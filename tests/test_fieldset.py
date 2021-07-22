@@ -526,6 +526,36 @@ def test_add_second_vector_field(pset_mode, mode):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
+def test_fieldset_write(pset_mode, tmpdir):
+    filepath = tmpdir.join("fieldset_write.nc")
+    xdim, ydim = 3, 4
+    lon = np.linspace(0., 10., xdim, dtype=np.float32)
+    lat = np.linspace(0., 10., ydim, dtype=np.float32)
+    U = np.ones((ydim, xdim), dtype=np.float32)
+    V = np.zeros((ydim, xdim), dtype=np.float32)
+    data = {'U': U, 'V': V}
+    dimensions = {'U': {'lat': lat, 'lon': lon},
+                  'V': {'lat': lat, 'lon': lon}}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+
+    fieldset.U.to_write = True
+
+    def UpdateU(particle, fieldset, time):
+        tmp = fieldset.U[particle]  # noqa
+        fieldset.U.data[particle.ti, particle.yi, particle.xi] += 1
+        fieldset.U.grid.time[0] = time
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ScipyParticle, lon=5, lat=5)
+    ofile = pset.ParticleFile(name=filepath, outputdt=2.)
+    pset.execute(UpdateU, dt=1, runtime=10, output_file=ofile)
+
+    assert fieldset.U.data[0, 1, 0] == 11
+
+    da = xr.open_dataset(str(filepath).replace('.nc', '_0005U.nc'))
+    assert np.allclose(fieldset.U.data, da['U'].values)
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
 @pytest.mark.parametrize('dt', [-3600, 3600])

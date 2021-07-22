@@ -18,6 +18,7 @@ from parcels.application_kernels.advection import AdvectionRK4
 from parcels.kernel.basekernel import BaseKernel as Kernel
 from parcels.collection.collections import ParticleCollection
 from parcels.tools.loggers import logger
+from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 
 
 class NDCluster(ABC):
@@ -28,6 +29,7 @@ class BaseParticleSet(NDCluster):
     """Base ParticleSet."""
     _collection = None
     kernel = None
+    interaction_kernel = None
     fieldset = None
     time_origin = None
     repeat_starttime = None
@@ -37,7 +39,8 @@ class BaseParticleSet(NDCluster):
     repeatpclass = None
     repeatkwargs = None
 
-    def __init__(self, fieldset=None, pclass=None, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+    def __init__(self, fieldset=None, pclass=None, lon=None, lat=None,
+                 depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         self._collection = None
         self.repeat_starttime = None
         self.repeatlon = None
@@ -46,6 +49,7 @@ class BaseParticleSet(NDCluster):
         self.repeatpclass = None
         self.repeatkwargs = None
         self.kernel = None
+        self.interaction_kernel = None
         self.fieldset = None
         self.time_origin = None
 
@@ -237,6 +241,9 @@ class BaseParticleSet(NDCluster):
         """
         pass
 
+    def InteractionKernel(self, pyfunc_inter):
+        raise NotImplementedError("Particle set type is not compatible with interaction.")
+
     @abstractmethod
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
@@ -294,7 +301,7 @@ class BaseParticleSet(NDCluster):
                 min_rt = p.time
         return min_rt, max_rt
 
-    def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
+    def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
                 verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for
@@ -338,6 +345,13 @@ class BaseParticleSet(NDCluster):
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
+
+        # Set up the interaction kernel(s) if not set and given.
+        if self.interaction_kernel is None and pyfunc_inter is not None:
+            if isinstance(pyfunc_inter, BaseInteractionKernel):
+                self.interaction_kernel = pyfunc_inter
+            else:
+                self.interaction_kernel = self.InteractionKernel(pyfunc_inter)
 
         # Convert all time variables to seconds
         if isinstance(endtime, delta):
@@ -433,12 +447,36 @@ class BaseParticleSet(NDCluster):
                                 'to a NetCDF file during the run.' % output_file.tempwritedir_base)
                 pbar = self.__create_progressbar(_starttime, endtime)
                 verbose_progress = True
+
             if dt > 0:
-                time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+                next_time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
-                time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
-            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
-                                execute_once=execute_once)
+                next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+
+            # If we don't perform interaction, only execute the normal kernel efficiently.
+            if self.interaction_kernel is None:
+                self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
+                                    execute_once=execute_once)
+            # Interaction: interleave the interaction and non-interaction kernel for each time step.
+            # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
+            else:
+                cur_time = time
+                while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
+                    if dt > 0:
+                        cur_end_time = min(cur_time+dt, next_time)
+                    else:
+                        cur_end_time = max(cur_time+dt, next_time)
+                    self.interaction_kernel.execute(
+                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
+                        output_file=output_file, execute_once=execute_once)
+                    self.kernel.execute(
+                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
+                        output_file=output_file, execute_once=execute_once)
+                    cur_time += dt
+                    if dt == 0:
+                        break
+            # End of interaction specific code
+            time = next_time
             if abs(time-next_prelease) < tol:
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
@@ -453,6 +491,14 @@ class BaseParticleSet(NDCluster):
             if abs(time-next_output) < tol:
                 if output_file:
                     output_file.write(self, time)
+            if abs(time - next_output) < tol or dt == 0:
+                for fld in self.fieldset.get_fields():
+                    if hasattr(fld, 'to_write') and fld.to_write:
+                        if fld.grid.tdim > 1:
+                            raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
+                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)
+                        fld.write(fldfilename)
+                        fld.to_write += 1
                 next_output += outputdt * np.sign(dt)
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time, animation=True)

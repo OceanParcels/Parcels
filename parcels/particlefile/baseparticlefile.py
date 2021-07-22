@@ -67,7 +67,6 @@ class BaseParticleFile(ABC):
     var_names_once = None
     file_list_once = None
     maxid_written = -1
-    time_written = None
     tempwritedir_base = None
     tempwritedir = None
 
@@ -104,7 +103,6 @@ class BaseParticleFile(ABC):
                 self.file_list_once = []
 
             self.file_list = []
-            self.time_written = []
 
         tmp_dir = tempwritedir
         if tempwritedir is None:

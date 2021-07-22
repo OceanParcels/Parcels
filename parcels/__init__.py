@@ -9,6 +9,7 @@ from parcels.particlefile import *  # noqa
 from parcels.field import *  # noqa
 from parcels.particleset import *  # noqa
 from parcels.kernel import *  # noqa
+from parcels.interaction import *  # noqa
 from parcels.application_kernels import *  # noqa
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.compilation import *  # noqa

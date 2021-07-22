@@ -7,7 +7,7 @@ from parcels.field import Field
 from parcels.tools.statuscodes import StateCode, OperationCode
 from parcels.tools.loggers import logger
 
-__all__ = ['ScipyParticle', 'JITParticle', 'Variable']
+__all__ = ['ScipyParticle', 'JITParticle', 'Variable', 'ScipyInteractionParticle']
 
 indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 
@@ -283,6 +283,11 @@ class ScipyParticle(_Particle):
     def __sizeof__(self):
         ptype = self.getPType()
         return sum([v.size for v in ptype.variables])
+
+
+class ScipyInteractionParticle(ScipyParticle):
+    vert_dist = Variable("vert_dist", dtype=np.float32)
+    horiz_dist = Variable("horiz_dist", dtype=np.float32)
 
 
 class JITParticle(ScipyParticle):

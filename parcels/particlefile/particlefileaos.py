@@ -56,8 +56,7 @@ class ParticleFileAOS(BaseParticleFile):
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
         attributes = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
-                      'file_list', 'file_list_once', 'maxid_written', 'time_written', 'parcels_mesh',
-                      'metadata']
+                      'file_list', 'file_list_once', 'maxid_written', 'parcels_mesh', 'metadata']
         return attributes
 
     def read_from_npy(self, file_list, time_steps, var):
@@ -125,7 +124,9 @@ class ParticleFileAOS(BaseParticleFile):
             if os.path.exists(tempwritedir):
                 pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
                 global_maxid_written = np.max([global_maxid_written, pset_info_local['maxid_written']])
-                global_time_written += pset_info_local['time_written']
+                for npyfile in pset_info_local['file_list']:
+                    tmp_dict = np.load(npyfile, allow_pickle=True).item()
+                    global_time_written.append([t for t in tmp_dict['time']])
                 global_file_list += pset_info_local['file_list']
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']

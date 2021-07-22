@@ -934,9 +934,6 @@ class ParticleCollectionAOS(ParticleCollection):
                 for p in pset_errs:
                     logger.warning_once('time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
 
-                if time not in pfile.time_written:
-                    pfile.time_written.append(time)
-
                 if len(pfile.var_names_once) > 0:
                     # _to_write_particles(self._data, time)
                     first_write = [p for p in self._data if _is_particle_started_yet(p, time) and (np.int64(p.id) not in pfile.written_once)]
