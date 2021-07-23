@@ -244,8 +244,7 @@ class ParticleSetNodes(BaseParticleSet):
         _pclass = object_class
         self.fieldset = fieldset
         if self.fieldset is None:
-            logger.warning_once("No FieldSet provided in ParticleSet generation. "
-                                   "This breaks most Parcels functionality")
+            logger.warning_once("No FieldSet provided in ParticleSet generation. This breaks most Parcels functionality")
         else:
             self.fieldset.check_complete()
         ngrids = self.fieldset.gridset.size if self.fieldset is not None else 0
@@ -660,7 +659,6 @@ class ParticleSetNodes(BaseParticleSet):
     @property
     def c_lib_register(self):
         return self._c_lib_register
-
 
     # @property
     # def fieldset(self):
