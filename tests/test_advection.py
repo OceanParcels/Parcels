@@ -15,11 +15,9 @@ from parcels import logger
 pset_modes_new = ['soa', 'aos', 'nodes']
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-pset_type_new = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
+pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
                  'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
                  'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
-pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
           'AdvDiffEM': AdvectionDiffusionEM, 'AdvDiffM1': AdvectionDiffusionM1}
 
@@ -77,14 +75,14 @@ def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
 
     pset2D = None
     if pset_mode != 'nodes':
-        pset2D = pset_type_new[pset_mode]['pset'](fieldset2D, pclass=ptype[mode],
+        pset2D = pset_type[pset_mode]['pset'](fieldset2D, pclass=ptype[mode],
                                                   lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart))
     else:
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset2D = pset_type_new[pset_mode]['pset'](idgen, fieldset2D, pclass=ptype[mode],
+        pset2D = pset_type[pset_mode]['pset'](idgen, fieldset2D, pclass=ptype[mode],
                                                   lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
                                                   c_lib_register=c_lib_register)
 
@@ -96,7 +94,7 @@ def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
 
     pset3D = None
     if pset_mode != 'nodes':
-        pset3D = pset_type_new[pset_mode]['pset'](fieldset3D, pclass=ptype[mode],
+        pset3D = pset_type[pset_mode]['pset'](fieldset3D, pclass=ptype[mode],
                                                   lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
                                                   depth=np.zeros(npart) + 10.)
     else:
@@ -104,7 +102,7 @@ def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset3D = pset_type_new[pset_mode]['pset'](idgen, fieldset3D, pclass=ptype[mode],
+        pset3D = pset_type[pset_mode]['pset'](idgen, fieldset3D, pclass=ptype[mode],
                                                   lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
                                                   depth=np.zeros(npart) + 10., c_lib_register=c_lib_register)
 
@@ -137,14 +135,14 @@ def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
 
     pset = None
     if pset_mode != 'nodes':
-        pset = pset_type_new[pset_mode]['pset'](fieldset, pclass=ptype[mode],
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                                 lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart))
     else:
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type_new[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
+        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
                                                 lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart),
                                                 c_lib_register=c_lib_register)
 
@@ -152,12 +150,23 @@ def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
     pset.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert np.allclose(np.diff(pset.lat), delta_lat, rtol=1.e-4)
 
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_advection_3D(pset_mode, mode, npart=11):
     """ 'Flat' 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s
     """
+    idgen = None
+    c_lib_register = None
+
     xdim = ydim = zdim = 2
     dimensions = {'lon': np.linspace(0., 1e4, xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1e4, ydim, dtype=np.float32),
@@ -167,20 +176,39 @@ def test_advection_3D(pset_mode, mode, npart=11):
     data['U'][:, :, 0] = 0.
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
-                                        lon=np.zeros(npart),
-                                        lat=np.zeros(npart) + 1e2,
-                                        depth=np.linspace(0, 1, npart))
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=np.zeros(npart),
+                                            lat=np.zeros(npart) + 1e2, depth=np.linspace(0, 1, npart))
+    else:
+        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
+                                            lon=np.zeros(npart), lat=np.zeros(npart) + 1e2,
+                                            depth=np.linspace(0, 1, npart))
+
     time = delta(hours=2).total_seconds()
     pset.execute(AdvectionRK4, runtime=time, dt=delta(seconds=30))
     assert np.allclose(pset.depth*time, pset.lon, atol=1.e-1)
 
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('direction', ['up', 'down'])
 @pytest.mark.parametrize('wErrorThroughSurface', [True, False])
 def test_advection_3D_outofbounds(pset_mode, mode, direction, wErrorThroughSurface):
+    # if pset_mode == 'nodes' and mode == 'jit' and wErrorThroughSurface == True:
+    #     return True
+
+    idgen = None
+    c_lib_register = None
+
     xdim = ydim = zdim = 2
     dimensions = {'lon': np.linspace(0., 1, xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1, ydim, dtype=np.float32),
@@ -204,14 +232,32 @@ def test_advection_3D_outofbounds(pset_mode, mode, direction, wErrorThroughSurfa
     if wErrorThroughSurface:
         recovery_dict[ErrorCode.ErrorThroughSurface] = SubmergeParticle
 
-    pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
-    pset.execute(AdvectionRK4_3D, runtime=10., dt=1, recovery=recovery_dict)
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 1.0)
+        idgen.setTimeLine(0.0, 10.0)
+        c_lib_register = LibraryRegisterC()
+        pset = pset_type[pset_mode]['pset'](idgen, fieldset=fieldset, pclass=ptype[mode],
+                                            lon=0.5, lat=0.5, depth=0.9, c_lib_register=c_lib_register)
+    advect_kernel = pset.Kernel(AdvectionRK4_3D, delete_cfiles=False)
+    pset.execute(advect_kernel, runtime=10., dt=1, recovery=recovery_dict)
 
     if direction == 'up' and wErrorThroughSurface:
-        assert np.allclose(pset.lon[0], 0.6)
-        assert np.allclose(pset.depth[0], 0)
+        assert np.isclose(pset[0].lon, 0.6)
+        assert np.isclose(pset[0].depth, 0)
     else:
         assert len(pset) == 0
+
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
 
 def periodicfields(xdim, ydim, uvel, vvel):
@@ -228,33 +274,66 @@ def periodicBC(particle, fieldset, time):
     particle.lat = math.fmod(particle.lat, 1)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_periodic_zonal(pset_mode, mode, xdim=100, ydim=100, halosize=3):
+    idgen = None
+    c_lib_register = None
+
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=0.)
     fieldset.add_periodic_halo(zonal=True, halosize=halosize)
     assert(len(fieldset.U.lon) == xdim + 2 * halosize)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    else:
+        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset.lon[0] - 0.15) < 0.1
 
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_periodic_meridional(pset_mode, mode, xdim=100, ydim=100):
+    idgen = None
+    c_lib_register = None
+
     fieldset = periodicfields(xdim, ydim, uvel=0., vvel=1.)
     fieldset.add_periodic_halo(meridional=True)
     assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    else:
+        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset.lat[0] - 0.15) < 0.1
 
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_periodic_zonal_meridional(pset_mode, mode, xdim=100, ydim=100):
+    idgen = None
+    c_lib_register = None
+
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=1.)
     fieldset.add_periodic_halo(zonal=True, meridional=True)
     assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
@@ -262,19 +341,34 @@ def test_advection_periodic_zonal_meridional(pset_mode, mode, xdim=100, ydim=100
     assert np.allclose(np.diff(fieldset.U.lat), fieldset.U.lat[1]-fieldset.U.lat[0], rtol=0.001)
     assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1]-fieldset.U.lon[0], rtol=0.001)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
+    else:
+        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset.lon[0] - 0.05) < 0.1
     assert abs(pset.lat[0] - 0.15) < 0.1
 
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('u', [-0.3, np.array(0.2)])
 @pytest.mark.parametrize('v', [0.2, np.array(1)])
 @pytest.mark.parametrize('w', [None, -0.2, np.array(0.7)])
 def test_length1dimensions(pset_mode, mode, u, v, w):
-    logger.info("mode: {} pset_mode {}".format(mode, pset_mode))
+    idgen = None
+    c_lib_register = None
+
+    # logger.info("mode: {} pset_mode {}".format(mode, pset_mode))
     (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (0, 1)
     (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (-4, 1)
     (depth, zdim) = (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (3, 1)
@@ -301,7 +395,11 @@ def test_length1dimensions(pset_mode, mode, u, v, w):
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
     x0, y0, z0 = 2, 8, -4
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
+    else:
+        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
     pfunc = AdvectionRK4 if w is None else AdvectionRK4_3D
     kernel = pset.Kernel(pfunc)
     pset.execute(kernel, runtime=4)
@@ -311,6 +409,14 @@ def test_length1dimensions(pset_mode, mode, u, v, w):
     assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()
     if w:
         assert ((np.array([p.depth - y0 for p in pset]) - 4 * w) < 1e-6).all()
+
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
 
 def truth_stationary(x_0, y_0, t):
@@ -335,7 +441,7 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
     return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('method, rtol, diffField', [
     ('EE', 1e-2, False),
@@ -344,6 +450,9 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
     ('RK4', 1e-5, False),
     ('RK45', 1e-5, False)])
 def test_stationary_eddy(pset_mode, fieldset_stationary, mode, method, rtol, diffField, npart=1):
+    idgen = None
+    c_lib_register = None
+
     fieldset = fieldset_stationary
     if diffField:
         fieldset.add_field(Field('Kh_zonal', np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
@@ -351,7 +460,12 @@ def test_stationary_eddy(pset_mode, fieldset_stationary, mode, method, rtol, dif
         fieldset.add_constant('dres', 0.1)
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(12500, 12500, npart)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+    else:
+        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     endtime = delta(hours=6).total_seconds()
     pset.execute(kernel[method], dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_stationary(x, y, endtime)[0] for x, y, in zip(lon, lat)]
@@ -359,10 +473,21 @@ def test_stationary_eddy(pset_mode, fieldset_stationary, mode, method, rtol, dif
     assert np.allclose(pset.lon, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_stationary_eddy_vertical(pset_mode, mode, npart=1):
+    idgen = None
+    c_lib_register = None
+
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(10000, 20000, npart)
     depth = np.linspace(12500, 12500, npart)
@@ -380,7 +505,15 @@ def test_stationary_eddy_vertical(pset_mode, mode, npart=1):
     data = {'U': fld1, 'V': fldzero, 'W': fld2}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 12500.0)
+        idgen.setTimeLine(0.0, endtime)
+        c_lib_register = LibraryRegisterC()
+        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth, c_lib_register=c_lib_register)
     pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_stationary(x, z, endtime)[0] for x, z, in zip(lon, depth)]
     exp_depth = [truth_stationary(x, z, endtime)[1] for x, z, in zip(lon, depth)]
@@ -388,16 +521,13 @@ def test_stationary_eddy_vertical(pset_mode, mode, npart=1):
     assert np.allclose(pset.lat, lat, rtol=1e-5)
     assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
 
-    data = {'U': fldzero, 'V': fld2, 'W': fld1}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
-
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
-    pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
-    exp_depth = [truth_stationary(z, y, endtime)[0] for z, y, in zip(depth, lat)]
-    exp_lat = [truth_stationary(z, y, endtime)[1] for z, y, in zip(depth, lat)]
-    assert np.allclose(pset.lon, lon, rtol=1e-5)
-    assert np.allclose(pset.lat, exp_lat, rtol=1e-5)
-    assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
 
 def truth_moving(x_0, y_0, t):

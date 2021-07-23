@@ -331,13 +331,16 @@ class ParticleCollectionNodes(ParticleCollection):
         if not self.empty():
             start_index = 0
             node = self._data[start_index]
-            while not node.is_valid() and start_index < len(self._data):
+            while not node.is_valid() and start_index < (len(self._data)-1):
                 start_index += 1
                 node = self._data[start_index]
             while node.prev is not None:
-                node = node.prev
+                prev_node = node.prev
+                while prev_node is not None and not prev_node.is_valid():
+                    prev_node = prev_node.prev
+                node = prev_node
             node = None if not node.is_valid() else node
-            assert node is not None
+            # assert node is not None
             return node
         return None
 

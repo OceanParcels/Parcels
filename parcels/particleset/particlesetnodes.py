@@ -109,7 +109,14 @@ class ParticleSetNodes(BaseParticleSet):
                  repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, c_lib_register=LibraryRegisterC(), **kwargs):
         super(ParticleSetNodes, self).__init__()
         self._idgen = idgen
+        if self._idgen is None:
+            logger.warn("A node-based particle set requires a global-context ID generator. Creating a default ID generator internally.")
+            self._idgen = GenerateID_Service(SequentialIdGenerator)
+
         self._c_lib_register = c_lib_register
+        if self._c_lib_register is None:
+            logger.warning("A node-based particle set requires a global-context 'LibraryRegisterC'. Creating default 'LibraryRegisterC' internally.")
+            self._c_lib_register = LibraryRegisterC()
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
 
@@ -237,7 +244,7 @@ class ParticleSetNodes(BaseParticleSet):
         _pclass = object_class
         self.fieldset = fieldset
         if self.fieldset is None:
-            logger.warninging_once("No FieldSet provided in ParticleSet generation. "
+            logger.warning_once("No FieldSet provided in ParticleSet generation. "
                                    "This breaks most Parcels functionality")
         else:
             self.fieldset.check_complete()
@@ -377,7 +384,7 @@ class ParticleSetNodes(BaseParticleSet):
         #             setattr(pdata, kwvar, kwargs[kwvar][i])
         #         ndata = self._nclass(id=pdata_id, data=pdata)
         #         self._nodes.add(ndata)
-        self._collection = ParticleCollectionNodes(idgen, c_lib_register, _pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
+        self._collection = ParticleCollectionNodes(self._idgen, self._c_lib_register, _pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
 
         self.repeatlon = None
         self.repeatlat = None
@@ -646,6 +653,15 @@ class ParticleSetNodes(BaseParticleSet):
     def particle_data(self):
         return self._collection.particle_data
 
+    @property
+    def idgen(self):
+        return self._idgen
+
+    @property
+    def c_lib_register(self):
+        return self._c_lib_register
+
+
     # @property
     # def fieldset(self):
     #     return self.fieldset
@@ -658,7 +674,7 @@ class ParticleSetNodes(BaseParticleSet):
         """
         err_particles = [
             ndata.data for ndata in self._collection
-            if ndata.data.state not in [StateCode.Success, StateCode.Evaluate]]
+            if ndata.is_valid() and ndata.data.state not in [StateCode.Success, StateCode.Evaluate]]
         return err_particles
 
     @property
@@ -667,7 +683,7 @@ class ParticleSetNodes(BaseParticleSet):
 
         :return: The number of error particles.
         """
-        return np.sum([True for ndata in self._collection if ndata.data.state not in [StateCode.Success, StateCode.Evaluate]])
+        return np.sum([True for ndata in self._collection if ndata.is_valid() and ndata.data.state not in [StateCode.Success, StateCode.Evaluate]])
 
     def __iter__(self):
         return super(ParticleSetNodes, self).__iter__()
@@ -1076,7 +1092,7 @@ class ParticleSetNodes(BaseParticleSet):
                    depth=pvars['depth'], pid_orig=pvars['id'], time=pvars['time'],
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, c_lib_register=c_lib_register, idgen=idgen, **kwargs)
 
-    def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
+    def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
                 verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for
