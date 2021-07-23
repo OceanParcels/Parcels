@@ -16,8 +16,8 @@ pset_modes_new = ['soa', 'aos', 'nodes']
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-                 'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
-                 'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
+             'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
           'AdvDiffEM': AdvectionDiffusionEM, 'AdvDiffM1': AdvectionDiffusionM1}
 
@@ -76,15 +76,15 @@ def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
     pset2D = None
     if pset_mode != 'nodes':
         pset2D = pset_type[pset_mode]['pset'](fieldset2D, pclass=ptype[mode],
-                                                  lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart))
+                                              lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart))
     else:
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
         pset2D = pset_type[pset_mode]['pset'](idgen, fieldset2D, pclass=ptype[mode],
-                                                  lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
-                                                  c_lib_register=c_lib_register)
+                                              lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
+                                              c_lib_register=c_lib_register)
 
     pset2D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(pset2D.lon) > 1.e-4).all()
@@ -95,16 +95,16 @@ def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
     pset3D = None
     if pset_mode != 'nodes':
         pset3D = pset_type[pset_mode]['pset'](fieldset3D, pclass=ptype[mode],
-                                                  lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
-                                                  depth=np.zeros(npart) + 10.)
+                                              lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
+                                              depth=np.zeros(npart) + 10.)
     else:
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
         pset3D = pset_type[pset_mode]['pset'](idgen, fieldset3D, pclass=ptype[mode],
-                                                  lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
-                                                  depth=np.zeros(npart) + 10., c_lib_register=c_lib_register)
+                                              lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
+                                              depth=np.zeros(npart) + 10., c_lib_register=c_lib_register)
 
     pset3D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(pset3D.lon) > 1.e-4).all()
@@ -136,15 +136,15 @@ def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
     pset = None
     if pset_mode != 'nodes':
         pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
-                                                lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart))
+                                            lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart))
     else:
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
-                                                lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart),
-                                                c_lib_register=c_lib_register)
+                                            lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart),
+                                            c_lib_register=c_lib_register)
 
     delta_lat = np.diff(pset.lat)
     pset.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
