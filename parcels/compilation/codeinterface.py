@@ -226,7 +226,7 @@ class InterfaceC(object):
     def load_library(self):
         if self.libc is None and self.compiled and not self.loaded:
             libdir = os.path.dirname(self.lib_file)
-            libdir += os.path.sep if libdir[-1] != os.path.sep else ''
+            # libdir += os.path.sep if libdir[-1] != os.path.sep else ''
             libfile = os.path.basename(self.lib_file)
             liblist = libfile.split('.')
             del liblist[-1]
