@@ -153,6 +153,9 @@ class KernelNodes(BaseKernel):
             fargs += [c_double(f) for f in self.const_args.values()]
 
         node_data = pset.begin()
+        if node_data is None:
+            logger.error("Attempting to execute kernel with Node data {} being empty or invalid.".format(node_data))
+            return
         if len(fargs) > 0:
             self._function(c_int(len(pset)), pointer(node_data), c_double(endtime), c_double(dt), *fargs)
         else:
@@ -236,11 +239,18 @@ class KernelNodes(BaseKernel):
         self.remove_deleted(pset, output_file=output_file, endtime=endtime)
 
         # Identify particles that threw errors
-        error_particles = pset.error_particles
+        n_error = pset.num_error_particles
 
-        while len(error_particles) > 0:
+        while n_error > 0:
             # Apply recovery kernel
-            for p in error_particles:
+            node = pset.begin()
+            while node is not None:
+                if not node.is_valid():
+                    node = node.next
+                    continue
+                p = node.data
+                if p.state in [StateCode.Success, StateCode.Evaluate]:
+                    continue
                 if p.state == OperationCode.StopExecution:
                     return
                 if p.state == OperationCode.Repeat:
@@ -256,6 +266,8 @@ class KernelNodes(BaseKernel):
                 else:
                     logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
                     p.delete()
+                node.set_data(p)
+                node = node.next
 
             # Remove all particles that signalled deletion
             self.remove_deleted(pset, output_file=output_file, endtime=endtime)
@@ -266,4 +278,4 @@ class KernelNodes(BaseKernel):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = pset.error_particles
+            n_error = pset.num_error_particles
