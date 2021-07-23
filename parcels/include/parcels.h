@@ -959,7 +959,7 @@ static inline StatusCode calculate_slip_conditions(double xsi, double eta, float
 {
       float f_u = 1, f_v = 1;
       if ((is_zero_flt(dataU[0][0])) && (is_zero_flt(dataU[0][1])) &&
-          (is_zero_flt(dataV[0][0])) && (is_zero_flt(dataV[0][1]))){
+          (is_zero_flt(dataV[0][0])) && (is_zero_flt(dataV[0][1])) && eta > 0.){
         if (interp_method == PARTIALSLIP) {
           f_u = f_u * (.5 + .5 * eta) / eta;
         } else if (interp_method == FREESLIP) {
@@ -967,7 +967,7 @@ static inline StatusCode calculate_slip_conditions(double xsi, double eta, float
         }
       }
       if ((is_zero_flt(dataU[1][0])) && (is_zero_flt(dataU[1][1])) &&
-          (is_zero_flt(dataV[1][0])) && (is_zero_flt(dataV[1][1]))){
+          (is_zero_flt(dataV[1][0])) && (is_zero_flt(dataV[1][1])) && eta < 1.){
         if (interp_method == PARTIALSLIP) {
           f_u = f_u * (1 - .5 * eta) / (1 - eta);
         } else if (interp_method == FREESLIP) {
@@ -975,7 +975,7 @@ static inline StatusCode calculate_slip_conditions(double xsi, double eta, float
         }
       }
       if ((is_zero_flt(dataU[0][0])) && (is_zero_flt(dataU[1][0])) &&
-          (is_zero_flt(dataV[0][0])) && (is_zero_flt(dataV[1][0]))){
+          (is_zero_flt(dataV[0][0])) && (is_zero_flt(dataV[1][0])) && xsi > 0.){
         if (interp_method == PARTIALSLIP) {
           f_v = f_v * (.5 + .5 * xsi) / xsi;
         } else if (interp_method == FREESLIP) {
@@ -983,7 +983,7 @@ static inline StatusCode calculate_slip_conditions(double xsi, double eta, float
         }
       }
       if ((is_zero_flt(dataU[0][1])) && (is_zero_flt(dataU[1][1])) &&
-          (is_zero_flt(dataV[0][1])) && (is_zero_flt(dataV[1][1]))){
+          (is_zero_flt(dataV[0][1])) && (is_zero_flt(dataV[1][1])) && xsi < 1.){
         if (interp_method == PARTIALSLIP) {
           f_v = f_v * (1 - .5 * xsi) / (1 - xsi);
         } else if (interp_method == FREESLIP) {

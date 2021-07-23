@@ -1643,13 +1643,13 @@ class VectorField(object):
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
         f_u, f_v = 1, 1
-        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi, xi+1):
+        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi, xi+1) and eta > 0:
             f_u = f_u * (.5 + .5 * eta) / eta
-        if self._is_land2D(di, yi+1, xi) and self._is_land2D(di, yi+1, xi+1):
+        if self._is_land2D(di, yi+1, xi) and self._is_land2D(di, yi+1, xi+1) and eta < 1:
             f_u = f_u * (1 - .5 * eta) / (1 - eta)
-        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi+1, xi):
+        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi+1, xi) and xsi > 0:
             f_v = f_v * (.5 + .5 * xsi) / xsi
-        if self._is_land2D(di, yi, xi+1) and self._is_land2D(di, yi+1, xi+1):
+        if self._is_land2D(di, yi, xi+1) and self._is_land2D(di, yi+1, xi+1) and xsi < 1:
             f_v = f_v * (1 - .5 * xsi) / (1 - xsi)
         u = f_u * self.U.eval(time, z, y, x, particle)
         v = f_v * self.V.eval(time, z, y, x, particle)
@@ -1660,13 +1660,13 @@ class VectorField(object):
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
         f_u, f_v = 1, 1
-        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi, xi+1):
+        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi, xi+1) and eta > 0:
             f_u = f_u / eta
-        if self._is_land2D(di, yi+1, xi) and self._is_land2D(di, yi+1, xi+1):
+        if self._is_land2D(di, yi+1, xi) and self._is_land2D(di, yi+1, xi+1) and eta < 1:
             f_u = f_u / (1 - eta)
-        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi+1, xi):
+        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi+1, xi) and xsi > 0:
             f_v = f_v / xsi
-        if self._is_land2D(di, yi, xi+1) and self._is_land2D(di, yi+1, xi+1):
+        if self._is_land2D(di, yi, xi+1) and self._is_land2D(di, yi+1, xi+1) and xsi < 1:
             f_v = f_v / (1 - xsi)
         u = f_u * self.U.eval(time, z, y, x, particle)
         v = f_v * self.V.eval(time, z, y, x, particle)
