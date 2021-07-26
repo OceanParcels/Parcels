@@ -47,8 +47,8 @@ def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
 
     # Generate the original test setup on A-grid in m
     domainsizeX, domainsizeY = (1.e5, 5.e4)
-    La = np.linspace(0, domainsizeX, xdim, dtype=np.float32)
-    Wa = np.linspace(0, domainsizeY, ydim, dtype=np.float32)
+    La = np.linspace(1e3, domainsizeX, xdim, dtype=np.float32)
+    Wa = np.linspace(1e3, domainsizeY, ydim, dtype=np.float32)
 
     u0 = 1
     x0 = domainsizeX / 2
