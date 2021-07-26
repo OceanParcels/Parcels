@@ -63,39 +63,9 @@ class PythonUV():
 
     def __getitem__(self, param):
         return param[2], param[1]
-#         return compute_UV(param)
-#         try:
-#             print(dir(typeof(param)))
-#             print(param[0])
-#         except:
-#             print(param)
-#         print(param, is_tuple(param))
-#         if is_tuple(param):
-#             particle = param[-1]
-#         else:
-#             particle = param
-#         return particle.lat, particle.lon
-#         return (2, 3)
-#         if isinstance(param, BaseTuple):
-#             print(param)
-#         try:
-#         if isinstance(param, tuple):
-#             len(param)
-#             return param[-1].lat, param[-1].lon
-#         except Exception:
-#             return param.lat, param.lon
-#         return np.random.rand(2)
 
 
 NumbaUV = jitclass(PythonUV, spec={})
-# class NumbaUV():
-#     def __init__(self):
-#         pass
-# 
-#     def __getitem__(self, _):
-#         return np.random.rand(2)
-
-#         return (1.0, 2.0)
 
 
 @jitclass(spec={"UV": as_numba_type(NumbaUV)})
