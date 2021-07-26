@@ -954,7 +954,7 @@ static inline StatusCode temporal_interpolationUVW_c_grid(type_coord x, type_coo
   }
 }
 
-static inline StatusCode calculate_slip_conditions(double xsi, double eta, float dataU[2][2], float dataV[2][2],
+static inline StatusCode calculate_slip_conditions_2D(double xsi, double eta, float dataU[2][2], float dataV[2][2],
                                                     float *u, float *v, int interp_method)
 {
       float f_u = 1, f_v = 1;
@@ -996,6 +996,74 @@ static inline StatusCode calculate_slip_conditions(double xsi, double eta, float
   return SUCCESS;
 }
 
+static inline StatusCode calculate_slip_conditions_3D(double xsi, double eta, double zeta, float dataU[2][2][2], float dataV[2][2][2],
+                                                    float *u, float *v, int interp_method)
+{
+      float f_u = 1, f_v = 1;
+      if ((is_zero_flt(dataU[0][0][0])) && (is_zero_flt(dataU[0][0][1])) && (is_zero_flt(dataU[1][0][0])) && (is_zero_flt(dataU[1][0][1])) &&
+          (is_zero_flt(dataV[0][0][0])) && (is_zero_flt(dataV[0][0][1])) && (is_zero_flt(dataV[1][0][0])) && (is_zero_flt(dataV[1][0][1])) &&
+          eta > 0.){
+        if (interp_method == PARTIALSLIP) {
+          f_u = f_u * (.5 + .5 * eta) / eta;
+        } else if (interp_method == FREESLIP) {
+          f_u = f_u / eta;
+        }
+      }
+      if ((is_zero_flt(dataU[0][1][0])) && (is_zero_flt(dataU[0][1][1])) && (is_zero_flt(dataU[1][1][0])) && (is_zero_flt(dataU[1][1][1])) &&
+          (is_zero_flt(dataV[0][1][0])) && (is_zero_flt(dataV[0][1][1])) && (is_zero_flt(dataV[1][1][0])) && (is_zero_flt(dataV[1][1][1])) &&
+           eta < 1.){
+        if (interp_method == PARTIALSLIP) {
+          f_u = f_u * (1 - .5 * eta) / (1 - eta);
+        } else if (interp_method == FREESLIP) {
+          f_u = f_u / (1 - eta);
+        }
+      }
+      if ((is_zero_flt(dataU[0][0][0])) && (is_zero_flt(dataU[0][1][0])) && (is_zero_flt(dataU[1][0][0])) && (is_zero_flt(dataU[1][1][0])) &&
+          (is_zero_flt(dataV[0][0][0])) && (is_zero_flt(dataV[0][1][0])) && (is_zero_flt(dataV[1][0][0])) && (is_zero_flt(dataV[1][1][0])) &&
+          xsi > 0.){
+        if (interp_method == PARTIALSLIP) {
+          f_v = f_v * (.5 + .5 * xsi) / xsi;
+        } else if (interp_method == FREESLIP) {
+          f_v = f_v / xsi;
+        }
+      }
+      if ((is_zero_flt(dataU[0][0][1])) && (is_zero_flt(dataU[0][1][1])) && (is_zero_flt(dataU[1][0][1])) && (is_zero_flt(dataU[1][1][1])) &&
+          (is_zero_flt(dataV[0][0][1])) && (is_zero_flt(dataV[0][1][1])) && (is_zero_flt(dataV[1][0][1])) && (is_zero_flt(dataV[1][1][1])) &&
+          xsi < 1.){
+        if (interp_method == PARTIALSLIP) {
+          f_v = f_v * (1 - .5 * xsi) / (1 - xsi);
+        } else if (interp_method == FREESLIP) {
+          f_v = f_v / (1 - xsi);
+        }
+      }
+      if ((is_zero_flt(dataU[0][0][0])) && (is_zero_flt(dataU[0][0][1])) && (is_zero_flt(dataU[0][1][0])) && (is_zero_flt(dataU[0][1][1])) &&
+          (is_zero_flt(dataV[0][0][0])) && (is_zero_flt(dataV[0][0][1])) && (is_zero_flt(dataV[0][1][0])) && (is_zero_flt(dataV[0][1][1])) &&
+          zeta > 0.){
+        if (interp_method == PARTIALSLIP) {
+          f_u = f_u * (.5 + .5 * zeta) / zeta;
+          f_v = f_v * (.5 + .5 * zeta) / zeta;
+        } else if (interp_method == FREESLIP) {
+          f_u = f_u / zeta;
+          f_v = f_v / zeta;
+        }
+      }
+      if ((is_zero_flt(dataU[1][0][0])) && (is_zero_flt(dataU[1][0][1])) && (is_zero_flt(dataU[1][1][0])) && (is_zero_flt(dataU[1][1][1])) &&
+          (is_zero_flt(dataV[1][0][0])) && (is_zero_flt(dataV[1][0][1])) && (is_zero_flt(dataV[1][1][0])) && (is_zero_flt(dataV[1][1][1])) &&
+          zeta < 1.){
+        if (interp_method == PARTIALSLIP) {
+          f_u = f_u * (1 - .5 * zeta) / (1 - zeta);
+          f_v = f_v * (1 - .5 * zeta) / (1 - zeta);
+        } else if (interp_method == FREESLIP) {
+          f_u = f_u / (1 - zeta);
+          f_v = f_v / (1 - zeta);
+        }
+      }
+      *u *= f_u;
+      *v *= f_v;
+
+  return SUCCESS;
+}
+
 static inline StatusCode temporal_interpolationUV_slip(type_coord x, type_coord y, type_coord z, double time, CField *U, CField *V,
                                                          GridCode gcode, int *xi, int *yi, int *zi, int *ti,
                                                          float *u, float *v, int interp_method, int gridindexingtype)
@@ -1024,14 +1092,26 @@ static inline StatusCode temporal_interpolationUV_slip(type_coord x, type_coord 
 
       status = spatial_interpolation_bilinear(xsi, eta, data2D_U[0], &u0); CHECKSTATUS(status);
       status = spatial_interpolation_bilinear(xsi, eta, data2D_V[0], &v0); CHECKSTATUS(status);
-      status = calculate_slip_conditions(xsi, eta, data2D_U[0], data2D_V[0], &u0, &v0, interp_method); CHECKSTATUS(status);
+      status = calculate_slip_conditions_2D(xsi, eta, data2D_U[0], data2D_V[0], &u0, &v0, interp_method); CHECKSTATUS(status);
 
       status = spatial_interpolation_bilinear(xsi, eta, data2D_U[1], &u1); CHECKSTATUS(status);
       status = spatial_interpolation_bilinear(xsi, eta, data2D_V[1], &v1); CHECKSTATUS(status);
-      status = calculate_slip_conditions(xsi, eta, data2D_U[1], data2D_V[1], &u1, &v1, interp_method); CHECKSTATUS(status);
-      *u = u0 + (u1 - u0) * (float)((time - t0) / (t1 - t0));
-      *v = v0 + (v1 - v0) * (float)((time - t0) / (t1 - t0));
+      status = calculate_slip_conditions_2D(xsi, eta, data2D_U[1], data2D_V[1], &u1, &v1, interp_method); CHECKSTATUS(status);
+    } else {
+      float data3D_U[2][2][2][2], data3D_V[2][2][2][2];
+      status = getCell3D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_U, 0); CHECKSTATUS(status);
+      status = getCell3D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_V, 0); CHECKSTATUS(status);
+
+      status = spatial_interpolation_trilinear(xsi, eta, zeta, data3D_U[0], &u0); CHECKSTATUS(status);
+      status = spatial_interpolation_trilinear(xsi, eta, zeta, data3D_V[0], &v0); CHECKSTATUS(status);
+      status = calculate_slip_conditions_3D(xsi, eta, zeta, data3D_U[0], data3D_V[0], &u0, &v0, interp_method); CHECKSTATUS(status);
+
+      status = spatial_interpolation_trilinear(xsi, eta, zeta, data3D_U[1], &u1); CHECKSTATUS(status);
+      status = spatial_interpolation_trilinear(xsi, eta, zeta, data3D_V[1], &v1); CHECKSTATUS(status);
+      status = calculate_slip_conditions_3D(xsi, eta, zeta, data3D_U[1], data3D_V[1], &u1, &v1, interp_method); CHECKSTATUS(status);
     }
+    *u = u0 + (u1 - u0) * (float)((time - t0) / (t1 - t0));
+    *v = v0 + (v1 - v0) * (float)((time - t0) / (t1 - t0));
 
   } else {
     double t0 = grid->time[ti[igrid]];
@@ -1044,7 +1124,15 @@ static inline StatusCode temporal_interpolationUV_slip(type_coord x, type_coord 
       status = spatial_interpolation_bilinear(xsi, eta, data2D_U[0], u); CHECKSTATUS(status);
       status = spatial_interpolation_bilinear(xsi, eta, data2D_V[0], v); CHECKSTATUS(status);
 
-      status = calculate_slip_conditions(xsi, eta, data2D_U[0], data2D_V[0], u, v, interp_method); CHECKSTATUS(status);
+      status = calculate_slip_conditions_2D(xsi, eta, data2D_U[0], data2D_V[0], u, v, interp_method); CHECKSTATUS(status);
+    } else {
+      float data3D_U[2][2][2][2], data3D_V[2][2][2][2];
+      status = getCell3D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_U, 1); CHECKSTATUS(status);
+      status = getCell3D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_V, 1); CHECKSTATUS(status);
+
+      status = spatial_interpolation_trilinear(xsi, eta, zeta, data3D_U[0], u); CHECKSTATUS(status);
+      status = spatial_interpolation_trilinear(xsi, eta, zeta, data3D_V[0], v); CHECKSTATUS(status);
+      status = calculate_slip_conditions_3D(xsi, eta, zeta, data3D_U[0], data3D_V[0], u, v, interp_method); CHECKSTATUS(status);
     }
   }
   return SUCCESS;
