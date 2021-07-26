@@ -1647,35 +1647,51 @@ class VectorField(object):
             else:
                 return True
 
-    def spatial_slip_interpolation2D(self, ti, z, y, x, time, particle=None):
+    def spatial_slip_interpolation(self, ti, z, y, x, time, particle=None):
         (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
-        f_u, f_v = 1, 1
+        f_u, f_v, f_w = 1, 1, 1
         if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi, xi+1) and self._is_land2D(di+1, yi, xi) \
                 and self._is_land2D(di+1, yi, xi+1) and eta > 0:
             if self.U.interp_method == 'partialslip':
                 f_u = f_u * (.5 + .5 * eta) / eta
+                if self.vector_type == '3D':
+                    f_w = f_w * (.5 + .5 * eta) / eta
             elif self.U.interp_method == 'freeslip':
                 f_u = f_u / eta
+                if self.vector_type == '3D':
+                    f_w = f_w / eta
         if self._is_land2D(di, yi+1, xi) and self._is_land2D(di, yi+1, xi+1) and self._is_land2D(di+1, yi+1, xi) \
                 and self._is_land2D(di+1, yi+1, xi+1) and eta < 1:
             if self.U.interp_method == 'partialslip':
                 f_u = f_u * (1 - .5 * eta) / (1 - eta)
+                if self.vector_type == '3D':
+                    f_w = f_w * (1 - .5 * eta) / (1 - eta)
             elif self.U.interp_method == 'freeslip':
                 f_u = f_u / (1 - eta)
+                if self.vector_type == '3D':
+                    f_w = f_w / (1 - eta)
         if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi+1, xi) and self._is_land2D(di+1, yi, xi) \
                 and self._is_land2D(di+1, yi+1, xi) and xsi > 0:
             if self.U.interp_method == 'partialslip':
                 f_v = f_v * (.5 + .5 * xsi) / xsi
+                if self.vector_type == '3D':
+                    f_w = f_w * (.5 + .5 * xsi) / xsi
             elif self.U.interp_method == 'freeslip':
                 f_v = f_v / xsi
+                if self.vector_type == '3D':
+                    f_w = f_w / xsi
         if self._is_land2D(di, yi, xi+1) and self._is_land2D(di, yi+1, xi+1) and self._is_land2D(di+1, yi, xi+1) \
                 and self._is_land2D(di+1, yi+1, xi+1) and xsi < 1:
             if self.U.interp_method == 'partialslip':
                 f_v = f_v * (1 - .5 * xsi) / (1 - xsi)
+                if self.vector_type == '3D':
+                    f_w = f_w * (1 - .5 * xsi) / (1 - xsi)
             elif self.U.interp_method == 'freeslip':
                 f_v = f_v / (1 - xsi)
+                if self.vector_type == '3D':
+                    f_w = f_w / (1 - xsi)
         if self.U.grid.zdim > 1:
             if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi, xi+1) and self._is_land2D(di, yi+1, xi) \
                     and self._is_land2D(di, yi+1, xi+1) and zeta > 0:
@@ -1696,22 +1712,11 @@ class VectorField(object):
 
         u = f_u * self.U.eval(time, z, y, x, particle)
         v = f_v * self.V.eval(time, z, y, x, particle)
-        return u, v
-
-    def _is_land3D(self, ti, zi, yi, xi):
-        return (self.U.data[ti, zi, yi, xi] == 0.) and (self.V.data[ti, zi, yi, xi] == 0.) and (self.W.data[ti, zi, yi, xi] == 0.)
-
-    def spatial_slip_interpolation3D(self, ti, z, y, x, time, particle=None):
-        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
-
-        f_u, f_v, f_w = 1, 1, 1
-
-        # TODO: implement 3D
-        u = f_u * self.U.eval(time, z, y, x, particle)
-        v = f_v * self.V.eval(time, z, y, x, particle)
-        w = f_w * self.W.eval(time, z, y, x, particle)
-
-        return u, v, w
+        if self.vector_type == '3D':
+            w = f_w * self.W.eval(time, z, y, x, particle)
+            return u, v, w
+        else:
+            return u, v
 
     def eval(self, time, z, y, x, particle=None):
         if self.U.interp_method not in ['cgrid_velocity', 'partialslip', 'freeslip']:
@@ -1727,8 +1732,8 @@ class VectorField(object):
                 return (u, v)
         else:
             interp = {'cgrid_velocity': {'2D': self.spatial_c_grid_interpolation2D, '3D': self.spatial_c_grid_interpolation3D},
-                      'partialslip': {'2D': self.spatial_slip_interpolation2D, '3D': self.spatial_slip_interpolation3D},
-                      'freeslip': {'2D': self.spatial_slip_interpolation2D, '3D': self.spatial_slip_interpolation3D}}
+                      'partialslip': {'2D': self.spatial_slip_interpolation, '3D': self.spatial_slip_interpolation},
+                      'freeslip': {'2D': self.spatial_slip_interpolation, '3D': self.spatial_slip_interpolation}}
             grid = self.U.grid
             (ti, periods) = self.U.time_index(time)
             time -= periods*(grid.time_full[-1]-grid.time_full[0])
