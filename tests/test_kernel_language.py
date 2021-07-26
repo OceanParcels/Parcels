@@ -438,7 +438,7 @@ def test_EOSseawaterproperties_kernels(pset_mode, mode):
                                         'temperature': 40,
                                         'potemperature': 36.89073},
                                   dimensions={'lat': 0, 'lon': 0, 'depth': 0})
-    fieldset.add_constant('refpressure', np.float(0))
+    fieldset.add_constant('refpressure', float(0))
 
     class PoTempParticle(ptype[mode]):
         potemp = Variable('potemp', dtype=np.float32)
