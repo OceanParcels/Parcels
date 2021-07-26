@@ -8,6 +8,8 @@ A temporary playground has been created for experimentation, called FakeParcels.
 
 ## Parts that should be converted
 
+We define the Numba realm as the combination of code that has to be jitted by Numba, or data structures that can be used by Numba, such as typed lists or numpy arrays. These data structures can be used both within and outside of the Numba realm. The python realm is code that does not have to be jitted, or data/class structures that do not have to be processed by Numba JIT code.
+
 ### Particleset/collection. 
 - The particle set/collection is most likely not directly readable/usable within the jitted code.
 - One solution might be to write code that converts parcels particlesets to Numba particlesets. The disadvantage would be that it kind of defeats a bit the purpose of having different kinds of particle sets in the first place, but it would require less time for each kind of particle set.
@@ -43,3 +45,8 @@ A temporary playground has been created for experimentation, called FakeParcels.
 ### Kernels
 - A new kernel has to be created that suits the Numba code. Most of the non-performance critical parts can live in the Python realm.
 - Support for exceptions in Numba is rudimentary to say the least, so propagation of errors probably needs to be handled slightly differently.
+
+
+### MPI
+- There are some references to mpi in the code compiler, but they mainly deal with using the right compiler (options).
+- MPI should hopefully stay completely in the Python realm, with little to no adjustments.
