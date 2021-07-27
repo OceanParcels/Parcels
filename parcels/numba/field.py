@@ -15,41 +15,6 @@ STATUS_CHUNK_MISSING = 2
 
 NumbaAdvection = njit(AdvectionRK4)
 
-# class NumbaChunk():
-#     def __init__(data, ):
-
-# @jitclass(spec=[('lat', Tuple),
-#                 ('long', Tuple),
-#                 ('depth', Tuple)])
-# class GridSpec():
-#     def __init__(self, lat, lon, depth):
-#         self.lat = lat
-#         self.lon = lon
-#         self.depth = depth
-# 
-#     def __len__(self):
-#         return self.lat[2]*self.lon[2]*self.depth[2]
-# 
-#     def particle_to_cell(self, p):
-#         i_lat = int(self.lat[2]*(p.lat-self.lat[0])/self.lat[1])
-#         i_lon = int(self.lon[2]*(p.lon-self.lon[0])/self.lon[1])
-#         i_depth = int(self.depth[2]*(p.depth-self.depth[0])/self.depth[1])
-#         i_cell = i_lat+i_lon*self.lat[2]+i_depth*self.lat[2]*self.lon[2]
-#         return i_cell
-
-
-# @jitclass(spec)
-# class NumbaUV():
-#     def __init__(self, data, grid):
-#         self.data = data
-#         self.grid = grid
-# 
-#     def __getitem__(self, param):
-#         lon = param[1]
-#         lat = param[2]
-#         p = param[3]
-#         
-
 
 class Particle():
     def __init__(self, dt):
@@ -83,7 +48,7 @@ def create_chunks(grid, pset, func):
 #     print(cells)
 
     data = nb.typed.List()
-    
+
 #     data = []
     i_chunk = 0
     for i_lon_chunk in range(grid.lon.nchunk):
