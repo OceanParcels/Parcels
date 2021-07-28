@@ -1638,12 +1638,12 @@ class VectorField(object):
     def _is_land2D(self, di, yi, xi):
         if self.U.data.ndim == 3:
             if di < np.shape(self.U.data)[0]:
-                return (self.U.data[di, yi, xi] == 0.) and (self.V.data[di, yi, xi] == 0.)
+                return np.isclose(self.U.data[di, yi, xi], 0.) and np.isclose(self.V.data[di, yi, xi], 0.)
             else:
                 return True
         else:
             if di < self.U.grid.zdim and yi < np.shape(self.U.data)[-2] and xi < np.shape(self.U.data)[-1]:
-                return (self.U.data[0, di, yi, xi] == 0.) and (self.V.data[0, di, yi, xi] == 0.)
+                return np.isclose(self.U.data[0, di, yi, xi], 0.) and np.isclose(self.V.data[0, di, yi, xi], 0.)
             else:
                 return True
 
