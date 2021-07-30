@@ -238,7 +238,7 @@ class CCompiler(object):
         self._libs = libs  # only possible for already-compiled, external libraries
 
     def compile(self, src, obj, log):
-        pass
+        return None
 
     def _create_compile_process_(self, cmd, src, log):
         with open(log, 'w') as logfile:
@@ -290,6 +290,7 @@ class CCompiler_SS(CCompiler):
             if os.path.exists(log):
                 with open(log, 'r') as liblog:
                     logger.info("Log output: %s" % (liblog.read()))
+        return obj
 
 
 class CCompiler_MS(CCompiler):
@@ -347,6 +348,7 @@ class CCompiler_MS(CCompiler):
         for fpath in objs:
             if os.path.exists(fpath):
                 os.remove(fpath)
+        return obj
 
 
 class GNUCompiler_SS(CCompiler_SS):
@@ -371,7 +373,7 @@ class GNUCompiler_SS(CCompiler_SS):
             lib_pathfile = "lib"+lib_pathfile
         obj = os.path.join(lib_pathdir, lib_pathfile)
 
-        super(GNUCompiler_SS, self).compile(src, obj, log)
+        return super(GNUCompiler_SS, self).compile(src, obj, log)
 
 
 class GNUCompiler_MS(CCompiler_MS):
@@ -396,7 +398,7 @@ class GNUCompiler_MS(CCompiler_MS):
             lib_pathfile = "lib"+lib_pathfile
         obj = os.path.join(lib_pathdir, lib_pathfile)
 
-        super(GNUCompiler_MS, self).compile(src, obj, log)
+        return super(GNUCompiler_MS, self).compile(src, obj, log)
 
 
 GNUCompiler = GNUCompiler_SS
