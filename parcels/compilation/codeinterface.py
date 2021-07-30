@@ -136,10 +136,11 @@ class InterfaceC(object):
         # lib_path = os.path.join(lib_pathdir, lib_pathfile)
 
         # == handle case where multiple simultaneous instances of node-library are required == #
-        libinstance = 0
+        # libinstance = 0
+        libinstance = PyRandom.randint(0, (2**32)-1)
         while os.path.exists("%s-%d.%s" % (os.path.join(get_cache_dir(), lib_path), libinstance, libext)):
             # libinstance += 1
-            libinstance = PyRandom.randint(0, 10000)
+            libinstance = PyRandom.randint(0, (2**32)-1)
         lib_pathfile = "%s-%d" % (lib_pathfile, libinstance)
         # lib_path = os.path.join(lib_pathdir, lib_pathfile)
         lib_path = lib_pathfile if os.path.sep not in self.basename else os.path.join(lib_pathdir, lib_pathfile)
@@ -159,7 +160,7 @@ class InterfaceC(object):
         else:
             self.src_file = "%s.c" % os.path.join(src_dir, src_pathfile)
         self.lib_file = "%s.%s" % (os.path.join(get_cache_dir(), lib_path), libext)
-        self.log_file = "%s.log" % os.path.join(get_cache_dir(), self.basename)
+        self.log_file = "%s.log" % (os.path.join(get_cache_dir(), lib_path), )
         if os.path.exists(self.lib_file):
             # logger.info("library path of '{}': library already compiled.".format(basename))
             self.compiled = True
@@ -205,10 +206,12 @@ class InterfaceC(object):
     def compile_library(self):
         """ Writes kernel code to file and compiles it."""
         if not self.compiled:
-            self.compiler.compile(self.src_file, self.lib_file, self.log_file)
-            logger.info("Compiled %s ==> %s" % (self.basename, self.lib_file))
-            assert os.path.exists(self.lib_file)
+            compiled_fpath = self.compiler.compile(self.src_file, self.lib_file, self.log_file)
+            # logger.info("Compiled %s ==> %s" % (self.basename, self.lib_file))
+            logger.info("Compiled %s ==> %s" % (self.basename, compiled_fpath))
+            assert os.path.exists(compiled_fpath)
             # self._cleanup_files = finalize(self, package_globals.cleanup_remove_files, self.lib_file, self.log_file)
+            self.lib_file = compiled_fpath
             self.compiled = True
 
     def cleanup_files(self):
@@ -231,6 +234,7 @@ class InterfaceC(object):
             libdir = os.path.dirname(self.lib_file)
             # libdir += os.path.sep if libdir[-1] != os.path.sep else ''
             libfile = os.path.basename(self.lib_file)
+            # libfile = libfile[3:len(libfile)] if libfile[0:3] == "lib" else libfile
             liblist = libfile.split('.')
             del liblist[-1]
             libfile = ""
@@ -240,16 +244,22 @@ class InterfaceC(object):
             #     libfile = libfile[3:len(libfile)]
             #
             # self.libc = npct.load_library(self.lib_file, '.')
+
+            # libc = None
             try:
                 self.libc = npct.load_library(libfile, libdir)
-                self.loaded = True
+                # libc = npct.load_library(libfile, libdir)
+                logger.info("Loaded %s library (%s)" % (self.basename, self.lib_file))
             except (OSError, ) as e:
+                self.loaded = False
                 from glob import glob
                 libext = 'dll' if sys.platform == 'win32' else 'so'
                 alllibfiles = sorted(glob(os.path.join(libdir, "*.%s" % (libext, ))))
                 logger.error("Did not locate {} in folder {} among files: {}".format(libfile, libdir, alllibfiles))
                 raise e
 
+            # self.libc = libc
+            self.loaded = True if self.libc is not None else False
             # self.libc = _ctypes.LoadLibrary(self.lib_file) if sys.platform == 'win32' else _ctypes.dlopen(self.lib_file)
             # self._cleanup_lib = finalize(self, package_globals.cleanup_unload_lib, self.libc)
 
@@ -275,6 +285,7 @@ class InterfaceC(object):
             function_param_array = []
         result = None
         if self.libc is None or not self.compiled or not self.loaded:
+            logger.error("Trying to call functions from dead library '{}' - returning empty result.".format(self.basename))
             return result
         result = dict()
         for function_param in function_param_array:
@@ -283,7 +294,8 @@ class InterfaceC(object):
                     isinstance(function_param["return"], type) or function_param["return"] is None and \
                     isinstance(function_param["arguments"], list):
                 try:
-                    result[function_param["name"]] = self.libc[function_param["name"]]
+                    # result[function_param["name"]] = self.libc[function_param["name"]]
+                    result[function_param["name"]] = getattr(self.libc, function_param["name"])
                     result[function_param["name"]].restype = function_param["return"]
                     result[function_param["name"]].argtypes = function_param["arguments"]
                 except (AttributeError, ValueError, KeyError, IndexError) as e:
