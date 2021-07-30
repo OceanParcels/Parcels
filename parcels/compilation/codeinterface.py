@@ -234,7 +234,8 @@ class InterfaceC(object):
             libdir = os.path.dirname(self.lib_file)
             # libdir += os.path.sep if libdir[-1] != os.path.sep else ''
             libfile = os.path.basename(self.lib_file)
-            # libfile = libfile[3:len(libfile)] if libfile[0:3] == "lib" else libfile
+            libfile = libfile[3:len(libfile)] if libfile[0:3] == "lib" else libfile
+            # libfile = libfile[3:len(libfile)] if libfile[0:3] == "lib" and os.name == 'posix' else libfile
             liblist = libfile.split('.')
             del liblist[-1]
             libfile = ""
