@@ -3,6 +3,7 @@ import sys
 import subprocess
 from struct import calcsize
 from parcels.tools import logger  # noqa: F401
+from sys import platform  # noqa: F401
 
 try:
     from mpi4py import MPI
@@ -369,7 +370,7 @@ class GNUCompiler_SS(CCompiler_SS):
         lib_pathfile = os.path.basename(obj)
         lib_pathdir = os.path.dirname(obj)
         # if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
-        if lib_pathfile[0:3] != "lib":
+        if lib_pathfile[0:3] != "lib" and platform != 'win32':
             lib_pathfile = "lib"+lib_pathfile
         obj = os.path.join(lib_pathdir, lib_pathfile)
 
@@ -394,7 +395,7 @@ class GNUCompiler_MS(CCompiler_MS):
         lib_pathfile = os.path.basename(obj)
         lib_pathdir = os.path.dirname(obj)
         # if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
-        if lib_pathfile[0:3] != "lib":
+        if lib_pathfile[0:3] != "lib" and platform != 'win32':
             lib_pathfile = "lib"+lib_pathfile
         obj = os.path.join(lib_pathdir, lib_pathfile)
 
