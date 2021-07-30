@@ -366,6 +366,9 @@ class GNUCompiler_SS(CCompiler_SS):
     def compile(self, src, obj, log):
         lib_pathfile = os.path.basename(obj)
         lib_pathdir = os.path.dirname(obj)
+        # if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
+        if lib_pathfile[0:3] != "lib":
+            lib_pathfile = "lib"+lib_pathfile
         obj = os.path.join(lib_pathdir, lib_pathfile)
 
         super(GNUCompiler_SS, self).compile(src, obj, log)
@@ -391,7 +394,7 @@ class GNUCompiler_MS(CCompiler_MS):
         # if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
         if lib_pathfile[0:3] != "lib":
             lib_pathfile = "lib"+lib_pathfile
-            obj = os.path.join(lib_pathdir, lib_pathfile)
+        obj = os.path.join(lib_pathdir, lib_pathfile)
 
         super(GNUCompiler_MS, self).compile(src, obj, log)
 
