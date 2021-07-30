@@ -275,6 +275,7 @@ class BaseKernel(object):
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
+        # logger.info("Loaded '%s' library (%s)" % (self.name, self.lib_file))
         self._function = self._lib.particle_loop
 
     def merge(self, kernel, kclass):

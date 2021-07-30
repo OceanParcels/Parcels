@@ -242,7 +242,7 @@ def test_advection_3D_outofbounds(pset_mode, mode, direction, wErrorThroughSurfa
         c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset=fieldset, pclass=ptype[mode],
                                             lon=0.5, lat=0.5, depth=0.9, c_lib_register=c_lib_register)
-    advect_kernel = pset.Kernel(AdvectionRK4_3D, delete_cfiles=False)
+    advect_kernel = pset.Kernel(AdvectionRK4_3D)
     pset.execute(advect_kernel, runtime=10., dt=1, recovery=recovery_dict)
 
     if direction == 'up' and wErrorThroughSurface:

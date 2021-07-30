@@ -1,4 +1,5 @@
 import os  # noqa
+import platform
 import sys  # noqa
 import _ctypes
 import random as PyRandom
@@ -234,13 +235,15 @@ class InterfaceC(object):
             libdir = os.path.dirname(self.lib_file)
             # libdir += os.path.sep if libdir[-1] != os.path.sep else ''
             libfile = os.path.basename(self.lib_file)
-            libfile = libfile[3:len(libfile)] if libfile[0:3] == "lib" else libfile
-            # libfile = libfile[3:len(libfile)] if libfile[0:3] == "lib" and os.name == 'posix' else libfile
+            # libfile = libfile[3:len(libfile)] if libfile[0:3] == "lib" else libfile
+            libfile = libfile[3:len(libfile)] if libfile[0:3] == "lib" and sys.platform in ['darwin', 'win32'] else libfile
             liblist = libfile.split('.')
             del liblist[-1]
-            libfile = ""
-            for entry in liblist:
-                libfile += entry
+
+            # libfile = ""
+            # for entry in liblist:
+            #     libfile += entry
+
             # if libfile[0:3] == "lib":
             #     libfile = libfile[3:len(libfile)]
             #
@@ -248,7 +251,8 @@ class InterfaceC(object):
 
             # libc = None
             try:
-                self.libc = npct.load_library(libfile, libdir)
+                # self.libc = npct.load_library(libfile, libdir)
+                self.libc = npct.load_library(self.lib_file, '.')
                 # libc = npct.load_library(libfile, libdir)
                 logger.info("Loaded %s library (%s)" % (self.basename, self.lib_file))
             except (OSError, ) as e:
