@@ -1,5 +1,5 @@
 import os  # noqa
-import platform
+import platform # noqa
 import sys  # noqa
 import _ctypes
 import random as PyRandom
