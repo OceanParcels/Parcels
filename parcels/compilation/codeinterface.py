@@ -131,20 +131,23 @@ class InterfaceC(object):
         libext = 'dll' if sys.platform == 'win32' else 'so'
         # == handle case that compiler auto-prefixed 'lib' with the libfile == #
         # if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
-        if lib_pathfile[0:3] != "lib":
-            lib_pathfile = "lib"+lib_pathfile
-        lib_path = os.path.join(lib_pathdir, lib_pathfile)
+        # if lib_pathfile[0:3] != "lib":
+        #     lib_pathfile = "lib"+lib_pathfile
+        # lib_path = os.path.join(lib_pathdir, lib_pathfile)
+
         # == handle case where multiple simultaneous instances of node-library are required == #
         libinstance = 0
         while os.path.exists("%s-%d.%s" % (os.path.join(get_cache_dir(), lib_path), libinstance, libext)):
             # libinstance += 1
             libinstance = PyRandom.randint(0, 10000)
         lib_pathfile = "%s-%d" % (lib_pathfile, libinstance)
-        lib_path = os.path.join(lib_pathdir, lib_pathfile)
+        # lib_path = os.path.join(lib_pathdir, lib_pathfile)
+        lib_path = lib_pathfile if os.path.sep not in self.basename else os.path.join(lib_pathdir, lib_pathfile)
+
         # == handle multi-lib in an MPI setup == #
         if MPI and MPI.COMM_WORLD.Get_size() > 1:
             lib_pathfile = "%s_%d" % (lib_pathfile, MPI.COMM_WORLD.Get_rank())
-            lib_path = os.path.join(lib_pathdir, lib_pathfile)
+            lib_path = lib_pathfile if os.path.sep not in self.basename else os.path.join(lib_pathdir, lib_pathfile)
         if isinstance(src_pathfile, list):
             self.src_file = []
             if isinstance(src_dir, list) and not isinstance(src_dir, str):
@@ -239,6 +242,7 @@ class InterfaceC(object):
             # self.libc = npct.load_library(self.lib_file, '.')
             try:
                 self.libc = npct.load_library(libfile, libdir)
+                self.loaded = True
             except (OSError, ) as e:
                 from glob import glob
                 libext = 'dll' if sys.platform == 'win32' else 'so'
@@ -248,7 +252,6 @@ class InterfaceC(object):
 
             # self.libc = _ctypes.LoadLibrary(self.lib_file) if sys.platform == 'win32' else _ctypes.dlopen(self.lib_file)
             # self._cleanup_lib = finalize(self, package_globals.cleanup_unload_lib, self.libc)
-            self.loaded = True
 
     def register(self, close_callback=None):
         if self.libc is not None and self.compiled and self.loaded:
