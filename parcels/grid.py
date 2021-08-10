@@ -275,7 +275,8 @@ class RectilinearGrid(Grid):
         if self.ydim > 1 and self.lat[-1] < self.lat[0]:
             self.lat = np.flip(self.lat, axis=0)
             self.lat_flipped = True
-            logger.warning_once("Flipping lat data from North-South to South-North")
+            logger.warning_once("Flipping lat data from North-South to South-North. "
+                                "Note that this may lead to wrong sign for meridional velocity, so tread very carefully")
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
