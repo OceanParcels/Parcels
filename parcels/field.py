@@ -238,9 +238,9 @@ class Field(object):
                     ftime = filebuffer.time
                     timeslices.append(ftime)
                     dataFiles.append([fname] * len(ftime))
-            timeslices = np.array(timeslices, dtype=list)
+            timeslices = np.array(timeslices)
             time = np.concatenate(timeslices)
-            dataFiles = np.concatenate(np.array(dataFiles, dtype=list))
+            dataFiles = np.concatenate(np.array(dataFiles))
         if time.size == 1 and time[0] is None:
             time[0] = 0
         time_origin = TimeConverter(time[0])
