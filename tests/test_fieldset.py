@@ -172,6 +172,23 @@ def test_field_from_netcdf_fieldtypes():
     assert isinstance(fset.varU.units, GeographicPolar)
 
 
+def test_fieldset_from_cgrid_interpmethod():
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+
+    filenames = {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                 'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                 'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'}
+    variable = 'U'
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+    failed = False
+    try:
+        # should fail because FieldSet.from_c_grid_dataset does not support interp_method
+        FieldSet.from_c_grid_dataset(filenames, variable, dimensions, interp_method='partialslip')
+    except TypeError:
+        failed = True
+    assert failed
+
+
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])
 @pytest.mark.parametrize('indslat', [range(30, 60), [22]])
 def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_subsets'):
@@ -622,7 +639,7 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     if with_GC:
         assert np.allclose(mem_steps_np[8:], perflog.memory_steps[-1], rtol=0.01)
     if (chunksize is not False or with_GC) and mode != 'scipy':
-        assert np.alltrue((mem_steps_np-mem_0) <= 5275648)   # represents 4 x [U|V] * sizeof(field data) + 562816
+        assert np.alltrue((mem_steps_np-mem_0) <= 5275648)  # represents 4 x [U|V] * sizeof(field data) + 562816
     assert not mem_exhausted
 
 

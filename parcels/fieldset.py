@@ -587,6 +587,8 @@ class FieldSet(object):
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
             raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U, V and W. "
                              "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
+        if 'interp_method' in kwargs.keys():
+            raise TypeError("On a C-grid, the interpolation method for velocities should not be overridden")
 
         interp_method = {}
         for v in variables:
