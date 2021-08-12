@@ -274,6 +274,125 @@ def test_inversedistance_nearland(pset_mode, mode, arrtype, k_sample_p, npart=81
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('boundaryslip', ['freeslip', 'partialslip'])
+@pytest.mark.parametrize('withW', [False, True])
+@pytest.mark.parametrize('withT', [False, True])
+def test_partialslip_nearland_zonal(pset_mode, mode, boundaryslip, withW, withT, npart=20):
+    dims = (3, 9, 3)
+    U = 0.1*np.ones(dims, dtype=np.float32)
+    U[:, 0, :] = np.nan
+    U[:, -1, :] = np.nan
+    V = np.zeros(dims, dtype=np.float32)
+    V[:, 0, :] = np.nan
+    V[:, -1, :] = np.nan
+    dimensions = {'lon': np.linspace(-10, 10, dims[2]),
+                  'lat': np.linspace(0., 4., dims[1], dtype=np.float32),
+                  'depth': np.linspace(-10, 10, dims[0])}
+    if withT:
+        dimensions['time'] = [0, 1]
+        U = np.tile(U, (2, 1, 1, 1))
+        V = np.tile(V, (2, 1, 1, 1))
+    if withW:
+        W = 0.1 * np.ones(dims, dtype=np.float32)
+        W[:, 0, :] = np.nan
+        W[:, -1, :] = np.nan
+        if withT:
+            W = np.tile(W, (2, 1, 1, 1))
+        data = {'U': U, 'V': V, 'W': W}
+    else:
+        data = {'U': U, 'V': V}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', interp_method=boundaryslip)
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=np.zeros(npart),
+                                        lat=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
+    kernel = AdvectionRK4_3D if withW else AdvectionRK4
+    pset.execute(kernel, endtime=1, dt=1)
+    if boundaryslip == 'partialslip':
+        assert np.allclose([p.lon for p in pset if p.lat >= 0.5 and p.lat <= 3.5], 0.1)
+        assert np.allclose([pset[0].lon, pset[-1].lon], 0.06)
+        assert np.allclose([pset[1].lon, pset[-2].lon], 0.08)
+        if withW:
+            assert np.allclose([p.depth for p in pset if p.lat >= 0.5 and p.lat <= 3.5], 0.1)
+            assert np.allclose([pset[0].depth, pset[-1].depth], 0.06)
+            assert np.allclose([pset[1].depth, pset[-2].depth], 0.08)
+    else:
+        assert np.allclose([p.lon for p in pset], 0.1)
+        if withW:
+            assert np.allclose([p.depth for p in pset], 0.1)
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('boundaryslip', ['freeslip', 'partialslip'])
+@pytest.mark.parametrize('withW', [False, True])
+def test_partialslip_nearland_meridional(pset_mode, mode, boundaryslip, withW, npart=20):
+    dims = (1, 1, 9)
+    U = np.zeros(dims, dtype=np.float32)
+    U[:, :, 0] = np.nan
+    U[:, :, -1] = np.nan
+    V = 0.1*np.ones(dims, dtype=np.float32)
+    V[:, :, 0] = np.nan
+    V[:, :, -1] = np.nan
+    dimensions = {'lon': np.linspace(0., 4., dims[2], dtype=np.float32), 'lat': 0, 'depth': 0}
+    if withW:
+        W = 0.1 * np.ones(dims, dtype=np.float32)
+        W[:, :, 0] = np.nan
+        W[:, :, -1] = np.nan
+        data = {'U': U, 'V': V, 'W': W}
+        interp_method = {'U': boundaryslip, 'V': boundaryslip, 'W': boundaryslip}
+    else:
+        data = {'U': U, 'V': V}
+        interp_method = {'U': boundaryslip, 'V': boundaryslip}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', interp_method=interp_method)
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lat=np.zeros(npart),
+                                        lon=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
+    kernel = AdvectionRK4_3D if withW else AdvectionRK4
+    pset.execute(kernel, endtime=1, dt=1)
+    if boundaryslip == 'partialslip':
+        assert np.allclose([p.lat for p in pset if p.lon >= 0.5 and p.lon <= 3.5], 0.1)
+        assert np.allclose([pset[0].lat, pset[-1].lat], 0.06)
+        assert np.allclose([pset[1].lat, pset[-2].lat], 0.08)
+        if withW:
+            assert np.allclose([p.depth for p in pset if p.lon >= 0.5 and p.lon <= 3.5], 0.1)
+            assert np.allclose([pset[0].depth, pset[-1].depth], 0.06)
+            assert np.allclose([pset[1].depth, pset[-2].depth], 0.08)
+    else:
+        assert np.allclose([p.lat for p in pset], 0.1)
+        if withW:
+            assert np.allclose([p.depth for p in pset], 0.1)
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('boundaryslip', ['freeslip', 'partialslip'])
+def test_partialslip_nearland_vertical(pset_mode, mode, boundaryslip, npart=20):
+    dims = (9, 1, 1)
+    U = 0.1*np.ones(dims, dtype=np.float32)
+    U[0, :, :] = np.nan
+    U[-1, :, :] = np.nan
+    V = 0.1*np.ones(dims, dtype=np.float32)
+    V[0, :, :] = np.nan
+    V[-1, :, :] = np.nan
+    dimensions = {'lon': 0, 'lat': 0, 'depth': np.linspace(0., 4., dims[0], dtype=np.float32)}
+    data = {'U': U, 'V': V}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', interp_method={'U': boundaryslip, 'V': boundaryslip})
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=np.zeros(npart), lat=np.zeros(npart),
+                                        depth=np.linspace(0.1, 3.9, npart))
+    pset.execute(AdvectionRK4, endtime=1, dt=1)
+    if boundaryslip == 'partialslip':
+        assert np.allclose([p.lon for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
+        assert np.allclose([p.lat for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
+        assert np.allclose([pset[0].lon, pset[-1].lon, pset[0].lat, pset[-1].lat], 0.06)
+        assert np.allclose([pset[1].lon, pset[-2].lon, pset[1].lat, pset[-2].lat], 0.08)
+    else:
+        assert np.allclose([p.lon for p in pset], 0.1)
+        assert np.allclose([p.lat for p in pset], 0.1)
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('lat_flip', [False, True])
 def test_fieldset_sample_particle(pset_mode, mode, k_sample_uv, lat_flip, npart=120):
     """ Sample the fieldset using an array of particles.
