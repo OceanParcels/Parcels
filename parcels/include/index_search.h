@@ -9,6 +9,8 @@ extern "C" {
 #include <math.h>
 
 #define CHECKSTATUS(res) do {if (res != SUCCESS) return res;} while (0)
+#define rtol 1.e-5
+#define atol 1.e-8
 
 #ifdef DOUBLE_COORD_VARIABLES
 typedef double type_coord;
@@ -55,6 +57,44 @@ typedef enum
   {
     RECTILINEAR_Z_GRID=0, RECTILINEAR_S_GRID=1, CURVILINEAR_Z_GRID=2, CURVILINEAR_S_GRID=3
   } GridCode;
+
+// equal/closeness comparison that is equal to numpy (double)
+static inline bool is_close_dbl(double a, double b) {
+    return (fabs(a-b) <= (atol + rtol * fabs(b)));
+}
+
+// customisable equal/closeness comparison (double)
+static inline bool is_close_dbl_tol(double a, double b, double tolerance) {
+    return (fabs(a-b) <= (tolerance + fabs(b)));
+}
+
+// numerically accurate equal/closeness comparison (double)
+static inline bool is_equal_dbl(double a, double b) {
+    return (fabs(a-b) <= (DBL_EPSILON * fabs(b)));
+}
+
+// customisable equal/closeness comparison (float)
+static inline bool is_close_flt_tol(float a, float b, float tolerance) {
+    return (fabs(a-b) <= (tolerance + fabs(b)));
+}
+
+// equal/closeness comparison that is equal to numpy (float)
+static inline bool is_close_flt(float a, float b) {
+    return (fabs(a-b) <= ((float)(atol) + (float)(rtol) * fabs(b)));
+}
+
+// numerically accurate equal/closeness comparison (float)
+static inline bool is_equal_flt(float a, float b) {
+    return (fabs(a-b) <= (FLT_EPSILON * fabs(b)));
+}
+
+static inline bool is_zero_dbl(double a) {
+    return (fabs(a) <= DBL_EPSILON * fabs(a));
+}
+
+static inline bool is_zero_flt(float a) {
+    return (fabs(a) <= FLT_EPSILON * fabs(a));
+}
 
 static inline StatusCode search_indices_vertical_z(type_coord z, int zdim, float *zvals, int *zi, double *zeta, int gridindexingtype)
 {
@@ -259,6 +299,13 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
   }
   else
     *zeta = 0;
+
+  if ( (*xsi < 0)  && (is_zero_dbl(*xsi)) )       {*xsi = 0.;}
+  if ( (*xsi > 1)  && (is_close_dbl(*xsi, 1.)) )  {*xsi = 1.;}
+  if ( (*eta < 0)  && (is_zero_dbl(*eta)) )       {*eta = 0.;}
+  if ( (*eta > 1)  && (is_close_dbl(*eta, 1.)) )  {*eta = 1.;}
+  if ( (*zeta < 0) && (is_zero_dbl(*zeta)) )      {*zeta = 0.;}
+  if ( (*zeta > 1) && (is_close_dbl(*zeta, 1.)) ) {*zeta = 1.;}
 
   if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_INTERPOLATION;
   if ( (*eta < 0) || (*eta > 1) ) return ERROR_INTERPOLATION;

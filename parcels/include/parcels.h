@@ -15,8 +15,6 @@ extern "C" {
 
 #define min(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define max(X, Y) (((X) > (Y)) ? (X) : (Y))
-#define rtol 1.e-5
-#define atol 1.e-8
 
 typedef struct
 {
@@ -24,44 +22,6 @@ typedef struct
   float ****data_chunks;
   CGrid *grid;
 } CField;
-
-// customisable equal/closeness comparison (double)
-static inline bool is_close_dbl_tol(double a, double b, double tolerance) {
-    return (fabs(a-b) <= (tolerance + fabs(b)));
-}
-
-// equal/closeness comparison that is equal to numpy (double)
-static inline bool is_close_dbl(double a, double b) {
-    return (fabs(a-b) <= (atol + rtol * fabs(b)));
-}
-
-// numerically accurate equal/closeness comparison (double)
-static inline bool is_equal_dbl(double a, double b) {
-    return (fabs(a-b) <= (DBL_EPSILON * fabs(b)));
-}
-
-// customisable equal/closeness comparison (float)
-static inline bool is_close_flt_tol(float a, float b, float tolerance) {
-    return (fabs(a-b) <= (tolerance + fabs(b)));
-}
-
-// equal/closeness comparison that is equal to numpy (float)
-static inline bool is_close_flt(float a, float b) {
-    return (fabs(a-b) <= ((float)(atol) + (float)(rtol) * fabs(b)));
-}
-
-// numerically accurate equal/closeness comparison (float)
-static inline bool is_equal_flt(float a, float b) {
-    return (fabs(a-b) <= (FLT_EPSILON * fabs(b)));
-}
-
-static inline bool is_zero_dbl(double a) {
-    return (fabs(a) <= DBL_EPSILON * fabs(a));
-}
-
-static inline bool is_zero_flt(float a) {
-    return (fabs(a) <= FLT_EPSILON * fabs(a));
-}
 
 /* Bilinear interpolation routine for 2D grid */
 static inline StatusCode spatial_interpolation_bilinear(double xsi, double eta, float data[2][2], float *value)
