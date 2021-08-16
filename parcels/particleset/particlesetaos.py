@@ -575,8 +575,7 @@ class ParticleSetAOS(BaseParticleSet):
         :param pfile: ParticleFile object requesting the conversion
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles
-        returns two dictionaries: one for all variables to be written each outputdt,
-         and one for all variables to be written once
+        returns two dictionaries: one for all variables to be written each outputdt, and one for all variables to be written once
         """
         return self._collection.toDictionary(pfile=pfile, time=time,
                                              deleted_only=deleted_only)
@@ -693,7 +692,6 @@ def search_kernel(particle, fieldset, time):
         """
         Method to set the write status of a Variable
         :param var: Name of the variable (string)
-        :param write_status: Write status of the variable (True, False or
-                             'once')
+        :param write_status: Write status of the variable (True, False or 'once')
         """
         self._collection.set_variable_write_status(var, write_status)
