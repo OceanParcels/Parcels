@@ -70,6 +70,7 @@ class Field(object):
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
+    :param usefloat32: Cast Field data to float32 for more efficient memory use (at expense of precision)
     :param time_origin: Time origin (TimeConverter object) of the time axis (only if grid is None)
     :param interp_method: Method for interpolation. Options are 'linear' (default), 'nearest',
            'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
@@ -90,7 +91,7 @@ class Field(object):
     * `Summed Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_
     """
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
-                 fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
+                 fieldtype=None, transpose=False, vmin=None, vmax=None, usefloat32=True, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, gridindexingtype='nemo',
                  to_write=False, **kwargs):
         if not isinstance(name, tuple):
@@ -159,6 +160,7 @@ class Field(object):
 
         self.vmin = vmin
         self.vmax = vmax
+        self.usefloat32 = usefloat32
 
         if not self.grid.defer_load:
             self.data = self.reshape(self.data, transpose)
@@ -493,7 +495,7 @@ class Field(object):
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray, da.core.Array)):
             data = np.array(data)
-        if not data.dtype == np.float32:
+        if self.usefloat32 and (data.dtype != np.float32):
             data = data.astype(np.float32)
         lib = np if isinstance(data, np.ndarray) else da
         if transpose:

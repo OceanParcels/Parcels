@@ -189,6 +189,21 @@ def test_fieldset_from_cgrid_interpmethod():
     assert failed
 
 
+@pytest.mark.parametrize('usefloat32', [True, False])
+def test_fieldset_float64(usefloat32, xdim=10, ydim=5):
+    lon = np.linspace(0., 10., xdim, dtype=np.float64)
+    lat = np.linspace(0., 10., ydim, dtype=np.float64)
+    U, V = np.meshgrid(lon, lat)
+    dimensions = {'lat': lat, 'lon': lon}
+    data = {'U': np.array(U, dtype=np.float64), 'V': np.array(V, dtype=np.float64)}
+
+    fset = FieldSet.from_data(data, dimensions, usefloat32=usefloat32)
+    if usefloat32:
+        assert fset.U.data.dtype == np.float32
+    else:
+        assert fset.U.data.dtype == np.float64
+
+
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])
 @pytest.mark.parametrize('indslat', [range(30, 60), [22]])
 def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_subsets'):
