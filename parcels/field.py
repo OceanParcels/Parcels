@@ -499,6 +499,8 @@ class Field(object):
             data = np.array(data)
         if (self.cast_data_dtype == np.float32) and (data.dtype != np.float32):
             data = data.astype(np.float32)
+        elif (self.cast_data_dtype == np.float64) and (data.dtype != np.float64):
+            data = data.astype(np.float64)
         lib = np if isinstance(data, np.ndarray) else da
         if transpose:
             data = lib.transpose(data)
