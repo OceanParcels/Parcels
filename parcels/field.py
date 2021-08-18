@@ -163,6 +163,8 @@ class Field(object):
         self.cast_data_dtype = cast_data_dtype
         if self.cast_data_dtype == 'float32':
             self.cast_data_dtype = np.float32
+        elif self.cast_data_dtype == 'float64':
+            self.cast_data_dtype = np.float64
 
         if not self.grid.defer_load:
             self.data = self.reshape(self.data, transpose)
