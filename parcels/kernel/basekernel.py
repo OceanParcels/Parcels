@@ -322,6 +322,8 @@ class BaseKernel(object):
             for f in pset.fieldset.get_fields():
                 if type(f) in [VectorField, NestedField, SummedField]:
                     continue
+                if f.data.dtype != np.float32:
+                    raise RuntimeError('Field %s data needs to be float32 in JIT mode' % f.name)
                 if f in self.field_args.values():
                     f.chunk_data()
                 else:

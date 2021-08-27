@@ -217,6 +217,9 @@ class FieldSet(object):
             if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
                 raise ValueError('Not all velocity Fields have the same gridindexingtype')
 
+            if U.cast_data_dtype != V.cast_data_dtype or (W and W.cast_data_dtype != U.cast_data_dtype):
+                raise ValueError('Not all velocity Fields have the same dtype')
+
         if isinstance(self.U, (SummedField, NestedField)):
             w = self.W if hasattr(self, 'W') else [None]*len(self.U)
             for U, V, W in zip(self.U, self.V, w):

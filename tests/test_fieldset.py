@@ -189,6 +189,41 @@ def test_fieldset_from_cgrid_interpmethod():
     assert failed
 
 
+@pytest.mark.parametrize('cast_data_dtype', ['float32', 'float64'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_fieldset_float64(cast_data_dtype, mode, tmpdir, xdim=10, ydim=5):
+    lon = np.linspace(0., 10., xdim, dtype=np.float64)
+    lat = np.linspace(0., 10., ydim, dtype=np.float64)
+    U, V = np.meshgrid(lon, lat)
+    dimensions = {'lat': lat, 'lon': lon}
+    data = {'U': np.array(U, dtype=np.float64), 'V': np.array(V, dtype=np.float64)}
+
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', cast_data_dtype=cast_data_dtype)
+    if cast_data_dtype == 'float32':
+        assert fieldset.U.data.dtype == np.float32
+    else:
+        assert fieldset.U.data.dtype == np.float64
+    pset = ParticleSetAOS(fieldset, ptype[mode], lon=1, lat=2)
+
+    failed = False
+    try:
+        pset.execute(AdvectionRK4, runtime=1)
+    except RuntimeError:
+        failed = True
+    if mode == 'jit' and cast_data_dtype == 'float64':
+        assert failed
+    else:
+        assert np.isclose(pset[0].lon, 2.70833)
+        assert np.isclose(pset[0].lat, 5.41667)
+    filepath = tmpdir.join('test_fieldset_float64')
+    fieldset.U.write(filepath)
+    da = xr.open_dataset(str(filepath)+'U.nc')
+    if cast_data_dtype == 'float32':
+        assert da['U'].dtype == np.float32
+    else:
+        assert da['U'].dtype == np.float64
+
+
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])
 @pytest.mark.parametrize('indslat', [range(30, 60), [22]])
 def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_subsets'):
