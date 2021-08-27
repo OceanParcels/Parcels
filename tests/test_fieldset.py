@@ -190,7 +190,7 @@ def test_fieldset_from_cgrid_interpmethod():
 
 
 @pytest.mark.parametrize('usefloat32', [True, False])
-def test_fieldset_float64(usefloat32, xdim=10, ydim=5):
+def test_fieldset_float64(usefloat32, tmpdir, xdim=10, ydim=5):
     lon = np.linspace(0., 10., xdim, dtype=np.float64)
     lat = np.linspace(0., 10., ydim, dtype=np.float64)
     U, V = np.meshgrid(lon, lat)
@@ -202,6 +202,13 @@ def test_fieldset_float64(usefloat32, xdim=10, ydim=5):
         assert fset.U.data.dtype == np.float32
     else:
         assert fset.U.data.dtype == np.float64
+    filepath = tmpdir.join('test_fieldset_float64')
+    fset.write(filepath)
+    da = xr.open_dataset(filepath+'U.nc')
+    if usefloat32:
+        assert da['vozocrtx'].dtype == np.float32
+    else:
+        assert da['vozocrtx'].dtype == np.float64
 
 
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])
