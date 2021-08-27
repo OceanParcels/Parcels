@@ -70,7 +70,8 @@ class Field(object):
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
-    :param cast_data_dtype: Cast Field data to dtype. Default is np.float32. Note that dtype can only be float32 in JIT mode
+    :param cast_data_dtype: Cast Field data to dtype. Supported dtypes are np.float32 (default) and np.float64.
+           Note that dtype can only be float32 in JIT mode
     :param time_origin: Time origin (TimeConverter object) of the time axis (only if grid is None)
     :param interp_method: Method for interpolation. Options are 'linear' (default), 'nearest',
            'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
