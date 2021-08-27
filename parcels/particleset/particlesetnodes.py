@@ -105,8 +105,8 @@ class ParticleSetNodes(BaseParticleSet):
     # _pu_centers = None
     # _lonlatdepth_dtype = None
 
-    def __init__(self, idgen, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None,
-                 repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, c_lib_register=LibraryRegisterC(), **kwargs):
+    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None,
+                 repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, idgen=None, c_lib_register=LibraryRegisterC(), **kwargs):
         super(ParticleSetNodes, self).__init__()
         self._idgen = idgen
         if self._idgen is None:

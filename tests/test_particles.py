@@ -50,9 +50,10 @@ def test_variable_init(fieldset, pset_mode, mode, npart=10):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=TestParticle,
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle,
                                             lon=np.linspace(0, 1, npart),
                                             lat=np.linspace(1, 0, npart),
+                                            idgen=idgen,
                                             c_lib_register=c_lib_register)
 
     def addOne(particle, fieldset, time):
@@ -110,7 +111,7 @@ def test_variable_unsupported_dtypes(fieldset, pset_mode, mode, type):
             idgen.setDepthLimits(0., 1.0)
             idgen.setTimeLine(0.0, 1.0)
             c_lib_register = LibraryRegisterC()
-            pset_type[pset_mode]['pset'](idgen, fieldset, pclass=TestParticle, lon=[0], lat=[0], c_lib_register=c_lib_register)
+            pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0], lat=[0], idgen=idgen, c_lib_register=c_lib_register)
         del pset
     except (RuntimeError, TypeError):
         error_thrown = True
@@ -144,7 +145,7 @@ def test_variable_special_names(fieldset, pset_mode, mode):
             if pset_mode != 'nodes':
                 pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0], lat=[0])
             else:
-                pset_type[pset_mode]['pset'](idgen, fieldset, pclass=TestParticle, lon=[0], lat=[0], c_lib_register=c_lib_register)
+                pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0], lat=[0], idgen=idgen, c_lib_register=c_lib_register)
         except AttributeError:
             error_thrown = True
         assert error_thrown
@@ -187,7 +188,7 @@ def test_variable_init_relative(fieldset, pset_mode, mode, coord_type, npart=10)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=TestParticle, lon=lon, lat=lat, lonlatdepth_dtype=coord_type, c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=lon, lat=lat, lonlatdepth_dtype=coord_type, idgen=idgen, c_lib_register=c_lib_register)
 
     # Adjust base variable to test for aliasing effects
     for p in pset:
