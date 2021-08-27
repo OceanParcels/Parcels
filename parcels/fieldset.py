@@ -217,7 +217,7 @@ class FieldSet(object):
             if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
                 raise ValueError('Not all velocity Fields have the same gridindexingtype')
 
-            if U.data.dtype != V.data.dtype or (W and W.data.dtype != U.data.dtype):
+            if type(U.data) != DeferredArray and (U.data.dtype != V.data.dtype or (W and W.data.dtype != U.data.dtype)):
                 raise ValueError('Not all velocity Fields have the same dtype')
 
         if isinstance(self.U, (SummedField, NestedField)):
