@@ -47,7 +47,7 @@ def test_pset_create_lon_lat(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat, pclass=ptype[mode], c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode], idgen=idgen, c_lib_register=c_lib_register)
 
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
@@ -162,8 +162,8 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
         idgen.setDepthLimits(0., 4.0)
         idgen.setTimeLine(0.0, 4.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat, depth=[4]*len(lon),
-                                            pclass=TestParticle, p3=np.arange(len(lon)), c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, depth=[4]*len(lon),
+                                            pclass=TestParticle, p3=np.arange(len(lon)), idgen=idgen, c_lib_register=c_lib_register)
 
     pfile = pset.ParticleFile(filename, outputdt=1)
 
@@ -332,8 +332,8 @@ def test_pset_create_with_time(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 5.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat, pclass=ptype[mode], time=time,
-                                            c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode], time=time,
+                                            idgen=idgen, c_lib_register=c_lib_register)
         assert np.allclose([p.time for p in pset], time, rtol=1e-12)
         del pset  # required to free ID's and libs
         pset = pset_type[pset_mode]['pset'].from_list(fieldset, lon=lon, lat=lat, pclass=ptype[mode],
@@ -384,8 +384,8 @@ def test_pset_repeated_release(fieldset, pset_mode, mode, npart=10):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
-                                            pclass=ptype[mode], time=time, c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
+                                            pclass=ptype[mode], time=time, idgen=idgen, c_lib_register=c_lib_register)
     assert np.allclose([p.time for p in pset], time)
 
     def IncrLon(particle, fieldset, time):
@@ -417,8 +417,8 @@ def test_pset_dt0(fieldset, pset_mode, mode, npart=10):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
-                                            pclass=ptype[mode], c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
+                                            pclass=ptype[mode], idgen=idgen, c_lib_register=c_lib_register)
 
     def IncrLon(particle, fieldset, time):
         particle.lon += 1
@@ -448,8 +448,8 @@ def test_pset_repeatdt_check_dt(pset_mode, fieldset):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5,
-                                            c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5,
+                                            idgen=idgen, c_lib_register=c_lib_register)
 
     def IncrLon(particle, fieldset, time):
         particle.lon = 1.
@@ -482,8 +482,8 @@ def test_pset_repeatdt_custominit(fieldset, pset_mode, mode):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5,
-                                            c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5,
+                                            idgen=idgen, c_lib_register=c_lib_register)
 
     def DoNothing(particle, fieldset, time):
         return StateCode.Success
@@ -514,8 +514,8 @@ def test_pset_stop_simulation(fieldset, pset_mode, mode):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=0, lat=0, pclass=ptype[mode],
-                                            c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=0, lat=0, pclass=ptype[mode],
+                                            idgen=idgen, c_lib_register=c_lib_register)
 
     def Delete(particle, fieldset, time):
         if time == 4:
@@ -550,8 +550,8 @@ def test_pset_access(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat, pclass=ptype[mode],
-                                            c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode],
+                                            idgen=idgen, c_lib_register=c_lib_register)
 
     assert(pset.size == 100)
     assert np.allclose([pset[i].lon for i in range(pset.size)], lon, rtol=1e-12)
@@ -585,8 +585,8 @@ def test_pset_custom_ptype(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=TestParticle, lon=np.linspace(0, 1, npart),
-                                            lat=np.linspace(1, 0, npart), c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=np.linspace(0, 1, npart),
+                                            idgen=idgen, lat=np.linspace(1, 0, npart), c_lib_register=c_lib_register)
 
     assert(pset.size == npart)
     assert np.allclose([p.p - 0.33 for p in pset], np.zeros(npart), atol=1e-5)
@@ -633,11 +633,11 @@ def test_pset_add_explicit(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=[], lat=[], pclass=ptype[mode],
-                                            lonlatdepth_dtype=np.float64, c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode],
+                                            lonlatdepth_dtype=np.float64, idgen=idgen, c_lib_register=c_lib_register)
         for i in range(npart):
-            particle = pset_type[pset_mode]['pset'](idgen, pclass=ptype[mode], lon=lon[i], lat=lat[i], fieldset=fieldset,
-                                                    lonlatdepth_dtype=np.float64, c_lib_register=c_lib_register)
+            particle = pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=lon[i], lat=lat[i], fieldset=fieldset,
+                                                    lonlatdepth_dtype=np.float64, idgen=idgen, c_lib_register=c_lib_register)
             pset.add(particle)
     assert len(pset) == 100
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
@@ -673,8 +673,8 @@ def test_pset_add_shorthand(fieldset, pset_mode, mode, npart=100):
         c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=[], lat=[], pclass=ptype[mode], c_lib_register=c_lib_register)
         for i in range(npart):
-            pset += pset_type[pset_mode]['pset'](idgen, pclass=ptype[mode], lon=lon[i], lat=lat[i],
-                                                 fieldset=fieldset, c_lib_register=c_lib_register)
+            pset += pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=lon[i], lat=lat[i],
+                                                 fieldset=fieldset, idgen=idgen, c_lib_register=c_lib_register)
 
     assert len(pset) == 100
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
@@ -708,10 +708,11 @@ def test_pset_add_execute(fieldset, pset_mode, mode, npart=10):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=[], lat=[], pclass=ptype[mode], c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode],
+                                            idgen=idgen, c_lib_register=c_lib_register)
         for i in range(npart):
-            pset += pset_type[pset_mode]['pset'](idgen, pclass=ptype[mode], lon=0.1, lat=0.1,
-                                                 fieldset=fieldset, c_lib_register=c_lib_register)
+            pset += pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=0.1, lat=0.1,
+                                                 fieldset=fieldset, idgen=idgen, c_lib_register=c_lib_register)
 
     for _ in range(3):
         pset.execute(pset.Kernel(AddLat), runtime=1., dt=1.0)
@@ -754,12 +755,12 @@ def test_pset_merge_inplace(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset1 = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
+        pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                              lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart),
-                                             c_lib_register=c_lib_register)
-        pset2 = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
+                                             idgen=idgen, c_lib_register=c_lib_register)
+        pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                              lon=np.linspace(0, 1, npart), lat=np.linspace(0, 1, npart),
-                                             c_lib_register=c_lib_register)
+                                             idgen=idgen, c_lib_register=c_lib_register)
     assert(pset1.size == 100)
     assert(pset2.size == 100)
     pset1.add(pset2)
@@ -796,12 +797,12 @@ def test_pset_merge_duplicate(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset1 = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
+        pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                              lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart),
-                                             c_lib_register=c_lib_register)
-        pset2 = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
+                                             idgen=idgen, c_lib_register=c_lib_register)
+        pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                              lon=np.linspace(0, 1, npart), lat=np.linspace(0, 1, npart),
-                                             c_lib_register=c_lib_register)
+                                             idgen=idgen, c_lib_register=c_lib_register)
     pset3 = pset1 + pset2
     assert(pset1.size == 100)
     assert(pset2.size == 100)
@@ -834,8 +835,8 @@ def test_pset_remove_index(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat, pclass=ptype[mode],
-                                            lonlatdepth_dtype=np.float64, c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode],
+                                            lonlatdepth_dtype=np.float64, idgen=idgen, c_lib_register=c_lib_register)
 
     for ilon, ilat in zip(lon[::-1], lat[::-1]):
         p = -1 if pset_mode != 'nodes' else pset.end()
@@ -874,8 +875,8 @@ def test_pset_remove_particle(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat,
-                                            pclass=ptype[mode], c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode],
+                                            idgen=idgen, c_lib_register=c_lib_register)
 
     for ilon, ilat in zip(lon[::-1], lat[::-1]):
         p = -1 if pset_mode != 'nodes' else pset.end()
@@ -916,9 +917,9 @@ def test_pset_remove_kernel(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                             lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart),
-                                            c_lib_register=c_lib_register)
+                                            idgen=idgen, c_lib_register=c_lib_register)
     pset.execute(pset.Kernel(DeleteKernel), endtime=1., dt=1.0)
     assert(pset.size == 40)
 
@@ -950,9 +951,9 @@ def test_pset_multi_execute(fieldset, pset_mode, mode, npart=10, n=5):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                             lon=np.linspace(0, 1, npart), lat=np.zeros(npart),
-                                            c_lib_register=c_lib_register)
+                                            idgen=idgen, c_lib_register=c_lib_register)
 
     k_add = pset.Kernel(AddLat)
     for _ in range(n):
@@ -986,9 +987,9 @@ def test_pset_multi_execute_delete(fieldset, pset_mode, mode, npart=10, n=5):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                             lon=np.linspace(0, 1, npart), lat=np.zeros(npart),
-                                            c_lib_register=c_lib_register)
+                                            idgen=idgen, c_lib_register=c_lib_register)
 
     k_add = pset.Kernel(AddLat)
     for _ in range(n):
@@ -1023,7 +1024,8 @@ def test_density(fieldset, pset_mode, mode, area_scale):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode], lon=lons, lat=lats, c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lons, lat=lats,
+                                            idgen=idgen, c_lib_register=c_lib_register)
 
     arr = pset.density(area_scale=area_scale)
     if area_scale:
@@ -1107,3 +1109,11 @@ def test_from_field_exact_val(pset_mode, staggered_grid):
     assert (np.array([p.lon for p in pset]) <= 1).all()
     test = np.logical_or(np.array([p.lon for p in pset]) <= 0, np.array([p.lat for p in pset]) >= 51)
     assert test.all()
+
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
