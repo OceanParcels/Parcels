@@ -27,3 +27,4 @@ dependencies:
   - pytest
   - nbval
   - pykdtree
+  - numba>=0.50.0
