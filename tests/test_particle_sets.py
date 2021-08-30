@@ -671,7 +671,7 @@ def test_pset_add_shorthand(fieldset, pset_mode, mode, npart=100):
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
         c_lib_register = LibraryRegisterC()
-        pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=[], lat=[], pclass=ptype[mode], c_lib_register=c_lib_register)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode], idgen=idgen, c_lib_register=c_lib_register)
         for i in range(npart):
             pset += pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=lon[i], lat=lat[i],
                                                  fieldset=fieldset, idgen=idgen, c_lib_register=c_lib_register)
