@@ -3,17 +3,22 @@ from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
+from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC  # noqa
 import numpy as np
 import pytest
 import os
 from netCDF4 import Dataset
 import cftime
 import random as py_random
+from parcels.tools import logger
 
+pset_modes_new = ['soa', 'aos', 'nodes']
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
+             'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 
 
 def fieldset(xdim=40, ydim=100):
@@ -34,10 +39,11 @@ def fieldset_ficture(xdim=40, ydim=100):
 
 def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
     if assystemcall:
-        os.system('parcels_convert_npydir_to_netcdf %s' % ofile.tempwritedir_base)
+        os.system('parcels_convert_npydir_to_netcdf %s -c %s' % (ofile.tempwritedir_base, ofile.__class__.__name__,))
     else:
         import parcels.scripts.convert_npydir_to_netcdf as convert
-        convert.convert_npydir_to_netcdf(ofile.tempwritedir_base, pfile_class=ofile.__class__)
+        # convert.convert_npydir_to_netcdf(ofile.tempwritedir_base, pfile_class=type(ofile).__name__)
+        convert.convert_npydir_to_netcdf(ofile.tempwritedir_base, pfile_class=ofile.__class__.__name__)
 
     ncfile1 = Dataset(filepath, 'r', 'NETCDF4')
 
@@ -56,7 +62,7 @@ def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
     return ncfile1
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_array_remove_particles.nc")
@@ -65,7 +71,11 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
                                         lat=0.5*np.ones(npart), time=0)
     pfile = pset.ParticleFile(filepath)
     pfile.write(pset, 0)
-    pset.remove_indices(3)
+    if pset_mode != 'nodes':
+        pset.remove_indices(3)
+    else:
+        ndata = pset.begin().next.next
+        pset.remove(ndata)
     for p in pset:
         p.time = 1
     pfile.write(pset, 1)
@@ -74,8 +84,10 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     assert type(timearr[3, 1]) is not type(timearr[3, 0])  # noqa
     ncfile.close()
 
+    del pset
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_set_towrite_False.nc")
@@ -100,10 +112,15 @@ def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
     pset.set_variable_write_status('depth', True)
     pset.set_variable_write_status('lat', True)
 
+    del pset
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+# -------------------------------------------------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
+    # comment: currently ends in infinite loop - retest
 
     filepath = tmpdir.join("pfile_array_remove_particles.nc")
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
@@ -111,20 +128,30 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
                                         lat=0.5*np.ones(npart), time=0)
     pfile = pset.ParticleFile(filepath)
     pfile.write(pset, 0)
-    for _ in range(npart):
-        pset.remove_indices(-1)
+    if pset_mode != 'nodes':
+        for _ in range(npart):
+            pset.remove_indices(-1)
+    else:
+        ndata = pset.end()
+        while ndata is not None:
+            del_item = ndata
+            ndata = ndata.prev
+            pset.remove(del_item)
     pfile.write(pset, 1)
     pfile.write(pset, 2)
     ncfile = close_and_compare_netcdffiles(filepath, pfile)
     assert ncfile.variables['time'][:].shape == (npart, 1)
     ncfile.close()
 
+    del pset
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('assystemcall', [True, False])
 def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemcall, npart=3):
     filepath = tmpdir.join("pfile_on_delete_written_variables.nc")
+    # comment: currently ends in infinite loop - retest
 
     def move_west(particle, fieldset, time):
         tmp = fieldset.U[time, particle.depth, particle.lat, particle.lon]  # to trigger out-of-bounds error
@@ -143,9 +170,11 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemca
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat)
 
     outfile = pset.ParticleFile(name=filepath, write_ondelete=True)
+    # logger.info("outfile name: {}".format(type(outfile).__name__))
     outfile.add_metadata('runtime', runtime)
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
+    logger.info("Finished execution in written-on-delete test.")
 
     ncfile = close_and_compare_netcdffiles(filepath, outfile, assystemcall=assystemcall)
     assert ncfile.runtime == runtime
@@ -153,8 +182,10 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemca
     assert (lon.size == noutside)
     ncfile.close()
 
+# -------------------------------------------------------------------------------------------------------------------- #
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     filepath = tmpdir.join("pfile_variable_write_double.nc")
@@ -172,7 +203,7 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     ncfile.close()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('npart', [1, 2, 5])
 def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
@@ -185,6 +216,7 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
     class MyParticle(ptype[mode]):
         v_once = Variable('v_once', dtype=np.float64, initial=0., to_write='once')
         age = Variable('age', dtype=np.float32, initial=0.)
+
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
     time = np.arange(0, npart/10., 0.1, dtype=np.float64)
@@ -198,6 +230,8 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
     assert (vfile.shape == (npart, ))
     assert np.allclose(vfile, time)
     ncfile.close()
+
+    del pset
 
 
 @pytest.mark.parametrize('type', ['repeatdt', 'timearr'])

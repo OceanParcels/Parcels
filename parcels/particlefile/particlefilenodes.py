@@ -116,6 +116,8 @@ class ParticleFileNodes(BaseParticleFile):
 
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
+
+        CAREFUL: 'max_id'written' is not actually 'ID' but 'index', and is only there for the purpose of reading/compatibility!
         """
         attributes = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
                       'file_list', 'file_list_once', 'max_index_written', 'time_written', 'parcels_mesh',

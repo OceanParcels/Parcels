@@ -351,15 +351,19 @@ class ParticleCollectionNodes(ParticleCollection):
         :return: end Node (Node whose next element is None); returns None if ParticleSet is empty
         """
         if not self.empty():
-            node = self._data[len(self._data) - 1]
+            start_index = len(self._data) - 1
+            node = self._data[start_index]
+            while not node.is_valid() and start_index > (-1):
+                start_index -= 1
+                node = self._data[start_index]
             while node.next is not None:
                 # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-                node_candidate = node
-                while not node_candidate.is_valid() and node_candidate.next is not None:
-                    node_candidate = node_candidate.next
-                if node_candidate is not node and node_candidate.next is not None:
-                    node = node_candidate
-                node = node.next
+                next_node = node.next
+                while next_node is not None and not next_node.is_valid():
+                    next_node = node.next
+                node = next_node
+            node = None if not node.is_valid() else node
+            # assert node is not None
             return node
         return None
 
@@ -1221,6 +1225,20 @@ class ParticleCollectionNodes(ParticleCollection):
                 node.unlink()
                 self._data.remove(node)
             node = next_node
+        # node = self.end()
+        # logger.info("clear(): End-Node = {}".format(node))
+        # while node is not None:
+        #     # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
+        #     if not node.is_valid():
+        #         node = node.prev
+        #         continue
+        #     prev_node = node.prev
+        #     logger.info("clear(): check node (id={}) with state '{}'".format(node.data.id, node.data.state))
+        #     if node.data.state == OperationCode.Delete:
+        #         logger.info("clear(): node-to-delete = {}".format(node))
+        #         node.unlink()
+        #         self._data.remove(node)
+        #     node = prev_node
         self._ncount = len(self._data)
 
     # ================================================================================================================ #
@@ -1274,6 +1292,19 @@ class ParticleCollectionNodes(ParticleCollection):
         return indices
 
     def get_deleted_item_IDs(self):
+        # we have 2 options of doing it, both of them are working.
+        # ---- Option 1: node-parsing way ---- #
+        # ids = []
+        # ndata = self.begin()
+        # while ndata is not None:
+        #     if not ndata.is_valid():
+        #         ndata = ndata.next
+        #         continue
+        #     if ndata.data.state == OperationCode.Delete:
+        #         ids.append(ndata.data.id)
+        #     ndata = ndata.next
+        # return ids
+        # ---- Option 2: pythonic list-comprehension way ---- #
         indices = [ndata.data.id for ndata in self._data if ndata.data.state == OperationCode.Delete]
         return indices
 
@@ -1347,12 +1378,13 @@ class ParticleCollectionNodes(ParticleCollection):
             else:
                 if deleted_only:
                     if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
-                        indices_to_write = [self.get_index_by_node(ndata) for ndata in self._data if ndata.data.state in [OperationCode.Delete, ]]
-                    elif type(deleted_only) in [list, np.ndarray] and len(deleted_only) > 0:
-                        if type(deleted_only[0]) in [int, np.int32, np.uint32]:
-                            indices_to_write = deleted_only
+                        # indices_to_write = [self.get_index_by_node(ndata) for ndata in self._data if ndata.data.state in [OperationCode.Delete, ]]
+                        indices_to_write = [self.get_index_by_node(ndata) for ndata in self if ndata.data.state in [OperationCode.Delete, ]]
+                    elif type(deleted_only) in [list, tuple, np.ndarray] and len(deleted_only) > 0:
                         if type(deleted_only[0]) in [np.int64, np.uint64]:
                             indices_to_write = [self.get_index_by_ID(id) for id in deleted_only]
+                        elif type(deleted_only[0]) in [int, np.int32, np.uint32]:
+                            indices_to_write = deleted_only
                         elif isinstance(deleted_only[0], Node):
                             indices_to_write = [self.get_index_by_node(ndata) for ndata in deleted_only if self.get_index_by_node(ndata) is not None]
                         elif isinstance(deleted_only[0], ScipyParticle):
@@ -1389,6 +1421,7 @@ class ParticleCollectionNodes(ParticleCollection):
 
                 if time not in pfile.time_written:
                     pfile.time_written.append(time)
+                    logger.info("Appended time={} to pfile.".format(time))
 
                 if len(pfile.var_names_once) > 0:
                     first_write = []
@@ -1415,9 +1448,11 @@ class ParticleCollectionNodes(ParticleCollection):
                         # pfile.written_once.extend(written_once_indices)
                         pfile.written_once.extend(np.array(data_dict_once['id']).astype(dtype=np.int64).tolist())
                         first_write.clear()
+                    logger.info("Attached once-to-write variables to pfile.")
 
             if deleted_only is False:
                 pfile.lasttime_written = time
+            logger.info("Returning to-write dictionaries pfile.")
 
         return data_dict, data_dict_once
 
