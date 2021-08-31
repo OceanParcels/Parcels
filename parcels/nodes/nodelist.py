@@ -43,6 +43,21 @@ class DoubleLinkedNodeList(SortedList):
     def __new__(cls, iterable=None, key=None, load=1000, dtype=Node, c_lib_register=None):
         return object.__new__(cls)
 
+    def irange(self, minimum=None, maximum=None, inclusive=(True, True), reverse=False):
+        return super(DoubleLinkedNodeList, self).irange(minimum=minimum, maximum=maximum, inclusive=inclusive, reverse=reverse)
+
+    def islice(self, start=None, stop=None, reverse=False):
+        return super(DoubleLinkedNodeList, self).islice(start=start, stop=stop, reverse=reverse)
+
+    def __iter__(self):
+        return super(DoubleLinkedNodeList, self).__iter__()
+
+    def __reversed__(self):
+        return super(DoubleLinkedNodeList, self).__reversed__()
+
+    def __len__(self):
+        return super(DoubleLinkedNodeList, self).__len__()
+
     def add(self, val):
         assert type(val) == self.dtype
         if isinstance(val, Node):

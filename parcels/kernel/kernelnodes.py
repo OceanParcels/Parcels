@@ -195,8 +195,10 @@ class KernelNodes(BaseKernel):
         indices_or_ids = None
         try:
             indices_or_ids = pset.get_deleted_item_IDs()
+            logger.info("Collected {} deleted items by ID ({}).".format(len(indices_or_ids), indices_or_ids))
         except:
             indices_or_ids = pset.get_deleted_item_indices()
+            logger.info("Collected {} deleted items by index ({}).".format(len(indices_or_ids), indices_or_ids))
         if len(indices_or_ids) > 0 and output_file is not None:
             output_file.write(pset, endtime, deleted_only=indices_or_ids)
         pset.remove_deleted_items()
@@ -240,24 +242,35 @@ class KernelNodes(BaseKernel):
 
         # Identify particles that threw errors
         n_error = pset.num_error_particles
+        logger.info("Located {} erroneous particles.".format(n_error))
+        recover_iteration = 0
 
         while n_error > 0:
+            recover_iteration += 1
             # Apply recovery kernel
             node = pset.begin()
             while node is not None:
+                logger.info("Checking node {} (iteration {})...".format(node, recover_iteration))
+                if node is None:
+                    break
                 if not node.is_valid():
                     node = node.next
                     continue
                 p = node.data
                 if p.state in [StateCode.Success, StateCode.Evaluate]:
+                    node = node.next  # this was the infinite-loop error - if there are erroneous particles but the last particle is valid, this goes in infinite loop
                     continue
                 if p.state == OperationCode.StopExecution:
+                    logger.warn("Particle {} - 'StopExecution' OC".format(p.id))
                     return
                 if p.state == OperationCode.Repeat:
+                    logger.warn("Particle {} - 'Repeat' OC").format(p.id)
                     p.reset_state()
                 elif p.state == OperationCode.Delete:
+                    logger.warn("Particle {} - 'Delete' OC".format(p.id))
                     pass
                 elif p.state in recovery_map:
+                    logger.warn("Particle {} - compute-related EC".format(p.id))
                     recovery_kernel = recovery_map[p.state]
                     p.set_state(StateCode.Success)
                     recovery_kernel(p, self.fieldset, p.time)
@@ -279,3 +292,5 @@ class KernelNodes(BaseKernel):
                 self.execute_python(pset, endtime, dt)
 
             n_error = pset.num_error_particles
+
+        logger.info("Concluded kernel execution on t={}".format(endtime))
