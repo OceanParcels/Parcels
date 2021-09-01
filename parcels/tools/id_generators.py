@@ -23,7 +23,7 @@ class BaseIdGenerator(ABC):
     def __init__(self):
         self._total_ids = 0
         self._used_ids = 0
-        _track_id_index = True
+        self._track_id_index = True
 
     def setTimeLine(self, min_time, max_time):
         pass
@@ -603,7 +603,7 @@ class GenerateID_Service(BaseIdGenerator):
             data_package = {}
             data_package["func_name"] = "map_id_to_index"
             data_package["args"] = 1
-            data_package["argv"] = [input_id,]
+            data_package["argv"] = [input_id, ]
             data_package["src_rank"] = mpi_rank
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
             data = mpi_comm.recv(source=self._serverrank, tag=self._response_tag)

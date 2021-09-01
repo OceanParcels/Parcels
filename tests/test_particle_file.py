@@ -11,7 +11,7 @@ import os
 from netCDF4 import Dataset
 import cftime
 import random as py_random
-from parcels.tools import logger
+# from parcels.tools import logger
 
 pset_modes_new = ['soa', 'aos', 'nodes']
 pset_modes = ['soa', 'aos']
