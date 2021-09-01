@@ -15,10 +15,15 @@ except:
 
 class BaseIdGenerator(ABC):
     _total_ids = 0
+    _used_ids = 0
     _recover_ids = False
+    _map_id_totalindex = dict()
+    _track_id_index = True
 
     def __init__(self):
         self._total_ids = 0
+        self._used_ids = 0
+        _track_id_index = True
 
     def setTimeLine(self, min_time, max_time):
         pass
@@ -42,6 +47,10 @@ class BaseIdGenerator(ABC):
     @property
     def total_length(self):
         return self._total_ids
+
+    @property
+    def usable_length(self):
+        return self._used_ids
 
     @property
     def recover_ids(self):
@@ -72,9 +81,25 @@ class BaseIdGenerator(ABC):
     def get_length(self):
         return self.__len__()
 
-    @abstractmethod
     def get_total_length(self):
         return self._total_ids
+
+    def get_usable_length(self):
+        return self._used_ids
+
+    def enable_id_index_tracking(self):
+        self._track_id_index = True
+
+    def disable_id_index_tracking(self):
+        self._track_id_index = False
+
+    def map_id_to_index(self, input_id):
+        if self._track_id_index:
+            return self._map_id_totalindex[input_id]
+        return None
+
+    def is_tracking_id_index(self):
+        return self._track_id_index
 
 
 class SequentialIdGenerator(BaseIdGenerator):
@@ -96,16 +121,24 @@ class SequentialIdGenerator(BaseIdGenerator):
         if n == 0:
             result = self.next_id
             self.next_id += 1
+            if self._track_id_index:
+                self._map_id_totalindex[result] = self._total_ids
             self._total_ids += 1
+            self._used_ids += 1
             return np.uint64(result)
         else:
             result = self.released_ids.pop(n-1)
+            if self._track_id_index:
+                self._map_id_totalindex[result] = self._total_ids
+            self._used_ids += 1
+            self._total_ids += 1
             return np.uint64(result)
 
     def releaseID(self, id):
         if not self._recover_ids:
             return
         self.released_ids.append(id)
+        self._used_ids -= 1
 
     def preGenerateIDs(self, high_value):
         if len(self.released_ids) > 0:
@@ -124,10 +157,7 @@ class SequentialIdGenerator(BaseIdGenerator):
         return self.next_id
 
     def get_length(self):
-        return self.__len__()
-
-    def get_total_length(self):
-        return self._total_ids
+        return len(self)
 
 
 class SpatialIdGenerator(BaseIdGenerator):
@@ -140,7 +170,6 @@ class SpatialIdGenerator(BaseIdGenerator):
     _depthbounds = np.zeros(2, dtype=np.float32)
     local_ids = None
     released_ids = {}
-    _total_ids = 0
 
     def __init__(self, lon_bins=360, lat_bins=180, depth_bins=32768):
         """
@@ -159,7 +188,6 @@ class SpatialIdGenerator(BaseIdGenerator):
         self._depth_bins = depth_bins
         self.local_ids = np.zeros((self._lon_bins, self._lat_bins, self._depth_bins), dtype=np.uint32)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
-        self._total_ids = 0
         self._recover_ids = False
 
     def __del__(self):
@@ -222,15 +250,8 @@ class SpatialIdGenerator(BaseIdGenerator):
     def __len__(self):
         return np.sum(self.local_ids) + sum([len(entity) for entity in self.released_ids])
 
-    @property
-    def total_length(self):
-        return self._total_ids
-
     def get_length(self):
         return self.__len__()
-
-    def get_total_length(self):
-        return self.total_length
 
     def _get_next_id(self, lon_index, lat_index, depth_index, time_index=None):
         local_index = -1
@@ -247,7 +268,10 @@ class SpatialIdGenerator(BaseIdGenerator):
         id = np.int64(id)
         id = np.bitwise_or(np.left_shift(id, 32), np.int64(local_index))
         id = np.uint64(id)
+        if self._track_id_index:
+            self._map_id_totalindex[id] = self._total_ids
         self._total_ids += 1
+        self._used_ids += 1
         return id
 
     def _release_id(self, spatiotemporal_id, local_id):
@@ -256,6 +280,7 @@ class SpatialIdGenerator(BaseIdGenerator):
         if spatiotemporal_id not in self.released_ids.keys():
             self.released_ids[spatiotemporal_id] = []
         self.released_ids[spatiotemporal_id].append(local_id)
+        self._used_ids -= 1
 
 
 class SpatioTemporalIdGenerator(BaseIdGenerator):
@@ -264,7 +289,6 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
     depthbounds = np.zeros(2, dtype=np.float32)
     local_ids = None
     released_ids = {}
-    _total_ids = 0
 
     def __init__(self):
         super(SpatioTemporalIdGenerator, self).__init__()
@@ -272,7 +296,6 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         self.depthbounds = np.zeros([0, 0, 1.0], dtype=np.float32)
         self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
-        self._total_ids = 0
         self._recover_ids = False
 
     def __del__(self):
@@ -326,16 +349,8 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
     def __len__(self):
         return np.sum(self.local_ids) + sum([len(entity) for entity in self.released_ids])
 
-    @property
-    def total_length(self):
-        return self._total_ids
-
     def get_length(self):
         return self.__len__()
-
-    def get_total_length(self):
-        # return self._total_ids
-        return self.total_length
 
     def _get_next_id(self, lon_index, lat_index, depth_index, time_index):
         local_index = -1
@@ -350,7 +365,10 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         id = np.int64(id)
         id = np.bitwise_or(np.left_shift(id, 32), np.int64(local_index))
         id = np.uint64(id)
+        if self._track_id_index:
+            self._map_id_totalindex[id] = self._total_ids
         self._total_ids += 1
+        self._used_ids += 1
         return id
 
     def _release_id(self, spatiotemporal_id, local_id):
@@ -359,6 +377,7 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         if spatiotemporal_id not in self.released_ids.keys():
             self.released_ids[spatiotemporal_id] = []
         self.released_ids[spatiotemporal_id].append(local_id)
+        self._used_ids -= 1
 
 
 class GenerateID_Service(BaseIdGenerator):
@@ -506,6 +525,7 @@ class GenerateID_Service(BaseIdGenerator):
             return self._service_process.__len__()
 
     def get_total_length(self):
+        # raise NotImplementedError()
         if MPI and self._use_subprocess:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -519,11 +539,90 @@ class GenerateID_Service(BaseIdGenerator):
 
             return int(data["result"])
         else:
-            return self._service_process.total_length
+            return self._service_process.get_total_length()
+
+    def get_usable_length(self):
+        if MPI and self._use_subprocess:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+
+            data_package = {}
+            data_package["func_name"] = "get_usable_length"
+            data_package["args"] = 0
+            data_package["src_rank"] = mpi_rank
+            mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
+            data = mpi_comm.recv(source=self._serverrank, tag=self._response_tag)
+
+            return int(data["result"])
+        else:
+            return self._service_process.get_usable_length()
 
     def __len__(self):
         return self.get_length()
 
     @property
     def total_length(self):
+        # raise NotImplementedError()
         return self.get_total_length()
+
+    @property
+    def usable_length(self):
+        return self.get_usable_length()
+
+    def enable_id_index_tracking(self):
+        if MPI and self._use_subprocess:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+
+            data_package = {}
+            data_package["func_name"] = "enable_id_index_tracking"
+            data_package["args"] = 0
+            data_package["src_rank"] = mpi_rank
+            mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
+        else:
+            return self._service_process.enable_id_index_tracking()
+
+    def disable_id_index_tracking(self):
+        if MPI and self._use_subprocess:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+
+            data_package = {}
+            data_package["func_name"] = "disable_id_index_tracking"
+            data_package["args"] = 0
+            data_package["src_rank"] = mpi_rank
+            mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
+        else:
+            return self._service_process.disable_id_index_tracking()
+
+    def map_id_to_index(self, input_id):
+        if MPI and self._use_subprocess:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+
+            data_package = {}
+            data_package["func_name"] = "map_id_to_index"
+            data_package["args"] = 1
+            data_package["argv"] = [input_id,]
+            data_package["src_rank"] = mpi_rank
+            mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
+            data = mpi_comm.recv(source=self._serverrank, tag=self._response_tag)
+            return int(data["result"])
+        else:
+            return self._service_process.map_id_to_index(input_id)
+
+    def is_tracking_id_index(self):
+        if MPI and self._use_subprocess:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+
+            data_package = {}
+            data_package["func_name"] = "is_tracking_id_index"
+            data_package["args"] = 0
+            data_package["src_rank"] = mpi_rank
+            mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
+            data = mpi_comm.recv(source=self._serverrank, tag=self._response_tag)
+
+            return (True if (data["result"] or data["result"] > 0) else False)
+        else:
+            return self._service_process.is_tracking_id_index()

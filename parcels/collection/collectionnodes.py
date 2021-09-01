@@ -17,6 +17,7 @@ from parcels.field import Field
 from parcels.tools.statuscodes import OperationCode
 from scipy.spatial import distance
 from parcels.tools.loggers import logger
+import gc
 
 try:
     from mpi4py import MPI
@@ -84,7 +85,8 @@ class ParticleCollectionNodes(ParticleCollection):
         self._ngrid = ngrid
 
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
-        pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + self._idgen.total_length
+        # pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + self._idgen.total_length
+        pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + self._idgen.usable_length
 
         assert depth is not None, "particle's initial depth is None - incompatible with the collection. Invalid state."
         assert lon.size == lat.size and lon.size == depth.size, (
@@ -381,6 +383,10 @@ class ParticleCollectionNodes(ParticleCollection):
         return result
 
     def get_index_by_node(self, ndata):
+        """
+        Obtain the index of a node, given the node object.
+        Caution: when deleting objects, this is not always up-to-date because of the delayed garbage collection.
+        """
         index = None
         try:
             index = self._data.index(ndata)
@@ -395,8 +401,10 @@ class ParticleCollectionNodes(ParticleCollection):
         internally can only be scanned for (a) its list index (non-coherent) or (b) a node itself, but not for a
         specific Node property alone. That is why using the 'bisect' module alone won't work.
         :param id: search Node ID
+
+        Caution: when deleting objects, this is not always up-to-date because of the delayed garbage collection. Hence, it is
+        correct in terms of objects-in-the-list, but it is not correct when only counting VALID particles.
         """
-        # super().get_index_by_ID(id)  # has no super-class implementation
         lower = 0
         upper = len(self._data) - 1
         pos = lower + int((upper - lower) / 2.0)
@@ -810,7 +818,7 @@ class ParticleCollectionNodes(ParticleCollection):
                 index = self._data.bisect_right(particle_obj)
             else:
                 if particle_obj.id == pid:
-                    index = self._idgen.total_length
+                    # index = self._idgen.total_length
                     pid = self._idgen.nextID(particle_obj.lon, particle_obj.lat, particle_obj.depth, particle_obj.time)
                     particle_obj.id = pid
                     # particle_obj.index = index
@@ -1371,24 +1379,50 @@ class ParticleCollectionNodes(ParticleCollection):
         time = time.total_seconds() if isinstance(time, delta) else time
 
         indices_to_write = []
+        dataindices = []
+        valid = True
         if pfile.lasttime_written != time and \
            (pfile.write_ondelete is False or deleted_only):
             if self._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
-            else:
+                valid = False
+            if not self._idgen.is_tracking_id_index():
+                logger.error("Cannot write node-based particle sets 'ParticleSetNodes' without tracking ID-indices.")
+                valid = False
+            if valid:
                 if deleted_only:
                     if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                         # indices_to_write = [self.get_index_by_node(ndata) for ndata in self._data if ndata.data.state in [OperationCode.Delete, ]]
-                        indices_to_write = [self.get_index_by_node(ndata) for ndata in self if ndata.data.state in [OperationCode.Delete, ]]
+                        # indices_to_write = [self.get_index_by_node(ndata) for ndata in self if ndata.data.state in [OperationCode.Delete, ]]
+                        indices_to_write = [self._idgen.map_id_to_index(ndata.data.id) for ndata in self if ndata.data.state in [OperationCode.Delete, ]]
+                        dataindices = [self.get_index_by_node(ndata) for ndata in self if ndata.data.state in [OperationCode.Delete, ]]
                     elif type(deleted_only) in [list, tuple, np.ndarray] and len(deleted_only) > 0:
-                        if type(deleted_only[0]) in [np.int64, np.uint64]:
-                            indices_to_write = [self.get_index_by_ID(id) for id in deleted_only]
-                        elif type(deleted_only[0]) in [int, np.int32, np.uint32]:
-                            indices_to_write = deleted_only
-                        elif isinstance(deleted_only[0], Node):
-                            indices_to_write = [self.get_index_by_node(ndata) for ndata in deleted_only if self.get_index_by_node(ndata) is not None]
-                        elif isinstance(deleted_only[0], ScipyParticle):
-                            indices_to_write = [self.get_index_by_ID(pdata.id) for pdata in deleted_only if self.get_index_by_ID(pdata.id) is not None]
+                        for D in deleted_only:
+                            if type(D) in [np.int64, np.uint64]:
+                                indices_to_write.append( self._idgen.map_id_to_index(D) )
+                                dataindices.append( self.get_index_by_ID(D) )
+                            elif type(D) in [int, np.int32, np.uint32]:
+                                raise RuntimeError("CollectNodes>>toDictionary(): Writing particles by index is not supported.")
+                            elif isinstance(D, Node) and (self.get_index_by_node(D) is not None):
+                                indices_to_write.append( self._idgen.map_id_to_index(D.data.id) )
+                                dataindices.append( self.get_index_by_node(D) )
+                            elif isinstance(deleted_only[0], ScipyParticle) and (self.get_index_by_id(D.id) is not None):
+                                indices_to_write.append( self._idgen.map_id_to_index(D.id) )
+                                dataindices.append( self.get_index_by_id(D.id) )
+
+                        #
+                        # if type(deleted_only[0]) in [np.int64, np.uint64]:
+                        #     # indices_to_write = [self.get_index_by_ID(id) for id in deleted_only]
+                        #     indices_to_write = [self._idgen.map_id_to_index(id) for id in deleted_only]
+                        # elif type(deleted_only[0]) in [int, np.int32, np.uint32]:
+                        #     indices_to_write = deleted_only  # verify that this somehow comes from the right source
+                        # elif isinstance(deleted_only[0], Node):
+                        #     # indices_to_write = [self.get_index_by_node(ndata) for ndata in deleted_only if self.get_index_by_node(ndata) is not None]
+                        #     indices_to_write = [self._idgen.map_id_to_index(ndata.data.id) for ndata in deleted_only if self.get_index_by_node(ndata) is not None]
+                        # elif isinstance(deleted_only[0], ScipyParticle):
+                        #     # indices_to_write = [self.get_index_by_ID(pdata.id) for pdata in deleted_only if self.get_index_by_ID(pdata.id) is not None]
+                        #     indices_to_write = [self._idgen.map_id_to_index(pdata.id) for pdata in deleted_only if self.get_index_by_ID(pdata.id) is not None]
+                        #
                 else:
                     # return [i for i, p in enumerate(pd) if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
                     # logger.warn("Node list status: {}".format([n.is_valid() for n in self._data]))
@@ -1398,61 +1432,71 @@ class ParticleCollectionNodes(ParticleCollection):
                             node = node.next
                             continue
                         if (time - np.abs(node.data.dt / 2)) <= node.data.time < (time + np.abs(node.data.dt)) and np.isfinite(node.data.id):
-                            node_index = self.get_index_by_node(node)
+                            # node_index = self.get_index_by_node(node)
+                            node_index = self._idgen.map_id_to_index(node.data.id)
                             indices_to_write.append(node_index)
+                            dataindices.append( self.get_index_by_node(node) )
                         node = node.next
                     # indices_to_write = _to_write_particles(self._data, time)
+# ====================================================================================================================================================== #
+# ============== here, the indices need to be actual indices in the double-linked list ================================================================= #
                 if len(indices_to_write) > 0:
                     for var in pfile.var_names:
                         # data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])
                         if 'id' in var:
-                            data_dict[var] = np.array([np.int64(getattr(self._data[index].data, var)) for index in indices_to_write])
+                            data_dict[var] = np.array([np.int64(getattr(self._data[index].data, var)) for index in dataindices])
+# ====================================================================================================================================================== #
+# ================= HERE, THE INDICES NEED TO BE THE GLOBAL ONES ======================================================================================= #
                         elif var == 'index':
                             data_dict[var] = np.array([np.int32(index) for index in indices_to_write])
                         else:
-                            data_dict[var] = np.array([getattr(self._data[index].data, var) for index in indices_to_write])
-
+                            data_dict[var] = np.array([getattr(self._data[index].data, var) for index in dataindices])
+# ====================================================================================================================================================== #
+# ================= HERE, THE INDICES NEED TO BE THE GLOBAL ONES ======================================================================================= #
                     pfile.max_index_written = np.maximum(pfile.max_index_written, np.max(indices_to_write))
 
-                pset_errs = [self._data[index].data for index in indices_to_write if self._data[index].data.state != OperationCode.Delete and abs(time-self._data[index].data.time) > 1e-3 and np.isfinite(self._data[index].data.time)]
+                pset_errs = [self._data[index].data for index in dataindices if self._data[index].data.state != OperationCode.Delete and abs(time-self._data[index].data.time) > 1e-3 and np.isfinite(self._data[index].data.time)]
                 for p in pset_errs:
                     logger.warning_once('time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
                 indices_to_write.clear()
+                dataindices.clear()
 
                 if time not in pfile.time_written:
                     pfile.time_written.append(time)
-                    logger.info("Appended time={} to pfile.".format(time))
+                    # logger.info("Appended time={} to pfile.".format(time))
 
                 if len(pfile.var_names_once) > 0:
-                    first_write = []
-                    written_once_indices = []
+                    p_written_once = []
+                    # written_once_indices = []
                     node = self.begin()
                     while node is not None:
                         # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
                         if not node.is_valid():
                             node = node.next
                             continue
-                        node_index = self.get_index_by_node(node)
                         # node.data.index
+                        # node_index = self.get_index_by_node(node)
+                        node_index = self._idgen.map_id_to_index(node.data.id)
                         # if (node_index is not None) and (node_index not in pfile.written_once) and _is_particle_started_yet(node.data, time):
                         if (node_index is not None) and (node.data.id not in pfile.written_once) and _is_particle_started_yet(node.data, time):
-                            first_write.append(node.data)
-                            written_once_indices.append(node_index)
+                            p_written_once.append(node.data)
+                            indices_to_write.append(node_index)
                         node = node.next
-                    if np.any(first_write):
-                        data_dict_once['id'] = np.array([p.id for p in first_write])
-                        data_dict_once['index'] = np.array(written_once_indices, dtype=np.int32)
+                    if np.any(p_written_once):
+                        data_dict_once['id'] = np.array([p.id for p in p_written_once])
+                        data_dict_once['index'] = np.array(indices_to_write, dtype=np.int32)
                         for var in pfile.var_names_once:
-                            data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
+                            data_dict_once[var] = np.array([getattr(p, var) for p in p_written_once])
                         # data_dict_once['index'] = np.array(written_once_indices, dtype=np.int32)
                         # pfile.written_once.extend(written_once_indices)
                         pfile.written_once.extend(np.array(data_dict_once['id']).astype(dtype=np.int64).tolist())
-                        first_write.clear()
-                    logger.info("Attached once-to-write variables to pfile.")
+                        p_written_once.clear()
+                        indices_to_write.clear()
+                    # logger.info("Attached once-to-write variables to pfile.")
 
             if deleted_only is False:
                 pfile.lasttime_written = time
-            logger.info("Returning to-write dictionaries pfile.")
+            # logger.info("Returning to-write dictionaries pfile.")
 
         return data_dict, data_dict_once
 

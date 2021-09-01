@@ -116,8 +116,6 @@ class ParticleFileNodes(BaseParticleFile):
 
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
-
-        CAREFUL: 'max_id'written' is not actually 'ID' but 'index', and is only there for the purpose of reading/compatibility!
         """
         attributes = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
                       'file_list', 'file_list_once', 'max_index_written', 'time_written', 'parcels_mesh',
@@ -134,7 +132,7 @@ class ParticleFileNodes(BaseParticleFile):
         :param var: name of the variable to read
         """
 
-        # from parcels.tools import logger
+        from parcels.tools import logger
         # logger.info("read_from_npy() - {}, {}, {}".format(file_list, time_steps, var))
 
         data = np.nan * np.zeros((self.max_index_written+1, time_steps))
@@ -151,15 +149,16 @@ class ParticleFileNodes(BaseParticleFile):
                                    '"parcels_convert_npydir_to_netcdf %s" to convert these to '
                                    'a NetCDF file yourself.\nTo avoid this error, make sure you '
                                    'close() your ParticleFile at the end of your script.' % self.tempwritedir)
+            logger.info("Reading '{}' ...".format(npyfile))
             # ------ ------ ------ ------ ------ ------
             # id_ind = np.array(data_dict["id"], dtype=np.int64)
             id_ind = np.array(data_dict['index'])
             # ------ ------ ------ ------ ------ ------
             t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
-            t_ind_used[t_ind] = 1
-            # logger.info("data\[id_ind, t_ind\] = data_dict\[var\] - {}, {}, {}".format(id_ind, t_ind, var))
+            # # logger.info("data\[id_ind, t_ind\] = data_dict\[var\] - {}, {}, {}".format(id_ind, t_ind, var))
             data[id_ind, t_ind] = data_dict[var]
             time_index[id_ind] = time_index[id_ind] + 1
+            t_ind_used[t_ind] = 1
 
         # remove rows and columns that are completely filled with nan values
         tmp = data[time_index > 0, :]

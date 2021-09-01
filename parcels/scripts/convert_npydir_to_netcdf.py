@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from glob import glob
 from os import path
-from parcels.tools import logger
+# from parcels.tools import logger
 
 import numpy as np
 
@@ -15,7 +15,7 @@ def convert_npydir_to_netcdf(tempwritedir_base, delete_tempfiles=False, pfile_cl
             are stored (can be obtained from ParticleFile.tempwritedir_base attribute)
     """
 
-    logger.info("ParticleFile class name: {}".format(pfile_class))
+    # logger.info("ParticleFile class name: {}".format(pfile_class))
     tempwritedir = sorted(glob(path.join("%s" % tempwritedir_base, "*")),
                           key=lambda x: int(path.basename(x)))[0]
     pyset_file = path.join(tempwritedir, 'pset_info.npy')
@@ -46,7 +46,7 @@ def main(tempwritedir_base=None, delete_tempfiles=False):
         if hasattr(args, 'delete_tempfiles'):
             delete_tempfiles = args.delete_tempfiles
         if hasattr(args, 'pfclass_name'):
-            logger.info("ParticleFile class name: {}".format(args.pfclass_name))
+            # logger.info("ParticleFile class name: {}".format(args.pfclass_name))
             try:
                 # localdicts = locals()
                 globaldicts = globals()
