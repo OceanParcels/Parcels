@@ -68,6 +68,7 @@ def test_pset_get(fieldset, pset_mode, mode, npart=10):
         idgen.close()
         del idgen
 
+
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_get_single_by_index(fieldset, pset_mode, mode, npart=10):
@@ -95,6 +96,7 @@ def test_pset_get_single_by_ID(fieldset, pset_mode, mode, npart=10):
         assert np.all(np.isclose([pset.collection.get_single_by_ID(np.int64(i)).lon for i in ids], np.linspace(0, 1, npart)))
     else:
         assert np.all(np.isin([pset.collection.get_single_by_ID(np.int64(i)).lon for i in ids], np.linspace(0, 1, npart)))
+    del pset
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -103,3 +105,4 @@ def test_pset_getattr(fieldset, pset_mode, mode, npart=10):
     lats = np.random.random(npart)
     pset = pset_type[pset_mode]['pset'](fieldset, lon=np.linspace(0, 1, npart), lat=lats, pclass=ptype[mode])
     assert np.allclose(pset.lat, lats)
+    del pset
