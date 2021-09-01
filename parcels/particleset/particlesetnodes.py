@@ -110,7 +110,7 @@ class ParticleSetNodes(BaseParticleSet):
         super(ParticleSetNodes, self).__init__()
         self._idgen = idgen
         if self._idgen is None:
-            logger.warn("A node-based particle set requires a global-context ID generator. Creating a default ID generator internally.")
+            logger.warning("A node-based particle set requires a global-context ID generator. Creating a default ID generator internally.")
             self._idgen = GenerateID_Service(SequentialIdGenerator)
 
         self._c_lib_register = c_lib_register
@@ -693,8 +693,8 @@ class ParticleSetNodes(BaseParticleSet):
     def get_index(self, ndata):
         return self._collection.get_index_by_node(ndata)
 
-    def get(self, index):
-        return self._collection.get_single_by_index(index)
+    def get(self, id):
+        return self._collection.get_single_by_id(id)
 
     def get_by_index(self, index):
         return self._collection.get_single_by_index(index)

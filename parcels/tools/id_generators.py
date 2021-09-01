@@ -569,6 +569,20 @@ class GenerateID_Service(BaseIdGenerator):
     def usable_length(self):
         return self.get_usable_length()
 
+    def preGenerateIDs(self, high_value):
+        if MPI and self._use_subprocess:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+            if mpi_rank == 0:
+                data_package = {}
+                data_package["func_name"] = "preGenerateIDs"
+                data_package["args"] = 1
+                data_package["argv"] = [high_value, ]
+                data_package["src_rank"] = mpi_rank
+                mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
+        else:
+            self._service_process.preGenerateIDs(high_value)
+
     def enable_id_index_tracking(self):
         if MPI and self._use_subprocess:
             mpi_comm = MPI.COMM_WORLD

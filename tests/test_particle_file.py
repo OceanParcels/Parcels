@@ -14,7 +14,6 @@ import random as py_random
 # from parcels.tools import logger
 
 pset_modes_new = ['soa', 'aos', 'nodes']
-pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
