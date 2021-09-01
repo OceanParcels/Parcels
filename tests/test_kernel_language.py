@@ -1,6 +1,8 @@
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, StateCode
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
+from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC  # noqa
 from parcels.application_kernels.TEOSseawaterdensity import PolyTEOS10_bsq
 from parcels.application_kernels.EOSseawaterproperties import PressureFromLatDepth, PtempFromTemp, TempFromPtemp, UNESCODensity
 from parcels import ParcelsRandom
@@ -10,10 +12,12 @@ import random as py_random
 from os import path
 import sys
 
+pset_modes_new = ['soa', 'aos', 'nodes']
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
+             'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 
 
 def expr_kernel(name, pset, expr, pset_mode):
@@ -38,7 +42,7 @@ def fieldset_fixture(xdim=20, ydim=20):
     return fieldset(xdim=xdim, ydim=ydim)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('name, expr, result', [
     ('Add', '2 + 5', 7),
@@ -57,7 +61,7 @@ def test_expression_int(pset_mode, mode, name, expr, result, npart=10):
     assert np.alltrue([p.p == result for p in pset])
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('name, expr, result', [
     ('Add', '2. + 5.', 7),
@@ -77,7 +81,7 @@ def test_expression_float(pset_mode, mode, name, expr, result, npart=10):
     assert np.alltrue([p.p == result for p in pset])
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('name, expr, result', [
     ('True', 'True', True),
@@ -106,7 +110,7 @@ def test_expression_bool(pset_mode, mode, name, expr, result, npart=10):
         assert(np.all(result == pset.p))
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_while_if_break(pset_mode, mode):
     """Test while, if and break commands"""
@@ -125,7 +129,7 @@ def test_while_if_break(pset_mode, mode):
     assert np.allclose(pset.p, 20., rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nested_if(pset_mode, mode):
     """Test nested if commands"""
@@ -144,7 +148,7 @@ def test_nested_if(pset_mode, mode):
     assert np.allclose([pset.p0[0], pset.p1[0]], [0, 1])
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pass(pset_mode, mode):
     """Test pass commands"""
@@ -160,7 +164,7 @@ def test_pass(pset_mode, mode):
     assert np.allclose(pset[0].p, -1)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_dt_as_variable_in_kernel(pset_mode, mode):
     pset = pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=0, lat=0)
@@ -171,7 +175,7 @@ def test_dt_as_variable_in_kernel(pset_mode, mode):
     pset.execute(kernel, endtime=10, dt=1.)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 def test_parcels_tmpvar_in_kernel(pset_mode):
     """Tests for error thrown if variable with 'tmp' defined in custom kernel"""
     error_thrown = False
@@ -191,7 +195,7 @@ def test_parcels_tmpvar_in_kernel(pset_mode):
         assert error_thrown
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_if_withfield(fieldset, pset_mode, mode):
     """Test combination of if and Field sampling commands"""
@@ -225,7 +229,7 @@ def test_if_withfield(fieldset, pset_mode, mode):
     assert np.allclose(pset.p, 7., rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize(
     'mode',
     ['scipy',
@@ -259,7 +263,7 @@ def test_print(fieldset, pset_mode, mode, capfd):
     assert abs(float(lst[0]) - 3) < tol
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_access(fieldset, pset_mode, mode):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=0, lat=0)
@@ -287,7 +291,7 @@ def random_series(npart, rngfunc, rngargs, mode):
     return series
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('rngfunc, rngargs', [
     ('random', []),
@@ -309,7 +313,7 @@ def test_random_float(pset_mode, mode, rngfunc, rngargs, npart=10):
     assert np.allclose(pset.p, series, atol=1e-9)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('concat', [False, True])
 def test_random_kernel_concat(fieldset, pset_mode, mode, concat):
@@ -329,7 +333,7 @@ def test_random_kernel_concat(fieldset, pset_mode, mode, concat):
     assert pset.p > 1 if concat else pset.p < 1
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('c_inc', ['str', 'file'])
 def test_c_kernel(fieldset, pset_mode, mode, c_inc):
@@ -369,7 +373,7 @@ def test_c_kernel(fieldset, pset_mode, mode, c_inc):
     assert np.allclose(pset.lon[0], 0.81578948)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_dt_modif_by_kernel(pset_mode, mode):
     class TestParticle(ptype[mode]):
@@ -385,7 +389,7 @@ def test_dt_modif_by_kernel(pset_mode, mode):
     assert np.isclose(pset.time[0], endtime)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('dt', [1e-2, 1e-6])
 def test_small_dt(pset_mode, mode, dt, npart=10):
@@ -399,7 +403,7 @@ def test_small_dt(pset_mode, mode, dt, npart=10):
     assert np.allclose([p.time for p in pset], dt*100)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_TEOSdensity_kernels(pset_mode, mode):
 
@@ -430,9 +434,17 @@ def test_TEOSdensity_kernels(pset_mode, mode):
     assert np.allclose(pset[0].density, 1022.85377)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_EOSseawaterproperties_kernels(pset_mode, mode):
+    idgen = None
+    c_lib_register = None
+    if pset_mode == 'nodes':
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 1.0)
+        idgen.setTimeLine(0.0, 1.0)
+        c_lib_register = LibraryRegisterC()
+
     fieldset = FieldSet.from_data(data={'U': 0, 'V': 0,
                                         'psu_salinity': 40,
                                         'temperature': 40,
@@ -443,25 +455,37 @@ def test_EOSseawaterproperties_kernels(pset_mode, mode):
     class PoTempParticle(ptype[mode]):
         potemp = Variable('potemp', dtype=np.float32)
         pressure = Variable('pressure', dtype=np.float32, initial=10000)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=PoTempParticle, lon=5, lat=5, depth=1000)
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=PoTempParticle, lon=5, lat=5, depth=1000)
+    else:
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=PoTempParticle, lon=5, lat=5, depth=1000,
+                                            idgen=idgen, c_lib_register=c_lib_register)
     pset.execute(PtempFromTemp, runtime=0, dt=0)
     assert np.allclose(pset[0].potemp, 36.89073)
 
     class TempParticle(ptype[mode]):
         temp = Variable('temp', dtype=np.float32)
         pressure = Variable('pressure', dtype=np.float32, initial=10000)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=TempParticle, lon=5, lat=5, depth=1000)
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=TempParticle, lon=5, lat=5, depth=1000)
+    else:
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=TempParticle, lon=5, lat=5, depth=1000,
+                                            idgen=idgen, c_lib_register=c_lib_register)
     pset.execute(TempFromPtemp, runtime=0, dt=0)
     assert np.allclose(pset[0].temp, 40)
 
     class TPressureParticle(ptype[mode]):
         pressure = Variable('pressure', dtype=np.float32)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=TempParticle, lon=5, lat=30, depth=7321.45)
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=TempParticle, lon=5, lat=30, depth=7321.45)
+    else:
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=TempParticle, lon=5, lat=30, depth=7321.45,
+                                            idgen=idgen, c_lib_register=c_lib_register)
     pset.execute(PressureFromLatDepth, runtime=0, dt=0)
     assert np.allclose(pset[0].pressure, 7500, atol=1e-2)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('pressure', [0, 10])
 def test_UNESCOdensity_kernel(pset_mode, mode, pressure):

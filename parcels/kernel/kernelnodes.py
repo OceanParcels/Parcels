@@ -264,7 +264,7 @@ class KernelNodes(BaseKernel):
                     logger.warning("Particle {} - 'StopExecution' OC".format(p.id))
                     return
                 if p.state == OperationCode.Repeat:
-                    logger.warning("Particle {} - 'Repeat' OC").format(p.id)
+                    logger.warning("Particle {} - 'Repeat' OC".format(p.id))
                     p.reset_state()
                 elif p.state == OperationCode.Delete:
                     logger.warning("Particle {} - 'Delete' OC".format(p.id))

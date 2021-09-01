@@ -297,7 +297,10 @@ class ParticleSetNodes(BaseParticleSet):
         if lonlatdepth_dtype is not None:
             self._lonlatdepth_dtype = lonlatdepth_dtype
         else:
-            self._lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(self.fieldset.U)
+            if fieldset is not None:
+                self._lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+            else:
+                self._lonlatdepth_dtype = np.float32
         assert self._lonlatdepth_dtype in [np.float32, np.float64], \
             'lon lat depth precision should be set to either np.float32 or np.float64'
 
