@@ -286,20 +286,22 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
     # test whether samplevar[:, k] = k
     for k in range(samplevar.shape[1]):
         assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
-    if pset_mode != 'nodes':
-        if type == 'repeatdt':
-            # -- Comment: this will not work with node-based lists where ID != index and array indices are (necessarily) reused. -- #
-            assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
-            assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
-        elif type == 'timearr':
-            # -- Comment: this will not work with node-based lists where ID != index and array indices are (necessarily) reused. -- #
-            assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
-        filesize = os.path.getsize(str(outfilepath))
-        assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
+
+    if type == 'repeatdt':
+        # -- Comment: this will not work with node-based lists where ID != index and array indices are (necessarily) reused. -- #
+        assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
+        assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
+    elif type == 'timearr':
+        # -- Comment: this will not work with node-based lists where ID != index and array indices are (necessarily) reused. -- #
+        assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
+    filesize = os.path.getsize(str(outfilepath))
+    assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
     ncfile.close()
 
+    del pset
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     outfilepath = tmpdir.join("pfile_write_timebackward.nc")
@@ -316,6 +318,8 @@ def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     trajs = ncfile.variables['trajectory'][:, 0]
     assert np.all(np.diff(trajs) > 0)  # all particles written in order of traj ID
 
+    del pset
+
 
 def test_set_calendar():
     for calendar_name, cf_datetime in zip(_get_cftime_calendars(), _get_cftime_datetimes()):
@@ -324,11 +328,23 @@ def test_set_calendar():
     assert _set_calendar('np_datetime64') == 'standard'
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 def test_error_duplicate_outputdir(fieldset, tmpdir, pset_mode):
     outfilepath = tmpdir.join("error_duplicate_outputdir.nc")
-    pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0)
-    pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0)
+    idgen = None
+    c_lib_register = None
+
+
+    pset = None
+    if pset_mode != 'nodes':
+        pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0)
+        pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0)
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setTimeLine(0.0, 1.0)
+        c_lib_register = LibraryRegisterC()
+        pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0, idgen=idgen, c_lib_register=c_lib_register)
+        pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0, idgen=idgen, c_lib_register=c_lib_register)
 
     py_random.seed(1234)
     pfile1 = pset1.ParticleFile(name=outfilepath, outputdt=1., convert_at_end=False)
@@ -343,8 +359,16 @@ def test_error_duplicate_outputdir(fieldset, tmpdir, pset_mode):
 
     pfile1.delete_tempwritedir()
 
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_reset_dt(fieldset, pset_mode, mode, tmpdir):
     # Assert that p.dt gets reset when a write_time is not a multiple of dt
