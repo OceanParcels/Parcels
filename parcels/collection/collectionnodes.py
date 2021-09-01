@@ -17,7 +17,7 @@ from parcels.field import Field
 from parcels.tools.statuscodes import OperationCode
 from scipy.spatial import distance
 from parcels.tools.loggers import logger
-import gc
+import gc  # noqa: F401
 
 try:
     from mpi4py import MPI
@@ -1399,16 +1399,16 @@ class ParticleCollectionNodes(ParticleCollection):
                     elif type(deleted_only) in [list, tuple, np.ndarray] and len(deleted_only) > 0:
                         for D in deleted_only:
                             if type(D) in [np.int64, np.uint64]:
-                                indices_to_write.append( self._idgen.map_id_to_index(D) )
-                                dataindices.append( self.get_index_by_ID(D) )
+                                indices_to_write.append(self._idgen.map_id_to_index(D))
+                                dataindices.append(self.get_index_by_ID(D))
                             elif type(D) in [int, np.int32, np.uint32]:
                                 raise RuntimeError("CollectNodes>>toDictionary(): Writing particles by index is not supported.")
                             elif isinstance(D, Node) and (self.get_index_by_node(D) is not None):
-                                indices_to_write.append( self._idgen.map_id_to_index(D.data.id) )
-                                dataindices.append( self.get_index_by_node(D) )
-                            elif isinstance(deleted_only[0], ScipyParticle) and (self.get_index_by_id(D.id) is not None):
-                                indices_to_write.append( self._idgen.map_id_to_index(D.id) )
-                                dataindices.append( self.get_index_by_id(D.id) )
+                                indices_to_write.append(self._idgen.map_id_to_index(D.data.id))
+                                dataindices.append(self.get_index_by_node(D))
+                            elif isinstance(D, ScipyParticle) and (self.get_index_by_id(D.id) is not None):
+                                indices_to_write.append(self._idgen.map_id_to_index(D.id))
+                                dataindices.append(self.get_index_by_id(D.id))
 
                         #
                         # if type(deleted_only[0]) in [np.int64, np.uint64]:
@@ -1435,7 +1435,7 @@ class ParticleCollectionNodes(ParticleCollection):
                             # node_index = self.get_index_by_node(node)
                             node_index = self._idgen.map_id_to_index(node.data.id)
                             indices_to_write.append(node_index)
-                            dataindices.append( self.get_index_by_node(node) )
+                            dataindices.append(self.get_index_by_node(node))
                         node = node.next
                     # indices_to_write = _to_write_particles(self._data, time)
 # ====================================================================================================================================================== #
