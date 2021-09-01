@@ -311,7 +311,6 @@ def test_error_duplicate_outputdir(fieldset, tmpdir, pset_mode):
     idgen = None
     c_lib_register = None
 
-
     pset = None
     if pset_mode != 'nodes':
         pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0)
