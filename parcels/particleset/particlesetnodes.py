@@ -268,7 +268,8 @@ class ParticleSetNodes(BaseParticleSet):
 
         if isinstance(pid_orig, (type(None), type(False))):
             # pid_orig = np.arange(lon.size)
-            pid_orig = self._idgen.total_length
+            # pid_orig = self._idgen.total_length
+            pid_orig = self._idgen.usable_length
 
         if depth is None:
             mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
@@ -681,7 +682,7 @@ class ParticleSetNodes(BaseParticleSet):
 
         :return: The number of error particles.
         """
-        return np.sum([True for ndata in self._collection if ndata.is_valid() and ndata.data.state not in [StateCode.Success, StateCode.Evaluate]])
+        return int(np.sum([True for ndata in self._collection if ndata.is_valid() and ndata.data.state not in [StateCode.Success, StateCode.Evaluate]]))
 
     def __iter__(self):
         return super(ParticleSetNodes, self).__iter__()

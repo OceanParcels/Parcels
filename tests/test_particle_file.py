@@ -114,8 +114,6 @@ def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
 
     del pset
 
-# -------------------------------------------------------------------------------------------------------------------- #
-
 
 @pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -174,15 +172,12 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemca
     outfile.add_metadata('runtime', runtime)
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
-    logger.info("Finished execution in written-on-delete test.")
 
     ncfile = close_and_compare_netcdffiles(filepath, outfile, assystemcall=assystemcall)
     assert ncfile.runtime == runtime
     lon = ncfile.variables['lon'][:]
     assert (lon.size == noutside)
     ncfile.close()
-
-# -------------------------------------------------------------------------------------------------------------------- #
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes_new)
@@ -258,7 +253,7 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
 
 
 @pytest.mark.parametrize('type', ['repeatdt', 'timearr'])
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
@@ -282,21 +277,25 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
         particle.sample_var += 1.
         if particle.sample_var > fieldset.maxvar:
             particle.delete()
+
     for i in range(runtime):
         pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
 
     ncfile = close_and_compare_netcdffiles(outfilepath, pfile)
     samplevar = ncfile.variables['sample_var'][:]
-    if type == 'repeatdt':
-        assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
-        assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
-    elif type == 'timearr':
-        assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
     # test whether samplevar[:, k] = k
     for k in range(samplevar.shape[1]):
         assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
-    filesize = os.path.getsize(str(outfilepath))
-    assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
+    if pset_mode != 'nodes':
+        if type == 'repeatdt':
+            # -- Comment: this will not work with node-based lists where ID != index and array indices are (necessarily) reused. -- #
+            assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
+            assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
+        elif type == 'timearr':
+            # -- Comment: this will not work with node-based lists where ID != index and array indices are (necessarily) reused. -- #
+            assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
+        filesize = os.path.getsize(str(outfilepath))
+        assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
     ncfile.close()
 
 
