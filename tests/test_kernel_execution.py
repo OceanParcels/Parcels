@@ -5,14 +5,17 @@ from parcels import (
 )
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
 import numpy as np
 import pytest
 import sys
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa', 'aos', 'nodes']
+# pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
+             'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 
 
 def DoNothing(particle, fieldset, time):
@@ -295,7 +298,9 @@ def test_execution_keep_cfiles_and_nocompilation_warnings(pset_mode, fieldset, d
     pset.execute(pset.Kernel(AdvectionRK4, delete_cfiles=delete_cfiles), endtime=1., dt=1.)
     cfile = pset.kernel.dyn_srcs[0]
     logfile = pset.kernel.log_file
-    del pset.kernel
+    # del pset.kernel  # this action is NOT allowed - you cannot just delete a kernel from a particle set. you can delete the particle set though.
+    del pset
+    # bad test anyway - the 'del' command actually executing the exit-routine of an object is only called on teardown - i.e.: the object is still alive here.
     if delete_cfiles:
         assert not path.exists(cfile)
     else:
