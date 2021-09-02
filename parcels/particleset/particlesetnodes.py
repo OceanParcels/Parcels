@@ -666,7 +666,11 @@ class ParticleSetNodes(BaseParticleSet):
 
     # @property
     # def fieldset(self):
-    #     return self.fieldset
+    #     return self._fieldset
+
+    @property
+    def kernel(self):
+        return self._kernel
 
     @property
     def error_particles(self):
