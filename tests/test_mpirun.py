@@ -10,7 +10,7 @@ except:
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="skipping macOS test as problem with file in pytest")
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos', 'nodes'])
 @pytest.mark.parametrize('repeatdt', [200*86400, 10*86400])
 @pytest.mark.parametrize('maxage', [600*86400, 10*86400])
 def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage):

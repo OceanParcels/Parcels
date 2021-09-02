@@ -1,6 +1,7 @@
 from parcels import (FieldSet, JITParticle, AdvectionRK4, plotTrajectoriesFile)
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
 from datetime import timedelta as delta
 import numpy as np
 import pytest
@@ -8,9 +9,10 @@ from os import path
 from parcels.tools.loggers import logger
 import sys
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa', 'aos', 'nodes']
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
+             'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 
 
 def create_outputfiles(dir, pset_mode):
