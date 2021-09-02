@@ -11,7 +11,7 @@ import pytest
 from os import path
 from datetime import timedelta as delta
 
-pset_modes_new = ['soa', 'aos', 'nodes']
+pset_modes = ['soa', 'aos', 'nodes']
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
@@ -19,7 +19,7 @@ pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel':
              'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_multi_structured_grids(pset_mode, mode):
 
@@ -142,7 +142,7 @@ def test_avoid_repeated_grids():
     assert field_set.V.grid is not field_set.U.grid
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_multigrids_pointer(pset_mode, mode):
     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
@@ -179,7 +179,7 @@ def test_multigrids_pointer(pset_mode, mode):
         pset.execute(AdvectionRK4_3D, runtime=1000, dt=500)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('z4d', ['True', 'False'])
 def test_rectilinear_s_grid_sampling(pset_mode, mode, z4d):
@@ -242,7 +242,7 @@ def test_rectilinear_s_grid_sampling(pset_mode, mode, z4d):
     assert np.allclose(p0.temp, ratio, atol=1e-4)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_rectilinear_s_grids_advect1(pset_mode, mode):
     # Constant water transport towards the east. check that the particle stays at the same relative depth (z/bath)
@@ -286,7 +286,7 @@ def test_rectilinear_s_grids_advect1(pset_mode, mode):
     assert np.allclose(pset.depth/bath_func(pset.lon), ratio)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_rectilinear_s_grids_advect2(pset_mode, mode):
     # Move particle towards the east, check relative depth evolution
@@ -332,7 +332,7 @@ def test_rectilinear_s_grids_advect2(pset_mode, mode):
         assert np.isclose(pset.relDepth[0], depth/bath_func(pset.lon[0]))
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_curvilinear_grids(pset_mode, mode):
 
@@ -374,7 +374,7 @@ def test_curvilinear_grids(pset_mode, mode):
     assert(np.isclose(p0.speed, 1000))
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nemo_grid(pset_mode, mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
@@ -414,7 +414,7 @@ def test_nemo_grid(pset_mode, mode):
     assert abs(v) < 1e-4
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advect_nemo(pset_mode, mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
@@ -441,7 +441,7 @@ def test_advect_nemo(pset_mode, mode):
     assert abs(p0.lat - latp) < 1e-3
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time', [True, False])
 def test_cgrid_uniform_2dvel(pset_mode, mode, time):
@@ -479,7 +479,7 @@ def test_cgrid_uniform_2dvel(pset_mode, mode, time):
     assert (p0.meridional - 1) < 1e-6
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1', 'slev2'])
 @pytest.mark.parametrize('time', [True, False])
@@ -547,7 +547,7 @@ def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
     assert abs(p0.vertical - 1) < 1e-6
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1'])
 @pytest.mark.parametrize('time', [True, False])
@@ -622,7 +622,7 @@ def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
     assert abs(p0.vertical - 1) < 1e-3
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
 @pytest.mark.parametrize('deferred_load', [True, False])
@@ -687,7 +687,7 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
         assert np.allclose(pset.tracer, 1)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 def test_cgrid_indexing(pset_mode, mode, gridindexingtype):
@@ -739,7 +739,7 @@ def test_cgrid_indexing(pset_mode, mode, gridindexingtype):
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 @pytest.mark.parametrize('withtime', [False, True])
@@ -816,7 +816,7 @@ def test_cgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
 @pytest.mark.parametrize('withtime', [False, True])
@@ -895,7 +895,7 @@ def test_bgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
 
 
 @pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('extrapolation', [True, False])
 def test_bgrid_interpolation(gridindexingtype, pset_mode, mode, extrapolation):
