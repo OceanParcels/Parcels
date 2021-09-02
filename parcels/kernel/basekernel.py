@@ -256,7 +256,7 @@ class BaseKernel(object):
         self._src_files = self.dyn_srcs + self.static_srcs
         all_files_array = []
         if isinstance(compiler, CCompiler_SS):  # if we only have a single-stage compiler, we can only have one source file, so take the first (dynamic) source
-            self.dyn_srcs = [self.dyn_srcs[0], ]
+            self.dyn_srcs = [self.dyn_srcs[0], ] if self.dyn_srcs is not None else None
             self.ccode = [self.ccode[0], ]
             self._src_files = self._src_files[0]  # shall not be a list, cause the single-stage compiler expects a single source file string
         if self.dyn_srcs is not None:

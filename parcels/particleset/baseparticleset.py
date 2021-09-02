@@ -49,9 +49,9 @@ class BaseParticleSet(NDCluster):
         self.repeatdepth = None
         self.repeatpclass = None
         self.repeatkwargs = None
-        self.kernel = None
+        # self.kernel = None  # should be removed, because - for write protection - 'self.kernel' shall be a non-writeable property of variable self._kernel
         self.interaction_kernel = None
-        self.fieldset = None
+        # self.fieldset = None  # should be removed, because - for write protection - 'self.fieldset' shall be a non-writeable property of variable self._fieldset
         self.time_origin = None
 
     def __del__(self):
