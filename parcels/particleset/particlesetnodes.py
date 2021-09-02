@@ -701,7 +701,10 @@ class ParticleSetNodes(BaseParticleSet):
         return self._collection.get_index_by_node(ndata)
 
     def get(self, id):
-        return self._collection.get_single_by_id(id)
+        if type(id) not in [np.int64, np.uint64]:
+            logger.warning("ParticleSetNodes.get() - provided ID as 32-bit number. Casting ID to 64-bit. Are you sure you intended to access the particle set by ID ?")
+            id = np.int64(id)
+        return self._collection.get_single_by_ID(id)
 
     def get_by_index(self, index):
         return self._collection.get_single_by_index(index)

@@ -1107,6 +1107,8 @@ class ParticleCollectionNodes(ParticleCollection):
         super().remove_multi_by_indices(indices)
         if type(indices) is dict:
             indices = list(indices.values())
+        if type(indices) is np.ndarray:
+            indices = indices.tolist()
 
         if len(indices) > 0:
             indices.sort(reverse=True)
