@@ -3,13 +3,13 @@ from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
+from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC  # noqa
 import numpy as np
 import xarray as xr
 import math
 import pytest
 from os import path
 from datetime import timedelta as delta
-from parcels.tools import logger
 
 pset_modes_new = ['soa', 'aos', 'nodes']
 pset_modes = ['soa', 'aos']
@@ -88,7 +88,7 @@ def test_multi_structured_grids(pset_mode, mode):
     pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=3, dt=1)
 
     # check if particle xi and yi are different for the two grids
-    p0 = None
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
@@ -234,7 +234,7 @@ def test_rectilinear_s_grid_sampling(pset_mode, mode, z4d):
                                                   lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
 
     pset.execute(pset.Kernel(sampleTemp), runtime=0, dt=0)
-    p0 = None
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
@@ -366,12 +366,12 @@ def test_curvilinear_grids(pset_mode, mode):
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
-    p0 = None
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
         p0 = pset.get(np.int64(0))
-    assert(np.isclose(p0.speed, 1000))  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    assert(np.isclose(p0.speed, 1000))
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes_new)
@@ -403,13 +403,13 @@ def test_nemo_grid(pset_mode, mode):
     latp = 81.5
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    p0 = None
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
         p0 = pset.get(np.int64(0))
-    u = field_set.U.units.to_source(p0.zonal, lonp, latp, 0)  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
-    v = field_set.V.units.to_source(p0.meridional, lonp, latp, 0)  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    u = field_set.U.units.to_source(p0.zonal, lonp, latp, 0)
+    v = field_set.V.units.to_source(p0.meridional, lonp, latp, 0)
     assert abs(u - 1) < 1e-4
     assert abs(v) < 1e-4
 
@@ -433,12 +433,12 @@ def test_advect_nemo(pset_mode, mode):
     latp = 81.5
     pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=[lonp], lat=[latp])
     pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
-    p0 = None
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
         p0 = pset.get(np.int64(0))
-    assert abs(p0.lat - latp) < 1e-3  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    assert abs(p0.lat - latp) < 1e-3
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes_new)
@@ -470,13 +470,13 @@ def test_cgrid_uniform_2dvel(pset_mode, mode, time):
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    p0 = None
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
         p0 = pset.get(np.int64(0))
-    assert (p0.zonal - 1) < 1e-6  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
-    assert (p0.meridional - 1) < 1e-6  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    assert (p0.zonal - 1) < 1e-6
+    assert (p0.meridional - 1) < 1e-6
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes_new)
@@ -537,14 +537,14 @@ def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    p0 = None
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
         p0 = pset.get(np.int64(0))
-    assert abs(p0.zonal - 1) < 1e-6  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
-    assert abs(p0.meridional - 1) < 1e-6  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
-    assert abs(p0.vertical - 1) < 1e-6  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    assert abs(p0.zonal - 1) < 1e-6
+    assert abs(p0.meridional - 1) < 1e-6
+    assert abs(p0.vertical - 1) < 1e-6
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes_new)
@@ -610,21 +610,19 @@ def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
         pset[0].zonal = fieldset.U.units.to_source(pset[0].zonal, lonp, latp, 0)
         pset[0].meridional = fieldset.V.units.to_source(pset[0].meridional, lonp, latp, 0)
     elif pset_mode == 'nodes':
-        pset.get(0).data.zonal = fieldset.U.units.to_source(pset.get(0).data.zonal, lonp, latp, 0)
-        pset.get(0).data.meridional = fieldset.V.units.to_source(pset.get(0).data.meridional, lonp, latp, 0)
-    p0 = None
+        pset.get(np.int64(0)).zonal = fieldset.U.units.to_source(pset.get(np.int64(0)).zonal, lonp, latp, 0)
+        pset.get(np.int64(0)).meridional = fieldset.V.units.to_source(pset.get(np.int64(0)).meridional, lonp, latp, 0)
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
         p0 = pset.get(np.int64(0))
-    assert abs(p0.zonal - 1) < 1e-3  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
-    assert abs(p0.meridional) < 1e-3  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
-    assert abs(p0.vertical - 1) < 1e-3  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
-
-# -------------------------------------------------------------------------------------------------------------------------------------------- #
+    assert abs(p0.zonal - 1) < 1e-3
+    assert abs(p0.meridional) < 1e-3
+    assert abs(p0.vertical - 1) < 1e-3
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
 @pytest.mark.parametrize('deferred_load', [True, False])
@@ -664,13 +662,21 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
     pset.execute(pset.Kernel(sampleVel), runtime=1, dt=1,
                  recovery={ErrorCode.ErrorOutOfBounds: OutBoundsError})
+    p0 = None
+    p1 = None
+    if pset_mode in ['soa', 'aos']:
+        p0 = pset[0]
+        p1 = pset[1]
+    elif pset_mode == 'nodes':
+        p0 = pset.get(np.int64(0))
+        p1 = pset.get(np.int64(1))
     if vert_discretisation == 'slevel2':
-        assert np.isclose(pset.vert[0], 0.)
-        assert np.isclose(pset.zonal[0], 0.)
-        assert np.isclose(pset.tracer[0], 99.)
-        assert np.isclose(pset.vert[1], -0.0066666666)
-        assert np.isclose(pset.zonal[1], .015)
-        assert np.isclose(pset.tracer[1], 1.)
+        assert np.isclose(p0.vert, 0.)
+        assert np.isclose(p0.zonal, 0.)
+        assert np.isclose(p0.tracer, 99.)
+        assert np.isclose(p1.vert, -0.0066666666)
+        assert np.isclose(p1.zonal, .015)
+        assert np.isclose(p1.tracer, 1.)
         assert pset.out_of_bounds[0] == 0
         assert pset.out_of_bounds[1] == 0
         assert pset.out_of_bounds[2] == 1
@@ -681,7 +687,7 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
         assert np.allclose(pset.tracer, 1)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 def test_cgrid_indexing(pset_mode, mode, gridindexingtype):
@@ -733,7 +739,7 @@ def test_cgrid_indexing(pset_mode, mode, gridindexingtype):
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 @pytest.mark.parametrize('withtime', [False, True])
@@ -810,7 +816,7 @@ def test_cgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
 @pytest.mark.parametrize('withtime', [False, True])
@@ -889,10 +895,12 @@ def test_bgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
 
 
 @pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('extrapolation', [True, False])
 def test_bgrid_interpolation(gridindexingtype, pset_mode, mode, extrapolation):
+    idgen = None
+    c_lib_register = None
     xi, yi = 3, 2
     if extrapolation:
         zi = 0 if gridindexingtype == 'mom5' else -1
@@ -951,6 +959,14 @@ def test_bgrid_interpolation(gridindexingtype, pset_mode, mode, extrapolation):
         Vvel = Variable("Vvel", dtype=np.float32, initial=0.0)
         Wvel = Variable("Wvel", dtype=np.float32, initial=0.0)
 
+    # because psets are created in the loop (i.e. multiple psets), we need a custom idgen and C-library register
+    if pset_mode == 'nodes':
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 10.0)
+        idgen.setTimeLine(0.0, 1.0)
+        idgen.enable_ID_recovery()
+        c_lib_register = LibraryRegisterC()
+
     for pointtype in ["U", "V", "W"]:
         if gridindexingtype == "pop":
             if pointtype in ["U", "V"]:
@@ -975,16 +991,36 @@ def test_bgrid_interpolation(gridindexingtype, pset_mode, mode, extrapolation):
             if extrapolation:
                 deps = 0
 
-        pset = pset_type[pset_mode]['pset'].from_list(fieldset=fieldset, pclass=myParticle,
-                                                      lon=lons, lat=lats, depth=deps)
+        if pset_mode != 'nodes':
+            pset = pset_type[pset_mode]['pset'].from_list(fieldset=fieldset, pclass=myParticle,
+                                                          lon=lons, lat=lats, depth=deps)
+        else:
+            pset = pset_type[pset_mode]['pset'].from_list(fieldset=fieldset, pclass=myParticle,
+                                                          lon=lons, lat=lats, depth=deps,
+                                                          idgen=idgen, c_lib_register=c_lib_register)
+
         pset.execute(VelocityInterpolator, dt=0)
+        p0 = None
+        if pset_mode in ['soa', 'aos']:
+            p0 = pset[0]
+        elif pset_mode == 'nodes':
+            p0 = pset.begin().data
 
         convfactor = 0.01 if gridindexingtype == "pop" else 1.
         if pointtype in ["U", "V"]:
-            assert np.allclose(pset.Uvel[0], u*convfactor)
-            assert np.allclose(pset.Vvel[0], v*convfactor)
+            assert np.isclose(p0.Uvel, u*convfactor)
+            assert np.isclose(p0.Vvel, v*convfactor)
         elif pointtype == "W":
             if extrapolation:
-                assert np.allclose(pset.Wvel[0], 0, atol=1e-9)
+                assert np.allclose(p0.Wvel, 0, atol=1e-9)
             else:
-                assert np.allclose(pset.Wvel[0], -w*convfactor)
+                assert np.allclose(p0.Wvel, -w*convfactor)
+
+        del pset
+
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register

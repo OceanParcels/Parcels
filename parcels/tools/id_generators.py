@@ -445,6 +445,34 @@ class GenerateID_Service(BaseIdGenerator):
     def close(self):
         self._abort_()
 
+    def enable_ID_recovery(self):
+        self._recover_ids = True
+        if MPI and self._use_subprocess:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+
+            data_package = {}
+            data_package["func_name"] = "enable_ID_recovery"
+            data_package["args"] = 0
+            data_package["src_rank"] = mpi_rank
+            mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
+        else:
+            self._service_process.enable_ID_recovery()
+
+    def disable_ID_recovery(self):
+        self._recover_ids = False
+        if MPI and self._use_subprocess:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+
+            data_package = {}
+            data_package["func_name"] = "disable_ID_recovery"
+            data_package["args"] = 0
+            data_package["src_rank"] = mpi_rank
+            mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
+        else:
+            self._service_process.disable_ID_recovery()
+
     def setTimeLine(self, min_time=0.0, max_time=1.0):
         if MPI and self._use_subprocess:
             mpi_comm = MPI.COMM_WORLD
@@ -594,7 +622,7 @@ class GenerateID_Service(BaseIdGenerator):
             data_package["src_rank"] = mpi_rank
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
         else:
-            return self._service_process.enable_id_index_tracking()
+            self._service_process.enable_id_index_tracking()
 
     def disable_id_index_tracking(self):
         if MPI and self._use_subprocess:
@@ -607,7 +635,7 @@ class GenerateID_Service(BaseIdGenerator):
             data_package["src_rank"] = mpi_rank
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
         else:
-            return self._service_process.disable_id_index_tracking()
+            self._service_process.disable_id_index_tracking()
 
     def map_id_to_index(self, input_id):
         if MPI and self._use_subprocess:
