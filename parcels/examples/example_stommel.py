@@ -13,14 +13,16 @@ from parcels import JITParticle
 from parcels import ScipyParticle
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
 from parcels import timer
 from parcels import Variable
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa', 'aos', 'nodes']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
+             'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 
 
 def stommel_fieldset(xdim=200, ydim=200, grid_type='A'):
@@ -164,7 +166,7 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='repeatdt of the ParticleSet')
     p.add_argument('-a', '--maxage', default=None, type=int,
                    help='max age of the particles (after which particles are deleted)')
-    p.add_argument('-psm', '--pset_mode', choices=('soa', 'aos'), default='soa',
+    p.add_argument('-psm', '--pset_mode', choices=('soa', 'aos', 'nodes'), default='soa',
                    help='max age of the particles (after which particles are deleted)')
     args = p.parse_args()
 
