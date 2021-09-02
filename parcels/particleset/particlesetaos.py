@@ -411,7 +411,7 @@ class ParticleSetAOS(BaseParticleSet):
 
     def __getattr__(self, name):
         """
-        Access a single property of all particles.
+        Access a single variable or property of all particles.
 
         :param name: name of the property
         """
