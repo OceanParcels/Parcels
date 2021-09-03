@@ -23,6 +23,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 def DeleteParticle(particle, fieldset, time):
     particle.delete()
 
+
 def fieldset_from_nemo_3D(chunk_mode):
     data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
     ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
