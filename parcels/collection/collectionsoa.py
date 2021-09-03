@@ -836,7 +836,6 @@ class ParticleCollectionSOA(ParticleCollection):
         This function depends on the specific collection in question and thus needs to be specified in specific
         derivative classes.
         """
-
         data_dict = {}
         data_dict_once = {}
 
@@ -845,7 +844,7 @@ class ParticleCollectionSOA(ParticleCollection):
         indices_to_write = []
         if pfile.lasttime_written != time and \
            (pfile.write_ondelete is False or deleted_only is not False):
-            if self._data['id'].size == 0:
+            if self._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
                 if deleted_only is not False:
@@ -858,7 +857,11 @@ class ParticleCollectionSOA(ParticleCollection):
                     indices_to_write = _to_write_particles(self._data, time)
                 if np.any(indices_to_write):
                     for var in pfile.var_names:
-                        data_dict[var] = self._data[var][indices_to_write]
+                        if var == 'id':
+                            data_dict[var] = self._data[var][indices_to_write].astype(dtype=np.int64)
+                        else:
+                            data_dict[var] = self._data[var][indices_to_write]
+                    # pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
 
                 pset_errs = ((self._data['state'][indices_to_write] != OperationCode.Delete) & np.greater(np.abs(time - self._data['time'][indices_to_write]), 1e-3, where=np.isfinite(self._data['time'][indices_to_write])))
                 if np.count_nonzero(pset_errs) > 0:

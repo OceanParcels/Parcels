@@ -107,7 +107,7 @@ class ParticleFileSOA(BaseParticleFile):
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
-
+        from parcels.tools import logger
         if MPI:
             # The export can only start when all threads are done.
             MPI.COMM_WORLD.Barrier()
