@@ -56,9 +56,10 @@ class ParticleFileAOS(BaseParticleFile):
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
         attributes = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
-                      'file_list', 'file_list_once', 'parcels_mesh', 'metadata']
+                      'file_list', 'file_list_once', 'parcels_mesh', 'metadata']  # , 'maxid_written'
         return attributes
 
+    # def read_from_npy(self, file_list, time_steps, var):
     def read_from_npy(self, file_list, n_timesteps, var):
         """
         Read NPY-files for one variable using a loop over all files.
@@ -67,12 +68,16 @@ class ParticleFileAOS(BaseParticleFile):
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
 
         :param file_list: List that  contains all file names in the output directory
+        # :param time_steps: Number of time steps that were written in out directory
         :param n_timesteps: Dictionary with (for each particle) number of time steps that were written in out directory
         :param var: name of the variable to read
         """
         max_timesteps = max(n_timesteps.values()) if n_timesteps.keys() else 0
         data = np.nan * np.zeros((len(n_timesteps), max_timesteps))
+        # data = np.nan * np.zeros((self.maxid_written+1, time_steps))
         time_index = np.zeros(len(n_timesteps))
+        # time_index = np.zeros(self.maxid_written+1, dtype=np.int64)
+        # t_ind_used = np.zeros(time_steps, dtype=np.int64)
         id_index = {}
         count = 0
         for i in sorted(n_timesteps.keys()):
@@ -91,11 +96,17 @@ class ParticleFileAOS(BaseParticleFile):
                                    'close() your ParticleFile at the end of your script.' % self.tempwritedir)
             for ii, i in enumerate(data_dict["id"]):
                 id_ind = id_index[i]
+                # id_ind = np.array(data_dict["id"], dtype=np.int64)
                 t_ind = int(time_index[id_ind]) if 'once' not in file_list[0] else 0
+                # t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
+                # t_ind_used[t_ind] = 1
                 data[id_ind, t_ind] = data_dict[var][ii]
+                # data[id_ind, t_ind] = data_dict[var]
                 time_index[id_ind] = time_index[id_ind] + 1
 
         # remove rows and columns that are completely filled with nan values
+        # tmp = data[time_index > 0, :]
+        # return tmp[:, t_ind_used == 1]
         return data[time_index > 0, :]
 
     def export(self):
@@ -105,6 +116,7 @@ class ParticleFileAOS(BaseParticleFile):
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
+        # from parcels.tools import logger
         if MPI:
             # The export can only start when all threads are done.
             MPI.COMM_WORLD.Barrier()
@@ -118,15 +130,21 @@ class ParticleFileAOS(BaseParticleFile):
         if len(temp_names) == 0:
             raise RuntimeError("No npy files found in %s" % self.tempwritedir_base)
 
+        # global_maxid_written = -1
+        # global_time_written = []
         n_timesteps = {}
         global_file_list = []
-        if len(self.var_names_once) > 0:
-            global_file_list_once = []
+        global_file_list_once = []
+        # if len(self.var_names_once) > 0:
+        #     global_file_list_once = []
         for tempwritedir in temp_names:
             if os.path.exists(tempwritedir):
                 pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
+                # global_maxid_written = np.max([global_maxid_written, pset_info_local['maxid_written']])
                 for npyfile in pset_info_local['file_list']:
                     tmp_dict = np.load(npyfile, allow_pickle=True).item()
+                    # # logger.info("Time written: {}".format(np.unique(tmp_dict['time'])))
+                    # global_time_written.append([t for t in tmp_dict['time']])  # this works badly if (t % dt) == 0 (in float-point numerics)
                     for i in tmp_dict['id']:
                         if i in n_timesteps:
                             n_timesteps[i] += 1
@@ -135,9 +153,13 @@ class ParticleFileAOS(BaseParticleFile):
                 global_file_list += pset_info_local['file_list']
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']
+        # self.maxid_written = global_maxid_written
+        # self.time_written = global_time_written  # shall not be cleared from duplicates because of a potential closing file.write(...) where abs((dt*N)-(outdt*M)) < FLT_EPS
+        # # logger.info("Time written: {}".format(self.time_written))
 
         for var in self.var_names:
             data = self.read_from_npy(global_file_list, n_timesteps, var)
+            # data = self.read_from_npy(global_file_list, len(self.time_written), var)
             if var == self.var_names[0]:
                 self.open_netcdf_file(data.shape)
             varout = 'z' if var == 'depth' else var
@@ -149,5 +171,6 @@ class ParticleFileAOS(BaseParticleFile):
                 n_timesteps_once[i] = 1
             for var in self.var_names_once:
                 getattr(self, var)[:] = self.read_from_npy(global_file_list_once, n_timesteps_once, var)
+                # getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var)
 
         self.close_netcdf_file()

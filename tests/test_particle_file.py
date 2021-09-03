@@ -1,4 +1,4 @@
-from parcels import (FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode)
+from parcels import (FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode, AdvectionRK4)
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
@@ -11,6 +11,7 @@ import os
 from netCDF4 import Dataset
 import cftime
 import random as py_random
+from datetime import timedelta as delta
 # from parcels.tools import logger
 
 pset_modes_new = ['soa', 'aos', 'nodes']
@@ -59,6 +60,31 @@ def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
 
     ncfile2.close()
     return ncfile1
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pfile_nointegerremainer_timeswritten(fieldset, pset_mode, mode, tmpdir, npart=10):
+    filepath = tmpdir.join("pfile_nointegerremainer_timeswritten.nc")
+
+    def DeleteP(particle, fieldset, time):
+        particle.delete()
+
+    lon = np.linspace(0.05, 0.95, npart)
+    lat = np.linspace(0.95, 0.05, npart)
+    # while in float64 or decimal arithmetic (100*0.005) == (10*0.05) [hence only 1 final outfile.write()),
+    # in float32 digital arithmetic (100*0.005) != (10*0.05) [as in datetime.timedelta],
+    # leading to a 'ghost'-'outfile.write()' command. This is tested to be taken care off here, similar to:
+    # parcels/examples/example_dask_chunk_OCMs.py::test_swash(...)
+    (dt, outdt, runtime) = (delta(seconds=0.005), delta(seconds=0.05), delta(seconds=0.5))
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+    outfile = pset.ParticleFile(name=filepath, outputdt=outdt)
+    pset.execute(AdvectionRK4, runtime=runtime, dt=dt, output_file=outfile,
+                 recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
+    outfile.close()
+
+    del pset
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes_new)

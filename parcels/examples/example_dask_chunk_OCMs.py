@@ -15,10 +15,13 @@ from parcels import ParticleFile
 from parcels import ParticleSet
 from parcels import ScipyParticle
 from parcels import Variable
-from parcels.tools.statuscodes import DaskChunkingError
+from parcels.tools.statuscodes import DaskChunkingError, ErrorCode
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
+
+def DeleteParticle(particle, fieldset, time):
+    particle.delete()
 
 def fieldset_from_nemo_3D(chunk_mode):
     data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
@@ -190,34 +193,39 @@ def compute_nemo_particle_advection(field_set, mode, lonp, latp):
     pfile = ParticleFile("nemo_particles_chunk", pset, outputdt=delta(days=1))
     kernels = pset.Kernel(AdvectionRK4) + periodicBC
     pset.execute(kernels, runtime=delta(days=4), dt=delta(hours=6), output_file=pfile)
+    pfile.close()
     return pset
 
 
 def compute_globcurrent_particle_advection(field_set, mode, lonp, latp):
     pset = ParticleSet(field_set, pclass=ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile("globcurrent_particles_chunk", pset, outputdt=delta(hours=2))
-    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5), output_file=pfile)
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5), output_file=pfile, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+    pfile.close()
     return pset
 
 
 def compute_pop_particle_advection(field_set, mode, lonp, latp):
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile("globcurrent_particles_chunk", pset, outputdt=delta(days=15))
-    pset.execute(AdvectionRK4, runtime=delta(days=90), dt=delta(days=2), output_file=pfile)
+    pset.execute(AdvectionRK4, runtime=delta(days=90), dt=delta(days=2), output_file=pfile, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+    pfile.close()
     return pset
 
 
 def compute_swash_particle_advection(field_set, mode, lonp, latp, depthp):
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp, depth=depthp)
     pfile = ParticleFile("swash_particles_chunk", pset, outputdt=delta(seconds=0.05))
-    pset.execute(AdvectionRK4, runtime=delta(seconds=0.2), dt=delta(seconds=0.005), output_file=pfile)
+    pset.execute(AdvectionRK4, runtime=delta(seconds=0.2), dt=delta(seconds=0.005), output_file=pfile, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+    pfile.close()
     return pset
 
 
 def compute_ofam_particle_advection(field_set, mode, lonp, latp, depthp):
     pset = ParticleSet(field_set, pclass=ptype[mode], lon=lonp, lat=latp, depth=depthp)
     pfile = ParticleFile("ofam_particles_chunk", pset, outputdt=delta(days=1))
-    pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5), output_file=pfile)
+    pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5), output_file=pfile, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+    pfile.close()
     return pset
 
 

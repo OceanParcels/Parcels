@@ -916,11 +916,12 @@ class ParticleCollectionAOS(ParticleCollection):
 
         indices_to_write = []
         if pfile.lasttime_written != time and \
-           (pfile.write_ondelete is False or deleted_only):
+           (pfile.write_ondelete is False or deleted_only is not False):
+            # if self._data.shape[0] == 0:
             if self._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
-                if deleted_only:
+                if deleted_only is not False:
                     if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                         data_states = [p.state for p in self._data]
                         indices_to_write = np.where(np.isin(data_states, [OperationCode.Delete]))[0]
