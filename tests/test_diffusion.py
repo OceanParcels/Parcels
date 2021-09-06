@@ -3,16 +3,18 @@ from parcels import (FieldSet, Field, RectilinearZGrid, JITParticle,
                      ScipyParticle, Variable)
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
 from parcels import ParcelsRandom
 from datetime import timedelta as delta
 import numpy as np
 import pytest
 from scipy import stats
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa', 'aos', 'nodes']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
+             'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 
 
 def zeros_fieldset(mesh='spherical', xdim=200, ydim=100, mesh_conversion=1):
