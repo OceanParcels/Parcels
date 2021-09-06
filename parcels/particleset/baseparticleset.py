@@ -520,7 +520,7 @@ class BaseParticleSet(NDCluster):
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
                             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
-                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)
+                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)  # what does this do ? the variable is boolean, then it's increased - what-the-frog ...
                         fld.write(fldfilename)
                         fld.to_write += 1
             if abs(time - next_output) < tol:
