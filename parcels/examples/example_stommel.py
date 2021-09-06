@@ -28,7 +28,6 @@ pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel':
              'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 
 
-
 def stommel_fieldset(xdim=200, ydim=200, grid_type='A'):
     """Simulate a periodic current along a western boundary, with significantly
     larger velocities along the western edge than the rest of the region
@@ -99,11 +98,13 @@ def idgenenerator(pset_mode):
         idgen.setTimeLine(0.0, 1.0)
     return idgen
 
+
 def clib_register(pset_mode):
     c_lib_register = None
     if pset_mode == 'nodes':
         c_lib_register = LibraryRegisterC()
     return c_lib_register
+
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
                     outfile="StommelParticle.nc", repeatdt=None, maxage=None, write_fields=True, pset_mode='soa',
@@ -149,7 +150,6 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     kernel = method
     if pset_mode == 'nodes' and not isinstance(method, BaseKernel):
         kernel = pset.Kernel(kernel)
-    # pset.Kernel(InitP) + 
     pset.execute(kernel + pset.Kernel(UpdateP) + pset.Kernel(AgeP), runtime=runtime, dt=dt,
                  moviedt=None, output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
