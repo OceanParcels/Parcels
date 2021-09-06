@@ -7,11 +7,17 @@ from parcels import DiffusionUniformKh
 from parcels import Field
 from parcels import FieldSet
 from parcels import JITParticle
-from parcels import ParticleSet
 from parcels import ParcelsRandom
 from parcels import ScipyParticle
+from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
+from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
 
+pset_modes = ['soa', 'aos', 'nodes']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
+             'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 
 
 def mesh_conversion(mesh):
@@ -19,8 +25,9 @@ def mesh_conversion(mesh):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_brownian_example(mode, mesh, npart=3000):
+def test_brownian_example(mode, pset_mode, mesh, npart=3000):
     fieldset = FieldSet.from_data({'U': 0, 'V': 0}, {'lon': 0, 'lat': 0}, mesh=mesh)
 
     # Set diffusion constants.
@@ -37,8 +44,8 @@ def test_brownian_example(mode, mesh, npart=3000):
     runtime = delta(days=1)
 
     ParcelsRandom.seed(1234)
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode],
-                       lon=np.zeros(npart), lat=np.zeros(npart))
+    pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode],
+                                        lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(DiffusionUniformKh),
                  runtime=runtime, dt=delta(hours=1))
 
