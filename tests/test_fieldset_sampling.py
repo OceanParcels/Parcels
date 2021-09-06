@@ -3,6 +3,7 @@ from parcels import (FieldSet, Field, NestedField, ScipyParticle, JITParticle, G
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
+from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC  # noqa
 import numpy as np
 import pytest
 from math import cos, pi
