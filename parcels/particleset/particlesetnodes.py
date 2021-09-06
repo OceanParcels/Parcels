@@ -1324,7 +1324,14 @@ class ParticleSetNodes(BaseParticleSet):
                     self.add(pdata)
                     add_iter += 1
                 next_prelease += self.repeatdt * np.sign(dt)
-            if abs(time-next_output) < tol:
+            if abs(time-next_output) < tol or execute_once:
+                for fld in self.fieldset.get_fields():
+                    if hasattr(fld, 'to_write') and fld.to_write:
+                        if fld.grid.tdim > 1:
+                            raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
+                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)  # what does this do ? the variable is boolean, then it's increased - what-the-frog ...
+                        fld.write(fldfilename)
+                        fld.to_write += 1
                 if output_file is not None:
                     output_file.write(self, time)
                 next_output += outputdt * np.sign(dt)
