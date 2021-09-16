@@ -173,7 +173,7 @@ class FieldSet(object):
         :param units: Optional UnitConverter object, to convert units
                       (e.g. for Horizontal diffusivity from m2/s to degree2/s)
         """
-        self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh, to_write=False))
+        self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh, to_write=False, allow_time_extrapolation=True))
 
     def add_vector_field(self, vfield):
         """Add a :class:`parcels.field.VectorField` object to the FieldSet
