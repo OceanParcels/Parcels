@@ -180,9 +180,9 @@ class SpatialIdGenerator(BaseIdGenerator):
         (log2(arg:lon_bins) * long2(arg::lat_bins) * log2(arg:depth_bins)) <= 32
         """
         super(SpatialIdGenerator, self).__init__()
-        self._lonbounds = np.zeros([-180.0, 180.0], dtype=np.float32)
-        self._latbounds = np.zeros([-90.0, 90.0], dtype=np.float32)
-        self._depthbounds = np.zeros([0.0, 1.0], dtype=np.float32)
+        self._lonbounds = np.array([-180.0, 180.0], dtype=np.float32)
+        self._latbounds = np.array([-90.0, 90.0], dtype=np.float32)
+        self._depthbounds = np.array([0.0, 1.0], dtype=np.float32)
         self._lon_bins = lon_bins
         self._lat_bins = lat_bins
         self._depth_bins = depth_bins
@@ -224,11 +224,11 @@ class SpatialIdGenerator(BaseIdGenerator):
         if iddepth is None:
             iddepth = self._depthbounds[0]
         lon_discrete = (idlon - self._lonbounds[0]) / (self._lonbounds[1] - self._lonbounds[0])
-        lon_discrete = np.int32(self._lon_bins * lon_discrete)
+        lon_discrete = np.int32((self._lon_bins-1) * lon_discrete)
         lat_discrete = (idlat - self._latbounds[0]) / (self._latbounds[1] - self._latbounds[0])
-        lat_discrete = np.int32(self._lat_bins * lat_discrete)
+        lat_discrete = np.int32((self._lat_bins-1) * lat_discrete)
         depth_discrete = (iddepth - self._depthbounds[0])/(self._depthbounds[1]-self._depthbounds[0])
-        depth_discrete = np.int32(self._depth_bins * depth_discrete)
+        depth_discrete = np.int32((self._depth_bins-1) * depth_discrete)
         lon_index = np.uint32(np.int32(lon_discrete))
         lat_index = np.uint32(np.int32(lat_discrete))
         depth_index = np.uint32(np.int32(depth_discrete))
@@ -292,8 +292,8 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
 
     def __init__(self):
         super(SpatioTemporalIdGenerator, self).__init__()
-        self.timebounds = np.zeros([0, 0, 1.0], dtype=np.float64)
-        self.depthbounds = np.zeros([0, 0, 1.0], dtype=np.float32)
+        self.timebounds = np.array([0, 1.0], dtype=np.float64)
+        self.depthbounds = np.array([0, 1.0], dtype=np.float32)
         self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
         self._recover_ids = False
@@ -321,8 +321,8 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
             depth = self.depthbounds[0]
         if time is None:
             time = self.timebounds[0]
-        lon_discrete = np.int32(lon)
-        lat_discrete = np.int32(lat)
+        lon_discrete = np.int32(min(max(lon, -179.9), 179.9))
+        lat_discrete = np.int32(min(max(lat, -179.9), 179.9))
         depth_discrete = (depth-self.depthbounds[0])/(self.depthbounds[1]-self.depthbounds[0])
         depth_discrete = np.int32(127.0 * depth_discrete)
         time_discrete = (time-self.timebounds[0])/(self.timebounds[1]-self.timebounds[0])
