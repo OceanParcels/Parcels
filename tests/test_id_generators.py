@@ -5,11 +5,7 @@ from parcels.tools import logger
 
 from parcels.tools import SequentialIdGenerator, SpatialIdGenerator, SpatioTemporalIdGenerator, GenerateID_Service  # noqa
 
-generator_type = ['sequential', 'spatial', 'spatiotemporal'],
-     pytest.param('jit',
-                  marks=pytest.mark.xfail(
-                      (sys.version_info >= (3, 0)) or (),
-                      reason="py.test FD capturing does not work for jit on python3 or Win"))
+generator_type = ['sequential', 'spatial', 'spatiotemporal']
 generators = {'sequential': SequentialIdGenerator,
               'spatial': SpatialIdGenerator,
               'spatiotemporal': SpatioTemporalIdGenerator}
