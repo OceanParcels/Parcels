@@ -7,5 +7,4 @@ export DISPLAY=:99.0;
 sh -e /etc/init.d/xvfb start;
 sleep 3;
 
-parcels_get_examples examples/;
-pytest -v -s --nbval-lax -k "not documentation" tests/ examples/;
+pytest -v -s tests/ ;
