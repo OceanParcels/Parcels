@@ -207,8 +207,8 @@ class SpatialIdGenerator(BaseIdGenerator):
 
     def getID(self, lon, lat, depth, time=None):
         idlon = lon  # avoid original 'lon' changes from change-by-ref artefacts
-        idlat = lat  # avoid original 'lon' changes from change-by-ref artefacts
-        iddepth = depth  # avoid original 'lon' changes from change-by-ref artefacts
+        idlat = lat  # avoid original 'lat' changes from change-by-ref artefacts
+        iddepth = depth  # avoid original 'depth' changes from change-by-ref artefacts
         if idlon < self._lonbounds[0]:
             vsgn = np.sign(idlon)
             idlon = np.fmod(np.fabs(idlon), np.fabs(self._lonbounds[0])) * vsgn
@@ -223,6 +223,9 @@ class SpatialIdGenerator(BaseIdGenerator):
             idlat = np.fmod(np.fabs(idlat), np.fabs(self._latbounds[1])) * vsgn
         if iddepth is None:
             iddepth = self._depthbounds[0]
+        if iddepth < self._depthbounds[0] or depth > self._depthbounds[1]:
+            vsgn = np.sign(depth)
+            iddepth = np.fmod(np.fabs(iddepth), np.fabs(max(self._depthbounds))) * vsgn if min(self._depthbounds) > 0 else max(self._depthbounds) - (np.fmod(np.fabs(iddepth), max(np.fabs(self._depthbounds))) * vsgn)
         lon_discrete = (idlon - self._lonbounds[0]) / (self._lonbounds[1] - self._lonbounds[0])
         lon_discrete = np.int32((self._lon_bins-1) * lon_discrete)
         lat_discrete = (idlat - self._latbounds[0]) / (self._latbounds[1] - self._latbounds[0])
@@ -256,7 +259,7 @@ class SpatialIdGenerator(BaseIdGenerator):
     def _get_next_id(self, lon_index, lat_index, depth_index, time_index=None):
         local_index = -1
         lon_shift = 32-int(np.ceil(np.log2(self._lon_bins)))
-        lat_shift = lon_index-int(np.ceil(np.log2(self._lat_bins)))
+        lat_shift = lon_shift-int(np.ceil(np.log2(self._lat_bins)))
         id = np.left_shift(lon_index, lon_shift) + np.left_shift(lat_index, lat_shift) + depth_index
         if len(self.released_ids) > 0 and (id in self.released_ids.keys()) and len(self.released_ids[id]) > 0:
             local_index = np.uint32(self.released_ids[id].pop())
@@ -292,8 +295,8 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
 
     def __init__(self):
         super(SpatioTemporalIdGenerator, self).__init__()
-        self.timebounds = np.array([0, 1.0], dtype=np.float64)
-        self.depthbounds = np.array([0, 1.0], dtype=np.float32)
+        self._timebounds = np.array([0, 1.0], dtype=np.float64)
+        self._depthbounds = np.array([0, 1.0], dtype=np.float32)
         self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
         self._recover_ids = False
@@ -305,27 +308,37 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
             del self.released_ids
 
     def setTimeLine(self, min_time=0.0, max_time=1.0):
-        self.timebounds = np.array([min_time, max_time], dtype=np.float64)
+        self._timebounds = np.array([min_time, max_time], dtype=np.float64)
 
     def setDepthLimits(self, min_depth=0.0, max_depth=1.0):
-        self.depthbounds = np.array([min_depth, max_depth], dtype=np.float32)
+        self._depthbounds = np.array([min_depth, max_depth], dtype=np.float32)
 
     def getID(self, lon, lat, depth, time):
-        if lon < -180.0 or lon > 180.0:
-            vsgn = np.sign(lon)
-            lon = np.fmod(np.fabs(lon), 180.0) * vsgn
-        if lat < -90.0 or lat > 90.0:
-            vsgn = np.sign(lat)
-            lat = np.fmod(np.fabs(lat), 90.0) * vsgn
-        if depth is None:
-            depth = self.depthbounds[0]
-        if time is None:
-            time = self.timebounds[0]
-        lon_discrete = np.int32(min(max(lon, -179.9), 179.9))
-        lat_discrete = np.int32(min(max(lat, -179.9), 179.9))
-        depth_discrete = (depth-self.depthbounds[0])/(self.depthbounds[1]-self.depthbounds[0])
+        idlon = lon  # avoid original 'lon' changes from change-by-ref artefacts
+        idlat = lat  # avoid original 'lat' changes from change-by-ref artefacts
+        iddepth = depth  # avoid original 'depth' changes from change-by-ref artefacts
+        idtime = time  # avoid original 'time' changes from change-by-ref artefacts
+        if idlon < -180.0 or idlon > 180.0:
+            vsgn = np.sign(idlon)
+            idlon = np.fmod(np.fabs(idlon), 180.0) * vsgn
+        if idlat < -90.0 or idlat > 90.0:
+            vsgn = np.sign(idlat)
+            idlat = np.fmod(np.fabs(idlat), 90.0) * vsgn
+        if iddepth is None:
+            iddepth = self._depthbounds[0]
+        if iddepth < self._depthbounds[0] or iddepth > self._depthbounds[1]:
+            vsgn = np.sign(iddepth)
+            iddepth = np.fmod(np.fabs(iddepth), np.fabs(max(self._depthbounds))) * vsgn if min(self._depthbounds) > 0 else max(self._depthbounds) - (np.fmod(np.fabs(iddepth), max(np.fabs(self._depthbounds))) * vsgn)
+        if idtime is None:
+            idtime = self._timebounds[0]
+        if idtime < self._timebounds[0] or idtime > self._timebounds[1]:
+            vsgn = np.sign(idtime)
+            idtime = np.fmod(np.fabs(idtime), np.fabs(max(self._timebounds))) * vsgn if min(self._timebounds) > 0 else max(self._timebounds) - (np.fmod(np.fabs(idtime), max(np.fabs(self._timebounds))) * vsgn)
+        lon_discrete = np.int32(min(max(idlon, -179.9), 179.9))
+        lat_discrete = np.int32(min(max(idlat, -179.9), 179.9))
+        depth_discrete = (iddepth-self._depthbounds[0])/(self._depthbounds[1]-self._depthbounds[0])
         depth_discrete = np.int32(127.0 * depth_discrete)
-        time_discrete = (time-self.timebounds[0])/(self.timebounds[1]-self.timebounds[0])
+        time_discrete = (idtime-self._timebounds[0])/(self._timebounds[1]-self._timebounds[0])
         time_discrete = np.int32(255.0 * time_discrete)
         lon_index = np.uint32(np.int32(lon_discrete)+180)
         lat_index = np.uint32(np.int32(lat_discrete)+90)
