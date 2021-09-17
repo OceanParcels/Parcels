@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from parcels.tools import GenerateID_Service, SequentialIdGenerator, SpatialIdGenerator, SpatioTemporalIdGenerator
+from parcels.tools import SequentialIdGenerator, SpatialIdGenerator, SpatioTemporalIdGenerator, GenerateID_Service  # noqa
 
 generator_type = ['sequential', 'spatial', 'spatiotemporal']
 generators = {'sequential': SequentialIdGenerator,
@@ -26,19 +26,22 @@ generators = {'sequential': SequentialIdGenerator,
 # print("Test-ID Rio:       {}".format(numpy.binary_repr(id4, width=64)))
 # print("===========================================================================")
 
+
 @pytest.mark.parametrize('gentype', generator_type)
-def test_spherical_neighbors(gentype):
+def test_idgenerator_initial(gentype):
     generator = generators[gentype]()
     positions = [(1.0, 0., 0., 0.),
-           (180.0, 0., 0., 0.),
-           (-1.0, 0., 0., 1.0),
-           (0., 0., 0., 1.0),
-           (0., 0., 0., 0.0)]
+                 (180.0, 0., 0., 0.),
+                 (-1.0, 0., 0., 1.0),
+                 (0., 0., 0., 1.0),
+                 (0., 0., 0., 0.0)]
+    pos_ref = np.array(positions)
     ids = []
     for pos in positions:
         id = generator.getID(pos[0], pos[1], pos[2], pos[3])
         ids.append(id)
     uids = np.unique(ids)
+    assert np.all(np.array(positions) == pos_ref)
     assert np.alltrue([id in uids for id in ids])
     if gentype == 'sequential':
         assert np.alltrue([type(id) in [np.int64, np.uint64] for id in ids])
@@ -61,3 +64,65 @@ def test_spherical_neighbors(gentype):
         assert ids[1] == max(ids)
         assert ids[2] == min(ids)
         assert ids[4] < ids[3]
+
+
+@pytest.mark.parametrize('gentype', generator_type)
+@pytest.mark.parametrize('depth_bound', [(0., 1.0), (0, 25.), (-25.0, 0.), (0., 1000.0)])
+@pytest.mark.parametrize('time_bound', [(0., 1.0), (0., 86400.0), (0., 316224000.0)])
+def test_idgenerator_settimedepth(gentype, depth_bound, time_bound):
+    generator = generators[gentype]()
+    generator.setDepthLimits(depth_bound[0], depth_bound[1])
+    generator.setTimeLine(time_bound[0], time_bound[1])
+    positions = [(1.0, 0., 0., 0.),
+                 (180.0, 0., 0., 0.),
+                 (-1.0, 0., 0., 1.0),
+                 (0., 0., 0., 1.0),
+                 (0., 0., 0., 0.0),
+                 (-90.0, 0., 0., 1.0),
+                 (1.0, 1.0, 0., 0.),
+                 (10.5, 12.5, 10, 0),
+                 (10.5, 12.5, 10, 64800),
+                 (-90.0, 0., 0., 43200.0)]
+    ids = []
+    for pos in positions:
+        id = generator.getID(pos[0], pos[1], pos[2], pos[3])
+        ids.append(id)
+    uids = np.unique(ids)
+    assert np.alltrue([id in uids for id in ids])
+    if gentype == 'sequential':
+        assert np.alltrue([type(id) in [np.int64, np.uint64] for id in ids])
+        assert np.all(ids == np.array(np.arange(start=0, stop=10, step=1), dtype=np.int64))
+    elif gentype in ['spatial', 'spatiotemporal']:
+        assert ids[5] == min(ids)
+        assert ids[1] == max(ids)
+        assert ids[4] > ids[5]
+        assert ids[4] < ids[1]
+
+
+@pytest.mark.parametrize('binranges', [(360, 180, 32768), (1000, 1000, 4096), (5000, 4000, 128)])
+@pytest.mark.parametrize('depth_bound', [(0., 1.0), (0, 25.), (-25.0, 0.), (0., 1000.0)])
+@pytest.mark.parametrize('time_bound', [(0., 1.0), (0., 86400.0), (0., 316224000.0)])
+def test_idgenerator_changing_bitallocation(binranges, depth_bound, time_bound):
+    generator = SpatialIdGenerator(binranges[0], binranges[1], binranges[2])
+    generator.setDepthLimits(depth_bound[0], depth_bound[1])
+    generator.setTimeLine(time_bound[0], time_bound[1])
+    positions = [(1.0, 0., 0., 0.),
+                 (180.0, 0., 0., 0.),
+                 (-1.0, 0., 0., 1.0),
+                 (0., 0., 0., 1.0),
+                 (0., 0., 0., 0.0),
+                 (-90.0, 0., 0., 1.0),
+                 (1.0, 1.0, 0., 0.),
+                 (10.5, 12.5, 10, 0),
+                 (10.5, 12.5, 10, 64800),
+                 (-90.0, 0., 0., 43200.0)]
+    ids = []
+    for pos in positions:
+        id = generator.getID(pos[0], pos[1], pos[2], pos[3])
+        ids.append(id)
+    uids = np.unique(ids)
+    assert np.alltrue([id in uids for id in ids])
+
+# test GenerateID_Service
+
+# test GenerateID_Service with MPI
