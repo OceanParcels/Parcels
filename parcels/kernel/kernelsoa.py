@@ -9,6 +9,8 @@ from ctypes import c_int
 from os import path
 
 import numpy as np
+from parcels.particleset.numba_aos import convert_pset_to_tlist,\
+    convert_tlist_to_pset
 try:
     from mpi4py import MPI
 except:
@@ -147,8 +149,12 @@ class KernelSOA(BaseKernel):
                     continue
                 f.data = np.array(f.data)
 
-        for p in pset:
-            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+        numba_pset = convert_pset_to_tlist(pset)
+        for p in numba_pset:
+            self.static_evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+        convert_tlist_to_pset(numba_pset, pset)
+#        for p in pset:
+#            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
