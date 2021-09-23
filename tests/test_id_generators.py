@@ -134,8 +134,81 @@ def test_idgenerator_changing_bitallocation(binranges, depth_bound, time_bound):
     uids = np.unique(ids)
     assert np.alltrue([id in uids for id in ids])
 
+
 # test ID-release
+@pytest.mark.parametrize('gentype', generator_type)
+@pytest.mark.parametrize('release_ids', [True, False])
+def test_idgenerator_idrelease(gentype, release_ids):
+    if sys.platform == 'win32' and gentype in ['spatial', 'spatiotemporal']:
+        logger.warning("Not testing ID-generator type '{}' on Win32 as requested ID-map memory sizes, which is at 7.91GB, exceeds the GitHub quota.".format(gentype))
+        return 0
+    generator = generators[gentype]()
+    if release_ids:
+        generator.enable_ID_recovery()
+    positions = [(-0.1, 0., 0., 0.),
+                 (180.0, 0., 0., 0.),
+                 (1.0, 0., 0., 1.0),
+                 (0., 0., 0., 1.0),
+                 (0., 0., 0., 0.0)]
+    pos_ref = np.array(positions)
+    ids = []
+    for pos in positions:
+        id = generator.getID(pos[0], pos[1], pos[2], pos[3])
+        ids.append(id)
+    generator.releaseID(ids[0])
+    ids.pop(0)
+    ids.append(generator.getID(-0.1, 0., 0., 0.))
+
+    id3 = ids[3]
+    id4 = ids[4]
+    if release_ids:
+        assert id4 < id3
+    else:
+        assert id3 < id4
+    uids = np.unique(ids)
+    assert np.alltrue([id in uids for id in ids])
+
 
 # test GenerateID_Service
+@pytest.mark.parametrize('gentype', generator_type)
+def test_idgenerator_service(gentype):
+    if sys.platform == 'win32' and gentype in ['spatial', 'spatiotemporal']:
+        logger.warning("Not testing ID-generator type '{}' on Win32 as requested ID-map memory sizes, which is at 7.91GB, exceeds the GitHub quota.".format(gentype))
+        return 0
+    generator = GenerateID_Service(generators[gentype])
+    positions = [(1.0, 0., 0., 0.),
+                 (180.0, 0., 0., 0.),
+                 (-1.0, 0., 0., 1.0),
+                 (0., 0., 0., 1.0),
+                 (0., 0., 0., 0.0)]
+    pos_ref = np.array(positions)
+    ids = []
+    for pos in positions:
+        id = generator.getID(pos[0], pos[1], pos[2], pos[3])
+        ids.append(id)
+    uids = np.unique(ids)
+    assert np.all(np.array(positions) == pos_ref)
+    assert np.alltrue([id in uids for id in ids])
+    if gentype == 'sequential':
+        assert np.alltrue([type(id) in [np.int64, np.uint64] for id in ids])
+        assert ids[0] == 0
+        assert ids[0] < ids[1]
+        assert ids[1] == 1
+        assert ids[1] < ids[2]
+        assert ids[2] == 2
+        assert ids[2] < ids[3]
+        assert ids[3] == 3
+    elif gentype == 'spatial':
+        assert ids[2] < ids[3]
+        assert ids[2] < ids[0]
+        assert ids[1] == max(ids)
+        assert ids[2] == min(ids)
+        assert ids[3] < ids[4]
+    elif gentype == 'spatiotemporal':
+        assert ids[2] < ids[3]
+        assert ids[2] < ids[0]
+        assert ids[1] == max(ids)
+        assert ids[2] == min(ids)
+        assert ids[4] < ids[3]
 
 # test GenerateID_Service with MPI
