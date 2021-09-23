@@ -107,7 +107,7 @@ def test_idgenerator_settimedepth(gentype, depth_bound, time_bound):
         assert ids[4] < ids[1]
 
 
-@pytest.mark.parametrize('binranges', [(360, 180, 32768), (1000, 1000, 4096), (5000, 4000, 128)])
+@pytest.mark.parametrize('binranges', [(360, 180, 8192), (1000, 1000, 1024), (5000, 4000, 32)])
 @pytest.mark.parametrize('depth_bound', [(0., 1.0), (0, 25.), (-25.0, 0.), (0., 1000.0)])
 @pytest.mark.parametrize('time_bound', [(0., 1.0), (0., 86400.0), (0., 316224000.0)])
 def test_idgenerator_changing_bitallocation(binranges, depth_bound, time_bound):
@@ -133,6 +133,8 @@ def test_idgenerator_changing_bitallocation(binranges, depth_bound, time_bound):
         ids.append(id)
     uids = np.unique(ids)
     assert np.alltrue([id in uids for id in ids])
+
+# test ID-release
 
 # test GenerateID_Service
 
