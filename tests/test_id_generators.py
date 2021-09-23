@@ -150,7 +150,6 @@ def test_idgenerator_idrelease(gentype, release_ids):
                  (1.0, 0., 0., 1.0),
                  (0., 0., 0., 1.0),
                  (0., 0., 0., 0.0)]
-    pos_ref = np.array(positions)
     ids = []
     for pos in positions:
         id = generator.getID(pos[0], pos[1], pos[2], pos[3])
