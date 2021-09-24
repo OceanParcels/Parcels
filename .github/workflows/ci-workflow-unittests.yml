@@ -1,5 +1,6 @@
-name: test-suite
-on: pull_request
+name: unit-tests
+on:
+  pull_request:
 jobs:
   pep8-linter:
     name: Testing PEP8 linter
@@ -14,7 +15,7 @@ jobs:
           python -m flake8 tests/
         shell: bash
   test_macOS:
-    name: Testing on macOS python latest
+    name: Unittesting on macOS python latest
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@master
@@ -25,10 +26,10 @@ jobs:
           MINICONDA_NAME: Miniconda3-latest-MacOSX-x86_64.sh
         run: |
           ./.github/scripts/linux_install.sh
-          ./.github/scripts/osx_test.sh
+          ./.github/scripts/osx_unittest.sh
         shell: bash
   test_linux:
-    name: Testing on Linux Python 3.6
+    name: Unittesting on Linux Python 3.6
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -39,10 +40,10 @@ jobs:
           MINICONDA_NAME: Miniconda3-latest-Linux-x86_64.sh
         run: |
           ./.github/scripts/linux_install.sh
-          ./.github/scripts/linux_test.sh
+          ./.github/scripts/linux_unittest.sh
         shell: bash
   test_windows:
-    name: Testing on Windows python latest
+    name: Unittesting on Windows python latest
     runs-on: windows-2016
     steps:
       - uses: actions/checkout@master
@@ -55,5 +56,5 @@ jobs:
         run: |
           ./.github/scripts/install_miniconda.ps1
           ./.github/scripts/windows_install.bat
-          ./.github/scripts/windows_test.bat
+          ./.github/scripts/windows_unittest.bat
         shell: powershell
