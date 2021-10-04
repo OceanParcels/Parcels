@@ -25,4 +25,5 @@ parcels/examples/.ipynb_checkpoints/*
 parcels.egg-info/*
 dist/parcels*.egg
 parcels/examples/particle*.png
+parcels/_version_setup.py
 /.pytest_cache/
