@@ -5,6 +5,7 @@ from datetime import timedelta as delta
 import sys
 import numpy as np
 import xarray as xr
+from copy import copy
 
 from parcels.grid import GridCode
 from parcels.grid import CurvilinearGrid
@@ -236,12 +237,12 @@ class ParticleSetSOA(BaseParticleSet):
             else:
                 if self._collection.data['time'][0] and not np.allclose(self._collection.data['time'], self._collection.data['time'][0]):
                     raise ValueError('All Particle.time should be the same when repeatdt is not None')
-                self.repeat_starttime = self._collection.data['time'][0]
-            self.repeatlon = self._collection.data['lon']
-            self.repeatlat = self._collection.data['lat']
-            self.repeatdepth = self._collection.data['depth']
+                self.repeat_starttime = copy(self._collection.data['time'][0])
+            self.repeatlon = copy(self._collection.data['lon'])
+            self.repeatlat = copy(self._collection.data['lat'])
+            self.repeatdepth = copy(self._collection.data['depth'])
             for kwvar in kwargs:
-                self.repeatkwargs[kwvar] = self._collection.data[kwvar]
+                self.repeatkwargs[kwvar] = copy(self._collection.data[kwvar])
 
         if self.repeatdt:
             if MPI and self._collection.pu_indicators is not None:
