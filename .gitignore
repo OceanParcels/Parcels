@@ -1,6 +1,8 @@
 build/*
 docs/_build/*
 gh-pages/*
+lib/
+bin/
 
 *.so
 *.log
