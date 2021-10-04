@@ -1,5 +1,6 @@
-from ._version import version
-__version__ = version
+import subprocess
+import os
+__version__ = subprocess.check_output(['git', '-C', os.path.dirname(__file__), 'describe', '--tags']).decode('ascii').strip()
 
 from parcels.fieldset import *  # noqa
 from parcels.particle import *  # noqa
