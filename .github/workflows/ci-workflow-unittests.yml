@@ -16,7 +16,7 @@ jobs:
         shell: bash
   test_macOS:
     name: Unittesting on macOS python latest
-    runs-on: macOS-latest
+    runs-on: macOS-10.15
     steps:
       - uses: actions/checkout@master
       - name: Test OSX
