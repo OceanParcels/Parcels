@@ -16,7 +16,7 @@ jobs:
         shell: bash
   test_macOS:
     name: Unittesting on macOS python latest
-    runs-on: macOS-10.15
+    runs-on: macOS-latest
     steps:
       - uses: actions/checkout@master
       - name: Test OSX
@@ -24,6 +24,7 @@ jobs:
           OS_NAME: osx
           PY_VERSION: 3
           MINICONDA_NAME: Miniconda3-latest-MacOSX-x86_64.sh
+          CC: gcc
         run: |
           ./.github/scripts/linux_install.sh
           ./.github/scripts/osx_unittest.sh
