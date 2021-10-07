@@ -831,6 +831,29 @@ def test_summedfields(pset_mode, mode, with_W, k_sample_p, mesh):
     assert np.isclose(pset.lat[0], 0.9)
     assert np.allclose(fieldsetS.UV[0][0, 0, 0, 0], [.2/conv, 0])
 
+@pytest.mark.parametrize('boundaryslip', ['freeslip', 'partialslip'])
+def test_summedfields_slipinterp_warning(boundaryslip):
+    xdim = 10
+    ydim = 20
+    zdim = 4
+    gf = 10  # factor by which the resolution of grid1 is higher than of grid2
+    U1 = Field('U', 0.2*np.ones((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32),
+               lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
+               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32),
+               depth=np.linspace(0., 20., zdim*gf, dtype=np.float32),
+               interp_method=boundaryslip)
+    U2 = Field('U', 0.1*np.ones((zdim, ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 1., xdim, dtype=np.float32),
+               lat=np.linspace(0., 1., ydim, dtype=np.float32),
+               depth=np.linspace(0., 20., zdim, dtype=np.float32))
+    V1 = Field('V', np.zeros((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid, fieldtype='V')
+    V2 = Field('V', np.zeros((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid, fieldtype='V')
+    fieldsetS = FieldSet(U1+U2, V1+V2)
+
+    with pytest.warns(UserWarning):
+        fieldsetS.check_complete()
+
+# test_summedfields_slipinterp_warning('aos', False, 'freeslip')
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])

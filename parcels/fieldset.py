@@ -228,6 +228,9 @@ class FieldSet(object):
             W = self.W if hasattr(self, 'W') else None
             check_velocityfields(self.U, self.V, W)
 
+        if isinstance(self.U, SummedField) and self.U[0].interp_method in ['partialslip', 'freeslip']:
+            raise UserWarning('Slip boundary conditions may not work well with SummedFields. Be careful')
+
         for g in self.gridset.grids:
             g.check_zonal_periodic()
             if len(g.time) == 1:
