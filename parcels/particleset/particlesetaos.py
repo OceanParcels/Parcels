@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import xarray as xr
 from ctypes import c_void_p
+from copy import copy
 
 from parcels.grid import GridCode
 from parcels.field import NestedField
@@ -264,12 +265,12 @@ class ParticleSetAOS(BaseParticleSet):
                 collect_time = self._collection.time
                 if collect_time[0] and not np.allclose(collect_time, collect_time[0]):
                     raise ValueError('All Particle.time should be the same when repeatdt is not None')
-                self.repeat_starttime = collect_time[0]
-            self.repeatlon = self._collection.lon
-            self.repeatlat = self._collection.lat
-            self.repeatdepth = self._collection.depth
+                self.repeat_starttime = copy(collect_time[0])
+            self.repeatlon = copy(self._collection.lon)
+            self.repeatlat = copy(self._collection.lat)
+            self.repeatdepth = copy(self._collection.depth)
             for kwvar in kwargs:
-                self.repeatkwargs[kwvar] = getattr(self._collection, kwvar)
+                self.repeatkwargs[kwvar] = copy(getattr(self._collection, kwvar))
 
         if self.repeatdt:
             if MPI and self._collection.pu_indicators is not None:
