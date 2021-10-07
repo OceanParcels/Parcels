@@ -6,6 +6,7 @@ import random as PyRandom
 import numpy.ctypeslib as npct
 from parcels.tools import get_cache_dir, get_package_dir
 from .codecompiler import *  # noqa: F401
+from .codecompiler import CCompiler_MS
 from parcels.tools.loggers import logger
 
 try:
@@ -207,7 +208,8 @@ class InterfaceC(object):
     def compile_library(self):
         """ Writes kernel code to file and compiles it."""
         if not self.compiled:
-            compiled_fpath = self.compiler.compile(self.src_file, self.lib_file, self.log_file)
+            src_file = self.src_file if not isinstance(self.compiler, CCompiler_MS) and not (isinstance(self.src_file, list) and not isinstance(self.src_file, str)) else [self.src_file, ]
+            compiled_fpath = self.compiler.compile(src=src_file, obj=self.lib_file, log=self.log_file)
             # logger.info("Compiled %s ==> %s" % (self.basename, self.lib_file))
             logger.info("Compiled %s ==> %s" % (self.basename, compiled_fpath))
             assert os.path.exists(compiled_fpath)
@@ -296,13 +298,14 @@ class InterfaceC(object):
         for function_param in function_param_array:
             if isinstance(function_param, dict) and \
                     isinstance(function_param["name"], str) and \
-                    isinstance(function_param["return"], type) or function_param["return"] is None and \
-                    isinstance(function_param["arguments"], list):
+                    (isinstance(function_param["return"], type) or function_param["return"] is None) and \
+                    (isinstance(function_param["arguments"], list) or function_param["arguments"] is None):
                 try:
                     # result[function_param["name"]] = self.libc[function_param["name"]]
                     result[function_param["name"]] = getattr(self.libc, function_param["name"])
                     result[function_param["name"]].restype = function_param["return"]
-                    result[function_param["name"]].argtypes = function_param["arguments"]
+                    if function_param["arguments"] is not None:
+                        result[function_param["name"]].argtypes = function_param["arguments"]
                 except (AttributeError, ValueError, KeyError, IndexError) as e:
                     result = None
                     logger.error("Failed to load function '{}' from library '{}.".format(function_param["name"], self.basename))
