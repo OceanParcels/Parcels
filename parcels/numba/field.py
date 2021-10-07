@@ -41,22 +41,18 @@ NumbaParticle = jitclass(Particle, spec=spec)
 
 
 def create_chunks(grid, pset, func):
-#     cells = np.unique([grid.particle_to_chunk(p) for p in pset])
-#     cell_used = np.zeros(grid.lat.n*grid.lon.n, dtype=np.bool)
-#     cell_used[cells] = True
-    cell_used = np.ones(grid.lat.n*grid.lon.n, dtype=np.bool)
-#     print(cells)
+    cells = np.unique([grid.particle_to_chunk(p) for p in pset])
+    cell_used = np.zeros(grid.lat.n*grid.lon.n, dtype=np.bool)
+    cell_used[cells] = True
 
     data = nb.typed.List()
 
-#     data = []
     i_chunk = 0
     for i_lon_chunk in range(grid.lon.nchunk):
         for i_lat_chunk in range(grid.lat.nchunk):
             if not cell_used[i_chunk]:
                 data.append(np.zeros((0, 0)))
             else:
-#                 print(i_chunk, grid.lat.chunk_spec(i_lat_chunk))
                 lat_vals = np.linspace(*grid.lat.chunk_spec(i_lat_chunk), endpoint=False)
                 lon_vals = np.linspace(*grid.lon.chunk_spec(i_lon_chunk), endpoint=False)
                 lat_grid, lon_grid = np.meshgrid(lat_vals, lon_vals)
@@ -110,8 +106,8 @@ class GridSpec():
     def particle_to_chunk(self, p):
         i_lat = int((p.lat-self.lat.start)/self.lat.dx)
         i_lon = int((p.lon-self.lon.start)/self.lon.dx)
-        i_chunk_lat = i_lat//self.lat.nchunk
-        i_chunk_lon = i_lon//self.lon.nchunk
+        i_chunk_lat = i_lat//self.lat.chunk_size
+        i_chunk_lon = i_lon//self.lon.chunk_size
         return i_chunk_lat+i_chunk_lon*self.lat.nchunk
 
     def get_i(self, lat, lon):
@@ -189,7 +185,7 @@ class FieldUV():
         status, valV = self.grid.interpolate(lat, lon, self.fieldV)
         if status != STATUS_OK:
             p.status = status
-            return valU, valU
+            return valV, valV
         return valU, valV
 
 
