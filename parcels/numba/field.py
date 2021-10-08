@@ -40,10 +40,12 @@ spec = [
 NumbaParticle = jitclass(Particle, spec=spec)
 
 
-def create_chunks(grid, pset, func):
+def create_chunks(grid, pset, func, fill=True):
     cells = np.unique([grid.particle_to_chunk(p) for p in pset])
     cell_used = np.zeros(grid.lat.n*grid.lon.n, dtype=np.bool)
     cell_used[cells] = True
+    if fill:
+        cell_used[:] = True
 
     data = nb.typed.List()
 
@@ -197,6 +199,13 @@ class FieldSet():
     def __init__(self, grid, fieldU, fieldV):
         self.grid = grid
         self.UV = FieldUV(fieldU, fieldV, grid)
+
+
+def create_legacy_pset(n_particle):
+    pset = nb.typed.List()
+    for _ in range(n_particle):
+        pset.append(NumbaParticle(0.01))
+    return pset
 
 
 @njit
