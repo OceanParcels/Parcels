@@ -4,6 +4,7 @@ from os import path
 
 import dask.array as da
 import numpy as np
+import warnings
 
 from parcels.field import Field, DeferredArray
 from parcels.field import NestedField
@@ -229,7 +230,7 @@ class FieldSet(object):
             check_velocityfields(self.U, self.V, W)
 
         if isinstance(self.U, SummedField) and self.U[0].interp_method in ['partialslip', 'freeslip']:
-            raise UserWarning('Slip boundary conditions may not work well with SummedFields. Be careful')
+            warnings.warn('Slip boundary conditions may not work well with SummedFields. Be careful', UserWarning)
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()

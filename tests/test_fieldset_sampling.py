@@ -831,6 +831,7 @@ def test_summedfields(pset_mode, mode, with_W, k_sample_p, mesh):
     assert np.isclose(pset.lat[0], 0.9)
     assert np.allclose(fieldsetS.UV[0][0, 0, 0, 0], [.2/conv, 0])
 
+
 @pytest.mark.parametrize('boundaryslip', ['freeslip', 'partialslip'])
 def test_summedfields_slipinterp_warning(boundaryslip):
     xdim = 10
@@ -853,7 +854,6 @@ def test_summedfields_slipinterp_warning(boundaryslip):
     with pytest.warns(UserWarning):
         fieldsetS.check_complete()
 
-# test_summedfields_slipinterp_warning('aos', False, 'freeslip')
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
