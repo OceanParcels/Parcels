@@ -229,8 +229,9 @@ class FieldSet(object):
             W = self.W if hasattr(self, 'W') else None
             check_velocityfields(self.U, self.V, W)
 
-        if isinstance(self.U, SummedField) and self.U[0].interp_method in ['partialslip', 'freeslip']:
-            warnings.warn('Slip boundary conditions may not work well with SummedFields. Be careful', UserWarning)
+        for fld in [self.U, self.V]:
+            if isinstance(fld, SummedField) and fld[0].interp_method in ['partialslip', 'freeslip'] and np.any([fld[0].grid is not f.grid for f in fld]):
+                warnings.warn('Slip boundary conditions may not work well with SummedFields. Be careful', UserWarning)
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()
