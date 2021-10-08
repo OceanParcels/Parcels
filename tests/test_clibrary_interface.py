@@ -50,11 +50,9 @@ def testf_hstring_fixture():
 @pytest.mark.parametrize("call_gc", [True, False])
 def test_clibrary_creation_teardown(compiler, call_gc):
     my_obj = LibraryRegisterC()
-    libs = "node"  # if compiler is GNUCompiler_SS else ["node",]
     ccompiler = compiler(cppargs=[], incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
-    my_interface = InterfaceC(libs, ccompiler, get_package_dir())
+    my_interface = InterfaceC("node", ccompiler, os.path.join(get_package_dir(), "nodes"))
     del ccompiler
-    del libs
     del my_interface
     del my_obj
     if call_gc:
@@ -66,14 +64,12 @@ def test_clibrary_creation_teardown(compiler, call_gc):
 @pytest.mark.parametrize("call_gc", [True, False])
 def test_clibrary_add_remove_entry(compiler, manual_interface_teardown, call_gc):
     my_obj = LibraryRegisterC()
-    libs = "node"  # if compiler is GNUCompiler_SS else ["node",]
     ccompiler = compiler(cppargs=[], incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
-    my_interface = InterfaceC(libs, ccompiler, get_package_dir())
+    my_interface = InterfaceC("node", ccompiler, os.path.join(get_package_dir(), "nodes"))
     my_obj.add_entry("node", my_interface)
     assert my_obj.get("node") == my_interface
     if manual_interface_teardown:
         my_obj.remove("node")
-    del libs
     del ccompiler
     del my_interface
     del my_obj
@@ -85,15 +81,16 @@ def test_clibrary_add_remove_entry(compiler, manual_interface_teardown, call_gc)
 @pytest.mark.parametrize('stages_done', [BUILD_LIB, COMPILE_LIB, LOAD_LIB, EXECUTE_LIB, UNLOAD_LIB, REMOVE_LIB])
 @pytest.mark.parametrize("manual_interface_teardown", [True, False])
 @pytest.mark.parametrize("call_gc", [True, False])
-def test_clibrary_test_custom_clib(testf_cstring, testf_hstring, compiler, stages_done, manual_interface_teardown, call_gc):
-    with open(os.path.join(get_cache_dir(), "testf.c"), "w") as f:
+def test_clibrary_custom_clib(testf_cstring, testf_hstring, compiler, stages_done, manual_interface_teardown, call_gc):
+    testf_c_file = os.path.join(get_cache_dir(), "testf.c")
+    testf_h_file = os.path.join(get_cache_dir(), "testf.h")
+    with open(testf_c_file, "w") as f:
         f.write(testf_cstring)
-    with open(os.path.join(get_cache_dir(), "testf.h"), "w") as f:
+    with open(testf_h_file, "w") as f:
         f.write(testf_hstring)
     my_obj = LibraryRegisterC()
-    libnames = "testf"  # if compiler is GNUCompiler_SS else ["testf",]
     ccompiler = compiler(cppargs=[], incdirs=[os.path.join(get_cache_dir()), "."], libdirs=[".", get_cache_dir()])
-    my_interface = InterfaceC(libnames, ccompiler, get_cache_dir())
+    my_interface = InterfaceC("testf", ccompiler, get_cache_dir())
     my_obj.add_entry("testf", my_interface)
     assert my_obj.is_created("testf")
     assert my_obj.get("testf") == my_interface
@@ -123,10 +120,109 @@ def test_clibrary_test_custom_clib(testf_cstring, testf_hstring, compiler, stage
         my_obj.clear()
     del my_interface
     del my_obj
+    if os.path.exists(testf_c_file):
+        os.remove(testf_c_file)
+    if os.path.exists(testf_h_file):
+        os.remove(testf_h_file)
     if call_gc:
         gc.collect()
 
+
+def test_clibrary_multilib_collective_compile(testf_cstring, testf_hstring):
+    testf_c_file = os.path.join(get_cache_dir(), "testf.c")
+    testf_h_file = os.path.join(get_cache_dir(), "testf.h")
+    with open(testf_c_file, "w") as f:
+        f.write(testf_cstring)
+    with open(testf_h_file, "w") as f:
+        f.write(testf_hstring)
+    my_obj = LibraryRegisterC()
+    # ccompiler_node = GNUCompiler_SS(cppargs=[], incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
+    # interface_node = InterfaceC("node", ccompiler_node, get_cache_dir())
+    ccompiler_testf = GNUCompiler_MS(cppargs=[],
+                                     incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), os.path.join(get_cache_dir()), "."],
+                                     libdirs=[".", get_cache_dir()],
+                                     libs=[])
+    interface_testf = InterfaceC(["node", "testf"], ccompiler_testf, [os.path.join(get_package_dir(), "nodes"), get_cache_dir()])
+    my_obj.add_entry("testf", interface_testf)
+    assert my_obj.is_created("testf")
+    assert my_obj.get("testf") == interface_testf
+    interface_testf.compile_library()
+    assert my_obj.is_compiled("testf")
+    my_obj.load("testf", get_cache_dir())
+    assert my_obj.is_loaded("testf")
+    testf_lib = my_obj.get("testf")
+    function_param_array = [{"name": "func", "return": None, "arguments": [ctypes.c_int, ]},
+                            {"name": "get_val", "return": ctypes.c_int, "arguments": None}]
+    funcs = testf_lib.load_functions(function_param_array)
+    func_testf = funcs["func"]
+    func_getval = funcs["get_val"]
+    func_testf(2)
+    result = func_getval()
+    assert result == 5
+    my_obj.unload("testf")
+    assert not my_obj.is_loaded("testf")
+    my_obj.remove("testf")
+    assert not my_obj.is_created("testf")
+    my_obj.clear()
+    del interface_testf
+    del my_obj
+    if os.path.exists(testf_c_file):
+        os.remove(testf_c_file)
+    if os.path.exists(testf_h_file):
+        os.remove(testf_h_file)
+
+
+def test_clibrary_multilib_separate_compile(testf_cstring, testf_hstring):
+    testf_c_file = os.path.join(get_cache_dir(), "testf.c")
+    testf_h_file = os.path.join(get_cache_dir(), "testf.h")
+    with open(testf_c_file, "w") as f:
+        f.write(testf_cstring)
+    with open(testf_h_file, "w") as f:
+        f.write(testf_hstring)
+    my_obj = LibraryRegisterC()
+    ccompiler_node = GNUCompiler_SS(cppargs=[], incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
+    interface_node = InterfaceC("node", ccompiler_node, src_dir=os.path.join(get_package_dir(), "nodes"))
+    ccompiler_testf = GNUCompiler_SS(cppargs=[], incdirs=[os.path.join(get_cache_dir()), "."], libdirs=[".", get_cache_dir()])
+    interface_testf = InterfaceC("testf", ccompiler_testf, src_dir=get_cache_dir())
+    my_obj.add_entry("node", interface_node)
+    my_obj.add_entry("testf", interface_testf)
+    assert my_obj.is_created("node")
+    assert my_obj.is_created("testf")
+    assert my_obj.get("node") == interface_node
+    assert my_obj.get("testf") == interface_testf
+    interface_node.compile_library()
+    interface_testf.compile_library()
+    assert my_obj.is_compiled("node")
+    assert my_obj.is_compiled("testf")
+    my_obj.load("node", get_cache_dir())
+    my_obj.load("testf", get_cache_dir())
+    assert my_obj.is_loaded("node")
+    assert my_obj.is_loaded("testf")
+    testf_lib = my_obj.get("testf")
+    function_param_array = [{"name": "func", "return": None, "arguments": [ctypes.c_int, ]},
+                            {"name": "get_val", "return": ctypes.c_int, "arguments": None}]
+    funcs = testf_lib.load_functions(function_param_array)
+    func_testf = funcs["func"]
+    func_getval = funcs["get_val"]
+    func_testf(2)
+    result = func_getval()
+    assert result == 5
+    my_obj.unload("node")
+    my_obj.unload("testf")
+    assert not my_obj.is_loaded("node")
+    assert not my_obj.is_loaded("testf")
+    my_obj.remove("node")
+    my_obj.remove("testf")
+    assert not my_obj.is_created("node")
+    assert not my_obj.is_created("testf")
+    my_obj.clear()
+    del interface_testf
+    del my_obj
+    if os.path.exists(testf_c_file):
+        os.remove(testf_c_file)
+    if os.path.exists(testf_h_file):
+        os.remove(testf_h_file)
+
+
 # TODO
-# - compile the self-written and the node-interface collectively
-# - compile c/h-string-written code and call the functions
 # - create a class that calls the c/h-functions, and test the register-/deregister functions
