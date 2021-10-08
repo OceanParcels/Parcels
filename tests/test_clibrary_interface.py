@@ -224,5 +224,78 @@ def test_clibrary_multilib_separate_compile(testf_cstring, testf_hstring):
         os.remove(testf_h_file)
 
 
-# TODO
-# - create a class that calls the c/h-functions, and test the register-/deregister functions
+def test_clibrary_inner_class_registration(testf_cstring, testf_hstring):
+
+    my_obj = LibraryRegisterC()
+    testf_c_file = os.path.join(get_cache_dir(), "testf.c")
+    testf_h_file = os.path.join(get_cache_dir(), "testf.h")
+    with open(testf_c_file, "w") as f:
+        f.write(testf_cstring)
+    with open(testf_h_file, "w") as f:
+        f.write(testf_hstring)
+
+    class TestClass(object):
+        registered = False
+
+        def __init__(self, c_lib_register):
+            libname = "testf"
+            src_dir = get_cache_dir()
+            if not c_lib_register.is_created(libname) or not c_lib_register.is_compiled(libname):
+                cppargs = []
+                ccompiler = GNUCompiler_SS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
+                my_interface = InterfaceC(libname, ccompiler, src_dir)
+                c_lib_register.add_entry(libname, my_interface)
+            if not c_lib_register.is_loaded(libname):
+                c_lib_register.load(libname, src_dir=src_dir)
+            c_lib_register.register(libname, close_callback=self.close_c_cb)
+            self.c_lib_register_ref = c_lib_register
+            self.registered = True
+            self.c_interface = self.c_lib_register_ref.get(libname)
+            function_param_array = [{"name": "func", "return": None, "arguments": [ctypes.c_int, ]},
+                                    {"name": "get_val", "return": ctypes.c_int, "arguments": None}]
+            c_funcs = self.c_interface.load_functions(function_param_array)
+            if c_funcs is None:
+                c_lib_register.deregister(libname=libname)
+                c_lib_register.unload(libname=libname)
+                c_lib_register.load(libname)
+                c_lib_register.register(libname, close_callback=self.close_c_cb)
+            assert c_funcs is not None, "Loading 'node' library failed."
+            self.func_testf = c_funcs["func"]
+            self.func_getval = c_funcs["get_val"]
+
+        def close(self):
+            self.c_lib_register_ref.deregister(libname="testf")
+            if self.c_interface.register_count <= 0:
+                self.c_interface.close()
+
+        def execute(self):
+            if self.registered and self.c_lib_register_ref is not None and self.func_testf is not None:
+                self.func_testf(2)
+                result = self.func_getval()
+                assert result == 5
+
+        def close_c_cb(self):
+            self.func_testf = None
+            self.func_getval = None
+            self.c_interface = None
+            self.c_lib_register_ref = None
+            self.registered = False
+
+    obj1 = TestClass(my_obj)
+    obj2 = TestClass(my_obj)
+    obj1.execute()
+    obj2.execute()
+    obj1.close()
+    obj1.close()
+    if my_obj.is_loaded("testf"):
+        my_obj.unload("testf")
+    assert not my_obj.is_loaded("testf")
+    if my_obj.is_created("testf"):
+        my_obj.remove("testf")
+    assert not my_obj.is_created("testf")
+    my_obj.clear()
+    del my_obj
+    if os.path.exists(testf_c_file):
+        os.remove(testf_c_file)
+    if os.path.exists(testf_h_file):
+        os.remove(testf_h_file)
