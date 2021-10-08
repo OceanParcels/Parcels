@@ -151,16 +151,17 @@ class InterfaceC(object):
         if MPI and MPI.COMM_WORLD.Get_size() > 1:
             lib_pathfile = "%s_%d" % (lib_pathfile, MPI.COMM_WORLD.Get_rank())
             lib_path = lib_pathfile if os.path.sep not in self.basename else os.path.join(lib_pathdir, lib_pathfile)
-        if isinstance(src_pathfile, list):
+        if isinstance(src_pathfile, list) and not isinstance(src_pathfile, str):
             self.src_file = []
             if isinstance(src_dir, list) and not isinstance(src_dir, str):
                 for fdir, fname in zip(src_dir, src_pathfile):
-                    self.src_file.append("%s.c" % os.path.join(fdir, fname))
+                    self.src_file.append("%s.c" % (os.path.join(fdir, fname)))
             else:
                 for fname in src_pathfile:
                     self.src_file = "%s.c" % os.path.join(src_dir, fname)
         else:
-            self.src_file = "%s.c" % os.path.join(src_dir, src_pathfile)
+            self.src_file = "%s.c" % (os.path.join(src_dir, src_pathfile), )
+            # logger.info("InterfaceC::__init__() - 'src_dir' = {}, 'src_pathfile' = {}, 'src_file' = {}".format(src_dir, src_pathfile, self.src_file))
         self.lib_file = "%s.%s" % (os.path.join(get_cache_dir(), lib_path), libext)
         self.log_file = "%s.log" % (os.path.join(get_cache_dir(), lib_path), )
         if os.path.exists(self.lib_file):
@@ -208,7 +209,8 @@ class InterfaceC(object):
     def compile_library(self):
         """ Writes kernel code to file and compiles it."""
         if not self.compiled:
-            src_file = self.src_file if not isinstance(self.compiler, CCompiler_MS) and not (isinstance(self.src_file, list) and not isinstance(self.src_file, str)) else [self.src_file, ]
+            src_file = self.src_file if not isinstance(self.compiler, CCompiler_MS) or (isinstance(self.src_file, list) and not isinstance(self.src_file, str)) else [self.src_file, ]
+            # logger.info("InterfaceC::compile_library() - 'src_file' = {}".format(src_file))
             compiled_fpath = self.compiler.compile(src=src_file, obj=self.lib_file, log=self.log_file)
             # logger.info("Compiled %s ==> %s" % (self.basename, self.lib_file))
             logger.info("Compiled %s ==> %s" % (self.basename, compiled_fpath))
