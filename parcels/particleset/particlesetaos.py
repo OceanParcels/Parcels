@@ -14,7 +14,7 @@ from parcels.field import SummedField
 from parcels.kernel.kernelaos import KernelAOS
 from parcels.particle import Variable, ScipyParticle, JITParticle # NOQA
 from parcels.particlefile.particlefileaos import ParticleFileAOS
-from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
+from parcels.tools.statuscodes import StateCode  # NOQA
 from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.collection.collectionaos import ParticleCollectionAOS
 from parcels.collection.collectionaos import ParticleCollectionIteratorAOS, ParticleCollectionIterableAOS  # NOQA

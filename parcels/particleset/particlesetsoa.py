@@ -12,14 +12,13 @@ from parcels.grid import CurvilinearGrid
 from parcels.kernel import KernelSOA
 from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa
 from parcels.particlefile import ParticleFileSOA
-from parcels.tools.statuscodes import StateCode
+from parcels.tools.statuscodes import StateCode, OperationCode    # noqa: F401
 from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.collection.collectionsoa import ParticleCollectionSOA
 from parcels.collection.collectionsoa import ParticleCollectionIteratorSOA  # noqa
 from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # noqa
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import OperationCode
 from parcels.interaction.interactionkernelsoa import InteractionKernelSOA
 from parcels.interaction.neighborsearch import BruteSphericalNeighborSearch
 from parcels.interaction.neighborsearch import BruteFlatNeighborSearch
