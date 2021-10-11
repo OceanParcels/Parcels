@@ -296,30 +296,32 @@ class ParticleSetAOS(BaseParticleSet):
         if key is None:
             return
         if type(key) in [int, np.int32, np.intp]:
-            self.delete_by_index(key)
+            # self.delete_by_index(key)
+            self._collection.delete_by_index(key)
         elif type(key) in [np.int64, np.uint64]:
-            self.delete_by_ID(key)
+            # self.delete_by_ID(key)
+            self._collection.delete_by_ID(key)
 
-    def delete_by_index(self, index):
-        """
-        This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
-        Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
-        instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
-        """
-        self._collection[index].state = OperationCode.Delete
+    # def delete_by_index(self, index):
+    #     """
+    #     This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
+    #     Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
+    #     instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
+    #     In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
+    #     is handled by 'recovery' dictionary during simulation execution.
+    #     """
+    #     self._collection[index].state = OperationCode.Delete
 
-    def delete_by_ID(self, id):
-        """
-        This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
-        Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
-        instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
-        """
-        p = self._collection.get_single_by_ID(id)
-        p.state = OperationCode.Delete
+    # def delete_by_ID(self, id):
+    #     """
+    #     This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
+    #     Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
+    #     instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
+    #     In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
+    #     is handled by 'recovery' dictionary during simulation execution.
+    #     """
+    #     p = self._collection.get_single_by_ID(id)
+    #     p.state = OperationCode.Delete
 
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
@@ -596,22 +598,31 @@ class ParticleSetAOS(BaseParticleSet):
                           to this one.
         :return: The current ParticleSet
         """
-        self.add(particles)
+        if isinstance(particles, type(self)):
+            self._collection += particles.collection
+        elif isinstance(particles, BaseParticleSet):
+            self._collection.add_collection(particles.collection)
+        else:
+            pass
         return self
 
-    def add(self, particles):
+    def add(self, value):
         """Add particles to the ParticleSet. Note that this is an
         incremental add, the particles will be added to the ParticleSet
         on which this function is called.
 
-        :param particles: Another ParticleSet containing particles to add
-                          to this one.
+        :param particles: Another ParticleSet, an numpy.ndarray or a particle
+                          to add to this one.
         :return: The current ParticleSet
         """
-        if isinstance(particles, BaseParticleSet):
-            particles = particles.collection
-        self._collection += particles
-        return self
+        if isinstance(value, type(self)):
+            self._collection.add_same(value.collection)
+        elif isinstance(value, BaseParticleSet):
+            self._collection.add_collection(value.collection)
+        elif isinstance(value, np.ndarray):
+            self._collection.add_multiple(value)
+        elif isinstance(value, ScipyParticle):
+            self._collection.add_single(value)
 
     def __isub__(self, pset):
         if isinstance(pset, type(self)):

@@ -720,7 +720,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
         This should actually delete the item instead of just marking the particle as 'to be deleted'.
         """
-        self.delete_by_index(key)
+        self.remove_single_by_index(key)
 
     def delete_by_index(self, index):
         """
@@ -731,16 +731,18 @@ class ParticleCollectionAOS(ParticleCollection):
         is handled by 'recovery' dictionary during simulation execution.
         """
         super().delete_by_index(index)
-        result = self.get_single_by_index(index)
-        self._data = np.delete(self._data, index)
-        if self.ptype.uses_jit:
-            self._data_c = np.delete(self._data_c, index)
-            # Update C-pointer on particles
-            for p, pdata in zip(self._data, self._data_c):
-                p._cptr = pdata
+        p = self.get_single_by_ID(id)
+        p.state = OperationCode.Delete
 
-        self._ncount -= 1
-        return result
+        # result = self.get_single_by_index(index)
+        # self._data = np.delete(self._data, index)
+        # if self.ptype.uses_jit:
+        #     self._data_c = np.delete(self._data_c, index)
+        #     # Update C-pointer on particles
+        #     for p, pdata in zip(self._data, self._data_c):
+        #         p._cptr = pdata
+        # self._ncount -= 1
+        # return result
 
     def delete_by_ID(self, id):
         """
@@ -765,7 +767,15 @@ class ParticleCollectionAOS(ParticleCollection):
         removal functions, e.g. remove-by-object or remove-by-ID.
         """
         super().remove_single_by_index(index)
-        self.delete_by_index(index)
+        result = self.get_single_by_index(index)
+        self._data = np.delete(self._data, index)
+        if self.ptype.uses_jit:
+            self._data_c = np.delete(self._data_c, index)
+            # Update C-pointer on particles
+            for p, pdata in zip(self._data, self._data_c):
+                p._cptr = pdata
+        self._ncount -= 1
+        return result
 
     def remove_single_by_object(self, particle_obj):
         """
