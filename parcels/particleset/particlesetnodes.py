@@ -739,6 +739,14 @@ class ParticleSetNodes(BaseParticleSet):
         return self._collection[key]
 
     def __iadd__(self, pset):
+        """Add particles to the ParticleSet. Note that this is an
+        incremental add, the particles will be added to the ParticleSet
+        on which this function is called.
+
+        :param particles: Another ParticleSet containing particles to add
+                          to this one.
+        :return: The current ParticleSet
+        """
         if isinstance(pset, type(self)):
             self._collection += pset.collection
         elif isinstance(pset, BaseParticleSet):
@@ -748,6 +756,14 @@ class ParticleSetNodes(BaseParticleSet):
         return self
 
     def add(self, value):
+        """Add particles to the ParticleSet. Note that this is an
+        incremental add, the particles will be added to the ParticleSet
+        on which this function is called.
+
+        :param particles: Another ParticleSet, an numpy.ndarray or a particle
+                          to add to this one.
+        :return: The current ParticleSet
+        """
         if isinstance(value, type(self)):
             self._collection.add_same(value.collection)
         elif isinstance(value, BaseParticleSet):

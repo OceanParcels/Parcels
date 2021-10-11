@@ -19,6 +19,7 @@ from parcels.collection.collectionsoa import ParticleCollectionIteratorSOA  # no
 from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # noqa
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import OperationCode
 from parcels.interaction.interactionkernelsoa import InteractionKernelSOA
 from parcels.interaction.neighborsearch import BruteSphericalNeighborSearch
 from parcels.interaction.neighborsearch import BruteFlatNeighborSearch
@@ -257,6 +258,46 @@ class ParticleSetSOA(BaseParticleSet):
 
     def __del__(self):
         super(ParticleSetSOA, self).__del__()
+
+    def delete(self, key):
+        """
+        This is the generic super-method to indicate obejct deletion of a specific object from this collection.
+
+        Comment/Annotation:
+        Functions for deleting multiple objects are more specialised than just a for-each loop of single-item deletion,
+        because certain data structures can delete multiple objects in-bulk faster with specialised function than making a
+        roundtrip per-item delete operation. Because of the sheer size of those containers and the resulting
+        performance demands, we need to make use of those specialised 'del' functions, where available.
+        """
+        if key is None:
+            return
+        if type(key) in [int, np.int32, np.intp]:
+            # self.delete_by_index(key)
+            self._collection.delete_by_index(key)
+        elif type(key) in [np.int64, np.uint64]:
+            # self.delete_by_ID(key)
+            self._collection.delete_by_ID(key)
+
+    # def delete_by_index(self, index):
+    #     """
+    #     This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
+    #     Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
+    #     instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
+    #     In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
+    #     is handled by 'recovery' dictionary during simulation execution.
+    #     """
+    #     self._collection[index].state = OperationCode.Delete
+
+    # def delete_by_ID(self, id):
+    #     """
+    #     This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
+    #     Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
+    #     instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
+    #     In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
+    #     is handled by 'recovery' dictionary during simulation execution.
+    #     """
+    #     p = self._collection.get_single_by_ID(id)
+    #     p.state = OperationCode.Delete
 
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
@@ -551,7 +592,14 @@ class ParticleSetSOA(BaseParticleSet):
                           to this one.
         :return: The current ParticleSet
         """
-        self.add(particles)
+        if isinstance(particles, type(self)):
+            self._collection += particles.collection
+            self._dirty_neighbor = True
+        elif isinstance(particles, BaseParticleSet):
+            self._collection.add_collection(particles.collection)
+            self._dirty_neighbor = True
+        else:
+            pass
         return self
 
     def __iter__(self):
@@ -560,20 +608,27 @@ class ParticleSetSOA(BaseParticleSet):
     def iterator(self):
         return super(ParticleSetSOA, self).iterator()
 
-    def add(self, particles):
+    def add(self, value):
         """Add particles to the ParticleSet. Note that this is an
         incremental add, the particles will be added to the ParticleSet
         on which this function is called.
 
-        :param particles: Another ParticleSet containing particles to add to this one.
+        :param particles: Another ParticleSet, an numpy.ndarray or a particle
+                          to add to this one.
         :return: The current ParticleSet
         """
-        if isinstance(particles, BaseParticleSet):
-            particles = particles.collection
-        self._collection += particles
-        # Adding particles invalidates the neighbor search structure.
-        self._dirty_neighbor = True
-        return self
+        if isinstance(value, type(self)):
+            self._collection.add_same(value.collection)
+            self._dirty_neighbor = True
+        elif isinstance(value, BaseParticleSet):
+            self._collection.add_collection(value.collection)
+            self._dirty_neighbor = True
+        elif isinstance(value, np.ndarray):
+            self._collection.add_multiple(value)
+            self._dirty_neighbor = True
+        elif isinstance(value, ScipyParticle):
+            self._collection.add_single(value)
+            self._dirty_neighbor = True
 
     def __isub__(self, pset):
         if isinstance(pset, type(self)):

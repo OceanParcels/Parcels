@@ -682,7 +682,7 @@ class ParticleCollectionSOA(ParticleCollection):
         The 'key' parameter should still be evaluated for being a single or a multi-entry delete, and needs to check
         that it received the correct type of 'indexing' argument (i.e. index, id or iterator).
         """
-        self.delete_by_index(key)
+        self.remove_single_by_index(key)
 
     def delete_by_index(self, index):
         """
@@ -693,7 +693,6 @@ class ParticleCollectionSOA(ParticleCollection):
         is handled by 'recovery' dictionary during simulation execution.
         """
         super().delete_by_index(index)
-
         self._data['state'][index] = OperationCode.Delete
 
     def delete_by_ID(self, id):
