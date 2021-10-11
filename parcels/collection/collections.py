@@ -3,7 +3,7 @@ from abc import ABC
 from abc import abstractmethod
 
 from .iterators import BaseParticleAccessor
-from parcels.particle import ScipyParticle
+from parcels.particle import ScipyParticle, ParticleType
 
 """
 Author: Dr. Christian Kehl
@@ -281,6 +281,34 @@ class Collection(ABC):
         assert pcollection is not None, "Trying to add another particle collection to this one, but the other one is None - invalid operation."
         assert isinstance(pcollection, ParticleCollection), "Trying to add another particle collection to this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
         assert type(pcollection) is not type(self)
+
+    @abstractmethod
+    def add_multiple(self, data_array):
+        """
+        Add multiple particles from an array-like structure (i.e. list or tuple or np.ndarray)
+        to the collection.
+        :arg data_array: one of the following:
+            i) a list or tuples containing multple Particle instances
+            ii) a Numpy.ndarray of dtype = Particle dtype
+            iii) a Numpy.ndarray of shape N x M, with N = # particles and
+                 M = variables [lon, lat, [depth, [time, [dt, [id=-1, [kwargs]]]]]]
+        """
+        is_tuple = False
+        is_list = False
+        is_ptype_ndarray = False
+        is_attr_ndarray = False
+        if data_array is None or len(data_array) <= 0:
+            return
+        if isinstance(data_array, list) and isinstance(data_array[0], ScipyParticle):
+            is_list = True
+        elif isinstance(data_array, tuple) and isinstance(data_array[0], ScipyParticle):
+            is_tuple = True
+        elif isinstance(data_array, np.ndarray):
+            if isinstance(data_array[0], ScipyParticle) or isinstance(data_array.dtype, ParticleType):
+                is_ptype_ndarray = True
+            else:
+                is_attr_ndarray = True
+        assert is_tuple or is_list or is_ptype_ndarray or is_attr_ndarray
 
     @abstractmethod
     def add_single(self, particle_obj):
