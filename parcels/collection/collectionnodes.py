@@ -683,7 +683,7 @@ class ParticleCollectionNodes(ParticleCollection):
         results = []
         for item_index, item in enumerate(pcollection):
             # self._pclass(lon=item.lon, lat=item.lat, pid=item.pid, ngrids=ngrids, depth=item.depth, time=item.time)
-            pdata_item = self._pclass(lon=item.lon, lat=item.lat, pid=item.pid, ngrids=self._ngrids, depth=item.depth, time=item.time)
+            pdata_item = self._pclass(lon=item.lon, lat=item.lat, pid=item.pid, ngrids=self._ngrid, depth=item.depth, time=item.time)
             results.append(self.add_single(pdata_item))
         pcollection.clear()
         self._ncount = len(self._data)
@@ -699,12 +699,13 @@ class ParticleCollectionNodes(ParticleCollection):
             iii) a Numpy.ndarray of shape N x M, with N = # particles and
                  M = variables [lon, lat, [depth, [time, [dt, [id=-1, [kwargs]]]]]]
         """
+        super().add_multiple(data_array)
         results = []
         if len(data_array) <= 0:
             return results
         if isinstance(data_array, list) or isinstance(data_array, tuple):
             for item in data_array:
-                results.append(self.add_entity(item))
+                results.append(self.add_single(item))
         elif isinstance(data_array, np.ndarray):
             if data_array.dtype == self._ptype:
                 for i in range(data_array.shape[0]):
@@ -716,6 +717,7 @@ class ParticleCollectionNodes(ParticleCollection):
             else:
                 # expect this to be a nD (2 <= n <= 5) array with [lon, lat, [depth, [time, [dt]]]]
                 pu_data = None
+                n_pu_data = 0
                 if MPI and MPI.COMM_WORLD.Get_size() > 1:
                     mpi_comm = MPI.COMM_WORLD
                     mpi_size = mpi_comm.Get_size()
@@ -743,22 +745,26 @@ class ParticleCollectionNodes(ParticleCollection):
                     mpi_comm.Bcast(self._pu_centers, root=0)
                 else:
                     pu_data = data_array
-                for i in range(pu_data.shape[0]):
-                    pdata = self._pclass(lon=pu_data[i, 0], lat=pu_data[i, 1], pid=np.iinfo(np.uint64).max, ngrids=self._ngrids)
-                    if pu_data.shape[1] > 2:
-                        pdata.depth = pu_data[i, 2]
-                    if pu_data.shape[1] > 3:
-                        pdata.time = pu_data[i, 3]
-                    if pu_data.shape[1] > 4:
-                        pdata.dt = pu_data[i, 4]
-                    if pu_data.shape[1] > 5:  # that is the provided ID that we skip - should not be defined
-                        pass
-                    if pu_data.shape[1] > 6:
-                        attr_index = 6
-                        for key in self._kwarg_keys:
-                            setattr(pdata, key, pu_data[i, attr_index])
-                            attr_index += 1
-                    results.append(self.add_single(pdata, pu_checked=True))
+                    n_pu_data = data_array.shape[0]
+                if n_pu_data <= 0:
+                    results = []
+                else:
+                    for i in range(pu_data.shape[0]):
+                        pdata = self._pclass(lon=pu_data[i, 0], lat=pu_data[i, 1], pid=np.iinfo(np.uint64).max, ngrids=self._ngrid)
+                        if pu_data.shape[1] > 2:
+                            pdata.depth = pu_data[i, 2]
+                        if pu_data.shape[1] > 3:
+                            pdata.time = pu_data[i, 3]
+                        if pu_data.shape[1] > 4:
+                            pdata.dt = pu_data[i, 4]
+                        if pu_data.shape[1] > 5:  # that is the provided ID that we skip - should not be defined
+                            pass
+                        if pu_data.shape[1] > 6:
+                            attr_index = 6
+                            for key in self._kwarg_keys:
+                                setattr(pdata, key, pu_data[i, attr_index])
+                                attr_index += 1
+                        results.append(self.add_single(pdata, pu_checked=True))
         else:
             self._ncount = len(self._data)
             return results

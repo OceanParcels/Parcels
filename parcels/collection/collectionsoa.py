@@ -1,3 +1,4 @@
+from builtins import getattr
 from datetime import timedelta as delta
 from operator import attrgetter
 from ctypes import Structure, POINTER
@@ -5,6 +6,7 @@ from bisect import bisect_left
 from math import floor
 
 import numpy as np
+from scipy.spatial import distance
 
 from parcels.collection.collections import ParticleCollection
 from parcels.collection.iterators import BaseParticleAccessor
@@ -68,6 +70,7 @@ class ParticleCollectionSOA(ParticleCollection):
         """
 
         super(ParticleCollection, self).__init__()
+        self._ngrid = ngrid
 
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
         pid = pid_orig + pclass.lastID
@@ -131,6 +134,7 @@ class ParticleCollectionSOA(ParticleCollection):
         self._pclass = pclass
 
         self._ptype = pclass.getPType()
+        self._kwarg_keys = kwargs.keys()
         self._data = {}
         initialised = set()
 
@@ -408,16 +412,182 @@ class ParticleCollectionSOA(ParticleCollection):
         Adds another, differently structured ParticleCollection to this collection. This is done by, for example,
         appending/adding the items of the other collection to this collection.
         """
+        # ==== first approach - still need to incorporate the MPI re-centering ==== #
         super().add_collection(pcollection)
-        raise NotImplementedError
+        # ngrids = 0
+        # if self._ncount > 0:
+        #     ngrids = len(self._data['xi'])
+        # elif len(pcollection) > 0:
+        #     ngrids = len(pcollection['xi'])
+        # ncount = self._ncount + len(pcollection)
+        for v in self.ptype.variables:
+            assert v in pcollection.ptype.variables, "Cannot merge two collections because the particle variables differ."
+        for v in self.ptype.variables:
+            self._data[v.name] = np.concatenate((pcollection._data[v.name], self._data[v.name]))
+        self._ncount = self._ncount + len(pcollection)
+        return []
 
-    def add_single(self, particle_obj):
+    def add_multiple(self, data_array):
+        """
+        Add multiple particles from an array-like structure (i.e. list or tuple or np.ndarray)
+        to the collection.
+        :arg data_array: one of the following:
+            i) a list or tuples containing multple Particle instances
+            ii) a Numpy.ndarray of dtype = Particle dtype
+            iii) a Numpy.ndarray of shape N x M, with N = # particles and
+                 M = variables [lon, lat, [depth, [time, [dt, [id=-1, [kwargs]]]]]]
+        """
+        # ==== first approach - still need to incorporate the MPI re-centering ==== #
+        super().add_multiple(data_array)
+        results = []
+        if len(data_array) <= 0:
+            return results
+        if isinstance(data_array, list) or isinstance(data_array, tuple):
+            for item in data_array:
+                results.append(self.add_entity(item))
+        elif isinstance(data_array, np.ndarray):
+            if data_array.dtype == self._ptype:
+                for i in range(data_array.shape[0]):
+                    pdata = data_array[i]
+                    results.append(self.add_single(pdata))
+            else:
+                # expect this to be a nD (2 <= n <= 5) array with [lon, lat, [depth, [time, [dt]]]]
+                pu_data = None
+                n_pu_data = 0
+                pu_ids = None
+                if MPI and MPI.COMM_WORLD.Get_size() > 1:
+                    mpi_comm = MPI.COMM_WORLD
+                    mpi_size = mpi_comm.Get_size()
+                    mpi_rank = mpi_comm.Get_rank()
+                    spdata = data_array[:, 0:2]  # expecting lon-lat in the first 2 dimensions
+                    min_pu = None
+                    if mpi_rank == 0:
+                        dists = distance.cdist(spdata, self._pu_centers)
+                        min_pu = np.argmax(dists, axis=1)
+                        self._pu_indicators = np.concatenate((self._pu_indicators, min_pu), axis=0)
+                    min_pu = mpi_comm.bcast(min_pu, root=0)
+                    self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
+                    pu_data = data_array[min_pu == mpi_rank]
+                    ids = np.arange(ScipyParticle.lastID, stop=ScipyParticle.lastID+data_array.shape[0]) if data_array.shape[1] <= 5 else data_array[:, 5]
+                    pu_ids = ids[min_pu == mpi_rank]
+                    new_lastID = 0
+                    if mpi_rank == 0:
+                        new_lastID = ScipyParticle.lastID+data_array.shape[0]-1
+                    new_lastID = mpi_comm.bcast(new_lastID, root=0)
+                    self._pclass.setLastID(new_lastID)
+                    pu_center = np.array(np.mean(spdata, axis=0), dtype=self._lonlatdepth_dtype)
+                    n_pu_data = pu_data.shape[0]
+                    pu_ncenters = None
+                    if mpi_rank == 0:
+                        pu_ncenters = np.empty([mpi_size, pu_center.shape[0]], dtype=self._latlondepth_dtype)
+                    mpi_comm.Gather(pu_center, pu_ncenters, root=0)
+                    pu_ndata = mpi_comm.gather(n_pu_data, root=0)
+                    if mpi_rank == 0:
+                        for i in range(self._pu_centers.shape[0]):
+                            ax = float(pu_ndata[i]) / float(len(np.nonzero(self._pu_indicators == i)[0]))
+                            self._pu_centers[i, :] += ax*pu_ncenters[i, :]
+                    mpi_comm.Bcast(self._pu_centers, root=0)
+                else:
+                    pu_data = data_array
+                    pu_ids = np.arange(ScipyParticle.lastID, stop=ScipyParticle.lastID+data_array.shape[0]) if data_array.shape[1] <= 5 else data_array[:, 5]
+                    new_lastID = ScipyParticle.lastID+data_array.shape[0]-1
+                    self._pclass.setLastID(new_lastID)
+                    n_pu_data = data_array.shape[0]
+                if n_pu_data <= 0:
+                    results = []
+                else:
+                    self._sorted = False
+                    pu_data = np.insert(pu_data, 5, pu_ids, axis=1)
+                    v_names = ['lon', 'lat', 'depth', 'time', 'dt', 'id'] + self._kwarg_keys
+                    for attr_index in range(0, pu_data.shape[1]):
+                        vname = v_names[attr_index]
+                        self._data[vname] = np.concatenate((self._data[vname], pu_data[:, attr_index]))
+                    for v in self.ptype.variables:
+                        if v.name in ['xi', 'yi', 'zi', 'ti']:
+                            self._data[v.name] = np.concatenate((self._data[v.name], np.empty((pu_data.shape[0], self._ngrid), dtype=v.dtype)))
+                    self._ncount = self._data['lon'].shape[0]
+                    results = pu_data
+        else:
+            self._ncount = len(self._data)
+            return results
+        self._ncount = len(self._data)
+        return results
+
+    def add_single(self, particle_obj, pu_checked=False):
         """
         Adding a single Particle to the collection - either as a 'Particle; object in parcels itself, or
         via its ParticleAccessor.
         """
+        # ==== first approach - still need to incorporate the MPI re-centering ==== #
         super().add_single(particle_obj)
-        raise NotImplementedError
+        assert isinstance(particle_obj, ScipyParticle)
+        # Comment: by current workflow, pset modification is only done on the front node, thus
+        # the distance determination and assigment is also done on the front node
+        _add_to_pu = True
+        if MPI and MPI.COMM_WORLD.Get_size() > 1 and not pu_checked:
+            pu_id = 0
+            if self._pu_centers is not None and isinstance(self._pu_centers, np.ndarray):
+                mpi_comm = MPI.COMM_WORLD
+                mpi_rank = mpi_comm.Get_rank()
+                mpi_size = mpi_comm.Get_size()
+                min_dist = np.finfo(self._lonlatdepth_dtype).max
+                min_pu = 0
+                spdata = None
+                if mpi_size > 1 and mpi_rank == 0:
+                    ppos = particle_obj
+                    spdata = np.array([ppos.lat, ppos.lon], dtype=self._lonlatdepth_dtype)
+                    n_clusters = self._pu_centers.shape[0]
+                    for i in range(n_clusters):
+                        diff = self._pu_centers[i, :] - spdata
+                        dist = np.dot(diff, diff)
+                        if dist < min_dist:
+                            min_dist = dist
+                            min_pu = i
+                    self._pu_indicators = np.concatenate((self._pu_indicators, min_pu), axis=0)
+                # NOW: move the related center by: (center-spdata) * 1/(cluster_size+1)
+                min_pu = mpi_comm.bcast(min_pu, root=0)
+                self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
+                pu_id = particle_obj.id
+                if particle_obj.id >= np.iinfo(np.uint64).max:
+                    pu_id = ScipyParticle.lastID
+                    new_lastID = 0
+                    if mpi_rank == 0:
+                        new_lastID = ScipyParticle.lastID + 1
+                    new_lastID = mpi_comm.bcast(new_lastID, root=0)
+                    self._pclass.setLastID(new_lastID)
+                if mpi_rank == 0:
+                    ax = 1.0 / float(len(np.nonzero(self._pu_indicators == min_pu)[0]))
+                    self._pu_centers[min_pu, :] += ax * spdata
+                mpi_comm.Bcast(self._pu_centers, root=0)
+
+                if mpi_rank == min_pu:
+                    _add_to_pu = True
+                else:
+                    _add_to_pu = False
+            else:
+                pu_id = particle_obj.id
+                if particle_obj.id >= np.iinfo(np.uint64).max:
+                    pu_id = ScipyParticle.lastID
+                    self._pclass.setLastID(ScipyParticle.lastID + 1)
+        else:
+            pu_id = particle_obj.id
+            if particle_obj.id >= np.iinfo(np.uint64).max:
+                pu_id = ScipyParticle.lastID
+                self._pclass.setLastID(ScipyParticle.lastID + 1)
+        if _add_to_pu:
+            self._sorted = False
+            particle_obj.id = pu_id
+            for v in self.ptype.variables:
+                if v.name in ['xi', 'yi', 'zi', 'ti']:
+                    self._data[v.name] = np.concatenate((self._data[v.name], np.empty((1, self._ngrid), dtype=v.dtype)))
+                else:
+                    self._data[v.name] = np.concatenate((self._data[v.name], getattr(particle_obj, v.name)))
+            index = self._data['lon'].shape[0]-1
+            if index >= 0:
+                self._ncount = self._data['lon'].shape[0]
+                return index
+        self._ncount = len(self._data)
+        return None
 
     def add_same(self, same_class):
         """
