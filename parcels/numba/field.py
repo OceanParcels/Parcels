@@ -4,7 +4,6 @@ from numba.types import List
 
 from numba import njit
 from numba.experimental import jitclass
-from numba.core.types.containers import Tuple
 from numba.core.typing.asnumbatype import as_numba_type
 from parcels import AdvectionRK4
 
@@ -150,18 +149,12 @@ class GridSpec():
 
                 if field[chunk_id].size == 0:
                     return ((chunk_id << 2) | STATUS_CHUNK_MISSING), 0.0
-#                 print(cur_lat, cur_lon)
-#                 print(chunk_id, i_rel_lat, i_rel_lon)
-#                 print()
                 field_val = field[chunk_id][i_rel_lon, i_rel_lat]
-#                 print(dist)
                 if dist < 1e-7:
                     dist = 1e-7
                 cur_sum += field_val/dist
                 tot_weight += 1/dist
-#                 print(field_val, dist)
-#         print(cur_sum, tot_weight)
-#         print()
+
         return STATUS_OK, cur_sum/tot_weight
 
 
