@@ -1,5 +1,6 @@
 """Module controlling the writing of ParticleSets to NetCDF file"""
 import os
+import psutil
 from glob import glob
 import numpy as np
 
@@ -59,7 +60,7 @@ class ParticleFileSOA(BaseParticleFile):
                       'file_list', 'file_list_once', 'maxid_written', 'parcels_mesh', 'metadata']
         return attributes
 
-    def read_from_npy(self, file_list, time_steps, var):
+    def read_from_npy(self, file_list, time_steps, var, id_range):
         """
         Read NPY-files for one variable using a loop over all files.
 
@@ -70,8 +71,12 @@ class ParticleFileSOA(BaseParticleFile):
         :param time_steps: Number of time steps that were written in out directory
         :param var: name of the variable to read
         """
-        data = np.nan * np.zeros((self.maxid_written+1, time_steps))
-        time_index = np.zeros(self.maxid_written+1, dtype=np.int64)
+
+        valid_id = np.arange(id_range[0], id_range[1])
+        n_ids = len(valid_id)
+
+        data = np.nan * np.zeros((n_ids, time_steps))
+        time_index = np.zeros(n_ids, dtype=np.int64)
         t_ind_used = np.zeros(time_steps, dtype=np.int64)
 
         # loop over all files
@@ -84,15 +89,19 @@ class ParticleFileSOA(BaseParticleFile):
                                    '"parcels_convert_npydir_to_netcdf %s" to convert these to '
                                    'a NetCDF file yourself.\nTo avoid this error, make sure you '
                                    'close() your ParticleFile at the end of your script.' % self.tempwritedir)
-            id_ind = np.array(data_dict["id"], dtype=np.int64)
-            t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
+
+            id_avail = np.array(data_dict["id"], dtype=np.int64)
+            id_mask_full = np.in1d(id_avail, valid_id) # which ids in data are present in this chunk
+            id_mask_chunk = np.in1d(valid_id, id_avail) # which ids in this chunk are present in data
+            t_ind = time_index[id_mask_chunk] if 'once' not in file_list[0] else 0
             t_ind_used[t_ind] = 1
-            data[id_ind, t_ind] = data_dict[var]
-            time_index[id_ind] = time_index[id_ind] + 1
+            data[id_mask_chunk, t_ind] = data_dict[var][id_mask_full]
+            time_index[id_mask_chunk] = time_index[id_mask_chunk] + 1
 
         # remove rows and columns that are completely filled with nan values
         tmp = data[time_index > 0, :]
         return tmp[:, t_ind_used == 1]
+
 
     def export(self):
         """
@@ -134,14 +143,38 @@ class ParticleFileSOA(BaseParticleFile):
         self.time_written = np.unique(global_time_written)
 
         for var in self.var_names:
-            data = self.read_from_npy(global_file_list, len(self.time_written), var)
-            if var == self.var_names[0]:
-                self.open_netcdf_file(data.shape)
-            varout = 'z' if var == 'depth' else var
-            getattr(self, varout)[:, :] = data
+            # Find available memory to check if output file is too large
+            avail_mem = psutil.virtual_memory()[1]
+            req_mem   = (self.maxid_written+1)*len(self.time_written)*8*1.2
+
+            if req_mem > avail_mem:
+                # Read id_per_chunk ids at a time to keep memory use down
+                total_chunks = int(np.ceil(req_mem/avail_mem))
+                id_per_chunk = int(np.ceil((self.maxid_written+1)/total_chunks))
+            else:
+                total_chunks = 1
+                id_per_chunk = self.maxid_written+1
+
+            for chunk in range(total_chunks):
+                # Minimum and maximum id for this chunk
+                id_range = [chunk*id_per_chunk,
+                            np.min(((chunk+1)*id_per_chunk, self.maxid_written+1))]
+
+                # Read chunk-sized data from NPY-files
+                data = self.read_from_npy(global_file_list, len(self.time_written), var, id_range)
+                if var == self.var_names[0]:
+                    # !! unacceptable assumption !!
+                    # This step assumes that the first id is 0 and that the
+                    # number of time-steps in the first chunk == number of
+                    # time-steps across all chunks.
+                    self.open_netcdf_file((self.maxid_written+1, data.shape[1]))
+
+                varout = 'z' if var == 'depth' else var
+                # Write to correct location in netcdf file
+                getattr(self, varout)[id_range[0]:id_range[1], :] = data
 
         if len(self.var_names_once) > 0:
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var)
+                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var, [0, self.maxid_written+1])
 
         self.close_netcdf_file()
