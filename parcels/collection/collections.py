@@ -266,21 +266,31 @@ class Collection(ABC):
         if other is None:
             return
         if type(other) is type(self):
-            self.add_same(other)
+            self.merge_same(other)
         elif isinstance(other, ParticleCollection):
-            self.add_collection(other)
+            self.merge_collection(other)
         else:
             self.add_single(other)
 
     @abstractmethod
-    def add_collection(self, pcollection):
+    def merge_collection(self, pcollection):
         """
-        Adds another, differently structured ParticleCollection to this collection. This is done by, for example,
+        Merges another, differently structured ParticleCollection into this collection. This is done by, for example,
         appending/adding the items of the other collection to this collection.
         """
         assert pcollection is not None, "Trying to add another particle collection to this one, but the other one is None - invalid operation."
         assert isinstance(pcollection, ParticleCollection), "Trying to add another particle collection to this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
         assert type(pcollection) is not type(self)
+
+    @abstractmethod
+    def merge_same(self, same_class):
+        """
+        Merges another, equi-structured ParticleCollection into this collection. This is done by concatenating
+        both collections. The fact that they are of the same ParticleCollection's derivative simplifies
+        parsing and concatenation.
+        """
+        assert same_class is not None, "Trying to add another {} to this one, but the other one is None - invalid operation.".format(type(self))
+        assert type(same_class) is type(self)
 
     @abstractmethod
     def add_multiple(self, data_array):
@@ -316,16 +326,6 @@ class Collection(ABC):
         via its ParticleAccessor.
         """
         assert (isinstance(particle_obj, BaseParticleAccessor) or isinstance(particle_obj, ScipyParticle))
-
-    @abstractmethod
-    def add_same(self, same_class):
-        """
-        Adds another, equi-structured ParticleCollection to this collection. This is done by concatenating
-        both collections. The fact that they are of the same ParticleCollection's derivative simplifies
-        parsing and concatenation.
-        """
-        assert same_class is not None, "Trying to add another {} to this one, but the other one is None - invalid operation.".format(type(self))
-        assert type(same_class) is type(self)
 
     @abstractmethod
     def __iadd__(self, same_class):
@@ -715,6 +715,7 @@ class Collection(ABC):
         This function merge two strictly equally-structured ParticleCollections into one. This can be, for example,
         quite handy to merge two particle subsets that - due to continuous removal - become too small to be effective.
 
+        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally merge individual particles that are tagged by status as
         being 'merged' (see the particle status for information on that).
 
@@ -727,7 +728,12 @@ class Collection(ABC):
 
         The function shall return the merged ParticleCollection.
         """
-        return None
+        if same_class is None:
+            return
+        if type(same_class) is type(self):
+            self.merge_same(same_class)
+        elif isinstance(same_class, ParticleCollection):
+            self.merge_collection(same_class)
 
     @abstractmethod
     def split(self, indices=None):

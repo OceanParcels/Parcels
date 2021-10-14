@@ -605,7 +605,7 @@ class ParticleSetAOS(BaseParticleSet):
         if isinstance(particles, type(self)):
             self._collection += particles.collection
         elif isinstance(particles, BaseParticleSet):
-            self._collection.add_collection(particles.collection)
+            self._collection.merge_collection(particles.collection)
         else:
             pass
         return self
@@ -620,9 +620,9 @@ class ParticleSetAOS(BaseParticleSet):
         :return: The current ParticleSet
         """
         if isinstance(value, type(self)):
-            self._collection.add_same(value.collection)
+            self._collection.merge_same(value.collection)
         elif isinstance(value, BaseParticleSet):
-            self._collection.add_collection(value.collection)
+            self._collection.merge_collection(value.collection)
         elif isinstance(value, np.ndarray) or isinstance(value, dict) or isinstance(value, list) or isinstance(value, tuple):
             self._collection.add_multiple(value)
         elif isinstance(value, ScipyParticle):

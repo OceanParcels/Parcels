@@ -673,13 +673,13 @@ class ParticleCollectionNodes(ParticleCollection):
                 results.append(res)
         return results
 
-    def add_collection(self, pcollection):
+    def merge_collection(self, pcollection):
         """
-        Adds another, differently structured ParticleCollection to this collection. This is done by, for example,
+        Merges another, differently structured ParticleCollection into this collection. This is done by, for example,
         appending/adding the items of the other collection to this collection.
         """
         # ==== first approach - still need to incorporate the MPI re-centering ==== #
-        super().add_collection(pcollection)
+        super().merge_collection(pcollection)
         results = []
         for item_index, item in enumerate(pcollection):
             # self._pclass(lon=item.lon, lat=item.lat, pid=item.pid, ngrids=ngrids, depth=item.depth, time=item.time)
@@ -687,6 +687,24 @@ class ParticleCollectionNodes(ParticleCollection):
             results.append(self.add_single(pdata_item))
         pcollection.clear()
         self._ncount = len(self._data)
+        return results
+
+    def merge_same(self, same_class):
+        """
+        Merges another, equi-structured ParticleCollection into this collection. This is done by concatenating
+        both collections. The fact that they are of the same ParticleCollection's derivative simplifies
+        parsing and concatenation.
+        """
+        super(ParticleCollectionNodes, self).merge_same(same_class)
+        results = []
+        if same_class.ncount <= 0:
+            return
+
+        for i in range(len(same_class)):
+            pdata = same_class.get_single_by_index(i)  # get() returns the particle data
+            # pdata = same_class.pop(i).data  # pop() returns the node
+            results.append(self.add_single(pdata))
+        # self._ncount = len(self._data) -> done by add_single()
         return results
 
     def add_multiple(self, data_array):
@@ -837,24 +855,6 @@ class ParticleCollectionNodes(ParticleCollection):
         self._ncount = len(self._data)
         return None
 
-    def add_same(self, same_class):
-        """
-        Adds another, equi-structured ParticleCollection to this collection. This is done by concatenating
-        both collections. The fact that they are of the same ParticleCollection's derivative simplifies
-        parsing and concatenation.
-        """
-        super(ParticleCollectionNodes, self).add_same(same_class)
-        results = []
-        if same_class.ncount <= 0:
-            return
-
-        for i in range(len(same_class)):
-            pdata = same_class.get_single_by_index(i)  # get() returns the particle data
-            # pdata = same_class.pop(i).data  # pop() returns the node
-            results.append(self.add_single(pdata))
-        # self._ncount = len(self._data) -> done by add_single()
-        return results
-
     def __iadd__(self, same_class):
         """
         Performs an incremental addition of the equi-structured ParticleCollections, such to allow
@@ -864,7 +864,7 @@ class ParticleCollectionNodes(ParticleCollection):
         with 'a' and 'b' begin the two equi-structured objects (or: 'b' being and individual object).
         This operation is equal to an in-place addition of (an) element(s).
         """
-        self.add_same(same_class)
+        self.merge_same(same_class)
         return self
 
     def insert(self, obj, index=None):
@@ -1259,6 +1259,7 @@ class ParticleCollectionNodes(ParticleCollection):
         This function merge two strictly equally-structured ParticleCollections into one. This can be, for example,
         quite handy to merge two particle subsets that - due to continuous removal - become too small to be effective.
 
+        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally merge individual particles that are tagged by status as
         being 'merged' (see the particle status for information on that).
 
@@ -1271,8 +1272,7 @@ class ParticleCollectionNodes(ParticleCollection):
 
         The function shall return the merged ParticleCollection.
         """
-        # TODO
-        raise NotImplementedError
+        super().merge(same_class)
 
     def split(self, indices=None):
         """

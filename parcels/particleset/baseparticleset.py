@@ -177,6 +177,21 @@ class BaseParticleSet(NDCluster):
             depth = [depth] * size
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype)
 
+    def merge(self, other):
+        """
+        This function merges another particle set into this one.
+        """
+        self._collection.merge(other.collection)
+
+    def split(self, key):
+        """
+        splits a particle set according to indiced, returning the resulting new subset that is not part anymore of this particle set
+        :param key: index (int; np.int32), Node
+        :return: ParticleSet
+        """
+        # TODO
+        raise NotImplementedError
+
     @classmethod
     @abstractmethod
     def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
