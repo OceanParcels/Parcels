@@ -142,6 +142,8 @@ class ParticleFileSOA(BaseParticleFile):
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']
         self.maxid_written = global_maxid_written
+
+        # These steps seem to be quite expensive...
         self.time_written = np.unique(global_time_written)
         self.id_present = np.unique([pid for frame in global_id for pid in frame])
 
@@ -174,9 +176,8 @@ class ParticleFileSOA(BaseParticleFile):
                 data = self.read_from_npy(global_file_list, len(self.time_written), var, id_range)
                 if (var == self.var_names[0]) & (chunk == 0):
                     # !! unacceptable assumption !!
-                    # This step assumes that the first id is 0 and that the
-                    # number of time-steps in the first chunk == number of
-                    # time-steps across all chunks.
+                    # Assumes that the number of time-steps in the first chunk
+                    # == number of time-steps across all chunks.
                     self.open_netcdf_file((len(self.id_present), data.shape[1]))
 
                 varout = 'z' if var == 'depth' else var
