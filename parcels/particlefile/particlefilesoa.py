@@ -151,7 +151,7 @@ class ParticleFileSOA(BaseParticleFile):
             # Find available memory to check if output file is too large
             avail_mem = psutil.virtual_memory()[1]
             req_mem   = len(self.id_present)*len(self.time_written)*8*1.2
-            avail_mem = req_mem/2
+            # avail_mem = req_mem/2 # ! HACK FOR TESTING !
 
             if req_mem > avail_mem:
                 # Read id_per_chunk ids at a time to keep memory use down
