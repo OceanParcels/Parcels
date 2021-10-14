@@ -409,6 +409,14 @@ class ParticleSetSOA(BaseParticleSet):
     def kernelclass(self):
         return KernelSOA
 
+    @property
+    def ptype(self):
+        return self._collection.ptype
+
+    @property
+    def pclass(self):
+        return self._collection.pclass
+
     @classmethod
     def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
         """
@@ -622,7 +630,7 @@ class ParticleSetSOA(BaseParticleSet):
         elif isinstance(value, BaseParticleSet):
             self._collection.add_collection(value.collection)
             self._dirty_neighbor = True
-        elif isinstance(value, np.ndarray):
+        elif isinstance(value, np.ndarray) or isinstance(value, dict) or isinstance(value, list) or isinstance(value, tuple):
             self._collection.add_multiple(value)
             self._dirty_neighbor = True
         elif isinstance(value, ScipyParticle):

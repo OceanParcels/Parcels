@@ -303,11 +303,10 @@ class Collection(ABC):
             is_list = True
         elif isinstance(data_array, tuple) and isinstance(data_array[0], ScipyParticle):
             is_tuple = True
-        elif isinstance(data_array, np.ndarray):
-            if isinstance(data_array[0], ScipyParticle) or isinstance(data_array.dtype, ParticleType):
-                is_ptype_ndarray = True
-            else:
-                is_attr_ndarray = True
+        elif isinstance(data_array, np.ndarray) and (isinstance(data_array[0], ScipyParticle) or isinstance(data_array.dtype, ParticleType)):
+            is_ptype_ndarray = True
+        elif isinstance(data_array, dict) and (isinstance(data_array[list(data_array.keys())[0]], np.ndarray)):
+            is_attr_ndarray = True
         assert is_tuple or is_list or is_ptype_ndarray or is_attr_ndarray
 
     @abstractmethod

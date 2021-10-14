@@ -40,7 +40,8 @@ class Variable(object):
 
     def __set__(self, instance, value):
         if isinstance(instance, JITParticle):
-            instance._cptr.__setitem__(self.name, value)
+            # instance._cptr.__setitem__(self.name, value)
+            instance.get_cptr().__setitem__(self.name, value)
         else:
             setattr(instance, "_%s" % (self.name,), value)
 

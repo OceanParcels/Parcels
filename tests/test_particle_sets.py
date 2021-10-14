@@ -612,9 +612,63 @@ def test_pset_custom_ptype(fieldset, pset_mode, mode, npart=100):
 # ==== laid out below.                                       ==== #
 # ==== Follow-up PR.                                         ==== #
 # =============================================================== #
+@pytest.mark.parametrize('execute_stage', [False, True])
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pset_add_explicit(fieldset, pset_mode, mode, npart=100):
+def test_pset_add_single_asparticle_explicit(fieldset, execute_stage, pset_mode, mode, npart=10):
+    idgen = None
+    c_lib_register = None
+
+    def AddLat(particle, fieldset, time):
+        particle.lon += 0.0625
+        particle.lat -= 0.0625
+
+    lon = np.linspace(0, 1, npart)
+    lat = np.linspace(1, 0, npart)
+
+    pset = None
+    ptype[mode].set_lonlatdepth_dtype(np.float64)
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64)
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 1.0)
+        idgen.setTimeLine(0.0, 1.0)
+        c_lib_register = LibraryRegisterC()
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64, idgen=idgen, c_lib_register=c_lib_register)
+
+    pid = np.iinfo(np.int64).max
+    pclass = pset.pclass
+    for i in range(npart):
+        if pset_mode != 'nodes':
+            pid = ptype[mode].lastID + i
+        if pset_mode == 'soa':
+            pclass = ptype[mode]  # this line, for example, will never work with SoA, because SoA doesn't follow the particle concept
+        particle = pclass(lon[i], lat[i], pid=pid, fieldset=fieldset, ngrids=fieldset.gridset.size)
+        pset.add(particle)
+    assert len(pset) == npart
+
+    if execute_stage:
+        for _ in range(4):
+            pset.execute(pset.Kernel(AddLat), runtime=1., dt=1.0)
+        assert np.allclose([p.lon for p in pset], lon+0.25, rtol=1e-12)
+        assert np.allclose([p.lat for p in pset], lat-0.25, rtol=1e-12)
+    else:
+        assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
+        assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
+
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_add_single_execute_aspset_explicit(fieldset, pset_mode, mode, npart=10):
     idgen = None
     c_lib_register = None
 
@@ -639,7 +693,160 @@ def test_pset_add_explicit(fieldset, pset_mode, mode, npart=100):
             particle = pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=lon[i], lat=lat[i], fieldset=fieldset,
                                                     lonlatdepth_dtype=np.float64, idgen=idgen, c_lib_register=c_lib_register)
             pset.add(particle)
-    assert len(pset) == 100
+    assert len(pset) == npart
+    assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
+    assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
+
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
+
+
+# =============================================================== #
+# ==== Adding individual particles by constructing a whole   ==== #
+# ==== new particle set is very expensive in runtime for     ==== #
+# ==== non-indexable data structures. Therefore, also the    ==== #
+# ==== adding should be done via individual particles. This  ==== #
+# ==== is already prepared for structure-optimized versions  ==== #
+# ==== in the collections, and now just needs to be done in  ==== #
+# ==== the particle set itself. Ties into the semantic issue ==== #
+# ==== laid out below.                                       ==== #
+# ==== Follow-up PR.                                         ==== #
+# =============================================================== #
+@pytest.mark.parametrize('execute_stage', [False, True])
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_add_multiple_asparticle_explicit(fieldset, execute_stage, pset_mode, mode, npart=10):
+    idgen = None
+    c_lib_register = None
+
+    def AddLat(particle, fieldset, time):
+        particle.lon += 0.0625
+        particle.lat -= 0.0625
+
+    lon = np.linspace(0, 1, npart)
+    lat = np.linspace(1, 0, npart)
+
+    pset = None
+    ptype[mode].set_lonlatdepth_dtype(np.float64)
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64)
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 1.0)
+        idgen.setTimeLine(0.0, 1.0)
+        c_lib_register = LibraryRegisterC()
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64, idgen=idgen, c_lib_register=c_lib_register)
+    parray = []
+    pid = np.iinfo(np.int64).max
+    pclass = pset.pclass
+    for i in range(npart):
+        if pset_mode != 'nodes':
+            pid = ptype[mode].lastID + i
+        if pset_mode == 'soa':
+            pclass = ptype[mode]  # this line, for example, will never work with SoA, because SoA doesn't follow the particle concept
+        particle = pclass(lon[i], lat[i], pid=pid, fieldset=fieldset, ngrids=fieldset.gridset.size)
+        parray.append(particle)
+    pset.add(parray)
+    assert len(pset) == npart
+
+    if execute_stage:
+        for _ in range(4):
+            pset.execute(pset.Kernel(AddLat), runtime=1., dt=1.0)
+        # pset.execute(pset.Kernel(AddLat), runtime=4.0, dt=1.0)
+        assert np.allclose([p.lon for p in pset], lon+0.25, rtol=1e-7)
+        assert np.allclose([p.lat for p in pset], lat-0.25, rtol=1e-7)
+    else:
+        assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
+        assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
+
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
+
+
+@pytest.mark.parametrize('execute_stage', [False, True])
+@pytest.mark.parametrize('pset_mode', ['aos', 'nodes'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_add_multiple_asdict_explicit(fieldset, execute_stage, pset_mode, mode, npart=10):
+    idgen = None
+    c_lib_register = None
+
+    def AddLat(particle, fieldset, time):
+        particle.lon += 0.0625
+        particle.lat -= 0.0625
+
+    lon = np.linspace(0, 1, npart)
+    lat = np.linspace(1, 0, npart)
+
+    pset = None
+    ptype[mode].set_lonlatdepth_dtype(np.float64)
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64)
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 1.0)
+        idgen.setTimeLine(0.0, 1.0)
+        c_lib_register = LibraryRegisterC()
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64, idgen=idgen, c_lib_register=c_lib_register)
+    parray = {'lon': lon, 'lat': lat}
+    pset.add(parray)
+    assert len(pset) == npart
+
+    if execute_stage:
+        for _ in range(4):
+            pset.execute(pset.Kernel(AddLat), runtime=1., dt=1.0)
+        assert np.allclose(np.array([p.lon for p in pset]), lon+0.25, rtol=1e-8)
+        assert np.allclose(np.array([p.lat for p in pset]), lat-0.25, rtol=1e-8)
+    else:
+        assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
+        assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
+
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_add_multiple_execute_aspset_explicit(fieldset, pset_mode, mode, npart=10):
+    idgen = None
+    c_lib_register = None
+
+    lon = np.linspace(0, 1, npart)
+    lat = np.linspace(1, 0, npart)
+
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64)
+        for i in range(npart):
+            particle = pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=lon[i], lat=lat[i],
+                                                    fieldset=fieldset, lonlatdepth_dtype=np.float64)
+            pset.add(particle)
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 1.0)
+        idgen.setTimeLine(0.0, 1.0)
+        c_lib_register = LibraryRegisterC()
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode],
+                                            lonlatdepth_dtype=np.float64, idgen=idgen, c_lib_register=c_lib_register)
+        for i in range(npart):
+            particle = pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=lon[i], lat=lat[i], fieldset=fieldset,
+                                                    lonlatdepth_dtype=np.float64, idgen=idgen, c_lib_register=c_lib_register)
+            pset.add(particle)
+    assert len(pset) == npart
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
 

@@ -455,84 +455,84 @@ class ParticleCollectionAOS(ParticleCollection):
         :arg data_array: one of the following:
             i) a list or tuples containing multple Particle instances
             ii) a Numpy.ndarray of dtype = Particle dtype
-            iii) a Numpy.ndarray of shape N x M, with N = # particles and
-                 M = variables [lon, lat, [depth, [time, [dt, [id=-1, [kwargs]]]]]]
+            iii) a dict of Numpy.ndarray of shape, each of which with N = # particles
         """
         super().add_multiple(data_array)
         results = []
         if len(data_array) <= 0:
             return results
         if isinstance(data_array, list) or isinstance(data_array, tuple):
+            logger.info("SoA -> data_array - type: {}; values: {}".format(type(data_array[0]), data_array))
             for item in data_array:
                 results.append(self.add_single(item))
-        elif isinstance(data_array, np.ndarray):
-            if data_array.dtype == self._ptype:
-                for i in range(data_array.shape[0]):
-                    pdata = data_array[i]
-                    results.append(self.add_single(pdata))
+        elif isinstance(data_array, np.ndarray) and (data_array.dtype == self._ptype):
+            for i in range(data_array.shape[0]):
+                pdata = data_array[i]
+                results.append(self.add_single(pdata))
+        elif isinstance(data_array, dict) and isinstance(data_array['lon'], np.ndarray):
+            # ==== NOT GOING TO WORK CAUSE THE ND.ARRAY NEEDS TO BE OF A SINGLE TYPE ==== #
+            pu_ids = None
+            pu_indices = None
+            # pu_data = None
+            n_pu_data = 0
+            if MPI and MPI.COMM_WORLD.Get_size() > 1:
+                mpi_comm = MPI.COMM_WORLD
+                mpi_size = mpi_comm.Get_size()
+                mpi_rank = mpi_comm.Get_rank()
+                spdata = np.array([data_array['lon'], data_array['lat']]).transpose([1, 0])
+                min_pu = None
+                if mpi_rank == 0:
+                    dists = distance.cdist(spdata, self._pu_centers)
+                    min_pu = np.argmax(dists, axis=1)
+                    self._pu_indicators = np.concatenate((self._pu_indicators, min_pu), axis=0)
+                min_pu = mpi_comm.bcast(min_pu, root=0)
+                self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
+                pu_indices = np.nonzero(min_pu == mpi_rank)[0]
+                # pu_data = data_array[min_pu == mpi_rank]
+                ids = np.arange(ScipyParticle.lastID, stop=ScipyParticle.lastID+data_array['lon'].shape[0]) if 'id' not in data_array.keys() else data_array['id']
+                mpi_comm.Bcast(ids, root=0)
+                # pu_ids = ids[min_pu == mpi_rank]
+                pu_ids = ids
+                new_lastID = 0
+                if mpi_rank == 0:
+                    new_lastID = ScipyParticle.lastID+data_array['lon'].shape[0]-1
+                new_lastID = mpi_comm.bcast(new_lastID, root=0)
+                self._pclass.setLastID(new_lastID)
+                pu_center = np.array(np.mean(spdata, axis=0), dtype=self._lonlatdepth_dtype)
+                n_pu_data = pu_indices.shape[0]
+                pu_ncenters = None
+                if mpi_rank == 0:
+                    pu_ncenters = np.empty([mpi_size, pu_center.shape[0]], dtype=self._latlondepth_dtype)
+                mpi_comm.Gather(pu_center, pu_ncenters, root=0)
+                pu_ndata = mpi_comm.gather(n_pu_data, root=0)
+                if mpi_rank == 0:
+                    for i in range(self._pu_centers.shape[0]):
+                        ax = float(pu_ndata[i]) / float(len(np.nonzero(self._pu_indicators == i)[0]))
+                        self._pu_centers[i, :] += ax*pu_ncenters[i, :]
+                mpi_comm.Bcast(self._pu_centers, root=0)
             else:
-                # expect this to be a nD (2 <= n <= 5) array with [lon, lat, [depth, [time, [dt]]]]
-                pu_data = None
-                n_pu_data = 0
-                if MPI and MPI.COMM_WORLD.Get_size() > 1:
-                    mpi_comm = MPI.COMM_WORLD
-                    mpi_size = mpi_comm.Get_size()
-                    mpi_rank = mpi_comm.Get_rank()
-                    spdata = data_array[:, 0:2]  # expecting lon-lat in the first 2 dimensions
-                    min_pu = None
-                    if mpi_rank == 0:
-                        dists = distance.cdist(spdata, self._pu_centers)
-                        min_pu = np.argmax(dists, axis=1)
-                        self._pu_indicators = np.concatenate((self._pu_indicators, min_pu), axis=0)
-                    min_pu = mpi_comm.bcast(min_pu, root=0)
-                    self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
-                    pu_data = data_array[min_pu == mpi_rank]
-                    ids = np.arange(ScipyParticle.lastID, stop=ScipyParticle.lastID+data_array.shape[0]) if data_array.shape[1] <= 5 else data_array[:, 5]
-                    pu_ids = ids[min_pu == mpi_rank]
-                    new_lastID = 0
-                    if mpi_rank == 0:
-                        new_lastID = ScipyParticle.lastID+data_array.shape[0]-1
-                    new_lastID = mpi_comm.bcast(new_lastID, root=0)
-                    self._pclass.setLastID(new_lastID)
-                    pu_center = np.array(np.mean(spdata, axis=0), dtype=self._lonlatdepth_dtype)
-                    n_pu_data = pu_data.shape[0]
-                    pu_ncenters = None
-                    if mpi_rank == 0:
-                        pu_ncenters = np.empty([mpi_size, pu_center.shape[0]], dtype=self._latlondepth_dtype)
-                    mpi_comm.Gather(pu_center, pu_ncenters, root=0)
-                    pu_ndata = mpi_comm.gather(n_pu_data, root=0)
-                    if mpi_rank == 0:
-                        for i in range(self._pu_centers.shape[0]):
-                            ax = float(pu_ndata[i]) / float(len(np.nonzero(self._pu_indicators == i)[0]))
-                            self._pu_centers[i, :] += ax*pu_ncenters[i, :]
-                    mpi_comm.Bcast(self._pu_centers, root=0)
-                else:
-                    pu_data = data_array
-                    pu_ids = np.arange(ScipyParticle.lastID, stop=ScipyParticle.lastID+data_array.shape[0]) if data_array.shape[1] <= 5 else data_array[:, 5]
-                    new_lastID = ScipyParticle.lastID+data_array.shape[0]-1
-                    self._pclass.setLastID(new_lastID)
-                    n_pu_data = data_array.shape[0]
-                if n_pu_data <= 0:
-                    results = []
-                else:
-                    for i in range(pu_data.shape[0]):
-                        pid = pu_ids[i]
-                        pdata = self._pclass(lon=pu_data[i, 0], lat=pu_data[i, 1], pid=pid, ngrids=self._ngrid)
-                        if pu_data.shape[1] > 2:
-                            pdata.depth = pu_data[i, 2]
-                        if pu_data.shape[1] > 3:
-                            pdata.time = pu_data[i, 3]
-                        if pu_data.shape[1] > 4:
-                            pdata.dt = pu_data[i, 4]
-                        if pu_data.shape[1] > 6:
-                            attr_index = 6
-                            for key in self._kwarg_keys:
-                                setattr(pdata, key, pu_data[i, attr_index])
-                                attr_index += 1
-                        results.append(self.add_single(pdata, pu_checked=True))
-        else:
-            self._ncount = len(self._data)
-            return results
+                # pu_data = data_array
+                pu_ids = np.arange(ScipyParticle.lastID, stop=ScipyParticle.lastID+data_array['lon'].shape[0]) if 'id' not in data_array.keys() else data_array['id']
+                new_lastID = ScipyParticle.lastID+data_array['lon'].shape[0]-1
+                self._pclass.setLastID(new_lastID)
+                pu_indices = np.arange(start=0, stop=data_array['lon'].shape[0])
+                n_pu_data = pu_indices.shape[0]
+            if n_pu_data <= 0:
+                results = []
+            else:
+                for i in pu_indices:
+                    pid = pu_ids[i]
+                    pdata = self._pclass(lon=data_array['lon'][i], lat=data_array['lat'][i], pid=pid, ngrids=self._ngrid)
+                    if 'depth' in data_array.keys():
+                        pdata.depth = data_array['depth'][i]
+                    if 'time' in data_array.keys():
+                        pdata.time = data_array['time'][i]
+                    if 'dt' in data_array.keys():
+                        pdata.dt = data_array['dt'][i]
+                    for key in self._kwarg_keys:
+                        if key in data_array.keys():
+                            setattr(pdata, key, data_array[key][i])
+                    results.append(self.add_single(pdata, pu_checked=True))
         self._ncount = len(self._data)
         return results
 
@@ -598,14 +598,18 @@ class ParticleCollectionAOS(ParticleCollection):
                 self._pclass.setLastID(ScipyParticle.lastID + 1)
         if _add_to_pu:
             particle_obj.id = pu_id
-            self._data = np.concatenate([self._data, particle_obj])
+            self._data = np.concatenate((self._data, [particle_obj, ]), axis=0)
             index = self._data.shape[0]-1
             if self._ptype.uses_jit and isinstance(particle_obj, JITParticle):
-                tmp_addr = self._data_c
-                prev_ncount = tmp_addr.shape[0]
-                self._data_c = np.array(self._ncount, dtype=self._ptype.dtype)
-                self._data_c[0:max(prev_ncount-1, 0)] = tmp_addr[:]
-                self._data_c[-1] = particle_obj.get_cptr()
+                self._data_c = np.concatenate((self._data_c, [particle_obj.get_cptr(), ]))
+                # tmp_addr = self._data_c
+                # prev_ncount = tmp_addr.shape[0]
+                # self._data_c = np.empty(self._data.shape[0], dtype=self._ptype.dtype)
+                # if prev_ncount > 0:
+                #     self._data_c[0:prev_ncount] = tmp_addr[:]
+                # self._data_c[-1] = particle_obj.get_cptr()
+                # # self._data_c[index] = particle_obj.get_cptr()
+                # # self._data[-1]._cptr = self._data_c[-1]
             if index >= 0:
                 self._ncount = self._data.shape[0]
                 return index
@@ -675,7 +679,7 @@ class ParticleCollectionAOS(ParticleCollection):
             if self._ptype.uses_jit and isinstance(obj, JITParticle):
                 top_array = self._data_c[0:index-1]
                 bottom_array = self._data_c[index:]
-                splice_array = np.concatenate([top_array, obj.get_cptr()])
+                splice_array = np.concatenate((top_array, [obj.get_cptr(), ]))
                 self._data_c = np.concatenate([splice_array, bottom_array])
             self._ncount = self._data.shape[0]
 
