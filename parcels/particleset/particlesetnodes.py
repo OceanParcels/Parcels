@@ -754,7 +754,7 @@ class ParticleSetNodes(BaseParticleSet):
         if isinstance(pset, type(self)):
             self._collection += pset.collection
         elif isinstance(pset, BaseParticleSet):
-            self._collection.add_collection(pset.collection)
+            self._collection.merge_collection(pset.collection)
         else:
             pass
         return self
@@ -769,9 +769,9 @@ class ParticleSetNodes(BaseParticleSet):
         :return: The current ParticleSet
         """
         if isinstance(value, type(self)):
-            self._collection.add_same(value.collection)
+            self._collection.merge_same(value.collection)
         elif isinstance(value, BaseParticleSet):
-            self._collection.add_collection(value.collection)
+            self._collection.merge_collection(value.collection)
         elif isinstance(value, np.ndarray) or isinstance(value, dict) or isinstance(value, list) or isinstance(value, tuple):
             self._collection.add_multiple(value)
         elif isinstance(value, ScipyParticle):
@@ -857,37 +857,6 @@ class ParticleSetNodes(BaseParticleSet):
 
     def __repr__(self):
         return repr(self._collection)
-
-    def merge(self, key1, key2):
-        """
-        This function splits this collection into two disect equi-structured collections. The reason for it can, for
-        example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
-        mandates a split.
-
-        On the other hand, this function can also internally split individual particles that are tagged byt status as
-        to be 'split' (see the particle status for information on that).
-
-        In order to distinguish both use cases, we can evaluate the 'indices' parameter. In cases where this is
-        'None', the split operation semantically refers to an internal split of individual particles - otherwise,
-        it performs a collection-split.
-
-        Comment: the function can be simplified later by pre-evaluating the function parameter and then reference
-        the individual, specific functions for element- or collection split.
-
-        The function shall return the newly created or extended Particle collection, i.e. either the collection that
-        results from a collection split or this very collection, containing the newly-split particles.
-        """
-        # TODO
-        raise NotImplementedError
-
-    def split(self, key):
-        """
-        splits a node, returning the result 2 new nodes
-        :param key: index (int; np.int32), Node
-        :return: 'node1, node2' or 'index1, index2'
-        """
-        # TODO
-        raise NotImplementedError
 
     def to_dict(self, pfile, time, deleted_only=False):
         """

@@ -603,7 +603,7 @@ class ParticleSetSOA(BaseParticleSet):
             self._collection += particles.collection
             self._dirty_neighbor = True
         elif isinstance(particles, BaseParticleSet):
-            self._collection.add_collection(particles.collection)
+            self._collection.merge_collection(particles.collection)
             self._dirty_neighbor = True
         else:
             pass
@@ -625,10 +625,10 @@ class ParticleSetSOA(BaseParticleSet):
         :return: The current ParticleSet
         """
         if isinstance(value, type(self)):
-            self._collection.add_same(value.collection)
+            self._collection.merge_same(value.collection)
             self._dirty_neighbor = True
         elif isinstance(value, BaseParticleSet):
-            self._collection.add_collection(value.collection)
+            self._collection.merge_collection(value.collection)
             self._dirty_neighbor = True
         elif isinstance(value, np.ndarray) or isinstance(value, dict) or isinstance(value, list) or isinstance(value, tuple):
             self._collection.add_multiple(value)
