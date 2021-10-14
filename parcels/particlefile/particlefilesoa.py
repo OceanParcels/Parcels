@@ -60,7 +60,7 @@ class ParticleFileSOA(BaseParticleFile):
                       'file_list', 'file_list_once', 'maxid_written', 'parcels_mesh', 'metadata']
         return attributes
 
-    def read_from_npy(self, file_list, time_steps, var, id_range):
+    def read_from_npy(self, file_list, time_steps, var, chunk_ids):
         """
         Read NPY-files for one variable using a loop over all files.
 
@@ -72,8 +72,7 @@ class ParticleFileSOA(BaseParticleFile):
         :param var: name of the variable to read
         """
 
-        valid_id = np.arange(id_range[0], id_range[1]+1)
-        n_ids = len(valid_id)
+        n_ids = len(chunk_ids)
 
         data = np.nan * np.zeros((n_ids, time_steps))
         time_index = np.zeros(n_ids, dtype=np.int64)
@@ -91,8 +90,8 @@ class ParticleFileSOA(BaseParticleFile):
                                    'close() your ParticleFile at the end of your script.' % self.tempwritedir)
 
             id_avail = np.array(data_dict["id"], dtype=np.int64)
-            id_mask_full = np.in1d(id_avail, valid_id) # which ids in data are present in this chunk
-            id_mask_chunk = np.in1d(valid_id, id_avail) # which ids in this chunk are present in data
+            id_mask_full = np.in1d(id_avail, chunk_ids) # which ids in data are present in this chunk
+            id_mask_chunk = np.in1d(chunk_ids, id_avail) # which ids in this chunk are present in data
             t_ind = time_index[id_mask_chunk] if 'once' not in file_list[0] else 0
             t_ind_used[t_ind] = 1
             data[id_mask_chunk, t_ind] = data_dict[var][id_mask_full]
@@ -168,12 +167,8 @@ class ParticleFileSOA(BaseParticleFile):
                 idx_range[1] = int(np.min(((chunk+1)*id_per_chunk,
                                           len(self.id_present))))
 
-                # Minimum and maximum id for this chunk
-                id_range = [self.id_present[idx_range[0]],
-                            self.id_present[idx_range[1]-1]]
-
                 # Read chunk-sized data from NPY-files
-                data = self.read_from_npy(global_file_list, len(self.time_written), var, id_range)
+                data = self.read_from_npy(global_file_list, len(self.time_written), var, self.id_present[idx_range[0]:idx_range[1]])
                 if (var == self.var_names[0]) & (chunk == 0):
                     # !! unacceptable assumption !!
                     # Assumes that the number of time-steps in the first chunk
@@ -186,6 +181,6 @@ class ParticleFileSOA(BaseParticleFile):
 
         if len(self.var_names_once) > 0:
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var, [0, self.maxid_written+1])
+                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var, self.id_present)
 
         self.close_netcdf_file()
