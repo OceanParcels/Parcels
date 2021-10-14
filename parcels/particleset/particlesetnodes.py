@@ -641,6 +641,10 @@ class ParticleSetNodes(BaseParticleSet):
         return self._collection.ptype
 
     @property
+    def pclass(self):
+        return self._collection.pclass
+
+    @property
     def size(self):
         return len(self._collection)
 
@@ -768,7 +772,7 @@ class ParticleSetNodes(BaseParticleSet):
             self._collection.add_same(value.collection)
         elif isinstance(value, BaseParticleSet):
             self._collection.add_collection(value.collection)
-        elif isinstance(value, np.ndarray):
+        elif isinstance(value, np.ndarray) or isinstance(value, dict) or isinstance(value, list) or isinstance(value, tuple):
             self._collection.add_multiple(value)
         elif isinstance(value, ScipyParticle):
             self._collection.add_single(value)

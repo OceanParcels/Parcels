@@ -453,6 +453,10 @@ class ParticleSetAOS(BaseParticleSet):
     def ptype(self):
         return self._collection.ptype
 
+    @property
+    def pclass(self):
+        return self._collection.pclass
+
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
         if type(field) in [SummedField, NestedField]:
@@ -619,7 +623,7 @@ class ParticleSetAOS(BaseParticleSet):
             self._collection.add_same(value.collection)
         elif isinstance(value, BaseParticleSet):
             self._collection.add_collection(value.collection)
-        elif isinstance(value, np.ndarray):
+        elif isinstance(value, np.ndarray) or isinstance(value, dict) or isinstance(value, list) or isinstance(value, tuple):
             self._collection.add_multiple(value)
         elif isinstance(value, ScipyParticle):
             self._collection.add_single(value)
