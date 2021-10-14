@@ -72,7 +72,7 @@ class ParticleFileSOA(BaseParticleFile):
         :param var: name of the variable to read
         """
 
-        valid_id = np.arange(id_range[0], id_range[1])
+        valid_id = np.arange(id_range[0], id_range[1]+1)
         n_ids = len(valid_id)
 
         data = np.nan * np.zeros((n_ids, time_steps))
@@ -126,6 +126,7 @@ class ParticleFileSOA(BaseParticleFile):
 
         global_maxid_written = -1
         global_time_written = []
+        global_id = []
         global_file_list = []
         if len(self.var_names_once) > 0:
             global_file_list_once = []
@@ -136,42 +137,51 @@ class ParticleFileSOA(BaseParticleFile):
                 for npyfile in pset_info_local['file_list']:
                     tmp_dict = np.load(npyfile, allow_pickle=True).item()
                     global_time_written.append([t for t in tmp_dict['time']])
+                    global_id.append([i for i in tmp_dict['id']])
                 global_file_list += pset_info_local['file_list']
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']
         self.maxid_written = global_maxid_written
         self.time_written = np.unique(global_time_written)
+        self.id_present = np.unique([pid for frame in global_id for pid in frame])
 
         for var in self.var_names:
             # Find available memory to check if output file is too large
             avail_mem = psutil.virtual_memory()[1]
-            req_mem   = (self.maxid_written+1)*len(self.time_written)*8*1.2
+            req_mem   = len(self.id_present)*len(self.time_written)*8*1.2
+            avail_mem = req_mem/2
 
             if req_mem > avail_mem:
                 # Read id_per_chunk ids at a time to keep memory use down
                 total_chunks = int(np.ceil(req_mem/avail_mem))
-                id_per_chunk = int(np.ceil((self.maxid_written+1)/total_chunks))
+                id_per_chunk = int(np.ceil(len(self.id_present)/total_chunks))
             else:
                 total_chunks = 1
-                id_per_chunk = self.maxid_written+1
+                id_per_chunk = len(self.id_present)
 
             for chunk in range(total_chunks):
+                # Minimum and maximum particle indices for this chunk
+                idx_range = [0, 0]
+                idx_range[0] = int(chunk*id_per_chunk)
+                idx_range[1] = int(np.min(((chunk+1)*id_per_chunk,
+                                          len(self.id_present))))
+
                 # Minimum and maximum id for this chunk
-                id_range = [chunk*id_per_chunk,
-                            np.min(((chunk+1)*id_per_chunk, self.maxid_written+1))]
+                id_range = [self.id_present[idx_range[0]],
+                            self.id_present[idx_range[1]-1]]
 
                 # Read chunk-sized data from NPY-files
                 data = self.read_from_npy(global_file_list, len(self.time_written), var, id_range)
-                if var == self.var_names[0]:
+                if (var == self.var_names[0]) & (chunk == 0):
                     # !! unacceptable assumption !!
                     # This step assumes that the first id is 0 and that the
                     # number of time-steps in the first chunk == number of
                     # time-steps across all chunks.
-                    self.open_netcdf_file((self.maxid_written+1, data.shape[1]))
+                    self.open_netcdf_file((len(self.id_present), data.shape[1]))
 
                 varout = 'z' if var == 'depth' else var
                 # Write to correct location in netcdf file
-                getattr(self, varout)[id_range[0]:id_range[1], :] = data
+                getattr(self, varout)[idx_range[0]:idx_range[1], :] = data
 
         if len(self.var_names_once) > 0:
             for var in self.var_names_once:
