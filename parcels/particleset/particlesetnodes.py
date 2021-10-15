@@ -120,9 +120,16 @@ class ParticleSetNodes(BaseParticleSet):
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
 
-        class_name = "Object"+pclass.__name__
+        Alist = [pclass.__name__[0:6], pclass.__name__[0:5]]
+        Blist = ["Array", "Object"]
+        class_is_derived = any([key in Blist for key in Alist])
+        class_name = "Object"+pclass.__name__ if not class_is_derived else pclass.__name__
+        logger.info("checking {} IN {}".format(Alist, Blist))
         object_class = None
-        if class_name not in dir():
+        if class_is_derived:
+            logger.warn("Reusing original class '{}' instead of deriving an object-version again. This is potentially incorrect - please check your object naming.".format(pclass.__name__))
+            object_class = pclass
+        elif class_name not in dir():
             def ObjectScipyClass_init(self, *args, **kwargs):
                 fieldset = kwargs.get('fieldset', None)
                 ngrids = kwargs.get('ngrids', None)
@@ -777,6 +784,48 @@ class ParticleSetNodes(BaseParticleSet):
         elif isinstance(value, ScipyParticle):
             self._collection.add_single(value)
 
+    def split_by_index(self, indices):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        super().split_by_index(indices)
+        assert len(self._collection) > 0
+        # ParticleCollectionNodes(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
+        result = ParticleSetNodes(pclass=self.pclass, lon=[], lat=[], time=[], lonlatdepth_dtype=self._collection.lonlatdepth_dtype, fieldset=self.fieldset, pid_orig=None, idgen=self._collection._idgen, c_lib_register=self._collection._c_lib_register)
+        for index in sorted(indices, reverse=True):  # pop-based process needs to start from the back of the queue
+            ndata = self._collection.pop_single_by_index(index=index)
+            pdata = ndata.data
+            ndata.set_data(None)
+            del ndata
+            result.add(pdata)
+        return result
+
+    def split_by_id(self, ids):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        super().split_by_id(ids)
+        assert len(self._collection) > 0
+        # result = ParticleCollectionNodes(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
+        result = ParticleSetNodes(pclass=self.pclass, lon=[], lat=[], time=[], lonlatdepth_dtype=self._collection.lonlatdepth_dtype, fieldset=self.fieldset, pid_orig=None, idgen=self._collection._idgen, c_lib_register=self._collection._c_lib_register)
+        for id in ids:
+            ndata = self._collection.pop_single_by_ID(id)
+            pdata = ndata.data
+            ndata.set_data(None)
+            del ndata
+            result.add(pdata)
+        return result
+
     def push(self, pdata, deepcopy_elem=False):
         if deepcopy_elem:
             self._collection.push(self._collection.pclass(pdata))
@@ -808,7 +857,7 @@ class ParticleSetNodes(BaseParticleSet):
             self._collection.remove_single_by_object(value)
 
     def pop(self, idx=-1, deepcopy_elem=False):
-        return self.pop(idx, deepcopy_elem)
+        return self._collection.data.pop(idx, deepcopy_elem)
 
     def get_deleted_item_indices(self):
         return self._collection.get_deleted_item_indices()

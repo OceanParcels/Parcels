@@ -177,14 +177,61 @@ class BaseParticleSet(NDCluster):
         """
         self._collection.merge(other.collection)
 
-    def split(self, key):
+    def split(self, keys):
         """
-        splits a particle set according to indiced, returning the resulting new subset that is not part anymore of this particle set
-        :param key: index (int; np.int32), Node
+        splits a particle set according to indices or ids, returning the resulting new subset that is not part anymore of this particle set
+        :param key: indices (int; np.int32; np.uin32), or IDs (np.int64, np.uint64)
         :return: ParticleSet
         """
-        # TODO
-        raise NotImplementedError
+        return self.split_same(keys)
+
+    def split_same(self, subset):
+        """
+        This function splits this collection into two disect equi-structured collections. The reason for it can, for
+        example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
+        mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        subset_are_indices = False
+        subset_are_ids = False
+        assert subset is not None
+        assert (subset.shape[0] if isinstance(subset, np.ndarray) else len(subset)) > 0
+        if isinstance(subset, np.ndarray) and (subset.dtype == np.int32 or subset.dtype == np.uint32):
+            subset_are_indices = True
+        elif isinstance(subset, list) and len(subset) > 0 and (isinstance(subset[0], int) or isinstance(subset[0], np.int32) or isinstance(subset[0], np.uint32)):
+            subset_are_indices = True
+        elif isinstance(subset, np.ndarray) and (subset.dtype == np.int64 or subset.dtype == np.uint64):
+            subset_are_ids = True
+        elif isinstance(subset, list) and len(subset) > 0 and (isinstance(subset[0], int) or isinstance(subset[0], np.int64) or isinstance(subset[0], np.uint64)):
+            subset_are_ids = True
+        assert subset_are_ids or subset_are_indices
+        if subset_are_indices:
+            return self.split_by_index(subset)
+        elif subset_are_ids:
+            return self.split_by_id(subset)
+        return None
+
+    @abstractmethod
+    def split_by_index(self, indices):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        subset_are_indices = False
+        assert indices is not None
+        assert (indices.shape[0] if isinstance(indices, np.ndarray) else len(indices)) > 0
+        if isinstance(indices, np.ndarray) and (indices.dtype == np.int32 or indices.dtype == np.uint32):
+            subset_are_indices = True
+        elif isinstance(indices, list) and len(indices) > 0 and (isinstance(indices[0], int) or isinstance(indices[0], np.int32) or isinstance(indices[0], np.uint32)):
+            subset_are_indices = True
+        assert subset_are_indices
+        return None
 
     @classmethod
     @abstractmethod

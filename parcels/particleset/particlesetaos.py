@@ -77,9 +77,17 @@ class ParticleSetAOS(BaseParticleSet):
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
-        class_name = "Object"+pclass.__name__
+
+        Alist = [pclass.__name__[0:6], pclass.__name__[0:5]]
+        Blist = ["Array", "Object"]
+        class_is_derived = any([key in Blist for key in Alist])
+        class_name = "Object"+pclass.__name__ if not class_is_derived else pclass.__name__
+        logger.info("checking {} IN {}".format(Alist, Blist))
         object_class = None
-        if class_name not in dir():
+        if class_is_derived:
+            logger.warn("Reusing original class '{}' instead of deriving an object-version again. This is potentially incorrect - please check your object naming.".format(pclass.__name__))
+            object_class = pclass
+        elif class_name not in dir():
             def ObjectScipyClass_init(self, *args, **kwargs):
                 fieldset = kwargs.get('fieldset', None)
                 ngrids = kwargs.get('ngrids', None)
@@ -627,6 +635,45 @@ class ParticleSetAOS(BaseParticleSet):
             self._collection.add_multiple(value)
         elif isinstance(value, ScipyParticle):
             self._collection.add_single(value)
+
+    def split_by_index(self, indices):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        super().split_by_index(indices)
+        assert len(self._collection) > 0
+        result = ParticleSetAOS(pclass=self.pclass, lon=[], lat=[], time=[], lonlatdepth_dtype=self._collection.lonlatdepth_dtype, pid_orig=None, fieldset=self.fieldset)
+        idx = sorted(indices, reverse=True)
+        tmp = []
+        for index in idx:  # pop-based process needs to start from the back of the queue
+            pdata = self._collection.pop_single_by_index(index=index)
+            tmp.append(pdata)
+        rdata = reversed(tmp)
+        for pdata in rdata:  # add particles in correct order again
+            result.add(pdata)
+        return result
+
+    def split_by_id(self, ids):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        super().split_by_id(ids)
+        assert len(self._collection) > 0
+        result = ParticleSetAOS(pclass=self.pclass, lon=[], lat=[], time=[], lonlatdepth_dtype=self._collection.lonlatdepth_dtype, pid_orig=None, fieldset=self.fieldset)
+        for id in ids:
+            pdata = self._collection.pop_single_by_ID(id)
+            result.add(pdata)
+        return result
 
     def __isub__(self, pset):
         if isinstance(pset, type(self)):

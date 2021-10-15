@@ -132,7 +132,7 @@ class ParticleCollectionAOS(ParticleCollection):
         self._pclass = pclass
 
         self._ptype = self._pclass.getPType()
-        self._kwarg_keys = kwargs.keys()
+        self._kwarg_keys = list(kwargs.keys())
         self._data = np.empty(lon.shape[0], dtype=pclass)
         initialised = set()
 
@@ -641,6 +641,44 @@ class ParticleCollectionAOS(ParticleCollection):
         self._ncount = len(self._data)
         return None
 
+    def split_by_index(self, indices):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        super().split_by_index(indices)
+        assert len(self._data) > 0
+        result = ParticleCollectionAOS(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
+        idx = sorted(indices, reverse=True)
+        tmp = []
+        for index in idx:  # pop-based process needs to start from the back of the queue
+            pdata = self.pop_single_by_index(index=index)
+            tmp.append(pdata)
+        for pdata in reversed(tmp):  # add particles in correct order again
+            result.add_single(pdata)
+        return result
+
+    def split_by_id(self, ids):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        super().split_by_id(ids)
+        assert len(self._data) > 0
+        result = ParticleCollectionAOS(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
+        for id in ids:
+            pdata = self.pop_single_by_ID(id)
+            result.add_single(pdata)
+        return result
+
     def __iadd__(self, same_class):
         """
         Performs an incremental addition of the equi-structured ParticleCollections, such to allow
@@ -795,7 +833,7 @@ class ParticleCollectionAOS(ParticleCollection):
         # We cannot look for the object directly, so we will look for one of
         # its properties that has the nice property of being stored in an
         # ordered list
-        self.remove_single_by_ID(particle_obj.id)
+        return self.remove_single_by_ID(particle_obj.id)
 
     def remove_single_by_ID(self, id):
         """
@@ -808,7 +846,7 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         super().remove_single_by_ID(id)
         index = self.get_index_by_ID(id)
-        self.remove_single_by_index(index)
+        return self.remove_single_by_index(index)
 
     def remove_same(self, same_class):
         """
@@ -938,7 +976,7 @@ class ParticleCollectionAOS(ParticleCollection):
         If Particle cannot be retrieved, returns None.
         """
         super().pop_single_by_index(index)
-        return self.delete_by_index(index)
+        return self.remove_single_by_index(index)
 
     def pop_single_by_ID(self, id):
         """
@@ -946,8 +984,7 @@ class ParticleCollectionAOS(ParticleCollection):
         If Particle cannot be retrieved (e.g. because the ID is not available), returns None.
         """
         super().pop_single_by_ID(id)
-        index = self.get_index_by_ID(id)
-        return self.delete_by_index(index)
+        return self.remove_single_by_ID(id)
 
     def pop_multi_by_indices(self, indices):
         """
@@ -1012,7 +1049,7 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         super().merge(same_class)
 
-    def split(self, indices=None):
+    def split(self, subset=None):
         """
         This function splits this collection into two disect equi-structured collections. The reason for it can, for
         example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
@@ -1031,7 +1068,7 @@ class ParticleCollectionAOS(ParticleCollection):
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
         """
-        raise NotImplementedError
+        return super().split(subset)
 
     def __sizeof__(self):
         """
