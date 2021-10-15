@@ -15,5 +15,5 @@ import parcels.rng as ParcelsRandom  # noqa
 from parcels.compilation import *  # noqa
 from parcels.scripts import *  # noqa
 from parcels.gridset import *  # noqa
-from parcels.grid import *  # noqa
+# from parcels.grid import *  # noqa
 from parcels.tools import *  # noqa

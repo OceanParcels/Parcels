@@ -13,7 +13,7 @@ from parcels.field import Field
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
-from parcels.grid import Grid
+from parcels._grid import Grid
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
 

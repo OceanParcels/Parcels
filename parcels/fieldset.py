@@ -9,9 +9,9 @@ from parcels.field import Field, DeferredArray
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
-from parcels.grid import Grid
+from parcels.numba.grid import BaseGrid, GridStatus
 from parcels.gridset import GridSet
-from parcels.grid import GridCode
+from parcels.numba.grid import GridCode
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
@@ -117,7 +117,8 @@ class FieldSet(object):
                 time = np.array([time_origin.reltime(t) for t in time])
             else:
                 time_origin = TimeConverter(0)
-            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            print(time, time_origin)
+            grid = BaseGrid.create_grid(lon, lat, depth, time, time_origin=time[0], mesh=mesh)
             if 'creation_log' not in kwargs.keys():
                 kwargs['creation_log'] = 'from_data'
 
@@ -232,11 +233,11 @@ class FieldSet(object):
             g.check_zonal_periodic()
             if len(g.time) == 1:
                 continue
-            assert isinstance(g.time_origin.time_origin, type(self.time_origin.time_origin)), 'time origins of different grids must be have the same type'
-            g.time = g.time + self.time_origin.reltime(g.time_origin)
-            if g.defer_load:
-                g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
-            g.time_origin = self.time_origin
+#             assert isinstance(g.time_origin.time_origin, type(self.time_origin.time_origin)), 'time origins of different grids must be have the same type'
+#             g.time = g.time + self.time_origin.reltime(g.time_origin)
+#             if g.defer_load:
+#                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
+#             g.time_origin = self.time_origin
         if not hasattr(self, 'UV'):
             if isinstance(self.U, SummedField):
                 self.add_vector_field(SummedField('UV', self.U, self.V))
@@ -1038,11 +1039,11 @@ class FieldSet(object):
         nextTime = np.infty if dt > 0 else -np.infty
 
         for g in self.gridset.grids:
-            g.update_status = 'not_updated'
+            g.update_status = GridStatus.NeedsUpdate
         for f in self.get_fields():
             if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load:
                 continue
-            if f.grid.update_status == 'not_updated':
+            if f.grid.update_status == GridStatus.NeedsUpdate:
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
                 if time == nextTime_loc and signdt != 0:
                     raise TimeExtrapolationError(time, field=f, msg='In fset.computeTimeChunk')
@@ -1052,7 +1053,7 @@ class FieldSet(object):
             if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
                 continue
             g = f.grid
-            if g.update_status == 'first_updated':  # First load of data
+            if g.update_status == GridStatus.FirstUpdated:  # First load of data
                 if f.data is not None and not isinstance(f.data, DeferredArray):
                     if not isinstance(f.data, list):
                         f.data = None
@@ -1086,7 +1087,7 @@ class FieldSet(object):
                     g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated,
                                             g.chunk_not_loaded, g.load_chunk)
 
-            elif g.update_status == 'updated':
+            elif g.update_status == GridStatus.Updated:
                 lib = np if isinstance(f.data, np.ndarray) else da
                 if f.gridindexingtype == 'pop' and g.zdim > 1:
                     zd = g.zdim - 1
