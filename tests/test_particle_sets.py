@@ -934,6 +934,43 @@ def test_pset_add_execute(fieldset, pset_mode, mode, npart=10):
         del c_lib_register
 
 
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_split(fieldset, pset_mode, mode, npart=32):
+    idgen = None
+    c_lib_register = None
+
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
+
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode])
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 1.0)
+        idgen.setTimeLine(0.0, 1.0)
+        c_lib_register = LibraryRegisterC()
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode], idgen=idgen, c_lib_register=c_lib_register)
+
+    split_indices = [1, 3, 30]
+    pset2 = pset.split(split_indices)
+
+    assert len(pset) == 29
+    assert len(pset2) == 3
+    step = lon[1]-lon[0]
+    assert np.allclose([p.lon for p in pset2], [step, 3*step, 1.0-step], rtol=1e-6)
+    assert np.allclose([p.lat for p in pset2], [1.0-step, 1.0-3*step, step], rtol=1e-6)
+
+    del pset
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
+
+
 # ======================================================================== #
 # ==== semantically, the function of 'merge' and 'add' are different. ==== #
 # ==== 'merge' adds B to A while deleting B (B empty after merge),    ==== #

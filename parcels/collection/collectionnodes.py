@@ -151,7 +151,7 @@ class ParticleCollectionNodes(ParticleCollection):
             self._nclass = NodeJIT
         else:
             self._nclass = Node
-        self._kwarg_keys = kwargs.keys()
+        self._kwarg_keys = list(kwargs.keys())
         self._data = DoubleLinkedNodeList(dtype=self._nclass, c_lib_register=self._c_lib_register)
         initialised = set()
 
@@ -855,6 +855,46 @@ class ParticleCollectionNodes(ParticleCollection):
         self._ncount = len(self._data)
         return None
 
+    def split_by_index(self, indices):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        super().split_by_index(indices)
+        assert len(self._data) > 0
+        result = ParticleCollectionNodes(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
+        for index in sorted(indices, reverse=True):  # pop-based process needs to start from the back of the queue
+            ndata = self.pop_single_by_index(index=index)
+            pdata = ndata.data
+            ndata.set_data(None)
+            del ndata
+            result.add_single(pdata)
+        return result
+
+    def split_by_id(self, ids):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        super().split_by_id(ids)
+        assert len(self._data) > 0
+        result = ParticleCollectionNodes(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
+        for id in ids:
+            ndata = self.pop_single_by_ID(id)
+            pdata = ndata.data
+            ndata.set_data(None)
+            del ndata
+            result.add_single(pdata)
+        return result
+
     def __iadd__(self, same_class):
         """
         Performs an incremental addition of the equi-structured ParticleCollections, such to allow
@@ -1178,8 +1218,9 @@ class ParticleCollectionNodes(ParticleCollection):
         If index is out of bounds, throws and OutOfRangeException.
         If Particle cannot be retrieved, returns None.
         """
-        logger.info("pop_single_by_index() called with index = {}".format(index))
+        # logger.info("pop_single_by_index() called with index = {}".format(index))
         super().pop_single_by_index(index)
+        self._ncount -= 1
         return self._data.pop(index)
 
     def pop_single_by_ID(self, id):
@@ -1190,6 +1231,7 @@ class ParticleCollectionNodes(ParticleCollection):
         super().pop_single_by_ID(id)
         node = self.get_node_by_ID(id)
         index = self._data.bisect_left(node)
+        self._ncount -= 1
         return self._data.pop(index)
 
     def pop_multi_by_indices(self, indices):
@@ -1205,6 +1247,7 @@ class ParticleCollectionNodes(ParticleCollection):
         results = []
         for index in indices:
             results.append(self.pop_single_by_index(index))
+            self._ncount -= 1
         return results
 
     def pop_multi_by_IDs(self, ids):
@@ -1216,6 +1259,7 @@ class ParticleCollectionNodes(ParticleCollection):
         results = []
         for id in ids:
             results.append(self.pop_single_by_ID(id))
+            self._ncount -= 1
         return results
 
     def _clear_deleted_(self):
@@ -1274,13 +1318,14 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         super().merge(same_class)
 
-    def split(self, indices=None):
+    def split(self, subset=None):
         """
         This function splits this collection into two disect equi-structured collections. The reason for it can, for
         example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
         mandates a split.
 
-        On the other hand, this function can also internally split individual particles that are tagged byt status as
+        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
+        On the other hand, this function can also internally split individual particles that are tagged by status as
         to be 'split' (see the particle status for information on that).
 
         In order to distinguish both use cases, we can evaluate the 'indices' parameter. In cases where this is
@@ -1293,9 +1338,7 @@ class ParticleCollectionNodes(ParticleCollection):
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
         """
-        # TODO
-        raise NotImplementedError
-    # ================================================================================================================ #
+        return super().split(subset)
 
     # ==== high-level functions to execute operations (Add, Delete, Merge, Split) requested by the ==== #
     # ==== internal :variables Particle.state of each Node.                                        ==== #

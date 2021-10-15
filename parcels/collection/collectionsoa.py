@@ -134,7 +134,7 @@ class ParticleCollectionSOA(ParticleCollection):
         self._pclass = pclass
 
         self._ptype = pclass.getPType()
-        self._kwarg_keys = kwargs.keys()
+        self._kwarg_keys = list(kwargs.keys())
         self._data = {}
         initialised = set()
 
@@ -641,6 +641,44 @@ class ParticleCollectionSOA(ParticleCollection):
         self._ncount = self._data['lon'].shape[0]
         return None
 
+    def split_by_index(self, indices):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        super().split_by_index(indices)
+        assert len(self._data) > 0
+        result = ParticleCollectionSOA(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
+        idx = sorted(indices, reverse=True)
+        tmp = []
+        for index in idx:  # pop-based process needs to start from the back of the queue
+            pdata = self.pop_single_by_index(index=index)
+            tmp.append(pdata)
+        for pdata in reversed(tmp):  # add particles in correct order again
+            result.add_single(pdata)
+        return result
+
+    def split_by_id(self, ids):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        super().split_by_id(ids)
+        assert len(self._data) > 0
+        result = ParticleCollectionSOA(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
+        for id in ids:
+            pdata = self.pop_single_by_ID(id)
+            result.add_single(pdata)
+        return result
+
     def __iadd__(self, same_class):
         """
         Performs an incremental addition of the equi-structured ParticleCollections, such to allow
@@ -897,7 +935,11 @@ class ParticleCollectionSOA(ParticleCollection):
         If Particle cannot be retrieved, returns None.
         """
         super().pop_single_by_index(index)
-        raise NotImplementedError
+        result = {}
+        for key in self._data:
+            result[key] = np.array([self._data[key][index], ])
+        self.remove_single_by_index(index=index)
+        return result
 
     def pop_single_by_ID(self, id):
         """
@@ -905,7 +947,16 @@ class ParticleCollectionSOA(ParticleCollection):
         If Particle cannot be retrieved (e.g. because the ID is not available), returns None.
         """
         super().pop_single_by_ID(id)
-        raise NotImplementedError
+        # Use binary search if the collection is sorted, linear search otherwise
+        index = -1
+        if self._sorted:
+            index = bisect_left(self._data['id'], id)
+            if index == len(self._data['id']) or \
+               self._data['id'][index] != id:
+                raise ValueError("Trying to remove a particle with a non-existing ID: %s." % id)
+        else:
+            index = np.where(self._data['id'] == id)[0][0]
+        return self.pop_single_by_index(index=index)
 
     def pop_multi_by_indices(self, indices):
         """
@@ -957,12 +1008,13 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().merge(same_class)
 
-    def split(self, indices=None):
+    def split(self, subset=None):
         """
         This function splits this collection into two disect equi-structured collections. The reason for it can, for
         example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
         mandates a split.
 
+        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally split individual particles that are tagged byt status as
         to be 'split' (see the particle status for information on that).
 
@@ -976,7 +1028,7 @@ class ParticleCollectionSOA(ParticleCollection):
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
         """
-        raise NotImplementedError
+        return super().split(subset)
 
     def __sizeof__(self):
         """

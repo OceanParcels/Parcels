@@ -327,6 +327,74 @@ class Collection(ABC):
         """
         assert (isinstance(particle_obj, BaseParticleAccessor) or isinstance(particle_obj, ScipyParticle))
 
+    def split_same(self, subset):
+        """
+        This function splits this collection into two disect equi-structured collections. The reason for it can, for
+        example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
+        mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        subset_are_indices = False
+        subset_are_ids = False
+        assert subset is not None
+        assert (subset.shape[0] if isinstance(subset, np.ndarray) else len(subset)) > 0
+        if isinstance(subset, np.ndarray) and (subset.dtype == np.int32 or subset.dtype == np.uint32):
+            subset_are_indices = True
+        elif isinstance(subset, list) and len(subset) > 0 and (isinstance(subset[0], int) or isinstance(subset[0], np.int32) or isinstance(subset[0], np.uint32)):
+            subset_are_indices = True
+        elif isinstance(subset, np.ndarray) and (subset.dtype == np.int64 or subset.dtype == np.uint64):
+            subset_are_ids = True
+        elif isinstance(subset, list) and len(subset) > 0 and (isinstance(subset[0], int) or isinstance(subset[0], np.int64) or isinstance(subset[0], np.uint64)):
+            subset_are_ids = True
+        assert subset_are_ids or subset_are_indices
+        if subset_are_indices:
+            return self.split_by_index(subset)
+        elif subset_are_ids:
+            return self.split_by_id(subset)
+        return None
+
+    @abstractmethod
+    def split_by_index(self, indices):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        subset_are_indices = False
+        assert indices is not None
+        assert (indices.shape[0] if isinstance(indices, np.ndarray) else len(indices)) > 0
+        if isinstance(indices, np.ndarray) and (indices.dtype == np.int32 or indices.dtype == np.uint32):
+            subset_are_indices = True
+        elif isinstance(indices, list) and len(indices) > 0 and (isinstance(indices[0], int) or isinstance(indices[0], np.int32) or isinstance(indices[0], np.uint32)):
+            subset_are_indices = True
+        assert subset_are_indices
+        return None
+
+    @abstractmethod
+    def split_by_id(self, ids):
+        """
+        This function splits this collection into two disect equi-structured collections using the indices as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        subset_are_ids = False
+        assert ids is not None
+        assert (ids.shape[0] if isinstance(ids, np.ndarray) else len(ids)) > 0
+        if isinstance(ids, np.ndarray) and (ids.dtype == np.int64 or ids.dtype == np.uint64):
+            subset_are_ids = True
+        elif isinstance(ids, list) and len(ids) > 0 and (isinstance(ids[0], int) or isinstance(ids[0], np.int64) or isinstance(ids[0], np.uint64)):
+            subset_are_ids = True
+        assert subset_are_ids
+        return None
+
     @abstractmethod
     def __iadd__(self, same_class):
         """
@@ -736,13 +804,14 @@ class Collection(ABC):
             self.merge_collection(same_class)
 
     @abstractmethod
-    def split(self, indices=None):
+    def split(self, subset=None):
         """
         This function splits this collection into two disect equi-structured collections. The reason for it can, for
         example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
         mandates a split.
 
-        On the other hand, this function can also internally split individual particles that are tagged byt status as
+        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
+        On the other hand, this function can also internally split individual particles that are tagged by status as
         to be 'split' (see the particle status for information on that).
 
         In order to distinguish both use cases, we can evaluate the 'indices' parameter. In cases where this is
@@ -755,6 +824,11 @@ class Collection(ABC):
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
         """
+        if subset is None:
+            # TODO: perform the 'split' of particles themselves via Kernels
+            pass
+        else:
+            return self.split_same(subset)
         return None
 
     def __str__(self):
