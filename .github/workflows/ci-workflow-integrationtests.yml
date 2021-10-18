@@ -1,10 +1,10 @@
 name: integration-tests
 on:
   pull_request:
-    types: [review_requested, ready_for_review]
 jobs:
   test_macOS:
     name: Integration testing on macOS python latest
+    if: github.event.pull_request.draft == false
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@master
@@ -20,6 +20,7 @@ jobs:
         shell: bash
   test_linux:
     name: Integration testing on Linux Python 3.6
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -34,6 +35,7 @@ jobs:
         shell: bash
   test_windows:
     name: Integration testing on Windows python latest
+    if: github.event.pull_request.draft == false
     runs-on: windows-2016
     steps:
       - uses: actions/checkout@master
