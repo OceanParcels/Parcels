@@ -17,7 +17,7 @@ out-*
 .idea/*
 Profile.prof
 .ipynb_checkpoints/*
-*/.ipynb_checkpoints/*
+**/.ipynb_checkpoints/*
 parcels/examples/.ipynb_checkpoints/*
 .cache/*
 .pytest_cache/*
