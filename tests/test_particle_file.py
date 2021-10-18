@@ -62,12 +62,16 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     filepath = tmpdir.join("pfile_array_remove_particles.nc")
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
-                                        lat=0.5*np.ones(npart))
+                                        lat=0.5*np.ones(npart), time=0)
     pfile = pset.ParticleFile(filepath)
     pfile.write(pset, 0)
     pset.remove_indices(3)
+    for p in pset:
+        p.time = 1
     pfile.write(pset, 1)
     ncfile = close_and_compare_netcdffiles(filepath, pfile)
+    timearr = ncfile.variables['time'][:]
+    assert type(timearr[3, 1]) is not type(timearr[3, 0])
     ncfile.close()
 
 
@@ -104,7 +108,7 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
     filepath = tmpdir.join("pfile_array_remove_particles.nc")
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
-                                        lat=0.5*np.ones(npart))
+                                        lat=0.5*np.ones(npart), time=0)
     pfile = pset.ParticleFile(filepath)
     pfile.write(pset, 0)
     for _ in range(npart):
@@ -112,6 +116,7 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
     pfile.write(pset, 1)
     pfile.write(pset, 2)
     ncfile = close_and_compare_netcdffiles(filepath, pfile)
+    assert ncfile.variables['time'][:].shape == (npart, 1)
     ncfile.close()
 
 

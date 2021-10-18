@@ -70,7 +70,7 @@ class ParticleFileAOS(BaseParticleFile):
         :param time_steps: Number of time steps that were written in out directory
         :param var: name of the variable to read
         """
-        data = np.nan * np.zeros((self.maxid_written+1, time_steps))
+        data = np.nan * np.zeros((self.maxid_written+1, time_steps))  # TODO implement changes from soa
         time_index = np.zeros(self.maxid_written+1, dtype=np.int64)
         t_ind_used = np.zeros(time_steps, dtype=np.int64)
 
