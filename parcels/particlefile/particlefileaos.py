@@ -70,9 +70,14 @@ class ParticleFileAOS(BaseParticleFile):
         :param time_steps: Number of time steps that were written in out directory
         :param var: name of the variable to read
         """
-        data = np.nan * np.zeros((self.maxid_written+1, time_steps))  # TODO implement changes from soa
-        time_index = np.zeros(self.maxid_written+1, dtype=np.int64)
-        t_ind_used = np.zeros(time_steps, dtype=np.int64)
+        maxtime_steps = max(time_steps.values()) if time_steps.keys() else 0
+        data = np.nan * np.zeros((len(time_steps), maxtime_steps))
+        time_index = np.zeros(len(time_steps))
+        id_index = {}
+        count = 0
+        for i in sorted(time_steps.keys()):
+            id_index[i] = count
+            count += 1
 
         # loop over all files
         for npyfile in file_list:
@@ -84,15 +89,14 @@ class ParticleFileAOS(BaseParticleFile):
                                    '"parcels_convert_npydir_to_netcdf %s" to convert these to '
                                    'a NetCDF file yourself.\nTo avoid this error, make sure you '
                                    'close() your ParticleFile at the end of your script.' % self.tempwritedir)
-            id_ind = np.array(data_dict["id"], dtype=np.int64)
-            t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
-            t_ind_used[t_ind] = 1
-            data[id_ind, t_ind] = data_dict[var]
-            time_index[id_ind] = time_index[id_ind] + 1
+            for ii, i in enumerate(data_dict["id"]):
+                id_ind = id_index[i]
+                t_ind = int(time_index[id_ind]) if 'once' not in file_list[0] else 0
+                data[id_ind, t_ind] = data_dict[var][ii]
+                time_index[id_ind] = time_index[id_ind] + 1
 
         # remove rows and columns that are completely filled with nan values
-        tmp = data[time_index > 0, :]
-        return tmp[:, t_ind_used == 1]
+        return data[time_index > 0, :]
 
     def export(self):
         """
@@ -114,34 +118,36 @@ class ParticleFileAOS(BaseParticleFile):
         if len(temp_names) == 0:
             raise RuntimeError("No npy files found in %s" % self.tempwritedir_base)
 
-        global_maxid_written = -1
-        global_time_written = []
+        time_steps = {}
         global_file_list = []
-        global_file_list_once = None
         if len(self.var_names_once) > 0:
             global_file_list_once = []
         for tempwritedir in temp_names:
             if os.path.exists(tempwritedir):
                 pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
-                global_maxid_written = np.max([global_maxid_written, pset_info_local['maxid_written']])
                 for npyfile in pset_info_local['file_list']:
                     tmp_dict = np.load(npyfile, allow_pickle=True).item()
-                    global_time_written.append([t for t in tmp_dict['time']])
+                    for i in tmp_dict['id']:
+                        if i in time_steps:
+                            time_steps[i] += 1
+                        else:
+                            time_steps[i] = 1
                 global_file_list += pset_info_local['file_list']
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']
-        self.maxid_written = global_maxid_written
-        self.time_written = np.unique(global_time_written)
 
         for var in self.var_names:
-            data = self.read_from_npy(global_file_list, len(self.time_written), var)
+            data = self.read_from_npy(global_file_list, time_steps, var)
             if var == self.var_names[0]:
                 self.open_netcdf_file(data.shape)
             varout = 'z' if var == 'depth' else var
             getattr(self, varout)[:, :] = data
 
         if len(self.var_names_once) > 0:
+            time_steps_once = {}
+            for i in time_steps:
+                time_steps_once[i] = 1
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var)
+                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, time_steps_once, var)
 
         self.close_netcdf_file()
