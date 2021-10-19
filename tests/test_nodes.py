@@ -62,16 +62,13 @@ def test_remove_nodelist(mode, c_lib_register, idgen):
     nlist.add(ntype[mode](data=ptype[mode](lon=0, lat=0, pid=idgen.getID(0, 0, 0, 0)), c_lib_register=c_lib_register, idgen=idgen))
     nlist.add(ntype[mode](data=ptype[mode](lon=0, lat=0, pid=idgen.getID(0, 0, 0, 0)), c_lib_register=c_lib_register, idgen=idgen))
     nlist.add(ntype[mode](data=ptype[mode](lon=0, lat=0, pid=idgen.getID(0, 0, 0, 0)), c_lib_register=c_lib_register, idgen=idgen))
-    # n1 = nlist[0]
+    n1 = nlist[0]
     n2 = nlist[1]
-    # n3 = nlist[2]
+    n3 = nlist[2]
+    n2.unlink()
     nlist.remove(n2)
-    # n2 = nlist.pop(2)
-    # del n2
-    #
-    # gc.collect()
-    # assert n3.prev == n1
-    # assert n1.next == n3
+    assert n3.prev == n1
+    assert n1.next == n3
     del nlist
 
 
