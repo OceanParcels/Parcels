@@ -2,31 +2,12 @@ import pytest
 import numpy as np
 import sys
 from parcels.tools import logger
-
 from parcels.tools import SequentialIdGenerator, SpatialIdGenerator, SpatioTemporalIdGenerator, GenerateID_Service  # noqa
 
 generator_type = ['sequential', 'spatial', 'spatiotemporal']
 generators = {'sequential': SequentialIdGenerator,
               'spatial': SpatialIdGenerator,
               'spatiotemporal': SpatioTemporalIdGenerator}
-
-# print("====== Test Spatial ID generator ======")
-# package_globals.spat_idgen.setDepthLimits(0.0, 75)
-# package_globals.spat_idgen.setTimeLine(0.0, 365.0)
-# id1 = package_globals.spat_idgen.getID(0.0, 0.0, 20.0, 0.0)
-# id2 = package_globals.spat_idgen.getID(0.0, 0.0, 20.0, 0.0)
-# id3 = package_globals.spat_idgen.getID(4.895168, 52.370216, 12.0, 0.0)  # Amsterdam
-# id4 = package_globals.spat_idgen.getID(-43.172897, -22.906847, 12.0, 0.0)  # Rio de Janeiro
-# id5 = package_globals.spat_idgen.getID(0.0, 0.0, 20.0, 0.0)
-# package_globals.spat_idgen.releaseID(id5)
-# id6 = package_globals.spat_idgen.getID(0.0, 0.0, 20.0, 0.0)
-# print("Test-ID 1:         {}".format(numpy.binary_repr(id1, width=64)))
-# print("Test-ID 2:         {}".format(numpy.binary_repr(id2, width=64)))
-# print("Test-ID 5:         {}".format(numpy.binary_repr(id5, width=64)))
-# print("Test-ID 6:         {}".format(numpy.binary_repr(id6, width=64)))
-# print("Test-ID Amsterdam: {}".format(numpy.binary_repr(id3, width=64)))
-# print("Test-ID Rio:       {}".format(numpy.binary_repr(id4, width=64)))
-# print("===========================================================================")
 
 
 @pytest.mark.parametrize('gentype', generator_type)
