@@ -81,6 +81,8 @@ class ParticleSetSOA(BaseParticleSet):
     :param pid_orig: Optional list of (offsets for) the particle IDs
     :param partitions: List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
            are distributed automatically on the processors
+    :param zperiodic_bc_domain: Zonal domain size, used to apply zonally periodic boundaries for particle-particle
+           interaction. If None, no zonally periodic boundaries are applied
 
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
