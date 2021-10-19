@@ -32,7 +32,9 @@ def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
     """
-    return [i for i, p in enumerate(pd) if ((time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt)) or np.isnan(p.dt)) and np.isfinite(p.id)]
+    return [i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt))
+                                             or (np.isnan(p.dt) and np.equal(time, p.time)))
+                                            and np.isfinite(p.id))]
 
 
 def _is_particle_started_yet(particle, time):
