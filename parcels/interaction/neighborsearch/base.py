@@ -36,7 +36,7 @@ class BaseNeighborSearch(ABC):
         # Thus, this mask allows for particles do be deactivated without
         # needing to completely rebuild the tree.
         self._active_mask = None
-        self.zperiodic_bc_domain = float(zperiodic_bc_domain)
+        self.zperiodic_bc_domain = zperiodic_bc_domain
 
     @abstractmethod
     def find_neighbors_by_coor(self, coor):
