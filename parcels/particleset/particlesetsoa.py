@@ -87,7 +87,7 @@ class ParticleSetSOA(BaseParticleSet):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
-                 pid_orig=None, interaction_distance=None, **kwargs):
+                 pid_orig=None, interaction_distance=None, zperiodic_bc_domain=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
@@ -228,7 +228,8 @@ class ParticleSetSOA(BaseParticleSet):
                 inter_dist_horiz = interaction_distance
             self._neighbor_tree = interaction_class(
                 inter_dist_vert=inter_dist_vert,
-                inter_dist_horiz=inter_dist_horiz)
+                inter_dist_horiz=inter_dist_horiz,
+                zperiodic_bc_domain=zperiodic_bc_domain)
         # End of neighbor search data structure initialization.
 
         if self.repeatdt:
