@@ -96,7 +96,10 @@ class BaseKernel(object):
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
-        self.remove_lib()
+        try:
+            self.remove_lib()
+        except:
+            pass
         self._fieldset = None
         self.field_args = None
         self.const_args = None
