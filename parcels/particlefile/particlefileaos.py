@@ -56,7 +56,7 @@ class ParticleFileAOS(BaseParticleFile):
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
         attributes = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
-                      'file_list', 'file_list_once', 'maxid_written', 'parcels_mesh', 'metadata']
+                      'file_list', 'file_list_once', 'parcels_mesh', 'metadata']
         return attributes
 
     def read_from_npy(self, file_list, time_steps, var):

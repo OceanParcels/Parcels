@@ -930,7 +930,6 @@ class ParticleCollectionAOS(ParticleCollection):
                             data_dict[var] = np.array([np.int64(getattr(p, var)) for p in self._data[indices_to_write]])
                         else:
                             data_dict[var] = np.array([getattr(p, var) for p in self._data[indices_to_write]])
-                    pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
 
                 pset_errs = [p for p in self._data[indices_to_write] if p.state != OperationCode.Delete and abs(time-p.time) > 1e-3 and np.isfinite(p.time)]
                 for p in pset_errs:

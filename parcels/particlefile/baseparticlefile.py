@@ -66,7 +66,6 @@ class BaseParticleFile(ABC):
     file_list = None
     var_names_once = None
     file_list_once = None
-    maxid_written = -1
     tempwritedir_base = None
     tempwritedir = None
 
