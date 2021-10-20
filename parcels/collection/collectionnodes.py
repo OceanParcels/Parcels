@@ -1126,15 +1126,13 @@ class ParticleCollectionNodes(ParticleCollection):
         self._ncount = len(self._data)
         return result
 
-# ==================================================================================================================== #
-# TO BE CONTINUED WITH THE DOCSTRING-ADDING
-# ==================================================================================================================== #
-
     def remove_same(self, same_class):
         """
         This function removes particles from this collection that are themselves stored in another object of an equi-
         structured ParticleCollection. As the structures of both collections are the same, a more efficient M-in-N
         removal can be applied without an in-between reformatting.
+
+        :arg same_class: a ParticleCollectionNodes object, containing Nodes that are to be removed from this collection
         """
         super().remove_same(same_class)
         other_node = same_class.begin()
@@ -1160,6 +1158,8 @@ class ParticleCollectionNodes(ParticleCollection):
         That said, this method should still be at least as efficient as a removal via common Python collections (i.e.
         lists, dicts, numpy's nD arrays & dense arrays). Despite this, due to the reformatting, in some cases it may
         be more efficient to remove items then rather by IDs oder indices.
+
+        :arg pcollection: a BaseParticleCollection object, containing Particle objects that are to be removed from this collection
         """
         super().remove_collection(pcollection)
         ids = [p.id for p in pcollection]
@@ -1179,6 +1179,9 @@ class ParticleCollectionNodes(ParticleCollection):
 
         For collections where removal-by-object incurs a performance malus, it is advisable to multi-remove particles
         by indices or IDs.
+
+        :arg pycollectionp: a Python-based collection (i.e. a tuple or list), containing Particle objects that are to
+                            be removed from this collection.
         """
         super().remove_multi_by_PyCollection_Particles(pycollectionp)
         ids = [p.id for p in pycollectionp]
@@ -1193,7 +1196,10 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         This function removes particles from this collection based on their indices. This works best for random-access
         collections (e.g. numpy's ndarrays, dense matrices and dense arrays), whereas internally ordered collections
-        shall rather use a removal-via-object-reference strategy.
+        shall rather use a removal-via-object-reference strategy. Note that an index-based removal in this ordered collection
+        is a slow process.
+
+        :arg indices: a list or np.ndarray of indices that are to be removed from this collection.
         """
         super().remove_multi_by_indices(indices)
         if type(indices) is dict:
@@ -1213,6 +1219,9 @@ class ParticleCollectionNodes(ParticleCollection):
         This function removes particles from this collection based on their IDs. For collections where this removal
         strategy would require a collection transformation or by-ID parsing, it is advisable to rather apply a removal-
         by-objects or removal-by-indices scheme.
+
+        :arg ids: a list or numpy.ndarray of (signed- or unsigned) 64-bit integer IDs, the items of which are to be
+                  removed from this collection
         """
         super().remove_multi_by_IDs(ids)
         if type(ids) is dict:
@@ -1234,6 +1243,9 @@ class ParticleCollectionNodes(ParticleCollection):
         self._ncount = len(self._data)
 
     def remove_deleted(self):
+        """
+        This function physically removes Particle objects from this collection that are marked to be removed by their state.
+        """
         self._clear_deleted_()
 
     def __isub__(self, other):
@@ -1244,6 +1256,8 @@ class ParticleCollectionNodes(ParticleCollection):
 
         with 'a' and 'b' begin the two equi-structured objects (or: 'b' being and individual object).
         This operation is equal to an in-place removal of (an) element(s).
+
+        :arg other: a single Particle or a collection of objects or keys that are to be removed.
         """
         if other is None:
             return
@@ -1266,6 +1280,9 @@ class ParticleCollectionNodes(ParticleCollection):
         If index < 0: return from 'end' of collection.
         If index is out of bounds, throws and OutOfRangeException.
         If Particle cannot be retrieved, returns None.
+
+        :arg index: index of the Node to be popped (i.e. retrieved and removed) from this collections
+        :returns last Node (if index == -1), indexed Node (if 0 < index < len(collection)) or None (if no Node can be retrieved)
         """
         super().pop_single_by_index(index)
         self._ncount -= 1
@@ -1275,6 +1292,9 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         Searches for Particle with ID 'id', removes that Particle from the Collection and returns that Particle (or: ParticleAccessor).
         If Particle cannot be retrieved (e.g. because the ID is not available), returns None.
+
+        :arg id: 64-bit (signed or unsigned) integer ID of the Node to be popped (i.e. retrieved and removed) from this collections
+        :returns identified Node (if ID is related or an object contained in this collection) or None (if no Node can be retrieved)
         """
         super().pop_single_by_ID(id)
         node = self.get_node_by_ID(id)
@@ -1290,6 +1310,9 @@ class ParticleCollectionNodes(ParticleCollection):
         If index < 0: return from 'end' of collection.
         If index in 'indices' is out of bounds, throws and OutOfRangeException.
         If Particles cannot be retrieved, returns None.
+
+        :arg index: a list or numpy.ndarray of indices of Nodes to be popped (i.e. retrieved and removed) from this collections
+        :returns a list of retrieved Nodes
         """
         super().pop_multi_by_indices(indices)
         results = []
@@ -1302,6 +1325,10 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         Searches for Particles with the IDs registered in 'ids', removes the Particles from the Collection and returns the Particles (or: their ParticleAccessors).
         If Particles cannot be retrieved (e.g. because the IDs are not available), returns None.
+
+        :arg id: a list or numpy.ndarray of64-bit (signed or unsigned) integer IDs of Nodes to be popped
+                 (i.e. retrieved and removed) from this collections
+        :returns a list of retrieved Nodes
         """
         super().pop_multi_by_IDs(ids)
         results = []
@@ -1331,13 +1358,12 @@ class ParticleCollectionNodes(ParticleCollection):
             node = next_node
         self._ncount = len(self._data)
 
-    # ================================================================================================================ #
-    def merge(self, same_class=None):
+    def merge(self, other=None):
         """
         This function merge two strictly equally-structured ParticleCollections into one. This can be, for example,
         quite handy to merge two particle subsets that - due to continuous removal - become too small to be effective.
 
-        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
+        TODO - RETHINK IF THAT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally merge individual particles that are tagged by status as
         being 'merged' (see the particle status for information on that).
 
@@ -1348,17 +1374,18 @@ class ParticleCollectionNodes(ParticleCollection):
         Comment: the function can be simplified later by pre-evaluating the function parameter and then reference
         the individual, specific functions for internal- or external merge.
 
-        The function shall return the merged ParticleCollection.
+        :arg keys: None for initiating a merge of individual particles; a BaseParticleCollection object to be merged into
+                   this collection otherwise.
         """
-        super().merge(same_class)
+        super().merge(other)
 
-    def split(self, subset=None):
+    def split(self, keys=None):
         """
         This function splits this collection into two disect equi-structured collections. The reason for it can, for
         example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
         mandates a split.
 
-        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
+        TODO - RETHINK IF THAT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally split individual particles that are tagged by status as
         to be 'split' (see the particle status for information on that).
 
@@ -1371,16 +1398,25 @@ class ParticleCollectionNodes(ParticleCollection):
 
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
+
+        :arg keys: None for initiating a merge of individual particles; a collection of indices or IDs of object to be
+                   merged into this collection otherwise.
         """
-        return super().split(subset)
+        return super().split(keys)
 
     # ==== high-level functions to execute operations (Add, Delete, Merge, Split) requested by the ==== #
     # ==== internal :variables Particle.state of each Node.                                        ==== #
     def get_deleted_item_indices(self):
+        """
+        :returns indices of particles that are marked for deletion.
+        """
         indices = [i for i, n in enumerate(self._data) if n.data.state == OperationCode.Delete]
         return indices
 
     def get_deleted_item_IDs(self):
+        """
+        :returns indices of particles that are marked for deletion.
+        """
         # we have 2 options of doing it, both of them are working.
         # ---- Option 1: node-parsing way ---- #
         # ids = []
@@ -1403,6 +1439,7 @@ class ParticleCollectionNodes(ParticleCollection):
         the size is computed as follows:
 
         sizeof(self) = len(self) * sizeof(pclass)
+        :returns size of this collection in bytes; initiated by calling sys.getsizeof(object)
         """
         size_bytes = 0
         i = 0
@@ -1434,6 +1471,7 @@ class ParticleCollectionNodes(ParticleCollection):
         'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
 
         Nodes-structure doesn't work this way
+        raises NotImplementedError
         """
         raise NotImplementedError
 
@@ -1565,6 +1603,7 @@ class ParticleCollectionNodes(ParticleCollection):
         trees, etc.), this may be 'the most constly' function in any kind of simulation.
 
         It can be - though - useful at the final stage of a simulation to dump the results to disk.
+        :returns vector-list (i.e. array) of Particle objects within this collection
         """
         results = []
         node = self.begin()
