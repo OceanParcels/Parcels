@@ -65,7 +65,17 @@ class ParticleCollectionAOS(ParticleCollection):
 
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
-        :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
+        :arg idgen: an instance of an ID generator used to obtain unique IDs - mandatory for a node-based collection
+        :arg c_lib_register: an instance of a process-consistent LibraryRegisterC object - mandatory for a node-based collection
+        :arg pclass: the Particle class of the objects stored within the nodes
+        :arg lon: a non-None list or array of longitudes
+        :arg lat: a non-None list or array of latitudes
+        :arg depth: a non-None list or array of depths
+        :arg times: a non-None list- or array of time-values
+        :arg lonlatdepth_dtype: the datatype (dtype) of coordinate-values (apart from time - time is fixed to 64-bit float)
+        :arg pid_orig: None or a vector or list of 64-bit (signed or unsigned) integer IDs, used for repeating particle addition
+        :arg paritions: None, or a list of indicators to which the particles shall be attached to
+        :arg ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
         field references of the ctypes-link of particles that are allocated
         """
 
@@ -82,7 +92,6 @@ class ParticleCollectionAOS(ParticleCollection):
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) do not have the same lengths.')
 
-        # If partitions is false, the partitions are already initialised
         if partitions is not None and partitions is not False:
             self._pu_indicators = _convert_to_flat_array(partitions)
 
@@ -90,7 +99,7 @@ class ParticleCollectionAOS(ParticleCollection):
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) do nott have the same lengths.' % kwvar)
 
-        offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1  # this 'len(pid)' may not work
+        offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -170,11 +179,8 @@ class ParticleCollectionAOS(ParticleCollection):
                         init_time = time[i] if time is not None and len(time) > 0 and np.count_nonzero([tval is not None for tval in time]) == len(time) else 0
                         init_field = v.initial
                         init_field.fieldset.computeTimeChunk(init_time, 0)
-                        # v.initial.fieldset.computeTimeChunk(time[i], 0)
-                        # v.initial.fieldset.computeTimeChunk(time[0], 0)
                         if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
-                        # setattr(self._data[i], v.name, init_field[time[i], depth[i], lat[i], lon[i]])
                         setattr(self._data[i], v.name, init_field[init_time, depth[i], lat[i], lon[i]])
                         logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
 
@@ -192,6 +198,9 @@ class ParticleCollectionAOS(ParticleCollection):
         super().__del__()
 
     def iterator(self):
+        """
+        :returns ParticleCollectionIterator, used for a 'for'-loop, in a forward-manner
+        """
         self._iterator = ParticleCollectionIteratorAOS(self)
         return self._iterator
 
@@ -202,6 +211,9 @@ class ParticleCollectionAOS(ParticleCollection):
         return self.iterator()
 
     def reverse_iterator(self):
+        """
+        :returns ParticleCollectionIterator, used for a 'for'-loop, in a backward-manner
+        """
         self._riterator = ParticleCollectionIteratorAOS(self, True)
         return self._riterator
 
@@ -217,7 +229,7 @@ class ParticleCollectionAOS(ParticleCollection):
         Access a particle in this collection using the fastest access
         method for this collection - by its index.
 
-        :param index: int or np.int32 index of a particle in this collection
+        :arg index: int or np.int32 index of a particle in this collection
         """
         return self.get_single_by_index(index)
 
@@ -226,7 +238,7 @@ class ParticleCollectionAOS(ParticleCollection):
         Access a single property of all particles.
         CAUTION: this function is not(!) in-place and is quite slow
 
-        :param name: name of the property
+        :arg name: name of the property
         """
         pdtype = None
         for var in self._ptype.variables:
@@ -250,18 +262,37 @@ class ParticleCollectionAOS(ParticleCollection):
         'particle_data' is a reference to the actual barebone-storage of the particle data, and thus depends directly on the
         specific collection in question. This property is just available for convenience and backward-compatibility, and
         this returns the same as 'data'.
+
+        Transitional/compatibility function.
         """
         return self._data_c
+
+    @property
+    def kernel_class(self):
+        return self._kclass
+
+    @kernel_class.setter
+    def kernel_class(self, value):
+        self._kclass = value
 
     def cptr(self, index):
         if self._data_c is not None:
             return self._data_c[index]
         return None
 
+    def empty(self):
+        """
+        :returns if the collections is empty or not
+        """
+        return len(self._data) <= 0
+
     def get_index_by_ID(self, id):
         """
         Provides a simple function to search / get the index for a particle of the requested ID.
         Returns the particle's index.
+
+        :arg id: search Particle-ID
+        :returns index of the Particle with the ID to be looked up
         """
         super().get_single_by_ID(id)
         data_ids = np.array([p.id for p in self._data])
@@ -269,6 +300,13 @@ class ParticleCollectionAOS(ParticleCollection):
         return index
 
     def get_indices_by_IDs(self, ids):
+        """
+        Looking up the indices of the nodes with the IDs that are provided. This expects the nodes to be present. IDs
+        for which no nodes are present in the collected are disregarded.
+
+        :arg ids: a vector-list or numpy.ndarray of (64-bit signed or unsigned integer) IDs
+        :returns: a vector-list of indices per requested ID
+        """
         data_ids = np.array([p.id for p in self._data])
         AinB = np.in1d(ids, data_ids)
         if False in AinB:
@@ -284,6 +322,9 @@ class ParticleCollectionAOS(ParticleCollection):
         translation of the collection from a none-indexable, none-random-access structure into an indexable structure.
         In cases where a get-by-index would result in a performance malus, it is highly-advisable to use a different
         get function, e.g. get-by-ID.
+
+        :arg index: index of the object to be retrieved
+        :returns Particle object (SciPy- or JIT) at the indexed location
         """
         super().get_single_by_index(index)
 
@@ -302,6 +343,9 @@ class ParticleCollectionAOS(ParticleCollection):
         directly, so we will look for one of its properties (the ID) that
         has the nice property of being stored in an ordered list (if the
         collection is sorted)
+
+        :arg particle_obj: a template object of a Particle (SciPy- or JIT) with reference values to be searched for
+        :returns (first) Particle-object (SciPy- or JIT) of the requested particle data
         """
         super().get_single_by_object(particle_obj)
 
@@ -317,6 +361,9 @@ class ParticleCollectionAOS(ParticleCollection):
 
         This function uses binary search if we know the ID list to be sorted, and linear search otherwise. We assume
         IDs are unique.
+
+        :arg id: search Particle-ID
+        :return (first) Particle-object (SciPy- or JIT) attached to ID
         """
         super().get_single_by_ID(id)
 
@@ -328,6 +375,9 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         This function gets particles from this collection that are themselves stored in another object of an equi-
         structured ParticleCollection.
+
+        :arg same_class: a ParticleCollectionAOS object with a subsample of Particles in this collection
+        :returns list of Particle-objects (SciPy- or JIT) of the requested subset-collection
         """
         super().get_same(same_class)
         results = []
@@ -345,6 +395,9 @@ class ParticleCollectionAOS(ParticleCollection):
         This function gets particles from this collection that are themselves stored in a ParticleCollection, which
         is differently structured than this one. That means the other-collection has to be re-formatted first in an
         intermediary format.
+
+        :arg pcollection: a ParticleCollection object (i.e. derived from BaseParticleCollection) with a subsample of Particles in this collection
+        :returns list of Particle-objects (SciPy- or JIT) of the requested subset-collection
         """
         super().get_collection(pcollection)
         if self._ncount <= 0:
@@ -370,6 +423,9 @@ class ParticleCollectionAOS(ParticleCollection):
 
         For collections where get-by-object incurs a performance malus, it is advisable to multi-get particles
         by indices or IDs.
+
+        :arg a Python-internal collection object (e.g. a tuple or list), filled with reference particles (SciPy- or JIT)
+        :returns a vector-list of the requested particles
         """
         super().get_multi_by_PyCollection_Particles(pycollectionp)
         np_collection_p = np.array(pycollectionp, dtype=self._pclass)
@@ -384,6 +440,9 @@ class ParticleCollectionAOS(ParticleCollection):
         This function gets particles from this collection based on their indices. This works best for random-access
         collections (e.g. numpy's ndarrays, dense matrices and dense arrays), whereas internally ordered collections
         shall rather use a get-via-object-reference strategy.
+
+        :param indices: requested indices
+        :returns vector-list of Particle objects
         """
         super().get_multi_by_indices(indices)
         if type(indices) is dict:
@@ -398,9 +457,12 @@ class ParticleCollectionAOS(ParticleCollection):
 
         Note that this implementation assumes that IDs of particles are strictly increasing with increasing index. So
         a particle with a larger index will always have a larger ID as well. The assumption often holds for this
-        datastructure as new particles always get a larger ID than any existing particle (IDs are not recycled)
+        data structure as new particles always get a larger ID than any existing particle (IDs are not recycled)
         and their data are appended at the end of the list (largest index). This allows for the use of binary search
         in the look-up. The collection maintains a `sorted` flag to indicate whether this assumption holds.
+
+        :arg ids: requested IDs of particles
+        :returns vector-list of Particle objects
         """
         super().get_multi_by_IDs(ids)
         if type(ids) is dict:
@@ -423,12 +485,15 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         Merges another, differently structured ParticleCollection into this collection. This is done by, for example,
         appending/adding the items of the other collection to this collection.
+
+        this is the former "add(pcollection)" function.
+        :arg pcollection: second ParticleCollection object to be merged into this collection
+        :returns vector-list of indices of all merged particles
         """
         # ==== first approach - still need to incorporate the MPI re-centering ==== #
         super().merge_collection(pcollection)
         ngrids = 0
         if self._ncount > 0:
-            # ngrids = len(getattr(self._data[0], 'xi'))
             ngrids = self._ngrid
         elif len(pcollection) > 0:
             pd0 = pcollection[0]
@@ -453,9 +518,12 @@ class ParticleCollectionAOS(ParticleCollection):
         Merges another, equi-structured ParticleCollection into this collection. This is done by concatenating
         both collections. The fact that they are of the same ParticleCollection's derivative simplifies
         parsing and concatenation.
+
+        this is the former "add(same_class)" function.
+        :arg same_class: second ParticleCollectionAOS object to be merged into this collection
+        :returns vector-list of indices of all merged particles
         """
         super().merge_same(same_class)
-
         if same_class.ncount <= 0:
             return
 
@@ -481,6 +549,7 @@ class ParticleCollectionAOS(ParticleCollection):
             i) a list or tuples containing multple Particle instances
             ii) a Numpy.ndarray of dtype = Particle dtype
             iii) a dict of Numpy.ndarray of shape, each of which with N = # particles
+        :returns vector-list of indices of all added particles
         """
         super().add_multiple(data_array)
         results = []
@@ -495,10 +564,8 @@ class ParticleCollectionAOS(ParticleCollection):
                 pdata = data_array[i]
                 results.append(self.add_single(pdata))
         elif isinstance(data_array, dict) and isinstance(data_array['lon'], np.ndarray):
-            # ==== NOT GOING TO WORK CAUSE THE ND.ARRAY NEEDS TO BE OF A SINGLE TYPE ==== #
             pu_ids = None
             pu_indices = None
-            # pu_data = None
             n_pu_data = 0
             if MPI and MPI.COMM_WORLD.Get_size() > 1:
                 mpi_comm = MPI.COMM_WORLD
@@ -513,10 +580,8 @@ class ParticleCollectionAOS(ParticleCollection):
                 min_pu = mpi_comm.bcast(min_pu, root=0)
                 self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
                 pu_indices = np.nonzero(min_pu == mpi_rank)[0]
-                # pu_data = data_array[min_pu == mpi_rank]
                 ids = np.arange(ScipyParticle.lastID, stop=ScipyParticle.lastID+data_array['lon'].shape[0]) if 'id' not in data_array.keys() else data_array['id']
                 mpi_comm.Bcast(ids, root=0)
-                # pu_ids = ids[min_pu == mpi_rank]
                 pu_ids = ids
                 new_lastID = 0
                 if mpi_rank == 0:
@@ -536,7 +601,6 @@ class ParticleCollectionAOS(ParticleCollection):
                         self._pu_centers[i, :] += ax*pu_ncenters[i, :]
                 mpi_comm.Bcast(self._pu_centers, root=0)
             else:
-                # pu_data = data_array
                 pu_ids = np.arange(ScipyParticle.lastID, stop=ScipyParticle.lastID+data_array['lon'].shape[0]) if 'id' not in data_array.keys() else data_array['id']
                 new_lastID = ScipyParticle.lastID+data_array['lon'].shape[0]-1
                 self._pclass.setLastID(new_lastID)
@@ -565,6 +629,7 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         Adding a single Particle to the collection - either as a 'Particle; object in parcels itself, or
         via its ParticleAccessor.
+        :returns index of added particle
         """
         # ==== first approach - still need to incorporate the MPI re-centering ==== #
         super().add_single(particle_obj)
@@ -591,7 +656,6 @@ class ParticleCollectionAOS(ParticleCollection):
                             min_dist = dist
                             min_pu = i
                     self._pu_indicators = np.concatenate((self._pu_indicators, min_pu), axis=0)
-                # NOW: move the related center by: (center-spdata) * 1/(cluster_size+1)
                 min_pu = mpi_comm.bcast(min_pu, root=0)
                 self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
                 pu_id = particle_obj.id
@@ -627,14 +691,6 @@ class ParticleCollectionAOS(ParticleCollection):
             index = self._data.shape[0]-1
             if self._ptype.uses_jit and isinstance(particle_obj, JITParticle):
                 self._data_c = np.concatenate((self._data_c, [particle_obj.get_cptr(), ]))
-                # tmp_addr = self._data_c
-                # prev_ncount = tmp_addr.shape[0]
-                # self._data_c = np.empty(self._data.shape[0], dtype=self._ptype.dtype)
-                # if prev_ncount > 0:
-                #     self._data_c[0:prev_ncount] = tmp_addr[:]
-                # self._data_c[-1] = particle_obj.get_cptr()
-                # # self._data_c[index] = particle_obj.get_cptr()
-                # # self._data[-1]._cptr = self._data_c[-1]
             if index >= 0:
                 self._ncount = self._data.shape[0]
                 return index
@@ -649,6 +705,9 @@ class ParticleCollectionAOS(ParticleCollection):
 
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
+
+        :arg indices: requested indices to be split off this collection
+        :returns new ParticleCollectionAOS with the split-off particles
         """
         super().split_by_index(indices)
         assert len(self._data) > 0
@@ -670,6 +729,9 @@ class ParticleCollectionAOS(ParticleCollection):
 
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
+
+        :arg IDs: requested IDs to be split off this collection
+        :returns new ParticleCollectionAOS with the split-off particles
         """
         super().split_by_id(ids)
         assert len(self._data) > 0
@@ -687,6 +749,10 @@ class ParticleCollectionAOS(ParticleCollection):
 
         with 'a' and 'b' begin the two equi-structured objects (or: 'b' being and individual object).
         This operation is equal to an in-place addition of (an) element(s).
+
+        this is the former "add(same_class)" function.
+        :arg pcollection: second ParticleCollectionAOS object to be merged into this collection
+        :returns vector-list of indices of all merged particles
         """
         self.merge_same(same_class)
         return self
@@ -705,6 +771,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
         For AoS, insert with 'index==None', the function equates to 'add'. If 'index' is specified, split the array,
         insert the item and splice the arrays.
+        :arg obj: Particle object to insert
         """
         if index is None:
             self.add_single(obj)
@@ -733,6 +800,8 @@ class ParticleCollectionAOS(ParticleCollection):
         This function further returns the index, at which position the Particle has been inserted. By definition,
         the index is positive, thus: a return of '-1' indicates push failure, NOT the last position in the collection.
         Furthermore, collections that do not work on an index-preserving manner also return '-1'.
+
+        :arg particle_obj: Particle object to push
         """
         return_index = self._ncount
         self.add_single(particle_obj)
@@ -748,6 +817,7 @@ class ParticleCollectionAOS(ParticleCollection):
         append(particle_obj) -> add_single(particle_obj)
 
         The function - in contrast to 'push' - does not return the index of the inserted object.
+        :arg particle_obj: Particle object to append
         """
         self.add_single(particle_obj)
 
@@ -761,6 +831,7 @@ class ParticleCollectionAOS(ParticleCollection):
         that it received the correct type of 'indexing' argument (i.e. index, id or iterator).
 
         This should actually delete the item instead of just marking the particle as 'to be deleted'.
+        :arg key: index to be removed
         """
         self.remove_single_by_index(key)
 
@@ -771,20 +842,11 @@ class ParticleCollectionAOS(ParticleCollection):
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
+        :arg index: index of the Particle to be set to the deleted state
         """
         super().delete_by_index(index)
         p = self.get_single_by_ID(id)
         p.state = OperationCode.Delete
-
-        # result = self.get_single_by_index(index)
-        # self._data = np.delete(self._data, index)
-        # if self.ptype.uses_jit:
-        #     self._data_c = np.delete(self._data_c, index)
-        #     # Update C-pointer on particles
-        #     for p, pdata in zip(self._data, self._data_c):
-        #         p._cptr = pdata
-        # self._ncount -= 1
-        # return result
 
     def delete_by_ID(self, id):
         """
@@ -793,6 +855,7 @@ class ParticleCollectionAOS(ParticleCollection):
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
+        :arg id: ID of the Particle to be set to the deleted state
         """
         super().delete_by_ID(id)
         index = self.get_index_by_ID(id)
@@ -827,6 +890,7 @@ class ParticleCollectionAOS(ParticleCollection):
         perform the removal - which results in a significant performance malus.
         In cases where a removal-by-object would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-index or remove-by-ID.
+        :arg particle_obj: Particle object of the Node that is to be removed from the collection
         """
         super().remove_single_by_object(particle_obj)
 
@@ -843,6 +907,7 @@ class ParticleCollectionAOS(ParticleCollection):
         malus.
         In cases where a removal-by-ID would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-object or remove-by-index.
+        :arg id: Particle ID of the object to be removed from the collection
         """
         super().remove_single_by_ID(id)
         index = self.get_index_by_ID(id)
@@ -853,6 +918,8 @@ class ParticleCollectionAOS(ParticleCollection):
         This function removes particles from this collection that are themselves stored in another object of an equi-
         structured ParticleCollection. As the structures of both collections are the same, a more efficient M-in-N
         removal can be applied without an in-between reformatting.
+
+        :arg same_class: a ParticleCollectionNodes object, containing Nodes that are to be removed from this collection
         """
         super().remove_same(same_class)
         indices = []
@@ -874,6 +941,8 @@ class ParticleCollectionAOS(ParticleCollection):
         That said, this method should still be at least as efficient as a removal via common Python collections (i.e.
         lists, dicts, numpy's nD arrays & dense arrays). Despite this, due to the reformatting, in some cases it may
         be more efficient to remove items then rather by IDs oder indices.
+
+        :arg pcollection: a BaseParticleCollection object, containing Particle objects that are to be removed from this collection
         """
         super().remove_collection(pcollection)
 
@@ -897,7 +966,10 @@ class ParticleCollectionAOS(ParticleCollection):
         each instance for its index (for random-access structures), which results in a considerable performance malus.
 
         For collections where removal-by-object incurs a performance malus, it is advisable to multi-remove particles
-        by indices or IDs.
+        by indices.
+
+        :arg pycollectionp: a Python-based collection (i.e. a tuple or list), containing Particle objects that are to
+                            be removed from this collection.
         """
         super().remove_multi_by_PyCollection_Particles(pycollectionp)
         npcollectionp = np.array(pycollectionp, dtype=self._pclass)
@@ -918,6 +990,8 @@ class ParticleCollectionAOS(ParticleCollection):
         This function removes particles from this collection based on their indices. This works best for random-access
         collections (e.g. numpy's ndarrays, dense matrices and dense arrays), whereas internally ordered collections
         shall rather use a removal-via-object-reference strategy.
+
+        :arg indices: a list or np.ndarray of indices that are to be removed from this collection.
         """
         super().remove_multi_by_indices(indices)
         if type(indices) is dict:
@@ -935,6 +1009,9 @@ class ParticleCollectionAOS(ParticleCollection):
         This function removes particles from this collection based on their IDs. For collections where this removal
         strategy would require a collection transformation or by-ID parsing, it is advisable to rather apply a removal-
         by-objects or removal-by-indices scheme.
+
+        :arg ids: a list or numpy.ndarray of (signed- or unsigned) 64-bit integer IDs, the items of which are to be
+                  removed from this collection
         """
         super().remove_multi_by_IDs(ids)
         if type(ids) is dict:
@@ -956,6 +1033,8 @@ class ParticleCollectionAOS(ParticleCollection):
 
         with 'a' and 'b' begin the two equi-structured objects (or: 'b' being and individual object).
         This operation is equal to an in-place removal of (an) element(s).
+
+        :arg other: a single Particle or a collection of objects or keys that are to be removed.
         """
         if other is None:
             return
@@ -974,6 +1053,9 @@ class ParticleCollectionAOS(ParticleCollection):
         If index < 0: return from 'end' of collection.
         If index is out of bounds, throws and OutOfRangeException.
         If Particle cannot be retrieved, returns None.
+
+        :arg index: index of the Node to be popped (i.e. retrieved and removed) from this collections
+        :returns last Node (if index == -1), indexed Node (if 0 < index < len(collection)) or None (if no Node can be retrieved)
         """
         super().pop_single_by_index(index)
         return self.remove_single_by_index(index)
@@ -994,6 +1076,9 @@ class ParticleCollectionAOS(ParticleCollection):
         If index < 0: return from 'end' of collection.
         If index in 'indices' is out of bounds, throws and OutOfRangeException.
         If Particles cannot be retrieved, returns None.
+
+        :arg index: a list or numpy.ndarray of indices of Nodes to be popped (i.e. retrieved and removed) from this collections
+        :returns a list of retrieved Nodes
         """
         super().pop_multi_by_indices(indices)
         results = self._data[indices]
@@ -1004,6 +1089,9 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         Searches for Particles with the IDs registered in 'ids', removes the Particles from the Collection and returns the Particles (or: their ParticleAccessors).
         If Particles cannot be retrieved (e.g. because the IDs are not available), returns None.
+
+        :arg id: 64-bit (signed or unsigned) integer ID of the Node to be popped (i.e. retrieved and removed) from this collections
+        :returns identified Node (if ID is related or an object contained in this collection) or None (if no Node can be retrieved)
         """
         super().pop_multi_by_IDs(ids)
         indices = self.get_indices_by_IDs(ids)
@@ -1029,12 +1117,12 @@ class ParticleCollectionAOS(ParticleCollection):
         else:
             self.remove_multi_by_indices(indices)
 
-    def merge(self, same_class=None):
+    def merge(self, other=None):
         """
         This function merge two strictly equally-structured ParticleCollections into one. This can be, for example,
         quite handy to merge two particle subsets that - due to continuous removal - become too small to be effective.
 
-        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
+        TODO - RETHINK IF THAT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally merge individual particles that are tagged by status as
         being 'merged' (see the particle status for information on that).
 
@@ -1047,14 +1135,15 @@ class ParticleCollectionAOS(ParticleCollection):
 
         The function shall return the merged ParticleCollection.
         """
-        super().merge(same_class)
+        super().merge(other)
 
-    def split(self, subset=None):
+    def split(self, keys=None):
         """
         This function splits this collection into two disect equi-structured collections. The reason for it can, for
         example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
         mandates a split.
 
+        TODO - RETHINK IF THAT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally split individual particles that are tagged byt status as
         to be 'split' (see the particle status for information on that).
 
@@ -1068,7 +1157,7 @@ class ParticleCollectionAOS(ParticleCollection):
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
         """
-        return super().split(subset)
+        return super().split(keys)
 
     def __sizeof__(self):
         """
@@ -1076,6 +1165,7 @@ class ParticleCollectionAOS(ParticleCollection):
         the size is computed as follows:
 
         sizeof(self) = len(self) * sizeof(pclass)
+        :returns size of this collection in bytes; initiated by calling sys.getsizeof(object)
         """
         return self._data.nbytes+self._data_c.nbytes
 

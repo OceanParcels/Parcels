@@ -72,7 +72,17 @@ class ParticleCollectionNodes(ParticleCollection):
 
     def __init__(self, idgen, c_lib_register, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
-        :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
+        :arg idgen: an instance of an ID generator used to obtain unique IDs - mandatory for a node-based collection
+        :arg c_lib_register: an instance of a process-consistent LibraryRegisterC object - mandatory for a node-based collection
+        :arg pclass: the Particle class of the objects stored within the nodes
+        :arg lon: a non-None list or array of longitudes
+        :arg lat: a non-None list or array of latitudes
+        :arg depth: a non-None list or array of depths
+        :arg times: a non-None list- or array of time-values
+        :arg lonlatdepth_dtype: the datatype (dtype) of coordinate-values (apart from time - time is fixed to 64-bit float)
+        :arg pid_orig: None or a vector or list of 64-bit (signed or unsigned) integer IDs, used for repeating particle addition
+        :arg paritions: None, or a list of indicators to which the particles shall be attached to
+        :arg ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
         field references of the ctypes-link of particles that are allocated
         """
         super(ParticleCollection, self).__init__()
@@ -190,7 +200,6 @@ class ParticleCollectionNodes(ParticleCollection):
                         init_time = pdata.time if pdata.time not in [None, np.nan] and np.count_nonzero([tval is not None for tval in time]) == len(time) else 0
                         init_field = v.initial
                         init_field.fieldset.computeTimeChunk(init_time, 0)
-                        # setattr(pdata, v.name, init_field[pdata.time, pdata.depth, pdata.lat, pdata.lon])
                         setattr(pdata, v.name, init_field[init_time, pdata.depth, pdata.lat, pdata.lon])
                         logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
                         # ==== ==== ==== #
@@ -227,7 +236,7 @@ class ParticleCollectionNodes(ParticleCollection):
 
     def iterator(self):
         """
-
+        :returns ParticleCollectionIterator, used for a 'for'-loop, in a forward-manner
         """
         self._iterator = ParticleCollectionIteratorNodes(self)
         return self._iterator
@@ -241,7 +250,7 @@ class ParticleCollectionNodes(ParticleCollection):
 
     def reverse_iterator(self):
         """
-
+        :returns ParticleCollectionIterator, used for a 'for'-loop, in a backward-manner
         """
         self._riterator = ParticleCollectionIteratorNodes(self, True)
         return self._riterator
@@ -393,6 +402,7 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         Obtain the index of a node, given the node object.
         Caution: when deleting objects, this is not always up-to-date because of the delayed garbage collection.
+
         :arg ndata: Node item to look up in the collection
         :returns index of the Node to be looked up
         """
@@ -409,6 +419,7 @@ class ParticleCollectionNodes(ParticleCollection):
         Returns the particle's index. Divide-and-conquer search of SORTED list - needed because the node list
         internally can only be scanned for (a) its list index (non-coherent) or (b) a node itself, but not for a
         specific Node property alone. That is why using the 'bisect' module alone won't work.
+
         :arg id: search Node ID
         :returns index of the Node with the ID to be looked up
 
@@ -445,6 +456,7 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         Looking up the indices of the nodes with the IDs that are provided. This expects the nodes to be present. IDs
         for which no nodes are present in the collected are disregarded.
+
         :arg ids: a vector-list or numpy.ndarray of (64-bit signed or unsigned integer) IDs
         :returns: a vector-list of indices per requested ID
         """
@@ -461,7 +473,8 @@ class ParticleCollectionNodes(ParticleCollection):
         translation of the collection from a none-indexable, none-random-access structure into an indexable structure.
         In cases where a get-by-index would result in a performance malus, it is highly-advisable to use a different
         get function, e.g. get-by-ID.
-        This function is comparatively slow in contrast to indexabe collections.
+        This function is comparatively slow in contrast to indexable collections.
+
         :arg index: index of the object to be retrieved
         :returns Particle object (SciPy- or JIT) at the indexed location
         """
@@ -487,6 +500,7 @@ class ParticleCollectionNodes(ParticleCollection):
         directly, so we will look for one of its properties (the ID) that
         has the nice property of being stored in an ordered list (if the
         collection is sorted).
+
         :arg particle_obj: a template object of a Particle (SciPy- or JIT) with reference values to be searched for
         :returns (first) Particle-object (SciPy- or JIT) of the requested particle data
         """
@@ -529,6 +543,7 @@ class ParticleCollectionNodes(ParticleCollection):
 
         This function uses binary search if we know the ID list to be sorted, and linear search otherwise. We assume
         IDs are unique.
+
         :arg id: search Node-ID
         :return (first) Particle-object (SciPy- or JIT) attached to ID
         """
@@ -598,6 +613,7 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         This function gets particles from this collection that are themselves stored in another object of an equi-
         structured ParticleCollection.
+
         :arg same_class: a ParticleCollectionNodes object with a subsample of Nodes in this collection
         :returns list of Particle-objects (SciPy- or JIT) of the requested subset-collection
         """
@@ -621,6 +637,7 @@ class ParticleCollectionNodes(ParticleCollection):
         This function gets particles from this collection that are themselves stored in a ParticleCollection, which
         is differently structured than this one. That means the other-collection has to be re-formatted first in an
         intermediary format.
+
         :arg pcollection: a ParticleCollection object (i.e. derived from BaseParticleCollection) with a subsample of Nodes in this collection
         :returns list of Particle-objects (SciPy- or JIT) of the requested subset-collection
         """
@@ -646,6 +663,7 @@ class ParticleCollectionNodes(ParticleCollection):
 
         For collections where get-by-object incurs a performance malus, it is advisable to multi-get particles
         by indices or IDs.
+
         :arg a Python-internal collection object (e.g. a tuple or list), filled with reference particles (SciPy- or JIT)
         :returns a vector-list of Nodes that contain the requested particles
         """
@@ -666,6 +684,7 @@ class ParticleCollectionNodes(ParticleCollection):
         This function gets particles from this collection based on their indices. This works best for random-access
         collections (e.g. numpy's ndarrays, dense matrices and dense arrays), whereas internally ordered collections
         shall rather use a get-via-object-reference strategy.
+
         :param indices: requested indices
         :returns vector-list of Node objects
         """
@@ -687,7 +706,7 @@ class ParticleCollectionNodes(ParticleCollection):
 
         Note that this implementation assumes that IDs of particles are strictly increasing with increasing index. So
         a particle with a larger index will always have a larger ID as well. The assumption often holds for this
-        datastructure as new particles always get a larger ID than any existing particle (IDs are not recycled)
+        data structure as new particles always get a larger ID than any existing particle (IDs are not recycled)
         and their data are appended at the end of the list (largest index). This allows for the use of binary search
         in the look-up. The collection maintains a `sorted` flag to indicate whether this assumption holds.
 
@@ -828,7 +847,6 @@ class ParticleCollectionNodes(ParticleCollection):
         # Comment: by current workflow, pset modification is only done on the front node, thus
         # the distance determination and assigment is also done on the front node
         _add_to_pu = True
-        # if MPI:
         if MPI and MPI.COMM_WORLD.Get_size() > 1 and not pu_checked:
             if self._pu_centers is not None and isinstance(self._pu_centers, np.ndarray):
                 mpi_comm = MPI.COMM_WORLD
@@ -889,7 +907,7 @@ class ParticleCollectionNodes(ParticleCollection):
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
 
-        :param indices: requested indices to be split off this collection
+        :arg indices: requested indices to be split off this collection
         :returns new ParticleCollectionNodes with the split-off (nodes of) particles
         """
         super().split_by_index(indices)
@@ -912,7 +930,7 @@ class ParticleCollectionNodes(ParticleCollection):
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
 
-        :param IDs: requested IDs to be split off this collection
+        :arg IDs: requested IDs to be split off this collection
         :returns new ParticleCollectionNodes with the split-off (nodes of) particles
         """
         super().split_by_id(ids)
@@ -954,8 +972,7 @@ class ParticleCollectionNodes(ParticleCollection):
 
         insert(obj) -> add_single(obj)
 
-        For AoS, insert with 'index==None', the function equates to 'add'. This collection does not evaluate the index,
-        as it is not an indexable collection.
+        This collection does not evaluate the index, as it is not an indexable collection.
         :arg obj: Particle object to insert
         """
         return self.add_single(obj)
@@ -972,6 +989,7 @@ class ParticleCollectionNodes(ParticleCollection):
         This function further returns the index, at which position the Particle has been inserted. By definition,
         the index is positive, thus: a return of '-1' indicates push failure, NOT the last position in the collection.
         Furthermore, collections that do not work on an index-preserving manner also return '-1'.
+
         :arg particle_obj: Particle object to push
         """
         return self.add_single(particle_obj)
@@ -1014,7 +1032,6 @@ class ParticleCollectionNodes(ParticleCollection):
         :arg index: index of the Particle to be set to the deleted state
         """
         super().delete_by_index(index)
-        # self._collection[index].state = OperationCode.Delete
         if index >= 0 and index < len(self._data):
             try:
                 self._data[index].data.state = OperationCode.Delete
@@ -1052,7 +1069,6 @@ class ParticleCollectionNodes(ParticleCollection):
         self._data[index].unlink()
         del self._data[index]
         return result
-        # return self._data.pop(index, deepcopy_elem=False).data
 
     def remove_single_by_object(self, particle_obj):
         """
@@ -1105,7 +1121,7 @@ class ParticleCollectionNodes(ParticleCollection):
         malus.
         In cases where a removal-by-ID would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-object or remove-by-index.
-        :arg id: Particle ID to be removed from the collection
+        :arg id: Particle ID of the object to be removed from the collection
         """
         super().remove_single_by_ID(id)
 
@@ -1178,7 +1194,7 @@ class ParticleCollectionNodes(ParticleCollection):
         each instance for its index (for random-access structures), which results in a considerable performance malus.
 
         For collections where removal-by-object incurs a performance malus, it is advisable to multi-remove particles
-        by indices or IDs.
+        by IDs.
 
         :arg pycollectionp: a Python-based collection (i.e. a tuple or list), containing Particle objects that are to
                             be removed from this collection.
