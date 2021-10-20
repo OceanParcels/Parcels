@@ -18,8 +18,8 @@ from .fieldfilebuffer import (NetcdfFileBuffer, DeferredNetcdfFileBuffer,
 from parcels._grid import CGrid
 # from .grid import Grid
 # from .grid import GridCode
-from parcels.numba.grid_all import BaseGrid
-from parcels.numba.grid_all import GridCode
+from parcels.numba.grid.base import BaseGrid
+from parcels.numba.grid.base import GridCode
 from parcels.tools.converters import Geographic
 from parcels.tools.converters import GeographicPolar
 from parcels.tools.converters import TimeConverter

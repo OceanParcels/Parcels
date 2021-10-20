@@ -7,6 +7,21 @@ from numba.experimental import jitclass
 import numba as nb
 from copy import deepcopy
 from numba.core.typing.asnumbatype import as_numba_type
+from numba import njit
+# from parcels.tools.statuscodes import FieldOutOfBoundError,\
+    # FieldOutOfBoundSurfaceError, FieldSamplingError
+
+
+class FieldOutOfBoundError(Exception):
+    pass
+
+
+class FieldOutOfBoundSurfaceError(Exception):
+    pass
+
+
+class FieldSamplingError(Exception):
+    pass
 
 
 class GridCode(IntEnum):
@@ -22,11 +37,22 @@ class GridStatus(IntEnum):
     NeedsUpdate = 2
 
 
+@jitclass(spec=[
+    ("x", nb.float32),
+    ("y", nb.float32),
+    ("z", nb.float32)])
+class FOBErrorData():
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+
+
 _base_spec = [
     ("xi", nb.int32[:]),
     ("yi", nb.int32[:]),
     ("zi", nb.int32[:]),
-    ("ti", nb.int32[:]),
+    ("ti", nb.int32),
     ("time", nb.float64[:]),
     ("time_full", nb.float64[:]),
     ("time_origin", nb.float64),
@@ -48,6 +74,7 @@ _base_spec = [
     ("tdim", nb.int64),
     ("gtype", nb.types.IntEnumMember(GridCode, nb.int64)),
     ("update_status", nb.types.IntEnumMember(GridStatus, nb.int64)),
+    ("fob_data", as_numba_type(FOBErrorData))
 ]
 
 
@@ -60,7 +87,7 @@ class BaseGrid(object):
         self.xi = np.empty(0, dtype=nb.int32)
         self.yi = np.empty(0, dtype=nb.int32)
         self.zi = np.empty(0, dtype=nb.int32)
-        self.ti = np.empty(0, dtype=nb.int32)
+        self.ti = -1
         self.lon = lon
         self.lat = lat
 #         self.time = np.zeros(1, dtype=np.float64) if time is None else time
@@ -198,6 +225,19 @@ class BaseGrid(object):
                 nextTime_loc = self.time[0] + periods*(self.time_full[-1]-self.time_full[0])
         return nextTime_loc
 
+    def FieldOutOfBoundError(self, x, y, z):
+        self.fob_data = FOBErrorData(x, y, z)
+        raise FieldOutOfBoundError()
+#     FieldOutOfBoundError(x, y, z)
+
+    def FieldOutOfBoundSurfaceError(self, x, y, z):
+        self.fob_data = FOBErrorData(x, y, z)
+        raise FieldOutOfBoundSurfaceError()
+
+    def FieldSamplingError(self, x, y, z):
+        self.fob_data = FOBErrorData(x, y, z)
+        raise FieldSamplingError()
+
     @property
     def chunk_not_loaded(self):
         return 0
@@ -217,6 +257,12 @@ class BaseGrid(object):
     @property
     def chunk_loaded(self):
         return [2, 3]
+
+    # def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False):
+    #     if self.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
+    #         return self.search_indices_rectilinear(x, y, z, ti, time, search2D=search2D)
+    #     else:
+    #         return self.search_indices_curvilinear(x, y, z, ti, time, search2D=search2D)
 
 
 # @jitclass(spec=_base_spec)

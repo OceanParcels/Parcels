@@ -6,8 +6,8 @@ import parcels.tools.interpolation_utils as i_u
 
 # from .grid import Grid
 # from .grid import GridCode
-from parcels.numba.grid_all import BaseGrid
-from parcels.numba.grid_all import GridCode
+from parcels.numba.grid.base import BaseGrid
+from parcels.numba.grid.base import GridCode
 from parcels.tools.converters import Geographic
 from parcels.tools.converters import GeographicPolar
 from parcels.tools.converters import TimeConverter
@@ -235,9 +235,9 @@ class NumbaField():
                         self.grid.cell_edge_sizes['y'][y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
                 self.cell_edge_sizes = self.grid.cell_edge_sizes
             else:
-                logger.error(('Field.cell_edge_sizes() not implemented for ', self.grid.gtype, 'grids.',
-                              'You can provide Field.grid.cell_edge_sizes yourself',
-                              'by in e.g. NEMO using the e1u fields etc from the mesh_mask.nc file'))
+#                 logger.error(('Field.cell_edge_sizes() not implemented for ', self.grid.gtype, 'grids.',
+#                               'You can provide Field.grid.cell_edge_sizes yourself',
+#                               'by in e.g. NEMO using the e1u fields etc from the mesh_mask.nc file'))
                 exit(-1)
 
     def cell_areas(self):

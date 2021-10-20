@@ -6,6 +6,7 @@ import numba as nb
 from copy import deepcopy
 from numba.core.typing.asnumbatype import as_numba_type
 from parcels.numba.grid.base import BaseGrid, _base_spec, GridCode
+from parcels.tools.statuscodes import FieldOutOfBoundError
 
 
 _curve_spec = deepcopy(_base_spec)
@@ -35,13 +36,13 @@ class CurvilinearGrid(BaseGrid):
     def get_dlon(self):
         return self.lon[0, 1:] - self.lon[0, :-1]
 
-    def search_indices_curvilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
-        if particle:
-            xi = particle.xi[self.igrid]
-            yi = particle.yi[self.igrid]
-        else:
-            xi = int(self.grid.xdim / 2) - 1
-            yi = int(self.grid.ydim / 2) - 1
+    def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False):
+        # if particle:
+            # xi = particle.xi[self.igrid]
+            # yi = particle.yi[self.igrid]
+        # else:
+        xi = int(self.grid.xdim / 2) - 1
+        yi = int(self.grid.ydim / 2) - 1
         xsi = eta = -1
         grid = self.grid
         invA = np.array([[1, 0, 0, 0],
@@ -54,11 +55,11 @@ class CurvilinearGrid(BaseGrid):
         if not grid.zonal_periodic:
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
                 if grid.lon[0, 0] < grid.lon[0, -1]:
-                    raise FieldOutOfBoundError(x, y, z, field=self)
+                    self.FieldOutOfBoundError(x, y, z)
                 elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
-                    raise FieldOutOfBoundError(x, y, z, field=self)
+                    self.FieldOutOfBoundError(x, y, z)
         if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
-            raise FieldOutOfBoundError(x, y, z, field=self)
+            raise self.FieldOutOfBoundError(x, y, z)
 
         while xsi < -tol or xsi > 1+tol or eta < -tol or eta > 1+tol:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
@@ -86,9 +87,9 @@ class CurvilinearGrid(BaseGrid):
             else:
                 xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
-                raise FieldOutOfBoundError(x, y, 0, field=self)
+                self.FieldOutOfBoundError(x, y, 0)
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
-                raise FieldOutOfBoundError(x, y, 0, field=self)
+                self.FieldOutOfBoundError(x, y, 0)
             if xsi < -tol:
                 xi -= 1
             elif xsi > 1+tol:
@@ -101,7 +102,7 @@ class CurvilinearGrid(BaseGrid):
             it += 1
             if it > maxIterSearch:
                 print('Correct cell not found after %d iterations' % maxIterSearch)
-                raise FieldOutOfBoundError(x, y, 0, field=self)
+                self.FieldOutOfBoundError(x, y, 0)
         xsi = max(0., xsi)
         eta = max(0., eta)
         xsi = min(1., xsi)
@@ -112,7 +113,7 @@ class CurvilinearGrid(BaseGrid):
                 try:
                     (zi, zeta) = self.search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
-                    raise FieldOutOfBoundError(x, y, z, field=self)
+                    self.FieldOutOfBoundError(x, y, z)
             elif grid.gtype == GridCode.CurvilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
@@ -120,12 +121,12 @@ class CurvilinearGrid(BaseGrid):
             zeta = 0
 
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-            raise FieldSamplingError(x, y, z, field=self)
+            self.FieldSamplingError(x, y, z)
 
-        if particle:
-            particle.xi[self.igrid] = xi
-            particle.yi[self.igrid] = yi
-            particle.zi[self.igrid] = zi
+        # if particle:
+            # particle.xi[self.igrid] = xi
+            # particle.yi[self.igrid] = yi
+            # particle.zi[self.igrid] = zi
 
         return (xsi, eta, zeta, xi, yi, zi)
 

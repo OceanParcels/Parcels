@@ -7,6 +7,7 @@ import numba as nb
 from copy import deepcopy
 from numba.core.typing.asnumbatype import as_numba_type
 from parcels.numba.grid.base import BaseGrid, _base_spec, GridCode
+from parcels.numba.grid.zgrid import BaseZGrid
 
 
 _rect_spec = _base_spec + [
@@ -38,31 +39,29 @@ class RectilinearGrid(BaseGrid):
 #             logger.warning_once("Flipping lat data from North-South to South-North. "
 #                                 "Note that this may lead to wrong sign for meridional velocity, so tread very carefully")
 
-    def search_indices_rectilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
-        grid = self.grid
+    def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False):
+        if self.xdim > 1 and (not self.zonal_periodic):
+            if x < self.lonlat_minmax[0] or x > self.lonlat_minmax[1]:
+                self.FieldOutOfBoundError(x, y, z)
+        if self.ydim > 1 and (y < self.lonlat_minmax[2] or y > self.lonlat_minmax[3]):
+                self.FieldOutOfBoundError(x, y, z)
 
-        if grid.xdim > 1 and (not grid.zonal_periodic):
-            if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
-                raise FieldOutOfBoundError(x, y, z, field=self)
-        if grid.ydim > 1 and (y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]):
-            raise FieldOutOfBoundError(x, y, z, field=self)
-
-        if grid.xdim > 1:
-            if grid.mesh != 'spherical':
-                lon_index = grid.lon < x
+        if self.xdim > 1:
+            if self.mesh != 'spherical':
+                lon_index = self.lon < x
                 if lon_index.all():
-                    xi = len(grid.lon) - 2
+                    xi = len(self.lon) - 2
                 else:
                     xi = lon_index.argmin() - 1 if lon_index.any() else 0
-                xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+                xsi = (x-self.lon[xi]) / (self.lon[xi+1]-self.lon[xi])
                 if xsi < 0:
                     xi -= 1
-                    xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+                    xsi = (x-self.lon[xi]) / (self.lon[xi+1]-self.lon[xi])
                 elif xsi > 1:
                     xi += 1
-                    xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+                    xsi = (x-self.lon[xi]) / (self.lon[xi+1]-self.lon[xi])
             else:
-                lon_fixed = grid.lon.copy()
+                lon_fixed = self.lon.copy()
                 indices = lon_fixed >= lon_fixed[0]
                 if not indices.all():
                     lon_fixed[indices.argmin():] += 360
@@ -84,44 +83,42 @@ class RectilinearGrid(BaseGrid):
         else:
             xi, xsi = -1, 0
 
-        if grid.ydim > 1:
-            lat_index = grid.lat < y
+        if self.ydim > 1:
+            lat_index = self.lat < y
             if lat_index.all():
-                yi = len(grid.lat) - 2
+                yi = len(self.lat) - 2
             else:
                 yi = lat_index.argmin() - 1 if lat_index.any() else 0
 
-            eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+            eta = (y-self.lat[yi]) / (self.lat[yi+1]-self.lat[yi])
             if eta < 0:
                 yi -= 1
-                eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+                eta = (y-self.lat[yi]) / (self.lat[yi+1]-self.lat[yi])
             elif eta > 1:
                 yi += 1
-                eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+                eta = (y-self.lat[yi]) / (self.lat[yi+1]-self.lat[yi])
         else:
             yi, eta = -1, 0
 
-        if grid.zdim > 1 and not search2D:
-            if grid.gtype == GridCode.RectilinearZGrid:
+        if self.zdim > 1 and not search2D:
+            (zi, zeta) = self.search_indices_vertical(x, y, z, xi, yi, xsi,
+                                                      eta, ti, time)
+            # if self.gtype == GridCode.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
-                try:
-                    (zi, zeta) = self.search_indices_vertical_z(z)
-                except FieldOutOfBoundError:
-                    raise FieldOutOfBoundError(x, y, z, field=self)
-                except FieldOutOfBoundSurfaceError:
-                    raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
-            elif grid.gtype == GridCode.RectilinearSGrid:
-                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
+                # (zi, zeta) = self.search_indices_vertical_z(z)
+ 
+            # elif self.gtype == GridCode.RectilinearSGrid:
+                # (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi, zeta = -1, 0
 
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-            raise FieldSamplingError(x, y, z, field=self)
+            self.FieldSamplingError(x, y, z)
 
-        if particle:
-            particle.xi[self.igrid] = xi
-            particle.yi[self.igrid] = yi
-            particle.zi[self.igrid] = zi
+        # if particle:
+        #     particle.xi[self.igrid] = xi
+        #     particle.yi[self.igrid] = yi
+        #     particle.zi[self.igrid] = zi
 
         return (xsi, eta, zeta, xi, yi, zi)
 
@@ -159,7 +156,7 @@ class RectilinearGrid(BaseGrid):
 
 
 @jitclass(spec=_rect_spec+[("depth", nb.float32[:])])
-class RectilinearZGrid(RectilinearGrid):
+class RectilinearZGrid(RectilinearGrid, BaseZGrid):
     """Rectilinear Z Grid
 
     :param lon: Vector containing the longitude coordinates of the grid

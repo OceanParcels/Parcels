@@ -2,32 +2,34 @@ import numpy as np
 
 
 class BaseZGrid():
-    def search_indices_vertical_z(self, z):
-        grid = self.grid
+    def search_indices_vertical(self, _x, _y, z, _xi, _yi, _xsi, _eta, _ti,
+                                _time):
+        # TODO: fix 
+        gridindexingtype="unknown"
         z = np.float32(z)
-        if grid.depth[-1] > grid.depth[0]:
-            if z < grid.depth[0]:
+        if self.depth[-1] > self.depth[0]:
+            if z < self.depth[0]:
                 # Since MOM5 is indexed at cell bottom, allow z at depth[0] - dz where dz = (depth[1] - depth[0])
-                if self.gridindexingtype == "mom5" and z > 2*grid.depth[0] - grid.depth[1]:
-                    return (-1, z / grid.depth[0])
+                if gridindexingtype == "mom5" and z > 2*self.depth[0] - self.depth[1]:
+                    return (-1, z / self.depth[0])
                 else:
-                    raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
-            elif z > grid.depth[-1]:
-                raise FieldOutOfBoundError(0, 0, z, field=self)
-            depth_indices = grid.depth <= z
-            if z >= grid.depth[-1]:
-                zi = len(grid.depth) - 2
+                    self.FieldOutOfBoundSurfaceError(0, 0, z)
+            elif z > self.depth[-1]:
+                self.FieldOutOfBoundError(0, 0, z)
+            depth_indices = self.depth <= z
+            if z >= self.depth[-1]:
+                zi = len(self.depth) - 2
             else:
-                zi = depth_indices.argmin() - 1 if z >= grid.depth[0] else 0
+                zi = depth_indices.argmin() - 1 if z >= self.depth[0] else 0
         else:
-            if z > grid.depth[0]:
-                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
-            elif z < grid.depth[-1]:
-                raise FieldOutOfBoundError(0, 0, z, field=self)
-            depth_indices = grid.depth >= z
-            if z <= grid.depth[-1]:
-                zi = len(grid.depth) - 2
+            if z > self.depth[0]:
+                self.FieldOutOfBoundSurfaceError(0, 0, z)
+            elif z < self.depth[-1]:
+                self.FieldOutOfBoundError(0, 0, z)
+            depth_indices = self.depth >= z
+            if z <= self.depth[-1]:
+                zi = len(self.depth) - 2
             else:
-                zi = depth_indices.argmin() - 1 if z <= grid.depth[0] else 0
-        zeta = (z-grid.depth[zi]) / (grid.depth[zi+1]-grid.depth[zi])
+                zi = depth_indices.argmin() - 1 if z <= self.depth[0] else 0
+        zeta = (z-self.depth[zi]) / (self.depth[zi+1]-self.depth[zi])
         return (zi, zeta)

@@ -7,7 +7,7 @@ import numpy as np
 import xarray as xr
 
 from parcels.numba.grid import GridCode
-from parcels.numba.grid import CurvilinearGrid
+from parcels.numba.grid.curvilinear import CurvilinearGrid
 from parcels.kernel import Kernel
 from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa
 from parcels.particlefile import ParticleFile

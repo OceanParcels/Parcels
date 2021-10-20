@@ -1,3 +1,7 @@
+from .curvilinear import CurvilinearSGrid, CurvilinearZGrid
+from .rectilinear import RectilinearSGrid, RectilinearZGrid
+
+
 class Grid():
     @staticmethod
     def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
