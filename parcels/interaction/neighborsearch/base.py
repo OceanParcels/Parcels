@@ -159,9 +159,33 @@ class BaseFlatNeighborSearch(BaseNeighborSearch):
 class BaseSphericalNeighborSearch(BaseNeighborSearch):
     "Base class for a neighbor search with a spherical mesh."
     def _distance(self, coor, subset_idx):
-        return spherical_distance(
+        vert_distances, horiz_distances = spherical_distance(
             *coor,
             self._values[0, subset_idx],
             self._values[1, subset_idx],
             self._values[2, subset_idx],
         )
+
+        if(self.zperiodic_bc_domain is not None):
+            # If zonal periodic boundaries
+            coor[2, 0] -= self.zperiodic_bc_domain
+            # distance through Western boundary
+            hd2 = spherical_distance(
+                *coor,
+                self._values[0, subset_idx],
+                self._values[1, subset_idx],
+                self._values[2, subset_idx])[1]
+            # distance through Eastern boundary
+            hd3 = spherical_distance(
+                *coor,
+                self._values[0, subset_idx],
+                self._values[1, subset_idx],
+                self._values[2, subset_idx])[1]
+            coor[2, 0] -= self.zperiodic_bc_domain
+        else:
+            hd2 = np.full(len(horiz_distances), np.inf)
+            hd3 = np.full(len(horiz_distances), np.inf)
+
+        horiz_distances = np.column_stack((horiz_distances, hd2, hd3))
+        horiz_distances = np.min(horiz_distances, axis=1)
+        return (vert_distances, horiz_distances)
