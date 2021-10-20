@@ -166,7 +166,7 @@ class BaseSphericalNeighborSearch(BaseNeighborSearch):
             self._values[2, subset_idx],
         )
 
-        if(self.zperiodic_bc_domain is not None):
+        if self.zperiodic_bc_domain:
             # If zonal periodic boundaries
             coor[2, 0] -= self.zperiodic_bc_domain
             # distance through Western boundary
@@ -175,6 +175,7 @@ class BaseSphericalNeighborSearch(BaseNeighborSearch):
                 self._values[0, subset_idx],
                 self._values[1, subset_idx],
                 self._values[2, subset_idx])[1]
+            coor[2, 0] += 2*self.zperiodic_bc_domain
             # distance through Eastern boundary
             hd3 = spherical_distance(
                 *coor,
