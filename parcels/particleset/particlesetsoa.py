@@ -81,13 +81,15 @@ class ParticleSetSOA(BaseParticleSet):
     :param pid_orig: Optional list of (offsets for) the particle IDs
     :param partitions: List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
            are distributed automatically on the processors
+    :param periodic_domain_zonal: Zonal domain size, used to apply zonally periodic boundaries for particle-particle
+           interaction. If None, no zonally periodic boundaries are applied
 
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
-                 pid_orig=None, interaction_distance=None, **kwargs):
+                 pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
@@ -228,7 +230,8 @@ class ParticleSetSOA(BaseParticleSet):
                 inter_dist_horiz = interaction_distance
             self._neighbor_tree = interaction_class(
                 inter_dist_vert=inter_dist_vert,
-                inter_dist_horiz=inter_dist_horiz)
+                inter_dist_horiz=inter_dist_horiz,
+                periodic_domain_zonal=periodic_domain_zonal)
         # End of neighbor search data structure initialization.
 
         if self.repeatdt:
