@@ -36,14 +36,14 @@ def DoNothing(particle, fieldset, time):
     return StateCode.Success
 
 
-def fieldset(xdim=20, ydim=20):
+def fieldset(xdim=20, ydim=20, mesh='spherical'):
     """ Standard unit mesh fieldset """
     lon = np.linspace(0., 1., xdim, dtype=np.float32)
     lat = np.linspace(0., 1., ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)
     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
     dimensions = {'lat': lat, 'lon': lon}
-    return FieldSet.from_data(data, dimensions, mesh='spherical')
+    return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
 class MergeParticle(ScipyInteractionParticle):
@@ -65,8 +65,24 @@ def test_simple_interaction_kernel(fieldset, mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats,
                        interaction_distance=interaction_distance)
     pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=1., dt=1.)
-    print(pset.lat)
     assert np.allclose(pset.lat, [0.1, 0.2, 0.1, 0.0], rtol=1e-5)
+
+
+@pytest.mark.parametrize('mode', ['scipy'])
+@pytest.mark.parametrize('mesh', ['spherical', 'flat'])
+@pytest.mark.parametrize('zperiodic_bc_domain', [False, True])
+def test_zonal_periodic_distance(mode, mesh, zperiodic_bc_domain):
+    fset = fieldset(mesh=mesh)
+    interaction_distance = 0.2 if mesh == 'flat' else 6371000*0.2*np.pi/180
+    lons = [0.05, 0.4, 0.95]
+    pset = ParticleSet(fset, pclass=ptype[mode], lon=lons, lat=[0.5]*len(lons),
+                       interaction_distance=interaction_distance, zperiodic_bc_domain=zperiodic_bc_domain)
+    pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=1., dt=1.)
+    if zperiodic_bc_domain:
+        assert np.allclose([pset[0].lat, pset[2].lat], 0.6)
+        assert np.allclose(pset[1].lat, 0.5)
+    else:
+        assert np.allclose([p.lat for p in pset], 0.5)
 
 
 @pytest.mark.parametrize('mode', ['scipy'])

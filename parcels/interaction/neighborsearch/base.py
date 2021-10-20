@@ -133,7 +133,7 @@ class BaseFlatNeighborSearch(BaseNeighborSearch):
         horiz_distance = np.sqrt(np.sum((
             self._values[1:, subset_idx] - coor[1:])**2,
             axis=0))
-        if(self.zperiodic_bc_domain is not None):
+        if self.zperiodic_bc_domain:
             # If zonal periodic boundaries
             coor[2, 0] -= self.zperiodic_bc_domain
             # distance through Western boundary
