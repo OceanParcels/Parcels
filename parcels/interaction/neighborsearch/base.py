@@ -14,12 +14,13 @@ class BaseNeighborSearch(ABC):
     """
 
     def __init__(self, inter_dist_vert, inter_dist_horiz,
-                 max_depth=100000):
+                 max_depth=100000, periodic_domain_zonal=None):
         """Initialize neighbor search
 
         :param inter_dist_vert: interaction distance (vertical) in m
         :param inter_dist_horiz: interaction distance (horizontal in m
         :param max_depth: maximum depth of the particles (i.e. 100km)
+        :param zperiodic_bc_domain: zonal domain if zonal periodic boundary
         """
         self.inter_dist_vert = inter_dist_vert
         self.inter_dist_horiz = inter_dist_horiz
@@ -35,6 +36,7 @@ class BaseNeighborSearch(ABC):
         # Thus, this mask allows for particles do be deactivated without
         # needing to completely rebuild the tree.
         self._active_mask = None
+        self.periodic_domain_zonal = periodic_domain_zonal
 
     @abstractmethod
     def find_neighbors_by_coor(self, coor):
@@ -131,6 +133,25 @@ class BaseFlatNeighborSearch(BaseNeighborSearch):
         horiz_distance = np.sqrt(np.sum((
             self._values[1:, subset_idx] - coor[1:])**2,
             axis=0))
+        if self.periodic_domain_zonal:
+            # If zonal periodic boundaries
+            coor[2, 0] -= self.periodic_domain_zonal
+            # distance through Western boundary
+            hd2 = np.sqrt(np.sum((
+                self._values[1:, subset_idx] - coor[1:])**2,
+                axis=0))
+            coor[2, 0] += 2*self.periodic_domain_zonal
+            # distance through Eastern boundary
+            hd3 = np.sqrt(np.sum((
+                self._values[1:, subset_idx] - coor[1:])**2,
+                axis=0))
+            coor[2, 0] -= self.periodic_domain_zonal
+        else:
+            hd2 = np.full(len(horiz_distance), np.inf)
+            hd3 = np.full(len(horiz_distance), np.inf)
+
+        horiz_distance = np.column_stack((horiz_distance, hd2, hd3))
+        horiz_distance = np.min(horiz_distance, axis=1)
         vert_distance = np.abs(self._values[0, subset_idx]-coor[0])
         return (vert_distance, horiz_distance)
 
@@ -138,9 +159,34 @@ class BaseFlatNeighborSearch(BaseNeighborSearch):
 class BaseSphericalNeighborSearch(BaseNeighborSearch):
     "Base class for a neighbor search with a spherical mesh."
     def _distance(self, coor, subset_idx):
-        return spherical_distance(
+        vert_distances, horiz_distances = spherical_distance(
             *coor,
             self._values[0, subset_idx],
             self._values[1, subset_idx],
             self._values[2, subset_idx],
         )
+
+        if self.periodic_domain_zonal:
+            # If zonal periodic boundaries
+            coor[2, 0] -= self.periodic_domain_zonal
+            # distance through Western boundary
+            hd2 = spherical_distance(
+                *coor,
+                self._values[0, subset_idx],
+                self._values[1, subset_idx],
+                self._values[2, subset_idx])[1]
+            coor[2, 0] += 2*self.periodic_domain_zonal
+            # distance through Eastern boundary
+            hd3 = spherical_distance(
+                *coor,
+                self._values[0, subset_idx],
+                self._values[1, subset_idx],
+                self._values[2, subset_idx])[1]
+            coor[2, 0] -= self.periodic_domain_zonal
+        else:
+            hd2 = np.full(len(horiz_distances), np.inf)
+            hd3 = np.full(len(horiz_distances), np.inf)
+
+        horiz_distances = np.column_stack((horiz_distances, hd2, hd3))
+        horiz_distances = np.min(horiz_distances, axis=1)
+        return (vert_distances, horiz_distances)
