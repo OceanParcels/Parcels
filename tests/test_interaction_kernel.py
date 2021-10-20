@@ -70,15 +70,15 @@ def test_simple_interaction_kernel(fieldset, mode):
 
 @pytest.mark.parametrize('mode', ['scipy'])
 @pytest.mark.parametrize('mesh', ['spherical', 'flat'])
-@pytest.mark.parametrize('zperiodic_bc_domain', [False, True])
-def test_zonal_periodic_distance(mode, mesh, zperiodic_bc_domain):
+@pytest.mark.parametrize('periodic_domain_zonal', [False, True])
+def test_zonal_periodic_distance(mode, mesh, periodic_domain_zonal):
     fset = fieldset(mesh=mesh)
     interaction_distance = 0.2 if mesh == 'flat' else 6371000*0.2*np.pi/180
     lons = [0.05, 0.4, 0.95]
     pset = ParticleSet(fset, pclass=ptype[mode], lon=lons, lat=[0.5]*len(lons),
-                       interaction_distance=interaction_distance, zperiodic_bc_domain=zperiodic_bc_domain)
+                       interaction_distance=interaction_distance, periodic_domain_zonal=periodic_domain_zonal)
     pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=1., dt=1.)
-    if zperiodic_bc_domain:
+    if periodic_domain_zonal:
         assert np.allclose([pset[0].lat, pset[2].lat], 0.6)
         assert np.allclose(pset[1].lat, 0.5)
     else:

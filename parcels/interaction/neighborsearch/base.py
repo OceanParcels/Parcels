@@ -14,7 +14,7 @@ class BaseNeighborSearch(ABC):
     """
 
     def __init__(self, inter_dist_vert, inter_dist_horiz,
-                 max_depth=100000, zperiodic_bc_domain=None):
+                 max_depth=100000, periodic_domain_zonal=None):
         """Initialize neighbor search
 
         :param inter_dist_vert: interaction distance (vertical) in m
@@ -36,7 +36,7 @@ class BaseNeighborSearch(ABC):
         # Thus, this mask allows for particles do be deactivated without
         # needing to completely rebuild the tree.
         self._active_mask = None
-        self.zperiodic_bc_domain = zperiodic_bc_domain
+        self.periodic_domain_zonal = periodic_domain_zonal
 
     @abstractmethod
     def find_neighbors_by_coor(self, coor):
@@ -133,19 +133,19 @@ class BaseFlatNeighborSearch(BaseNeighborSearch):
         horiz_distance = np.sqrt(np.sum((
             self._values[1:, subset_idx] - coor[1:])**2,
             axis=0))
-        if self.zperiodic_bc_domain:
+        if self.periodic_domain_zonal:
             # If zonal periodic boundaries
-            coor[2, 0] -= self.zperiodic_bc_domain
+            coor[2, 0] -= self.periodic_domain_zonal
             # distance through Western boundary
             hd2 = np.sqrt(np.sum((
                 self._values[1:, subset_idx] - coor[1:])**2,
                 axis=0))
-            coor[2, 0] += 2*self.zperiodic_bc_domain
+            coor[2, 0] += 2*self.periodic_domain_zonal
             # distance through Eastern boundary
             hd3 = np.sqrt(np.sum((
                 self._values[1:, subset_idx] - coor[1:])**2,
                 axis=0))
-            coor[2, 0] -= self.zperiodic_bc_domain
+            coor[2, 0] -= self.periodic_domain_zonal
         else:
             hd2 = np.full(len(horiz_distance), np.inf)
             hd3 = np.full(len(horiz_distance), np.inf)
@@ -166,23 +166,23 @@ class BaseSphericalNeighborSearch(BaseNeighborSearch):
             self._values[2, subset_idx],
         )
 
-        if self.zperiodic_bc_domain:
+        if self.periodic_domain_zonal:
             # If zonal periodic boundaries
-            coor[2, 0] -= self.zperiodic_bc_domain
+            coor[2, 0] -= self.periodic_domain_zonal
             # distance through Western boundary
             hd2 = spherical_distance(
                 *coor,
                 self._values[0, subset_idx],
                 self._values[1, subset_idx],
                 self._values[2, subset_idx])[1]
-            coor[2, 0] += 2*self.zperiodic_bc_domain
+            coor[2, 0] += 2*self.periodic_domain_zonal
             # distance through Eastern boundary
             hd3 = spherical_distance(
                 *coor,
                 self._values[0, subset_idx],
                 self._values[1, subset_idx],
                 self._values[2, subset_idx])[1]
-            coor[2, 0] -= self.zperiodic_bc_domain
+            coor[2, 0] -= self.periodic_domain_zonal
         else:
             hd2 = np.full(len(horiz_distances), np.inf)
             hd3 = np.full(len(horiz_distances), np.inf)
