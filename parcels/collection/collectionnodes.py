@@ -305,13 +305,13 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         return self._data_c
 
-    @property
-    def kernel_class(self):
-        return self._kclass
+    # @property
+    # def kernel_class(self):
+    #     return self._kclass
 
-    @kernel_class.setter
-    def kernel_class(self, value):
-        self._kclass = value
+    # @kernel_class.setter
+    # def kernel_class(self, value):
+    #     self._kclass = value
 
     def cptr(self, index):
         if self._ptype.uses_jit:
@@ -991,6 +991,7 @@ class ParticleCollectionNodes(ParticleCollection):
         Furthermore, collections that do not work on an index-preserving manner also return '-1'.
 
         :arg particle_obj: Particle object to push
+        :returns index, i.e. position of the new element
         """
         return self.add_single(particle_obj)
 
@@ -1006,7 +1007,7 @@ class ParticleCollectionNodes(ParticleCollection):
         The function - in contrast to 'push' - does not return the index of the inserted object.
         :arg particle_obj: Particle object to append
         """
-        return self.add_single(particle_obj)
+        self.add_single(particle_obj)
 
     def __delitem__(self, key):
         """
