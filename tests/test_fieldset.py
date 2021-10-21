@@ -619,6 +619,16 @@ def test_fieldset_write(pset_mode, tmpdir):
 @pytest.mark.parametrize('with_GC', [False, True])
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows memory leaks (#787)")
 def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chunksize, with_GC):
+    """
+    The fixed max. memory cap in 'field_step_max' is directly calculated and shall not be changed anymore.
+    It's based on the following values:
+    # x-entries: 512
+    # y values: 128
+    # time allocations: 4
+    # fields loaded: 2
+    # buffered timesteps: 2
+    SciPy-Buffers 1; JIT-Buffers: 2
+    """
     if time_periodic and dt < 0:
         return True  # time_periodic does not work in backward-time mode
     if chunksize == 'auto':
@@ -651,7 +661,7 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
             particle.lat += 180.
 
     process = psutil.Process(os.getpid())
-    mem_0 = process.memory_info().rss
+    # mem_0 = process.memory_info().rss
     fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
@@ -668,14 +678,16 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     if with_GC:
         postProcessFuncs.append(perIterGC)
     pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=[0.5, ], lat=[0.5, ])
-    mem_0 = process.memory_info().rss
+    # mem_0 = process.memory_info().rss
     mem_exhausted = False
     try:
         pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=dt, runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
     except MemoryError:
         mem_exhausted = True
     mem_steps_np = np.array(perflog.memory_steps)
-    field_step_max = ((4*8+512*128*4+512*128*4+(512*128*4))*2*2*2)
+    field_step_max = ((4*8+512*128*4+512*128*4+(512*128*4))*2*2)
+    if mode != 'scipy':
+        field_step_max *= 2
     if with_GC:
         assert np.allclose(mem_steps_np[8:], perflog.memory_steps[-1], rtol=0.01)
     if (chunksize is not False or with_GC) and mode != 'scipy':
