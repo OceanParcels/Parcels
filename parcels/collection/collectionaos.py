@@ -267,13 +267,13 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         return self._data_c
 
-    @property
-    def kernel_class(self):
-        return self._kclass
+    # @property
+    # def kernel_class(self):
+    #     return self._kclass
 
-    @kernel_class.setter
-    def kernel_class(self, value):
-        self._kclass = value
+    # @kernel_class.setter
+    # def kernel_class(self, value):
+    #     self._kclass = value
 
     def cptr(self, index):
         if self._data_c is not None:
@@ -342,7 +342,7 @@ class ParticleCollectionAOS(ParticleCollection):
         In this specific implementation, we cannot look for the object
         directly, so we will look for one of its properties (the ID) that
         has the nice property of being stored in an ordered list (if the
-        collection is sorted)
+        collection is sorted).
 
         :arg particle_obj: a template object of a Particle (SciPy- or JIT) with reference values to be searched for
         :returns (first) Particle-object (SciPy- or JIT) of the requested particle data
@@ -424,7 +424,7 @@ class ParticleCollectionAOS(ParticleCollection):
         For collections where get-by-object incurs a performance malus, it is advisable to multi-get particles
         by indices or IDs.
 
-        :arg a Python-internal collection object (e.g. a tuple or list), filled with reference particles (SciPy- or JIT)
+        :arg pycollectionp: a Python-internal collection object (e.g. a tuple or list), filled with reference particles (SciPy- or JIT)
         :returns a vector-list of the requested particles
         """
         super().get_multi_by_PyCollection_Particles(pycollectionp)
@@ -750,8 +750,7 @@ class ParticleCollectionAOS(ParticleCollection):
         with 'a' and 'b' begin the two equi-structured objects (or: 'b' being and individual object).
         This operation is equal to an in-place addition of (an) element(s).
 
-        this is the former "add(same_class)" function.
-        :arg pcollection: second ParticleCollectionAOS object to be merged into this collection
+        :arg same_class: second ParticleCollectionAOS object to be merged into this collection
         :returns vector-list of indices of all merged particles
         """
         self.merge_same(same_class)
@@ -802,6 +801,7 @@ class ParticleCollectionAOS(ParticleCollection):
         Furthermore, collections that do not work on an index-preserving manner also return '-1'.
 
         :arg particle_obj: Particle object to push
+        :returns index, i.e. position of the new element
         """
         return_index = self._ncount
         self.add_single(particle_obj)
@@ -845,7 +845,7 @@ class ParticleCollectionAOS(ParticleCollection):
         :arg index: index of the Particle to be set to the deleted state
         """
         super().delete_by_index(index)
-        p = self.get_single_by_ID(id)
+        p = self.get_single_by_index(index)
         p.state = OperationCode.Delete
 
     def delete_by_ID(self, id):
@@ -870,6 +870,7 @@ class ParticleCollectionAOS(ParticleCollection):
         and then perform the removal.
         In cases where a removal-by-index would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-object or remove-by-ID.
+        :arg index: index of the Particle to be removed from the collection
         """
         super().remove_single_by_index(index)
         result = self.get_single_by_index(index)
@@ -890,7 +891,7 @@ class ParticleCollectionAOS(ParticleCollection):
         perform the removal - which results in a significant performance malus.
         In cases where a removal-by-object would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-index or remove-by-ID.
-        :arg particle_obj: Particle object of the Node that is to be removed from the collection
+        :arg particle_obj: Particle object that is to be removed from the collection
         """
         super().remove_single_by_object(particle_obj)
 
@@ -919,7 +920,7 @@ class ParticleCollectionAOS(ParticleCollection):
         structured ParticleCollection. As the structures of both collections are the same, a more efficient M-in-N
         removal can be applied without an in-between reformatting.
 
-        :arg same_class: a ParticleCollectionNodes object, containing Nodes that are to be removed from this collection
+        :arg same_class: a ParticleCollectionAOS object, containing Nodes that are to be removed from this collection
         """
         super().remove_same(same_class)
         indices = []
@@ -1064,6 +1065,9 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         Searches for Particle with ID 'id', removes that Particle from the Collection and returns that Particle (or: ParticleAccessor).
         If Particle cannot be retrieved (e.g. because the ID is not available), returns None.
+
+        :arg id: 64-bit (signed or unsigned) integer ID of the Particle object to be popped (i.e. retrieved and removed) from this collections
+        :returns identified Particle (if ID is related or an object contained in this collection) or None (if no Particle can be retrieved)
         """
         super().pop_single_by_ID(id)
         return self.remove_single_by_ID(id)
