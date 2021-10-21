@@ -660,8 +660,6 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
         while particle.lat < -90.:
             particle.lat += 180.
 
-    process = psutil.Process(os.getpid())
-    # mem_0 = process.memory_info().rss
     fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
@@ -678,7 +676,6 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     if with_GC:
         postProcessFuncs.append(perIterGC)
     pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=[0.5, ], lat=[0.5, ])
-    # mem_0 = process.memory_info().rss
     mem_exhausted = False
     try:
         pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=dt, runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
@@ -690,7 +687,7 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
         field_step_max *= 2
     if with_GC:
         assert np.allclose(mem_steps_np[8:], perflog.memory_steps[-1], rtol=0.01)
-    if (chunksize is not False or with_GC) and mode != 'scipy':
+    if (chunksize is not False or with_GC):
         # assert np.alltrue((mem_steps_np-mem_0) <= 5275648)  # represents 4 x [U|V] * sizeof(field data) + 562816
         assert np.alltrue([mem_steps_np[i]-mem_steps_np[i-1] for i in range(len(mem_steps_np))] < field_step_max)
     assert not mem_exhausted
