@@ -769,17 +769,17 @@ class ParticleCollectionSOA(ParticleCollection):
             self.add_single(obj)
         else:
             # TODO: convert code beyond into SOA-version
-        #     assert isinstance(obj, ScipyParticle)
-        #     top_array = self._data[0:index-1]
-        #     bottom_array = self._data[index:]
-        #     splice_array = np.concatenate([top_array, obj])
-        #     self._data = np.concatenate([splice_array, bottom_array])
-        #     if self._ptype.uses_jit and isinstance(obj, JITParticle):
-        #         top_array = self._data_c[0:index-1]
-        #         bottom_array = self._data_c[index:]
-        #         splice_array = np.concatenate((top_array, [obj.get_cptr(), ]))
-        #         self._data_c = np.concatenate([splice_array, bottom_array])
-        #     self._ncount = self._data.shape[0]
+            # assert isinstance(obj, ScipyParticle)
+            # top_array = self._data[0:index-1]
+            # bottom_array = self._data[index:]
+            # splice_array = np.concatenate([top_array, obj])
+            # self._data = np.concatenate([splice_array, bottom_array])
+            # if self._ptype.uses_jit and isinstance(obj, JITParticle):
+            #     top_array = self._data_c[0:index-1]
+            #     bottom_array = self._data_c[index:]
+            #     splice_array = np.concatenate((top_array, [obj.get_cptr(), ]))
+            #     self._data_c = np.concatenate([splice_array, bottom_array])
+            # self._ncount = self._data.shape[0]
             raise NotImplementedError
 
     def push(self, particle_obj):
