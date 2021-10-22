@@ -2,15 +2,12 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta as delta
 
-import sys
 import numpy as np
 import xarray as xr
 from ctypes import c_void_p
 from copy import copy
 
 from parcels.grid import GridCode
-from parcels.field import NestedField
-from parcels.field import SummedField
 from parcels.kernel.kernelaos import KernelAOS
 from parcels.particle import Variable, ScipyParticle, JITParticle # NOQA
 from parcels.particlefile.particlefileaos import ParticleFileAOS
@@ -82,7 +79,6 @@ class ParticleSetAOS(BaseParticleSet):
         Blist = ["Array", "Object"]
         class_is_derived = any([key in Blist for key in Alist])
         class_name = "Object"+pclass.__name__ if not class_is_derived else pclass.__name__
-        logger.info("checking {} IN {}".format(Alist, Blist))
         object_class = None
         if class_is_derived:
             logger.warn("Reusing original class '{}' instead of deriving an object-version again. This is potentially incorrect - please check your object naming.".format(pclass.__name__))
@@ -207,12 +203,12 @@ class ParticleSetAOS(BaseParticleSet):
         # ==== dynamic re-classing completed ==== #
         _pclass = object_class
 
-        self.fieldset = fieldset
-        if self.fieldset is None:
+        self._fieldset = fieldset
+        if self._fieldset is None:
             logger.warning_once("No FieldSet provided in ParticleSet generation. "
                                 "This breaks most Parcels functionality")
         else:
-            self.fieldset.check_complete()
+            self._fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
 
         lon = np.empty(shape=0) if lon is None else _convert_to_array(lon)
@@ -222,7 +218,7 @@ class ParticleSetAOS(BaseParticleSet):
             pid_orig = np.arange(lon.size)
 
         if depth is None:
-            mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
+            mindepth = self._fieldset.gridset.dimrange('depth')[0] if self._fieldset is not None else 0
             depth = np.ones(lon.size) * mindepth
         else:
             depth = _convert_to_array(depth)
@@ -234,7 +230,7 @@ class ParticleSetAOS(BaseParticleSet):
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
-        self.time_origin = fieldset.time_origin if self.fieldset is not None else 0
+        self.time_origin = fieldset.time_origin if self._fieldset is not None else 0
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
@@ -263,7 +259,7 @@ class ParticleSetAOS(BaseParticleSet):
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
 
-        ngrids = fieldset.gridset.size if fieldset is not None else 0
+        ngrids = self._fieldset.gridset.size if self._fieldset is not None else 0
         self._collection = ParticleCollectionAOS(_pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
 
         if self.repeatdt:
@@ -286,7 +282,8 @@ class ParticleSetAOS(BaseParticleSet):
                 mpi_rank = mpi_comm.Get_rank()
                 self.repeatpid = pid_orig[self._collection.pu_indicators == mpi_rank]
 
-        self.kernel = None
+        self._kernel = None
+        self._kclass = KernelAOS
 
     def __del__(self):
         super(ParticleSetAOS, self).__del__()
@@ -309,27 +306,6 @@ class ParticleSetAOS(BaseParticleSet):
         elif type(key) in [np.int64, np.uint64]:
             # self.delete_by_ID(key)
             self._collection.delete_by_ID(key)
-
-    # def delete_by_index(self, index):
-    #     """
-    #     This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
-    #     Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
-    #     instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-    #     In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-    #     is handled by 'recovery' dictionary during simulation execution.
-    #     """
-    #     self._collection[index].state = OperationCode.Delete
-
-    # def delete_by_ID(self, id):
-    #     """
-    #     This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
-    #     Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
-    #     instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-    #     In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-    #     is handled by 'recovery' dictionary during simulation execution.
-    #     """
-    #     p = self._collection.get_single_by_ID(id)
-    #     p.state = OperationCode.Delete
 
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
@@ -433,18 +409,8 @@ class ParticleSetAOS(BaseParticleSet):
         else:
             return False
 
-    @property
-    def size(self):
-        return len(self._collection)
-
     def __repr__(self):
         return "\n".join([str(p) for p in self])
-
-    def __len__(self):
-        return len(self._collection)
-
-    def __sizeof__(self):
-        return sys.getsizeof(self._collection)
 
     def cstruct(self):
         return self._collection.cstruct()
@@ -452,29 +418,6 @@ class ParticleSetAOS(BaseParticleSet):
     @property
     def ctypes_struct(self):
         return self.cstruct()
-
-    @property
-    def kernelclass(self):
-        return KernelAOS
-
-    @property
-    def ptype(self):
-        return self._collection.ptype
-
-    @property
-    def pclass(self):
-        return self._collection.pclass
-
-    @staticmethod
-    def lonlatdepth_dtype_from_field_interp_method(field):
-        if type(field) in [SummedField, NestedField]:
-            for f in field:
-                if f.interp_method == 'cgrid_velocity':
-                    return np.float64
-        else:
-            if field.interp_method == 'cgrid_velocity':
-                return np.float64
-        return np.float32
 
     @classmethod
     def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
@@ -728,7 +671,7 @@ class ParticleSetAOS(BaseParticleSet):
         """
 
         field_name = field_name if field_name else "U"
-        field = getattr(self.fieldset, field_name)
+        field = getattr(self._fieldset, field_name)
 
         f_str = """
 def search_kernel(particle, fieldset, time):
@@ -736,7 +679,7 @@ def search_kernel(particle, fieldset, time):
         """.format(field_name)
 
         k = KernelAOS(
-            self.fieldset,
+            self._fieldset,
             self._collection.ptype,
             funcname="search_kernel",
             funcvars=["particle", "fieldset", "time", "x"],
@@ -774,9 +717,8 @@ def search_kernel(particle, fieldset, time):
 
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
-        # logger.info("called ParticleSetAOS::Kernel()")
-        return KernelAOS(self.fieldset, self.collection.ptype, pyfunc=pyfunc,
-                         c_include=c_include, delete_cfiles=delete_cfiles)
+        return self._kclass(self.fieldset, self.collection.ptype, pyfunc=pyfunc,
+                            c_include=c_include, delete_cfiles=delete_cfiles)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`

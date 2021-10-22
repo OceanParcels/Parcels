@@ -29,16 +29,19 @@ class NDCluster(ABC):
 class BaseParticleSet(NDCluster):
     """Base ParticleSet."""
     _collection = None
-    kernel = None
+    _fieldset = None
+    _kernel = None
+    # kernel = None
+    _kclass = None
     interaction_kernel = None
-    fieldset = None
     time_origin = None
-    repeat_starttime = None
+    repeatdt = None
+    repeatpclass = None
     repeatlon = None
     repeatlat = None
     repeatdepth = None
-    repeatpclass = None
     repeatkwargs = None
+    repeat_starttime = None
 
     def __init__(self, fieldset=None, pclass=None, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
@@ -49,13 +52,14 @@ class BaseParticleSet(NDCluster):
         self.repeatdepth = None
         self.repeatpclass = None
         self.repeatkwargs = None
+        self._kernel = None
         # self.kernel = None  # should be removed, because - for write protection - 'self.kernel' shall be a non-writeable property of variable self._kernel
         self.interaction_kernel = None
+        self._fieldset = None
         # self.fieldset = None  # should be removed, because - for write protection - 'self.fieldset' shall be a non-writeable property of variable self._fieldset
         self.time_origin = None
 
     def __del__(self):
-        # logger.info("BaseParticleSet.del() called.")
         if self._collection is not None and isinstance(self._collection, ParticleCollection):
             # logger.info("BaseParticleSet.del() - deleting collection of type '{}'.".format(type(self._collection)))
             del self._collection
@@ -110,8 +114,40 @@ class BaseParticleSet(NDCluster):
         return self._collection
 
     @property
+    def fieldset(self):
+        return self._fieldset
+
+    # ==== no implementation of setter, as fieldset needs to be initialized on construction ==== #
+
+    # @property
+    # def kernelclass(self):
+    #     return BaseKernel
+
+    @property
+    def kernel(self):
+        return self._kernel
+
+    # ==== no implementation of setter, as kernel needs to be initialized on construction ==== #
+
+    @property
     def kernelclass(self):
-        return BaseKernel
+        return (self._kclass if self._kclass is not None else BaseKernel)
+
+    @kernelclass.setter
+    def kernelclass(self, value):
+        self._kclass = value
+
+    @property
+    def lonlatdepth_dtype(self):
+        return self._collection.lonlatdepth_dtype
+
+    @property
+    def ptype(self):
+        return self._collection.ptype
+
+    @property
+    def pclass(self):
+        return self._collection.pclass
 
     @abstractmethod
     def cstruct(self):
@@ -232,6 +268,53 @@ class BaseParticleSet(NDCluster):
             subset_are_indices = True
         assert subset_are_indices
         return None
+
+    @abstractmethod
+    def split_by_id(self, ids):
+        """
+        This function splits this collection into two disect equi-structured collections using the ID as subset.
+        The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
+        performance reasons mandates a split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        subset_are_ids = False
+        assert ids is not None
+        assert (ids.shape[0] if isinstance(ids, np.ndarray) else len(ids)) > 0
+        if isinstance(ids, np.ndarray) and (ids.dtype == np.int64 or ids.dtype == np.uint64):
+            subset_are_ids = True
+        elif isinstance(ids, list) and len(ids) > 0 and (isinstance(ids[0], int) or isinstance(ids[0], np.int64) or isinstance(ids[0], np.uint64)):
+            subset_are_ids = True
+        assert subset_are_ids
+        return None
+
+    @property
+    def size(self):
+        # ==== to change at some point - len and size are different things ==== #
+        return len(self._collection)
+
+    def __len__(self):
+        """
+        :returns number of elements in the particle set
+        """
+        return len(self._collection)
+
+    def __sizeof__(self):
+        """
+        This function returns the size in actual bytes required in memory to hold the particle set. Ideally and simply,
+        the size is computed as follows:
+
+        sizeof(self) = len(self) * sizeof(pclass)
+        :returns size of this collection in bytes; initiated by calling sys.getsizeof(object)
+        """
+        sz = sys.getsizeof(self._collection)
+        sz += sys.getsizeof(self.repeatdt) if self.repeatdt is not None else 0
+        sz += sys.getsizeof(self.repeatlon) if self.repeatlon is not None else 0
+        sz += sys.getsizeof(self.repeatlat) if self.repeatlat is not None else 0
+        sz += sys.getsizeof(self.repeatdepth) if self.repeatdepth is not None else 0
+        sz += sys.getsizeof(self.repeatkwargs) if self.repeatkwargs is not None else 0
+        return sz
 
     @classmethod
     @abstractmethod
@@ -412,13 +495,13 @@ class BaseParticleSet(NDCluster):
             if isinstance(pyfunc, BaseKernel):
                 assert isinstance(pyfunc, self.kernelclass), "Trying to mix kernels of different particle set structures - action prohibited. Please construct the kernel for this specific particle set '{}'.".format(type(self).__name__)
                 if pyfunc.ptype.name == self.collection.ptype.name:
-                    self.kernel = pyfunc
+                    self._kernel = pyfunc
                 elif pyfunc.pyfunc is not None:
-                    self.kernel = self.Kernel(pyfunc.pyfunc)
+                    self._kernel = self.Kernel(pyfunc.pyfunc)
                 else:
                     raise RuntimeError("Cannot reuse concatenated kernels that were compiled for different particle types. Please rebuild the 'pyfunc' or 'kernel' given to the execute function.")
             else:
-                self.kernel = self.Kernel(pyfunc)
+                self._kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
             if self.collection.ptype.uses_jit:
                 # logger.info("Compiling particle class {} with kernel function {} into KernelName {}".format(self.collection.pclass, self.kernel.funcname, self.kernel.name))

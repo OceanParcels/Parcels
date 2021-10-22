@@ -2,7 +2,6 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta as delta
 
-import sys
 import numpy as np
 import xarray as xr
 from copy import copy
@@ -86,6 +85,9 @@ class ParticleSetSOA(BaseParticleSet):
 
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
+    _active_particle_idx = None
+    _values = None
+    _dirty_neighbor = False
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
@@ -99,7 +101,6 @@ class ParticleSetSOA(BaseParticleSet):
         Blist = ['Array', 'Object']
         class_is_derived = any([key in Blist for key in Alist])
         class_name = "Array"+pclass.__name__ if not class_is_derived else pclass.__name__
-        logger.info("checking {} IN {}".format(Alist, Blist))
         array_class = None
         if class_is_derived:
             logger.warn("Reusing original class '{}' instead of deriving an array-version again. This is potentially incorrect - please check your object naming.".format(pclass.__name__))
@@ -136,11 +137,11 @@ class ParticleSetSOA(BaseParticleSet):
         # ==== dynamic re-classing completed ==== #
         _pclass = array_class
 
-        self.fieldset = fieldset
-        if self.fieldset is None:
+        self._fieldset = fieldset
+        if self._fieldset is None:
             logger.warning_once("No FieldSet provided in ParticleSet generation. This breaks most Parcels functionality")
         else:
-            self.fieldset.check_complete()
+            self._fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
 
         lon = np.empty(shape=0) if lon is None else _convert_to_array(lon)
@@ -150,7 +151,7 @@ class ParticleSetSOA(BaseParticleSet):
             pid_orig = np.arange(lon.size)
 
         if depth is None:
-            mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
+            mindepth = self._fieldset.gridset.dimrange('depth')[0] if self._fieldset is not None else 0
             depth = np.ones(lon.size) * mindepth
         else:
             depth = _convert_to_array(depth)
@@ -162,7 +163,7 @@ class ParticleSetSOA(BaseParticleSet):
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
-        self.time_origin = fieldset.time_origin if self.fieldset is not None else 0
+        self.time_origin = fieldset.time_origin if self._fieldset is not None else 0
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
@@ -191,7 +192,7 @@ class ParticleSetSOA(BaseParticleSet):
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
 
-        ngrids = fieldset.gridset.size if fieldset is not None else 1
+        ngrids = self._fieldset.gridset.size if self._fieldset is not None else 1
 
         # Variables used for interaction kernels.
         inter_dist_horiz = None
@@ -262,7 +263,10 @@ class ParticleSetSOA(BaseParticleSet):
                 mpi_rank = mpi_comm.Get_rank()
                 self.repeatpid = pid_orig[self._collection.pu_indicators == mpi_rank]
 
-        self.kernel = None
+        self._kernel = None
+        self._kclass = KernelSOA
+        self._active_particle_idx = None
+        self._values = None
 
     def __del__(self):
         super(ParticleSetSOA, self).__del__()
@@ -285,27 +289,6 @@ class ParticleSetSOA(BaseParticleSet):
         elif type(key) in [np.int64, np.uint64]:
             # self.delete_by_ID(key)
             self._collection.delete_by_ID(key)
-
-    # def delete_by_index(self, index):
-    #     """
-    #     This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
-    #     Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
-    #     instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-    #     In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-    #     is handled by 'recovery' dictionary during simulation execution.
-    #     """
-    #     self._collection[index].state = OperationCode.Delete
-
-    # def delete_by_ID(self, id):
-    #     """
-    #     This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
-    #     Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
-    #     instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-    #     In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-    #     is handled by 'recovery' dictionary during simulation execution.
-    #     """
-    #     p = self._collection.get_single_by_ID(id)
-    #     p.state = OperationCode.Delete
 
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
@@ -349,7 +332,7 @@ class ParticleSetSOA(BaseParticleSet):
         may be quite expensive.
         """
 
-        if self.fieldset is None:
+        if self._fieldset is None:
             # we need to be attached to a fieldset to have a valid
             # gridset to search for indices
             return
@@ -413,18 +396,6 @@ class ParticleSetSOA(BaseParticleSet):
     @property
     def ctypes_struct(self):
         return self.cstruct()
-
-    @property
-    def kernelclass(self):
-        return KernelSOA
-
-    @property
-    def ptype(self):
-        return self._collection.ptype
-
-    @property
-    def pclass(self):
-        return self._collection.pclass
 
     @classmethod
     def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
@@ -585,19 +556,8 @@ class ParticleSetSOA(BaseParticleSet):
         neighbor_ids = self._collection.data['id'][neighbor_idx]
         return neighbor_ids
 
-    @property
-    def size(self):
-        # ==== to change at some point - len and size are different things ==== #
-        return len(self._collection)
-
     def __repr__(self):
         return "\n".join([str(p) for p in self])
-
-    def __len__(self):
-        return len(self._collection)
-
-    def __sizeof__(self):
-        return sys.getsizeof(self._collection)
 
     def __iadd__(self, particles):
         """Add particles to the ParticleSet. Note that this is an
@@ -740,7 +700,7 @@ class ParticleSetSOA(BaseParticleSet):
         """
 
         field_name = field_name if field_name else "U"
-        field = getattr(self.fieldset, field_name)
+        field = getattr(self._fieldset, field_name)
 
         f_str = """
 def search_kernel(particle, fieldset, time):
@@ -748,7 +708,7 @@ def search_kernel(particle, fieldset, time):
         """.format(field_name)
 
         k = KernelSOA(
-            self.fieldset,
+            self._fieldset,
             self._collection.ptype,
             funcname="search_kernel",
             funcvars=["particle", "fieldset", "time", "x"],
@@ -786,11 +746,14 @@ def search_kernel(particle, fieldset, time):
 
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
-        # logger.info("called ParticleSetSOA::Kernel()")
-        return KernelSOA(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
-                         delete_cfiles=delete_cfiles)
+        return self._kclass(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
+                            delete_cfiles=delete_cfiles)
 
     def InteractionKernel(self, pyfunc_inter):
+        """
+        This function creates a new InteraktionKernel, if the respective interaction function is set.
+        :returns instance of BaseInteractionKernel, if pyfunc_inter != None
+        """
         if pyfunc_inter is None:
             return None
         return InteractionKernelSOA(self.fieldset, self.collection.ptype, pyfunc=pyfunc_inter)
