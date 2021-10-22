@@ -81,7 +81,7 @@ class RectilinearGrid(BaseGrid):
                     xi += 1
                     xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
         else:
-            xi, xsi = -1, 0
+            xi, xsi = -1, 0.0
 
         if self.ydim > 1:
             lat_index = self.lat < y
@@ -98,7 +98,7 @@ class RectilinearGrid(BaseGrid):
                 yi += 1
                 eta = (y-self.lat[yi]) / (self.lat[yi+1]-self.lat[yi])
         else:
-            yi, eta = -1, 0
+            yi, eta = -1, 0.0
 
         if self.zdim > 1 and not search2D:
             (zi, zeta) = self.search_indices_vertical(x, y, z, xi, yi, xsi,
@@ -110,7 +110,7 @@ class RectilinearGrid(BaseGrid):
             # elif self.gtype == GridCode.RectilinearSGrid:
                 # (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
-            zi, zeta = -1, 0
+            zi, zeta = -1, 0.0
 
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
             self.FieldSamplingError(x, y, z)
@@ -124,6 +124,11 @@ class RectilinearGrid(BaseGrid):
 
     def get_dlon(self):
         return self.lon[1:] - self.lon[:-1]
+
+    def get_pxy(self, xi, yi):
+        px = np.array([self.lon[xi], self.lon[xi+1], self.lon[xi+1], self.lon[xi]])
+        py = np.array([self.lat[yi], self.lat[yi], self.lat[yi+1], self.lat[yi+1]])
+        return px, py
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)

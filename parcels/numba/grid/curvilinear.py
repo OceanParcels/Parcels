@@ -130,6 +130,11 @@ class CurvilinearGrid(BaseGrid):
 
         return (xsi, eta, zeta, xi, yi, zi)
 
+    def get_pxy(self, xi, yi):
+        px = np.array([self.lon[yi, xi], self.lon[yi, xi+1], self.lon[yi+1, xi+1], self.lon[yi+1, xi]])
+        py = np.array([self.lat[yi, xi], self.lat[yi, xi+1], self.lat[yi+1, xi+1], self.lat[yi+1, xi]])
+        return px, py
+
     def reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
         if xi < 0:
             if sphere_mesh:

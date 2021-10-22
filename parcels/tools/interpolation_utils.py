@@ -1,7 +1,9 @@
 # flake8: noqa
 import numpy as np
+from numba.core.decorators import njit
 
 
+@njit
 def phi1D_lin(xsi):
     phi = [1-xsi,
            xsi]
@@ -9,6 +11,7 @@ def phi1D_lin(xsi):
     return phi
 
 
+@njit
 def phi1D_quad(xsi):
     phi = [2*xsi**2-3*xsi+1,
            -4*xsi**2+4*xsi,
@@ -17,15 +20,18 @@ def phi1D_quad(xsi):
     return phi
 
 
+@njit
 def phi2D_lin(xsi, eta):
-    phi = [(1-xsi) * (1-eta),
-              xsi  * (1-eta),
-              xsi  *    eta ,
-           (1-xsi) *    eta ]
+    phi = np.array(
+        [(1-xsi) * (1-eta),
+            xsi  * (1-eta),
+            xsi  *    eta ,
+         (1-xsi) *    eta ]).astype(np.float32)
 
     return phi
 
 
+@njit
 def phi3D_lin(xsi, eta, zet):
     phi = [(1-xsi) * (1-eta) * (1-zet),
               xsi  * (1-eta) * (1-zet),
@@ -39,6 +45,7 @@ def phi3D_lin(xsi, eta, zet):
     return phi
 
 
+@njit
 def dphidxsi3D_lin(xsi, eta, zet):
     dphidxsi = [ - (1-eta) * (1-zet),
                    (1-eta) * (1-zet),
@@ -68,6 +75,7 @@ def dphidxsi3D_lin(xsi, eta, zet):
     return dphidxsi, dphideta, dphidzet
 
 
+@njit
 def dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
     dphidxsi, dphideta, dphidzet = dphidxsi3D_lin(xsi, eta, zet)
 
@@ -97,6 +105,7 @@ def dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
     return dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet
 
 
+@njit
 def jacobian3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
     dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh)
 
@@ -106,6 +115,7 @@ def jacobian3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
     return jac
 
 
+@njit
 def jacobian3D_lin_face(hexa_x, hexa_y, hexa_z, xsi, eta, zet, orientation, mesh):
     dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh)
 
@@ -126,6 +136,7 @@ def jacobian3D_lin_face(hexa_x, hexa_y, hexa_z, xsi, eta, zet, orientation, mesh
     return jac
 
 
+@njit
 def dphidxsi2D_lin(xsi, eta):
     dphidxsi = [-(1-eta),
                   1-eta,
@@ -139,6 +150,7 @@ def dphidxsi2D_lin(xsi, eta):
     return dphidxsi, dphideta
 
 
+@njit
 def dxdxsi2D_lin(quad_x, quad_y, xsi, eta,):
     dphidxsi, dphideta = dphidxsi2D_lin(xsi, eta)
 
@@ -150,6 +162,7 @@ def dxdxsi2D_lin(quad_x, quad_y, xsi, eta,):
     return dxdxsi, dxdeta, dydxsi, dydeta
 
 
+@njit
 def jacobian2D_lin(quad_x, quad_y, xsi, eta):
     dxdxsi, dxdeta, dydxsi, dydeta = dxdxsi2D_lin(quad_x, quad_y, xsi, eta)
 
@@ -157,11 +170,13 @@ def jacobian2D_lin(quad_x, quad_y, xsi, eta):
     return jac
 
 
+@njit
 def length2d_lin_edge(quad_x, quad_y, ids):
     xe = [quad_x[ids[0]], quad_x[ids[1]]]
     ye = [quad_y[ids[0]], quad_y[ids[1]]]
     return np.sqrt((xe[1]-xe[0])**2+(ye[1]-ye[0])**2)
 
 
+@njit
 def interpolate(phi, f, xsi):
     return np.dot(phi(xsi), f)

@@ -5,7 +5,7 @@ class BaseZGrid():
     def search_indices_vertical(self, _x, _y, z, _xi, _yi, _xsi, _eta, _ti,
                                 _time):
         # TODO: fix 
-        gridindexingtype="unknown"
+        gridindexingtype = "unknown"
         z = np.float32(z)
         if self.depth[-1] > self.depth[0]:
             if z < self.depth[0]:

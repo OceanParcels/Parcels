@@ -2,7 +2,7 @@ import numpy as np
 
 
 class BaseSGrid():
-    def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, ti, time):
+    def search_indices_vertical(self, x, y, z, xi, yi, xsi, eta, ti, time):
         grid = self.grid
         if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
             xsi = 1
@@ -37,9 +37,9 @@ class BaseSGrid():
             else:
                 zi = depth_indices.argmin() - 1 if z >= depth_vector[0] else 0
             if z < depth_vector[zi]:
-                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+                self.FieldOutOfBoundSurfaceError(0, 0, z)
             elif z > depth_vector[zi+1]:
-                raise FieldOutOfBoundError(x, y, z, field=self)
+                self.FieldOutOfBoundError(x, y, z)
         else:
             depth_indices = depth_vector >= z
             if z <= depth_vector[-1]:
@@ -47,8 +47,8 @@ class BaseSGrid():
             else:
                 zi = depth_indices.argmin() - 1 if z <= depth_vector[0] else 0
             if z > depth_vector[zi]:
-                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+                self.FieldOutOfBoundSurfaceError(0, 0, z, field=self)
             elif z < depth_vector[zi+1]:
-                raise FieldOutOfBoundError(x, y, z, field=self)
+                self.FieldOutOfBoundError(x, y, z, field=self)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
