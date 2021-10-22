@@ -1,6 +1,5 @@
 import os  # noqa
 import platform # noqa
-import sys  # noqa
 import _ctypes
 import random as PyRandom
 import numpy.ctypeslib as npct
@@ -23,12 +22,23 @@ __all__ = ['LibraryRegisterC', 'InterfaceC']
 
 
 class LibraryRegisterC:
+    """
+    This class is an interface that allows objects to register to one and the same c-library in the background via ctypes,
+    while the library is only compiled one. That is important when having a large number of objects that need to register to
+    one and the same library.
+    """
     _data = {}
 
     def __init__(self):
+        """
+        LibraryRegisterC - Constructor
+        """
         self._data = {}
 
     def __del__(self):
+        """
+        LibraryRegisterC - Destructor
+        """
         if self._data is None or len(self._data) <= 0:
             self._data = None
         else:
@@ -36,36 +46,38 @@ class LibraryRegisterC:
             self._data = None
 
     def clear(self):
-        # comment: we cannot pop it here, cause then there's no entry for the nodes in the self._data list to deregister from
-        # while len(self._data) > 0:
+        """
+        This functions clears the registry by detaching and closing the connection of registered objects to the managed
+        C-libraries, and then remove the compiled C-libraries themselves.
+        """
         for item in self._data.items():
-            # entry = self._data.popitem()
-            # libname = item[0]
             entry = item[1]
-            # logger.info("Closing library '{}' ...".format(entry.basename))
-            # while entry.is_registered() and entry.is_loaded():
             if entry.is_registered() and entry.is_loaded():
-                # logger.info("Library '{}' has still {} entities registered.".format(libname, entry.register_count))
-                # stdout.write("Library '{}' has still {} entities registered.".format(libname, entry.register_count))
                 entry.close()
             entry.unload_library()
             entry.cleanup_files()
         while len(self._data) > 0:
             entry = self._data.popitem()
-            # libname = entry[0]
             entry = entry[1]
-            # logger.info("Deleteing library '{}'".format(libname))
             del entry
 
     def add_entry(self, libname, interface_c_instance):
+        """
+        Adds an interface to a distinct C-library, represented as one interface.
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        :arg interface_c_instance: the C-library interface itself
+        """
         if not self.is_created(libname):
             self._data[libname] = interface_c_instance
 
-    def load(self, libname, src_dir=get_package_dir()):
+    def load(self, libname):  # , src_dir=get_package_dir()
+        """
+        Loads a distinct C-library via its C-library interface.
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        """
         if libname is None or (libname in self._data.keys() and self._data[libname].is_loaded()):
             return
         if libname not in self._data.keys():
-            # cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
             return
         if not self._data[libname].is_compiled():
             self._data[libname].compile_library()
@@ -73,47 +85,93 @@ class LibraryRegisterC:
             self._data[libname].load_library()
 
     def unload(self, libname):
+        """
+        Unloads a given C-library via its registered C-Interface.
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        """
         if libname in self._data.keys():
             self._data[libname].unload_library()
 
     def remove(self, libname):
+        """
+        This function removes a given C-Interface. Note that this function plainly deleted the library - it does not
+        (prior to it) unload the library in an ordered manner.
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        """
         if libname in self._data.keys():
             del self._data[libname]
 
     def is_created(self, libname):
+        """
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        :returns if the given library is created (i.e. attached to the registry) or not
+        """
         return libname in self._data.keys()
 
     def is_registered(self, libname):
+        """
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        :returns if the given library is registered (by any external object) or not
+        """
         return self._data[libname].is_registered()
 
     def is_loaded(self, libname):
+        """
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        :returns if the given library is loaded or not
+        """
         return self._data[libname].is_loaded()
 
     def is_compiled(self, libname):
+        """
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        :returns if the given library is compiled or not
+        """
         return self._data[libname].is_compiled()
 
     def __getitem__(self, item):
+        """
+        This function retrieves a distinct C-library interface.
+        :arg item: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        :returns requested C-library interface
+        """
         return self.get(item)
 
     def get(self, libname):
+        """
+        This function retrieves a distinct C-library interface. It is a safe request with a prior containment check.
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        :returns requested C-library interface
+        """
         if libname in self._data.keys():
             return self._data[libname]
         return None
 
     def register(self, libname, close_callback=None):
-        # logger.info("Library registration called.")
+        """
+        This functions allows for an external object to register itself to a distinct library, including defining a
+        callback function that allows it to execute an ordered clean-up.
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+        :arg close_callback: a callback-function of the object, called when the external object is deregistered.
+        """
         if libname in self._data.keys():
             self._data[libname].register(close_callback)
-        #     logger.info("Library '{}' registered {} times.".format(libname, self._data[libname].register_count))
 
     def deregister(self, libname):
-        # logger.info("Library deregistration called.")
+        """
+        This function allows for an external function to deregister itself from a distinct library. If a callback function
+        previously has been registered, it is executed upon deregistration.
+        :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
+
+        """
         if libname in self._data.keys():
             self._data[libname].unregister()
-        #     logger.info("Library '{}' deregistered - remaining registrations: {}.".format(libname, self._data[libname].register_count))
 
 
 class InterfaceC(object):
+    """
+
+    """
     basename = ""
     compiled = False
     loaded = False
@@ -123,6 +181,9 @@ class InterfaceC(object):
     close_cb = None
 
     def __init__(self, c_file_name, compiler, src_dir=get_package_dir()):
+        """
+        C-Interface - Constructor
+        """
         self.basename = c_file_name
         src_pathfile = c_file_name
         if isinstance(self.basename, list) and not isinstance(self.basename, str) and len(self.basename) > 0:
@@ -131,20 +192,12 @@ class InterfaceC(object):
         lib_pathfile = os.path.basename(self.basename)
         lib_pathdir = os.path.dirname(self.basename)
         libext = 'dll' if sys.platform == 'win32' else 'so'
-        # == handle case that compiler auto-prefixed 'lib' with the libfile == #
-        # if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
-        # if lib_pathfile[0:3] != "lib":
-        #     lib_pathfile = "lib"+lib_pathfile
-        # lib_path = os.path.join(lib_pathdir, lib_pathfile)
 
         # == handle case where multiple simultaneous instances of node-library are required == #
-        # libinstance = 0
         libinstance = PyRandom.randint(0, (2**32)-1)
         while os.path.exists("%s-%d.%s" % (os.path.join(get_cache_dir(), lib_path), libinstance, libext)):
-            # libinstance += 1
             libinstance = PyRandom.randint(0, (2**32)-1)
         lib_pathfile = "%s-%d" % (lib_pathfile, libinstance)
-        # lib_path = os.path.join(lib_pathdir, lib_pathfile)
         lib_path = lib_pathfile if os.path.sep not in self.basename else os.path.join(lib_pathdir, lib_pathfile)
 
         # == handle multi-lib in an MPI setup == #
@@ -161,15 +214,10 @@ class InterfaceC(object):
                     self.src_file = "%s.c" % os.path.join(src_dir, fname)
         else:
             self.src_file = "%s.c" % (os.path.join(src_dir, src_pathfile), )
-            # logger.info("InterfaceC::__init__() - 'src_dir' = {}, 'src_pathfile' = {}, 'src_file' = {}".format(src_dir, src_pathfile, self.src_file))
         self.lib_file = "%s.%s" % (os.path.join(get_cache_dir(), lib_path), libext)
         self.log_file = "%s.log" % (os.path.join(get_cache_dir(), lib_path), )
         if os.path.exists(self.lib_file):
-            # logger.info("library path of '{}': library already compiled.".format(basename))
             self.compiled = True
-        else:
-            # logger.info("library path of '{}': library still needs to be compiled.".format(basename))
-            pass
 
         self.compiler = compiler
         self.compiled = False
@@ -179,31 +227,59 @@ class InterfaceC(object):
         self.close_cb = []
 
     def __del__(self):
+        """
+        C-Interface - Destructor
+        """
         self.unload_library()
         self.cleanup_files()
 
     def is_compiled(self):
+        """
+        :returns if this C-library is compiled or not
+        """
         return self.compiled
 
     def is_loaded(self):
+        """
+        :returns if this C-library is loaded or not
+        """
         return self.loaded
 
     def is_registered(self):
+        """
+        :returns if any external object has been registered with this library or not
+        """
         return self.register_count > 0
 
     def get_library_path(self):
+        """
+        :returns the path to the library-file, incl. the library filename itself
+        """
         return self.lib_file
 
     def get_library_dir(self):
+        """
+        :returns the path to the directory where the library-file is located
+        """
         return os.path.dirname(self.lib_file)
 
     def get_library_basename(self):
+        """
+        :returns the name of the library filename, without the parent directory or the file extension
+        """
         return self.basename
 
     def get_library_filename(self):
+        """
+        :returns the library filename, without the parent directory or the file extension; commonly similar
+                 to 'get_library_basename()', but can include the 'lib'-suffix on UNIX platforms
+        """
         return os.path.basename(self.lib_file)
 
     def get_library_extension(self):
+        """
+        :returns the file extension of the library
+        """
         return os.path.splitext(self.lib_file)[1]
 
     def compile_library(self):
@@ -220,11 +296,17 @@ class InterfaceC(object):
             self.compiled = True
 
     def cleanup_files(self):
+        """
+        Removes all files (i.e. lib-file and log-file) of the associated library
+        """
         if os.path.isfile(self.lib_file) and self.compiled:
             [os.remove(s) for s in [self.lib_file, self.log_file] if os.path.exists(s)]
         self.compiled = False
 
     def unload_library(self):
+        """
+        Unloads the C-library
+        """
         if self.libc is not None and self.compiled and self.loaded:
             try:
                 _ctypes.FreeLibrary(self.libc._handle) if sys.platform == 'win32' else _ctypes.dlclose(self.libc._handle)
@@ -235,29 +317,17 @@ class InterfaceC(object):
             self.loaded = False
 
     def load_library(self):
+        """
+        Loads the (compiled) C-library
+        """
         if self.libc is None and self.compiled and not self.loaded:
             libdir = os.path.dirname(self.lib_file)
-            # libdir += os.path.sep if libdir[-1] != os.path.sep else ''
             libfile = os.path.basename(self.lib_file)
-            # libfile = libfile[3:len(libfile)] if libfile[0:3] == "lib" else libfile
             libfile = libfile[3:len(libfile)] if libfile[0:3] == "lib" and sys.platform in ['darwin', 'win32'] else libfile
             liblist = libfile.split('.')
             del liblist[-1]
-
-            # libfile = ""
-            # for entry in liblist:
-            #     libfile += entry
-
-            # if libfile[0:3] == "lib":
-            #     libfile = libfile[3:len(libfile)]
-            #
-            # self.libc = npct.load_library(self.lib_file, '.')
-
-            # libc = None
             try:
-                # self.libc = npct.load_library(libfile, libdir)
                 self.libc = npct.load_library(self.lib_file, '.')
-                # libc = npct.load_library(libfile, libdir)
                 logger.info("Loaded %s library (%s)" % (self.basename, self.lib_file))
             except (OSError, ) as e:
                 self.loaded = False
@@ -267,26 +337,28 @@ class InterfaceC(object):
                 logger.error("Did not locate {} in folder {} among files: {}".format(libfile, libdir, alllibfiles))
                 raise e
 
-            # self.libc = libc
             self.loaded = True if self.libc is not None else False
-            # self.libc = _ctypes.LoadLibrary(self.lib_file) if sys.platform == 'win32' else _ctypes.dlopen(self.lib_file)
-            # self._cleanup_lib = finalize(self, package_globals.cleanup_unload_lib, self.libc)
 
     def register(self, close_callback=None):
+        """
+        Registers an external object to this C-library, with a callback executed on deregistration.
+        :arg callback: function of the external object, executed upon deregistration
+        """
         if self.libc is not None and self.compiled and self.loaded:
             self.register_count += 1
         if close_callback is not None:
             self.close_cb.append(close_callback)
-        # logger.info("library '{}' - registered instances: {}".format(self.basename, self.register_count))
 
     def unregister(self):
+        """
+        Deregisters an external object from this C-library.
+        """
         if self.register_count > 0:
             self.register_count -= 1
-        # logger.info("library '{}' - registered instances: {}".format(self.basename, self.register_count))
 
     def load_functions(self, function_param_array=None):
         """
-
+        A function to return a ctype-interface to the requested library functions, which can be called fromout Python
         :param function_name_array: array of dictionary {"name": str, "return": type, "arguments": [type, ...]}
         :return: dict (function_name -> function_handler)
         """
@@ -315,6 +387,9 @@ class InterfaceC(object):
         return result
 
     def close(self):
+        """
+        Closes this interface, while also executing remaining closing callbacks.
+        """
         if self.close_cb is not None and len(self.close_cb) > 0:
             for close_func in self.close_cb:
                 try:
