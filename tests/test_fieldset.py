@@ -687,9 +687,9 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
         field_step_max *= 2
     if with_GC:
         assert np.allclose(mem_steps_np[8:], perflog.memory_steps[-1], rtol=0.01)
-    if (chunksize is not False or with_GC):
+    if (chunksize is not False or with_GC) and mem_steps_np.shape[0]>1:
         # assert np.alltrue((mem_steps_np-mem_0) <= 5275648)  # represents 4 x [U|V] * sizeof(field data) + 562816
-        assert np.alltrue(np.ndarray([mem_steps_np[i]-mem_steps_np[i-1] for i in range(len(mem_steps_np))]) < field_step_max)
+        assert np.alltrue(np.array([(mem_steps_np[i]-mem_steps_np[i-1]) for i in range(1, mem_steps_np.shape[0])]) < field_step_max)
     assert not mem_exhausted
 
 
