@@ -250,12 +250,3 @@ class BaseGrid(object):
     @property
     def chunk_loaded(self):
         return [2, 3]
-
-    # def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False):
-    #     if self.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
-    #         return self.search_indices_rectilinear(x, y, z, ti, time, search2D=search2D)
-    #     else:
-    #         return self.search_indices_curvilinear(x, y, z, ti, time, search2D=search2D)
-
-
-# @jitclass(spec=_base_spec)

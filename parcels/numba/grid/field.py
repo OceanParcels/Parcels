@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 from parcels.numba.grid.base import GridCode
 from numba.experimental import jitclass
@@ -7,17 +5,11 @@ from numba.core.typing.asnumbatype import as_numba_type
 from parcels.numba.grid.rectilinear import RectilinearZGrid
 import numba as nb
 from numba.core.decorators import njit
-from numba.extending import overload, register_jitable
 
 
 @njit
 def _numba_isclose(a, b):
     return np.absolute(a-b) <= 1e-8 + 1e-5*np.absolute(b)
-
-
-# @overload(_numba_isclose)
-# def jit_isclose(a, b):
-#     return _numba_isclose(a, b)
 
 
 @jitclass(spec=[
@@ -36,7 +28,6 @@ class NumbaField():
         self.gridindexingtype = gridindexingtype
 
     def interpolator2D(self, ti, z, y, x, particle=None):
-        print(ti, z, y, x)
         (xsi, eta, _, xi, yi, _) = self.grid.search_indices(x, y, z)
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
