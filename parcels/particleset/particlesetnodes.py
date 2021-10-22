@@ -5,7 +5,6 @@ from datetime import datetime
 from datetime import timedelta as delta
 
 import os  # noqa: F401
-import sys  # noqa: F401
 import numpy as np  # noqa: F401
 import xarray as xr
 from ctypes import c_void_p
@@ -13,12 +12,8 @@ import cftime
 
 from parcels.grid import GridCode
 from parcels.field import Field
-from parcels.field import NestedField
-from parcels.field import SummedField
 from parcels.compilation import GNUCompiler_MS
 from parcels.tools import get_cache_dir, get_package_dir
-# from parcels.nodes.nodelist import *
-# from parcels.nodes.PyNode import Node, NodeJIT
 from parcels.tools import GenerateID_Service, SequentialIdGenerator
 from parcels.compilation import LibraryRegisterC
 from parcels.kernel.kernelnodes import KernelNodes
@@ -27,7 +22,6 @@ from parcels.particlefile.particlefilenodes import ParticleFileNodes
 from parcels.tools.statuscodes import StateCode, OperationCode    # noqa: F401
 from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.collection.collectionnodes import ParticleCollectionNodes
-from parcels.collection.collectionnodes import ParticleCollectionIteratorNodes, ParticleCollectionIterableNodes  # noqa: F401
 
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
@@ -36,13 +30,6 @@ try:
     from mpi4py import MPI
 except:
     MPI = None
-
-# if MPI:
-#     try:
-#         from sklearn.cluster import KMeans
-#     except:
-#         raise EnvironmentError('sklearn needs to be available if MPI is installed. '
-#                                'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleSetNodes']
 
@@ -93,17 +80,8 @@ class ParticleSetNodes(BaseParticleSet):
 
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
-    # _nodes = None
-    # _pclass = ScipyParticle
-    # _nclass = Node
-    _kclass = KernelNodes
-    # _ptype = None
     _c_lib_register = None
     _idgen = None
-    # _fieldset = None
-    # _kernel = None
-    # _pu_centers = None
-    # _lonlatdepth_dtype = None
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None,
                  repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, idgen=None, c_lib_register=LibraryRegisterC(), **kwargs):
@@ -124,7 +102,6 @@ class ParticleSetNodes(BaseParticleSet):
         Blist = ["Array", "Object"]
         class_is_derived = any([key in Blist for key in Alist])
         class_name = "Object"+pclass.__name__ if not class_is_derived else pclass.__name__
-        logger.info("checking {} IN {}".format(Alist, Blist))
         object_class = None
         if class_is_derived:
             logger.warn("Reusing original class '{}' instead of deriving an object-version again. This is potentially incorrect - please check your object naming.".format(pclass.__name__))
@@ -249,37 +226,23 @@ class ParticleSetNodes(BaseParticleSet):
 
         # ==== ==== ==== ==== ==== ==== dynamic re-classing completed ==== ==== ==== ==== ==== ==== #
         _pclass = object_class
-        self.fieldset = fieldset
-        if self.fieldset is None:
+        self._fieldset = fieldset
+        if self._fieldset is None:
             logger.warning_once("No FieldSet provided in ParticleSet generation. This breaks most Parcels functionality")
         else:
-            self.fieldset.check_complete()
-        ngrids = self.fieldset.gridset.size if self.fieldset is not None else 0
+            self._fieldset.check_complete()
+        ngrids = self._fieldset.gridset.size if self._fieldset is not None else 0
         partitions = kwargs.pop('partitions', None)
-
-        # TODO: to be adapted with custom ID generator (done line 258)
-        # pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + self._idgen.total_length
-
-        # self._pclass = pclass
-        # self._ptype = self._pclass.getPType()
-        # self._pu_centers = None  # can be given by parameter
-        # if self._ptype.uses_jit:
-        #     self._nclass = NodeJIT
-        # else:
-        #     self._nclass = Node
-        # self._nodes = DoubleLinkedNodeList(dtype=self._nclass, c_lib_register=self._c_lib_register)
 
         # ---- init common parameters to ParticleSets ---- #
         lon = np.empty(shape=0) if lon is None else _convert_to_array(lon)
         lat = np.empty(shape=0) if lat is None else _convert_to_array(lat)
 
         if isinstance(pid_orig, (type(None), type(False))):
-            # pid_orig = np.arange(lon.size)
-            # pid_orig = self._idgen.total_length
             pid_orig = self._idgen.usable_length
 
         if depth is None:
-            mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
+            mindepth = self._fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
             depth = np.ones(lon.size, dtype=lonlatdepth_dtype) * mindepth
         else:
             depth = _convert_to_array(depth)
@@ -287,67 +250,28 @@ class ParticleSetNodes(BaseParticleSet):
             'lon, lat, depth don''t all have the same lenghts')
 
         time = _convert_to_array(time)
-        # time = np.repeat(time, lon.size) if time.size == 1 else time
         time = np.repeat(time, len(lon)) if time.size == 1 else time
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
-        self.time_origin = fieldset.time_origin if self.fieldset is not None else 0
+        self.time_origin = fieldset.time_origin if self._fieldset is not None else 0
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
-        # time = np.array([self.time_origin.reltime(t) if isinstance(t, np.datetime64) else t for t in time])
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
-        assert lon.size == time.size, (
-            'time and positions (lon, lat, depth) don''t have the same lengths.')
+        assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
 
-        # take care about lon-lat-depth datatype
+        # ============ ================================= TODO ============================== ============ #
+        # ============ THIS BELONGS INTO THE COLLECTION, JUST WITH A REFERENCE PROPERTY HERE ============ #
         if lonlatdepth_dtype is not None:
-            self._lonlatdepth_dtype = lonlatdepth_dtype
+            lonlatdepth_dtype = lonlatdepth_dtype
         else:
             if fieldset is not None:
-                self._lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+                lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
             else:
-                self._lonlatdepth_dtype = np.float32
-        assert self._lonlatdepth_dtype in [np.float32, np.float64], \
+                lonlatdepth_dtype = np.float32
+        assert lonlatdepth_dtype in [np.float32, np.float64], \
             'lon lat depth precision should be set to either np.float32 or np.float64'
-
-        # ---- init MPI functionality -> Collections-work ---- #
-        # _partitions = kwargs.pop('partitions', None)
-        # if _partitions is not None and _partitions is not False:
-        #     _partitions = self._convert_to_array_(_partitions)
-
-        # offset = np.max(pid) if (pid is not None) and (len(pid) > 0) else -1
-        # if MPI:
-        #     mpi_comm = MPI.COMM_WORLD
-        #     mpi_rank = mpi_comm.Get_rank()
-        #     mpi_size = mpi_comm.Get_size()
-        #     if lon.size < mpi_size and mpi_size > 1:
-        #         raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
-        #     if mpi_size > 1:
-        #         if _partitions is not False:
-        #             if _partitions is None or self._pu_centers is None:
-        #                 _partitions = None
-        #                 _pu_centers = None
-        #                 if mpi_rank == 0:
-        #                     coords = np.vstack((lon, lat)).transpose()
-        #                     kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-        #                     _partitions = kmeans.labels_
-        #                     _pu_centers = kmeans.cluster_centers_
-        #                 _partitions = mpi_comm.bcast(_partitions, root=0)
-        #                 _pu_centers = mpi_comm.bcast(_pu_centers, root=0)
-        #                 self._pu_centers = _pu_centers
-        #             elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
-        #                 raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
-        #             lon = lon[_partitions == mpi_rank]
-        #             lat = lat[_partitions == mpi_rank]
-        #             time = time[_partitions == mpi_rank]
-        #             depth = depth[_partitions == mpi_rank]
-        #             if pid is not None and (isinstance(pid, list) or isinstance(pid, np.ndarray)):
-        #                 pid = pid[_partitions == mpi_rank]
-        #             for kwvar in kwargs:
-        #                 kwargs[kwvar] = kwargs[kwvar][_partitions == mpi_rank]
-        #         offset = mpi_comm.allreduce(offset, op=MPI.MAX)
-        # pclass.setLastID(offset+1)
+        # ============ ================================= END =============================== ============ #
 
         # ---- particle data parameter length assertions ---- #
         for kwvar in kwargs:
@@ -355,45 +279,16 @@ class ParticleSetNodes(BaseParticleSet):
             assert lon.shape[0] == kwargs[kwvar].shape[0], (
                 '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwargs[kwvar])
 
+        # ------------------------------------------------------------------------------------ #
+        # ---- ---- ---- ---- set up repeated-release particles parameters ---- ---- ---- ---- #
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
             if self.repeatdt <= 0:
                 raise('Repeatdt should be > 0')
             if time[0] and not np.allclose(time, time[0]):
                 raise ('All Particle.time should be the same when repeatdt is not None')
-            # self.repeatpclass = pclass
             self.repeatpclass = _pclass
 
-            # self.repeatkwargs = kwargs
-        # ==== CODE BELOW ONLY APPLIES IF USING REPEAT PARAMETERS ==== #
-        # rdata_available = True
-        # rdata_available &= (lon is not None) and (isinstance(lon, list) or isinstance(lon, np.ndarray))
-        # rdata_available &= (lat is not None) and (isinstance(lat, list) or isinstance(lat, np.ndarray))
-        # rdata_available &= (depth is not None) and (isinstance(depth, list) or isinstance(depth, np.ndarray))
-        # rdata_available &= (time is not None) and (isinstance(time, list) or isinstance(time, np.ndarray))
-        # if self.repeatdt and rdata_available:
-        #     self.repeat_starttime = self.fieldset.gridset.dimrange('full_time')[0] if time is None else time[0]
-        #     self.rparam = RepeatParameters(self._pclass, lon, lat, depth, None, None if pid is None else (pid - pclass.lastID), **kwargs)
-
-        # ==== fill / initialize / populate the list ==== #
-        # if lon is not None and lat is not None:
-        #     for i in range(lon.size):
-        #         pdata_id = None
-        #         index = -1
-        #         if pid is not None and (isinstance(pid, list) or isinstance(pid, np.ndarray)):
-        #             index = pid[i]
-        #             pdata_id = pid[i]
-        #         else:
-        #             index = self._idgen.total_length
-        #             pdata_id = self._idgen.nextID(lon[i], lat[i], depth[i], abs(time[i]))
-        #         pdata = self._pclass(lon[i], lat[i], pid=pdata_id, fieldset=self.fieldset, depth=depth[i], time=time[i], index=index)
-        #         # Set other Variables if provided
-        #         for kwvar in kwargs:
-        #             if not hasattr(pdata, kwvar):
-        #                 raise RuntimeError('Particle class does not have Variable %s' % kwvar)
-        #             setattr(pdata, kwvar, kwargs[kwvar][i])
-        #         ndata = self._nclass(id=pdata_id, data=pdata)
-        #         self._nodes.add(ndata)
         self._collection = ParticleCollectionNodes(self._idgen, self._c_lib_register, _pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
 
         self.repeatlon = None
@@ -405,8 +300,6 @@ class ParticleSetNodes(BaseParticleSet):
             self.repeatlon = np.empty(len(self._collection), dtype=self._lonlatdepth_dtype)
             self.repeatlat = np.empty(len(self._collection), dtype=self._lonlatdepth_dtype)
             self.repeatdepth = np.empty(len(self._collection), dtype=self._lonlatdepth_dtype)
-            # self.repeat_starttime = np.empty(len(self._collection), dtype=np.float64)  # this is just 1 number
-            # self.repeat_starttime = np.float64(0)
             self.repeatkwargs = {}
             for kwvar in kwargs.keys():
                 self.repeatkwargs[kwvar] = []
@@ -435,12 +328,16 @@ class ParticleSetNodes(BaseParticleSet):
                 mpi_comm = MPI.COMM_WORLD
                 mpi_rank = mpi_comm.Get_rank()
                 self.repeatpid = None if pid_orig is None else pid_orig[self._collection.pu_indicators == mpi_rank]
+        # ---- ---- ---- ---- ---- finalize repeat-release parameters ---- ---- ---- ---- ---- #
+        # ------------------------------------------------------------------------------------ #
 
         self._kernel = None
         self._kclass = KernelNodes
 
     def __del__(self):
-        # logger.info("ParticleSetNodes.del() called.")
+        """
+        ParticleSet - Destructor
+        """
         if self._collection is not None:  # collection needs to be deleted here specifically.
             self._collection.clear()
             del self._collection
@@ -456,6 +353,8 @@ class ParticleSetNodes(BaseParticleSet):
         because certain data structures can delete multiple objects in-bulk faster with specialised function than making a
         roundtrip per-item delete operation. Because of the sheer size of those containers and the resulting
         performance demands, we need to make use of those specialised 'del' functions, where available.
+
+        :arg key: ID(s) or index/indices of particles that are to be marked by a 'delete'-state
         """
         if key is None:
             return
@@ -465,10 +364,11 @@ class ParticleSetNodes(BaseParticleSet):
             self._collection.delete_by_ID(key)
 
     def _set_particle_vector(self, name, value):
-        """Set attributes of all particles to new values.
+        """
+        Set attributes of all particles to new values.
 
-        :param name: Name of the attribute (str).
-        :param value: New value to set the attribute of the particles to.
+        :arg name: Name of the attribute (str).
+        :arg value: New value to set the attribute of the particles to.
         """
         ndata = self._collection.begin()
         while ndata is not None:
@@ -480,12 +380,11 @@ class ParticleSetNodes(BaseParticleSet):
             setattr(pdata, name, value)
             ndata.set_data(pdata)
             ndata = ndata.next
-        # [setattr(p, name, value) for p in self._collection.data]
 
     def _impute_release_times(self, default):
         """Set attribute 'time' to default if encountering NaN values.
 
-        :param default: Default release time.
+        :arg default: Default release time.
         :return: Minimum and maximum release times.
         """
         max_rt = None
@@ -629,29 +528,6 @@ class ParticleSetNodes(BaseParticleSet):
         return self._collection.end()
 
     @property
-    def lonlatdepth_dtype(self):
-        return self._collection.lonlatdepth_dtype
-
-    @staticmethod
-    def lonlatdepth_dtype_from_field_interp_method(field):
-        if type(field) in [SummedField, NestedField]:
-            for f in field:
-                if f.interp_method == 'cgrid_velocity':
-                    return np.float64
-        else:
-            if field.interp_method == 'cgrid_velocity':
-                return np.float64
-        return np.float32
-
-    @property
-    def ptype(self):
-        return self._collection.ptype
-
-    @property
-    def pclass(self):
-        return self._collection.pclass
-
-    @property
     def size(self):
         return len(self._collection)
 
@@ -675,14 +551,6 @@ class ParticleSetNodes(BaseParticleSet):
     def c_lib_register(self):
         return self._c_lib_register
 
-    # @property
-    # def fieldset(self):
-    #     return self._fieldset
-
-    @property
-    def kernel(self):
-        return self._kernel
-
     @property
     def error_particles(self):
         """Get an iterator over all particles that are in an error state.
@@ -703,21 +571,45 @@ class ParticleSetNodes(BaseParticleSet):
         return int(np.sum([True for ndata in self._collection if ndata.is_valid() and ndata.data.state not in [StateCode.Success, StateCode.Evaluate]]))
 
     def __iter__(self):
+        """
+        Returns an Iterator that allows for forward iteration over the
+        elements in the ParticleSet (e.g. `for p in pset:`).
+        """
         return super(ParticleSetNodes, self).__iter__()
 
     def iterator(self):
+        """
+        :returns forward iterator for ParticleSetNodes, used for a 'for'-loop, in a forward-manner
+        """
         return super(ParticleSetNodes, self).iterator()
 
     def get_index(self, ndata):
+        """
+        :arg ndata: the Node object for which the index is to be retrieved
+        :returns index of the requested Node
+        """
         return self._collection.get_index_by_node(ndata)
 
     def get(self, id):
+        """
+        :arg id: Particle ID that is searched for
+        :returns Particle with the requested ID
+        """
         if type(id) not in [np.int64, np.uint64]:
             logger.warning("ParticleSetNodes.get() - provided ID as 32-bit number. Casting ID to 64-bit. Are you sure you intended to access the particle set by ID ?")
             id = np.int64(id)
         return self._collection.get_single_by_ID(id)
 
     def get_by_index(self, index):
+        """
+        This function returns the Particle object at a certain index.
+
+        For a node-based particle set, the user is discouraged to use this functions as it performs very slowly due
+        to its non-indexable collection. It is advised to use the "get(id)" function, which is more performant.
+
+        :arg index: index of the object to be retrieved
+        :returns Particle object (SciPy- or JIT) at the indexed location
+        """
         return self._collection.get_single_by_index(index)
 
     def __getattr__(self, name):
@@ -725,6 +617,7 @@ class ParticleSetNodes(BaseParticleSet):
         Access a single property of all particles.
 
         :param name: name of the property
+        :returns list of value of requested attribute
         """
         for v in self._collection.ptype.variables:
             if v.name == name:
@@ -732,9 +625,13 @@ class ParticleSetNodes(BaseParticleSet):
         if name in self.__dict__ and name[0] != '_':
             return self.__dict__[name]
         else:
-            False
+            return None
 
     def __getitem__(self, key):
+        """
+        :arg key: index (32-bit integer) or id (64-bit integer) of the requested particle
+        returns: Particle of the requested key
+        """
         return self._collection[key]
 
     def __setitem__(self, key, value):
@@ -792,10 +689,12 @@ class ParticleSetNodes(BaseParticleSet):
 
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
+
+        :arg indices: indices of elements within the particle set that are to be split off
+        :returns a new ParticleSetNodes containing the split-off elements
         """
         super().split_by_index(indices)
         assert len(self._collection) > 0
-        # ParticleCollectionNodes(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
         result = ParticleSetNodes(pclass=self.pclass, lon=[], lat=[], time=[], lonlatdepth_dtype=self._collection.lonlatdepth_dtype, fieldset=self.fieldset, pid_orig=None, idgen=self._collection._idgen, c_lib_register=self._collection._c_lib_register)
         for index in sorted(indices, reverse=True):  # pop-based process needs to start from the back of the queue
             ndata = self._collection.pop_single_by_index(index=index)
@@ -813,10 +712,12 @@ class ParticleSetNodes(BaseParticleSet):
 
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
+
+        :arg ids: IDs of elements within the particle set that are to be split-off
+        :returns a new ParticleSetNodes containing the split-off elements
         """
         super().split_by_id(ids)
         assert len(self._collection) > 0
-        # result = ParticleCollectionNodes(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
         result = ParticleSetNodes(pclass=self.pclass, lon=[], lat=[], time=[], lonlatdepth_dtype=self._collection.lonlatdepth_dtype, fieldset=self.fieldset, pid_orig=None, idgen=self._collection._idgen, c_lib_register=self._collection._c_lib_register)
         for id in ids:
             ndata = self._collection.pop_single_by_ID(id)
@@ -827,12 +728,29 @@ class ParticleSetNodes(BaseParticleSet):
         return result
 
     def push(self, pdata, deepcopy_elem=False):
+        """
+        Pushes a given particle object into this particle set.
+
+        :arg padata: particle object to be pushed
+        :arg deepcopy_elem: boolean if the object shall be copied (True) or just referenced (False)
+        :returns index, i.e. position of the new element
+        """
         if deepcopy_elem:
             self._collection.push(self._collection.pclass(pdata))
         else:
             self._collection.push(pdata)
 
     def __isub__(self, pset):
+        """
+        This method performs an incremental removal of the equi-structured ParticleSet, such to allow
+
+        a -= b,
+
+        with 'a' and 'b' begin the two equi-structured objects (or: 'b' being and individual object).
+        This operation is equal to an in-place removal of (an) element(s).
+
+        :arg other: a single Particle or a collection of objects or keys that are to be removed.
+        """
         if isinstance(pset, type(self)):
             self._collection -= pset.collection
         elif isinstance(pset, BaseParticleSet):
@@ -857,37 +775,56 @@ class ParticleSetNodes(BaseParticleSet):
             self._collection.remove_single_by_object(value)
 
     def pop(self, idx=-1, deepcopy_elem=False):
+        """
+        Pops (i.e. retrieves and removes) the particle at the requested ID
+
+        :arg idx: index of the particle that is requested
+        :arg deepcopy_elem: boolean,setting if the returned element is just referenced (False) or firmly copied and recreated (True)
+        :returns requested Particle object
+        """
         return self._collection.data.pop(idx, deepcopy_elem)
 
     def get_deleted_item_indices(self):
+        """
+        Obtains indices of particles marked with a 'delete'-status
+        :returns indices of to-be-deleted particles
+        """
         return self._collection.get_deleted_item_indices()
 
     def get_deleted_item_IDs(self):
+        """
+        Obtains IDs of particles marked with a 'delete'-status
+        :returns IDs of to-be-deleted particles
+        """
         return self._collection.get_deleted_item_IDs()
 
     def remove_indices(self, indices):
         """
         Renamed forwarding method to 'remove_items_by_indices' (as it is semantically more consistent).
+        :arg indices: 32-bit integer indices of the particles that are to be removed
         """
         self.remove_items_by_indices(indices)
 
     def remove_items_by_indices(self, indices):
-        """Method to remove particles from the ParticleSet, based on their `indices`"""
+        """
+        Method to remove particles from the ParticleSet, based on their `indices`
+        :arg indices: 32-bit integer indices of the particles that are to be removed
+        """
         self._collection.remove_multi_by_indices(indices)
 
     def remove_deleted_items(self):
+        """
+        Removes all items that are marked with a 'delete'-state
+        """
         self._collection.remove_deleted()
 
     def remove_booleanvector(self, indices):
-        """Method to remove particles from the ParticleSet, based on an array of booleans"""
+        """
+        Method to remove particles from the ParticleSet, based on an array of booleans.
+        :arg indices: a boolean numpy.ndarray that marks all to-be-deleted elements as 'True'
+        """
         indices = np.nonzero(indices)[0]
         self.remove_items_by_indices(indices)
-
-    def __len__(self):
-        return len(self._collection)
-
-    def __sizeof__(self):
-        return sys.getsizeof(self._collection)
 
     def cstruct(self):
         raise NotImplementedError("A node-based collection does not comprise into a contiguous-memory structure (i.e. cstruct). For using the structure in ctypes, please just start with 'pset.begin()' the ctypes-function.")
@@ -895,14 +832,6 @@ class ParticleSetNodes(BaseParticleSet):
     @property
     def ctypes_struct(self):
         raise NotImplementedError("A node-based collection does not comprise into a contiguous-memory structure (i.e. cstruct). For using the structure in ctypes, please just start with 'pset.begin()' the ctypes-function.")
-
-    @property
-    def kernelclass(self):
-        return self._kclass
-
-    @kernelclass.setter
-    def kernelclass(self, value):
-        self._kclass = value
 
     def __repr__(self):
         return repr(self._collection)
@@ -918,7 +847,7 @@ class ParticleSetNodes(BaseParticleSet):
             iii) list or np.array (type: [u]int64) of deleted IDs to write
             iv) list of type(Node or derivatives) of deleted nodes to write
             v) list of type(ScipyParticle or derivatives) of deleted Particles to write
-        returns two dictionaries: one for all variables to be written each outputdt,
+        :returns two dictionaries: one for all variables to be written each outputdt,
          and one for all variables to be written once
         """
         return self._collection.toDictionary(pfile=pfile, time=time,
@@ -931,7 +860,7 @@ class ParticleSetNodes(BaseParticleSet):
 
         :param start_field: :mod:`parcels.fieldset.Field` object for initialising particles stochastically (horizontally)  according to the presented density field.
 
-        returns list(lon), list(lat)
+        :returns list(lon), list(lat)
         """
         if mode == 'monte_carlo':
             data = start_field.data if isinstance(start_field.data, np.ndarray) else np.array(start_field.data)
@@ -1080,7 +1009,6 @@ class ParticleSetNodes(BaseParticleSet):
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
-
         c_lib_register = kwargs.pop("c_lib_register", None)
         if c_lib_register is None:
             logger.warning("A node-based particle set requires a global-context 'LibraryRegisterC'. Creating default 'LibraryRegisterC'.")
@@ -1123,18 +1051,15 @@ class ParticleSetNodes(BaseParticleSet):
 
         inds = np.where(pvars['time'] == restarttime)
         for v in pvars:
-            logger.info("indices: {}; variable: {}; ".format(inds, v))
             if to_write[v] is True:
                 pvars[v] = pvars[v][inds]
             elif to_write[v] == 'once':
                 pvars[v] = pvars[v][inds[0]]
-            logger.info("values: {}; ".format(pvars[v]))
             if v not in ['lon', 'lat', 'depth', 'time', 'id', 'index']:
                 kwargs[v] = pvars[v]
         pfile.close()
         pvars['id'] = None
 
-        #
         return cls(fieldset=fieldset, pclass=pclass, lon=pvars['lon'], lat=pvars['lat'],
                    depth=pvars['depth'], pid_orig=pvars['id'], time=pvars['time'],
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, c_lib_register=c_lib_register, idgen=idgen, **kwargs)
@@ -1184,11 +1109,9 @@ class ParticleSetNodes(BaseParticleSet):
             else:
                 self._kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
-            if self.collection.ptype.uses_jit:
-                # logger.info("Compiling particle class {} with kernel function {} into KernelName {}".format(self.collection.pclass, self.kernel.funcname, self.kernel.name))
+            if self._collection.ptype.uses_jit:
                 self._kernel.remove_lib()
-                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
-                # self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()], libs=["node"]))
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self._collection.lonlatdepth_dtype == np.float64 else None
                 self._kernel.compile(compiler=GNUCompiler_MS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], tmp_dir=get_cache_dir()))
                 self._kernel.load_lib()
 
@@ -1227,7 +1150,6 @@ class ParticleSetNodes(BaseParticleSet):
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
 
         mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
-        #  + [mintime, ] + [maxtime, ]
         _starttime = min([n.data.time for n in self._collection.data if not np.isnan(n.data.time)]) if dt >= 0 else max([n.data.time for n in self._collection.data if not np.isnan(n.data.time)])
         _fieldstarttime = mintime if dt >= 0 else maxtime
         _starttime = _fieldstarttime if _starttime is None or np.isnan(_starttime) else _starttime
@@ -1236,14 +1158,10 @@ class ParticleSetNodes(BaseParticleSet):
         if runtime is not None:
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
-            mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
+            mintime, maxtime = self._fieldset.gridset.dimrange('time_full') if self._fieldset is not None else (0, 1)
             endtime = maxtime if dt >= 0 else mintime
 
-        # print("Fieldset min-max: {} to {}".format(mintime, maxtime))
-        # print("starttime={} to endtime={} (runtime={})".format(_starttime, endtime, runtime))
-
         execute_once = False
-        # if abs(endtime - _starttime) < 1e-5 or np.isclose(dt, 0) or (runtime is None or np.isclose(runtime, 0)):
         if abs(endtime - _starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
             runtime = 0
@@ -1253,11 +1171,8 @@ class ParticleSetNodes(BaseParticleSet):
             execute_once = True
 
         # ==== Initialise particle timestepping
-        # self._set_particle_vector("dt", dt)
         _starttime = _starttime[0] if isinstance(_starttime, np.ndarray) or type(_starttime) in [list, tuple] else _starttime
         ndata = self._collection.begin()
-        # assert ndata is not None
-        # init_dt_p = 0
         while ndata is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
             if not ndata.is_valid():
@@ -1269,9 +1184,6 @@ class ParticleSetNodes(BaseParticleSet):
                 pdata.time = _starttime
             ndata.set_data(pdata)
             ndata = ndata.next
-        #     init_dt_p += 1
-        # logger.info("initialised {} particles with dt = {}".format(init_dt_p, dt))
-        # return
 
         # First write output_file, because particles could have been added
         if output_file is not None:
@@ -1299,7 +1211,7 @@ class ParticleSetNodes(BaseParticleSet):
         next_movie = time + moviedt if dt > 0 else time - moviedt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
 
-        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
+        next_input = self._fieldset.computeTimeChunk(time, np.sign(dt)) if self._fieldset is not None else np.inf
 
         tol = 1e-12
 
@@ -1325,20 +1237,7 @@ class ParticleSetNodes(BaseParticleSet):
                 time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
-            logger.info("Computing kernel {} with t={} and dt={} ...".format(self._kernel, time, dt))
-            # logger.info("active particles before kernel execution:")
-            # ndata = self._collection.begin()
-            # while ndata is not None:
-            #     logger.info("\t{} - dt: {}".format(ndata.data, ndata.data.dt))
-            #     ndata = ndata.next
             self._kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
-            # logger.info("active particles after kernel execution:")
-            # ndata = self._collection.begin()
-            # while ndata is not None:
-            #     logger.info("\t{} - dt: {}".format(ndata.data, ndata.data.dt))
-            #     ndata = ndata.next
-
-            logger.info("time: {}; startime: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, _starttime, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
             if abs(time-next_prelease) < tol:
                 ngrids = self.fieldset.gridset.size if self.fieldset is not None else 0
                 add_iter = 0
@@ -1349,7 +1248,6 @@ class ParticleSetNodes(BaseParticleSet):
                     pdepth = self.repeatdepth[add_iter]
                     ptime = time if self.release_starttime is None else self.release_starttime
                     pid = self._idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
-                    # pid = self._idgen.nextID(lon, lat, pdepth, ptime)
                     pdata = self.repeatpclass(lon, lat, pid=pid, ngrids=ngrids, depth=pdepth, time=ptime)
                     pdata.dt = dt
                     # Set other Variables if provided
@@ -1363,7 +1261,7 @@ class ParticleSetNodes(BaseParticleSet):
                     add_iter += 1
                 next_prelease += self.repeatdt * np.sign(dt)
             if abs(time-next_output) < tol or execute_once:
-                for fld in self.fieldset.get_fields():
+                for fld in self._fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
                             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
@@ -1373,7 +1271,6 @@ class ParticleSetNodes(BaseParticleSet):
                 if output_file is not None:
                     output_file.write(self, time)
                 next_output += outputdt * np.sign(dt)
-
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time, animation=True)
                 next_movie += moviedt * np.sign(dt)
@@ -1383,18 +1280,14 @@ class ParticleSetNodes(BaseParticleSet):
                     for extFunc in postIterationCallbacks:
                         extFunc()
                 next_callback += callbackdt * np.sign(dt)
-
             if time != endtime:
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
                 break
-
             if verbose_progress:
                 pbar.update(abs(time - _starttime))
-
         if output_file is not None:
             output_file.write(self, time)
-
         if verbose_progress:
             pbar.finish()
 
@@ -1433,7 +1326,7 @@ class ParticleSetNodes(BaseParticleSet):
         """
 
         field_name = field_name if field_name else "U"
-        field = getattr(self.fieldset, field_name)
+        field = getattr(self._fieldset, field_name)
 
         f_str = """
 def search_kernel(particle, fieldset, time):
@@ -1441,14 +1334,13 @@ def search_kernel(particle, fieldset, time):
         """.format(field_name)
 
         k = KernelNodes(
-            self.fieldset,
+            self._fieldset,
             self._collection.ptype,
             funcname="search_kernel",
             funcvars=["particle", "fieldset", "time", "x"],
             funccode=f_str,
         )
         self.execute(pyfunc=k, runtime=0)
-
         if isinstance(particle_val, str):
             particle_val = [getattr(p, particle_val) for p in self.particles]
         else:
@@ -1468,23 +1360,23 @@ def search_kernel(particle, fieldset, time):
 
         if relative:
             density /= np.sum(particle_val)
-
         if area_scale:
             density /= field.cell_areas()
-
         return density
 
     def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
-        """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
+        """
+        Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
         based on `fieldset` and `ptype` of the ParticleSet
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        :returns a Kernel object specific to this particle set
         """
-        # logger.info("called ParticleSetNodes::Kernel()")
         return self.kernelclass(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include, delete_cfiles=delete_cfiles)
 
     def ParticleFile(self, *args, **kwargs):
-        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
-        object from the ParticleSet"""
+        """
+        Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet.
+        """
         return ParticleFileNodes(*args, particleset=self, **kwargs)
 
     def set_variable_write_status(self, var, write_status):
