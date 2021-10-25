@@ -1,3 +1,4 @@
+import sys
 from datetime import timedelta as delta
 from operator import attrgetter  # NOQA
 
@@ -1171,7 +1172,10 @@ class ParticleCollectionAOS(ParticleCollection):
         sizeof(self) = len(self) * sizeof(pclass)
         :returns size of this collection in bytes; initiated by calling sys.getsizeof(object)
         """
-        return self._data.nbytes+self._data_c.nbytes
+        sz = self._data.nbytes if isinstance(self._data, np.ndarray) else sys.getsizeof(self._data)
+        if self._data_c is not None:
+            sz += self._data_c.nbytes if isinstance(self._data_c, np.ndarray) else sys.getsizeof(self._data_c)
+        return sz
 
     def clear(self):
         """

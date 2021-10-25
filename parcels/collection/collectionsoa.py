@@ -1196,7 +1196,10 @@ class ParticleCollectionSOA(ParticleCollection):
         sizeof(self) = len(self) * sizeof(pclass)
         :returns size of this collection in bytes; initiated by calling sys.getsizeof(object)
         """
-        raise NotImplementedError
+        sz = 0
+        for key in self._data:
+            sz += self._data[key].nbytes
+        return sz
 
     def clear(self):
         """
