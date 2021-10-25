@@ -98,7 +98,7 @@ def test_clibrary_custom_clib(testf_cstring, testf_hstring, compiler, stages_don
         my_interface.compile_library()
         assert my_obj.is_compiled("testf")
     if stages_done > COMPILE_LIB:
-        my_obj.load("testf", get_cache_dir())
+        my_obj.load("testf")  # , get_cache_dir()
         assert my_obj.is_loaded("testf")
     if stages_done > LOAD_LIB:
         testf_lib = my_obj.get("testf")
@@ -148,7 +148,7 @@ def test_clibrary_multilib_collective_compile(testf_cstring, testf_hstring):
     assert my_obj.get("testf") == interface_testf
     interface_testf.compile_library()
     assert my_obj.is_compiled("testf")
-    my_obj.load("testf", get_cache_dir())
+    my_obj.load("testf")  # , get_cache_dir()
     assert my_obj.is_loaded("testf")
     testf_lib = my_obj.get("testf")
     function_param_array = [{"name": "func", "return": None, "arguments": [ctypes.c_int, ]},
@@ -194,8 +194,8 @@ def test_clibrary_multilib_separate_compile(testf_cstring, testf_hstring):
     interface_testf.compile_library()
     assert my_obj.is_compiled("node")
     assert my_obj.is_compiled("testf")
-    my_obj.load("node", get_cache_dir())
-    my_obj.load("testf", get_cache_dir())
+    my_obj.load("node")  # , get_cache_dir()
+    my_obj.load("testf")  # , get_cache_dir()
     assert my_obj.is_loaded("node")
     assert my_obj.is_loaded("testf")
     testf_lib = my_obj.get("testf")
@@ -246,7 +246,7 @@ def test_clibrary_inner_class_registration(testf_cstring, testf_hstring):
                 my_interface = InterfaceC(libname, ccompiler, src_dir)
                 c_lib_register.add_entry(libname, my_interface)
             if not c_lib_register.is_loaded(libname):
-                c_lib_register.load(libname, src_dir=src_dir)
+                c_lib_register.load(libname)  # , src_dir=src_dir
             c_lib_register.register(libname, close_callback=self.close_c_cb)
             self.c_lib_register_ref = c_lib_register
             self.registered = True
