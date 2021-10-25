@@ -685,6 +685,8 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     field_step_max = ((4*8+512*128*4+512*128*4+(512*128*4))*2*2)
     if mode != 'scipy':
         field_step_max *= 2
+    sz_pset = sys.getsizeof(pset)
+    field_step_max += sz_pset
     if with_GC:
         assert np.allclose(mem_steps_np[8:], perflog.memory_steps[-1], rtol=0.01)
     if (chunksize is not False or with_GC) and mem_steps_np.shape[0] > 1 and mode != 'scipy':
