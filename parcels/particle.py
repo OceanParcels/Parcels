@@ -48,6 +48,11 @@ class Variable(object):
     def __repr__(self):
         return "PVar<%s|%s>" % (self.name, self.dtype)
 
+    @property
+    def size(self):
+        """Size of the underlying particle struct in bytes"""
+        return (8 if self.is64bit() else 4)
+
     def is64bit(self):
         """Check whether variable is 64-bit"""
         return True if self.dtype in indicators_64bit else False
@@ -106,7 +111,7 @@ class ParticleType(object):
     @property
     def size(self):
         """Size of the underlying particle struct in bytes"""
-        return sum([8 if v.is64bit() else 4 for v in self.variables])
+        return sum([v.size for v in self.variables])
 
     @property
     def supported_dtypes(self):

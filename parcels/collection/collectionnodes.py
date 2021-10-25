@@ -1467,7 +1467,8 @@ class ParticleCollectionNodes(ParticleCollection):
                 node = node.next
                 continue
             size_bytes += sys.getsizeof(node.data)
-            size_bytes += sys.getsizeof(self._data_c[i])
+            if self._data_c is not None:
+                size_bytes += sys.getsizeof(self._data_c[i]) if not isinstance(self._data_c, np.ndarray) else (self._data_c.nbytes / self._data_c.shape[0])
             i += 1
             node = node.next
         return size_bytes
