@@ -192,6 +192,22 @@ def test_parcels_tmpvar_in_kernel(pset_mode):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
+def test_abs(pset_mode):
+    """Tests for error thrown if using abs in kernel"""
+    error_thrown = False
+    pset = pset_type[pset_mode]['pset'](pclass=JITParticle, lon=0, lat=0)
+
+    def kernel_abs(particle, fieldset, time):
+        particle.lon = abs(3.1)  # noqa
+
+    try:
+        pset.execute(kernel_abs, endtime=1, dt=1.)
+    except NotImplementedError:
+        error_thrown = True
+    assert error_thrown
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_if_withfield(fieldset, pset_mode, mode):
     """Test combination of if and Field sampling commands"""
