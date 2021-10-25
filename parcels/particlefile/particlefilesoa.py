@@ -59,7 +59,7 @@ class ParticleFileSOA(BaseParticleFile):
                       'file_list', 'file_list_once', 'parcels_mesh', 'metadata']
         return attributes
 
-    def read_from_npy(self, file_list, time_steps, var):
+    def read_from_npy(self, file_list, n_timesteps, var):
         """
         Read NPY-files for one variable using a loop over all files.
 
@@ -67,15 +67,15 @@ class ParticleFileSOA(BaseParticleFile):
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
 
         :param file_list: List that  contains all file names in the output directory
-        :param time_steps: Number of time steps that were written in out directory
+        :param n_timesteps: Dictionary with (for each particle) number of time steps that were written in out directory
         :param var: name of the variable to read
         """
-        maxtime_steps = max(time_steps.values()) if time_steps.keys() else 0
-        data = np.nan * np.zeros((len(time_steps), maxtime_steps))
-        time_index = np.zeros(len(time_steps))
+        max_timesteps = max(n_timesteps.values()) if n_timesteps.keys() else 0
+        data = np.nan * np.zeros((len(n_timesteps), max_timesteps))
+        time_index = np.zeros(len(n_timesteps))
         id_index = {}
         count = 0
-        for i in sorted(time_steps.keys()):
+        for i in sorted(n_timesteps.keys()):
             id_index[i] = count
             count += 1
 
@@ -119,7 +119,7 @@ class ParticleFileSOA(BaseParticleFile):
         if len(temp_names) == 0:
             raise RuntimeError("No npy files found in %s" % self.tempwritedir_base)
 
-        time_steps = {}
+        n_timesteps = {}
         global_file_list = []
         if len(self.var_names_once) > 0:
             global_file_list_once = []
@@ -129,26 +129,26 @@ class ParticleFileSOA(BaseParticleFile):
                 for npyfile in pset_info_local['file_list']:
                     tmp_dict = np.load(npyfile, allow_pickle=True).item()
                     for i in tmp_dict['id']:
-                        if i in time_steps:
-                            time_steps[i] += 1
+                        if i in n_timesteps:
+                            n_timesteps[i] += 1
                         else:
-                            time_steps[i] = 1
+                            n_timesteps[i] = 1
                 global_file_list += pset_info_local['file_list']
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']
 
         for var in self.var_names:
-            data = self.read_from_npy(global_file_list, time_steps, var)
+            data = self.read_from_npy(global_file_list, n_timesteps, var)
             if var == self.var_names[0]:
                 self.open_netcdf_file(data.shape)
             varout = 'z' if var == 'depth' else var
             getattr(self, varout)[:, :] = data
 
         if len(self.var_names_once) > 0:
-            time_steps_once = {}
-            for i in time_steps:
-                time_steps_once[i] = 1
+            n_timesteps_once = {}
+            for i in n_timesteps:
+                n_timesteps_once[i] = 1
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, time_steps_once, var)
+                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, n_timesteps_once, var)
 
         self.close_netcdf_file()
