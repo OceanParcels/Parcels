@@ -30,8 +30,9 @@ def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
     """
-    return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
-            & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+    return ((np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+             & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+             | ((np.isnan(pd['dt'])) & np.equal(time, pd['time'], where=np.isfinite(pd['time']))))
             & (np.isfinite(pd['id']))
             & (np.isfinite(pd['time'])))
 
@@ -849,7 +850,6 @@ class ParticleCollectionSOA(ParticleCollection):
                 if np.any(indices_to_write):
                     for var in pfile.var_names:
                         data_dict[var] = self._data[var][indices_to_write]
-                    pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
 
                 pset_errs = ((self._data['state'][indices_to_write] != OperationCode.Delete) & np.greater(np.abs(time - self._data['time'][indices_to_write]), 1e-3, where=np.isfinite(self._data['time'][indices_to_write])))
                 if np.count_nonzero(pset_errs) > 0:
