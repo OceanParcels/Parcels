@@ -1551,7 +1551,7 @@ class ParticleCollectionNodes(ParticleCollection):
                             node = node.next
                             continue
                         # return [i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt)) or np.equal(time, p.time)) and np.isfinite(p.id))]
-                        if ((time - np.abs(node.data.dt / 2)) <= node.data.time < (time + np.abs(node.data.dt))  or np.equal(time, node.data.time)) and np.isfinite(node.data.id):
+                        if ((time - np.abs(node.data.dt / 2)) <= node.data.time < (time + np.abs(node.data.dt)) or np.equal(time, node.data.time)) and np.isfinite(node.data.id):
                             node_index = self._idgen.map_id_to_index(node.data.id)
                             indices_to_write.append(node_index)
                             dataindices.append(self.get_index_by_node(node))
@@ -1571,7 +1571,6 @@ class ParticleCollectionNodes(ParticleCollection):
                             data_dict[var] = np.array([getattr(self._data[index].data, var) for index in dataindices])
                 # ====================================================================================================================================== #
                 # ================= HERE, THE INDICES NEED TO BE THE GLOBAL ONES ======================================================================= #
-                # TODO
                     pfile.max_index_written = np.maximum(pfile.max_index_written, np.max(indices_to_write))
 
                 pset_errs = [self._data[index].data for index in dataindices if self._data[index].data.state != OperationCode.Delete and abs(time-self._data[index].data.time) > 1e-3 and np.isfinite(self._data[index].data.time)]

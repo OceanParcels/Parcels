@@ -1255,7 +1255,7 @@ class ParticleCollectionSOA(ParticleCollection):
             else:
                 if deleted_only is not False:
                     if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
-                        indices_to_write = np.where(np.isin(self._data['state'],[OperationCode.Delete]))[0]
+                        indices_to_write = np.where(np.isin(self._data['state'], [OperationCode.Delete]))[0]
                     elif type(deleted_only) in [list, np.ndarray]:
                         indices_to_write = deleted_only
                 else:
