@@ -111,7 +111,7 @@ class ParticleFileAOS(BaseParticleFile):
             # The export can only start when all threads are done.
             MPI.COMM_WORLD.Barrier()
             if MPI.COMM_WORLD.Get_rank() > 0:
-                return  # export only on threat 0
+                return  # export only on process 0
 
         # Create dictionary to translate datatypes and fill_values
         self.fmt_map = {np.float32: 'f4', np.float64: 'f8',
