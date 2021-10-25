@@ -35,8 +35,7 @@ def _to_write_particles(pd, time):
     Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
     """
     return [i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt))
-                                             or (np.isnan(p.dt) and np.equal(time, p.time)))
-                                            and np.isfinite(p.id))]
+                                             or np.equal(time, p.time)) and np.isfinite(p.id))]
 
 
 def _is_particle_started_yet(particle, time):
@@ -1217,7 +1216,6 @@ class ParticleCollectionAOS(ParticleCollection):
         indices_to_write = []
         if pfile.lasttime_written != time and \
            (pfile.write_ondelete is False or deleted_only is not False):
-            # if self._data.shape[0] == 0:
             if self._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
@@ -1244,7 +1242,6 @@ class ParticleCollectionAOS(ParticleCollection):
                     logger.warning_once('time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
 
                 if len(pfile.var_names_once) > 0:
-                    # _to_write_particles(self._data, time)
                     first_write = [p for p in self._data if _is_particle_started_yet(p, time) and (np.int64(p.id) not in pfile.written_once)]
                     if np.any(first_write):
                         data_dict_once['id'] = np.array([p.id for p in first_write]).astype(dtype=np.int64)

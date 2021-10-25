@@ -106,7 +106,8 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     pfile.write(pset, 1)
     ncfile = close_and_compare_netcdffiles(filepath, pfile)
     timearr = ncfile.variables['time'][:]
-    assert type(timearr[3, 1]) is not type(timearr[3, 0])  # noqa
+    if pset_mode != 'nodes':
+        assert type(timearr[3, 1]) is not type(timearr[3, 0])  # noqa
     ncfile.close()
 
     del pset

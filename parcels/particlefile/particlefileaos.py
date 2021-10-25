@@ -97,7 +97,7 @@ class ParticleFileAOS(BaseParticleFile):
             for ii, i in enumerate(data_dict["id"]):
                 id_ind = id_index[i]
                 # id_ind = np.array(data_dict["id"], dtype=np.int64)
-                t_ind = int(time_index[id_ind]) if 'once' not in file_list[0] else 0
+                t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
                 # t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
                 # t_ind_used[t_ind] = 1
                 data[id_ind, t_ind] = data_dict[var][ii]
@@ -120,7 +120,7 @@ class ParticleFileAOS(BaseParticleFile):
             # The export can only start when all threads are done.
             MPI.COMM_WORLD.Barrier()
             if MPI.COMM_WORLD.Get_rank() > 0:
-                return  # export only on threat 0
+                return  # export only on process 0
 
         # Retrieve all temporary writing directories and sort them in numerical order
         temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),
