@@ -73,9 +73,9 @@ class ParticleFileSOA(BaseParticleFile):
         :param var: name of the variable to read
         """
         max_timesteps = max(n_timesteps.values()) if n_timesteps.keys() else 0
-        data = np.nan * np.zeros((len(n_timesteps), max_timesteps))
+        data = np.nan * np.zeros((len(n_timesteps), max_timesteps))  # there is the issue that this array should be structured - we need to define its type here!
         # data = np.nan * np.zeros((self.maxid_written+1, time_steps))
-        time_index = np.zeros(len(n_timesteps))
+        time_index = np.zeros(len(n_timesteps), dtype=np.int32)
         # time_index = np.zeros(self.maxid_written+1, dtype=np.int64)
         # t_ind_used = np.zeros(time_steps, dtype=np.int64)
         id_index = {}
