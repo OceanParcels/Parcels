@@ -257,7 +257,7 @@ class NodeJIT(Node, ctypes.Structure):
             src_dir = os.path.dirname(os.path.abspath(__file__))
             ccompiler = GNUCompiler_SS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
             c_lib_register.add_entry(libname, InterfaceC(libname, ccompiler, src_dir))
-            c_lib_register.load(libname, src_dir=src_dir)
+            c_lib_register.load(libname)  # , src_dir=src_dir
         c_lib_register.register(libname, close_callback=self.close_c_funcs)
         self.c_lib_register_ref = c_lib_register
         self.registered = True
