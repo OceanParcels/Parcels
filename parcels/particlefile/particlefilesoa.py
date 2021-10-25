@@ -74,7 +74,7 @@ class ParticleFileSOA(BaseParticleFile):
         max_timesteps = max(n_timesteps.values()) if n_timesteps.keys() else 0
         fill_value = self.fill_value_map[dtype]
         data = fill_value * np.ones((len(n_timesteps), max_timesteps), dtype=dtype)
-        time_index = np.zeros(len(n_timesteps))
+        time_index = np.zeros(len(n_timesteps), dtype=np.int32)
         id_index = {}
         count = 0
         for i in sorted(n_timesteps.keys()):
