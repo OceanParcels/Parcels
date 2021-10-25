@@ -59,8 +59,20 @@ class BaseKernel(object):
     _ptype = None
     funcname = None
 
-    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None,
+    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, funcvars=None, py_ast=None,
                  c_include="", delete_cfiles=True):
+        """
+        BaseKernel - Constructor
+        :arg fieldset: the fieldset object of the host ParticleSet
+        :arg ptype: the ParticleType of the host ParticleSet
+        :arg pyfunc: the initial Python func or a concatenation of BaseKernel's hosting the kernel code
+        :arg funcname: None, if :arg pyfunc is a concatenated kernel or python function; otherwise, name of the custom function
+        :arg funccode: None, if :arg pyfunc is a concatenated kernel or python function; otherwise, string of code of the custom function
+        :arg funcvars: None, if :arg pyfunc is a concatenated kernel or python function; otherwise, variables of the custom function
+        :arg py_ast: a parsed hierarchy of generated functions
+        :arg c_include: added C include functions for generation or interpretation of the custom function
+        :arg delete_cfiles: boolean, telling of the written C source files are deleted on destruction or not
+        """
         self._fieldset = fieldset
         self.field_args = None
         self.const_args = None
@@ -90,6 +102,9 @@ class BaseKernel(object):
             self.generate_sources()
 
     def __del__(self):
+        """
+        BaseKernel - Destructor
+        """
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
@@ -136,7 +151,10 @@ class BaseKernel(object):
 
     @staticmethod
     def fix_indentation(string):
-        """Fix indentation to allow in-lined kernel definitions"""
+        """
+        Fix indentation to allow in-lined kernel definitions
+        :arg string: code string for which the indentation is to be checked and fixed
+        """
         lines = string.split('\n')
         indent = re_indent.match(lines[0])
         if indent:
@@ -144,15 +162,17 @@ class BaseKernel(object):
         return "\n".join(lines)
 
     def generate_sources(self):
+        """
+        Generates and compiles a kernel with its source(s)
+        """
         src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-        # if type(src_file_or_files) in (list, dict, tuple, ndarray):
         self.dyn_srcs = src_file_or_files
-        # self._src_files = self.dyn_srcs
 
     def check_fieldsets_in_kernels(self, pyfunc):
         """
         function checks the integrity of the fieldset with the kernels.
         This function is to be called from the derived class when setting up the 'pyfunc'.
+        :arg pyfunc: Python function to be checked for fieldset consistency
         """
         if self.fieldset is not None:
             if pyfunc is AdvectionRK4_3D:
@@ -177,7 +197,7 @@ class BaseKernel(object):
 
     def check_kernel_signature_on_version(self):
         """
-        returns numkernelargs
+        :returns numkernelargs
         """
         numkernelargs = 0
         if self._pyfunc is not None:
@@ -188,6 +208,10 @@ class BaseKernel(object):
         return numkernelargs
 
     def remove_lib(self):
+        """
+        Ultimately removing a (compiled and loaded) library, and regenerates new sources files.
+        This latter process is needed due to compiler quirks on Windows.
+        """
         if self._lib is not None:
             BaseKernel.cleanup_unload_lib(self._lib)
             del self._lib
@@ -242,7 +266,10 @@ class BaseKernel(object):
         return src_file_or_files, lib_file, log_file
 
     def compile(self, compiler):
-        """ Writes kernel code to file and compiles it."""
+        """
+        Writes kernel code to file and compiles it.
+        :arg compiler: the head (C-)compiler used for code compilations; instance of derived class of 'CCompiler'
+        """
         if type(self.dyn_srcs) not in (list, dict, tuple) or isinstance(self.dyn_srcs, str):
             self.dyn_srcs = [self.dyn_srcs, ]
         if type(self.ccode) not in (list, dict, tuple) or isinstance(self.ccode, str):
@@ -274,11 +301,18 @@ class BaseKernel(object):
                 all_files_array.append(self.log_file)
 
     def load_lib(self):
+        """
+        Loads the compiled kernel into memory, to be used for kernel execution.
+        """
         self._lib = npct.load_library(self.lib_file, '.')
-        # logger.info("Loaded '%s' library (%s)" % (self.name, self.lib_file))
         self._function = self._lib.particle_loop
 
     def merge(self, kernel, kclass):
+        """
+        Merging two (possibly disparate) kernels of the same kind of ParticleSet.
+        :arg kernel: new additional kernel to be merged into this kernel
+        :arg kclass: the actual, derived, specific KernelClass of the new, merged kernel
+        """
         funcname = self.funcname + kernel.funcname
         func_ast = None
         if self.py_ast is not None:
@@ -292,25 +326,47 @@ class BaseKernel(object):
                       delete_cfiles=delete_cfiles)
 
     def __add__(self, kernel):
+        """
+        Adds (via '+') one kernel to another. In the expression
+        k = a + b
+        this function covers the case where at least 'a' is a BaseKernel.
+        :arg kernel: BaseKernel or python function object to be merged (i.e. added)
+        """
         if not isinstance(kernel, BaseKernel):
             kernel = BaseKernel(self.fieldset, self.ptype, pyfunc=kernel)
         return self.merge(kernel, BaseKernel)
 
     def __radd__(self, kernel):
+        """
+        Adds (via '+') one kernel to another. In the expression
+        k = a + b
+        this function covers the case where at least 'b' is a BaseKernel.
+        :arg kernel: BaseKernel or python function object to be merged (i.e. added)
+        """
         if not isinstance(kernel, BaseKernel):
             kernel = BaseKernel(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self, BaseKernel)
 
     @staticmethod
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
+        """
+        Explicitly clearing up files on Kernel destruction.
+        :arg lib_file: array of library files
+        :arg all_files_array: array of log-files and (potentially) source-files
+        :arg delete_cfiles: boolean flag, telling if source files are to be deleted or not
+        """
         if lib_file is not None:
-            if path.isfile(lib_file):  # and delete_cfiles
+            if path.isfile(lib_file):
                 [remove(s) for s in [lib_file, ] if path is not None and path.exists(s)]
             if delete_cfiles and len(all_files_array) > 0:
                 [remove(s) for s in all_files_array if path is not None and path.exists(s)]
 
     @staticmethod
     def cleanup_unload_lib(lib):
+        """
+        Explicitly unloading a previously-loaded ctypes library
+        :arg lib: ctypes library object to be closed and removed
+        """
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
@@ -325,6 +381,9 @@ class BaseKernel(object):
         Utility to remove all particles that signalled deletion.
 
         This version is generally applicable to all structures and collections
+        :arg pset: host ParticleSet
+        :arg output_file: instance of ParticleFile object of the host ParticleSet where deleted objects are to be written to on deletion
+        :arg endtime: timestamp at which the particles are to be deleted
         """
         indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
         if len(indices) > 0 and output_file is not None:
@@ -334,6 +393,7 @@ class BaseKernel(object):
     def load_fieldset_jit(self, pset):
         """
         Updates the loaded fields of pset's fieldset according to the chunk information within their grids
+        :arg pset: host ParticleSet
         """
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
