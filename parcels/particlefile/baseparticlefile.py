@@ -237,6 +237,11 @@ class BaseParticleFile(ABC):
         if self.convert_at_end:
             self.close()
 
+    # ============================ TODO =================================== #
+    def __sizeof__(self):
+        pass
+    # ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== #
+
     def close(self, delete_tempfiles=True):
         """Close the ParticleFile object by exporting and then deleting
         the temporary npy files"""

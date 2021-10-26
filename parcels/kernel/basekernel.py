@@ -1,4 +1,5 @@
 import re
+import sys
 import _ctypes
 import inspect
 import numpy.ctypeslib as npct
@@ -123,6 +124,18 @@ class BaseKernel(object):
         self._src_files = None
         self.lib_file = None
         self.log_file = None
+
+    def __sizeof__(self):
+        sz = sys.getsizeof(self._lib) if self._lib is not None else 0
+        sz += sys.getsizeof(self._cleanup_files) if self._cleanup_files is not None else 0
+        sz += sys.getsizeof(self._cleanup_lib) if self._cleanup_lib is not None else 0
+        sz += sys.getsizeof(self._c_include) if self._c_include is not None else 0
+        sz += sys.getsizeof(self.dyn_srcs) if self.dyn_srcs is not None else 0
+        sz += sys.getsizeof(self.static_srcs) if self.static_srcs is not None else 0
+        sz += sys.getsizeof(self._src_files) if self._src_files is not None else 0
+        sz += sys.getsizeof(self.lib_file) if self.lib_file is not None else 0
+        sz += sys.getsizeof(self.log_file) if self.log_file is not None else 0
+        return sz
 
     @property
     def ptype(self):
