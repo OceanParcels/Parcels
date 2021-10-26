@@ -309,6 +309,7 @@ class BaseParticleSet(NDCluster):
         :returns size of this collection in bytes; initiated by calling sys.getsizeof(object)
         """
         sz = sys.getsizeof(self._collection)
+        sz += sys.getsizeof(self._kernel)
         sz += sys.getsizeof(self.repeatdt) if self.repeatdt is not None else 0
         sz += sys.getsizeof(self.repeatlon) if self.repeatlon is not None else 0
         sz += sys.getsizeof(self.repeatlat) if self.repeatlat is not None else 0

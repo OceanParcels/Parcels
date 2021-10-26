@@ -632,18 +632,25 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     if time_periodic and dt < 0:
         return True  # time_periodic does not work in backward-time mode
     if chunksize == 'auto':
-        dask.config.set({'array.chunk-size': '2MiB'})
+        dask.config.set({'array.chunk-size': '128KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
 
     class PerformanceLog():
         samples = []
         memory_steps = []
+        pset = None
+        pfile = None
         _iter = 0
 
         def advance(self):
             process = psutil.Process(os.getpid())
-            self.memory_steps.append(process.memory_info().rss)
+            offset = 0
+            if self.pset is not None:
+                offset -= sys.getsizeof(self.pset)
+            if self.pfile is not None:
+                offset -= sys.getsizeof(self.pfile)
+            self.memory_steps.append(process.memory_info().rss - offset)
             self.samples.append(self._iter)
             self._iter += 1
 
@@ -676,6 +683,7 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     if with_GC:
         postProcessFuncs.append(perIterGC)
     pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=[0.5, ], lat=[0.5, ])
+    perflog.pset = pset
     mem_exhausted = False
     try:
         pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=dt, runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
@@ -685,7 +693,8 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     field_step_max = ((4*8+512*128*4+512*128*4+(512*128*4))*2*2)
     if mode != 'scipy':
         field_step_max *= 2
-    sz_pset = sys.getsizeof(pset)
+    # sz_pset = sys.getsizeof(pset)
+    sz_pset = 0
     field_step_max += sz_pset
     if with_GC:
         assert np.allclose(mem_steps_np[8:], perflog.memory_steps[-1], rtol=0.01)
