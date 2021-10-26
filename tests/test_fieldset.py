@@ -642,15 +642,18 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
         pset = None
         pfile = None
         _iter = 0
+        _process = None
+
+        def __init__(self):
+            self._process = psutil.Process(os.getpid())
 
         def advance(self):
-            process = psutil.Process(os.getpid())
             offset = 0
             if self.pset is not None:
                 offset -= sys.getsizeof(self.pset)
             if self.pfile is not None:
                 offset -= sys.getsizeof(self.pfile)
-            self.memory_steps.append(process.memory_info().rss - offset)
+            self.memory_steps.append(self._process.memory_info().rss - offset)
             self.samples.append(self._iter)
             self._iter += 1
 
@@ -682,11 +685,12 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     postProcessFuncs = [perflog.advance, ]
     if with_GC:
         postProcessFuncs.append(perIterGC)
+    perflog.advance()
     pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=[0.5, ], lat=[0.5, ])
     perflog.pset = pset
     mem_exhausted = False
     try:
-        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=dt, runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
+        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=dt, runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=10))
     except MemoryError:
         mem_exhausted = True
     mem_steps_np = np.array(perflog.memory_steps)
@@ -697,9 +701,25 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     sz_pset = 0
     field_step_max += sz_pset
     if with_GC:
-        assert np.alltrue(mem_steps_np[8:] <= perflog.memory_steps[-1])
-    if (chunksize is not False or with_GC) and mem_steps_np.shape[0] > 1 and mode != 'scipy':
-        assert np.alltrue(np.array([(mem_steps_np[i]-mem_steps_np[i-1]) for i in range(1, mem_steps_np.shape[0])]) < field_step_max)
+        if chunksize is not False:
+            N = mem_steps_np.shape[0]
+            mem0 = mem_steps_np[0]
+            # flat-lining - here, the line shall not exceed the theoretical max.
+            if np.allclose(mem_steps_np[N-8:], perflog.memory_steps[-1], rtol=1e-6):
+                assert np.alltrue((mem_steps_np-mem0) <= field_step_max)
+            else:  # otehrwise, we have a peaky mem usage - make sure exceeding peaks are uncommon (<5% of measurements), and that peaks are less than 2*field_step_max
+                excessive_occurence = np.count_nonzero((mem_steps_np-mem0) > field_step_max)
+                limit = max(1, int(0.05*N))
+                assert excessive_occurence <= limit
+                increases = np.array([(mem_steps_np[i] - mem_steps_np[i - 1]) for i in range(1, mem_steps_np.shape[0])])
+                assert np.alltrue(increases < 2.0*field_step_max)
+
+    # if with_GC:
+    #     mem0 = mem_steps_np[0]
+    #     assert np.alltrue((mem_steps_np-mem0) <= field_step_max)
+    #     # assert np.alltrue(mem_steps_np[8:] <= perflog.memory_steps[-1])
+    # if (chunksize is not False or with_GC) and mem_steps_np.shape[0] > 1 and mode != 'scipy':
+    #     assert np.alltrue(np.array([(mem_steps_np[i]-mem_steps_np[i-1]) for i in range(1, mem_steps_np.shape[0])]) < field_step_max)
     assert not mem_exhausted
 
 
