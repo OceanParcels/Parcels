@@ -43,7 +43,19 @@ class KernelSOA(BaseKernel):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
+                 funccode=None, funcvars=None, py_ast=None, c_include="", delete_cfiles=True):
+        """
+        KernelSOA - Constructor
+        :arg fieldset: the fieldset object of the host ParticleSet
+        :arg ptype: the ParticleType of the host ParticleSet
+        :arg pyfunc: the initial Python func or a concatenation of BaseKernel's hosting the kernel code
+        :arg funcname: None, if :arg pyfunc is a concatenated kernel or python function; otherwise, name of the custom function
+        :arg funccode: None, if :arg pyfunc is a concatenated kernel or python function; otherwise, string of code of the custom function
+        :arg funcvars: None, if :arg pyfunc is a concatenated kernel or python function; otherwise, variables of the custom function
+        :arg py_ast: a parsed hierarchy of generated functions
+        :arg c_include: added C include functions for generation or interpretation of the custom function
+        :arg delete_cfiles: boolean, telling of the written C source files are deleted on destruction or not
+        """
         super(KernelSOA, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
 
         # Derive meta information from pyfunc, if not given
@@ -87,12 +99,10 @@ class KernelSOA(BaseKernel):
         assert numkernelargs == 3, \
             'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
 
-        # self.name = "%s%s" % (ptype.name, self.funcname)
         self.name = "%s%s" % (self.ptype.name, self.funcname)
 
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
-            # kernelgen = KernelGenerator(fieldset, ptype)
             kernelgen = KernelGenerator(self.fieldset, self.ptype)
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast), self.funcvars)
             self.field_args = kernelgen.field_args
@@ -106,7 +116,6 @@ class KernelSOA(BaseKernel):
                             self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
-            # loopgen = LoopGenerator(self.fieldset, self.ptype)
             if path.isfile(self._c_include):
                 with open(self._c_include, 'r') as f:
                     c_include_str = f.read()
@@ -117,12 +126,29 @@ class KernelSOA(BaseKernel):
 
             src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
             self.dyn_srcs = src_file_or_files
-            # if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
-            #     self.dyn_srcs = src_file_or_files
-            # else:
-            #     self.src_file = src_file_or_files
+
+    def __del__(self):
+        """
+        KernelSOA - Destructor
+        """
+        # Clean-up the in-memory dynamic linked libraries.
+        # This is not really necessary, as these programs are not that large, but with the new random
+        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
+        super(KernelSOA, self).__del__()
+
+    def generate_sources(self):
+        """
+        Generates and compiles a kernel with its source(s)
+        """
+        pass
 
     def __add__(self, kernel):
+        """
+        Adds (via '+') one kernel to another. In the expression
+        k = a + b
+        this function covers the case where at least 'a' is a BaseKernel.
+        :arg kernel: BaseKernel or python function object to be merged (i.e. added)
+        """
         mkernel = kernel  # do this to avoid rewriting the object put in as parameter
         if not isinstance(mkernel, BaseKernel):
             mkernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
@@ -131,6 +157,12 @@ class KernelSOA(BaseKernel):
         return self.merge(mkernel, KernelSOA)
 
     def __radd__(self, kernel):
+        """
+        Adds (via '+') one kernel to another. In the expression
+        k = a + b
+        this function covers the case where at least 'b' is a BaseKernel.
+        :arg kernel: BaseKernel or python function object to be merged (i.e. added)
+        """
         mkernel = kernel  # do this to avoid rewriting the object put in as parameter
         if not isinstance(mkernel, BaseKernel):
             mkernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
@@ -138,34 +170,32 @@ class KernelSOA(BaseKernel):
             mkernel = KernelSOA(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
         return mkernel.merge(self, KernelSOA)
 
-    def generate_sources(self):
-        pass
-
     def execute_jit(self, pset, endtime, dt):
-        """Invokes JIT engine to perform the core update loop"""
-        # logger.info("Loading fieldset data into jit.")
+        """
+        Invokes JIT engine to perform the core update loop
+        :arg pset: particle set to calculate
+        :arg endtime: timestamp to calculate
+        :arg dt: delta-t to be calculated
+        """
         self.load_fieldset_jit(pset)
-        # logger.info("Fieldset loaded.")
 
-        # logger.info("Adding struct-params for field args ...")
         fargs = []
         if self.field_args is not None:
             fargs += [byref(f.ctypes_struct) for f in self.field_args.values()]
-        # logger.info("Added struct-params for field args.")
-        # logger.info("Adding double-params for const args ...")
-        # fargs += [c_double(f) for f in self.const_args.values()]
         if self.const_args is not None:
             fargs += [c_double(f) for f in self.const_args.values()]
-        # # logger.info("Added double-params for const args.")
 
         particle_data = byref(pset.ctypes_struct)
-        # logger.info("Executing kernel with field args.")
         result = self._function(c_int(len(pset)), particle_data, c_double(endtime), c_double(dt), *fargs)
-        # logger.info("Finished kernel execution.")
         return result
 
     def execute_python(self, pset, endtime, dt):
-        """Performs the core update loop via Python"""
+        """
+        Performs the core update loop via Python
+        :arg pset: particle set to calculate
+        :arg endtime: timestamp to calculate
+        :arg dt: delta-t to be calculated
+        """
         # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
         sign_dt = np.sign(dt)
 
@@ -185,17 +215,14 @@ class KernelSOA(BaseKernel):
         for p in pset:
             self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
-    def __del__(self):
-        # Clean-up the in-memory dynamic linked libraries.
-        # This is not really necessary, as these programs are not that large, but with the new random
-        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
-        super(KernelSOA, self).__del__()
-
     def remove_deleted(self, pset, output_file, endtime):
         """
         Utility to remove all particles that signalled deletion
 
-        This deletion function is targetted to index-addressable, random-access array-collections.
+        This version is generally applicable to all structures and collections
+        :arg pset: host ParticleSet
+        :arg output_file: instance of ParticleFile object of the host ParticleSet where deleted objects are to be written to on deletion
+        :arg endtime: timestamp at which the particles are to be deleted
         """
         # Indices marked for deletion.
         bool_indices = pset.collection.state == OperationCode.Delete
@@ -205,7 +232,15 @@ class KernelSOA(BaseKernel):
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
-        """Execute this Kernel over a ParticleSet for several timesteps"""
+        """
+        Execute this Kernel over a ParticleSet for several timesteps
+        :arg pset: host ParticleSet
+        :arg endtime: endtime of this overall kernel evaluation step
+        :arg dt: computational integration timestep
+        :arg recovery: dict of recovery code -> recovery function
+        :arg output_file: instance of ParticleFile object of the host ParticleSet where deleted objects are to be written to on deletion
+        :arg execute_once: boolean, telling if to execute once (True) or computing the kernel iteratively
+        """
         pset.collection.state[:] = StateCode.Evaluate
 
         if abs(dt) < 1e-6 and not execute_once:

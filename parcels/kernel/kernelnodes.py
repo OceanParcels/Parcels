@@ -46,6 +46,18 @@ class KernelNodes(BaseKernel):
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
                  funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
+        """
+        KernelNodes - Constructor
+        :arg fieldset: the fieldset object of the host ParticleSet
+        :arg ptype: the ParticleType of the host ParticleSet
+        :arg pyfunc: the initial Python func or a concatenation of BaseKernel's hosting the kernel code
+        :arg funcname: None, if :arg pyfunc is a concatenated kernel or python function; otherwise, name of the custom function
+        :arg funccode: None, if :arg pyfunc is a concatenated kernel or python function; otherwise, string of code of the custom function
+        :arg funcvars: None, if :arg pyfunc is a concatenated kernel or python function; otherwise, variables of the custom function
+        :arg py_ast: a parsed hierarchy of generated functions
+        :arg c_include: added C include functions for generation or interpretation of the custom function
+        :arg delete_cfiles: boolean, telling of the written C source files are deleted on destruction or not
+        """
         super(KernelNodes, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
 
         # Derive meta information from pyfunc, if not given
@@ -117,16 +129,28 @@ class KernelNodes(BaseKernel):
                 src_file_or_files = [src_file_or_files, ]
             self.dyn_srcs = src_file_or_files
 
-    def generate_sources(self):
-        pass
-
     def __del__(self):
+        """
+        KernelNodes - Destructor
+        """
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
         super(KernelNodes, self).__del__()
 
+    def generate_sources(self):
+        """
+        Generates and compiles a kernel with its source(s)
+        """
+        pass
+
     def __add__(self, kernel):
+        """
+        Adds (via '+') one kernel to another. In the expression
+        k = a + b
+        this function covers the case where at least 'a' is a BaseKernel.
+        :arg kernel: BaseKernel or python function object to be merged (i.e. added)
+        """
         mkernel = kernel  # do this to avoid rewriting the object put in as parameter
         if not isinstance(mkernel, BaseKernel):
             mkernel = KernelNodes(self.fieldset, self.ptype, pyfunc=kernel)
@@ -135,6 +159,12 @@ class KernelNodes(BaseKernel):
         return self.merge(mkernel, KernelNodes)
 
     def __radd__(self, kernel):
+        """
+        Adds (via '+') one kernel to another. In the expression
+        k = a + b
+        this function covers the case where at least 'b' is a BaseKernel.
+        :arg kernel: BaseKernel or python function object to be merged (i.e. added)
+        """
         mkernel = kernel  # do this to avoid rewriting the object put in as parameter
         if not isinstance(mkernel, BaseKernel):
             mkernel = KernelNodes(self.fieldset, self.ptype, pyfunc=kernel)
@@ -143,7 +173,12 @@ class KernelNodes(BaseKernel):
         return mkernel.merge(self, KernelNodes)
 
     def execute_jit(self, pset, endtime, dt):
-        """Invokes JIT engine to perform the core update loop"""
+        """
+        Invokes JIT engine to perform the core update loop
+        :arg pset: particle set to calculate
+        :arg endtime: timestamp to calculate
+        :arg dt: delta-t to be calculated
+        """
         self.load_fieldset_jit(pset)
 
         fargs = []
@@ -162,7 +197,12 @@ class KernelNodes(BaseKernel):
             self._function(c_int(len(pset)), pointer(node_data), c_double(endtime), c_double(dt))
 
     def execute_python(self, pset, endtime, dt):
-        """Performs the core update loop via Python"""
+        """
+        Performs the core update loop via Python
+        :arg pset: particle set to calculate
+        :arg endtime: timestamp to calculate
+        :arg dt: delta-t to be calculated
+        """
         # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
         sign_dt = np.sign(dt)
 
@@ -191,7 +231,14 @@ class KernelNodes(BaseKernel):
             node = node.next
 
     def remove_deleted(self, pset, output_file, endtime):
-        """Utility to remove all particles that signalled deletion"""
+        """
+        Utility to remove all particles that signalled deletion
+
+        This version is generally applicable to all structures and collections
+        :arg pset: host ParticleSet
+        :arg output_file: instance of ParticleFile object of the host ParticleSet where deleted objects are to be written to on deletion
+        :arg endtime: timestamp at which the particles are to be deleted
+        """
         ids = None
         try:
             ids = pset.get_deleted_item_IDs()
@@ -204,10 +251,17 @@ class KernelNodes(BaseKernel):
         return pset
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
-        """Execute this Kernel over a ParticleSet for several timesteps"""
+        """
+        Execute this Kernel over a ParticleSet for several timesteps
+        :arg pset: host ParticleSet
+        :arg endtime: endtime of this overall kernel evaluation step
+        :arg dt: computational integration timestep
+        :arg recovery: dict of recovery code -> recovery function
+        :arg output_file: instance of ParticleFile object of the host ParticleSet where deleted objects are to be written to on deletion
+        :arg execute_once: boolean, telling if to execute once (True) or computing the kernel iteratively
+        """
         node = pset.begin()
         while node is not None:
-            # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
             if not node.is_valid():
                 node = node.next
                 continue
@@ -241,8 +295,6 @@ class KernelNodes(BaseKernel):
 
         # Identify particles that threw errors
         n_error = pset.num_error_particles
-        if n_error > 0:
-            logger.info("Located {} erroneous particles.".format(n_error))
         recover_iteration = 0
 
         while n_error > 0:
@@ -250,7 +302,6 @@ class KernelNodes(BaseKernel):
             # Apply recovery kernel
             node = pset.begin()
             while node is not None:
-                # logger.info("Checking node {} (iteration {})...".format(node, recover_iteration))
                 if node is None:
                     break
                 if not node.is_valid():
@@ -261,16 +312,12 @@ class KernelNodes(BaseKernel):
                     node = node.next  # this was the infinite-loop error - if there are erroneous particles but the last particle is valid, this goes in infinite loop
                     continue
                 if p.state == OperationCode.StopExecution:
-                    logger.warning("Particle {} - 'StopExecution' OC".format(p.id))
                     return
                 if p.state == OperationCode.Repeat:
-                    logger.warning("Particle {} - 'Repeat' OC".format(p.id))
                     p.reset_state()
                 elif p.state == OperationCode.Delete:
-                    logger.warning("Particle {} - 'Delete' OC".format(p.id))
                     pass
                 elif p.state in recovery_map:
-                    logger.warning("Particle {} - compute-related EC".format(p.id))
                     recovery_kernel = recovery_map[p.state]
                     p.set_state(StateCode.Success)
                     recovery_kernel(p, self.fieldset, p.time)
@@ -292,7 +339,3 @@ class KernelNodes(BaseKernel):
                 self.execute_python(pset, endtime, dt)
 
             n_error = pset.num_error_particles
-            if n_error > 0:
-                logger.info("Located {} erroneous particles.".format(n_error))
-
-        logger.info("Concluded kernel execution on t={}".format(endtime))
