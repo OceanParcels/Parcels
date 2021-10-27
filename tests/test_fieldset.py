@@ -614,11 +614,10 @@ def test_fieldset_write(pset_mode, tmpdir):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
-@pytest.mark.parametrize('dt', [-3600, 3600])
 @pytest.mark.parametrize('chunksize', [False, 'auto', {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
 @pytest.mark.parametrize('with_GC', [False, True])
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows memory leaks (#787)")
-def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chunksize, with_GC):
+def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, chunksize, with_GC):
     """
     The fixed max. memory cap in 'field_step_max' is directly calculated and shall not be changed anymore.
     It's based on the following values:
@@ -629,6 +628,7 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     # buffered timesteps: 2
     SciPy-Buffers 1; JIT-Buffers: 2
     """
+    dt = 3600.0
     if time_periodic and dt < 0:
         return True  # time_periodic does not work in backward-time mode
     if chunksize == 'auto':
