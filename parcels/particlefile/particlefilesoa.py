@@ -32,25 +32,47 @@ class ParticleFileSOA(BaseParticleFile):
 
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
                  tempwritedir=None, pset_info=None):
+        """
+        ParticleFileSOA - Constructor
+        :param name: Basename of the output file
+        :param particleset: ParticleSet to output
+        :param outputdt: Interval which dictates the update frequency of file output
+                         while ParticleFile is given as an argument of ParticleSet.execute()
+                         It is either a timedelta object or a positive double.
+        :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
+        :param convert_at_end: Boolean to convert npy files to netcdf at end of run. Default is True
+        :param tempwritedir: directories to write temporary files to during executing.
+                         Default is out-XXXXXX where Xs are random capitals. Files for individual
+                         processors are written to subdirectories 0, 1, 2 etc under tempwritedir
+        :param pset_info: dictionary of info on the ParticleSet, stored in tempwritedir/XX/pset_info.npy,
+                         used to create NetCDF file from npy-files.
+        """
         super(ParticleFileSOA, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
                                               write_ondelete=write_ondelete, convert_at_end=convert_at_end,
                                               tempwritedir=tempwritedir, pset_info=pset_info)
 
     def __del__(self):
+        """
+        ParticleFileSOA - Destructor
+        """
         super(ParticleFileSOA, self).__del__()
 
     def _reserved_var_names(self):
         """
-        returns the reserved dimension names not to be written just once.
+        :returns the reserved dimension names not to be written just once.
         """
         return ['time', 'lat', 'lon', 'depth', 'id']  # , 'index'
 
     def _create_trajectory_records(self, coords):
+        """
+        This function creates the NetCDF record of the ParticleSet inside the output NetCDF file
+        :arg coords: tuple of dictionary keys for # entities ("traj(ectories)") and timesteps ("obs(ervations)")
+        """
         super(ParticleFileSOA, self)._create_trajectory_records(coords=coords)
 
     def get_pset_info_attributes(self):
         """
-        returns the main attributes of the pset_info.npy file.
+        :returns the main attributes of the pset_info.npy file.
 
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
@@ -81,7 +103,7 @@ class ParticleFileSOA(BaseParticleFile):
             id_index[i] = count
             count += 1
 
-        # loop over all files
+        # -- loop over all files -- #
         for npyfile in file_list:
             try:
                 data_dict = np.load(npyfile, allow_pickle=True).item()
@@ -103,9 +125,6 @@ class ParticleFileSOA(BaseParticleFile):
     def export(self):
         """
         Exports outputs in temporary NPY-files to NetCDF file
-
-        Attention:
-        For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
         if MPI:
             # The export can only start when all threads are done.

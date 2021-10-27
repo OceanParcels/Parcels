@@ -14,7 +14,8 @@ __all__ = ['ParticleFileAOS']
 
 
 class ParticleFileAOS(BaseParticleFile):
-    """Initialise trajectory output.
+    """
+    Initialise trajectory output.
 
     :param name: Basename of the output file
     :param particleset: ParticleSet to output
@@ -32,25 +33,47 @@ class ParticleFileAOS(BaseParticleFile):
 
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
                  tempwritedir=None, pset_info=None):
+        """
+        ParticleFileAOS - Constructor
+        :param name: Basename of the output file
+        :param particleset: ParticleSet to output
+        :param outputdt: Interval which dictates the update frequency of file output
+                         while ParticleFile is given as an argument of ParticleSet.execute()
+                         It is either a timedelta object or a positive double.
+        :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
+        :param convert_at_end: Boolean to convert npy files to netcdf at end of run. Default is True
+        :param tempwritedir: directories to write temporary files to during executing.
+                         Default is out-XXXXXX where Xs are random capitals. Files for individual
+                         processors are written to subdirectories 0, 1, 2 etc under tempwritedir
+        :param pset_info: dictionary of info on the ParticleSet, stored in tempwritedir/XX/pset_info.npy,
+                         used to create NetCDF file from npy-files.
+        """
         super(ParticleFileAOS, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
                                               write_ondelete=write_ondelete, convert_at_end=convert_at_end,
                                               tempwritedir=tempwritedir, pset_info=pset_info)
 
     def __del__(self):
+        """
+        ParticleFileAOS - Destructor
+        """
         super(ParticleFileAOS, self).__del__()
 
     def _reserved_var_names(self):
         """
-        returns the reserved dimension names not to be written just once.
+        :returns the reserved dimension names not to be written just once.
         """
         return ['time', 'lat', 'lon', 'depth', 'id']
 
     def _create_trajectory_records(self, coords):
+        """
+        This function creates the NetCDF record of the ParticleSet inside the output NetCDF file
+        :arg coords: tuple of dictionary keys for # entities ("traj(ectories)") and timesteps ("obs(ervations)")
+        """
         super(ParticleFileAOS, self)._create_trajectory_records(coords=coords)
 
     def get_pset_info_attributes(self):
         """
-        returns the main attributes of the pset_info.npy file.
+        :returns the main attributes of the pset_info.npy file.
 
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
@@ -70,6 +93,7 @@ class ParticleFileAOS(BaseParticleFile):
         :param file_list: List that  contains all file names in the output directory
         :param n_timesteps: Dictionary with (for each particle) number of time steps that were written in out directory
         :param var: name of the variable to read
+        :returns data dictionary of time instances to be written
         """
         max_timesteps = max(n_timesteps.values()) if n_timesteps.keys() else 0
         fill_value = self.fill_value_map[dtype]
@@ -81,7 +105,6 @@ class ParticleFileAOS(BaseParticleFile):
             id_index[i] = count
             count += 1
 
-        # loop over all files
         for npyfile in file_list:
             try:
                 data_dict = np.load(npyfile, allow_pickle=True).item()
@@ -103,9 +126,6 @@ class ParticleFileAOS(BaseParticleFile):
     def export(self):
         """
         Exports outputs in temporary NPY-files to NetCDF file
-
-        Attention:
-        For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
         if MPI:
             # The export can only start when all threads are done.
@@ -129,8 +149,7 @@ class ParticleFileAOS(BaseParticleFile):
 
         n_timesteps = {}
         global_file_list = []
-        if len(self.var_names_once) > 0:
-            global_file_list_once = []
+        global_file_list_once = []
         for tempwritedir in temp_names:
             if os.path.exists(tempwritedir):
                 pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
