@@ -3,8 +3,6 @@ import sys
 import os
 from parcels.compilation import InterfaceC, GNUCompiler_SS, GNUCompiler_MS  # noqa: F401
 from parcels.tools import get_cache_dir, get_package_dir
-# from numpy import int32, int64, uint32, uint64
-# from parcels.tools import logger
 
 LIB_LOAD_MAX_REPEAT = 10
 
@@ -15,42 +13,39 @@ LIB_LOAD_MAX_REPEAT = 10
 
 
 class Node(object):
+    """
+    A simple nodal object, storing its connectivity to its predecessor and its successor, and (a reference to) its object (as payload)
+    """
     prev = None
     next = None
-    # id = None  # not required anymore
     idgen = None
     data = None
     registered = False
 
     def __init__(self, prev=None, next=None, id=None, data=None, c_lib_register=None, idgen=None):
+        """
+        Node - Constructor
+        :arg prev: predecessor Node object
+        :arg next: successor Node object
+        :arg id: optional, legacy parameter to set this object's ID
+        :arg data: data payload of this Node
+        :arg c_lib_register: a LibraryRegisterC object; available for compliance reasons with the NodeJIT sibling class
+        :arg idgen: an ID generator object used for ID registration- and de-registration for the Particle data payload
+        """
         if prev is not None:
             assert (isinstance(prev, Node))
-            # self.prev = prev
             self.set_prev(prev)
         else:
-            # self.prev = None
             self.reset_prev()
         if next is not None:
             assert (isinstance(next, Node))
-            # self.next = next
             self.set_next(next)
         else:
-            # self.next = None
             self.reset_next()
-        # if id is not None and (isinstance(id, int) or type(id) in [int32, uint32, int64, uint64]) and (id >= 0):
-        #     self.id = id
-        # elif id is None:
-        #     # TODO: change the depth here to a init-function parameter called "max_depth" (here: geographic depth, not depth cells, not 'tree depth' or so
-        #     self.id = idgen.nextID(random.uniform(-180.0, 180.0), random.uniform(-90.0, 90.0), random.uniform(0., 75.0), 0.)
-        # else:
-        #     self.id = None
-
-        # self.data = data
         if data is not None:
             self.set_data(data)
         else:
             self.reset_data()
-
         self.link()
 
         assert idgen is not None, "Using Nodes requires to specify an ID generator (in order to release the ID on delete)."
@@ -58,34 +53,46 @@ class Node(object):
         self.registered = True
 
     def __deepcopy__(self, memodict={}):
+        """
+        :returns a deepcopy of this very object
+        """
         result = type(self)(prev=None, next=None, id=-1, data=None)
         result.registered = True
-        # result.id = self.id
         result.next = self.next
         result.prev = self.prev
         result.data = self.data
         return result
 
     def __del__(self):
+        """
+        Node - Destructor
+        """
         if self.data is not None:
             try:
                 self.idgen.releaseID(self.data.id)
             except:
                 pass
         del self.data
-        # idgen.releaseID(self.id)
         self.unlink()
         self.reset_data()
 
     def link(self):
-        # if not self.registered:
-        #     return
+        """
+        links this node to its neighbours, i.e. sets this object to be the successor of its predecessor and
+        sets this object to be the predecessor of its successor, so that we have a mutual connection in the form of:
+        prev <-> this <-> next
+        """
         if self.prev is not None and self.prev.next != self:
             self.prev.set_next(self)
         if self.next is not None and self.next.prev != self:
             self.next.set_prev(self)
 
     def unlink(self):
+        """
+        removes this object from the linked chain of nodes, i.e. we set this predecessor's successor to be this successor
+        and set this successor's predecessor to this predecessor, so that the new connection is in the form of:
+        prev <-> next
+        """
         if self.registered:
             if self.prev is not None:
                 if self.next is not None:
@@ -99,24 +106,29 @@ class Node(object):
                     self.next.reset_prev()
         self.reset_prev()
         self.reset_next()
-        # self.reset_data()
         self.registered = False
 
     def is_valid(self):
         """
         Function is required as Nodes can be unlinked (i.e. not having data, next- and previous links)
         but still part of a list or other collection, not being called on __del__()
+        :returns if a node is still valid (True) or invalid (False)
         """
         result = True
         result &= ((self.next is not None) or (self.prev is not None))
-        # result &= (self.data is not None)
         result |= (self.data is not None)
         return result
 
     def __iter__(self):
+        """
+        :returns forward iterator through the interconnected chain of double-linked nodes fromout this node
+        """
         return self
 
     def __next__(self):
+        """
+        :returns next node in the interconnected chain of double-linked nodes
+        """
         # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
         next_node = self.next
         while next_node is not None and not next_node.is_valid():
@@ -126,79 +138,67 @@ class Node(object):
         return next_node
 
     def __eq__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean if :arg other and this object are equal
+        """
         if type(self) is not type(other):
             return False
-        # if (self.data is not None) and (other.data is not None):
-        #     return self.data == other.data
-        # else:
-        #     return self.id == other.id
-        # if (self.data is not None) and (other.data is not None):
-        # if self.is_valid() and other.is_valid():
         if (self.data is not None) and (other.data is not None):
             result = (self.data.id == other.data.id)
-            # result |=  (self.data == other.data)
             return result
 
     def __ne__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean if :arg other and this object are not equal
+        """
         return not (self == other)
 
     def __lt__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean, if :arg other is ordered before the position of this
+        """
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
-        # return self.id < other.id
         return self.data.id < other.data.id
-        # if self.is_valid() and other.is_valid():
-        #     return self.data.id < other.data.id
-        # elif not self.is_valid() and other.is_valid():
-        #     return False
-        # elif self.is_valid() and not other.is_valid():
-        #     return True
-        # return False
 
     def __le__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean, if :arg other is ordered before-or-at the position of this
+        """
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
-        # return self.id <= other.id
         return self.data.id <= other.data.id
-        # if self.is_valid() and other.is_valid():
-        #     return self.data.id <= other.data.id
-        # elif not self.is_valid() and other.is_valid():
-        #     return False
-        # elif self.is_valid() and not other.is_valid():
-        #     return True
-        # return False
 
     def __gt__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean, if :arg other is ordered after the position of this
+        """
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
-        # return self.id > other.id
         return self.data.id > other.data.id
-        # if self.is_valid() and other.is_valid():
-        #     return self.data.id > other.data.id
-        # elif not self.is_valid() and other.is_valid():
-        #     return False
-        # elif self.is_valid() and not other.is_valid():
-        #     return True
-        # return False
 
     def __ge__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean, if :arg other is ordered after-or-at the position of this
+        """
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
-        # return self.id >= other.id
         return self.data.id >= other.data.id
-        # if self.is_valid() and other.is_valid():
-        #     return self.data.id >= other.data.id
-        # elif not self.is_valid() and other.is_valid():
-        #     return False
-        # elif self.is_valid() and not other.is_valid():
-        #     return True
-        # return False
 
     def __repr__(self):
+        """
+        :returns a byte-like representation of a Node
+        """
         return '<%s.%s object at %s>' % (
             self.__class__.__module__,
             self.__class__.__name__,
@@ -206,34 +206,62 @@ class Node(object):
         )
 
     def __str__(self):
+        """
+        returns a text-like representation of a Node
+        """
         return "Node(p: {}, n: {}, id: {}, d: {})".format(repr(self.prev), repr(self.next), self.data.id, repr(self.data))
 
     def __sizeof__(self):
-        obj_size = sys.getsizeof(object)+sys.getsizeof(object)  # +sys.getsizeof(self.id)
+        """
+        :returns the byte size of this object, INCLUDING the size of its containing object
+        """
+        obj_size = sys.getsizeof(object)+sys.getsizeof(object)
         if self.data is not None:
             obj_size += sys.getsizeof(self.data)
         return obj_size
 
     def set_prev(self, prev):
+        """
+        (mandatory) setter-function for the previous Node object
+        """
         self.prev = prev
 
     def set_next(self, next):
+        """
+        (mandatory) setter-function for the next Node object
+        """
         self.next = next
 
     def set_data(self, data):
+        """
+        (mandatory) setter-function for the data payload of this Node
+        """
         self.data = data
 
     def reset_data(self):
+        """
+        this function resets (i.e. nullifies / nonifies) the the Node's data payload
+        """
         self.data = None
 
     def reset_prev(self):
+        """
+        this function resets (i.e. nullifies / nonifies) the the Node's predecessor
+        """
         self.prev = None
 
     def reset_next(self):
+        """
+        this function resets (i.e. nullifies / nonifies) the the Node's successor
+        """
         self.next = None
 
 
 class NodeJIT(Node, ctypes.Structure):
+    """
+    A nodal object, storing its connectivity to its predecessor and its successor, and (a reference to) its object (as payload).
+    This type is connected to a direct ctypes representation, which can be used in ctypes-bound JIT functions.
+    """
     _fields_ = [('_c_prev_p', ctypes.c_void_p),
                 ('_c_next_p', ctypes.c_void_p),
                 ('_c_data_p', ctypes.c_void_p),
@@ -249,7 +277,15 @@ class NodeJIT(Node, ctypes.Structure):
     c_lib_register_ref = None
 
     def __init__(self, prev=None, next=None, id=None, data=None, c_lib_register=None, idgen=None):
-        # super().__init__(prev=prev, next=next, id=id, data=data, idgen=idgen)
+        """
+        NodeJIT - Constructor
+        :arg prev: predecessor Node object
+        :arg next: successor Node object
+        :arg id: optional, legacy parameter to set this object's ID
+        :arg data: data payload of this Node
+        :arg c_lib_register: a LibraryRegisterC object, used to register this object to the ctypes JIT C-library
+        :arg idgen: an ID generator object used for ID registration- and de-registration for the Particle data payload
+        """
         super().__init__(prev=None, next=None, id=id, data=None, idgen=idgen)
         libname = "node"
         if not c_lib_register.is_created(libname) or not c_lib_register.is_compiled(libname) or not c_lib_register.is_loaded(libname):
@@ -257,11 +293,11 @@ class NodeJIT(Node, ctypes.Structure):
             src_dir = os.path.dirname(os.path.abspath(__file__))
             ccompiler = GNUCompiler_SS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
             c_lib_register.add_entry(libname, InterfaceC(libname, ccompiler, src_dir))
-            c_lib_register.load(libname)  # , src_dir=src_dir
+            c_lib_register.load(libname)
         c_lib_register.register(libname, close_callback=self.close_c_funcs)
         self.c_lib_register_ref = c_lib_register
         self.registered = True
-        parent_c_interface = self.c_lib_register_ref.get(libname)  # ["node"]
+        parent_c_interface = self.c_lib_register_ref.get(libname)
 
         c_funcs = None
         repeat_load_iteration = 0
@@ -275,36 +311,24 @@ class NodeJIT(Node, ctypes.Structure):
                 c_lib_register.register(libname, close_callback=self.close_c_funcs)
         assert c_funcs is not None, "Loading 'node' library failed."
         self.link_c_functions(c_funcs)
-
         self.init_node_c(self)
 
         if prev is not None and isinstance(prev, NodeJIT):
-            # self.set_prev_ptr_c(self, self.prev)
             self.set_prev(prev)
         else:
-            # self.reset_prev_ptr_c(self)
             self.reset_prev()
-
         if next is not None and isinstance(next, NodeJIT):
-            # self.set_next_ptr_c(self, self.next)
             self.set_next(next)
         else:
-            # self.reset_next_ptr_c(self)
             self.reset_next()
 
         if data is not None:
-            # try:
-            #     self.set_data_ptr_c(self, self.data.cdata())
-            # except AttributeError:
-            #     logger.warn("Node's data container casting error - output of data.cdata(): {}".format(self.data.cdata()))
-            #     self.set_data_ptr_c(self, ctypes.cast(self.data, ctypes.c_void_p))
             self.set_data(data)
         else:
-            # self.reset_data_ptr_c(self)
             self.reset_data()
-
         self.link()
 
+    # ---- continue TODO ---- #
     def __deepcopy__(self, memodict={}):
         result = type(self)(prev=None, next=None, id=-1, data=None)
         # result.id = self.id
