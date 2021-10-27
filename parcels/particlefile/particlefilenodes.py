@@ -33,6 +33,21 @@ class ParticleFileNodes(BaseParticleFile):
 
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
                  tempwritedir=None, pset_info=None):
+        """
+        ParticleFileNodes - Constructor
+        :param name: Basename of the output file
+        :param particleset: ParticleSet to output
+        :param outputdt: Interval which dictates the update frequency of file output
+                         while ParticleFile is given as an argument of ParticleSet.execute()
+                         It is either a timedelta object or a positive double.
+        :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
+        :param convert_at_end: Boolean to convert npy files to netcdf at end of run. Default is True
+        :param tempwritedir: directories to write temporary files to during executing.
+                         Default is out-XXXXXX where Xs are random capitals. Files for individual
+                         processors are written to subdirectories 0, 1, 2 etc under tempwritedir
+        :param pset_info: dictionary of info on the ParticleSet, stored in tempwritedir/XX/pset_info.npy,
+                         used to create NetCDF file from npy-files.
+        """
         super(ParticleFileNodes, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
                                                 write_ondelete=write_ondelete, convert_at_end=convert_at_end,
                                                 tempwritedir=tempwritedir, pset_info=pset_info)
@@ -41,15 +56,22 @@ class ParticleFileNodes(BaseParticleFile):
         self.time_written = []
 
     def __del__(self):
+        """
+        ParticleFileNodes - Destructor
+        """
         super(ParticleFileNodes, self).__del__()
 
     def _reserved_var_names(self):
         """
-        returns the reserved dimension names not to be written just once.
+        :returns the reserved dimension names not to be written just once.
         """
         return ['time', 'lat', 'lon', 'depth', 'id', 'index']
 
     def _create_trajectory_records(self, coords):
+        """
+        This function creates the NetCDF record of the ParticleSet inside the output NetCDF file
+        :arg coords: tuple of dictionary keys for # entities ("traj(ectories)") and timesteps ("obs(ervations)")
+        """
         # Create ID variable according to CF conventions
         self.id = self.dataset.createVariable("trajectory", "i8", coords, fill_value=-2**(63))  # minint64 fill_value
         self.id.long_name = "Unique identifier for each particle"
@@ -97,14 +119,14 @@ class ParticleFileNodes(BaseParticleFile):
 
         for vname in self.var_names:
             if vname not in self._reserved_var_names():
-                # hm, shouldn't that be adaptive instead of "f4" ? I think I looked that up already once and if violates the CF convention, sadly
+                # hm, shouldn't that be adaptive instead of fixed to "f4" (e.g. "f8") ? I think I looked that up already once and it violates the CF convention, sadly
                 setattr(self, vname, self.dataset.createVariable(vname, "f4", coords, fill_value=np.nan))
                 getattr(self, vname).long_name = ""
                 getattr(self, vname).standard_name = vname
                 getattr(self, vname).units = "unknown"
 
         for vname in self.var_names_once:
-            # hm, shouldn't that be adaptive instead of "f4" ? I think I looked that up already once and if violates the CF convention, sadly
+            # hm, shouldn't that be adaptive instead of fixed to "f4" (e.g. "f8") ? I think I looked that up already once and it violates the CF convention, sadly
             setattr(self, vname, self.dataset.createVariable(vname, "f4", "traj", fill_value=np.nan))
             getattr(self, vname).long_name = ""
             getattr(self, vname).standard_name = vname
@@ -112,7 +134,7 @@ class ParticleFileNodes(BaseParticleFile):
 
     def get_pset_info_attributes(self):
         """
-        returns the main attributes of the pset_info.npy file.
+        :returns the main attributes of the pset_info.npy file.
 
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
@@ -133,7 +155,6 @@ class ParticleFileNodes(BaseParticleFile):
         """
 
         from parcels.tools import logger
-        # logger.info("read_from_npy() - {}, {}, {}".format(file_list, time_steps, var))
 
         data = np.nan * np.zeros((self.max_index_written+1, time_steps))
         time_index = np.zeros(self.max_index_written+1, dtype=np.int64)
@@ -150,12 +171,8 @@ class ParticleFileNodes(BaseParticleFile):
                                    'a NetCDF file yourself.\nTo avoid this error, make sure you '
                                    'close() your ParticleFile at the end of your script.' % self.tempwritedir)
             logger.info("Reading '{}' ...".format(npyfile))
-            # ------ ------ ------ ------ ------ ------
-            # id_ind = np.array(data_dict["id"], dtype=np.int64)
             id_ind = np.array(data_dict['index'])
-            # ------ ------ ------ ------ ------ ------
             t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
-            # # logger.info("data\[id_ind, t_ind\] = data_dict\[var\] - {}, {}, {}".format(id_ind, t_ind, var))
             data[id_ind, t_ind] = data_dict[var]
             time_index[id_ind] = time_index[id_ind] + 1
             t_ind_used[t_ind] = 1
