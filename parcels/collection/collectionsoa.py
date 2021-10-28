@@ -258,14 +258,6 @@ class ParticleCollectionSOA(ParticleCollection):
                 return self._data[name]
         return False
 
-    # @property
-    # def kernel_class(self):
-    #     return self._kclass
-
-    # @kernel_class.setter
-    # def kernel_class(self, value):
-    #     self._kclass = value
-
     def empty(self):
         """
         :returns if the collections is empty or not
@@ -1266,7 +1258,6 @@ class ParticleCollectionSOA(ParticleCollection):
                             data_dict[var] = self._data[var][indices_to_write].astype(dtype=np.int64)
                         else:
                             data_dict[var] = self._data[var][indices_to_write]
-                    # pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
 
                 pset_errs = ((self._data['state'][indices_to_write] != OperationCode.Delete) & np.greater(np.abs(time - self._data['time'][indices_to_write]), 1e-3, where=np.isfinite(self._data['time'][indices_to_write])))
                 if np.count_nonzero(pset_errs) > 0:

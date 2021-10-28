@@ -92,7 +92,7 @@ class BaseParticleFile(ABC):
         self.write_ondelete = write_ondelete
         self.convert_at_end = convert_at_end
         self.outputdt = outputdt
-        self.lasttime_written = None  # variable to check if time has been written already
+        self.lasttime_written = None
 
         self.dataset = None
         self.metadata = {}
@@ -235,7 +235,7 @@ class BaseParticleFile(ABC):
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
         # Create ID variable according to CF conventions
-        self.id = self.dataset.createVariable("trajectory", "i8", coords, fill_value=-2**(63))  # minint64 fill_value
+        self.id = self.dataset.createVariable("trajectory", "i8", coords, fill_value=-2**(63))
         self.id.long_name = "Unique identifier for each particle"
         self.id.cf_role = "trajectory_id"
 

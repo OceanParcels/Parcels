@@ -61,7 +61,7 @@ class ParticleFileSOA(BaseParticleFile):
         """
         :returns the reserved dimension names not to be written just once.
         """
-        return ['time', 'lat', 'lon', 'depth', 'id']  # , 'index'
+        return ['time', 'lat', 'lon', 'depth', 'id']
 
     def _create_trajectory_records(self, coords):
         """
@@ -78,7 +78,7 @@ class ParticleFileSOA(BaseParticleFile):
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
         attributes = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
-                      'file_list', 'file_list_once', 'parcels_mesh', 'metadata']  # , 'maxid_written'
+                      'file_list', 'file_list_once', 'parcels_mesh', 'metadata']
         return attributes
 
     def read_from_npy(self, file_list, n_timesteps, var):
