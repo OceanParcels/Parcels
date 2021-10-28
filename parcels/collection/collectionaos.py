@@ -1171,7 +1171,8 @@ class ParticleCollectionAOS(ParticleCollection):
         sizeof(self) = len(self) * sizeof(pclass)
         :returns size of this collection in bytes; initiated by calling sys.getsizeof(object)
         """
-        sz = self._data.nbytes if isinstance(self._data, np.ndarray) else sys.getsizeof(self._data)
+        sz = super(ParticleCollection, self).__sizeof__()
+        sz += self._data.nbytes if isinstance(self._data, np.ndarray) else sys.getsizeof(self._data)
         if self._data_c is not None:
             sz += self._data_c.nbytes if isinstance(self._data_c, np.ndarray) else sys.getsizeof(self._data_c)
         return sz

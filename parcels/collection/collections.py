@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from abc import ABC
 from abc import abstractmethod
@@ -868,7 +869,7 @@ class Collection(ABC):
 
         sizeof(self) = len(self) * sizeof(pclass)
         """
-        pass
+        return 0
 
     def empty(self):
         """
@@ -918,6 +919,21 @@ class ParticleCollection(Collection):
         ParticleCollection - Destructor
         """
         pass
+
+    def __sizeof__(self):
+        """
+        This function returns the size in actual bytes required in memory to hold the collection. Ideally and simply,
+        the size is computed as follows:
+
+        sizeof(self) = len(self) * sizeof(pclass)
+        :returns size of this collection in bytes; initiated by calling sys.getsizeof(object)
+        """
+        sz = sys.getsizeof(super(ParticleCollection, self))
+        sz += self._pu_indicators.nbytes if isinstance(self._pu_indicators, np.ndarray) else sys.getsizeof(self._pu_indicators)
+        sz += self._pu_centers.nbytes if isinstance(self._pu_centers, np.ndarray) else sys.getsizeof(self._pu_centers)
+        sz += sys.getsizeof(self._offset)
+        # skip data counting here
+        return sz
 
     @property
     def pu_indicators(self):

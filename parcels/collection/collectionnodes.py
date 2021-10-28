@@ -1458,7 +1458,7 @@ class ParticleCollectionNodes(ParticleCollection):
         sizeof(self) = len(self) * sizeof(pclass)
         :returns size of this collection in bytes; initiated by calling sys.getsizeof(object)
         """
-        size_bytes = 0
+        size_bytes = super(ParticleCollection, self).__sizeof__()
         i = 0
         node = self.begin()
         while node is not None:
