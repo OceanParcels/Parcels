@@ -61,7 +61,7 @@ class ParticleFileSOA(BaseParticleFile):
         """
         :returns the reserved dimension names not to be written just once.
         """
-        return ['time', 'lat', 'lon', 'depth', 'id']  # , 'index'
+        return ['time', 'lat', 'lon', 'depth', 'id']
 
     def _create_trajectory_records(self, coords):
         """

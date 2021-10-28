@@ -1550,7 +1550,6 @@ class ParticleCollectionNodes(ParticleCollection):
                         if not node.is_valid():
                             node = node.next
                             continue
-                        # return [i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt)) or np.equal(time, p.time)) and np.isfinite(p.id))]
                         if ((time - np.abs(node.data.dt / 2)) <= node.data.time < (time + np.abs(node.data.dt)) or np.equal(time, node.data.time)) and np.isfinite(node.data.id):
                             node_index = self._idgen.map_id_to_index(node.data.id)
                             indices_to_write.append(node_index)
@@ -1560,7 +1559,6 @@ class ParticleCollectionNodes(ParticleCollection):
                 # ============== here, the indices need to be actual indices in the double-linked list ================================================= #
                 if len(indices_to_write) > 0:
                     for var in pfile.var_names:
-                        # data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])
                         if 'id' in var:
                             data_dict[var] = np.array([np.int64(getattr(self._data[index].data, var)) for index in dataindices])
                 # ====================================================================================================================================== #
@@ -1584,7 +1582,6 @@ class ParticleCollectionNodes(ParticleCollection):
 
                 if len(pfile.var_names_once) > 0:
                     p_written_once = []
-                    # written_once_indices = []
                     node = self.begin()
                     while node is not None:
                         # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #

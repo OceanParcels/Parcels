@@ -267,14 +267,6 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         return self._data_c
 
-    # @property
-    # def kernel_class(self):
-    #     return self._kclass
-
-    # @kernel_class.setter
-    # def kernel_class(self, value):
-    #     self._kclass = value
-
     def cptr(self, index):
         if self._data_c is not None:
             return self._data_c[index]
