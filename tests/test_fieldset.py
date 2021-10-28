@@ -611,7 +611,7 @@ def test_fieldset_write(pset_mode, tmpdir):
     assert np.allclose(fieldset.U.data, da['U'].values)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', ['aos', 'soa'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
 @pytest.mark.parametrize('chunksize', [False, 'auto', {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
