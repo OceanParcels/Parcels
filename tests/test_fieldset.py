@@ -697,9 +697,6 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, chunksiz
     field_step_max = ((4*8+512*128*4+512*128*4+(512*128*4))*2*2)
     if mode != 'scipy':
         field_step_max *= 2
-    # sz_pset = sys.getsizeof(pset)
-    sz_pset = 0
-    field_step_max += sz_pset
     if with_GC:
         if chunksize is not False:
             N = mem_steps_np.shape[0]
@@ -707,7 +704,7 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, chunksiz
             # flat-lining - here, the line shall not exceed the theoretical max.
             if np.allclose(mem_steps_np[N-8:], perflog.memory_steps[-1], rtol=1e-6):
                 assert np.alltrue((mem_steps_np-mem0) <= field_step_max)
-            else:  # otehrwise, we have a peaky mem usage - make sure exceeding peaks are uncommon (<5% of measurements), and that peaks are less than 2*field_step_max
+            else:  # otherwise, we have a peaky mem usage - make sure exceeding peaks are uncommon (<5% of measurements), and that peaks are less than 2*field_step_max
                 excessive_occurence = np.count_nonzero((mem_steps_np-mem0) > field_step_max)
                 limit = max(1, int(0.05*N))
                 assert excessive_occurence <= limit
