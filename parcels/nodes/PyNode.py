@@ -52,17 +52,6 @@ class Node(object):
         self.idgen = idgen
         self.registered = True
 
-    def __deepcopy__(self, memodict={}):
-        """
-        :returns a deepcopy of this very object
-        """
-        result = type(self)(prev=None, next=None, id=-1, data=None)
-        result.registered = True
-        result.next = self.next
-        result.prev = self.prev
-        result.data = self.data
-        return result
-
     def __del__(self):
         """
         Node - Destructor
@@ -75,6 +64,17 @@ class Node(object):
         del self.data
         self.unlink()
         self.reset_data()
+
+    def __deepcopy__(self, memodict={}):
+        """
+        :returns a deepcopy of this very object
+        """
+        result = type(self)(prev=None, next=None, id=-1, data=None)
+        result.registered = True
+        result.next = self.next
+        result.prev = self.prev
+        result.data = self.data
+        return result
 
     def link(self):
         """
@@ -328,14 +328,19 @@ class NodeJIT(Node, ctypes.Structure):
             self.reset_data()
         self.link()
 
-    # ---- continue TODO ---- #
+    def __del__(self):
+        """
+        NodeJIT - Destructor
+        """
+        super(NodeJIT, self).__del__()
+
     def __deepcopy__(self, memodict={}):
+        """
+        :returns a deepcopy of this very object
+        The deepcopy operation includes individual registration of the object with the LibraryRegisterC interface.
+        """
         result = type(self)(prev=None, next=None, id=-1, data=None)
-        # result.id = self.id
-        # result.next = self.next
-        # result.prev = self.prev
-        # result.data = self.data
-        if self.c_lib_register_ref is not None:  # and self.registered:
+        if self.c_lib_register_ref is not None:
             libname = "node"
             result.c_lib_register_ref = self.c_lib_register_ref
             result.c_lib_register_ref.register(libname, close_callback=self.close_c_funcs)
@@ -350,111 +355,105 @@ class NodeJIT(Node, ctypes.Structure):
             result.link_c_functions(c_funcs)
             result.init_node_c(self)
 
-        # if result.prev is not None and isinstance(result.prev, NodeJIT):
-        #     result.set_prev_ptr_c(result, result.prev)
-        # else:
-        #     result.reset_prev_ptr_c(result)
-        # if result.next is not None and isinstance(result.next, NodeJIT):
-        #     result.set_next_ptr_c(result, result.next)
-        # else:
-        #     result.reset_next_ptr_c(result)
         result.set_prev(self.prev)
         result.set_next(self.next)
-
-        # if result.data is not None:
-        #     result.set_data_ptr_c(result, ctypes.cast(result.data, ctypes.c_void_p))
-        # else:
-        #     result.reset_data_ptr_c(result)
         result.set_data(self.data)
         return result
 
-    def __del__(self):
-        # nid = -1
-        # if self.data is not None:
-        #     nid = self.data.id
-        # logger.info("NodeJIT.del() {} is called.".format(nid))
-        # self.unlink()
-
-        # if self.data is not None:
-        #     try:
-        #         self.idgen.releaseID(self.data.id)
-        #     except:
-        #         pass
-        # del self.data
-        super(NodeJIT, self).__del__()
-        # logger.info("NodeJIT {} deleted.".format(nid))
-
+    # ---- continue TODO ---- #
     def link(self):
+        """
+        links this node to its neighbours, i.e. sets this object to be the successor of its predecessor and
+        sets this object to be the predecessor of its successor, so that we have a mutual connection in the form of:
+        prev <-> this <-> next
+
+        In NodeJIT, this linking requires a C-interface, and hence does not execute without the object being registered
+        in C.
+        """
         if not self.registered or self.c_lib_register_ref is None:
             return
-        # if self.prev is not None and self.prev.next != self:
-        #     self.prev.set_next(self)
-        # if self.next is not None and self.next.prev != self:
-        #     self.next.set_prev(self)
         super(NodeJIT, self).link()
 
     def unlink(self):
-        # nid = -1
-        # if self.data is not None:
-        #     nid = self.data.id
-        # logger.info("NodeJIT.unlink() {} is called.".format(nid))
+        """
+        removes this object from the linked chain of nodes, i.e. we set this predecessor's successor to be this successor
+        and set this successor's predecessor to this predecessor, so that the new connection is in the form of:
+        prev <-> next
+
+        In NodeJIT, this unlinking requires a C-interface, and hence does not execute without the object being registered
+        in C.
+        """
         super(NodeJIT, self).unlink()
-
-        # if self.prev is not None:
-        #     if self.next is not None:
-        #         # self.prev.set_next(self.next)
-        #         self.prev.set_next_ptr_c(self.next)
-        #     else:
-        #         # self.prev.reset_next()
-        #         self.prev.reset_next_ptr_c()
-        # if self.next is not None:
-        #     if self.prev is not None:
-        #         # self.next.set_prev(self.prev)
-        #         self.next.set_prev_ptr_c(self.prev)
-        #     else:
-        #         # self.next.reset_prev()
-        #         self.next.reset_prev_ptr_c()
-
-        # # self.reset_prev()
-        # self.reset_prev_ptr_c()
-        # # self.reset_next()
-        # self.reset_next_ptr_c()
-        # # self.reset_data()
-        # self.reset_data_ptr_c()
-        if self.c_lib_register_ref is not None:  # and self.registered:
+        if self.c_lib_register_ref is not None:
             self.unlink_c_functions()
             self.c_lib_register_ref.deregister("node")
-        # self.registered = False
         self.c_lib_register_ref = None
-        # self.prev = None
-        # self.next = None
 
     def __repr__(self):
+        """
+        :returns a byte-like representation of a Node
+        """
         return super().__repr__()
 
     def __str__(self):
-        return super().__str__()
+        """
+        returns a text-like representation of a Node
+        """
+        return "NodeJIT(p: {}, n: {}, id: {}, d: {})".format(repr(self.prev), repr(self.next), self.data.id, repr(self.data))
 
     def __sizeof__(self):
+        """
+        :returns the byte size of this object, INCLUDING the size of its containing object
+        """
         return super().__sizeof__()+sys.getsizeof(self._fields_)
 
     def __eq__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean if :arg other and this object are equal
+        """
         return super().__eq__(other)
 
     def __ne__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean if :arg other and this object are not equal
+        """
         return super().__ne__(other)
 
     def __lt__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean, if :arg other is ordered before the position of this
+        """
         return super().__lt__(other)
 
     def __le__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean, if :arg other is ordered before-or-at the position of this
+        """
         return super().__le__(other)
 
     def __gt__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean, if :arg other is ordered after the position of this
+        """
         return super().__gt__(other)
 
+    def __ge__(self, other):
+        """
+        :arg other: another Node object
+        :returns boolean, if :arg other is ordered after-or-at the position of this
+        """
+        return super().__ge__(other)
+
     def close_c_funcs(self):
-        # logger.info("NodeJIT.close_c_func() called.")
+        """
+        This functions releases the object's links to the C-interface (i.e. deregisters itself in C), and
+        deregisters itself from the InterfaceC object of the LibraryRegisterC.
+        """
         if self.registered:
             try:
                 self.reset_prev_ptr_c()
@@ -469,6 +468,9 @@ class NodeJIT(Node, ctypes.Structure):
         self.c_lib_register_ref = None
 
     def unlink_c_functions(self):
+        """
+        unlinks (i.e. resets / nullifies / nonifies) all C-function member variables.
+        """
         self.init_node_c = None
         self.set_prev_ptr_c = None
         self.set_next_ptr_c = None
@@ -478,6 +480,10 @@ class NodeJIT(Node, ctypes.Structure):
         self.reset_data_ptr_c = None
 
     def link_c_functions(self, c_func_dict):
+        """
+        Links all C-function member variables to their ctypes function interface.
+        :arg c_func_dict: dictionary of 'function name' (str) -> CDLL function
+        """
         self.init_node_c = c_func_dict['init_node']
         self.set_prev_ptr_c = c_func_dict['set_prev_ptr']
         self.set_next_ptr_c = c_func_dict['set_next_ptr']
@@ -487,42 +493,58 @@ class NodeJIT(Node, ctypes.Structure):
         self.reset_data_ptr_c = c_func_dict['reset_data_ptr']
 
     def set_data(self, data):
-        # logger.info("NodeJIT.set_data() is called.")
+        """
+        (mandatory) setter-function for the data payload of this Node
+        """
         super().set_data(data)
         if self.registered:
             self.update_data()
 
     def set_prev(self, prev):
-        # logger.info("NodeJIT.set_prev() is called.")
+        """
+        (mandatory) setter-function for the previous Node object
+        """
         super().set_prev(prev)
         if self.registered:
             self.update_prev()
 
     def set_next(self, next):
-        # logger.info("NodeJIT.set_next() is called.")
+        """
+        (mandatory) setter-function for the next Node object
+        """
         super().set_next(next)
         if self.registered:
             self.update_next()
 
     def reset_data(self):
-        # logger.info("NodeJIT.reset_data() is called.")
+        """
+        this function resets (i.e. nullifies / nonifies) the the Node's data payload
+        """
         super().reset_data()
         if self.registered and self.reset_data_ptr_c is not None:
             self.reset_data_ptr_c(self)
 
     def reset_prev(self):
-        # logger.info("NodeJIT.reset_prev() is called.")
+        """
+        this function resets (i.e. nullifies / nonifies) the the Node's predecessor
+        """
         super().reset_prev()
         if self.registered and self.reset_prev_ptr_c is not None:
             self.reset_prev_ptr_c(self)
 
     def reset_next(self):
-        # logger.info("NodeJIT.reset_next() is called.")
+        """
+        this function resets (i.e. nullifies / nonifies) the the Node's successor
+        """
         super().reset_next()
         if self.registered and self.reset_next_ptr_c is not None:
             self.reset_next_ptr_c(self)
 
     def update_prev(self):
+        """
+        This function checks the variable types of the 'prev' member and then updates the C-pointer of
+        this object's prior element using the 'prev' object.
+        """
         if self.set_prev_ptr_c is None or self.reset_prev_ptr_c is None:
             return
         if self.prev is not None and isinstance(self.prev, NodeJIT):
@@ -531,6 +553,10 @@ class NodeJIT(Node, ctypes.Structure):
             self.reset_prev_ptr_c(self)
 
     def update_next(self):
+        """
+        This function checks the variable types of the 'next' member and then updates the C-pointer of
+        this object's succeeding element using the 'next' object.
+        """
         if self.set_next_ptr_c is None or self.reset_next_ptr_c is None:
             return
         if self.next is not None and isinstance(self.next, NodeJIT):
@@ -539,6 +565,10 @@ class NodeJIT(Node, ctypes.Structure):
             self.reset_next_ptr_c(self)
 
     def update_data(self):
+        """
+        This function checks the variable types of the 'data' member and then updates the C-pointer of
+        this object's payload container element using the 'data' object.
+        """
         if self.set_data_ptr_c is None or self.reset_data_ptr_c is None:
             return
         if self.data is not None:
@@ -551,6 +581,13 @@ class NodeJIT(Node, ctypes.Structure):
 
 
 def NodeJIT_func_params():
+    """
+    This static function
+    :returns a list of dictionary records, each entry containg:
+     'name' (str)
+     'return' (ctypes type of function's return value)
+     'arguments' (list of ctypes types of the function's calling arguments)
+    """
     return [{"name": 'init_node', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]},
             {"name": 'set_prev_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]},
             {"name": 'set_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]},
