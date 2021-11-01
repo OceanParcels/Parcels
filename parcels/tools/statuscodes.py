@@ -1,4 +1,5 @@
 """Collection of pre-built recovery kernels"""
+from enum import IntEnum
 
 
 __all__ = ['StateCode', 'OperationCode', 'ErrorCode',
@@ -7,18 +8,18 @@ __all__ = ['StateCode', 'OperationCode', 'ErrorCode',
            'recovery_map']
 
 
-class StateCode(object):
+class StateCode(IntEnum):
     Success = 0
     Evaluate = 1
 
 
-class OperationCode(object):
+class OperationCode(IntEnum):
     Repeat = 2
     Delete = 3
     StopExecution = 4
 
 
-class ErrorCode(object):
+class ErrorCode(IntEnum):
     Error = 5
     ErrorInterpolation = 51
     ErrorOutOfBounds = 6
