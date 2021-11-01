@@ -26,7 +26,7 @@ from parcels.field import Field
 from parcels.field import VectorField
 from parcels.field import NestedField
 from parcels.field import SummedField
-from parcels.grid import GridCode
+from parcels.numba.grid import GridCode
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError
 from parcels.field import TimeExtrapolationError

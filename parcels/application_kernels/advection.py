@@ -12,7 +12,7 @@ def AdvectionRK4(particle, fieldset, time):
     """Advection of particles using fourth-order Runge-Kutta integration.
 
     Function needs to be converted to Kernel object before execution"""
-    (u1, v1) = fieldset.UV[particle]
+    (u1, v1) = fieldset.UV[time, particle.depth, particle.lat, particle.lon, particle]
     lon1, lat1 = (particle.lon + u1*.5*particle.dt, particle.lat + v1*.5*particle.dt)
     (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth, lat1, lon1, particle]
     lon2, lat2 = (particle.lon + u2*.5*particle.dt, particle.lat + v2*.5*particle.dt)

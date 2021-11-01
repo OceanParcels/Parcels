@@ -149,13 +149,16 @@ class KernelSOA(BaseKernel):
                     continue
                 f.data = np.array(f.data)
 
-        numba_pset = convert_pset_to_tlist(pset)
-        for p in numba_pset:
+        for p in pset:
             self.static_evaluate_particle(p, endtime, sign_dt, dt,
                                           self._ptype, self._pyfunc,
                                           self._fieldset,
                                           analytical=analytical)
-        convert_tlist_to_pset(numba_pset, pset)
+#         numba_pset = convert_pset_to_tlist(pset)
+#         for p in numba_pset:
+#             self.static_evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+#         convert_tlist_to_pset(numba_pset, pset)
+
 #        for p in pset:
 #            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
@@ -202,11 +205,12 @@ class KernelSOA(BaseKernel):
         recovery_map = recovery_base_map.copy()
         recovery_map.update(recovery)
 
-        if pset.fieldset is not None:
-            for g in pset.fieldset.gridset.grids:
-                if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
-                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
-                                            g.chunk_deprecated, g.load_chunk)
+#         if pset.fieldset is not None:
+#             for g in pset.fieldset.gridset.grids:
+#                 print(len(g.load_chunk), g.chunk_not_loaded)
+#                 if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
+#                     g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
+#                                             g.chunk_deprecated, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:

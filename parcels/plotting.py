@@ -6,8 +6,8 @@ import copy
 
 from parcels.field import Field
 from parcels.field import VectorField
-from parcels.grid import CurvilinearGrid
-from parcels.grid import GridCode
+from parcels.numba.grid.curvilinear import CurvilinearGrid
+from parcels.numba.grid import GridCode
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
 

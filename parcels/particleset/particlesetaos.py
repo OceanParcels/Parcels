@@ -7,7 +7,7 @@ import numpy as np
 import xarray as xr
 from ctypes import c_void_p
 
-from parcels.grid import GridCode
+from parcels.numba.grid import GridCode
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.kernel.kernelaos import KernelAOS
