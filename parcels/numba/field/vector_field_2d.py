@@ -1,6 +1,6 @@
 from numba.experimental import jitclass
 from numba.core.typing.asnumbatype import as_numba_type
-from parcels.numba.grid.field import NumbaField
+from .field import NumbaField
 import numba as nb
 import numpy as np
 from parcels.numba.grid.base import GridCode

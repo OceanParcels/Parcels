@@ -1,8 +1,7 @@
-from numba.core.decorators import njit
 from numba.core.typing.asnumbatype import as_numba_type
-from parcels.numba.grid.field import NumbaField
-from parcels.numba.grid.vector_field_2d import NumbaVectorField2D
-from parcels.numba.grid.vector_field_3d import NumbaVectorField3D
+from .field import NumbaField
+from parcels.numba.field.vector_field_2d import NumbaVectorField2D
+from parcels.numba.field.vector_field_3d import NumbaVectorField3D
 from numba.experimental import jitclass
 
 

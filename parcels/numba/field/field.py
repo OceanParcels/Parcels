@@ -1,10 +1,10 @@
 import numpy as np
-from parcels.numba.grid.base import GridCode
 from numba.experimental import jitclass
 from numba.core.typing.asnumbatype import as_numba_type
 from parcels.numba.grid.rectilinear import RectilinearZGrid
 import numba as nb
 from numba.core.decorators import njit
+import math
 
 
 @njit
@@ -21,11 +21,14 @@ def _numba_isclose(a, b):
     ("allow_time_extrapolation", nb.bool_),
 ])
 class NumbaField():
-    def __init__(self, grid, data, interp_method="nearest", gridindexingtype="nemo"):
+    def __init__(self, grid, data, interp_method="nearest",
+                 gridindexingtype="nemo", time_periodic=True):
         self.grid = grid
         self.data = data
         self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
+        self.time_periodic = time_periodic
+        # TODO: add unit conversion.
 
     def interpolator2D(self, ti, z, y, x, particle=None):
         (xsi, eta, _, xi, yi, _) = self.grid.search_indices(x, y, z)
@@ -166,6 +169,25 @@ class NumbaField():
             raise RuntimeError("Current interpolation method is not "
                                "implemented for 3D grids")
 
+    def temporal_interpolate_fullfield(self, ti, time):
+        """Calculate the data of a field between two snapshots,
+        using linear interpolation
+
+        :param ti: Index in time array associated with time (via :func:`time_index`)
+        :param time: Time to interpolate to
+
+        :rtype: Linearly interpolated field"""
+        t0 = self.grid.time[ti]
+        if time == t0:
+            return self.data[ti, :]
+        elif ti+1 >= len(self.grid.time):
+            raise self.TimeExtrapolationError(time, field=self, msg='show_time')
+        else:
+            t1 = self.grid.time[ti+1]
+            f0 = self.data[ti, :]
+            f1 = self.data[ti+1, :]
+            return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
+
     def spatial_interpolation(self, ti, z, y, x, time, particle=None):
         """Interpolate horizontal field values using a SciPy interpolator"""
 
@@ -189,15 +211,15 @@ class NumbaField():
                 time < self.grid.time[0] or time > self.grid.time[-1]):
             self.TimeExtrapolationError(time)
         time_index = self.grid.time <= time
-        # if self.time_periodic:
-        #     if time_index.all() or np.logical_not(time_index).all():
-        #         periods = int(math.floor((time-self.grid.time_full[0])/(self.grid.time_full[-1]-self.grid.time_full[0])))
-        #         self.grid.periods = periods
-        #         time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
-        #         time_index = self.grid.time <= time
-        #         ti = time_index.argmin() - 1 if time_index.any() else 0
-        #         return (ti, periods)
-        #     return (time_index.argmin() - 1 if time_index.any() else 0, 0)
+        if self.time_periodic:
+            if time_index.all() or np.logical_not(time_index).all():
+                periods = int(math.floor((time-self.grid.time_full[0])/(self.grid.time_full[-1]-self.grid.time_full[0])))
+                self.grid.periods = periods
+                time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
+                time_index = self.grid.time <= time
+                ti = time_index.argmin() - 1 if time_index.any() else 0
+                return (ti, periods)
+            return (time_index.argmin() - 1 if time_index.any() else 0, 0)
         if time_index.all():
             # If given time > last known field time, use
             # the last field frame without interpolation
