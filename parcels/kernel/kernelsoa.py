@@ -151,7 +151,10 @@ class KernelSOA(BaseKernel):
 
         numba_pset = convert_pset_to_tlist(pset)
         for p in numba_pset:
-            self.static_evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+            self.static_evaluate_particle(p, endtime, sign_dt, dt,
+                                          self._ptype, self._pyfunc,
+                                          self._fieldset,
+                                          analytical=analytical)
         convert_tlist_to_pset(numba_pset, pset)
 #        for p in pset:
 #            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
