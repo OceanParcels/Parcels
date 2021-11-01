@@ -15,6 +15,11 @@ from parcels.numba.grid import GridCode
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
+from parcels.numba.field.fieldset import _base_fieldset_spec, BaseNumbaFieldSet
+from numba.core.typing.asnumbatype import as_numba_type
+from parcels.numba.field.field import NumbaField
+from parcels.numba.field.vector_field_2d import NumbaVectorField2D
+from numba.experimental import jitclass
 try:
     from mpi4py import MPI
 except:
@@ -31,21 +36,51 @@ class FieldSet(object):
     :param V: :class:`parcels.field.Field` object for meridional velocity component
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
-    def __init__(self, U, V, fields=None):
+    def __init__(self, U, V, fields={}):
         self.gridset = GridSet()
         self.completed = False
-        if U:
-            self.add_field(U, 'U')
-            self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
-        if V:
-            self.add_field(V, 'V')
+        # if U:
+            # self.add_field(U, 'U')
+            # self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
+        # if V:
+            # self.add_field(V, 'V')
+        W = fields.pop("W", None)
 
+        self.numba_fieldset = self.create_numba_fieldset(U, V, W, fields)
         # Add additional fields as attributes
-        if fields:
-            for name, field in fields.items():
-                self.add_field(field, name)
+        # if fields:
+            # for name, field in fields.items():
+                # self.add_field(field, name)
+
+        self.U = U
+        self.V = V
+        self.W = W
+        self.UV = self.numba_fieldset.UV
+        self.UVW = self.numba_fieldset.UVW
+        for name, field in fields.items():
+            setattr(self, name, field)
 
         self.compute_on_defer = None
+
+    @staticmethod
+    def create_numba_fieldset(U, V, W=None, fields={}):
+        spec = deepcopy(_base_fieldset_spec)
+        for name, field in fields.items():
+            if isinstance(field, Field):
+                spec.append((name, as_numba_type(NumbaField)))
+            elif isinstance(field, VectorField):
+                spec.append((name, as_numba_type(NumbaVectorField2D)))
+            else:
+                raise TypeError(f"'{name}' Field should be scalar or 2D vector field ")
+        numba_class = jitclass(BaseNumbaFieldSet, spec=spec)
+        if W is not None:
+            numba_fieldset = numba_class(U.numba_field, V.numba_field, W.numba_field)
+        else:
+            numba_fieldset = numba_class(U.numba_field, V.numba_field)
+
+        for name, field in fields.items():
+            setattr(numba_fieldset, name, field.numba_field)
+        return numba_fieldset
 
     @staticmethod
     def checkvaliddimensionsdict(dims):

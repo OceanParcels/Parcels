@@ -187,7 +187,6 @@ class RectilinearZGrid(RectilinearGrid, BaseZGrid):
         self.gtype = GridCode.RectilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.zdim = self.depth.size
-        print(self.depth.size, self.depth.shape)
 #         self.z4d = -1  # only used in RectilinearSGrid
 #         if not self.depth.dtype == np.float32:
 #             self.depth = self.depth.astype(np.float32)

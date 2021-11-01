@@ -5,14 +5,16 @@ from parcels.numba.field.vector_field_3d import NumbaVectorField3D
 from numba.experimental import jitclass
 
 
-@jitclass(spec=[
+_base_fieldset_spec = [
     ("U", as_numba_type(NumbaField)),
     ("V", as_numba_type(NumbaField)),
     ("W", as_numba_type(NumbaField)),
     ("UV", as_numba_type(NumbaVectorField2D)),
     ("UVW", as_numba_type(NumbaVectorField3D))
-])
-class NumbaFieldSet():
+]
+
+
+class BaseNumbaFieldSet():
     def __init__(self, U, V, W=None):
         self.U = U
         self.V = V
