@@ -9,7 +9,7 @@ from parcels.field import Field, DeferredArray
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
-from parcels.numba.grid import BaseGrid, GridStatus
+from parcels.grid import Grid, GridStatus
 from parcels.gridset import GridSet
 from parcels.numba.grid import GridCode
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
@@ -55,6 +55,10 @@ class FieldSet(object):
         self.U = U
         self.V = V
         self.W = W
+        if isinstance(self.U, Field):
+            self.time_origin = self.U.grid.time_origin
+        else:
+            self.time_origin = self.U[0].grid.time_origin
         self.UV = self.numba_fieldset.UV
         self.UVW = self.numba_fieldset.UVW
         for name, field in fields.items():
@@ -153,7 +157,7 @@ class FieldSet(object):
             else:
                 time_origin = TimeConverter(0)
             print(time, time_origin)
-            grid = BaseGrid.create_grid(lon, lat, depth, time, time_origin=time[0], mesh=mesh)
+            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time[0], mesh=mesh)
             if 'creation_log' not in kwargs.keys():
                 kwargs['creation_log'] = 'from_data'
 

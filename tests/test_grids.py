@@ -16,8 +16,8 @@ pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel':
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_multi_structured_grids(pset_mode, mode):
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_multi_structured_grids(pset_mode, mode="scipy"):
 
     def temp_func(lon, lat):
         return 20 + lat/1000. + 2 * np.sin(lon*2*np.pi/5000.)
@@ -273,8 +273,8 @@ def test_rectilinear_s_grids_advect1(pset_mode, mode):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_rectilinear_s_grids_advect2(pset_mode, mode):
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_rectilinear_s_grids_advect2(pset_mode, mode="scipy"):
     # Move particle towards the east, check relative depth evolution
     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
@@ -319,8 +319,8 @@ def test_rectilinear_s_grids_advect2(pset_mode, mode):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_curvilinear_grids(pset_mode, mode):
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_curvilinear_grids(pset_mode, mode="scipy"):
 
     x = np.linspace(0, 1e3, 7, dtype=np.float32)
     y = np.linspace(0, 1e3, 5, dtype=np.float32)
@@ -356,8 +356,8 @@ def test_curvilinear_grids(pset_mode, mode):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_nemo_grid(pset_mode, mode):
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_nemo_grid(pset_mode, mode="scipy"):
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
@@ -391,8 +391,8 @@ def test_nemo_grid(pset_mode, mode):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advect_nemo(pset_mode, mode):
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advect_nemo(pset_mode, mode="scipy"):
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
@@ -413,9 +413,9 @@ def test_advect_nemo(pset_mode, mode):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time', [True, False])
-def test_cgrid_uniform_2dvel(pset_mode, mode, time):
+def test_cgrid_uniform_2dvel(pset_mode, time, mode="scipy"):
     lon = np.array([[0, 2], [.4, 1.5]])
     lat = np.array([[0, -.5], [.8, .5]])
     U = np.array([[-99, -99], [4.4721359549995793e-01, 1.3416407864998738e+00]])
@@ -446,10 +446,10 @@ def test_cgrid_uniform_2dvel(pset_mode, mode, time):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1', 'slev2'])
 @pytest.mark.parametrize('time', [True, False])
-def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
+def test_cgrid_uniform_3dvel(pset_mode, vert_mode, time, mode="scipy"):
 
     lon = np.array([[0, 2], [.4, 1.5]])
     lat = np.array([[0, -.5], [.8, .5]])
@@ -509,10 +509,10 @@ def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1'])
 @pytest.mark.parametrize('time', [True, False])
-def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
+def test_cgrid_uniform_3dvel_spherical(pset_mode, vert_mode, time, mode="scipy"):
     data_path = path.join(path.dirname(__file__), 'test_data/')
     dim_file = xr.open_dataset(data_path + 'mask_nemo_cross_180lon.nc')
     u_file = xr.open_dataset(data_path + 'Uu_eastward_nemo_cross_180lon.nc')
@@ -575,10 +575,10 @@ def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
 @pytest.mark.parametrize('deferred_load', [True, False])
-def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
+def test_popgrid(pset_mode, vert_discretisation, deferred_load, mode="scipy"):
     mesh = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
     if vert_discretisation == 'zlevel':
         w_dep = 'w_dep'
@@ -632,9 +632,9 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
-def test_cgrid_indexing(pset_mode, mode, gridindexingtype):
+def test_cgrid_indexing(pset_mode, gridindexingtype, mode="scipy"):
     xdim, ydim = 151, 201
     a = b = 20000  # domain size
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
@@ -684,10 +684,10 @@ def test_cgrid_indexing(pset_mode, mode, gridindexingtype):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 @pytest.mark.parametrize('withtime', [False, True])
-def test_cgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
+def test_cgrid_indexing_3D(pset_mode, gridindexingtype, withtime, mode="scipy"):
     xdim = zdim = 201
     ydim = 2
     a = c = 20000  # domain size

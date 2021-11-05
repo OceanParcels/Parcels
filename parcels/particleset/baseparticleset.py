@@ -11,7 +11,6 @@ import progressbar
 
 from parcels.tools.statuscodes import StateCode
 from parcels.tools.global_statics import get_package_dir
-from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.application_kernels.advection import AdvectionRK4
@@ -340,11 +339,11 @@ class BaseParticleSet(NDCluster):
             else:
                 self.kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
-            if self.collection.ptype.uses_jit:
-                self.kernel.remove_lib()
-                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
-                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
-                self.kernel.load_lib()
+            # if self.collection.ptype.uses_jit:
+            #     self.kernel.remove_lib()
+            #     cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
+            #     self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
+            #     self.kernel.load_lib()
 
         # Set up the interaction kernel(s) if not set and given.
         if self.interaction_kernel is None and pyfunc_inter is not None:

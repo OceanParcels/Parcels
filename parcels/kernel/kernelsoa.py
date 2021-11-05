@@ -17,8 +17,8 @@ except:
     MPI = None
 
 from parcels.kernel.basekernel import BaseKernel
-from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
-from parcels.compilation.codegenerator import LoopGenerator
+# from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
+# from parcels.compilation.codegenerator import LoopGenerator
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
@@ -92,34 +92,34 @@ class KernelSOA(BaseKernel):
         self.name = "%s%s" % (ptype.name, self.funcname)
 
         # Generate the kernel function and add the outer loop
-        if self.ptype.uses_jit:
-            kernelgen = KernelGenerator(fieldset, ptype)
-            kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
-                                              self.funcvars)
-            self.field_args = kernelgen.field_args
-            self.vector_field_args = kernelgen.vector_field_args
-            fieldset = self.fieldset
-            for f in self.vector_field_args.values():
-                Wname = f.W.ccode_name if f.W else 'not_defined'
-                for sF_name, sF_component in zip([f.U.ccode_name, f.V.ccode_name, Wname], ['U', 'V', 'W']):
-                    if sF_name not in self.field_args:
-                        if sF_name != 'not_defined':
-                            self.field_args[sF_name] = getattr(f, sF_component)
-            self.const_args = kernelgen.const_args
-            loopgen = LoopGenerator(fieldset, ptype)
-            if path.isfile(self._c_include):
-                with open(self._c_include, 'r') as f:
-                    c_include_str = f.read()
-            else:
-                c_include_str = self._c_include
-            self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
-                                          kernel_ccode, c_include_str)
-
-            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
-                self.dyn_srcs = src_file_or_files
-            else:
-                self.src_file = src_file_or_files
+        # if self.ptype.uses_jit:
+        #     kernelgen = KernelGenerator(fieldset, ptype)
+        #     kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
+        #                                       self.funcvars)
+        #     self.field_args = kernelgen.field_args
+        #     self.vector_field_args = kernelgen.vector_field_args
+        #     fieldset = self.fieldset
+        #     for f in self.vector_field_args.values():
+        #         Wname = f.W.ccode_name if f.W else 'not_defined'
+        #         for sF_name, sF_component in zip([f.U.ccode_name, f.V.ccode_name, Wname], ['U', 'V', 'W']):
+        #             if sF_name not in self.field_args:
+        #                 if sF_name != 'not_defined':
+        #                     self.field_args[sF_name] = getattr(f, sF_component)
+        #     self.const_args = kernelgen.const_args
+        #     loopgen = LoopGenerator(fieldset, ptype)
+        #     if path.isfile(self._c_include):
+        #         with open(self._c_include, 'r') as f:
+        #             c_include_str = f.read()
+        #     else:
+        #         c_include_str = self._c_include
+        #     self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
+        #                                   kernel_ccode, c_include_str)
+        #
+        #     src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
+        #     if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
+        #         self.dyn_srcs = src_file_or_files
+        #     else:
+        #         self.src_file = src_file_or_files
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""

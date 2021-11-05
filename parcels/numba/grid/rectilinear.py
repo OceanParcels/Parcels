@@ -179,13 +179,13 @@ class RectilinearZGrid(RectilinearGrid, BaseZGrid):
     """
     __init__rect = RectilinearGrid.__init__
 
-    def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
+    def __init__(self, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
         self.__init__rect(lon, lat, time, time_origin, mesh)
 #         if isinstance(depth, np.ndarray):
 #             assert(len(depth.shape) <= 1), 'depth is not a vector'
 
         self.gtype = GridCode.RectilinearZGrid
-        self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth.astype(nb.float32)
         self.zdim = self.depth.size
 #         self.z4d = -1  # only used in RectilinearSGrid
 #         if not self.depth.dtype == np.float32:
@@ -217,13 +217,13 @@ class RectilinearSGrid(RectilinearGrid):
     """
     __init_rect = RectilinearGrid.__init__
 
-    def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
+    def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
         self.__init_rect(lon, lat, time, time_origin, mesh)
 #         assert(isinstance(depth, np.ndarray) and 
         assert len(depth.shape) in [3, 4], 'depth is not a 3D or 4D numpy array'
 
         self.gtype = GridCode.RectilinearSGrid
-        self.depth = depth
+        self.depth = depth.astype(nb.float32)
         self.zdim = self.depth.shape[-3]
 #         self.z4d = len(self.depth.shape) == 4
 #         if self.z4d:
@@ -234,8 +234,8 @@ class RectilinearSGrid(RectilinearGrid):
 #         else:
 #             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
 #             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
-        if not self.depth.dtype == np.float32:
-            self.depth = self.depth.astype(np.float32)
+        # if not self.depth.dtype == np.float32:
+            # self.depth = self.depth.astype(np.float32)
         if self.lat_flipped:
             self.depth = self.depth[:, :, ::-1, :]
 #             self.depth = np.flip(self.depth, axis=-2)

@@ -2,6 +2,7 @@ import numpy as np
 
 from parcels.numba.grid.curvilinear import CurvilinearSGrid, CurvilinearZGrid
 from parcels.numba.grid.rectilinear import RectilinearSGrid, RectilinearZGrid
+from parcels.numba.grid import GridStatus
 
 
 class Grid():

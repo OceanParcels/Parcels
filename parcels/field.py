@@ -33,6 +33,7 @@ from parcels.tools.loggers import logger
 from parcels.numba.field.field import NumbaField
 from parcels.numba.field.vector_field_3d import NumbaVectorField3D
 from parcels.numba.field.vector_field_2d import NumbaVectorField2D
+from _ast import Attribute
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
@@ -105,17 +106,42 @@ class Field():
             gridindexingtype='nemo', to_write=False, **kwargs):
         if grid is None:
             grid = Grid.create_grid(lon, lat, depth, time,
-                                         time_origin=time_origin, mesh=mesh)
+                                    time_origin=time_origin, mesh=mesh)
         elif grid.defer_load and isinstance(data, np.ndarray):
-            raise ValueError('Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately')
-        self.numba_field = NumbaField(grid, data, interp_method=interp_method,
-                                      time_periodic=time_periodic)
-
+            raise ValueError('Cannot combine Grid from defer_loaded Field with'
+                             ' np.ndarray data. please specify lon, lat, depth and time dimensions separately')
+        self.gridindexingtype = gridindexingtype
+        self.vmin = vmin
+        self.vmax = vmax
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
         else:
             self.name, self.filebuffername = name
+        self.cast_data_dtype = cast_data_dtype
+        if self.cast_data_dtype == 'float32':
+            self.cast_data_dtype = np.float32
+        elif self.cast_data_dtype == 'float64':
+            self.cast_data_dtype = np.float64
+
+        if not grid.defer_load:
+            data = self.reshape(data, grid, transpose)
+
+            # Hack around the fact that NaN and ridiculously large values
+            # propagate in SciPy's interpolators
+            lib = np if isinstance(data, np.ndarray) else da
+            data[lib.isnan(data)] = 0.
+            if self.vmin is not None:
+                data[data < self.vmin] = 0.
+            if self.vmax is not None:
+                data[data > self.vmax] = 0.
+
+            if grid._add_last_periodic_data_timestep:
+                data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
+        self.numba_field = NumbaField(grid, data, interp_method=interp_method,
+                                      time_periodic=time_periodic)
+
+
         time_origin = TimeConverter(0) if time_origin is None else time_origin
         self.igrid = -1
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
@@ -168,28 +194,6 @@ class Field():
                 self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
                 self.grid.time_full = self.grid.time
 
-        self.vmin = vmin
-        self.vmax = vmax
-        self.cast_data_dtype = cast_data_dtype
-        if self.cast_data_dtype == 'float32':
-            self.cast_data_dtype = np.float32
-        elif self.cast_data_dtype == 'float64':
-            self.cast_data_dtype = np.float64
-
-        if not self.grid.defer_load:
-            self.data = self.reshape(self.data, transpose)
-
-            # Hack around the fact that NaN and ridiculously large values
-            # propagate in SciPy's interpolators
-            lib = np if isinstance(self.data, np.ndarray) else da
-            self.data[lib.isnan(self.data)] = 0.
-            if self.vmin is not None:
-                self.data[self.data < self.vmin] = 0.
-            if self.vmax is not None:
-                self.data[self.data > self.vmax] = 0.
-
-            if self.grid._add_last_periodic_data_timestep:
-                self.data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
 
         self._scaling_factor = None
 
@@ -222,7 +226,7 @@ class Field():
             raise SyntaxError('Field received an unexpected keyword argument "%s"' % list(kwargs.keys())[0])
 
     def __getattr__(self, key):
-        if not hasattr(self, "numba_field"):
+        if key == "numba_field":
             raise AttributeError("Cannot get numba field vars before creating it.")
         if key in ["grid", "data", "interp_method", "time_periodic", "allow_time_extrapolation"]:
             return getattr(self.numba_field, key)
@@ -511,7 +515,7 @@ class Field():
         return cls(name, data, grid=grid, allow_time_extrapolation=allow_time_extrapolation,
                    interp_method=interp_method, **kwargs)
 
-    def reshape(self, data, transpose=False):
+    def reshape(self, data, grid, transpose=False):
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray, da.core.Array)):
             data = np.array(data)
@@ -522,16 +526,16 @@ class Field():
         lib = np if isinstance(data, np.ndarray) else da
         if transpose:
             data = lib.transpose(data)
-        if self.grid.lat_flipped:
+        if grid.lat_flipped:
             data = lib.flip(data, axis=-2)
 
-        if self.grid.xdim == 1 or self.grid.ydim == 1:
+        if grid.xdim == 1 or grid.ydim == 1:
             data = lib.squeeze(data)  # First remove all length-1 dimensions in data, so that we can add them below
-        if self.grid.xdim == 1 and len(data.shape) < 4:
+        if grid.xdim == 1 and len(data.shape) < 4:
             if lib == da:
                 raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use chunksize=None')
             data = lib.expand_dims(data, axis=-1)
-        if self.grid.ydim == 1 and len(data.shape) < 4:
+        if grid.ydim == 1 and len(data.shape) < 4:
             if lib == da:
                 raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use chunksize=None')
             data = lib.expand_dims(data, axis=-2)
@@ -540,21 +544,24 @@ class Field():
             errormessage = ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
                             'Flag transpose=True could help to reorder the data.' % self.name)
 
-            assert data.shape[0] == self.grid.tdim, errormessage
-            assert data.shape[2] == self.grid.ydim - 2 * self.grid.meridional_halo, errormessage
-            assert data.shape[3] == self.grid.xdim - 2 * self.grid.zonal_halo, errormessage
+            assert data.shape[0] == grid.tdim, errormessage
+            assert data.shape[2] == grid.ydim - 2 * grid.meridional_halo, errormessage
+            assert data.shape[3] == grid.xdim - 2 * grid.zonal_halo, errormessage
             if self.gridindexingtype == 'pop':
-                assert data.shape[1] == self.grid.zdim or data.shape[1] == self.grid.zdim-1, errormessage
+                assert data.shape[1] == grid.zdim or data.shape[1] == grid.zdim-1, errormessage
             else:
-                assert data.shape[1] == self.grid.zdim, errormessage
+                assert data.shape[1] == grid.zdim, errormessage
         else:
-            assert (data.shape == (self.grid.tdim,
-                                   self.grid.ydim - 2 * self.grid.meridional_halo,
-                                   self.grid.xdim - 2 * self.grid.zonal_halo)), \
+            assert (data.shape == (grid.tdim,
+                                   grid.ydim - 2 * grid.meridional_halo,
+                                   grid.xdim - 2 * grid.zonal_halo)), \
                 ('Field %s expecting a data shape of [tdim, ydim, xdim]. '
                  'Flag transpose=True could help to reorder the data.' % self.name)
-        if self.grid.meridional_halo > 0 or self.grid.zonal_halo > 0:
-            data = self.add_periodic_halo(zonal=self.grid.zonal_halo > 0, meridional=self.grid.meridional_halo > 0, halosize=max(self.grid.meridional_halo, self.grid.zonal_halo), data=data)
+            data = data.reshape(data.shape[0], 1, data.shape[1], data.shape[2])
+        if grid.meridional_halo > 0 or grid.zonal_halo > 0:
+            data = self.add_periodic_halo(
+                zonal=grid.zonal_halo > 0, meridional=grid.meridional_halo > 0,
+                halosize=max(grid.meridional_halo, grid.zonal_halo), data=data)
         return data
 
     def set_scaling_factor(self, factor):

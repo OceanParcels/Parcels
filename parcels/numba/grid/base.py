@@ -88,11 +88,10 @@ class BaseGrid(object):
         self.yi = np.empty(0, dtype=nb.int32)
         self.zi = np.empty(0, dtype=nb.int32)
         self.ti = -1
-        self.lon = lon
-        self.lat = lat
-#         self.time = np.zeros(1, dtype=np.float64) if time is None else time
-        self.time = time
-        self.time_origin = time_origin
+        self.lon = lon.astype(nb.float32)
+        self.lat = lat.astype(nb.float32)
+        self.time = np.zeros(1, dtype=nb.float64) if time is None else time.astype(nb.float64)
+        self.time_origin = nb.float64(time_origin)
         self.time_full = self.time  # needed for deferred_loaded Fields
 #         self.time_origin = TimeConverter() if time_origin is None else time_origin
 #         assert isinstance(self.time_origin, TimeConverter), 'time_origin needs to be a TimeConverter object'

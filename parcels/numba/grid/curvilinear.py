@@ -212,7 +212,7 @@ class CurvilinearZGrid(CurvilinearGrid):
     """
     __init__curv = CurvilinearGrid.__init__
 
-    def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
+    def __init__(self, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
         self.__init__curv(lon, lat, time, time_origin, mesh)
 #         if isinstance(depth, np.ndarray):
 #             assert(len(depth.shape) == 1), 'depth is not a vector'
@@ -249,7 +249,7 @@ class CurvilinearSGrid(CurvilinearGrid):
     """
     __init__curv = CurvilinearGrid.__init__
 
-    def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
+    def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
         self.__init__curv(lon, lat, time, time_origin, mesh)
 #         assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
