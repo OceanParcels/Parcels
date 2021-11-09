@@ -10,6 +10,8 @@ import xarray as xr
 from ctypes import c_void_p
 import cftime
 
+import progressbar
+
 from parcels.grid import GridCode
 from parcels.field import Field
 from parcels.compilation import GNUCompiler_MS
@@ -900,6 +902,17 @@ class ParticleSetNodes(BaseParticleSet):
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
+    def __create_progressbar(self, starttime, endtime):
+        pbar = None
+        try:
+            pbar = progressbar.ProgressBar(max_value=abs(endtime - starttime)).start()
+        except:  # for old versions of progressbar
+            try:
+                pbar = progressbar.ProgressBar(maxvalue=abs(endtime - starttime)).start()
+            except:  # for even older OR newer versions
+                pbar = progressbar.ProgressBar(maxval=abs(endtime - starttime)).start()
+        return pbar
+
     @classmethod
     def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from lists of lon and lat
@@ -1220,7 +1233,7 @@ class ParticleSetNodes(BaseParticleSet):
         if verbose_progress is None:
             walltime_start = time_module.time()
         if verbose_progress:
-            pbar = self._create_progressbar_(_starttime, endtime)
+            pbar = self.__create_progressbar(_starttime, endtime)
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
 
@@ -1230,7 +1243,7 @@ class ParticleSetNodes(BaseParticleSet):
                     logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir_base)
                     logger.info('You can use "parcels_convert_npydir_to_netcdf %s" to convert these '
                                 'to a NetCDF file during the run.' % output_file.tempwritedir_base)
-                pbar = self._create_progressbar_(_starttime, endtime)
+                pbar = self.__create_progressbar(_starttime, endtime)
                 verbose_progress = True
 
             if dt > 0:
