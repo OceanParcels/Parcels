@@ -12,7 +12,6 @@ from os import path
 from datetime import timedelta as delta
 
 pset_modes = ['soa', 'aos', 'nodes']
-pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
@@ -93,8 +92,6 @@ def test_multi_structured_grids(pset_mode, mode):
         p0 = pset[0]
     elif pset_mode == 'nodes':
         p0 = pset.get(np.int64(0))
-    # assert np.all([pset.xi[i, 0] != pset.xi[i, 1] for i in range(3)])
-    # assert np.all([pset.yi[i, 0] != pset.yi[i, 1] for i in range(3)])
     assert np.alltrue([p0.xi[0] != p0.xi[1] for i in range(3)])
     assert np.alltrue([p0.yi[0] != p0.yi[1] for i in range(3)])
 
@@ -234,7 +231,7 @@ def test_rectilinear_s_grid_sampling(pset_mode, mode, z4d):
                                                   lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
 
     pset.execute(pset.Kernel(sampleTemp), runtime=0, dt=0)
-    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node would have an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
@@ -366,7 +363,7 @@ def test_curvilinear_grids(pset_mode, mode):
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
-    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node would have an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
@@ -403,7 +400,7 @@ def test_nemo_grid(pset_mode, mode):
     latp = 81.5
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node would have an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
@@ -433,7 +430,7 @@ def test_advect_nemo(pset_mode, mode):
     latp = 81.5
     pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=[lonp], lat=[latp])
     pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
-    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node would have an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
@@ -470,7 +467,7 @@ def test_cgrid_uniform_2dvel(pset_mode, mode, time):
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node would have an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
@@ -537,7 +534,7 @@ def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node would have an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
@@ -612,7 +609,7 @@ def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
     elif pset_mode == 'nodes':
         pset.get(np.int64(0)).zonal = fieldset.U.units.to_source(pset.get(np.int64(0)).zonal, lonp, latp, 0)
         pset.get(np.int64(0)).meridional = fieldset.V.units.to_source(pset.get(np.int64(0)).meridional, lonp, latp, 0)
-    p0 = None  # assure to get the 'first' item - here, with nodes, the first node by default has an ID of 0
+    p0 = None  # assure to get the 'first' item - here, with nodes, the first node would have an ID of 0
     if pset_mode in ['soa', 'aos']:
         p0 = pset[0]
     elif pset_mode == 'nodes':
