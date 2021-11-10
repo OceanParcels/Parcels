@@ -19,7 +19,6 @@ from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC 
 from parcels import timer
 from parcels import Variable
 
-# pset_modes = ['soa', 'aos', 'nodes']
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
@@ -124,7 +123,6 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     class MyParticle(ParticleClass):
         p = Variable('p', dtype=np.float32, initial=0.)
         p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
-        # p_start = Variable('p_start', dtype=np.float32, initial=0.)
         age = Variable('age', dtype=np.float32, initial=0.)
 
     if pset_mode != 'nodes':
@@ -166,8 +164,6 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_stommel_fieldset(pset_mode, mode, grid_type, tmpdir):
     timer.root = timer.Timer('Main')
-    # idgen = idgenenerator(pset_mode)
-    # c_lib_register = clib_register(pset_mode)
     idgen = None
     c_lib_register = None
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
@@ -183,15 +179,6 @@ def test_stommel_fieldset(pset_mode, mode, grid_type, tmpdir):
     err_smpl = np.array([abs(psetRK4.p[i] - psetRK4.fieldset.P[0., psetRK4.lon[i], psetRK4.lat[i], psetRK4.depth[i]]) for i in range(psetRK4.size)])
     assert(err_smpl <= 1.e-1).all()
     timer.stommel.stop()
-
-    # del psetRK4
-    # del psetRK45
-    # if idgen is not None:
-    #     idgen.close()
-    #     del idgen
-    # if c_lib_register is not None:
-    #     c_lib_register.clear()
-    #     del c_lib_register
 
     timer.root.stop()
     timer.root.print_tree()
