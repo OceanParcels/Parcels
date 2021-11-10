@@ -1,7 +1,6 @@
-import pytest
 import gc
 import os
-from parcels.tools import logger  # noqa
+import pytest
 import ctypes
 
 from parcels.compilation.codeinterface import LibraryRegisterC, InterfaceC
@@ -31,8 +30,8 @@ def testf_cstring_fixture():
 
 @pytest.fixture(name="testf_hstring")
 def testf_hstring_fixture():
-    _string_ = "#ifndef _ZIGGURAT_H\n" \
-               "#define _ZIGGURAT_H\n" \
+    _string_ = "#ifndef _TESTFUNC_H\n" \
+               "#define _TESTFUNC_H\n" \
                "#ifdef __cplusplus\n" \
                "extern \"C\" {\n" \
                "#endif\n" \
@@ -98,7 +97,7 @@ def test_clibrary_custom_clib(testf_cstring, testf_hstring, compiler, stages_don
         my_interface.compile_library()
         assert my_obj.is_compiled("testf")
     if stages_done > COMPILE_LIB:
-        my_obj.load("testf")  # , get_cache_dir()
+        my_obj.load("testf")
         assert my_obj.is_loaded("testf")
     if stages_done > LOAD_LIB:
         testf_lib = my_obj.get("testf")
@@ -136,8 +135,6 @@ def test_clibrary_multilib_collective_compile(testf_cstring, testf_hstring):
     with open(testf_h_file, "w") as f:
         f.write(testf_hstring)
     my_obj = LibraryRegisterC()
-    # ccompiler_node = GNUCompiler_SS(cppargs=[], incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
-    # interface_node = InterfaceC("node", ccompiler_node, get_cache_dir())
     ccompiler_testf = GNUCompiler_MS(cppargs=[],
                                      incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), os.path.join(get_cache_dir()), "."],
                                      libdirs=[".", get_cache_dir()],
@@ -148,7 +145,7 @@ def test_clibrary_multilib_collective_compile(testf_cstring, testf_hstring):
     assert my_obj.get("testf") == interface_testf
     interface_testf.compile_library()
     assert my_obj.is_compiled("testf")
-    my_obj.load("testf")  # , get_cache_dir()
+    my_obj.load("testf")
     assert my_obj.is_loaded("testf")
     testf_lib = my_obj.get("testf")
     function_param_array = [{"name": "func", "return": None, "arguments": [ctypes.c_int, ]},
@@ -194,8 +191,8 @@ def test_clibrary_multilib_separate_compile(testf_cstring, testf_hstring):
     interface_testf.compile_library()
     assert my_obj.is_compiled("node")
     assert my_obj.is_compiled("testf")
-    my_obj.load("node")  # , get_cache_dir()
-    my_obj.load("testf")  # , get_cache_dir()
+    my_obj.load("node")
+    my_obj.load("testf")
     assert my_obj.is_loaded("node")
     assert my_obj.is_loaded("testf")
     testf_lib = my_obj.get("testf")
@@ -246,7 +243,7 @@ def test_clibrary_inner_class_registration(testf_cstring, testf_hstring):
                 my_interface = InterfaceC(libname, ccompiler, src_dir)
                 c_lib_register.add_entry(libname, my_interface)
             if not c_lib_register.is_loaded(libname):
-                c_lib_register.load(libname)  # , src_dir=src_dir
+                c_lib_register.load(libname)
             c_lib_register.register(libname, close_callback=self.close_c_cb)
             self.c_lib_register_ref = c_lib_register
             self.registered = True
