@@ -116,7 +116,6 @@ def test_idgenerator_changing_bitallocation(binranges, depth_bound, time_bound):
     assert np.alltrue([id in uids for id in ids])
 
 
-# test ID-release
 @pytest.mark.parametrize('gentype', generator_type)
 @pytest.mark.parametrize('release_ids', [True, False])
 def test_idgenerator_idrelease(gentype, release_ids):
@@ -149,7 +148,6 @@ def test_idgenerator_idrelease(gentype, release_ids):
     assert np.alltrue([id in uids for id in ids])
 
 
-# test GenerateID_Service
 @pytest.mark.parametrize('gentype', generator_type)
 def test_idgenerator_service(gentype):
     if sys.platform == 'win32' and gentype in ['spatial', 'spatiotemporal']:
@@ -191,4 +189,4 @@ def test_idgenerator_service(gentype):
         assert ids[2] == min(ids)
         assert ids[4] < ids[3]
 
-# test GenerateID_Service with MPI
+# TODO (in later PR):test GenerateID_Service with MPI
