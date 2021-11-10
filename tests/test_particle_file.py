@@ -12,9 +12,8 @@ from netCDF4 import Dataset
 import cftime
 import random as py_random
 from datetime import timedelta as delta
-# from parcels.tools import logger
 
-pset_modes_new = ['soa', 'aos', 'nodes']
+pset_modes = ['soa', 'aos', 'nodes']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
@@ -42,7 +41,6 @@ def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
         os.system('parcels_convert_npydir_to_netcdf %s -c %s' % (ofile.tempwritedir_base, ofile.__class__.__name__,))
     else:
         import parcels.scripts.convert_npydir_to_netcdf as convert
-        # convert.convert_npydir_to_netcdf(ofile.tempwritedir_base, pfile_class=type(ofile).__name__)
         convert.convert_npydir_to_netcdf(ofile.tempwritedir_base, pfile_class=ofile.__class__.__name__)
 
     ncfile1 = Dataset(filepath, 'r', 'NETCDF4')
@@ -62,7 +60,7 @@ def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
     return ncfile1
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_nointegerremainer_timeswritten(fieldset, pset_mode, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_nointegerremainer_timeswritten.nc")
@@ -87,7 +85,7 @@ def test_pfile_nointegerremainer_timeswritten(fieldset, pset_mode, mode, tmpdir,
     del pset
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_array_remove_particles.nc")
@@ -113,7 +111,7 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     del pset
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_set_towrite_False.nc")
@@ -141,11 +139,9 @@ def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
     del pset
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
-    # comment: currently ends in infinite loop - retest
-
     filepath = tmpdir.join("pfile_array_remove_particles.nc")
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
@@ -170,12 +166,11 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
     del pset
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('assystemcall', [True, False])
 def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemcall, npart=3):
     filepath = tmpdir.join("pfile_on_delete_written_variables.nc")
-    # comment: currently ends in infinite loop - retest
 
     def move_west(particle, fieldset, time):
         tmp = fieldset.U[time, particle.depth, particle.lat, particle.lon]  # to trigger out-of-bounds error
@@ -194,7 +189,6 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemca
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat)
 
     outfile = pset.ParticleFile(name=filepath, write_ondelete=True)
-    # logger.info("outfile name: {}".format(type(outfile).__name__))
     outfile.add_metadata('runtime', runtime)
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
@@ -206,7 +200,7 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemca
     ncfile.close()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     filepath = tmpdir.join("pfile_variable_write_double.nc")
@@ -224,7 +218,7 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     ncfile.close()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_write_dtypes_pfile(fieldset, mode, pset_mode, tmpdir):
     filepath = tmpdir.join("pfile_dtypes.nc")
@@ -279,7 +273,7 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
 
 
 @pytest.mark.parametrize('type', ['repeatdt', 'timearr'])
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
@@ -309,16 +303,15 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
 
     ncfile = close_and_compare_netcdffiles(outfilepath, pfile)
     samplevar = ncfile.variables['sample_var'][:]
-    # test whether samplevar[:, k] = k
     for k in range(samplevar.shape[1]):
         assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
 
     if type == 'repeatdt':
-        # -- Comment: this will not work with node-based lists where ID != index and array indices are (necessarily) reused. -- #
+        # Comment: this would not work with node-based lists where ID != index and array indices are (necessarily) reused. #
         assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
         assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
     elif type == 'timearr':
-        # -- Comment: this will not work with node-based lists where ID != index and array indices are (necessarily) reused. -- #
+        # Comment: this would not work with node-based lists where ID != index and array indices are (necessarily) reused. #
         assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
     filesize = os.path.getsize(str(outfilepath))
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
@@ -327,7 +320,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
     del pset
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     outfilepath = tmpdir.join("pfile_write_timebackward.nc")
@@ -354,7 +347,7 @@ def test_set_calendar():
     assert _set_calendar('np_datetime64') == 'standard'
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 def test_error_duplicate_outputdir(fieldset, tmpdir, pset_mode):
     outfilepath = tmpdir.join("error_duplicate_outputdir.nc")
     idgen = None
@@ -393,7 +386,7 @@ def test_error_duplicate_outputdir(fieldset, tmpdir, pset_mode):
         del c_lib_register
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes_new)
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_reset_dt(fieldset, pset_mode, mode, tmpdir):
     # Assert that p.dt gets reset when a write_time is not a multiple of dt
