@@ -3,7 +3,7 @@ from parcels.field import Field, VectorField
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
-from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC  # noqa
+# from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC  # noqa
 from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes, UnitConverter, GeographicPolar
 import dask.array as da
 import dask
@@ -710,13 +710,6 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, chunksiz
                 assert excessive_occurence <= limit
                 increases = np.array([(mem_steps_np[i] - mem_steps_np[i - 1]) for i in range(1, mem_steps_np.shape[0])])
                 assert np.alltrue(increases < 2.0*field_step_max)
-
-    # if with_GC:
-    #     mem0 = mem_steps_np[0]
-    #     assert np.alltrue((mem_steps_np-mem0) <= field_step_max)
-    #     # assert np.alltrue(mem_steps_np[8:] <= perflog.memory_steps[-1])
-    # if (chunksize is not False or with_GC) and mem_steps_np.shape[0] > 1 and mode != 'scipy':
-    #     assert np.alltrue(np.array([(mem_steps_np[i]-mem_steps_np[i-1]) for i in range(1, mem_steps_np.shape[0])]) < field_step_max)
     assert not mem_exhausted
 
 
