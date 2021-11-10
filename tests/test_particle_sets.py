@@ -4,7 +4,6 @@ from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
 from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC  # noqa
-# from parcels.tools import logger
 import numpy as np
 import pytest
 
@@ -134,10 +133,7 @@ def test_pset_create_list_with_customvariable(fieldset, pset_mode, mode, npart=1
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-# @pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# @pytest.mark.parametrize('mode', ['jit'])
-# @pytest.mark.parametrize('mode', ['scipy'])
 @pytest.mark.parametrize('restart', [True, False])
 def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir):
     filename = tmpdir.join("pset_fromparticlefile.nc")
@@ -194,10 +190,6 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
     if restart and 'nodes' not in pset_mode:
         assert np.allclose([p.id for p in pset], [p.id for p in pset_new])
         logger.info("Checked field for restart")
-
-    # for var in ['time', 'p', 'p2', 'p3', 'dt']:
-    #     printarray = ([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
-    #     logger.info("variable '{}' - array: {}".format(var, printarray))
 
     pset_new.execute(Kernel, runtime=2, dt=1)
     assert len(pset_new) == 3*len(pset)
@@ -335,11 +327,11 @@ def test_pset_create_with_time(fieldset, pset_mode, mode, npart=100):
         pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode], time=time,
                                             idgen=idgen, c_lib_register=c_lib_register)
         assert np.allclose([p.time for p in pset], time, rtol=1e-12)
-        del pset  # required to free ID's and libs
+        del pset
         pset = pset_type[pset_mode]['pset'].from_list(fieldset, lon=lon, lat=lat, pclass=ptype[mode],
                                                       time=[time]*npart, idgen=idgen, c_lib_register=c_lib_register)
         assert np.allclose([p.time for p in pset], time, rtol=1e-12)
-        del pset  # required to free ID's and libs
+        del pset
         pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, start=(0, 1), finish=(1, 0),
                                                       pclass=ptype[mode], time=time, idgen=idgen,
                                                       c_lib_register=c_lib_register)
@@ -374,7 +366,6 @@ def test_pset_repeated_release(fieldset, pset_mode, mode, npart=10):
     c_lib_register = None
 
     time = np.arange(0, npart, 1)  # release 1 particle every second
-
     pset = None
     if pset_mode != 'nodes':
         pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
@@ -601,17 +592,6 @@ def test_pset_custom_ptype(fieldset, pset_mode, mode, npart=100):
         del c_lib_register
 
 
-# =============================================================== #
-# ==== Adding individual particles by constructing a whole   ==== #
-# ==== new particle set is very expensive in runtime for     ==== #
-# ==== non-indexable data structures. Therefore, also the    ==== #
-# ==== adding should be done via individual particles. This  ==== #
-# ==== is already prepared for structure-optimized versions  ==== #
-# ==== in the collections, and now just needs to be done in  ==== #
-# ==== the particle set itself. Ties into the semantic issue ==== #
-# ==== laid out below.                                       ==== #
-# ==== Follow-up PR.                                         ==== #
-# =============================================================== #
 @pytest.mark.parametrize('execute_stage', [False, True])
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -643,7 +623,7 @@ def test_pset_add_single_asparticle_explicit(fieldset, execute_stage, pset_mode,
         if pset_mode != 'nodes':
             pid = ptype[mode].lastID + i
         if pset_mode == 'soa':
-            pclass = ptype[mode]  # this line, for example, will never work with SoA, because SoA doesn't follow the particle concept
+            pclass = ptype[mode]  # this line won't work with SoA, because SoA doesn't implement the 'Particle' concept
         particle = pclass(lon[i], lat[i], pid=pid, fieldset=fieldset, ngrids=fieldset.gridset.size)
         pset.add(particle)
     assert len(pset) == npart
@@ -706,17 +686,6 @@ def test_pset_add_single_execute_aspset_explicit(fieldset, pset_mode, mode, npar
         del c_lib_register
 
 
-# =============================================================== #
-# ==== Adding individual particles by constructing a whole   ==== #
-# ==== new particle set is very expensive in runtime for     ==== #
-# ==== non-indexable data structures. Therefore, also the    ==== #
-# ==== adding should be done via individual particles. This  ==== #
-# ==== is already prepared for structure-optimized versions  ==== #
-# ==== in the collections, and now just needs to be done in  ==== #
-# ==== the particle set itself. Ties into the semantic issue ==== #
-# ==== laid out below.                                       ==== #
-# ==== Follow-up PR.                                         ==== #
-# =============================================================== #
 @pytest.mark.parametrize('execute_stage', [False, True])
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -748,7 +717,7 @@ def test_pset_add_multiple_asparticle_explicit(fieldset, execute_stage, pset_mod
         if pset_mode != 'nodes':
             pid = ptype[mode].lastID + i
         if pset_mode == 'soa':
-            pclass = ptype[mode]  # this line, for example, will never work with SoA, because SoA doesn't follow the particle concept
+            pclass = ptype[mode]  # this line won't work with SoA, because SoA doesn't implement the 'Particle' concept
         particle = pclass(lon[i], lat[i], pid=pid, fieldset=fieldset, ngrids=fieldset.gridset.size)
         parray.append(particle)
     pset.add(parray)
@@ -757,7 +726,6 @@ def test_pset_add_multiple_asparticle_explicit(fieldset, execute_stage, pset_mod
     if execute_stage:
         for _ in range(4):
             pset.execute(pset.Kernel(AddLat), runtime=1., dt=1.0)
-        # pset.execute(pset.Kernel(AddLat), runtime=4.0, dt=1.0)
         assert np.allclose([p.lon for p in pset], lon+0.25, rtol=1e-7)
         assert np.allclose([p.lat for p in pset], lat-0.25, rtol=1e-7)
     else:
@@ -975,9 +943,8 @@ def test_pset_split(fieldset, pset_mode, mode, npart=32):
 # ==== semantically, the function of 'merge' and 'add' are different. ==== #
 # ==== 'merge' adds B to A while deleting B (B empty after merge),    ==== #
 # ==== while 'add' just copies B into A (B and A non-empty after it). ==== #
-# ==== possibly, implementing a 'merge' function of a Particle set    ==== #
-# ==== would be good to resolve it (in contrast to Particle.merge()). ==== #
-# ==== Follow-up PR.                                                  ==== #
+# ==== Implementing a 'merge' function of a Particle set resolves     ==== #
+# ==== the ambiguity (contrasting the Particle.merge() function).     ==== #
 # ======================================================================== #
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -1020,6 +987,13 @@ def test_pset_merge_inplace(fieldset, pset_mode, mode, npart=100):
         del c_lib_register
 
 
+# ======================================================================== #
+# ==== semantically, the function of 'merge' and 'add' are different. ==== #
+# ==== 'merge' adds B to A while deleting B (B empty after merge),    ==== #
+# ==== while 'add' just copies B into A (B and A non-empty after it). ==== #
+# ==== Implementing a 'merge' function of a Particle set resolves     ==== #
+# ==== the ambiguity (contrasting the Particle.merge() function).     ==== #
+# ======================================================================== #
 @pytest.mark.xfail(reason="ParticleSet duplication has not been implemented yet")
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
