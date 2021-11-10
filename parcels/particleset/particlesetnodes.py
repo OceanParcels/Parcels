@@ -10,8 +10,6 @@ import xarray as xr
 from ctypes import c_void_p
 import cftime
 
-import progressbar
-
 from parcels.grid import GridCode
 from parcels.field import Field
 from parcels.compilation import GNUCompiler_MS
