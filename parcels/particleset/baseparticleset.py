@@ -157,7 +157,7 @@ class BaseParticleSet(NDCluster):
         """
         pass
 
-    def __create_progressbar(self, starttime, endtime):
+    def _create_progressbar_(self, starttime, endtime):
         pbar = None
         try:
             pbar = progressbar.ProgressBar(max_value=abs(endtime - starttime)).start()
@@ -613,7 +613,7 @@ class BaseParticleSet(NDCluster):
         if verbose_progress is None:
             walltime_start = time_module.time()
         if verbose_progress:
-            pbar = self.__create_progressbar(_starttime, endtime)
+            pbar = self._create_progressbar_(_starttime, endtime)
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
@@ -622,7 +622,7 @@ class BaseParticleSet(NDCluster):
                     logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir_base)
                     logger.info('You can use "parcels_convert_npydir_to_netcdf %s" to convert these '
                                 'to a NetCDF file during the run.' % output_file.tempwritedir_base)
-                pbar = self.__create_progressbar(_starttime, endtime)
+                pbar = self._create_progressbar_(_starttime, endtime)
                 verbose_progress = True
 
             if dt > 0:
