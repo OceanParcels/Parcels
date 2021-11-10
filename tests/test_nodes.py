@@ -1,8 +1,6 @@
 from parcels import (ScipyParticle, JITParticle, Node, NodeJIT, DoubleLinkedNodeList)
 from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC  # noqa
-# from parcels.tools import logger
 import pytest
-# import gc
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 ntype = {'scipy': Node, 'jit': NodeJIT}
 
@@ -24,7 +22,7 @@ def idgen_fixture():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_create_nodes(mode, c_lib_register, idgen):
     nodevalue = ntype[mode](data=ptype[mode](lon=0, lat=0, pid=idgen.getID(0, 0, 0, 0)), c_lib_register=c_lib_register, idgen=idgen)
-    del nodevalue
+    return nodevalue
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
