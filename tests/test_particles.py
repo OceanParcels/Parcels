@@ -6,7 +6,6 @@ from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC 
 import numpy as np
 import pytest
 from operator import attrgetter
-# from parcels.tools import logger
 
 pset_modes = ['soa', 'aos', 'nodes']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -65,24 +64,7 @@ def test_variable_init(fieldset, pset_mode, mode, npart=10):
     assert np.allclose([p.p_double for p in pset], 12., rtol=1e-12)
     assert np.allclose([p.p_int for p in pset], 13, rtol=1e-12)
 
-    # if pset_mode == 'nodes':
-    #     node_c_interface = c_lib_register.get("node")
-    #     num_nodes_registered = 0
-    #     if node_c_interface is not None:
-    #         num_nodes_registered = node_c_interface.register_count
-    #     logger.info("# C-lib. registered nodes before PSet deletion: {}".format(num_nodes_registered))
-    #     if num_nodes_registered > 0:
-    #         i = 0
-    #         for ndata in pset.collection.data:
-    #             logger.info("Node {}: {}".format(i, ndata))
     del pset
-    # if pset_mode == 'nodes':
-    #     node_c_interface = c_lib_register.get("node")
-    #     num_nodes_registered = 0
-    #     if node_c_interface is not None:
-    #         num_nodes_registered = node_c_interface.register_count
-    #     logger.info("# C-lib. registered nodes after PSet deletion: {}".format(num_nodes_registered))
-
     if idgen is not None:
         idgen.close()
         del idgen
