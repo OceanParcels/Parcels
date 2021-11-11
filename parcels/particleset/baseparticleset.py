@@ -485,6 +485,7 @@ class BaseParticleSet(NDCluster):
         :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
         :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
         """
+        # COMMENT #1104: this is a "_create_runtime_kernel_()" function
         # check if pyfunc has changed since last compile. If so, recompile.
         # COMMENT #1034: this still needs to check that the ParticleClass name also didn't change!
         if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
@@ -512,7 +513,9 @@ class BaseParticleSet(NDCluster):
                 self.interaction_kernel = pyfunc_inter
             else:
                 self.interaction_kernel = self.InteractionKernel(pyfunc_inter)
+        # ==================================================================== #
 
+        # COMMENT #1104: this could be a "_check_times_(...)" function
         # Convert all time variables to seconds
         if isinstance(endtime, delta):
             raise RuntimeError('endtime must be either a datetime or a double')
@@ -535,6 +538,7 @@ class BaseParticleSet(NDCluster):
             moviedt = moviedt.total_seconds()
         if isinstance(callbackdt, delta):
             callbackdt = callbackdt.total_seconds()
+        # ==================================================================== #
 
         assert runtime is None or runtime >= 0, 'runtime must be positive'
         assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
@@ -543,6 +547,7 @@ class BaseParticleSet(NDCluster):
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
 
+        # COMMENT #1104: this could be a "_get_time_bounds_(...)" function
         mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
 
         default_release_time = mintime if dt >= 0 else maxtime
@@ -616,6 +621,7 @@ class BaseParticleSet(NDCluster):
             else:
                 next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
 
+            # COMMENT #1104: this could be the "_execute_kernel_(...)" function
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
                 self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
@@ -640,7 +646,11 @@ class BaseParticleSet(NDCluster):
                         break
             # End of interaction specific code
             time = next_time
+            # ==================================================================== #
+
+            # logger.info("Kernel executed - time: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
             if abs(time-next_prelease) < tol:
+                # COMMENT #1104: this could be the "_add_prediodic_release_particles_(...)" function
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
                     lat=self.repeatlat, depth=self.repeatdepth,
@@ -651,7 +661,9 @@ class BaseParticleSet(NDCluster):
                     p.dt = dt
                 self.add(pset_new)
                 next_prelease += self.repeatdt * np.sign(dt)
+                # ==================================================================== #
             if abs(time - next_output) < tol or dt == 0:
+                # COMMENT #1104: this could be the "_write_field_data_(...)" function
                 for fld in self.fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
@@ -660,9 +672,11 @@ class BaseParticleSet(NDCluster):
                         fld.write(fldfilename)
                         fld.to_write += 1
             if abs(time - next_output) < tol:
+                # COMMENT #1104: this could be the "_write_particle_data_(....)" function
                 if output_file:
                     output_file.write(self, time)
                 next_output += outputdt * np.sign(dt)
+                # ==================================================================== #
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time, animation=True)
                 next_movie += moviedt * np.sign(dt)
