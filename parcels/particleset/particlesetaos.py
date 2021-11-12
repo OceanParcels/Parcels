@@ -13,6 +13,7 @@ from parcels.particle import Variable, ScipyParticle, JITParticle # NOQA
 from parcels.particlefile.particlefileaos import ParticleFileAOS
 from parcels.tools.statuscodes import StateCode  # NOQA
 from parcels.particleset.baseparticleset import BaseParticleSet
+from parcels.particleset.benchmarkparticleset import BaseBenchmarkParticleSet
 from parcels.collection.collectionaos import ParticleCollectionAOS
 from parcels.collection.collectionaos import ParticleCollectionIteratorAOS, ParticleCollectionIterableAOS  # NOQA
 
@@ -23,7 +24,7 @@ try:
 except:
     MPI = None
 
-__all__ = ['ParticleSetAOS']
+__all__ = ['ParticleSetAOS', 'BenchmarkParticleSetAOS']
 
 
 def _convert_to_array(var):
@@ -47,7 +48,7 @@ def _convert_to_reltime(time):
     return False
 
 
-class ParticleSetAOS(BaseParticleSet):
+class ParticleSetAOS(BaseBenchmarkParticleSet):
     """Container class for storing particle and executing kernel over them.
 
     :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
@@ -70,7 +71,8 @@ class ParticleSetAOS(BaseParticleSet):
     """
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
-        super(ParticleSetAOS, self).__init__()
+        super(ParticleSetAOS, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt,
+                                             lonlatdepth_dtype, pid_orig, **kwargs)
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -732,3 +734,13 @@ def search_kernel(particle, fieldset, time):
         :param write_status: Write status of the variable (True, False or 'once')
         """
         self._collection.set_variable_write_status(var, write_status)
+
+
+class BenchmarkParticleSetAOS(ParticleSetAOS):
+
+    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+        super(BenchmarkParticleSetAOS, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt,
+                                                      lonlatdepth_dtype, pid_orig, use_benchmark=True, **kwargs)
+
+    def __del__(self):
+        super(BenchmarkParticleSetAOS, self).__del__()
