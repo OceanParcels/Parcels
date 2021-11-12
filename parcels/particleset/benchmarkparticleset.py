@@ -5,6 +5,7 @@ import psutil
 import os
 import sys
 from platform import system as system_name
+import matplotlib.pyplot as plt
 from resource import getrusage, RUSAGE_SELF
 import numpy as np
 # import matplotlib.pyplot as plt
@@ -16,10 +17,14 @@ except:
 
 from parcels.tools.loggers import logger
 from parcels.tools.performance_logger import TimingLog, ParamLogging, Asynchronous_ParamLogging
+from parcels.particleset.baseparticleset import BaseParticleSet
+from parcels.kernel.benchmarkkernel import BaseBenchmarkKernel
+# from parcels.particle import JITParticle
+from parcels.application_kernels.advection import AdvectionRK4
 
 
 
-__all__ = ['BenchmarkParticleSet']
+__all__ = ['BaseBenchmarkParticleSet']
 
 def measure_mem():
     process = psutil.Process(os.getpid())
@@ -45,9 +50,13 @@ def measure_mem_usage():
 USE_ASYNC_MEMLOG = False
 USE_RUSE_SYNC_MEMLOG = False  # can be faulty
 
-class BenchmarkParticleSet:
+class BaseBenchmarkParticleSet(BaseParticleSet):
+    perform_benchmark = False
 
-    def __init__(self):
+    def __init__(self, fieldset=None, pclass=None, lon=None, lat=None,
+                 depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+        super(BaseBenchmarkParticleSet, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt, lonlatdepth_dtype, pid_orig, **kwargs)
+        self.perform_benchmark = kwargs.pop('use_benchmark', False)
         self.total_log = TimingLog()
         self.compute_log = TimingLog()
         self.io_log = TimingLog()
@@ -58,8 +67,193 @@ class BenchmarkParticleSet:
         self.async_mem_log = Asynchronous_ParamLogging()
         self.process = psutil.Process(os.getpid())
 
+    def __del__(self):
+        super(BaseBenchmarkParticleSet, self).__del__()
+
     def set_async_memlog_interval(self, interval):
         self.async_mem_log.measure_interval = interval
+
+    def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
+                moviedt=None, recovery=None, output_file=None, movie_background_field=None,
+                verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
+        """Execute a given kernel function over the particle set for
+        multiple timesteps. Optionally also provide sub-timestepping
+        for particle output.
+
+        :param pyfunc: Kernel function to execute. This can be the name of a
+                       defined Python function or a :class:`parcels.kernel.Kernel` object.
+                       Kernels can be concatenated using the + operator
+        :param endtime: End time for the timestepping loop.
+                        It is either a datetime object or a positive double.
+        :param runtime: Length of the timestepping loop. Use instead of endtime.
+                        It is either a timedelta object or a positive double.
+        :param dt: Timestep interval to be passed to the kernel.
+                   It is either a timedelta object or a double.
+                   Use a negative value for a backward-in-time simulation.
+        :param moviedt:  Interval for inner sub-timestepping (leap), which dictates
+                         the update frequency of animation.
+                         It is either a timedelta object or a positive double.
+                         None value means no animation.
+        :param output_file: :mod:`parcels.particlefile.ParticleFile` object for particle output
+        :param recovery: Dictionary with additional `:mod:parcels.tools.error`
+                         recovery kernels to allow custom recovery behaviour in case of
+                         kernel errors.
+        :param movie_background_field: field plotted as background in the movie if moviedt is set.
+                                       'vector' shows the velocity as a vector field.
+        :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
+        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
+        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
+        """
+        if not self.perform_benchmark:
+            super(BaseBenchmarkParticleSet, self).execute(pyfunc, pyfunc_inter, endtime, runtime, dt, moviedt, recovery, output_file,
+                                                          movie_background_field, verbose_progress, postIterationCallbacks, callbackdt)
+            return
+        self._create_runtime_kernel_(pyfunc, pyfunc_inter)
+        # Convert all time variables to seconds
+        endtime, runtime, dt, outputdt, moviedt, callbackdt = self._check_times_(endtime, runtime, dt, moviedt=moviedt, callbackdt=callbackdt, output_file=output_file)
+
+        assert runtime is None or runtime >= 0, 'runtime must be positive'
+        assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
+        assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
+
+        if runtime is not None and endtime is not None:
+            raise RuntimeError('Only one of (endtime, runtime) can be specified')
+
+        _starttime, endtime, runtime, dt, execute_once = self._get_time_bounds_(endtime, runtime, dt)
+        # First write output_file, because particles could have been added
+        if output_file:
+            output_file.write(self, _starttime)
+        if moviedt:
+            self.show(field=movie_background_field, show_time=_starttime, animation=True)
+
+        moviedt, callbackdt, next_prelease, next_output, next_movie, next_callback, next_input = self._get_dt_bounds(_starttime, dt, outputdt, moviedt, callbackdt)
+        time = _starttime
+        tol = 1e-12
+
+        pbar = None
+        walltime_start = None
+        if verbose_progress is None:
+            walltime_start = time_module.time()
+        if verbose_progress:
+            pbar = self._create_progressbar_(_starttime, endtime)
+
+        mem_used_start = 0
+        if USE_ASYNC_MEMLOG:
+            self.async_mem_log.measure_func = measure_mem
+            mem_used_start = measure_mem()
+
+        while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
+            self.total_log.start_timing()
+            if USE_ASYNC_MEMLOG:
+                self.async_mem_log.measure_start_value = mem_used_start
+                self.async_mem_log.start_partial_measurement()
+            if verbose_progress is None and time_module.time() - walltime_start > 10:
+                # Showing progressbar if runtime > 10 seconds
+                if output_file:
+                    logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir_base)
+                    logger.info('You can use "parcels_convert_npydir_to_netcdf %s" to convert these '
+                                'to a NetCDF file during the run.' % output_file.tempwritedir_base)
+                pbar = self._create_progressbar_(_starttime, endtime)
+                verbose_progress = True
+
+            if dt > 0:
+                next_time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+            else:
+                next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+
+            if not isinstance(self.kernel, BaseBenchmarkKernel):
+                self.compute_log.start_timing()
+            time = self._execute_kernel_(next_time, dt, recovery, output_file=output_file, execute_once=execute_once)
+            if abs(time-next_prelease) < tol:
+                # creating new particles equals a memory-io operation
+                if not isinstance(self.kernel, BaseBenchmarkKernel):
+                    self.compute_log.stop_timing()
+                    self.compute_log.accumulate_timing()
+
+                self.mem_io_log.start_timing()
+                self._add_periodic_release_particles_(time, dt)
+                self.mem_io_log.stop_timing()
+                self.mem_io_log.accumulate_timing()
+                next_prelease += self.repeatdt * np.sign(dt)
+            else:
+                if not isinstance(self.kernel, BaseBenchmarkKernel):
+                    self.compute_log.stop_timing()
+                else:
+                    pass
+            if isinstance(self.kernel, BaseBenchmarkKernel):
+                self.compute_log.add_aux_measure(self.kernel.compute_timings.sum())
+                self.kernel.compute_timings.reset()
+                self.io_log.add_aux_measure(self.kernel.io_timings.sum())
+                self.kernel.io_timings.reset()
+                self.mem_io_log.add_aux_measure(self.kernel.mem_io_timings.sum())
+                self.kernel.mem_io_timings.reset()
+            self.compute_log.accumulate_timing()
+            self.nparticle_log.advance_iteration(self.size)
+
+            if abs(time - next_output) < tol or execute_once:
+                self.io_log.start_timing()
+                self._write_field_data_(output_file)
+                self.io_log.stop_timing()
+                self.io_log.accumulate_timing()
+            if abs(time - next_output) < tol:
+                self.io_log.start_timing()
+                self._write_particle_data_(output_file,  time)
+                self.io_log.stop_timing()
+                self.io_log.accumulate_timing()
+                next_output += outputdt * np.sign(dt)
+            if abs(time-next_movie) < tol:
+                self.plot_log.start_timing()
+                self.show(field=movie_background_field, show_time=time, animation=True)
+                self.plot_log.stop_timing()
+                self.plot_log.accumulate_timing()
+                next_movie += moviedt * np.sign(dt)
+            if abs(time-next_callback) < tol:
+                self.mem_io_log.start_timing()
+                if postIterationCallbacks is not None:
+                    for extFunc in postIterationCallbacks:
+                        extFunc()
+                self.mem_io_log.stop_timing()
+                self.mem_io_log.accumulate_timing()
+                next_callback += callbackdt * np.sign(dt)
+            if time != endtime:
+                self.io_log.start_timing()
+                next_input = self.fieldset.computeTimeChunk(time, dt)
+                self.io_log.stop_timing()
+                self.io_log.accumulate_timing()
+            if dt == 0:
+                break
+            if verbose_progress:
+                self.plot_log.start_timing()
+                pbar.update(abs(time - _starttime))
+                self.plot_log.stop_timing()
+                self.plot_log.accumulate_timing()
+            self.total_log.stop_timing()
+            self.total_log.accumulate_timing()
+            mem_B_used_total = 0
+            if USE_RUSE_SYNC_MEMLOG:
+                mem_B_used_total = measure_mem_usage()
+            else:
+                mem_B_used_total = measure_mem_rss()
+            self.mem_log.advance_iteration(mem_B_used_total)
+            if USE_ASYNC_MEMLOG:
+                self.async_mem_log.stop_partial_measurement()  # does 'advance_iteration' internally
+
+            self.compute_log.advance_iteration()
+            self.io_log.advance_iteration()
+            self.mem_io_log.advance_iteration()
+            self.plot_log.advance_iteration()
+            self.total_log.advance_iteration()
+
+        if output_file:
+            self.io_log.start_timing()
+            output_file.write(self, time)
+            self.io_log.stop_timing()
+            self.io_log.accumulate_timing()
+        if verbose_progress:
+            self.plot_log.start_timing()
+            pbar.finish()
+            self.plot_log.stop_timing()
+            self.plot_log.accumulate_timing()
 
     def plot_and_log(self, total_times=None, compute_times=None, io_times=None, plot_times=None, memory_used=None, nparticles=None, target_N=1, imageFilePath="", odir=os.getcwd(), xlim_range=None, ylim_range=None):
         # == do something with the log-arrays == #
