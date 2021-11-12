@@ -3,11 +3,13 @@ Author: Dr. Christian Kehl
 Date: 11-02-2020
 """
 
-from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
-from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, StateCode, OperationCode, ErrorCode
-from parcels.particleset_benchmark import ParticleSet_Benchmark as BenchmarkParticleSet
-from parcels.particleset import ParticleSet as DryParticleSet
-from parcels.field import Field, VectorField, NestedField, SummedField
+from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4  # noqa
+from parcels import FieldSet, ScipyParticle, JITParticle, Variable, StateCode, OperationCode, ErrorCode  # noqa
+# from parcels.particleset_benchmark import ParticleSet_Benchmark as BenchmarkParticleSet
+# from parcels.particleset import ParticleSet as DryParticleSet
+from parcels import BenchmarkParticleSetSOA, BenchmarkParticleSetAOS, BenchmarkParticleSetNodes
+from parcels import ParticleSetSOA, ParticleSetAOS, ParticleSetNodes
+from parcels.field import VectorField, NestedField, SummedField  # Field,
 # from parcels import plotTrajectoriesFile_loadedField
 # from parcels import rng as random
 from parcels import ParcelsRandom
@@ -32,8 +34,15 @@ except:
     MPI = None
 with_GC = False
 
-pset = None
+# pset = None
+pset_modes = ['soa', 'aos', 'nodes']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+pset_types_dry = {'soa': {'pset': ParticleSetSOA},  # , 'pfile': ParticleFileSOA, 'kernel': KernelSOA
+                  'aos': {'pset': ParticleSetAOS},  # , 'pfile': ParticleFileAOS, 'kernel': KernelAOS
+                  'nodes': {'pset': ParticleSetNodes}}  # , 'pfile': ParticleFileNodes, 'kernel': KernelNodes
+pset_types = {'soa': {'pset': BenchmarkParticleSetSOA},
+              'aos': {'pset': BenchmarkParticleSetAOS},
+              'nodes': {'pset': BenchmarkParticleSetNodes}}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 global_t_0 = 0
 Nparticle = int(math.pow(2,10)) # equals to Nparticle = 1024
@@ -215,14 +224,16 @@ if __name__=='__main__':
     parser.add_argument("-V", "--visualize", dest="visualize", action='store_true', default=False, help="Visualize particle trajectories at the end (default: False). Requires -w in addition to take effect.")
     parser.add_argument("-N", "--n_particles", dest="nparticles", type=str, default="2**6", help="number of particles to generate and advect (default: 2e6)")
     parser.add_argument("-sN", "--start_n_particles", dest="start_nparticles", type=str, default="96", help="(optional) number of particles generated per release cycle (if --rt is set) (default: 96)")
-    parser.add_argument("-m", "--mode", dest="compute_mode", choices=['jit','scipy'], default="jit", help="computation mode = [JIT, SciPp]")
+    parser.add_argument("-m", "--mode", dest="compute_mode", choices=['jit','scipy'], default="jit", help="computation mode = [JIT, SciPy]")
+    parser.add_argument("-tp", "--type", dest="pset_type", choices=pset_modes, default="soa", help="particle set type = [SOA, AOS, Nodes]")
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
     parser.add_argument("--dry", dest="dryrun", action="store_true", default=False, help="Start dry run (no benchmarking and its classes")
     args = parser.parse_args()
 
-    ParticleSet = BenchmarkParticleSet
+    pset_type = args.pset_type
+    ParticleSet = pset_types[pset_type]['pset']
     if args.dryrun:
-        ParticleSet = DryParticleSet
+        ParticleSet = pset_types_dry[pset_type]['pset']
 
     imageFileName=args.imageFileName
     periodicFlag=args.periodic
