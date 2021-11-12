@@ -16,6 +16,7 @@ except:
     MPI = None
 
 from parcels.kernel.basekernel import BaseKernel
+from parcels.kernel.benchmarkkernel import BaseBenchmarkKernel
 from parcels.compilation.codegenerator import ObjectKernelGenerator as KernelGenerator
 from parcels.compilation.codegenerator import NodeLoopGenerator
 from parcels.field import NestedField
@@ -28,10 +29,10 @@ from parcels.tools.loggers import logger
 from parcels.tools.global_statics import get_package_dir
 
 
-__all__ = ['KernelNodes']
+__all__ = ['KernelNodes', 'BenchmarkKernelNodes']
 
 
-class KernelNodes(BaseKernel):
+class KernelNodes(BaseBenchmarkKernel):
     """Kernel object that encapsulates auto-generated code.
 
     :arg fieldset: FieldSet object providing the field information
@@ -45,7 +46,7 @@ class KernelNodes(BaseKernel):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
+                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True, **kwargs):
         """
         KernelNodes - Constructor
         :arg fieldset: the fieldset object of the host ParticleSet
@@ -58,7 +59,7 @@ class KernelNodes(BaseKernel):
         :arg c_include: added C include functions for generation or interpretation of the custom function
         :arg delete_cfiles: boolean, indicating whether the written C source files are deleted on destruction
         """
-        super(KernelNodes, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
+        super(KernelNodes, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles, **kwargs)
 
         # Derive meta information from pyfunc, if not given
         self.check_fieldsets_in_kernels(pyfunc)
@@ -338,3 +339,126 @@ class KernelNodes(BaseKernel):
                 self.execute_python(pset, endtime, dt)
 
             n_error = pset.num_error_particles
+
+
+class BenchmarkKernelNodes(KernelNodes):
+
+    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
+                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
+        super(BenchmarkKernelNodes, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles, use_benchmark=True)
+
+    def __del__(self):
+        super(BenchmarkKernelNodes, self).__del__()
+
+    def __add__(self, kernel):
+        """
+        Adds (via '+') one kernel to another. In the expression
+        k = a + b
+        this function covers the case where at least 'a' is a BaseKernel.
+        :arg kernel: BaseKernel or python function object to be merged (i.e. added)
+        """
+        mkernel = kernel  # do this to avoid rewriting the object put in as parameter
+        if not isinstance(mkernel, BaseBenchmarkKernel):
+            mkernel = BenchmarkKernelNodes(self.fieldset, self.ptype, pyfunc=kernel)
+        elif not isinstance(mkernel, BenchmarkKernelNodes) and kernel.pyfunc is not None:
+            mkernel = BenchmarkKernelNodes(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
+        return self.merge(mkernel, BenchmarkKernelNodes)
+
+    def __radd__(self, kernel):
+        """
+        Adds (via '+') one kernel to another. In the expression
+        k = a + b
+        this function covers the case where at least 'b' is a BaseKernel.
+        :arg kernel: BaseKernel or python function object to be merged (i.e. added)
+        """
+        mkernel = kernel  # do this to avoid rewriting the object put in as parameter
+        if not isinstance(mkernel, BaseBenchmarkKernel):
+            mkernel = BenchmarkKernelNodes(self.fieldset, self.ptype, pyfunc=kernel)
+        elif not isinstance(mkernel, BenchmarkKernelNodes) and kernel.pyfunc is not None:
+            mkernel = BenchmarkKernelNodes(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
+        return mkernel.merge(self, BenchmarkKernelNodes)
+
+    def execute_jit(self, pset, endtime, dt):
+        """
+        Invokes JIT engine to perform the core update loop
+        :arg pset: particle set to calculate
+        :arg endtime: timestamp to calculate
+        :arg dt: delta-t to be calculated
+        """
+        if not self.perform_benchmark:
+            super(BenchmarkKernelNodes, self).execute_jit(pset, endtime, dt)
+        self.load_fieldset_jit(pset)
+
+        self._compute_timings.start_timing()
+        fargs = []
+        if self.field_args is not None:
+            fargs += [byref(f.ctypes_struct) for f in self.field_args.values()]
+        if self.const_args is not None:
+            fargs += [c_double(f) for f in self.const_args.values()]
+
+        node_data = pset.begin()
+        if node_data is None:
+            logger.error("Attempting to execute kernel with Node data {} being empty or invalid.".format(node_data))
+            return
+        result = None
+        if len(fargs) > 0:
+            result = self._function(c_int(len(pset)), pointer(node_data), c_double(endtime), c_double(dt), *fargs)
+        else:
+            result = self._function(c_int(len(pset)), pointer(node_data), c_double(endtime), c_double(dt))
+        self._compute_timings.stop_timing()
+        self._compute_timings.accumulate_timing()
+
+        self._io_timings.advance_iteration()
+        self._mem_io_timings.advance_iteration()
+        self._compute_timings.advance_iteration()
+        return result
+
+    def execute_python(self, pset, endtime, dt):
+        """
+        Performs the core update loop via Python
+        :arg pset: particle set to calculate
+        :arg endtime: timestamp to calculate
+        :arg dt: delta-t to be calculated
+        """
+        if not self.perform_benchmark:
+            super(BenchmarkKernelNodes, self).execute_python(pset, endtime, dt)
+        # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
+        sign_dt = np.sign(dt)
+
+        analytical = False
+        if 'AdvectionAnalytical' in self._pyfunc.__name__:
+            analytical = True
+            if not np.isinf(dt):
+                logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
+            dt = np.inf
+
+        if self.fieldset is not None:
+            for f in self.fieldset.get_fields():
+                if type(f) in [VectorField, NestedField, SummedField]:
+                    continue
+                self._io_timings.start_timing()
+                loaded_data = f.data
+                self._io_timings.stop_timing()
+                self._io_timings.accumulate_timing()
+                self._mem_io_timings.start_timing()
+                f.data = np.array(loaded_data)
+                self._mem_io_timings.stop_timing()
+                self._mem_io_timings.accumulate_timing()
+
+        self._compute_timings.start_timing()
+        node = pset.begin()
+        while node is not None:
+            # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
+            if not node.is_valid():
+                node = node.next
+                continue
+            p = node.data
+            p = self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+            node.set_data(p)
+            node = node.next
+        self._compute_timings.stop_timing()
+        self._compute_timings.accumulate_timing()
+
+        self._io_timings.advance_iteration()
+        self._mem_io_timings.advance_iteration()
+        self._compute_timings.advance_iteration()
