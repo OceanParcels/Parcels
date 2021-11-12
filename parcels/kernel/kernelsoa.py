@@ -15,6 +15,7 @@ except:
     MPI = None
 
 from parcels.kernel.basekernel import BaseKernel
+from parcels.kernel.benchmarkkernel import BaseBenchmarkKernel
 from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
 from parcels.compilation.codegenerator import LoopGenerator
 from parcels.field import NestedField
@@ -26,10 +27,10 @@ from parcels.tools.statuscodes import recovery_map as recovery_base_map
 from parcels.tools.loggers import logger
 
 
-__all__ = ['KernelSOA']
+__all__ = ['KernelSOA', 'BenchmarkKernelSOA']
 
 
-class KernelSOA(BaseKernel):
+class KernelSOA(BaseBenchmarkKernel):
     """Kernel object that encapsulates auto-generated code.
 
     :arg fieldset: FieldSet object providing the field information
@@ -43,7 +44,7 @@ class KernelSOA(BaseKernel):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, funcvars=None, py_ast=None, c_include="", delete_cfiles=True):
+                 funccode=None, funcvars=None, py_ast=None, c_include="", delete_cfiles=True, **kwargs):
         """
         KernelSOA - Constructor
         :arg fieldset: the fieldset object of the host ParticleSet
@@ -56,7 +57,7 @@ class KernelSOA(BaseKernel):
         :arg c_include: added C include functions for generation or interpretation of the custom function
         :arg delete_cfiles: boolean, indicating whether the written C source files are deleted on destruction
         """
-        super(KernelSOA, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
+        super(KernelSOA, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles, **kwargs)
 
         # Derive meta information from pyfunc, if not given
         self.check_fieldsets_in_kernels(pyfunc)
@@ -301,3 +302,111 @@ class KernelSOA(BaseKernel):
                 self.execute_python(pset, endtime, dt)
 
             n_error = pset.num_error_particles
+
+
+class BenchmarkKernelSOA(KernelSOA):
+
+    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
+                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
+        super(BenchmarkKernelSOA, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles, use_benchmark=True)
+
+    def __del__(self):
+        super(BenchmarkKernelSOA, self).__del__()
+
+    def __add__(self, kernel):
+        """
+        Adds (via '+') one kernel to another. In the expression
+        k = a + b
+        this function covers the case where at least 'a' is a BaseKernel.
+        :arg kernel: BaseKernel or python function object to be merged (i.e. added)
+        """
+        mkernel = kernel  # do this to avoid rewriting the object put in as parameter
+        if not isinstance(mkernel, BaseBenchmarkKernel):
+            mkernel = BenchmarkKernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
+        elif not isinstance(mkernel, BenchmarkKernelSOA) and kernel.pyfunc is not None:
+            mkernel = BenchmarkKernelSOA(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
+        return self.merge(mkernel, BenchmarkKernelSOA)
+
+    def __radd__(self, kernel):
+        """
+        Adds (via '+') one kernel to another. In the expression
+        k = a + b
+        this function covers the case where at least 'b' is a BaseKernel.
+        :arg kernel: BaseKernel or python function object to be merged (i.e. added)
+        """
+        mkernel = kernel  # do this to avoid rewriting the object put in as parameter
+        if not isinstance(mkernel, BaseBenchmarkKernel):
+            mkernel = BenchmarkKernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
+        elif not isinstance(mkernel, BenchmarkKernelSOA) and kernel.pyfunc is not None:
+            mkernel = BenchmarkKernelSOA(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
+        return mkernel.merge(self, BenchmarkKernelSOA)
+
+    def execute_jit(self, pset, endtime, dt):
+        """
+        Invokes JIT engine to perform the core update loop
+        :arg pset: particle set to calculate
+        :arg endtime: timestamp to calculate
+        :arg dt: delta-t to be calculated
+        """
+        if not self.perform_benchmark:
+            super(BenchmarkKernelSOA, self).execute_jit(pset, endtime, dt)
+        self.load_fieldset_jit(pset)
+
+        self._compute_timings.start_timing()
+        fargs = []
+        if self.field_args is not None:
+            fargs += [byref(f.ctypes_struct) for f in self.field_args.values()]
+        if self.const_args is not None:
+            fargs += [c_double(f) for f in self.const_args.values()]
+
+        particle_data = byref(pset.ctypes_struct)
+        result = self._function(c_int(len(pset)), particle_data, c_double(endtime), c_double(dt), *fargs)
+        self._compute_timings.stop_timing()
+        self._compute_timings.accumulate_timing()
+
+        self._io_timings.advance_iteration()
+        self._mem_io_timings.advance_iteration()
+        self._compute_timings.advance_iteration()
+        return result
+
+    def execute_python(self, pset, endtime, dt):
+        """
+        Performs the core update loop via Python
+        :arg pset: particle set to calculate
+        :arg endtime: timestamp to calculate
+        :arg dt: delta-t to be calculated
+        """
+        if not self.perform_benchmark:
+            super(BenchmarkKernelSOA, self).execute_python(pset, endtime, dt)
+        # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
+        sign_dt = np.sign(dt)
+
+        analytical = False
+        if 'AdvectionAnalytical' in self._pyfunc.__name__:
+            analytical = True
+            if not np.isinf(dt):
+                logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
+            dt = np.inf
+
+        if self.fieldset is not None:
+            for f in self.fieldset.get_fields():
+                if type(f) in [VectorField, NestedField, SummedField]:
+                    continue
+                self._io_timings.start_timing()
+                loaded_data = f.data
+                self._io_timings.stop_timing()
+                self._io_timings.accumulate_timing()
+                self._mem_io_timings.start_timing()
+                f.data = np.array(loaded_data)
+                self._mem_io_timings.stop_timing()
+                self._mem_io_timings.accumulate_timing()
+
+        self._compute_timings.start_timing()
+        for p in pset:
+            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+        self._compute_timings.stop_timing()
+        self._compute_timings.accumulate_timing()
+
+        self._io_timings.advance_iteration()
+        self._mem_io_timings.advance_iteration()
+        self._compute_timings.advance_iteration()

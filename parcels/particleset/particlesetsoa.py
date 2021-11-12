@@ -1,6 +1,7 @@
 from datetime import date
 from datetime import datetime
 from datetime import timedelta as delta
+from os import path
 
 import numpy as np
 import xarray as xr
@@ -8,15 +9,18 @@ from copy import copy
 
 from parcels.grid import GridCode
 from parcels.grid import CurvilinearGrid
-from parcels.kernel import KernelSOA
+from parcels.kernel import KernelSOA, BaseKernel
+from parcels.compilation.codecompiler import GNUCompiler
 from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa
 from parcels.particlefile import ParticleFileSOA
 from parcels.tools.statuscodes import StateCode, OperationCode    # noqa: F401
 from parcels.particleset.baseparticleset import BaseParticleSet
+from parcels.particleset.benchmarkparticleset import BaseBenchmarkParticleSet
 from parcels.collection.collectionsoa import ParticleCollectionSOA
 from parcels.collection.collectionsoa import ParticleCollectionIteratorSOA  # noqa
 from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # noqa
 from parcels.tools.converters import _get_cftime_calendars
+from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
 from parcels.interaction.interactionkernelsoa import InteractionKernelSOA
 from parcels.interaction.neighborsearch import BruteSphericalNeighborSearch
@@ -33,7 +37,7 @@ try:
 except:
     KDTree = None
 
-__all__ = ['ParticleSetSOA']
+__all__ = ['ParticleSetSOA', 'BenchmarkParticleSetSOA']
 
 
 def _convert_to_array(var):
@@ -57,7 +61,7 @@ def _convert_to_reltime(time):
     return False
 
 
-class ParticleSetSOA(BaseParticleSet):
+class ParticleSetSOA(BaseBenchmarkParticleSet):
     """Container class for storing particle and executing kernel over them.
 
     Please note that this currently only supports fixed size particle sets, meaning that the particle set only
@@ -92,7 +96,8 @@ class ParticleSetSOA(BaseParticleSet):
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
                  pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
-        super(ParticleSetSOA, self).__init__()
+        super(ParticleSetSOA, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt,
+                                             lonlatdepth_dtype, pid_orig, **kwargs)
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -684,6 +689,70 @@ class ParticleSetSOA(BaseParticleSet):
         self._dirty_neighbor = True
         self.remove_indices(np.where(indices)[0])
 
+    # ==== ==== ==== overriding execute(...) modular functions here ==== ==== ==== #
+    def _create_runtime_kernel_(self, pyfunc, pyfunc_inter=None):
+        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
+            # Generate and store Kernel
+            if isinstance(pyfunc, BaseKernel):
+                assert isinstance(pyfunc, self.kernelclass), "Trying to mix kernels of different particle set structures - action prohibited. Please construct the kernel for this specific particle set '{}'.".format(type(self).__name__)
+                if pyfunc.ptype.name == self.collection.ptype.name:
+                    self._kernel = pyfunc
+                elif pyfunc.pyfunc is not None:
+                    self._kernel = self.Kernel(pyfunc.pyfunc)
+                else:
+                    raise RuntimeError("Cannot reuse concatenated kernels that were compiled for different particle types. Please rebuild the 'pyfunc' or 'kernel' given to the execute function.")
+            else:
+                self._kernel = self.Kernel(pyfunc)
+            # Prepare JIT kernel execution
+            if self.collection.ptype.uses_jit:
+                self.kernel.remove_lib()
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
+                self.kernel.load_lib()
+        # Set up the interaction kernel(s) if not set and given.
+        if self.interaction_kernel is None and pyfunc_inter is not None:
+            self.interaction_kernel = self.InteractionKernel(pyfunc_inter)
+
+    def _execute_kernel_(self, time, dt, recovery, output_file=None, execute_once=False):
+        next_time = time
+        # If we don't perform interaction, only execute the normal kernel efficiently.
+        if self.interaction_kernel is None:
+            self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
+                                execute_once=execute_once)
+        # Interaction: interleave the interaction and non-interaction kernel for each time step.
+        # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
+        else:
+            cur_time = time
+            while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
+                if dt > 0:
+                    cur_end_time = min(cur_time+dt, next_time)
+                else:
+                    cur_end_time = max(cur_time+dt, next_time)
+                self.interaction_kernel.execute(
+                    self, endtime=cur_end_time, dt=dt, recovery=recovery,
+                    output_file=output_file, execute_once=execute_once)
+                self.kernel.execute(
+                    self, endtime=cur_end_time, dt=dt, recovery=recovery,
+                    output_file=output_file, execute_once=execute_once)
+                cur_time += dt
+                if dt == 0:
+                    break
+        # End of interaction specific code
+        time = next_time
+        return time
+
+    def _add_periodic_release_particles_(self, time, dt):
+        pset_new = self.__class__(fieldset=self.fieldset, time=time, lon=self.repeatlon,
+                                  lat=self.repeatlat, depth=self.repeatdepth,
+                                  pclass=self.repeatpclass,
+                                  lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
+                                  partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
+        # for p in pset_new:
+        #     p.dt = dt
+        pset_new.dt[:] = dt
+        self.add(pset_new)
+    # ==== ==== ==== concluded overriding execute(...) modular functions here ==== ==== ==== #
+
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
         through a 2D histogram.
@@ -770,3 +839,15 @@ def search_kernel(particle, fieldset, time):
         :param write_status: Write status of the variable (True, False or 'once')
         """
         self._collection.set_variable_write_status(var, write_status)
+
+
+class BenchmarkParticleSetSOA(ParticleSetSOA):
+
+    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
+                 depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
+                 pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
+        super(BenchmarkParticleSetSOA, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt, lonlatdepth_dtype,
+                                                      pid_orig, interaction_distance, periodic_domain_zonal, use_benchmark=True, **kwargs)
+
+    def __del__(self):
+        super(BenchmarkParticleSetSOA, self).__del__()
