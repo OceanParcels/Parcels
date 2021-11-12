@@ -485,59 +485,62 @@ class BaseParticleSet(NDCluster):
         :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
         :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
         """
-        # COMMENT #1104: this is a "_create_runtime_kernel_()" function
-        # check if pyfunc has changed since last compile. If so, recompile.
-        # COMMENT #1034: this still needs to check that the ParticleClass name also didn't change!
-        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
-            # Generate and store Kernel
-            if isinstance(pyfunc, BaseKernel):
-                assert isinstance(pyfunc, self.kernelclass), "Trying to mix kernels of different particle set structures - action prohibited. Please construct the kernel for this specific particle set '{}'.".format(type(self).__name__)
-                if pyfunc.ptype.name == self.collection.ptype.name:
-                    self._kernel = pyfunc
-                elif pyfunc.pyfunc is not None:
-                    self._kernel = self.Kernel(pyfunc.pyfunc)
-                else:
-                    raise RuntimeError("Cannot reuse concatenated kernels that were compiled for different particle types. Please rebuild the 'pyfunc' or 'kernel' given to the execute function.")
-            else:
-                self._kernel = self.Kernel(pyfunc)
-            # Prepare JIT kernel execution
-            if self.collection.ptype.uses_jit:
-                self.kernel.remove_lib()
-                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
-                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
-                self.kernel.load_lib()
-
-        # Set up the interaction kernel(s) if not set and given.
-        if self.interaction_kernel is None and pyfunc_inter is not None:
-            if isinstance(pyfunc_inter, BaseInteractionKernel):
-                self.interaction_kernel = pyfunc_inter
-            else:
-                self.interaction_kernel = self.InteractionKernel(pyfunc_inter)
+        # == COMMENT #1104: this is a "_create_runtime_kernel_()" function == #
+        # == check if pyfunc has changed since last compile. If so, recompile. == #
+        # == COMMENT #1034: this still needs to check that the ParticleClass name also didn't change! == #
+        self._create_runtime_kernel_(pyfunc, pyfunc_inter)
+        # if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
+        #     # Generate and store Kernel
+        #     if isinstance(pyfunc, BaseKernel):
+        #         assert isinstance(pyfunc, self.kernelclass), "Trying to mix kernels of different particle set structures - action prohibited. Please construct the kernel for this specific particle set '{}'.".format(type(self).__name__)
+        #         if pyfunc.ptype.name == self.collection.ptype.name:
+        #             self._kernel = pyfunc
+        #         elif pyfunc.pyfunc is not None:
+        #             self._kernel = self.Kernel(pyfunc.pyfunc)
+        #         else:
+        #             raise RuntimeError("Cannot reuse concatenated kernels that were compiled for different particle types. Please rebuild the 'pyfunc' or 'kernel' given to the execute function.")
+        #     else:
+        #         self._kernel = self.Kernel(pyfunc)
+        #     # Prepare JIT kernel execution
+        #     if self.collection.ptype.uses_jit:
+        #         # logger.info("Compiling particle class {} with kernel function {} into KernelName {}".format(self.collection.pclass, self.kernel.funcname, self.kernel.name))
+        #         self.kernel.remove_lib()
+        #         cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
+        #         self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
+        #         self.kernel.load_lib()
+        #
+        # # Set up the interaction kernel(s) if not set and given.
+        # if self.interaction_kernel is None and pyfunc_inter is not None:
+        #     if isinstance(pyfunc_inter, BaseInteractionKernel):
+        #         self.interaction_kernel = pyfunc_inter
+        #     else:
+        #         self.interaction_kernel = self.InteractionKernel(pyfunc_inter)
         # ==================================================================== #
 
         # COMMENT #1104: this could be a "_check_times_(...)" function
         # Convert all time variables to seconds
-        if isinstance(endtime, delta):
-            raise RuntimeError('endtime must be either a datetime or a double')
-        if isinstance(endtime, datetime):
-            endtime = np.datetime64(endtime)
-        elif isinstance(endtime, cftime.datetime):
-            endtime = self.time_origin.reltime(endtime)
-        if isinstance(endtime, np.datetime64):
-            if self.time_origin.calendar is None:
-                raise NotImplementedError('If fieldset.time_origin is not a date, execution endtime must be a double')
-            endtime = self.time_origin.reltime(endtime)
-        if isinstance(runtime, delta):
-            runtime = runtime.total_seconds()
-        if isinstance(dt, delta):
-            dt = dt.total_seconds()
-        outputdt = output_file.outputdt if output_file else np.infty
-        if isinstance(outputdt, delta):
-            outputdt = outputdt.total_seconds()
-        if isinstance(moviedt, delta):
-            moviedt = moviedt.total_seconds()
-        if isinstance(callbackdt, delta):
-            callbackdt = callbackdt.total_seconds()
+        endtime, runtime, dt, outputdt, moviedt, callbackdt = self._check_times_(endtime, runtime, dt, moviedt=moviedt, callbackdt=callbackdt, output_file=output_file)
+        # if isinstance(endtime, delta):
+        #     raise RuntimeError('endtime must be either a datetime or a double')
+        # if isinstance(endtime, datetime):
+        #     endtime = np.datetime64(endtime)
+        # elif isinstance(endtime, cftime.datetime):
+        #     endtime = self.time_origin.reltime(endtime)
+        # if isinstance(endtime, np.datetime64):
+        #     if self.time_origin.calendar is None:
+        #         raise NotImplementedError('If fieldset.time_origin is not a date, execution endtime must be a double')
+        #     endtime = self.time_origin.reltime(endtime)
+        # if isinstance(runtime, delta):
+        #     runtime = runtime.total_seconds()
+        # if isinstance(dt, delta):
+        #     dt = dt.total_seconds()
+        # outputdt = output_file.outputdt if output_file else np.infty
+        # if isinstance(outputdt, delta):
+        #     outputdt = outputdt.total_seconds()
+        # if isinstance(moviedt, delta):
+        #     moviedt = moviedt.total_seconds()
+        # if isinstance(callbackdt, delta):
+        #     callbackdt = callbackdt.total_seconds()
         # ==================================================================== #
 
         assert runtime is None or runtime >= 0, 'runtime must be positive'
@@ -548,31 +551,34 @@ class BaseParticleSet(NDCluster):
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
 
         # COMMENT #1104: this could be a "_get_time_bounds_(...)" function
-        mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
-
-        default_release_time = mintime if dt >= 0 else maxtime
-        min_rt, max_rt = self._impute_release_times(default_release_time)
-
-        # Derive _starttime and endtime from arguments or fieldset defaults
-        _starttime = min_rt if dt >= 0 else max_rt
-        if self.repeatdt is not None and self.repeat_starttime is None:
-            self.repeat_starttime = _starttime
-        if runtime is not None:
-            endtime = _starttime + runtime * np.sign(dt)
-        elif endtime is None:
-            mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
-            endtime = maxtime if dt >= 0 else mintime
-
-        execute_once = False
-        if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
-            dt = 0
-            runtime = 0
-            endtime = _starttime
-            logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
-                                "The kernels will be executed once, without incrementing time")
-            execute_once = True
-
-        self._set_particle_vector('dt', dt)
+        _starttime, endtime, runtime, dt, execute_once = self._get_time_bounds_(endtime, runtime, dt)
+        # mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
+        #
+        # default_release_time = mintime if dt >= 0 else maxtime
+        # min_rt, max_rt = self._impute_release_times(default_release_time)
+        #
+        # # Derive _starttime and endtime from arguments or fieldset defaults
+        # _starttime = min_rt if dt >= 0 else max_rt
+        # if self.repeatdt is not None and self.repeat_starttime is None:
+        #     self.repeat_starttime = _starttime
+        # if runtime is not None:
+        #     endtime = _starttime + runtime * np.sign(dt)
+        # elif endtime is None:
+        #     mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
+        #     endtime = maxtime if dt >= 0 else mintime
+        #
+        # execute_once = False
+        # # if abs(endtime - _starttime) < 1e-5 or np.isclose(dt, 0) or (runtime is None or np.isclose(runtime, 0)):
+        # if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
+        #     dt = 0
+        #     runtime = 0
+        #     endtime = _starttime
+        #     logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
+        #                         "The kernels will be executed once, without incrementing time")
+        #     execute_once = True
+        #
+        # self._set_particle_vector('dt', dt)
+        # ==================================================================== #
 
         # First write output_file, because particles could have been added
         if output_file:
@@ -580,22 +586,29 @@ class BaseParticleSet(NDCluster):
         if moviedt:
             self.show(field=movie_background_field, show_time=_starttime, animation=True)
 
-        if moviedt is None:
-            moviedt = np.infty
-        if callbackdt is None:
-            interupt_dts = [np.infty, moviedt, outputdt]
-            if self.repeatdt is not None:
-                interupt_dts.append(self.repeatdt)
-            callbackdt = np.min(np.array(interupt_dts))
+
+        # COMMENT #1104: this could be a "_get_dt_bounds_(...)" function
+        moviedt, callbackdt, next_prelease, next_output, next_movie, next_callback, next_input = self._get_dt_bounds(_starttime, dt, outputdt, moviedt, callbackdt)
         time = _starttime
-        if self.repeatdt:
-            next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
-        else:
-            next_prelease = np.infty if dt > 0 else - np.infty
-        next_output = time + outputdt if dt > 0 else time - outputdt
-        next_movie = time + moviedt if dt > 0 else time - moviedt
-        next_callback = time + callbackdt if dt > 0 else time - callbackdt
-        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
+        # if moviedt is None:
+        #     moviedt = np.infty
+        # if callbackdt is None:
+        #     interupt_dts = [np.infty, moviedt, outputdt]
+        #     if self.repeatdt is not None:
+        #         interupt_dts.append(self.repeatdt)
+        #     callbackdt = np.min(np.array(interupt_dts))
+        # time = _starttime
+        # if self.repeatdt:
+        #     next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
+        # else:
+        #     next_prelease = np.infty if dt > 0 else - np.infty
+        # next_output = time + outputdt if dt > 0 else time - outputdt
+        # next_movie = time + moviedt if dt > 0 else time - moviedt
+        # next_callback = time + callbackdt if dt > 0 else time - callbackdt
+        # # logger.info("compute time-chunk input for time = {} and dt = {} ...".format(time, dt))
+        # next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
+        # # logger.info("Time-chunk input for time = {} and dt = {} computed.".format(time, dt))
+        # ==================================================================== #
 
         tol = 1e-12
 
@@ -620,61 +633,67 @@ class BaseParticleSet(NDCluster):
                 next_time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+            # logger.info("Executing next timestep is time = {} ...".format(next_time))
 
             # COMMENT #1104: this could be the "_execute_kernel_(...)" function
             # If we don't perform interaction, only execute the normal kernel efficiently.
-            if self.interaction_kernel is None:
-                self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
-                                    execute_once=execute_once)
-            # Interaction: interleave the interaction and non-interaction kernel for each time step.
-            # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
-            else:
-                cur_time = time
-                while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
-                    if dt > 0:
-                        cur_end_time = min(cur_time+dt, next_time)
-                    else:
-                        cur_end_time = max(cur_time+dt, next_time)
-                    self.interaction_kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
-                        output_file=output_file, execute_once=execute_once)
-                    self.kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
-                        output_file=output_file, execute_once=execute_once)
-                    cur_time += dt
-                    if dt == 0:
-                        break
-            # End of interaction specific code
-            time = next_time
+            time = self._execute_kernel_(next_time, dt, recovery, output_file=output_file, execute_once=execute_once)
+            # if self.interaction_kernel is None:
+            #     self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
+            #                         execute_once=execute_once)
+            # # Interaction: interleave the interaction and non-interaction kernel for each time step.
+            # # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
+            # else:
+            #     cur_time = time
+            #     while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
+            #         if dt > 0:
+            #             cur_end_time = min(cur_time+dt, next_time)
+            #         else:
+            #             cur_end_time = max(cur_time+dt, next_time)
+            #         self.interaction_kernel.execute(
+            #             self, endtime=cur_end_time, dt=dt, recovery=recovery,
+            #             output_file=output_file, execute_once=execute_once)
+            #         self.kernel.execute(
+            #             self, endtime=cur_end_time, dt=dt, recovery=recovery,
+            #             output_file=output_file, execute_once=execute_once)
+            #         cur_time += dt
+            #         if dt == 0:
+            #             break
+            # # End of interaction specific code
+            # time = next_time
             # ==================================================================== #
 
             # logger.info("Kernel executed - time: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
             if abs(time-next_prelease) < tol:
-                # COMMENT #1104: this could be the "_add_prediodic_release_particles_(...)" function
-                pset_new = self.__class__(
-                    fieldset=self.fieldset, time=time, lon=self.repeatlon,
-                    lat=self.repeatlat, depth=self.repeatdepth,
-                    pclass=self.repeatpclass,
-                    lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
-                    partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
-                for p in pset_new:
-                    p.dt = dt
-                self.add(pset_new)
-                next_prelease += self.repeatdt * np.sign(dt)
+                # COMMENT #1104: this could be the "_add_periodic_release_particles_(...)" function
+                self._add_periodic_release_particles_(time, dt)
+                # pset_new = self.__class__(
+                #     fieldset=self.fieldset, time=time, lon=self.repeatlon,
+                #     lat=self.repeatlat, depth=self.repeatdepth,
+                #     pclass=self.repeatpclass,
+                #     lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
+                #     partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
+                # for p in pset_new:
+                #     p.dt = dt
+                # self.add(pset_new)
                 # ==================================================================== #
-            if abs(time - next_output) < tol or dt == 0:
+                next_prelease += self.repeatdt * np.sign(dt)
+            if abs(time - next_output) < tol or execute_once:
                 # COMMENT #1104: this could be the "_write_field_data_(...)" function
-                for fld in self.fieldset.get_fields():
-                    if hasattr(fld, 'to_write') and fld.to_write:
-                        if fld.grid.tdim > 1:
-                            raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
-                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)
-                        fld.write(fldfilename)
-                        fld.to_write += 1
+                self._write_field_data_(output_file)
+                # for fld in self.fieldset.get_fields():
+                #     if hasattr(fld, 'to_write') and fld.to_write:
+                #         if fld.grid.tdim > 1:
+                #             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
+                #         fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)  # what does this do ? the variable is boolean, then it's increased - what-the-frog ...
+                #         fld.write(fldfilename)
+                #         fld.to_write += 1
+                # ==================================================================== #
             if abs(time - next_output) < tol:
                 # COMMENT #1104: this could be the "_write_particle_data_(....)" function
-                if output_file:
-                    output_file.write(self, time)
+                self._write_particle_data_(output_file,  time)
+                # if output_file:
+                #     output_file.write(self, time)
                 next_output += outputdt * np.sign(dt)
                 # ==================================================================== #
             if abs(time-next_movie) < tol:
@@ -697,6 +716,124 @@ class BaseParticleSet(NDCluster):
             output_file.write(self, time)
         if verbose_progress:
             pbar.finish()
+
+    def _create_runtime_kernel_(self, pyfunc, pyfunc_inter=None):
+        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
+            # Generate and store Kernel
+            if isinstance(pyfunc, BaseKernel):
+                assert isinstance(pyfunc, self.kernelclass), "Trying to mix kernels of different particle set structures - action prohibited. Please construct the kernel for this specific particle set '{}'.".format(type(self).__name__)
+                if pyfunc.ptype.name == self.collection.ptype.name:
+                    self._kernel = pyfunc
+                elif pyfunc.pyfunc is not None:
+                    self._kernel = self.Kernel(pyfunc.pyfunc)
+                else:
+                    raise RuntimeError("Cannot reuse concatenated kernels that were compiled for different particle types. Please rebuild the 'pyfunc' or 'kernel' given to the execute function.")
+            else:
+                self._kernel = self.Kernel(pyfunc)
+            # Prepare JIT kernel execution
+            if self.collection.ptype.uses_jit:
+                self.kernel.remove_lib()
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
+                self.kernel.load_lib()
+
+    def _check_times_(self, endtime, runtime, dt, moviedt=None, callbackdt=None, output_file=None):
+        if isinstance(endtime, delta):
+            raise RuntimeError('endtime must be either a datetime or a double')
+        if isinstance(endtime, datetime):
+            endtime = np.datetime64(endtime)
+        elif isinstance(endtime, cftime.datetime):
+            endtime = self.time_origin.reltime(endtime)
+        if isinstance(endtime, np.datetime64):
+            if self.time_origin.calendar is None:
+                raise NotImplementedError('If fieldset.time_origin is not a date, execution endtime must be a double')
+            endtime = self.time_origin.reltime(endtime)
+        if isinstance(runtime, delta):
+            runtime = runtime.total_seconds()
+        if isinstance(dt, delta):
+            dt = dt.total_seconds()
+        outputdt = output_file.outputdt if output_file else np.infty
+        if isinstance(outputdt, delta):
+            outputdt = outputdt.total_seconds()
+        if isinstance(moviedt, delta):
+            moviedt = moviedt.total_seconds()
+        if isinstance(callbackdt, delta):
+            callbackdt = callbackdt.total_seconds()
+        return endtime, runtime, dt, outputdt, moviedt, callbackdt
+
+    def _get_time_bounds_(self, endtime, runtime, dt):
+        mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
+
+        default_release_time = mintime if dt >= 0 else maxtime
+        min_rt, max_rt = self._impute_release_times(default_release_time)
+
+        # Derive _starttime and endtime from arguments or fieldset defaults
+        starttime = min_rt if dt >= 0 else max_rt
+        if self.repeatdt is not None and self.repeat_starttime is None:
+            self.repeat_starttime = starttime
+        if runtime is not None:
+            endtime = starttime + runtime * np.sign(dt)
+        elif endtime is None:
+            mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
+            endtime = maxtime if dt >= 0 else mintime
+
+        execute_once = False
+        if abs(endtime-starttime) < 1e-5 or dt == 0 or runtime == 0:
+            dt = 0
+            runtime = 0
+            endtime = starttime
+            logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
+                                "The kernels will be executed once, without incrementing time")
+            execute_once = True
+
+        self._set_particle_vector('dt', dt)
+        return starttime, endtime, runtime, dt, execute_once
+
+    def _get_dt_bounds(self, starttime, dt, outputdt, moviedt, callbackdt):
+        time = starttime
+        if moviedt is None:
+            moviedt = np.infty
+        if callbackdt is None:
+            interupt_dts = [np.infty, moviedt, outputdt]
+            if self.repeatdt is not None:
+                interupt_dts.append(self.repeatdt)
+            callbackdt = np.min(np.array(interupt_dts))
+        if self.repeatdt:
+            next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
+        else:
+            next_prelease = np.infty if dt > 0 else - np.infty
+        next_output = time + outputdt if dt > 0 else time - outputdt
+        next_movie = time + moviedt if dt > 0 else time - moviedt
+        next_callback = time + callbackdt if dt > 0 else time - callbackdt
+        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
+        return moviedt, callbackdt, next_prelease, next_output, next_movie, next_callback, next_input
+
+    def _execute_kernel_(self, time, dt, recovery, output_file=None, execute_once=False):
+        self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
+        return time
+
+    def _add_periodic_release_particles_(self, time, dt):
+        pset_new = self.__class__(fieldset=self.fieldset, time=time, lon=self.repeatlon,
+                                  lat=self.repeatlat, depth=self.repeatdepth,
+                                  pclass=self.repeatpclass,
+                                  lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
+                                  partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
+        for p in pset_new:
+            p.dt = dt
+        self.add(pset_new)
+
+    def _write_field_data_(self, output_file):
+        for fld in self.fieldset.get_fields():
+            if hasattr(fld, 'to_write') and fld.to_write:
+                if fld.grid.tdim > 1:
+                    raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
+                fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)  # what does this do ? the variable is boolean, then it's increased - what-the-frog ...
+                fld.write(fldfilename)
+                fld.to_write += 1
+
+    def _write_particle_data_(self, output_file, time):
+        if output_file:
+            output_file.write(self, time)
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
              land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
