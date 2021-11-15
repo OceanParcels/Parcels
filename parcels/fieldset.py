@@ -68,7 +68,7 @@ class FieldSet(object):
 
     @staticmethod
     def create_numba_fieldset(U, V, W=None, fields={}):
-        spec = deepcopy(_base_fieldset_spec)
+        spec = _base_fieldset_spec()
         for name, field in fields.items():
             if isinstance(field, Field):
                 spec.append((name, as_numba_type(NumbaField)))

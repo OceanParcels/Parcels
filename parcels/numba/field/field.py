@@ -2,14 +2,10 @@ import numpy as np
 from numba.experimental import jitclass
 from numba.core.typing.asnumbatype import as_numba_type
 from parcels.numba.grid.rectilinear import RectilinearZGrid
+from parcels.numba.utils import _numba_isclose
 import numba as nb
 from numba.core.decorators import njit
 import math
-
-
-@njit
-def _numba_isclose(a, b):
-    return np.absolute(a-b) <= 1e-8 + 1e-5*np.absolute(b)
 
 
 @jitclass(spec=[

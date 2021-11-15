@@ -6,14 +6,15 @@ from numba.experimental import jitclass
 import numba as nb
 from copy import deepcopy
 from numba.core.typing.asnumbatype import as_numba_type
-from parcels.numba.grid.base import BaseGrid, _base_spec, GridCode
+from parcels.numba.grid.base import BaseGrid, GridCode, _base_grid_spec
 from parcels.numba.grid.zgrid import BaseZGrid
 
 
-_rect_spec = _base_spec + [
-    ("lat", nb.float32[:]),
-    ("lon", nb.float32[:]),
-]
+def _rect_grid_spec():
+    return _base_grid_spec() + [
+        ("lat", nb.float32[:]),
+        ("lon", nb.float32[:]),
+    ]
 
 
 class RectilinearGrid(BaseGrid):
@@ -160,7 +161,7 @@ class RectilinearGrid(BaseGrid):
             self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
-@jitclass(spec=_rect_spec+[("depth", nb.float32[:])])
+@jitclass(spec=_rect_grid_spec()+[("depth", nb.float32[:])])
 class RectilinearZGrid(RectilinearGrid, BaseZGrid):
     """Rectilinear Z Grid
 
@@ -192,7 +193,7 @@ class RectilinearZGrid(RectilinearGrid, BaseZGrid):
 #             self.depth = self.depth.astype(np.float32)
 
 
-@jitclass(spec=_rect_spec+[("depth", nb.float32[:, :, :, :])])
+@jitclass(spec=_rect_grid_spec()+[("depth", nb.float32[:, :, :, :])])
 class RectilinearSGrid(RectilinearGrid):
     """Rectilinear S Grid. Same horizontal discretisation as a rectilinear z grid,
        but with s vertical coordinates

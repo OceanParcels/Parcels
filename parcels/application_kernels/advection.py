@@ -1,7 +1,7 @@
 """Collection of pre-built advection kernels"""
 import math
 
-from parcels.tools.statuscodes import OperationCode
+from parcels.tools.statuscodes import OperationCode, StateCode
 
 
 __all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D',
@@ -21,6 +21,7 @@ def AdvectionRK4(particle, fieldset, time):
     (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3, particle]
     particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
     particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
+    return StateCode.Success
 
 
 def AdvectionRK4_3D(particle, fieldset, time):

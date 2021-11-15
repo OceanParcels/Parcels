@@ -5,15 +5,18 @@ from numba.experimental import jitclass
 import numba as nb
 from copy import deepcopy
 from numba.core.typing.asnumbatype import as_numba_type
-from parcels.numba.grid.base import BaseGrid, _base_spec, GridCode
+from parcels.numba.grid.base import BaseGrid, _base_grid_spec, GridCode
 from parcels.tools.statuscodes import FieldOutOfBoundError
 
 
-_curve_spec = deepcopy(_base_spec)
-_curve_spec.extend([
-    ("lat", nb.float32[:, :]),
-    ("lon", nb.float32[:, :]),
-])
+def _curve_grid_spec():
+    return _base_grid_spec() + [
+        ("lat", nb.float32[:, :]),
+        ("lon", nb.float32[:, :]),
+    ]
+# _curve_spec = deepcopy(_base_spec)
+# _curve_spec.extend([
+# ])
 
 
 class CurvilinearGrid(BaseGrid):
@@ -193,7 +196,7 @@ class CurvilinearGrid(BaseGrid):
 #             self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
-@jitclass(spec=_base_spec+[("depth", nb.float32[:])])
+@jitclass(spec=_curve_grid_spec()+[("depth", nb.float32[:])])
 class CurvilinearZGrid(CurvilinearGrid):
     """Curvilinear Z Grid.
 
@@ -225,7 +228,7 @@ class CurvilinearZGrid(CurvilinearGrid):
 #             self.depth = self.depth.astype(np.float32)
 
 
-@jitclass(spec=_base_spec+[("depth", nb.float32[:, :, :, :])])
+@jitclass(spec=_curve_grid_spec()+[("depth", nb.float32[:, :, :, :])])
 class CurvilinearSGrid(CurvilinearGrid):
     """Curvilinear S Grid.
 

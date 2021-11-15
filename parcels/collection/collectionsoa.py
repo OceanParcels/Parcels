@@ -130,16 +130,23 @@ class ParticleCollectionSOA(ParticleCollection):
         self._pclass = pclass
 
         self._ptype = pclass.getPType()
-        self._data = {}
+#         self._data = {}
         initialised = set()
 
         self._ncount = len(lon)
+        self._data = np.empty(self.ncount, dtype=self.ptype.dtype).view(np.recarray)
+        self._pbackup = np.empty(1, dtype=self.ptype.dtype).view(np.recarray)
+        self._data.lat = lat
+        print(self._data)
+#         for v in self.ptype.variables:
+#             self._numba_data[v.name][:] = self._data[v.name][:]
 
-        for v in self.ptype.variables:
-            if v.name in ['xi', 'yi', 'zi', 'ti']:
-                self._data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
-            else:
-                self._data[v.name] = np.empty(self._ncount, dtype=v.dtype)
+#         for v in self.ptype.variables:
+#             print(len(lon), ngrid)
+#             if v.name in ['xi', 'yi', 'zi', 'ti']:
+#                 self._data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
+#             else:
+#                 self._data[v.name] = np.empty(self._ncount, dtype=v.dtype)
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
@@ -155,7 +162,7 @@ class ParticleCollectionSOA(ParticleCollection):
             self._data['fileid'][:] = -1
 
             # special case for exceptions which can only be handled from scipy
-            self._data['exception'] = np.empty(self.ncount, dtype=object)
+#             self._data['exception'] = np.empty(self.ncount, dtype=object)
 
             initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
 
@@ -234,7 +241,7 @@ class ParticleCollectionSOA(ParticleCollection):
         :param name: name of the property
         """
         for v in self.ptype.variables:
-            if v.name == name and name in self._data:
+            if v.name == name and name in list(self._data.dtype.fields):
                 return self._data[name]
         return False
 
@@ -556,8 +563,9 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().remove_single_by_index(index)
 
-        for d in self._data:
-            self._data[d] = np.delete(self._data[d], index, axis=0)
+        self._data = np.delete(self._data, index)
+#         for d in self._data:
+#             self._data[d] = np.delete(self._data[d], index, axis=0)
 
         self._ncount -= 1
 
@@ -644,8 +652,10 @@ class ParticleCollectionSOA(ParticleCollection):
         if type(indices) is dict:
             indices = list(indices.values())
 
-        for d in self._data:
-            self._data[d] = np.delete(self._data[d], indices, axis=0)
+        if len(indices):
+            self._data = np.delete(self._data, indices)
+#         for d in self._data:
+#             self._data[d] = np.delete(self._data[d], indices, axis=0)
 
         self._ncount -= len(indices)
 

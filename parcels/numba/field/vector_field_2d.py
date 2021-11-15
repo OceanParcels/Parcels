@@ -6,7 +6,7 @@ import numpy as np
 from parcels.numba.grid.base import GridCode
 import math
 import parcels.tools.interpolation_utils as ip
-from .field import _numba_isclose
+from parcels.numba.utils import _numba_isclose
 
 
 class NumbaBaseVectorField():
