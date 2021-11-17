@@ -15,7 +15,8 @@ from parcels.numba.grid import GridCode
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
-from parcels.numba.field.fieldset import _base_fieldset_spec, BaseNumbaFieldSet
+from parcels.numba.field.fieldset import _base_fieldset_spec, BaseNumbaFieldSet,\
+    NumbaFieldSet
 from numba.core.typing.asnumbatype import as_numba_type
 from parcels.numba.field.field import NumbaField
 from parcels.numba.field.vector_field_2d import NumbaVectorField2D
@@ -37,7 +38,6 @@ class FieldSet(object):
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
     def __init__(self, U, V, fields={}):
-        self.gridset = GridSet()
         self.completed = False
         # if U:
             # self.add_field(U, 'U')
@@ -46,7 +46,10 @@ class FieldSet(object):
             # self.add_field(V, 'V')
         W = fields.pop("W", None)
 
-        self.numba_fieldset = self.create_numba_fieldset(U, V, W, fields)
+        self.numba_fieldset = NumbaFieldSet.create(U, V, W, fields)
+        self.gridset = self.create_gridset(U, V, W, fields)
+#         for field in fields:
+#             self.gridset.add_grid(field)
         # Add additional fields as attributes
         # if fields:
             # for name, field in fields.items():
@@ -54,17 +57,35 @@ class FieldSet(object):
 
         self.U = U
         self.V = V
+        self.UV = self.numba_fieldset.UV
+        for name, field in fields.items():
+            setattr(self, name, field)
         self.W = W
+        if W is not None:
+            self.UVW = self.numba_fieldset.UVW
+        else:
+            self.UVW = None
+
         if isinstance(self.U, Field):
             self.time_origin = self.U.grid.time_origin
         else:
             self.time_origin = self.U[0].grid.time_origin
-        self.UV = self.numba_fieldset.UV
-        self.UVW = self.numba_fieldset.UVW
-        for name, field in fields.items():
-            setattr(self, name, field)
 
         self.compute_on_defer = None
+
+    @staticmethod
+    def create_gridset(U, V, W=None, fields={}):
+        all_fields = {
+            "U": U,
+            "V": V,
+            "W": W,
+            **fields,
+        }
+        gridset = GridSet()
+        for field in all_fields.values():
+            if field is not None:
+                gridset.add_grid(field)
+        return gridset
 
     @staticmethod
     def create_numba_fieldset(U, V, W=None, fields={}):

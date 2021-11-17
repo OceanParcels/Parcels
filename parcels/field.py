@@ -34,6 +34,7 @@ from parcels.numba.field.field import NumbaField
 from parcels.numba.field.vector_field_3d import NumbaVectorField3D
 from parcels.numba.field.vector_field_2d import NumbaVectorField2D
 from _ast import Attribute
+from parcels.numba.field.utils import _get_numba_field_class
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
@@ -101,7 +102,7 @@ class Field():
             self, name, data, lon=None, lat=None, depth=None, time=None,
             grid=None, mesh='flat', timestamps=None, fieldtype=None,
             transpose=False, vmin=None, vmax=None, cast_data_dtype='float32',
-            time_origin=None, interp_method='linear',
+            time_origin=0, interp_method='linear',
             allow_time_extrapolation=None, time_periodic=False,
             gridindexingtype='nemo', to_write=False, **kwargs):
         if grid is None:
@@ -138,11 +139,12 @@ class Field():
 
             if grid._add_last_periodic_data_timestep:
                 data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
-        self.numba_field = NumbaField(grid, data, interp_method=interp_method,
-                                      time_periodic=time_periodic)
+        self.numba_class = _get_numba_field_class(grid)
+        self.numba_field = self.numba_class(grid, data, interp_method=interp_method,
+                                            time_periodic=time_periodic)
 
 
-        time_origin = TimeConverter(0) if time_origin is None else time_origin
+#         time_origin = TimeConverter(0) if time_origin is None else time_origin
         self.igrid = -1
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
@@ -540,6 +542,13 @@ class Field():
                 raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use chunksize=None')
             data = lib.expand_dims(data, axis=-2)
 
+        if grid.tdim == 1:
+            if len(data.shape) < 4:
+                data = data.reshape(sum(((1,), data.shape), ()))
+        if grid.zdim == 1:
+            if len(data.shape) == 4:
+                data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
+
         if len(data.shape) == 4:
             errormessage = ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
                             'Flag transpose=True could help to reorder the data.' % self.name)
@@ -552,6 +561,7 @@ class Field():
             else:
                 assert data.shape[1] == grid.zdim, errormessage
         else:
+            print(data.shape, grid.tdim, grid.xdim, grid.ydim, grid.zdim)
             assert (data.shape == (grid.tdim,
                                    grid.ydim - 2 * grid.meridional_halo,
                                    grid.xdim - 2 * grid.zonal_halo)), \

@@ -636,14 +636,13 @@ def search_kernel(particle, fieldset, time):
 
         return density
 
-    def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
+    def Kernel(self, pyfunc):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
         based on `fieldset` and `ptype` of the ParticleSet
 
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
-        return Kernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
-                      delete_cfiles=delete_cfiles)
+        return Kernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc)
 
     def InteractionKernel(self, pyfunc_inter):
         if pyfunc_inter is None:

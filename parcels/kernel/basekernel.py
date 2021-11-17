@@ -59,17 +59,14 @@ class BaseKernel(object):
     _ptype = None
     funcname = None
 
-    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None,
-                 c_include="", delete_cfiles=True):
+    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None):
         self._fieldset = fieldset
         self.field_args = None
         self.const_args = None
         self._ptype = ptype
         self._lib = None
-        self.delete_cfiles = delete_cfiles
         self._cleanup_files = None
         self._cleanup_lib = None
-        self._c_include = c_include
 
         # Derive meta information from pyfunc, if not given
         self._pyfunc = None
@@ -115,10 +112,6 @@ class BaseKernel(object):
     @property
     def fieldset(self):
         return self._fieldset
-
-    @property
-    def c_include(self):
-        return self._c_include
 
     @property
     def _cache_key(self):
@@ -264,12 +257,9 @@ class BaseKernel(object):
         if self.py_ast is not None:
             func_ast = FunctionDef(name=funcname, args=self.py_ast.args, body=self.py_ast.body + kernel.py_ast.body,
                                    decorator_list=[], lineno=1, col_offset=0)
-        delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
         return kclass(self.fieldset, self.ptype, pyfunc=None,
                       funcname=funcname, funccode=self.funccode + kernel.funccode,
-                      py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
-                      c_include=self._c_include + kernel.c_include,
-                      delete_cfiles=delete_cfiles)
+                      py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars)
 
     def __add__(self, kernel):
         if not isinstance(kernel, BaseKernel):
@@ -280,25 +270,6 @@ class BaseKernel(object):
         if not isinstance(kernel, BaseKernel):
             kernel = BaseKernel(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self, BaseKernel)
-
-    @staticmethod
-    def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
-        if lib_file is not None:
-            if path.isfile(lib_file):  # and delete_cfiles
-                [remove(s) for s in [lib_file, ] if path is not None and path.exists(s)]
-            if delete_cfiles and len(all_files_array) > 0:
-                [remove(s) for s in all_files_array if path is not None and path.exists(s)]
-
-    @staticmethod
-    def cleanup_unload_lib(lib):
-        # Clean-up the in-memory dynamic linked libraries.
-        # This is not really necessary, as these programs are not that large, but with the new random
-        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
-        if lib is not None:
-            try:
-                _ctypes.FreeLibrary(lib._handle) if platform == 'win32' else _ctypes.dlclose(lib._handle)
-            except:
-                logger.warning_once("compiled library already freed.")
 
     def remove_deleted(self, pset, output_file, endtime):
         """

@@ -6,16 +6,35 @@ from parcels.numba.utils import _numba_isclose
 import numba as nb
 from numba.core.decorators import njit
 import math
+from parcels.numba.grid.base import GridCode
+from parcels.numba.grid.curvilinear import CurvilinearZGrid, CurvilinearSGrid
 
 
-@jitclass(spec=[
-    ("grid", as_numba_type(RectilinearZGrid)),
-    ("data", nb.float32[:, :, :, :]),
-    ("interp_method", nb.types.string),
-    ("gridindexingtype", nb.types.string),
-    ("time_periodic", nb.bool_),
-    ("allow_time_extrapolation", nb.bool_),
-])
+def _base_field_spec():
+    return [
+        ("data", nb.float32[:, :, :, :]),
+        ("interp_method", nb.types.string),
+        ("gridindexingtype", nb.types.string),
+        ("time_periodic", nb.bool_),
+        ("allow_time_extrapolation", nb.bool_),
+    ]
+#     if grid_type == GridCode.CurvilinearZGrid:
+#         _base_spec += [("grid", as_numba_type(CurvilinearZGrid))]
+#     elif grid_type == GridCode.CurvilinearSGrid:
+#         _base_spec += [("grid", as_numba_type(CurvilinearSGrid))]
+#     elif grid_type == GridCode.
+# @jitclass(spec=[
+#     ("grid", as_numba_type(RectilinearZGrid)),
+#     ("data", nb.float32[:, :, :, :]),
+#     ("interp_method", nb.types.string),
+#     ("gridindexingtype", nb.types.string),
+#     ("time_periodic", nb.bool_),
+#     ("allow_time_extrapolation", nb.bool_),
+# ])
+#
+# NumbaField
+
+
 class NumbaField():
     def __init__(self, grid, data, interp_method="nearest",
                  gridindexingtype="nemo", time_periodic=True):
@@ -27,7 +46,7 @@ class NumbaField():
         # TODO: add unit conversion.
 
     def interpolator2D(self, ti, z, y, x, particle=None):
-        (xsi, eta, _, xi, yi, _) = self.grid.search_indices(x, y, z)
+        (xsi, eta, _, xi, yi, _) = self.grid.search_indices(x, y, z, particle=particle)
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
@@ -78,7 +97,7 @@ class NumbaField():
 
     def interpolator3D(self, ti, z, y, x, time, particle=None):
         (xsi, eta, zeta, xi, yi, zi) = self.grid.search_indices(
-            x, y, z, ti, time)
+            x, y, z, ti, time, particle=particle)
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1

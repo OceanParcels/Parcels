@@ -8,19 +8,39 @@ import math
 import parcels.tools.interpolation_utils as ip
 
 
-@jitclass(spec=[
-    ("U", as_numba_type(NumbaField)),
-    ("V", as_numba_type(NumbaField)),
-    ("W", as_numba_type(NumbaField)),
-    ("vector_type", nb.types.string),
-    ("name", nb.types.string),
-])
 class NumbaVectorField3D():
-    def __init__(self, name, U, V, W=None):
+    @staticmethod
+    def _class(U):
+        numba_class = U.numba_class
+        vfield_class = jitclass(_NumbaVectorField3D, spec=[
+            ("U", as_numba_type(numba_class)),
+            ("V", as_numba_type(numba_class)),
+            ("W", as_numba_type(numba_class)),
+            ("vector_type", nb.types.string),
+            ("name", nb.types.string),
+            ("gridindexingtype", nb.types.string),
+        ])
+        return vfield_class
+
+    def create(self, name, U, V, W):
+        return self._class(name, U, V, W)
+
+# @jitclass(spec=[
+#     ("U", as_numba_type(NumbaField)),
+#     ("V", as_numba_type(NumbaField)),
+#     ("W", as_numba_type(NumbaField)),
+#     ("vector_type", nb.types.string),
+#     ("name", nb.types.string),
+# ])
+
+
+class _NumbaVectorField3D():
+    def __init__(self, name, U, V, W):
         self.U = U
         self.V = V
         self.W = W
         self.name = name
+        self.gridindexingtype = U.gridindexingtype
 
     def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':

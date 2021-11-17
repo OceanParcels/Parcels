@@ -47,8 +47,10 @@ class KernelSOA(BaseKernel):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
-        super(KernelSOA, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
+                 funccode=None, py_ast=None, funcvars=None):
+        super(KernelSOA, self).__init__(
+            fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname,
+            funccode=funccode, py_ast=py_ast, funcvars=funcvars)
 
         # Derive meta information from pyfunc, if not given
         self.check_fieldsets_in_kernels(pyfunc)
@@ -92,46 +94,6 @@ class KernelSOA(BaseKernel):
             'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
 
         self.name = "%s%s" % (ptype.name, self.funcname)
-
-        # Generate the kernel function and add the outer loop
-        # if self.ptype.uses_jit:
-        #     kernelgen = KernelGenerator(fieldset, ptype)
-        #     kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
-        #                                       self.funcvars)
-        #     self.field_args = kernelgen.field_args
-        #     self.vector_field_args = kernelgen.vector_field_args
-        #     fieldset = self.fieldset
-        #     for f in self.vector_field_args.values():
-        #         Wname = f.W.ccode_name if f.W else 'not_defined'
-        #         for sF_name, sF_component in zip([f.U.ccode_name, f.V.ccode_name, Wname], ['U', 'V', 'W']):
-        #             if sF_name not in self.field_args:
-        #                 if sF_name != 'not_defined':
-        #                     self.field_args[sF_name] = getattr(f, sF_component)
-        #     self.const_args = kernelgen.const_args
-        #     loopgen = LoopGenerator(fieldset, ptype)
-        #     if path.isfile(self._c_include):
-        #         with open(self._c_include, 'r') as f:
-        #             c_include_str = f.read()
-        #     else:
-        #         c_include_str = self._c_include
-        #     self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
-        #                                   kernel_ccode, c_include_str)
-        #
-        #     src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-        #     if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
-        #         self.dyn_srcs = src_file_or_files
-        #     else:
-        #         self.src_file = src_file_or_files
-
-    def execute_jit(self, pset, endtime, dt):
-        """Invokes JIT engine to perform the core update loop"""
-        self.load_fieldset_jit(pset)
-
-        fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
-        fargs += [c_double(f) for f in self.const_args.values()]
-        particle_data = byref(pset.ctypes_struct)
-        return self._function(c_int(len(pset)), particle_data,
-                              c_double(endtime), c_double(dt), *fargs)
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
@@ -311,7 +273,6 @@ class KernelSOA(BaseKernel):
         indices = np.where(bool_indices)[0]
         if len(indices) > 0 and output_file is not None:
             output_file.write(pset, endtime, deleted_only=bool_indices)
-        print(indices)
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):

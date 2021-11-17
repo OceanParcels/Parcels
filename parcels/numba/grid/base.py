@@ -50,9 +50,9 @@ class FOBErrorData():
 
 def _base_grid_spec():
     return [
-        ("xi", nb.int32[:]),
-        ("yi", nb.int32[:]),
-        ("zi", nb.int32[:]),
+        ("xi", nb.types.DictType(nb.int64, nb.int64)),
+        ("yi", nb.types.DictType(nb.int64, nb.int64)),
+        ("zi", nb.types.DictType(nb.int64, nb.int64)),
         ("ti", nb.int32),
         ("time", nb.float64[:]),
         ("time_full", nb.float64[:]),
@@ -85,9 +85,12 @@ class BaseGrid(object):
 
     """
     def __init__(self, lon, lat, time, time_origin, mesh):
-        self.xi = np.empty(0, dtype=nb.int32)
-        self.yi = np.empty(0, dtype=nb.int32)
-        self.zi = np.empty(0, dtype=nb.int32)
+        self.xi = nb.typed.Dict.empty(nb.int64, nb.int64)
+        self.yi = nb.typed.Dict.empty(nb.int64, nb.int64)
+        self.zi = nb.typed.Dict.empty(nb.int64, nb.int64)
+#         self.xi = np.empty(0, dtype=nb.int32)
+#         self.yi = np.empty(0, dtype=nb.int32)
+#         self.zi = np.empty(0, dtype=nb.int32)
         self.ti = -1
         self.lon = lon.astype(nb.float32)
         self.lat = lat.astype(nb.float32)

@@ -3,6 +3,22 @@ import numpy as np
 __all__ = ['GridSet']
 
 
+def check_grids_equal(grid_1, grid_2):
+    if grid_1.time_origin != grid_2.time_origin:
+        return False
+    for attr in ['lon', 'lat', 'depth', 'time']:
+        gattr = getattr(grid_1, attr)
+        gridattr = getattr(grid_2, attr)
+        if gattr.shape != gridattr.shape or not np.allclose(gattr, gridattr):
+            return False
+
+    if (grid_1.chunksize != grid_2.chunksize) and (grid_2.chunksize not in [False, None]):
+        for dim in grid_2.chunksize:
+            if grid_2.chunksize[dim][1] != grid_1.chunksize[dim][1]:
+                return False
+    return True
+
+
 class GridSet(object):
     """GridSet class that holds the Grids on which the Fields are defined
 
@@ -17,24 +33,25 @@ class GridSet(object):
         for g in self.grids:
             if field.chunksize == 'auto':
                 break
-            if g == grid:
-                existing_grid = True
-                break
-            sameGrid = True
-            if grid.time_origin != g.time_origin:
-                continue
-            for attr in ['lon', 'lat', 'depth', 'time']:
-                gattr = getattr(g, attr)
-                gridattr = getattr(grid, attr)
-                if gattr.shape != gridattr.shape or not np.allclose(gattr, gridattr):
-                    sameGrid = False
-                    break
-
-            if (g.chunksize != grid.chunksize) and (grid.chunksize not in [False, None]):
-                for dim in grid.chunksize:
-                    if grid.chunksize[dim][1] != g.chunksize[dim][1]:
-                        sameGrid &= False
-                        break
+            sameGrid = check_grids_equal(g, grid)
+#             if g == grid:
+#                 existing_grid = True
+#                 break
+#             sameGrid = True
+#             if grid.time_origin != g.time_origin:
+#                 continue
+#             for attr in ['lon', 'lat', 'depth', 'time']:
+#                 gattr = getattr(g, attr)
+#                 gridattr = getattr(grid, attr)
+#                 if gattr.shape != gridattr.shape or not np.allclose(gattr, gridattr):
+#                     sameGrid = False
+#                     break
+# 
+#             if (g.chunksize != grid.chunksize) and (grid.chunksize not in [False, None]):
+#                 for dim in grid.chunksize:
+#                     if grid.chunksize[dim][1] != g.chunksize[dim][1]:
+#                         sameGrid &= False
+#                         break
 
             if sameGrid:
                 existing_grid = True
@@ -43,7 +60,9 @@ class GridSet(object):
 
         if not existing_grid:
             self.grids.append(grid)
-        field.igrid = self.grids.index(field.grid)
+#         print(field.name, len(self.grids), self.grids)
+#         print(grid, field.grid, self.grids[0])
+#         field.igrid = self.grids.index(field.grid)
 
     def dimrange(self, dim):
         """Returns maximum value of a dimension (lon, lat, depth or time)

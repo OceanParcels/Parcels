@@ -8,6 +8,7 @@ from copy import deepcopy
 from numba.core.typing.asnumbatype import as_numba_type
 from parcels.numba.grid.base import BaseGrid, GridCode, _base_grid_spec
 from parcels.numba.grid.zgrid import BaseZGrid
+from parcels.numba.utils import numba_reshape_34
 
 
 def _rect_grid_spec():
@@ -40,7 +41,7 @@ class RectilinearGrid(BaseGrid):
 #             logger.warning_once("Flipping lat data from North-South to South-North. "
 #                                 "Note that this may lead to wrong sign for meridional velocity, so tread very carefully")
 
-    def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False):
+    def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False, particle=None):
         if self.xdim > 1 and (not self.zonal_periodic):
             if x < self.lonlat_minmax[0] or x > self.lonlat_minmax[1]:
                 self.FieldOutOfBoundError(x, y, z)
@@ -116,10 +117,13 @@ class RectilinearGrid(BaseGrid):
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
             self.FieldSamplingError(x, y, z)
 
-        # if particle:
-        #     particle.xi[self.igrid] = xi
-        #     particle.yi[self.igrid] = yi
-        #     particle.zi[self.igrid] = zi
+        if particle is not None:
+            self.xi[particle.id] = xi
+            self.yi[particle.id] = yi
+            self.zi[particle.id] = zi
+#             particle.xi[self.igrid] = xi
+#             particle.yi[self.igrid] = yi
+#             particle.zi[self.igrid] = zi
 
         return (xsi, eta, zeta, xi, yi, zi)
 
@@ -218,10 +222,15 @@ class RectilinearSGrid(RectilinearGrid):
     """
     __init_rect = RectilinearGrid.__init__
 
+    # TODO: description of dimensions is wrong in docstring?
+
     def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
         self.__init_rect(lon, lat, time, time_origin, mesh)
 #         assert(isinstance(depth, np.ndarray) and 
         assert len(depth.shape) in [3, 4], 'depth is not a 3D or 4D numpy array'
+#         if len(depth.shape) == 3:
+#             depth = depth.reshape(*depth.shape, 1)
+        depth = numba_reshape_34(depth)
 
         self.gtype = GridCode.RectilinearSGrid
         self.depth = depth.astype(nb.float32)
