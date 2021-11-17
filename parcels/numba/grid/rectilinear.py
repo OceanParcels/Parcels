@@ -9,6 +9,7 @@ from numba.core.typing.asnumbatype import as_numba_type
 from parcels.numba.grid.base import BaseGrid, GridCode, _base_grid_spec
 from parcels.numba.grid.zgrid import BaseZGrid
 from parcels.numba.utils import numba_reshape_34
+from parcels.numba.grid.sgrid import BaseSGrid
 
 
 def _rect_grid_spec():
@@ -41,7 +42,7 @@ class RectilinearGrid(BaseGrid):
 #             logger.warning_once("Flipping lat data from North-South to South-North. "
 #                                 "Note that this may lead to wrong sign for meridional velocity, so tread very carefully")
 
-    def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False, particle=None):
+    def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False, particle=None, interp_method="nearest"):
         if self.xdim > 1 and (not self.zonal_periodic):
             if x < self.lonlat_minmax[0] or x > self.lonlat_minmax[1]:
                 self.FieldOutOfBoundError(x, y, z)
@@ -104,7 +105,7 @@ class RectilinearGrid(BaseGrid):
 
         if self.zdim > 1 and not search2D:
             (zi, zeta) = self.search_indices_vertical(x, y, z, xi, yi, xsi,
-                                                      eta, ti, time)
+                                                      eta, ti, time, interp_method=interp_method)
             # if self.gtype == GridCode.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
                 # (zi, zeta) = self.search_indices_vertical_z(z)
@@ -198,7 +199,7 @@ class RectilinearZGrid(RectilinearGrid, BaseZGrid):
 
 
 @jitclass(spec=_rect_grid_spec()+[("depth", nb.float32[:, :, :, :])])
-class RectilinearSGrid(RectilinearGrid):
+class RectilinearSGrid(RectilinearGrid, BaseSGrid):
     """Rectilinear S Grid. Same horizontal discretisation as a rectilinear z grid,
        but with s vertical coordinates
 
@@ -235,7 +236,7 @@ class RectilinearSGrid(RectilinearGrid):
         self.gtype = GridCode.RectilinearSGrid
         self.depth = depth.astype(nb.float32)
         self.zdim = self.depth.shape[-3]
-#         self.z4d = len(self.depth.shape) == 4
+        self.z4d = self.depth.shape[0] != 1
 #         if self.z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
         assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'

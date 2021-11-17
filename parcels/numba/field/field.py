@@ -46,7 +46,7 @@ class NumbaField():
         # TODO: add unit conversion.
 
     def interpolator2D(self, ti, z, y, x, particle=None):
-        (xsi, eta, _, xi, yi, _) = self.grid.search_indices(x, y, z, particle=particle)
+        (xsi, eta, _, xi, yi, _) = self.grid.search_indices(x, y, z, particle=particle, interp_method=self.interp_method)
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1

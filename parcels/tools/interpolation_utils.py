@@ -1,21 +1,22 @@
 # flake8: noqa
 import numpy as np
 from numba.core.decorators import njit
+import numba as nb
 
 
 @njit
 def phi1D_lin(xsi):
-    phi = [1-xsi,
-           xsi]
+    phi = np.array([1-xsi,
+           xsi]).astype(nb.float32)
 
     return phi
 
 
 @njit
 def phi1D_quad(xsi):
-    phi = [2*xsi**2-3*xsi+1,
+    phi = np.array([2*xsi**2-3*xsi+1,
            -4*xsi**2+4*xsi,
-           2*xsi**2-xsi]
+           2*xsi**2-xsi]).astype(nb.float32)
 
     return phi
 
@@ -33,44 +34,47 @@ def phi2D_lin(xsi, eta):
 
 @njit
 def phi3D_lin(xsi, eta, zet):
-    phi = [(1-xsi) * (1-eta) * (1-zet),
+    phi = np.array([(1-xsi) * (1-eta) * (1-zet),
               xsi  * (1-eta) * (1-zet),
               xsi  *    eta  * (1-zet),
            (1-xsi) *    eta  * (1-zet),
            (1-xsi) * (1-eta) *    zet ,
               xsi  * (1-eta) *    zet ,
               xsi  *    eta  *    zet ,
-           (1-xsi) *    eta  *    zet ]
+           (1-xsi) *    eta  *    zet ]).astype(np.float32)
 
     return phi
 
 
 @njit
 def dphidxsi3D_lin(xsi, eta, zet):
-    dphidxsi = [ - (1-eta) * (1-zet),
+    dphidxsi = np.array([
+                 - (1-eta) * (1-zet),
                    (1-eta) * (1-zet),
                    (  eta) * (1-zet),
                  - (  eta) * (1-zet),
                  - (1-eta) * (  zet),
                    (1-eta) * (  zet),
                    (  eta) * (  zet),
-                 - (  eta) * (  zet)]
-    dphideta = [ - (1-xsi) * (1-zet),
+                 - (  eta) * (  zet)]).astype(np.float32)
+    dphideta = np.array([
+                 - (1-xsi) * (1-zet),
                  - (  xsi) * (1-zet),
                    (  xsi) * (1-zet),
                    (1-xsi) * (1-zet),
                  - (1-xsi) * (  zet),
                  - (  xsi) * (  zet),
                    (  xsi) * (  zet),
-                   (1-xsi) * (  zet)]
-    dphidzet = [ - (1-xsi) * (1-eta),
+                   (1-xsi) * (  zet)]).astype(np.float32)
+    dphidzet = np.array([
+                 - (1-xsi) * (1-eta),
                  - (  xsi) * (1-eta),
                  - (  xsi) * (  eta),
                  - (1-xsi) * (  eta),
                    (1-xsi) * (1-eta),
                    (  xsi) * (1-eta),
                    (  xsi) * (  eta),
-                   (1-xsi) * (  eta)]
+                   (1-xsi) * (  eta)]).astype(np.float32)
 
     return dphidxsi, dphideta, dphidzet
 
@@ -138,14 +142,14 @@ def jacobian3D_lin_face(hexa_x, hexa_y, hexa_z, xsi, eta, zet, orientation, mesh
 
 @njit
 def dphidxsi2D_lin(xsi, eta):
-    dphidxsi = [-(1-eta),
+    dphidxsi = np.array([-(1-eta),
                   1-eta,
                     eta,
-                -   eta]
-    dphideta = [-(1-xsi),
+                -   eta]).astype(nb.float32)
+    dphideta = np.array([-(1-xsi),
                 -   xsi,
                     xsi,
-                  1-xsi]
+                  1-xsi]).astype(nb.float32)
 
     return dphidxsi, dphideta
 

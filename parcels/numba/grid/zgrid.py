@@ -3,7 +3,7 @@ import numpy as np
 
 class BaseZGrid():
     def search_indices_vertical(self, _x, _y, z, _xi, _yi, _xsi, _eta, _ti,
-                                _time):
+                                _time, interp_method):
         # TODO: fix 
         gridindexingtype = "unknown"
         z = np.float32(z)

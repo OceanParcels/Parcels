@@ -7,6 +7,8 @@ from copy import deepcopy
 from numba.core.typing.asnumbatype import as_numba_type
 from parcels.numba.grid.base import BaseGrid, _base_grid_spec, GridCode
 from parcels.tools.statuscodes import FieldOutOfBoundError
+from parcels.numba.grid.zgrid import BaseZGrid
+from parcels.numba.grid.sgrid import BaseSGrid
 
 
 def _curve_grid_spec():
@@ -134,8 +136,8 @@ class CurvilinearGrid(BaseGrid):
         return (xsi, eta, zeta, xi, yi, zi)
 
     def get_pxy(self, xi, yi):
-        px = np.array([self.lon[yi, xi], self.lon[yi, xi+1], self.lon[yi+1, xi+1], self.lon[yi+1, xi]])
-        py = np.array([self.lat[yi, xi], self.lat[yi, xi+1], self.lat[yi+1, xi+1], self.lat[yi+1, xi]])
+        px = np.array([self.lon[yi, xi], self.lon[yi, xi+1], self.lon[yi+1, xi+1], self.lon[yi+1, xi]]).astype(nb.float32)
+        py = np.array([self.lat[yi, xi], self.lat[yi, xi+1], self.lat[yi+1, xi+1], self.lat[yi+1, xi]]).astype(nb.float32)
         return px, py
 
     def reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
@@ -197,7 +199,7 @@ class CurvilinearGrid(BaseGrid):
 
 
 @jitclass(spec=_curve_grid_spec()+[("depth", nb.float32[:])])
-class CurvilinearZGrid(CurvilinearGrid):
+class CurvilinearZGrid(CurvilinearGrid, BaseZGrid):
     """Curvilinear Z Grid.
 
     :param lon: 2D array containing the longitude coordinates of the grid
@@ -229,7 +231,7 @@ class CurvilinearZGrid(CurvilinearGrid):
 
 
 @jitclass(spec=_curve_grid_spec()+[("depth", nb.float32[:, :, :, :])])
-class CurvilinearSGrid(CurvilinearGrid):
+class CurvilinearSGrid(CurvilinearGrid, BaseSGrid):
     """Curvilinear S Grid.
 
     :param lon: 2D array containing the longitude coordinates of the grid
@@ -259,6 +261,7 @@ class CurvilinearSGrid(CurvilinearGrid):
         self.gtype = GridCode.CurvilinearSGrid
         self.depth = depth
         self.zdim = self.depth.shape[-3]
+        self.z4d = self.depth.shape[0] != 1
 #         self.z4d = len(self.depth.shape) == 4
 #         if self.z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file

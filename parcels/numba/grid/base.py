@@ -73,6 +73,7 @@ def _base_grid_spec():
         ("ydim", nb.int64),
         ("zdim", nb.int64),
         ("tdim", nb.int64),
+        ("z4d", nb.bool_),
         ("gtype", nb.types.IntEnumMember(GridCode, nb.int64)),
         ("update_status", nb.types.IntEnumMember(GridStatus, nb.int64)),
         ("fob_data", as_numba_type(FOBErrorData))
