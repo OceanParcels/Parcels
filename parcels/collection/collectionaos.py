@@ -276,7 +276,7 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         :returns if the collections is empty or not
         """
-        return len(self._data) <= 0
+        return len(self._data) == 0
 
     def get_index_by_ID(self, id):
         """
