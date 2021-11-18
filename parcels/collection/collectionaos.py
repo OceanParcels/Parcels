@@ -65,8 +65,6 @@ class ParticleCollectionAOS(ParticleCollection):
 
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
-        :arg idgen: an instance of an ID generator used to obtain unique IDs - mandatory for a node-based collection
-        :arg c_lib_register: an instance of a process-consistent LibraryRegisterC object - mandatory for a node-based collection
         :arg pclass: the Particle class of the objects stored within the nodes
         :arg lon: a non-None list or array of longitudes
         :arg lat: a non-None list or array of latitudes
