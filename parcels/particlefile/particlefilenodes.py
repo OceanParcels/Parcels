@@ -168,7 +168,6 @@ class ParticleFileNodes(BaseParticleFile):
                                    '"parcels_convert_npydir_to_netcdf %s" to convert these to '
                                    'a NetCDF file yourself.\nTo avoid this error, make sure you '
                                    'close() your ParticleFile at the end of your script.' % self.tempwritedir)
-            logger.info("Reading '{}' ...".format(npyfile))
             id_ind = np.array(data_dict['index'])
             t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
             data[id_ind, t_ind] = data_dict[var]
