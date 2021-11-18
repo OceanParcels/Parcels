@@ -154,8 +154,6 @@ class ParticleFileNodes(BaseParticleFile):
         :param var: name of the variable to read
         """
 
-        from parcels.tools import logger
-
         data = np.nan * np.zeros((self.max_index_written+1, time_steps))
         time_index = np.zeros(self.max_index_written+1, dtype=np.int64)
         t_ind_used = np.zeros(time_steps, dtype=np.int64)
