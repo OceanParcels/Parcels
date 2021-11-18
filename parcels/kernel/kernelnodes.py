@@ -245,7 +245,6 @@ class KernelNodes(BaseKernel):
         except:
             raise RuntimeError("KernelNodes: unable to locate IDs of deleted particles.")
         if len(ids) > 0 and output_file is not None:
-            logger.info("Collected {} deleted items by ID ({}).".format(len(ids), ids))
             output_file.write(pset, endtime, deleted_only=ids)
         pset.remove_deleted_items()
         return pset
