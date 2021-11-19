@@ -22,7 +22,7 @@ def PolyTEOS10_bsq(particle, fieldset, time):
     Oceanic Technology, 20, 730-741.
     '''
 
-    Z = - particle.depth  # note: use negative depths!
+    Z = - math.fabs(particle.depth)  # Z needs to be negative
     SA = fieldset.abs_salinity[time, particle.depth, particle.lat, particle.lon]
     CT = fieldset.cons_temperature[time, particle.depth, particle.lat, particle.lon]
 
