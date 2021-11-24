@@ -58,6 +58,7 @@ class BaseKernel(object):
     _fieldset = None
     _ptype = None
     funcname = None
+    _compiled_pyfunc = None
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None):
         self._fieldset = fieldset

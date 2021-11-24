@@ -113,130 +113,22 @@ class KernelSOA(BaseKernel):
                     continue
                 f.data = np.array(f.data)
 
+        inner_loop(pset._collection._data, endtime, sign_dt, dt,
+                   self.compiled_pyfunc, self._fieldset.numba_fieldset,
+                   pset._collection._pbackup, analytical=analytical)
 #         for p in pset._collection._data:
-        compiled_pyfunc = njit(self._pyfunc)
-        for i in range(len(pset)):
-            self.static_evaluate_particle(pset._collection._data, i, endtime, sign_dt, dt,
-                                          compiled_pyfunc,
-                                          self._fieldset.numba_fieldset,
-                                          pset._collection._pbackup,
-                                          analytical=analytical)
-
-    @staticmethod
-    @nb.njit
-    def static_evaluate_particle(pset, idx, endtime, sign_dt, dt, pyfunc,
-                                 fieldset, pbackup,
-                                 analytical=False):
-        """
-        Execute the kernel evaluation of for an individual particle.
-        :arg p: object of (sub-)type (ScipyParticle, JITParticle) or (sub-)type of BaseParticleAccessor
-        :arg fieldset: fieldset of the containing ParticleSet (e.g. pset.fieldset)
-        :arg analytical: flag indicating the analytical advector or an iterative advection
-        :arg endtime: endtime of this overall kernel evaluation step
-        :arg dt: computational integration timestep
-        """
-        # back up variables in case of OperationCodeRepeat
-        p = pset[idx]
-        pbackup[0] = p
-        pdt_prekernels = .0
-        # Don't execute particles that aren't started yet
-        sign_end_part = np.sign(endtime - p.time)
-        # Compute min/max dt for first timestep. Only use endtime-p.time for one timestep
-        reset_dt = False
-        if abs(endtime - p.time) < abs(p.dt):
-            dt_pos = abs(endtime - p.time)
-            reset_dt = True
-        else:
-            dt_pos = abs(p.dt)
-            reset_dt = False
-
-        # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
-        # as they fulfil the condition here on entering at the final calculation here. ==== #
-        if ((sign_end_part != sign_dt) or _numba_isclose(dt_pos, 0)) and not _numba_isclose(dt, 0):
-            if abs(p.time) >= abs(endtime):
-                p.state = StateCode.Success
-            return p
-
-        while p.state == StateCode.Evaluate or p.state == OperationCode.Repeat or _numba_isclose(dt, 0):
-#             for var in variables:
-#                 p_var_back[var.name] = getattr(p, var.name)
-#             try:
-#             print(dt, p.state, p.time, p.dt)
-            pdt_prekernels = sign_dt * dt_pos
-            p.dt = pdt_prekernels
-            state_prev = p.state
-            res = pyfunc(p, fieldset, p.time)
-#             if res is None:
-#                 res = StateCode.Success
-
-            if res is StateCode.Success and p.state != state_prev:
-                res = p.state
-
-            if not analytical and res == StateCode.Success and not _numba_isclose(p.dt, pdt_prekernels):
-                res = OperationCode.Repeat
-
-#             except FieldOutOfBoundError:  # as fse_xy:
-#                 res = ErrorCode.ErrorOutOfBounds
-                # p.exception = fse_xy
-#             except FieldOutOfBoundSurfaceError:  # as fse_z:
-#                 res = ErrorCode.ErrorThroughSurface
-                # p.exception = fse_z
-#             except TimeExtrapolationError:  # as fse_t:
-#                 res = ErrorCode.ErrorTimeExtrapolation
-                # p.exception = fse_t
-
-#             except Exception:  # as e:
-#                 res = ErrorCode.Error
-                # p.exception = e
-
-            # Handle particle time and time loop
-            if res == StateCode.Success or res == OperationCode.Delete:
-                # Update time and repeat
-                p.time += p.dt
-                if reset_dt and p.dt == pdt_prekernels:
-                    p.dt = dt
-                if not np.isnan(p._next_dt):
-                    p.dt = p._next_dt
-                    p._next_dt = np.nan
-#                 p.update_next_dt()
-                if analytical:
-                    p.dt = np.inf
-                if abs(endtime - p.time) < abs(p.dt):
-                    dt_pos = abs(endtime - p.time)
-                    reset_dt = True
-                else:
-                    dt_pos = abs(p.dt)
-                    reset_dt = False
-
-                sign_end_part = np.sign(endtime - p.time)
-                if res != OperationCode.Delete and not _numba_isclose(dt_pos, 0) and (sign_end_part == sign_dt):
-                    res = StateCode.Evaluate
-                if sign_end_part != sign_dt:
-                    dt_pos = 0
-
-                p.state = res
-                if _numba_isclose(dt, 0):
-                    break
-            else:
-                p.state = res
-                # Try again without time update
-                pset[idx] = pbackup[0]
-#                 for var in variables:
-#                     if var.name not in ['dt', 'state']:
-#                         setattr(p, var.name, p_var_back[var.name])
-                if abs(endtime - p.time) < abs(p.dt):
-                    dt_pos = abs(endtime - p.time)
-                    reset_dt = True
-                else:
-                    dt_pos = abs(p.dt)
-                    reset_dt = False
-
-                sign_end_part = np.sign(endtime - p.time)
-                if sign_end_part != sign_dt:
-                    dt_pos = 0
-                break
-        return p
-
+#         compiled_pyfunc = njit(self._pyfunc)
+#         for i in range(len(pset)):
+#             self.static_evaluate_particle(pset._collection._data, i, endtime, sign_dt, dt,
+#                                           self.compiled_pyfunc,
+#                                           self._fieldset.numba_fieldset,
+#                                           pset._collection._pbackup,
+#                                           analytical=analytical)
+    @property
+    def compiled_pyfunc(self):
+        if self._compiled_pyfunc is None:
+            self._compiled_pyfunc = njit(self._pyfunc)
+        return self._compiled_pyfunc
 
 #         numba_pset = convert_pset_to_tlist(pset)
 #         for p in numba_pset:
@@ -338,3 +230,131 @@ class KernelSOA(BaseKernel):
                 self.execute_python(pset, endtime, dt)
 
             n_error = pset.num_error_particles
+
+
+@nb.njit(cache=True)
+def inner_loop(pset, endtime, sign_dt, dt,
+               compiled_pyfunc,
+               numba_fieldset,
+               pbackup,
+               analytical=False):
+    for idx in range(len(pset)):
+        evaluate_particle(
+            pset, idx, endtime, sign_dt, dt, compiled_pyfunc,
+            numba_fieldset, pbackup, analytical=analytical)
+
+
+@nb.njit(cache=True)
+def evaluate_particle(pset, idx, endtime, sign_dt, dt, pyfunc,
+                      fieldset, pbackup,
+                      analytical=False):
+    """
+    Execute the kernel evaluation of for an individual particle.
+    :arg p: object of (sub-)type (ScipyParticle, JITParticle) or (sub-)type of BaseParticleAccessor
+    :arg fieldset: fieldset of the containing ParticleSet (e.g. pset.fieldset)
+    :arg analytical: flag indicating the analytical advector or an iterative advection
+    :arg endtime: endtime of this overall kernel evaluation step
+    :arg dt: computational integration timestep
+    """
+    # back up variables in case of OperationCodeRepeat
+    p = pset[idx]
+    pbackup[0] = p
+    pdt_prekernels = .0
+    # Don't execute particles that aren't started yet
+    sign_end_part = np.sign(endtime - p.time)
+    # Compute min/max dt for first timestep. Only use endtime-p.time for one timestep
+    reset_dt = False
+    if abs(endtime - p.time) < abs(p.dt):
+        dt_pos = abs(endtime - p.time)
+        reset_dt = True
+    else:
+        dt_pos = abs(p.dt)
+        reset_dt = False
+
+    # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
+    # as they fulfil the condition here on entering at the final calculation here. ==== #
+    if ((sign_end_part != sign_dt) or _numba_isclose(dt_pos, 0)) and not _numba_isclose(dt, 0):
+        if abs(p.time) >= abs(endtime):
+            p.state = StateCode.Success
+        return p
+
+    while p.state == StateCode.Evaluate or p.state == OperationCode.Repeat or _numba_isclose(dt, 0):
+#             for var in variables:
+#                 p_var_back[var.name] = getattr(p, var.name)
+#             try:
+#             print(dt, p.state, p.time, p.dt)
+        pdt_prekernels = sign_dt * dt_pos
+        p.dt = pdt_prekernels
+        state_prev = p.state
+        res = pyfunc(p, fieldset, p.time)
+#             if res is None:
+#                 res = StateCode.Success
+
+        if res is StateCode.Success and p.state != state_prev:
+            res = p.state
+
+        if not analytical and res == StateCode.Success and not _numba_isclose(p.dt, pdt_prekernels):
+            res = OperationCode.Repeat
+
+#             except FieldOutOfBoundError:  # as fse_xy:
+#                 res = ErrorCode.ErrorOutOfBounds
+            # p.exception = fse_xy
+#             except FieldOutOfBoundSurfaceError:  # as fse_z:
+#                 res = ErrorCode.ErrorThroughSurface
+            # p.exception = fse_z
+#             except TimeExtrapolationError:  # as fse_t:
+#                 res = ErrorCode.ErrorTimeExtrapolation
+            # p.exception = fse_t
+
+#             except Exception:  # as e:
+#                 res = ErrorCode.Error
+            # p.exception = e
+
+        # Handle particle time and time loop
+        if res == StateCode.Success or res == OperationCode.Delete:
+            # Update time and repeat
+            p.time += p.dt
+            if reset_dt and p.dt == pdt_prekernels:
+                p.dt = dt
+            if not np.isnan(p._next_dt):
+                p.dt = p._next_dt
+                p._next_dt = np.nan
+#                 p.update_next_dt()
+            if analytical:
+                p.dt = np.inf
+            if abs(endtime - p.time) < abs(p.dt):
+                dt_pos = abs(endtime - p.time)
+                reset_dt = True
+            else:
+                dt_pos = abs(p.dt)
+                reset_dt = False
+
+            sign_end_part = np.sign(endtime - p.time)
+            if res != OperationCode.Delete and not _numba_isclose(dt_pos, 0) and (sign_end_part == sign_dt):
+                res = StateCode.Evaluate
+            if sign_end_part != sign_dt:
+                dt_pos = 0
+
+            p.state = res
+            if _numba_isclose(dt, 0):
+                break
+        else:
+            p.state = res
+            # Try again without time update
+            pset[idx] = pbackup[0]
+#                 for var in variables:
+#                     if var.name not in ['dt', 'state']:
+#                         setattr(p, var.name, p_var_back[var.name])
+            if abs(endtime - p.time) < abs(p.dt):
+                dt_pos = abs(endtime - p.time)
+                reset_dt = True
+            else:
+                dt_pos = abs(p.dt)
+                reset_dt = False
+
+            sign_end_part = np.sign(endtime - p.time)
+            if sign_end_part != sign_dt:
+                dt_pos = 0
+            break
+    return p
+
