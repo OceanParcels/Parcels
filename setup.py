@@ -6,8 +6,7 @@ except ImportError:
     from distutils.core import setup, find_packages
 
 setup(name='parcels',
-      description="""Framework for Lagrangian tracking of virtual
-      ocean particles in the petascale age.""",
+      description="""Framework for Lagrangian tracking of virtual ocean particles in the petascale age.""",
       author="oceanparcels.org team",
       use_scm_version={'write_to': 'parcels/_version_setup.py'},
       setup_requires=['setuptools_scm', 'setuptools_scm_git_archive'],
