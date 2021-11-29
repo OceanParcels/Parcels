@@ -9,6 +9,7 @@ import pytest
 from os import path
 from datetime import timedelta as delta
 from parcels.gridset import check_grids_equal
+from parcels.tools.statuscodes import StateCode
 
 pset_modes = ['soa']
 ptype = ScipyParticle
@@ -16,268 +17,128 @@ pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel':
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
-def test_multi_structured_grids(pset_mode):
-
-    def temp_func(lon, lat):
-        return 20 + lat/1000. + 2 * np.sin(lon*2*np.pi/5000.)
-
-    a = 10000
-    b = 10000
-
-    # Grid 0
-    xdim_g0 = 201
-    ydim_g0 = 201
-    # Coordinates of the test fieldset (on A-grid in deg)
-    lon_g0 = np.linspace(0, a, xdim_g0, dtype=np.float32)
-    lat_g0 = np.linspace(0, b, ydim_g0, dtype=np.float32)
-    time_g0 = np.linspace(0., 1000., 2, dtype=np.float64)
-    grid_0 = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
-
-    # Grid 1
-    xdim_g1 = 51
-    ydim_g1 = 51
-    # Coordinates of the test fieldset (on A-grid in deg)
-    lon_g1 = np.linspace(0, a, xdim_g1, dtype=np.float32)
-    lat_g1 = np.linspace(0, b, ydim_g1, dtype=np.float32)
-    time_g1 = np.linspace(0., 1000., 2, dtype=np.float64)
-    grid_1 = RectilinearZGrid(lon_g1, lat_g1, time=time_g1)
-
-    u_data = np.ones((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
-    u_data = 2*u_data
-    u_field = Field('U', u_data, grid=grid_0, transpose=True)
-
-    temp0_data = np.empty((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
-    for i in range(lon_g0.size):
-        for j in range(lat_g0.size):
-            temp0_data[i, j, :] = temp_func(lon_g0[i], lat_g0[j])
-    temp0_field = Field('temp0', temp0_data, grid=grid_0, transpose=True)
-
-    v_data = np.zeros((lon_g1.size, lat_g1.size, time_g1.size), dtype=np.float32)
-    v_field = Field('V', v_data, grid=grid_1, transpose=True)
-
-    temp1_data = np.empty((lon_g1.size, lat_g1.size, time_g1.size), dtype=np.float32)
-    for i in range(lon_g1.size):
-        for j in range(lat_g1.size):
-            temp1_data[i, j, :] = temp_func(lon_g1[i], lat_g1[j])
-    temp1_field = Field('temp1', temp1_data, grid=grid_1, transpose=True)
-
-    other_fields = {}
-    other_fields['temp0'] = temp0_field
-    other_fields['temp1'] = temp1_field
-
-    field_set = FieldSet(u_field, v_field, fields=other_fields)
-
-    def sampleTemp(particle, fieldset, time):
-        # Note that fieldset.temp is interpolated at time=time+dt.
-        # Indeed, sampleTemp is called at time=time, but the result is written
-        # at time=time+dt, after the Kernel update
-        particle.temp0 = fieldset.temp0[time+particle.dt, particle.depth, particle.lat, particle.lon]
-        particle.temp1 = fieldset.temp1[time+particle.dt, particle.depth, particle.lat, particle.lon]
-
-    class MyParticle(ptype):
-        temp0 = Variable('temp0', dtype=np.float32, initial=20.)
-        temp1 = Variable('temp1', dtype=np.float32, initial=20.)
-
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3001], lat=[5001], repeatdt=1)
-
-    pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=3, dt=1)
-
-    # check if particle xi and yi are different for the two grids
-    # assert np.all([pset.xi[i, 0] != pset.xi[i, 1] for i in range(3)])
-    # assert np.all([pset.yi[i, 0] != pset.yi[i, 1] for i in range(3)])
-    assert np.alltrue([grid_0.xi[i] != grid_1.xi[i] for i in range(3)])
-    assert np.alltrue([grid_0.yi[i] != grid_1.yi[i] for i in range(3)])
-#     assert np.alltrue([pset[i].xi[0] != pset[i].xi[1] for i in range(3)])
-#     assert np.alltrue([pset[i].yi[0] != pset[i].yi[1] for i in range(3)])
-
-    # advect without updating temperature to test particle deletion
-    pset.remove_indices(np.array([1]))
-    pset.execute(AdvectionRK4, runtime=1, dt=1)
-
-    assert np.alltrue([np.isclose(p.temp0, p.temp1, atol=1e-3) for p in pset])
-
-
-@pytest.mark.xfail(reason="Grid cannot be computed using a time vector which is neither float nor int", strict=True)
-def test_time_format_in_grid():
-    lon = np.linspace(0, 1, 2, dtype=np.float32)
-    lat = np.linspace(0, 1, 2, dtype=np.float32)
-    time = np.array([np.datetime64('2000-01-01')]*2)
-    RectilinearZGrid(lon, lat, time=time)
-
-
-def test_avoid_repeated_grids():
-
-    lon_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
-    lat_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
-    time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
-    grid_0 = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
-
-    lon_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
-    lat_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
-    time_g1 = np.linspace(0, 1000, 2, dtype=np.float64)
-    grid_1 = RectilinearZGrid(lon_g1, lat_g1, time=time_g1)
-
-    u_data = np.zeros((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
-    u_field = Field('U', u_data, grid=grid_0, transpose=True)
-
-    v_data = np.zeros((lon_g1.size, lat_g1.size, time_g1.size), dtype=np.float32)
-    v_field = Field('V', v_data, grid=grid_1, transpose=True)
-
-    temp0_field = Field('temp', u_data, lon=lon_g0, lat=lat_g0, time=time_g0, transpose=True)
-
-    other_fields = {}
-    other_fields['temp'] = temp0_field
-
-    field_set = FieldSet(u_field, v_field, fields=other_fields)
-    assert field_set.gridset.size == 2
-
-    assert check_grids_equal(field_set.U.grid, field_set.temp.grid)
-    assert not check_grids_equal(field_set.V.grid, field_set.U.grid)
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
-def test_multigrids_pointer(pset_mode):
-    lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
-    lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
-    depth_g0 = np.zeros((5, lat_g0.size, lon_g0.size), dtype=np.float32)
-
-    def bath_func(lon):
-        return lon / 1000. + 10
-    bath = bath_func(lon_g0)
-
-    zdim = depth_g0.shape[0]
-    for i in range(lon_g0.size):
-        for k in range(zdim):
-            depth_g0[k, :, i] = bath[i] * k / (zdim-1)
-
-    grid_0 = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
-    grid_1 = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
-
-    u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
-    v_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
-    w_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
-
-    u_field = Field('U', u_data, grid=grid_0)
-    v_field = Field('V', v_data, grid=grid_0)
-    w_field = Field('W', w_data, grid=grid_1)
-
-    field_set = FieldSet(u_field, v_field, fields={'W': w_field})
-    assert(check_grids_equal(u_field.grid, v_field.grid))
-    assert(check_grids_equal(u_field.grid, w_field.grid))  # w_field.grid is now supposed to be grid_1
-
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype, lon=[0], lat=[0], depth=[1])
-
-    for i in range(10):
-        pset.execute(AdvectionRK4_3D, runtime=1000, dt=500)
-# 
-# 
 # @pytest.mark.parametrize('pset_mode', pset_modes)
-# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# @pytest.mark.parametrize('z4d', ['True', 'False'])
-# def test_rectilinear_s_grid_sampling(pset_mode, mode, z4d):
-#     lon_g0 = np.linspace(-3e4, 3e4, 61, dtype=np.float32)
-#     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
-#     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
-#     if z4d:
-#         depth_g0 = np.zeros((time_g0.size, 5, lat_g0.size, lon_g0.size), dtype=np.float32)
-#     else:
-#         depth_g0 = np.zeros((5, lat_g0.size, lon_g0.size), dtype=np.float32)
+# def test_multi_structured_grids(pset_mode):
 # 
-#     def bath_func(lon):
-#         bath = (lon <= -2e4) * 20.
-#         bath += (lon > -2e4) * (lon < 2e4) * (110. + 90 * np.sin(lon/2e4 * np.pi/2.))
-#         bath += (lon >= 2e4) * 200.
-#         return bath
-#     bath = bath_func(lon_g0)
+#     def temp_func(lon, lat):
+#         return 20 + lat/1000. + 2 * np.sin(lon*2*np.pi/5000.)
 # 
-#     zdim = depth_g0.shape[-3]
-#     for i in range(depth_g0.shape[-1]):
-#         for k in range(zdim):
-#             if z4d:
-#                 depth_g0[:, k, :, i] = bath[i] * k / (zdim-1)
-#             else:
-#                 depth_g0[k, :, i] = bath[i] * k / (zdim-1)
+#     a = 10000
+#     b = 10000
 # 
-#     grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0, time=time_g0)
+#     # Grid 0
+#     xdim_g0 = 201
+#     ydim_g0 = 201
+#     # Coordinates of the test fieldset (on A-grid in deg)
+#     lon_g0 = np.linspace(0, a, xdim_g0, dtype=np.float32)
+#     lat_g0 = np.linspace(0, b, ydim_g0, dtype=np.float32)
+#     time_g0 = np.linspace(0., 1000., 2, dtype=np.float64)
+#     grid_0 = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
 # 
-#     u_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
-#     v_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
-#     temp_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
-#     for k in range(1, zdim):
-#         temp_data[:, k, :, :] = k / (zdim-1.)
-#     u_field = Field('U', u_data, grid=grid)
-#     v_field = Field('V', v_data, grid=grid)
-#     temp_field = Field('temp', temp_data, grid=grid)
+#     # Grid 1
+#     xdim_g1 = 51
+#     ydim_g1 = 51
+#     # Coordinates of the test fieldset (on A-grid in deg)
+#     lon_g1 = np.linspace(0, a, xdim_g1, dtype=np.float32)
+#     lat_g1 = np.linspace(0, b, ydim_g1, dtype=np.float32)
+#     time_g1 = np.linspace(0., 1000., 2, dtype=np.float64)
+#     grid_1 = RectilinearZGrid(lon_g1, lat_g1, time=time_g1)
+# 
+#     u_data = np.ones((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
+#     u_data = 2*u_data
+#     u_field = Field('U', u_data, grid=grid_0, transpose=True)
+# 
+#     temp0_data = np.empty((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
+#     for i in range(lon_g0.size):
+#         for j in range(lat_g0.size):
+#             temp0_data[i, j, :] = temp_func(lon_g0[i], lat_g0[j])
+#     temp0_field = Field('temp0', temp0_data, grid=grid_0, transpose=True)
+# 
+#     v_data = np.zeros((lon_g1.size, lat_g1.size, time_g1.size), dtype=np.float32)
+#     v_field = Field('V', v_data, grid=grid_1, transpose=True)
+# 
+#     temp1_data = np.empty((lon_g1.size, lat_g1.size, time_g1.size), dtype=np.float32)
+#     for i in range(lon_g1.size):
+#         for j in range(lat_g1.size):
+#             temp1_data[i, j, :] = temp_func(lon_g1[i], lat_g1[j])
+#     temp1_field = Field('temp1', temp1_data, grid=grid_1, transpose=True)
 # 
 #     other_fields = {}
-#     other_fields['temp'] = temp_field
+#     other_fields['temp0'] = temp0_field
+#     other_fields['temp1'] = temp1_field
+# 
 #     field_set = FieldSet(u_field, v_field, fields=other_fields)
 # 
 #     def sampleTemp(particle, fieldset, time):
-#         particle.temp = fieldset.temp[time, particle.depth, particle.lat, particle.lon]
+#         # Note that fieldset.temp is interpolated at time=time+dt.
+#         # Indeed, sampleTemp is called at time=time, but the result is written
+#         # at time=time+dt, after the Kernel update
+#         particle.temp0 = fieldset.temp0[time+particle.dt, particle.depth, particle.lat, particle.lon]
+#         particle.temp1 = fieldset.temp1[time+particle.dt, particle.depth, particle.lat, particle.lon]
 # 
-#     class MyParticle(ptype[mode]):
-#         temp = Variable('temp', dtype=np.float32, initial=20.)
+#     class MyParticle(ptype):
+#         temp0 = Variable('temp0', dtype=np.float32, initial=20.)
+#         temp1 = Variable('temp1', dtype=np.float32, initial=20.)
 # 
-#     lon = 400
-#     lat = 0
-#     ratio = .3
-#     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle,
-#                                                   lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
+#     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3001], lat=[5001], repeatdt=1)
 # 
-#     pset.execute(pset.Kernel(sampleTemp), runtime=0, dt=0)
-#     assert np.allclose(pset.temp[0], ratio, atol=1e-4)
+#     pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=3, dt=1)
+# 
+#     # check if particle xi and yi are different for the two grids
+#     # assert np.all([pset.xi[i, 0] != pset.xi[i, 1] for i in range(3)])
+#     # assert np.all([pset.yi[i, 0] != pset.yi[i, 1] for i in range(3)])
+#     assert np.alltrue([grid_0.xi[i] != grid_1.xi[i] for i in range(3)])
+#     assert np.alltrue([grid_0.yi[i] != grid_1.yi[i] for i in range(3)])
+# #     assert np.alltrue([pset[i].xi[0] != pset[i].xi[1] for i in range(3)])
+# #     assert np.alltrue([pset[i].yi[0] != pset[i].yi[1] for i in range(3)])
+# 
+#     # advect without updating temperature to test particle deletion
+#     pset.remove_indices(np.array([1]))
+#     pset.execute(AdvectionRK4, runtime=1, dt=1)
+# 
+#     assert np.alltrue([np.isclose(p.temp0, p.temp1, atol=1e-3) for p in pset])
 # 
 # 
+# @pytest.mark.xfail(reason="Grid cannot be computed using a time vector which is neither float nor int", strict=True)
+# def test_time_format_in_grid():
+#     lon = np.linspace(0, 1, 2, dtype=np.float32)
+#     lat = np.linspace(0, 1, 2, dtype=np.float32)
+#     time = np.array([np.datetime64('2000-01-01')]*2)
+#     RectilinearZGrid(lon, lat, time=time)
+# 
+# 
+# def test_avoid_repeated_grids():
+# 
+#     lon_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
+#     lat_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
+#     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
+#     grid_0 = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
+# 
+#     lon_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
+#     lat_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
+#     time_g1 = np.linspace(0, 1000, 2, dtype=np.float64)
+#     grid_1 = RectilinearZGrid(lon_g1, lat_g1, time=time_g1)
+# 
+#     u_data = np.zeros((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
+#     u_field = Field('U', u_data, grid=grid_0, transpose=True)
+# 
+#     v_data = np.zeros((lon_g1.size, lat_g1.size, time_g1.size), dtype=np.float32)
+#     v_field = Field('V', v_data, grid=grid_1, transpose=True)
+# 
+#     temp0_field = Field('temp', u_data, lon=lon_g0, lat=lat_g0, time=time_g0, transpose=True)
+# 
+#     other_fields = {}
+#     other_fields['temp'] = temp0_field
+# 
+#     field_set = FieldSet(u_field, v_field, fields=other_fields)
+#     assert field_set.gridset.size == 2
+# 
+#     assert check_grids_equal(field_set.U.grid, field_set.temp.grid)
+#     assert not check_grids_equal(field_set.V.grid, field_set.U.grid)
+
+
 # @pytest.mark.parametrize('pset_mode', pset_modes)
-# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# def test_rectilinear_s_grids_advect1(pset_mode, mode):
-#     # Constant water transport towards the east. check that the particle stays at the same relative depth (z/bath)
-#     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
-#     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
-#     depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
-# 
-#     def bath_func(lon):
-#         return lon / 1000. + 10
-#     bath = bath_func(lon_g0)
-# 
-#     for i in range(depth_g0.shape[0]):
-#         for k in range(depth_g0.shape[2]):
-#             depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
-#     depth_g0 = depth_g0.transpose()  # we don't change it on purpose, to check if the transpose op if fixed in jit
-# 
-#     grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
-# 
-#     zdim = depth_g0.shape[0]
-#     u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
-#     v_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
-#     w_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
-#     for i in range(lon_g0.size):
-#         u_data[:, :, i] = 1 * 10 / bath[i]
-#         for k in range(zdim):
-#             w_data[k, :, i] = u_data[k, :, i] * depth_g0[k, :, i] / bath[i] * 1e-3
-# 
-#     u_field = Field('U', u_data, grid=grid)
-#     v_field = Field('V', v_data, grid=grid)
-#     w_field = Field('W', w_data, grid=grid)
-# 
-#     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
-# 
-#     lon = np.zeros((11))
-#     lat = np.zeros((11))
-#     ratio = [min(i/10., .99) for i in range(11)]
-#     depth = bath_func(lon)*ratio
-#     pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=lon, lat=lat, depth=depth)
-# 
-#     pset.execute(AdvectionRK4_3D, runtime=10000, dt=500)
-#     assert np.allclose(pset.depth/bath_func(pset.lon), ratio)
-# 
-# 
-# @pytest.mark.parametrize('pset_mode', pset_modes)
-# # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# def test_rectilinear_s_grids_advect2(pset_mode, mode="scipy"):
-#     # Move particle towards the east, check relative depth evolution
+# def test_multigrids_pointer(pset_mode):
 #     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
 #     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
 #     depth_g0 = np.zeros((5, lat_g0.size, lon_g0.size), dtype=np.float32)
@@ -291,77 +152,220 @@ def test_multigrids_pointer(pset_mode):
 #         for k in range(zdim):
 #             depth_g0[k, :, i] = bath[i] * k / (zdim-1)
 # 
-#     grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
+#     print(np.min(depth_g0), np.max(depth_g0))
+#     grid_0 = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
+#     grid_1 = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
 # 
+#     u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+#     v_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+#     w_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+# 
+#     u_field = Field('U', u_data, grid=grid_0)
+#     v_field = Field('V', v_data, grid=grid_0)
+#     w_field = Field('W', w_data, grid=grid_1)
+# 
+#     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
+#     assert(check_grids_equal(u_field.grid, v_field.grid))
+#     assert(check_grids_equal(u_field.grid, w_field.grid))  # w_field.grid is now supposed to be grid_1
+# 
+#     pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype, lon=[0], lat=[0], depth=[1])
+# 
+#     for i in range(10):
+#         print("i", i)
+#         pset.execute(AdvectionRK4_3D, runtime=1000, dt=500)
+
+
+# @pytest.mark.parametrize('pset_mode', pset_modes)
+# @pytest.mark.parametrize('z4d', ['True', 'False'])
+# def test_rectilinear_s_grid_sampling(pset_mode, z4d):
+#     lon_g0 = np.linspace(-3e4, 3e4, 61, dtype=np.float32)
+#     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
+#     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
+#     if z4d:
+#         depth_g0 = np.zeros((time_g0.size, 5, lat_g0.size, lon_g0.size), dtype=np.float32)
+#     else:
+#         depth_g0 = np.zeros((5, lat_g0.size, lon_g0.size), dtype=np.float32)
+#  
+#     def bath_func(lon):
+#         bath = (lon <= -2e4) * 20.
+#         bath += (lon > -2e4) * (lon < 2e4) * (110. + 90 * np.sin(lon/2e4 * np.pi/2.))
+#         bath += (lon >= 2e4) * 200.
+#         return bath
+#     bath = bath_func(lon_g0)
+#  
+#     zdim = depth_g0.shape[-3]
+#     for i in range(depth_g0.shape[-1]):
+#         for k in range(zdim):
+#             if z4d:
+#                 depth_g0[:, k, :, i] = bath[i] * k / (zdim-1)
+#             else:
+#                 depth_g0[k, :, i] = bath[i] * k / (zdim-1)
+#  
+#     grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0, time=time_g0)
+#  
+#     u_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+#     v_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+#     temp_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+#     for k in range(1, zdim):
+#         temp_data[:, k, :, :] = k / (zdim-1.)
+#     u_field = Field('U', u_data, grid=grid)
+#     v_field = Field('V', v_data, grid=grid)
+#     temp_field = Field('temp', temp_data, grid=grid)
+#  
+#     other_fields = {}
+#     other_fields['temp'] = temp_field
+#     field_set = FieldSet(u_field, v_field, fields=other_fields)
+#  
+#     def sampleTemp(particle, fieldset, time):
+#         particle.temp = fieldset.temp[time, particle.depth, particle.lat, particle.lon]
+#         return StateCode.Success
+#  
+#     class MyParticle(ptype):
+#         temp = Variable('temp', dtype=np.float32, initial=20.)
+#  
+#     lon = 400
+#     lat = 0
+#     ratio = .3
+#     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle,
+#                                                   lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
+#  
+#     pset.execute(pset.Kernel(sampleTemp), runtime=0, dt=0)
+#     assert np.allclose(pset.temp[0], ratio, atol=1e-4)
+ 
+ 
+# @pytest.mark.parametrize('pset_mode', pset_modes)
+# def test_rectilinear_s_grids_advect1(pset_mode):
+#     # Constant water transport towards the east. check that the particle stays at the same relative depth (z/bath)
+#     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
+#     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
+#     depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
+#  
+#     def bath_func(lon):
+#         return lon / 1000. + 10
+#     bath = bath_func(lon_g0)
+#  
+#     for i in range(depth_g0.shape[0]):
+#         for k in range(depth_g0.shape[2]):
+#             depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
+#     depth_g0 = depth_g0.transpose()  # we don't change it on purpose, to check if the transpose op if fixed in jit
+#  
+#     grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
+#  
+#     zdim = depth_g0.shape[0]
+#     u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+#     v_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+#     w_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+#     for i in range(lon_g0.size):
+#         u_data[:, :, i] = 1 * 10 / bath[i]
+#         for k in range(zdim):
+#             w_data[k, :, i] = u_data[k, :, i] * depth_g0[k, :, i] / bath[i] * 1e-3
+#  
+#     u_field = Field('U', u_data, grid=grid)
+#     v_field = Field('V', v_data, grid=grid)
+#     w_field = Field('W', w_data, grid=grid)
+#  
+#     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
+#  
+#     lon = np.zeros((11))
+#     lat = np.zeros((11))
+#     ratio = [min(i/10., .99) for i in range(11)]
+#     depth = bath_func(lon)*ratio
+#     pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype, lon=lon, lat=lat, depth=depth)
+#  
+#     pset.execute(AdvectionRK4_3D, runtime=10000, dt=500)
+#     assert np.allclose(pset.depth/bath_func(pset.lon), ratio)
+#  
+# 
+# @pytest.mark.parametrize('pset_mode', pset_modes)
+# def test_rectilinear_s_grids_advect2(pset_mode):
+#     # Move particle towards the east, check relative depth evolution
+#     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
+#     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
+#     depth_g0 = np.zeros((5, lat_g0.size, lon_g0.size), dtype=np.float32)
+#  
+#     def bath_func(lon):
+#         return lon / 1000. + 10
+#     bath = bath_func(lon_g0)
+#  
+#     zdim = depth_g0.shape[0]
+#     for i in range(lon_g0.size):
+#         for k in range(zdim):
+#             depth_g0[k, :, i] = bath[i] * k / (zdim-1)
+#  
+#     grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
+#  
 #     u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
 #     v_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
 #     rel_depth_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
 #     for k in range(1, zdim):
 #         rel_depth_data[k, :, :] = k / (zdim-1.)
-# 
+#  
 #     u_field = Field('U', u_data, grid=grid)
 #     v_field = Field('V', v_data, grid=grid)
 #     rel_depth_field = Field('relDepth', rel_depth_data, grid=grid)
 #     field_set = FieldSet(u_field, v_field, fields={'relDepth': rel_depth_field})
-# 
-#     class MyParticle(ptype[mode]):
+#  
+#     class MyParticle(ptype):
 #         relDepth = Variable('relDepth', dtype=np.float32, initial=20.)
-# 
+#  
 #     def moveEast(particle, fieldset, time):
 #         particle.lon += 5 * particle.dt
 #         particle.relDepth = fieldset.relDepth[time, particle.depth, particle.lat, particle.lon]
-# 
+#         return StateCode.Success
+#  
 #     depth = .9
 #     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[0], lat=[0], depth=[depth])
-# 
+#  
 #     kernel = pset.Kernel(moveEast)
 #     for _ in range(10):
 #         pset.execute(kernel, runtime=100, dt=50)
 #         assert np.allclose(pset.relDepth[0], depth/bath_func(pset.lon[0]))
-# 
-# 
+ 
+ 
 # @pytest.mark.parametrize('pset_mode', pset_modes)
 # # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# def test_curvilinear_grids(pset_mode, mode="scipy"):
-# 
+# def test_curvilinear_grids(pset_mode):
+#  
 #     x = np.linspace(0, 1e3, 7, dtype=np.float32)
 #     y = np.linspace(0, 1e3, 5, dtype=np.float32)
 #     (xx, yy) = np.meshgrid(x, y)
-# 
+#  
 #     r = np.sqrt(xx*xx+yy*yy)
 #     theta = np.arctan2(yy, xx)
 #     theta = theta + np.pi/6.
-# 
+#  
 #     lon = r * np.cos(theta)
 #     lat = r * np.sin(theta)
 #     time = np.array([0, 86400], dtype=np.float64)
 #     grid = CurvilinearZGrid(lon, lat, time=time)
-# 
+#  
 #     u_data = np.ones((2, y.size, x.size), dtype=np.float32)
 #     v_data = np.zeros((2, y.size, x.size), dtype=np.float32)
 #     u_data[0, :, :] = lon[:, :] + lat[:, :]
+# 
 #     u_field = Field('U', u_data, grid=grid, transpose=False)
 #     v_field = Field('V', v_data, grid=grid, transpose=False)
 #     field_set = FieldSet(u_field, v_field)
-# 
+#  
 #     def sampleSpeed(particle, fieldset, time):
-#         u = fieldset.U[time, particle.depth, particle.lat, particle.lon]
-#         v = fieldset.V[time, particle.depth, particle.lat, particle.lon]
+#         u = fieldset.U[time, particle.depth, particle.lat, particle.lon, particle]
+#         v = fieldset.V[time, particle.depth, particle.lat, particle.lon, particle]
 #         particle.speed = math.sqrt(u*u+v*v)
-# 
-#     class MyParticle(ptype[mode]):
+#         return StateCode.Success
+#  
+#     class MyParticle(ptype):
 #         speed = Variable('speed', dtype=np.float32, initial=0.)
-# 
+#  
 #     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
 #     pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
 #     assert(np.allclose(pset.speed[0], 1000))
-# 
-# 
+#  
+ 
 # @pytest.mark.parametrize('pset_mode', pset_modes)
 # # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 # def test_nemo_grid(pset_mode, mode="scipy"):
 #     data_path = path.join(path.dirname(__file__), 'test_data/')
-# 
+#  
 #     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
 #                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
 #                        'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
@@ -371,17 +375,17 @@ def test_multigrids_pointer(pset_mode):
 #     variables = {'U': 'U', 'V': 'V'}
 #     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
 #     field_set = FieldSet.from_nemo(filenames, variables, dimensions)
-# 
+#  
 #     # test ParticleSet.from_field on curvilinear grids
 #     pset_type[pset_mode]['pset'].from_field(field_set, ptype[mode], start_field=field_set.U, size=5)
-# 
+#  
 #     def sampleVel(particle, fieldset, time):
 #         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
-# 
+#  
 #     class MyParticle(ptype[mode]):
 #         zonal = Variable('zonal', dtype=np.float32, initial=0.)
 #         meridional = Variable('meridional', dtype=np.float32, initial=0.)
-# 
+#  
 #     lonp = 175.5
 #     latp = 81.5
 #     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
@@ -390,8 +394,8 @@ def test_multigrids_pointer(pset_mode):
 #     v = field_set.V.units.to_source(pset.meridional[0], lonp, latp, 0)
 #     assert abs(u - 1) < 1e-4
 #     assert abs(v) < 1e-4
-# 
-# 
+#  
+ 
 # @pytest.mark.parametrize('pset_mode', pset_modes)
 # # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 # def test_advect_nemo(pset_mode, mode="scipy"):

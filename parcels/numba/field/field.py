@@ -222,6 +222,8 @@ class NumbaField():
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
         """
+        if len(self.grid.time) == 1:
+            return (0, 0)
         if not self.time_periodic and not self.allow_time_extrapolation and (
                 time < self.grid.time[0] or time > self.grid.time[-1]):
             self.TimeExtrapolationError(time)
@@ -277,3 +279,5 @@ class NumbaField():
             # return self.units.to_target(value, x, y, z)
         return value
 
+    def __getitem__(self, key):
+        return self.eval(*key)

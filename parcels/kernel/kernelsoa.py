@@ -124,6 +124,7 @@ class KernelSOA(BaseKernel):
 #                                           self._fieldset.numba_fieldset,
 #                                           pset._collection._pbackup,
 #                                           analytical=analytical)
+
     @property
     def compiled_pyfunc(self):
         if self._compiled_pyfunc is None:
@@ -232,7 +233,7 @@ class KernelSOA(BaseKernel):
             n_error = pset.num_error_particles
 
 
-@nb.njit(cache=True)
+@nb.njit(cache=False)
 def inner_loop(pset, endtime, sign_dt, dt,
                compiled_pyfunc,
                numba_fieldset,
@@ -242,9 +243,10 @@ def inner_loop(pset, endtime, sign_dt, dt,
         evaluate_particle(
             pset, idx, endtime, sign_dt, dt, compiled_pyfunc,
             numba_fieldset, pbackup, analytical=analytical)
+    return 0
 
 
-@nb.njit(cache=True)
+@nb.njit(cache=False)
 def evaluate_particle(pset, idx, endtime, sign_dt, dt, pyfunc,
                       fieldset, pbackup,
                       analytical=False):
@@ -287,8 +289,9 @@ def evaluate_particle(pset, idx, endtime, sign_dt, dt, pyfunc,
         p.dt = pdt_prekernels
         state_prev = p.state
         res = pyfunc(p, fieldset, p.time)
-#             if res is None:
-#                 res = StateCode.Success
+
+#         if res is None:
+#             res = StateCode.Success
 
         if res is StateCode.Success and p.state != state_prev:
             res = p.state

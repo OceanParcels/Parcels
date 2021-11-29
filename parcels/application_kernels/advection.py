@@ -44,6 +44,7 @@ def AdvectionRK4_3D(particle, fieldset, time):
     particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
     particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
     particle.depth += (w1 + 2*w2 + 2*w3 + w4) / 6. * particle.dt
+    return StateCode.Success
 
 
 def AdvectionEE(particle, fieldset, time):

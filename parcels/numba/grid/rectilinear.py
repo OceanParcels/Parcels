@@ -42,7 +42,7 @@ class RectilinearGrid(BaseGrid):
 #             logger.warning_once("Flipping lat data from North-South to South-North. "
 #                                 "Note that this may lead to wrong sign for meridional velocity, so tread very carefully")
 
-    def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False, particle=None, interp_method="nearest"):
+    def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False, particle=None, interp_method="linear"):
         if self.xdim > 1 and (not self.zonal_periodic):
             if x < self.lonlat_minmax[0] or x > self.lonlat_minmax[1]:
                 self.FieldOutOfBoundError(x, y, z)

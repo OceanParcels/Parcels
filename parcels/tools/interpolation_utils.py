@@ -7,7 +7,7 @@ import numba as nb
 @njit
 def phi1D_lin(xsi):
     phi = np.array([1-xsi,
-           xsi]).astype(nb.float32)
+           xsi]).astype(nb.float64)
 
     return phi
 
@@ -16,7 +16,7 @@ def phi1D_lin(xsi):
 def phi1D_quad(xsi):
     phi = np.array([2*xsi**2-3*xsi+1,
            -4*xsi**2+4*xsi,
-           2*xsi**2-xsi]).astype(nb.float32)
+           2*xsi**2-xsi]).astype(nb.float64)
 
     return phi
 
@@ -145,11 +145,11 @@ def dphidxsi2D_lin(xsi, eta):
     dphidxsi = np.array([-(1-eta),
                   1-eta,
                     eta,
-                -   eta]).astype(nb.float32)
+                -   eta]).astype(nb.float64)
     dphideta = np.array([-(1-xsi),
                 -   xsi,
                     xsi,
-                  1-xsi]).astype(nb.float32)
+                  1-xsi]).astype(nb.float64)
 
     return dphidxsi, dphideta
 

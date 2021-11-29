@@ -9,6 +9,7 @@ from parcels.numba.grid.base import BaseGrid, _base_grid_spec, GridCode
 from parcels.tools.statuscodes import FieldOutOfBoundError
 from parcels.numba.grid.zgrid import BaseZGrid
 from parcels.numba.grid.sgrid import BaseSGrid
+from numba import njit
 
 
 def _curve_grid_spec():
@@ -21,6 +22,14 @@ def _curve_grid_spec():
 # ])
 
 
+@njit
+def _squeeze2d(x):
+    shp = np.array(x.shape)
+    first = shp[shp > 1][0]
+    last = shp[shp > 1][-1]
+    return x.reshape(first, last)
+
+
 class CurvilinearGrid(BaseGrid):
     __init_base = BaseGrid.__init__
 
@@ -31,8 +40,8 @@ class CurvilinearGrid(BaseGrid):
 #         if isinstance(time, np.ndarray):
 #             assert(len(time.shape) == 1), 'time is not a vector'
 
-        lon = lon.squeeze()
-        lat = lat.squeeze()
+        lon = _squeeze2d(lon)
+        lat = _squeeze2d(lat)
         self.__init_base(lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
@@ -41,39 +50,42 @@ class CurvilinearGrid(BaseGrid):
     def get_dlon(self):
         return self.lon[0, 1:] - self.lon[0, :-1]
 
-    def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False):
-        # if particle:
-            # xi = particle.xi[self.igrid]
-            # yi = particle.yi[self.igrid]
-        # else:
-        xi = int(self.grid.xdim / 2) - 1
-        yi = int(self.grid.ydim / 2) - 1
+    def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False,
+                       particle=None, interp_method="linear"):
+        if particle is not None:
+            try:
+                xi = self.xi[particle.id]
+                yi = self.yi[particle.id]
+            except Exception:
+                xi = int(self.xdim / 2) - 1
+                yi = int(self.ydim / 2) - 1
+        else:
+            xi = int(self.xdim / 2) - 1
+            yi = int(self.ydim / 2) - 1
         xsi = eta = -1
-        grid = self.grid
         invA = np.array([[1, 0, 0, 0],
                          [-1, 1, 0, 0],
                          [-1, 0, 0, 1],
-                         [1, -1, 1, -1]])
+                         [1, -1, 1, -1]]).astype(nb.float64)
         maxIterSearch = 1e6
         it = 0
         tol = 1.e-10
-        if not grid.zonal_periodic:
-            if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
-                if grid.lon[0, 0] < grid.lon[0, -1]:
+        if not self.zonal_periodic:
+            if x < self.lonlat_minmax[0] or x > self.lonlat_minmax[1]:
+                if self.lon[0, 0] < self.lon[0, -1]:
                     self.FieldOutOfBoundError(x, y, z)
-                elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
+                elif x < self.lon[0, 0] and x > self.lon[0, -1]:  # This prevents from crashing in [160, -160]
                     self.FieldOutOfBoundError(x, y, z)
-        if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
-            raise self.FieldOutOfBoundError(x, y, z)
+        if y < self.lonlat_minmax[2] or y > self.lonlat_minmax[3]:
+            self.FieldOutOfBoundError(x, y, z)
 
         while xsi < -tol or xsi > 1+tol or eta < -tol or eta > 1+tol:
-            px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
-            if grid.mesh == 'spherical':
+            px, py = self.get_pxy(xi, yi)
+            if self.mesh == 'spherical':
                 px[0] = px[0]+360 if px[0] < x-225 else px[0]
                 px[0] = px[0]-360 if px[0] > x+225 else px[0]
                 px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
                 px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
-            py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)
 
@@ -93,7 +105,7 @@ class CurvilinearGrid(BaseGrid):
                 xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
                 self.FieldOutOfBoundError(x, y, 0)
-            if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
+            if xsi > 1 and eta > 1 and xi == self.xdim-1 and yi == self.ydim-1:
                 self.FieldOutOfBoundError(x, y, 0)
             if xsi < -tol:
                 xi -= 1
@@ -103,24 +115,19 @@ class CurvilinearGrid(BaseGrid):
                 yi -= 1
             elif eta > 1+tol:
                 yi += 1
-            (xi, yi) = self.reconnect_bnd_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
+            (xi, yi) = self.reconnect_bnd_indices(xi, yi, self.xdim, self.ydim, self.mesh)
             it += 1
             if it > maxIterSearch:
-                print('Correct cell not found after %d iterations' % maxIterSearch)
+#                 print('Correct cell not found after {maxIterSearch} iterations'.format(maxIterSearch))
                 self.FieldOutOfBoundError(x, y, 0)
         xsi = max(0., xsi)
         eta = max(0., eta)
         xsi = min(1., xsi)
         eta = min(1., eta)
 
-        if grid.zdim > 1 and not search2D:
-            if grid.gtype == GridCode.CurvilinearZGrid:
-                try:
-                    (zi, zeta) = self.search_indices_vertical_z(z)
-                except FieldOutOfBoundError:
-                    self.FieldOutOfBoundError(x, y, z)
-            elif grid.gtype == GridCode.CurvilinearSGrid:
-                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
+        if self.zdim > 1 and not search2D:
+            (zi, zeta) = self.search_indices_vertical(
+                x, y, z, xi, yi, xsi, eta, ti, time, interp_method=interp_method)
         else:
             zi = -1
             zeta = 0
@@ -128,7 +135,10 @@ class CurvilinearGrid(BaseGrid):
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
             self.FieldSamplingError(x, y, z)
 
-        # if particle:
+        if particle is not None:
+            self.xi[particle.id] = xi
+            self.yi[particle.id] = yi
+            self.zi[particle.id] = zi
             # particle.xi[self.igrid] = xi
             # particle.yi[self.igrid] = yi
             # particle.zi[self.igrid] = zi
@@ -136,8 +146,8 @@ class CurvilinearGrid(BaseGrid):
         return (xsi, eta, zeta, xi, yi, zi)
 
     def get_pxy(self, xi, yi):
-        px = np.array([self.lon[yi, xi], self.lon[yi, xi+1], self.lon[yi+1, xi+1], self.lon[yi+1, xi]]).astype(nb.float32)
-        py = np.array([self.lat[yi, xi], self.lat[yi, xi+1], self.lat[yi+1, xi+1], self.lat[yi+1, xi]]).astype(nb.float32)
+        px = np.array([self.lon[yi, xi], self.lon[yi, xi+1], self.lon[yi+1, xi+1], self.lon[yi+1, xi]]).astype(nb.float64)
+        py = np.array([self.lat[yi, xi], self.lat[yi, xi+1], self.lat[yi+1, xi+1], self.lat[yi+1, xi]]).astype(nb.float64)
         return px, py
 
     def reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):

@@ -25,10 +25,10 @@ class BaseSGrid():
                 assert tt >= 0 and tt <= 1, 'Vertical s grid is being wrongly interpolated in time'
                 depth_vector = dv2[0, :] * (1-tt) + dv2[1, :] * tt
         else:
-            depth_vector = (1-xsi)*(1-eta) * self.depth[1, :, yi, xi] + \
-                xsi*(1-eta) * self.depth[1, :, yi, xi+1] + \
-                xsi*eta * self.depth[1, :, yi+1, xi+1] + \
-                (1-xsi)*eta * self.depth[1, :, yi+1, xi]
+            depth_vector = (1-xsi)*(1-eta) * self.depth[0, :, yi, xi] + \
+                xsi*(1-eta) * self.depth[0, :, yi, xi+1] + \
+                xsi*eta * self.depth[0, :, yi+1, xi+1] + \
+                (1-xsi)*eta * self.depth[0, :, yi+1, xi]
         z = nb.float32(z)
 
         if depth_vector[-1] > depth_vector[0]:
@@ -38,6 +38,7 @@ class BaseSGrid():
             else:
                 zi = depth_indices.argmin() - 1 if z >= depth_vector[0] else 0
             if z < depth_vector[zi]:
+
                 self.FieldOutOfBoundSurfaceError(0, 0, z)
             elif z > depth_vector[zi+1]:
                 self.FieldOutOfBoundError(x, y, z)

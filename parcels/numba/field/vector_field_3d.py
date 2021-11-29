@@ -52,8 +52,8 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
             return np.sqrt((lon2-lon1)**2 + (lat2-lat1)**2)
 
     def jacobian(self, xsi, eta, px, py):
-        dphidxsi = np.array([eta-1, 1-eta, eta, -eta]).astype(nb.float32)
-        dphideta = np.array([xsi-1, -xsi, xsi, 1-xsi]).astype(nb.float32)
+        dphidxsi = np.array([eta-1, 1-eta, eta, -eta]).astype(nb.float64)
+        dphideta = np.array([xsi-1, -xsi, xsi, 1-xsi]).astype(nb.float64)
 
         dxdxsi = np.dot(px, dphidxsi)
         dxdeta = np.dot(px, dphideta)
@@ -108,9 +108,9 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
         W1 = w1 * ip.jacobian3D_lin_face(px, py, pz, xsi, eta, 1, 'vertical', grid.mesh)
 
         # Computing fluxes in half left hexahedron -> flux_u05
-        xx = np.array([px[0], (px[0]+px[1])/2, (px[2]+px[3])/2, px[3], px[4], (px[4]+px[5])/2, (px[6]+px[7])/2, px[7]]).astype(nb.float32)
-        yy = np.array([py[0], (py[0]+py[1])/2, (py[2]+py[3])/2, py[3], py[4], (py[4]+py[5])/2, (py[6]+py[7])/2, py[7]]).astype(nb.float32)
-        zz = np.array([pz[0], (pz[0]+pz[1])/2, (pz[2]+pz[3])/2, pz[3], pz[4], (pz[4]+pz[5])/2, (pz[6]+pz[7])/2, pz[7]]).astype(nb.float32)
+        xx = np.array([px[0], (px[0]+px[1])/2, (px[2]+px[3])/2, px[3], px[4], (px[4]+px[5])/2, (px[6]+px[7])/2, px[7]]).astype(nb.float64)
+        yy = np.array([py[0], (py[0]+py[1])/2, (py[2]+py[3])/2, py[3], py[4], (py[4]+py[5])/2, (py[6]+py[7])/2, py[7]]).astype(nb.float64)
+        zz = np.array([pz[0], (pz[0]+pz[1])/2, (pz[2]+pz[3])/2, pz[3], pz[4], (pz[4]+pz[5])/2, (pz[6]+pz[7])/2, pz[7]]).astype(nb.float64)
         flux_u0 = u0 * ip.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal', grid.mesh)
         flux_v0_halfx = v0 * ip.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional', grid.mesh)
         flux_v1_halfx = v1 * ip.jacobian3D_lin_face(xx, yy, zz, .5, 1, .5, 'meridional', grid.mesh)
@@ -119,9 +119,9 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
         flux_u05 = flux_u0 + flux_v0_halfx - flux_v1_halfx + flux_w0_halfx - flux_w1_halfx
 
         # Computing fluxes in half front hexahedron -> flux_v05
-        xx = np.array([px[0], px[1], (px[1]+px[2])/2, (px[0]+px[3])/2, px[4], px[5], (px[5]+px[6])/2, (px[4]+px[7])/2]).astype(nb.float32)
-        yy = np.array([py[0], py[1], (py[1]+py[2])/2, (py[0]+py[3])/2, py[4], py[5], (py[5]+py[6])/2, (py[4]+py[7])/2]).astype(nb.float32)
-        zz = np.array([pz[0], pz[1], (pz[1]+pz[2])/2, (pz[0]+pz[3])/2, pz[4], pz[5], (pz[5]+pz[6])/2, (pz[4]+pz[7])/2]).astype(nb.float32)
+        xx = np.array([px[0], px[1], (px[1]+px[2])/2, (px[0]+px[3])/2, px[4], px[5], (px[5]+px[6])/2, (px[4]+px[7])/2]).astype(nb.float64)
+        yy = np.array([py[0], py[1], (py[1]+py[2])/2, (py[0]+py[3])/2, py[4], py[5], (py[5]+py[6])/2, (py[4]+py[7])/2]).astype(nb.float64)
+        zz = np.array([pz[0], pz[1], (pz[1]+pz[2])/2, (pz[0]+pz[3])/2, pz[4], pz[5], (pz[5]+pz[6])/2, (pz[4]+pz[7])/2]).astype(nb.float64)
         flux_u0_halfy = u0 * ip.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal', grid.mesh)
         flux_u1_halfy = u1 * ip.jacobian3D_lin_face(xx, yy, zz, 1, .5, .5, 'zonal', grid.mesh)
         flux_v0 = v0 * ip.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional', grid.mesh)
@@ -130,9 +130,9 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
         flux_v05 = flux_u0_halfy - flux_u1_halfy + flux_v0 + flux_w0_halfy - flux_w1_halfy
 
         # Computing fluxes in half lower hexahedron -> flux_w05
-        xx = np.array([px[0], px[1], px[2], px[3], (px[0]+px[4])/2, (px[1]+px[5])/2, (px[2]+px[6])/2, (px[3]+px[7])/2]).astype(nb.float32)
-        yy = np.array([py[0], py[1], py[2], py[3], (py[0]+py[4])/2, (py[1]+py[5])/2, (py[2]+py[6])/2, (py[3]+py[7])/2]).astype(nb.float32)
-        zz = np.array([pz[0], pz[1], pz[2], pz[3], (pz[0]+pz[4])/2, (pz[1]+pz[5])/2, (pz[2]+pz[6])/2, (pz[3]+pz[7])/2]).astype(nb.float32)
+        xx = np.array([px[0], px[1], px[2], px[3], (px[0]+px[4])/2, (px[1]+px[5])/2, (px[2]+px[6])/2, (px[3]+px[7])/2]).astype(nb.float64)
+        yy = np.array([py[0], py[1], py[2], py[3], (py[0]+py[4])/2, (py[1]+py[5])/2, (py[2]+py[6])/2, (py[3]+py[7])/2]).astype(nb.float64)
+        zz = np.array([pz[0], pz[1], pz[2], pz[3], (pz[0]+pz[4])/2, (pz[1]+pz[5])/2, (pz[2]+pz[6])/2, (pz[3]+pz[7])/2]).astype(nb.float64)
         flux_u0_halfz = u0 * ip.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal', grid.mesh)
         flux_u1_halfz = u1 * ip.jacobian3D_lin_face(xx, yy, zz, 1, .5, .5, 'zonal', grid.mesh)
         flux_v0_halfz = v0 * ip.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional', grid.mesh)
@@ -153,9 +153,9 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
         W05 = flux_w05 / surf_w05 * jac_w05
 
         jac = ip.jacobian3D_lin(px, py, pz, xsi, eta, zet, grid.mesh)
-        dxsidt = ip.interpolate(ip.phi1D_quad, np.array([U0, U05, U1]).astype(nb.float32), xsi) / jac
-        detadt = ip.interpolate(ip.phi1D_quad, np.array([V0, V05, V1]).astype(nb.float32), eta) / jac
-        dzetdt = ip.interpolate(ip.phi1D_quad, np.array([W0, W05, W1]).astype(nb.float32), zet) / jac
+        dxsidt = ip.interpolate(ip.phi1D_quad, np.array([U0, U05, U1]).astype(nb.float64), xsi) / jac
+        detadt = ip.interpolate(ip.phi1D_quad, np.array([V0, V05, V1]).astype(nb.float64), eta) / jac
+        dzetdt = ip.interpolate(ip.phi1D_quad, np.array([W0, W05, W1]).astype(nb.float64), zet) / jac
 
         dphidxsi, dphideta, dphidzet = ip.dphidxsi3D_lin(xsi, eta, zet)
 
@@ -286,6 +286,9 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
                 # of the defined time range or if we have hit an
                 # exact value in the time array.
                 return self.spatial_interpolate(ti, z, y, x, grid.time[ti], particle=particle)
+
+    def __getitem__(self, key):
+        return self.eval(*key)
 
 #     def __getitem__(self, key):
 #         if _isParticle(key):
