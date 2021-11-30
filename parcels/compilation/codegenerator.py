@@ -1538,7 +1538,6 @@ class NodeLoopGenerator(object):
         reset_res_state = c.Assign("res", "particle->state")
         update_state = c.Assign("particle->state", "res")
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
-        # particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
         particle_backup = c.Value(self.ptype.name, "particle_backup")
         sign_end_part = c.Assign("sign_end_part", "(endtime - particle->time) > 0 ? 1 : -1")
 
