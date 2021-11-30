@@ -287,12 +287,9 @@ class InterfaceC(object):
         """ Writes kernel code to file and compiles it."""
         if not self.compiled:
             src_file = self.src_file if not isinstance(self.compiler, CCompiler_MS) or (isinstance(self.src_file, list) and not isinstance(self.src_file, str)) else [self.src_file, ]
-            # logger.info("InterfaceC::compile_library() - 'src_file' = {}".format(src_file))
             compiled_fpath = self.compiler.compile(src=src_file, obj=self.lib_file, log=self.log_file)
-            # logger.info("Compiled %s ==> %s" % (self.basename, self.lib_file))
             logger.info("Compiled %s ==> %s" % (self.basename, compiled_fpath))
             assert os.path.exists(compiled_fpath)
-            # self._cleanup_files = finalize(self, package_globals.cleanup_remove_files, self.lib_file, self.log_file)
             self.lib_file = compiled_fpath
             self.compiled = True
 
