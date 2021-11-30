@@ -116,13 +116,6 @@ class GNU_parameters(Compiler_parameters):
             else:
                 self._ldargs += ['-Wl,-rpath,%s' % (",-rpath,".join(libdirs))]
 
-            # # rpstring = '-Wl'
-            # rpstring = '-Wl,-rpath='
-            # for ldir in libdirs:
-            #     # rpstring += ',rpath,%s' % (ldir)
-            #     # rpstring += ',%s' % (ldir)
-            #    rpstring += ":".join(ldir)
-            # self._ldargs += [rpstring]
         if len(Lflags) > 0:
             self._ldargs += Lflags
         if len(lflags) > 0:
