@@ -72,7 +72,7 @@ class BaseKernel(object):
         :arg funcvars: None, if :arg pyfunc is a concatenated kernel or python function; otherwise, variables of the custom function
         :arg py_ast: a parsed hierarchy of generated functions
         :arg c_include: added C include functions for generation or interpretation of the custom function
-        :arg delete_cfiles: boolean, telling of the written C source files are deleted on destruction or not
+        :arg delete_cfiles: boolean, indicating whether the written C source files are deleted on destruction
         """
         self._fieldset = fieldset
         self.field_args = None
