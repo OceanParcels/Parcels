@@ -106,8 +106,9 @@ class Field():
             allow_time_extrapolation=None, time_periodic=False,
             gridindexingtype='nemo', to_write=False, **kwargs):
         if grid is None:
-            grid = Grid.create_grid(lon, lat, depth, time,
-                                    time_origin=time_origin, mesh=mesh)
+            grid = Grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        elif not isinstance(grid, Grid):
+            grid = Grid.wrap(grid)
         elif grid.defer_load and isinstance(data, np.ndarray):
             raise ValueError('Cannot combine Grid from defer_loaded Field with'
                              ' np.ndarray data. please specify lon, lat, depth and time dimensions separately')
@@ -140,8 +141,9 @@ class Field():
             if grid._add_last_periodic_data_timestep:
                 data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
         self.numba_class = _get_numba_field_class(grid)
-        self.numba_field = self.numba_class(grid, data, interp_method=interp_method,
+        self.numba_field = self.numba_class(grid.numba_grid, data, interp_method=interp_method,
                                             time_periodic=time_periodic)
+        self.grid = grid
 
 
 #         time_origin = TimeConverter(0) if time_origin is None else time_origin
@@ -149,9 +151,9 @@ class Field():
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
-        self.lon = self.grid.lon
-        self.lat = self.grid.lat
-        self.depth = self.grid.depth
+#         self.lon = self.grid.lon
+#         self.lat = self.grid.lat
+#         self.depth = self.grid.depth
         self.fieldtype = self.name if fieldtype is None else fieldtype
         self.to_write = to_write
         if self.grid.mesh == 'flat' or (self.fieldtype not in unitconverters_map.keys()):
@@ -230,9 +232,19 @@ class Field():
     def __getattr__(self, key):
         if key == "numba_field":
             raise AttributeError("Cannot get numba field vars before creating it.")
-        if key in ["grid", "data", "interp_method", "time_periodic", "allow_time_extrapolation"]:
+        if key in ["data", "interp_method", "time_periodic", "allow_time_extrapolation"]:
             return getattr(self.numba_field, key)
+        if key in ["lat", "lon", "depth"]:
+            return getattr(self.grid, key)
         raise AttributeError(f"Attribute {key} not found.")
+
+    def __setattr__(self, key, value):
+        if key in ["data", "interp_method", "time_periodic", "allow_time_extrapolation"]:
+            setattr(self.numba_field, key, value)
+        elif key in ["lat", "lon", "depth"]:
+            setattr(self.grid, key, value)
+        else:
+            super().__setattr__(key, value)
 
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
@@ -403,7 +415,7 @@ class Field():
             time, time_origin, timeslices, dataFiles = cls.collect_timeslices(timestamps, data_filenames,
                                                                               _grid_fb_class, dimensions,
                                                                               indices, netcdf_engine)
-            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            grid = Grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             kwargs['dataFiles'] = dataFiles
         elif grid is not None and ('dataFiles' not in kwargs or kwargs['dataFiles'] is None):
@@ -513,7 +525,7 @@ class Field():
         time_origin = TimeConverter(time[0])
         time = time_origin.reltime(time)
 
-        grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        grid = Grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         return cls(name, data, grid=grid, allow_time_extrapolation=allow_time_extrapolation,
                    interp_method=interp_method, **kwargs)
 
@@ -561,7 +573,6 @@ class Field():
             else:
                 assert data.shape[1] == grid.zdim, errormessage
         else:
-            print(data.shape, grid.tdim, grid.xdim, grid.ydim, grid.zdim)
             assert (data.shape == (grid.tdim,
                                    grid.ydim - 2 * grid.meridional_halo,
                                    grid.xdim - 2 * grid.zonal_halo)), \

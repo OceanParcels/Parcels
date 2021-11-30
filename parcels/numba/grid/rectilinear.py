@@ -25,14 +25,14 @@ class RectilinearGrid(BaseGrid):
     """
     __init_base = BaseGrid.__init__
 
-    def __init__(self, lon, lat, time, time_origin, mesh):
+    def __init__(self, lon, lat, time, mesh):
 #         assert(isinstance(lon, np.ndarray) and len(lon.shape) <= 1), 'lon is not a numpy vector'
 #         assert(isinstance(lat, np.ndarray) and len(lat.shape) <= 1), 'lat is not a numpy vector'
 #         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
 #         if isinstance(time, np.ndarray):
 #             assert(len(time.shape) == 1), 'time is not a vector'
 
-        self.__init_base(lon, lat, time, time_origin, mesh)
+        self.__init_base(lon, lat, time, mesh)
         self.xdim = self.lon.size
         self.ydim = self.lat.size
         self.tdim = self.time.size

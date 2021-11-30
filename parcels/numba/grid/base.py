@@ -56,7 +56,7 @@ def _base_grid_spec():
         ("ti", nb.int32),
         ("time", nb.float64[:]),
         ("time_full", nb.float64[:]),
-        ("time_origin", nb.float64),
+#         ("time_origin", nb.float64),
         ("mesh", nb.types.string),
         ("zonal_periodic", nb.bool_),
         ("zonal_halo", nb.int32),
@@ -76,7 +76,8 @@ def _base_grid_spec():
         ("z4d", nb.bool_),
         ("gtype", nb.types.IntEnumMember(GridCode, nb.int64)),
         ("update_status", nb.types.IntEnumMember(GridStatus, nb.int64)),
-        ("fob_data", as_numba_type(FOBErrorData))
+        ("fob_data", as_numba_type(FOBErrorData)),
+        ("depth_field", nb.float32[:]),
     ]
 
 
@@ -85,7 +86,7 @@ class BaseGrid(object):
     """Grid class that defines a (spatial and temporal) grid on which Fields are defined
 
     """
-    def __init__(self, lon, lat, time, time_origin, mesh):
+    def __init__(self, lon, lat, time, mesh):
         self.xi = nb.typed.Dict.empty(nb.int64, nb.int64)
         self.yi = nb.typed.Dict.empty(nb.int64, nb.int64)
         self.zi = nb.typed.Dict.empty(nb.int64, nb.int64)
@@ -96,7 +97,7 @@ class BaseGrid(object):
         self.lon = lon.astype(nb.float32)
         self.lat = lat.astype(nb.float32)
         self.time = np.zeros(1, dtype=nb.float64) if time is None else time.astype(nb.float64)
-        self.time_origin = nb.float64(time_origin)
+#         self.time_origin = nb.float64(0)
         self.time_full = self.time  # needed for deferred_loaded Fields
 #         self.time_origin = TimeConverter() if time_origin is None else time_origin
 #         assert isinstance(self.time_origin, TimeConverter), 'time_origin needs to be a TimeConverter object'
@@ -113,6 +114,7 @@ class BaseGrid(object):
         self.chunk_info = -1
         self.chunksize = -1
         self._add_last_periodic_data_timestep = False
+        self.depth_field = np.empty(0, dtype=nb.float32)
 #         self.depth_field = None
 
     def lon_grid_to_target(self):

@@ -2,12 +2,13 @@ import numpy as np
 import parcels.tools.interpolation_utils as ip
 import math
 from parcels.numba.utils import _numba_isclose
+import numba as nb
 
 
 class NumbaBaseVectorField():
     def jacobian(self, xsi, eta, px, py):
-        dphidxsi = np.array([eta-1, 1-eta, eta, -eta]).astype(np.float32)
-        dphideta = np.array([xsi-1, -xsi, xsi, 1-xsi]).astype(np.float32)
+        dphidxsi = np.array([eta-1, 1-eta, eta, -eta]).astype(nb.float64)
+        dphideta = np.array([xsi-1, -xsi, xsi, 1-xsi]).astype(nb.float64)
 
         dxdxsi = np.dot(px, dphidxsi)
         dxdeta = np.dot(px, dphideta)

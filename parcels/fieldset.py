@@ -60,8 +60,8 @@ class FieldSet(object):
         self.UV = self.numba_fieldset.UV
         for name, field in fields.items():
             setattr(self, name, field)
-        self.W = W
         if W is not None:
+            self.W = W
             self.UVW = self.numba_fieldset.UVW
         else:
             self.UVW = None
@@ -177,8 +177,7 @@ class FieldSet(object):
                 time = np.array([time_origin.reltime(t) for t in time])
             else:
                 time_origin = TimeConverter(0)
-            print(time, time_origin)
-            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time[0], mesh=mesh)
+            grid = Grid(lon, lat, depth, time, time_origin=time[0], mesh=mesh)
             if 'creation_log' not in kwargs.keys():
                 kwargs['creation_log'] = 'from_data'
 
@@ -326,7 +325,7 @@ class FieldSet(object):
         for f in self.get_fields():
             if type(f) in [VectorField, NestedField, SummedField] or f.dataFiles is None:
                 continue
-            if f.grid.depth_field is not None:
+            if len(f.grid.depth_field) != 0:
                 if f.grid.depth_field == 'not_yet_set':
                     raise ValueError("If depth dimension is set at 'not_yet_set', it must be added later using Field.set_depth_from_field(field)")
                 if not f.grid.defer_load:

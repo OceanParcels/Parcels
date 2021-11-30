@@ -10,6 +10,7 @@ from parcels.tools.statuscodes import FieldOutOfBoundError
 from parcels.numba.grid.zgrid import BaseZGrid
 from parcels.numba.grid.sgrid import BaseSGrid
 from numba import njit
+from parcels.numba.utils import numba_reshape_34
 
 
 def _curve_grid_spec():
@@ -33,7 +34,7 @@ def _squeeze2d(x):
 class CurvilinearGrid(BaseGrid):
     __init_base = BaseGrid.__init__
 
-    def __init__(self, lon, lat, time=None, time_origin=None, mesh='flat'):
+    def __init__(self, lon, lat, time=None, mesh='flat'):
 #         assert(isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
 #         assert(isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
 #         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
@@ -42,7 +43,7 @@ class CurvilinearGrid(BaseGrid):
 
         lon = _squeeze2d(lon)
         lat = _squeeze2d(lat)
-        self.__init_base(lon, lat, time, time_origin, mesh)
+        self.__init_base(lon, lat, time, mesh)
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
         self.tdim = self.time.size
@@ -227,8 +228,8 @@ class CurvilinearZGrid(CurvilinearGrid, BaseZGrid):
     """
     __init__curv = CurvilinearGrid.__init__
 
-    def __init__(self, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
-        self.__init__curv(lon, lat, time, time_origin, mesh)
+    def __init__(self, lon, lat, depth=None, time=None, mesh='flat'):
+        self.__init__curv(lon, lat, time, mesh)
 #         if isinstance(depth, np.ndarray):
 #             assert(len(depth.shape) == 1), 'depth is not a vector'
 
@@ -264,18 +265,19 @@ class CurvilinearSGrid(CurvilinearGrid, BaseSGrid):
     """
     __init__curv = CurvilinearGrid.__init__
 
-    def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
-        self.__init__curv(lon, lat, time, time_origin, mesh)
+    def __init__(self, lon, lat, depth, time=None, mesh='flat'):
+        self.__init__curv(lon, lat, time, mesh)
 #         assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
         self.gtype = GridCode.CurvilinearSGrid
-        self.depth = depth
+        self.depth = numba_reshape_34(depth).astype(nb.float32)
         self.zdim = self.depth.shape[-3]
         self.z4d = self.depth.shape[0] != 1
 #         self.z4d = len(self.depth.shape) == 4
 #         if self.z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
-        assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+        if self.z4d:
+            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
         assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
         assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
 #         else:

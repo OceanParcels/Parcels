@@ -372,6 +372,8 @@ class ParticleSetSOA(BaseParticleSet):
         """
         if mode == 'monte_carlo':
             data = start_field.data if isinstance(start_field.data, np.ndarray) else np.array(start_field.data)
+            if len(data.shape) == 4 and data.shape[0] == 1:
+                data = data.reshape(data.shape[1:])
             if start_field.interp_method == 'cgrid_tracer':
                 p_interior = np.squeeze(data[0, 1:, 1:])
             else:  # if A-grid

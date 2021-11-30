@@ -320,321 +320,323 @@ pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel':
 #     for _ in range(10):
 #         pset.execute(kernel, runtime=100, dt=50)
 #         assert np.allclose(pset.relDepth[0], depth/bath_func(pset.lon[0]))
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_curvilinear_grids(pset_mode):
+
+    x = np.linspace(0, 1e3, 7, dtype=np.float32)
+    y = np.linspace(0, 1e3, 5, dtype=np.float32)
+    (xx, yy) = np.meshgrid(x, y)
+
+    r = np.sqrt(xx*xx+yy*yy)
+    theta = np.arctan2(yy, xx)
+    theta = theta + np.pi/6.
+
+    lon = r * np.cos(theta)
+    lat = r * np.sin(theta)
+    time = np.array([0, 86400], dtype=np.float64)
+    grid = CurvilinearZGrid(lon, lat, time=time)
+
+    u_data = np.ones((2, y.size, x.size), dtype=np.float32)
+    v_data = np.zeros((2, y.size, x.size), dtype=np.float32)
+    u_data[0, :, :] = lon[:, :] + lat[:, :]
+
+    u_field = Field('U', u_data, grid=grid, transpose=False)
+    v_field = Field('V', v_data, grid=grid, transpose=False)
+    field_set = FieldSet(u_field, v_field)
+
+    def sampleSpeed(particle, fieldset, time):
+        u = fieldset.U[time, particle.depth, particle.lat, particle.lon, particle]
+        v = fieldset.V[time, particle.depth, particle.lat, particle.lon, particle]
+        particle.speed = math.sqrt(u*u+v*v)
+        return StateCode.Success
+
+    class MyParticle(ptype):
+        speed = Variable('speed', dtype=np.float32, initial=0.)
+
+    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
+    pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
+    assert(np.allclose(pset.speed[0], 1000))
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_nemo_grid(pset_mode):
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+
+    filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                       'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                       'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
+                 'V': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                       'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                       'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}}
+    variables = {'U': 'U', 'V': 'V'}
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+    field_set = FieldSet.from_nemo(filenames, variables, dimensions)
+
+    # test ParticleSet.from_field on curvilinear grids
+    pset_type[pset_mode]['pset'].from_field(field_set, ptype, start_field=field_set.U, size=5)
+
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+        return StateCode.Success
+
+    class MyParticle(ptype):
+        zonal = Variable('zonal', dtype=np.float32, initial=0.)
+        meridional = Variable('meridional', dtype=np.float32, initial=0.)
+
+    lonp = 175.5
+    latp = 81.5
+    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
+    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    u = field_set.U.units.to_source(pset.zonal[0], lonp, latp, 0)
+    v = field_set.V.units.to_source(pset.meridional[0], lonp, latp, 0)
+    assert abs(u - 1) < 1e-4
+    assert abs(v) < 1e-4
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+def test_advect_nemo(pset_mode):
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+
+    filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                       'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                       'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
+                 'V': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                       'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                       'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}}
+    variables = {'U': 'U', 'V': 'V'}
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+    field_set = FieldSet.from_nemo(filenames, variables, dimensions)
+
+    lonp = 175.5
+    latp = 81.5
+    pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype, lon=[lonp], lat=[latp])
+    pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
+    assert abs(pset.lat[0] - latp) < 1e-3
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('time', [True, False])
+def test_cgrid_uniform_2dvel(pset_mode, time):
+    lon = np.array([[0, 2], [.4, 1.5]])
+    lat = np.array([[0, -.5], [.8, .5]])
+    U = np.array([[-99, -99], [4.4721359549995793e-01, 1.3416407864998738e+00]])
+    V = np.array([[-99, 1.2126781251816650e+00], [-99, 1.2278812270298409e+00]])
+
+    if time:
+        U = np.stack((U, U))
+        V = np.stack((V, V))
+        dimensions = {'lat': lat, 'lon': lon, 'time': np.array([0, 10])}
+    else:
+        dimensions = {'lat': lat, 'lon': lon}
+    data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset.U.interp_method = 'cgrid_velocity'
+    fieldset.V.interp_method = 'cgrid_velocity'
+
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+        return StateCode.Success
+
+    class MyParticle(ptype):
+        zonal = Variable('zonal', dtype=np.float32, initial=0.)
+        meridional = Variable('meridional', dtype=np.float32, initial=0.)
+
+    pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3)
+    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    assert (pset[0].zonal - 1) < 1e-6
+    assert (pset[0].meridional - 1) < 1e-6
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('vert_mode', ['zlev', 'slev1', 'slev2'])
+# @pytest.mark.parametrize('vert_mode', ['slev2'])
+@pytest.mark.parametrize('time', [True, False])
+def test_cgrid_uniform_3dvel(pset_mode, vert_mode, time):
+    lon = np.array([[0, 2], [.4, 1.5]])
+    lat = np.array([[0, -.5], [.8, .5]])
+
+    u0 = 4.4721359549995793e-01
+    u1 = 1.3416407864998738e+00
+    v0 = 1.2126781251816650e+00
+    v1 = 1.2278812270298409e+00
+    w0 = 1
+    w1 = 1
+
+    if vert_mode == 'zlev':
+        depth = np.array([0, 1])
+    elif vert_mode == 'slev1':
+        depth = np.array([[[0, 0], [0, 0]], [[1, 1], [1, 1]]])
+    elif vert_mode == 'slev2':
+        depth = np.array([[[-1, -.6], [-1.1257142857142859, -.9]],
+                          [[1, 1.5], [0.50857142857142845, .8]]])
+        w0 = 1.0483007922296661e+00
+        w1 = 1.3098951476312375e+00
+
+    U = np.array([[[-99, -99], [u0, u1]],
+                  [[-99, -99], [-99, -99]]])
+    V = np.array([[[-99, v0], [-99, v1]],
+                  [[-99, -99], [-99, -99]]])
+    W = np.array([[[-99, -99], [-99, w0]],
+                  [[-99, -99], [-99, w1]]])
+
+    if time:
+        U = np.stack((U, U))
+        V = np.stack((V, V))
+        W = np.stack((W, W))
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': np.array([0, 10])}
+    else:
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
+    data = {'U': np.array(U, dtype=np.float32),
+            'V': np.array(V, dtype=np.float32),
+            'W': np.array(W, dtype=np.float32)}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset.U.interp_method = 'cgrid_velocity'
+    fieldset.V.interp_method = 'cgrid_velocity'
+    fieldset.W.interp_method = 'cgrid_velocity'
+
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
+        return StateCode.Success
+
+    class MyParticle(ptype):
+        zonal = Variable('zonal', dtype=np.float32, initial=0.)
+        meridional = Variable('meridional', dtype=np.float32, initial=0.)
+        vertical = Variable('vertical', dtype=np.float32, initial=0.)
+
+    pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
+    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    assert abs(pset[0].zonal - 1) < 1e-6
+    assert abs(pset[0].meridional - 1) < 1e-6
+    assert abs(pset[0].vertical - 1) < 1e-6
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('vert_mode', ['zlev', 'slev1'])
+@pytest.mark.parametrize('time', [True, False])
+def test_cgrid_uniform_3dvel_spherical(pset_mode, vert_mode, time):
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+    dim_file = xr.open_dataset(data_path + 'mask_nemo_cross_180lon.nc')
+    u_file = xr.open_dataset(data_path + 'Uu_eastward_nemo_cross_180lon.nc')
+    v_file = xr.open_dataset(data_path + 'Vv_eastward_nemo_cross_180lon.nc')
+    j = 4
+    i = 11
+    lon = np.array(dim_file.glamf[0, j:j+2, i:i+2])
+    lat = np.array(dim_file.gphif[0, j:j+2, i:i+2])
+    U = np.array(u_file.U[0, j:j+2, i:i+2])
+    V = np.array(v_file.V[0, j:j+2, i:i+2])
+    trash = np.zeros((2, 2))
+    U = np.stack((U, trash))
+    V = np.stack((V, trash))
+    w0 = 1
+    w1 = 1
+    W = np.array([[[-99, -99], [-99, w0]],
+                  [[-99, -99], [-99, w1]]])
  
+    if vert_mode == 'zlev':
+        depth = np.array([0, 1])
+    elif vert_mode == 'slev1':
+        depth = np.array([[[0, 0], [0, 0]], [[1, 1], [1, 1]]])
  
-# @pytest.mark.parametrize('pset_mode', pset_modes)
-# # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# def test_curvilinear_grids(pset_mode):
-#  
-#     x = np.linspace(0, 1e3, 7, dtype=np.float32)
-#     y = np.linspace(0, 1e3, 5, dtype=np.float32)
-#     (xx, yy) = np.meshgrid(x, y)
-#  
-#     r = np.sqrt(xx*xx+yy*yy)
-#     theta = np.arctan2(yy, xx)
-#     theta = theta + np.pi/6.
-#  
-#     lon = r * np.cos(theta)
-#     lat = r * np.sin(theta)
-#     time = np.array([0, 86400], dtype=np.float64)
-#     grid = CurvilinearZGrid(lon, lat, time=time)
-#  
-#     u_data = np.ones((2, y.size, x.size), dtype=np.float32)
-#     v_data = np.zeros((2, y.size, x.size), dtype=np.float32)
-#     u_data[0, :, :] = lon[:, :] + lat[:, :]
-# 
-#     u_field = Field('U', u_data, grid=grid, transpose=False)
-#     v_field = Field('V', v_data, grid=grid, transpose=False)
-#     field_set = FieldSet(u_field, v_field)
-#  
-#     def sampleSpeed(particle, fieldset, time):
-#         u = fieldset.U[time, particle.depth, particle.lat, particle.lon, particle]
-#         v = fieldset.V[time, particle.depth, particle.lat, particle.lon, particle]
-#         particle.speed = math.sqrt(u*u+v*v)
-#         return StateCode.Success
-#  
-#     class MyParticle(ptype):
-#         speed = Variable('speed', dtype=np.float32, initial=0.)
-#  
-#     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
-#     pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
-#     assert(np.allclose(pset.speed[0], 1000))
-#  
+    if time:
+        U = np.stack((U, U))
+        V = np.stack((V, V))
+        W = np.stack((W, W))
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': np.array([0, 10])}
+    else:
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
+    data = {'U': np.array(U, dtype=np.float32),
+            'V': np.array(V, dtype=np.float32),
+            'W': np.array(W, dtype=np.float32)}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical')
+    fieldset.U.interp_method = 'cgrid_velocity'
+    fieldset.V.interp_method = 'cgrid_velocity'
+    fieldset.W.interp_method = 'cgrid_velocity'
  
-# @pytest.mark.parametrize('pset_mode', pset_modes)
-# # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# def test_nemo_grid(pset_mode, mode="scipy"):
-#     data_path = path.join(path.dirname(__file__), 'test_data/')
-#  
-#     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
-#                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
-#                        'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
-#                  'V': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
-#                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
-#                        'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}}
-#     variables = {'U': 'U', 'V': 'V'}
-#     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-#     field_set = FieldSet.from_nemo(filenames, variables, dimensions)
-#  
-#     # test ParticleSet.from_field on curvilinear grids
-#     pset_type[pset_mode]['pset'].from_field(field_set, ptype[mode], start_field=field_set.U, size=5)
-#  
-#     def sampleVel(particle, fieldset, time):
-#         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
-#  
-#     class MyParticle(ptype[mode]):
-#         zonal = Variable('zonal', dtype=np.float32, initial=0.)
-#         meridional = Variable('meridional', dtype=np.float32, initial=0.)
-#  
-#     lonp = 175.5
-#     latp = 81.5
-#     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
-#     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-#     u = field_set.U.units.to_source(pset.zonal[0], lonp, latp, 0)
-#     v = field_set.V.units.to_source(pset.meridional[0], lonp, latp, 0)
-#     assert abs(u - 1) < 1e-4
-#     assert abs(v) < 1e-4
-#  
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
+        return StateCode.Success
+
+    class MyParticle(ptype):
+        zonal = Variable('zonal', dtype=np.float32, initial=0.)
+        meridional = Variable('meridional', dtype=np.float32, initial=0.)
+        vertical = Variable('vertical', dtype=np.float32, initial=0.)
  
-# @pytest.mark.parametrize('pset_mode', pset_modes)
-# # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# def test_advect_nemo(pset_mode, mode="scipy"):
-#     data_path = path.join(path.dirname(__file__), 'test_data/')
-# 
-#     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
-#                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
-#                        'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
-#                  'V': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
-#                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
-#                        'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}}
-#     variables = {'U': 'U', 'V': 'V'}
-#     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-#     field_set = FieldSet.from_nemo(filenames, variables, dimensions)
-# 
-#     lonp = 175.5
-#     latp = 81.5
-#     pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=[lonp], lat=[latp])
-#     pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
-#     assert abs(pset.lat[0] - latp) < 1e-3
-# 
-# 
-# @pytest.mark.parametrize('pset_mode', pset_modes)
-# # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# @pytest.mark.parametrize('time', [True, False])
-# def test_cgrid_uniform_2dvel(pset_mode, time, mode="scipy"):
-#     lon = np.array([[0, 2], [.4, 1.5]])
-#     lat = np.array([[0, -.5], [.8, .5]])
-#     U = np.array([[-99, -99], [4.4721359549995793e-01, 1.3416407864998738e+00]])
-#     V = np.array([[-99, 1.2126781251816650e+00], [-99, 1.2278812270298409e+00]])
-# 
-#     if time:
-#         U = np.stack((U, U))
-#         V = np.stack((V, V))
-#         dimensions = {'lat': lat, 'lon': lon, 'time': np.array([0, 10])}
-#     else:
-#         dimensions = {'lat': lat, 'lon': lon}
-#     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
-#     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-#     fieldset.U.interp_method = 'cgrid_velocity'
-#     fieldset.V.interp_method = 'cgrid_velocity'
-# 
-#     def sampleVel(particle, fieldset, time):
-#         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
-# 
-#     class MyParticle(ptype[mode]):
-#         zonal = Variable('zonal', dtype=np.float32, initial=0.)
-#         meridional = Variable('meridional', dtype=np.float32, initial=0.)
-# 
-#     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3)
-#     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-#     assert (pset[0].zonal - 1) < 1e-6
-#     assert (pset[0].meridional - 1) < 1e-6
-# 
-# 
-# @pytest.mark.parametrize('pset_mode', pset_modes)
-# # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1', 'slev2'])
-# @pytest.mark.parametrize('time', [True, False])
-# def test_cgrid_uniform_3dvel(pset_mode, vert_mode, time, mode="scipy"):
-# 
-#     lon = np.array([[0, 2], [.4, 1.5]])
-#     lat = np.array([[0, -.5], [.8, .5]])
-# 
-#     u0 = 4.4721359549995793e-01
-#     u1 = 1.3416407864998738e+00
-#     v0 = 1.2126781251816650e+00
-#     v1 = 1.2278812270298409e+00
-#     w0 = 1
-#     w1 = 1
-# 
-#     if vert_mode == 'zlev':
-#         depth = np.array([0, 1])
-#     elif vert_mode == 'slev1':
-#         depth = np.array([[[0, 0], [0, 0]], [[1, 1], [1, 1]]])
-#     elif vert_mode == 'slev2':
-#         depth = np.array([[[-1, -.6], [-1.1257142857142859, -.9]],
-#                           [[1, 1.5], [0.50857142857142845, .8]]])
-#         w0 = 1.0483007922296661e+00
-#         w1 = 1.3098951476312375e+00
-# 
-#     U = np.array([[[-99, -99], [u0, u1]],
-#                   [[-99, -99], [-99, -99]]])
-#     V = np.array([[[-99, v0], [-99, v1]],
-#                   [[-99, -99], [-99, -99]]])
-#     W = np.array([[[-99, -99], [-99, w0]],
-#                   [[-99, -99], [-99, w1]]])
-# 
-#     if time:
-#         U = np.stack((U, U))
-#         V = np.stack((V, V))
-#         W = np.stack((W, W))
-#         dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': np.array([0, 10])}
-#     else:
-#         dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
-#     data = {'U': np.array(U, dtype=np.float32),
-#             'V': np.array(V, dtype=np.float32),
-#             'W': np.array(W, dtype=np.float32)}
-#     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-#     fieldset.U.interp_method = 'cgrid_velocity'
-#     fieldset.V.interp_method = 'cgrid_velocity'
-#     fieldset.W.interp_method = 'cgrid_velocity'
-# 
-#     def sampleVel(particle, fieldset, time):
-#         (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
-# 
-#     class MyParticle(ptype[mode]):
-#         zonal = Variable('zonal', dtype=np.float32, initial=0.)
-#         meridional = Variable('meridional', dtype=np.float32, initial=0.)
-#         vertical = Variable('vertical', dtype=np.float32, initial=0.)
-# 
-#     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
-#     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-#     assert abs(pset[0].zonal - 1) < 1e-6
-#     assert abs(pset[0].meridional - 1) < 1e-6
-#     assert abs(pset[0].vertical - 1) < 1e-6
-# 
-# 
-# @pytest.mark.parametrize('pset_mode', pset_modes)
-# # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1'])
-# @pytest.mark.parametrize('time', [True, False])
-# def test_cgrid_uniform_3dvel_spherical(pset_mode, vert_mode, time, mode="scipy"):
-#     data_path = path.join(path.dirname(__file__), 'test_data/')
-#     dim_file = xr.open_dataset(data_path + 'mask_nemo_cross_180lon.nc')
-#     u_file = xr.open_dataset(data_path + 'Uu_eastward_nemo_cross_180lon.nc')
-#     v_file = xr.open_dataset(data_path + 'Vv_eastward_nemo_cross_180lon.nc')
-#     j = 4
-#     i = 11
-#     lon = np.array(dim_file.glamf[0, j:j+2, i:i+2])
-#     lat = np.array(dim_file.gphif[0, j:j+2, i:i+2])
-#     U = np.array(u_file.U[0, j:j+2, i:i+2])
-#     V = np.array(v_file.V[0, j:j+2, i:i+2])
-#     trash = np.zeros((2, 2))
-#     U = np.stack((U, trash))
-#     V = np.stack((V, trash))
-#     w0 = 1
-#     w1 = 1
-#     W = np.array([[[-99, -99], [-99, w0]],
-#                   [[-99, -99], [-99, w1]]])
-# 
-#     if vert_mode == 'zlev':
-#         depth = np.array([0, 1])
-#     elif vert_mode == 'slev1':
-#         depth = np.array([[[0, 0], [0, 0]], [[1, 1], [1, 1]]])
-# 
-#     if time:
-#         U = np.stack((U, U))
-#         V = np.stack((V, V))
-#         W = np.stack((W, W))
-#         dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': np.array([0, 10])}
-#     else:
-#         dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
-#     data = {'U': np.array(U, dtype=np.float32),
-#             'V': np.array(V, dtype=np.float32),
-#             'W': np.array(W, dtype=np.float32)}
-#     fieldset = FieldSet.from_data(data, dimensions, mesh='spherical')
-#     fieldset.U.interp_method = 'cgrid_velocity'
-#     fieldset.V.interp_method = 'cgrid_velocity'
-#     fieldset.W.interp_method = 'cgrid_velocity'
-# 
-#     def sampleVel(particle, fieldset, time):
-#         (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
-# 
-#     class MyParticle(ptype[mode]):
-#         zonal = Variable('zonal', dtype=np.float32, initial=0.)
-#         meridional = Variable('meridional', dtype=np.float32, initial=0.)
-#         vertical = Variable('vertical', dtype=np.float32, initial=0.)
-# 
-#     lonp = 179.8
-#     latp = 81.35
-#     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=lonp, lat=latp, depth=.2)
-#     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-#     if pset_mode == 'soa':
-#         pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
-#         pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
-#     elif pset_mode == 'aos':
-#         pset[0].zonal = fieldset.U.units.to_source(pset[0].zonal, lonp, latp, 0)
-#         pset[0].meridional = fieldset.V.units.to_source(pset[0].meridional, lonp, latp, 0)
-#     assert abs(pset[0].zonal - 1) < 1e-3
-#     assert abs(pset[0].meridional) < 1e-3
-#     assert abs(pset[0].vertical - 1) < 1e-3
-# 
-# 
-# @pytest.mark.parametrize('pset_mode', pset_modes)
-# # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-# @pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
-# @pytest.mark.parametrize('deferred_load', [True, False])
-# def test_popgrid(pset_mode, vert_discretisation, deferred_load, mode="scipy"):
-#     mesh = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
-#     if vert_discretisation == 'zlevel':
-#         w_dep = 'w_dep'
-#     elif vert_discretisation == 'slevel':
-#         w_dep = 'w_deps'   # same as zlevel, but defined as slevel
-#     elif vert_discretisation == 'slevel2':
-#         w_dep = 'w_deps2'  # contains shaved cells
-# 
-#     filenames = mesh
-#     variables = {'U': 'U',
-#                  'V': 'V',
-#                  'W': 'W',
-#                  'T': 'T'}
-#     dimensions = {'lon': 'lon', 'lat': 'lat', 'depth': w_dep, 'time': 'time'}
-# 
-#     field_set = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat', deferred_load=deferred_load)
-# 
-#     def sampleVel(particle, fieldset, time):
-#         (particle.zonal, particle.meridional, particle.vert) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
-#         particle.tracer = fieldset.T[time, particle.depth, particle.lat, particle.lon]
-# 
-#     def OutBoundsError(particle, fieldset, time):
-#         particle.out_of_bounds = 1
-#         particle.depth -= 3
-# 
-#     class MyParticle(ptype[mode]):
-#         zonal = Variable('zonal', dtype=np.float32, initial=0.)
-#         meridional = Variable('meridional', dtype=np.float32, initial=0.)
-#         vert = Variable('vert', dtype=np.float32, initial=0.)
-#         tracer = Variable('tracer', dtype=np.float32, initial=0.)
-#         out_of_bounds = Variable('out_of_bounds', dtype=np.float32, initial=0.)
-# 
-#     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
-#     pset.execute(pset.Kernel(sampleVel), runtime=1, dt=1,
-#                  recovery={ErrorCode.ErrorOutOfBounds: OutBoundsError})
-#     if vert_discretisation == 'slevel2':
-#         assert np.isclose(pset.vert[0], 0.)
-#         assert np.isclose(pset.zonal[0], 0.)
-#         assert np.isclose(pset.tracer[0], 99.)
-#         assert np.isclose(pset.vert[1], -0.0066666666)
-#         assert np.isclose(pset.zonal[1], .015)
-#         assert np.isclose(pset.tracer[1], 1.)
-#         assert pset.out_of_bounds[0] == 0
-#         assert pset.out_of_bounds[1] == 0
-#         assert pset.out_of_bounds[2] == 1
-#     else:
-#         assert np.allclose(pset.zonal, 0.015)
-#         assert np.allclose(pset.meridional, 0.01)
-#         assert np.allclose(pset.vert, -0.01)
-#         assert np.allclose(pset.tracer, 1)
+    lonp = 179.8
+    latp = 81.35
+    pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=lonp, lat=latp, depth=.2)
+    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    if pset_mode == 'soa':
+        pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
+        pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
+    elif pset_mode == 'aos':
+        pset[0].zonal = fieldset.U.units.to_source(pset[0].zonal, lonp, latp, 0)
+        pset[0].meridional = fieldset.V.units.to_source(pset[0].meridional, lonp, latp, 0)
+    assert abs(pset[0].zonal - 1) < 1e-3
+    assert abs(pset[0].meridional) < 1e-3
+    assert abs(pset[0].vertical - 1) < 1e-3
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
+@pytest.mark.parametrize('deferred_load', [True, False])
+def test_popgrid(pset_mode, vert_discretisation, deferred_load):
+    mesh = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
+    if vert_discretisation == 'zlevel':
+        w_dep = 'w_dep'
+    elif vert_discretisation == 'slevel':
+        w_dep = 'w_deps'   # same as zlevel, but defined as slevel
+    elif vert_discretisation == 'slevel2':
+        w_dep = 'w_deps2'  # contains shaved cells
+ 
+    filenames = mesh
+    variables = {'U': 'U',
+                 'V': 'V',
+                 'W': 'W',
+                 'T': 'T'}
+    dimensions = {'lon': 'lon', 'lat': 'lat', 'depth': w_dep, 'time': 'time'}
+ 
+    field_set = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat', deferred_load=deferred_load)
+ 
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional, particle.vert) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
+        particle.tracer = fieldset.T[time, particle.depth, particle.lat, particle.lon]
+        return StateCode.Success
+
+    def OutBoundsError(particle, fieldset, time):
+        particle.out_of_bounds = 1
+        particle.depth -= 3
+ 
+    class MyParticle(ptype):
+        zonal = Variable('zonal', dtype=np.float32, initial=0.)
+        meridional = Variable('meridional', dtype=np.float32, initial=0.)
+        vert = Variable('vert', dtype=np.float32, initial=0.)
+        tracer = Variable('tracer', dtype=np.float32, initial=0.)
+        out_of_bounds = Variable('out_of_bounds', dtype=np.float32, initial=0.)
+ 
+    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
+    pset.execute(pset.Kernel(sampleVel), runtime=1, dt=1,
+                 recovery={ErrorCode.ErrorOutOfBounds: OutBoundsError})
+    if vert_discretisation == 'slevel2':
+        assert np.isclose(pset.vert[0], 0.)
+        assert np.isclose(pset.zonal[0], 0.)
+        assert np.isclose(pset.tracer[0], 99.)
+        assert np.isclose(pset.vert[1], -0.0066666666)
+        assert np.isclose(pset.zonal[1], .015)
+        assert np.isclose(pset.tracer[1], 1.)
+        assert pset.out_of_bounds[0] == 0
+        assert pset.out_of_bounds[1] == 0
+        assert pset.out_of_bounds[2] == 1
+    else:
+        assert np.allclose(pset.zonal, 0.015)
+        assert np.allclose(pset.meridional, 0.01)
+        assert np.allclose(pset.vert, -0.01)
+        assert np.allclose(pset.tracer, 1)
 # 
 # 
 # @pytest.mark.parametrize('pset_mode', pset_modes)

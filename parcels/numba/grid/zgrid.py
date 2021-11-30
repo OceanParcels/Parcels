@@ -1,4 +1,5 @@
 import numpy as np
+import numba as nb
 
 
 class BaseZGrid():
@@ -33,3 +34,6 @@ class BaseZGrid():
                 zi = depth_indices.argmin() - 1 if z <= self.depth[0] else 0
         zeta = (z-self.depth[zi]) / (self.depth[zi+1]-self.depth[zi])
         return (zi, zeta)
+
+    def get_pz(self, _xi, _yi, zi):
+        return np.array([self.depth[zi], self.depth[zi+1]]).astype(nb.float64)

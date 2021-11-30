@@ -27,7 +27,7 @@ def phi2D_lin(xsi, eta):
         [(1-xsi) * (1-eta),
             xsi  * (1-eta),
             xsi  *    eta ,
-         (1-xsi) *    eta ]).astype(np.float32)
+         (1-xsi) *    eta ]).astype(nb.float64)
 
     return phi
 
@@ -41,7 +41,7 @@ def phi3D_lin(xsi, eta, zet):
            (1-xsi) * (1-eta) *    zet ,
               xsi  * (1-eta) *    zet ,
               xsi  *    eta  *    zet ,
-           (1-xsi) *    eta  *    zet ]).astype(np.float32)
+           (1-xsi) *    eta  *    zet ]).astype(nb.float64)
 
     return phi
 
@@ -56,7 +56,7 @@ def dphidxsi3D_lin(xsi, eta, zet):
                  - (1-eta) * (  zet),
                    (1-eta) * (  zet),
                    (  eta) * (  zet),
-                 - (  eta) * (  zet)]).astype(np.float32)
+                 - (  eta) * (  zet)]).astype(nb.float64)
     dphideta = np.array([
                  - (1-xsi) * (1-zet),
                  - (  xsi) * (1-zet),
@@ -65,7 +65,7 @@ def dphidxsi3D_lin(xsi, eta, zet):
                  - (1-xsi) * (  zet),
                  - (  xsi) * (  zet),
                    (  xsi) * (  zet),
-                   (1-xsi) * (  zet)]).astype(np.float32)
+                   (1-xsi) * (  zet)]).astype(nb.float64)
     dphidzet = np.array([
                  - (1-xsi) * (1-eta),
                  - (  xsi) * (1-eta),
@@ -74,7 +74,7 @@ def dphidxsi3D_lin(xsi, eta, zet):
                    (1-xsi) * (1-eta),
                    (  xsi) * (1-eta),
                    (  xsi) * (  eta),
-                   (1-xsi) * (  eta)]).astype(np.float32)
+                   (1-xsi) * (  eta)]).astype(nb.float64)
 
     return dphidxsi, dphideta, dphidzet
 

@@ -67,12 +67,6 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
         (xsi, eta, zet, xi, yi, zi) = self.U.grid.search_indices(x, y, z, ti, time, particle=particle)
 
         px, py = grid.get_pxy(xi, yi)
-#         if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
-#             px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
-#             py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi+1], grid.lat[yi+1]])
-#         else:
-#             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
-#             py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
 
         if grid.mesh == 'spherical':
             px[0] = px[0]+360 if px[0] < x-225 else px[0]
@@ -84,11 +78,12 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
 
         px = np.concatenate((px, px))
         py = np.concatenate((py, py))
+        pz = grid.get_pz(xi, yi, zi)
 #         if grid.z4d:
-        pz = np.array([grid.depth[0, zi, yi, xi], grid.depth[0, zi, yi, xi+1],
-                       grid.depth[0, zi, yi+1, xi+1], grid.depth[0, zi, yi+1, xi],
-                       grid.depth[0, zi+1, yi, xi], grid.depth[0, zi+1, yi, xi+1],
-                       grid.depth[0, zi+1, yi+1, xi+1], grid.depth[0, zi+1, yi+1, xi]])
+#         pz = np.array([grid.depth[0, zi, yi, xi], grid.depth[0, zi, yi, xi+1],
+#                        grid.depth[0, zi, yi+1, xi+1], grid.depth[0, zi, yi+1, xi],
+#                        grid.depth[0, zi+1, yi, xi], grid.depth[0, zi+1, yi, xi+1],
+#                        grid.depth[0, zi+1, yi+1, xi+1], grid.depth[0, zi+1, yi+1, xi]])
 #         else:
 #             pz = np.array([grid.depth[zi, yi, xi], grid.depth[zi, yi, xi+1], grid.depth[zi, yi+1, xi+1], grid.depth[zi, yi+1, xi],
 #                            grid.depth[zi+1, yi, xi], grid.depth[zi+1, yi, xi+1], grid.depth[zi+1, yi+1, xi+1], grid.depth[zi+1, yi+1, xi]])

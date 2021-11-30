@@ -54,3 +54,10 @@ class BaseSGrid():
                 self.FieldOutOfBoundError(x, y, z)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
+
+    def get_pz(self, xi, yi, zi):
+        return np.array([
+            self.depth[0, zi, yi, xi], self.depth[0, zi, yi, xi+1],
+            self.depth[0, zi, yi+1, xi+1], self.depth[0, zi, yi+1, xi],
+            self.depth[0, zi+1, yi, xi], self.depth[0, zi+1, yi, xi+1],
+            self.depth[0, zi+1, yi+1, xi+1], self.depth[0, zi+1, yi+1, xi]]).astype(nb.float64)

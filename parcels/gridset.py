@@ -1,10 +1,11 @@
 import numpy as np
+from parcels.grid import Grid
 
 __all__ = ['GridSet']
 
 
 def check_grids_equal(grid_1, grid_2):
-    if grid_1.time_origin != grid_2.time_origin:
+    if isinstance(grid_1, Grid) and isinstance(grid_2, Grid) and  grid_1.time_origin != grid_2.time_origin:
         return False
     for attr in ['lon', 'lat', 'depth', 'time']:
         gattr = getattr(grid_1, attr)

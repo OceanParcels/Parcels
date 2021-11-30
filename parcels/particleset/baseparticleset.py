@@ -189,6 +189,7 @@ class BaseParticleSet(NDCluster):
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
 
+        print(start_field, size, mode)
         lon, lat = cls.monte_carlo_sample(start_field, size, mode)
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
