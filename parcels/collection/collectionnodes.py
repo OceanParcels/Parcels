@@ -105,7 +105,7 @@ class ParticleCollectionNodes(ParticleCollection):
 
         for kwvar in kwargs:
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) do nott have the same lengths.' % kwvar)
+                '%s and positions (lon, lat, depth) do not have the same lengths.' % kwvar)
 
         offset = np.max(pid) if (pid is not None) and type(pid) in [list, tuple, np.ndarray] and len(pid) > 0 else -1
         if MPI:
