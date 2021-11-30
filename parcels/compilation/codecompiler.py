@@ -386,7 +386,6 @@ class GNUCompiler_MS(CCompiler_MS):
     def compile(self, src, obj, log):
         lib_pathfile = os.path.basename(obj)
         lib_pathdir = os.path.dirname(obj)
-        # if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
         if lib_pathfile[0:3] != "lib" and platform != 'win32':
             lib_pathfile = "lib"+lib_pathfile
         obj = os.path.join(lib_pathdir, lib_pathfile)
