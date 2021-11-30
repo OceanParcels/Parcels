@@ -363,7 +363,7 @@ class Collection(ABC):
         The reason for it can, for example, be that the set exceeds a pre-defined maximum number of elements, which for
         performance reasons mandates a split.
 
-        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        The function returns the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
         """
         subset_are_indices = False
