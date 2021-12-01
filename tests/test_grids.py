@@ -583,9 +583,9 @@ def test_cgrid_uniform_3dvel_spherical(pset_mode, vert_mode, time):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
-@pytest.mark.parametrize('deferred_load', [True, False])
-def test_popgrid(pset_mode, vert_discretisation, deferred_load):
+# @pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
+# @pytest.mark.parametrize('deferred_load', [True, False])
+def test_popgrid(pset_mode, vert_discretisation="zlevel", deferred_load=False):
     mesh = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
     if vert_discretisation == 'zlevel':
         w_dep = 'w_dep'
@@ -622,6 +622,12 @@ def test_popgrid(pset_mode, vert_discretisation, deferred_load):
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
     pset.execute(pset.Kernel(sampleVel), runtime=1, dt=1,
                  recovery={ErrorCode.ErrorOutOfBounds: OutBoundsError})
+    print(field_set.U.depth)
+    print(field_set.U.lat)
+    print(field_set.U.lon)
+    print(field_set.W.depth)
+    print(field_set.W.data)
+    print(field_set.W.data.shape)
     if vert_discretisation == 'slevel2':
         assert np.isclose(pset.vert[0], 0.)
         assert np.isclose(pset.zonal[0], 0.)

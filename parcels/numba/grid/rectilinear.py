@@ -132,8 +132,8 @@ class RectilinearGrid(BaseGrid):
         return self.lon[1:] - self.lon[:-1]
 
     def get_pxy(self, xi, yi):
-        px = np.array([self.lon[xi], self.lon[xi+1], self.lon[xi+1], self.lon[xi]])
-        py = np.array([self.lat[yi], self.lat[yi], self.lat[yi+1], self.lat[yi+1]])
+        px = np.array([self.lon[xi], self.lon[xi+1], self.lon[xi+1], self.lon[xi]]).astype(nb.float64)
+        py = np.array([self.lat[yi], self.lat[yi], self.lat[yi+1], self.lat[yi+1]]).astype(nb.float64)
         return px, py
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
@@ -185,8 +185,8 @@ class RectilinearZGrid(RectilinearGrid, BaseZGrid):
     """
     __init__rect = RectilinearGrid.__init__
 
-    def __init__(self, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
-        self.__init__rect(lon, lat, time, time_origin, mesh)
+    def __init__(self, lon, lat, depth=None, time=None, mesh='flat'):
+        self.__init__rect(lon, lat, time, mesh)
 #         if isinstance(depth, np.ndarray):
 #             assert(len(depth.shape) <= 1), 'depth is not a vector'
 
@@ -225,8 +225,8 @@ class RectilinearSGrid(RectilinearGrid, BaseSGrid):
 
     # TODO: description of dimensions is wrong in docstring?
 
-    def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
-        self.__init_rect(lon, lat, time, time_origin, mesh)
+    def __init__(self, lon, lat, depth, time=None, mesh='flat'):
+        self.__init_rect(lon, lat, time, mesh)
 #         assert(isinstance(depth, np.ndarray) and 
         assert len(depth.shape) in [3, 4], 'depth is not a 3D or 4D numpy array'
 #         if len(depth.shape) == 3:
