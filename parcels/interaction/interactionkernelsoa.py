@@ -32,10 +32,10 @@ class InteractionKernelSOA(BaseInteractionKernel):
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
                  funccode=None, py_ast=None, funcvars=None, c_include="",
                  delete_cfiles=True):
-        super().__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc,
-                         funcname=funcname, funccode=funccode, py_ast=py_ast,
-                         funcvars=funcvars, c_include=c_include,
-                         delete_cfiles=delete_cfiles)
+        super(InteractionKernelSOA, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc,
+                                                   funcname=funcname, funccode=funccode, py_ast=py_ast,
+                                                   funcvars=funcvars, c_include=c_include,
+                                                   delete_cfiles=delete_cfiles)
 
         for func in self._pyfunc:
             self.check_fieldsets_in_kernels(func)

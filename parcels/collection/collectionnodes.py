@@ -772,7 +772,7 @@ class ParticleCollectionNodes(ParticleCollection):
         if len(data_array) <= 0:
             return results
         if isinstance(data_array, list) or isinstance(data_array, tuple):
-            logger.info("SoA -> data_array - type: {}; values: {}".format(type(data_array[0]), data_array))
+            # logger.info("Nodes -> data_array - type: {}; values: {}".format(type(data_array[0]), data_array))
             for item in data_array:
                 results.append(self.add_single(item))
         elif isinstance(data_array, np.ndarray) and (data_array.dtype == self._ptype):

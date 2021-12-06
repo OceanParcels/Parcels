@@ -28,8 +28,10 @@ class BaseInteractionKernel(BaseKernel):
             raise NotImplementedError("InteractionKernels are not supported in an MPI environment. Please run your simulation outside MPI.")
 
         if pyfunc is not None:
-            if isinstance(pyfunc, list):
+            if isinstance(pyfunc, list) and not isinstance(pyfunc, str):
                 funcname = ''.join([func.__name__ for func in pyfunc])
+            elif isinstance(pyfunc, BaseKernel):
+                funcname = pyfunc.name
             else:
                 funcname = pyfunc.__name__
 
@@ -39,7 +41,7 @@ class BaseInteractionKernel(BaseKernel):
             c_include=c_include, delete_cfiles=delete_cfiles)
 
         if pyfunc is not None:
-            if isinstance(pyfunc, list):
+            if isinstance(pyfunc, list) and not isinstance(pyfunc, str):
                 self._pyfunc = pyfunc
             else:
                 self._pyfunc = [pyfunc]
