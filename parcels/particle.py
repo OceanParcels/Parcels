@@ -328,7 +328,7 @@ class ScipyParticle(_Particle):
         return self.id > other.id
 
     def __ge__(self, other):
-        """:returns of this particle object's ID is larger-or-equal to :arg other 's ID"""
+        """:returns if this particle object's ID is larger-or-equal to :arg other 's ID"""
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
