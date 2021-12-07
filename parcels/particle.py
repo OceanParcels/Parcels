@@ -422,23 +422,23 @@ class JITParticle(ScipyParticle):
         self._cptr = None
 
     def __eq__(self, other):
-        """:returns of this particle object is equal to :arg other"""
+        """:returns if this particle object is equal to :arg other"""
         return super(JITParticle, self).__eq__(other)
 
     def __ne__(self, other):
-        """:returns of this particle object is not equal to :arg other"""
+        """:returns if this particle object is not equal to :arg other"""
         return not (self == other)
 
     def __lt__(self, other):
-        """:returns of this particle object's ID is smaller than :arg other 's ID"""
+        """:returns if this particle object's ID is smaller than :arg other 's ID"""
         return super(JITParticle, self).__lt__(other)
 
     def __le__(self, other):
-        """:returns of this particle object's ID is smaller-or-equal to :arg other 's ID"""
+        """:returns if this particle object's ID is smaller-or-equal to :arg other 's ID"""
         return super(JITParticle, self).__le__(other)
 
     def __gt__(self, other):
-        """:returns of this particle object's ID is larger than :arg other 's ID"""
+        """:returns if this particle object's ID is larger than :arg other 's ID"""
         return super(JITParticle, self).__gt__(other)
 
     def __ge__(self, other):
