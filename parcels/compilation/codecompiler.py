@@ -2,8 +2,8 @@ import os
 import sys
 import subprocess
 from struct import calcsize
-from parcels.tools import logger  # noqa: F401
-from sys import platform  # noqa: F401
+from parcels.tools import logger
+from sys import platform
 
 try:
     from mpi4py import MPI
