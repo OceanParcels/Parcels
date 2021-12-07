@@ -935,7 +935,6 @@ class ParticleCollectionSOA(ParticleCollection):
             self._data[d] = np.delete(self._data[d], indices, axis=0)
         self._ncount = self._data['lon'].shape[0]
 
-
     def remove_collection(self, pcollection):
         """
         This function removes particles from this collection that are themselves stored in a ParticleCollection, which
@@ -1090,7 +1089,7 @@ class ParticleCollectionSOA(ParticleCollection):
         lats = result_dict.pop('lat', None)
         depths = result_dict.pop('depth', None)
         times = result_dict.pop('time', None)
-        result = ParticleCollectionSOA(self._pclass, lon=lons, lat=lats, depth=depths, time=times, pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid, kwargs = result_dict)
+        result = ParticleCollectionSOA(self._pclass, lon=lons, lat=lats, depth=depths, time=times, pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid, kwargs=result_dict)
         indices = sorted(indices)
         self.remove_multi_by_indices(indices)
         return result

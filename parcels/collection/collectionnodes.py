@@ -1043,7 +1043,7 @@ class ParticleCollectionNodes(ParticleCollection):
         super().delete_by_ID(id)
         index = self.get_index_by_ID(id)
         pdata = self._data[index].data
-        pdata.state = OperationCode
+        pdata.state = OperationCode.Delete
         self._data[index].set_data(pdata)
 
     def remove_single_by_index(self, index):
@@ -1166,7 +1166,7 @@ class ParticleCollectionNodes(ParticleCollection):
         formatted in an intermediary format, before executing the removal.
         That said, this method should still be at least as efficient as a removal via common Python collections (i.e.
         lists, dicts, numpy's nD arrays & dense arrays). Despite this, due to the reformatting, in some cases it may
-        be more efficient to remove items then rather by IDs oder indices.
+        be more efficient to remove items rather by IDs or indices.
 
         :arg pcollection: a BaseParticleCollection object, containing Particle objects that are to be removed from this collection
         """
@@ -1348,7 +1348,7 @@ class ParticleCollectionNodes(ParticleCollection):
 
     def _clear_deleted_(self):
         """
-        This (protected) function physically removes particles from the collection whose status is set to 'DELETE'.
+        This (protected) function physically removes particles from the collection whose status is set to 'OperationCode.Delete'.
         It is the logical finalisation method of physically deleting particles that have been marked for deletion and
         that have not otherwise been recovered.
         This methods in heavily dependent on the actual collection type and should be implemented very specific
