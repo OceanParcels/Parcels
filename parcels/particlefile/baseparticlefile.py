@@ -202,7 +202,7 @@ class BaseParticleFile(ABC):
 
     def close_netcdf_file(self):
         """
-        closes the NetCDF file and flushes the written cotent to disk
+        closes the NetCDF file and flushes the written content to disk
         """
         self.dataset.close()
 
