@@ -1593,15 +1593,14 @@ class NodeLoopGenerator(object):
                                                      c.If("particle == NULL", c.Block([progress_loop, c.Statement("continue")])),
                                                      sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop, progress_loop]))
 
-        fbody = c.Block([c.Value("int", "sign_dt, sign_end_part"),  # p,
+        fbody = c.Block([c.Value("int", "sign_dt, sign_end_part"),
                          c.Value("StatusCode", "res"),
                          c.Value("int", "reset_dt"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          c.Pointer(c.Value("NodeJIT", "node")), c.Assign("node", "node_begin"),
                          c.Pointer(c.Value(self.ptype.name, "particle")),
-                         # c.Assign("particle", "(%s*)(node->_c_data_p)" % (self.ptype.name)),
-                         sign_dt, particle_backup, node_loop])  # part_loop
+                         sign_dt, particle_backup, node_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)

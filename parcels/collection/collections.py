@@ -213,7 +213,7 @@ class Collection(ABC):
         assert type(pcollection) is not type(self)
 
     @abstractmethod
-    def get_multi_by_PyCollection_Particles(self, pycollectionp):
+    def get_multi_by_PyCollection_Particles(self, pycollection_p):
         """
         This function gets particles from this collection, which are themselves in common Python collections, such as
         lists, dicts and numpy structures. We can either directly get the referred Particle instances (for internally-
@@ -223,7 +223,7 @@ class Collection(ABC):
         For collections where get-by-object incurs a performance malus, it is advisable to multi-get particles
         by indices or IDs.
         """
-        assert type(pycollectionp) in [list, dict, np.ndarray], "Trying to get a collection of Particles, but their container is not a valid Python-collection - invalid operation."
+        assert type(pycollection_p) in [list, dict, np.ndarray], "Trying to get a collection of Particles, but their container is not a valid Python-collection - invalid operation."
 
     @abstractmethod
     def get_multi_by_indices(self, indices):
@@ -627,7 +627,7 @@ class Collection(ABC):
         assert type(pcollection) is not type(self)
 
     @abstractmethod
-    def remove_multi_by_PyCollection_Particles(self, pycollectionp):
+    def remove_multi_by_PyCollection_Particles(self, pycollection_p):
         """
         This function removes particles from this collection, which are themselves in common Python collections, such as
         lists, dicts and numpy structures. In order to perform the removal, we can either directly remove the referred
@@ -637,7 +637,7 @@ class Collection(ABC):
         For collections where removal-by-object incurs a performance malus, it is advisable to multi-remove particles
         by indices or IDs.
         """
-        assert type(pycollectionp) in [list, dict, np.ndarray], "Trying to remove a collection of Particles, but their container is not a valid Python-collection - invalid operation."
+        assert type(pycollection_p) in [list, dict, np.ndarray], "Trying to remove a collection of Particles, but their container is not a valid Python-collection - invalid operation."
 
     @abstractmethod
     def remove_multi_by_indices(self, indices):
@@ -784,9 +784,10 @@ class Collection(ABC):
         This function merge two strictly equally-structured ParticleCollections into one. This can be, for example,
         quite handy to merge two particle subsets that - due to continuous removal - become too small to be effective.
 
-        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally merge individual particles that are tagged by status as
-        being 'merged' (see the particle status for information on that).
+        being 'merged' (see the particle status for information on that), if :arg same_class is None. This will be done by
+        physically merging particles with the tagged status code 'merge' in this collection, which is to be implemented
+        in the :method ParticleCollection.merge_by_status function (TODO).
 
         In order to distinguish both use cases, we can evaluate the 'same_class' parameter. In cases where this is
         'None', the merge operation semantically refers to an internal merge of individual particles - otherwise,
@@ -798,11 +799,19 @@ class Collection(ABC):
         The function shall return the merged ParticleCollection.
         """
         if same_class is None:
-            return
+            self.merge_by_status()
         if type(same_class) is type(self):
             self.merge_same(same_class)
         elif isinstance(same_class, ParticleCollection):
             self.merge_collection(same_class)
+
+    @abstractmethod
+    def merge_by_status(self):
+        """
+        Physically merges particles with the tagged status code 'merge' in this collection (TODO).
+        Operates similar to :method ParticleCollection._clear_deleted_ method.
+        """
+        pass
 
     @abstractmethod
     def split(self, subset=None):
@@ -811,9 +820,10 @@ class Collection(ABC):
         example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
         mandates a split.
 
-        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally split individual particles that are tagged by status as
-        to be 'split' (see the particle status for information on that).
+        to be 'split' (see the particle status for information on that), if :arg subset is None. This will be done by
+        physically splitting particles with the tagged status code 'split' in this collection, which is to be implemented
+        in the :method ParticleCollection.split_by_status function (TODO).
 
         In order to distinguish both use cases, we can evaluate the 'indices' parameter. In cases where this is
         'None', the split operation semantically refers to an internal split of individual particles - otherwise,
@@ -825,12 +835,20 @@ class Collection(ABC):
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
         """
+        result = None
         if subset is None:
-            # TODO: perform the 'split' of particles themselves via Kernels
-            pass
+            result = self.split_by_status()
         else:
-            return self.split_same(subset)
-        return None
+            result = self.split_same(subset)
+        return result
+
+    @abstractmethod
+    def split_by_status(self):
+        """
+        Physically splits particles with the tagged status code 'split' in this collection (TODO).
+        Operates similar to :method ParticleCollection._clear_deleted_ method.
+        """
+        pass
 
     def __str__(self):
         """
@@ -871,7 +889,7 @@ class Collection(ABC):
         """
         return 0
 
-    def empty(self):
+    def isempty(self):
         """
         This function retuns a boolean value, expressing if a collection is emoty (i.e. does not [anymore] contain any
         elements) or not.

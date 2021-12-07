@@ -258,11 +258,41 @@ class ParticleCollectionSOA(ParticleCollection):
                 return self._data[name]
         return False
 
-    def empty(self):
+    def isempty(self):
         """
         :returns if the collections is empty or not
         """
         return len(self._data) <= 0
+
+    def get_indices_by_ids(self, ids):
+        """
+        Uses binary search if the collection is sorted, linear search otherwise, to locate indices of requested ids.
+        :arg ids: list or np.array of (64-bit integer) IDs
+        :returns np.array of (32-bit integer) indices
+        """
+        indices = np.empty(len(ids), dtype=np.int32)
+        if self._sorted:
+            # This is efficient if len(ids) << self.len
+            sorted_ids = np.sort(np.array(ids))
+            indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
+        else:
+            indices = np.where(np.in1d(self._data['id'], ids))[0]
+        return indices
+
+    def get_index_by_id(self, id):
+        """
+        Uses binary search if the collection is sorted, linear search otherwise, to locate the index of the requested ID.
+        :arg ids: 64-bit integer ID
+        :returns 32-bit integer index
+        """
+        index = -1
+        if self._sorted:
+            index = bisect_left(self._data['id'], id)
+            if index == len(self._data['id']) or self._data['id'][index] != id:
+                raise ValueError("Trying to access a particle with a non-existing ID: %s." % id)
+        else:
+            index = np.where(self._data['id'] == id)[0][0]
+        return index
 
     def get_single_by_index(self, index):
         """
@@ -316,21 +346,11 @@ class ParticleCollectionSOA(ParticleCollection):
         :return (first) ParticleAccessor attached to ID
         """
         super().get_single_by_ID(id)
-
-        # Use binary search if the collection is sorted, linear search otherwise
-        index = -1
-        if self._sorted:
-            index = bisect_left(self._data['id'], id)
-            if index == len(self._data['id']) or self._data['id'][index] != id:
-                raise ValueError("Trying to access a particle with a non-existing ID: %s." % id)
-        else:
-            index = np.where(self._data['id'] == id)[0][0]
-
+        index = self.get_index_by_id(id)
         return self.get_single_by_index(index)
 
     def get_same(self, same_class):
         """
-        TODO
         This function gets particles from this collection that are themselves stored in another object of an equi-
         structured ParticleCollection.
 
@@ -338,11 +358,12 @@ class ParticleCollectionSOA(ParticleCollection):
         :returns list of ParticleAccessors of the requested subset-collection
         """
         super().get_same(same_class)
-        raise NotImplementedError
+        ids = same_class.data['id']
+        indices = same_class.get_indices_by_ids(ids)
+        return self.get_multi_by_indices(indices)
 
     def get_collection(self, pcollection):
         """
-        TODO
         This function gets particles from this collection that are themselves stored in a ParticleCollection, which
         is differently structured than this one. That means the other-collection has to be re-formatted first in an
         intermediary format.
@@ -351,11 +372,35 @@ class ParticleCollectionSOA(ParticleCollection):
         :returns list of ParticleAccessor of the requested subset-collection
         """
         super().get_collection(pcollection)
-        raise NotImplementedError
+        if self._ncount <= 0:
+            return None
+        ngrids = len(getattr(self._data[0], 'xi'))
+        results = []
+        vname_self = [v.name for v in self._ptype.variables]
+        vname_pcol = [v.name for v in pcollection.ptype.variables]
+        vname_combi = [pname for pname in vname_pcol if (pname in vname_self) and (pname not in ['lon', 'lat', 'depth', 'time',
+                                                                                                 'id', 'xi', 'yi', 'zi', 'ti'])]
+        for item in pcollection:
+            loni = np.where(self._data['lon'] == item.lon)[0]
+            loni = loni[0] if loni.size != 0 else None
+            lati = np.where(self._data['lat'] == item.lon)[0]
+            lati = lati[0] if lati.size != 0 else None
+            depthi = np.where(self._data['depth'] == item.lon)[0]
+            depthi = depthi[0] if depthi.size != 0 else None
+            timei = np.where(self._data['time'] == item.lon)[0]
+            timei = timei[0] if timei.size != 0 else None
+            if (loni == lati) and (loni == depthi) and (loni == timei) and (None not in [loni, lati, depthi, timei]):
+                kwargs = {}
+                for vname in vname_combi:
+                    kwargs[vname] = getattr(item, vname)
+                pdata_item = self._pclass(lon=item.lon, lat=item.lat, pid=item.pid, ngrids=ngrids, depth=item.depth, time=item.time, **kwargs)
+                results.append(pdata_item)
+        if len(results) == 0:
+            results = None
+        return results
 
-    def get_multi_by_PyCollection_Particles(self, pycollectionp):
+    def get_multi_by_PyCollection_Particles(self, pycollection_p):
         """
-        TODO
         This function gets particles from this collection, which are themselves in common Python collections, such as
         lists, dicts and numpy structures. We can either directly get the referred Particle instances (for internally-
         ordered collections, e.g. ordered lists, sets, trees) or we may need to parse each instance for its index (for
@@ -367,8 +412,13 @@ class ParticleCollectionSOA(ParticleCollection):
         :arg pycollectionp: a Python-internal collection object (e.g. a tuple or list), filled with reference particles (SciPy- or JIT)
         :returns a vector-list of the requested particles
         """
-        super().get_multi_by_PyCollection_Particles(pycollectionp)
-        raise NotImplementedError
+        super().get_multi_by_PyCollection_Particles(pycollection_p)
+        ids = [p.id for p in pycollection_p]
+        indices = self.get_indices_by_ids(ids)
+        result = dict()
+        for d in self._data:
+            result[d] = self._data[d][indices]
+        return result
 
     def get_multi_by_indices(self, indices):
         """
@@ -402,19 +452,9 @@ class ParticleCollectionSOA(ParticleCollection):
         super().get_multi_by_IDs(ids)
         if type(ids) is dict:
             ids = list(ids.values())
-
         if len(ids) == 0:
             return None
-
-        # Use binary search if the collection is sorted, linear search otherwise
-        indices = np.empty(len(ids), dtype=np.int32)
-        if self._sorted:
-            # This is efficient if len(ids) << self.len
-            sorted_ids = np.sort(np.array(ids))
-            indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
-        else:
-            indices = np.where(np.in1d(self._data['id'], ids))[0]
-
+        indices = self.get_indices_by_ids(ids)
         return self.get_multi_by_indices(indices)
 
     def _recursive_ID_lookup(self, low, high, sublist):
@@ -695,16 +735,8 @@ class ParticleCollectionSOA(ParticleCollection):
         :returns new ParticleCollectionSOA with the split-off particles
         """
         super().split_by_index(indices)
-        assert len(self._data) > 0
-        result = ParticleCollectionSOA(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
-        idx = sorted(indices, reverse=True)
-        tmp = []
-        for index in idx:  # pop-based process needs to start from the back of the queue
-            pdata = self.pop_single_by_index(index=index)
-            tmp.append(pdata)
-        for pdata in reversed(tmp):  # add particles in correct order again
-            result.add_single(pdata)
-        return result
+        assert self._data['lon'].shape[0] > 0
+        return self.pop_multi_by_indices(indices)
 
     def split_by_id(self, ids):
         """
@@ -719,12 +751,8 @@ class ParticleCollectionSOA(ParticleCollection):
         :returns new ParticleCollectionSOA with the split-off particles
         """
         super().split_by_id(ids)
-        assert len(self._data) > 0
-        result = ParticleCollectionSOA(self._idgen, self._c_lib_register, self._pclass, lon=np.empty(shape=0), lat=np.empty(shape=0), depth=np.empty(shape=0), time=np.empty(shape=0), pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid)
-        for id in ids:
-            pdata = self.pop_single_by_ID(id)
-            result.add_single(pdata)
-        return result
+        assert self._data['lon'].shape[0] > 0
+        return self.pop_multi_by_IDs(ids)
 
     def __iadd__(self, same_class):
         """
@@ -760,18 +788,14 @@ class ParticleCollectionSOA(ParticleCollection):
         if index is None:
             self.add_single(obj)
         else:
-            # TODO: convert code beyond into SOA-version
-            # assert isinstance(obj, ScipyParticle)
-            # top_array = self._data[0:index-1]
-            # bottom_array = self._data[index:]
-            # splice_array = np.concatenate([top_array, obj])
-            # self._data = np.concatenate([splice_array, bottom_array])
-            # if self._ptype.uses_jit and isinstance(obj, JITParticle):
-            #     top_array = self._data_c[0:index-1]
-            #     bottom_array = self._data_c[index:]
-            #     splice_array = np.concatenate((top_array, [obj.get_cptr(), ]))
-            #     self._data_c = np.concatenate([splice_array, bottom_array])
-            # self._ncount = self._data.shape[0]
+            assert isinstance(obj, ScipyParticle)
+            for d in self._data:
+                assert hasattr(obj, d)
+                top_array = self._data[d][0:index-1]
+                bottom_array = self._data[d][index:]
+                splice_array = np.concatenate([top_array, getattr(obj, d)])
+                self._data[d] = np.concatenate([splice_array, bottom_array])
+            self._ncount = self._data['lon'].shape[0]
             raise NotImplementedError
 
     def push(self, particle_obj):
@@ -844,17 +868,7 @@ class ParticleCollectionSOA(ParticleCollection):
         :arg id: ID of the record to be set to the deleted state
         """
         super().delete_by_ID(id)
-
-        # Use binary search if the collection is sorted, linear search otherwise
-        index = -1
-        if self._sorted:
-            index = bisect_left(self._data['id'], id)
-            if index == len(self._data['id']) or \
-               self._data['id'][index] != id:
-                raise ValueError("Trying to delete a particle with a non-existing ID: %s." % id)
-        else:
-            index = np.where(self._data['id'] == id)[0][0]
-
+        index = self.get_index_by_id(id)
         self.delete_by_index(index)
 
     def remove_single_by_index(self, index):
@@ -869,10 +883,8 @@ class ParticleCollectionSOA(ParticleCollection):
         :arg index: index of the record to be removed from the collection
         """
         super().remove_single_by_index(index)
-
         for d in self._data:
             self._data[d] = np.delete(self._data[d], index, axis=0)
-
         self._ncount -= 1
 
     def remove_single_by_object(self, particle_obj):
@@ -903,22 +915,11 @@ class ParticleCollectionSOA(ParticleCollection):
         :arg id: Particle ID of the object to be removed from the collection
         """
         super().remove_single_by_ID(id)
-
-        # Use binary search if the collection is sorted, linear search otherwise
-        index = -1
-        if self._sorted:
-            index = bisect_left(self._data['id'], id)
-            if index == len(self._data['id']) or \
-               self._data['id'][index] != id:
-                raise ValueError("Trying to remove a particle with a non-existing ID: %s." % id)
-        else:
-            index = np.where(self._data['id'] == id)[0][0]
-
+        index = self.get_index_by_id(id)
         self.remove_single_by_index(index)
 
     def remove_same(self, same_class):
         """
-        TODO: reimplement code below
         This function removes particles from this collection that are themselves stored in another object of an equi-
         structured ParticleCollection. As the structures of both collections are the same, a more efficient M-in-N
         removal can be applied without an in-between reformatting.
@@ -926,25 +927,17 @@ class ParticleCollectionSOA(ParticleCollection):
         :arg same_class: a ParticleCollectionSOA object, containing Nodes that are to be removed from this collection
         """
         super().remove_same(same_class)
-        # indices = []
-        # indices = np.in1d(same_class.data, self._data)
-        # indices = None if len(indices) == 0 else np.nonzero(indices)[0]
-        # self._data = np.delete(self._data, indices)
-        # if self.ptype.uses_jit:
-        #     self._data_c = np.delete(self._data_c, indices)
-        #     for p, pdata in zip(self._data, self._data_c):
-        #         p._cptr = pdata
-        # self._ncount = self._data.shape[0]
-        super().remove_same(same_class)
-        raise NotImplementedError
+        ids = [p.id for p in same_class]
+        indices = self.get_indices_by_ids(ids)
+        if indices is None:
+            return
+        for d in self._data:
+            self._data[d] = np.delete(self._data[d], indices, axis=0)
+        self._ncount = self._data['lon'].shape[0]
 
-# ==================================================================================================================== #
-# TO BE CONTINUED WITH THE DOCSTRING-ADDING
-# ==================================================================================================================== #
 
     def remove_collection(self, pcollection):
         """
-        TODO
         This function removes particles from this collection that are themselves stored in a ParticleCollection, which
         is differently structured than this one. Tht means the removal first requires the removal-collection to be re-
         formatted in an intermediary format, before executing the removal.
@@ -955,21 +948,14 @@ class ParticleCollectionSOA(ParticleCollection):
         :arg pcollection: a BaseParticleCollection object, containing Particle objects that are to be removed from this collection
         """
         super().remove_collection(pcollection)
-        # ids = [p.id for p in pcollection]
-        # data_ids = [p.id for p in self._data]
-        # indices = np.in1d(ids, data_ids)
-        # indices = None if len(indices) == 0 else np.nonzero(indices)[0]
-        # self._data = np.delete(self._data, indices)
-        # if self.ptype.uses_jit:
-        #     self._data_c = np.delete(self._data_c, indices)
-        #     for p, pdata in zip(self._data, self._data_c):
-        #         p._cptr = pdata
-        # self._ncount = self._data.shape[0]
-        raise NotImplementedError
+        ids = [p.id for p in pcollection]
+        indices = self.get_indices_by_ids(ids)
+        for d in self._data:
+            self._data[d] = np.delete(self._data[d], indices, axis=0)
+        self._ncount = self._data['lon'].shape[0]
 
-    def remove_multi_by_PyCollection_Particles(self, pycollectionp):
+    def remove_multi_by_PyCollection_Particles(self, pycollection_p):
         """
-        TODO
         This function removes particles from this collection, which are themselves in common Python collections, such as
         lists, dicts and numpy structures. In order to perform the removal, we can either directly remove the referred
         Particle instances (for internally-ordered collections, e.g. ordered lists, sets, trees) or we may need to parse
@@ -981,19 +967,12 @@ class ParticleCollectionSOA(ParticleCollection):
         :arg pycollectionp: a Python-based collection (i.e. a tuple or list), containing Particle objects that are to
                             be removed from this collection.
         """
-        super().remove_multi_by_PyCollection_Particles(pycollectionp)
-        # npcollectionp = np.array(pycollectionp, dtype=self._pclass)
-        # npindices = np.in1d(npcollectionp, self._data)
-        # indices = None if len(npindices) == 0 else np.nonzero(npindices)[0]
-        # if indices is None:
-        #     return
-        # self._data = np.delete(self._data, indices)
-        # if self.ptype.uses_jit:
-        #     self._data_c = np.delete(self._data_c, indices)
-        #     for p, pdata in zip(self._data, self._data_c):
-        #         p._cptr = pdata
-        # self._ncount = self._data.shape[0]
-        raise NotImplementedError
+        super().remove_multi_by_PyCollection_Particles(pycollection_p)
+        ids = [p.id for p in pycollection_p]
+        indices = self.get_indices_by_ids(ids)
+        for d in self._data:
+            self._data[d] = np.delete(self._data[d], indices, axis=0)
+        self._ncount = self._data['lon'].shape[0]
 
     def remove_multi_by_indices(self, indices):
         """
@@ -1027,16 +1006,7 @@ class ParticleCollectionSOA(ParticleCollection):
 
         if len(ids) == 0:
             return
-
-        # Use binary search if the collection is sorted, linear search otherwise
-        indices = np.empty(len(ids), dtype=np.int32)
-        if self._sorted:
-            # This is efficient if len(ids) << self.len
-            sorted_ids = np.sort(np.array(ids))
-            indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
-        else:
-            indices = np.where(np.in1d(self._data['id'], ids))[0]
-
+        indices = self.get_indices_by_ids(ids)
         self.remove_multi_by_indices(indices)
 
     def __isub__(self, other):
@@ -1088,20 +1058,11 @@ class ParticleCollectionSOA(ParticleCollection):
         :returns identified record (if ID is related or an object contained in this collection) or None (if no record can be retrieved)
         """
         super().pop_single_by_ID(id)
-        # Use binary search if the collection is sorted, linear search otherwise
-        index = -1
-        if self._sorted:
-            index = bisect_left(self._data['id'], id)
-            if index == len(self._data['id']) or \
-               self._data['id'][index] != id:
-                raise ValueError("Trying to remove a particle with a non-existing ID: %s." % id)
-        else:
-            index = np.where(self._data['id'] == id)[0][0]
+        index = self.get_index_by_id(id)
         return self.pop_single_by_index(index=index)
 
     def pop_multi_by_indices(self, indices):
         """
-        TODO
         Searches for Particles with the indices registered in 'indices', removes the Particles from the Collection and returns the Particles (or: their ParticleAccessors).
         If indices is None -> Particle cannot be retrieved -> Assert-Error and return None
         If index is None, return last item (-1);
@@ -1113,11 +1074,29 @@ class ParticleCollectionSOA(ParticleCollection):
         :returns a list of retrieved records
         """
         super().pop_multi_by_indices(indices)
-        raise NotImplementedError
+        assert self._ncount > 0
+        for i in range(len(indices)):
+            indices[i] = indices[i] if indices[i] >= 0 else indices[self._ncount+indices[i]]
+        if indices in [None, -1] or self._ncount == 1:
+            return self.pop_single_by_index(self._ncount-1)
+        result_dict = {}
+        vnames = [v.name for v in self._ptype.variables]
+        for d in self._data:
+            if d in ['id', 'xi', 'yi', 'zi', 'ti']:
+                continue
+            if d in vnames:
+                result_dict[d] = self._data[d][indices]
+        lons = result_dict.pop('lon', None)
+        lats = result_dict.pop('lat', None)
+        depths = result_dict.pop('depth', None)
+        times = result_dict.pop('time', None)
+        result = ParticleCollectionSOA(self._pclass, lon=lons, lat=lats, depth=depths, time=times, pid_orig=None, lonlatdepth_dtype=self._lonlatdepth_dtype, ngrid=self._ngrid, kwargs = result_dict)
+        indices = sorted(indices)
+        self.remove_multi_by_indices(indices)
+        return result
 
     def pop_multi_by_IDs(self, ids):
         """
-        TODO
         Searches for Particles with the IDs registered in 'ids', removes the Particles from the Collection and returns the Particles (or: their ParticleAccessors).
         If Particles cannot be retrieved (e.g. because the IDs are not available), returns None.
 
@@ -1125,27 +1104,31 @@ class ParticleCollectionSOA(ParticleCollection):
         :returns identified records (if ID is related or an object contained in this collection) or None (if no record can be retrieved)
         """
         super().pop_multi_by_IDs(ids)
-        raise NotImplementedError
+        indices = self.get_indices_by_ids(ids)
+        return self.pop_multi_by_indices(indices)
 
     def _clear_deleted_(self):
         """
-        TODO
         This (protected) function physically removes particles from the collection whose status is set to 'DELETE'.
         It is the logical finalisation method of physically deleting particles that have been marked for deletion and
         that have not otherwise been recovered.
         This methods in heavily dependent on the actual collection type and should be implemented very specific
         to the actual data structure, to remove objects 'the fastest way possible'.
         """
-        raise NotImplementedError
+        super(ParticleCollectionSOA, self)._clear_deleted_()
+        bool_indices = self._data['state'] == OperationCode.Delete
+        indices = np.where(bool_indices)[0]
+        self.remove_multi_by_indices(indices)
 
     def merge(self, other=None):
         """
         This function merge two strictly equally-structured ParticleCollections into one. This can be, for example,
         quite handy to merge two particle subsets that - due to continuous removal - become too small to be effective.
 
-        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally merge individual particles that are tagged by status as
-        being 'merged' (see the particle status for information on that).
+        being 'merged' (see the particle status for information on that), if :arg same_class is None. This will be done by
+        physically merging particles with the tagged status code 'merge' in this collection, which is to be implemented
+        in the :method ParticleCollection.merge_by_status function (TODO).
 
         In order to distinguish both use cases, we can evaluate the 'same_class' parameter. In cases where this is
         'None', the merge operation semantically refers to an internal merge of individual particles - otherwise,
@@ -1158,15 +1141,23 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().merge(other)
 
+    def merge_by_status(self):
+        """
+        Physically merges particles with the tagged status code 'merge' in this collection (TODO).
+        Operates similar to :method ParticleCollection._clear_deleted_ method.
+        """
+        raise NotImplementedError
+
     def split(self, keys=None):
         """
         This function splits this collection into two disect equi-structured collections. The reason for it can, for
         example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
         mandates a split.
 
-        TODO - RETHINK IF TAHT IS STILL THE WAY TO GO:
-        On the other hand, this function can also internally split individual particles that are tagged byt status as
-        to be 'split' (see the particle status for information on that).
+        On the other hand, this function can also internally split individual particles that are tagged by status as
+        to be 'split' (see the particle status for information on that), if :arg subset is None. This will be done by
+        physically splitting particles with the tagged status code 'split' in this collection, which is to be implemented
+        in the :method ParticleCollection.split_by_status function (TODO).
 
         In order to distinguish both use cases, we can evaluate the 'indices' parameter. In cases where this is
         'None', the split operation semantically refers to an internal split of individual particles - otherwise,
@@ -1179,6 +1170,13 @@ class ParticleCollectionSOA(ParticleCollection):
         results from a collection split or this very collection, containing the newly-split particles.
         """
         return super().split(keys)
+
+    def split_by_status(self):
+        """
+        Physically splits particles with the tagged status code 'split' in this collection (TODO).
+        Operates similar to :method ParticleCollection._clear_deleted_ method.
+        """
+        raise NotImplementedError
 
     def __sizeof__(self):
         """

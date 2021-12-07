@@ -119,10 +119,6 @@ class BaseParticleSet(NDCluster):
 
     # ==== no implementation of setter, as fieldset needs to be initialized on construction ==== #
 
-    # @property
-    # def kernelclass(self):
-    #     return BaseKernel
-
     @property
     def kernel(self):
         return self._kernel

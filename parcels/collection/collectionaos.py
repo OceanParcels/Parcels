@@ -270,7 +270,7 @@ class ParticleCollectionAOS(ParticleCollection):
             return self._data_c[index]
         return None
 
-    def empty(self):
+    def isempty(self):
         """
         :returns if the collections is empty or not
         """
@@ -404,7 +404,7 @@ class ParticleCollectionAOS(ParticleCollection):
             results = None
         return results
 
-    def get_multi_by_PyCollection_Particles(self, pycollectionp):
+    def get_multi_by_PyCollection_Particles(self, pycollection_p):
         """
         This function gets particles from this collection, which are themselves in common Python collections, such as
         lists, dicts and numpy structures. We can either directly get the referred Particle instances (for internally-
@@ -417,8 +417,8 @@ class ParticleCollectionAOS(ParticleCollection):
         :arg pycollectionp: a Python-internal collection object (e.g. a tuple or list), filled with reference particles (SciPy- or JIT)
         :returns a vector-list of the requested particles
         """
-        super().get_multi_by_PyCollection_Particles(pycollectionp)
-        np_collection_p = np.array(pycollectionp, dtype=self._pclass)
+        super().get_multi_by_PyCollection_Particles(pycollection_p)
+        np_collection_p = np.array(pycollection_p, dtype=self._pclass)
         indices = np.in1d(np_collection_p, self._data).nonzero()[0]
         result = self._data[indices]
         if result.shape[0] <= 0:
@@ -949,7 +949,7 @@ class ParticleCollectionAOS(ParticleCollection):
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
 
-    def remove_multi_by_PyCollection_Particles(self, pycollectionp):
+    def remove_multi_by_PyCollection_Particles(self, pycollection_p):
         """
         This function removes particles from this collection, which are themselves in common Python collections, such as
         lists, dicts and numpy structures. In order to perform the removal, we can either directly remove the referred
@@ -962,8 +962,8 @@ class ParticleCollectionAOS(ParticleCollection):
         :arg pycollectionp: a Python-based collection (i.e. a tuple or list), containing Particle objects that are to
                             be removed from this collection.
         """
-        super().remove_multi_by_PyCollection_Particles(pycollectionp)
-        npcollectionp = np.array(pycollectionp, dtype=self._pclass)
+        super().remove_multi_by_PyCollection_Particles(pycollection_p)
+        npcollectionp = np.array(pycollection_p, dtype=self._pclass)
         npindices = np.in1d(npcollectionp, self._data)
         indices = None if len(npindices) == 0 else np.nonzero(npindices)[0]
         if indices is None:
@@ -1116,9 +1116,10 @@ class ParticleCollectionAOS(ParticleCollection):
         This function merge two strictly equally-structured ParticleCollections into one. This can be, for example,
         quite handy to merge two particle subsets that - due to continuous removal - become too small to be effective.
 
-        TODO - RETHINK IF THAT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally merge individual particles that are tagged by status as
-        being 'merged' (see the particle status for information on that).
+        being 'merged' (see the particle status for information on that), if :arg same_class is None. This will be done by
+        physically merging particles with the tagged status code 'merge' in this collection, which is to be implemented
+        in the :method ParticleCollection.merge_by_status function (TODO).
 
         In order to distinguish both use cases, we can evaluate the 'same_class' parameter. In cases where this is
         'None', the merge operation semantically refers to an internal merge of individual particles - otherwise,
@@ -1131,15 +1132,23 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         super().merge(other)
 
+    def merge_by_status(self):
+        """
+        Physically merges particles with the tagged status code 'merge' in this collection (TODO).
+        Operates similar to :method ParticleCollection._clear_deleted_ method.
+        """
+        raise NotImplementedError
+
     def split(self, keys=None):
         """
         This function splits this collection into two disect equi-structured collections. The reason for it can, for
         example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
         mandates a split.
 
-        TODO - RETHINK IF THAT IS STILL THE WAY TO GO:
-        On the other hand, this function can also internally split individual particles that are tagged byt status as
-        to be 'split' (see the particle status for information on that).
+        On the other hand, this function can also internally split individual particles that are tagged by status as
+        to be 'split' (see the particle status for information on that), if :arg subset is None. This will be done by
+        physically splitting particles with the tagged status code 'split' in this collection, which is to be implemented
+        in the :method ParticleCollection.split_by_status function (TODO).
 
         In order to distinguish both use cases, we can evaluate the 'indices' parameter. In cases where this is
         'None', the split operation semantically refers to an internal split of individual particles - otherwise,
@@ -1152,6 +1161,13 @@ class ParticleCollectionAOS(ParticleCollection):
         results from a collection split or this very collection, containing the newly-split particles.
         """
         return super().split(keys)
+
+    def split_by_status(self):
+        """
+        Physically splits particles with the tagged status code 'split' in this collection (TODO).
+        Operates similar to :method ParticleCollection._clear_deleted_ method.
+        """
+        raise NotImplementedError
 
     def __sizeof__(self):
         """

@@ -305,14 +305,6 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         return self._data_c
 
-    # @property
-    # def kernel_class(self):
-    #     return self._kclass
-
-    # @kernel_class.setter
-    # def kernel_class(self, value):
-    #     self._kclass = value
-
     def cptr(self, index):
         if self._ptype.uses_jit:
             node = self._data[index]
@@ -320,7 +312,7 @@ class ParticleCollectionNodes(ParticleCollection):
         else:
             return None
 
-    def empty(self):
+    def isempty(self):
         """
         :returns if the collections is empty or not
         """
@@ -331,7 +323,7 @@ class ParticleCollectionNodes(ParticleCollection):
         Returns the begin of the linked particle list (like C++ STL begin() function)
         :return: begin Node (Node whose prev element is None); returns None if ParticleSet is empty
         """
-        if not self.empty():
+        if not self.isempty():
             start_index = 0
             node = self._data[start_index]
             while not node.is_valid() and start_index < (len(self._data)-1):
@@ -353,7 +345,7 @@ class ParticleCollectionNodes(ParticleCollection):
         not the element past the last element (invalid element). (see http://www.cplusplus.com/reference/list/list/end/)
         :return: end Node (Node whose next element is None); returns None if ParticleSet is empty
         """
-        if not self.empty():
+        if not self.isempty():
             start_index = len(self._data) - 1
             node = self._data[start_index]
             while not node.is_valid() and start_index > (-1):
@@ -654,7 +646,7 @@ class ParticleCollectionNodes(ParticleCollection):
             results = None
         return results
 
-    def get_multi_by_PyCollection_Particles(self, pycollectionp):
+    def get_multi_by_PyCollection_Particles(self, pycollection_p):
         """
         This function gets particles from this collection, which are themselves in common Python collections, such as
         lists, dicts and numpy structures. We can either directly get the referred Particle instances (for internally-
@@ -667,11 +659,11 @@ class ParticleCollectionNodes(ParticleCollection):
         :arg a Python-internal collection object (e.g. a tuple or list), filled with reference particles (SciPy- or JIT)
         :returns a vector-list of Nodes that contain the requested particles
         """
-        super().get_multi_by_PyCollection_Particles(pycollectionp)
-        if (self._ncount <= 0) or (len(pycollectionp) <= 0):
+        super().get_multi_by_PyCollection_Particles(pycollection_p)
+        if (self._ncount <= 0) or (len(pycollection_p) <= 0):
             return None
         results = []
-        for item in pycollectionp:
+        for item in pycollection_p:
             node = self.get_node_by_ID(item.id)
             if node is not None:
                 results.append(node)
@@ -1187,7 +1179,7 @@ class ParticleCollectionNodes(ParticleCollection):
             mutual_ids = data_ids[indices]
             self.remove_multi_by_IDs(mutual_ids)
 
-    def remove_multi_by_PyCollection_Particles(self, pycollectionp):
+    def remove_multi_by_PyCollection_Particles(self, pycollection_p):
         """
         This function removes particles from this collection, which are themselves in common Python collections, such as
         lists, dicts and numpy structures. In order to perform the removal, we can either directly remove the referred
@@ -1200,8 +1192,8 @@ class ParticleCollectionNodes(ParticleCollection):
         :arg pycollectionp: a Python-based collection (i.e. a tuple or list), containing Particle objects that are to
                             be removed from this collection.
         """
-        super().remove_multi_by_PyCollection_Particles(pycollectionp)
-        ids = [p.id for p in pycollectionp]
+        super().remove_multi_by_PyCollection_Particles(pycollection_p)
+        ids = [p.id for p in pycollection_p]
         data_ids = [n.data.id for n in self._data]
         indices = np.in1d(data_ids, ids)
         indices = None if len(indices) == 0 else np.nonzero(indices)[0]
@@ -1380,9 +1372,10 @@ class ParticleCollectionNodes(ParticleCollection):
         This function merge two strictly equally-structured ParticleCollections into one. This can be, for example,
         quite handy to merge two particle subsets that - due to continuous removal - become too small to be effective.
 
-        TODO - RETHINK IF THAT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally merge individual particles that are tagged by status as
-        being 'merged' (see the particle status for information on that).
+        being 'merged' (see the particle status for information on that), if :arg same_class is None. This will be done by
+        physically merging particles with the tagged status code 'merge' in this collection, which is to be implemented
+        in the :method ParticleCollection.merge_by_status function (TODO).
 
         In order to distinguish both use cases, we can evaluate the 'same_class' parameter. In cases where this is
         'None', the merge operation semantically refers to an internal merge of individual particles - otherwise,
@@ -1396,15 +1389,23 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         super().merge(other)
 
+    def merge_by_status(self):
+        """
+        Physically merges particles with the tagged status code 'merge' in this collection (TODO).
+        Operates similar to :method ParticleCollection._clear_deleted_ method.
+        """
+        raise NotImplementedError
+
     def split(self, keys=None):
         """
         This function splits this collection into two disect equi-structured collections. The reason for it can, for
         example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
         mandates a split.
 
-        TODO - RETHINK IF THAT IS STILL THE WAY TO GO:
         On the other hand, this function can also internally split individual particles that are tagged by status as
-        to be 'split' (see the particle status for information on that).
+        to be 'split' (see the particle status for information on that), if :arg subset is None. This will be done by
+        physically splitting particles with the tagged status code 'split' in this collection, which is to be implemented
+        in the :method ParticleCollection.split_by_status function (TODO).
 
         In order to distinguish both use cases, we can evaluate the 'indices' parameter. In cases where this is
         'None', the split operation semantically refers to an internal split of individual particles - otherwise,
@@ -1421,8 +1422,13 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         return super().split(keys)
 
-    # ==== high-level functions to execute operations (Add, Delete, Merge, Split) requested by the ==== #
-    # ==== internal :variables Particle.state of each Node.                                        ==== #
+    def split_by_status(self):
+        """
+        Physically splits particles with the tagged status code 'split' in this collection (TODO).
+        Operates similar to :method ParticleCollection._clear_deleted_ method.
+        """
+        raise NotImplementedError
+
     def get_deleted_item_indices(self):
         """
         :returns indices of particles that are marked for deletion.
