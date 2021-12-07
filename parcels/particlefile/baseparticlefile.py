@@ -202,7 +202,7 @@ class BaseParticleFile(ABC):
 
     def close_netcdf_file(self):
         """
-        closes the NetCDF file and flushes the written cotent to disk
+        closes the NetCDF file and flushes the written content to disk
         """
         self.dataset.close()
 
@@ -334,7 +334,7 @@ class BaseParticleFile(ABC):
         """
         Buffer data to set of temporary numpy files, using np.save
         :arg data_dict: a dict of data, each entry associating 'var_name' -> 2D numpy.ndarray of values (# particles x timesteps)
-        :arg data_dict_once:  a dict of data, each entry associating 'var_name' -> 2D numpy.ndarray of values (# particles x timesteps), only written once
+        :arg data_dict_once:  a dict of data, each entry associating 'var_name' -> 2D numpy.ndarray of values, only written once
         """
 
         if not os.path.exists(self.tempwritedir):

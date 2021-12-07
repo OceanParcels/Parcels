@@ -314,21 +314,21 @@ class ScipyParticle(_Particle):
         return self.id < other.id
 
     def __le__(self, other):
-        """:returns of this particle object's ID is smaller-or-equal to :arg other 's ID"""
+        """:returns if this particle object's ID is smaller-or-equal to :arg other 's ID"""
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
         return self.id <= other.id
 
     def __gt__(self, other):
-        """:returns of this particle object's ID is larger than :arg other 's ID"""
+        """:returns if this particle object's ID is larger than :arg other 's ID"""
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
         return self.id > other.id
 
     def __ge__(self, other):
-        """:returns of this particle object's ID is larger-or-equal to :arg other 's ID"""
+        """:returns if this particle object's ID is larger-or-equal to :arg other 's ID"""
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
@@ -422,23 +422,23 @@ class JITParticle(ScipyParticle):
         self._cptr = None
 
     def __eq__(self, other):
-        """:returns of this particle object is equal to :arg other"""
+        """:returns if this particle object is equal to :arg other"""
         return super(JITParticle, self).__eq__(other)
 
     def __ne__(self, other):
-        """:returns of this particle object is not equal to :arg other"""
+        """:returns if this particle object is not equal to :arg other"""
         return not (self == other)
 
     def __lt__(self, other):
-        """:returns of this particle object's ID is smaller than :arg other 's ID"""
+        """:returns if this particle object's ID is smaller than :arg other 's ID"""
         return super(JITParticle, self).__lt__(other)
 
     def __le__(self, other):
-        """:returns of this particle object's ID is smaller-or-equal to :arg other 's ID"""
+        """:returns if this particle object's ID is smaller-or-equal to :arg other 's ID"""
         return super(JITParticle, self).__le__(other)
 
     def __gt__(self, other):
-        """:returns of this particle object's ID is larger than :arg other 's ID"""
+        """:returns if this particle object's ID is larger than :arg other 's ID"""
         return super(JITParticle, self).__gt__(other)
 
     def __ge__(self, other):
