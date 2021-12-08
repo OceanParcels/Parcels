@@ -33,3 +33,5 @@ dependencies:
   - scikit-learn
   - pykdtree
   - sortedcontainers>=2.1.0
+  - xarray>=0.10.8
+  - dask>=2.0
