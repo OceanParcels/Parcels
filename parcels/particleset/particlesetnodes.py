@@ -373,7 +373,7 @@ class ParticleSetNodes(BaseParticleSet):
         ndata = self._collection.begin()
         while ndata is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not ndata.is_valid():
+            if not ndata.isvalid():
                 ndata = ndata.next
                 continue
             pdata = ndata.data
@@ -433,7 +433,7 @@ class ParticleSetNodes(BaseParticleSet):
         i = 0
         while ndata is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not ndata.is_valid():
+            if not ndata.isvalid():
                 ndata = ndata.next
                 continue
             pdata = ndata.data
@@ -467,7 +467,7 @@ class ParticleSetNodes(BaseParticleSet):
         i = 0
         while ndata is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not ndata.is_valid():
+            if not ndata.isvalid():
                 ndata = ndata.next
                 continue
             pdata = ndata.data
@@ -559,7 +559,7 @@ class ParticleSetNodes(BaseParticleSet):
         """
         err_particles = [
             ndata.data for ndata in self._collection
-            if ndata.is_valid() and ndata.data.state not in [StateCode.Success, StateCode.Evaluate]]
+            if ndata.isvalid() and ndata.data.state not in [StateCode.Success, StateCode.Evaluate]]
         return err_particles
 
     @property
@@ -568,7 +568,7 @@ class ParticleSetNodes(BaseParticleSet):
 
         :return: The number of error particles.
         """
-        return int(np.sum([True for ndata in self._collection if ndata.is_valid() and ndata.data.state not in [StateCode.Success, StateCode.Evaluate]]))
+        return int(np.sum([True for ndata in self._collection if ndata.isvalid() and ndata.data.state not in [StateCode.Success, StateCode.Evaluate]]))
 
     def __iter__(self):
         """
@@ -1175,7 +1175,7 @@ class ParticleSetNodes(BaseParticleSet):
         ndata = self._collection.begin()
         while ndata is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not ndata.is_valid():
+            if not ndata.isvalid():
                 ndata = ndata.next
                 continue
             pdata = ndata.data

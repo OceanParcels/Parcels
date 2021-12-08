@@ -53,7 +53,7 @@ class LibraryRegisterC:
         """
         for item in self._data.items():
             entry = item[1]
-            if entry.is_registered() and entry.is_loaded():
+            if entry.isregistered() and entry.isloaded():
                 entry.close()
             entry.unload_library()
             entry.cleanup_files()
@@ -68,7 +68,7 @@ class LibraryRegisterC:
         :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
         :arg interface_c_instance: the C-library interface itself
         """
-        if not self.is_created(libname):
+        if not self.iscreated(libname):
             self._data[libname] = interface_c_instance
 
     def load(self, libname):  # , src_dir=get_package_dir()
@@ -76,13 +76,13 @@ class LibraryRegisterC:
         Loads a distinct C-library via its C-library interface.
         :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
         """
-        if libname is None or (libname in self._data.keys() and self._data[libname].is_loaded()):
+        if libname is None or (libname in self._data.keys() and self._data[libname].isloaded()):
             return
         if libname not in self._data.keys():
             return
-        if not self._data[libname].is_compiled():
+        if not self._data[libname].iscompiled():
             self._data[libname].compile_library()
-        if not self._data[libname].is_loaded():
+        if not self._data[libname].isloaded():
             self._data[libname].load_library()
 
     def unload(self, libname):
@@ -102,33 +102,33 @@ class LibraryRegisterC:
         if libname in self._data.keys():
             del self._data[libname]
 
-    def is_created(self, libname):
+    def iscreated(self, libname):
         """
         :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
         :returns if the given library is created (i.e. attached to the registry) or not
         """
         return libname in self._data.keys()
 
-    def is_registered(self, libname):
+    def isregistered(self, libname):
         """
         :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
         :returns if the given library is registered (by any external object) or not
         """
-        return self._data[libname].is_registered()
+        return self._data[libname].isregistered()
 
-    def is_loaded(self, libname):
+    def isloaded(self, libname):
         """
         :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
         :returns if the given library is loaded or not
         """
-        return self._data[libname].is_loaded()
+        return self._data[libname].isloaded()
 
-    def is_compiled(self, libname):
+    def iscompiled(self, libname):
         """
         :arg libname: name of the C-library itself; for a library called 'libexample.so' or 'example.dll', :arg name equals 'example'
         :returns if the given library is compiled or not
         """
-        return self._data[libname].is_compiled()
+        return self._data[libname].iscompiled()
 
     def __getitem__(self, item):
         """
@@ -234,19 +234,19 @@ class InterfaceC(object):
         self.unload_library()
         self.cleanup_files()
 
-    def is_compiled(self):
+    def iscompiled(self):
         """
         :returns if this C-library is compiled or not
         """
         return self.compiled
 
-    def is_loaded(self):
+    def isloaded(self):
         """
         :returns if this C-library is loaded or not
         """
         return self.loaded
 
-    def is_registered(self):
+    def isregistered(self):
         """
         :returns if any external object has been registered with this library or not
         """

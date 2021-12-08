@@ -326,16 +326,16 @@ class ParticleCollectionNodes(ParticleCollection):
         if not self.isempty():
             start_index = 0
             node = self._data[start_index]
-            while not node.is_valid() and start_index < (len(self._data)-1):
+            while not node.isvalid() and start_index < (len(self._data)-1):
                 start_index += 1
                 node = self._data[start_index]
             while node.prev is not None:
                 # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
                 prev_node = node.prev
-                while prev_node is not None and not prev_node.is_valid():
+                while prev_node is not None and not prev_node.isvalid():
                     prev_node = prev_node.prev
                 node = prev_node
-            node = None if not node.is_valid() else node
+            node = None if not node.isvalid() else node
             return node
         return None
 
@@ -348,16 +348,16 @@ class ParticleCollectionNodes(ParticleCollection):
         if not self.isempty():
             start_index = len(self._data) - 1
             node = self._data[start_index]
-            while not node.is_valid() and start_index > (-1):
+            while not node.isvalid() and start_index > (-1):
                 start_index -= 1
                 node = self._data[start_index]
             while node.next is not None:
                 # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
                 next_node = node.next
-                while next_node is not None and not next_node.is_valid():
+                while next_node is not None and not next_node.isvalid():
                     next_node = node.next
                 node = next_node
-            node = None if not node.is_valid() else node
+            node = None if not node.isvalid() else node
             return node
         return None
 
@@ -370,7 +370,7 @@ class ParticleCollectionNodes(ParticleCollection):
         result = False
         ndata = self.begin()
         while ndata is not None:
-            if not ndata.is_valid():
+            if not ndata.isvalid():
                 continue
             pdata = ndata.data
             result |= (pdata.id == id)
@@ -382,7 +382,7 @@ class ParticleCollectionNodes(ParticleCollection):
         node = self.begin()
         while node.next is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             result += str(node) + "\n"
@@ -1079,7 +1079,7 @@ class ParticleCollectionNodes(ParticleCollection):
         result = None
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             result = node.data
@@ -1122,7 +1122,7 @@ class ParticleCollectionNodes(ParticleCollection):
         result = None
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             result = node.data
@@ -1241,7 +1241,7 @@ class ParticleCollectionNodes(ParticleCollection):
         node = self.begin()
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             next_node = node.next
@@ -1357,7 +1357,7 @@ class ParticleCollectionNodes(ParticleCollection):
         node = self.begin()
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             next_node = node.next
@@ -1445,7 +1445,7 @@ class ParticleCollectionNodes(ParticleCollection):
         # ids = []
         # ndata = self.begin()
         # while ndata is not None:
-        #     if not ndata.is_valid():
+        #     if not ndata.isvalid():
         #         ndata = ndata.next
         #         continue
         #     if ndata.data.state == OperationCode.Delete:
@@ -1469,7 +1469,7 @@ class ParticleCollectionNodes(ParticleCollection):
         node = self.begin()
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             size_bytes += sys.getsizeof(node.data)
@@ -1553,7 +1553,7 @@ class ParticleCollectionNodes(ParticleCollection):
                 else:
                     node = self.begin()
                     while node is not None:
-                        if not node.is_valid():
+                        if not node.isvalid():
                             node = node.next
                             continue
                         if ((time - np.abs(node.data.dt / 2)) <= node.data.time < (time + np.abs(node.data.dt)) or np.equal(time, node.data.time)) and np.isfinite(node.data.id):
@@ -1591,7 +1591,7 @@ class ParticleCollectionNodes(ParticleCollection):
                     node = self.begin()
                     while node is not None:
                         # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-                        if not node.is_valid():
+                        if not node.isvalid():
                             node = node.next
                             continue
                         node_index = self._idgen.map_id_to_index(node.data.id)
@@ -1631,7 +1631,7 @@ class ParticleCollectionNodes(ParticleCollection):
         node = self.begin()
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             results.append(node.data)
@@ -1772,7 +1772,7 @@ class ParticleCollectionIteratorNodes(BaseParticleCollectionIterator):
             result = ParticleAccessorNodes(self._pcoll, self.p)
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
             self.p = self.p.prev if self._reverse else self.p.next
-            while self.p is not None and not self.p.is_valid():
+            while self.p is not None and not self.p.isvalid():
                 self.p = self.p.prev if self._reverse else self.p.next
             return result
         raise StopIteration

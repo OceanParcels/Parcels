@@ -222,7 +222,7 @@ class KernelNodes(BaseKernel):
         node = pset.begin()
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             p = node.data
@@ -261,7 +261,7 @@ class KernelNodes(BaseKernel):
         """
         node = pset.begin()
         while node is not None:
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             node.data.reset_state()
@@ -303,7 +303,7 @@ class KernelNodes(BaseKernel):
             while node is not None:
                 if node is None:
                     break
-                if not node.is_valid():
+                if not node.isvalid():
                     node = node.next
                     continue
                 p = node.data
