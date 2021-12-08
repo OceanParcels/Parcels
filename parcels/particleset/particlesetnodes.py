@@ -16,7 +16,7 @@ from parcels.compilation import GNUCompiler_MS
 from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools import GenerateID_Service, SequentialIdGenerator
 from parcels.compilation import LibraryRegisterC
-from parcels.kernel.kernelnodes import KernelNodes
+from parcels.kernel.kernelnodes import KernelNodes, BenchmarkKernelNodes
 from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa: F401
 from parcels.particlefile.particlefilenodes import ParticleFileNodes
 from parcels.tools.statuscodes import StateCode, OperationCode    # noqa: F401
@@ -82,8 +82,9 @@ class ParticleSetNodes(BaseBenchmarkParticleSet):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None,
                  repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, idgen=None, c_lib_register=LibraryRegisterC(), **kwargs):
+        use_benchmark = kwargs.pop('use_benchmark', False)
         super(ParticleSetNodes, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt,
-                                               lonlatdepth_dtype, pid_orig, **kwargs)
+                                               lonlatdepth_dtype, pid_orig, use_benchmark=use_benchmark, **kwargs)
         self._idgen = idgen
         if self._idgen is None:
             logger.warning("A node-based particle set requires a global-context ID generator. Creating a default ID generator internally.")
@@ -1316,6 +1317,7 @@ class BenchmarkParticleSetNodes(ParticleSetNodes):
                  repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, idgen=None, c_lib_register=LibraryRegisterC(), **kwargs):
         super(BenchmarkParticleSetNodes, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt,
                                                         lonlatdepth_dtype, pid_orig, idgen, c_lib_register, use_benchmark=True, **kwargs)
+        self._kclass = BenchmarkKernelNodes
 
     def __del__(self):
         super(BenchmarkParticleSetNodes, self).__del__()

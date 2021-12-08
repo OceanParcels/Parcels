@@ -462,3 +462,105 @@ class BenchmarkKernelNodes(KernelNodes):
         self._io_timings.advance_iteration()
         self._mem_io_timings.advance_iteration()
         self._compute_timings.advance_iteration()
+
+    def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
+        """
+        Execute this Kernel over a ParticleSet for several timesteps
+        :arg pset: host ParticleSet
+        :arg endtime: endtime of this overall kernel evaluation step
+        :arg dt: computational integration timestep
+        :arg recovery: dict of recovery code -> recovery function
+        :arg output_file: instance of ParticleFile object of the host ParticleSet where deleted objects are to be written to on deletion
+        :arg execute_once: boolean, telling if to execute once (True) or computing the kernel iteratively
+        """
+        self._mem_io_timings.start_timing()
+        node = pset.begin()
+        while node is not None:
+            if not node.is_valid():
+                node = node.next
+                continue
+            node.data.reset_state()
+            node = node.next
+        self._mem_io_timings.stop_timing()
+        self._mem_io_timings.accumulate_timing()
+
+        if abs(dt) < 1e-6 and not execute_once:
+            logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
+
+        if recovery is None:
+            recovery = {}
+        elif ErrorCode.ErrorOutOfBounds in recovery and ErrorCode.ErrorThroughSurface not in recovery:
+            recovery[ErrorCode.ErrorThroughSurface] = recovery[ErrorCode.ErrorOutOfBounds]
+        recovery_map = recovery_base_map.copy()
+        recovery_map.update(recovery)
+
+        self._mem_io_timings.start_timing()
+        if pset.fieldset is not None:
+            for g in pset.fieldset.gridset.grids:
+                if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
+                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
+                                            g.chunk_deprecated, g.load_chunk)
+        self._mem_io_timings.stop_timing()
+        self._mem_io_timings.advance_iteration()
+
+        # Execute the kernel over the particle set
+        if self.ptype.uses_jit:
+            self.execute_jit(pset, endtime, dt)
+        else:
+            self.execute_python(pset, endtime, dt)
+
+        # Remove all particles that signalled deletion
+        self.remove_deleted(pset, output_file=output_file, endtime=endtime)
+
+        # Identify particles that threw errors
+        n_error = pset.num_error_particles
+        recover_iteration = 0
+
+        while n_error > 0:
+            recover_iteration += 1
+            # Apply recovery kernel
+            node = pset.begin()
+            while node is not None:
+                if node is None:
+                    break
+                if not node.is_valid():
+                    node = node.next
+                    continue
+                p = node.data
+                if p.state in [StateCode.Success, StateCode.Evaluate]:
+                    node = node.next  # this was the infinite-loop error - if there are erroneous particles but the last particle is valid, this goes in infinite loop
+                    continue
+                if p.state == OperationCode.StopExecution:
+                    return
+                if p.state == OperationCode.Repeat:
+                    p.reset_state()
+                elif p.state == OperationCode.Delete:
+                    pass
+                elif p.state in recovery_map:
+                    recovery_kernel = recovery_map[p.state]
+                    p.set_state(StateCode.Success)
+                    self._compute_timings.start_timing()
+                    recovery_kernel(p, self.fieldset, p.time)
+                    self._compute_timings.stop_timing()
+                    self._compute_timings.accumulate_timing()
+                    if p.isComputed():
+                        p.reset_state()
+                else:
+                    logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
+                    p.delete()
+                node.set_data(p)
+                node = node.next
+
+            # Remove all particles that signalled deletion
+            self.remove_deleted(pset, output_file=output_file, endtime=endtime)
+
+            # Execute core loop again to continue interrupted particles
+            if self.ptype.uses_jit:
+                self.execute_jit(pset, endtime, dt)
+            else:
+                self.execute_python(pset, endtime, dt)
+
+            n_error = pset.num_error_particles
+            # logger.warn("Compute time: {} s".format(np.array(self._compute_timings.get_values()).sum()))
+            # logger.warn("(Ext.) I/O time: {} s".format(np.array(self._io_timings.get_values()).sum()))
+            # logger.warn("(Mem.) I/O time: {} s".format(np.array(self._mem_io_timings.get_values()).sum()))

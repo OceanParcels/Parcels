@@ -9,7 +9,7 @@ from copy import copy
 
 from parcels.grid import GridCode
 from parcels.grid import CurvilinearGrid
-from parcels.kernel import KernelSOA, BaseKernel
+from parcels.kernel import KernelSOA, BenchmarkKernelSOA, BaseKernel
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa
 from parcels.particlefile import ParticleFileSOA
@@ -96,8 +96,11 @@ class ParticleSetSOA(BaseBenchmarkParticleSet):
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
                  pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
+        use_benchmark = kwargs.pop('use_benchmark', False)
+        idgen = kwargs.pop('idgen', None)
+        c_lib_register = kwargs.pop('c_lib_register', None)
         super(ParticleSetSOA, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt,
-                                             lonlatdepth_dtype, pid_orig, **kwargs)
+                                             lonlatdepth_dtype, pid_orig, use_benchmark=use_benchmark, **kwargs)
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -848,6 +851,7 @@ class BenchmarkParticleSetSOA(ParticleSetSOA):
                  pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
         super(BenchmarkParticleSetSOA, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt, lonlatdepth_dtype,
                                                       pid_orig, interaction_distance, periodic_domain_zonal, use_benchmark=True, **kwargs)
+        self._kclass = BenchmarkKernelSOA
 
     def __del__(self):
         super(BenchmarkParticleSetSOA, self).__del__()

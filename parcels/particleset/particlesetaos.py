@@ -8,7 +8,7 @@ from ctypes import c_void_p
 from copy import copy
 
 from parcels.grid import GridCode
-from parcels.kernel.kernelaos import KernelAOS
+from parcels.kernel.kernelaos import KernelAOS, BenchmarkKernelAOS
 from parcels.particle import Variable, ScipyParticle, JITParticle # NOQA
 from parcels.particlefile.particlefileaos import ParticleFileAOS
 from parcels.tools.statuscodes import StateCode  # NOQA
@@ -71,8 +71,11 @@ class ParticleSetAOS(BaseBenchmarkParticleSet):
     """
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+        use_benchmark = kwargs.pop('use_benchmark', False)
+        idgen = kwargs.pop('idgen', None)
+        c_lib_register = kwargs.pop('c_lib_register', None)
         super(ParticleSetAOS, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt,
-                                             lonlatdepth_dtype, pid_orig, **kwargs)
+                                             lonlatdepth_dtype, pid_orig, use_benchmark=use_benchmark, **kwargs)
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -741,6 +744,7 @@ class BenchmarkParticleSetAOS(ParticleSetAOS):
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(BenchmarkParticleSetAOS, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt,
                                                       lonlatdepth_dtype, pid_orig, use_benchmark=True, **kwargs)
+        self._kclass = BenchmarkKernelAOS
 
     def __del__(self):
         super(BenchmarkParticleSetAOS, self).__del__()

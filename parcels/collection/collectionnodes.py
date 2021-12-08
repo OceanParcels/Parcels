@@ -1368,9 +1368,12 @@ class ParticleCollectionNodes(ParticleCollection):
                 node = node.next
                 continue
             next_node = node.next
-            if node.data.state == OperationCode.Delete:
-                node.unlink()
-                self._data.remove(node)
+            try:
+                if node.data.state == OperationCode.Delete:
+                    node.unlink()
+                    self._data.remove(node)
+            except (ValueError, IndexError) as e:
+                pass
             node = next_node
         self._ncount = len(self._data)
 

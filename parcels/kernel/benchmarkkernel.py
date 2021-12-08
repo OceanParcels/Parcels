@@ -58,7 +58,7 @@ class BaseBenchmarkKernel(BaseKernel):
         super(BaseBenchmarkKernel, self).remove_deleted(pset=pset, output_file=output_file, endtime=endtime)
         self._mem_io_timings.stop_timing()
         self._mem_io_timings.accumulate_timing()
-        self._mem_io_timings.advance_iteration()
+        # self._mem_io_timings.advance_iteration()
 
     def load_fieldset_jit(self, pset):
         """

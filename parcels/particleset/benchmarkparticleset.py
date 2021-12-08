@@ -164,22 +164,16 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
             if not isinstance(self.kernel, BaseBenchmarkKernel):
                 self.compute_log.start_timing()
             time = self._execute_kernel_(next_time, dt, recovery, output_file=output_file, execute_once=execute_once)
+            if not isinstance(self.kernel, BaseBenchmarkKernel):
+                self.compute_log.stop_timing()
+                # self.compute_log.accumulate_timing()
             if abs(time-next_prelease) < tol:
                 # creating new particles equals a memory-io operation
-                if not isinstance(self.kernel, BaseBenchmarkKernel):
-                    self.compute_log.stop_timing()
-                    self.compute_log.accumulate_timing()
-
                 self.mem_io_log.start_timing()
                 self._add_periodic_release_particles_(time, dt)
                 self.mem_io_log.stop_timing()
                 self.mem_io_log.accumulate_timing()
                 next_prelease += self.repeatdt * np.sign(dt)
-            else:
-                if not isinstance(self.kernel, BaseBenchmarkKernel):
-                    self.compute_log.stop_timing()
-                else:
-                    pass
             if isinstance(self.kernel, BaseBenchmarkKernel):
                 self.compute_log.add_aux_measure(self.kernel.compute_timings.sum())
                 self.kernel.compute_timings.reset()
@@ -273,7 +267,7 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
             io_times = np.array(io_times)
         if mem_io_times is not None:
             mem_io_times = np.array(mem_io_times)
-            io_times += mem_io_times
+            # io_times += mem_io_times
         if plot_times is None or type(plot_times) not in [list, dict, np.ndarray]:
             plot_times = self.plot_log.get_values()
         if not isinstance(plot_times, np.ndarray):
@@ -297,6 +291,7 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
         plot_t = (total_times * t_scaler).tolist()
         plot_ct = (compute_times * t_scaler).tolist()
         plot_iot = (io_times * t_scaler).tolist()
+        plot_miot = (mem_io_times * t_scaler).tolist()
         plot_drawt = (plot_times * t_scaler).tolist()
         plot_npart = (nparticles * npart_scaler).tolist()
         plot_mem = []
@@ -308,6 +303,7 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
             plot_mem_async = (memory_used_async * mem_scaler).tolist()
 
         do_iot_plot = True
+        do_miot_plot = True
         do_drawt_plot = False
         do_mem_plot = True
         do_mem_plot_async = True
@@ -316,6 +312,9 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
         if len(plot_t) != len(plot_iot):
             print("plot_t and plot_iot have different lengths ({} vs {})".format(len(plot_t), len(plot_iot)))
             do_iot_plot = False
+        if len(plot_t) != len(plot_miot):
+            print("plot_t and plot_miot have different lengths ({} vs {})".format(len(plot_t), len(plot_miot)))
+            do_miot_plot = False
         if len(plot_t) != len(plot_drawt):
             print("plot_t and plot_drawt have different lengths ({} vs {})".format(len(plot_t), len(plot_iot)))
             do_drawt_plot = False
@@ -331,7 +330,9 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
         ax.plot(x, plot_t, 's-', label="total time_spent [100ms]")
         ax.plot(x, plot_ct, 'o-', label="compute-time spent [100ms]")
         if do_iot_plot:
-            ax.plot(x, plot_iot, 'o-', label="io-time spent [100ms]")
+            ax.plot(x, plot_iot, 'o-', label="(ext.) io-time spent [100ms]")
+        if do_miot_plot:
+            ax.plot(x, plot_miot, 'D-', label="(mem.) io-time spent [100ms]")
         if do_drawt_plot:
             ax.plot(x, plot_drawt, 'o-', label="draw-time spent [100ms]")
         if (memory_used is not None) and do_mem_plot:
@@ -351,7 +352,8 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
 
         sys.stdout.write("cumulative total runtime: {}\n".format(total_times.sum()))
         sys.stdout.write("cumulative compute time: {}\n".format(compute_times.sum()))
-        sys.stdout.write("cumulative I/O time: {}\n".format(io_times.sum()))
+        sys.stdout.write("cumulative (ext.) I/O time: {}\n".format(io_times.sum()))
+        sys.stdout.write("cumulative (mem.) I/O time: {}\n".format(mem_io_times.sum()))
         sys.stdout.write("cumulative plot time: {}\n".format(plot_times.sum()))
 
         csv_file = os.path.splitext(imageFilePath)[0]+".csv"
@@ -365,10 +367,10 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
             if MPI:
                 mpi_comm = MPI.COMM_WORLD
                 ncores = mpi_comm.Get_size()
-            header_string = "target_N, start_N, final_N, avg_N, ncores, avg_kt_total[s], avg_kt_compute[s], avg_kt_io[s], avg_kt_plot[s], cum_t_total[s], cum_t_compute[s], com_t_io[s], cum_t_plot[s], max_mem[MB]\n"
+            header_string = "target_N, start_N, final_N, avg_N, ncores, avg_kt_total[s], avg_kt_compute[s], avg_kt_mem-io[s], avg_kt_io[s], avg_kt_plot[s], cum_t_total[s], cum_t_compute[s], cum_t_mem-io[s], com_t_io[s], cum_t_plot[s], max_mem[MB]\n"
             f.write(header_string)
             data_string = "{}, {}, {}, {}, {}, ".format(target_N, nparticles_t0, nparticles_tN, nparticles.mean(), ncores)
-            data_string += "{:2.10f}, {:2.10f}, {:2.10f}, {:2.10f}, ".format(total_times.mean(), compute_times.mean(), io_times.mean(), plot_times.mean())
+            data_string += "{:2.10f}, {:2.10f}, {:2.10f}, {:2.10f}, ".format(total_times.mean(), compute_times.mean(), mem_io_times.mean(), io_times.mean(), plot_times.mean())
             max_mem_sync = 0
             if memory_used is not None and len(memory_used) > 1:
                 memory_used = np.floor(memory_used / (1024*1024))
@@ -381,5 +383,5 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
                     memory_used_async = memory_used_async.astype(dtype=np.int64)
                     max_mem_async = memory_used_async.max()
             max_mem = max(max_mem_sync, max_mem_async)
-            data_string += "{:10.4f}, {:10.4f}, {:10.4f}, {:10.4f}, {}".format(total_times.sum(), compute_times.sum(), io_times.sum(), plot_times.sum(), max_mem)
+            data_string += "{:10.4f}, {:10.4f}, {:10.4f}, {:10.4f}, {}".format(total_times.sum(), compute_times.sum(), mem_io_times.sum(), io_times.sum(), plot_times.sum(), max_mem)
             f.write(data_string)
