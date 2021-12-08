@@ -449,7 +449,7 @@ class BenchmarkKernelNodes(KernelNodes):
         node = pset.begin()
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             p = node.data
@@ -476,7 +476,7 @@ class BenchmarkKernelNodes(KernelNodes):
         self._mem_io_timings.start_timing()
         node = pset.begin()
         while node is not None:
-            if not node.is_valid():
+            if not node.isvalid():
                 node = node.next
                 continue
             node.data.reset_state()
@@ -523,7 +523,7 @@ class BenchmarkKernelNodes(KernelNodes):
             while node is not None:
                 if node is None:
                     break
-                if not node.is_valid():
+                if not node.isvalid():
                     node = node.next
                     continue
                 p = node.data
