@@ -31,7 +31,6 @@ class BaseParticleSet(NDCluster):
     _collection = None
     _fieldset = None
     _kernel = None
-    # kernel = None
     _kclass = None
     interaction_kernel = None
     time_origin = None
@@ -53,21 +52,16 @@ class BaseParticleSet(NDCluster):
         self.repeatpclass = None
         self.repeatkwargs = None
         self._kernel = None
-        # self.kernel = None  # should be removed, because - for write protection - 'self.kernel' shall be a non-writeable property of variable self._kernel
         self.interaction_kernel = None
         self._fieldset = None
-        # self.fieldset = None  # should be removed, because - for write protection - 'self.fieldset' shall be a non-writeable property of variable self._fieldset
         self.time_origin = None
 
     def __del__(self):
         if self._collection is not None and isinstance(self._collection, ParticleCollection):
-            # logger.info("BaseParticleSet.del() - deleting collection of type '{}'.".format(type(self._collection)))
             del self._collection
         else:
-            # logger.info("BaseParticleSet.del() - no collection available.")
             pass
         self._collection = None
-        # super(BaseParticleSet, self).__del__()
 
     def clear(self):
         try:
@@ -507,7 +501,6 @@ class BaseParticleSet(NDCluster):
                 self._kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
             if self.collection.ptype.uses_jit:
-                # logger.info("Compiling particle class {} with kernel function {} into KernelName {}".format(self.collection.pclass, self.kernel.funcname, self.kernel.name))
                 self.kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
@@ -598,9 +591,7 @@ class BaseParticleSet(NDCluster):
         next_output = time + outputdt if dt > 0 else time - outputdt
         next_movie = time + moviedt if dt > 0 else time - moviedt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
-        # logger.info("compute time-chunk input for time = {} and dt = {} ...".format(time, dt))
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
-        # logger.info("Time-chunk input for time = {} and dt = {} computed.".format(time, dt))
 
         tol = 1e-12
 
@@ -625,7 +616,6 @@ class BaseParticleSet(NDCluster):
                 next_time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
-            # logger.info("Executing next timestep is time = {} ...".format(next_time))
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
@@ -651,7 +641,6 @@ class BaseParticleSet(NDCluster):
                         break
             # End of interaction specific code
             time = next_time
-            # logger.info("Kernel executed - time: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
             if abs(time-next_prelease) < tol:
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
@@ -668,9 +657,9 @@ class BaseParticleSet(NDCluster):
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
                             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
-                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)  # what does this do ? the variable is boolean, then it's increased - what-the-frog ...
+                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)
                         fld.write(fldfilename)
-                        fld.to_write += 1
+                        fld.to_write += 1  # what does this do ? the variable is boolean, then it's increased - highly confusing ...
             if abs(time - next_output) < tol:
                 if output_file:
                     output_file.write(self, time)
