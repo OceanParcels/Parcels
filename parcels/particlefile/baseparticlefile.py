@@ -163,21 +163,11 @@ class BaseParticleFile(ABC):
         if self.var_names_once is not None:
             for vname in self.var_names_once:
                 sz += sys.getsizeof(getattr(self, vname)) if getattr(self, vname) is not None else 0
-        sz += sys.getsizeof(self.outputdt) if self.outputdt is not None else 0
-        sz += sys.getsizeof(self.lasttime_written) if self.lasttime_written is not None else 0
-        sz += sys.getsizeof(self.dataset) if self.dataset is not None else 0
-        sz += sys.getsizeof(self.metadata) if self.metadata is not None else 0
-        sz += sys.getsizeof(self.name) if self.name is not None else 0
-        sz += sys.getsizeof(self.parcels_mesh) if self.parcels_mesh is not None else 0
-        sz += sys.getsizeof(self.time_origin) if self.time_origin is not None else 0
-        sz += sys.getsizeof(self.lonlatdepth_dtype) if self.lonlatdepth_dtype is not None else 0
-        sz += sys.getsizeof(self.var_names) if self.var_names is not None else 0
-        sz += sys.getsizeof(self.file_list) if self.file_list is not None else 0
-        sz += sys.getsizeof(self.var_names_once) if self.var_names_once is not None else 0
-        sz += sys.getsizeof(self.file_list_once) if self.file_list_once is not None else 0
+        for var in [self.outputdt, self.lasttime_written, self.dataset, self.metadata, self.name, self.parcels_mesh,
+                    self.time_origin, self.lonlatdepth_dtype, self.var_names, self.file_list, self.var_names_once,
+                    self.file_list_once, self.tempwritedir_base, self.tempwritedir]:
+            sz += sys.getsizeof(var) if var is not None else 0
         sz += sys.getsizeof(self.maxid_written)
-        sz += sys.getsizeof(self.tempwritedir_base) if self.tempwritedir_base is not None else 0
-        sz += sys.getsizeof(self.tempwritedir) if self.tempwritedir is not None else 0
         return sz
 
     @abstractmethod
@@ -218,9 +208,6 @@ class BaseParticleFile(ABC):
         :arg fname: filepath of the NetCDF file to be written
         :arg data_shape: shape of the record to be written
         """
-        # ==== This is the line that currently fails the tests - the new netcdf package seems to
-        # ==== use a different signature, making that call fail with an internal pedantic-warning
-        # ==== interpretation of the underlying HDF5 library.
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", data_shape[1])
         self.dataset.createDimension("traj", data_shape[0])
