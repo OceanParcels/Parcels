@@ -91,7 +91,7 @@ class ParticleCollectionNodes(ParticleCollection):
         self._ngrid = ngrid
 
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
-        pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + self._idgen.usable_length
+        pid = pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + self._idgen.usable_length
 
         assert depth is not None, "particle's initial depth is None - incompatible with the collection. Invalid state."
         assert lon.size == lat.size and lon.size == depth.size, (
