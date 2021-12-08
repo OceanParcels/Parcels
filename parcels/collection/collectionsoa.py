@@ -619,10 +619,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 results = []
             else:
                 self._sorted = False
-                # ================================================================================================ #
-                # pu_data = np.insert(pu_data, 5, pu_ids, axis=1)  # doesn't work if pu_data has less than 4 dimensions
                 data_array['id'] = pu_ids
-                # ================================================================================================ #
                 v_names = ['lon', 'lat', 'depth', 'time', 'dt', 'id'] + self._kwarg_keys
                 for key in data_array.keys():
                     if key not in v_names:
