@@ -4,6 +4,14 @@ import os
 from parcels.compilation import InterfaceC, GNUCompiler_SS, GNUCompiler_MS  # noqa: F401
 from parcels.tools import get_cache_dir, get_package_dir
 
+# ======================================================================================================= #
+# Due to a delay in compilation and loading of the C-library, it is possible to request the creation      #
+# of a node while the C-library is still not ready. Therefore, when creating the first node, we need to   #
+# continuously trial-and-error link the node to the C-library. After a certain max. number of tries,      #
+# we can conclude that the C-library has not been created (either because it the nodelist was used        #
+# inappropriately or because compilation went wrong), so after this max. number of tries, we throw an     #
+# error and abort further processing.                                                                     #
+# ======================================================================================================= #
 LIB_LOAD_MAX_REPEAT = 10
 
 # ======================================================================================================= #
@@ -48,7 +56,7 @@ class Node(object):
             self.reset_data()
         self.link()
 
-        assert idgen is not None, "Using Nodes requires to specify an ID generator (in order to release the ID on delete)."
+        assert idgen is not None, "Using Nodes requires to specify an ID generator (in order to release the ID on delete). See https://github.com/OceanParcels/parcels/tree/2.x/tests/test_nodes.py"
         self.idgen = idgen
         self.registered = True
 
@@ -108,7 +116,7 @@ class Node(object):
         self.reset_next()
         self.registered = False
 
-    def is_valid(self):
+    def isvalid(self):
         """
         Function is required as Nodes can be unlinked (i.e. not having data, next- and previous links)
         but still part of a list or other collection, not being called on __del__()
@@ -131,7 +139,7 @@ class Node(object):
         """
         # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
         next_node = self.next
-        while next_node is not None and not next_node.is_valid():
+        while next_node is not None and not next_node.isvalid():
             next_node = next_node.next
         if next_node is None:
             raise StopIteration
@@ -288,7 +296,7 @@ class NodeJIT(Node, ctypes.Structure):
         """
         super().__init__(prev=None, next=None, id=id, data=None, idgen=idgen)
         libname = "node"
-        if not c_lib_register.is_created(libname) or not c_lib_register.is_compiled(libname) or not c_lib_register.is_loaded(libname):
+        if not c_lib_register.iscreated(libname) or not c_lib_register.iscompiled(libname) or not c_lib_register.isloaded(libname):
             cppargs = []
             src_dir = os.path.dirname(os.path.abspath(__file__))
             ccompiler = GNUCompiler_SS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
@@ -360,7 +368,6 @@ class NodeJIT(Node, ctypes.Structure):
         result.set_data(self.data)
         return result
 
-    # ---- continue TODO ---- #
     def link(self):
         """
         links this node to its neighbours, i.e. sets this object to be the successor of its predecessor and

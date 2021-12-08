@@ -91,14 +91,14 @@ def test_clibrary_custom_clib(testf_cstring, testf_hstring, compiler, stages_don
     ccompiler = compiler(cppargs=[], incdirs=[os.path.join(get_cache_dir()), "."], libdirs=[".", get_cache_dir()])
     my_interface = InterfaceC("testf", ccompiler, get_cache_dir())
     my_obj.add_entry("testf", my_interface)
-    assert my_obj.is_created("testf")
+    assert my_obj.iscreated("testf")
     assert my_obj.get("testf") == my_interface
     if stages_done > BUILD_LIB:
         my_interface.compile_library()
-        assert my_obj.is_compiled("testf")
+        assert my_obj.iscompiled("testf")
     if stages_done > COMPILE_LIB:
         my_obj.load("testf")
-        assert my_obj.is_loaded("testf")
+        assert my_obj.isloaded("testf")
     if stages_done > LOAD_LIB:
         testf_lib = my_obj.get("testf")
         function_param_array = [{"name": "func", "return": None, "arguments": [ctypes.c_int, ]},
@@ -111,10 +111,10 @@ def test_clibrary_custom_clib(testf_cstring, testf_hstring, compiler, stages_don
         assert result == 5
     if stages_done > EXECUTE_LIB:
         my_obj.unload("testf")
-        assert not my_obj.is_loaded("testf")
+        assert not my_obj.isloaded("testf")
     if stages_done > UNLOAD_LIB:
         my_obj.remove("testf")
-        assert not my_obj.is_created("testf")
+        assert not my_obj.iscreated("testf")
     if manual_interface_teardown:
         my_obj.clear()
     del my_interface
@@ -141,12 +141,12 @@ def test_clibrary_multilib_collective_compile(testf_cstring, testf_hstring):
                                      libs=[])
     interface_testf = InterfaceC(["node", "testf"], ccompiler_testf, [os.path.join(get_package_dir(), "nodes"), get_cache_dir()])
     my_obj.add_entry("testf", interface_testf)
-    assert my_obj.is_created("testf")
+    assert my_obj.iscreated("testf")
     assert my_obj.get("testf") == interface_testf
     interface_testf.compile_library()
-    assert my_obj.is_compiled("testf")
+    assert my_obj.iscompiled("testf")
     my_obj.load("testf")
-    assert my_obj.is_loaded("testf")
+    assert my_obj.isloaded("testf")
     testf_lib = my_obj.get("testf")
     function_param_array = [{"name": "func", "return": None, "arguments": [ctypes.c_int, ]},
                             {"name": "get_val", "return": ctypes.c_int, "arguments": None}]
@@ -157,9 +157,9 @@ def test_clibrary_multilib_collective_compile(testf_cstring, testf_hstring):
     result = func_getval()
     assert result == 5
     my_obj.unload("testf")
-    assert not my_obj.is_loaded("testf")
+    assert not my_obj.isloaded("testf")
     my_obj.remove("testf")
-    assert not my_obj.is_created("testf")
+    assert not my_obj.iscreated("testf")
     my_obj.clear()
     del interface_testf
     del my_obj
@@ -183,18 +183,18 @@ def test_clibrary_multilib_separate_compile(testf_cstring, testf_hstring):
     interface_testf = InterfaceC("testf", ccompiler_testf, src_dir=get_cache_dir())
     my_obj.add_entry("node", interface_node)
     my_obj.add_entry("testf", interface_testf)
-    assert my_obj.is_created("node")
-    assert my_obj.is_created("testf")
+    assert my_obj.iscreated("node")
+    assert my_obj.iscreated("testf")
     assert my_obj.get("node") == interface_node
     assert my_obj.get("testf") == interface_testf
     interface_node.compile_library()
     interface_testf.compile_library()
-    assert my_obj.is_compiled("node")
-    assert my_obj.is_compiled("testf")
+    assert my_obj.iscompiled("node")
+    assert my_obj.iscompiled("testf")
     my_obj.load("node")
     my_obj.load("testf")
-    assert my_obj.is_loaded("node")
-    assert my_obj.is_loaded("testf")
+    assert my_obj.isloaded("node")
+    assert my_obj.isloaded("testf")
     testf_lib = my_obj.get("testf")
     function_param_array = [{"name": "func", "return": None, "arguments": [ctypes.c_int, ]},
                             {"name": "get_val", "return": ctypes.c_int, "arguments": None}]
@@ -206,12 +206,12 @@ def test_clibrary_multilib_separate_compile(testf_cstring, testf_hstring):
     assert result == 5
     my_obj.unload("node")
     my_obj.unload("testf")
-    assert not my_obj.is_loaded("node")
-    assert not my_obj.is_loaded("testf")
+    assert not my_obj.isloaded("node")
+    assert not my_obj.isloaded("testf")
     my_obj.remove("node")
     my_obj.remove("testf")
-    assert not my_obj.is_created("node")
-    assert not my_obj.is_created("testf")
+    assert not my_obj.iscreated("node")
+    assert not my_obj.iscreated("testf")
     my_obj.clear()
     del interface_testf
     del my_obj
@@ -237,12 +237,12 @@ def test_clibrary_inner_class_registration(testf_cstring, testf_hstring):
         def __init__(self, c_lib_register):
             libname = "testf"
             src_dir = get_cache_dir()
-            if not c_lib_register.is_created(libname) or not c_lib_register.is_compiled(libname):
+            if not c_lib_register.iscreated(libname) or not c_lib_register.iscompiled(libname):
                 cppargs = []
                 ccompiler = GNUCompiler_SS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
                 my_interface = InterfaceC(libname, ccompiler, src_dir)
                 c_lib_register.add_entry(libname, my_interface)
-            if not c_lib_register.is_loaded(libname):
+            if not c_lib_register.isloaded(libname):
                 c_lib_register.load(libname)
             c_lib_register.register(libname, close_callback=self.close_c_cb)
             self.c_lib_register_ref = c_lib_register
@@ -284,12 +284,12 @@ def test_clibrary_inner_class_registration(testf_cstring, testf_hstring):
     obj2.execute()
     obj1.close()
     obj1.close()
-    if my_obj.is_loaded("testf"):
+    if my_obj.isloaded("testf"):
         my_obj.unload("testf")
-    assert not my_obj.is_loaded("testf")
-    if my_obj.is_created("testf"):
+    assert not my_obj.isloaded("testf")
+    if my_obj.iscreated("testf"):
         my_obj.remove("testf")
-    assert not my_obj.is_created("testf")
+    assert not my_obj.iscreated("testf")
     my_obj.clear()
     del my_obj
     if os.path.exists(testf_c_file):
