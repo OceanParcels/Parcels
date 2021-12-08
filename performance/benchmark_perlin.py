@@ -372,7 +372,7 @@ if __name__=='__main__':
                     lonlat_field *= np.array([a, b])
                     time_field = np.ones((int(addParticleN), 1), dtype=np.float64) * simStart
                     # pdata = np.concatenate( (lonlat_field, time_field), axis=1 )
-                    pdata = {'lon': lonlat_field[0], 'lat': lonlat_field[1], 'time': time_field}
+                    pdata = {'lon': lonlat_field[:, 0], 'lat': lonlat_field[:, 1], 'time': time_field}
                     pset.add(pdata)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * b, time=simStart, idgen=idgen, c_lib_register=c_lib_register)
@@ -387,7 +387,7 @@ if __name__=='__main__':
                     lonlat_field *= np.array([a, b])
                     time_field = np.ones((int(addParticleN), 1), dtype=np.float64) * simStart
                     # pdata = np.concatenate( (lonlat_field, time_field), axis=1 )
-                    pdata = {'lon': lonlat_field[0], 'lat': lonlat_field[1], 'time': time_field}
+                    pdata = {'lon': lonlat_field[:, 0], 'lat': lonlat_field[:, 1], 'time': time_field}
                     pset.add(pdata)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * b, time=simStart, idgen=idgen, c_lib_register=c_lib_register)
@@ -404,7 +404,7 @@ if __name__=='__main__':
                     lonlat_field *= np.array([a, b])
                     time_field = np.ones((int(addParticleN), 1), dtype=np.float64) * simStart
                     # pdata = np.concatenate( (lonlat_field, time_field), axis=1 )
-                    pdata = {'lon': lonlat_field[0], 'lat': lonlat_field[1], 'time': time_field}
+                    pdata = {'lon': lonlat_field[:, 0], 'lat': lonlat_field[:, 1], 'time': time_field}
                     pset.add(pdata)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * b, time=simStart, idgen=idgen, c_lib_register=c_lib_register)
@@ -419,7 +419,7 @@ if __name__=='__main__':
                     lonlat_field *= np.array([a, b])
                     time_field = np.ones((int(addParticleN), 1), dtype=np.float64) * simStart
                     # pdata = np.concatenate( (lonlat_field, time_field), axis=1 )
-                    pdata = {'lon': lonlat_field[0], 'lat': lonlat_field[1], 'time': time_field}
+                    pdata = {'lon': lonlat_field[:, 0], 'lat': lonlat_field[:, 1], 'time': time_field}
                     pset.add(pdata)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * b, time=simStart, idgen=idgen, c_lib_register=c_lib_register)

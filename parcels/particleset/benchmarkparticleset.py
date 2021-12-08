@@ -370,7 +370,7 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
             header_string = "target_N, start_N, final_N, avg_N, ncores, avg_kt_total[s], avg_kt_compute[s], avg_kt_mem-io[s], avg_kt_io[s], avg_kt_plot[s], cum_t_total[s], cum_t_compute[s], cum_t_mem-io[s], com_t_io[s], cum_t_plot[s], max_mem[MB]\n"
             f.write(header_string)
             data_string = "{}, {}, {}, {}, {}, ".format(target_N, nparticles_t0, nparticles_tN, nparticles.mean(), ncores)
-            data_string += "{:2.10f}, {:2.10f}, {:2.10f}, {:2.10f}, ".format(total_times.mean(), compute_times.mean(), mem_io_times.mean(), io_times.mean(), plot_times.mean())
+            data_string += "{:2.10f}, {:2.10f}, {:2.10f}, {:2.10f}, {:2.10f}, ".format(total_times.mean(), compute_times.mean(), mem_io_times.mean(), io_times.mean(), plot_times.mean())
             max_mem_sync = 0
             if memory_used is not None and len(memory_used) > 1:
                 memory_used = np.floor(memory_used / (1024*1024))
@@ -383,5 +383,5 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
                     memory_used_async = memory_used_async.astype(dtype=np.int64)
                     max_mem_async = memory_used_async.max()
             max_mem = max(max_mem_sync, max_mem_async)
-            data_string += "{:10.4f}, {:10.4f}, {:10.4f}, {:10.4f}, {}".format(total_times.sum(), compute_times.sum(), mem_io_times.sum(), io_times.sum(), plot_times.sum(), max_mem)
+            data_string += "{:10.4f}, {:10.4f}, {:10.4f}, {:10.4f}, {:10.4f}, {}".format(total_times.sum(), compute_times.sum(), mem_io_times.sum(), io_times.sum(), plot_times.sum(), max_mem)
             f.write(data_string)
