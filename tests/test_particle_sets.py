@@ -934,13 +934,6 @@ def test_pset_split(fieldset, pset_mode, mode, npart=32):
         del c_lib_register
 
 
-# ======================================================================== #
-# ==== semantically, the function of 'merge' and 'add' are different. ==== #
-# ==== 'merge' adds B to A while deleting B (B empty after merge),    ==== #
-# ==== while 'add' just copies B into A (B and A non-empty after it). ==== #
-# ==== Implementing a 'merge' function of a Particle set resolves     ==== #
-# ==== the ambiguity (contrasting the Particle.merge() function).     ==== #
-# ======================================================================== #
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_merge_inplace(fieldset, pset_mode, mode, npart=100):
@@ -982,13 +975,6 @@ def test_pset_merge_inplace(fieldset, pset_mode, mode, npart=100):
         del c_lib_register
 
 
-# ======================================================================== #
-# ==== semantically, the function of 'merge' and 'add' are different. ==== #
-# ==== 'merge' adds B to A while deleting B (B empty after merge),    ==== #
-# ==== while 'add' just copies B into A (B and A non-empty after it). ==== #
-# ==== Implementing a 'merge' function of a Particle set resolves     ==== #
-# ==== the ambiguity (contrasting the Particle.merge() function).     ==== #
-# ======================================================================== #
 @pytest.mark.xfail(reason="ParticleSet duplication has not been implemented yet")
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
