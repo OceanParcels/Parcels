@@ -209,7 +209,7 @@ class Node(object):
         """
         returns a text-like representation of a Node
         """
-        return "Node(p: {}, n: {}, id: {}, d: {})".format(repr(self.prev), repr(self.next), self.data.id, repr(self.data))
+        return "Node(prev: {}, next: {}, id: {}, data: {})".format(repr(self.prev), repr(self.next), self.data.id, repr(self.data))
 
     def __sizeof__(self):
         """
