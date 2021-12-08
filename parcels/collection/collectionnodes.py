@@ -1189,7 +1189,7 @@ class ParticleCollectionNodes(ParticleCollection):
         For collections where removal-by-object incurs a performance malus, it is advisable to multi-remove particles
         by IDs.
 
-        :arg pycollectionp: a Python-based collection (i.e. a tuple or list), containing Particle objects that are to
+        :arg pycollection_p: a Python-based collection (i.e. a tuple or list), containing Particle objects that are to
                             be removed from this collection.
         """
         super().remove_multi_by_PyCollection_Particles(pycollection_p)

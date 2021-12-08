@@ -409,7 +409,7 @@ class ParticleCollectionSOA(ParticleCollection):
         For collections where get-by-object incurs a performance malus, it is advisable to multi-get particles
         by indices or IDs.
 
-        :arg pycollectionp: a Python-internal collection object (e.g. a tuple or list), filled with reference particles (SciPy- or JIT)
+        :arg pycollection_p: a Python-internal collection object (e.g. a tuple or list), filled with reference particles (SciPy- or JIT)
         :returns a vector-list of the requested particles
         """
         super().get_multi_by_PyCollection_Particles(pycollection_p)
@@ -963,7 +963,7 @@ class ParticleCollectionSOA(ParticleCollection):
         For collections where removal-by-object incurs a performance malus, it is advisable to multi-remove particles
         by indices or IDs.
 
-        :arg pycollectionp: a Python-based collection (i.e. a tuple or list), containing Particle objects that are to
+        :arg pycollection_p: a Python-based collection (i.e. a tuple or list), containing Particle objects that are to
                             be removed from this collection.
         """
         super().remove_multi_by_PyCollection_Particles(pycollection_p)
