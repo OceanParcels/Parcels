@@ -1768,12 +1768,16 @@ class ParticleCollectionIteratorNodes(BaseParticleCollectionIterator):
         """Returns a ParticleAccessor for the next particle in the
         ParticleSet.
         """
+        result = None
+        p_prev = self.p
         if self.p is not None:
             result = ParticleAccessorNodes(self._pcoll, self.p)
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
             self.p = self.p.prev if self._reverse else self.p.next
-            while self.p is not None and not self.p.isvalid():
+            while (self.p is not None) and (not self.p.isvalid()):
                 self.p = self.p.prev if self._reverse else self.p.next
+        result = result if self.p != p_prev else None
+        if result is not None:
             return result
         raise StopIteration
 
