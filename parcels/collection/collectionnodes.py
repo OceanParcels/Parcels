@@ -474,7 +474,8 @@ class ParticleCollectionNodes(ParticleCollection):
         result = None
         if index >= 0 and index < len(self._data):
             try:
-                result = self._data[index].data
+                if self._data[index] is not None and self._data[index].isvalid():
+                    result = self._data[index].data
             except ValueError:
                 pass
         return result
@@ -874,13 +875,18 @@ class ParticleCollectionNodes(ParticleCollection):
         if _add_to_pu:
             index = -1
             pid = np.iinfo(np.uint64).max
+            poid = particle_obj.data.id if isinstance(particle_obj, self._nclass) else (
+                particle_obj.id if isinstance(particle_obj, ScipyParticle) else np.iinfo(np.uint64).max)
+            if (poid == pid) or (poid in [np.iinfo(np.uint64).max, np.iinfo(np.int64).max]):
+                pid = self._idgen.nextID(particle_obj.lon, particle_obj.lat, particle_obj.depth, particle_obj.time)
+                if isinstance(particle_obj, self._nclass):
+                    particle_obj.data.id = pid
+                elif isinstance(particle_obj, ScipyParticle):
+                    particle_obj.id = pid
             if isinstance(particle_obj, self._nclass):
                 self._data.add(particle_obj)
                 index = self._data.bisect_right(particle_obj)
             else:
-                if particle_obj.id == pid:
-                    pid = self._idgen.nextID(particle_obj.lon, particle_obj.lat, particle_obj.depth, particle_obj.time)
-                    particle_obj.id = pid
                 node = self._nclass(data=particle_obj, c_lib_register=self._c_lib_register, idgen=self._idgen)
                 self._data.add(node)
                 index = self._data.bisect_right(node)
@@ -1027,7 +1033,8 @@ class ParticleCollectionNodes(ParticleCollection):
         super().delete_by_index(index)
         if index >= 0 and index < len(self._data):
             try:
-                self._data[index].data.state = OperationCode.Delete
+                if self._data[index] is not None and self._data[index].isvalid():
+                    self._data[index].data.state = OperationCode.Delete
             except ValueError:
                 pass
 
@@ -1172,7 +1179,7 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         super().remove_collection(pcollection)
         ids = [p.id for p in pcollection]
-        data_ids = [n.data.id for n in self._data]
+        data_ids = [n.data.id for n in self._data if n.isvalid()]
         indices = np.in1d(data_ids, ids)
         indices = None if len(indices) == 0 else np.nonzero(indices)[0]
         if indices is not None:
@@ -1194,7 +1201,7 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         super().remove_multi_by_PyCollection_Particles(pycollection_p)
         ids = [p.id for p in pycollection_p]
-        data_ids = [n.data.id for n in self._data]
+        data_ids = [n.data.id for n in self._data if n.isvalid()]
         indices = np.in1d(data_ids, ids)
         indices = None if len(indices) == 0 else np.nonzero(indices)[0]
         if indices is not None:
@@ -1433,7 +1440,7 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         :returns indices of particles that are marked for deletion.
         """
-        indices = [i for i, n in enumerate(self._data) if n.data.state == OperationCode.Delete]
+        indices = [i for i, n in enumerate(self._data) if n.isvalid() and n.data.state == OperationCode.Delete]
         return indices
 
     def get_deleted_item_IDs(self):
@@ -1453,8 +1460,8 @@ class ParticleCollectionNodes(ParticleCollection):
         #     ndata = ndata.next
         # return ids
         # ---- Option 2: pythonic list-comprehension way ---- #
-        indices = [ndata.data.id for ndata in self._data if ndata.data.state == OperationCode.Delete]
-        return indices
+        ids = [ndata.data.id for ndata in self._data if ndata.isvalid() and ndata.data.state == OperationCode.Delete]
+        return ids
 
     def __sizeof__(self):
         """
