@@ -27,6 +27,8 @@ class BaseIdGenerator(ABC):
         """
         self._total_ids = 0
         self._used_ids = 0
+        self._recover_ids = False
+        self._map_id_totalindex = dict()
         self._track_id_index = True
 
     def __del__(self):
@@ -36,6 +38,7 @@ class BaseIdGenerator(ABC):
         self._total_ids = 0
         self._used_ids = 0
         self._track_id_index = False
+        self._map_id_totalindex.clear()
 
     def setTimeLine(self, min_time, max_time):
         """

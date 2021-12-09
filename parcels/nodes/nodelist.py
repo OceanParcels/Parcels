@@ -33,9 +33,9 @@ class DoubleLinkedNodeList(SortedList):
         self._c_lib_register = c_lib_register
 
     def __del__(self):
-        self.clear()
+        self.clear(do_gc=False)
 
-    def clear(self):
+    def clear(self, do_gc=True):
         """Remove all the elements from the list."""
         n = self.__len__()
         if n > 0:
@@ -43,7 +43,11 @@ class DoubleLinkedNodeList(SortedList):
                 self.__getitem__(-1).unlink()
                 del self[-1]
                 n = self.__len__()
-        gc.collect()
+        if gc is not None and do_gc:
+            try:
+                gc.collect()
+            except:
+                pass
         super()._clear()
 
     def __new__(cls, iterable=None, key=None, load=1000, dtype=Node, c_lib_register=None):
