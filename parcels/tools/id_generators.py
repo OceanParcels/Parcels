@@ -195,9 +195,13 @@ class BaseIdGenerator(ABC):
         :arg input_id: ID to be associated with an index
         :returns list index
         """
+        index = None
         if self._track_id_index:
-            return self._map_id_totalindex[input_id]
-        return None
+            try:
+                index = self._map_id_totalindex[input_id]
+            except (IndexError, ValueError) as e:
+                index = None
+        return index
 
     def is_tracking_id_index(self):
         """
@@ -253,8 +257,8 @@ class SequentialIdGenerator(BaseIdGenerator):
             result = self.released_ids.pop(n-1)
             if self._track_id_index:
                 self._map_id_totalindex[result] = self._total_ids
-            self._used_ids += 1
             self._total_ids += 1
+            self._used_ids += 1
             return np.uint64(result)
 
     def releaseID(self, id):
