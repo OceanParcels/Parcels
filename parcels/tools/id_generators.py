@@ -199,7 +199,7 @@ class BaseIdGenerator(ABC):
         if self._track_id_index:
             try:
                 index = self._map_id_totalindex[input_id]
-            except (IndexError, ValueError):
+            except (IndexError, ValueError, KeyError):
                 index = None
         return index
 
