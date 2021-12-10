@@ -875,9 +875,9 @@ class ParticleCollectionNodes(ParticleCollection):
         if _add_to_pu:
             index = -1
             pid = np.iinfo(np.uint64).max
-            poid = particle_obj.data.id if isinstance(particle_obj, self._nclass) else (
-                particle_obj.id if isinstance(particle_obj, ScipyParticle) else np.iinfo(np.uint64).max)
-            if (poid == pid) or (poid in [np.iinfo(np.uint64).max, np.iinfo(np.int64).max]):
+            poid = particle_obj.data.id if isinstance(particle_obj, self._nclass) \
+                else (particle_obj.id if isinstance(particle_obj, ScipyParticle) else np.iinfo(np.uint64).max)
+            if (poid == pid) or (poid in [np.iinfo(np.uint64).max, np.iinfo(np.int64).max]) or isinstance(particle_obj, ScipyParticle):
                 pid = self._idgen.nextID(particle_obj.lon, particle_obj.lat, particle_obj.depth, particle_obj.time)
                 if isinstance(particle_obj, self._nclass):
                     particle_obj.data.id = pid
@@ -1565,8 +1565,10 @@ class ParticleCollectionNodes(ParticleCollection):
                             continue
                         if ((time - np.abs(node.data.dt / 2)) <= node.data.time < (time + np.abs(node.data.dt)) or np.equal(time, node.data.time)) and np.isfinite(node.data.id):
                             node_index = self._idgen.map_id_to_index(node.data.id)
-                            indices_to_write.append(node_index)
-                            dataindices.append(self.get_index_by_node(node))
+                            p_index = self.get_index_by_node(node)
+                            if p_index is not None and node_index is not None:
+                                indices_to_write.append(node_index)
+                                dataindices.append(p_index)
                         node = node.next
                 # ====================================================================================================================================== #
                 # ============== here, the indices need to be actual indices in the double-linked list ================================================= #
