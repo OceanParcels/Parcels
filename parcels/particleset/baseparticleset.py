@@ -7,7 +7,7 @@ from os import path
 import time as time_module
 import cftime
 
-import progressbar
+from tqdm import tqdm
 
 from parcels.tools.statuscodes import StateCode
 from parcels.tools.global_statics import get_package_dir
@@ -105,14 +105,8 @@ class BaseParticleSet(NDCluster):
         pass
 
     def __create_progressbar(self, starttime, endtime):
-        pbar = None
-        try:
-            pbar = progressbar.ProgressBar(max_value=abs(endtime - starttime)).start()
-        except:  # for old versions of progressbar
-            try:
-                pbar = progressbar.ProgressBar(maxvalue=abs(endtime - starttime)).start()
-            except:  # for even older OR newer versions
-                pbar = progressbar.ProgressBar(maxval=abs(endtime - starttime)).start()
+        pbar = tqdm(total=abs(endtime - starttime))
+        pbar.prevtime = starttime
         return pbar
 
     @classmethod
@@ -514,12 +508,13 @@ class BaseParticleSet(NDCluster):
             if dt == 0:
                 break
             if verbose_progress:
-                pbar.update(abs(time - _starttime))
+                pbar.update(abs(time - pbar.prevtime))
+                pbar.prevtime = time
 
         if output_file:
             output_file.write(self, time)
         if verbose_progress:
-            pbar.finish()
+            pbar.close()
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
              land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
