@@ -922,8 +922,12 @@ def test_pset_split(fieldset, pset_mode, mode, npart=32):
     assert len(pset) == 29
     assert len(pset2) == 3
     step = lon[1]-lon[0]
-    assert np.allclose([p.lon for p in pset2], [step, 3*step, 1.0-step], rtol=1e-6)
-    assert np.allclose([p.lat for p in pset2], [1.0-step, 1.0-3*step, step], rtol=1e-6)
+    if pset_mode != 'nodes':
+        assert np.allclose([p.lon for p in pset2], [step, 3*step, 1.0-step], rtol=1e-6)
+        assert np.allclose([p.lat for p in pset2], [1.0-step, 1.0-3*step, step], rtol=1e-6)
+    else:  # for non-index-based sets, the order of occurrence depends on the ID itself, so we can only test if ieach value is in the target array
+        assert np.alltrue([np.any([np.isclose(p.lon, ref_data, rtol=1e-6) for ref_data in [step, 3*step, 1.0-step]]) for p in pset2])
+        assert np.alltrue([np.any([np.isclose(p.lat, ref_data, rtol=1e-6) for ref_data in [1.0-step, 1.0-3*step, step]]) for p in pset2])
 
     del pset
     if idgen is not None:
