@@ -290,6 +290,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = PrintNode()
         elif (node.id == 'pnum') or ('parcels_tmpvar' in node.id):
             raise NotImplementedError("Custom Kernels cannot contain string %s; please change your kernel" % node.id)
+        elif node.id == 'abs':
+            raise NotImplementedError("abs() does not work in JIT Kernels. Use math.fabs() instead")
         return node
 
     def visit_Attribute(self, node):
