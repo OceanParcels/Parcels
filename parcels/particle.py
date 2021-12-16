@@ -7,7 +7,7 @@ from parcels.field import Field
 from parcels.tools.statuscodes import StateCode, OperationCode
 from parcels.tools.loggers import logger
 
-__all__ = ['ScipyParticle', 'JITParticle', 'Variable', 'ScipyInteractionParticle']
+__all__ = ['ScipyParticle', 'Variable', 'ScipyInteractionParticle']
 
 indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 
@@ -32,16 +32,16 @@ class Variable(object):
     def __get__(self, instance, cls):
         if instance is None:
             return self
-        if issubclass(cls, JITParticle):
-            return instance._cptr.__getitem__(self.name)
+#         if issubclass(cls, JITParticle):
+#             return instance._cptr.__getitem__(self.name)
         else:
             return getattr(instance, "_%s" % self.name, self.initial)
 
     def __set__(self, instance, value):
-        if isinstance(instance, JITParticle):
-            instance._cptr.__setitem__(self.name, value)
-        else:
-            setattr(instance, "_%s" % self.name, value)
+#         if isinstance(instance, JITParticle):
+#             instance._cptr.__setitem__(self.name, value)
+#         else:
+        setattr(instance, "_%s" % self.name, value)
 
     def __repr__(self):
         return "PVar<%s|%s>" % (self.name, self.dtype)
@@ -63,7 +63,8 @@ class ParticleType(object):
         if not issubclass(pclass, ScipyParticle):
             raise TypeError("Class object does not inherit from parcels.ScipyParticle")
         self.name = pclass.__name__
-        self.uses_jit = issubclass(pclass, JITParticle)
+#         self.uses_jit = issubclass(pclass, JITParticle)
+        self.uses_jit = False
         # Pick Variable objects out of __dict__.
         self.variables = [v for v in pclass.__dict__.values() if isinstance(v, Variable)]
         for cls in pclass.__bases__:
@@ -134,8 +135,8 @@ class _Particle(object):
                 if time is None:
                     raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                        'Add a "time=" to ParticleSet construction')
-                if v.initial.grid.ti < 0:
-                    v.initial.fieldset.computeTimeChunk(time, 0)
+#                 if v.initial.grid.ti < 0:
+#                     v.initial.fieldset.computeTimeChunk(time, 0)
                 initial = v.initial[time, depth, lat, lon]
                 logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
             else:
@@ -290,70 +291,70 @@ class ScipyInteractionParticle(ScipyParticle):
     horiz_dist = Variable("horiz_dist", dtype=np.float32)
 
 
-class JITParticle(ScipyParticle):
-    """Particle class for JIT-based (Just-In-Time) Particle objects
-
-    :param lon: Initial longitude of particle
-    :param lat: Initial latitude of particle
-    :param fieldset: :mod:`parcels.fieldset.FieldSet` object to track this particle on
-    :param dt: Execution timestep for this particle
-    :param time: Current time of the particle
-
-    Additional Variables can be added via the :Class Variable: objects
-
-    Users should use JITParticles for faster advection computation.
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        self._cptr = kwargs.pop('cptr', None)
-        if self._cptr is None:
-            # Allocate data for a single particle
-            ptype = self.getPType()
-            self._cptr = np.empty(1, dtype=ptype.dtype)[0]
-        super(JITParticle, self).__init__(*args, **kwargs)
-
-    def __del__(self):
-        super(JITParticle, self).__del__()
-
-    def cdata(self):
-        if self._cptr is None:
-            return None
-        return self._cptr.ctypes.data_as(c_void_p)
-
-    def set_cptr(self, value):
-        if isinstance(value, np.ndarray):
-            ptype = self.getPType()
-            self._cptr = np.array(value, dtype=ptype.dtype)
-        else:
-            self._cptr = None
-
-    def get_cptr(self):
-        if isinstance(self._cptr, np.ndarray):
-            return self._cptr[0]
-        return self._cptr
-
-    def reset_cptr(self):
-        self._cptr = None
-
-    def __eq__(self, other):
-        return super(JITParticle, self).__eq__(other)
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def __lt__(self, other):
-        return super(JITParticle, self).__lt__(other)
-
-    def __le__(self, other):
-        return super(JITParticle, self).__le__(other)
-
-    def __gt__(self, other):
-        return super(JITParticle, self).__gt__(other)
-
-    def __ge__(self, other):
-        return super(JITParticle, self).__ge__(other)
-
-    def __sizeof__(self):
-        ptype = self.getPType()
-        return sum([v.size for v in ptype.variables])
+# class JITParticle(ScipyParticle):
+#     """Particle class for JIT-based (Just-In-Time) Particle objects
+# 
+#     :param lon: Initial longitude of particle
+#     :param lat: Initial latitude of particle
+#     :param fieldset: :mod:`parcels.fieldset.FieldSet` object to track this particle on
+#     :param dt: Execution timestep for this particle
+#     :param time: Current time of the particle
+# 
+#     Additional Variables can be added via the :Class Variable: objects
+# 
+#     Users should use JITParticles for faster advection computation.
+# 
+#     """
+# 
+#     def __init__(self, *args, **kwargs):
+#         self._cptr = kwargs.pop('cptr', None)
+#         if self._cptr is None:
+#             # Allocate data for a single particle
+#             ptype = self.getPType()
+#             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
+#         super(JITParticle, self).__init__(*args, **kwargs)
+# 
+#     def __del__(self):
+#         super(JITParticle, self).__del__()
+# 
+#     def cdata(self):
+#         if self._cptr is None:
+#             return None
+#         return self._cptr.ctypes.data_as(c_void_p)
+# 
+#     def set_cptr(self, value):
+#         if isinstance(value, np.ndarray):
+#             ptype = self.getPType()
+#             self._cptr = np.array(value, dtype=ptype.dtype)
+#         else:
+#             self._cptr = None
+# 
+#     def get_cptr(self):
+#         if isinstance(self._cptr, np.ndarray):
+#             return self._cptr[0]
+#         return self._cptr
+# 
+#     def reset_cptr(self):
+#         self._cptr = None
+# 
+#     def __eq__(self, other):
+#         return super(JITParticle, self).__eq__(other)
+# 
+#     def __ne__(self, other):
+#         return not (self == other)
+# 
+#     def __lt__(self, other):
+#         return super(JITParticle, self).__lt__(other)
+# 
+#     def __le__(self, other):
+#         return super(JITParticle, self).__le__(other)
+# 
+#     def __gt__(self, other):
+#         return super(JITParticle, self).__gt__(other)
+# 
+#     def __ge__(self, other):
+#         return super(JITParticle, self).__ge__(other)
+# 
+#     def __sizeof__(self):
+#         ptype = self.getPType()
+#         return sum([v.size for v in ptype.variables])

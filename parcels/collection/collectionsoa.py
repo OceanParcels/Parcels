@@ -9,7 +9,7 @@ import numpy as np
 from parcels.collection.collections import ParticleCollection
 from parcels.collection.iterators import BaseParticleAccessor
 from parcels.collection.iterators import BaseParticleCollectionIterator, BaseParticleCollectionIterable
-from parcels.particle import ScipyParticle, JITParticle  # noqa
+from parcels.particle import ScipyParticle# , JITParticle  # noqa
 from parcels.field import Field
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import OperationCode
@@ -137,7 +137,6 @@ class ParticleCollectionSOA(ParticleCollection):
         self._data = np.empty(self.ncount, dtype=self.ptype.dtype).view(np.recarray)
         self._pbackup = np.empty(1, dtype=self.ptype.dtype).view(np.recarray)
         self._data.lat = lat
-        print(self._data)
 #         for v in self.ptype.variables:
 #             self._numba_data[v.name][:] = self._data[v.name][:]
 
@@ -182,7 +181,7 @@ class ParticleCollectionSOA(ParticleCollection):
                     for i in range(self.ncount):
                         if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
-                        v.initial.fieldset.computeTimeChunk(time[i], 0)
+#                         v.initial.fieldset.computeTimeChunk(time[i], 0)
                         self._data[v.name][i] = v.initial[
                             time[i], depth[i], lat[i], lon[i]
                         ]

@@ -9,7 +9,7 @@ from parcels import AdvectionEE
 from parcels import AdvectionRK4
 from parcels import AdvectionRK45
 from parcels import FieldSet
-from parcels import JITParticle
+# from parcels import JITParticle
 from parcels import ScipyParticle
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
@@ -17,7 +17,7 @@ from parcels import timer
 from parcels import Variable
 
 pset_modes = ['soa', 'aos']
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+ptype = {'scipy': ScipyParticle}#, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -76,8 +76,8 @@ def UpdateP(particle, fieldset, time):
 
 def AgeP(particle, fieldset, time):
     particle.age += particle.dt
-    if particle.age > fieldset.maxage:
-        particle.delete()
+#     if particle.age > fieldset.maxage:
+#         particle.delete()
 
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
@@ -92,7 +92,12 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     # Determine particle class according to mode
     timer.pset = timer.Timer('Pset', parent=timer.stommel)
     timer.psetinit = timer.Timer('Pset_init', parent=timer.pset)
-    ParticleClass = JITParticle if mode == 'jit' else ScipyParticle
+    if mode == 'jit':
+        from parcels import JITParticle
+        ParticleClass = JITParticle
+    else:
+        ParticleClass = ScipyParticle
+#     ParticleClass = JITParticle if mode == 'jit' else ScipyParticle
 
     class MyParticle(ParticleClass):
         p = Variable('p', dtype=np.float32, initial=0.)
@@ -125,10 +130,12 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     return pset
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+# @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('grid_type', ['A', 'C'])
-@pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_stommel_fieldset(pset_mode, mode, grid_type, tmpdir):
+# @pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def test_stommel_fieldset(grid_type, tmpdir):
+    pset_mode = "soa"
+    mode = "scipy"
     timer.root = timer.Timer('Main')
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
     outfile = tmpdir.join("StommelParticle")

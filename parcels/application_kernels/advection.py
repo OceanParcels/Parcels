@@ -54,6 +54,7 @@ def AdvectionEE(particle, fieldset, time):
     (u1, v1) = fieldset.UV[particle]
     particle.lon += u1 * particle.dt
     particle.lat += v1 * particle.dt
+    return StateCode.Success
 
 
 def AdvectionRK45(particle, fieldset, time):
@@ -72,7 +73,7 @@ def AdvectionRK45(particle, fieldset, time):
     b4 = [25./216., 0., 1408./2565., 2197./4104., -1./5.]
     b5 = [16./135., 0., 6656./12825., 28561./56430., -9./50., 2./55.]
 
-    (u1, v1) = fieldset.UV[particle]
+    (u1, v1) = fieldset.UV[time, particle.depth, particle.lat, particle.lon, particle]
     lon1, lat1 = (particle.lon + u1 * A[0][0] * particle.dt,
                   particle.lat + v1 * A[0][0] * particle.dt)
     (u2, v2) = fieldset.UV[time + c[0] * particle.dt, particle.depth, lat1, lon1, particle]
@@ -99,10 +100,13 @@ def AdvectionRK45(particle, fieldset, time):
         particle.lon = lon_4th
         particle.lat = lat_4th
         if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol / 10), 2):
-            particle.update_next_dt(particle.dt * 2)
+            particle._next_dt = particle.dt * 2
+#             particle.update_next_dt(particle.dt * 2)
+
     else:
         particle.dt /= 2
         return OperationCode.Repeat
+    return StateCode.Success
 
 
 def AdvectionAnalytical(particle, fieldset, time):

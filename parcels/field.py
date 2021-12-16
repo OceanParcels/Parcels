@@ -102,7 +102,7 @@ class Field():
             self, name, data, lon=None, lat=None, depth=None, time=None,
             grid=None, mesh='flat', timestamps=None, fieldtype=None,
             transpose=False, vmin=None, vmax=None, cast_data_dtype='float32',
-            time_origin=0, interp_method='linear',
+            time_origin=None, interp_method='linear',
             allow_time_extrapolation=None, time_periodic=False,
             gridindexingtype='nemo', to_write=False, **kwargs):
         if grid is None:

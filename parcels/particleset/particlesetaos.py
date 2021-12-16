@@ -11,7 +11,7 @@ from parcels.numba.grid import GridCode
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.kernel.kernelaos import KernelAOS
-from parcels.particle import Variable, ScipyParticle, JITParticle # NOQA
+from parcels.particle import Variable, ScipyParticle# , JITParticle # NOQA
 from parcels.particlefile.particlefileaos import ParticleFileAOS
 from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
 from parcels.particleset.baseparticleset import BaseParticleSet
@@ -71,7 +71,7 @@ class ParticleSetAOS(BaseParticleSet):
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+    def __init__(self, fieldset=None, pclass=ScipyParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSetAOS, self).__init__()
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
@@ -187,9 +187,9 @@ class ParticleSetAOS(BaseParticleSet):
                                       "__sizeof__": ObjectClass_sizeof_forward
                                       }
             object_class = None
-            if issubclass(pclass, JITParticle):
-                object_class = type("Object" + pclass.__name__, (pclass, ), object_jit_class_vdict)
-            elif issubclass(pclass, ScipyParticle):
+#             if issubclass(pclass, JITParticle):
+#                 object_class = type("Object" + pclass.__name__, (pclass, ), object_jit_class_vdict)
+            if issubclass(pclass, ScipyParticle):
                 object_class = type("Object" + pclass.__name__, (pclass,), object_scipy_class_vdict)
             if object_class is None:
                 raise TypeError("ParticleSetAOS: Given Particle base class is invalid - derive from either ScipyParticle or JITParticle.")

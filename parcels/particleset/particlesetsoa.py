@@ -9,7 +9,7 @@ import xarray as xr
 from parcels.numba.grid import GridCode
 from parcels.numba.grid.curvilinear import CurvilinearGrid
 from parcels.kernel import Kernel
-from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa
+from parcels.particle import Variable, ScipyParticle# , JITParticle  # noqa
 from parcels.particlefile import ParticleFile
 from parcels.tools.statuscodes import StateCode
 from parcels.particleset.baseparticleset import BaseParticleSet
@@ -84,7 +84,7 @@ class ParticleSetSOA(BaseParticleSet):
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
+    def __init__(self, fieldset=None, pclass=ScipyParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
                  pid_orig=None, interaction_distance=None, **kwargs):
         super(ParticleSetSOA, self).__init__()

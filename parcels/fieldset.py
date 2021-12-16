@@ -177,7 +177,7 @@ class FieldSet(object):
                 time = np.array([time_origin.reltime(t) for t in time])
             else:
                 time_origin = TimeConverter(0)
-            grid = Grid(lon, lat, depth, time, time_origin=time[0], mesh=mesh)
+            grid = Grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             if 'creation_log' not in kwargs.keys():
                 kwargs['creation_log'] = 'from_data'
 

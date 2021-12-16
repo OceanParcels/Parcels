@@ -185,8 +185,8 @@ class BaseKernel(object):
                 all_files_array.append(self.src_file)
         if self.log_file is not None:
             all_files_array.append(self.log_file)
-        if self.lib_file is not None and all_files_array is not None and self.delete_cfiles is not None:
-            BaseKernel.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
+#         if self.lib_file is not None and all_files_array is not None and self.delete_cfiles is not None:
+#             BaseKernel.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
 
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.

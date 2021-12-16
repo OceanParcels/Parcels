@@ -3,11 +3,14 @@ import numpy as np
 from parcels.numba.grid.curvilinear import CurvilinearSGrid, CurvilinearZGrid
 from parcels.numba.grid.rectilinear import RectilinearSGrid, RectilinearZGrid
 from parcels.numba.grid import GridStatus
+from parcels.tools.converters import TimeConverter
 
 
 class Grid():
     def __init__(self, lon=None, lat=None, depth=None, time=None, mesh=None, time_origin=None, grid=None,
                  **kwargs):
+        time_origin = TimeConverter(0) if time_origin is None else time_origin
+
         if grid is not None and not isinstance(grid, Grid):
             self.numba_grid = grid
             self.time_origin = time_origin
