@@ -290,7 +290,7 @@ class ScipyParticle(_Particle):
             self.next_dt = next_dt
 
     def __eq__(self, other):
-        """:returns of this particle object is equal to :arg other"""
+        """:returns if this particle object is equal to :arg other"""
         if type(self) is not type(other):
             return False
         ids_eq = (self.id == other.id)
@@ -307,7 +307,7 @@ class ScipyParticle(_Particle):
         return not (self == other)
 
     def __lt__(self, other):
-        """:returns of this particle object's ID is smaller than :arg other 's ID"""
+        """:returns if this particle object's ID is smaller than :arg other 's ID"""
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)

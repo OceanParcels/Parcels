@@ -2,7 +2,6 @@ from parcels.nodes.PyNode import Node
 from sortedcontainers import SortedList
 from numpy import int32, int64, uint32, uint64
 from copy import deepcopy
-# from parcels.tools import logger
 import gc
 
 
@@ -60,7 +59,7 @@ class DoubleLinkedNodeList(SortedList):
     def irange(self, minimum=None, maximum=None, inclusive=(True, True), reverse=False):
         """
         Generates a double-linked list with consecutive elements in the interval (:arg minimum ... :arg maximum). If
-        :arg inclusive is contains a 'False' item, the interval can be half-open or fully-open. A reversed-order list is
+        :arg inclusive contains a 'False' item, the interval can be half-open or fully-open. A reversed-order list is
         generated using the :arg reverse parameter.
         :arg minimum: minimum element of the list; minimum object must be orderable and countable
         :arg maximum: maximum element of the list; maximum object must be orderable and countable
