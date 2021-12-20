@@ -224,7 +224,7 @@ class BaseParticleFile(ABC):
 
         for vname, dtype in zip(self.var_names, self.var_dtypes):
             if vname not in self._reserved_var_names():
-                fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).min
+                fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).max
                 nc_dtype_fmt = dtype[0] + str(int(int(dtype[-2:])/8))
                 setattr(self, vname, self.dataset.createVariable(vname, nc_dtype_fmt, coords, fill_value=fill_value))
                 getattr(self, vname).long_name = ""
@@ -232,7 +232,7 @@ class BaseParticleFile(ABC):
                 getattr(self, vname).units = "unknown"
 
         for vname, dtype in zip(self.var_names_once, self.var_dtypes_once):
-            fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).min
+            fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).max
             nc_dtype_fmt = dtype[0] + str(int(int(dtype[-2:])/8))
             setattr(self, vname, self.dataset.createVariable(vname, nc_dtype_fmt, "traj", fill_value=fill_value))
             getattr(self, vname).long_name = ""

@@ -55,11 +55,12 @@ class ParticleFileAOS(BaseParticleFile):
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
-        attributes = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
-                      'file_list', 'file_list_once', 'parcels_mesh', 'metadata']
+        attributes = ['name', 'var_names', 'var_dtypes', 'var_names_once', 'var_dtypes_once',
+                      'time_origin', 'lonlatdepth_dtype', 'file_list', 'file_list_once',
+                      'parcels_mesh', 'metadata']
         return attributes
 
-    def read_from_npy(self, file_list, n_timesteps, var):
+    def read_from_npy(self, file_list, n_timesteps, var, dtype):
         """
         Read NPY-files for one variable using a loop over all files.
 
@@ -71,7 +72,11 @@ class ParticleFileAOS(BaseParticleFile):
         :param var: name of the variable to read
         """
         max_timesteps = max(n_timesteps.values()) if n_timesteps.keys() else 0
-        data = np.nan * np.zeros((len(n_timesteps), max_timesteps))
+        fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).max
+        if dtype[0] == 'f':
+            data = fill_value * np.zeros((len(n_timesteps), max_timesteps), dtype=dtype)
+        else:
+            data = fill_value * np.ones((len(n_timesteps), max_timesteps), dtype=dtype)
         time_index = np.zeros(len(n_timesteps))
         id_index = {}
         count = 0
@@ -136,8 +141,8 @@ class ParticleFileAOS(BaseParticleFile):
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']
 
-        for var in self.var_names:
-            data = self.read_from_npy(global_file_list, n_timesteps, var)
+        for var, dtype in zip(self.var_names, self.var_dtypes):
+            data = self.read_from_npy(global_file_list, n_timesteps, var, dtype)
             if var == self.var_names[0]:
                 self.open_netcdf_file(data.shape)
             varout = 'z' if var == 'depth' else var
@@ -148,6 +153,6 @@ class ParticleFileAOS(BaseParticleFile):
             for i in n_timesteps:
                 n_timesteps_once[i] = 1
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, n_timesteps_once, var)
+                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, n_timesteps_once, var, dtype)
 
         self.close_netcdf_file()

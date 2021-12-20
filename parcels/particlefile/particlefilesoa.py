@@ -72,7 +72,7 @@ class ParticleFileSOA(BaseParticleFile):
         :param var: name of the variable to read
         """
         max_timesteps = max(n_timesteps.values()) if n_timesteps.keys() else 0
-        fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).min
+        fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).max
         if dtype[0] == 'f':
             data = fill_value * np.zeros((len(n_timesteps), max_timesteps), dtype=dtype)
         else:
