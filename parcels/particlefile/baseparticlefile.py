@@ -98,11 +98,11 @@ class BaseParticleFile(ABC):
             self.var_names_once = []
             self.var_dtypes_once = []
             for v in self.particleset.collection.ptype.variables:
-                if v.to_write == 'once':
+                if v.to_write == 'once' and self.write_ondelete == False:
                     self.var_names_once += [v.name]
                     self.var_dtypes_once += [v.dtype.__name__]
                     # self.var_dtypes_once += [v.dtype.__name__[0] + str(int(int(v.dtype.__name__[-2:])/8))]
-                elif v.to_write is True:
+                elif v.to_write is True or v.to_write == 'once':
                     self.var_names += [v.name]
                     self.var_dtypes += [v.dtype.__name__]
                     # self.var_dtypes += [v.dtype.__name__[0] + str(int(int(v.dtype.__name__[-2:])/8))]
