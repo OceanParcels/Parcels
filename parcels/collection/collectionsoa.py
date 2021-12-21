@@ -383,11 +383,11 @@ class ParticleCollectionSOA(ParticleCollection):
         for item in pcollection:
             loni = np.where(self._data['lon'] == item.lon)[0]
             loni = loni[0] if loni.size != 0 else None
-            lati = np.where(self._data['lat'] == item.lon)[0]
+            lati = np.where(self._data['lat'] == item.lat)[0]
             lati = lati[0] if lati.size != 0 else None
-            depthi = np.where(self._data['depth'] == item.lon)[0]
+            depthi = np.where(self._data['depth'] == item.depth)[0]
             depthi = depthi[0] if depthi.size != 0 else None
-            timei = np.where(self._data['time'] == item.lon)[0]
+            timei = np.where(self._data['time'] == item.time)[0]
             timei = timei[0] if timei.size != 0 else None
             if (loni == lati) and (loni == depthi) and (loni == timei) and (None not in [loni, lati, depthi, timei]):
                 kwargs = {}
@@ -570,8 +570,6 @@ class ParticleCollectionSOA(ParticleCollection):
                 insert_index = self.add_single(pdata)
                 results.append(insert_index)
         elif isinstance(data_array, dict) and isinstance(data_array['lon'], np.ndarray):
-            # ==== NOT GOING TO WORK CAUSE THE ND.ARRAY NEEDS TO BE OF A SINGLE TYPE ==== #
-            # expect this to be a nD (2 <= n <= 5) array with [lon, lat, [depth, [time, [dt]]]]
             ids = None
             pu_indices = None
             n_pu_data = 0
@@ -580,7 +578,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 mpi_comm = MPI.COMM_WORLD
                 mpi_size = mpi_comm.Get_size()
                 mpi_rank = mpi_comm.Get_rank()
-                spdata = data_array[:, 0:2]  # expecting lon-lat in the first 2 dimensions
+                spdata = np.array([data_array['lon'], data_array['lat']]).transpose([1, 0])
                 min_pu = None
                 if mpi_rank == 0:
                     dists = distance.cdist(spdata, self._pu_centers)
@@ -1070,7 +1068,7 @@ class ParticleCollectionSOA(ParticleCollection):
         :returns a list of retrieved records
         """
         super().pop_multi_by_indices(indices)
-        assert self._ncount > 0
+        assert self._ncount > 0, "SOA collection is empty - no particle available to 'pop'."
         for i in range(len(indices)):
             indices[i] = indices[i] if indices[i] >= 0 else indices[self._ncount+indices[i]]
         if indices in [None, -1] or self._ncount == 1:

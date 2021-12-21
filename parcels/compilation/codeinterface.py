@@ -373,7 +373,6 @@ class InterfaceC(object):
                     (isinstance(function_param["return"], type) or function_param["return"] is None) and \
                     (isinstance(function_param["arguments"], list) or function_param["arguments"] is None):
                 try:
-                    # result[function_param["name"]] = self.libc[function_param["name"]]
                     result[function_param["name"]] = getattr(self.libc, function_param["name"])
                     result[function_param["name"]].restype = function_param["return"]
                     if function_param["arguments"] is not None:
