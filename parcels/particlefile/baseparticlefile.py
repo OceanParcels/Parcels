@@ -221,7 +221,6 @@ class BaseParticleFile(ABC):
             self.z.units = "m"
             self.z.positive = "down"
 
-
         for vname, dtype in zip(self.var_names, self.var_dtypes):
             if vname not in self._reserved_var_names():
                 fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).max
