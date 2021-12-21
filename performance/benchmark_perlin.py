@@ -183,6 +183,38 @@ def perlin_fieldset_from_xarray(periodic_wrap=False):
     else:
         return FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh='flat', allow_time_extrapolation=True)
 
+
+def perlin_fieldset_from_file(periodic_wrap=False, filepath=None):
+    """Simulate a current from structured random noise (i.e. Perlin noise).
+    we use the external package 'perlin-numpy' as field generator, see:
+    https://github.com/pvigier/perlin-numpy
+
+    Perlin noise was introduced in the literature here:
+    Perlin, Ken (July 1985). "An Image Synthesizer". SIGGRAPH Comput. Graph. 19 (97–8930), p. 287–296.
+    doi:10.1145/325165.325247, https://dl.acm.org/doi/10.1145/325334.325247
+    """
+    if filepath is None:
+        return None
+    # img_shape = (perlinres[0]*shapescale[0], int(math.pow(2,noctaves))*perlinres[1]*shapescale[1], int(math.pow(2,noctaves))*perlinres[2]*shapescale[2])
+
+    # # Coordinates of the test fieldset (on A-grid in deg)
+    # lon = np.linspace(0, a, img_shape[1], dtype=np.float32)
+    # lat = np.linspace(0, b, img_shape[2], dtype=np.float32)
+    # totime = img_shape[0] * 24.0 * 60.0 * 60.0
+    # time = np.linspace(0., totime, img_shape[0], dtype=np.float32)
+
+    # dimensions = {'time': time, 'lon': lon, 'lat': lat}
+    # dims = ('time', 'lat', 'lon')
+
+    # variables = {'U': 'Uxr', 'V': 'Vxr'}
+    # dimensions = {'time': 'time', 'lat': 'lat', 'lon': 'lon'}
+    if periodic_wrap:
+        return FieldSet.from_parcels(filepath, time_periodic=delta(days=366), deferred_load=True, chunksize=False)
+        # return FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh='flat', time_periodic=delta(days=366))
+    else:
+        return FieldSet.from_parcels(filepath, time_periodic=delta(days=366), deferred_load=True, allow_time_extrapolation=True)
+        # return FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh='flat', allow_time_extrapolation=True)
+
 class AgeParticle_JIT(JITParticle):
     age = Variable('age', dtype=np.float64, initial=0.0)
     life_expectancy = Variable('life_expectancy', dtype=np.float64, initial=np.finfo(np.float64).max)
@@ -324,7 +356,10 @@ if __name__=='__main__':
         field_fpath = False
         if args.write_out:
             field_fpath = os.path.join(odir,"perlin")
-        fieldset = perlin_fieldset_from_numpy(periodic_wrap=periodicFlag, write_out=field_fpath)
+        if field_fpath and os.path.exists(field_fpath):
+            fieldset = perlin_fieldset_from_file(periodic_wrap=periodicFlag, filepath=field_fpath)
+        else:
+            fieldset = perlin_fieldset_from_numpy(periodic_wrap=periodicFlag, write_out=field_fpath)
 
     if args.compute_mode == 'scipy':
         Nparticle = 2**10

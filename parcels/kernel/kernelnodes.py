@@ -510,10 +510,13 @@ class BenchmarkKernelNodes(KernelNodes):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        self.remove_deleted(pset, output_file=output_file, endtime=endtime)
+        self.benchmark_remove_deleted(pset, output_file=output_file, endtime=endtime)
 
         # Identify particles that threw errors
+        self._mem_io_timings.start_timing()
         n_error = pset.num_error_particles
+        self._mem_io_timings.stop_timing()
+        self._mem_io_timings.accumulate_timing()
         recover_iteration = 0
 
         while n_error > 0:
@@ -552,7 +555,7 @@ class BenchmarkKernelNodes(KernelNodes):
                 node = node.next
 
             # Remove all particles that signalled deletion
-            self.remove_deleted(pset, output_file=output_file, endtime=endtime)
+            self.benchmark_remove_deleted(pset, output_file=output_file, endtime=endtime)
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:

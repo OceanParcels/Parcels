@@ -54,8 +54,11 @@ class BaseBenchmarkKernel(BaseKernel):
         :arg output_file: instance of ParticleFile object of the host ParticleSet where deleted objects are to be written to on deletion
         :arg endtime: timestamp at which the particles are to be deleted
         """
-        self._mem_io_timings.start_timing()
         super(BaseBenchmarkKernel, self).remove_deleted(pset=pset, output_file=output_file, endtime=endtime)
+
+    def benchmark_remove_deleted(self, pset, output_file, endtime):
+        self._mem_io_timings.start_timing()
+        self.remove_deleted(pset=pset, output_file=output_file, endtime=endtime)
         self._mem_io_timings.stop_timing()
         self._mem_io_timings.accumulate_timing()
         # self._mem_io_timings.advance_iteration()

@@ -875,8 +875,7 @@ class ParticleCollectionNodes(ParticleCollection):
         if _add_to_pu:
             index = -1
             pid = np.iinfo(np.uint64).max
-            poid = particle_obj.data.id if isinstance(particle_obj, self._nclass) \
-                else (particle_obj.id if isinstance(particle_obj, ScipyParticle) else np.iinfo(np.uint64).max)
+            poid = particle_obj.data.id if isinstance(particle_obj, self._nclass) else (particle_obj.id if isinstance(particle_obj, ScipyParticle) else np.iinfo(np.uint64).max)
             if (poid == pid) or (poid in [np.iinfo(np.uint64).max, np.iinfo(np.int64).max]) or isinstance(particle_obj, ScipyParticle):
                 pid = self._idgen.nextID(particle_obj.lon, particle_obj.lat, particle_obj.depth, particle_obj.time)
                 if isinstance(particle_obj, self._nclass):
@@ -1452,19 +1451,19 @@ class ParticleCollectionNodes(ParticleCollection):
         """
         # we have 2 options of doing it, both of them are working.
         # ---- Option 1: node-parsing way ---- #
-        # ids = []
-        # ndata = self.begin()
-        # while ndata is not None:
-        #     if not ndata.isvalid():
-        #         ndata = ndata.next
-        #         continue
-        #     if ndata.data.state == OperationCode.Delete:
-        #         ids.append(ndata.data.id)
-        #     ndata = ndata.next
-        # return ids
-        # ---- Option 2: pythonic list-comprehension way ---- #
-        ids = [ndata.data.id for ndata in self._data if ndata.isvalid() and ndata.data.state == OperationCode.Delete]
+        ids = []
+        ndata = self.begin()
+        while ndata is not None:
+            if not ndata.isvalid():
+                ndata = ndata.next
+                continue
+            if ndata.data.state == OperationCode.Delete:
+                ids.append(ndata.data.id)
+            ndata = ndata.next
         return ids
+        # ---- Option 2: pythonic list-comprehension way ---- #
+        # ids = [ndata.data.id for ndata in self._data if ndata.isvalid() and ndata.data.state == OperationCode.Delete]
+        # return ids
 
     def __sizeof__(self):
         """
