@@ -301,10 +301,8 @@ class ParticleSetAOS(BaseParticleSet):
         if key is None:
             return
         if type(key) in [int, np.int32, np.intp]:
-            # self.delete_by_index(key)
             self._collection.delete_by_index(key)
         elif type(key) in [np.int64, np.uint64]:
-            # self.delete_by_ID(key)
             self._collection.delete_by_ID(key)
 
     def _set_particle_vector(self, name, value):
@@ -498,7 +496,6 @@ class ParticleSetAOS(BaseParticleSet):
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
             elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'state'] \
                     and v.to_write:
-                # , 'fileid'
                 raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
             to_write[v.name] = v.to_write
         vars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
