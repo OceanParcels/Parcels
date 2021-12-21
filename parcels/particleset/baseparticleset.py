@@ -16,7 +16,7 @@ from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.kernel.basekernel import BaseKernel  # as Kernel
+from parcels.kernel.basekernel import BaseKernel
 from parcels.collection.collections import ParticleCollection
 from parcels.tools.loggers import logger
 from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
@@ -559,7 +559,6 @@ class BaseParticleSet(NDCluster):
             endtime = maxtime if dt >= 0 else mintime
 
         execute_once = False
-        # if abs(endtime - _starttime) < 1e-5 or np.isclose(dt, 0) or (runtime is None or np.isclose(runtime, 0)):
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
             runtime = 0
@@ -659,7 +658,7 @@ class BaseParticleSet(NDCluster):
                             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
                         fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)
                         fld.write(fldfilename)
-                        fld.to_write += 1  # what does this do ? the variable is boolean, then it's increased - highly confusing ...
+                        fld.to_write += 1
             if abs(time - next_output) < tol:
                 if output_file:
                     output_file.write(self, time)
