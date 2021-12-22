@@ -58,9 +58,9 @@ def _convert_to_reltime(time):
 class ParticleSetNodes(BaseParticleSet):
     """This particle set organizes actual particles in form of a double-linked list, such as:
 
-    None  -> prev    |-> prev   \-> None
-             next   -|   next  -|
-             data        data
+    None  -> prev     | -> prev    | -> None
+             next   - |    next  - |
+             data          data
 
     :arg data is the node's payload, which is an actual ScipyParticle or JITParticle. Remember that, as a node-based
     list, this particle set is built upon a non-indexable collections. This can lead to a speed boost for a few
