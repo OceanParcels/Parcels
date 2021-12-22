@@ -72,11 +72,8 @@ class ParticleFileAOS(BaseParticleFile):
         :param var: name of the variable to read
         """
         max_timesteps = max(n_timesteps.values()) if n_timesteps.keys() else 0
-        fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).max
-        if dtype[0] == 'f':
-            data = fill_value * np.zeros((len(n_timesteps), max_timesteps), dtype=dtype)
-        else:
-            data = fill_value * np.ones((len(n_timesteps), max_timesteps), dtype=dtype)
+        fill_value = self.fill_value_map[dtype]
+        data = fill_value * np.ones((len(n_timesteps), max_timesteps), dtype=dtype)
         time_index = np.zeros(len(n_timesteps))
         id_index = {}
         count = 0
@@ -115,6 +112,13 @@ class ParticleFileAOS(BaseParticleFile):
             MPI.COMM_WORLD.Barrier()
             if MPI.COMM_WORLD.Get_rank() > 0:
                 return  # export only on threat 0
+
+        # Create dictionary to translate datatypes and fill_values
+        self.fmt_map = {np.float32: 'f4', np.float64: 'f8',
+                        np.bool_: 'i1', np.int16: 'i2', np.int32: 'i4', np.int64: 'i8'}
+        self.fill_value_map = {np.float32: np.nan, np.float64: np.nan,
+                               np.bool_: np.iinfo(np.bool_).max, np.int16: np.iinfo(np.int16).max,
+                               np.int32: np.iinfo(np.int32).max, np.int64: np.iinfo(np.int64).max}
 
         # Retrieve all temporary writing directories and sort them in numerical order
         temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),

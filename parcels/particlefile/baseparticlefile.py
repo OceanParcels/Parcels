@@ -100,10 +100,10 @@ class BaseParticleFile(ABC):
             for v in self.particleset.collection.ptype.variables:
                 if v.to_write == 'once' and self.write_ondelete is False:
                     self.var_names_once += [v.name]
-                    self.var_dtypes_once += [v.dtype.__name__]
+                    self.var_dtypes_once += [v.dtype]
                 elif v.to_write is True or v.to_write == 'once':
                     self.var_names += [v.name]
-                    self.var_dtypes += [v.dtype.__name__]
+                    self.var_dtypes += [v.dtype]
             if len(self.var_names_once) > 0:
                 self.written_once = []
                 self.file_list_once = []
@@ -221,16 +221,16 @@ class BaseParticleFile(ABC):
 
         for vname, dtype in zip(self.var_names, self.var_dtypes):
             if vname not in self._reserved_var_names():
-                fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).max
-                nc_dtype_fmt = dtype[0] + str(int(int(dtype[-2:])/8))
+                fill_value = self.fill_value_map[dtype]
+                nc_dtype_fmt = self.fmt_map[dtype]
                 setattr(self, vname, self.dataset.createVariable(vname, nc_dtype_fmt, coords, fill_value=fill_value))
                 getattr(self, vname).long_name = ""
                 getattr(self, vname).standard_name = vname
                 getattr(self, vname).units = "unknown"
 
         for vname, dtype in zip(self.var_names_once, self.var_dtypes_once):
-            fill_value = np.nan if dtype[0] == 'f' else np.iinfo(np.dtype(dtype)).max
-            nc_dtype_fmt = dtype[0] + str(int(int(dtype[-2:])/8))
+            fill_value = self.fill_value_map[dtype]
+            nc_dtype_fmt = self.fmt_map[dtype]
             setattr(self, vname, self.dataset.createVariable(vname, nc_dtype_fmt, "traj", fill_value=fill_value))
             getattr(self, vname).long_name = ""
             getattr(self, vname).standard_name = vname
