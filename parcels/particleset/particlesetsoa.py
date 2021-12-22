@@ -284,10 +284,8 @@ class ParticleSetSOA(BaseParticleSet):
         if key is None:
             return
         if type(key) in [int, np.int32, np.intp]:
-            # self.delete_by_index(key)
             self._collection.delete_by_index(key)
         elif type(key) in [np.int64, np.uint64]:
-            # self.delete_by_ID(key)
             self._collection.delete_by_ID(key)
 
     def _set_particle_vector(self, name, value):

@@ -370,8 +370,8 @@ class SpatialIdGenerator(BaseIdGenerator):
     def setDepthLimits(self, min_depth=0.0, max_depth=1.0):
         """
         abstract function - setting min-max limits to the 'depth' dimension of the ID
-        :arg min_depth: lowest depth value during the simulation. With depth being measured from the waterline, this value would be the waterline depth itself.
-        :arg max_depth: highest depth value during the simulation. With depth being measured from the waterline, this value would be the depth of the sea floor.
+        :arg min_depth: lowest depth value during the simulation. With depth being measured from the sea surface, this value would be the sea surface itself (`min_depth=0`).
+        :arg max_depth: highest depth value during the simulation. With depth being measured from the sea surface positive downward, this value would be the deepest level of the model.
         """
         self._depthbounds = np.array([min_depth, max_depth], dtype=np.float32)
 
@@ -539,8 +539,8 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
     def setDepthLimits(self, min_depth=0.0, max_depth=1.0):
         """
         abstract function - setting min-max limits to the 'depth' dimension of the ID
-        :arg min_depth: lowest depth value during the simulation. With depth being measured from the waterline, this value would be the waterline depth itself.
-        :arg max_depth: highest depth value during the simulation. With depth being measured from the waterline, this value would be the depth of the sea floor.
+        :arg min_depth: lowest depth value during the simulation. With depth being measured from the sea surface, this value would be the sea surface itself (`min_depth=0`).
+        :arg max_depth: highest depth value during the simulation. With depth being measured from the sea surface positive downward, this value would be the deepest level of the model.
         """
         self._depthbounds = np.array([min_depth, max_depth], dtype=np.float32)
 
@@ -793,8 +793,8 @@ class GenerateID_Service(BaseIdGenerator):
     def setDepthLimits(self, min_depth=0.0, max_depth=1.0):
         """
         abstract function - setting min-max limits to the 'depth' dimension of the ID
-        :arg min_depth: lowest depth value during the simulation. With depth being measured from the waterline, this value would be the waterline depth itself.
-        :arg max_depth: highest depth value during the simulation. With depth being measured from the waterline, this value would be the depth of the sea floor.
+        :arg min_depth: lowest depth value during the simulation. With depth being measured from the sea surface, this value would be the sea surface itself (`min_depth=0`).
+        :arg max_depth: highest depth value during the simulation. With depth being measured from the sea surface positive downward, this value would be the deepest level of the model.
         """
         if MPI and self._use_subprocess:
             mpi_comm = MPI.COMM_WORLD

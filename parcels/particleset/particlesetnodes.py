@@ -33,10 +33,6 @@ except:
 
 __all__ = ['ParticleSetNodes']
 
-# ==================================================================================================================== #
-#                                          TODO change description text                                                #
-# ==================================================================================================================== #
-
 
 def _convert_to_array(var):
     """Convert lists and single integers/floats to one-dimensional numpy
@@ -60,7 +56,18 @@ def _convert_to_reltime(time):
 
 
 class ParticleSetNodes(BaseParticleSet):
-    """Container class for storing particle and executing kernel over them.
+    """This particle set organizes actual particles in form of a double-linked list, such as:
+
+    None  -> prev    |-> prev   \-> None
+             next   -|   next  -|
+             data        data
+
+    :arg data is the node's payload, which is an actual ScipyParticle or JITParticle. Remember that, as a node-based
+    list, this particle set is built upon a non-indexable collections. This can lead to a speed boost for a few
+    applications, but it also means that indices to the particles are not preserved (i.e. they change) and that
+    iterating through the particle set is done differently than with structured arrays. Also keep in mind, if you
+    use the node-list in an indexing-manner, then the particle set will be very slow. For guidelines how to use it,
+    consult the tests in 'test_particle_sets.py' and 'test_nodes.py'.
 
     :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
            While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
@@ -260,8 +267,6 @@ class ParticleSetNodes(BaseParticleSet):
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
 
-        # ============ ================================= TODO ============================== ============ #
-        # ============ THIS BELONGS INTO THE COLLECTION, JUST WITH A REFERENCE PROPERTY HERE ============ #
         if lonlatdepth_dtype is not None:
             lonlatdepth_dtype = lonlatdepth_dtype
         else:
@@ -271,7 +276,6 @@ class ParticleSetNodes(BaseParticleSet):
                 lonlatdepth_dtype = np.float32
         assert lonlatdepth_dtype in [np.float32, np.float64], \
             'lon lat depth precision should be set to either np.float32 or np.float64'
-        # ============ ================================= END =============================== ============ #
 
         # ---- particle data parameter length assertions ---- #
         for kwvar in kwargs:
@@ -1202,7 +1206,7 @@ class ParticleSetNodes(BaseParticleSet):
             callbackdt = np.min(np.array(interupt_dts))
 
         time = _starttime
-        if self.repeatdt:  # and self.rparam is not None:
+        if self.repeatdt:
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
             next_prelease = np.infty if dt > 0 else - np.infty
@@ -1265,7 +1269,7 @@ class ParticleSetNodes(BaseParticleSet):
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
                             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
-                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)  # what does this do ? the variable is boolean, then it's increased - what-the-frog ...
+                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)
                         fld.write(fldfilename)
                         fld.to_write += 1
                 if output_file is not None:
