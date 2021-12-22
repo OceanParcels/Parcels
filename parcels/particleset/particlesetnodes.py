@@ -419,7 +419,7 @@ class ParticleSetNodes(BaseParticleSet):
         *not implemented*, as node-based data structure is _not_ index-based.
         Please use 'data_ids' or 'data_nodes'
         """
-        raise NotImplementedError("'data_indices' function shall not be used as the node-based structure is not indexable.")
+        raise NotImplementedError("'data_indices' function cannot be used as the node-based structure is not indexable.")
 
     def data_ids(self, variable_name, compare_values, invert=False):
         """Get the ID's of all particles where the value of
@@ -508,7 +508,7 @@ class ParticleSetNodes(BaseParticleSet):
         Functionality:
         *not implemented*, as node-based data structure is _not_ index-based.
         """
-        raise NotImplementedError("'populate_indices' function shall not be used as the node-based structure is not indexable.")
+        raise NotImplementedError("'populate_indices' function cannot be used as the node-based structure is not indexable.")
 
     def cptr(self, index):
         return self._collection.cptr(index)
