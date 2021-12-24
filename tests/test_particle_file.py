@@ -174,6 +174,29 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_write_dtypes_pfile(fieldset, mode, pset_mode, tmpdir):
+    filepath = tmpdir.join("pfile_dtypes.nc")
+
+    dtypes = ['float32', 'float64', 'int32', 'int64']
+    if mode == 'scipy':
+        dtypes.append('bool_')  # bool only implemented in scipy
+
+    class MyParticle(ptype[mode]):
+        for d in dtypes:
+            # need an exec() here because we need to dynamically set the variable name
+            exec(f'v_{d} = Variable("v_{d}", dtype=np.{d}, initial=0.)')
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=0)
+    pfile = pset.ParticleFile(name=filepath, outputdt=1)
+    pfile.write(pset, 0)
+    ncfile = close_and_compare_netcdffiles(filepath, pfile)
+    for d in dtypes:
+        nc_fmt = d if d != 'bool_' else 'i1'
+        assert ncfile.variables[f'v_{d}'].dtype == nc_fmt
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('npart', [1, 2, 5])
 def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
     filepath = tmpdir.join("pfile_once_written_variables.nc")

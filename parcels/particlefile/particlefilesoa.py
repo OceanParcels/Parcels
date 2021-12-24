@@ -55,11 +55,12 @@ class ParticleFileSOA(BaseParticleFile):
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
-        attributes = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
-                      'file_list', 'file_list_once', 'parcels_mesh', 'metadata']
+        attributes = ['name', 'var_names', 'var_dtypes', 'var_names_once', 'var_dtypes_once',
+                      'time_origin', 'lonlatdepth_dtype', 'file_list', 'file_list_once',
+                      'parcels_mesh', 'metadata']
         return attributes
 
-    def read_from_npy(self, file_list, n_timesteps, var):
+    def read_from_npy(self, file_list, n_timesteps, var, dtype):
         """
         Read NPY-files for one variable using a loop over all files.
 
@@ -71,7 +72,8 @@ class ParticleFileSOA(BaseParticleFile):
         :param var: name of the variable to read
         """
         max_timesteps = max(n_timesteps.values()) if n_timesteps.keys() else 0
-        data = np.nan * np.zeros((len(n_timesteps), max_timesteps))
+        fill_value = self.fill_value_map[dtype]
+        data = fill_value * np.ones((len(n_timesteps), max_timesteps), dtype=dtype)
         time_index = np.zeros(len(n_timesteps))
         id_index = {}
         count = 0
@@ -112,6 +114,13 @@ class ParticleFileSOA(BaseParticleFile):
             if MPI.COMM_WORLD.Get_rank() > 0:
                 return  # export only on threat 0
 
+        # Create dictionary to translate datatypes and fill_values
+        self.fmt_map = {np.float32: 'f4', np.float64: 'f8',
+                        np.bool_: 'i1', np.int16: 'i2', np.int32: 'i4', np.int64: 'i8'}
+        self.fill_value_map = {np.float32: np.nan, np.float64: np.nan,
+                               np.bool_: np.iinfo(np.int8).max, np.int16: np.iinfo(np.int16).max,
+                               np.int32: np.iinfo(np.int32).max, np.int64: np.iinfo(np.int64).max}
+
         # Retrieve all temporary writing directories and sort them in numerical order
         temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),
                             key=lambda x: int(os.path.basename(x)))
@@ -137,8 +146,8 @@ class ParticleFileSOA(BaseParticleFile):
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']
 
-        for var in self.var_names:
-            data = self.read_from_npy(global_file_list, n_timesteps, var)
+        for var, dtype in zip(self.var_names, self.var_dtypes):
+            data = self.read_from_npy(global_file_list, n_timesteps, var, dtype)
             if var == self.var_names[0]:
                 self.open_netcdf_file(data.shape)
             varout = 'z' if var == 'depth' else var
@@ -149,6 +158,6 @@ class ParticleFileSOA(BaseParticleFile):
             for i in n_timesteps:
                 n_timesteps_once[i] = 1
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, n_timesteps_once, var)
+                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, n_timesteps_once, var, dtype)
 
         self.close_netcdf_file()

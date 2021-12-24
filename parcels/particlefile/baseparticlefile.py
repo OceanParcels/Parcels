@@ -63,8 +63,10 @@ class BaseParticleFile(ABC):
     time_origin = None
     lonlatdepth_dtype = None
     var_names = None
+    var_dtypes = None
     file_list = None
     var_names_once = None
+    var_dtypes_once = None
     file_list_once = None
     maxid_written = -1
     tempwritedir_base = None
@@ -92,12 +94,16 @@ class BaseParticleFile(ABC):
             self.time_origin = self.particleset.time_origin
             self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
             self.var_names = []
+            self.var_dtypes = []
             self.var_names_once = []
+            self.var_dtypes_once = []
             for v in self.particleset.collection.ptype.variables:
                 if v.to_write == 'once':
                     self.var_names_once += [v.name]
+                    self.var_dtypes_once += [v.dtype]
                 elif v.to_write is True:
                     self.var_names += [v.name]
+                    self.var_dtypes += [v.dtype]
             if len(self.var_names_once) > 0:
                 self.written_once = []
                 self.file_list_once = []
@@ -213,15 +219,19 @@ class BaseParticleFile(ABC):
             self.z.units = "m"
             self.z.positive = "down"
 
-        for vname in self.var_names:
+        for vname, dtype in zip(self.var_names, self.var_dtypes):
             if vname not in self._reserved_var_names():
-                setattr(self, vname, self.dataset.createVariable(vname, "f4", coords, fill_value=np.nan))
+                fill_value = self.fill_value_map[dtype]
+                nc_dtype_fmt = self.fmt_map[dtype]
+                setattr(self, vname, self.dataset.createVariable(vname, nc_dtype_fmt, coords, fill_value=fill_value))
                 getattr(self, vname).long_name = ""
                 getattr(self, vname).standard_name = vname
                 getattr(self, vname).units = "unknown"
 
-        for vname in self.var_names_once:
-            setattr(self, vname, self.dataset.createVariable(vname, "f4", "traj", fill_value=np.nan))
+        for vname, dtype in zip(self.var_names_once, self.var_dtypes_once):
+            fill_value = self.fill_value_map[dtype]
+            nc_dtype_fmt = self.fmt_map[dtype]
+            setattr(self, vname, self.dataset.createVariable(vname, nc_dtype_fmt, "traj", fill_value=fill_value))
             getattr(self, vname).long_name = ""
             getattr(self, vname).standard_name = vname
             getattr(self, vname).units = "unknown"
