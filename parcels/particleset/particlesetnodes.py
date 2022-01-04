@@ -1289,11 +1289,12 @@ class ParticleSetNodes(BaseParticleSet):
             if dt == 0:
                 break
             if verbose_progress:
-                pbar.update(abs(time - _starttime))
+                pbar.update(abs(time - pbar.prevtime))
+                pbar.prevtime = time
         if output_file is not None:
             output_file.write(self, time)
         if verbose_progress:
-            pbar.finish()
+            pbar.close()
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
              land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):

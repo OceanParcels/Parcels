@@ -147,7 +147,7 @@ class BaseParticleSet(NDCluster):
         """
         pass
 
-    def __create_progressbar(self, starttime, endtime):
+    def _create_progressbar_(self, starttime, endtime):
         pbar = tqdm(total=abs(endtime - starttime))
         pbar.prevtime = starttime
         return pbar

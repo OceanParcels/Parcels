@@ -68,6 +68,8 @@ class BaseParticleFile(ABC):
     file_list = None
     var_names_once = None
     var_dtypes_once = None
+    fill_value_map = dict()
+    fmt_map = dict()
     file_list_once = None
     maxid_written = -1
     tempwritedir_base = None
@@ -98,6 +100,8 @@ class BaseParticleFile(ABC):
 
         self.dataset = None
         self.metadata = {}
+        self.fill_value_map = dict()
+        self.fmt_map = dict()
         if pset_info:
             for v in pset_info.keys():
                 setattr(self, v, pset_info[v])
@@ -377,7 +381,7 @@ class BaseParticleFile(ABC):
         self.dump_psetinfo_to_npy()
 
     @abstractmethod
-    def read_from_npy(self, file_list, time_steps, var):
+    def read_from_npy(self, file_list, var, dtype, time_steps=None, n_timesteps=None):
         """
         Read NPY-files for one variable using a loop over all files.
 
@@ -386,6 +390,8 @@ class BaseParticleFile(ABC):
 
         :param file_list: List that  contains all file names in the output directory
         :param time_steps: Number of time steps that were written in out directory
+        :param n_timesteps: Dictionary with (for each particle) number of time steps that were written in out directory
+        :param dtype: 'dtype' of the variable's data to be written
         :param var: name of the variable to read
         """
         return None

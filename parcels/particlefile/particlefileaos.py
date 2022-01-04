@@ -83,7 +83,7 @@ class ParticleFileAOS(BaseParticleFile):
                       'parcels_mesh', 'metadata']
         return attributes
 
-    def read_from_npy(self, file_list, n_timesteps, var, dtype):
+    def read_from_npy(self, file_list, var, dtype, time_steps=None, n_timesteps=None):
         """
         Read NPY-files for one variable using a loop over all files.
 
@@ -93,8 +93,11 @@ class ParticleFileAOS(BaseParticleFile):
         :param file_list: List that  contains all file names in the output directory
         :param n_timesteps: Dictionary with (for each particle) number of time steps that were written in out directory
         :param var: name of the variable to read
+        :param dtype: 'dtype' of the variable's data to be written
         :returns data dictionary of time instances to be written
         """
+        if n_timesteps is None:
+            raise NotImplementedError("ParticleFileAOS needs a populated dictionary of time steps.")
         max_timesteps = max(n_timesteps.values()) if n_timesteps.keys() else 0
         fill_value = self.fill_value_map[dtype]
         data = fill_value * np.ones((len(n_timesteps), max_timesteps), dtype=dtype)
@@ -105,6 +108,7 @@ class ParticleFileAOS(BaseParticleFile):
             id_index[i] = count
             count += 1
 
+        # -- loop over all files -- #
         for npyfile in file_list:
             try:
                 data_dict = np.load(npyfile, allow_pickle=True).item()
@@ -165,7 +169,7 @@ class ParticleFileAOS(BaseParticleFile):
                     global_file_list_once += pset_info_local['file_list_once']
 
         for var, dtype in zip(self.var_names, self.var_dtypes):
-            data = self.read_from_npy(global_file_list, n_timesteps, var, dtype)
+            data = self.read_from_npy(global_file_list, var, dtype, n_timesteps=n_timesteps)
             if var == self.var_names[0]:
                 self.open_netcdf_file(data.shape)
             varout = 'z' if var == 'depth' else var
@@ -175,7 +179,7 @@ class ParticleFileAOS(BaseParticleFile):
             n_timesteps_once = {}
             for i in n_timesteps:
                 n_timesteps_once[i] = 1
-            for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, n_timesteps_once, var, dtype)
+            for var, dtype in zip(self.var_names_once, self.var_dtypes_once):
+                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, var, dtype, n_timesteps=n_timesteps_once)
 
         self.close_netcdf_file()
