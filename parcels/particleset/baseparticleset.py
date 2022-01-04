@@ -9,7 +9,7 @@ import cftime
 
 from tqdm import tqdm
 
-from parcels.tools.statuscodes import StateCode
+from parcels.tools.statuscodes import StateCode, OperationCode
 from parcels.tools.global_statics import get_package_dir
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
@@ -449,8 +449,10 @@ class BaseParticleSet(NDCluster):
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
-                self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
-                                    execute_once=execute_once)
+                res = self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
+                                          execute_once=execute_once)
+                if res == OperationCode.StopExecution:
+                    return
             # Interaction: interleave the interaction and non-interaction kernel for each time step.
             # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
             else:

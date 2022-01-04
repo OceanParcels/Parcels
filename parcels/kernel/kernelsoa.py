@@ -216,7 +216,7 @@ class KernelSOA(BaseKernel):
             # Apply recovery kernel
             for p in error_pset:
                 if p.state == OperationCode.StopExecution:
-                    return
+                    return OperationCode.StopExecution
                 if p.state == OperationCode.Repeat:
                     p.reset_state()
                 elif p.state == OperationCode.Delete:
