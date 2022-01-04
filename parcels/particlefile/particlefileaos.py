@@ -120,7 +120,7 @@ class ParticleFileAOS(BaseParticleFile):
                                    'close() your ParticleFile at the end of your script.' % self.tempwritedir)
             for ii, i in enumerate(data_dict["id"]):
                 id_ind = id_index[i]
-                t_ind = int(time_index[id_ind]) if 'once' not in file_list[0] else 0
+                t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
                 data[id_ind, t_ind] = data_dict[var][ii]
                 time_index[id_ind] = time_index[id_ind] + 1
 

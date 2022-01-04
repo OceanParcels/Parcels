@@ -176,7 +176,7 @@ class ParticleFileNodes(BaseParticleFile):
                                    'a NetCDF file yourself.\nTo avoid this error, make sure you '
                                    'close() your ParticleFile at the end of your script.' % self.tempwritedir)
             id_ind = np.array(data_dict['index'])
-            t_ind = int(time_index[id_ind]) if 'once' not in file_list[0] else 0
+            t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
             data[id_ind, t_ind] = data_dict[var]
             time_index[id_ind] = time_index[id_ind] + 1
             t_ind_used[t_ind] = 1
