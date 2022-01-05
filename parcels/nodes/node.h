@@ -31,9 +31,6 @@ void reset_data_ptr(NodeJIT* self_node);
 void reset_pu_affinity(NodeJIT* self_node);
 void reset_pu_number(NodeJIT* self_node);
 
-
-
-
 #ifdef __cplusplus
 }
 #endif

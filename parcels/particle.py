@@ -303,7 +303,7 @@ class ScipyParticle(_Particle):
         return ids_eq and attr_eq
 
     def __ne__(self, other):
-        """:returns of this particle object is not equal to :arg other"""
+        """:returns if this particle object is not equal to :arg other"""
         return not (self == other)
 
     def __lt__(self, other):
