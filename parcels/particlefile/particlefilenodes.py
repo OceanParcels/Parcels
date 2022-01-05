@@ -72,6 +72,37 @@ class ParticleFileNodes(BaseParticleFile):
         This function creates the NetCDF record of the ParticleSet inside the output NetCDF file
         :arg coords: tuple of dictionary keys for # entities ("traj(ectories)") and timesteps ("obs(ervations)")
         """
+        super(ParticleFileNodes, self)._create_trajectory_records(coords=coords)
+
+    def _create_variable_records(self, coords):
+        """
+        creates the NetCDF record structure for the (user-defined) variables of a trajectory.
+        :arg coords: tuple of dictionary keys for # entities ("traj(ectories)") and timesteps ("obs(ervations)")
+        """
+
+        self.index = self.dataset.createVariable("index", "i4", coords, fill_value=-2**(31))
+        self.index.long_name = "running (zero-based continuous) indexing element referring to the LOCAL index of a particle within one timestep"
+
+        for vname in self.var_names:
+            if vname not in self._reserved_var_names():
+                # hm, shouldn't that be adaptive instead of fixed to "f4" (e.g. "f8") ? I think I looked that up already once and it violates the CF convention, sadly
+                setattr(self, vname, self.dataset.createVariable(vname, "f4", coords, fill_value=np.nan))
+                getattr(self, vname).long_name = ""
+                getattr(self, vname).standard_name = vname
+                getattr(self, vname).units = "unknown"
+
+        for vname in self.var_names_once:
+            # hm, shouldn't that be adaptive instead of fixed to "f4" (e.g. "f8") ? I think I looked that up already once and it violates the CF convention, sadly
+            setattr(self, vname, self.dataset.createVariable(vname, "f4", "traj", fill_value=np.nan))
+            getattr(self, vname).long_name = ""
+            getattr(self, vname).standard_name = vname
+            getattr(self, vname).units = "unknown"
+
+    def _create_trajectory_records_old(self, coords):
+        """
+        This function creates the NetCDF record of the ParticleSet inside the output NetCDF file
+        :arg coords: tuple of dictionary keys for # entities ("traj(ectories)") and timesteps ("obs(ervations)")
+        """
         # Create ID variable according to CF conventions
         self.id = self.dataset.createVariable("trajectory", "i8", coords, fill_value=-2**(63))  # minint64 fill_value
         self.id.long_name = "Unique identifier for each particle"

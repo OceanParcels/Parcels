@@ -278,6 +278,13 @@ class BaseParticleFile(ABC):
             self.z.units = "m"
             self.z.positive = "down"
 
+        self._create_variable_records(coords=coords)
+
+    def _create_variable_records(self, coords):
+        """
+        creates the NetCDF record structure for the (user-defined) variables of a trajectory.
+        :arg coords: tuple of dictionary keys for # entities ("traj(ectories)") and timesteps ("obs(ervations)")
+        """
         for vname, dtype in zip(self.var_names, self.var_dtypes):
             if vname not in self._reserved_var_names():
                 fill_value = self.fill_value_map[dtype]
