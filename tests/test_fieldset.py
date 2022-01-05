@@ -573,10 +573,7 @@ def test_add_second_vector_field(pset_mode, mode):
         particle.lat += v * particle.dt
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=0.5, lat=0.5)
-    kernel = AdvectionRK4
-    if pset_mode == 'nodes':
-        kernel = pset.Kernel(kernel)
-    pset.execute(kernel+pset.Kernel(SampleUV2), dt=1, runtime=1)
+    pset.execute(pset.Kernel(AdvectionRK4)+pset.Kernel(SampleUV2), dt=1, runtime=1)
 
     assert abs(pset.lon[0] - 2.5) < 1e-9
     assert abs(pset.lat[0] - .5) < 1e-9
