@@ -51,8 +51,8 @@ class BaseIdGenerator(ABC):
     def setDepthLimits(self, min_depth, max_depth):
         """
         abstract function - setting min-max limits to the 'depth' dimension of the ID
-        :arg min_depth: lowest depth value during the simulation. With depth being measured from the waterline, this value would be the waterline depth itself.
-        :arg max_depth: highest depth value during the simulation. With depth being measured from the waterline, this value would be the depth of the sea floor.
+        :arg min_depth: lowest depth value during the simulation. With depth being measured from the sea surface, this value would be the sea surface itself (`min_depth=0`).
+        :arg max_depth: highest depth value during the simulation. When depth is measured from the sea surface positive downward, this value would be the deepest level of the model.
         """
         pass
 
