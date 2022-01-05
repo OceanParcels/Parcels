@@ -1550,7 +1550,7 @@ class ParticleCollectionNodes(ParticleCollection):
                                 indices_to_write.append(self._idgen.map_id_to_index(D))
                                 dataindices.append(self.get_index_by_ID(D))
                             elif type(D) in [int, np.int32, np.uint32]:
-                                raise RuntimeError("CollectNodes>>toDictionary(): Writing particles by index is not supported.")
+                                raise RuntimeError("CollectNodes::toDictionary(): Writing particles by index is not supported.")
                             elif isinstance(D, Node) and (self.get_index_by_node(D) is not None):
                                 indices_to_write.append(self._idgen.map_id_to_index(D.data.id))
                                 dataindices.append(self.get_index_by_node(D))

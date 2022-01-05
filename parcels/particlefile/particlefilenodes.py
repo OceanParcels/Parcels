@@ -117,19 +117,17 @@ class ParticleFileNodes(BaseParticleFile):
             self.z.units = "m"
             self.z.positive = "down"
 
-        for vname, dtype in zip(self.var_names, self.var_dtypes):
+        for vname in self.var_names:
             if vname not in self._reserved_var_names():
-                fill_value = self.fill_value_map[dtype]
-                nc_dtype_fmt = self.fmt_map[dtype]
-                setattr(self, vname, self.dataset.createVariable(vname, nc_dtype_fmt, coords, fill_value=fill_value))
+                # hm, shouldn't that be adaptive instead of fixed to "f4" (e.g. "f8") ? I think I looked that up already once and it violates the CF convention, sadly
+                setattr(self, vname, self.dataset.createVariable(vname, "f4", coords, fill_value=np.nan))
                 getattr(self, vname).long_name = ""
                 getattr(self, vname).standard_name = vname
                 getattr(self, vname).units = "unknown"
 
-        for vname, dtype in zip(self.var_names_once, self.var_dtypes_once):
-            fill_value = self.fill_value_map[dtype]
-            nc_dtype_fmt = self.fmt_map[dtype]
-            setattr(self, vname, self.dataset.createVariable(vname, nc_dtype_fmt, "traj", fill_value=fill_value))
+        for vname in self.var_names_once:
+            # hm, shouldn't that be adaptive instead of fixed to "f4" (e.g. "f8") ? I think I looked that up already once and it violates the CF convention, sadly
+            setattr(self, vname, self.dataset.createVariable(vname, "f4", "traj", fill_value=np.nan))
             getattr(self, vname).long_name = ""
             getattr(self, vname).standard_name = vname
             getattr(self, vname).units = "unknown"
@@ -141,12 +139,12 @@ class ParticleFileNodes(BaseParticleFile):
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
-        attributes = ['name', 'var_names', 'var_dtypes', 'var_names_once', 'var_dtypes_once',
-                      'time_origin', 'lonlatdepth_dtype', 'file_list', 'file_list_once', 'max_index_written',
-                      'time_written', 'parcels_mesh', 'metadata']
+        attributes = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
+                      'file_list', 'file_list_once', 'max_index_written', 'time_written', 'parcels_mesh',
+                      'metadata']
         return attributes
 
-    def read_from_npy(self, file_list, var, dtype, time_steps=None, n_timesteps=None):
+    def read_from_npy(self, file_list, time_steps, var):
         """
         Read NPY-files for one variable using a loop over all files. This differs from indexable structures,
         as here we count the max_index_written, not the maxid_written
@@ -154,14 +152,9 @@ class ParticleFileNodes(BaseParticleFile):
         :param file_list: List that  contains all file names in the output directory
         :param time_steps: Number of time steps that were written in out directory
         :param var: name of the variable to read
-        :param dtype: 'dtype' of the variable's data to be written
-        :returns data dictionary of time instances to be written
         """
-        if time_steps is None:
-            raise NotImplementedError("ParticleFileNodes needs the number of time steps written out in the data dictionary.")
 
-        fill_value = self.fill_value_map[dtype]
-        data = fill_value * np.zeros((self.max_index_written+1, time_steps), dtype=dtype)
+        data = np.nan * np.zeros((self.max_index_written+1, time_steps))
         time_index = np.zeros(self.max_index_written+1, dtype=np.int64)
         t_ind_used = np.zeros(time_steps, dtype=np.int64)
 
@@ -198,13 +191,6 @@ class ParticleFileNodes(BaseParticleFile):
             if MPI.COMM_WORLD.Get_rank() > 0:
                 return  # export only on threat 0
 
-        # Create dictionary to translate datatypes and fill_values
-        self.fmt_map = {np.float32: 'f4', np.float64: 'f8',
-                        np.bool_: 'i1', np.int16: 'i2', np.int32: 'i4', np.int64: 'i8'}
-        self.fill_value_map = {np.float32: np.nan, np.float64: np.nan,
-                               np.bool_: np.iinfo(np.int8).max, np.int16: np.iinfo(np.int16).max,
-                               np.int32: np.iinfo(np.int32).max, np.int64: np.iinfo(np.int64).max}
-
         # Retrieve all temporary writing directories and sort them in numerical order
         temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),
                             key=lambda x: int(os.path.basename(x)))
@@ -229,15 +215,15 @@ class ParticleFileNodes(BaseParticleFile):
         self.max_index_written = global_max_index_written
         self.time_written = np.unique(global_time_written)
 
-        for var, dtype in zip(self.var_names, self.var_dtypes):
-            data = self.read_from_npy(global_file_list, var, dtype, time_steps=len(self.time_written))
+        for var in self.var_names:
+            data = self.read_from_npy(global_file_list, len(self.time_written), var)
             if var == self.var_names[0]:
                 self.open_netcdf_file(data.shape)
             varout = 'z' if var == 'depth' else var
             getattr(self, varout)[:, :] = data
 
         if len(self.var_names_once) > 0:
-            for var, dtype in zip(self.var_names_once, self.var_dtypes_once):
-                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, var, dtype, time_steps=1)
+            for var in self.var_names_once:
+                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var)
 
         self.close_netcdf_file()

@@ -137,12 +137,12 @@ class ParticleFileAOS(BaseParticleFile):
             if MPI.COMM_WORLD.Get_rank() > 0:
                 return  # export only on process 0
 
-        # Create dictionary to translate datatypes and fill_values
-        self.fmt_map = {np.float32: 'f4', np.float64: 'f8',
-                        np.bool_: 'i1', np.int16: 'i2', np.int32: 'i4', np.int64: 'i8'}
-        self.fill_value_map = {np.float32: np.nan, np.float64: np.nan,
-                               np.bool_: np.iinfo(np.int8).max, np.int16: np.iinfo(np.int16).max,
-                               np.int32: np.iinfo(np.int32).max, np.int64: np.iinfo(np.int64).max}
+        ## Create dictionary to translate datatypes and fill_values
+        #self.fmt_map = {np.float32: 'f4', np.float64: 'f8',
+        #                np.bool_: 'i1', np.int16: 'i2', np.int32: 'i4', np.int64: 'i8'}
+        #self.fill_value_map = {np.float32: np.nan, np.float64: np.nan,
+        #                       np.bool_: np.iinfo(np.int8).max, np.int16: np.iinfo(np.int16).max,
+        #                       np.int32: np.iinfo(np.int32).max, np.int64: np.iinfo(np.int64).max}
 
         # Retrieve all temporary writing directories and sort them in numerical order
         temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),

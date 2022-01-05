@@ -218,7 +218,7 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     ncfile.close()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', ['aos', 'soa'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_write_dtypes_pfile(fieldset, mode, pset_mode, tmpdir):
     filepath = tmpdir.join("pfile_dtypes.nc")

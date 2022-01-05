@@ -100,8 +100,6 @@ class BaseParticleFile(ABC):
 
         self.dataset = None
         self.metadata = {}
-        self.fill_value_map = dict()
-        self.fmt_map = dict()
         if pset_info:
             for v in pset_info.keys():
                 setattr(self, v, pset_info[v])
@@ -129,6 +127,13 @@ class BaseParticleFile(ABC):
                 self.file_list_once = []
 
             self.file_list = []
+
+        # Create dictionary to translate datatypes and fill_values
+        self.fmt_map = {np.float32: 'f4', np.float64: 'f8',
+                        np.bool_: 'i1', np.int16: 'i2', np.int32: 'i4', np.int64: 'i8'}
+        self.fill_value_map = {np.float32: np.nan, np.float64: np.nan,
+                               np.bool_: np.iinfo(np.int8).min, np.int16: np.iinfo(np.int16).max,
+                               np.int32: np.iinfo(np.int32).max, np.int64: np.iinfo(np.int64).max}
 
         tmp_dir = tempwritedir
         if tempwritedir is None:
