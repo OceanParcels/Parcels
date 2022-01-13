@@ -119,7 +119,7 @@ class Grid(object):
                 self.periods.value = 0
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
                                            self.tdim, self.z4d,
-                                           self.mesh == 'spherical', self.zonal_periodic,
+                                           int(self.mesh == 'spherical'), int(self.zonal_periodic),
                                            (c_int * len(self.chunk_info))(*self.chunk_info),
                                            self.load_chunk.ctypes.data_as(POINTER(c_int)),
                                            self.time_full[0], self.time_full[-1], pointer(self.periods),
