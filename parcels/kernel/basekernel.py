@@ -96,7 +96,10 @@ class BaseKernel(object):
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
-        self.remove_lib()
+        try:
+            self.remove_lib()
+        except:
+            pass
         self._fieldset = None
         self.field_args = None
         self.const_args = None
@@ -322,6 +325,8 @@ class BaseKernel(object):
             for f in pset.fieldset.get_fields():
                 if type(f) in [VectorField, NestedField, SummedField]:
                     continue
+                if f.data.dtype != np.float32:
+                    raise RuntimeError('Field %s data needs to be float32 in JIT mode' % f.name)
                 if f in self.field_args.values():
                     f.chunk_data()
                 else:

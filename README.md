@@ -27,3 +27,5 @@ See [oceanparcels.org](http://oceanparcels.org/) for further information about [
 [![Build Status](https://github.com/oceanparcels/parcels/workflows/test-suite/badge.svg?branch=master)](https://github.com/OceanParcels/parcels/actions?query=workflow%3Atest-suite+branch%3Amaster)
 [![Anaconda-release](https://anaconda.org/conda-forge/parcels/badges/version.svg)](https://anaconda.org/conda-forge/parcels/)
 [![Anaconda-date](https://anaconda.org/conda-forge/parcels/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/parcels/)
+[![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.823561.svg)](https://doi.org/10.5281/zenodo.823561)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5353/badge)](https://bestpractices.coreinfrastructure.org/projects/5353)

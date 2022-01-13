@@ -1,6 +1,8 @@
 build/*
 docs/_build/*
 gh-pages/*
+lib/
+bin/
 
 *.so
 *.log
@@ -15,7 +17,7 @@ out-*
 .idea/*
 Profile.prof
 .ipynb_checkpoints/*
-*/.ipynb_checkpoints/*
+**/.ipynb_checkpoints/*
 parcels/examples/.ipynb_checkpoints/*
 .cache/*
 .pytest_cache/*
@@ -23,5 +25,5 @@ parcels/examples/.ipynb_checkpoints/*
 parcels.egg-info/*
 dist/parcels*.egg
 parcels/examples/particle*.png
-parcels/_version.py
+parcels/_version_setup.py
 /.pytest_cache/

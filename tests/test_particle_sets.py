@@ -170,6 +170,19 @@ def test_pset_create_with_time(fieldset, pset_mode, mode, npart=100):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_not_multipldt_time(fieldset, pset_mode, mode):
+    times = [0, 1.1]
+    pset = pset_type[pset_mode]['pset'](fieldset, lon=[0]*2, lat=[0]*2, pclass=ptype[mode], time=times)
+
+    def Addlon(particle, fieldset, time):
+        particle.lon += particle.dt
+
+    pset.execute(Addlon, dt=1, runtime=2)
+    assert np.allclose([p.lon for p in pset], [2 - t for t in times])
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_repeated_release(fieldset, pset_mode, mode, npart=10):
     time = np.arange(0, npart, 1)  # release 1 particle every second
     pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(npart), lat=np.zeros(npart),

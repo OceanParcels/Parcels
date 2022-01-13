@@ -32,7 +32,9 @@ def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
     """
-    return [i for i, p in enumerate(pd) if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
+    return [i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt))
+                                             or (np.isnan(p.dt) and np.equal(time, p.time)))
+                                            and np.isfinite(p.id))]
 
 
 def _is_particle_started_yet(particle, time):
@@ -928,7 +930,6 @@ class ParticleCollectionAOS(ParticleCollection):
                             data_dict[var] = np.array([np.int64(getattr(p, var)) for p in self._data[indices_to_write]])
                         else:
                             data_dict[var] = np.array([getattr(p, var) for p in self._data[indices_to_write]])
-                    pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
 
                 pset_errs = [p for p in self._data[indices_to_write] if p.state != OperationCode.Delete and abs(time-p.time) > 1e-3 and np.isfinite(p.time)]
                 for p in pset_errs:

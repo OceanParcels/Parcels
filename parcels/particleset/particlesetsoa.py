@@ -5,6 +5,7 @@ from datetime import timedelta as delta
 import sys
 import numpy as np
 import xarray as xr
+from copy import copy
 
 from parcels.grid import GridCode
 from parcels.grid import CurvilinearGrid
@@ -80,13 +81,15 @@ class ParticleSetSOA(BaseParticleSet):
     :param pid_orig: Optional list of (offsets for) the particle IDs
     :param partitions: List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
            are distributed automatically on the processors
+    :param periodic_domain_zonal: Zonal domain size, used to apply zonally periodic boundaries for particle-particle
+           interaction. If None, no zonally periodic boundaries are applied
 
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
-                 pid_orig=None, interaction_distance=None, **kwargs):
+                 pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
@@ -227,7 +230,8 @@ class ParticleSetSOA(BaseParticleSet):
                 inter_dist_horiz = interaction_distance
             self._neighbor_tree = interaction_class(
                 inter_dist_vert=inter_dist_vert,
-                inter_dist_horiz=inter_dist_horiz)
+                inter_dist_horiz=inter_dist_horiz,
+                periodic_domain_zonal=periodic_domain_zonal)
         # End of neighbor search data structure initialization.
 
         if self.repeatdt:
@@ -236,12 +240,12 @@ class ParticleSetSOA(BaseParticleSet):
             else:
                 if self._collection.data['time'][0] and not np.allclose(self._collection.data['time'], self._collection.data['time'][0]):
                     raise ValueError('All Particle.time should be the same when repeatdt is not None')
-                self.repeat_starttime = self._collection.data['time'][0]
-            self.repeatlon = self._collection.data['lon']
-            self.repeatlat = self._collection.data['lat']
-            self.repeatdepth = self._collection.data['depth']
+                self.repeat_starttime = copy(self._collection.data['time'][0])
+            self.repeatlon = copy(self._collection.data['lon'])
+            self.repeatlat = copy(self._collection.data['lat'])
+            self.repeatdepth = copy(self._collection.data['depth'])
             for kwvar in kwargs:
-                self.repeatkwargs[kwvar] = self._collection.data[kwvar]
+                self.repeatkwargs[kwvar] = copy(self._collection.data[kwvar])
 
         if self.repeatdt:
             if MPI and self._collection.pu_indicators is not None:

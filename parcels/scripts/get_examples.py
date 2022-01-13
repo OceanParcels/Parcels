@@ -6,7 +6,7 @@ from datetime import timedelta
 import shutil
 
 import pkg_resources
-from progressbar import ProgressBar
+from tqdm import tqdm
 
 try:
     # For Python 3.0 and later
@@ -84,9 +84,8 @@ def _still_to_download(file_names, target_path):
 def download_files(source_url, file_names, target_path):
     """Mirror file_names from source_url to target_path."""
     _maybe_create_dir(target_path)
-    pbar = ProgressBar()
     print("Downloading %s ..." % (source_url.split("/")[-1]))
-    for filename in pbar(file_names):
+    for filename in tqdm(file_names):
         _maybe_create_dir(os.path.join(target_path, os.path.dirname(filename)))
         if not os.path.exists(os.path.join(target_path, filename)):
             download_url = source_url + "/" + filename

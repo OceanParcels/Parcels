@@ -4,6 +4,7 @@ from os import path
 
 import dask.array as da
 import numpy as np
+import warnings
 
 from parcels.field import Field, DeferredArray
 from parcels.field import NestedField
@@ -217,6 +218,9 @@ class FieldSet(object):
             if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
                 raise ValueError('Not all velocity Fields have the same gridindexingtype')
 
+            if U.cast_data_dtype != V.cast_data_dtype or (W and W.cast_data_dtype != U.cast_data_dtype):
+                raise ValueError('Not all velocity Fields have the same dtype')
+
         if isinstance(self.U, (SummedField, NestedField)):
             w = self.W if hasattr(self, 'W') else [None]*len(self.U)
             for U, V, W in zip(self.U, self.V, w):
@@ -224,6 +228,10 @@ class FieldSet(object):
         else:
             W = self.W if hasattr(self, 'W') else None
             check_velocityfields(self.U, self.V, W)
+
+        for fld in [self.U, self.V]:
+            if isinstance(fld, SummedField) and fld[0].interp_method in ['partialslip', 'freeslip'] and np.any([fld[0].grid is not f.grid for f in fld]):
+                warnings.warn('Slip boundary conditions may not work well with SummedFields. Be careful', UserWarning)
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()
@@ -276,7 +284,7 @@ class FieldSet(object):
             paths = sorted(glob(str(paths)))
         if len(paths) == 0:
             notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-            raise IOError("FieldSet files not found: %s" % str(notfound_paths))
+            raise IOError("FieldSet files not found for variable %s: %s" % (var, str(notfound_paths)))
         for fp in paths:
             if not path.exists(fp):
                 raise IOError("FieldSet file not found: %s" % str(fp))
