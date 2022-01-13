@@ -368,7 +368,7 @@ class RectilinearSGrid(RectilinearGrid):
         self.gtype = GridCode.RectilinearSGrid
         self.depth = depth
         self.zdim = self.depth.shape[-3]
-        self.z4d = len(self.depth.shape) == 4
+        self.z4d = 1 if len(self.depth.shape) == 4 else 0
         if self.z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
             assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
@@ -497,7 +497,7 @@ class CurvilinearSGrid(CurvilinearGrid):
         self.gtype = GridCode.CurvilinearSGrid
         self.depth = depth
         self.zdim = self.depth.shape[-3]
-        self.z4d = len(self.depth.shape) == 4
+        self.z4d = 1 if len(self.depth.shape) == 4 else 0
         if self.z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
             assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
