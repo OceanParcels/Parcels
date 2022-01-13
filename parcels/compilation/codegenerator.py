@@ -698,9 +698,6 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
     def visit_Pow(self, node):
         node.ccode = "pow"
 
-    def visit_Num(self, node):
-        node.ccode = str(node.n)
-
     def visit_BoolOp(self, node):
         self.visit(node.op)
         for v in node.values:
@@ -834,11 +831,15 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         stat = ', '.join(["%d" if n.ccode in int_vars else "%f" for n in node.values])
         node.ccode = c.Statement('printf("%s\\n", %s)' % (stat, vars))
 
-    def visit_Str(self, node):
+    def visit_Constant(self, node):
         if node.s == 'parcels_customed_Cfunc_pointer_args':
             node.ccode = node.s
+        elif isinstance(node.s, str):
+            node.ccode = ''  # skip strings from docstrings or comments
+        elif isinstance(node.s, bool):
+            node.ccode = "1" if node.s is True else "0"
         else:
-            node.ccode = ''
+            node.ccode = str(node.n)
 
 
 class ArrayKernelGenerator(AbstractKernelGenerator):
