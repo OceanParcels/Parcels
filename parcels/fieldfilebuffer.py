@@ -394,8 +394,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if self.dimensions is None or self.dataset is None or self.chunksize in [None, False, 'auto']:
             return False
         dim_chunked = False
-        dim_chunked = True if (not dim_chunked and type(self.chunksize) is dict and dimension_name in self.chunksize.keys()) else False
-        dim_chunked = True if (not dim_chunked and type(self.chunksize) in [None, False]) else False
+        dim_chunked |= True if (not dim_chunked and type(self.chunksize) is dict and dimension_name in self.chunksize.keys()) else False
+        dim_chunked |= True if (not dim_chunked and type(self.chunksize) in [None, False]) else False
         return (dimension_name in self.dimensions) and dim_chunked
 
     def _is_dimension_in_dataset(self, parcels_dimension_name, netcdf_dimension_name=None):
@@ -453,6 +453,9 @@ class DaskFileBuffer(NetcdfFileBuffer):
         display_name = dimension_name if (dimension_name not in self.dimensions) else self.dimensions[dimension_name]
         return "Did not find {} in NetCDF dims. Please specifiy chunksize as dictionary for NetCDF dimension names, e.g.\n chunksize={{ '{}': <number>, ... }}.".format(display_name, display_name)
 
+    def _dask_NoChunkInfo_warningMessage_(self):
+        return "Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see http://oceanparcels.org/faq.html#field_chunking_config and https://docs.dask.org)."
+
     def _chunkmap_to_chunksize(self):
         """
         [private function - not to be called from outside the class]
@@ -507,9 +510,26 @@ class DaskFileBuffer(NetcdfFileBuffer):
         chunk_dict = {}
         chunk_index_map = {}
         neg_offset = 0
+        chunk_cap = None
+        # ==== obtain the size limit in the Dask config, and treat that as per-item memory limit. ==== #
+        # ==== applicable if a single dimension is set to 'auto' and needs to be resolved.        ==== #
+        if 'array.chunk-size' in da_conf.config.keys():
+            chunk_cap = da_utils.parse_bytes(da_conf.config.get('array.chunk-size'))
+        else:
+            predefined_cap = da_conf.get('array.chunk-size')
+            if predefined_cap is not None:
+                chunk_cap = da_utils.parse_bytes(predefined_cap)
+            else:
+                chunk_cap = None
+        num_autochunk_dims = np.nonzero([self.chunksize[dim][1] == 'auto' for dim in self.chunksize.keys()])[0]
+        if (num_autochunk_dims>0 and chunk_cap is None):
+                logger.info_once(self._dask_NoChunkInfo_warningMessage_())
+        # ==== end of auto-chunk information ==== #
         if 'time' in self.chunksize.keys():
             timei, timename, timesize = self._is_dimension_in_dataset(parcels_dimension_name='time', netcdf_dimension_name=self.chunksize['time'][0])
             timevalue = self.chunksize['time'][1]
+            timevalue = timesize if timevalue in [None, False] else timevalue
+            timevalue = int(math.pow(chunk_cap/np.dtype(np.float64).itemsize, 0.25)) if (timevalue == 'auto') and (chunk_cap is not None) else timevalue
             if timei is not None and timei >= 0 and timevalue > 1:
                 timevalue = min(timesize, timevalue)
                 chunk_dict[timename] = timevalue
@@ -519,6 +539,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if 'depth' in self.chunksize.keys():
             depthi, depthname, depthsize = self._is_dimension_in_dataset(parcels_dimension_name='depth', netcdf_dimension_name=self.chunksize['depth'][0])
             depthvalue = self.chunksize['depth'][1]
+            depthvalue = depthsize if depthvalue in [None, False] else depthvalue
+            depthvalue = int(math.pow(chunk_cap/np.dtype(np.float64).itemsize, 0.25)) if (depthvalue == 'auto') and (chunk_cap is not None) else depthvalue
             if depthi is not None and depthi >= 0 and depthvalue > 1:
                 depthvalue = min(depthsize, depthvalue)
                 chunk_dict[depthname] = depthvalue
@@ -528,6 +550,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if 'lat' in self.chunksize.keys():
             lati, latname, latsize = self._is_dimension_in_dataset(parcels_dimension_name='lat', netcdf_dimension_name=self.chunksize['lat'][0])
             latvalue = self.chunksize['lat'][1]
+            latvalue = latsize if latvalue in [None, False] else latvalue
+            latvalue = int(math.pow(chunk_cap/np.dtype(np.float64).itemsize, 0.25)) if (latvalue == 'auto') and (chunk_cap is not None) else latvalue
             if lati is not None and lati >= 0 and latvalue > 1:
                 latvalue = min(latsize, latvalue)
                 chunk_dict[latname] = latvalue
@@ -537,6 +561,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if 'lon' in self.chunksize.keys():
             loni, lonname, lonsize = self._is_dimension_in_dataset(parcels_dimension_name='lon', netcdf_dimension_name=self.chunksize['lon'][0])
             lonvalue = self.chunksize['lon'][1]
+            lonvalue = lonsize if lonvalue in [None, False] else lonvalue
+            lonvalue = int(math.pow(chunk_cap/np.dtype(np.float64).itemsize, 0.25)) if (lonvalue == 'auto') and (chunk_cap is not None) else lonvalue
             if loni is not None and loni >= 0 and lonvalue > 1:
                 lonvalue = min(lonsize, lonvalue)
                 chunk_dict[lonname] = lonvalue
