@@ -42,7 +42,7 @@ jobs:
       - name: Test Windows
         env:
           OS_NAME: win
-          PY_VERSION: 3.8
+          PY_VERSION: 3
           PYTHON_ARCH: 64
           PYTHON: C:\Miniconda36-x64
         run: |
