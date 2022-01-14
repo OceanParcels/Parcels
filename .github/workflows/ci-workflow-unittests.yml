@@ -45,7 +45,7 @@ jobs:
         shell: bash
   test_windows:
     name: Unittesting on Windows python latest
-    runs-on: windows-2016
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@master
       - name: Test Windows
