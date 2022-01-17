@@ -1,5 +1,5 @@
 """
-
+issue # 1126
 """
 # import sys
 import os
@@ -11,6 +11,7 @@ import _pickle as cPickle
 from time import sleep
 from random import uniform
 from shutil import copyfile
+from parcels.tools import get_cache_dir
 
 
 def get_size(start_path='.'):
@@ -57,11 +58,44 @@ def unlock_close_file_sync(filehandle):
     return
 
 
+def get_compute_env():
+    """
+
+    :return: tuple of: computer_env, cache_head_dir, data_head_dir
+    """
+    computer_env = "local/unspecified"
+    cache_head = ""
+    data_head = ""
+    USERNAME = os.environ.get('USER')
+    if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
+        data_head = "/data/oceanparcels/input_data"
+        cache_head = "/scratch/{}".format(USERNAME)
+        computer_env = "Gemini"
+    elif os.uname()[1] in ["lorenz.science.uu.nl",] or fnmatch.fnmatchcase(os.uname()[1], "node*"):  # Lorenz
+        data_head = "/storage/shared/oceanparcels/input_data"
+        cache_head = "/scratch/{}".format(USERNAME)
+        computer_env = "Lorenz"
+    elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
+        data_head = "/projects/0/topios/hydrodynamic_data"
+        cache_head = "/scratch/local/{}".format(USERNAME)
+        computer_env = "Cartesius"
+    elif fnmatch.fnmatchcase(os.uname()[1], "int*.snellius.*") or fnmatch.fnmatchcase(os.uname()[1], "fcn*") or fnmatch.fnmatchcase(os.uname()[1], "tcn*") or fnmatch.fnmatchcase(os.uname()[1], "gcn*") or fnmatch.fnmatchcase(os.uname()[1], "hcn*"):  # Snellius
+        data_head = "/projects/0/topios/hydrodynamic_data"
+        cache_head = "/scratch-local/{}".format(USERNAME)
+        computer_env = "Snellius"
+    else:  # local setup
+        data_head = "/data"
+        cache_head = "/tmp/{}".format(USERNAME)
+    cache_head = os.path.join(cache_head, os.path.split(get_cache_dir())[1])
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, target_N, sys.argv[1:]))
+    return computer_env, cache_head, data_head
+
+
 class FieldFileCache(object):
     # needs to be a background process because the FieldFileBuffers will just straight access the cached location;
     # the background process needs to assure that the files are actually there
-    _cache_top_dir = "/data"
-    _computer_env = "local"
+    _cache_top_dir = "/data"  # needs to be calculated
+    _computer_env = "local"  # needs to be calculated
     _occupation_file = "available_files.pkl"  # pickled file
     _process_file = "loaded_files.pkl"
     _field_names = []  # name of all fields under management (for easy iteration)
@@ -78,9 +112,10 @@ class FieldFileCache(object):
     _cache_lower_limit = int(3.5*2014*1024*1024)
     _use_thread = False
 
-    def __init__(self, cache_upper_limit=eval(20*1024*1024*1024), cache_lower_limit=eval(3.5*2014*1024*1024), use_thread=False):
-        self._cache_top_dir = "/data"  # needs to be calculated
-        self._computer_env = "local"  # needs to be calculated
+    def __init__(self, cache_upper_limit=eval(20*1024*1024*1024), cache_lower_limit=eval(3.5*2014*1024*1024), use_thread=False, cache_top_dir=None):
+        computer_env, cache_head, data_head = get_compute_env()
+        self._cache_top_dir = cache_top_dir if cache_top_dir is not None and type(cache_top_dir) is str else cache_head
+        self._computer_env = computer_env
         self._occupation_file = "available_files.pkl"
         self._process_file = "loaded_files.pkl"
         self._field_names = []
@@ -96,6 +131,7 @@ class FieldFileCache(object):
         self._cache_upper_limit = int(cache_upper_limit)
         self._cache_lower_limit = int(cache_lower_limit)
         self._use_thread = use_thread
+        self._caching_started = False
         self._T = None
 
     @property
@@ -120,13 +156,19 @@ class FieldFileCache(object):
     def disable_threading(self):
         self._use_thread = False
 
+    @property
+    def caching_started(self):
+        return self._caching_started
+
     def start_caching(self):
         if self._use_thread:
             self._start_thread()
+        self._caching_started = True
 
     def stop_caching(self):
         if self._use_thread:
             self._T.stopped.set()
+        self._caching_started = False
 
     def _start_thread(self):
         self._T = FieldFileCacheThread(self._cache_top_dir, self._computer_env, self._occupation_file, self._process_file,
@@ -135,11 +177,19 @@ class FieldFileCache(object):
                                        self._cache_upper_limit, self._cache_lower_limit)
         self._T.start()
 
+    def is_field_added(self, name):
+        """
+
+        :param name: Name of the Field to be added
+        :return: if Field is already added to the cache
+        """
+        return (name in self._field_names)
+
     def add_field(self, name, files):
         """
         Adds files of a field to the cache and returns the (cached) file paths
-        :param name:
-        :param files:
+        :param name: Name of the Field to be added
+        :param files: Field data files
         :return: list of new file paths with directory to cache
         """
         dirname = files[0]
