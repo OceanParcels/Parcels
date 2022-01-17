@@ -3,6 +3,7 @@ issue # 1126
 """
 # import sys
 import os
+import fnmatch
 # from glob import glob
 import numpy as np
 import portalocker
@@ -71,7 +72,7 @@ def get_compute_env():
         data_head = "/data/oceanparcels/input_data"
         cache_head = "/scratch/{}".format(USERNAME)
         computer_env = "Gemini"
-    elif os.uname()[1] in ["lorenz.science.uu.nl",] or fnmatch.fnmatchcase(os.uname()[1], "node*"):  # Lorenz
+    elif os.uname()[1] in ["lorenz.science.uu.nl", ] or fnmatch.fnmatchcase(os.uname()[1], "node*"):  # Lorenz
         data_head = "/storage/shared/oceanparcels/input_data"
         cache_head = "/scratch/{}".format(USERNAME)
         computer_env = "Lorenz"
@@ -87,7 +88,7 @@ def get_compute_env():
         data_head = "/data"
         cache_head = "/tmp/{}".format(USERNAME)
     cache_head = os.path.join(cache_head, os.path.split(get_cache_dir())[1])
-    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, target_N, sys.argv[1:]))
+    print("running on {} (uname: {}) - cache head directory: {} - data head directory: {}".format(computer_env, os.uname()[1], cache_head, data_head))
     return computer_env, cache_head, data_head
 
 
