@@ -36,7 +36,7 @@ jobs:
   test_windows:
     name: Integration testing on Windows python latest
     if: github.event.pull_request.draft == false
-    runs-on: windows-2016
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@master
       - name: Test Windows
