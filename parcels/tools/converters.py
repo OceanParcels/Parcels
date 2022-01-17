@@ -101,7 +101,7 @@ class TimeConverter(object):
     def __ne__(self, other):
         other = other.time_origin if isinstance(other, TimeConverter) else other
         if not isinstance(other, type(self.time_origin)):
-            return False
+            return True
         return self.time_origin != other
 
     def __gt__(self, other):
