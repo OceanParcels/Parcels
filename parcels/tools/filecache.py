@@ -10,7 +10,7 @@ import threading
 import _pickle as cPickle
 from time import sleep
 from random import uniform
-from shutil import copyfile
+from shutil import copyfile, rmtree
 from parcels.tools import get_cache_dir
 
 
@@ -112,9 +112,11 @@ class FieldFileCache(object):
     _cache_lower_limit = int(3.5*2014*1024*1024)
     _use_thread = False
 
-    def __init__(self, cache_upper_limit=eval(20*1024*1024*1024), cache_lower_limit=eval(3.5*2014*1024*1024), use_thread=False, cache_top_dir=None):
+    def __init__(self, cache_upper_limit=eval(20*1024*1024*1024), cache_lower_limit=eval(3.5*2014*1024*1024), use_thread=False, cache_top_dir=None, remove_cache_dir=True):
         computer_env, cache_head, data_head = get_compute_env()
         self._cache_top_dir = cache_top_dir if cache_top_dir is not None and type(cache_top_dir) is str else cache_head
+        if not os.path.exists(self.cache_top_dir):
+            os.mkdir(self.cache_top_dir)
         self._computer_env = computer_env
         self._occupation_file = "available_files.pkl"
         self._process_file = "loaded_files.pkl"
@@ -132,7 +134,12 @@ class FieldFileCache(object):
         self._cache_lower_limit = int(cache_lower_limit)
         self._use_thread = use_thread
         self._caching_started = False
+        self._remove_cache_top_dir = remove_cache_dir
         self._T = None
+
+    def __del__(self):
+        if self._remove_cache_top_dir and os.path.exists(self.cache_top_dir):
+            rmtree(self.cache_top_dir)
 
     @property
     def cache_top_dir(self):
