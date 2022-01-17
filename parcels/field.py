@@ -188,6 +188,12 @@ class Field(object):
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
         self.dataFiles = kwargs.pop('dataFiles', None)
+        # ========== Section added to auto-cache fieldset data files ========== #
+        self._field_file_cache = kwargs.pop('field_file_cache', None)
+        if self._field_file_cache is not None and self.dataFiles is not None:
+            if not self._field_file_cache.is_field_added(self.name):
+                self.dataFiles = self._field_file_cache.add_field(self.name, self.dataFiles)
+        # ========== ========== ========== END ========== ========== ========== #
         if self.grid._add_last_periodic_data_timestep and self.dataFiles is not None:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
         self._field_fb_class = kwargs.pop('FieldFileBuffer', None)
@@ -212,6 +218,20 @@ class Field(object):
         self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError('Field received an unexpected keyword argument "%s"' % list(kwargs.keys())[0])
+
+    # ========== Section added to auto-cache fieldset data files ========== #
+    @property
+    def field_file_cache(self):
+        return self._field_file_cache
+
+    @field_file_cache.setter
+    def field_file_cache(self, cache):
+        if self._field_file_cache is None:
+            self._field_file_cache = cache
+        if self._field_file_cache is not None and self.dataFiles is not None:
+            if not self._field_file_cache.is_field_added(self.name):
+                self.dataFiles = self._field_file_cache.add_field(self.name, self.dataFiles)
+    # ========== ========== ========== END ========== ========== ========== #
 
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
@@ -1366,6 +1386,11 @@ class Field(object):
             else:
                 ti = g.ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
+
+        # ========== Section added to auto-cache fieldset data files ========== #
+        if self._field_file_cache is not None and self._field_file_cache.is_field_added(self.name):
+            self._field_file_cache.update_next(self.name)
+        # ========== ========== ========== END ========== ========== ========== #
 
         rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None
         filebuffer = self._field_fb_class(self.dataFiles[g.ti + tindex], self.dimensions, self.indices,

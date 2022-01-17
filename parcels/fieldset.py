@@ -16,6 +16,7 @@ from parcels.grid import GridCode
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
+from parcels.tools.filecache import FieldFileCache
 try:
     from mpi4py import MPI
 except:
@@ -34,6 +35,7 @@ class FieldSet(object):
     """
     def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
+        self._field_file_cache = None
         self.completed = False
         if U:
             self.add_field(U, 'U')
@@ -47,6 +49,14 @@ class FieldSet(object):
                 self.add_field(field, name)
 
         self.compute_on_defer = None
+
+    @property
+    def field_file_cache(self):
+        return self._field_file_cache
+
+    @field_file_cache.setter
+    def field_file_cache(self, field_file_cache):
+        raise AttributeError("Setting the field file cache a posteori is prohibited.")
 
     @staticmethod
     def checkvaliddimensionsdict(dims):
@@ -163,6 +173,8 @@ class FieldSet(object):
             setattr(self, name, field)
             self.gridset.add_grid(field)
             field.fieldset = self
+            if field.dataFiles is not None and field.field_file_cache is None:
+                field.field_file_cache = self._field_file_cache
 
     def add_constant_field(self, name, value, mesh='flat'):
         """Wrapper function to add a Field that is constant in space,
@@ -362,6 +374,10 @@ class FieldSet(object):
             timestamps = None
 
         fields = {}
+        cls._field_file_cache = kwargs.pop("cache", None) if cls._field_file_cache is None else cls._field_file_cache
+        cache_dir = kwargs.pop("cache", None)
+        if cls._field_file_cache is None:
+            cls._field_file_cache = FieldFileCache(cache_lower_limit=eval(0.5*1024*1024*1024), use_thread=True, cache_top_dir=cache_dir)
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'
         for var, name in variables.items():
@@ -417,7 +433,7 @@ class FieldSet(object):
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, deferred_load=deferred_load,
-                                            fieldtype=fieldtype, chunksize=varchunksize, dataFiles=dFiles, **kwargs)
+                                            fieldtype=fieldtype, chunksize=varchunksize, dataFiles=dFiles, field_file_cache=cls._field_file_cache, **kwargs)
 
         u = fields.pop('U', None)
         v = fields.pop('V', None)
@@ -1039,6 +1055,8 @@ class FieldSet(object):
         :param time: Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
         :param dt: time step of the integration scheme
         """
+        if self._field_file_cache is not None and not self._field_file_cache.caching_started:
+            self._field_file_cache.start_caching()
         signdt = np.sign(dt)
         nextTime = np.infty if dt > 0 else -np.infty
 
