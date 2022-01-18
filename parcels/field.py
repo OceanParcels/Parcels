@@ -11,6 +11,7 @@ import dask.array as da
 import numpy as np
 import xarray as xr
 from pathlib import Path
+from time import sleep
 
 import parcels.tools.interpolation_utils as i_u
 from .fieldfilebuffer import (NetcdfFileBuffer, DeferredNetcdfFileBuffer,
@@ -1389,7 +1390,9 @@ class Field(object):
 
         # ========== Section added to auto-cache fieldset data files ========== #
         if self._field_file_cache is not None and self._field_file_cache.is_field_added(self.name):
-            self._field_file_cache.update_next(self.name)
+            self._field_file_cache.update_next(self.name, ti=(g.ti + tindex))
+            while not self._field_file_cache.is_ready(self.dataFiles[g.ti + tindex], name_hint=self.name):
+                sleep(0.1)
         # ========== ========== ========== END ========== ========== ========== #
 
         rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None

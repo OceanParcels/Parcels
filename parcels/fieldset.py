@@ -33,9 +33,11 @@ class FieldSet(object):
     :param V: :class:`parcels.field.Field` object for meridional velocity component
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
-    def __init__(self, U, V, fields=None):
+    _field_file_cache = None
+
+    def __init__(self, U, V, fields=None, field_file_cache=None):
         self.gridset = GridSet()
-        self._field_file_cache = None
+        self._field_file_cache = field_file_cache
         self.completed = False
         if U:
             self.add_field(U, 'U')
@@ -356,6 +358,9 @@ class FieldSet(object):
                '{parcels_varname: {netcdf_dimname : (parcels_dimname, chunksize_as_int)}, ...}', where 'parcels_dimname' is one of ('time', 'depth', 'lat', 'lon')
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
+        :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
+        :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
+        :param do_cache: switch to enable or disable caching (default: True [= enabled])
 
         For usage examples see the following tutorials:
 
@@ -375,9 +380,10 @@ class FieldSet(object):
 
         fields = {}
         cls._field_file_cache = kwargs.pop("cache", None) if cls._field_file_cache is None else cls._field_file_cache
-        cache_dir = kwargs.pop("cache", None)
-        if cls._field_file_cache is None:
-            cls._field_file_cache = FieldFileCache(cache_lower_limit=eval(0.5*1024*1024*1024), use_thread=True, cache_top_dir=cache_dir)
+        cache_dir = kwargs.pop("cache_dir", None)
+        do_cache = kwargs.pop("do_cache", True)
+        if cls._field_file_cache is None and do_cache:
+            cls._field_file_cache = FieldFileCache(cache_lower_limit=0.5*1024*1024*1024, use_thread=True, cache_top_dir=cache_dir)
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'
         for var, name in variables.items():
@@ -437,7 +443,7 @@ class FieldSet(object):
 
         u = fields.pop('U', None)
         v = fields.pop('V', None)
-        return cls(u, v, fields=fields)
+        return cls(u, v, fields=fields, field_file_cache=cls._field_file_cache)
 
     @classmethod
     def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
@@ -1055,10 +1061,10 @@ class FieldSet(object):
         :param time: Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
         :param dt: time step of the integration scheme
         """
-        if self._field_file_cache is not None and not self._field_file_cache.caching_started:
-            self._field_file_cache.start_caching()
         signdt = np.sign(dt)
         nextTime = np.infty if dt > 0 else -np.infty
+        if self._field_file_cache is not None and not self._field_file_cache.caching_started:
+            self._field_file_cache.start_caching(signdt=signdt)
 
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
@@ -1200,3 +1206,7 @@ class FieldSet(object):
                 return nextTime
             else:
                 return time + nSteps * dt
+
+    def stop_caching(self):
+        if self._field_file_cache is not None and self._field_file_cache.caching_started:
+            self._field_file_cache.stop_caching()
