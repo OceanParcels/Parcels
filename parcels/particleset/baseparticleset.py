@@ -515,6 +515,7 @@ class BaseParticleSet(NDCluster):
             output_file.write(self, time)
         if verbose_progress:
             pbar.close()
+        self.fieldset.stop_caching()
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
              land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
