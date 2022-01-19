@@ -381,7 +381,7 @@ class FieldSet(object):
         fields = {}
         cls._field_file_cache = kwargs.pop("cache", None) if cls._field_file_cache is None else cls._field_file_cache
         cache_dir = kwargs.pop("cache_dir", None)
-        do_cache = kwargs.pop("do_cache", True)
+        do_cache = kwargs.pop("do_cache", False)
         if cls._field_file_cache is None and do_cache:
             cls._field_file_cache = FieldFileCache(cache_lower_limit=0.5*1024*1024*1024, use_thread=True, cache_top_dir=cache_dir)
         if 'creation_log' not in kwargs.keys():

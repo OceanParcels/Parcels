@@ -29,6 +29,7 @@ from parcels.tools.statuscodes import FieldOutOfBoundSurfaceError
 from parcels.tools.statuscodes import FieldSamplingError
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
+from random import uniform
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
@@ -193,7 +194,7 @@ class Field(object):
         self._field_file_cache = kwargs.pop('field_file_cache', None)
         if self._field_file_cache is not None and self.dataFiles is not None:
             if not self._field_file_cache.is_field_added(self.name):
-                self.dataFiles = self._field_file_cache.add_field(self.name, self.dataFiles)
+                self.dataFiles = self._field_file_cache.add_field(self.name, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
         # ========== ========== ========== END ========== ========== ========== #
         if self.grid._add_last_periodic_data_timestep and self.dataFiles is not None:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
@@ -1391,8 +1392,11 @@ class Field(object):
         # ========== Section added to auto-cache fieldset data files ========== #
         if self._field_file_cache is not None and self._field_file_cache.is_field_added(self.name):
             self._field_file_cache.update_next(self.name, ti=(g.ti + tindex))
+            # self._field_file_cache.wait_for_file(self.name, ti=(g.ti + tindex))
             while not self._field_file_cache.is_ready(self.dataFiles[g.ti + tindex], name_hint=self.name):
-                sleep(0.1)
+                sleeptime = uniform(0.01, 0.2)
+                sleep(sleeptime)
+                self._field_file_cache.update_next(self.name, ti=(g.ti + tindex))
         # ========== ========== ========== END ========== ========== ========== #
 
         rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None
