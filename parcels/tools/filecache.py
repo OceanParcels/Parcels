@@ -16,6 +16,7 @@ from time import sleep
 from random import uniform
 from shutil import copyfile, rmtree
 from .global_statics import get_cache_dir
+from tempfile import gettempdir
 from .loggers import logger
 
 DEBUG = False
@@ -90,7 +91,11 @@ def get_compute_env():
     cache_head = ""
     data_head = ""
     USERNAME = os.environ.get('USER')
-    if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
+    if os.name != 'posix':
+        data_head = os.path.join(gettempdir(), "data")
+        cache_head = os.path.join(gettempdir(), "{}".format(USERNAME))
+        computer_env = "local/non-posix"
+    elif os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
         data_head = "/data/oceanparcels/input_data"
         cache_head = "/scratch/{}".format(USERNAME)
         computer_env = "Gemini"
