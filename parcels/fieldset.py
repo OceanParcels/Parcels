@@ -268,7 +268,7 @@ class FieldSet(object):
             ccode_fieldnames.append(fld.ccode_name)
 
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or f.dataFiles is None:
+            if type(f) in [VectorField, NestedField, SummedField] or (f.dataFiles is None and f.creation_log != 'from_xarray_dataset'):
                 continue
             if f.grid.depth_field is not None:
                 if f.grid.depth_field == 'not_yet_set':
