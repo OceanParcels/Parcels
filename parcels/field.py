@@ -494,7 +494,6 @@ class Field(object):
                 #depth = filebuffer.depth_dimensions
                 _lon_lat_time = [dimensions[d] for d in ['lon', 'lat', 'time']]
                 _dim_depth = [d for d in da.dims if d not in _lon_lat_time][0]
-                print(data.shape)
                 depth = np.empty((0, len(da[_dim_depth].values), len(lat), len(lon)))
                 kwargs['depth_field'] = 'not_yet_set'
             else:
