@@ -939,6 +939,34 @@ def test_fieldset_from_xarray(pset_mode, tdim):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_fieldset_xarray_timevaryingdepth(pset_mode, mode):
+    nx, ny, nz, nt = 100, 200, 20, 10
+    Lx, Ly, Lz, Lt = 1, 1, 1, 2
+    ds = xr.Dataset(coords=dict(x=("x", np.linspace(0, Lx, nx)),
+                                y=("y", np.linspace(0, Ly, ny)),
+                                s=("s", np.linspace(-Lz, 0, nz)),
+                                t=("t", np.linspace(0, Lt, nt))),)
+    ds["z"] = Lz * (ds.t * .1 * (1 + ds.s) + ds.s + 0 * ds.y * ds.x)
+    ds["u"] = Lx / Lt / 10 * (Lz + ds.z)
+    ds["v"] = 0. * ds.z
+    ds["w"] = 0. * ds.z
+
+    variables = {'U': 'u', 'V': 'v', 'depth': 'z'}
+    dimensions = {'U': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
+                  'V': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
+                  'depth': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'}}
+
+    fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh='flat')
+    fieldset.U.set_depth_from_field(fieldset.depth)
+    fieldset.V.set_depth_from_field(fieldset.depth)
+
+    pset = pset_type[pset_mode]['pset'](fieldset, ptype[mode], lon=[Lx/2] * 2, lat=[Ly/2] * 2, depth=[-Lz/2, 0])
+    pset.execute(AdvectionRK4, endtime=1, dt=0.1)
+    assert np.allclose(pset.depth, [-Lz/2, 0])
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_frompop(pset_mode, mode):
     filenames = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
     variables = {'U': 'U', 'V': 'V', 'W': 'W', 'T': 'T'}
