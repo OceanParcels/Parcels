@@ -495,7 +495,7 @@ class Field(object):
                 depth = np.empty((0, len(da[_dim_depth].values), len(lat), len(lon)))
                 kwargs['depth_field'] = 'not_yet_set'
             else:
-                depth = da[dimensions['time']].values
+                depth = da[dimensions['depth']].values
         else:
             depth = np.zeros(1)
 
