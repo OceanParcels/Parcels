@@ -485,13 +485,11 @@ class Field(object):
         interp_method = kwargs.pop('interp_method', 'linear')
 
         time = da[dimensions['time']].values if 'time' in dimensions else np.array([0])
-        #depth = da[dimensions['depth']].values if 'depth' in dimensions else np.array([0])
         lon = da[dimensions['lon']].values
         lat = da[dimensions['lat']].values
 
         if 'depth' in dimensions:
             if dimensions['depth'] == 'not_yet_set':
-                #depth = filebuffer.depth_dimensions
                 _lon_lat_time = [dimensions[d] for d in ['lon', 'lat', 'time']]
                 _dim_depth = [d for d in da.dims if d not in _lon_lat_time][0]
                 depth = np.empty((0, len(da[_dim_depth].values), len(lat), len(lon)))
