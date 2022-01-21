@@ -146,6 +146,7 @@ class FieldFileCache(object):
     _end_ti = {}
     _periodic_wrap = {}  # for each field, shows if not to wrap (0), wrap on first-to-last (-1) or on last-to-first (+1)
     _do_wrapping = {}
+    _occupation_files_lock = None
     _processed_files_lock = None
     _periodic_wrap_lock = None
     _stopped = None
@@ -180,6 +181,7 @@ class FieldFileCache(object):
         self._periodic_wrap = {}
         self._do_wrapping = {}
         self._T = None
+        self._occupation_files_lock = None
         self._processed_files_lock = None
         self._periodic_wrap_lock = None
         self._stopped = None
@@ -299,13 +301,15 @@ class FieldFileCache(object):
         if DEBUG:
             logger.info("Creating caching thread ...")
         self._stopped = threading.Event()
+        self._occupation_files_lock = threading.Lock()
         self._processed_files_lock = threading.Lock()
         self._periodic_wrap_lock = threading.Lock()
         self._T = FieldFileCacheThread(self._cache_top_dir, self._computer_env, self._occupation_file, self._process_file, self._ti_file,
                                        self._field_names, self._original_top_dirs, self._original_filepaths, self._global_files,
                                        self._available_files, self._processed_files, self._tis, self._last_loaded_tis, self._changeflags,
                                        self._cache_upper_limit, self._cache_lower_limit, self._start_ti, self._end_ti, self._do_wrapping,
-                                       self._periodic_wrap, self._processed_files_lock, self._periodic_wrap_lock, self._stopped)
+                                       self._periodic_wrap, self._occupation_files_lock, self._processed_files_lock, self._periodic_wrap_lock,
+                                       self._stopped)
         if DEBUG:
             logger.info("Caching thread created.")
         self._T.start()
@@ -442,14 +446,14 @@ class FieldFileCache(object):
         else:
             return self.is_file_available(filepath, name_hint)
 
-    def wait_for_file(self, filepath, name_hint=None):
-        # TODO
-        pass
-
     def is_file_available(self, filepath, name):
+        if self._use_thread:
+            self._occupation_files_lock.acquire()
         fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
         self._available_files = cPickle.load(fh_available)
         unlock_close_file_sync(fh_available)
+        if self._use_thread:
+            self._occupation_files_lock.release()
         if DEBUG:
             logger.info("Available files in cache: {}".format(self._available_files[name]))
             logger.info("File to locate: {}".format(filepath))
@@ -496,9 +500,13 @@ class FieldFileCache(object):
         if DEBUG:
             logger.info("All processes' time indices: {}".format(process_tis))
         unlock_close_file_sync(fh_time_indices)
+        if self._use_thread:
+            self._occupation_files_lock.acquire()
         fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
         self._available_files = cPickle.load(fh_available)
         unlock_close_file_sync(fh_available)
+        if self._use_thread:
+            self._occupation_files_lock.release()
 
         cache_range_indices = {}
         signdt = 1 if max(list(self._start_ti.values())) == 0 else -1
@@ -552,9 +560,13 @@ class FieldFileCache(object):
                     cacheclean[name] = True
                     continue
 
+                if self._use_thread:
+                    self._occupation_files_lock.acquire()
                 fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
                 self._available_files = cPickle.load(fh_available)
                 unlock_close_file_sync(fh_available)
+                if self._use_thread:
+                    self._occupation_files_lock.release()
                 if (self._global_files[name][i] in self._available_files[name]) and (os.path.exists(self._global_files[name][i])):
                     if not file_check_lock_busy(self._global_files[name][i]):
                         os.remove(self._global_files[name][i])
@@ -562,9 +574,13 @@ class FieldFileCache(object):
                     else:  # file still in use -> lowest usable index
                         indices[name] = i
                         cacheclean[name] = True
+                if self._use_thread:
+                    self._occupation_files_lock.acquire()
                 fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
                 cPickle.dump(self._available_files, fh_available)
                 unlock_close_file_sync(fh_available)
+                if self._use_thread:
+                    self._occupation_files_lock.release()
                 # ==== do not remove more files than necessary -> not below lower cache limit
                 cache_size = get_size(self._cache_top_dir)
                 if DEBUG:
@@ -607,14 +623,22 @@ class FieldFileCache(object):
                         continue  # no new file to add to cache
                     i = cache_range_indices[name][0]
 
+                    if self._use_thread:
+                        self._occupation_files_lock.acquire()
                     fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
                     self._available_files = cPickle.load(fh_available)
                     unlock_close_file_sync(fh_available)
+                    if self._use_thread:
+                        self._occupation_files_lock.release()
                     if self._global_files[name][i] not in self._available_files[name]:
                         self._available_files[name].append(self._global_files[name][i])
+                    if self._use_thread:
+                        self._occupation_files_lock.acquire()
                     fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
                     cPickle.dump(self._available_files, fh_available)
                     unlock_close_file_sync(fh_available)
+                    if self._use_thread:
+                        self._occupation_files_lock.release()
 
                     if not os.path.exists(self._global_files[name][i]):
                         if DEBUG:
@@ -654,7 +678,7 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
                  field_names, original_top_dirs, original_filepaths, global_files,
                  available_files, processed_files, tis, last_loaded_tis, changeflags,
                  cache_upper_limit, cache_lower_limit, start_ti, end_ti, do_wrapping,
-                 periodic_wrap, processed_files_lock, periodic_wrap_lock, stop_event):
+                 periodic_wrap, occupation_files_lock, processed_files_lock, periodic_wrap_lock, stop_event):
         super(FieldFileCache, self).__init__()
         threading.Thread.__init__(self)
         self._cache_top_dir = cache_top_dir
@@ -686,6 +710,7 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
         self._periodic_wrap = {}
         self._do_wrapping = do_wrapping
         self._periodic_wrap = periodic_wrap
+        self._occupation_files_lock = occupation_files_lock
         self._processed_files_lock = processed_files_lock
         self._periodic_wrap_lock = periodic_wrap_lock
         self._stopped = stop_event
