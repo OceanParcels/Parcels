@@ -14,6 +14,7 @@ from pathlib import Path
 from time import sleep
 
 import parcels.tools.interpolation_utils as i_u
+from parcels.tools.filecache import DEBUG as CACHE_DEBUG
 from .fieldfilebuffer import (NetcdfFileBuffer, DeferredNetcdfFileBuffer,
                               DaskFileBuffer, DeferredDaskFileBuffer)
 from .grid import CGrid
@@ -195,6 +196,8 @@ class Field(object):
         if self._field_file_cache is not None and self.dataFiles is not None:
             if not self._field_file_cache.is_field_added(self.name):
                 self.dataFiles = self._field_file_cache.add_field(self.name, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
+                if CACHE_DEBUG:
+                    print("{}".format(enumerate(self.dataFiles)))
         # ========== ========== ========== END ========== ========== ========== #
         if self.grid._add_last_periodic_data_timestep and self.dataFiles is not None:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
