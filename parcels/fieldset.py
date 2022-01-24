@@ -379,7 +379,8 @@ class FieldSet(object):
             timestamps = None
 
         fields = {}
-        cls._field_file_cache = kwargs.pop("cache", None) if cls._field_file_cache is None else cls._field_file_cache
+        cache_obj = kwargs.pop("cache", None)
+        cls._field_file_cache = cache_obj if cls._field_file_cache is None else cls._field_file_cache
         cache_dir = kwargs.pop("cache_dir", None)
         do_cache = kwargs.pop("do_cache", False)
         if cls._field_file_cache is None and do_cache:
