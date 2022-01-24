@@ -300,7 +300,7 @@ class BaseKernel(object):
             try:
                 _ctypes.FreeLibrary(lib._handle) if platform == 'win32' else _ctypes.dlclose(lib._handle)
             except:
-                logger.warning_once("compiled library already freed.")
+                pass
 
     def remove_deleted(self, pset, output_file, endtime):
         """
