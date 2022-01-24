@@ -42,7 +42,16 @@ class NetcdfFileBuffer(_FileBuffer):
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
             self.dataset['decoded'] = True
         except (OSError,) as e:
-            if e.code == 101:  # File is locked and cannot be opened again
+            err_no = None
+            if hasattr(e, 'code'):
+                err_no = e.code
+            elif hasattr(e, 'errno'):
+                err_no = e.errno
+            elif hasattr(e, 'errorcode'):
+                err_no = e.errorcode
+            elif hasattr(e, 'args'):
+                err_no, _ = e.args
+            if err_no is not None and err_no == 101:  # File is locked and cannot be opened again
                 logger.error("You are trying to open a locked file, i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
                              "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
                              "i.e. 'chunksize=None'")
@@ -250,7 +259,16 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
             self.dataset['decoded'] = True
         except (OSError,) as e:
-            if e.code == 101:  # File is locked and cannot be opened again
+            err_no = None
+            if hasattr(e, 'code'):
+                err_no = e.code
+            elif hasattr(e, 'errno'):
+                err_no = e.errno
+            elif hasattr(e, 'errorcode'):
+                err_no = e.errorcode
+            elif hasattr(e, 'args'):
+                err_no, _ = e.args
+            if err_no is not None and err_no == 101:  # File is locked and cannot be opened again
                 logger.error("You are trying to open a locked file, i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
                              "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
                              "i.e. 'chunksize=None'")

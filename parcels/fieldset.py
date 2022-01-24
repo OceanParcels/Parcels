@@ -387,10 +387,8 @@ class FieldSet(object):
             cls._field_file_cache = FieldFileCache(cache_lower_limit=0.5*1024*1024*1024, use_thread=True, cache_top_dir=cache_dir)
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'
-        disable_chunking = False
         if not (type(filenames) is dict):
             # then we just have a list of filenames for all files. Chunking won't work here. Why ? Cause chunking requires file locking
-            disable_chunking = True
             if cls._field_file_cache is None:
                 chunksize = None
                 logger.warn_once("You have defined chunking for a fieldset that stores all variables in the same file. This is prohibited by the required file-locking mechanism. Trying to access the files without chunking.")

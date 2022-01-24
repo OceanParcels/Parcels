@@ -373,7 +373,8 @@ class FieldFileCache(object):
             source_paths.append(dname)
             fname = os.path.split(dname)[1]
             if self._named_copy:
-                fname = "{}_{}".format(name, fname)
+                ofname = fname
+                fname = "{}_{}".format(name, ofname)
             destination_paths.append(os.path.join(self._cache_top_dir, fname))
         self._field_names.append(name)
         self._original_top_dirs[name] = topdirname
