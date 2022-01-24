@@ -191,7 +191,7 @@ class Field(object):
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
         inFiles = kwargs.pop('dataFiles', None)
-        self.dataFiles = [dFile for dFile in self.dataFiles] if inFiles is not None else None
+        self.dataFiles = [dFile for dFile in inFiles] if inFiles is not None else None
         # ========== Section added to auto-cache fieldset data files ========== #
         self._field_file_cache = kwargs.pop('field_file_cache', None)
         if self._field_file_cache is not None and self.dataFiles is not None:
