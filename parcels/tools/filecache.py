@@ -518,16 +518,16 @@ class FieldFileCache(object):
             self._periodic_wrap_lock.acquire()
         for name in self._field_names:
             if self._periodic_wrap[name] != 0 and self._do_wrapping[name]:
-                self._prev_processed_files[name] -= 1
-                self._processed_files[name] -= 1
+                self._prev_processed_files[name][:] -= 1
+                self._processed_files[name][:] -= 1
             if DEBUG:
                 logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
             prev_processed = np.where(self.prev_processed_files[name] > 0)[0]
-            progress_ti_before = (prev_processed.max() if signdt > 0 else prev_processed.min()) if np.any(self.prev_processed_files[name]) else self._start_ti[name]
+            progress_ti_before = (prev_processed.max() if signdt > 0 else prev_processed.min()) if np.any(self.prev_processed_files[name] > 0) else self._start_ti[name]
             if DEBUG:
                 logger.info("field '{}':  _processed_files = {}".format(name, self._processed_files[name]))
             now_processed = np.where(self._processed_files[name] > 0)[0]
-            progress_ti_now = (now_processed.max() if signdt > 0 else now_processed.min()) if np.any(self._processed_files[name]) else self._start_ti[name]
+            progress_ti_now = (now_processed.max() if signdt > 0 else now_processed.min()) if np.any(self._processed_files[name] > 0) else self._start_ti[name]
             if progress_ti_now != progress_ti_before:
                 self._changeflags[name] |= True
             if DEBUG:
