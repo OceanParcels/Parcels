@@ -19,7 +19,7 @@ from .global_statics import get_cache_dir
 from tempfile import gettempdir
 from .loggers import logger
 
-DEBUG = False
+DEBUG = True
 
 
 def file_check_lock_busy(filepath):
@@ -151,8 +151,10 @@ class FieldFileCache(object):
     _periodic_wrap_lock = None
     _stopped = None
 
-    def __init__(self, cache_upper_limit=20*1024*1024*1024, cache_lower_limit=3.5*2014*1024*1024, use_thread=False, cache_top_dir=None, remove_cache_dir=True):
+    def __init__(self, cache_upper_limit=20*1024*1024*1024, cache_lower_limit=3.5*2014*1024*1024, use_thread=False, cache_top_dir=None, remove_cache_dir=True, debug=False):
         computer_env, cache_head, data_head = get_compute_env()
+        global DEBUG
+        DEBUG = debug
         self._cache_top_dir = cache_top_dir if cache_top_dir is not None and type(cache_top_dir) is str else cache_head
         self._cache_top_dir = os.path.join(self._cache_top_dir, str(os.getpid()))
         if not os.path.exists(self.cache_top_dir):
