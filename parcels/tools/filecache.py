@@ -142,12 +142,14 @@ class FieldFileCache(object):
     _use_thread = False
     _caching_started = False
     _remove_cache_top_dir = False
+    _named_copy = False
     _start_ti = {}
     _end_ti = {}
     _periodic_wrap = {}  # for each field, shows if not to wrap (0), wrap on first-to-last (-1) or on last-to-first (+1)
     _do_wrapping = {}
     _occupation_files_lock = None
     _processed_files_lock = None
+    _ti_files_lock = None
     _periodic_wrap_lock = None
     _stopped = None
 
@@ -178,6 +180,7 @@ class FieldFileCache(object):
         self._use_thread = use_thread
         self._caching_started = False
         self._remove_cache_top_dir = remove_cache_dir
+        self._named_copy = False
         self._start_ti = {}
         self._end_ti = {}
         self._periodic_wrap = {}
@@ -185,6 +188,7 @@ class FieldFileCache(object):
         self._T = None
         self._occupation_files_lock = None
         self._processed_files_lock = None
+        self._ti_files_lock = None
         self._periodic_wrap_lock = None
         self._stopped = None
 
@@ -203,6 +207,16 @@ class FieldFileCache(object):
     @cache_top_dir.setter
     def cache_top_dir(self, cache_dir_path):
         self._cache_top_dir = cache_dir_path
+
+    @property
+    def named_copy(self):
+        return self._named_copy
+
+    def enable_named_copy(self):
+        self._named_copy = True if not self._caching_started else self._named_copy
+
+    def disable_named_copy(self):
+        self._named_copy = False if not self._caching_started else self._named_copy
 
     @property
     def use_thread(self):
@@ -291,6 +305,14 @@ class FieldFileCache(object):
 
     def stop_caching(self):
         if self._use_thread:
+            if self._occupation_files_lock.locked():
+                self._occupation_files_lock.release()
+            if self._processed_files_lock.locked():
+                self._processed_files_lock.release()
+            if self._ti_files_lock.locked():
+                self._ti_files_lock.release()
+            if self._periodic_wrap_lock.locked():
+                self._periodic_wrap_lock.release()
             # self._stopped.set()
             self._T.stop_execution()
             self._T.join()
@@ -305,13 +327,14 @@ class FieldFileCache(object):
         self._stopped = threading.Event()
         self._occupation_files_lock = threading.Lock()
         self._processed_files_lock = threading.Lock()
+        self._ti_files_lock = threading.Lock()
         self._periodic_wrap_lock = threading.Lock()
         self._T = FieldFileCacheThread(self._cache_top_dir, self._computer_env, self._occupation_file, self._process_file, self._ti_file,
                                        self._field_names, self._original_top_dirs, self._original_filepaths, self._global_files,
                                        self._available_files, self._processed_files, self._tis, self._last_loaded_tis, self._changeflags,
-                                       self._cache_upper_limit, self._cache_lower_limit, self._start_ti, self._end_ti, self._do_wrapping,
-                                       self._periodic_wrap, self._occupation_files_lock, self._processed_files_lock, self._periodic_wrap_lock,
-                                       self._stopped)
+                                       self._cache_upper_limit, self._cache_lower_limit, self._named_copy, self._start_ti, self._end_ti,
+                                       self._do_wrapping, self._periodic_wrap, self._occupation_files_lock, self._processed_files_lock,
+                                       self._ti_files_lock, self._periodic_wrap_lock, self._stopped)
         if DEBUG:
             logger.info("Caching thread created.")
         self._T.start()
@@ -349,6 +372,8 @@ class FieldFileCache(object):
         for dname in files:
             source_paths.append(dname)
             fname = os.path.split(dname)[1]
+            if self._named_copy:
+                fname = "{}_{}".format(name, fname)
             destination_paths.append(os.path.join(self._cache_top_dir, fname))
         self._field_names.append(name)
         self._original_top_dirs[name] = topdirname
@@ -387,6 +412,7 @@ class FieldFileCache(object):
             logger.info("{}: requested timestep {} for field '{}'.".format(str(type(self).__name__), ti, name))
         if self._use_thread:
             self._processed_files_lock.acquire()
+            self._ti_files_lock.acquire()
         fh = lock_open_file_sync(os.path.join(self._cache_top_dir, self._process_file), filemode="rb")
         fh_tis = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="rb")
         self._processed_files = cPickle.load(fh)
@@ -428,6 +454,7 @@ class FieldFileCache(object):
         unlock_close_file_sync(fh_tis)
         if self._use_thread:
             self._processed_files_lock.release()
+            self._ti_files_lock.release()
 
         self._changeflags[name] |= changed_timestep
 
@@ -497,11 +524,15 @@ class FieldFileCache(object):
         unlock_close_file_sync(fh_processed)
         if self._use_thread:
             self._processed_files_lock.release()
+        if self._use_thread:
+            self._ti_files_lock.acquire()
         fh_time_indices = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="rb")
         process_tis = cPickle.load(fh_time_indices)
+        unlock_close_file_sync(fh_time_indices)
+        if self._use_thread:
+            self._ti_files_lock.release()
         if DEBUG:
             logger.info("All processes' time indices: {}".format(process_tis))
-        unlock_close_file_sync(fh_time_indices)
         if self._use_thread:
             self._occupation_files_lock.acquire()
         fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
@@ -679,8 +710,9 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
     def __init__(self, cache_top_dir, computer_env, occupation_file, process_file, ti_file,
                  field_names, original_top_dirs, original_filepaths, global_files,
                  available_files, processed_files, tis, last_loaded_tis, changeflags,
-                 cache_upper_limit, cache_lower_limit, start_ti, end_ti, do_wrapping,
-                 periodic_wrap, occupation_files_lock, processed_files_lock, periodic_wrap_lock, stop_event):
+                 cache_upper_limit, cache_lower_limit, named_copy, start_ti, end_ti,
+                 do_wrapping, periodic_wrap, occupation_files_lock, processed_files_lock,
+                 ti_files_lock, periodic_wrap_lock, stop_event):
         super(FieldFileCache, self).__init__()
         threading.Thread.__init__(self)
         self._cache_top_dir = cache_top_dir
@@ -707,6 +739,7 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
         self._cache_lower_limit = cache_lower_limit
         self._use_thread = True
         self._caching_started = False
+        self._named_copy = named_copy
         self._start_ti = start_ti
         self._end_ti = end_ti
         self._periodic_wrap = {}
@@ -714,6 +747,7 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
         self._periodic_wrap = periodic_wrap
         self._occupation_files_lock = occupation_files_lock
         self._processed_files_lock = processed_files_lock
+        self._ti_files_lock = ti_files_lock
         self._periodic_wrap_lock = periodic_wrap_lock
         self._stopped = stop_event
 

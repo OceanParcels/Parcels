@@ -5,6 +5,7 @@ import numpy as np
 import xarray as xr
 from netCDF4 import Dataset as ncDataset
 
+import traceback
 import datetime
 import math
 import psutil
@@ -40,6 +41,14 @@ class NetcdfFileBuffer(_FileBuffer):
             # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
             self.dataset['decoded'] = True
+        except (OSError,) as e:
+            if e.code == 101:  # File is locked and cannot be opened again
+                logger.error("You are trying to open a locked file, i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
+                             "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
+                             "i.e. 'chunksize=None'")
+                exit()
+            else:
+                traceback.print_stack()
         except:
             logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         "
                                 "It will be opened with no decoding. Filling values might be wrongly parsed."
@@ -240,6 +249,14 @@ class DaskFileBuffer(NetcdfFileBuffer):
             else:
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
             self.dataset['decoded'] = True
+        except (OSError,) as e:
+            if e.code == 101:  # File is locked and cannot be opened again
+                logger.error("You are trying to open a locked file, i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
+                             "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
+                             "i.e. 'chunksize=None'")
+                exit()
+            else:
+                traceback.print_stack()
         except:
             logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
                                 % (self.filename, xr.__version__))
