@@ -613,6 +613,10 @@ class FieldFileCache(object):
                 past_keep_index = cache_range_indices[name][0]
                 i = indices[name]
                 indices[name] += signdt
+                if self._do_wrapping[name]:
+                    indices[name] = (indices[name] + len(self._global_files[name])) % len(self._global_files[name])
+                else:
+                    indices[name] = (min(indices[name], self._end_ti[name]) if signdt > 0 else max(indices[name], self._end_ti[name]))
                 if (signdt > 0 and i >= past_keep_index) or (signdt < 0 and i <= past_keep_index):
                     cacheclean[name] = True
                     continue
@@ -641,7 +645,7 @@ class FieldFileCache(object):
                 # ==== do not remove more files than necessary -> not below lower cache limit
                 cache_size = get_size(self._cache_top_dir)
                 if DEBUG and (np.any(list(cacheclean.values())) or (cache_size < self._cache_lower_limit)):
-                    logger.info("Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
+                    logger.info("[removed cache] Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
                 if (cache_size < self._cache_lower_limit) or np.all(list(cacheclean.values())):
                     break
         for name in self._field_names:
