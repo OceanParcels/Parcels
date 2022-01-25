@@ -255,7 +255,7 @@ class FieldFileCache(object):
         for name in self._field_names:
             self._start_ti[name] = len(self._global_files[name])-1 if signdt < 0 else 0
             self._end_ti[name] = 0 if signdt < 0 else len(self._global_files[name]) - 1
-            self._tis[name] = self._start_ti[name]
+            self._tis[name] = self._start_ti[name] - signdt
             self._last_loaded_tis[name] = self._tis[name]
         process_tis = None
         create_ti_dict = not os.path.exists(os.path.join(self._cache_top_dir, self._ti_file))
@@ -617,7 +617,7 @@ class FieldFileCache(object):
                     self._occupation_files_lock.release()
                 # ==== do not remove more files than necessary -> not below lower cache limit
                 cache_size = get_size(self._cache_top_dir)
-                if DEBUG:
+                if DEBUG and (np.any(list(cacheclean.values())) or (cache_size < self._cache_lower_limit)):
                     logger.info("Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
                 if (cache_size < self._cache_lower_limit) or np.all(list(cacheclean.values())):
                     break
@@ -693,7 +693,7 @@ class FieldFileCache(object):
                         cache_range_indices[name] = (self._start_ti[name], cache_range_indices[name][1]) if (cache_range_indices[name][0] > (len(self._global_files[name]) - 1) and signdt > 0) else cache_range_indices[name]
                         cache_range_indices[name] = (self._start_ti[name], cache_range_indices[name][1]) if (cache_range_indices[name][0] < 0 and signdt < 0) else cache_range_indices[name]
                 cache_size = get_size(self._cache_top_dir)
-                if DEBUG:
+                if DEBUG and (cachefill or (cache_size > self._cache_upper_limit)):
                     logger.info("Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
                 if (cache_size >= self._cache_upper_limit) or cachefill:
                     break
