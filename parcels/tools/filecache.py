@@ -513,6 +513,15 @@ class FieldFileCache(object):
             logger.info("File OK ?: {}".format(file_ok_check))
         return (file_available_check and file_exists_check and file_ok_check)
 
+    def renew_cache(self, name):
+        """
+
+        Just initiates a new cache_load process by setting the changeflags of field :param name.
+        :param name: name of the field to the renewed in cache
+        :return: None
+        """
+        self._changeflags[name] = True
+
     def _load_cache(self):
         """
         Updates the cache. Procedure as follows:
