@@ -38,6 +38,21 @@ def file_check_lock_busy(filepath):
     return result
 
 
+def file_check_OK(filepath):
+    """
+
+    :param filepath: file to be checked
+    :return: if there is no OS or IO error, all is fine (True)
+    """
+    result = True
+    try:
+        fp = open(filepath)
+        fp.close()
+    except (IOError, OSError):
+        result = False
+    return result
+
+
 def get_size(start_path='.'):
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(start_path):
@@ -488,11 +503,16 @@ class FieldFileCache(object):
         unlock_close_file_sync(fh_available)
         if self._use_thread:
             self._occupation_files_lock.release()
+        file_available_check = filepath in self._available_files[name]
+        file_exists_check = os.path.exists(filepath)
+        file_ok_check = file_check_OK(filepath)
         if DEBUG:
             logger.info("Available files in cache: {}".format(self._available_files[name]))
             logger.info("File to locate: {}".format(filepath))
-            logger.info("File located ?: {}".format(filepath in self._available_files[name]))
-        return (filepath in self._available_files[name])
+            logger.info("File located ?: {}".format(file_available_check))
+            logger.info("File exists ?: {}".format(file_exists_check))
+            logger.info("File OK ?: {}".format(file_ok_check))
+        return (file_available_check and file_exists_check and file_ok_check)
 
     def _load_cache(self):
         """
