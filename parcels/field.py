@@ -1403,7 +1403,7 @@ class Field(object):
             self._field_file_cache.update_next(self.name, ti=(g.ti + tindex))
             # self._field_file_cache.wait_for_file(self.name, ti=(g.ti + tindex))
             while not self._field_file_cache.is_ready(self.dataFiles[g.ti + tindex], name_hint=self.name):
-                sleeptime = uniform(0.01, 0.2)
+                sleeptime = uniform(0.01, 0.5)
                 sleep(sleeptime)
                 # self._field_file_cache.update_next(self.name, ti=(g.ti + tindex))
         # ========== ========== ========== END ========== ========== ========== #
