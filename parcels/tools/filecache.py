@@ -617,7 +617,7 @@ class FieldFileCache(object):
                     indices[name] = (indices[name] + len(self._global_files[name])) % len(self._global_files[name])
                 else:
                     indices[name] = (min(indices[name], self._end_ti[name]) if signdt > 0 else max(indices[name], self._end_ti[name]))
-                if (signdt > 0 and (i >= past_keep_index or i>= self._tis[name])) or (signdt < 0 and (i <= past_keep_index or i<= self._tis[name])) or self._global_files[name][self._tis[name]]==self._global_files[name][i]:
+                if (signdt > 0 and (i >= past_keep_index or i >= self._tis[name])) or (signdt < 0 and (i <= past_keep_index or i <= self._tis[name])) or self._global_files[name][self._tis[name]] == self._global_files[name][i]:
                     indices[name] = i
                     cacheclean[name] = True
                     continue
