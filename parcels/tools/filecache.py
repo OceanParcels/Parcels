@@ -6,7 +6,6 @@ import os
 import copy
 import fnmatch
 import errno
-# from glob import glob
 import numpy as np
 import math
 import portalocker
@@ -14,7 +13,7 @@ import threading
 import _pickle as cPickle
 from time import sleep
 from random import uniform
-from shutil import copyfile, rmtree
+from shutil import copyfile, copy2, rmtree
 from .global_statics import get_cache_dir
 from tempfile import gettempdir
 from .loggers import logger
@@ -701,7 +700,11 @@ class FieldFileCache(object):
                     if not os.path.exists(self._global_files[name][i]):
                         if DEBUG:
                             logger.info("field '{}' - loading '{}' to '{}' ...".format(name, self._original_filepaths[name][i], self._global_files[name][i]))
-                        copyfile(self._original_filepaths[name][i], self._global_files[name][i])
+                        # copyfile(self._original_filepaths[name][i], self._global_files[name][i])
+                        copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                        while os.path.getsize(self._global_files[name][i]) != os.path.getsize(self._original_filepaths[name][i]):
+                            sleeptime = uniform(0.1, 0.3)
+                            sleep(sleeptime)
                         if DEBUG:
                             logger.info("field '{}' - '{}' ready.".format(name, self._global_files[name][i]))
                     else:
