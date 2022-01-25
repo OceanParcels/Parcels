@@ -13,7 +13,7 @@ import threading
 import _pickle as cPickle
 from time import sleep
 from random import uniform
-from shutil import copyfile, copy2, rmtree
+from shutil import copyfile, copy2, rmtree  # noqa
 from .global_statics import get_cache_dir
 from tempfile import gettempdir
 from .loggers import logger
