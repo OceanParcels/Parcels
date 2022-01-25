@@ -1405,7 +1405,7 @@ class Field(object):
             while not self._field_file_cache.is_ready(self.dataFiles[g.ti + tindex], name_hint=self.name):
                 sleeptime = uniform(0.01, 0.2)
                 sleep(sleeptime)
-                self._field_file_cache.update_next(self.name, ti=(g.ti + tindex))
+                # self._field_file_cache.update_next(self.name, ti=(g.ti + tindex))
         # ========== ========== ========== END ========== ========== ========== #
 
         rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None
