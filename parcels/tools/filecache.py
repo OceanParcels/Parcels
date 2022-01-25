@@ -617,7 +617,7 @@ class FieldFileCache(object):
                     indices[name] = (indices[name] + len(self._global_files[name])) % len(self._global_files[name])
                 else:
                     indices[name] = (min(indices[name], self._end_ti[name]) if signdt > 0 else max(indices[name], self._end_ti[name]))
-                if (signdt > 0 and i >= past_keep_index) or (signdt < 0 and i <= past_keep_index):
+                if (signdt > 0 and (i >= past_keep_index or i>= self._tis[name])) or (signdt < 0 and (i <= past_keep_index or i<= self._tis[name])):
                     cacheclean[name] = True
                     continue
 
@@ -642,12 +642,12 @@ class FieldFileCache(object):
                 unlock_close_file_sync(fh_available)
                 if self._use_thread:
                     self._occupation_files_lock.release()
-                # ==== do not remove more files than necessary -> not below lower cache limit
-                cache_size = get_size(self._cache_top_dir)
-                if DEBUG and (np.any(list(cacheclean.values())) or (cache_size < self._cache_lower_limit)):
-                    logger.info("[removed cache] Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
-                if (cache_size < self._cache_lower_limit) or np.all(list(cacheclean.values())):
-                    break
+            # ==== do not remove more files than necessary -> not below lower cache limit
+            cache_size = get_size(self._cache_top_dir)
+            if DEBUG and (np.any(list(cacheclean.values())) or (cache_size < self._cache_lower_limit)):
+                logger.info("[removed cache] Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
+            if (cache_size < self._cache_lower_limit) or np.all(list(cacheclean.values())):
+                break
         for name in self._field_names:
             cache_range_indices[name] = (indices[name], cache_range_indices[name][1])
             if DEBUG:
@@ -672,64 +672,63 @@ class FieldFileCache(object):
 
         cache_size = get_size(self._cache_top_dir)
         if DEBUG:
-            logger.info("Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
-        if not (cache_size >= self._cache_upper_limit):
-            cachefill = False
-            while (cache_size < self._cache_upper_limit) and (not cachefill):
-                cachefill = True
-                for name in self._field_names:
-                    if not self._do_wrapping[name] and ((cache_range_indices[name][0] > cache_range_indices[name][1] and signdt >= 0) or (cache_range_indices[name][0] < cache_range_indices[name][1] and signdt < 0)):
-                        continue  # no new file to add to cache
-                    elif not self._changeflags[name]:
-                        continue  # no new file to add to cache
-                    i = cache_range_indices[name][0]
+            logger.info("[before adding] Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
+        cachefill = (cache_size >= self._cache_upper_limit)
+        while (cache_size < self._cache_upper_limit) and (not cachefill):
+            cachefill = True
+            for name in self._field_names:
+                if not self._do_wrapping[name] and ((cache_range_indices[name][0] > cache_range_indices[name][1] and signdt >= 0) or (cache_range_indices[name][0] < cache_range_indices[name][1] and signdt < 0)):
+                    continue  # no new file to add to cache
+                elif not self._changeflags[name]:
+                    continue  # no new file to add to cache
+                i = cache_range_indices[name][0]
 
-                    if self._use_thread:
-                        self._occupation_files_lock.acquire()
-                    fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
-                    self._available_files = cPickle.load(fh_available)
-                    unlock_close_file_sync(fh_available)
-                    if self._use_thread:
-                        self._occupation_files_lock.release()
+                if self._use_thread:
+                    self._occupation_files_lock.acquire()
+                fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
+                self._available_files = cPickle.load(fh_available)
+                unlock_close_file_sync(fh_available)
+                if self._use_thread:
+                    self._occupation_files_lock.release()
 
-                    if not os.path.exists(self._global_files[name][i]):
-                        if DEBUG:
-                            logger.info("field '{}' - loading '{}' to '{}' ...".format(name, self._original_filepaths[name][i], self._global_files[name][i]))
-                        # copyfile(self._original_filepaths[name][i], self._global_files[name][i])
-                        copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
-                        while os.path.getsize(self._global_files[name][i]) != os.path.getsize(self._original_filepaths[name][i]):
-                            sleeptime = uniform(0.1, 0.3)
-                            sleep(sleeptime)
-                        if DEBUG:
-                            logger.info("field '{}' - '{}' ready.".format(name, self._global_files[name][i]))
-                    else:
-                        if DEBUG:
-                            logger.info("field '{}' - '{}' already available.".format(name, self._global_files[name][i]))
-                        pass
+                if not os.path.exists(self._global_files[name][i]):
+                    if DEBUG:
+                        logger.info("field '{}' - loading '{}' to '{}' ...".format(name, self._original_filepaths[name][i], self._global_files[name][i]))
+                    # copyfile(self._original_filepaths[name][i], self._global_files[name][i])
+                    copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    while os.path.getsize(self._global_files[name][i]) != os.path.getsize(self._original_filepaths[name][i]):
+                        sleeptime = uniform(0.1, 0.3)
+                        sleep(sleeptime)
+                    if DEBUG:
+                        logger.info("field '{}' - '{}' ready.".format(name, self._global_files[name][i]))
+                else:
+                    if DEBUG:
+                        logger.info("field '{}' - '{}' already available.".format(name, self._global_files[name][i]))
+                    pass
 
-                    if self._global_files[name][i] not in self._available_files[name]:
-                        self._available_files[name].append(self._global_files[name][i])
-                    if self._use_thread:
-                        self._occupation_files_lock.acquire()
-                    fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
-                    cPickle.dump(self._available_files, fh_available)
-                    unlock_close_file_sync(fh_available)
-                    if self._use_thread:
-                        self._occupation_files_lock.release()
+                if self._global_files[name][i] not in self._available_files[name]:
+                    self._available_files[name].append(self._global_files[name][i])
+                if self._use_thread:
+                    self._occupation_files_lock.acquire()
+                fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
+                cPickle.dump(self._available_files, fh_available)
+                unlock_close_file_sync(fh_available)
+                if self._use_thread:
+                    self._occupation_files_lock.release()
 
-                    self._last_loaded_tis[name] = i
-                    cachefill &= False
-                    if cache_range_indices[name][0] == cache_range_indices[name][1]:
-                        self._changeflags[name] = False  # no new file to add to cache in next run
-                    cache_range_indices[name] = (i+signdt, cache_range_indices[name][1])
-                    if self._do_wrapping[name]:
-                        cache_range_indices[name] = (self._start_ti[name], cache_range_indices[name][1]) if (cache_range_indices[name][0] > (len(self._global_files[name]) - 1) and signdt > 0) else cache_range_indices[name]
-                        cache_range_indices[name] = (self._start_ti[name], cache_range_indices[name][1]) if (cache_range_indices[name][0] < 0 and signdt < 0) else cache_range_indices[name]
-                cache_size = get_size(self._cache_top_dir)
-                if DEBUG and (cachefill or (cache_size > self._cache_upper_limit)):
-                    logger.info("Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
-                if (cache_size >= self._cache_upper_limit) or cachefill:
-                    break
+                self._last_loaded_tis[name] = i
+                cachefill &= False
+                if cache_range_indices[name][0] == cache_range_indices[name][1]:
+                    self._changeflags[name] = False  # no new file to add to cache in next run
+                cache_range_indices[name] = (i+signdt, cache_range_indices[name][1])
+                if self._do_wrapping[name]:
+                    cache_range_indices[name] = (self._start_ti[name], cache_range_indices[name][1]) if (cache_range_indices[name][0] > (len(self._global_files[name]) - 1) and signdt > 0) else cache_range_indices[name]
+                    cache_range_indices[name] = (self._start_ti[name], cache_range_indices[name][1]) if (cache_range_indices[name][0] < 0 and signdt < 0) else cache_range_indices[name]
+            cache_size = get_size(self._cache_top_dir)
+            if DEBUG and (cachefill or (cache_size > self._cache_upper_limit)):
+                logger.info("[after adding] Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
+            if (cache_size >= self._cache_upper_limit) or cachefill:
+                break
 
         self.update_processed_files()
         # fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
