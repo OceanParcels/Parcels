@@ -57,7 +57,7 @@ class NetcdfFileBuffer(_FileBuffer):
                              "i.e. 'chunksize=None'")
                 exit()
             else:
-                logger.warn_once("Unknown OSError in NetcdfFileBuffer.")
+                logger.warning_once("Unknown OSError in NetcdfFileBuffer.")
                 traceback.print_tb(e.__traceback__)
         except:
             logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         "
@@ -275,7 +275,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                              "i.e. 'chunksize=None'")
                 exit()
             else:
-                logger.warn_once("Unknown OSError in NetcdfFileBuffer.")
+                logger.warning_once("Unknown OSError in NetcdfFileBuffer.")
                 traceback.print_stack()
         except:
             logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
