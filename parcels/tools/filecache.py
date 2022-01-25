@@ -687,15 +687,6 @@ class FieldFileCache(object):
                     unlock_close_file_sync(fh_available)
                     if self._use_thread:
                         self._occupation_files_lock.release()
-                    if self._global_files[name][i] not in self._available_files[name]:
-                        self._available_files[name].append(self._global_files[name][i])
-                    if self._use_thread:
-                        self._occupation_files_lock.acquire()
-                    fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
-                    cPickle.dump(self._available_files, fh_available)
-                    unlock_close_file_sync(fh_available)
-                    if self._use_thread:
-                        self._occupation_files_lock.release()
 
                     if not os.path.exists(self._global_files[name][i]):
                         if DEBUG:
@@ -711,6 +702,17 @@ class FieldFileCache(object):
                         if DEBUG:
                             logger.info("field '{}' - '{}' already available.".format(name, self._global_files[name][i]))
                         pass
+
+                    if self._global_files[name][i] not in self._available_files[name]:
+                        self._available_files[name].append(self._global_files[name][i])
+                    if self._use_thread:
+                        self._occupation_files_lock.acquire()
+                    fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
+                    cPickle.dump(self._available_files, fh_available)
+                    unlock_close_file_sync(fh_available)
+                    if self._use_thread:
+                        self._occupation_files_lock.release()
+
                     self._last_loaded_tis[name] = i
                     cachefill &= False
                     if cache_range_indices[name][0] == cache_range_indices[name][1]:
