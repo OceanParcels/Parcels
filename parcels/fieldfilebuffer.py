@@ -52,15 +52,15 @@ class NetcdfFileBuffer(_FileBuffer):
             elif hasattr(e, 'args'):
                 err_no, _ = e.args
             if err_no is not None and err_no == 101:  # File is locked and cannot be opened again
-                logger.error("You are trying to open a locked file, i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
+                logger.error("You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
                              "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
-                             "i.e. 'chunksize=None'")
+                             "i.e. 'chunksize=None'".format(str(self.filename)))
                 exit()
             else:
-                logger.warning_once("Unknown OSError in NetcdfFileBuffer.")
+                logger.warning_once("Unknown OSError in NetcdfFileBuffer when reading {}.".format(str(self.filename)))
                 traceback.print_tb(e.__traceback__)
         except:
-            logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         "
+            logger.warning_once("File '%s' could not be decoded properly by xarray (version: %s).\n         "
                                 "It will be opened with no decoding. Filling values might be wrongly parsed."
                                 % (self.filename, xr.__version__))
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
