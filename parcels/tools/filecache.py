@@ -255,7 +255,7 @@ class FieldFileCache(object):
         for name in self._field_names:
             self._start_ti[name] = len(self._global_files[name])-1 if signdt < 0 else 0
             self._end_ti[name] = 0 if signdt < 0 else len(self._global_files[name]) - 1
-            self._tis[name] = self._start_ti[name] - signdt
+            self._tis[name] = self._start_ti[name] - int(signdt)
             self._last_loaded_tis[name] = self._tis[name]
         process_tis = None
         create_ti_dict = not os.path.exists(os.path.join(self._cache_top_dir, self._ti_file))
