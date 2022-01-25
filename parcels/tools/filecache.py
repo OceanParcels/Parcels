@@ -418,6 +418,8 @@ class FieldFileCache(object):
         fh_tis = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="rb")
         self._processed_files = cPickle.load(fh)
         process_tis = cPickle.load(fh_tis)
+        if DEBUG:
+            logger.info("{}: current timestep {} for field '{}'.".format(str(type(self).__name__), self._tis[name], name))
 
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.acquire()
@@ -429,6 +431,8 @@ class FieldFileCache(object):
             normal_delta = -1 if self._start_ti[name] > 0 else 1
             self._periodic_wrap[name] = 0 if ti_delta == normal_delta else normal_delta
             ti_delta = normal_delta
+            if DEBUG and self._periodic_wrap[name] != 0:
+                logger.info("{}: detected a periodic wrap at ti {} -> {} for field '{}'.".format(str(type(self).__name__), self._tis[name], ti, name))
 
         while self._tis[name] != ti:
             self._tis[name] += ti_delta
