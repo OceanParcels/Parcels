@@ -840,9 +840,9 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
                 self._load_cache()
                 num_files_loaded = 0
                 for name in self._field_names:
-                    num_files_loaded = len(self._available_files[name])
+                    num_files_loaded += len(self._available_files[name])
                 if DEBUG:
                     logger.info("FieldFileCacheThread: files loaded into cache. Cache size: {}".format(num_files_loaded))
-            sleep(1.0)
+            sleep(0.5)
             if self._stopped.is_set():
                 break
