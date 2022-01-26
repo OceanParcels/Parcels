@@ -13,7 +13,7 @@ import threading
 import _pickle as cPickle
 from time import sleep
 from random import uniform
-from shutil import copyfile, copy2, rmtree  # noqa
+from shutil import copyfile, copy, copy2, rmtree  # noqa
 from .global_statics import get_cache_dir
 from tempfile import gettempdir
 from .loggers import logger
@@ -488,7 +488,7 @@ class FieldFileCache(object):
             for name in self._field_names:
                 if filepath in self._global_files[name]:
                     name_hint = name
-        assert name_hint is not None, "Requested field not part of the cache requests."
+            assert name_hint is not None, "Requested field not part of the cache requests."
         if self._use_thread:
             return self._T.is_file_available(filepath, name_hint)
         else:
@@ -511,11 +511,24 @@ class FieldFileCache(object):
             logger.info("File located ?: {}".format(file_available_check))
             logger.info("File exists ?: {}".format(file_exists_check))
             logger.info("File OK ?: {}".format(file_ok_check))
-        return (file_available_check and file_exists_check and file_ok_check)
+        return file_available_check and file_exists_check and file_ok_check
 
     def renew_cache(self, name):
         """
+        Just initiates a new cache_load process by setting the changeflags of field :param name.
+        :param name: name of the field to the renewed in cache
+        :return: None
+        """
+        while not self.caching_started:
+            logger.warn("FieldFileCacheThread not started")
+            sleep(0.1)
+        if self._use_thread:
+            self._T.reset_changeflag(name=name)
+        else:
+            self.reset_changeflag(name=name)
 
+    def reset_changeflag(self, name):
+        """
         Just initiates a new cache_load process by setting the changeflags of field :param name.
         :param name: name of the field to the renewed in cache
         :return: None
@@ -705,7 +718,8 @@ class FieldFileCache(object):
                     if DEBUG:
                         logger.info("field '{}' - loading '{}' to '{}' ...".format(name, self._original_filepaths[name][i], self._global_files[name][i]))
                     # copyfile(self._original_filepaths[name][i], self._global_files[name][i])
-                    copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    copy(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    # copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
                     while os.path.getsize(self._global_files[name][i]) != os.path.getsize(self._original_filepaths[name][i]):
                         sleeptime = uniform(0.1, 0.3)
                         sleep(sleeptime)
@@ -793,6 +807,7 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
         self._ti_files_lock = ti_files_lock
         self._periodic_wrap_lock = periodic_wrap_lock
         self._stopped = stop_event
+        self._sleepreset = False
 
     @property
     def use_thread(self):
@@ -829,20 +844,35 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
     def _start_thread(self):
         pass
 
+    def reset_changeflag(self, name):
+        super(FieldFileCacheThread, self).reset_changeflag(name=name)
+        self._sleepreset = True
+
     def stop_execution(self):
         self._stopped.set()
 
     def run(self):
+        sleeptime = 0.2  # [s]
+        maintain_sleep = True
         while not self._stopped.is_set():
+            if self._sleepreset:
+                sleeptime = 0.2
+                self._sleepreset = False
             if np.any(list(self._changeflags.values())):
                 if DEBUG:
                     logger.info("FieldFileCacheThread: loading files to cache ...")
                 self._load_cache()
-                num_files_loaded = 0
-                for name in self._field_names:
-                    num_files_loaded += len(self._available_files[name])
                 if DEBUG:
+                    num_files_loaded = 0
+                    for name in self._field_names:
+                        num_files_loaded += len(self._available_files[name])
                     logger.info("FieldFileCacheThread: files loaded into cache. Cache size: {}".format(num_files_loaded))
-            sleep(2.0)
+                if not maintain_sleep:
+                    sleeptime /= 2.0
+                maintain_sleep = False
+            else:
+                sleeptime *= 2.0
+                maintain_sleep = True
+            sleep(sleeptime)  # <- load balancing on this parameter: normal aging first, doubling the time if no change and halfing the time after a change. 200ms min. is used when renew_cache() needed to be called.; like TCP-Reno protocoll.
             if self._stopped.is_set():
                 break
