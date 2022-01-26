@@ -843,6 +843,6 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
                     num_files_loaded += len(self._available_files[name])
                 if DEBUG:
                     logger.info("FieldFileCacheThread: files loaded into cache. Cache size: {}".format(num_files_loaded))
-            sleep(0.5)
+            sleep(2.0)
             if self._stopped.is_set():
                 break
