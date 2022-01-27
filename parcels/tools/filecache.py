@@ -599,6 +599,7 @@ class FieldFileCache(object):
                 self._processed_files[name][:] -= 1
             if DEBUG:
                 logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
+            current_ti = self._tis[name]
             prev_processed = np.where(self.prev_processed_files[name] > 0)[0]
             progress_ti_before = (prev_processed.max() if signdt > 0 else prev_processed.min()) if np.any(self.prev_processed_files[name] > 0) else self._start_ti[name]
             if DEBUG:
@@ -617,6 +618,8 @@ class FieldFileCache(object):
             else:
                 # future_keep_index = min(progress_ti_now+5, last_ti) if signdt > 0 else max(progress_ti_now-5, 0)  # look-ahead index limit
                 future_keep_index = self._end_ti[name]  # purely storage limited
+            past_keep_index = min(past_keep_index, max(current_ti - 1, 0)) if signdt > 0 else max(past_keep_index, min(current_ti + 1, last_ti))  # clamping to what is currently processed
+            future_keep_index = max(future_keep_index, min(current_ti + 1, last_ti)) if signdt > 0 else min(future_keep_index, max(current_ti - 1, 0))
             if DEBUG:
                 logger.info("field '{}' (before cleanup): past-ti = {}, future-ti = {}".format(name, past_keep_index, future_keep_index))
             cache_range_indices[name] = (past_keep_index, future_keep_index)
@@ -639,7 +642,8 @@ class FieldFileCache(object):
                     indices[name] = (indices[name] + len(self._global_files[name])) % len(self._global_files[name])
                 else:
                     indices[name] = (min(indices[name], self._end_ti[name]) if signdt > 0 else max(indices[name], self._end_ti[name]))
-                if (signdt > 0 and (i >= past_keep_index or i >= self._tis[name])) or (signdt < 0 and (i <= past_keep_index or i <= self._tis[name])) or self._global_files[name][self._tis[name]] == self._global_files[name][i]:
+                # if (signdt > 0 and (i >= past_keep_index or i >= self._tis[name])) or (signdt < 0 and (i <= past_keep_index or i <= self._tis[name])) or self._global_files[name][self._tis[name]] == self._global_files[name][i]:
+                if (signdt > 0 and i >= past_keep_index) or (signdt < 0 and i <= past_keep_index) or self._global_files[name][self._tis[name]] == self._global_files[name][i]:
                     indices[name] = i
                     cacheclean[name] = True
                     continue
@@ -651,13 +655,15 @@ class FieldFileCache(object):
                 unlock_close_file_sync(fh_available)
                 if self._use_thread:
                     self._occupation_files_lock.release()
-                if (self._global_files[name][i] in self._available_files[name]) and (os.path.exists(self._global_files[name][i])):
-                    if not file_check_lock_busy(self._global_files[name][i]):
+                if (self._global_files[name][i] in self._available_files[name]):
+                    if (os.path.exists(self._global_files[name][i])) and not(file_check_lock_busy(self._global_files[name][i])):
                         os.remove(self._global_files[name][i])
                         self._available_files[name].remove(self._global_files[name][i])
                     else:  # file still in use -> lowest usable index
                         indices[name] = i
                         cacheclean[name] = True
+                else:
+                    pass  # skip because the file is not in cache
                 if self._use_thread:
                     self._occupation_files_lock.acquire()
                 fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
@@ -671,6 +677,7 @@ class FieldFileCache(object):
                 logger.info("[removed cache] Current cache size: {} bytes ({} MB); cleaned fields: {}.".format(cache_size, int(cache_size/(1024*1024)), cacheclean))
             if (cache_size < self._cache_lower_limit) or np.all(list(cacheclean.values())):
                 break
+
         for name in self._field_names:
             cache_range_indices[name] = (indices[name], cache_range_indices[name][1])
             if DEBUG:
