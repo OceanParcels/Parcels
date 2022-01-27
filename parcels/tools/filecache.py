@@ -3,7 +3,7 @@ issue # 1126
 """
 # import sys
 import os
-import copy
+from copy import deepcopy
 import fnmatch
 import errno
 import numpy as np
@@ -261,7 +261,7 @@ class FieldFileCache(object):
         for key in self._processed_files.keys():
             assert key in self._prev_processed_files
             assert len(self._processed_files) == len(self._prev_processed_files)
-            self._prev_processed_files[key] = copy.deepcopy(self._processed_files[key])
+            self._prev_processed_files[key] = deepcopy(self._processed_files[key])
 
     def start_caching(self, signdt):
         if DEBUG:
