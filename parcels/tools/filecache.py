@@ -657,6 +657,8 @@ class FieldFileCache(object):
                     self._occupation_files_lock.release()
                 if (self._global_files[name][i] in self._available_files[name]):
                     if (os.path.exists(self._global_files[name][i])) and not(file_check_lock_busy(self._global_files[name][i])):
+                        if DEBUG:
+                            logger.info("Removing file '{}' with index={} ...".format(self._global_files[name][i], i))
                         os.remove(self._global_files[name][i])
                         self._available_files[name].remove(self._global_files[name][i])
                     else:  # file still in use -> lowest usable index
