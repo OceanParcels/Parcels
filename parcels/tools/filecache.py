@@ -591,6 +591,7 @@ class FieldFileCache(object):
         signdt = 1 if max(list(self._start_ti.values())) == 0 else -1
         indices = {}
         cacheclean = {}
+        files_to_keep = {}
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.acquire()
         for name in self._field_names:
@@ -623,6 +624,7 @@ class FieldFileCache(object):
             if DEBUG:
                 logger.info("field '{}' (before cleanup): past-ti = {}, future-ti = {}".format(name, past_keep_index, future_keep_index))
             cache_range_indices[name] = (past_keep_index, future_keep_index)
+            files_to_keep[name] = list(dict.fromkeys(self._global_files[name][past_keep_index:future_keep_index]))
             indices[name] = self._start_ti[name]
             cacheclean[name] = not self._changeflags[name]
             if self._do_wrapping[name]:
@@ -656,7 +658,7 @@ class FieldFileCache(object):
                 if self._use_thread:
                     self._occupation_files_lock.release()
                 if (self._global_files[name][i] in self._available_files[name]):
-                    if (os.path.exists(self._global_files[name][i])) and not(file_check_lock_busy(self._global_files[name][i])):
+                    if os.path.exists(self._global_files[name][i]) and not file_check_lock_busy(self._global_files[name][i]) and self._global_files[name][i] not in files_to_keep[name]:
                         if DEBUG:
                             logger.info("Removing file '{}' with index={} ...".format(self._global_files[name][i], i))
                         os.remove(self._global_files[name][i])
