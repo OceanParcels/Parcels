@@ -514,6 +514,9 @@ class FieldSet(object):
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
         :param chunksize: size of the chunks in dask loading. Default is None (no chunking)
+        :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
+        :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
+        :param do_cache: switch to enable or disable caching (default: True [= enabled])
 
         """
 
@@ -615,6 +618,9 @@ class FieldSet(object):
         :param gridindexingtype: The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo()
                See also the Grid indexing documentation on oceanparcels.org
         :param chunksize: size of the chunks in dask loading
+        :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
+        :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
+        :param do_cache: switch to enable or disable caching (default: True [= enabled])
 
         """
 
