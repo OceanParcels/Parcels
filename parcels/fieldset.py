@@ -455,8 +455,7 @@ class FieldSet(object):
     @classmethod
     def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False,
-                  tracer_interp_method='cgrid_tracer', chunksize=None,
-                  cache=None, cache_dir=None, do_cache=False, **kwargs):
+                  tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_
@@ -526,7 +525,7 @@ class FieldSet(object):
             raise ValueError("gridindexingtype must be 'nemo' in FieldSet.from_nemo(). Use FieldSet.from_c_grid_dataset otherwise")
         fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                            allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
-                                           chunksize=chunksize, gridindexingtype='nemo', cache=cache, cache_dir=cache_dir, do_cache=do_cache, **kwargs)
+                                           chunksize=chunksize, gridindexingtype='nemo', **kwargs)
         if hasattr(fieldset, 'W'):
             fieldset.W.set_scaling_factor(-1.)
         return fieldset
@@ -534,8 +533,7 @@ class FieldSet(object):
     @classmethod
     def from_mitgcm(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                     allow_time_extrapolation=None, time_periodic=False,
-                    tracer_interp_method='cgrid_tracer', chunksize=None,
-                    cache=None, cache_dir=None, do_cache=False, **kwargs):
+                    tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of MITgcm fields.
            All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
            gridindexing is set to 'mitgcm' for grids that have the shape
@@ -557,14 +555,13 @@ class FieldSet(object):
             raise ValueError("gridindexingtype must be 'mitgcm' in FieldSet.from_mitgcm(). Use FieldSet.from_c_grid_dataset otherwise")
         fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                            allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
-                                           chunksize=chunksize, gridindexingtype='mitgcm', cache=cache, cache_dir=cache_dir, do_cache=do_cache, **kwargs)
+                                           chunksize=chunksize, gridindexingtype='mitgcm', **kwargs)
         return fieldset
 
     @classmethod
     def from_c_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
-                            tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', chunksize=None,
-                            cache=None, cache_dir=None, do_cache=False, **kwargs):
+                            tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
@@ -645,7 +642,7 @@ class FieldSet(object):
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
-                               chunksize=chunksize, gridindexingtype=gridindexingtype, cache=cache, cache_dir=cache_dir, do_cache=do_cache, **kwargs)
+                               chunksize=chunksize, gridindexingtype=gridindexingtype, **kwargs)
 
     @classmethod
     def from_pop(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
