@@ -1,18 +1,11 @@
 import collections
 import datetime
-import math
-from ctypes import c_float
-from ctypes import c_int
-from ctypes import POINTER
-from ctypes import pointer
-from ctypes import Structure
 
 import dask.array as da
 import numpy as np
 import xarray as xr
 from pathlib import Path
 
-import parcels.tools.interpolation_utils as i_u
 from .fieldfilebuffer import (NetcdfFileBuffer, DeferredNetcdfFileBuffer,
                               DaskFileBuffer, DeferredDaskFileBuffer)
 # from parcels._grid import CGrid
@@ -26,14 +19,10 @@ from parcels.tools.converters import TimeConverter
 from parcels.tools.converters import UnitConverter
 from parcels.tools.converters import unitconverters_map
 from parcels.tools.statuscodes import FieldOutOfBoundError
-from parcels.tools.statuscodes import FieldOutOfBoundSurfaceError
 from parcels.tools.statuscodes import FieldSamplingError
-from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
-from parcels.numba.field.field import NumbaField
 from parcels.numba.field.vector_field_3d import NumbaVectorField3D
 from parcels.numba.field.vector_field_2d import NumbaVectorField2D
-from _ast import Attribute
 from parcels.numba.field.utils import _get_numba_field_class
 
 
@@ -48,7 +37,11 @@ def _isParticle(key):
 
 
 class Field():
-    """Class that encapsulates access to field data.
+    """Class that encapsulates access to field data (Python)
+
+    It will contain a numba_field attribute that is Numba compatible
+    All/most variables that are defined in the numba field can be accessed
+    from the Python Field as well.
 
     :param name: Name of the field
     :param data: 2D, 3D or 4D numpy array of field data.
@@ -141,19 +134,16 @@ class Field():
             if grid._add_last_periodic_data_timestep:
                 data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
         self.numba_class = _get_numba_field_class(grid)
-        self.numba_field = self.numba_class(grid.numba_grid, data, interp_method=interp_method,
+        self.numba_field = self.numba_class(grid.numba_grid, data,
+                                            interp_method=interp_method,
                                             time_periodic=time_periodic)
         self.grid = grid
 
-
-#         time_origin = TimeConverter(0) if time_origin is None else time_origin
         self.igrid = -1
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
-#         self.lon = self.grid.lon
-#         self.lat = self.grid.lat
-#         self.depth = self.grid.depth
+        # They are implemented with __getattr__
         self.fieldtype = self.name if fieldtype is None else fieldtype
         self.to_write = to_write
         if self.grid.mesh == 'flat' or (self.fieldtype not in unitconverters_map.keys()):
@@ -197,7 +187,6 @@ class Field():
                 self.grid._add_last_periodic_data_timestep = True
                 self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
                 self.grid.time_full = self.grid.time
-
 
         self._scaling_factor = None
 
@@ -689,7 +678,7 @@ class Field():
 
         self.data_chunks = [None] * npartitions
         self.c_data_chunks = [None] * npartitions
-        self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
+        # self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
         # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #      chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
         self.grid.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
@@ -909,7 +898,7 @@ class Field():
 
 class VectorField(object):
     """Class VectorField stores 2 or 3 fields which defines together a vector field.
-    This enables to interpolate them as one single vector field in the kernels.
+    This enables to interpolate them as one single vector field in the kernels. (Python)
 
     :param name: Name of the vector field
     :param U: field defining the zonal component
@@ -952,7 +941,10 @@ class VectorField(object):
 
 
 class DeferredArray():
-    """Class used for throwing error when Field.data is not read in deferred loading mode"""
+    """Class used for throwing error when Field.data is not read in deferred loading mode
+
+    TODO: Doesn't work.
+    """
     data_shape = ()
 
     def __init__(self):
@@ -975,7 +967,9 @@ class DeferredArray():
 
 
 class SummedField(list):
-    """Class SummedField is a list of Fields over which Field interpolation
+    """TODO: Doesn't work at the moment.
+
+    Class SummedField is a list of Fields over which Field interpolation
     is summed. This can e.g. be used when combining multiple flow fields,
     where the total flow is the sum of all the individual flows.
     Note that the individual Fields can be on different Grids.
@@ -1037,7 +1031,9 @@ class SummedField(list):
 
 
 class NestedField(list):
-    """Class NestedField is a list of Fields from which the first one to be not declared out-of-boundaries
+    """TODO: Doesn't work
+
+    Class NestedField is a list of Fields from which the first one to be not declared out-of-boundaries
     at particle position is interpolated. This induces that the order of the fields in the list matters.
     Each one it its turn, a field is interpolated: if the interpolation succeeds or if an error other
     than `ErrorOutOfBounds` is thrown, the function is stopped. Otherwise, next field is interpolated.

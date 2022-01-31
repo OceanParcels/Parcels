@@ -5,6 +5,10 @@ __all__ = ['GridSet']
 
 
 def check_grids_equal(grid_1, grid_2):
+    """Check whether two grids are the same.
+
+    Probably can be more robust.
+    """
     if isinstance(grid_1, Grid) and isinstance(grid_2, Grid) and  grid_1.time_origin != grid_2.time_origin:
         return False
     for attr in ['lon', 'lat', 'depth', 'time']:
@@ -23,6 +27,7 @@ def check_grids_equal(grid_1, grid_2):
 class GridSet(object):
     """GridSet class that holds the Grids on which the Fields are defined
 
+    There is no numba equivalent.
     """
 
     def __init__(self):
@@ -35,24 +40,6 @@ class GridSet(object):
             if field.chunksize == 'auto':
                 break
             sameGrid = check_grids_equal(g, grid)
-#             if g == grid:
-#                 existing_grid = True
-#                 break
-#             sameGrid = True
-#             if grid.time_origin != g.time_origin:
-#                 continue
-#             for attr in ['lon', 'lat', 'depth', 'time']:
-#                 gattr = getattr(g, attr)
-#                 gridattr = getattr(grid, attr)
-#                 if gattr.shape != gridattr.shape or not np.allclose(gattr, gridattr):
-#                     sameGrid = False
-#                     break
-# 
-#             if (g.chunksize != grid.chunksize) and (grid.chunksize not in [False, None]):
-#                 for dim in grid.chunksize:
-#                     if grid.chunksize[dim][1] != g.chunksize[dim][1]:
-#                         sameGrid &= False
-#                         break
 
             if sameGrid:
                 existing_grid = True
@@ -61,9 +48,6 @@ class GridSet(object):
 
         if not existing_grid:
             self.grids.append(grid)
-#         print(field.name, len(self.grids), self.grids)
-#         print(grid, field.grid, self.grids[0])
-#         field.igrid = self.grids.index(field.grid)
 
     def dimrange(self, dim):
         """Returns maximum value of a dimension (lon, lat, depth or time)

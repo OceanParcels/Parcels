@@ -8,8 +8,9 @@ import numpy as np
 
 from parcels.collection.collections import ParticleCollection
 from parcels.collection.iterators import BaseParticleAccessor
-from parcels.collection.iterators import BaseParticleCollectionIterator, BaseParticleCollectionIterable
-from parcels.particle import ScipyParticle# , JITParticle  # noqa
+from parcels.collection.iterators import BaseParticleCollectionIterator
+from parcels.collection.iterators import BaseParticleCollectionIterable
+from parcels.particle import ScipyParticle
 from parcels.field import Field
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import OperationCode
@@ -130,22 +131,12 @@ class ParticleCollectionSOA(ParticleCollection):
         self._pclass = pclass
 
         self._ptype = pclass.getPType()
-#         self._data = {}
         initialised = set()
 
         self._ncount = len(lon)
         self._data = np.empty(self.ncount, dtype=self.ptype.dtype).view(np.recarray)
         self._pbackup = np.empty(1, dtype=self.ptype.dtype).view(np.recarray)
         self._data.lat = lat
-#         for v in self.ptype.variables:
-#             self._numba_data[v.name][:] = self._data[v.name][:]
-
-#         for v in self.ptype.variables:
-#             print(len(lon), ngrid)
-#             if v.name in ['xi', 'yi', 'zi', 'ti']:
-#                 self._data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
-#             else:
-#                 self._data[v.name] = np.empty(self._ncount, dtype=v.dtype)
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates

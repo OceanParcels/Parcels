@@ -1,40 +1,12 @@
-from enum import IntEnum
-
 import numpy as np
 
-from parcels.tools.converters import TimeConverter
 from numba.experimental import jitclass
 import numba as nb
-from copy import deepcopy
 from numba.core.typing.asnumbatype import as_numba_type
-from numba import njit
-# from parcels.tools.statuscodes import FieldOutOfBoundError,\
-    # FieldOutOfBoundSurfaceError, FieldSamplingError
 
-
-class FieldOutOfBoundError(Exception):
-    pass
-
-
-class FieldOutOfBoundSurfaceError(Exception):
-    pass
-
-
-class FieldSamplingError(Exception):
-    pass
-
-
-class GridCode(IntEnum):
-    RectilinearZGrid = 0
-    RectilinearSGrid = 1
-    CurvilinearZGrid = 2
-    CurvilinearSGrid = 3
-
-
-class GridStatus(IntEnum):
-    Updated = 0
-    FirstUpdated = 1
-    NeedsUpdate = 2
+from .statuscodes import FieldOutOfBoundError, FieldOutOfBoundSurfaceError
+from .statuscodes import FieldSamplingError
+from .statuscodes import GridCode, GridStatus
 
 
 @jitclass(spec=[
@@ -42,6 +14,7 @@ class GridStatus(IntEnum):
     ("y", nb.float32),
     ("z", nb.float32)])
 class FOBErrorData():
+    """"Object for storing data related to Field errors."""
     def __init__(self, x, y, z):
         self.x = x
         self.y = y
@@ -49,6 +22,10 @@ class FOBErrorData():
 
 
 def _base_grid_spec():
+    """Grid specifications that are shared between different types
+
+    lat, lon, depth need to be added by the specific implementations.
+    """
     return [
         ("xi", nb.types.DictType(nb.int64, nb.int64)),
         ("yi", nb.types.DictType(nb.int64, nb.int64)),
@@ -56,7 +33,6 @@ def _base_grid_spec():
         ("ti", nb.int32),
         ("time", nb.float64[:]),
         ("time_full", nb.float64[:]),
-#         ("time_origin", nb.float64),
         ("mesh", nb.types.string),
         ("zonal_periodic", nb.bool_),
         ("zonal_halo", nb.int32),
@@ -81,41 +57,36 @@ def _base_grid_spec():
     ]
 
 
-# @jitclass(spec=_base_spec)
 class BaseGrid(object):
     """Grid class that defines a (spatial and temporal) grid on which Fields are defined
 
+    Base class derived by RectilinearGrid, etc. Only then the class should be
+    compiled/jitclass(ed).
     """
     def __init__(self, lon, lat, time, mesh):
         self.xi = nb.typed.Dict.empty(nb.int64, nb.int64)
         self.yi = nb.typed.Dict.empty(nb.int64, nb.int64)
         self.zi = nb.typed.Dict.empty(nb.int64, nb.int64)
-#         self.xi = np.empty(0, dtype=nb.int32)
-#         self.yi = np.empty(0, dtype=nb.int32)
-#         self.zi = np.empty(0, dtype=nb.int32)
         self.ti = -1
         self.lon = lon.astype(nb.float32)
         self.lat = lat.astype(nb.float32)
         self.time = np.zeros(1, dtype=nb.float64) if time is None else time.astype(nb.float64)
-#         self.time_origin = nb.float64(0)
         self.time_full = self.time  # needed for deferred_loaded Fields
-#         self.time_origin = TimeConverter() if time_origin is None else time_origin
-#         assert isinstance(self.time_origin, TimeConverter), 'time_origin needs to be a TimeConverter object'
         self.mesh = mesh
-#         self.cell_edge_sizes = {}
         self.zonal_periodic = False
         self.zonal_halo = 0
         self.meridional_halo = 0
         self.lat_flipped = False
         self.defer_load = False
-        self.lonlat_minmax = np.array([np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32)
+        self.lonlat_minmax = np.array(
+            [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)],
+            dtype=np.float32)
         self.periods = 0
         self.load_chunk = nb.typed.List([nb.int32(-1)])
         self.chunk_info = -1
         self.chunksize = -1
         self._add_last_periodic_data_timestep = False
         self.depth_field = np.empty(0, dtype=nb.float32)
-#         self.depth_field = None
 
     def lon_grid_to_target(self):
         if self.lon_remapping:
@@ -131,7 +102,6 @@ class BaseGrid(object):
         return lon
 
     def advancetime(self, grid_new):
-#         assert isinstance(grid_new.time_origin, type(self.time_origin)), 'time_origin of new and old grids must be either both None or both a date'
         if self.time_origin:
             grid_new.time = grid_new.time + self.time_origin.reltime(grid_new.time_origin)
         if len(grid_new.time) != 1:
@@ -148,7 +118,6 @@ class BaseGrid(object):
     def check_zonal_periodic(self):
         if self.zonal_periodic or self.mesh == 'flat' or self.lon.size == 1:
             return
-#         dx = (self.lon[1:] - self.lon[:-1]) if len(self.lon.shape) == 1 else self.lon[0, 1:] - self.lon[0, :-1]
         dx = self.get_dlon()
         dx = np.where(dx < -180, dx+360, dx)
         dx = np.where(dx > 180, dx-360, dx)
@@ -156,78 +125,22 @@ class BaseGrid(object):
 
     def add_Sdepth_periodic_halo(self, zonal, meridional, halosize):
         if zonal:
-#             if len(self.depth.shape) == 3:
-#                 self.depth = np.concatenate((self.depth[:, :, -halosize:], self.depth,
-#                                              self.depth[:, :, 0:halosize]), axis=len(self.depth.shape) - 1)
-#                 assert self.depth.shape[2] == self.xdim, "Third dim must be x."
-#             else:
-            self.depth = np.concatenate((self.depth[:, :, :, -halosize:], self.depth,
-                                         self.depth[:, :, :, 0:halosize]), axis=len(self.depth.shape) - 1)
+            self.depth = np.concatenate(
+                (self.depth[:, :, :, -halosize:], self.depth,
+                 self.depth[:, :, :, 0:halosize]), axis=len(self.depth.shape)-1)
             assert self.depth.shape[3] == self.xdim, "Fourth dim must be x."
         if meridional:
-#             if len(self.depth.shape) == 3:
-#                 self.depth = np.concatenate((self.depth[:, -halosize:, :], self.depth,
-#                                              self.depth[:, 0:halosize, :]), axis=len(self.depth.shape) - 2)
-#                 assert self.depth.shape[1] == self.ydim, "Second dim must be y."
-#             else:
-            self.depth = np.concatenate((self.depth[:, :, -halosize:, :], self.depth,
-                                         self.depth[:, :, 0:halosize, :]), axis=len(self.depth.shape) - 2)
+            self.depth = np.concatenate(
+                (self.depth[:, :, -halosize:, :], self.depth,
+                 self.depth[:, :, 0:halosize, :]), axis=len(self.depth.shape)-2)
             assert self.depth.shape[2] == self.ydim, "Third dim must be y."
 
-#     def computeTimeChunk(self, f, time, signdt):
-#         nextTime_loc = np.infty if signdt >= 0 else -np.infty
-# #         periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
-#         periods = self.periods
-#         prev_time_indices = self.time
-#         if self.update_status == GridStatus.NeedsUpdate:
-#             if self.ti >= 0:
-#                 if time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time[1]:
-#                     self.ti = -1  # reset
-#                 elif signdt >= 0 and (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time_full[-1]):
-#                     self.ti = -1  # reset
-#                 elif signdt < 0 and (time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time_full[-1]):
-#                     self.ti = -1  # reset
-#                 elif signdt >= 0 and time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time[1] and self.ti < len(self.time_full)-2:
-#                     self.ti += 1
-#                     self.time = self.time_full[self.ti:self.ti+2]
-#                     self.update_status = GridStatus.Updated
-#                 elif signdt < 0 and time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time[0] and self.ti > 0:
-#                     self.ti -= 1
-#                     self.time = self.time_full[self.ti:self.ti+2]
-#                     self.update_status = GridStatus.Updated
-#             if self.ti == -1:
-#                 self.time = self.time_full
-#                 self.ti, _ = f.time_index(time)
-# #                 periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
-#                 periods = self.periods
-#                 if signdt == -1 and self.ti == 0 and (time - periods*(self.time_full[-1]-self.time_full[0])) == self.time[0] and f.time_periodic:
-#                     self.ti = len(self.time)-1
-#                     periods -= 1
-#                 if signdt == -1 and self.ti > 0 and self.time_full[self.ti] == time:
-#                     self.ti -= 1
-#                 if self.ti >= len(self.time_full) - 1:
-#                     self.ti = len(self.time_full) - 2
-# 
-#                 self.time = self.time_full[self.ti:self.ti+2]
-#                 self.tdim = 2
-#                 if prev_time_indices is None or len(prev_time_indices) != 2 or len(prev_time_indices) != len(self.time):
-#                     self.update_status = GridStatus.FirstUpdated
-#                 elif functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, self.time, prev_time_indices), True) and len(prev_time_indices) == len(self.time):
-#                     self.update_status = GridStatus.NeedsUpdate
-#                 elif functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, self.time[:1], prev_time_indices[:1]), True) and len(prev_time_indices) == len(self.time):
-#                     self.update_status = GridStatus.Updated
-#                 else:
-#                     self.update_status = GridStatus.FirstUpdated
-#             if signdt >= 0 and (self.ti < len(self.time_full)-2 or not f.allow_time_extrapolation):
-#                 nextTime_loc = self.time[1] + periods*(self.time_full[-1]-self.time_full[0])
-#             elif signdt < 0 and (self.ti > 0 or not f.allow_time_extrapolation):
-#                 nextTime_loc = self.time[0] + periods*(self.time_full[-1]-self.time_full[0])
-#         return nextTime_loc
+    def computeTimeChunk(self, f, time, signdt):
+        raise NotImplementedError
 
     def FieldOutOfBoundError(self, x, y, z):
         self.fob_data = FOBErrorData(x, y, z)
         raise FieldOutOfBoundError()
-#     FieldOutOfBoundError(x, y, z)
 
     def FieldOutOfBoundSurfaceError(self, x, y, z):
         self.fob_data = FOBErrorData(x, y, z)
@@ -237,6 +150,9 @@ class BaseGrid(object):
         self.fob_data = FOBErrorData(x, y, z)
         raise FieldSamplingError()
 
+    # I'm not 100% sure if this part works and to what extent,
+    # but it relates to having chunked memory, and loading small chunks
+    # instead of everything at once.
     @property
     def chunk_not_loaded(self):
         return 0

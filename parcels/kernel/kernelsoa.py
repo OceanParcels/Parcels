@@ -116,28 +116,12 @@ class KernelSOA(BaseKernel):
         inner_loop(pset._collection._data, endtime, sign_dt, dt,
                    self.compiled_pyfunc, self._fieldset.numba_fieldset,
                    pset._collection._pbackup, analytical=analytical)
-#         for p in pset._collection._data:
-#         compiled_pyfunc = njit(self._pyfunc)
-#         for i in range(len(pset)):
-#             self.static_evaluate_particle(pset._collection._data, i, endtime, sign_dt, dt,
-#                                           self.compiled_pyfunc,
-#                                           self._fieldset.numba_fieldset,
-#                                           pset._collection._pbackup,
-#                                           analytical=analytical)
 
     @property
     def compiled_pyfunc(self):
         if self._compiled_pyfunc is None:
             self._compiled_pyfunc = njit(self._pyfunc)
         return self._compiled_pyfunc
-
-#         numba_pset = convert_pset_to_tlist(pset)
-#         for p in numba_pset:
-#             self.static_evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
-#         convert_tlist_to_pset(numba_pset, pset)
-
-#        for p in pset:
-#            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -181,13 +165,6 @@ class KernelSOA(BaseKernel):
             recovery[ErrorCode.ErrorThroughSurface] = recovery[ErrorCode.ErrorOutOfBounds]
         recovery_map = recovery_base_map.copy()
         recovery_map.update(recovery)
-
-#         if pset.fieldset is not None:
-#             for g in pset.fieldset.gridset.grids:
-#                 print(len(g.load_chunk), g.chunk_not_loaded)
-#                 if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
-#                     g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
-#                                             g.chunk_deprecated, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:
@@ -250,7 +227,11 @@ def inner_loop(pset, endtime, sign_dt, dt,
 def evaluate_particle(pset, idx, endtime, sign_dt, dt, pyfunc,
                       fieldset, pbackup,
                       analytical=False):
-    """
+    """Inner loop that can be compiled.
+
+    NOTE: User kernels should ALWAYS give back a status code,
+    otherwise crashes are expected.
+
     Execute the kernel evaluation of for an individual particle.
     :arg p: object of (sub-)type (ScipyParticle, JITParticle) or (sub-)type of BaseParticleAccessor
     :arg fieldset: fieldset of the containing ParticleSet (e.g. pset.fieldset)
@@ -259,6 +240,7 @@ def evaluate_particle(pset, idx, endtime, sign_dt, dt, pyfunc,
     :arg dt: computational integration timestep
     """
     # back up variables in case of OperationCodeRepeat
+    # Back up is another record array with length 1.
     p = pset[idx]
     pbackup[0] = p
     pdt_prekernels = .0
@@ -281,37 +263,17 @@ def evaluate_particle(pset, idx, endtime, sign_dt, dt, pyfunc,
         return p
 
     while p.state == StateCode.Evaluate or p.state == OperationCode.Repeat or _numba_isclose(dt, 0):
-#             for var in variables:
-#                 p_var_back[var.name] = getattr(p, var.name)
-#             try:
-#             print(dt, p.state, p.time, p.dt)
         pdt_prekernels = sign_dt * dt_pos
         p.dt = pdt_prekernels
         state_prev = p.state
         res = pyfunc(p, fieldset, p.time)
-
-#         if res is None:
-#             res = StateCode.Success
 
         if res is StateCode.Success and p.state != state_prev:
             res = p.state
 
         if not analytical and res == StateCode.Success and not _numba_isclose(p.dt, pdt_prekernels):
             res = OperationCode.Repeat
-
-#             except FieldOutOfBoundError:  # as fse_xy:
-#                 res = ErrorCode.ErrorOutOfBounds
-            # p.exception = fse_xy
-#             except FieldOutOfBoundSurfaceError:  # as fse_z:
-#                 res = ErrorCode.ErrorThroughSurface
-            # p.exception = fse_z
-#             except TimeExtrapolationError:  # as fse_t:
-#                 res = ErrorCode.ErrorTimeExtrapolation
-            # p.exception = fse_t
-
-#             except Exception:  # as e:
-#                 res = ErrorCode.Error
-            # p.exception = e
+            # TODO: Do error handling
 
         # Handle particle time and time loop
         if res == StateCode.Success or res == OperationCode.Delete:
@@ -322,7 +284,8 @@ def evaluate_particle(pset, idx, endtime, sign_dt, dt, pyfunc,
             if not np.isnan(p._next_dt):
                 p.dt = p._next_dt
                 p._next_dt = np.nan
-#                 p.update_next_dt()
+                # NOTE: particle is not an object, so we can't do this:
+                # p.update_next_dt()
             if analytical:
                 p.dt = np.inf
             if abs(endtime - p.time) < abs(p.dt):
@@ -345,9 +308,6 @@ def evaluate_particle(pset, idx, endtime, sign_dt, dt, pyfunc,
             p.state = res
             # Try again without time update
             pset[idx] = pbackup[0]
-#                 for var in variables:
-#                     if var.name not in ['dt', 'state']:
-#                         setattr(p, var.name, p_var_back[var.name])
             if abs(endtime - p.time) < abs(p.dt):
                 dt_pos = abs(endtime - p.time)
                 reset_dt = True
@@ -360,4 +320,3 @@ def evaluate_particle(pset, idx, endtime, sign_dt, dt, pyfunc,
                 dt_pos = 0
             break
     return p
-

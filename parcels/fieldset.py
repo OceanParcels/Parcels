@@ -9,18 +9,13 @@ from parcels.field import Field, DeferredArray
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
-from parcels.grid import Grid, GridStatus
+from parcels.grid import Grid
 from parcels.gridset import GridSet
-from parcels.numba.grid import GridCode
+from parcels.numba.grid import GridCode, GridStatus
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
-from parcels.numba.field.fieldset import _base_fieldset_spec, BaseNumbaFieldSet,\
-    NumbaFieldSet
-from numba.core.typing.asnumbatype import as_numba_type
-from parcels.numba.field.field import NumbaField
-from parcels.numba.field.vector_field_2d import NumbaVectorField2D
-from numba.experimental import jitclass
+from parcels.numba.field.fieldset import NumbaFieldSet
 try:
     from mpi4py import MPI
 except:
@@ -31,7 +26,7 @@ __all__ = ['FieldSet']
 
 
 class FieldSet(object):
-    """FieldSet class that holds hydrodynamic data needed to execute particles
+    """FieldSet class that holds hydrodynamic data needed to execute particles (Python)
 
     :param U: :class:`parcels.field.Field` object for zonal velocity component
     :param V: :class:`parcels.field.Field` object for meridional velocity component
@@ -39,21 +34,11 @@ class FieldSet(object):
     """
     def __init__(self, U, V, fields={}):
         self.completed = False
-        # if U:
-            # self.add_field(U, 'U')
-            # self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
-        # if V:
-            # self.add_field(V, 'V')
         W = fields.pop("W", None)
 
+        # Create numba fieldset and gridset.
         self.numba_fieldset = NumbaFieldSet.create(U, V, W, fields)
         self.gridset = self.create_gridset(U, V, W, fields)
-#         for field in fields:
-#             self.gridset.add_grid(field)
-        # Add additional fields as attributes
-        # if fields:
-            # for name, field in fields.items():
-                # self.add_field(field, name)
 
         self.U = U
         self.V = V
@@ -86,26 +71,6 @@ class FieldSet(object):
             if field is not None:
                 gridset.add_grid(field)
         return gridset
-
-    @staticmethod
-    def create_numba_fieldset(U, V, W=None, fields={}):
-        spec = _base_fieldset_spec()
-        for name, field in fields.items():
-            if isinstance(field, Field):
-                spec.append((name, as_numba_type(NumbaField)))
-            elif isinstance(field, VectorField):
-                spec.append((name, as_numba_type(NumbaVectorField2D)))
-            else:
-                raise TypeError(f"'{name}' Field should be scalar or 2D vector field ")
-        numba_class = jitclass(BaseNumbaFieldSet, spec=spec)
-        if W is not None:
-            numba_fieldset = numba_class(U.numba_field, V.numba_field, W.numba_field)
-        else:
-            numba_fieldset = numba_class(U.numba_field, V.numba_field)
-
-        for name, field in fields.items():
-            setattr(numba_fieldset, name, field.numba_field)
-        return numba_fieldset
 
     @staticmethod
     def checkvaliddimensionsdict(dims):
@@ -292,11 +257,7 @@ class FieldSet(object):
             g.check_zonal_periodic()
             if len(g.time) == 1:
                 continue
-#             assert isinstance(g.time_origin.time_origin, type(self.time_origin.time_origin)), 'time origins of different grids must be have the same type'
-#             g.time = g.time + self.time_origin.reltime(g.time_origin)
-#             if g.defer_load:
-#                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
-#             g.time_origin = self.time_origin
+
         if not hasattr(self, 'UV'):
             if isinstance(self.U, SummedField):
                 self.add_vector_field(SummedField('UV', self.U, self.V))

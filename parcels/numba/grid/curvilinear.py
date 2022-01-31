@@ -1,12 +1,9 @@
 import numpy as np
 
-from parcels.tools.converters import TimeConverter
 from numba.experimental import jitclass
 import numba as nb
-from copy import deepcopy
-from numba.core.typing.asnumbatype import as_numba_type
-from parcels.numba.grid.base import BaseGrid, _base_grid_spec, GridCode
-from parcels.tools.statuscodes import FieldOutOfBoundError
+from parcels.numba.grid.base import BaseGrid, _base_grid_spec
+from .statuscodes import GridCode
 from parcels.numba.grid.zgrid import BaseZGrid
 from parcels.numba.grid.sgrid import BaseSGrid
 from numba import njit
@@ -18,13 +15,14 @@ def _curve_grid_spec():
         ("lat", nb.float32[:, :]),
         ("lon", nb.float32[:, :]),
     ]
-# _curve_spec = deepcopy(_base_spec)
-# _curve_spec.extend([
-# ])
 
 
 @njit
 def _squeeze2d(x):
+    """Particular implementation of np.squeeze, only to 2 dimensions
+    which are the first and last dimensions of the array.
+    Only works if all dimensions apart from the first and last are 1.
+    """
     shp = np.array(x.shape)
     first = shp[shp > 1][0]
     last = shp[shp > 1][-1]
@@ -32,15 +30,10 @@ def _squeeze2d(x):
 
 
 class CurvilinearGrid(BaseGrid):
+    """Base class for a curvilinear grid"""
     __init_base = BaseGrid.__init__
 
     def __init__(self, lon, lat, time=None, mesh='flat'):
-#         assert(isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
-#         assert(isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
-#         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
-#         if isinstance(time, np.ndarray):
-#             assert(len(time.shape) == 1), 'time is not a vector'
-
         lon = _squeeze2d(lon)
         lat = _squeeze2d(lat)
         self.__init_base(lon, lat, time, mesh)
@@ -49,10 +42,12 @@ class CurvilinearGrid(BaseGrid):
         self.tdim = self.time.size
 
     def get_dlon(self):
+        """Get distances between grid points"""
         return self.lon[0, 1:] - self.lon[0, :-1]
 
     def search_indices(self, x, y, z, ti=-1, time=-1, search2D=False,
                        particle=None, interp_method="linear"):
+        """Transfered from original code."""
         if particle is not None:
             try:
                 xi = self.xi[particle.id]
@@ -119,7 +114,6 @@ class CurvilinearGrid(BaseGrid):
             (xi, yi) = self.reconnect_bnd_indices(xi, yi, self.xdim, self.ydim, self.mesh)
             it += 1
             if it > maxIterSearch:
-#                 print('Correct cell not found after {maxIterSearch} iterations'.format(maxIterSearch))
                 self.FieldOutOfBoundError(x, y, 0)
         xsi = max(0., xsi)
         eta = max(0., eta)
@@ -140,15 +134,15 @@ class CurvilinearGrid(BaseGrid):
             self.xi[particle.id] = xi
             self.yi[particle.id] = yi
             self.zi[particle.id] = zi
-            # particle.xi[self.igrid] = xi
-            # particle.yi[self.igrid] = yi
-            # particle.zi[self.igrid] = zi
 
         return (xsi, eta, zeta, xi, yi, zi)
 
     def get_pxy(self, xi, yi):
-        px = np.array([self.lon[yi, xi], self.lon[yi, xi+1], self.lon[yi+1, xi+1], self.lon[yi+1, xi]]).astype(nb.float64)
-        py = np.array([self.lat[yi, xi], self.lat[yi, xi+1], self.lat[yi+1, xi+1], self.lat[yi+1, xi]]).astype(nb.float64)
+        """Get px and py"""
+        px = np.array([self.lon[yi, xi], self.lon[yi, xi+1], self.lon[yi+1, xi+1],
+                       self.lon[yi+1, xi]]).astype(nb.float64)
+        py = np.array([self.lat[yi, xi], self.lat[yi, xi+1], self.lat[yi+1, xi+1],
+                       self.lat[yi+1, xi]]).astype(nb.float64)
         return px, py
 
     def reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
@@ -180,8 +174,6 @@ class CurvilinearGrid(BaseGrid):
         """
         if zonal:
             lonshift = self.lon[:, -1] - 2 * self.lon[:, 0] + self.lon[:, 1]
-#             if not np.allclose(self.lon[:, 1]-self.lon[:, 0], self.lon[:, -1]-self.lon[:, -2]):
-#                 logger.warning_once("The zonal halo is located at the east and west of current grid, with a dx = lon[:,1]-lon[:,0] between the last nodes of the original grid and the first ones of the halo. In your grid, lon[:,1]-lon[:,0] != lon[:,-1]-lon[:,-2]. Is the halo computed as you expect?")
             self.lon = np.concatenate((self.lon[:, -halosize:] - lonshift[:, np.newaxis],
                                        self.lon, self.lon[:, 0:halosize] + lonshift[:, np.newaxis]),
                                       axis=len(self.lon.shape)-1)
@@ -193,8 +185,6 @@ class CurvilinearGrid(BaseGrid):
             self.zonal_periodic = True
             self.zonal_halo = halosize
         if meridional:
-#             if not np.allclose(self.lat[1, :]-self.lat[0, :], self.lat[-1, :]-self.lat[-2, :]):
-#                 logger.warning_once("The meridional halo is located at the north and south of current grid, with a dy = lat[1,:]-lat[0,:] between the last nodes of the original grid and the first ones of the halo. In your grid, lat[1,:]-lat[0,:] != lat[-1,:]-lat[-2,:]. Is the halo computed as you expect?")
             latshift = self.lat[-1, :] - 2 * self.lat[0, :] + self.lat[1, :]
             self.lat = np.concatenate((self.lat[-halosize:, :] - latshift[np.newaxis, :],
                                        self.lat, self.lat[0:halosize, :] + latshift[np.newaxis, :]),
@@ -205,8 +195,6 @@ class CurvilinearGrid(BaseGrid):
             self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
             self.meridional_halo = halosize
-#         if isinstance(self, CurvilinearSGrid):
-#             self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 @jitclass(spec=_curve_grid_spec()+[("depth", nb.float32[:])])
@@ -230,15 +218,9 @@ class CurvilinearZGrid(CurvilinearGrid, BaseZGrid):
 
     def __init__(self, lon, lat, depth=None, time=None, mesh='flat'):
         self.__init__curv(lon, lat, time, mesh)
-#         if isinstance(depth, np.ndarray):
-#             assert(len(depth.shape) == 1), 'depth is not a vector'
-
         self.gtype = GridCode.CurvilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.zdim = self.depth.size
-#         self.z4d = -1  # only for SGrid
-#         if not self.depth.dtype == np.float32:
-#             self.depth = self.depth.astype(np.float32)
 
 
 @jitclass(spec=_curve_grid_spec()+[("depth", nb.float32[:, :, :, :])])
@@ -267,21 +249,15 @@ class CurvilinearSGrid(CurvilinearGrid, BaseSGrid):
 
     def __init__(self, lon, lat, depth, time=None, mesh='flat'):
         self.__init__curv(lon, lat, time, mesh)
-#         assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
         self.gtype = GridCode.CurvilinearSGrid
         self.depth = numba_reshape_34(depth).astype(nb.float32)
         self.zdim = self.depth.shape[-3]
         self.z4d = self.depth.shape[0] != 1
-#         self.z4d = len(self.depth.shape) == 4
-#         if self.z4d:
-            # self.depth.shape[0] is 0 for S grids loaded from netcdf file
         if self.z4d:
-            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-        assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-        assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-#         else:
-#             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
-#             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
-#         if not self.depth.dtype == np.float32:
-#             self.depth = self.depth.astype(np.float32)
+            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, \
+                'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+        assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, \
+            'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+        assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, \
+            'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'

@@ -1,15 +1,17 @@
+import math
+
 from numba.experimental import jitclass
 from numba.core.typing.asnumbatype import as_numba_type
-from .field import NumbaField
 import numba as nb
 import numpy as np
+
 from parcels.numba.grid.base import GridCode
-import math
-import parcels.tools.interpolation_utils as ip
 from parcels.numba.field.base_vector_field import NumbaBaseVectorField
+import parcels.tools.interpolation_utils as ip
 
 
 class NumbaVectorField3D():
+    """Python helper class to create 3D fields"""
     @staticmethod
     def _class(U):
         numba_class = U.numba_class
@@ -24,18 +26,12 @@ class NumbaVectorField3D():
         return vfield_class
 
     def create(self, name, U, V, W):
+        "Create Numba 3D field from python fields"
         return self._class(name, U, V, W)
-
-# @jitclass(spec=[
-#     ("U", as_numba_type(NumbaField)),
-#     ("V", as_numba_type(NumbaField)),
-#     ("W", as_numba_type(NumbaField)),
-#     ("vector_type", nb.types.string),
-#     ("name", nb.types.string),
-# ])
 
 
 class _NumbaVectorField3D(NumbaBaseVectorField):
+    """Numba compiled 3D field class"""
     def __init__(self, name, U, V, W):
         self.U = U
         self.V = V
@@ -79,14 +75,6 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
         px = np.concatenate((px, px))
         py = np.concatenate((py, py))
         pz = grid.get_pz(xi, yi, zi)
-#         if grid.z4d:
-#         pz = np.array([grid.depth[0, zi, yi, xi], grid.depth[0, zi, yi, xi+1],
-#                        grid.depth[0, zi, yi+1, xi+1], grid.depth[0, zi, yi+1, xi],
-#                        grid.depth[0, zi+1, yi, xi], grid.depth[0, zi+1, yi, xi+1],
-#                        grid.depth[0, zi+1, yi+1, xi+1], grid.depth[0, zi+1, yi+1, xi]])
-#         else:
-#             pz = np.array([grid.depth[zi, yi, xi], grid.depth[zi, yi, xi+1], grid.depth[zi, yi+1, xi+1], grid.depth[zi, yi+1, xi],
-#                            grid.depth[zi+1, yi, xi], grid.depth[zi+1, yi, xi+1], grid.depth[zi+1, yi+1, xi+1], grid.depth[zi+1, yi+1, xi]])
 
         u0 = self.U.data[ti, zi, yi+1, xi]
         u1 = self.U.data[ti, zi, yi+1, xi+1]
@@ -158,10 +146,6 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
         v = np.dot(dphidxsi, py) * dxsidt + np.dot(dphideta, py) * detadt + np.dot(dphidzet, py) * dzetdt
         w = np.dot(dphidxsi, pz) * dxsidt + np.dot(dphideta, pz) * detadt + np.dot(dphidzet, pz) * dzetdt
 
-#         if isinstance(u, da.core.Array):
-#             u = u.compute()
-#             v = v.compute()
-#             w = w.compute()
         return (u, v, w)
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None):
@@ -184,7 +168,7 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
         else:
             (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
-            # w = self.W.units.to_target(w, x, y, z)
+            # TODO: unit conversion
         return (u, v, w)
 
     def spatial_slip_interpolation(self, ti, z, y, x, time, particle=None):
@@ -258,10 +242,8 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
         if self.U.interp_method not in ['cgrid_velocity', 'partialslip', 'freeslip']:
             u = self.U.eval(time, z, y, x, particle=particle, applyConversion=False)
             v = self.V.eval(time, z, y, x, particle=particle, applyConversion=False)
-            # u = self.U.units.to_target(u, x, y, z)
-            # v = self.V.units.to_target(v, x, y, z)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
-                # w = self.W.units.to_target(w, x, y, z)
+            # TODO: unit conversion
             return (u, v, w)
         else:
             grid = self.U.grid
@@ -283,10 +265,5 @@ class _NumbaVectorField3D(NumbaBaseVectorField):
                 return self.spatial_interpolate(ti, z, y, x, grid.time[ti], particle=particle)
 
     def __getitem__(self, key):
+        # Change in API: always give all the variables (not only particle).
         return self.eval(*key)
-
-#     def __getitem__(self, key):
-#         if _isParticle(key):
-#             return self.eval(key.time, key.depth, key.lat, key.lon, key)
-#         else:
-#             return self.eval(*key)

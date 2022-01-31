@@ -1,14 +1,15 @@
+import math
+
 from numba.experimental import jitclass
 from numba.core.typing.asnumbatype import as_numba_type
-from .field import NumbaField
 import numba as nb
 import numpy as np
-from parcels.numba.grid.base import GridCode
-import math
-from parcels.numba.field.base_vector_field import NumbaBaseVectorField
+
+from .base_vector_field import NumbaBaseVectorField
 
 
 class NumbaVectorField2D():
+    """Python helper class to create 2D fields"""
     @staticmethod
     def _class(U):
         numba_class = U.numba_class
@@ -22,10 +23,12 @@ class NumbaVectorField2D():
         return vfield_class
 
     def create(self, name, U, V):
+        "Create Numba 2D field from python fields"
         return self._class(name, U, V)
 
 
 class _NumbaVectorField2D(NumbaBaseVectorField):
+    """Numba compiled 2D field class"""
     def __init__(self, name, U, V):
         self.U = U
         self.V = V

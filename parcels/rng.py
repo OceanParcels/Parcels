@@ -14,6 +14,8 @@ from parcels.tools.loggers import logger
 __all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', 'vonmisesvariate']
 
 
+# This part is only about JIT
+
 # class RandomC(object):
 #     stmt_import = """#include "parcels.h"\n\n"""
 #     fnct_seed = """

@@ -1,11 +1,13 @@
-import numpy as np
-import parcels.tools.interpolation_utils as ip
 import math
-from parcels.numba.utils import _numba_isclose
+import numpy as np
 import numba as nb
+
+from parcels.numba.utils import _numba_isclose
+import parcels.tools.interpolation_utils as ip
 
 
 class NumbaBaseVectorField():
+    """Class with all functions that are shared between vector fields."""
     def jacobian(self, xsi, eta, px, py):
         dphidxsi = np.array([eta-1, 1-eta, eta, -eta]).astype(nb.float64)
         dphideta = np.array([xsi-1, -xsi, xsi, 1-xsi]).astype(nb.float64)
@@ -18,8 +20,9 @@ class NumbaBaseVectorField():
         return jac
 
     def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None):
+        """Copied from the originals"""
         grid = self.U.grid
-        (xsi, eta, zeta, xi, yi, zi) = grid.search_indices(x, y, z, ti, time)
+        (xsi, eta, _zeta, xi, yi, zi) = grid.search_indices(x, y, z, ti, time)
 
         px, py = grid.get_pxy(xi, yi)
 
@@ -63,6 +66,7 @@ class NumbaBaseVectorField():
         return (u, v)
 
     def _is_land2D(self, di, yi, xi):
+        """Check if grid cell is on land"""
         if di < self.U.grid.zdim and yi < np.shape(self.U.data)[-2] and xi < np.shape(self.U.data)[-1]:
             return _numba_isclose(self.U.data[0, di, yi, xi], 0.) and _numba_isclose(self.V.data[0, di, yi, xi], 0.)
         else:

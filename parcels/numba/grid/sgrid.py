@@ -1,9 +1,9 @@
 import numpy as np
 import numba as nb
-# TODO: Fix dimension shit
 
 
 class BaseSGrid():
+    """Base class for S-grids"""
     def search_indices_vertical(self, x, y, z, xi, yi, xsi, eta, ti, time, interp_method):
         if interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
             xsi = 1
@@ -60,4 +60,5 @@ class BaseSGrid():
             self.depth[0, zi, yi, xi], self.depth[0, zi, yi, xi+1],
             self.depth[0, zi, yi+1, xi+1], self.depth[0, zi, yi+1, xi],
             self.depth[0, zi+1, yi, xi], self.depth[0, zi+1, yi, xi+1],
-            self.depth[0, zi+1, yi+1, xi+1], self.depth[0, zi+1, yi+1, xi]]).astype(nb.float64)
+            self.depth[0, zi+1, yi+1, xi+1],
+            self.depth[0, zi+1, yi+1, xi]]).astype(nb.float64)

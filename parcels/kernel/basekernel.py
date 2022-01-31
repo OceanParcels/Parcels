@@ -4,7 +4,6 @@ import inspect
 import numpy.ctypeslib as npct
 from time import time as ostime
 from os import path
-from os import remove
 from sys import platform
 from sys import version_info
 from ast import FunctionDef
@@ -12,7 +11,6 @@ from hashlib import md5
 from parcels.tools.loggers import logger
 import numpy as np
 from numpy import ndarray
-import numba as nb
 
 try:
     from mpi4py import MPI
@@ -28,8 +26,8 @@ from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.numba.grid import GridCode
 from parcels.field import FieldOutOfBoundError
-from parcels.field import FieldOutOfBoundSurfaceError
-from parcels.field import TimeExtrapolationError
+from parcels.numba.grid.statuscodes import FieldOutOfBoundSurfaceError
+from parcels.numba.grid.statuscodes import TimeExtrapolationError
 from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
 from parcels.application_kernels.advection import AdvectionRK4_3D
 from parcels.application_kernels.advection import AdvectionAnalytical

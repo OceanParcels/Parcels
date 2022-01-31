@@ -2,13 +2,13 @@ import numpy as np
 
 from parcels.numba.grid.curvilinear import CurvilinearSGrid, CurvilinearZGrid
 from parcels.numba.grid.rectilinear import RectilinearSGrid, RectilinearZGrid
-from parcels.numba.grid import GridStatus
 from parcels.tools.converters import TimeConverter
 
 
 class Grid():
-    def __init__(self, lon=None, lat=None, depth=None, time=None, mesh=None, time_origin=None, grid=None,
-                 **kwargs):
+    """Python Grid that is a wrapper around the Numba Grid class."""
+    def __init__(self, lon=None, lat=None, depth=None, time=None, mesh=None,
+                 time_origin=None, grid=None, **kwargs):
         time_origin = TimeConverter(0) if time_origin is None else time_origin
 
         if grid is not None and not isinstance(grid, Grid):
@@ -24,9 +24,10 @@ class Grid():
         if not isinstance(time, np.ndarray):
             time = np.array(time)
         time = time.astype(np.float64)
-        depth = depth.astype(np.float32)
         if not (depth is None or isinstance(depth, np.ndarray)):
             depth = np.array(depth)
+        if depth is not None:
+            depth = depth.astype(np.float32)
         if len(lon.shape) <= 1:
             if depth is None or len(depth.shape) <= 1:
                 self.numba_grid = RectilinearZGrid(

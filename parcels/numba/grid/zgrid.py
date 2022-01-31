@@ -3,14 +3,15 @@ import numba as nb
 
 
 class BaseZGrid():
+    """Base class for z-grids"""
     def search_indices_vertical(self, _x, _y, z, _xi, _yi, _xsi, _eta, _ti,
                                 _time, interp_method):
-        # TODO: fix 
         gridindexingtype = "unknown"
         z = np.float32(z)
         if self.depth[-1] > self.depth[0]:
             if z < self.depth[0]:
-                # Since MOM5 is indexed at cell bottom, allow z at depth[0] - dz where dz = (depth[1] - depth[0])
+                # Since MOM5 is indexed at cell bottom, allow z at depth[0] -
+                # dz where dz = (depth[1] - depth[0])
                 if gridindexingtype == "mom5" and z > 2*self.depth[0] - self.depth[1]:
                     return (-1, z / self.depth[0])
                 else:

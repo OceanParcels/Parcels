@@ -1,13 +1,7 @@
 import numpy as np
-from numba.experimental import jitclass
-from numba.core.typing.asnumbatype import as_numba_type
-from parcels.numba.grid.rectilinear import RectilinearZGrid
 from parcels.numba.utils import _numba_isclose
 import numba as nb
-from numba.core.decorators import njit
 import math
-from parcels.numba.grid.base import GridCode
-from parcels.numba.grid.curvilinear import CurvilinearZGrid, CurvilinearSGrid
 
 
 def _base_field_spec():
@@ -18,24 +12,16 @@ def _base_field_spec():
         ("time_periodic", nb.bool_),
         ("allow_time_extrapolation", nb.bool_),
     ]
-#     if grid_type == GridCode.CurvilinearZGrid:
-#         _base_spec += [("grid", as_numba_type(CurvilinearZGrid))]
-#     elif grid_type == GridCode.CurvilinearSGrid:
-#         _base_spec += [("grid", as_numba_type(CurvilinearSGrid))]
-#     elif grid_type == GridCode.
-# @jitclass(spec=[
-#     ("grid", as_numba_type(RectilinearZGrid)),
-#     ("data", nb.float32[:, :, :, :]),
-#     ("interp_method", nb.types.string),
-#     ("gridindexingtype", nb.types.string),
-#     ("time_periodic", nb.bool_),
-#     ("allow_time_extrapolation", nb.bool_),
-# ])
-#
-# NumbaField
 
 
 class NumbaField():
+    """Numba field class
+
+    The reason that this cannot be jitted immediately is because
+    the class specifications depend on the grid type and this ensures we
+    don't need to create 4+ different NumbaFields. The code for compiling is
+    located in the python part of the code (parcels.field).
+    """
     def __init__(self, grid, data, interp_method="nearest",
                  gridindexingtype="nemo", time_periodic=True):
         self.grid = grid
@@ -46,7 +32,8 @@ class NumbaField():
         # TODO: add unit conversion.
 
     def interpolator2D(self, ti, z, y, x, particle=None):
-        (xsi, eta, _, xi, yi, _) = self.grid.search_indices(x, y, z, particle=particle, interp_method=self.interp_method)
+        (xsi, eta, _, xi, yi, _) = self.grid.search_indices(
+            x, y, z, particle=particle, interp_method=self.interp_method)
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
@@ -87,7 +74,7 @@ class NumbaField():
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, 0, yi+1, xi+1]
         elif self.interp_method == 'cgrid_velocity':
-            # Todo fix "this"
+            # TODO: Do proper error propagation that returns the field.
             raise ValueError(
                 "This is a scalar field. cgrid_velocity interpolation method "
                 "should be used for vector fields (e.g. FieldSet.UV)")
@@ -180,7 +167,7 @@ class NumbaField():
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, zi, yi+1, xi+1]
         else:
-            # TODO: fix
+            # TODO: Same as above error propagation
             raise RuntimeError("Current interpolation method is not "
                                "implemented for 3D grids")
 
@@ -273,8 +260,10 @@ class NumbaField():
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # excat value in the time array.
-            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
+            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti],
+                                               particle=particle)
 
+        # TODO: Implement unit conversion
         # if applyConversion:
             # return self.units.to_target(value, x, y, z)
         return value

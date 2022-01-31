@@ -3,14 +3,12 @@ from abc import ABC
 from abc import abstractmethod
 from datetime import datetime
 from datetime import timedelta as delta
-from os import path
 import time as time_module
 import cftime
 
 import progressbar
 
 from parcels.tools.statuscodes import StateCode
-from parcels.tools.global_statics import get_package_dir
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.application_kernels.advection import AdvectionRK4
@@ -189,7 +187,6 @@ class BaseParticleSet(NDCluster):
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
 
-        print(start_field, size, mode)
         lon, lat = cls.monte_carlo_sample(start_field, size, mode)
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
