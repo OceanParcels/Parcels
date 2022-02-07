@@ -439,8 +439,6 @@ class ParticleCollectionSOA(ParticleCollection):
                     and self._data['id'][-1] < same_class._data['id'][0]):
                 self._sorted = False
             self._data = np.concatenate((self._data, same_class._data))
-#             for d in self._data:
-#                 self._data[d] = np.concatenate((self._data[d], same_class._data[d]))
             self._ncount += same_class.ncount
 
     def __iadd__(self, same_class):
@@ -555,8 +553,6 @@ class ParticleCollectionSOA(ParticleCollection):
         super().remove_single_by_index(index)
 
         self._data = np.delete(self._data, index)
-#         for d in self._data:
-#             self._data[d] = np.delete(self._data[d], index, axis=0)
 
         self._ncount -= 1
 
@@ -645,8 +641,6 @@ class ParticleCollectionSOA(ParticleCollection):
 
         if len(indices):
             self._data = np.delete(self._data, indices)
-#         for d in self._data:
-#             self._data[d] = np.delete(self._data[d], indices, axis=0)
 
         self._ncount -= len(indices)
 

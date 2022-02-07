@@ -41,3 +41,7 @@ Most of the new/modified code is in `parcels.numba`. The code that is present in
 Only the SOA datastructure is modified (because we rely on record arrays, which are similar). Changes are made in `collection.collectionsoa` to reflect this.
 
 There is a limited number of advection kernels that has been modified: `AdvectionRK4`, `AdvectionsRK4_3D` and `AdvectionEE`.
+
+## First try: NumbaAOS
+
+In the old versions of this branch we worked on a Array of Structures approach to converting parcels to be compatible with numba. This was abandoned, because of the aforementioned issues with copying particles in numba problem.

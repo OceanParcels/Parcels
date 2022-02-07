@@ -32,8 +32,6 @@ class Variable(object):
     def __get__(self, instance, cls):
         if instance is None:
             return self
-#         if issubclass(cls, JITParticle):
-#             return instance._cptr.__getitem__(self.name)
         else:
             return getattr(instance, "_%s" % self.name, self.initial)
 

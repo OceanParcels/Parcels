@@ -2,15 +2,8 @@ import inspect
 import math  # noqa
 import random  # noqa
 from ast import parse
-from copy import deepcopy
-from ctypes import byref
-from ctypes import c_double
-from ctypes import c_int
-from os import path
 
 import numpy as np
-from parcels.particleset.numba_aos import convert_pset_to_tlist,\
-    convert_tlist_to_pset
 from numba.core.decorators import njit
 from parcels.numba.utils import _numba_isclose
 try:
@@ -19,8 +12,6 @@ except:
     MPI = None
 
 from parcels.kernel.basekernel import BaseKernel
-# from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
-# from parcels.compilation.codegenerator import LoopGenerator
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
