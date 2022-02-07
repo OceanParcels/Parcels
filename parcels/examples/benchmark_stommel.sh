@@ -37,6 +37,4 @@ for P in ${N_PART[*]}; do
         echo "$FIRST_LINE" >> $BENCH_FILE
     fi
     echo "$TIMINGS" >> $BENCH_FILE
-#    LINE=(` | tail -1`)
-#    print ${P} ${LINE[-2]} >> $BENCH_FILE
-done
+
