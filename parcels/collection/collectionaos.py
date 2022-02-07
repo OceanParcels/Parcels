@@ -9,7 +9,7 @@ from parcels.collection.collections import ParticleCollection
 from parcels.collection.iterators import BaseParticleAccessor
 from parcels.collection.iterators import BaseParticleCollectionIterator
 from parcels.collection.iterators import BaseParticleCollectionIterable
-from parcels.particle import ScipyParticle #, JITParticle  # noqa
+from parcels.particle import ScipyParticle
 from parcels.field import Field
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import OperationCode

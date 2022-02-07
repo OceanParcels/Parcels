@@ -336,12 +336,6 @@ class BaseParticleSet(NDCluster):
                 self.kernel = pyfunc
             else:
                 self.kernel = self.Kernel(pyfunc)
-            # Prepare JIT kernel execution
-            # if self.collection.ptype.uses_jit:
-            #     self.kernel.remove_lib()
-            #     cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
-            #     self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
-            #     self.kernel.load_lib()
 
         # Set up the interaction kernel(s) if not set and given.
         if self.interaction_kernel is None and pyfunc_inter is not None:

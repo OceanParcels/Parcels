@@ -187,8 +187,6 @@ class ParticleSetAOS(BaseParticleSet):
                                       "__sizeof__": ObjectClass_sizeof_forward
                                       }
             object_class = None
-#             if issubclass(pclass, JITParticle):
-#                 object_class = type("Object" + pclass.__name__, (pclass, ), object_jit_class_vdict)
             if issubclass(pclass, ScipyParticle):
                 object_class = type("Object" + pclass.__name__, (pclass,), object_scipy_class_vdict)
             if object_class is None:
