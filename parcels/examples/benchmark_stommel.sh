@@ -37,4 +37,5 @@ for P in ${N_PART[*]}; do
         echo "$FIRST_LINE" >> $BENCH_FILE
     fi
     echo "$TIMINGS" >> $BENCH_FILE
+done
 
