@@ -26,6 +26,11 @@ Another more general difficulty with Numba, is that it takes quite a bit of time
 
 A significant limitation is that Numba can only use a very limited set of libraries, mostly numpy. Anything else has to be done outside of `nopython` (JITed) mode. This limitation is of course also applied then to all user kernels.
 
+User kernels in the Numba implementation need to always return some kind of status code. This is necessary, because otherwise Numba segfaults. This obviously is not very nice or informative for the user, and probably we cannot prevent it unless we manually parse the code somehow.
+
+The field access has to always be with the same number of arguments: `field.UV[particle]` is not possible to be implemented, because of how Numba works.
+
+It is relatively difficult to find solutions to issues with numba online, because documentation is sometimes a little sparse, and there is not that many people using `jitclass` that a lot of SO questions exist.
 
 ## Implementation details
 
@@ -34,3 +39,5 @@ A general pattern that has been used is that classes such as `Grid` and `Field` 
 Most of the new/modified code is in `parcels.numba`. The code that is present in `parcels.numba.grid` concerns the code for the numba `Grid`. The code has been reorganized and split into separate base classes for z-grid/s-grid and rectilinear/curvilinear. `parcels.numba.field` concerns the Field, Fieldset and VectorField code.
 
 Only the SOA datastructure is modified (because we rely on record arrays, which are similar). Changes are made in `collection.collectionsoa` to reflect this.
+
+There is a limited number of advection kernels that has been modified: `AdvectionRK4`, `AdvectionsRK4_3D` and `AdvectionEE`.
