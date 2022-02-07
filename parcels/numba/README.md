@@ -42,6 +42,8 @@ Only the SOA datastructure is modified (because we rely on record arrays, which 
 
 There is a limited number of advection kernels that has been modified: `AdvectionRK4`, `AdvectionsRK4_3D` and `AdvectionEE`.
 
+The C/JIT code has been mostly removed, both to remove clutter, but also to ensure that this code doesn't run that part of the code base by mistake.
+
 ## First try: NumbaAOS
 
 In the old versions of this branch we worked on a Array of Structures approach to converting parcels to be compatible with numba. This was abandoned, because of the aforementioned issues with copying particles in numba problem.
