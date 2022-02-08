@@ -167,7 +167,7 @@ class FieldFileCache(object):
     _periodic_wrap_lock = None
     _stopped = None
 
-    def __init__(self, cache_upper_limit=20*1024*1024*1024, cache_lower_limit=3.5*2014*1024*1024, use_thread=False, cache_top_dir=None, remove_cache_dir=True, debug=False):
+    def __init__(self, cache_upper_limit=35*1024*1024*1024, cache_lower_limit=3.5*2014*1024*1024, use_thread=False, cache_top_dir=None, remove_cache_dir=True, debug=False):
         computer_env, cache_head, data_head = get_compute_env()
         global DEBUG
         DEBUG = debug
