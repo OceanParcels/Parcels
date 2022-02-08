@@ -153,7 +153,7 @@ class Field(object):
             if isinstance(self.time_periodic, datetime.timedelta):
                 self.time_periodic = self.time_periodic.total_seconds()
             if not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
-                if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
+                if (self.grid.time[-1] - self.grid.time[0]) > self.time_periodic:
                     raise ValueError("Time series provided is longer than the time_periodic parameter")
                 self.grid._add_last_periodic_data_timestep = True
                 self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)

@@ -329,7 +329,8 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or
+               the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
                fully load them (default: True). It is advised to deferred load the data, since in
