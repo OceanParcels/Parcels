@@ -14,7 +14,7 @@ from pathlib import Path
 from time import sleep
 
 import parcels.tools.interpolation_utils as i_u
-# from parcels.tools.filecache import DEBUG as CACHE_DEBUG
+from parcels.tools.filecache import DEBUG as CACHE_DEBUG
 from .fieldfilebuffer import (NetcdfFileBuffer, DeferredNetcdfFileBuffer,
                               DaskFileBuffer, DeferredDaskFileBuffer)
 from .grid import CGrid
@@ -43,7 +43,7 @@ def _isParticle(key):
         return False
 
 
-CACHE_DEBUG = True
+# CACHE_DEBUG = True
 
 
 class Field(object):
