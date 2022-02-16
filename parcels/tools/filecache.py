@@ -167,7 +167,7 @@ class FieldFileCache(object):
     _periodic_wrap_lock = None
     _stopped = None
 
-    def __init__(self, cache_upper_limit=35*1024*1024*1024, cache_lower_limit=3.5*2014*1024*1024, use_thread=False, cache_top_dir=None, remove_cache_dir=True, debug=False):
+    def __init__(self, cache_upper_limit=20*1024*1024*1024, cache_lower_limit=3.5*2014*1024*1024, use_thread=False, cache_top_dir=None, remove_cache_dir=True, debug=False):
         computer_env, cache_head, data_head = get_compute_env()
         global DEBUG
         DEBUG = debug
@@ -708,7 +708,8 @@ class FieldFileCache(object):
         if DEBUG:
             logger.info("[before adding] Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
         cachefill = (cache_size >= self._cache_upper_limit)
-        while (cache_size < self._cache_upper_limit) and (not cachefill):
+        # while (cache_size < self._cache_upper_limit) and (not cachefill):
+        while (cache_size < self._cache_upper_limit) and (not cachefill) and np.any(list(self._changeflags.values())):
             cachefill = True
             for name in self._field_names:
                 if not self._do_wrapping[name] and ((cache_range_indices[name][0] > cache_range_indices[name][1] and signdt >= 0) or (cache_range_indices[name][0] < cache_range_indices[name][1] and signdt < 0)):
@@ -762,7 +763,7 @@ class FieldFileCache(object):
             cache_size = get_size(self._cache_top_dir)
             if DEBUG and (cachefill or (cache_size > self._cache_upper_limit)):
                 logger.info("[after adding] Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
-            if (cache_size >= self._cache_upper_limit) or cachefill:
+            if (cache_size >= self._cache_upper_limit) or cachefill or not np.any(list(self._changeflags.values())):
                 break
 
         self.update_processed_files()
