@@ -440,7 +440,7 @@ class FieldSet(object):
                                 processedGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if processedGrid:
                         grid = fields[procvar].grid
-                        if procpaths == nowpaths and (cls._field_file_cache is None or not cls._field_file_cache.named_copy):
+                        if procpaths == nowpaths and (cls._field_file_cache is None):  # or not cls._field_file_cache.named_copy
                             dFiles = fields[procvar].dataFiles
                             break
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
