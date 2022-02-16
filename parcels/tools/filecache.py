@@ -318,6 +318,8 @@ class FieldFileCache(object):
         #     self._processed_files_lock.release()
 
     def stop_caching(self):
+        if not self._caching_started:
+            return
         if self._use_thread:
             if self._occupation_files_lock.locked():
                 self._occupation_files_lock.release()
@@ -371,6 +373,13 @@ class FieldFileCache(object):
         :param files: Field data files
         :return: list of new file paths with directory to cache
         """
+        field_name = name
+        if self._field_file_cache.is_field_added(field_name):
+            field_name_index = -1
+            while self._field_file_cache.is_field_added(field_name):
+                field_name_index += 1
+                field_name = "%s%d" % (name, field_name_index)
+
         dirname = files[0]
         is_top_dir = False
         while not is_top_dir:
@@ -388,23 +397,23 @@ class FieldFileCache(object):
             fname = os.path.split(dname)[1]
             if self._named_copy:
                 ofname = fname
-                fname = "{}_{}".format(name, ofname)
+                fname = "{}_{}".format(field_name, ofname)
             destination_paths.append(os.path.join(self._cache_top_dir, fname))
-        self._field_names.append(name)
-        self._original_top_dirs[name] = topdirname
-        self._original_filepaths[name] = source_paths
-        self._global_files[name] = destination_paths
-        self._available_files[name] = []
-        self._processed_files[name] = np.zeros(len(destination_paths), dtype=np.int16)
-        self._prev_processed_files[name] = np.zeros(len(destination_paths), dtype=np.int16)
-        self._periodic_wrap[name] = 0
-        self._do_wrapping[name] = do_wrapping
+        self._field_names.append(field_name)
+        self._original_top_dirs[field_name] = topdirname
+        self._original_filepaths[field_name] = source_paths
+        self._global_files[field_name] = destination_paths
+        self._available_files[field_name] = []
+        self._processed_files[field_name] = np.zeros(len(destination_paths), dtype=np.int16)
+        self._prev_processed_files[field_name] = np.zeros(len(destination_paths), dtype=np.int16)
+        self._periodic_wrap[field_name] = 0
+        self._do_wrapping[field_name] = do_wrapping
 
-        self._tis[name] = 0
-        self._last_loaded_tis[name] = 0
-        self._changeflags[name] = True
+        self._tis[field_name] = 0
+        self._last_loaded_tis[field_name] = 0
+        self._changeflags[field_name] = True
 
-        return destination_paths
+        return destination_paths, field_name
 
     def update_next(self, name, ti):
         while not self.caching_started:

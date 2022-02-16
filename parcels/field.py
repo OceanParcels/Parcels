@@ -14,7 +14,8 @@ from pathlib import Path
 from time import sleep
 
 import parcels.tools.interpolation_utils as i_u
-from parcels.tools.filecache import DEBUG as CACHE_DEBUG
+# from parcels.tools.filecache import DEBUG as CACHE_DEBUG
+CACHE_DEBUG = True
 from .fieldfilebuffer import (NetcdfFileBuffer, DeferredNetcdfFileBuffer,
                               DaskFileBuffer, DeferredDaskFileBuffer)
 from .grid import CGrid
@@ -195,14 +196,14 @@ class Field(object):
         # ========== Section added to auto-cache fieldset data files ========== #
         self._field_file_cache = kwargs.pop('field_file_cache', None)
         if self._field_file_cache is not None and self.dataFiles is not None:
-            if not self._field_file_cache.is_field_added(self.name):
-                if CACHE_DEBUG:
-                    index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
-                    print("Field '{}' (before caching) - {}".format(self.name, index_file_list))
-                self.dataFiles = self._field_file_cache.add_field(self.name, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
-                if CACHE_DEBUG:
-                    index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
-                    print("Field '{}' (before caching) - {}".format(self.name, index_file_list))
+            # if not self._field_file_cache.is_field_added(self.name):
+            if CACHE_DEBUG:
+                index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
+                print("Field '{}' (before caching) - {}".format(self.name, index_file_list))
+            self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
+            if CACHE_DEBUG:
+                index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
+                print("Field '{}' (before caching) - {}".format(self._cache_field_name, index_file_list))
         # ========== ========== ========== END ========== ========== ========== #
         if self.grid._add_last_periodic_data_timestep and self.dataFiles is not None:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
@@ -239,9 +240,14 @@ class Field(object):
         if self._field_file_cache is None:
             self._field_file_cache = cache
         if self._field_file_cache is not None and self.dataFiles is not None:
-            if not self._field_file_cache.is_field_added(self.name):
-                inFiles = [dFile for dFile in self.dataFiles]
-                self.dataFiles = self._field_file_cache.add_field(self.name, inFiles)
+            # if not self._field_file_cache.is_field_added(self.name):
+            if CACHE_DEBUG:
+                index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
+                print("Field '{}' (before caching) - {}".format(self.name, index_file_list))
+            self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
+            if CACHE_DEBUG:
+                index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
+                print("Field '{}' (before caching) - {}".format(self._cache_field_name, index_file_list))
     # ========== ========== ========== END ========== ========== ========== #
 
     @classmethod
@@ -1399,14 +1405,13 @@ class Field(object):
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
         # ========== Section added to auto-cache fieldset data files ========== #
-        if self._field_file_cache is not None and self._field_file_cache.is_field_added(self.name):
-            self._field_file_cache.update_next(self.name, ti=(g.ti + tindex))
+        if self._field_file_cache is not None and hasattr(self, "_cache_field_name"): # self._field_file_cache.is_field_added(self.name):
+            self._field_file_cache.update_next(self._cache_field_name, ti=(g.ti + tindex))
             # self._field_file_cache.wait_for_file(self.name, ti=(g.ti + tindex))
-            while not self._field_file_cache.is_ready(self.dataFiles[g.ti + tindex], name_hint=self.name):
-                self._field_file_cache.renew_cache(self.name)
+            while not self._field_file_cache.is_ready(self.dataFiles[g.ti + tindex], name_hint=self._cache_field_name):
+                self._field_file_cache.renew_cache(self._cache_field_name)
                 sleeptime = uniform(0.01, 0.5)
                 sleep(sleeptime)
-                # self._field_file_cache.update_next(self.name, ti=(g.ti + tindex))
         # ========== ========== ========== END ========== ========== ========== #
 
         rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None
