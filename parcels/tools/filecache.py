@@ -374,7 +374,7 @@ class FieldFileCache(object):
         :return: list of new file paths with directory to cache
         """
         field_name = name
-        if self._field_file_cache.is_field_added(field_name):
+        if self.is_field_added(field_name):
             field_name_index = -1
             while self._field_file_cache.is_field_added(field_name):
                 field_name_index += 1
