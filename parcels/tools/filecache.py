@@ -180,6 +180,7 @@ class FieldFileCache(object):
         self._process_file = "loaded_files.pkl"
         self._ti_file = "timeindices.pkl"
         self._field_names = []
+        self._var_names = {}
         self._original_top_dirs = {}
         self._original_filepaths = {}
         self._global_files = {}
@@ -254,15 +255,6 @@ class FieldFileCache(object):
     @caching_started.setter
     def caching_started(self, flag):
         raise AttributeError("Flag for caching being started cannot be set from outside the class")
-
-    def update_processed_files(self):
-        """
-        :return: None
-        """
-        for key in self._processed_files.keys():
-            assert key in self._prev_processed_files
-            assert len(self._processed_files) == len(self._prev_processed_files)
-            self._prev_processed_files[key] = deepcopy(self._processed_files[key])
 
     def start_caching(self, signdt):
         if DEBUG:
@@ -348,17 +340,43 @@ class FieldFileCache(object):
         self._ti_files_lock = threading.Lock()
         self._periodic_wrap_lock = threading.Lock()
         self._T = FieldFileCacheThread(self._cache_top_dir, self._computer_env, self._occupation_file, self._process_file, self._ti_file,
-                                       self._field_names, self._original_top_dirs, self._original_filepaths, self._global_files,
+                                       self._field_names, self._var_names, self._original_top_dirs, self._original_filepaths, self._global_files,
                                        self._available_files, self._processed_files, self._tis, self._last_loaded_tis, self._changeflags,
-                                       self._cache_upper_limit, self._cache_lower_limit, self._named_copy, self._start_ti, self._end_ti,
-                                       self._do_wrapping, self._periodic_wrap, self._occupation_files_lock, self._processed_files_lock,
-                                       self._ti_files_lock, self._periodic_wrap_lock, self._stopped)
+                                       self._cache_upper_limit, self._cache_lower_limit, self._named_copy, self._sim_dt, self._start_ti,
+                                       self._end_ti, self._do_wrapping, self._periodic_wrap, self._occupation_files_lock,
+                                       self._processed_files_lock, self._ti_files_lock, self._periodic_wrap_lock, self._stopped)
         if DEBUG:
             logger.info("Caching thread created.")
         self._T.start()
         if DEBUG:
             logger.info("Caching thread started.")
         sleep(0.5)
+
+    def update_processed_files(self):
+        """
+        :return: None
+        """
+        for key in self._processed_files.keys():
+            assert key in self._prev_processed_files
+            assert len(self._processed_files) == len(self._prev_processed_files)
+            self._prev_processed_files[key] = deepcopy(self._processed_files[key])
+
+    def nc_copy(self, src_filepath, dst_filepath):
+        """
+        Copies and merges source file fields in destination file
+        :param src_filepath:
+        :param dst_filepath:
+        :return: None
+        """
+        field_names = self.fields_in_file(dst_filepath)
+        var_string = ""
+        for fname in field_names:
+            var_string += "{},".format(self._var_names[fname])
+        var_string = var_string[:-1] if var_string[-1] == ',' else var_string
+        cmd = "ncks -v {} {} {}".format(var_string, src_filepath, dst_filepath)
+        if DEBUG:
+            logger.info("copy file via command: '{}'".format(cmd))
+        os.system(cmd)
 
     def is_field_added(self, name):
         """
@@ -368,7 +386,23 @@ class FieldFileCache(object):
         """
         return (name in self._field_names)
 
-    def add_field(self, name, files, do_wrapping=False):
+    def fields_in_file(self, filepath, skip_field=None):
+        """
+        Checks with fields contain the requested file. This is mainly to fuse the field-copy, especially when using
+        'ncks;.
+        :param filepath: path to a Field file
+        :param skip_field: (Optional) excludes the given field name in the result list
+        :return: list of field names
+        """
+        field_name_results = []
+        for name in self._field_names:
+            if skip_field is not None and name == skip_field:
+                continue
+            if filepath in self._global_files[name]:
+                field_name_results.append(name)
+        return field_name_results
+
+    def add_field(self, name, varname, files, do_wrapping=False):
         """
         Adds files of a field to the cache and returns the (cached) file paths
         :param name: Name of the Field to be added
@@ -402,6 +436,7 @@ class FieldFileCache(object):
                 fname = "{}_{}".format(field_name, ofname)
             destination_paths.append(os.path.join(self._cache_top_dir, fname))
         self._field_names.append(field_name)
+        self._var_names[field_name] = varname
         self._original_top_dirs[field_name] = topdirname
         self._original_filepaths[field_name] = source_paths
         self._global_files[field_name] = destination_paths
@@ -612,6 +647,7 @@ class FieldFileCache(object):
         indices = {}
         cacheclean = {}
         files_to_keep = {}
+        global_files_to_keep = []
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.acquire()
         for name in self._field_names:
@@ -645,12 +681,14 @@ class FieldFileCache(object):
                 logger.info("field '{}' (before cleanup): past-ti = {}, future-ti = {}".format(name, past_keep_index, future_keep_index))
             cache_range_indices[name] = (past_keep_index, future_keep_index)
             files_to_keep[name] = list(dict.fromkeys(self._global_files[name][past_keep_index:future_keep_index]))
+            global_files_to_keep += files_to_keep[name]
             indices[name] = self._start_ti[name]
             cacheclean[name] = not self._changeflags[name]
             if self._do_wrapping[name]:
                 self._periodic_wrap[name] = 0
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.release()
+        global_files_to_keep = list(dict.fromkeys(global_files_to_keep))
 
         cache_size = get_size(self._cache_top_dir)
         while (cache_size > self._cache_lower_limit) and (not np.all(list(cacheclean.values()))):
@@ -678,7 +716,8 @@ class FieldFileCache(object):
                 if self._use_thread:
                     self._occupation_files_lock.release()
                 if (self._global_files[name][i] in self._available_files[name]):
-                    if os.path.exists(self._global_files[name][i]) and not file_check_lock_busy(self._global_files[name][i]) and self._global_files[name][i] not in files_to_keep[name]:
+                    # if os.path.exists(self._global_files[name][i]) and not file_check_lock_busy(self._global_files[name][i]) and self._global_files[name][i] not in files_to_keep[name]:
+                    if os.path.exists(self._global_files[name][i]) and not file_check_lock_busy(self._global_files[name][i]) and self._global_files[name][i] not in global_files_to_keep:
                         if DEBUG:
                             logger.info("Removing file '{}' with index={} ...".format(self._global_files[name][i], i))
                         os.remove(self._global_files[name][i])
@@ -750,8 +789,9 @@ class FieldFileCache(object):
                     if DEBUG:
                         logger.info("field '{}' - loading '{}' to '{}' ...".format(name, self._original_filepaths[name][i], self._global_files[name][i]))
                     # copyfile(self._original_filepaths[name][i], self._global_files[name][i])
-                    copy(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
                     # copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    # copy(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    nc_copy(self._original_filepaths[name][i], self._global_files[name][i])
                     while os.path.getsize(self._global_files[name][i]) != os.path.getsize(self._original_filepaths[name][i]):
                         sleeptime = uniform(0.1, 0.3)
                         sleep(sleeptime)
@@ -797,9 +837,9 @@ class FieldFileCache(object):
 class FieldFileCacheThread(threading.Thread, FieldFileCache):
 
     def __init__(self, cache_top_dir, computer_env, occupation_file, process_file, ti_file,
-                 field_names, original_top_dirs, original_filepaths, global_files,
+                 field_names, var_names, original_top_dirs, original_filepaths, global_files,
                  available_files, processed_files, tis, last_loaded_tis, changeflags,
-                 cache_upper_limit, cache_lower_limit, named_copy, start_ti, end_ti,
+                 cache_upper_limit, cache_lower_limit, named_copy, sim_dt, start_ti, end_ti,
                  do_wrapping, periodic_wrap, occupation_files_lock, processed_files_lock,
                  ti_files_lock, periodic_wrap_lock, stop_event):
         super(FieldFileCache, self).__init__()
@@ -810,6 +850,7 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
         self._process_file = process_file
         self._ti_file = ti_file
         self._field_names = field_names
+        self._var_names = var_names
         self._original_top_dirs = original_top_dirs
         self._original_filepaths = original_filepaths
         self._global_files = global_files
@@ -829,6 +870,7 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
         self._use_thread = True
         self._caching_started = False
         self._named_copy = named_copy
+        self._sim_dt = sim_dt
         self._start_ti = start_ti
         self._end_ti = end_ti
         self._periodic_wrap = {}
