@@ -195,6 +195,7 @@ class FieldFileCache(object):
         self._caching_started = False
         self._remove_cache_top_dir = remove_cache_dir
         self._named_copy = False
+        self._sim_dt = 1.0
         self._start_ti = {}
         self._end_ti = {}
         self._periodic_wrap = {}
@@ -271,6 +272,7 @@ class FieldFileCache(object):
             self._end_ti[name] = 0 if signdt < 0 else len(self._global_files[name]) - 1
             self._tis[name] = self._start_ti[name] - int(signdt)
             self._last_loaded_tis[name] = self._tis[name]
+        self._sim_dt = signdt
         process_tis = None
         create_ti_dict = not os.path.exists(os.path.join(self._cache_top_dir, self._ti_file))
         if create_ti_dict:
@@ -432,6 +434,8 @@ class FieldFileCache(object):
         :param name: name of the registered field
         :return: None
         """
+        
+        # ==== WHAT HAPPENS IF THE SAME TI IS REQUESTED TWICE ? ==== #
         if DEBUG:
             logger.info("{}: requested timestep {} for field '{}'.".format(str(type(self).__name__), ti, name))
         if self._use_thread:
@@ -449,10 +453,17 @@ class FieldFileCache(object):
         changed_timestep = False
         if not self._do_wrapping[name]:
             ti = max(ti, self._end_ti[name]) if self._start_ti[name] > 0 else min(ti, self._end_ti[name])
+        else:
+            ti_len = math.abs(self._end_ti[name]-self._start_ti[name]) + 1  #  len(self._global_files[name])
+            ti = (ti + ti_len) % ti_len
+        if DEBUG:
+            logger.info("{}: [corrected] request-timestep {} for field '{}'.".format(str(type(self).__name__), ti, name))
+        assert (ti >= 0) and (ti < len(self._global_files[name])), "Requested index is outside the valid index range."
+
         ti_delta = int(math.copysign(1, ti - self._tis[name])) if int(ti - self._tis[name]) != 0 else 0
         if self._do_wrapping[name]:
             normal_delta = -1 if self._start_ti[name] > 0 else 1
-            self._periodic_wrap[name] = 0 if ti_delta == normal_delta else normal_delta
+            self._periodic_wrap[name] = 0 if (ti_delta == normal_delta) or (ti_delta == 0) else normal_delta
             ti_delta = normal_delta
             if DEBUG and self._periodic_wrap[name] != 0:
                 logger.info("{}: detected a periodic wrap at ti {} -> {} for field '{}'.".format(str(type(self).__name__), self._tis[name], ti, name))
