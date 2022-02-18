@@ -412,7 +412,7 @@ class FieldFileCache(object):
         field_name = name
         if self.is_field_added(field_name):
             field_name_index = -1
-            while self._field_file_cache.is_field_added(field_name):
+            while self.is_field_added(field_name):
                 field_name_index += 1
                 field_name = "%s%d" % (name, field_name_index)
 
