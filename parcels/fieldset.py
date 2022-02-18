@@ -1221,3 +1221,7 @@ class FieldSet(object):
     def stop_caching(self):
         if self._field_file_cache is not None and self._field_file_cache.caching_started:
             self._field_file_cache.stop_caching()
+
+    def restart_caching(self):
+        if self._field_file_cache is not None and self._field_file_cache.caching_started:
+            self._field_file_cache.restart_cache()

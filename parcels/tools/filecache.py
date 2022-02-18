@@ -582,6 +582,38 @@ class FieldFileCache(object):
         else:
             self.reset_changeflag(name=name)
 
+    def restart_cache(self, name):
+        """
+
+        :param name:
+        :return:
+        """
+        if self._use_thread:
+            self._ti_files_lock.acquire()
+        fh_time_indices = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="rb")
+        process_tis = cPickle.load(fh_time_indices)
+        unlock_close_file_sync(fh_time_indices)
+        if self._use_thread:
+            self._ti_files_lock.release()
+        if DEBUG:
+            logger.info("All processes' time indices: {}".format(process_tis))
+
+        for name in self._field_names:
+            self._prev_processed_files[name] = deepcopy(self._processed_files[name])
+            self._processed_files[name] = np.zeros(len(destination_paths), dtype=np.int16)
+            self._periodic_wrap[name] = 0
+            self._tis[name] = 0
+            self._last_loaded_tis[name] = 0
+            self._changeflags[name] = True
+
+        if self._use_thread:
+            self._ti_files_lock.acquire()
+        fh_tis = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="wb")
+        cPickle.dump(process_tis, fh_tis)
+        unlock_close_file_sync(fh_tis)
+        if self._use_thread:
+            self._ti_files_lock.release()
+
     def reset_changeflag(self, name):
         """
         Just initiates a new cache_load process by setting the changeflags of field :param name.
@@ -791,7 +823,7 @@ class FieldFileCache(object):
                     # copyfile(self._original_filepaths[name][i], self._global_files[name][i])
                     # copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
                     # copy(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
-                    nc_copy(self._original_filepaths[name][i], self._global_files[name][i])
+                    self.nc_copy(self._original_filepaths[name][i], self._global_files[name][i])
                     while os.path.getsize(self._global_files[name][i]) != os.path.getsize(self._original_filepaths[name][i]):
                         sleeptime = uniform(0.1, 0.3)
                         sleep(sleeptime)
