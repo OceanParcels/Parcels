@@ -352,15 +352,6 @@ class FieldFileCache(object):
             logger.info("Caching thread started.")
         sleep(0.5)
 
-    def update_processed_files(self):
-        """
-        :return: None
-        """
-        for key in self._processed_files.keys():
-            assert key in self._prev_processed_files
-            assert len(self._processed_files) == len(self._prev_processed_files)
-            self._prev_processed_files[key] = deepcopy(self._processed_files[key])
-
     def nc_copy(self, src_filepath, dst_filepath):
         """
         Copies and merges source file fields in destination file
@@ -377,6 +368,15 @@ class FieldFileCache(object):
         if DEBUG:
             logger.info("copy file via command: '{}'".format(cmd))
         os.system(cmd)
+
+    def update_processed_files(self):
+        """
+        :return: None
+        """
+        for key in self._processed_files.keys():
+            assert key in self._prev_processed_files
+            assert len(self._processed_files) == len(self._prev_processed_files)
+            self._prev_processed_files[key] = deepcopy(self._processed_files[key])
 
     def is_field_added(self, name):
         """
@@ -453,6 +453,8 @@ class FieldFileCache(object):
         return destination_paths, field_name
 
     def update_next(self, name, ti):
+        # if not self.caching_started:
+        #     self.star
         while not self.caching_started:
             logger.warn("FieldFileCacheThread not started")
             sleep(0.1)
@@ -465,8 +467,10 @@ class FieldFileCache(object):
 
     def request_next(self, name, ti):
         """
-
+        registers the request for a file in the cache, so that it is loaded (if not already available).
+        Also controls the periodic wrapping.
         :param name: name of the registered field
+        :param ti: requested time index (i.e. index of a timestamp) if the field file
         :return: None
         """
         
@@ -532,12 +536,74 @@ class FieldFileCache(object):
 
         self._changeflags[name] |= changed_timestep
 
+    def request_single(self, name, ti):
+        """
+        back-up function to obtain field data before simulation (e.g. fieldset sampling; time loading; etc.).
+        Hard-copy single file to cache.
+        Do not call in actual simulation because of performance drop.
+        :param name: name of the registered field
+        :param ti: requested time index (i.e. index of a timestamp) if the field file
+        :return:
+        """
+        assert (ti >= 0) and (ti < len(self._global_files[name])), "Requested index is outside the valid index range."
+        if DEBUG:
+            logger.info("{} (request-single): requested timestep {} for field '{}'.".format(str(type(self).__name__), ti, name))
+
+        if self._use_thread:
+            self._occupation_files_lock.acquire()
+        fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
+        self._available_files = cPickle.load(fh_available)
+        unlock_close_file_sync(fh_available)
+        if self._use_thread:
+            self._occupation_files_lock.release()
+
+        if self._use_thread:
+            self._ti_files_lock.acquire()
+        fh_tis = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="rb")
+        process_tis = cPickle.load(fh_tis)
+        unlock_close_file_sync(fh_tis)
+        if self._use_thread:
+            self._ti_files_lock.release()
+
+
+        if DEBUG:
+            logger.info("{}: loading requested timestep {} in field '{}'.".format(str(type(self).__name__), ti, name))
+        self.nc_copy(self._original_filepaths[name][i], self._global_files[name][i])
+        while os.path.getsize(self._global_files[name][i]) != os.path.getsize(self._original_filepaths[name][i]):
+            sleeptime = uniform(0.1, 0.3)
+            sleep(sleeptime)
+
+        if DEBUG:
+            logger.info("{}: loaded file for timestep {} in field '{}'.".format(str(type(self).__name__), ti, name))
+        self._tis[name] = ti
+        process_tis[os.getpid()] = self._tis
+        if self._global_files[name][ti] not in self._available_files[name]:
+            self._available_files[name].append(self._global_files[name][ti])
+
+        if self._use_thread:
+            self._ti_files_lock.acquire()
+        fh_tis = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="wb")
+        cPickle.dump(process_tis, fh_tis)
+        unlock_close_file_sync(fh_tis)
+        if self._use_thread:
+            self._ti_files_lock.release()
+
+        if self._use_thread:
+            self._occupation_files_lock.acquire()
+        fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
+        cPickle.dump(self._available_files, fh_available)
+        unlock_close_file_sync(fh_available)
+        if self._use_thread:
+            self._occupation_files_lock.release()
+        return True
+
     def is_ready(self, filepath, name_hint=None):
         """
-
-        :param filepath:
-        :param name_hint:
-        :return:
+        Checks if a requested file in :param filepath for the given :param name_hint is available in cache.
+        Super-function also forwarding the check to the caching thread.
+        :param filepath: requested file path
+        :param name_hint: name if the field the requested file belongs to
+        :return: boolean if file is available (True) or not (False)
         """
         if name_hint is None:
             for name in self._field_names:
@@ -550,6 +616,12 @@ class FieldFileCache(object):
             return self.is_file_available(filepath, name_hint)
 
     def is_file_available(self, filepath, name):
+        """
+        Checks if a requested file in :param filepath for the given :param name_hint is available in cache.
+        :param filepath: requested file path
+        :param name_hint: name if the field the requested file belongs to
+        :return: boolean if file is available (True) or not (False)
+        """
         if self._use_thread:
             self._occupation_files_lock.acquire()
         fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
@@ -571,6 +643,7 @@ class FieldFileCache(object):
     def renew_cache(self, name):
         """
         Just initiates a new cache_load process by setting the changeflags of field :param name.
+        Super-function also forwarding the request to the caching thread.
         :param name: name of the field to the renewed in cache
         :return: None
         """
@@ -582,10 +655,33 @@ class FieldFileCache(object):
         else:
             self.reset_changeflag(name=name)
 
+    def reset_changeflag(self, name):
+        """
+        Just initiates a new cache_load process by setting the changeflags of field :param name.
+        :param name: name of the field to the renewed in cache
+        :return: None
+        """
+        self._changeflags[name] = True
+
     def restart_cache(self, name):
         """
+        Re-initializes the cache after the caching has started if the simulation is completely reset.
+        Super-function also forwarding the request to the caching thread.
+        :param name: name of the field the cache is to be restarted for
+        :return:
+        """
+        while not self.caching_started:
+            logger.warn("FieldFileCacheThread not started")
+            sleep(0.1)
+        if self._use_thread:
+            self._T.call_restart_cache(name=name)
+        else:
+            self.call_restart_cache(name=name)
 
-        :param name:
+    def call_restart_cache(self, name):
+        """
+        Re-initializes the cache after the caching has started if the simulation is completely reset.
+        :param name: name of the field the cache is to be restarted for
         :return:
         """
         if self._use_thread:
@@ -613,14 +709,6 @@ class FieldFileCache(object):
         unlock_close_file_sync(fh_tis)
         if self._use_thread:
             self._ti_files_lock.release()
-
-    def reset_changeflag(self, name):
-        """
-        Just initiates a new cache_load process by setting the changeflags of field :param name.
-        :param name: name of the field to the renewed in cache
-        :return: None
-        """
-        self._changeflags[name] = True
 
     def _load_cache(self):
         """

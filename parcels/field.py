@@ -1408,12 +1408,15 @@ class Field(object):
 
         # ========== Section added to auto-cache fieldset data files ========== #
         if self._field_file_cache is not None and hasattr(self, "_cache_field_name") and self._cache_field_name is not None: # self._field_file_cache.is_field_added(self.name):
-            self._field_file_cache.update_next(self._cache_field_name, ti=(g.ti + tindex))
-            # self._field_file_cache.wait_for_file(self.name, ti=(g.ti + tindex))
-            while not self._field_file_cache.is_ready(self.dataFiles[g.ti + tindex], name_hint=self._cache_field_name):
-                self._field_file_cache.renew_cache(self._cache_field_name)
-                sleeptime = uniform(0.01, 0.5)
-                sleep(sleeptime)
+            if self._field_file_cache.caching_started:
+                self._field_file_cache.update_next(self._cache_field_name, ti=(g.ti + tindex))
+                # self._field_file_cache.wait_for_file(self.name, ti=(g.ti + tindex))
+                while not self._field_file_cache.is_ready(self.dataFiles[g.ti + tindex], name_hint=self._cache_field_name):
+                    self._field_file_cache.renew_cache(self._cache_field_name)
+                    sleeptime = uniform(0.01, 0.5)
+                    sleep(sleeptime)
+            else:
+                self._field_file_cache.request_single(name=self._cache_field_name, ti=(g.ti + tindex))
         # ========== ========== ========== END ========== ========== ========== #
 
         rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None
