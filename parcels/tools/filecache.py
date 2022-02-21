@@ -257,6 +257,16 @@ class FieldFileCache(object):
         raise AttributeError("Flag for caching being started cannot be set from outside the class")
 
     def _initialize_comm_files_(self):
+        process_tis = None
+        create_ti_dict = not os.path.exists(os.path.join(self._cache_top_dir, self._ti_file))
+        if create_ti_dict:
+            process_tis = {}
+        else:
+            fh_time_indices = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="rb")
+            process_tis = cPickle.load(fh_time_indices)
+            unlock_close_file_sync(fh_time_indices)
+        process_tis[os.getpid()] = self._tis
+
         if DEBUG:
             logger.info("Dumping 'processed' dict into {} ...".format(os.path.join(self._cache_top_dir, self._process_file)))
         fh_processed = lock_open_file_sync(os.path.join(self._cache_top_dir, self._process_file), filemode="wb")
@@ -282,15 +292,6 @@ class FieldFileCache(object):
             self._tis[name] = self._start_ti[name] - int(signdt)
             self._last_loaded_tis[name] = self._tis[name]
         self._sim_dt = signdt
-        process_tis = None
-        create_ti_dict = not os.path.exists(os.path.join(self._cache_top_dir, self._ti_file))
-        if create_ti_dict:
-            process_tis = {}
-        else:
-            fh_time_indices = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="rb")
-            process_tis = cPickle.load(fh_time_indices)
-            unlock_close_file_sync(fh_time_indices)
-        process_tis[os.getpid()] = self._tis
 
         self._initialize_comm_files_()
 
