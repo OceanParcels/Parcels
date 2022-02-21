@@ -549,7 +549,9 @@ class FieldFileCache(object):
         :param ti: requested time index (i.e. index of a timestamp) if the field file
         :return:
         """
-        assert (ti >= 0) and (ti < len(self._global_files[name])), "Requested index is outside the valid index range."
+        ti_len = len(self._global_files[name])  #  len(self._global_files[name])
+        ti = (ti + ti_len) % ti_len
+        assert (ti >= 0) and (ti < ti_len), "Requested index is outside the valid index range."
         if DEBUG:
             logger.info("{} (request-single): requested timestep {} for field '{}'.".format(str(type(self).__name__), ti, name))
 
