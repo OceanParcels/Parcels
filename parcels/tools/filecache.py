@@ -577,7 +577,6 @@ class FieldFileCache(object):
 
         if DEBUG:
             logger.info("{}: loading requested timestep {} in field '{}'.".format(str(type(self).__name__), ti, name))
-        # self.nc_copy(self._original_filepaths[name][ti], self._global_files[name][ti])
         copy2(self._original_filepaths[name][ti], self._global_files[name][ti], follow_symlinks=True)
         while os.path.getsize(self._global_files[name][ti]) != os.path.getsize(self._original_filepaths[name][ti]):
             sleeptime = uniform(0.1, 0.3)
