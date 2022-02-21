@@ -256,6 +256,23 @@ class FieldFileCache(object):
     def caching_started(self, flag):
         raise AttributeError("Flag for caching being started cannot be set from outside the class")
 
+    def _initialize_comm_files_(self):
+        if DEBUG:
+            logger.info("Dumping 'processed' dict into {} ...".format(os.path.join(self._cache_top_dir, self._process_file)))
+        fh_processed = lock_open_file_sync(os.path.join(self._cache_top_dir, self._process_file), filemode="wb")
+        if DEBUG:
+            logger.info("Dumping 'available' dict into {} ...".format(os.path.join(self._cache_top_dir, self._occupation_file)))
+        fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
+        if DEBUG:
+            logger.info("Dumping 'time_indices' dict into {} ...".format(os.path.join(self._cache_top_dir, self._ti_file)))
+        fh_time_indices = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="wb")
+        cPickle.dump(self._available_files, fh_available)
+        cPickle.dump(self._processed_files, fh_processed)
+        cPickle.dump(process_tis, fh_time_indices)
+        unlock_close_file_sync(fh_available)
+        unlock_close_file_sync(fh_processed)
+        unlock_close_file_sync(fh_time_indices)
+
     def start_caching(self, signdt):
         if DEBUG:
             logger.info("Start caching ...")
@@ -275,21 +292,7 @@ class FieldFileCache(object):
             unlock_close_file_sync(fh_time_indices)
         process_tis[os.getpid()] = self._tis
 
-        if DEBUG:
-            logger.info("Dumping 'processed' dict into {} ...".format(os.path.join(self._cache_top_dir, self._process_file)))
-        fh_processed = lock_open_file_sync(os.path.join(self._cache_top_dir, self._process_file), filemode="wb")
-        if DEBUG:
-            logger.info("Dumping 'available' dict into {} ...".format(os.path.join(self._cache_top_dir, self._occupation_file)))
-        fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
-        if DEBUG:
-            logger.info("Dumping 'time_indices' dict into {} ...".format(os.path.join(self._cache_top_dir, self._ti_file)))
-        fh_time_indices = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="wb")
-        cPickle.dump(self._available_files, fh_available)
-        cPickle.dump(self._processed_files, fh_processed)
-        cPickle.dump(process_tis, fh_time_indices)
-        unlock_close_file_sync(fh_available)
-        unlock_close_file_sync(fh_processed)
-        unlock_close_file_sync(fh_time_indices)
+        self._initialize_comm_files_()
 
         if self._use_thread:
             self._start_thread()
@@ -548,6 +551,9 @@ class FieldFileCache(object):
         assert (ti >= 0) and (ti < len(self._global_files[name])), "Requested index is outside the valid index range."
         if DEBUG:
             logger.info("{} (request-single): requested timestep {} for field '{}'.".format(str(type(self).__name__), ti, name))
+
+        if not os.path.exists(os.path.join(self._cache_top_dir, self._occupation_file)):
+            self._initialize_comm_files_()
 
         if self._use_thread:
             self._occupation_files_lock.acquire()
