@@ -301,7 +301,7 @@ class FieldSet(object):
             raise IOError("FieldSet files not found for variable %s: %s" % (var, str(notfound_paths)))
         for fp in paths:
             if not path.exists(fp):
-                raise IOError("FieldSet file not found: %s" % str(fp))
+                raise IOError("FieldSet file not found for variable %s: %s" % (var, str(fp)))
         return paths
 
     @classmethod
