@@ -558,20 +558,20 @@ class FieldFileCache(object):
         if not os.path.exists(os.path.join(self._cache_top_dir, self._occupation_file)):
             self._initialize_comm_files_()
 
-        if self._use_thread:
+        if self._use_thread and self.caching_started:
             self._occupation_files_lock.acquire()
         fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
         self._available_files = cPickle.load(fh_available)
         unlock_close_file_sync(fh_available)
-        if self._use_thread:
+        if self._use_thread and self.caching_started:
             self._occupation_files_lock.release()
 
-        if self._use_thread:
+        if self._use_thread and self.caching_started:
             self._ti_files_lock.acquire()
         fh_tis = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="rb")
         process_tis = cPickle.load(fh_tis)
         unlock_close_file_sync(fh_tis)
-        if self._use_thread:
+        if self._use_thread and self.caching_started:
             self._ti_files_lock.release()
 
 
@@ -589,20 +589,20 @@ class FieldFileCache(object):
         if self._global_files[name][ti] not in self._available_files[name]:
             self._available_files[name].append(self._global_files[name][ti])
 
-        if self._use_thread:
+        if self._use_thread and self.caching_started:
             self._ti_files_lock.acquire()
         fh_tis = lock_open_file_sync(os.path.join(self._cache_top_dir, self._ti_file), filemode="wb")
         cPickle.dump(process_tis, fh_tis)
         unlock_close_file_sync(fh_tis)
-        if self._use_thread:
+        if self._use_thread and self.caching_started:
             self._ti_files_lock.release()
 
-        if self._use_thread:
+        if self._use_thread and self.caching_started:
             self._occupation_files_lock.acquire()
         fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
         cPickle.dump(self._available_files, fh_available)
         unlock_close_file_sync(fh_available)
-        if self._use_thread:
+        if self._use_thread and self.caching_started:
             self._occupation_files_lock.release()
         return True
 
