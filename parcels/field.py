@@ -166,6 +166,7 @@ class Field(object):
                     tshift = abs(math.ceil(float(self.time_periodic) / float(grid_dt)) * float(grid_dt))
                     tishift = int(tshift / abs(grid_dt))
                     self.grid.time = self.grid.time[0:tishift]
+                    logger.info("clipped time: {} to {}".format(self.grid.time[0], self.grid.time[-1]))
                     self.grid._add_last_periodic_data_timestep = True
                     # raise ValueError("Time series provided is longer than the time_periodic parameter")
                 else:
