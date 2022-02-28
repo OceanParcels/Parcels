@@ -160,8 +160,6 @@ class Field(object):
                 self.time_periodic = self.time_periodic.total_seconds()
             if not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
                 if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
-                    # tshift = 1.0
-                    # tishift = 0
                     grid_dt = self.grid.time[1] - self.grid.time[0]
                     tshift = abs(math.ceil(float(self.time_periodic) / float(grid_dt)) * float(grid_dt))
                     tishift = int(tshift / abs(grid_dt))
