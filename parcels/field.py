@@ -156,6 +156,7 @@ class Field(object):
         if self.time_periodic is True:
             raise ValueError("Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.timedelta object.")
         if self.time_periodic is not False:
+            logger.info("time for {}: {} to {}".format(self.name, self.grid.time[0], self.grid.time[-1]))
             if isinstance(self.time_periodic, datetime.timedelta):
                 self.time_periodic = self.time_periodic.total_seconds()
             if not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
@@ -163,9 +164,10 @@ class Field(object):
                     grid_dt = self.grid.time[1] - self.grid.time[0]
                     tshift = abs(math.ceil(float(self.time_periodic) / float(grid_dt)) * float(grid_dt))
                     tishift = int(math.ceil(tshift / abs(grid_dt)))
-                    self.grid.time = self.grid.time[0:tishift]
+                    self.grid.time = self.grid.time[0:tishift+1]
                     # raise ValueError("Time series provided is longer than the time_periodic parameter")
-                self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
+                else:
+                    self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
                 logger.info("clipped time: {} to {}".format(self.grid.time[0], self.grid.time[-1]))
                 self.grid._add_last_periodic_data_timestep = True
                 self.grid.time_full = self.grid.time
