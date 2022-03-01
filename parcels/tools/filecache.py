@@ -109,7 +109,8 @@ def get_compute_env():
         data_head = os.path.join(gettempdir(), "data")
         cache_head = os.path.join(gettempdir(), "{}".format(USERNAME))
         computer_env = "local/non-posix"
-    elif os.uname()[1] in ['science-bs35', 'science-bs36', 'science-bs37', 'science-bs38', 'science-bs39', 'science-bs40', 'science-bs41', 'science-bs42']:  # Gemini
+    # elif os.uname()[1] in ['science-bs35', 'science-bs36', 'science-bs37', 'science-bs38', 'science-bs39', 'science-bs40', 'science-bs41', 'science-bs42']:  # Gemini
+    elif fnmatch.fnmatchcase(os.uname()[1], "science-bs*"):  # Gemini
         data_head = "/data/oceanparcels/input_data"
         cache_head = "/scratch/{}".format(USERNAME)
         computer_env = "Gemini"
