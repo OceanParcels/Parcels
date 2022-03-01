@@ -109,7 +109,7 @@ def get_compute_env():
         data_head = os.path.join(gettempdir(), "data")
         cache_head = os.path.join(gettempdir(), "{}".format(USERNAME))
         computer_env = "local/non-posix"
-    elif os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
+    elif os.uname()[1] in ['science-bs35', 'science-bs36', 'science-bs37', 'science-bs38', 'science-bs39', 'science-bs40', 'science-bs41', 'science-bs42']:  # Gemini
         data_head = "/data/oceanparcels/input_data"
         cache_head = "/scratch/{}".format(USERNAME)
         computer_env = "Gemini"
@@ -128,6 +128,7 @@ def get_compute_env():
     else:  # local setup
         data_head = "/data"
         cache_head = "/tmp/{}".format(USERNAME)
+        computer_env = "local/{}".format(os.name)
     cache_head = os.path.join(cache_head, os.path.split(get_cache_dir())[1])
     # print("running on {} (uname: {}) - cache head directory: {} - data head directory: {}".format(computer_env, os.uname()[1], cache_head, data_head))
     return computer_env, cache_head, data_head
