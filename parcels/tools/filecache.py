@@ -370,7 +370,11 @@ class FieldFileCache(object):
         for fname in field_names:
             var_string += "{},".format(self._var_names[fname])
         var_string = var_string[:-1] if var_string[-1] == ',' else var_string
-        cmd = "ncks -v {} {} {}".format(var_string, src_filepath, dst_filepath)
+        # Options:
+        # -q -> quench; no print-outs at all
+        # -4 -> output in NetCDF 4 format
+        # --fix_rec_dmn=all -> remove the 'unlimited' dimension from the data to focus just on 1 file
+        cmd = "ncks -4 --fix_rec_dmn=all -q -v {} {} {}".format(var_string, src_filepath, dst_filepath)
         # if DEBUG:
         #     logger.info("copy file via command: '{}'".format(cmd))
         logger.info("copy file via command: '{}'".format(cmd))
