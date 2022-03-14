@@ -679,7 +679,7 @@ class FieldFileCache(object):
         """
         self._changeflags[name] = True
 
-    def restart_cache(self, name):
+    def restart_cache(self, name=None):
         """
         Re-initializes the cache after the caching has started if the simulation is completely reset.
         Super-function also forwarding the request to the caching thread.
@@ -689,10 +689,17 @@ class FieldFileCache(object):
         while not self.caching_started:
             logger.warn("FieldFileCacheThread not started")
             sleep(0.1)
-        if self._use_thread:
-            self._T.call_restart_cache(name=name)
+        if name is None:
+            for fname in self._field_names:
+                if self._use_thread:
+                    self._T.call_restart_cache(name=fname)
+                else:
+                    self.call_restart_cache(name=fname)
         else:
-            self.call_restart_cache(name=name)
+            if self._use_thread:
+                self._T.call_restart_cache(name=name)
+            else:
+                self.call_restart_cache(name=name)
 
     def call_restart_cache(self, name):
         """
