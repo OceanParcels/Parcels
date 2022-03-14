@@ -374,11 +374,11 @@ class FieldFileCache(object):
         # -q -> quench; no print-outs at all
         # -4 -> output in NetCDF 4 format
         # --fix_rec_dmn=all -> remove the 'unlimited' dimension from the data to focus just on 1 file
-        cmd = "ncks -4 --fix_rec_dmn=all -q -v {} {} {}".format(var_string, src_filepath, dst_filepath)
+        cmd = "ncks -4 -q -v {} {} {}".format(var_string, src_filepath, dst_filepath)
         if DEBUG:
             logger.info("copy file via command: '{}'".format(cmd))
         if os.system(cmd) != 0:
-            raise OSError("Failure executing NetCDF kitchen sink '{}'.")
+            raise OSError("Failure executing NetCDF kitchen sink '{}'.".format(cmd))
 
     def update_processed_files(self):
         """
