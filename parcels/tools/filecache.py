@@ -371,9 +371,11 @@ class FieldFileCache(object):
             var_string += "{},".format(self._var_names[fname])
         var_string = var_string[:-1] if var_string[-1] == ',' else var_string
         cmd = "ncks -v {} {} {}".format(var_string, src_filepath, dst_filepath)
-        if DEBUG:
-            logger.info("copy file via command: '{}'".format(cmd))
-        os.system(cmd)
+        # if DEBUG:
+        #     logger.info("copy file via command: '{}'".format(cmd))
+        logger.info("copy file via command: '{}'".format(cmd))
+        if os.system(cmd) != 0:
+            raise OSError("Failure executing NetCDF kitchen sink '{}'.")
 
     def update_processed_files(self):
         """
@@ -923,8 +925,11 @@ class FieldFileCache(object):
                     # copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
                     # copy(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
                     self.nc_copy(self._original_filepaths[name][i], self._global_files[name][i])
+                    if not os.path.exists(self._global_files[name][i]):
+                        copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    assert os.path.exists(self._global_files[name][i])
                     while os.path.getsize(self._global_files[name][i]) != os.path.getsize(self._original_filepaths[name][i]):
-                        sleeptime = uniform(0.1, 0.3)
+                        sleeptime = uniform(0.05, 0.12)
                         sleep(sleeptime)
                     if DEBUG:
                         logger.info("field '{}' - '{}' ready.".format(name, self._global_files[name][i]))
