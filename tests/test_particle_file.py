@@ -1,4 +1,4 @@
-from parcels import (FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode)
+from parcels import (FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode, AdvectionRK4)
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
@@ -169,6 +169,32 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     ncfile = close_and_compare_netcdffiles(filepath, ofile)
     lons = ncfile.variables['lon'][:]
     assert (isinstance(lons[0, 0], np.float64))
+    ncfile.close()
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_write_xi(fieldset, pset_mode, mode, tmpdir):
+    filepath = tmpdir.join("pfile_xi.nc")
+    fieldset.U.data[:] = 1  # set a non-zero zonal velocity
+    dt = 3600
+
+    def Get_Xi(particle, fieldset, time):
+        particle.pxi = particle.xi[0]  # note, this is sampling the indices of the _first_ grid only when multiple grids
+
+    class MyParticle(ptype[mode]):
+        pxi = Variable('pxi', dtype=np.int32, initial=0.)
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
+    ofile = pset.ParticleFile(name=filepath, outputdt=dt)
+    pset.execute(pset.Kernel(AdvectionRK4)+pset.Kernel(Get_Xi), endtime=10*dt, dt=dt, output_file=ofile)
+
+    ncfile = close_and_compare_netcdffiles(filepath, ofile)
+    pxi = ncfile.variables['pxi'][:][0]
+    lons = ncfile.variables['lon'][:][0]
+    assert (pxi[0] == 0) and (pxi[-1] > 0)  # check that particle has moved
+    for xi, lon in zip(pxi, lons):
+        assert fieldset.U.grid.lon[xi] <= lon < fieldset.U.grid.lon[xi+1]
     ncfile.close()
 
 
