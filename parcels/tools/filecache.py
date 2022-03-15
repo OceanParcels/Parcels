@@ -719,7 +719,7 @@ class FieldFileCache(object):
 
         for name in self._field_names:
             self._prev_processed_files[name] = deepcopy(self._processed_files[name])
-            self._processed_files[name] = np.zeros(len(destination_paths), dtype=np.int16)
+            self._processed_files[name] = np.zeros(len(self._global_files[name]), dtype=np.int16)
             self._periodic_wrap[name] = 0
             self._tis[name] = 0
             self._last_loaded_tis[name] = 0
