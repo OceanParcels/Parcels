@@ -116,10 +116,13 @@ class ParticleFileSOA(BaseParticleFile):
 
         # Create dictionary to translate datatypes and fill_values
         self.fmt_map = {np.float32: 'f4', np.float64: 'f8',
-                        np.bool_: 'i1', np.int16: 'i2', np.int32: 'i4', np.int64: 'i8'}
+                        np.bool_: 'i1', np.int16: 'i2', np.int32: 'i4', np.int64: 'i8',
+                        np.uint16: 'u2', np.uint32: 'u4', np.uint64: 'u8'}
         self.fill_value_map = {np.float32: np.nan, np.float64: np.nan,
                                np.bool_: np.iinfo(np.int8).max, np.int16: np.iinfo(np.int16).max,
-                               np.int32: np.iinfo(np.int32).max, np.int64: np.iinfo(np.int64).max}
+                               np.int32: np.iinfo(np.int32).max, np.int64: np.iinfo(np.int64).max,
+                               np.uint16: np.iinfo(np.uint16).max, np.uint32: np.iinfo(np.uint32).max,
+                               np.uint64: np.iinfo(np.uint64).max}
 
         # Retrieve all temporary writing directories and sort them in numerical order
         temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),
