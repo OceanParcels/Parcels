@@ -934,13 +934,14 @@ class FieldFileCache(object):
                     if DEBUG:
                         logger.info("field '{}' - loading '{}' to '{}' ...".format(name, self._original_filepaths[name][i], self._global_files[name][i]))
                     # copyfile(self._original_filepaths[name][i], self._global_files[name][i])
-                    # copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
                     # copy(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
-                    self.nc_copy(self._original_filepaths[name][i], self._global_files[name][i])
-                    checksize = False
-                    if not os.path.exists(self._global_files[name][i]):
-                        copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
-                        checksize = True
+
+                    # self.nc_copy(self._original_filepaths[name][i], self._global_files[name][i])
+                    # checksize = False
+                    # if not os.path.exists(self._global_files[name][i]):
+                    #     copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    #     checksize = True
                     assert os.path.exists(self._global_files[name][i])
                     while checksize and (os.path.getsize(self._global_files[name][i]) != os.path.getsize(self._original_filepaths[name][i])):
                         sleeptime = uniform(0.05, 0.12)
