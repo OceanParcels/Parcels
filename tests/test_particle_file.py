@@ -177,9 +177,9 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
 def test_write_dtypes_pfile(fieldset, mode, pset_mode, tmpdir):
     filepath = tmpdir.join("pfile_dtypes.nc")
 
-    dtypes = ['float32', 'float64', 'int32', 'int64']
-    if mode == 'scipy':
-        dtypes.append('bool_')  # bool only implemented in scipy
+    dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64']
+    if mode =='scipy' or pset_mode == 'soa':
+        dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16']) # Not implemented in AoS JIT
 
     class MyParticle(ptype[mode]):
         for d in dtypes:
