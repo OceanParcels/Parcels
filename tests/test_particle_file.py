@@ -177,7 +177,7 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
 def test_write_dtypes_pfile(fieldset, mode, pset_mode, tmpdir):
     filepath = tmpdir.join("pfile_dtypes.nc")
 
-    dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64']
+    dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64', 'uint64']
     if mode =='scipy' or pset_mode == 'soa':
         dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16']) # Not implemented in AoS JIT
 
