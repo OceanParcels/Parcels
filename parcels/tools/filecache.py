@@ -486,7 +486,6 @@ class FieldFileCache(object):
         :param ti: requested time index (i.e. index of a timestamp) if the field file
         :return: None
         """
-        
         # ==== WHAT HAPPENS IF THE SAME TI IS REQUESTED TWICE ? ==== #
         if DEBUG:
             logger.info("{}: requested timestep {} for field '{}'.".format(str(type(self).__name__), ti, name))
@@ -506,7 +505,7 @@ class FieldFileCache(object):
         if not self._do_wrapping[name]:
             ti = max(ti, self._end_ti[name]) if self._start_ti[name] > 0 else min(ti, self._end_ti[name])
         else:
-            ti_len = abs(self._end_ti[name]-self._start_ti[name]) + 1  #  len(self._global_files[name])
+            ti_len = abs(self._end_ti[name]-self._start_ti[name]) + 1
             ti = (ti + ti_len) % ti_len
         if DEBUG:
             logger.info("{}: [corrected] request-timestep {} for field '{}'.".format(str(type(self).__name__), ti, name))
@@ -558,7 +557,7 @@ class FieldFileCache(object):
         :param ti: requested time index (i.e. index of a timestamp) if the field file
         :return:
         """
-        ti_len = len(self._global_files[name])  #  len(self._global_files[name])
+        ti_len = len(self._global_files[name])
         ti = (ti + ti_len) % ti_len
         assert (ti >= 0) and (ti < ti_len), "Requested index is outside the valid index range."
         if DEBUG:
@@ -582,7 +581,6 @@ class FieldFileCache(object):
         unlock_close_file_sync(fh_tis)
         if self._use_thread and self.caching_started:
             self._ti_files_lock.release()
-
 
         if DEBUG:
             logger.info("{}: loading requested timestep {} in field '{}'.".format(str(type(self).__name__), ti, name))
@@ -936,9 +934,9 @@ class FieldFileCache(object):
                     # copyfile(self._original_filepaths[name][i], self._global_files[name][i])
                     copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
                     # copy(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    checksize = False
 
                     # self.nc_copy(self._original_filepaths[name][i], self._global_files[name][i])
-                    # checksize = False
                     # if not os.path.exists(self._global_files[name][i]):
                     #     copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
                     #     checksize = True
