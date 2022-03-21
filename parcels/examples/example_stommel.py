@@ -15,6 +15,7 @@ from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from parcels import timer
 from parcels import Variable
+from parcels.tools import logger
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle}#, 'jit': JITParticle}
@@ -173,12 +174,16 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='max age of the particles (after which particles are deleted)')
     p.add_argument('-psm', '--pset_mode', choices=('soa', 'aos'), default='soa',
                    help='max age of the particles (after which particles are deleted)')
+    p.add_argument('-nw', '--no_write_fields', dest='write_fields', action='store_false', default=True,
+                   help='indicates if results are to be written to disk or not')
     args = p.parse_args()
 
     timer.args.stop()
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
-    stommel_example(args.particles, mode=args.mode, verbose=args.verbose, method=method[args.method],
-                    outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage)
+    if 'jit' in args.mode:
+        logger.warning("JIT-mode in Numba not supported! Auto-default to Numba.")
+    stommel_example(args.particles, mode='scipy', verbose=args.verbose, method=method[args.method],
+                    outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage, pset_mode=args.pset_mode.lower(), write_fields=args.write_fields)
     timer.stommel.stop()
     timer.root.stop()
     timer.root.print_tree()
