@@ -431,7 +431,7 @@ class BaseParticleSet(NDCluster):
             walltime_start = time_module.time()
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
-        if self.fieldset.restart_caching() is not None:
+        if self.fieldset is not None:
             self.fieldset.restart_caching()
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
