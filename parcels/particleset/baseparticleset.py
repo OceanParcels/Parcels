@@ -388,7 +388,7 @@ class BaseParticleSet(NDCluster):
             self.repeat_starttime = _starttime
         if runtime is not None:
             endtime = _starttime + runtime * np.sign(dt)
-        elif endtime is None:
+        elif endtime is None and self.fieldset is not None:
             mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
             endtime = maxtime if dt >= 0 else mintime
 
@@ -431,7 +431,8 @@ class BaseParticleSet(NDCluster):
             walltime_start = time_module.time()
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
-        self.fieldset.restart_caching()
+        if self.fieldset.restart_caching() is not None:
+            self.fieldset.restart_caching()
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
@@ -483,7 +484,7 @@ class BaseParticleSet(NDCluster):
                     p.dt = dt
                 self.add(pset_new)
                 next_prelease += self.repeatdt * np.sign(dt)
-            if abs(time - next_output) < tol or dt == 0:
+            if (abs(time - next_output) < tol or dt == 0) and (self.fieldset is not None):
                 for fld in self.fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
@@ -504,7 +505,7 @@ class BaseParticleSet(NDCluster):
                     for extFunc in postIterationCallbacks:
                         extFunc()
                 next_callback += callbackdt * np.sign(dt)
-            if time != endtime:
+            if (time != endtime) and (self.fieldset is not None):
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
                 break
