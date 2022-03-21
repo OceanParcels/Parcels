@@ -205,12 +205,14 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='max age of the particles (after which particles are deleted)')
     p.add_argument('-psm', '--pset_mode', choices=('SoA','soa', 'aos', 'AoS', 'nodes', 'Nodes'), default='soa',
                    help='collection datatype used as ParticleSet to store the particles')
+    p.add_argument('-nw', '--no_write_fields', dest='write_fields', action='store_false', default=True,
+                   help='indicates if results are to be written to disk or not')
     args = p.parse_args()
 
     timer.args.stop()
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
     stommel_example(args.particles, mode=args.mode, verbose=args.verbose, method=method[args.method],
-                    outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage, pset_mode=args.pset_mode.lower())
+                    outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage, pset_mode=args.pset_mode.lower(), write_fields=args.write_fields)
     timer.stommel.stop()
     timer.root.stop()
     timer.root.print_tree()
