@@ -164,7 +164,7 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='repeatdt of the ParticleSet')
     p.add_argument('-a', '--maxage', default=None, type=int,
                    help='max age of the particles (after which particles are deleted)')
-    p.add_argument('-psm', '--pset_mode', choices=('Soa', 'soa', 'AoS', 'aos'), default='soa',
+    p.add_argument('-psm', '--pset_mode', choices=('SoA', 'soa', 'AoS', 'aos'), default='soa',
                    help='max age of the particles (after which particles are deleted)')
     p.add_argument('-nw', '--no_write_fields', dest='write_fields', action='store_false', default=True,
                    help='indicates if results are to be written to disk or not')
