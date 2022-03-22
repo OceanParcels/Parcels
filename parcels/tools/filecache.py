@@ -13,7 +13,7 @@ import threading
 import _pickle as cPickle
 from time import sleep
 from random import uniform
-from shutil import copyfile, copy, copy2, rmtree  # noqa
+from shutil import copyfile, copy, copy2, rmtree, which  # noqa
 from .global_statics import get_cache_dir
 from tempfile import gettempdir
 from .loggers import logger
@@ -198,7 +198,9 @@ class FieldFileCache(object):
         self._caching_started = False
         self._remove_cache_top_dir = remove_cache_dir
         self._named_copy = False
+        self._use_ncks = (which("ncks") is not None)
         self._sim_dt = 1.0
+        self._cache_step_limit = -1
         self._start_ti = {}
         self._end_ti = {}
         self._periodic_wrap = {}
@@ -217,6 +219,14 @@ class FieldFileCache(object):
     @property
     def prev_processed_files(self):
         return self._prev_processed_files
+
+    @property
+    def cache_step_limit(self):
+        return self._cache_step_limit
+
+    @cache_step_limit.setter
+    def cache_step_limit(self, value):
+        self._cache_step_limit = value if not self._caching_started else self._cache_step_limit
 
     @property
     def cache_top_dir(self):
@@ -348,9 +358,10 @@ class FieldFileCache(object):
         self._T = FieldFileCacheThread(self._cache_top_dir, self._computer_env, self._occupation_file, self._process_file, self._ti_file,
                                        self._field_names, self._var_names, self._original_top_dirs, self._original_filepaths, self._global_files,
                                        self._available_files, self._processed_files, self._tis, self._last_loaded_tis, self._changeflags,
-                                       self._cache_upper_limit, self._cache_lower_limit, self._named_copy, self._sim_dt, self._start_ti,
-                                       self._end_ti, self._do_wrapping, self._periodic_wrap, self._occupation_files_lock,
-                                       self._processed_files_lock, self._ti_files_lock, self._periodic_wrap_lock, self._stopped)
+                                       self._cache_upper_limit, self._cache_lower_limit, self._named_copy, self._use_ncks, self._sim_dt,
+                                       self._cache_step_limit, self._start_ti, self._end_ti, self._do_wrapping, self._periodic_wrap,
+                                       self._occupation_files_lock, self._processed_files_lock, self._ti_files_lock, self._periodic_wrap_lock,
+                                       self._stopped)
         if DEBUG:
             logger.info("Caching thread created.")
         self._T.start()
@@ -813,11 +824,18 @@ class FieldFileCache(object):
             last_ti = len(self._global_files[name])-1
             past_keep_index = max(progress_ti_before-1, 0) if signdt > 0 else min(progress_ti_before+1, last_ti)
             if self._do_wrapping[name]:
-                future_keep_index = progress_ti_before-2 if signdt > 0 else progress_ti_before+2  # purely storage limited
+                future_keep_index = progress_ti_now
+                if self._cache_step_limit < 0:
+                    future_keep_index = progress_ti_before-2 if signdt > 0 else progress_ti_before+2  # purely storage limited
+                else:
+                    future_keep_index = progress_ti_now+self._cache_step_limit if signdt > 0 else progress_ti_now-self._cache_step_limit  # look-ahead index limit
                 future_keep_index = (future_keep_index + len(self._global_files[name])) % len(self._global_files[name])
             else:
-                # future_keep_index = min(progress_ti_now+5, last_ti) if signdt > 0 else max(progress_ti_now-5, 0)  # look-ahead index limit
-                future_keep_index = self._end_ti[name]  # purely storage limited
+                future_keep_index = progress_ti_now
+                if self._cache_step_limit < 0:
+                    future_keep_index = self._end_ti[name]  # purely storage limited
+                else:
+                    future_keep_index = min(progress_ti_now+self._cache_step_limit, last_ti) if signdt > 0 else max(progress_ti_now-self._cache_step_limit, 0)  # look-ahead index limit
             past_keep_index = min(past_keep_index, max(current_ti - 1, 0)) if signdt > 0 else max(past_keep_index, min(current_ti + 1, last_ti))  # clamping to what is currently processed
             future_keep_index = max(future_keep_index, min(current_ti + 1, last_ti)) if signdt > 0 else min(future_keep_index, max(current_ti - 1, 0))
             if DEBUG:
@@ -932,14 +950,18 @@ class FieldFileCache(object):
                     if DEBUG:
                         logger.info("field '{}' - loading '{}' to '{}' ...".format(name, self._original_filepaths[name][i], self._global_files[name][i]))
                     # copyfile(self._original_filepaths[name][i], self._global_files[name][i])
-                    copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    # copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
                     # copy(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
-                    checksize = False
-
-                    # self.nc_copy(self._original_filepaths[name][i], self._global_files[name][i])
-                    # if not os.path.exists(self._global_files[name][i]):
-                    #     copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
-                    #     checksize = True
+                    checksize = True
+                    if self._use_ncks:
+                        checksize = False
+                        self.nc_copy(self._original_filepaths[name][i], self._global_files[name][i])
+                        if not os.path.exists(self._global_files[name][i]):
+                            checksize = True
+                            copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
+                    else:
+                        checksize = True
+                        copy2(self._original_filepaths[name][i], self._global_files[name][i], follow_symlinks=True)
                     assert os.path.exists(self._global_files[name][i])
                     while checksize and (os.path.getsize(self._global_files[name][i]) != os.path.getsize(self._original_filepaths[name][i])):
                         sleeptime = uniform(0.05, 0.12)
@@ -988,9 +1010,9 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
     def __init__(self, cache_top_dir, computer_env, occupation_file, process_file, ti_file,
                  field_names, var_names, original_top_dirs, original_filepaths, global_files,
                  available_files, processed_files, tis, last_loaded_tis, changeflags,
-                 cache_upper_limit, cache_lower_limit, named_copy, sim_dt, start_ti, end_ti,
-                 do_wrapping, periodic_wrap, occupation_files_lock, processed_files_lock,
-                 ti_files_lock, periodic_wrap_lock, stop_event):
+                 cache_upper_limit, cache_lower_limit, named_copy, use_ncks, sim_dt,
+                 cache_step_limit, start_ti, end_ti, do_wrapping, periodic_wrap, occupation_files_lock,
+                 processed_files_lock, ti_files_lock, periodic_wrap_lock, stop_event):
         super(FieldFileCache, self).__init__()
         threading.Thread.__init__(self)
         self._cache_top_dir = cache_top_dir
@@ -1019,7 +1041,9 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
         self._use_thread = True
         self._caching_started = False
         self._named_copy = named_copy
+        self._use_ncks = use_ncks
         self._sim_dt = sim_dt
+        self._cache_step_limit = cache_step_limit
         self._start_ti = start_ti
         self._end_ti = end_ti
         self._periodic_wrap = {}
