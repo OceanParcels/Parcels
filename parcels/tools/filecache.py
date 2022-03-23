@@ -175,6 +175,8 @@ class FieldFileCache(object):
         DEBUG = debug
         self._cache_top_dir = cache_top_dir if cache_top_dir is not None and type(cache_top_dir) is str else cache_head
         self._cache_top_dir = os.path.join(self._cache_top_dir, str(os.getpid()))
+        if DEBUG:
+            logger.info("Process-ID: {}".format(os.getpid()))
         if not os.path.exists(self.cache_top_dir):
             os.makedirs(self.cache_top_dir, exist_ok=True)
         self._computer_env = computer_env
