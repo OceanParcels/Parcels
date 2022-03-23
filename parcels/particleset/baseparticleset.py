@@ -416,6 +416,10 @@ class BaseParticleSet(NDCluster):
             if self.repeatdt is not None:
                 interupt_dts.append(self.repeatdt)
             callbackdt = np.min(np.array(interupt_dts))
+
+        if self.fieldset is not None:
+            self.fieldset.restart_caching()
+
         time = _starttime
         if self.repeatdt:
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
@@ -431,8 +435,6 @@ class BaseParticleSet(NDCluster):
             walltime_start = time_module.time()
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
-        if self.fieldset is not None:
-            self.fieldset.restart_caching()
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
