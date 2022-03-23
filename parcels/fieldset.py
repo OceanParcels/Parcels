@@ -1224,4 +1224,6 @@ class FieldSet(object):
 
     def restart_caching(self):
         if self._field_file_cache is not None and self._field_file_cache.caching_started:
+            logger.info("Restarting the cache ...")
             self._field_file_cache.restart_cache()
+            logger.info("Cache restarted.")
