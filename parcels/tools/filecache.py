@@ -731,15 +731,18 @@ class FieldFileCache(object):
         if self._use_thread:
             self._ti_files_lock.release()
         if DEBUG:
-            logger.info("All processes' time indices: {}".format(process_tis))
+            logger.info("{}.restart_cache(): All processes' time indices: {}".format(str(type(self).__name__), process_tis))
 
         for name in self._field_names:
             self._prev_processed_files[name] = deepcopy(self._processed_files[name])
             self._processed_files[name] = np.zeros(len(self._global_files[name]), dtype=np.int16)
             self._periodic_wrap[name] = 0
-            self._tis[name] = 0
-            self._last_loaded_tis[name] = 0
+            self._tis[name] = self._start_ti[name] - int(self._sim_dt)
+            self._last_loaded_tis[name] = self._tis[name]
             self._changeflags[name] = True
+            if DEBUG:
+                logger.info("{}.restart_cache(): prev_processed_files = {} for field '{}'".format(str(type(self).__name__), self.prev_processed_files[name], name))
+                logger.info("{}.restart_cache(): current timestep = {} for field '{}'.".format(str(type(self).__name__), self._tis[name], name))
 
         if self._use_thread:
             self._ti_files_lock.acquire()
