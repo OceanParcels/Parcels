@@ -209,7 +209,8 @@ class Field(object):
             if CACHE_DEBUG:
                 index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
                 logger.info("Field '{}' (before cache registration) - {}".format(self.name, index_file_list))
-            self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.filebuffername, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
+            # self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.filebuffername, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
+            self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.filebuffername, self.dataFiles, do_wrapping=False)
             if CACHE_DEBUG:
                 index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
                 logger.info("Field '{}' (after cache registration) - {}".format(self._cache_field_name, index_file_list))
@@ -253,7 +254,8 @@ class Field(object):
             if CACHE_DEBUG:
                 index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
                 logger.info("Field '{}' (before cache registration) - {}".format(self.name, index_file_list))
-            self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.filebuffername, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
+            # self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.filebuffername, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
+            self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.filebuffername, self.dataFiles, do_wrapping=False)
             if CACHE_DEBUG:
                 index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
                 logger.info("Field '{}' (after cache registration) - {}".format(self._cache_field_name, index_file_list))
