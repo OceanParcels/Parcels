@@ -464,6 +464,8 @@ class FieldFileCache(object):
         self._original_top_dirs[field_name] = topdirname
         self._original_filepaths[field_name] = source_paths
         self._global_files[field_name] = destination_paths
+        if DEBUG:
+            logger.info("len(files) = {}".format(len(destination_paths)))
         self._available_files[field_name] = []
         self._processed_files[field_name] = np.zeros(len(destination_paths), dtype=np.int16)
         self._prev_processed_files[field_name] = np.zeros(len(destination_paths), dtype=np.int16)
@@ -795,7 +797,7 @@ class FieldFileCache(object):
         if self._use_thread:
             self._ti_files_lock.release()
         if DEBUG:
-            logger.info("All processes' time indices: {}".format(process_tis))
+            logger.info("{}.load_cache(): All processes' time indices: {}".format(str(type(self).__name__), process_tis))
         if self._use_thread:
             self._occupation_files_lock.acquire()
         fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="rb")
