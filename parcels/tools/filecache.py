@@ -524,7 +524,7 @@ class FieldFileCache(object):
         assert (ti >= 0) and (ti < len(self._global_files[name])), "Requested index is outside the valid index range."
 
         ti_delta = int(math.copysign(1, ti - self._tis[name])) if int(ti - self._tis[name]) != 0 else 0
-        sim_delta = int(math.copysign(self._sim_dt))
+        sim_delta = int(math.copysign(1, self._sim_dt))
         if ti_delta != 0 and ti_delta != sim_delta and DEBUG:
             logger.warn("Wrong ti-sign - expected: {}, given: {}.".format(sim_delta, ti_delta))
 
