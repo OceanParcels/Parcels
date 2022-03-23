@@ -509,6 +509,7 @@ class BaseParticleSet(NDCluster):
                         extFunc()
                 next_callback += callbackdt * np.sign(dt)
             if (time != endtime) and (self.fieldset is not None):
+                logger.info("BaseParticleSet.execute(): calling 'computeTimeChunk' for time={}".format(time))
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
                 break
