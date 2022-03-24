@@ -843,22 +843,26 @@ class FieldFileCache(object):
             if DEBUG:
                 logger.info("field '{}': progress ti before = {}, progress ti now = {}".format(name, progress_ti_before, progress_ti_now))
             last_ti = len(self._global_files[name])-1
-            past_keep_index = max(progress_ti_before-1, 0) if signdt > 0 else min(progress_ti_before+1, last_ti)
-            if self._do_wrapping[name]:
-                future_keep_index = progress_ti_now
+            ti_len = len(self._global_files[name])
+            past_keep_index = (max(progress_ti_now-ti_len, progress_ti_before-ti_len) + ti_len) % ti_len if signdt > 0 else min(progress_ti_now+ti_len, progress_ti_before+ti_len) % ti_len
+            past_keep_index =  ((max(past_keep_index-1, 0) if signdt > 0 else min(past_keep_index+1, last_ti)) + ti_len) % ti_len
+            # if self._do_wrapping[name]:
+            if True:
+                future_keep_index = (min(progress_ti_now-ti_len, progress_ti_before-ti_len) + ti_len) % ti_len if signdt > 0 else max(progress_ti_now+ti_len, progress_ti_before+ti_len) % ti_len
                 if self._cache_step_limit < 0:
-                    future_keep_index = progress_ti_before-2 if signdt > 0 else progress_ti_before+2  # purely storage limited
+                    future_keep_index = past_keep_index-2 if signdt > 0 else past_keep_index+2  # purely storage limited
                 else:
-                    future_keep_index = progress_ti_now+self._cache_step_limit if signdt > 0 else progress_ti_now-self._cache_step_limit  # look-ahead index limit
-                future_keep_index = (future_keep_index + len(self._global_files[name])) % len(self._global_files[name])
-            else:
-                future_keep_index = progress_ti_now
-                if self._cache_step_limit < 0:
-                    future_keep_index = self._end_ti[name]  # purely storage limited
-                else:
-                    future_keep_index = min(progress_ti_now+self._cache_step_limit, last_ti) if signdt > 0 else max(progress_ti_now-self._cache_step_limit, 0)  # look-ahead index limit
-            past_keep_index = min(past_keep_index, max(current_ti - 1, 0)) if signdt > 0 else max(past_keep_index, min(current_ti + 1, last_ti))  # clamping to what is currently processed
-            future_keep_index = max(future_keep_index, min(current_ti + 1, last_ti)) if signdt > 0 else min(future_keep_index, max(current_ti - 1, 0))
+                    future_keep_index = future_keep_index+self._cache_step_limit if signdt > 0 else future_keep_index-self._cache_step_limit  # look-ahead index limit
+                future_keep_index = (future_keep_index + ti_len) % ti_len
+            # else:
+            #     future_keep_index = progress_ti_now
+            #     if self._cache_step_limit < 0:
+            #         future_keep_index = self._end_ti[name]  # purely storage limited
+            #     else:
+            #         future_keep_index = min(progress_ti_now+self._cache_step_limit, last_ti) if signdt > 0 else max(progress_ti_now-self._cache_step_limit, 0)  # look-ahead index limit
+            # past_keep_index = min(past_keep_index, max(current_ti - 1, 0)) if signdt > 0 else max(past_keep_index, min((current_ti + 1, last_ti))  # clamping to what is currently processed
+            past_keep_index = (min(past_keep_index, current_ti - 1) + ti_len) % ti_len if signdt > 0 else max(past_keep_index, current_ti + 1) % ti_len  # clamping to what is currently processed
+            future_keep_index = max(future_keep_index, current_ti + 1) % ti_len if signdt > 0 else (min(future_keep_index, current_ti - 1) + ti_len) % ti_len
             if DEBUG:
                 logger.info("field '{}' (before cleanup): past-ti = {}, future-ti = {}".format(name, past_keep_index, future_keep_index))
             cache_range_indices[name] = (past_keep_index, future_keep_index)
