@@ -517,21 +517,23 @@ class FieldFileCache(object):
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.acquire()
         changed_timestep = False
+        ti_len = len(self._global_files[name])
 
         ti_delta = int(math.copysign(1, ti - self._tis[name])) if int(ti - self._tis[name]) != 0 else 0
         sim_delta = int(math.copysign(1, self._sim_dt))
         if ti_delta != 0 and ti_delta != sim_delta:
             if DEBUG:
                 logger.warn("Wrong ti-sign - expected: {}, given: {}.".format(sim_delta, ti_delta))
-            self._tis[name] = ti - sim_delta
+            # self._tis[name] = ((ti - sim_delta) + ti_len) % ti_len
+            self._tis[name] = (ti + ti_len) % ti_len
             if DEBUG:
                 logger.info("{}: [corrected] current timestep {}  for field '{}'.".format(str(type(self).__name__), self._tis[name], name))
 
-        if not self._do_wrapping[name]:
-            ti = min(max(ti, self._end_ti[name]), self._start_ti[name]) if self._start_ti[name] > 0 else max(min(ti, self._end_ti[name]), self._start_ti[name])
-        else:
-            ti_len = len(self._global_files[name])
-            ti = (ti + ti_len) % ti_len
+        # if not self._do_wrapping[name]:
+        #     ti = min(max(ti, self._end_ti[name]), self._start_ti[name]) if self._start_ti[name] > 0 else max(min(ti, self._end_ti[name]), self._start_ti[name])
+        # else:
+        #     pass
+        ti = (ti + ti_len) % ti_len
         ti_delta = int(math.copysign(1, ti - self._tis[name])) if int(ti - self._tis[name]) != 0 else 0
         if DEBUG:
             logger.info("{}: [corrected] requested timestep {} and ti_delta {} for field '{}'.".format(str(type(self).__name__), ti, ti_delta, name))
