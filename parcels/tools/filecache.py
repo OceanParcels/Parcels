@@ -524,8 +524,8 @@ class FieldFileCache(object):
         if ti_delta != 0 and ti_delta != sim_delta:
             if DEBUG:
                 logger.warn("Wrong ti-sign - expected: {}, given: {}.".format(sim_delta, ti_delta))
-            # self._tis[name] = ((ti - sim_delta) + ti_len) % ti_len
-            self._tis[name] = (ti + ti_len) % ti_len
+            self._tis[name] = ((ti - sim_delta) + ti_len) % ti_len
+            # self._tis[name] = (ti + ti_len) % ti_len
             if DEBUG:
                 logger.info("{}: [corrected] current timestep {}  for field '{}'.".format(str(type(self).__name__), self._tis[name], name))
 
