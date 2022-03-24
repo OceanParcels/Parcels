@@ -517,20 +517,25 @@ class FieldFileCache(object):
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.acquire()
         changed_timestep = False
-        if not self._do_wrapping[name]:
-            ti = max(ti, self._end_ti[name]) if self._start_ti[name] > 0 else min(ti, self._end_ti[name])
-        else:
-            # ti_len = abs(self._end_ti[name]-self._start_ti[name]) + 1
-            ti_len = len(self._global_files[name])
-            ti = (ti + ti_len) % ti_len
-        if DEBUG:
-            logger.info("{}: [corrected] request-timestep {} for field '{}'.".format(str(type(self).__name__), ti, name))
-        assert (ti >= 0) and (ti < len(self._global_files[name])), "Requested index is outside the valid index range."
 
         ti_delta = int(math.copysign(1, ti - self._tis[name])) if int(ti - self._tis[name]) != 0 else 0
         sim_delta = int(math.copysign(1, self._sim_dt))
-        if ti_delta != 0 and ti_delta != sim_delta and DEBUG:
-            logger.warn("Wrong ti-sign - expected: {}, given: {}.".format(sim_delta, ti_delta))
+        if ti_delta != 0 and ti_delta != sim_delta:
+            if DEBUG:
+                logger.warn("Wrong ti-sign - expected: {}, given: {}.".format(sim_delta, ti_delta))
+            self._tis[name] = ti - sim_delta
+            if DEBUG:
+                logger.info("{}: [corrected] current timestep {}  for field '{}'.".format(str(type(self).__name__), self._tis[name], name))
+
+        if not self._do_wrapping[name]:
+            ti = min(max(ti, self._end_ti[name]), self._start_ti[name]) if self._start_ti[name] > 0 else max(min(ti, self._end_ti[name]), self._start_ti[name])
+        else:
+            ti_len = len(self._global_files[name])
+            ti = (ti + ti_len) % ti_len
+        ti_delta = int(math.copysign(1, ti - self._tis[name])) if int(ti - self._tis[name]) != 0 else 0
+        if DEBUG:
+            logger.info("{}: [corrected] requested timestep {} and ti_delta {} for field '{}'.".format(str(type(self).__name__), ti, ti_delta, name))
+        assert (ti >= 0) and (ti < len(self._global_files[name])), "Requested index is outside the valid index range."
 
         if self._do_wrapping[name]:
             normal_delta = -1 if self._start_ti[name] > 0 else 1
@@ -539,17 +544,19 @@ class FieldFileCache(object):
             if DEBUG and self._periodic_wrap[name] != 0:
                 logger.info("{}: detected a periodic wrap at ti {} -> {} for field '{}'.".format(str(type(self).__name__), self._tis[name], ti, name))
 
-        while self._tis[name] != ti:
+        while self._tis[name] != ti or ti_delta == 0:
             self._tis[name] += ti_delta
             if self._do_wrapping[name]:
                 self._tis[name] = self._start_ti[name] if ti_delta > 0 and (self._tis[name] > self._end_ti[name]) else self._tis[name]
                 self._tis[name] = self._start_ti[name] if ti_delta < 0 and (self._tis[name] < self._end_ti[name]) else self._tis[name]
             else:
                 self._tis[name] = min(len(self._global_files[name])-1, max(0, self._tis[name]))
-            self._processed_files[name][self._tis[name]] += 1
+            self._processed_files[name][self._tis[name]] += int(abs(ti_delta))
             changed_timestep = True
             if DEBUG:
                 logger.info("{}: loading initiated timestep {} (requested {}; timedelta {}) in field '{}'.".format(str(type(self).__name__), self._tis[name], ti, ti_delta, name))
+            if ti_delta == 0:
+                break
         process_tis[os.getpid()] = self._tis
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.release()
