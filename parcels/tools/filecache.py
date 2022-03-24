@@ -18,7 +18,7 @@ from .global_statics import get_cache_dir
 from tempfile import gettempdir
 from .loggers import logger
 
-DEBUG = True
+DEBUG = False
 
 
 def file_check_lock_busy(filepath):

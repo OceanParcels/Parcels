@@ -428,7 +428,6 @@ class BaseParticleSet(NDCluster):
         next_output = time + outputdt if dt > 0 else time - outputdt
         next_movie = time + moviedt if dt > 0 else time - moviedt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
-        logger.info("BaseParticleSet.execute(): Computing first timestep.")
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
         tol = 1e-12
@@ -509,7 +508,6 @@ class BaseParticleSet(NDCluster):
                         extFunc()
                 next_callback += callbackdt * np.sign(dt)
             if (time != endtime) and (self.fieldset is not None):
-                logger.info("BaseParticleSet.execute(): calling 'computeTimeChunk' for time={}".format(time))
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
                 break
