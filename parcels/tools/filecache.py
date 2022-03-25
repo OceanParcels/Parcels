@@ -829,20 +829,20 @@ class FieldFileCache(object):
             if self._periodic_wrap[name] != 0 and self._do_wrapping[name]:
                 self._prev_processed_files[name][:] -= 1
                 self._processed_files[name][:] -= 1
-            if DEBUG:
+            if True:
                 logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
             current_ti = self._tis[name]
-            if DEBUG:
+            if True:
                 logger.info("field '{}':  current_ti = {}".format(name, current_ti))
             prev_processed = np.where(self.prev_processed_files[name] > 0)[0]
             progress_ti_before = (prev_processed.max() if signdt > 0 else prev_processed.min()) if np.any(self.prev_processed_files[name] > 0) else self._start_ti[name]
-            if DEBUG:
+            if True:
                 logger.info("field '{}':  _processed_files = {}".format(name, self._processed_files[name]))
             now_processed = np.where(self._processed_files[name] > 0)[0]
             progress_ti_now = (now_processed.max() if signdt > 0 else now_processed.min()) if np.any(self._processed_files[name] > 0) else self._start_ti[name]
             if progress_ti_now != progress_ti_before:
                 self._changeflags[name] |= True
-            if DEBUG:
+            if True:
                 logger.info("field '{}': progress ti before = {}, progress ti now = {}".format(name, progress_ti_before, progress_ti_now))
             last_ti = len(self._global_files[name])-1
             ti_len = len(self._global_files[name])
@@ -860,14 +860,14 @@ class FieldFileCache(object):
             #     future_keep_index = progress_ti_now
             #     if self._cache_step_limit < 0:
             #         future_keep_index = self._end_ti[name]  # purely storage limited
-            if DEBUG:
+            if DEBUTG:
                 logger.info("field '{}' (before current_ti-correction): past-ti = {}, future-ti = {}".format(name, past_keep_index, future_keep_index))
             #     else:
             #         future_keep_index = min(progress_ti_now+self._cache_step_limit, last_ti) if signdt > 0 else max(progress_ti_now-self._cache_step_limit, 0)  # look-ahead index limit
             # past_keep_index = min(past_keep_index, max(current_ti - 1, 0)) if signdt > 0 else max(past_keep_index, min((current_ti + 1, last_ti))  # clamping to what is currently processed
             past_keep_index = (min(past_keep_index, current_ti - 1) + ti_len) % ti_len if signdt > 0 else max(past_keep_index, current_ti + 1) % ti_len  # clamping to what is currently processed
             future_keep_index = max(future_keep_index, current_ti + 1) % ti_len if signdt > 0 else (min(future_keep_index, current_ti - 1) + ti_len) % ti_len
-            if DEBUG:
+            if True:
                 logger.info("field '{}' (before cleanup): past-ti = {}, future-ti = {}".format(name, past_keep_index, future_keep_index))
             cache_range_indices[name] = (past_keep_index, future_keep_index)
             files_to_keep[name] = list(dict.fromkeys(self._global_files[name][past_keep_index:future_keep_index]))
@@ -916,7 +916,7 @@ class FieldFileCache(object):
                 if (self._global_files[name][i] in self._available_files[name]):
                     # if os.path.exists(self._global_files[name][i]) and not file_check_lock_busy(self._global_files[name][i]) and self._global_files[name][i] not in files_to_keep[name]:
                     if os.path.exists(self._global_files[name][wrap_index]) and not file_check_lock_busy(self._global_files[name][wrap_index]) and self._global_files[name][wrap_index] not in global_files_to_keep:
-                        if DEBUG:
+                        if True:
                             logger.info("Removing file '{}' with (free-boundary) index={} ...".format(self._global_files[name][wrap_index], i))
                         os.remove(self._global_files[name][wrap_index])
                         self._available_files[name].remove(self._global_files[name][wrap_index])
@@ -941,7 +941,7 @@ class FieldFileCache(object):
 
         for name in self._field_names:
             cache_range_indices[name] = (indices[name], cache_range_indices[name][1])
-            if DEBUG:
+            if True:
                 logger.info("field '{}' (after cleanup): past-ti = {}, future-ti = {}".format(name, cache_range_indices[name][0], cache_range_indices[name][1]))
 
         # for name in self._field_names:
@@ -1157,11 +1157,14 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
                         num_files_loaded += len(self._available_files[name])
                     logger.info("FieldFileCacheThread: files loaded into cache. Cache size: {}".format(num_files_loaded))
                 if not maintain_sleep:
-                    sleeptime /= 2.0
+                    sleeptime /= 1.2
                 maintain_sleep = False
             else:
-                sleeptime *= 2.0
+                sleeptime *= 1.1
                 maintain_sleep = True
+            if sleeptime > 120.0:
+                logger.warn_once("FieldFileCacheThread: Main wait cycle now at 2 minutes.")
+                sleeptime = 120.0
             sleep(sleeptime)  # <- load balancing on this parameter: normal aging first, doubling the time if no change and halfing the time after a change. 200ms min. is used when renew_cache() needed to be called.; like TCP-Reno protocoll.
             if self._stopped.is_set():
                 break
