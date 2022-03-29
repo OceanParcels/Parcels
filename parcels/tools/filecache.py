@@ -875,7 +875,7 @@ class FieldFileCache(object):
             #     future_keep_index = progress_ti_now
             #     if self._cache_step_limit < 0:
             #         future_keep_index = self._end_ti[name]  # purely storage limited
-            if DEBUTG:
+            if DEBUG:
                 logger.info("field '{}' (before current_ti-correction): past-ti = {}, future-ti = {}".format(name, past_keep_index, future_keep_index))
             #     else:
             #         future_keep_index = min(progress_ti_now+self._cache_step_limit, last_ti) if signdt > 0 else max(progress_ti_now-self._cache_step_limit, 0)  # look-ahead index limit
