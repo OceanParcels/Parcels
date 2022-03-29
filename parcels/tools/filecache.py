@@ -841,22 +841,27 @@ class FieldFileCache(object):
         for name in self._field_names:
             last_ti = len(self._global_files[name])-1
             ti_len = len(self._global_files[name])
+            if True:
+                logger.info("field '{}':  prev_processed_files [corrected] = {}".format(name, self.prev_processed_files[name]))
+                logger.info("field '{}':  processed_files [corrected] = {}".format(name, self._processed_files[name]))
             # ==== correct auto-wrapping ==== #
             process_correction = False
-            if (self._prev_processed_files[name][-1] > 0 and self._prev_processed_files[name][0] <= 0) and (self._processed_files[name][-1] > 0 and self._processed_files[name][0] > 0) and (signdt > 0):
+            if (self._prev_processed_files[name][last_ti] > 0 and self._prev_processed_files[name][0] <= 0) and (self._processed_files[name][last_ti] > 0 and self._processed_files[name][0] > 0) and (signdt > 0):
                 # fix wrapping without periodic flag
                 if ti_len > 2 and self._processed_files[name][1] > 0:
                     self._periodic_wrap[name] = 0
-                    self._prev_processed_files[name][-1] = 0
-                    self._processed_files[name][-1] = 0
+                    self._prev_processed_files[name][last_ti] = 0
+                    self._processed_files[name][last_ti] = 0
                     process_correction = True
-            if (self._prev_processed_files[name][-1] <= 0 and self._prev_processed_files[name][0] > 0) and (self._processed_files[name][-1] > 0 and self._processed_files[name][0] > 0) and (signdt < 0):
+                    print("corrected self._prev_processed_files[{}][{}] from 1 to 0".format(name, last_ti))
+            if (self._prev_processed_files[name][last_ti] <= 0 and self._prev_processed_files[name][0] > 0) and (self._processed_files[name][last_ti] > 0 and self._processed_files[name][0] > 0) and (signdt < 0):
                 # fix wrapping without periodic flag
                 if ti_len > 2 and self._processed_files[name][last_ti-1] > 0:
                     self._periodic_wrap[name] = 0
                     self._prev_processed_files[name][0] = 0
                     self._processed_files[name][0] = 0
                     process_correction = True
+                    print("corrected self._prev_processed_files[{}][{}] from 1 to 0".format(name, 0))
             if self._periodic_wrap[name] != 0 and self._do_wrapping[name]:
                 self._prev_processed_files[name][:] -= 1
                 self._processed_files[name][:] -= 1
@@ -864,6 +869,9 @@ class FieldFileCache(object):
                 self._processed_files[name][:] = np.maximum(self._processed_files[name][:], 0)
                 process_correction = True
             if process_correction:
+                if True:
+                    logger.info("field '{}':  prev_processed_files [corrected] = {}".format(name, self.prev_processed_files[name]))
+                    logger.info("field '{}':  processed_files [corrected] = {}".format(name, self._processed_files[name]))
                 fh_processed = lock_open_file_sync(os.path.join(self._cache_top_dir, self._process_file), filemode="wb")
                 cPickle.dump(self._processed_files, fh_processed)
                 unlock_close_file_sync(fh_processed)
@@ -874,12 +882,8 @@ class FieldFileCache(object):
             current_ti = self._tis[name]
             if True:
                 logger.info("field '{}':  current_ti = {}".format(name, current_ti))
-            if True:
-                logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
             prev_processed = np.where(self.prev_processed_files[name] > 0)[0]
             progress_ti_before = (prev_processed.max() if signdt > 0 else prev_processed.min()) if np.any(self.prev_processed_files[name] > 0) else self._start_ti[name]
-            if True:
-                logger.info("field '{}':  processed_files = {}".format(name, self._processed_files[name]))
             now_processed = np.where(self._processed_files[name] > 0)[0]
             progress_ti_now = (now_processed.max() if signdt > 0 else now_processed.min()) if np.any(self._processed_files[name] > 0) else self._start_ti[name]
             if progress_ti_now != progress_ti_before:
