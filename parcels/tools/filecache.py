@@ -846,7 +846,7 @@ class FieldFileCache(object):
                 logger.info("field '{}':  processed_files = {}".format(name, self._processed_files[name]))
             # ==== correct auto-wrapping ==== #
             process_correction = False
-            if (self._prev_processed_files[name][last_ti] > 0 and self._prev_processed_files[name][0] <= 0) and (self._processed_files[name][last_ti] > 0 and self._processed_files[name][0] > 0) and (signdt > 0):
+            if (self._prev_processed_files[name][last_ti] > 0 and self._prev_processed_files[name][0] > 0) and (self._processed_files[name][last_ti] > 0 and self._processed_files[name][0] > 0) and (signdt > 0) and (self._periodic_wrap[name] == 0):
                 # fix wrapping without periodic flag
                 if ti_len > 2 and self._processed_files[name][1] > 0:
                     self._periodic_wrap[name] = 0
@@ -854,7 +854,7 @@ class FieldFileCache(object):
                     self._processed_files[name][last_ti] = 0
                     process_correction = True
                     print("corrected self._prev_processed_files[{}][{}] from 1 to 0".format(name, last_ti))
-            if (self._prev_processed_files[name][last_ti] <= 0 and self._prev_processed_files[name][0] > 0) and (self._processed_files[name][last_ti] > 0 and self._processed_files[name][0] > 0) and (signdt < 0):
+            if (self._prev_processed_files[name][0] > 0 and self._prev_processed_files[name][last_ti] > 0) and (self._processed_files[name][last_ti] > 0 and self._processed_files[name][0] > 0) and (signdt < 0) and (self._periodic_wrap[name] == 0):
                 # fix wrapping without periodic flag
                 if ti_len > 2 and self._processed_files[name][last_ti-1] > 0:
                     self._periodic_wrap[name] = 0
