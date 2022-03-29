@@ -895,7 +895,7 @@ class FieldFileCache(object):
             past_keep_index = (max(progress_ti_now-ti_len, progress_ti_before-ti_len) + ti_len) % ti_len if signdt > 0 else min(progress_ti_now+ti_len, progress_ti_before+ti_len) % ti_len
             past_keep_index = ((max(past_keep_index-1, 0) if signdt > 0 else min(past_keep_index+1, last_ti)) + ti_len) % ti_len
             # if self._do_wrapping[name]:
-            if DEBUG:
+            if True:
                 future_keep_index = (min(progress_ti_now-ti_len, progress_ti_before-ti_len) + ti_len) % ti_len if signdt > 0 else max(progress_ti_now+ti_len, progress_ti_before+ti_len) % ti_len
                 if self._cache_step_limit < 0:
                     future_keep_index = past_keep_index-2 if signdt > 0 else past_keep_index+2  # purely storage limited
