@@ -842,8 +842,8 @@ class FieldFileCache(object):
             last_ti = len(self._global_files[name])-1
             ti_len = len(self._global_files[name])
             if True:
-                logger.info("field '{}':  prev_processed_files [corrected] = {}".format(name, self.prev_processed_files[name]))
-                logger.info("field '{}':  processed_files [corrected] = {}".format(name, self._processed_files[name]))
+                logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
+                logger.info("field '{}':  processed_files = {}".format(name, self._processed_files[name]))
             # ==== correct auto-wrapping ==== #
             process_correction = False
             if (self._prev_processed_files[name][last_ti] > 0 and self._prev_processed_files[name][0] <= 0) and (self._processed_files[name][last_ti] > 0 and self._processed_files[name][0] > 0) and (signdt > 0):
