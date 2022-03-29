@@ -849,7 +849,7 @@ class FieldFileCache(object):
                     self._processed_files[name][-1] = 0
             if (self._prev_processed_files[name][-1] <= 0 and self._prev_processed_files[name][0] > 0) and (self._processed_files[name][-1] > 0 and self._processed_files[name][0] > 0) and (signdt < 0):
                 # fix wrapping without periodic flag
-                if ti_len > 2 and self._processed_files[name][1] > 0:
+                if ti_len > 2 and self._processed_files[name][-1] > 0:
                     self._periodic_wrap[name] = 0
                     self._prev_processed_files[name][0] = 0
                     self._processed_files[name][0] = 0
