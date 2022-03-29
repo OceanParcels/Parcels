@@ -839,6 +839,20 @@ class FieldFileCache(object):
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.acquire()
         for name in self._field_names:
+            last_ti = len(self._global_files[name])-1
+            ti_len = len(self._global_files[name])
+            if (self._prev_processed_files[name][-1] > 0 and self._prev_processed_files[name][0] <= 0) and (self._processed_files[name][-1] > 0 and self._processed_files[name][0] > 0) and (signdt > 0):
+                # fix wrapping without periodic flag
+                if ti_len > 2 and self._processed_files[name][1] > 0:
+                    self._periodic_wrap[name] = 0
+                    self._prev_processed_files[name][-1] = 0
+                    self._processed_files[name][-1] = 0
+            if (self._prev_processed_files[name][-1] <= 0 and self._prev_processed_files[name][0] > 0) and (self._processed_files[name][-1] > 0 and self._processed_files[name][0] > 0) and (signdt < 0):
+                # fix wrapping without periodic flag
+                if ti_len > 2 and self._processed_files[name][1] > 0:
+                    self._periodic_wrap[name] = 0
+                    self._prev_processed_files[name][0] = 0
+                    self._processed_files[name][0] = 0
             if self._periodic_wrap[name] != 0 and self._do_wrapping[name]:
                 self._prev_processed_files[name][:] -= 1
                 self._processed_files[name][:] -= 1
@@ -859,8 +873,6 @@ class FieldFileCache(object):
                 self._changeflags[name] |= True
             if True:
                 logger.info("field '{}': progress ti before = {}, progress ti now = {}".format(name, progress_ti_before, progress_ti_now))
-            last_ti = len(self._global_files[name])-1
-            ti_len = len(self._global_files[name])
             past_keep_index = (max(progress_ti_now-ti_len, progress_ti_before-ti_len) + ti_len) % ti_len if signdt > 0 else min(progress_ti_now+ti_len, progress_ti_before+ti_len) % ti_len
             past_keep_index = ((max(past_keep_index-1, 0) if signdt > 0 else min(past_keep_index+1, last_ti)) + ti_len) % ti_len
             # if self._do_wrapping[name]:
