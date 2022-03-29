@@ -849,7 +849,7 @@ class FieldFileCache(object):
                     self._processed_files[name][-1] = 0
             if (self._prev_processed_files[name][-1] <= 0 and self._prev_processed_files[name][0] > 0) and (self._processed_files[name][-1] > 0 and self._processed_files[name][0] > 0) and (signdt < 0):
                 # fix wrapping without periodic flag
-                if ti_len > 2 and self._processed_files[name][-1] > 0:
+                if ti_len > 2 and self._processed_files[name][last_ti-1] > 0:
                     self._periodic_wrap[name] = 0
                     self._prev_processed_files[name][0] = 0
                     self._processed_files[name][0] = 0
@@ -858,15 +858,15 @@ class FieldFileCache(object):
                 self._processed_files[name][:] -= 1
                 self._prev_processed_files[name][:] = np.maximum(self._prev_processed_files[name][:], 0)
                 self._processed_files[name][:] = np.maximum(self._processed_files[name][:], 0)
-            if True:
-                logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
             current_ti = self._tis[name]
             if True:
                 logger.info("field '{}':  current_ti = {}".format(name, current_ti))
+            if True:
+                logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
             prev_processed = np.where(self.prev_processed_files[name] > 0)[0]
             progress_ti_before = (prev_processed.max() if signdt > 0 else prev_processed.min()) if np.any(self.prev_processed_files[name] > 0) else self._start_ti[name]
             if True:
-                logger.info("field '{}':  _processed_files = {}".format(name, self._processed_files[name]))
+                logger.info("field '{}':  processed_files = {}".format(name, self._processed_files[name]))
             now_processed = np.where(self._processed_files[name] > 0)[0]
             progress_ti_now = (now_processed.max() if signdt > 0 else now_processed.min()) if np.any(self._processed_files[name] > 0) else self._start_ti[name]
             if progress_ti_now != progress_ti_before:
