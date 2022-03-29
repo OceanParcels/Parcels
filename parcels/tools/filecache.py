@@ -213,10 +213,19 @@ class FieldFileCache(object):
         self._ti_files_lock = None
         self._periodic_wrap_lock = None
         self._stopped = None
+        self._killed_ = False
 
     def __del__(self):
+        self.remove()
+
+    def remove(self):
         if self._caching_started:
             self.stop_caching()
+        self._killed_ = True
+
+    @property
+    def removed(self):
+        return self._killed_
 
     @property
     def prev_processed_files(self):
@@ -243,10 +252,10 @@ class FieldFileCache(object):
         return self._named_copy
 
     def enable_named_copy(self):
-        self._named_copy = True if not self._caching_started else self._named_copy
+        self._named_copy = True if not self._caching_started and not self._use_ncks else self._named_copy
 
     def disable_named_copy(self):
-        self._named_copy = False if not self._caching_started else self._named_copy
+        self._named_copy = False
 
     @property
     def use_thread(self):
@@ -369,7 +378,7 @@ class FieldFileCache(object):
         self._T.start()
         if DEBUG:
             logger.info("Caching thread started.")
-        sleep(0.5)
+        sleep(0.3)
 
     def nc_copy(self, src_filepath, dst_filepath):
         """
@@ -692,13 +701,17 @@ class FieldFileCache(object):
         :param name: name of the field to the renewed in cache
         :return: None
         """
-        while not self.caching_started:
+        if not self.caching_started and not self._use_thread:
+            logger.warn_once("Caching not started yet.")
+        while not self.caching_started and self._use_thread:
             logger.warn("FieldFileCacheThread not started")
             sleep(0.1)
         if self._use_thread:
             self._T.reset_changeflag(name=name)
         else:
             self.reset_changeflag(name=name)
+        if not self._use_thread:
+            self._load_cache()
 
     def reset_changeflag(self, name):
         """
@@ -829,6 +842,8 @@ class FieldFileCache(object):
             if self._periodic_wrap[name] != 0 and self._do_wrapping[name]:
                 self._prev_processed_files[name][:] -= 1
                 self._processed_files[name][:] -= 1
+                self._prev_processed_files[name][:] = np.maximum(self._prev_processed_files[name][:], 0)
+                self._processed_files[name][:] = np.maximum(self._processed_files[name][:], 0)
             if True:
                 logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
             current_ti = self._tis[name]
