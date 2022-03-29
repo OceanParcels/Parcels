@@ -841,23 +841,36 @@ class FieldFileCache(object):
         for name in self._field_names:
             last_ti = len(self._global_files[name])-1
             ti_len = len(self._global_files[name])
+            # ==== correct auto-wrapping ==== #
+            process_correction = False
             if (self._prev_processed_files[name][-1] > 0 and self._prev_processed_files[name][0] <= 0) and (self._processed_files[name][-1] > 0 and self._processed_files[name][0] > 0) and (signdt > 0):
                 # fix wrapping without periodic flag
                 if ti_len > 2 and self._processed_files[name][1] > 0:
                     self._periodic_wrap[name] = 0
                     self._prev_processed_files[name][-1] = 0
                     self._processed_files[name][-1] = 0
+                    process_correction = True
             if (self._prev_processed_files[name][-1] <= 0 and self._prev_processed_files[name][0] > 0) and (self._processed_files[name][-1] > 0 and self._processed_files[name][0] > 0) and (signdt < 0):
                 # fix wrapping without periodic flag
                 if ti_len > 2 and self._processed_files[name][last_ti-1] > 0:
                     self._periodic_wrap[name] = 0
                     self._prev_processed_files[name][0] = 0
                     self._processed_files[name][0] = 0
+                    process_correction = True
             if self._periodic_wrap[name] != 0 and self._do_wrapping[name]:
                 self._prev_processed_files[name][:] -= 1
                 self._processed_files[name][:] -= 1
                 self._prev_processed_files[name][:] = np.maximum(self._prev_processed_files[name][:], 0)
                 self._processed_files[name][:] = np.maximum(self._processed_files[name][:], 0)
+                process_correction = True
+            if process_correction:
+                fh_processed = lock_open_file_sync(os.path.join(self._cache_top_dir, self._process_file), filemode="wb")
+                cPickle.dump(self._processed_files, fh_processed)
+                unlock_close_file_sync(fh_processed)
+                if self._use_thread:
+                    self._processed_files_lock.release()
+            # ==== auto-wrapping corrected ==== #
+
             current_ti = self._tis[name]
             if True:
                 logger.info("field '{}':  current_ti = {}".format(name, current_ti))
