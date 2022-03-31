@@ -401,14 +401,14 @@ class FieldFileCache(object):
         """
         ti_len = len(self._global_files[name])
         lookup_ti = (ti + ti_len) % ti_len
-        assert lookup_ti > 0
+        assert lookup_ti >= 0
         assert lookup_ti < ti_len
         return self._index_map[name][lookup_ti]
 
     def map_fi2ti(self, name, fi, subindex):
         fi_len = len(self._destination_filepaths[name])
         lookup_fi = (fi + fi_len) % fi_len
-        assert lookup_fi > 0
+        assert lookup_fi >= 0
         assert lookup_fi < fi_len
         assert subindex > 0 and subindex < len(self._reverse_index_map[name][lookup_fi])
         return self._reverse_index_map[name][lookup_fi][subindex]
@@ -882,7 +882,8 @@ class FieldFileCache(object):
         for name in self._field_names:
             start_ti = self._start_ti[name]
             end_ti = self._end_ti[name]
-            fi_len = len(list(dict.fromkeys(self._index_map[name])))
+            # fi_len = len(list(dict.fromkeys(self._index_map[name])))
+            fi_len = len(self._index_map[name])
             last_fi = fi_len-1
             start_fi = self.map_ti2fi(name, start_ti)[0]
             end_fi = self.map_ti2fi(name, end_ti)[0]
