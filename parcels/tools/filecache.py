@@ -403,15 +403,15 @@ class FieldFileCache(object):
         lookup_ti = (ti + ti_len) % ti_len
         assert lookup_ti > 0
         assert lookup_ti < ti_len
-        return self._index_map[lookup_ti]
+        return self._index_map[name][lookup_ti]
 
     def map_fi2ti(self, name, fi, subindex):
         fi_len = len(self._destination_filepaths[name])
         lookup_fi = (fi + fi_len) % fi_len
         assert lookup_fi > 0
         assert lookup_fi < fi_len
-        assert subindex > 0 and subindex < len(self._reverse_index_map[lookup_fi])
-        return self._reverse_index_map[lookup_fi][subindex]
+        assert subindex > 0 and subindex < len(self._reverse_index_map[name][lookup_fi])
+        return self._reverse_index_map[name][lookup_fi][subindex]
 
     def update_processed_files(self):
         """
