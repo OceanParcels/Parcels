@@ -544,7 +544,7 @@ class FieldFileCache(object):
         ti_len = len(self._global_files[name])
         fi_len = len(self._destination_filepaths)
         # ---- map ti -> fi: preserve sign ---- #
-        fi = self.map_ti2fi(name, ti)
+        fi = self.map_ti2fi(name, ti)[0]
         if ti < 0:
             fi = fi - fi_len
         if DEBUG:
@@ -596,11 +596,11 @@ class FieldFileCache(object):
                 self._tis[name] = self._start_ti[name] if ti_delta < 0 and (self._tis[name] < self._end_ti[name]) else self._tis[name]
             else:
                 self._tis[name] = min(ti_len-1, max(0, self._tis[name]))
-            # self._processed_files[name][self.map_ti2fi(name, self._tis[name])] += int(abs(ti_delta))
-            temp_addition[self.map_ti2fi(name, self._tis[name])] += int(abs(ti_delta))
+            # self._processed_files[name][self.map_ti2fi(name, self._tis[name])[0]] += int(abs(ti_delta))
+            temp_addition[self.map_ti2fi(name, self._tis[name])[0]] += int(abs(ti_delta))
             changed_timestep = True
             if DEBUG:
-                logger.info("{}: loading initiated timestep {} with file index {} (requested {}; timedelta {}) in field '{}'.".format(str(type(self).__name__), self._tis[name], self.map_ti2fi(name, self._tis[name]), ti, ti_delta, name))
+                logger.info("{}: loading initiated timestep {} with file index {} (requested {}; timedelta {}) in field '{}'.".format(str(type(self).__name__), self._tis[name], self.map_ti2fi(name, self._tis[name][0]), ti, ti_delta, name))
             if ti_delta == 0:
                 break
         for i in range(temp_addition.shape[0]):
@@ -635,7 +635,7 @@ class FieldFileCache(object):
         ti_len = len(self._global_files[name])
         fi_len = len(self._destination_filepaths)
         ti = (ti + ti_len) % ti_len
-        fi = self.map_ti2fi(name, ti)
+        fi = self.map_ti2fi(name, ti)[0]
         assert (ti >= 0) and (ti < ti_len), "Requested index is outside the valid index range."
         if DEBUG:
             logger.info("{} (request-single): requested timestep {} with file index {} for field '{}'.".format(str(type(self).__name__), ti, fi, name))
@@ -884,8 +884,8 @@ class FieldFileCache(object):
             end_ti = self._end_ti[name]
             fi_len = len(list(dict.fromkeys(self._index_map[name])))
             last_fi = fi_len-1
-            start_fi = self.map_ti2fi(name, start_ti)
-            end_fi = self.map_ti2fi(name, end_ti)
+            start_fi = self.map_ti2fi(name, start_ti)[0]
+            end_fi = self.map_ti2fi(name, end_ti)[0]
             if DEBUG:
                 logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
                 logger.info("field '{}':  processed_files = {}".format(name, self._processed_files[name]))
@@ -927,7 +927,7 @@ class FieldFileCache(object):
             # ==== auto-wrapping corrected ==== #
 
             current_ti = self._tis[name]
-            current_fi = self.map_ti2fi(name, current_ti)
+            current_fi = self.map_ti2fi(name, current_ti)[0]
             if True:
                 logger.info("field '{}':  current_ti = {}; current_fi = {}".format(name, current_ti, current_fi))
             prev_processed = np.where(self.prev_processed_files[name] > 0)[0]
