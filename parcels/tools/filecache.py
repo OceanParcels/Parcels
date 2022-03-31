@@ -542,7 +542,7 @@ class FieldFileCache(object):
         # ---- init_variables ---- #
         changed_timestep = False
         ti_len = len(self._global_files[name])
-        fi_len = len(self._destination_filepaths)
+        fi_len = len(self._destination_filepaths[name])
         # ---- map ti -> fi: preserve sign ---- #
         fi = self.map_ti2fi(name, ti)[0]
         if ti < 0:
@@ -633,7 +633,7 @@ class FieldFileCache(object):
         :return:
         """
         ti_len = len(self._global_files[name])
-        fi_len = len(self._destination_filepaths)
+        fi_len = len(self._destination_filepaths[name])
         ti = (ti + ti_len) % ti_len
         fi = self.map_ti2fi(name, ti)[0]
         assert (ti >= 0) and (ti < ti_len), "Requested index is outside the valid index range."
@@ -883,7 +883,7 @@ class FieldFileCache(object):
             start_ti = self._start_ti[name]
             end_ti = self._end_ti[name]
             # fi_len = len(list(dict.fromkeys(self._index_map[name])))
-            fi_len = len(self._index_map[name])
+            fi_len = len(self._destination_filepaths[name])
             last_fi = fi_len-1
             start_fi = self.map_ti2fi(name, start_ti)[0]
             end_fi = self.map_ti2fi(name, end_ti)[0]
@@ -980,7 +980,8 @@ class FieldFileCache(object):
         cache_size = get_size(self._cache_top_dir)
         while (cache_size > self._cache_lower_limit) and (not np.all(list(cacheclean.values()))):
             for name in self._field_names:
-                fi_len = len(list(dict.fromkeys(self._index_map[name])))
+                # fi_len = len(list(dict.fromkeys(self._index_map[name])))
+                fi_len = len(self._destination_filepaths[name])
                 if cacheclean[name]:
                     continue
                 past_keep_index = cache_range_indices[name][0]
@@ -1051,7 +1052,7 @@ class FieldFileCache(object):
             for name in self._field_names:
                 start_index = cache_range_indices[name][0]
                 end_index = cache_range_indices[name][1]
-                fi_len = len(list(dict.fromkeys(self._index_map[name])))
+                fi_len = len(self._destination_filepaths[name])
 
                 # if not self._do_wrapping[name] and ((cache_range_indices[name][0] > cache_range_indices[name][1] and signdt >= 0) or (cache_range_indices[name][0] < cache_range_indices[name][1] and signdt < 0)):
                 if ((start_index > end_index and signdt >= 0) or (start_index < end_index and signdt < 0)):
@@ -1155,7 +1156,7 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
         self._index_map = index_map
         self._reverse_index_map = reverse_index_map
         for name in self._field_names:
-            self._prev_processed_files[name] = np.zeros(len(self._global_files[name]), dtype=np.int16)
+            self._prev_processed_files[name] = np.zeros(len(self._destination_filepaths[name]), dtype=np.int16)
         if DEBUG:
             logger.info("FieldFileCacheThread: previous processed files - keys: {}".format(self._prev_processed_files.keys()))
             logger.info("FieldFileCacheThread: processed files - keys: {}".format(self._processed_files.keys()))
