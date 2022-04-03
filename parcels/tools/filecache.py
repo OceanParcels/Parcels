@@ -553,7 +553,7 @@ class FieldFileCache(object):
         fi = self.map_ti2fi(name, ti)[0]
         if ti < 0:
             fi = fi - fi_len
-        if True:
+        if DEBUG:
             logger.info("{}: requested timestep {} (file index {}) for field '{}'.".format(str(type(self).__name__), ti, fi, name))
 
         # ---- open sync filepaths ---- #
@@ -594,7 +594,7 @@ class FieldFileCache(object):
             if DEBUG and self._periodic_wrap[name] != 0:
                 logger.info("{}: detected a periodic wrap at ti {} -> {} for field '{}'.".format(str(type(self).__name__), self._tis[name], ti, name))
 
-        temp_addition = np.zeros(self._processed_files[name].shape, self._processed_files[name].dtype)
+        # temp_addition = np.zeros(self._processed_files[name].shape, self._processed_files[name].dtype)
         while self._tis[name] != ti or ti_delta == 0:
             self._tis[name] += ti_delta
             if self._do_wrapping[name]:
@@ -606,17 +606,20 @@ class FieldFileCache(object):
 
             # add_index = self._tis[name]
             # temp_addition[self.map_ti2fi(name, add_index)[0]] += int(abs(ti_delta))
-            add_index = self.map_ti2fi(name, self._tis[name])[0]
-            temp_addition[add_index] += int(abs(ti_delta))
+            # add_index = self.map_ti2fi(name, self._tis[name])[0]
+            # temp_addition[add_index] += int(abs(ti_delta))
+
+            self_fi = self.map_ti2fi(name, self._tis[name])
+            curr_fi = self.map_ti2fi(name, ti)
+            if self_fi != curr_fi:
+                self._processed_files[name][self_fi] += int(abs(ti_delta))
             changed_timestep = True
             if True:
                 logger.info("{}: loading initiated timestep {} with file index {} (requested ti {}; timedelta {}) in field '{}'.".format(str(type(self).__name__), self._tis[name], self.map_ti2fi(name, self._tis[name])[0], ti, ti_delta, name))
             if ti_delta == 0:
                 break
-        # for i in range(temp_addition.shape[0]):
-        #     self._processed_files[name][i] += (1 if temp_addition[i] != 0 else 0)
-        self._processed_files[name] += np.minimum(temp_addition, 1)
-        del temp_addition
+        # self._processed_files[name] += np.minimum(temp_addition, 1)
+        # del temp_addition
         process_tis[os.getpid()] = self._tis
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.release()
@@ -934,6 +937,8 @@ class FieldFileCache(object):
                 if True:
                     logger.info("field '{}':  prev_processed_files [corrected] = {}".format(name, self.prev_processed_files[name]))
                     logger.info("field '{}':  processed_files [corrected] = {}".format(name, self._processed_files[name]))
+                if self._use_thread:
+                    self._processed_files_lock.acquire()
                 fh_processed = lock_open_file_sync(os.path.join(self._cache_top_dir, self._process_file), filemode="wb")
                 cPickle.dump(self._processed_files, fh_processed)
                 unlock_close_file_sync(fh_processed)
