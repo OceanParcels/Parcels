@@ -553,7 +553,7 @@ class FieldFileCache(object):
         fi = self.map_ti2fi(name, ti)[0]
         if ti < 0:
             fi = fi - fi_len
-        if DEBUG:
+        if True:
             logger.info("{}: requested timestep {} (file index {}) for field '{}'.".format(str(type(self).__name__), ti, fi, name))
 
         # ---- open sync filepaths ---- #
@@ -603,14 +603,19 @@ class FieldFileCache(object):
             else:
                 self._tis[name] = min(ti_len-1, max(0, self._tis[name]))
             # self._processed_files[name][self.map_ti2fi(name, self._tis[name])[0]] += int(abs(ti_delta))
-            temp_addition[self.map_ti2fi(name, self._tis[name])[0]] += int(abs(ti_delta))
+
+            # add_index = self._tis[name]
+            # temp_addition[self.map_ti2fi(name, add_index)[0]] += int(abs(ti_delta))
+            add_index = self.map_ti2fi(name, self._tis[name])[0]
+            temp_addition[add_index] += int(abs(ti_delta))
             changed_timestep = True
-            if DEBUG:
-                logger.info("{}: loading initiated timestep {} with file index {} (requested {}; timedelta {}) in field '{}'.".format(str(type(self).__name__), self._tis[name], self.map_ti2fi(name, self._tis[name][0]), ti, ti_delta, name))
+            if True:
+                logger.info("{}: loading initiated timestep {} with file index {} (requested ti {}; timedelta {}) in field '{}'.".format(str(type(self).__name__), self._tis[name], self.map_ti2fi(name, self._tis[name])[0], ti, ti_delta, name))
             if ti_delta == 0:
                 break
-        for i in range(temp_addition.shape[0]):
-            self._processed_files[name][i] += (1 if temp_addition[i] != 0 else 0)
+        # for i in range(temp_addition.shape[0]):
+        #     self._processed_files[name][i] += (1 if temp_addition[i] != 0 else 0)
+        self._processed_files[name] += np.maximum(temp_addition, 1)
         del temp_addition
         process_tis[os.getpid()] = self._tis
         if self._use_thread and np.any(list(self._do_wrapping.values())):
