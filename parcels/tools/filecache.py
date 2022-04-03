@@ -485,7 +485,7 @@ class FieldFileCache(object):
                 fname = "{}_{}".format(field_name, ofname)
             if True and len(source_paths) > 0:
                 logger.info("Check if '{}' equals '{}' ...".format(dname, source_paths[-1]))
-            if len(destination_paths) == 0 or (len(source_paths) > 0 and dname in source_paths[-1]):
+            if len(destination_paths) == 0 or (len(source_paths) > 0 and dname not in source_paths[-1]):
                 # destination_index += 1
                 sub_destination_index = 0
                 reverse_index_map.append(list())
