@@ -596,7 +596,10 @@ class FieldFileCache(object):
 
         # temp_addition = np.zeros(self._processed_files[name].shape, self._processed_files[name].dtype)
         while self._tis[name] != ti or ti_delta == 0:
+            self_fi = self.map_ti2fi(name, self._tis[name])
+            curr_fi = self.map_ti2fi(name, ti)
             self._tis[name] += ti_delta
+            next_fi = self.map_ti2fi(name, self._tis[name])
             if self._do_wrapping[name]:
                 self._tis[name] = self._start_ti[name] if ti_delta > 0 and (self._tis[name] > self._end_ti[name]) else self._tis[name]
                 self._tis[name] = self._start_ti[name] if ti_delta < 0 and (self._tis[name] < self._end_ti[name]) else self._tis[name]
@@ -608,11 +611,8 @@ class FieldFileCache(object):
             # temp_addition[self.map_ti2fi(name, add_index)[0]] += int(abs(ti_delta))
             # add_index = self.map_ti2fi(name, self._tis[name])[0]
             # temp_addition[add_index] += int(abs(ti_delta))
-
-            self_fi = self.map_ti2fi(name, self._tis[name])
-            curr_fi = self.map_ti2fi(name, ti)
             if self_fi != curr_fi:
-                self._processed_files[name][self_fi] += int(abs(ti_delta))
+                self._processed_files[name][next_fi] += int(abs(ti_delta))
             changed_timestep = True
             if True:
                 logger.info("{}: loading initiated timestep {} with file index {} (requested ti {}; timedelta {}) in field '{}'.".format(str(type(self).__name__), self._tis[name], self.map_ti2fi(name, self._tis[name])[0], ti, ti_delta, name))
