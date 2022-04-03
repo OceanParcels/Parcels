@@ -483,8 +483,8 @@ class FieldFileCache(object):
             if self._named_copy:
                 ofname = fname
                 fname = "{}_{}".format(field_name, ofname)
-            if True and len(source_paths) > 0:
-                logger.info("Check if '{}' equals '{}' ...".format(dname, source_paths[-1]))
+            # if True and len(source_paths) > 0:
+            #     logger.info("Check if '{}' equals '{}' ...".format(dname, source_paths[-1]))
             if len(destination_paths) == 0 or (len(source_paths) > 0 and dname not in source_paths[-1]):
                 # destination_index += 1
                 sub_destination_index = 0
@@ -611,6 +611,7 @@ class FieldFileCache(object):
                 break
         for i in range(temp_addition.shape[0]):
             self._processed_files[name][i] += (1 if temp_addition[i] != 0 else 0)
+        del temp_addition
         process_tis[os.getpid()] = self._tis
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.release()
