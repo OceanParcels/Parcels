@@ -1006,11 +1006,13 @@ class FieldFileCache(object):
                 #     indices[name] = (min(indices[name], self._end_ti[name]) if signdt > 0 else max(indices[name], self._end_ti[name]))
 
                 # if (signdt > 0 and (i >= past_keep_index or i >= self._tis[name])) or (signdt < 0 and (i <= past_keep_index or i <= self._tis[name])) or self._global_files[name][self._tis[name]] == self._global_files[name][i]:
+                # if (signdt > 0 and i >= past_keep_index) or (signdt < 0 and i <= past_keep_index) or self._global_files[name][self._tis[name]] == self._destination_filepaths[name][wrap_index]:
                 if (signdt > 0 and i >= past_keep_index) or \
-                        (signdt < 0 and i <= past_keep_index) or \
-                        self._global_files[name][self._tis[name]] == self._destination_filepaths[name][wrap_index]:
+                        (signdt < 0 and i <= past_keep_index):
                     indices[name] = i
                     cacheclean[name] = True
+                    continue
+                if self._global_files[name][self._tis[name]] == self._destination_filepaths[name][wrap_index]:
                     continue
 
                 if self._use_thread:
@@ -1030,8 +1032,6 @@ class FieldFileCache(object):
                     else:  # file still in use -> lowest usable index
                         indices[name] = i
                         cacheclean[name] = True
-                else:
-                    pass  # skip because the file is not in cache
                 if self._use_thread:
                     self._occupation_files_lock.acquire()
                 fh_available = lock_open_file_sync(os.path.join(self._cache_top_dir, self._occupation_file), filemode="wb")
@@ -1039,6 +1039,7 @@ class FieldFileCache(object):
                 unlock_close_file_sync(fh_available)
                 if self._use_thread:
                     self._occupation_files_lock.release()
+
             # ==== do not remove more files than necessary -> not below lower cache limit
             cache_size = get_size(self._cache_top_dir)
             if DEBUG and (np.any(list(cacheclean.values())) or (cache_size < self._cache_lower_limit)):
