@@ -582,7 +582,7 @@ class FieldFileCache(object):
 
         ti = (ti + ti_len) % ti_len
         fi = (fi + fi_len) % fi_len
-        ti_delta = int(math.copysign(1, ti - self._tis[name])) if int(ti - self._tis[name]) != 0 else 0
+        ti_delta = int(math.copysign(1, ti - self._tis[name])) if abs(ti - self._tis[name]) > 0 else 0
         if DEBUG:
             logger.info("{}: [corrected] requested timestep {} and ti_delta {} for field '{}'.".format(str(type(self).__name__), ti, ti_delta, name))
         assert (fi >= 0) and (fi < fi_len), "Requested index is outside the valid index range."
@@ -615,7 +615,7 @@ class FieldFileCache(object):
                 break
         # for i in range(temp_addition.shape[0]):
         #     self._processed_files[name][i] += (1 if temp_addition[i] != 0 else 0)
-        self._processed_files[name] += np.maximum(temp_addition, 1)
+        self._processed_files[name] += np.minimum(temp_addition, 1)
         del temp_addition
         process_tis[os.getpid()] = self._tis
         if self._use_thread and np.any(list(self._do_wrapping.values())):
