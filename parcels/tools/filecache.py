@@ -887,29 +887,31 @@ class FieldFileCache(object):
             last_fi = fi_len-1
             start_fi = self.map_ti2fi(name, start_ti)[0]
             end_fi = self.map_ti2fi(name, end_ti)[0]
-            if DEBUG:
+            if True:
                 logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
                 logger.info("field '{}':  processed_files = {}".format(name, self._processed_files[name]))
             # ==== correct auto-wrapping ==== #
             process_correction = False
-            if (self._prev_processed_files[name][last_fi] > 0 and self._prev_processed_files[name][0] > 0) and (self._processed_files[name][last_fi] > 0 and self._processed_files[name][0] > 0) and (signdt > 0) and (self._periodic_wrap[name] == 0):
+            if (self._prev_processed_files[name][end_fi] > 0 and self._prev_processed_files[name][start_fi] > 0) and (self._processed_files[name][end_fi] > 0 and self._processed_files[name][start_fi] > 0)(self._periodic_wrap[name] == 0):
                 # fix wrapping without periodic flag
-                if fi_len > 2 and self._processed_files[name][1] > 0:
+                if fi_len > 2 and self._processed_files[name][start_fi+signdt] > 0:
                     self._periodic_wrap[name] = 0
-                    self._prev_processed_files[name][last_fi] = 0
-                    self._processed_files[name][last_fi] = 0
+                    self._prev_processed_files[name][end_fi] = 0
+                    self._processed_files[name][end_fi] = 0
                     process_correction = True
                     if True:
                         logger.info("corrected self._prev_processed_files[{}][{}] from 1 to 0".format(name, last_fi))
-            if (self._prev_processed_files[name][0] > 0 and self._prev_processed_files[name][last_fi] > 0) and (self._processed_files[name][last_fi] > 0 and self._processed_files[name][0] > 0) and (signdt < 0) and (self._periodic_wrap[name] == 0):
-                # fix wrapping without periodic flag
-                if fi_len > 2 and self._processed_files[name][last_fi-1] > 0:
-                    self._periodic_wrap[name] = 0
-                    self._prev_processed_files[name][0] = 0
-                    self._processed_files[name][0] = 0
-                    process_correction = True
-                    if True:
-                        logger.info("corrected self._prev_processed_files[{}][{}] from 1 to 0".format(name, 0))
+            # if (self._prev_processed_files[name][0] > 0 and self._prev_processed_files[name][last_fi] > 0) and (self._processed_files[name][last_fi] > 0 and self._processed_files[name][0] > 0) and (signdt < 0) and (self._periodic_wrap[name] == 0):
+            #     # fix wrapping without periodic flag
+            #     if fi_len > 2 and self._processed_files[name][last_fi-1] > 0:
+            #         self._periodic_wrap[name] = 0
+            #         self._prev_processed_files[name][0] = 0
+            #         self._processed_files[name][0] = 0
+            #         process_correction = True
+            #         if True:
+            #             logger.info("corrected self._prev_processed_files[{}][{}] from 1 to 0".format(name, 0))
+
+
             if self._periodic_wrap[name] != 0 and self._do_wrapping[name]:
                 self._prev_processed_files[name][:] -= 1
                 self._processed_files[name][:] -= 1
@@ -917,7 +919,7 @@ class FieldFileCache(object):
                 self._processed_files[name][:] = np.maximum(self._processed_files[name][:], 0)
                 process_correction = True
             if process_correction:
-                if DEBUG:
+                if True:
                     logger.info("field '{}':  prev_processed_files [corrected] = {}".format(name, self.prev_processed_files[name]))
                     logger.info("field '{}':  processed_files [corrected] = {}".format(name, self._processed_files[name]))
                 fh_processed = lock_open_file_sync(os.path.join(self._cache_top_dir, self._process_file), filemode="wb")
@@ -937,7 +939,7 @@ class FieldFileCache(object):
             progress_fi_now = (now_processed.max() if signdt > 0 else now_processed.min()) if np.any(self._processed_files[name] > 0) else start_fi
             if progress_fi_now != progress_fi_before:
                 self._changeflags[name] |= True
-            if DEBUG:
+            if True:
                 logger.info("field '{}': progress fi [before] = {}, progress fi [now] = {}".format(name, progress_fi_before, progress_fi_now))
 
             past_keep_index = (max(progress_fi_now-fi_len, progress_fi_before-fi_len) + fi_len) % fi_len if signdt > 0 else min(progress_fi_now+fi_len, progress_fi_before+fi_len) % fi_len
