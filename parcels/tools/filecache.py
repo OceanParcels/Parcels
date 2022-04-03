@@ -594,7 +594,6 @@ class FieldFileCache(object):
             if DEBUG and self._periodic_wrap[name] != 0:
                 logger.info("{}: detected a periodic wrap at ti {} -> {} for field '{}'.".format(str(type(self).__name__), self._tis[name], ti, name))
 
-        # temp_addition = np.zeros(self._processed_files[name].shape, self._processed_files[name].dtype)
         while self._tis[name] != ti or ti_delta == 0:
             self_fi = self.map_ti2fi(name, self._tis[name])[0]
             curr_fi = self.map_ti2fi(name, ti)[0]
@@ -605,21 +604,13 @@ class FieldFileCache(object):
                 self._tis[name] = self._start_ti[name] if ti_delta < 0 and (self._tis[name] < self._end_ti[name]) else self._tis[name]
             else:
                 self._tis[name] = min(ti_len-1, max(0, self._tis[name]))
-            # self._processed_files[name][self.map_ti2fi(name, self._tis[name])[0]] += int(abs(ti_delta))
-
-            # add_index = self._tis[name]
-            # temp_addition[self.map_ti2fi(name, add_index)[0]] += int(abs(ti_delta))
-            # add_index = self.map_ti2fi(name, self._tis[name])[0]
-            # temp_addition[add_index] += int(abs(ti_delta))
             if self_fi != curr_fi:
                 self._processed_files[name][next_fi] += int(abs(ti_delta))
             changed_timestep = True
-            if True:
+            if DEBUG:
                 logger.info("{}: loading initiated timestep {} with file index {} (requested ti {}; timedelta {}) in field '{}'.".format(str(type(self).__name__), self._tis[name], self.map_ti2fi(name, self._tis[name])[0], ti, ti_delta, name))
             if ti_delta == 0:
                 break
-        # self._processed_files[name] += np.minimum(temp_addition, 1)
-        # del temp_addition
         process_tis[os.getpid()] = self._tis
         if self._use_thread and np.any(list(self._do_wrapping.values())):
             self._periodic_wrap_lock.release()
@@ -648,7 +639,6 @@ class FieldFileCache(object):
         :return:
         """
         ti_len = len(self._global_files[name])
-        fi_len = len(self._destination_filepaths[name])
         ti = (ti + ti_len) % ti_len
         fi = self.map_ti2fi(name, ti)[0]
         assert (ti >= 0) and (ti < ti_len), "Requested index is outside the valid index range."
@@ -902,7 +892,7 @@ class FieldFileCache(object):
             last_fi = fi_len-1
             start_fi = self.map_ti2fi(name, start_ti)[0]
             end_fi = self.map_ti2fi(name, end_ti)[0]
-            if True:
+            if DEBUG:
                 logger.info("field '{}':  prev_processed_files = {}".format(name, self.prev_processed_files[name]))
                 logger.info("field '{}':  processed_files = {}".format(name, self._processed_files[name]))
             # ==== correct auto-wrapping ==== #
@@ -914,17 +904,8 @@ class FieldFileCache(object):
                     self._prev_processed_files[name][end_fi] = 0
                     self._processed_files[name][end_fi] = 0
                     process_correction = True
-                    if True:
+                    if DEBUG:
                         logger.info("corrected self._prev_processed_files[{}][{}] from 1 to 0".format(name, last_fi))
-            # if (self._prev_processed_files[name][0] > 0 and self._prev_processed_files[name][last_fi] > 0) and (self._processed_files[name][last_fi] > 0 and self._processed_files[name][0] > 0) and (signdt < 0) and (self._periodic_wrap[name] == 0):
-            #     # fix wrapping without periodic flag
-            #     if fi_len > 2 and self._processed_files[name][last_fi-1] > 0:
-            #         self._periodic_wrap[name] = 0
-            #         self._prev_processed_files[name][0] = 0
-            #         self._processed_files[name][0] = 0
-            #         process_correction = True
-            #         if True:
-            #             logger.info("corrected self._prev_processed_files[{}][{}] from 1 to 0".format(name, 0))
 
 
             if self._periodic_wrap[name] != 0 and self._do_wrapping[name]:
@@ -934,7 +915,7 @@ class FieldFileCache(object):
                 self._processed_files[name][:] = np.maximum(self._processed_files[name][:], 0)
                 process_correction = True
             if process_correction:
-                if True:
+                if DEBUG:
                     logger.info("field '{}':  prev_processed_files [corrected] = {}".format(name, self.prev_processed_files[name]))
                     logger.info("field '{}':  processed_files [corrected] = {}".format(name, self._processed_files[name]))
                 if self._use_thread:
@@ -948,7 +929,7 @@ class FieldFileCache(object):
 
             current_ti = self._tis[name]
             current_fi = self.map_ti2fi(name, current_ti)[0]
-            if True:
+            if DEBUG:
                 logger.info("field '{}':  current_ti = {}; current_fi = {}".format(name, current_ti, current_fi))
             prev_processed = np.where(self.prev_processed_files[name] > 0)[0]
             progress_fi_before = (prev_processed.max() if signdt > 0 else prev_processed.min()) if np.any(self.prev_processed_files[name] > 0) else start_fi
@@ -956,7 +937,7 @@ class FieldFileCache(object):
             progress_fi_now = (now_processed.max() if signdt > 0 else now_processed.min()) if np.any(self._processed_files[name] > 0) else start_fi
             if progress_fi_now != progress_fi_before:
                 self._changeflags[name] |= True
-            if True:
+            if DEBUG:
                 logger.info("field '{}': progress fi [before] = {}, progress fi [now] = {}".format(name, progress_fi_before, progress_fi_now))
 
             past_keep_index = (max(progress_fi_now-fi_len, progress_fi_before-fi_len) + fi_len) % fi_len if signdt > 0 else min(progress_fi_now+fi_len, progress_fi_before+fi_len) % fi_len
@@ -980,7 +961,7 @@ class FieldFileCache(object):
             # past_keep_index = min(past_keep_index, max(current_ti - 1, 0)) if signdt > 0 else max(past_keep_index, min((current_ti + 1, last_ti))  # clamping to what is currently processed
             past_keep_index = (min(past_keep_index, current_fi - 1) + fi_len) % fi_len if signdt > 0 else max(past_keep_index, current_fi + 1) % fi_len  # clamping to what is currently processed
             future_keep_index = max(future_keep_index, current_fi + 1) % fi_len if signdt > 0 else (min(future_keep_index, current_fi - 1) + fi_len) % fi_len
-            if True:
+            if DEBUG:
                 logger.info("field '{}' (before cleanup): past-fi = {}, future-fi = {}".format(name, past_keep_index, future_keep_index))
             cache_range_indices[name] = (past_keep_index, future_keep_index)
             files_to_keep[name] = list(dict.fromkeys(self._destination_filepaths[name][past_keep_index:future_keep_index]))
@@ -999,7 +980,6 @@ class FieldFileCache(object):
         cache_size = get_size(self._cache_top_dir)
         while (cache_size > self._cache_lower_limit) and (not np.all(list(cacheclean.values()))):
             for name in self._field_names:
-                # fi_len = len(list(dict.fromkeys(self._index_map[name])))
                 fi_len = len(self._destination_filepaths[name])
                 if cacheclean[name]:
                     continue
@@ -1007,13 +987,6 @@ class FieldFileCache(object):
                 i = indices[name]  # range: [-1:fi_len]
                 wrap_index = (i + fi_len) % fi_len
                 indices[name] += signdt
-                # if self._do_wrapping[name]:
-
-                # if True:
-                #     indices[name] = (indices[name] + len(self._global_files[name])) % len(self._global_files[name])
-
-                # else:
-                #     indices[name] = (min(indices[name], self._end_ti[name]) if signdt > 0 else max(indices[name], self._end_ti[name]))
 
                 # if (signdt > 0 and (i >= past_keep_index or i >= self._tis[name])) or (signdt < 0 and (i <= past_keep_index or i <= self._tis[name])) or self._global_files[name][self._tis[name]] == self._global_files[name][i]:
                 # if (signdt > 0 and i >= past_keep_index) or (signdt < 0 and i <= past_keep_index) or self._global_files[name][self._tis[name]] == self._destination_filepaths[name][wrap_index]:
@@ -1035,7 +1008,7 @@ class FieldFileCache(object):
                 if (self._destination_filepaths[name][wrap_index] in self._available_files[name]):
                     # if os.path.exists(self._global_files[name][i]) and not file_check_lock_busy(self._global_files[name][i]) and self._global_files[name][i] not in files_to_keep[name]:
                     if os.path.exists(self._destination_filepaths[name][wrap_index]) and not file_check_lock_busy(self._destination_filepaths[name][wrap_index]) and self._destination_filepaths[name][wrap_index] not in global_files_to_keep:
-                        if True:
+                        if DEBUG:
                             logger.info("Removing file '{}' with (free-boundary) index={} ...".format(self._destination_filepaths[name][wrap_index], i))
                         os.remove(self._destination_filepaths[name][wrap_index])
                         self._available_files[name].remove(self._destination_filepaths[name][wrap_index])
@@ -1059,7 +1032,7 @@ class FieldFileCache(object):
 
         for name in self._field_names:
             cache_range_indices[name] = (indices[name], cache_range_indices[name][1])
-            if True:
+            if DEBUG:
                 logger.info("field '{}' (after cleanup): past-ti = {}, future-ti = {}".format(name, cache_range_indices[name][0], cache_range_indices[name][1]))
 
         cache_size = get_size(self._cache_top_dir)
