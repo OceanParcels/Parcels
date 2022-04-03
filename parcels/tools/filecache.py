@@ -479,12 +479,13 @@ class FieldFileCache(object):
         index_map = []
         reverse_index_map = []
         for dname in files:
-            source_paths.append(dname)
             fname = os.path.split(dname)[1]
             if self._named_copy:
                 ofname = fname
                 fname = "{}_{}".format(field_name, ofname)
-            if len(destination_paths) == 0 or (len(source_paths) > 0 and dname != source_paths[-1]):
+            if True and len(source_paths) > 0:
+                logger.info("Check if '{}' equals '{}' ...".format(dname, source_paths[-1]))
+            if len(destination_paths) == 0 or (len(source_paths) > 0 and dname in source_paths[-1]):
                 # destination_index += 1
                 sub_destination_index = 0
                 reverse_index_map.append(list())
@@ -494,6 +495,7 @@ class FieldFileCache(object):
                     logger.info("Added file {}.".format(destination_paths[-1]))
             destination_index = len(destination_paths)-1
             full_destination_paths.append(os.path.join(self._cache_top_dir, fname))
+            source_paths.append(dname)
             last_reverse_index = len(reverse_index_map)-1
             index_map.append((destination_index, sub_destination_index))
             reverse_index_map[last_reverse_index].append(source_index)
