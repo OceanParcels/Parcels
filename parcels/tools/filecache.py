@@ -483,14 +483,12 @@ class FieldFileCache(object):
             if self._named_copy:
                 ofname = fname
                 fname = "{}_{}".format(field_name, ofname)
-            # if True and len(source_paths) > 0:
-            #     logger.info("Check if '{}' equals '{}' ...".format(dname, source_paths[-1]))
             if len(destination_paths) == 0 or (len(source_paths) > 0 and dname not in source_paths[-1]):
                 # destination_index += 1
                 sub_destination_index = 0
                 reverse_index_map.append(list())
                 destination_paths.append(os.path.join(self._cache_top_dir, fname))
-                if True:
+                if DEBUG:
                     # logger.info("Added file {}.".format(os.path.join(self._cache_top_dir, fname)))
                     logger.info("Added file {}.".format(destination_paths[-1]))
             destination_index = len(destination_paths)-1
