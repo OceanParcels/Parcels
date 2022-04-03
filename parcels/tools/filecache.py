@@ -596,10 +596,10 @@ class FieldFileCache(object):
 
         # temp_addition = np.zeros(self._processed_files[name].shape, self._processed_files[name].dtype)
         while self._tis[name] != ti or ti_delta == 0:
-            self_fi = self.map_ti2fi(name, self._tis[name])
-            curr_fi = self.map_ti2fi(name, ti)
+            self_fi = self.map_ti2fi(name, self._tis[name])[0]
+            curr_fi = self.map_ti2fi(name, ti)[0]
             self._tis[name] += ti_delta
-            next_fi = self.map_ti2fi(name, self._tis[name])
+            next_fi = self.map_ti2fi(name, self._tis[name])[0]
             if self._do_wrapping[name]:
                 self._tis[name] = self._start_ti[name] if ti_delta > 0 and (self._tis[name] > self._end_ti[name]) else self._tis[name]
                 self._tis[name] = self._start_ti[name] if ti_delta < 0 and (self._tis[name] < self._end_ti[name]) else self._tis[name]
