@@ -484,11 +484,15 @@ class FieldFileCache(object):
             if self._named_copy:
                 ofname = fname
                 fname = "{}_{}".format(field_name, ofname)
-            if len(destination_paths) == 0 or dname != source_paths[-1]:
-                destination_index += 1
+            if len(destination_paths) == 0 or (len(source_paths) > 0 and dname != source_paths[-1]):
+                # destination_index += 1
                 sub_destination_index = 0
                 reverse_index_map.append(list())
                 destination_paths.append(os.path.join(self._cache_top_dir, fname))
+                if True:
+                    # logger.info("Added file {}.".format(os.path.join(self._cache_top_dir, fname)))
+                    logger.info("Added file {}.".format(destination_paths[-1]))
+            destination_index = len(destination_paths)-1
             full_destination_paths.append(os.path.join(self._cache_top_dir, fname))
             last_reverse_index = len(reverse_index_map)-1
             index_map.append((destination_index, sub_destination_index))
@@ -811,7 +815,7 @@ class FieldFileCache(object):
             logger.info("{}.restart_cache(): All processes' time indices: {}".format(str(type(self).__name__), process_tis))
 
         for name in self._field_names:
-            self._prev_processed_files[name] = deepcopy(self._processed_files[name])
+            self._prev_processed_files[name] = np.zeros(len(self._destination_filepaths[name]), dtype=np.int16)
             self._processed_files[name] = np.zeros(len(self._destination_filepaths[name]), dtype=np.int16)
             self._periodic_wrap[name] = 0
             self._prev_tis[name] = self._tis[name]
@@ -892,7 +896,7 @@ class FieldFileCache(object):
                 logger.info("field '{}':  processed_files = {}".format(name, self._processed_files[name]))
             # ==== correct auto-wrapping ==== #
             process_correction = False
-            if (self._prev_processed_files[name][end_fi] > 0 and self._prev_processed_files[name][start_fi] > 0) and (self._processed_files[name][end_fi] > 0 and self._processed_files[name][start_fi] > 0)(self._periodic_wrap[name] == 0):
+            if (self._prev_processed_files[name][end_fi] > 0 and self._prev_processed_files[name][start_fi] > 0) and (self._processed_files[name][end_fi] > 0 and self._processed_files[name][start_fi] > 0) and (self._periodic_wrap[name] == 0):
                 # fix wrapping without periodic flag
                 if fi_len > 2 and self._processed_files[name][start_fi+signdt] > 0:
                     self._periodic_wrap[name] = 0
