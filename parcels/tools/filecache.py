@@ -28,12 +28,16 @@ def file_check_lock_busy(filepath):
     :return: True if locked or busy; False if free
     """
     result = False
+    fp = None
     try:
         fp = open(filepath)
-        fp.close()
     except IOError as e:
         if e.errno in [errno.EACCES, errno.EBUSY]:
             result = True
+            fp = None
+    finally:
+        if fp is not None:
+            fp.close()
     return result
 
 
@@ -44,11 +48,15 @@ def file_check_OK(filepath):
     :return: if there is no OS or IO error, all is fine (True)
     """
     result = True
+    fp = None
     try:
         fp = open(filepath)
-        fp.close()
     except (IOError, OSError):
         result = False
+        fp = None
+    finally:
+        if fp is not None:
+            fp.close()
     return result
 
 
@@ -732,7 +740,7 @@ class FieldFileCache(object):
         file_available_check = filepath in self._available_files[name]
         file_exists_check = os.path.exists(filepath)
         file_ok_check = file_check_OK(filepath)
-        if DEBUG:
+        if True:
             logger.info("Available files in cache: {}".format(self._available_files[name]))
             logger.info("File to locate: {}".format(filepath))
             logger.info("File located ?: {}".format(file_available_check))
