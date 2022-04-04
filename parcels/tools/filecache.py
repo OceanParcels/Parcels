@@ -1246,7 +1246,7 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
                 sleeptime *= 1.1
                 maintain_sleep = True
             if sleeptime > 120.0:
-                logger.warn_once("FieldFileCacheThread: Main wait cycle now at 2 minutes.")
+                logger.warning_once("FieldFileCacheThread: Main wait cycle now at 2 minutes.")
                 sleeptime = 120.0
             sleep(sleeptime)  # <- load balancing on this parameter: normal aging first, doubling the time if no change and halfing the time after a change. 200ms min. is used when renew_cache() needed to be called.; like TCP-Reno protocoll.
             if self._stopped.is_set():
