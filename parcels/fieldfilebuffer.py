@@ -29,25 +29,6 @@ class _FileBuffer(object):
         self.data_full_zdim = data_full_zdim
 
 
-def check_file_access(filepath):
-    """
-
-    :param filepath: file to be checked
-    :return: if there is no OS or IO error, all is fine (True)
-    """
-    result = True
-    fp = None
-    try:
-        fp = open(filepath)
-    except (IOError, OSError):
-        result = False
-        fp = None
-    finally:
-        if fp is not None:
-            fp.close()
-    return result
-
-
 class NetcdfFileBuffer(_FileBuffer):
     def __init__(self, *args, **kwargs):
         self.lib = np
@@ -55,38 +36,57 @@ class NetcdfFileBuffer(_FileBuffer):
         super(NetcdfFileBuffer, self).__init__(*args, **kwargs)
 
     def __enter__(self):
-        while not check_file_access(str(self.filename)):  # asynchronous access - check for file-locking first; assure file is _not_ locked.
-            sleep(0.02)
-        try:
-            # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
-            # (which we would rather want to have being auto-managed).
-            # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
-            self.dataset['decoded'] = True
-        except (OSError,) as e:
-            err_no = None
-            if hasattr(e, 'code'):
-                err_no = e.code
-            elif hasattr(e, 'errno'):
-                err_no = e.errno
-            elif hasattr(e, 'errorcode'):
-                err_no = e.errorcode
-            elif hasattr(e, 'args'):
-                err_no, _ = e.args
-            if err_no is not None and err_no == 101:  # File is locked and cannot be opened again
-                logger.error("You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
-                             "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
-                             "i.e. 'chunksize=None'".format(str(self.filename)))
-                exit()
+        e = None
+        access_success = False
+        attempts = 20
+        err_no = None
+        while not access_success and attempts > 0:
+            try:
+                # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
+                # (which we would rather want to have being auto-managed).
+                # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
+                self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
+                self.dataset['decoded'] = True
+                access_success = True
+            except (OSError, IOError) as e:
+                access_success = False
+                if hasattr(e, 'code'):
+                    err_no = e.code
+                elif hasattr(e, 'errno'):
+                    err_no = e.errno
+                elif hasattr(e, 'errorcode'):
+                    err_no = e.errorcode
+                elif hasattr(e, 'args'):
+                    err_no, _ = e.args
+                if err_no is not None:
+                    logger.warning("Encountered error with error code '{}'!".format(err_no))
+                    if err_no == 101:  # File is locked and cannot be opened again
+                        logger.warning("You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
+                                 "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
+                                 "i.e. 'chunksize=None'".format(str(self.filename)))
+                else:
+                    logger.warning_once("Unknown OSError in NetcdfFileBuffer when reading {}.".format(str(self.filename)))
+                    traceback.print_tb(e.__traceback__)
+            except:
+                logger.warning_once("File '%s' could not be decoded properly by xarray (version: %s).\n         "
+                                    "It will be opened with no decoding. Filling values might be wrongly parsed."
+                                    % (self.filename, xr.__version__))
+                self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
+                self.dataset['decoded'] = False
+                access_success = True
+            if access_success:
+                e = None
+                break
             else:
-                logger.warning_once("Unknown OSError in NetcdfFileBuffer when reading {}.".format(str(self.filename)))
+                attempts -= 1
+        if not access_success:
+            if e is not None:
                 traceback.print_tb(e.__traceback__)
-        except:
-            logger.warning_once("File '%s' could not be decoded properly by xarray (version: %s).\n         "
-                                "It will be opened with no decoding. Filling values might be wrongly parsed."
-                                % (self.filename, xr.__version__))
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
-            self.dataset['decoded'] = False
+            if err_no is not None:
+                logger.error("Failed to open file '{}' with error code '{}'. Exiting.".format(str(self.filename), err_no))
+            else:
+                logger.error("Failed to open file '{}'. Exiting.".format(str(self.filename)))
+                exit()
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
                 raise RuntimeError('Indices for field subsetting need to be a list')
