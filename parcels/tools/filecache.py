@@ -913,7 +913,6 @@ class FieldFileCache(object):
                     if DEBUG:
                         logger.info("corrected self._prev_processed_files[{}][{}] from 1 to 0".format(name, last_fi))
 
-
             if self._periodic_wrap[name] != 0 and self._do_wrapping[name]:
                 self._prev_processed_files[name][:] -= 1
                 self._processed_files[name][:] -= 1
