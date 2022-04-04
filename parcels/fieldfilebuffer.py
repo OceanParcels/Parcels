@@ -3,6 +3,7 @@ from dask import config as da_conf
 from dask import utils as da_utils
 import numpy as np
 import xarray as xr
+from time import sleep
 from netCDF4 import Dataset as ncDataset
 
 import traceback
@@ -28,6 +29,25 @@ class _FileBuffer(object):
         self.data_full_zdim = data_full_zdim
 
 
+def check_file_access(filepath):
+    """
+
+    :param filepath: file to be checked
+    :return: if there is no OS or IO error, all is fine (True)
+    """
+    result = True
+    fp = None
+    try:
+        fp = open(filepath)
+    except (IOError, OSError):
+        result = False
+        fp = None
+    finally:
+        if fp is not None:
+            fp.close()
+    return result
+
+
 class NetcdfFileBuffer(_FileBuffer):
     def __init__(self, *args, **kwargs):
         self.lib = np
@@ -35,6 +55,8 @@ class NetcdfFileBuffer(_FileBuffer):
         super(NetcdfFileBuffer, self).__init__(*args, **kwargs)
 
     def __enter__(self):
+        while not check_file_access(str(self.filename)):  # asynchronous access - check for file-locking first; assure file is _not_ locked.
+            sleep(0.02)
         try:
             # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
             # (which we would rather want to have being auto-managed).
