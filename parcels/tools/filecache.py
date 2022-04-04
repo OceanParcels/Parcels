@@ -211,7 +211,7 @@ class FieldFileCache(object):
         self._use_thread = use_thread
         self._caching_started = False
         self._remove_cache_top_dir = remove_cache_dir
-        self._named_copy = False
+        self._named_copy = use_thread  # for multi-threaded access, we need to avoid file-lock clashes, so best keep each field var separate.
         self._use_ncks = (which("ncks") is not None)
         self._sim_dt = 1.0
         self._cache_step_limit = -1
