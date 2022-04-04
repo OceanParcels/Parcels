@@ -264,7 +264,7 @@ class FieldFileCache(object):
         return self._named_copy
 
     def enable_named_copy(self):
-        self._named_copy = True if not self._caching_started and not self._use_ncks else self._named_copy
+        self._named_copy = True if not self._caching_started else self._named_copy  # and not self._use_ncks
 
     def disable_named_copy(self):
         self._named_copy = False
