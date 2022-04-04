@@ -740,7 +740,7 @@ class FieldFileCache(object):
         file_available_check = filepath in self._available_files[name]
         file_exists_check = os.path.exists(filepath)
         file_ok_check = file_check_OK(filepath)
-        if True:
+        if DEBUG:
             logger.info("Available files in cache: {}".format(self._available_files[name]))
             logger.info("File to locate: {}".format(filepath))
             logger.info("File located ?: {}".format(file_available_check))
