@@ -79,6 +79,7 @@ class NetcdfFileBuffer(_FileBuffer):
                 break
             else:
                 attempts -= 1
+                sleep(0.02)
         if not access_success:
             if e is not None:
                 traceback.print_tb(e.__traceback__)
