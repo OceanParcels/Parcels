@@ -48,7 +48,8 @@ class NetcdfFileBuffer(_FileBuffer):
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
                 self.dataset['decoded'] = True
                 access_success = True
-            except (OSError, IOError) as e:
+            except (OSError, IOError) as err:
+                e = err
                 access_success = False
                 if hasattr(e, 'code'):
                     err_no = e.code
@@ -58,15 +59,6 @@ class NetcdfFileBuffer(_FileBuffer):
                     err_no = e.errorcode
                 elif hasattr(e, 'args'):
                     err_no, _ = e.args
-                if err_no is not None:
-                    logger.warning("Encountered error with error code '{}'!".format(err_no))
-                    if err_no == 101 or err_no == -101:  # File is locked and cannot be opened again
-                        logger.warning("You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
-                                       "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
-                                       "i.e. 'chunksize=None'".format(str(self.filename)))
-                else:
-                    logger.warning_once("Unknown OSError in NetcdfFileBuffer when reading {}.".format(str(self.filename)))
-                    traceback.print_tb(e.__traceback__)
             except:
                 logger.warning_once("File '%s' could not be decoded properly by xarray (version: %s).\n         "
                                     "It will be opened with no decoding. Filling values might be wrongly parsed."
@@ -83,11 +75,19 @@ class NetcdfFileBuffer(_FileBuffer):
         if not access_success:
             if e is not None:
                 traceback.print_tb(e.__traceback__)
-            if err_no is not None:
-                logger.error("Failed to open file '{}' with error code '{}'. Exiting.".format(str(self.filename), err_no))
+                if err_no is not None:
+                    if err_no == 101 or err_no == -101:  # File is locked and cannot be opened again
+                        logger.error("You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
+                                     "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
+                                     "i.e. 'chunksize=None'".format(str(self.filename)))
+                    else:
+
+                        logger.error("Failed to open file '{}' with error code '{}'. Exiting.".format(str(self.filename), err_no))
+                else:
+                    logger.error("Failed to open file '{}'. Exiting.".format(str(self.filename)))
             else:
-                logger.error("Failed to open file '{}'. Exiting.".format(str(self.filename)))
-                exit()
+                logger.error("Unknown OSError in NetcdfFileBuffer when reading {}. Exiting".format(str(self.filename)))
+            exit()
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
                 raise RuntimeError('Indices for field subsetting need to be a list')
