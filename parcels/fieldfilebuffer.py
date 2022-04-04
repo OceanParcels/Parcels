@@ -62,8 +62,8 @@ class NetcdfFileBuffer(_FileBuffer):
                     logger.warning("Encountered error with error code '{}'!".format(err_no))
                     if err_no == 101:  # File is locked and cannot be opened again
                         logger.warning("You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
-                                 "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
-                                 "i.e. 'chunksize=None'".format(str(self.filename)))
+                                       "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
+                                       "i.e. 'chunksize=None'".format(str(self.filename)))
                 else:
                     logger.warning_once("Unknown OSError in NetcdfFileBuffer when reading {}.".format(str(self.filename)))
                     traceback.print_tb(e.__traceback__)
