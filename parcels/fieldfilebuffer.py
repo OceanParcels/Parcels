@@ -265,6 +265,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         where - due to the chunking, the file is 'locked', meaning that it cannot be simultaneously accessed by
         another process. This is significant in a cluster setup.
         """
+
         if self.chunksize not in [False, None, 'auto'] and type(self.chunksize) is not dict:
             raise AttributeError("'chunksize' is of wrong type. Parameter is expected to be a dict per data dimension, or be False, None or 'auto'.")
         if isinstance(self.chunksize, list):
@@ -273,41 +274,69 @@ class DaskFileBuffer(NetcdfFileBuffer):
         init_chunk_dict = None
         if self.chunksize not in [False, None]:
             init_chunk_dict = self._get_initial_chunk_dictionary()
-        try:
-            # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
-            # (which we would rather want to have being auto-managed).
-            # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
-            if self.lock_file:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict)
+
+        e = None
+        access_success = False
+        attempts = 100
+        err_no = None
+        while not access_success and attempts > 0:
+            try:
+                # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
+                # (which we would rather want to have being auto-managed).
+                # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
+                if self.lock_file:
+                    self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine,
+                                                   chunks=init_chunk_dict)
+                else:
+                    self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine,
+                                                   chunks=init_chunk_dict, lock=False)
+                self.dataset['decoded'] = True
+                access_success = True
+            except (OSError, IOError) as err:
+                e = err
+                access_success = False
+                if hasattr(e, 'code'):
+                    err_no = e.code
+                elif hasattr(e, 'errno'):
+                    err_no = e.errno
+                elif hasattr(e, 'errorcode'):
+                    err_no = e.errorcode
+                elif hasattr(e, 'args'):
+                    err_no, _ = e.args
+            except:
+                logger.warning_once("File '%s' could not be decoded properly by xarray (version: %s).\n         "
+                                    "It will be opened with no decoding. Filling values might be wrongly parsed."
+                                    % (self.filename, xr.__version__))
+                if self.lock_file:
+                    self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine,
+                                                   chunks=init_chunk_dict)
+                else:
+                    self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine,
+                                                   chunks=init_chunk_dict, lock=False)
+                self.dataset['decoded'] = False
+                access_success = True
+            if access_success:
+                e = None
+                break
             else:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
-            self.dataset['decoded'] = True
-        except (OSError,) as e:
-            err_no = None
-            if hasattr(e, 'code'):
-                err_no = e.code
-            elif hasattr(e, 'errno'):
-                err_no = e.errno
-            elif hasattr(e, 'errorcode'):
-                err_no = e.errorcode
-            elif hasattr(e, 'args'):
-                err_no, _ = e.args
-            if err_no is not None and err_no == 101:  # File is locked and cannot be opened again
-                logger.error("You are trying to open a locked file, i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
-                             "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
-                             "i.e. 'chunksize=None'")
-                exit()
+                attempts -= 1
+                sleep(0.02)
+        if not access_success:
+            if e is not None:
+                traceback.print_tb(e.__traceback__)
+                if err_no is not None:
+                    if err_no == 101 or err_no == -101:  # File is locked and cannot be opened again
+                        logger.error("You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
+                                     "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
+                                     "i.e. 'chunksize=None'".format(str(self.filename)))
+                    else:
+
+                        logger.error("Failed to open file '{}' with error code '{}'. Exiting.".format(str(self.filename), err_no))
+                else:
+                    logger.error("Failed to open file '{}'. Exiting.".format(str(self.filename)))
             else:
-                logger.warning_once("Unknown OSError in NetcdfFileBuffer.")
-                traceback.print_stack()
-        except:
-            logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
-                                % (self.filename, xr.__version__))
-            if self.lock_file:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict)
-            else:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
-            self.dataset['decoded'] = False
+                logger.error("Unknown OSError in NetcdfFileBuffer when reading {}. Exiting".format(str(self.filename)))
+            exit()
 
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
