@@ -16,6 +16,73 @@ from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import DaskChunkingError
 
 
+def guarded_netcdf_open(filename, decode_cf=False, engine='netcdf4', chunks=None, lock=None):
+    access_success = False
+    dataset = None
+
+    e=None
+    attempts = 100
+    err_no = None
+    while not access_success and attempts > 0:
+        try:
+            # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
+            # (which we would rather want to have being auto-managed).
+            # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
+            if lock is None:
+                dataset = xr.open_dataset(str(filename), decode_cf=decode_cf, engine=engine, chunks=chunks)
+            else:
+                dataset = xr.open_dataset(str(filename), decode_cf=decode_cf, engine=engine, chunks=chunks, lock=lock)
+            dataset['decoded'] = decode_cf
+            access_success = True
+        except (OSError, IOError, KeyError) as err:
+            e = err
+            access_success = False
+            if hasattr(e, 'code'):
+                err_no = e.code
+            elif hasattr(e, 'errno'):
+                err_no = e.errno
+            elif hasattr(e, 'errorcode'):
+                err_no = e.errorcode
+            elif hasattr(e, 'args'):
+                err_no, _ = e.args
+        except:
+            logger.warning_once("File '%s' could not be decoded properly by xarray (version: %s).\n         "
+                                "It will be opened with no decoding. Filling values might be wrongly parsed."
+                                % (self.filename, xr.__version__))
+            if lock is None:
+                dataset = xr.open_dataset(str(filename), decode_cf=False, engine=engine, chunks=chunks)
+            else:
+                dataset = xr.open_dataset(str(filename), decode_cf=False, engine=engine, chunks=chunks, lock=lock)
+            dataset['decoded'] = False
+            access_success = True
+        if access_success:
+            e = None
+            break
+        else:
+            attempts -= 1
+            sleep(0.02)
+    if not access_success:
+        if e is not None:
+            traceback.print_tb(e.__traceback__)
+            if err_no is not None:
+                if err_no == 101 or err_no == -101:  # File is locked and cannot be opened again
+                    logger.error(
+                        "You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
+                        "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
+                        "i.e. 'chunksize=None'".format(str(self.filename)))
+                else:
+
+                    logger.error(
+                        "Failed to open file '{}' with error code '{}'. Exiting.".format(str(self.filename), err_no))
+            else:
+                logger.error("Failed to open file '{}'. Exiting.".format(str(self.filename)))
+        else:
+            logger.error("Unknown OSError in NetcdfFileBuffer when reading {}. Exiting".format(str(self.filename)))
+        exit()
+
+    return access_success, dataset
+
+
 class _FileBuffer(object):
     def __init__(self, filename, dimensions, indices, timestamp=None,
                  interp_method='linear', data_full_zdim=None, **kwargs):
@@ -36,57 +103,8 @@ class NetcdfFileBuffer(_FileBuffer):
         super(NetcdfFileBuffer, self).__init__(*args, **kwargs)
 
     def __enter__(self):
-        e = None
-        access_success = False
-        attempts = 100
-        err_no = None
-        while not access_success and attempts > 0:
-            try:
-                # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
-                # (which we would rather want to have being auto-managed).
-                # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
-                self.dataset['decoded'] = True
-                access_success = True
-            except (OSError, IOError, KeyError) as err:
-                e = err
-                access_success = False
-                if hasattr(e, 'code'):
-                    err_no = e.code
-                elif hasattr(e, 'errno'):
-                    err_no = e.errno
-                elif hasattr(e, 'errorcode'):
-                    err_no = e.errorcode
-                elif hasattr(e, 'args'):
-                    err_no, _ = e.args
-            except:
-                logger.warning_once("File '%s' could not be decoded properly by xarray (version: %s).\n         "
-                                    "It will be opened with no decoding. Filling values might be wrongly parsed."
-                                    % (self.filename, xr.__version__))
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
-                self.dataset['decoded'] = False
-                access_success = True
-            if access_success:
-                e = None
-                break
-            else:
-                attempts -= 1
-                sleep(0.02)
+        access_success, self.dataset = guarded_netcdf_open(self.filename, decode_cf=True, engine=self.netcdf_engine)
         if not access_success:
-            if e is not None:
-                traceback.print_tb(e.__traceback__)
-                if err_no is not None:
-                    if err_no == 101 or err_no == -101:  # File is locked and cannot be opened again
-                        logger.error("You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
-                                     "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
-                                     "i.e. 'chunksize=None'".format(str(self.filename)))
-                    else:
-
-                        logger.error("Failed to open file '{}' with error code '{}'. Exiting.".format(str(self.filename), err_no))
-                else:
-                    logger.error("Failed to open file '{}'. Exiting.".format(str(self.filename)))
-            else:
-                logger.error("Unknown OSError in NetcdfFileBuffer when reading {}. Exiting".format(str(self.filename)))
             exit()
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
@@ -275,67 +293,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if self.chunksize not in [False, None]:
             init_chunk_dict = self._get_initial_chunk_dictionary()
 
-        e = None
-        access_success = False
-        attempts = 100
-        err_no = None
-        while not access_success and attempts > 0:
-            try:
-                # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
-                # (which we would rather want to have being auto-managed).
-                # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
-                if self.lock_file:
-                    self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine,
-                                                   chunks=init_chunk_dict)
-                else:
-                    self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine,
-                                                   chunks=init_chunk_dict, lock=False)
-                self.dataset['decoded'] = True
-                access_success = True
-            except (OSError, IOError, KeyError) as err:
-                e = err
-                access_success = False
-                if hasattr(e, 'code'):
-                    err_no = e.code
-                elif hasattr(e, 'errno'):
-                    err_no = e.errno
-                elif hasattr(e, 'errorcode'):
-                    err_no = e.errorcode
-                elif hasattr(e, 'args'):
-                    err_no, _ = e.args
-            except:
-                logger.warning_once("File '%s' could not be decoded properly by xarray (version: %s).\n         "
-                                    "It will be opened with no decoding. Filling values might be wrongly parsed."
-                                    % (self.filename, xr.__version__))
-                if self.lock_file:
-                    self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine,
-                                                   chunks=init_chunk_dict)
-                else:
-                    self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine,
-                                                   chunks=init_chunk_dict, lock=False)
-                self.dataset['decoded'] = False
-                access_success = True
-            if access_success:
-                e = None
-                break
-            else:
-                attempts -= 1
-                sleep(0.02)
+        access_success, self.dataset = guarded_netcdf_open(self.filename, decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=self.lock_file)
         if not access_success:
-            if e is not None:
-                traceback.print_tb(e.__traceback__)
-                if err_no is not None:
-                    if err_no == 101 or err_no == -101:  # File is locked and cannot be opened again
-                        logger.error("You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
-                                     "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
-                                     "i.e. 'chunksize=None'".format(str(self.filename)))
-                    else:
-
-                        logger.error("Failed to open file '{}' with error code '{}'. Exiting.".format(str(self.filename), err_no))
-                else:
-                    logger.error("Failed to open file '{}'. Exiting.".format(str(self.filename)))
-            else:
-                logger.error("Unknown OSError in NetcdfFileBuffer when reading {}. Exiting".format(str(self.filename)))
             exit()
 
         for inds in self.indices.values():
@@ -696,8 +655,9 @@ class DaskFileBuffer(NetcdfFileBuffer):
         """
         # ==== check-opening requested dataset to access metadata                   ==== #
         # ==== file-opening and dimension-reading does not require a decode or lock ==== #
-        self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks={}, lock=False)
-        self.dataset['decoded'] = False
+        access_success, self.dataset = guarded_netcdf_open(self.filename, decode_cf=False, engine=self.netcdf_engine, chunks={}, lock=False)
+        if not access_success:
+            exit()
         # ==== self.dataset temporarily available ==== #
         init_chunk_dict = {}
         init_chunk_map = {}
@@ -740,6 +700,9 @@ class DaskFileBuffer(NetcdfFileBuffer):
         else:
             self.autochunkingfailed = False
         try:
+            # access_success, self.dataset = guarded_netcdf_open(self.filename, decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
+            # if not access_success:
+            #     exit()
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
             if isinstance(self.chunksize, dict):
                 self.chunksize = init_chunk_dict
