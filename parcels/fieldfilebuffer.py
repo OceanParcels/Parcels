@@ -20,7 +20,7 @@ def guarded_netcdf_open(filename, decode_cf=False, engine='netcdf4', chunks=None
     access_success = False
     dataset = None
 
-    e=None
+    e = None
     attempts = 100
     err_no = None
     while not access_success and attempts > 0:
@@ -48,7 +48,7 @@ def guarded_netcdf_open(filename, decode_cf=False, engine='netcdf4', chunks=None
         except:
             logger.warning_once("File '%s' could not be decoded properly by xarray (version: %s).\n         "
                                 "It will be opened with no decoding. Filling values might be wrongly parsed."
-                                % (self.filename, xr.__version__))
+                                % (filename, xr.__version__))
             if lock is None:
                 dataset = xr.open_dataset(str(filename), decode_cf=False, engine=engine, chunks=chunks)
             else:
@@ -69,15 +69,15 @@ def guarded_netcdf_open(filename, decode_cf=False, engine='netcdf4', chunks=None
                     logger.error(
                         "You are trying to open locked file '{}', i.e. a Field file that is already accessed by another field. Common example: 1 file storing U, V and W flow values.\n"
                         "This happens when trying to chunk a fieldset which stores all variables in one file, which is prohibited. Please define your fieldset without the use of chunking,\n"
-                        "i.e. 'chunksize=None'".format(str(self.filename)))
+                        "i.e. 'chunksize=None'".format(str(filename)))
                 else:
 
                     logger.error(
-                        "Failed to open file '{}' with error code '{}'. Exiting.".format(str(self.filename), err_no))
+                        "Failed to open file '{}' with error code '{}'. Exiting.".format(str(filename), err_no))
             else:
-                logger.error("Failed to open file '{}'. Exiting.".format(str(self.filename)))
+                logger.error("Failed to open file '{}'. Exiting.".format(str(filename)))
         else:
-            logger.error("Unknown OSError in NetcdfFileBuffer when reading {}. Exiting".format(str(self.filename)))
+            logger.error("Unknown OSError in NetcdfFileBuffer when reading {}. Exiting".format(str(filename)))
         exit()
 
     return access_success, dataset
