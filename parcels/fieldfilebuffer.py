@@ -48,7 +48,7 @@ class NetcdfFileBuffer(_FileBuffer):
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
                 self.dataset['decoded'] = True
                 access_success = True
-            except (OSError, IOError) as err:
+            except (OSError, IOError, KeyError) as err:
                 e = err
                 access_success = False
                 if hasattr(e, 'code'):
@@ -292,7 +292,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                                                    chunks=init_chunk_dict, lock=False)
                 self.dataset['decoded'] = True
                 access_success = True
-            except (OSError, IOError) as err:
+            except (OSError, IOError, KeyError) as err:
                 e = err
                 access_success = False
                 if hasattr(e, 'code'):
