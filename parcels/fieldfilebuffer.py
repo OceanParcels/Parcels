@@ -28,10 +28,10 @@ def guarded_netcdf_open(filename, decode_cf=False, engine='netcdf4', chunks=None
             # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
             # (which we would rather want to have being auto-managed).
             # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
-            if lock is None:
+            if lock in [None, True]:
                 dataset = xr.open_dataset(str(filename), decode_cf=decode_cf, engine=engine, chunks=chunks)
             else:
-                dataset = xr.open_dataset(str(filename), decode_cf=decode_cf, engine=engine, chunks=chunks, lock=lock)
+                dataset = xr.open_dataset(str(filename), decode_cf=decode_cf, engine=engine, chunks=chunks, lock=False)
             dataset['decoded'] = decode_cf
             access_success = True
         except (OSError, IOError, KeyError) as err:
