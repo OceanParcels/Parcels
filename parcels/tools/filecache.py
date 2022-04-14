@@ -517,8 +517,8 @@ class FieldFileCache(object):
         self._reverse_index_map[field_name] = reverse_index_map
         self._original_top_dirs[field_name] = topdirname
         self._source_filepaths[field_name] = source_paths
-        self._original_filepaths[field_name] = original_paths
         self._destination_filepaths[field_name] = destination_paths
+        self._original_files[field_name] = original_paths
         self._global_files[field_name] = full_destination_paths
         if DEBUG:
             logger.info("len(files) = {}".format(len(self._global_files[field_name])))
