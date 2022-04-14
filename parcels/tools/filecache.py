@@ -13,7 +13,7 @@ import threading
 import _pickle as cPickle
 from time import sleep
 from random import uniform
-from shutil import copyfile, copy, copy2, rmtree, which  # noqa
+from shutil import copyfile, copy, copy2, rmtree, which, move  # noqa
 from .global_statics import get_cache_dir
 from tempfile import gettempdir
 from .loggers import logger
@@ -197,6 +197,7 @@ class FieldFileCache(object):
         self._original_top_dirs = {}
         self._source_filepaths = {}
         self._destination_filepaths = {}
+        self._original_files = {}
         self._global_files = {}
         self._available_files = {}
         self._processed_files = {}
@@ -363,7 +364,7 @@ class FieldFileCache(object):
         self._ti_files_lock = threading.Lock()
         self._periodic_wrap_lock = threading.Lock()
         self._T = FieldFileCacheThread(self._cache_top_dir, self._computer_env, self._occupation_file, self._process_file, self._ti_file,
-                                       self._field_names, self._var_names, self._original_top_dirs, self._source_filepaths, self._destination_filepaths, self._global_files,
+                                       self._field_names, self._var_names, self._original_top_dirs, self._source_filepaths, self._destination_filepaths, self._original_files, self._global_files,
                                        self._available_files, self._processed_files, self._index_map, self._reverse_index_map, self._tis, self._prev_tis, self._changeflags,
                                        self._cache_upper_limit, self._cache_lower_limit, self._named_copy, self._use_ncks, self._sim_dt,
                                        self._cache_step_limit, self._start_ti, self._end_ti, self._do_wrapping, self._periodic_wrap,
@@ -392,13 +393,14 @@ class FieldFileCache(object):
         # -q -> quench; no print-outs at all
         # -4 -> output in NetCDF 4 format
         # --fix_rec_dmn=all -> remove the 'unlimited' dimension from the data to focus just on 1 file
-        cmd = "ncks -4 --fix_rec_dmn=all -q -v {} {} {}".format(var_string, src_filepath, dst_filepath)
+        cmd = "ncks -4 --fix_rec_dmn=all -q -v {} {} {}".format(var_string, src_filepath, dst_filepath+".tmp")
         if DEBUG:
             logger.info("copy file via command: '{}'".format(cmd))
         if os.system(cmd) != 0:
             # raise OSError("Failure executing NetCDF kitchen sink '{}'.".format(cmd))
             if os.path.exists(dst_filepath):
                 os.remove(dst_filepath)
+        move(dst_filepath+".tmp", dst_filepath)
 
     def map_ti2fi(self, name, ti):
         """
@@ -479,6 +481,7 @@ class FieldFileCache(object):
                 logger.info("'{}' is common head: {}".format(dirname, is_top_dir))
         topdirname = dirname
         source_paths = []
+        original_paths = []
         destination_paths = []
         full_destination_paths = []
         source_index = 0
@@ -495,13 +498,14 @@ class FieldFileCache(object):
                 # destination_index += 1
                 sub_destination_index = 0
                 reverse_index_map.append(list())
+                source_paths.append(dname)
                 destination_paths.append(os.path.join(self._cache_top_dir, fname))
                 if DEBUG:
                     # logger.info("Added file {}.".format(os.path.join(self._cache_top_dir, fname)))
                     logger.info("Added file {}.".format(destination_paths[-1]))
             destination_index = len(destination_paths)-1
             full_destination_paths.append(os.path.join(self._cache_top_dir, fname))
-            source_paths.append(dname)
+            original_paths.append(dname)
             last_reverse_index = len(reverse_index_map)-1
             index_map.append((destination_index, sub_destination_index))
             reverse_index_map[last_reverse_index].append(source_index)
@@ -513,6 +517,7 @@ class FieldFileCache(object):
         self._reverse_index_map[field_name] = reverse_index_map
         self._original_top_dirs[field_name] = topdirname
         self._source_filepaths[field_name] = source_paths
+        self._original_filepaths[field_name] = original_paths
         self._destination_filepaths[field_name] = destination_paths
         self._global_files[field_name] = full_destination_paths
         if DEBUG:
@@ -1078,6 +1083,8 @@ class FieldFileCache(object):
                     if self._use_ncks:
                         checksize = False
                         self.nc_copy(self._source_filepaths[name][wrap_index], self._destination_filepaths[name][wrap_index])
+                        # self.nc_copy(self._source_filepaths[name][wrap_index], self._destination_filepaths[name][wrap_index]+".tmp")
+                        # move(self._destination_filepaths[name][wrap_index]+".tmp", self._destination_filepaths[name][wrap_index])
                         if not os.path.exists(self._destination_filepaths[name][wrap_index]):
                             checksize = True
                             copy2(self._source_filepaths[name][wrap_index], self._destination_filepaths[name][wrap_index], follow_symlinks=True)
@@ -1130,9 +1137,9 @@ class FieldFileCache(object):
 class FieldFileCacheThread(threading.Thread, FieldFileCache):
 
     def __init__(self, cache_top_dir, computer_env, occupation_file, process_file, ti_file,
-                 field_names, var_names, original_top_dirs, source_filepaths, destination_filepaths, global_files,
-                 available_files, processed_files, index_map, reverse_index_map, tis, last_loaded_tis, changeflags,
-                 cache_upper_limit, cache_lower_limit, named_copy, use_ncks, sim_dt,
+                 field_names, var_names, original_top_dirs, source_filepaths, destination_filepaths, original_files,
+                 global_files, available_files, processed_files, index_map, reverse_index_map, tis, last_loaded_tis,
+                 changeflags, cache_upper_limit, cache_lower_limit, named_copy, use_ncks, sim_dt,
                  cache_step_limit, start_ti, end_ti, do_wrapping, periodic_wrap, occupation_files_lock,
                  processed_files_lock, ti_files_lock, periodic_wrap_lock, stop_event):
         super(FieldFileCache, self).__init__()
@@ -1147,6 +1154,7 @@ class FieldFileCacheThread(threading.Thread, FieldFileCache):
         self._original_top_dirs = original_top_dirs
         self._source_filepaths = source_filepaths
         self._destination_filepaths = destination_filepaths
+        self._original_files = original_files
         self._global_files = global_files
         self._available_files = available_files
         self._processed_files = processed_files
