@@ -47,14 +47,14 @@ def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
     ofile.export()
 
     if engine == 'zarr':
-        assert os.path.getsize(filepath) < os.path.getsize(ofile.name)
+        assert os.path.getsize(filepath) < os.path.getsize(ofile.name)  # zarr expected to be smaller filesize
     else:
         assert os.path.getsize(filepath) == os.path.getsize(ofile.name)
 
     ncfile2 = xr.open_dataset(filepath + 'b.nc')
     for v in ncfile2.keys():
         if v == 'time':
-            assert np.all(ncfile1[v].values-ncfile2[v].values < np.timedelta64(1, 's'), where=np.isfinite(ncfile1[v].values))
+            assert np.allclose(ncfile1[v].values, ncfile2[v].values, atol=np.timedelta64(1, 's'), equal_nan=True)
         else:
             assert np.allclose(ncfile1[v].values, ncfile2[v].values, equal_nan=True)
 
