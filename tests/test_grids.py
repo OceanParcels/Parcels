@@ -681,6 +681,67 @@ def test_cgrid_indexing(pset_mode, mode, gridindexingtype):
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4,
                  runtime=delta(hours=14), dt=delta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
+    
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
+def test_cgrid_indexing_curvilinear(pset_mode, mode, gridindexingtype):
+    xdim, ydim = 151, 201
+    a = b = 20000  # domain size
+    lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
+    lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
+    dx, dy = lon[2] - lon[1], lat[2] - lat[1]
+    omega = 2 * np.pi / delta(days=1).total_seconds()
+
+    index_signs = {'nemo': -1, 'mitgcm': 1}
+    isign = index_signs[gridindexingtype]
+    
+    def rotate_coords(lon, lat, alpha=0):
+        rotmat = np.array([[np.cos(alpha),  np.sin(alpha)],
+                           [-np.sin(alpha), np.cos(alpha)]])
+        lons, lats = np.meshgrid(lon, lat)
+        rotated = np.einsum('ji, mni -> jmn', rotmat, np.dstack([lons, lats]))
+        return rotated[0], rotated[1]
+    
+    alpha = 15*np.pi/180
+    lons, lats = rotate_coords(lon, lat, alpha)
+    
+    def calc_r_phi(ln, lt):
+        return np.sqrt(ln ** 2 + lt ** 2), np.arctan2(ln, lt)
+
+    def calculate_UVR(lats, lons, dx, dy, omega, alpha):
+        U = np.zeros(lats.shape, dtype=np.float32)
+        V = np.zeros(lats.shape, dtype=np.float32)
+        R = np.zeros(lats.shape, dtype=np.float32)
+        for i in range(lats.shape[1]):
+            for j in range(lats.shape[0]):
+                r, phi = calc_r_phi(lons[j,i], lats[j,i])
+                R[j, i] = r
+                r, phi = calc_r_phi(lons[j,i] + isign * (dx / 2) * np.cos(alpha), lats[j,i] - isign * (dx / 2) * np.sin(alpha))
+                V[j, i] = np.sin(alpha) * (omega * r * np.cos(phi)) + np.cos(alpha) * (-omega * r * np.sin(phi))
+                r, phi = calc_r_phi(lons[j,i] + isign * (dy / 2) * np.sin(alpha), lats[j,i] + isign * (dy / 2) * np.cos(alpha))
+                U[j, i] = np.cos(alpha) * (omega * r * np.cos(phi)) - np.sin(alpha) * (-omega * r * np.sin(phi))
+        return U, V, R
+
+    U, V, R = calculate_UVR(lats, lons, dx, dy, omega, alpha)
+    data = {'U': U, 'V': V, 'R': R}
+    dimensions = {'lon': lon, 'lat': lat}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', gridindexingtype=gridindexingtype)
+    fieldset.U.interp_method = 'cgrid_velocity'
+    fieldset.V.interp_method = 'cgrid_velocity'
+
+    def UpdateR(particle, fieldset, time):
+        particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
+
+    class MyParticle(ptype[mode]):
+        radius = Variable('radius', dtype=np.float32, initial=0.)
+        radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=4e3, time=0)
+
+    pset.execute(pset.Kernel(UpdateR) + AdvectionRK4,
+                 runtime=delta(hours=14), dt=delta(minutes=5))
+    assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
