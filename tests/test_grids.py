@@ -681,7 +681,8 @@ def test_cgrid_indexing(pset_mode, mode, gridindexingtype):
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4,
                  runtime=delta(hours=14), dt=delta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
-    
+
+
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
@@ -695,17 +696,17 @@ def test_cgrid_indexing_curvilinear(pset_mode, mode, gridindexingtype):
 
     index_signs = {'nemo': -1, 'mitgcm': 1}
     isign = index_signs[gridindexingtype]
-    
+
     def rotate_coords(lon, lat, alpha=0):
-        rotmat = np.array([[np.cos(alpha),  np.sin(alpha)],
+        rotmat = np.array([[np.cos(alpha), np.sin(alpha)],
                            [-np.sin(alpha), np.cos(alpha)]])
         lons, lats = np.meshgrid(lon, lat)
         rotated = np.einsum('ji, mni -> jmn', rotmat, np.dstack([lons, lats]))
         return rotated[0], rotated[1]
-    
+
     alpha = 15*np.pi/180
     lons, lats = rotate_coords(lon, lat, alpha)
-    
+
     def calc_r_phi(ln, lt):
         return np.sqrt(ln ** 2 + lt ** 2), np.arctan2(ln, lt)
 
@@ -715,11 +716,11 @@ def test_cgrid_indexing_curvilinear(pset_mode, mode, gridindexingtype):
         R = np.zeros(lats.shape, dtype=np.float32)
         for i in range(lats.shape[1]):
             for j in range(lats.shape[0]):
-                r, phi = calc_r_phi(lons[j,i], lats[j,i])
+                r, phi = calc_r_phi(lons[j, i], lats[j, i])
                 R[j, i] = r
-                r, phi = calc_r_phi(lons[j,i] + isign * (dx / 2) * np.cos(alpha), lats[j,i] - isign * (dx / 2) * np.sin(alpha))
+                r, phi = calc_r_phi(lons[j, i] + isign * (dx / 2) * np.cos(alpha), lats[j, i] - isign * (dx / 2) * np.sin(alpha))
                 V[j, i] = np.sin(alpha) * (omega * r * np.cos(phi)) + np.cos(alpha) * (-omega * r * np.sin(phi))
-                r, phi = calc_r_phi(lons[j,i] + isign * (dy / 2) * np.sin(alpha), lats[j,i] + isign * (dy / 2) * np.cos(alpha))
+                r, phi = calc_r_phi(lons[j, i] + isign * (dy / 2) * np.sin(alpha), lats[j, i] + isign * (dy / 2) * np.cos(alpha))
                 U[j, i] = np.cos(alpha) * (omega * r * np.cos(phi)) - np.sin(alpha) * (-omega * r * np.sin(phi))
         return U, V, R
 
