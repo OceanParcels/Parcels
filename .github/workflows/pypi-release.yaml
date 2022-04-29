@@ -3,6 +3,8 @@ on:
   release:
     types: [created, edited]
   push:
+    branches:
+      - pypi-packaging
     tags:
       - 'v*'
   workflow_dispatch:
@@ -65,14 +67,14 @@ jobs:
           ls -ltrh dist
 
       - name: Verify the built dist/wheel is valid
-#        if: github.event_name == 'push'
+        if: github.event_name == 'push'
         run: |
           python -m pip install --upgrade pip
           python -m pip install dist/parcels*.whl
 #          python -m parcels.util.print_versions
 
       - name: Publish package to TestPyPI
-#        if: github.event_name == 'push'
+        if: github.event_name == 'push'
         uses: pypa/gh-action-pypi-publish@v1.5.0
         with:
           user: __token__
