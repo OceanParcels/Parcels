@@ -1,4 +1,4 @@
-name: Build and Upload Parcels to PyPI
+name: Build and Upload to PyPI
 on:
 #  release:
 #    types: [created, edited]
