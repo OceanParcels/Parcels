@@ -12,7 +12,6 @@ from parcels.field import SummedField
 from parcels.field import VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
-from parcels.grid import GridCode
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
@@ -210,10 +209,6 @@ class FieldSet(object):
 
             if U.gridindexingtype not in ['nemo', 'mitgcm', 'mom5', 'pop']:
                 raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm', 'mom5' or 'pop'")
-
-            if U.gridindexingtype == 'mitgcm' and U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearZGrid]:
-                raise NotImplementedError('Curvilinear Grids are not implemented for mitgcm-style grid indexing.'
-                                          'If you have a use-case for this, please let us know by filing an Issue on github')
 
             if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
                 raise ValueError('Not all velocity Fields have the same gridindexingtype')

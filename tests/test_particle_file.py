@@ -9,6 +9,7 @@ import os
 from netCDF4 import Dataset
 import cftime
 import random as py_random
+import xarray as xr
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -39,16 +40,25 @@ def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
         import parcels.scripts.convert_npydir_to_netcdf as convert
         convert.convert_npydir_to_netcdf(ofile.tempwritedir_base, pfile_class=ofile.__class__)
 
-    ncfile1 = Dataset(filepath, 'r', 'NETCDF4')
+    engine = 'zarr' if 'zarr' in str(filepath) else 'netcdf4'
+    ncfile1 = xr.open_dataset(filepath, engine=engine)
 
     ofile.name = filepath + 'b.nc'
     ofile.export()
-    ncfile2 = Dataset(filepath + 'b.nc', 'r', 'NETCDF4')
 
-    for v in ncfile2.variables.keys():
-        assert np.allclose(ncfile1.variables[v][:], ncfile2.variables[v][:])
+    if engine == 'zarr':
+        assert os.path.getsize(filepath) < os.path.getsize(ofile.name)  # zarr expected to be smaller filesize
+    else:
+        assert os.path.getsize(filepath) == os.path.getsize(ofile.name)
 
-    for a in ncfile2.ncattrs():
+    ncfile2 = xr.open_dataset(filepath + 'b.nc')
+    for v in ncfile2.keys():
+        if v == 'time':
+            assert np.allclose(ncfile1[v].values, ncfile2[v].values, atol=np.timedelta64(1, 's'), equal_nan=True)
+        else:
+            assert np.allclose(ncfile1[v].values, ncfile2[v].values, equal_nan=True)
+
+    for a in ncfile2.attrs:
         if a != 'parcels_version':
             assert getattr(ncfile1, a) == getattr(ncfile2, a)
 
@@ -71,7 +81,7 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     pfile.write(pset, 1)
     ncfile = close_and_compare_netcdffiles(filepath, pfile)
     timearr = ncfile.variables['time'][:]
-    assert type(timearr[3, 1]) is not type(timearr[3, 0])  # noqa
+    assert (np.isnat(timearr[3, 1])) and (np.isfinite(timearr[3, 0]))
     ncfile.close()
 
 
@@ -168,7 +178,7 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
 
     ncfile = close_and_compare_netcdffiles(filepath, ofile)
     lons = ncfile.variables['lon'][:]
-    assert (isinstance(lons[0, 0], np.float64))
+    assert (isinstance(lons.values[0, 0], np.float64))
     ncfile.close()
 
 
@@ -189,7 +199,8 @@ def test_write_dtypes_pfile(fieldset, mode, pset_mode, tmpdir):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=0)
     pfile = pset.ParticleFile(name=filepath, outputdt=1)
     pfile.write(pset, 0)
-    ncfile = close_and_compare_netcdffiles(filepath, pfile)
+    pfile.close()
+    ncfile = Dataset(filepath, 'r', 'NETCDF4')  # using netCDF4.Dataset here because xarray does not observe all dtypes correctly
     for d in dtypes:
         nc_fmt = d if d != 'bool_' else 'i1'
         assert ncfile.variables[f'v_{d}'].dtype == nc_fmt
@@ -241,7 +252,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
         pset = pset_type[pset_mode]['pset'](fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
     elif type == 'timearr':
         pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
-    outfilepath = tmpdir.join("pfile_repeated_release.nc")
+    outfilepath = tmpdir.join("pfile_repeated_release.zarr")
     pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt))
 
     def IncrLon(particle, fieldset, time):
