@@ -522,8 +522,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
             else:
                 chunk_cap = None
         num_autochunk_dims = np.nonzero([self.chunksize[dim][1] == 'auto' for dim in self.chunksize.keys()])[0]
-        if (num_autochunk_dims>0 and chunk_cap is None):
-                logger.info_once(self._dask_NoChunkInfo_warningMessage_())
+        if num_autochunk_dims > 0 and chunk_cap is None:
+            logger.info_once(self._dask_NoChunkInfo_warningMessage_())
         # ==== end of auto-chunk information ==== #
         if 'time' in self.chunksize.keys():
             timei, timename, timesize = self._is_dimension_in_dataset(parcels_dimension_name='time', netcdf_dimension_name=self.chunksize['time'][0])

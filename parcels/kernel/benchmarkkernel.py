@@ -1,7 +1,5 @@
 import numpy as np
-from ctypes import byref
-from ctypes import c_double
-from ctypes import c_int
+from ctypes import byref, c_double, c_int  # NOQA
 
 try:
     from mpi4py import MPI
@@ -11,12 +9,13 @@ except:
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
-from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
+from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode  # NOQA
 from parcels.kernel.basekernel import BaseKernel
-from parcels.tools.loggers import logger
+from parcels.tools.loggers import logger  # NOQA
 from parcels.tools.performance_logger import TimingLog
 
 __all__ = ['BaseBenchmarkKernel']
+
 
 class BaseBenchmarkKernel(BaseKernel):
     perform_benchmark = False
@@ -133,4 +132,3 @@ class BaseBenchmarkKernel(BaseKernel):
         :arg execute_once: boolean, telling if to execute once (True) or computing the kernel iteratively
         """
         raise NotImplementedError
-

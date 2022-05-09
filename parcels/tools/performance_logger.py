@@ -10,6 +10,7 @@ from threading import Thread
 from threading import Event
 from time import sleep
 
+
 class TimingLog():
     stime = 0
     etime = 0
@@ -179,6 +180,7 @@ class ParamLogging():
             self._samples.append(self._iter)
             self._iter += 1
 
+
 class Asynchronous_ParamLogging():
     _samples = []
     _params = []
@@ -256,12 +258,12 @@ class Asynchronous_ParamLogging():
             self._measure_start_value = self._measure_func()
             self._measure_partial_values.append(0)
         while not self._event.is_set():
-            self._measure_partial_values.append( self._measure_func()-self._measure_start_value )
+            self._measure_partial_values.append(self._measure_func()-self._measure_start_value)
             sleep(self._measure_interval)
 
     def async_run_measurement(self):
         while not self._event.is_set():
-            self._measure_partial_values.append( self.measure_func() )
+            self._measure_partial_values.append(self.measure_func())
             sleep(self.measure_interval)
 
     def start_partial_measurement(self):
@@ -319,4 +321,3 @@ class Asynchronous_ParamLogging():
             self._params.append(param)
             self._samples.append(self._iter)
             self._iter += 1
-

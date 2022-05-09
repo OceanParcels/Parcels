@@ -1,6 +1,4 @@
 import time as time_module
-from datetime import datetime
-from datetime import timedelta as delta
 import psutil
 import os
 import sys
@@ -8,7 +6,6 @@ from platform import system as system_name
 import matplotlib.pyplot as plt
 from resource import getrusage, RUSAGE_SELF
 import numpy as np
-# import matplotlib.pyplot as plt
 
 try:
     from mpi4py import MPI
@@ -19,12 +16,13 @@ from parcels.tools.loggers import logger
 from parcels.tools.performance_logger import TimingLog, ParamLogging, Asynchronous_ParamLogging
 from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.kernel.benchmarkkernel import BaseBenchmarkKernel
-# from parcels.particle import JITParticle
 from parcels.application_kernels.advection import AdvectionRK4
 
 
-
 __all__ = ['BaseBenchmarkParticleSet']
+USE_ASYNC_MEMLOG = False
+USE_RUSE_SYNC_MEMLOG = False  # can be faulty
+
 
 def measure_mem():
     process = psutil.Process(os.getpid())
@@ -33,12 +31,13 @@ def measure_mem():
     # print("psutil - res-set: {}; res-shr: {} res-text: {}, res-data: {}, res-lib: {}; res-total: {}".format(pmem.rss, pmem.shared, pmem.text, pmem.data, pmem.lib, pmem_total))
     return pmem_total
 
+
 def measure_mem_rss():
     process = psutil.Process(os.getpid())
     pmem = process.memory_info()
-    pmem_total = pmem.shared + pmem.text + pmem.data + pmem.lib
     # print("psutil - res-set: {}; res-shr: {} res-text: {}, res-data: {}, res-lib: {}; res-total: {}".format(pmem.rss, pmem.shared, pmem.text, pmem.data, pmem.lib, pmem_total))
     return pmem.rss
+
 
 def measure_mem_usage():
     rsc = getrusage(RUSAGE_SELF)
@@ -47,8 +46,6 @@ def measure_mem_usage():
         return rsc.ru_maxrss*1024
     return rsc.ru_maxrss
 
-USE_ASYNC_MEMLOG = False
-USE_RUSE_SYNC_MEMLOG = False  # can be faulty
 
 class BaseBenchmarkParticleSet(BaseParticleSet):
     perform_benchmark = False
@@ -191,7 +188,7 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
                 self.io_log.accumulate_timing()
             if abs(time - next_output) < tol:
                 self.io_log.start_timing()
-                self._write_particle_data_(output_file,  time)
+                self._write_particle_data_(output_file, time)
                 self.io_log.stop_timing()
                 self.io_log.accumulate_timing()
                 next_output += outputdt * np.sign(dt)

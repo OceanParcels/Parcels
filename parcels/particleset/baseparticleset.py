@@ -19,7 +19,7 @@ from parcels.application_kernels.advection import AdvectionRK4
 from parcels.kernel.basekernel import BaseKernel
 from parcels.collection.collections import ParticleCollection
 from parcels.tools.loggers import logger
-from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
+# from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 
 
 class NDCluster(ABC):
@@ -586,7 +586,6 @@ class BaseParticleSet(NDCluster):
         if moviedt:
             self.show(field=movie_background_field, show_time=_starttime, animation=True)
 
-
         # COMMENT #1104: this could be a "_get_dt_bounds_(...)" function
         moviedt, callbackdt, next_prelease, next_output, next_movie, next_callback, next_input = self._get_dt_bounds(_starttime, dt, outputdt, moviedt, callbackdt)
         time = _starttime
@@ -691,7 +690,7 @@ class BaseParticleSet(NDCluster):
                 # ==================================================================== #
             if abs(time - next_output) < tol:
                 # COMMENT #1104: this could be the "_write_particle_data_(....)" function
-                self._write_particle_data_(output_file,  time)
+                self._write_particle_data_(output_file, time)
                 # if output_file:
                 #     output_file.write(self, time)
                 next_output += outputdt * np.sign(dt)

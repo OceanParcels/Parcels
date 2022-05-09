@@ -1371,7 +1371,7 @@ class ParticleCollectionNodes(ParticleCollection):
                 if node.data.state == OperationCode.Delete:
                     node.unlink()
                     self._data.remove(node)
-            except (ValueError, IndexError) as e:
+            except (ValueError, IndexError):
                 pass
             node = next_node
         self._ncount = len(self._data)

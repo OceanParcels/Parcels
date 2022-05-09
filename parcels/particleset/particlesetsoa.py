@@ -61,7 +61,7 @@ def _convert_to_reltime(time):
     return False
 
 
-def _create_convert_depth_(depth = None, fieldset = None, arrsize = None):
+def _create_convert_depth_(depth=None, fieldset=None, arrsize=None):
     if depth is None:
         mindepth = fieldset.gridset.dimrange('depth')[0] if fieldset is not None else 0
         depth = np.ones(arrsize) * mindepth

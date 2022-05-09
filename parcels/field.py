@@ -158,9 +158,9 @@ class Field(object):
                 self.time_periodic = self.time_periodic.total_seconds()
             if not np.isclose(grid_timespan, self.time_periodic):
                 if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
-                    logger.warning_once("The 'time_petriodic' parameter intends to give the total mximum timeframe for which the given field data shall be periodically repeated.\n" + \
-                                        "Hence, the provided time period '{} seconds' in invalid as it is smaller than the time frame covered by field '{}', which is '{} seconds'.\n" + \
-                                        "Parcels attempts now to cull the provided field to the requested 'period', and then " + \
+                    logger.warning_once("The 'time_petriodic' parameter intends to give the total mximum timeframe for which the given field data shall be periodically repeated.\n" +\
+                                        "Hence, the provided time period '{} seconds' in invalid as it is smaller than the time frame covered by field '{}', which is '{} seconds'.\n" +\
+                                        "Parcels attempts now to cull the provided field to the requested 'period', and then " +\
                                         "repeats the requested period over a max. timeframe of 100 years.".format(time_periodic, self.name, grid_timespan))
                     grid_dt = self.grid.time[1] - self.grid.time[0]
                     tshift = abs(math.ceil(float(self.time_periodic) / float(grid_dt)) * float(grid_dt))

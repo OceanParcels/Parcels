@@ -1,5 +1,3 @@
-import time as time_module
-from parcels.application_kernels.advection import AdvectionRK4
 from datetime import date
 from datetime import datetime
 from datetime import timedelta as delta
@@ -56,7 +54,7 @@ def _convert_to_reltime(time):
     return False
 
 
-def _create_convert_depth_(depth = None, fieldset = None, arrsize = None):
+def _create_convert_depth_(depth=None, fieldset=None, arrsize=None):
     if depth is None:
         mindepth = fieldset.gridset.dimrange('depth')[0] if fieldset is not None else 0
         depth = np.ones(arrsize) * mindepth
@@ -1207,8 +1205,7 @@ class ParticleSetNodes(BaseBenchmarkParticleSet):
         ngrids = self.fieldset.gridset.size if self.fieldset is not None else 0
         add_iter = 0
         while add_iter < len(self.repeatlon):
-            gen_id = None if self.repeatpid is None or type(self.repeatpid) not in [list, tuple, dict, np.ndarray] else \
-            self.repeatid[add_iter]
+            gen_id = None if self.repeatpid is None or type(self.repeatpid) not in [list, tuple, dict, np.ndarray] else self.repeatid[add_iter]
             lon = self.repeatlon[add_iter]
             lat = self.repeatlat[add_iter]
             pdepth = self.repeatdepth[add_iter]
