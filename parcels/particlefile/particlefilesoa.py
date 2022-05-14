@@ -3,6 +3,7 @@ import os
 from glob import glob
 import numpy as np
 import xarray as xr
+import gzip
 
 try:
     from mpi4py import MPI
@@ -85,7 +86,8 @@ class ParticleFileSOA(BaseParticleFile):
         # loop over all files
         for npyfile in file_list:
             try:
-                data_dict = np.load(npyfile, allow_pickle=True).item()
+                with gzip.open(npyfile,'rb') as f:
+                    data_dict = np.load(f, allow_pickle=True).item()
             except NameError:
                 raise RuntimeError('Cannot combine npy files into netcdf file because your ParticleFile is '
                                    'still open on interpreter shutdown.\nYou can use '
@@ -139,7 +141,8 @@ class ParticleFileSOA(BaseParticleFile):
             if os.path.exists(tempwritedir):
                 pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
                 for npyfile in pset_info_local['file_list']:
-                    tmp_dict = np.load(npyfile, allow_pickle=True).item()
+                    with gzip.open(npyfile,'rb') as f:
+                        tmp_dict = np.load(f, allow_pickle=True).item()
                     for i in tmp_dict['id']:
                         if i in n_timesteps:
                             n_timesteps[i] += 1
