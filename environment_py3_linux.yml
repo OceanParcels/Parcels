@@ -3,7 +3,7 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python>3.4
+  - python>=3.8
   - cachetools>=1.0.0
   - cgen
   - coverage
@@ -30,3 +30,4 @@ dependencies:
   - nbval
   - scikit-learn
   - pykdtree
+  - zarr

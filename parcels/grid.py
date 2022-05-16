@@ -125,7 +125,7 @@ class Grid(object):
                 self.periods.value = 0
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
                                            self.tdim, self.z4d,
-                                           self.mesh == 'spherical', self.zonal_periodic,
+                                           int(self.mesh == 'spherical'), int(self.zonal_periodic),
                                            (c_int * len(self.chunk_info))(*self.chunk_info),
                                            self.load_chunk.ctypes.data_as(POINTER(c_int)),
                                            self.time_full[0], self.time_full[-1], pointer(self.periods),
@@ -378,7 +378,7 @@ class RectilinearSGrid(RectilinearGrid):
         if not self.depth.flags['C_CONTIGUOUS']:
             self.depth = np.array(self.depth, order='C')
         self.zdim = self.depth.shape[-3]
-        self.z4d = len(self.depth.shape) == 4
+        self.z4d = 1 if len(self.depth.shape) == 4 else 0
         if self.z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
             assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
@@ -511,7 +511,7 @@ class CurvilinearSGrid(CurvilinearGrid):
         if not self.depth.flags['C_CONTIGUOUS']:
             self.depth = np.array(self.depth, order='C')
         self.zdim = self.depth.shape[-3]
-        self.z4d = len(self.depth.shape) == 4
+        self.z4d = 1 if len(self.depth.shape) == 4 else 0
         if self.z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
             assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
