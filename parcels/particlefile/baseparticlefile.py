@@ -5,6 +5,7 @@ import shutil
 import string
 from abc import ABC
 from abc import abstractmethod
+import gzip
 
 import numpy as np
 
@@ -235,14 +236,14 @@ class BaseParticleFile(ABC):
             os.makedirs(self.tempwritedir)
 
         if len(data_dict) > 0:
-            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + ".npy")
-            with open(tmpfilename, 'wb') as f:
+            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + ".npy.gz")
+            with gzip.open(tmpfilename, 'wb') as f:
                 np.save(f, data_dict)
             self.file_list.append(tmpfilename)
 
         if len(data_dict_once) > 0:
-            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + '_once.npy')
-            with open(tmpfilename, 'wb') as f:
+            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + '_once.npy.gz')
+            with gzip.open(tmpfilename, 'wb') as f:
                 np.save(f, data_dict_once)
             self.file_list_once.append(tmpfilename)
 
