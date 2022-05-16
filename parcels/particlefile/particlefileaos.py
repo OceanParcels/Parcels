@@ -86,7 +86,7 @@ class ParticleFileAOS(BaseParticleFile):
         # loop over all files
         for npyfile in file_list:
             try:
-                with gzip.open(npyfile,'b') as f:
+                with gzip.open(npyfile, 'b') as f:
                     data_dict = np.load(f, allow_pickle=True).item()
             except NameError:
                 raise RuntimeError('Cannot combine npy files into netcdf file because your ParticleFile is '
@@ -140,7 +140,7 @@ class ParticleFileAOS(BaseParticleFile):
             if os.path.exists(tempwritedir):
                 pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
                 for npyfile in pset_info_local['file_list']:
-                    with gzip.open(npyfile,'b') as f:
+                    with gzip.open(npyfile, 'b') as f:
                         tmp_dict = np.load(f, allow_pickle=True).item()
                     for i in tmp_dict['id']:
                         if i in n_timesteps:

@@ -5,7 +5,7 @@ import shutil
 import string
 from abc import ABC
 from abc import abstractmethod
-import gzip 
+import gzip
 
 import numpy as np
 
