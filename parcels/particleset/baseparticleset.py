@@ -808,8 +808,9 @@ class BaseParticleSet(NDCluster):
         return moviedt, callbackdt, next_prelease, next_output, next_movie, next_callback, next_input
 
     def _execute_kernel_(self, time, dt, recovery, output_file=None, execute_once=False):
+        endtime = time
         self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
-        return time
+        return endtime
 
     def _add_periodic_release_particles_(self, time, dt):
         pset_new = self.__class__(fieldset=self.fieldset, time=time, lon=self.repeatlon,

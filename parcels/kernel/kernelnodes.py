@@ -220,6 +220,7 @@ class KernelNodes(BaseBenchmarkKernel):
                     continue
                 f.data = np.array(f.data)
 
+        target_time = endtime
         node = pset.begin()
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
@@ -227,7 +228,7 @@ class KernelNodes(BaseBenchmarkKernel):
                 node = node.next
                 continue
             p = node.data
-            p = self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+            p = self.evaluate_particle(p, target_time, sign_dt, dt, analytical=analytical)
             node.set_data(p)
             node = node.next
 
@@ -446,6 +447,7 @@ class BenchmarkKernelNodes(KernelNodes):
                 self._mem_io_timings.accumulate_timing()
 
         self._compute_timings.start_timing()
+        target_time = endtime
         node = pset.begin()
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
@@ -453,7 +455,7 @@ class BenchmarkKernelNodes(KernelNodes):
                 node = node.next
                 continue
             p = node.data
-            p = self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+            p = self.evaluate_particle(p, target_time, sign_dt, dt, analytical=analytical)
             node.set_data(p)
             node = node.next
         self._compute_timings.stop_timing()

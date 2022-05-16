@@ -213,8 +213,9 @@ class KernelAOS(BaseBenchmarkKernel):
                     continue
                 f.data = np.array(f.data)
 
+        target_time = endtime
         for p in pset:
-            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+            self.evaluate_particle(p, target_time, sign_dt, dt, analytical=analytical)
 
     def remove_deleted(self, pset, output_file, endtime):
         """
@@ -404,8 +405,9 @@ class BenchmarkKernelAOS(KernelAOS):
                 self._mem_io_timings.accumulate_timing()
 
         self._compute_timings.start_timing()
+        target_time = endtime
         for p in pset:
-            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+            self.evaluate_particle(p, target_time, sign_dt, dt, analytical=analytical)
         self._compute_timings.stop_timing()
         self._compute_timings.accumulate_timing()
 
