@@ -192,7 +192,7 @@ class ParticleSetSOA(BaseBenchmarkParticleSet):
             'lon, lat, depth don''t all have the same lenghts')
 
         time = _convert_to_array(time)
-        time = np.repeat(time, lon.size) if time.size == 1 else time
+        time = np.repeat(time, lon.size) if time.shape[0] == 1 else time
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
@@ -201,7 +201,7 @@ class ParticleSetSOA(BaseBenchmarkParticleSet):
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.shape[0] == time.shape[0], (
-            'time and positions (lon, lat, depth) don''t have the same lengths.')
+            "time [{}] and positions (lon, lat, depth) [{}] don''t have the same lengths.".format(lon.shape[0], time.shape[0]))
 
         if lonlatdepth_dtype is None:
             if fieldset is not None:
@@ -214,7 +214,7 @@ class ParticleSetSOA(BaseBenchmarkParticleSet):
         for kwvar in kwargs:
             kwargs[kwvar] = _convert_to_array(kwargs[kwvar])
             assert lon.shape[0] == kwargs[kwvar].shape[0], (
-                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
+                "%s [{}] and positions (lon, lat, depth) [{}] don''t have the same lengths.".format(kwvar, lon.shape[0], time.shape[0]))
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
