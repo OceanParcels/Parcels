@@ -268,7 +268,7 @@ class ParticleSetNodes(BaseBenchmarkParticleSet):
             depth = np.ones(lon.size, dtype=lonlatdepth_dtype) * mindepth
         else:
             depth = _convert_to_array(depth)
-        assert lon.size == lat.size and lon.size == depth.size, (
+        assert lon.shape[0] == lat.shape[0] and lon.shape[0] == depth.shape[0], (
             'lon, lat, depth don''t all have the same lenghts')
 
         time = _convert_to_array(time)
@@ -280,7 +280,7 @@ class ParticleSetNodes(BaseBenchmarkParticleSet):
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
-        assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
+        assert lon.shape[0] == time.shape[0], "time and positions (lon, lat, depth) do not have the same lengths."
 
         # ============ ================================= TODO ============================== ============ #
         # ============ THIS BELONGS INTO THE COLLECTION, JUST WITH A REFERENCE PROPERTY HERE ============ #
