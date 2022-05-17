@@ -256,7 +256,7 @@ class ParticleSetAOS(BaseBenchmarkParticleSet):
             'lon, lat, depth don''t all have the same lenghts')
 
         time = _convert_to_array(time)
-        time = np.repeat(time, lon.size) if time.size == 1 else time
+        time = np.repeat(time, lon.size) if time.shape[0] == 1 else time
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
