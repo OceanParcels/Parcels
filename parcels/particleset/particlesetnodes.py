@@ -68,14 +68,14 @@ def _create_convert_depth_(depth=None, fieldset=None, arrsize=None):
 def _create_convert_time_(time=None, fieldset=None, arrsize=None):
     time = np.array([0.0], dtype=np.float64) if time is None else time
     time = _convert_to_array(time)
-    time = np.repeat(time, arrsize) if time.size == 1 else time
-    if time.size > 0 and type(time[0]) in [datetime, date]:
+    time = np.repeat(time, arrsize) if len(time) == 1 else time
+    if len(time) > 0 and type(time[0]) in [datetime, date]:
         time = np.array([np.datetime64(t) for t in time])
     time_origin = fieldset.time_origin if fieldset is not None else 0
-    if time.size > 0 and isinstance(time[0], np.timedelta64) and not time_origin:
+    if len(time) > 0 and isinstance(time[0], np.timedelta64) and not time_origin:
         raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
     time = np.array([time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
-    assert arrsize == time.size, ('time and positions (lon, lat, depth) don''t have the same lengths.')
+    assert arrsize == len(time), ("time [{}] and positions (lon, lat, depth) [{}] don''t have the same lengths.".format(len(time), arrsize))
     return time
 
 
@@ -272,7 +272,7 @@ class ParticleSetNodes(BaseBenchmarkParticleSet):
             'lon, lat, depth don''t all have the same lenghts')
 
         time = _convert_to_array(time)
-        time = np.repeat(time, len(lon)) if time.shape[0] == 1 else time
+        time = np.repeat(time, len(lon)) if len(time) == 1 else time
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
@@ -327,7 +327,7 @@ class ParticleSetNodes(BaseBenchmarkParticleSet):
                 self.repeatkwargs[kwvar] = []
 
             collect_time = [pdata.time for pdata in self._collection]
-            if len(time) > 0 and (time[0] is None or np.isnan(time[0])):
+            if len(time) > 0 and (time[0] is not None and not np.isnan(time[0])):
                 self.repeat_starttime = time[0]
             else:
                 if collect_time and not np.allclose(collect_time, collect_time[0]):
@@ -701,10 +701,10 @@ class ParticleSetNodes(BaseBenchmarkParticleSet):
         elif isinstance(value, np.ndarray) or isinstance(value, dict) or isinstance(value, list) or isinstance(value, tuple):
             if isinstance(value, dict) and isinstance(value['lon'], np.ndarray):
                 # ==== special-treat depth- and time ==== #
-                value['time'] = _create_convert_time_(None, self._fieldset, len(self._collection)) if 'time' not in value.keys() \
-                    else _create_convert_time_(value['time'], self._fieldset, len(self._collection))
-                value['depth'] = _create_convert_time_(None, self._fieldset, len(self._collection)) if 'depth' not in value.keys() \
-                    else _create_convert_time_(value['depth'], self._fieldset, len(self._collection))
+                value['time'] = _create_convert_time_(None, self._fieldset, len(value['lon'])) if 'time' not in value.keys() \
+                    else _create_convert_time_(value['time'], self._fieldset, len(value['lon']))
+                value['depth'] = _create_convert_depth_(None, self._fieldset, len(value['lon'])) if 'depth' not in value.keys() \
+                    else _create_convert_depth_(value['depth'], self._fieldset, len(value['lon']))
                 # ==== end format correction ==== #
             self._collection.add_multiple(value)
         elif isinstance(value, ScipyParticle):

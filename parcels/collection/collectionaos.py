@@ -592,7 +592,7 @@ class ParticleCollectionAOS(ParticleCollection):
                 mpi_comm.Bcast(self._pu_centers, root=0)
             else:
                 pu_ids = np.arange(ScipyParticle.lastID, stop=ScipyParticle.lastID+data_array['lon'].shape[0]) if 'id' not in data_array.keys() else data_array['id']
-                new_lastID = ScipyParticle.lastID+data_array['lon'].shape[0]-1
+                new_lastID = max(ScipyParticle.lastID, np.max(pu_ids))
                 self._pclass.setLastID(new_lastID)
                 pu_indices = np.arange(start=0, stop=data_array['lon'].shape[0])
                 n_pu_data = pu_indices.shape[0]
@@ -611,7 +611,11 @@ class ParticleCollectionAOS(ParticleCollection):
                     for key in self._kwarg_keys:
                         if key in data_array.keys():
                             setattr(pdata, key, data_array[key][i])
-                    results.append(self.add_single(pdata, pu_checked=True))
+                    res = self.add_single(pdata, pu_checked=True)
+                    if res is not None:
+                        results.append(res)
+                for p, pdata in zip(self._data, self._data_c):
+                    p._cptr = pdata
         self._ncount = len(self._data)
         return results
 
@@ -678,11 +682,12 @@ class ParticleCollectionAOS(ParticleCollection):
         if _add_to_pu:
             particle_obj.id = pu_id
             self._data = np.concatenate((self._data, [particle_obj, ]), axis=0)
-            index = self._data.shape[0]-1
+            index = len(self._data) - 1
             if self._ptype.uses_jit and isinstance(particle_obj, JITParticle):
                 self._data_c = np.concatenate((self._data_c, [particle_obj.get_cptr(), ]))
+                particle_obj._cptr = self._data_c[len(self._data_c)-1]
             if index >= 0:
-                self._ncount = self._data.shape[0]
+                self._ncount = len(self._data)
                 return index
         self._ncount = len(self._data)
         return None

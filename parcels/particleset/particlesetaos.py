@@ -62,14 +62,14 @@ def _create_convert_depth_(depth=None, fieldset=None, arrsize=None):
 def _create_convert_time_(time=None, fieldset=None, arrsize=None):
     time = np.array([0.0], dtype=np.float64) if time is None else time
     time = _convert_to_array(time)
-    time = np.repeat(time, arrsize) if time.size == 1 else time
-    if time.size > 0 and type(time[0]) in [datetime, date]:
+    time = np.repeat(time, arrsize) if len(time) == 1 else time
+    if len(time) > 0 and type(time[0]) in [datetime, date]:
         time = np.array([np.datetime64(t) for t in time])
     time_origin = fieldset.time_origin if fieldset is not None else 0
-    if time.size > 0 and isinstance(time[0], np.timedelta64) and not time_origin:
+    if len(time) > 0 and isinstance(time[0], np.timedelta64) and not time_origin:
         raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
     time = np.array([time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
-    assert arrsize == time.size, ('time and positions (lon, lat, depth) don''t have the same lengths.')
+    assert arrsize == len(time), ("time [{}] and positions (lon, lat, depth) [{}] don''t have the same lengths.".format(len(time), arrsize))
     return time
 
 
@@ -256,7 +256,7 @@ class ParticleSetAOS(BaseBenchmarkParticleSet):
             'lon, lat, depth don''t all have the same lenghts')
 
         time = _convert_to_array(time)
-        time = np.repeat(time, lon.size) if time.shape[0] == 1 else time
+        time = np.repeat(time, lon.shape[0]) if len(time) == 1 else time
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
@@ -293,7 +293,7 @@ class ParticleSetAOS(BaseBenchmarkParticleSet):
         self._collection = ParticleCollectionAOS(_pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
 
         if self.repeatdt:
-            if len(time) > 0 and time[0] is None:
+            if len(time) > 0 and time[0] is not None:
                 self.repeat_starttime = time[0]
             else:
                 collect_time = self._collection.time
@@ -343,7 +343,7 @@ class ParticleSetAOS(BaseBenchmarkParticleSet):
         :param name: Name of the attribute (str).
         :param value: New value to set the attribute of the particles to.
         """
-        [setattr(p, name, value) for p in self._collection.data]
+        [setattr(self._collection.data[i], name, value) for i in range(len(self._collection.data))]
 
     def _impute_release_times(self, default):
         """Set attribute 'time' to default if encountering NaN values.
@@ -607,10 +607,10 @@ class ParticleSetAOS(BaseBenchmarkParticleSet):
         elif isinstance(value, np.ndarray) or isinstance(value, dict) or isinstance(value, list) or isinstance(value, tuple):
             if isinstance(value, dict) and isinstance(value['lon'], np.ndarray):
                 # ==== special-treat depth- and time ==== #
-                value['time'] = _create_convert_time_(None, self._fieldset, len(self._collection)) if 'time' not in value.keys() \
-                    else _create_convert_time_(value['time'], self._fieldset, len(self._collection))
-                value['depth'] = _create_convert_time_(None, self._fieldset, len(self._collection)) if 'depth' not in value.keys() \
-                    else _create_convert_time_(value['depth'], self._fieldset, len(self._collection))
+                value['time'] = _create_convert_time_(None, self._fieldset, len(value['lon'])) if 'time' not in value.keys() \
+                    else _create_convert_time_(value['time'], self._fieldset, len(value['lon']))
+                value['depth'] = _create_convert_depth_(None, self._fieldset, len(value['lon'])) if 'depth' not in value.keys() \
+                    else _create_convert_depth_(value['depth'], self._fieldset, len(value['lon']))
                 # ==== end format correction ==== #
             self._collection.add_multiple(value)
         elif isinstance(value, ScipyParticle):

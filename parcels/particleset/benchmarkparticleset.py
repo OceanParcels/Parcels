@@ -117,9 +117,11 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
 
         _starttime, endtime, runtime, dt, execute_once = self._get_time_bounds_(endtime, runtime, dt)
+        logger.info("Execute particle simulation between t0={} and tN={} (dT={}) with dt={} s.".format(_starttime, endtime, runtime, dt))
         # First write output_file, because particles could have been added
         if output_file:
-            output_file.write(self, _starttime)
+            write_time = _starttime
+            output_file.write(self, write_time)
         if moviedt:
             self.show(field=movie_background_field, show_time=_starttime, animation=True)
 
@@ -157,17 +159,22 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
                 next_time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+            # logger.info("next_prelease = {}, next_input = {}, next_output = {}, next_movie = {}, next_callback = {}, endtime = {} => next_time: {}".format(next_prelease, next_input, next_output, next_movie, next_callback, endtime, next_time))
 
             if not isinstance(self.kernel, BaseBenchmarkKernel):
                 self.compute_log.start_timing()
+            # logger.info("Time to compute: {}".format(next_time))
             time = self._execute_kernel_(next_time, dt, recovery, output_file=output_file, execute_once=execute_once)
+            # logger.info("Time after compute: {}".format(next_time))
             if not isinstance(self.kernel, BaseBenchmarkKernel):
                 self.compute_log.stop_timing()
                 # self.compute_log.accumulate_timing()
             if abs(time-next_prelease) < tol:
                 # creating new particles equals a memory-io operation
                 self.mem_io_log.start_timing()
+                # logger.info("Releasing particles at time t={}".format(time))
                 self._add_periodic_release_particles_(time, dt)
+                # logger.info("Time after release: {}".format(time))
                 self.mem_io_log.stop_timing()
                 self.mem_io_log.accumulate_timing()
                 next_prelease += self.repeatdt * np.sign(dt)
@@ -207,6 +214,7 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
                 self.mem_io_log.accumulate_timing()
                 next_callback += callbackdt * np.sign(dt)
             if time != endtime:
+            # if abs(time - next_input) < tol:
                 self.io_log.start_timing()
                 next_input = self.fieldset.computeTimeChunk(time, dt)
                 self.io_log.stop_timing()

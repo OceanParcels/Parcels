@@ -609,7 +609,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 mpi_comm.Bcast(self._pu_centers, root=0)
             else:
                 pu_ids = np.arange(ScipyParticle.lastID, stop=ScipyParticle.lastID+data_array['lon'].shape[0]) if 'id' not in data_array.keys() else data_array['id']
-                new_lastID = ScipyParticle.lastID+data_array['lon'].shape[0]-1
+                new_lastID = max(ScipyParticle.lastID, np.max(pu_ids))
                 self._pclass.setLastID(new_lastID)
                 pu_indices = np.arange(start=0, stop=data_array['lon'].shape[0])
                 n_pu_data = pu_indices.shape[0]
@@ -618,17 +618,30 @@ class ParticleCollectionSOA(ParticleCollection):
             else:
                 self._sorted = False
                 data_array['id'] = pu_ids
+                # if 'dt' not in data_array.keys():
+                #     data_array['dt'] = np.zeros(n_pu_data, dtype=np.float64)
+                # if 'state' not in data_array.keys():
+                #     data_array['state'] = np.zeros(n_pu_data, dtype=np.int32)
                 v_names = ['lon', 'lat', 'depth', 'time', 'dt', 'id'] + self._kwarg_keys
-                for key in data_array.keys():
-                    if key not in v_names:
+                # for key in data_array.keys():
+                for v in self.ptype.variables:
+                    key = v.name
+                    # if key not in v_names:
+                    if key not in data_array.keys():
                         continue
-                    self._data[key] = np.concatenate((self._data[key], data_array[key][pu_indices]))
+                    #self._data[key] = np.concatenate((self._data[key], data_array[key][pu_indices]))
+                    self._data[key] = np.concatenate((self._data[key], data_array[key][pu_indices].astype(v.dtype)))
+                    # self._data[key] = np.concatenate((self._data[key], np.array(data_array[key][pu_indices].tolist(), dtype=v.dtype)))
                 for v in self.ptype.variables:
                     if v.name in ['xi', 'yi', 'zi', 'ti']:
                         self._data[v.name] = np.concatenate((self._data[v.name], np.empty((n_pu_data, self._ngrid), dtype=v.dtype)))
+                    elif v.name not in data_array.keys():
+                        darray = np.empty(n_pu_data, dtype=v.dtype)
+                        darray[:] = v.initial
+                        self._data[v.name] = np.concatenate((self._data[v.name], darray))
                 results = self._ncount + np.arange(start=0, stop=n_pu_data)
                 self._ncount = self._data['lon'].shape[0]
-                self._data['exception'] = np.empty(self._ncount, dtype=object)
+                # self._data['exception'] = np.empty(self._ncount, dtype=object)
         self._ncount = self._data['lon'].shape[0]
         return results
 

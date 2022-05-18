@@ -552,6 +552,7 @@ class BaseParticleSet(NDCluster):
 
         # COMMENT #1104: this could be a "_get_time_bounds_(...)" function
         _starttime, endtime, runtime, dt, execute_once = self._get_time_bounds_(endtime, runtime, dt)
+        logger.info("Execute particle simulation between t0={} and tN={} (dT={}) with dt={} s.".format(_starttime, endtime, runtime, dt))
         # mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
         #
         # default_release_time = mintime if dt >= 0 else maxtime
@@ -582,7 +583,8 @@ class BaseParticleSet(NDCluster):
 
         # First write output_file, because particles could have been added
         if output_file:
-            output_file.write(self, _starttime)
+            write_time = _starttime
+            output_file.write(self, write_time)
         if moviedt:
             self.show(field=movie_background_field, show_time=_starttime, animation=True)
 
@@ -798,7 +800,7 @@ class BaseParticleSet(NDCluster):
                 interupt_dts.append(self.repeatdt)
             callbackdt = np.min(np.array(interupt_dts))
         if self.repeatdt:
-            next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
+            next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * (self.repeatdt * np.sign(dt))
         else:
             next_prelease = np.infty if dt > 0 else - np.infty
         next_output = time + outputdt if dt > 0 else time - outputdt
@@ -809,11 +811,12 @@ class BaseParticleSet(NDCluster):
 
     def _execute_kernel_(self, time, dt, recovery, output_file=None, execute_once=False):
         endtime = time
-        self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
+        self.kernel.execute(self, endtime=endtime, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
         return endtime
 
     def _add_periodic_release_particles_(self, time, dt):
-        pset_new = self.__class__(fieldset=self.fieldset, time=time, lon=self.repeatlon,
+        release_time = time
+        pset_new = self.__class__(fieldset=self.fieldset, time=release_time, lon=self.repeatlon,
                                   lat=self.repeatlat, depth=self.repeatdepth,
                                   pclass=self.repeatpclass,
                                   lonlatdepth_dtype=self.collection.lonlatdepth_dtype,

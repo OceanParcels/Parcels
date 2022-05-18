@@ -275,6 +275,8 @@ class KernelAOS(BaseBenchmarkKernel):
         while len(error_particles) > 0:
             # Apply recovery kernel
             for p in error_particles:
+                if p.state in [StateCode.Success, StateCode.Evaluate]:
+                    continue
                 if p.state == OperationCode.StopExecution:
                     return
                 if p.state == OperationCode.Repeat:
@@ -468,6 +470,8 @@ class BenchmarkKernelAOS(KernelAOS):
         while len(error_particles) > 0:
             # Apply recovery kernel
             for p in error_particles:
+                if p.state in [StateCode.Success, StateCode.Evaluate]:
+                    continue
                 if p.state == OperationCode.StopExecution:
                     return
                 if p.state == OperationCode.Repeat:
