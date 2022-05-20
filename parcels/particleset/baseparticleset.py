@@ -667,7 +667,8 @@ class BaseParticleSet(NDCluster):
             # logger.info("Kernel executed - time: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
             if abs(time-next_prelease) < tol:
                 # COMMENT #1104: this could be the "_add_periodic_release_particles_(...)" function
-                self._add_periodic_release_particles_(time, dt)
+                period_time = time
+                self._add_periodic_release_particles_(period_time, dt)
                 # pset_new = self.__class__(
                 #     fieldset=self.fieldset, time=time, lon=self.repeatlon,
                 #     lat=self.repeatlat, depth=self.repeatdepth,
@@ -692,7 +693,8 @@ class BaseParticleSet(NDCluster):
                 # ==================================================================== #
             if abs(time - next_output) < tol:
                 # COMMENT #1104: this could be the "_write_particle_data_(....)" function
-                self._write_particle_data_(output_file, time)
+                output_time = time
+                self._write_particle_data_(output_file, output_time)
                 # if output_file:
                 #     output_file.write(self, time)
                 next_output += outputdt * np.sign(dt)
@@ -707,7 +709,8 @@ class BaseParticleSet(NDCluster):
                         extFunc()
                 next_callback += callbackdt * np.sign(dt)
             if time != endtime:
-                next_input = self.fieldset.computeTimeChunk(time, dt)
+                input_time = time
+                next_input = self.fieldset.computeTimeChunk(input_time, dt)
             if dt == 0:
                 break
             if verbose_progress:

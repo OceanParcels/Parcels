@@ -173,7 +173,8 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
                 # creating new particles equals a memory-io operation
                 self.mem_io_log.start_timing()
                 # logger.info("Releasing particles at time t={}".format(time))
-                self._add_periodic_release_particles_(time, dt)
+                period_time = time
+                self._add_periodic_release_particles_(period_time, dt)
                 # logger.info("Time after release: {}".format(time))
                 self.mem_io_log.stop_timing()
                 self.mem_io_log.accumulate_timing()
@@ -195,7 +196,8 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
                 self.io_log.accumulate_timing()
             if abs(time - next_output) < tol:
                 self.io_log.start_timing()
-                self._write_particle_data_(output_file, time)
+                output_time = time
+                self._write_particle_data_(output_file, output_time)
                 self.io_log.stop_timing()
                 self.io_log.accumulate_timing()
                 next_output += outputdt * np.sign(dt)
@@ -216,7 +218,8 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
             if time != endtime:
             # if abs(time - next_input) < tol:
                 self.io_log.start_timing()
-                next_input = self.fieldset.computeTimeChunk(time, dt)
+                input_time = time
+                next_input = self.fieldset.computeTimeChunk(input_time, dt)
                 self.io_log.stop_timing()
                 self.io_log.accumulate_timing()
             if dt == 0:
