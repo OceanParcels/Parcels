@@ -159,7 +159,7 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
                 next_time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
-            # logger.info("next_prelease = {}, next_input = {}, next_output = {}, next_movie = {}, next_callback = {}, endtime = {} => next_time: {}".format(next_prelease, next_input, next_output, next_movie, next_callback, endtime, next_time))
+            logger.info("next_prelease = {}, next_input = {}, next_output = {}, next_movie = {}, next_callback = {}, endtime = {} => next_time: {}".format(next_prelease, next_input, next_output, next_movie, next_callback, endtime, next_time))
 
             if not isinstance(self.kernel, BaseBenchmarkKernel):
                 self.compute_log.start_timing()
@@ -215,8 +215,8 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
                 self.mem_io_log.stop_timing()
                 self.mem_io_log.accumulate_timing()
                 next_callback += callbackdt * np.sign(dt)
-            if time != endtime:
-            # if abs(time - next_input) < tol:
+            # if time != endtime:
+            if abs(time - next_input) < tol and time != endtime:
                 self.io_log.start_timing()
                 input_time = time
                 next_input = self.fieldset.computeTimeChunk(input_time, dt)

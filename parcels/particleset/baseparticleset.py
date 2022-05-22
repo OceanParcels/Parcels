@@ -708,7 +708,8 @@ class BaseParticleSet(NDCluster):
                     for extFunc in postIterationCallbacks:
                         extFunc()
                 next_callback += callbackdt * np.sign(dt)
-            if time != endtime:
+            # if time != endtime:
+            if abs(time - next_input) < tol and time != endtime:
                 input_time = time
                 next_input = self.fieldset.computeTimeChunk(input_time, dt)
             if dt == 0:

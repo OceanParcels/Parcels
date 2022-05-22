@@ -773,7 +773,8 @@ class ParticleSetSOA(BaseBenchmarkParticleSet):
                 if dt == 0:
                     break
         # End of interaction specific code
-        return next_time
+        # return next_time
+        return time
 
     def _add_periodic_release_particles_(self, time, dt):
         release_time = time
