@@ -1052,7 +1052,8 @@ class FieldSet(object):
         :param dt: time step of the integration scheme
         """
         signdt = np.sign(dt)
-        nextTime = np.infty if dt > 0 else -np.infty
+        request_time = time
+        nextTime = np.infty if dt > 0 else -np.infty  # time _relative_ to the start time
 
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
@@ -1060,10 +1061,12 @@ class FieldSet(object):
             if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
-                nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
+                nextTime_loc = f.grid.computeTimeChunk(f, request_time, signdt)
+                # logger.info("Grid of field '{0}' - self.time = ({1:f}, {2:f})".format(f.name, f.grid.time[0], f.grid.time[1]))
                 if time == nextTime_loc and signdt != 0:
                     raise TimeExtrapolationError(time, field=f, msg='In fset.computeTimeChunk')
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
+        # logger.info("Called time: {}; computed time: {}, nextTime: {}".format(time, request_time, nextTime))
 
         for f in self.get_fields():
             if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
@@ -1187,10 +1190,14 @@ class FieldSet(object):
                 f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
+            # logger.info("dt=0. Return time: {}".format(nextTime))
             return nextTime
         else:
             nSteps = int((nextTime - time) / dt)
             if nSteps == 0:
+                # logger.info("First timestep loaded. Return time: {}".format(nextTime))
                 return nextTime
             else:
-                return time + nSteps * dt
+                returnTime = time + abs(nSteps) * dt
+                # logger.info("Next timestep loaded. Return time: {} = {} + {} * {}".format(returnTime, time, abs(nSteps), dt))
+                return returnTime

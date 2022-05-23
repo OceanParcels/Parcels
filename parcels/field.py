@@ -149,29 +149,29 @@ class Field(object):
                                  allow_time_extrapolation is set to False")
             self.allow_time_extrapolation = False
         if self.time_periodic is True:
-            logger.info("Repeating the provided field period over a max. timespan of 100 years. If you need a longer total time coverage with periodic field repition, please provide the max. time coverage as 'time_periodic' parameter (format: datetime.timedelta).")
-            self.grid.time = np.append(self.grid.time, self.grid.time[0] + datetime.timedelta(days=100*366).total_seconds())
-            # raise ValueError("Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.timedelta object.")
+            # logger.info("Repeating the provided field period over a max. timespan of 100 years. If you need a longer total time coverage with periodic field repetion, please provide the max. time coverage as 'time_periodic' parameter (format: datetime.timedelta).")
+            # self.grid.time = np.append(self.grid.time, self.grid.time[0] + datetime.timedelta(days=100*366).total_seconds())
+            # self.grid.time_full = self.grid.time
+            # self.grid._add_last_periodic_data_timestep = True
+            raise ValueError("Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.timedelta object.")
         elif self.time_periodic not in [False, None]:
             # logger.info("time for {}: {} to {}".format(self.name, self.grid.time[0], self.grid.time[-1]))
             if isinstance(self.time_periodic, datetime.timedelta):
                 self.time_periodic = self.time_periodic.total_seconds()
             if not np.isclose(grid_timespan, self.time_periodic):
                 if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
-                    logger.warning_once("The 'time_petriodic' parameter intends to give the total mximum timeframe for which the given field data shall be periodically repeated.\n" +\
-                                        "Hence, the provided time period '{} seconds' in invalid as it is smaller than the time frame covered by field '{}', which is '{} seconds'.\n".format(time_periodic, self.name, grid_timespan) +\
-                                        "Parcels attempts now to cull the provided field to the requested 'period', and then " +\
-                                        "repeats the requested period over a max. timeframe of 100 years.")
                     grid_dt = self.grid.time[1] - self.grid.time[0]
+                    logger.warning_once("The 'time_petriodic' parameter intends to give the total mximum timeframe for which the given field data shall be periodically repeated.\n \
+                                        Hence, the provided time period '{} seconds' in invalid as it is smaller than the time frame covered by field '{}', which is '{} seconds'.\n \
+                                        Parcels attempts now to clip the provided field (dt(g) = {}) to the requested 'period'.".format(time_periodic, self.name, grid_timespan, grid_dt))
                     tshift = abs(math.ceil(float(self.time_periodic) / float(grid_dt)) * float(grid_dt))
                     tishift = int(math.ceil(tshift / abs(grid_dt)))
                     self.grid.time = self.grid.time[0:tishift+1]
-                    self.grid.time = np.append(self.grid.time, self.grid.time[0] + datetime.timedelta(days=100*366).total_seconds())
                     # raise ValueError("Time series provided is longer than the time_periodic parameter")
                 else:
                     self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
-                logger.info("clipped- or extended repeating time periood: {} to {}".format(self.grid.time[0], self.grid.time[-1]))
-                self.grid._add_last_periodic_data_timestep = True
+                    self.grid._add_last_periodic_data_timestep = True
+                # logger.info("clipped- or extended repeating time period: {} to {}".format(self.grid.time[0], self.grid.time[-1]))
                 self.grid.time_full = self.grid.time
 
         self.vmin = vmin
