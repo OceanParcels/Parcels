@@ -622,14 +622,14 @@ class ParticleCollectionSOA(ParticleCollection):
                 #     data_array['dt'] = np.zeros(n_pu_data, dtype=np.float64)
                 # if 'state' not in data_array.keys():
                 #     data_array['state'] = np.zeros(n_pu_data, dtype=np.int32)
-                v_names = ['lon', 'lat', 'depth', 'time', 'dt', 'id'] + self._kwarg_keys
+                # v_names = ['lon', 'lat', 'depth', 'time', 'dt', 'id'] + self._kwarg_keys
                 # for key in data_array.keys():
                 for v in self.ptype.variables:
                     key = v.name
                     # if key not in v_names:
                     if key not in data_array.keys():
                         continue
-                    #self._data[key] = np.concatenate((self._data[key], data_array[key][pu_indices]))
+                    # self._data[key] = np.concatenate((self._data[key], data_array[key][pu_indices]))
                     self._data[key] = np.concatenate((self._data[key], data_array[key][pu_indices].astype(v.dtype)))
                     # self._data[key] = np.concatenate((self._data[key], np.array(data_array[key][pu_indices].tolist(), dtype=v.dtype)))
                 for v in self.ptype.variables:
