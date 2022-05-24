@@ -1234,7 +1234,8 @@ class FieldSet(object):
             if nSteps == 0:
                 return nextTime
             else:
-                return time + nSteps * dt
+                returnTime = time + abs(nSteps) * dt
+                return returnTime
 
     def stop_caching(self):
         if self._field_file_cache is not None and self._field_file_cache.caching_started:

@@ -431,6 +431,8 @@ class BaseParticleSet(NDCluster):
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
         tol = 1e-12
+        pbar = None
+        walltime_start = None
         if verbose_progress is None:
             walltime_start = time_module.time()
         if verbose_progress:
@@ -476,8 +478,9 @@ class BaseParticleSet(NDCluster):
             # End of interaction specific code
             time = next_time
             if abs(time-next_prelease) < tol:
+                period_time = time
                 pset_new = self.__class__(
-                    fieldset=self.fieldset, time=time, lon=self.repeatlon,
+                    fieldset=self.fieldset, time=period_time, lon=self.repeatlon,
                     lat=self.repeatlat, depth=self.repeatdepth,
                     pclass=self.repeatpclass,
                     lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
@@ -495,8 +498,9 @@ class BaseParticleSet(NDCluster):
                         fld.write(fldfilename)
                         fld.to_write += 1
             if abs(time - next_output) < tol:
+                output_time = time
                 if output_file:
-                    output_file.write(self, time)
+                    output_file.write(self, output_time)
                 next_output += outputdt * np.sign(dt)
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time, animation=True)
@@ -508,7 +512,8 @@ class BaseParticleSet(NDCluster):
                         extFunc()
                 next_callback += callbackdt * np.sign(dt)
             if (time != endtime) and (self.fieldset is not None):
-                next_input = self.fieldset.computeTimeChunk(time, dt)
+                input_time = time
+                next_input = self.fieldset.computeTimeChunk(input_time, dt)
             if dt == 0:
                 break
             if verbose_progress:
