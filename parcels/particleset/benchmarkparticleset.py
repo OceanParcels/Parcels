@@ -215,7 +215,7 @@ class BaseBenchmarkParticleSet(BaseParticleSet):
                 self.mem_io_log.stop_timing()
                 self.mem_io_log.accumulate_timing()
                 next_callback += callbackdt * np.sign(dt)
-            if time != endtime:
+            if time != endtime and (self.fieldset is not None):
                 # logger.info("Loading new fieldset at time t={} with dt={} s".format(time, dt))
                 self.io_log.start_timing()
                 input_time = time

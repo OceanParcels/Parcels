@@ -811,7 +811,7 @@ class BaseParticleSet(NDCluster):
         next_output = time + outputdt if dt > 0 else time - outputdt
         next_movie = time + moviedt if dt > 0 else time - moviedt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
-        logger.info("Obtain first timestep at t={} ...".format(time))
+        # logger.info("Obtain first timestep at t={} ...".format(time))
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
         return moviedt, callbackdt, next_prelease, next_output, next_movie, next_callback, next_input
 
