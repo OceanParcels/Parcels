@@ -104,7 +104,7 @@ class Field(object):
         time_origin = TimeConverter(0) if time_origin is None else time_origin
         if grid:
             if grid.defer_load and isinstance(data, np.ndarray):
-                raise ValueError('Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately')
+                raise ValueError("Cannot combine a deferred-loaded Field Grid with an np.ndarray data array in Field '{}'. Please specify lon, lat, depth and time dimensions separately.".format(self.name))
             self.grid = grid
         else:
             self.grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
@@ -182,7 +182,7 @@ class Field(object):
         elif self.cast_data_dtype == 'float64':
             self.cast_data_dtype = np.float64
 
-        if not self.grid.defer_load:
+        if not self.grid.defer_load and isinstance(self.data, np.ndarray):
             self.data = self.reshape(self.data, transpose)
 
             # Hack around the fact that NaN and ridiculously large values
