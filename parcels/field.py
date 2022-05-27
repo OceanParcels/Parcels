@@ -1460,7 +1460,7 @@ class VectorField(object):
         jac = dxdxsi*dydeta - dxdeta*dydxsi
         return jac
 
-    def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None):
+    def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         grid = self.U.grid
         (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
 
@@ -1628,7 +1628,7 @@ class VectorField(object):
             w = w.compute()
         return (u, v, w)
 
-    def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None):
+    def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         """
         +---+---+---+
         |   |V1 |   |
@@ -1648,7 +1648,8 @@ class VectorField(object):
         else:
             (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
-            w = self.W.units.to_target(w, x, y, z)
+            if applyConversion:
+                w = self.W.units.to_target(w, x, y, z)
         return (u, v, w)
 
     def _is_land2D(self, di, yi, xi):
