@@ -35,8 +35,7 @@ def k_sample_uv_fixture():
 
 def k_sample_uv_noconvert():
     def SampleUVNoConvert(particle, fieldset, time):
-        particle.u = fieldset.U.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
-        particle.v = fieldset.V.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
+        (particle.u, particle.v) = fieldset.UV.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
     return SampleUVNoConvert
 
 

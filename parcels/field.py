@@ -1656,7 +1656,7 @@ class VectorField(object):
             else:
                 return True
 
-    def spatial_slip_interpolation(self, ti, z, y, x, time, particle=None):
+    def spatial_slip_interpolation(self, ti, z, y, x, time, particle=None, applyConversion=True):
         (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
@@ -1719,23 +1719,25 @@ class VectorField(object):
                     f_u = f_u / (1 - zeta)
                     f_v = f_v / (1 - zeta)
 
-        u = f_u * self.U.eval(time, z, y, x, particle)
-        v = f_v * self.V.eval(time, z, y, x, particle)
+        u = f_u * self.U.eval(time, z, y, x, particle, applyConversion=applyConversion)
+        v = f_v * self.V.eval(time, z, y, x, particle, applyConversion=applyConversion)
         if self.vector_type == '3D':
-            w = f_w * self.W.eval(time, z, y, x, particle)
+            w = f_w * self.W.eval(time, z, y, x, particle, applyConversion=applyConversion)
             return u, v, w
         else:
             return u, v
 
-    def eval(self, time, z, y, x, particle=None):
+    def eval(self, time, z, y, x, particle=None, applyConversion=True):
         if self.U.interp_method not in ['cgrid_velocity', 'partialslip', 'freeslip']:
             u = self.U.eval(time, z, y, x, particle=particle, applyConversion=False)
             v = self.V.eval(time, z, y, x, particle=particle, applyConversion=False)
-            u = self.U.units.to_target(u, x, y, z)
-            v = self.V.units.to_target(v, x, y, z)
+            if applyConversion:
+                u = self.U.units.to_target(u, x, y, z)
+                v = self.V.units.to_target(v, x, y, z)
             if self.vector_type == '3D':
                 w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
-                w = self.W.units.to_target(w, x, y, z)
+                if applyConversion:
+                    w = self.W.units.to_target(w, x, y, z)
                 return (u, v, w)
             else:
                 return (u, v)
@@ -1750,12 +1752,12 @@ class VectorField(object):
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
                 if self.vector_type == '3D':
-                    (u0, v0, w0) = interp[self.U.interp_method]['3D'](ti, z, y, x, time, particle=particle)
-                    (u1, v1, w1) = interp[self.U.interp_method]['3D'](ti + 1, z, y, x, time, particle=particle)
+                    (u0, v0, w0) = interp[self.U.interp_method]['3D'](ti, z, y, x, time, particle=particle, applyConversion=applyConversion)
+                    (u1, v1, w1) = interp[self.U.interp_method]['3D'](ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion)
                     w = w0 + (w1 - w0) * ((time - t0) / (t1 - t0))
                 else:
-                    (u0, v0) = interp[self.U.interp_method]['2D'](ti, z, y, x, time, particle=particle)
-                    (u1, v1) = interp[self.U.interp_method]['2D'](ti + 1, z, y, x, time, particle=particle)
+                    (u0, v0) = interp[self.U.interp_method]['2D'](ti, z, y, x, time, particle=particle, applyConversion=applyConversion)
+                    (u1, v1) = interp[self.U.interp_method]['2D'](ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion)
                 u = u0 + (u1 - u0) * ((time - t0) / (t1 - t0))
                 v = v0 + (v1 - v0) * ((time - t0) / (t1 - t0))
                 if self.vector_type == '3D':
@@ -1767,9 +1769,9 @@ class VectorField(object):
                 # of the defined time range or if we have hit an
                 # exact value in the time array.
                 if self.vector_type == '3D':
-                    return interp[self.U.interp_method]['3D'](ti, z, y, x, grid.time[ti], particle=particle)
+                    return interp[self.U.interp_method]['3D'](ti, z, y, x, grid.time[ti], particle=particle, applyConversion=applyConversion)
                 else:
-                    return interp[self.U.interp_method]['2D'](ti, z, y, x, grid.time[ti], particle=particle)
+                    return interp[self.U.interp_method]['2D'](ti, z, y, x, grid.time[ti], particle=particle, applyConversion=applyConversion)
 
     def __getitem__(self, key):
         if _isParticle(key):
