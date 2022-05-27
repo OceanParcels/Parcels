@@ -343,8 +343,7 @@ def test_curvilinear_grids(pset_mode, mode):
     field_set = FieldSet(u_field, v_field)
 
     def sampleSpeed(particle, fieldset, time):
-        u = fieldset.U[time, particle.depth, particle.lat, particle.lon]
-        v = fieldset.V[time, particle.depth, particle.lat, particle.lon]
+        u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
         particle.speed = math.sqrt(u*u+v*v)
 
     class MyParticle(ptype[mode]):

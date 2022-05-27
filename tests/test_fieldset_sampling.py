@@ -118,8 +118,8 @@ def test_fieldset_sample(fieldset, xdim=120, ydim=80):
     """ Sample the fieldset using indexing notation. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([fieldset.V[0, 0., 70., x] for x in lon])
-    u_s = np.array([fieldset.U[0, 0., y, -45.] for y in lat])
+    v_s = np.array([fieldset.UV[0, 0., 70., x][1] for x in lon])
+    u_s = np.array([fieldset.UV[0, 0., y, -45.][0] for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-7)
     assert np.allclose(u_s, lat, rtol=1e-7)
 
@@ -128,8 +128,8 @@ def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
     """ Sample the fieldset using the explicit eval function. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([fieldset.V.eval(0, 0., 70., x) for x in lon])
-    u_s = np.array([fieldset.U.eval(0, 0., y, 0.) for y in lat])
+    v_s = np.array([fieldset.UV.eval(0, 0., 70., x)[1] for x in lon])
+    u_s = np.array([fieldset.UV.eval(0, 0., y, 0.)[0] for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-7)
     assert np.allclose(u_s, lat, rtol=1e-7)
 
