@@ -23,8 +23,7 @@ def pclass(mode):
 
 def k_sample_uv():
     def SampleUV(particle, fieldset, time):
-        particle.u = fieldset.U[time, particle.depth, particle.lat, particle.lon]
-        particle.v = fieldset.V[time, particle.depth, particle.lat, particle.lon]
+        (particle.u, particle.v) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
     return SampleUV
 
 

@@ -1079,7 +1079,12 @@ class Field(object):
         else:
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
+    def _check_velocitysampling(self):
+        if self.name in ['U', 'V', 'W']:
+            logger.warning_once("Sampling of velocities should noramlly be done using fieldset.UV or fieldset.UVW object; thread carefully")
+
     def __getitem__(self, key):
+        self._check_velocitysampling()
         if _isParticle(key):
             return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
@@ -1113,11 +1118,13 @@ class Field(object):
 
     def ccode_eval_array(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
+        self._check_velocitysampling()
         ccode_str = "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s, %s)" \
                     % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
         return ccode_str
 
     def ccode_eval_object(self, var, t, z, y, x):
+        self._check_velocitysampling()
         # Casting interp_methd to int as easier to pass on in C-code
         ccode_str = "temporal_interpolation_pstruct(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s, %s)" \
                     % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
