@@ -1081,7 +1081,7 @@ class Field(object):
 
     def _check_velocitysampling(self):
         if self.name in ['U', 'V', 'W']:
-            logger.warning_once("Sampling of velocities should noramlly be done using fieldset.UV or fieldset.UVW object; thread carefully")
+            logger.warning_once("Sampling of velocities should normally be done using fieldset.UV or fieldset.UVW object; thread carefully")
 
     def __getitem__(self, key):
         self._check_velocitysampling()
