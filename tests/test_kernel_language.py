@@ -218,21 +218,21 @@ def test_if_withfield(fieldset, pset_mode, mode):
     def kernel(particle, fieldset, time):
         u, v = fieldset.UV[time, 0, 0, 1.]
         particle.p = 0
-        if fieldset.UV[time, 0, 0, 1.][0] == u:
+        if fieldset.U[time, 0, 0, 1.] == u:
             particle.p += 1
-        if fieldset.UV[time, 0, 0, 1.][0] == fieldset.UV[time, 0, 0, 1.][0]:
+        if fieldset.U[time, 0, 0, 1.] == fieldset.U[time, 0, 0, 1.]:
             particle.p += 1
         if True:
             particle.p += 1
-        if fieldset.UV[time, 0, 0, 1.][0] == u and 1 == 1:
+        if fieldset.U[time, 0, 0, 1.] == u and 1 == 1:
             particle.p += 1
-        if fieldset.UV[time, 0, 0, 1.][0] == fieldset.UV[time, 0, 0, 1.][0] and fieldset.UV[time, 0, 0, 1.] == fieldset.UV[time, 0, 0, 1.][0]:
+        if fieldset.U[time, 0, 0, 1.] == fieldset.U[time, 0, 0, 1.] and fieldset.U[time, 0, 0, 1.] == fieldset.U[time, 0, 0, 1.]:
             particle.p += 1
-        if fieldset.UV[time, 0, 0, 1.][0] == u:
+        if fieldset.U[time, 0, 0, 1.] == u:
             particle.p += 1
         else:
             particle.p += 1000
-        if fieldset.UV[time, 0, 0, 1.][0] == 3:
+        if fieldset.U[time, 0, 0, 1.] == 3:
             particle.p += 1000
         else:
             particle.p += 1
