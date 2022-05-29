@@ -105,7 +105,8 @@ def test_globcurrent_time_periodic(mode, rundays):
         pset = ParticleSet(fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0])
 
         def SampleU(particle, fieldset, time):
-            particle.sample_var += fieldset.U[time, particle.depth, particle.lat, particle.lon]
+            u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+            particle.sample_var += u
 
         pset.execute(SampleU, runtime=delta(days=rundays), dt=delta(days=1))
         sample_var.append(pset[0].sample_var)
