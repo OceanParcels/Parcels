@@ -2,6 +2,8 @@
 import os
 from glob import glob
 import numpy as np
+import xarray as xr
+import gzip
 
 try:
     from mpi4py import MPI
@@ -84,7 +86,8 @@ class ParticleFileSOA(BaseParticleFile):
         # loop over all files
         for npyfile in file_list:
             try:
-                data_dict = np.load(npyfile, allow_pickle=True).item()
+                with gzip.open(npyfile, 'rb') as f:
+                    data_dict = np.load(f, allow_pickle=True).item()
             except NameError:
                 raise RuntimeError('Cannot combine npy files into netcdf file because your ParticleFile is '
                                    'still open on interpreter shutdown.\nYou can use '
@@ -97,12 +100,14 @@ class ParticleFileSOA(BaseParticleFile):
                 data[id_ind, t_ind] = data_dict[var][ii]
                 time_index[id_ind] = time_index[id_ind] + 1
 
+        if dtype == np.bool_:
+            data = data.astype(np.bool_)
         # remove rows and columns that are completely filled with nan values
         return data[time_index > 0, :]
 
     def export(self):
         """
-        Exports outputs in temporary NPY-files to NetCDF file
+        Exports outputs in temporary NPY-files to output file (either netcdf or zarr)
 
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
@@ -141,7 +146,8 @@ class ParticleFileSOA(BaseParticleFile):
             if os.path.exists(tempwritedir):
                 pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
                 for npyfile in pset_info_local['file_list']:
-                    tmp_dict = np.load(npyfile, allow_pickle=True).item()
+                    with gzip.open(npyfile, 'rb') as f:
+                        tmp_dict = np.load(f, allow_pickle=True).item()
                     for i in tmp_dict['id']:
                         if i in n_timesteps:
                             n_timesteps[i] += 1
@@ -151,18 +157,24 @@ class ParticleFileSOA(BaseParticleFile):
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']
 
+        ds = xr.Dataset(attrs=pset_info_local['metadata'])
         for var, dtype in zip(self.var_names, self.var_dtypes):
             data = self.read_from_npy(global_file_list, n_timesteps, var, dtype)
             if var == self.var_names[0]:
-                self.open_netcdf_file(data.shape)
+                self.open_output_file(data.shape)
             varout = 'z' if var == 'depth' else var
-            getattr(self, varout)[:, :] = data
+            varout = 'trajectory' if varout == 'id' else varout
+            ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=self.attrs[varout])
 
         if len(self.var_names_once) > 0:
             n_timesteps_once = {}
             for i in n_timesteps:
                 n_timesteps_once[i] = 1
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, n_timesteps_once, var, dtype)
+                data = self.read_from_npy(global_file_list_once, n_timesteps_once, var, dtype)
+                ds[var] = xr.DataArray(data=data.flatten(), dims=["traj"], attrs=self.attrs[var])
 
-        self.close_netcdf_file()
+        if 'zarr' in self.outputformat:
+            ds.to_zarr(self.fname)
+        else:
+            ds.to_netcdf(self.fname)
