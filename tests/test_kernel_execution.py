@@ -143,7 +143,7 @@ def test_execution_fail_python_exception(fieldset, pset_mode, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_fail_out_of_bounds(fieldset, pset_mode, mode, npart=10):
     def MoveRight(particle, fieldset, time):
-        fieldset.U[time, particle.depth, particle.lat, particle.lon + 0.1]
+        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1]  # noqa
         particle.lon += 0.1
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
@@ -163,7 +163,7 @@ def test_execution_fail_out_of_bounds(fieldset, pset_mode, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_recover_out_of_bounds(fieldset, pset_mode, mode, npart=2):
     def MoveRight(particle, fieldset, time):
-        fieldset.U[time, particle.depth, particle.lat, particle.lon + 0.1]
+        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1]  # noqa
         particle.lon += 0.1
 
     def MoveLeft(particle, fieldset, time):
@@ -183,7 +183,7 @@ def test_execution_recover_out_of_bounds(fieldset, pset_mode, mode, npart=2):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_delete_out_of_bounds(fieldset, pset_mode, mode, npart=10):
     def MoveRight(particle, fieldset, time):
-        fieldset.U[time, particle.depth, particle.lat, particle.lon + 0.1]
+        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1]  # noqa
         particle.lon += 0.1
 
     def DeleteMe(particle, fieldset, time):

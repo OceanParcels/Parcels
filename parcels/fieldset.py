@@ -46,6 +46,7 @@ class FieldSet(object):
                 self.add_field(field, name)
 
         self.compute_on_defer = None
+        self.add_UVfield()
 
     @staticmethod
     def checkvaliddimensionsdict(dims):
@@ -188,6 +189,22 @@ class FieldSet(object):
             for f in vfield:
                 f.fieldset = self
 
+    def add_UVfield(self):
+        if not hasattr(self, 'UV') and hasattr(self, 'U') and hasattr(self, 'V'):
+            if isinstance(self.U, SummedField):
+                self.add_vector_field(SummedField('UV', self.U, self.V))
+            elif isinstance(self.U, NestedField):
+                self.add_vector_field(NestedField('UV', self.U, self.V))
+            else:
+                self.add_vector_field(VectorField('UV', self.U, self.V))
+        if not hasattr(self, 'UVW') and hasattr(self, 'W'):
+            if isinstance(self.U, SummedField):
+                self.add_vector_field(SummedField('UVW', self.U, self.V, self.W))
+            elif isinstance(self.U, NestedField):
+                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
+            else:
+                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
+
     def check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
         assert self.V, 'FieldSet does not have a Field named "V"'
@@ -237,20 +254,7 @@ class FieldSet(object):
             if g.defer_load:
                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
             g.time_origin = self.time_origin
-        if not hasattr(self, 'UV'):
-            if isinstance(self.U, SummedField):
-                self.add_vector_field(SummedField('UV', self.U, self.V))
-            elif isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField('UV', self.U, self.V))
-            else:
-                self.add_vector_field(VectorField('UV', self.U, self.V))
-        if not hasattr(self, 'UVW') and hasattr(self, 'W'):
-            if isinstance(self.U, SummedField):
-                self.add_vector_field(SummedField('UVW', self.U, self.V, self.W))
-            elif isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
-            else:
-                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
+        self.add_UVfield()
 
         ccode_fieldnames = []
         counter = 1
@@ -995,7 +999,7 @@ class FieldSet(object):
                 self.V.write(filename, varname='vomecrty')
 
             for v in self.get_fields():
-                if (v.name != 'U') and (v.name != 'V'):
+                if isinstance(v, Field) and (v.name != 'U') and (v.name != 'V'):
                     v.write(filename)
 
     def advancetime(self, fieldset_new):
