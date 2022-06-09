@@ -156,13 +156,8 @@ class Field(object):
                                  allow_time_extrapolation is set to False")
             self.allow_time_extrapolation = False
         if self.time_periodic is True:
-            # logger.info("Repeating the provided field period over a max. timespan of 100 years. If you need a longer total time coverage with periodic field repition, please provide the max. time coverage as 'time_periodic' parameter (format: datetime.timedelta).")
-            # self.grid.time = np.append(self.grid.time, self.grid.time[0] + datetime.timedelta(days=100*366).total_seconds())
-            # self.grid.time_full = self.grid.time
-            # self.grid._add_last_periodic_data_timestep = True
             raise ValueError("Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.timedelta object.")
         elif self.time_periodic not in [False, None]:
-            # logger.info("time for {}: {} to {}".format(self.name, self.grid.time[0], self.grid.time[-1]))
             if isinstance(self.time_periodic, datetime.timedelta):
                 self.time_periodic = self.time_periodic.total_seconds()
             if not np.isclose(grid_timespan, self.time_periodic):
@@ -175,12 +170,9 @@ class Field(object):
                     tishift = int(math.ceil(tshift / abs(grid_dt)))
                     self.grid.time = self.grid.time[0:tishift+1]
                     self.grid._add_last_periodic_data_timestep = False
-                    # self.grid.time = np.append(self.grid.time, self.grid.time[0] + datetime.timedelta(days=100*366).total_seconds())
-                    # raise ValueError("Time series provided is longer than the time_periodic parameter")
                 else:
                     self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
                     self.grid._add_last_periodic_data_timestep = True
-                # logger.info("clipped- or extended repeating time periood: {} to {}".format(self.grid.time[0], self.grid.time[-1]))
                 self.grid.time_full = self.grid.time
 
         self.vmin = vmin
@@ -193,7 +185,6 @@ class Field(object):
 
         if not self.grid.defer_load and isinstance(self.data, np.ndarray):
             self.data = self.reshape(self.data, transpose)
-
             # Hack around the fact that NaN and ridiculously large values
             # propagate in SciPy's interpolators
             lib = np if isinstance(self.data, np.ndarray) else da
@@ -205,7 +196,6 @@ class Field(object):
 
             if self.grid._add_last_periodic_data_timestep:
                 self.data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
-
         self._scaling_factor = None
 
         # Variable names in JIT code
@@ -216,12 +206,10 @@ class Field(object):
         # ========== Section added to auto-cache fieldset data files ========== #
         self._field_file_cache = kwargs.pop('field_file_cache', None)
         if self._field_file_cache is not None and self.dataFiles is not None:
-            # if not self._field_file_cache.is_field_added(self.name):
             if CACHE_DEBUG:
                 index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
                 logger.info("Field '{}' (before cache registration) - {}".format(self.name, index_file_list))
             self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.filebuffername, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
-            # self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.filebuffername, self.dataFiles, do_wrapping=False)
             if CACHE_DEBUG:
                 index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
                 logger.info("Field '{}' (after cache registration) - {}".format(self._cache_field_name, index_file_list))
@@ -235,7 +223,6 @@ class Field(object):
         self.chunksize = kwargs.pop('chunksize', None)
         self.netcdf_chunkdims_name_map = kwargs.pop('chunkdims_name_map', None)
         self.grid.depth_field = kwargs.pop('depth_field', None)
-
         if self.grid.depth_field == 'not_yet_set':
             assert self.grid.z4d, 'Providing the depth dimensions from another field data is only available for 4d S grids'
 
@@ -261,12 +248,10 @@ class Field(object):
         if self._field_file_cache is None:
             self._field_file_cache = cache
         if self._field_file_cache is not None and self.dataFiles is not None:
-            # if not self._field_file_cache.is_field_added(self.name):
             if CACHE_DEBUG:
                 index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
                 logger.info("Field '{}' (before cache registration) - {}".format(self.name, index_file_list))
             self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.filebuffername, self.dataFiles, do_wrapping=(self.time_periodic not in [None, False]))
-            # self.dataFiles, self._cache_field_name = self._field_file_cache.add_field(self.name, self.filebuffername, self.dataFiles, do_wrapping=False)
             if CACHE_DEBUG:
                 index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
                 logger.info("Field '{}' (after cache registration) - {}".format(self._cache_field_name, index_file_list))

@@ -391,13 +391,6 @@ class FieldSet(object):
             cls._field_file_cache = FieldFileCache(cache_lower_limit=0.5*1024*1024*1024, use_thread=True, cache_top_dir=cache_dir)
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'
-        # if not (type(filenames) is dict):
-        #     # then we just have a list of filenames for all files. Chunking won't work here. Why ? Cause chunking requires file locking
-        #     if cls._field_file_cache is not None:
-        #         cls._field_file_cache.enable_named_copy()
-        #     else:
-        #         logger.warning_once("You have defined chunking for a fieldset that stores all variables in the same file. This is not support by the required file-locking mechanism and may cause issues during computation.")
-        #         # chunksize = None
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
             paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
@@ -444,7 +437,7 @@ class FieldSet(object):
                                 processedGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if processedGrid:
                         grid = fields[procvar].grid
-                        if procpaths == nowpaths and (cls._field_file_cache is None):  # or not cls._field_file_cache.named_copy
+                        if procpaths == nowpaths and (cls._field_file_cache is None):
                             dFiles = fields[procvar].dataFiles
                             break
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
