@@ -2,6 +2,8 @@
 import os
 from glob import glob
 import numpy as np
+import xarray as xr
+import gzip
 
 try:
     from mpi4py import MPI
@@ -84,7 +86,8 @@ class ParticleFileSOA(BaseParticleFile):
         # loop over all files
         for npyfile in file_list:
             try:
-                data_dict = np.load(npyfile, allow_pickle=True).item()
+                with gzip.open(npyfile, 'rb') as f:
+                    data_dict = np.load(f, allow_pickle=True).item()
             except NameError:
                 raise RuntimeError('Cannot combine npy files into netcdf file because your ParticleFile is '
                                    'still open on interpreter shutdown.\nYou can use '
@@ -97,12 +100,14 @@ class ParticleFileSOA(BaseParticleFile):
                 data[id_ind, t_ind] = data_dict[var][ii]
                 time_index[id_ind] = time_index[id_ind] + 1
 
+        if dtype == np.bool_:
+            data = data.astype(np.bool_)
         # remove rows and columns that are completely filled with nan values
         return data[time_index > 0, :]
 
     def export(self):
         """
-        Exports outputs in temporary NPY-files to NetCDF file
+        Exports outputs in temporary NPY-files to output file (either netcdf or zarr)
 
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
@@ -115,11 +120,16 @@ class ParticleFileSOA(BaseParticleFile):
                 return  # export only on threat 0
 
         # Create dictionary to translate datatypes and fill_values
-        self.fmt_map = {np.float32: 'f4', np.float64: 'f8',
-                        np.bool_: 'i1', np.int16: 'i2', np.int32: 'i4', np.int64: 'i8'}
-        self.fill_value_map = {np.float32: np.nan, np.float64: np.nan,
-                               np.bool_: np.iinfo(np.int8).max, np.int16: np.iinfo(np.int16).max,
-                               np.int32: np.iinfo(np.int32).max, np.int64: np.iinfo(np.int64).max}
+        self.fmt_map = {np.float16: 'f2', np.float32: 'f4', np.float64: 'f8',
+                        np.bool_: 'i1', np.int8: 'i1', np.int16: 'i2',
+                        np.int32: 'i4', np.int64: 'i8', np.uint8: 'u1',
+                        np.uint16: 'u2', np.uint32: 'u4', np.uint64: 'u8'}
+        self.fill_value_map = {np.float16: np.nan, np.float32: np.nan, np.float64: np.nan,
+                               np.bool_: np.iinfo(np.int8).max, np.int8: np.iinfo(np.int8).max,
+                               np.int16: np.iinfo(np.int16).max, np.int32: np.iinfo(np.int32).max,
+                               np.int64: np.iinfo(np.int64).max, np.uint8: np.iinfo(np.uint8).max,
+                               np.uint16: np.iinfo(np.uint16).max, np.uint32: np.iinfo(np.uint32).max,
+                               np.uint64: np.iinfo(np.uint64).max}
 
         # Retrieve all temporary writing directories and sort them in numerical order
         temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),
@@ -136,7 +146,8 @@ class ParticleFileSOA(BaseParticleFile):
             if os.path.exists(tempwritedir):
                 pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
                 for npyfile in pset_info_local['file_list']:
-                    tmp_dict = np.load(npyfile, allow_pickle=True).item()
+                    with gzip.open(npyfile, 'rb') as f:
+                        tmp_dict = np.load(f, allow_pickle=True).item()
                     for i in tmp_dict['id']:
                         if i in n_timesteps:
                             n_timesteps[i] += 1
@@ -146,18 +157,24 @@ class ParticleFileSOA(BaseParticleFile):
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']
 
+        ds = xr.Dataset(attrs=pset_info_local['metadata'])
         for var, dtype in zip(self.var_names, self.var_dtypes):
             data = self.read_from_npy(global_file_list, n_timesteps, var, dtype)
             if var == self.var_names[0]:
-                self.open_netcdf_file(data.shape)
+                self.open_output_file(data.shape)
             varout = 'z' if var == 'depth' else var
-            getattr(self, varout)[:, :] = data
+            varout = 'trajectory' if varout == 'id' else varout
+            ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=self.attrs[varout])
 
         if len(self.var_names_once) > 0:
             n_timesteps_once = {}
             for i in n_timesteps:
                 n_timesteps_once[i] = 1
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, n_timesteps_once, var, dtype)
+                data = self.read_from_npy(global_file_list_once, n_timesteps_once, var, dtype)
+                ds[var] = xr.DataArray(data=data.flatten(), dims=["traj"], attrs=self.attrs[var])
 
-        self.close_netcdf_file()
+        if 'zarr' in self.outputformat:
+            ds.to_zarr(self.fname)
+        else:
+            ds.to_netcdf(self.fname)

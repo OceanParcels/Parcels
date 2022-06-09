@@ -78,17 +78,31 @@ class FieldEvalNode(IntrinsicNode):
 
 
 class VectorFieldNode(IntrinsicNode):
+    def __getattr__(self, attr):
+        if attr == "eval":
+            return VectorFieldEvalCallNode(self)
+        else:
+            raise NotImplementedError('Access to VectorField attributes are not (yet) implemented in JIT mode')
+
     def __getitem__(self, attr):
         return VectorFieldEvalNode(self.obj, attr)
 
 
+class VectorFieldEvalCallNode(IntrinsicNode):
+    def __init__(self, field):
+        self.field = field
+        self.obj = field.obj
+        self.ccode = ""
+
+
 class VectorFieldEvalNode(IntrinsicNode):
-    def __init__(self, field, args, var, var2, var3):
+    def __init__(self, field, args, var, var2, var3, convert=True):
         self.field = field
         self.args = args
         self.var = var  # the variable in which the interpolated field is written
         self.var2 = var2  # second variable for UV interpolation
         self.var3 = var3  # third variable for UVW interpolation
+        self.convert = convert  # whether to convert the result (like field.applyConversion)
 
 
 class SummedFieldNode(IntrinsicNode):
@@ -412,6 +426,26 @@ class IntrinsicTransformer(ast.NodeTransformer):
             self.stmt_stack += [FieldEvalNode(node.func.field, args, tmp, convert)]
             return ast.Name(id=tmp)
 
+        elif isinstance(node.func, VectorFieldEvalCallNode):
+            # get a temporary value to assign result to
+            tmp1 = self.get_tmp()
+            tmp2 = self.get_tmp()
+            tmp3 = self.get_tmp() if node.func.field.obj.vector_type == '3D' else None
+            # whether to convert
+            convert = True
+            if "applyConversion" in node.keywords:
+                k = node.keywords["applyConversion"]
+                if isinstance(k, ast.NameConstant):
+                    convert = k.value
+
+            # convert args to Index(Tuple(*args))
+            args = ast.Index(value=ast.Tuple(node.args, ast.Load()))
+
+            self.stmt_stack += [VectorFieldEvalNode(node.func.field, args, tmp1, tmp2, tmp3, convert)]
+            if tmp3:
+                return ast.Tuple([ast.Name(id=tmp1), ast.Name(id=tmp2), ast.Name(id=tmp3)], ast.Load())
+            else:
+                return ast.Tuple([ast.Name(id=tmp1), ast.Name(id=tmp2)], ast.Load())
         return node
 
 
@@ -907,14 +941,14 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         args = self._check_FieldSamplingArguments(node.args.ccode)
         ccode_eval = node.field.obj.ccode_eval_array(node.var, node.var2, node.var3,
                                                      node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
-        if node.field.obj.U.interp_method != 'cgrid_velocity':
+        if node.convert and node.field.obj.U.interp_method != 'cgrid_velocity':
             ccode_conv1 = node.field.obj.U.ccode_convert(*args)
             ccode_conv2 = node.field.obj.V.ccode_convert(*args)
             statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
                           c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
         else:
             statements = []
-        if node.field.obj.vector_type == '3D':
+        if node.convert and node.field.obj.vector_type == '3D':
             ccode_conv3 = node.field.obj.W.ccode_convert(*args)
             statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
         conv_stat = c.Block(statements)
@@ -1058,14 +1092,14 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
         ccode_eval = node.field.obj.ccode_eval_object(node.var, node.var2, node.var3, node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
-        if node.field.obj.U.interp_method != 'cgrid_velocity':
+        if node.convert and node.field.obj.U.interp_method != 'cgrid_velocity':
             ccode_conv1 = node.field.obj.U.ccode_convert(*args)
             ccode_conv2 = node.field.obj.V.ccode_convert(*args)
             statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
                           c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
         else:
             statements = []
-        if node.field.obj.vector_type == '3D':
+        if node.convert and node.field.obj.vector_type == '3D':
             ccode_conv3 = node.field.obj.W.ccode_convert(*args)
             statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
         conv_stat = c.Block(statements)
