@@ -365,6 +365,7 @@ class FieldSet(object):
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
         :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
 
         For usage examples see the following tutorials:
 
@@ -387,8 +388,9 @@ class FieldSet(object):
         cls._field_file_cache = cache_obj if cls._field_file_cache is None else cls._field_file_cache
         cache_dir = kwargs.pop("cache_dir", None)
         do_cache = kwargs.pop("do_cache", False)
+        use_threads = kwargs.pop("use_threads", False)
         if cls._field_file_cache is None and do_cache:
-            cls._field_file_cache = FieldFileCache(cache_lower_limit=0.5*1024*1024*1024, use_thread=True, cache_top_dir=cache_dir)
+            cls._field_file_cache = FieldFileCache(cache_lower_limit=0.5*1024*1024*1024, use_thread=use_threads, cache_top_dir=cache_dir)
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'
         for var, name in variables.items():
@@ -516,7 +518,7 @@ class FieldSet(object):
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
         :param do_cache: switch to enable or disable caching (default: True [= enabled])
-
+        :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
         """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_nemo'
@@ -621,7 +623,7 @@ class FieldSet(object):
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
         :param do_cache: switch to enable or disable caching (default: True [= enabled])
-
+        :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
         """
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
@@ -707,6 +709,10 @@ class FieldSet(object):
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
         :param chunksize: size of the chunks in dask loading
+        :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
+        :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
+        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
         :param depth_units: The units of the vertical dimension. Default in Parcels is 'm',
                but many POP outputs are in 'cm'
 
@@ -790,6 +796,10 @@ class FieldSet(object):
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_mom5() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
         :param chunksize: size of the chunks in dask loading
+        :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
+        :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
+        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
 
 
         """
@@ -861,6 +871,10 @@ class FieldSet(object):
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
         :param chunksize: size of the chunks in dask loading
+        :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
+        :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
+        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
 
         """
 
@@ -913,6 +927,10 @@ class FieldSet(object):
                that case Parcels deals with a better memory management during particle set execution.
                deferred_load=False is however sometimes necessary for plotting the fields.
         :param chunksize: size of the chunks in dask loading
+        :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
+        :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
+        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
 
         """
 

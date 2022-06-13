@@ -221,8 +221,9 @@ class ParticleSetAOS(BaseParticleSet):
         assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
 
+        time = np.array([0.0], dtype=np.float64) if time is None else time
         time = _convert_to_array(time)
-        time = np.repeat(time, lon.size) if time.size == 1 else time
+        time = np.repeat(time, lon.size) if not hasattr(time, '__len__') or len(time) == 1 else time
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
