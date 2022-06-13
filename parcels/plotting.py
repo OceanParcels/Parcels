@@ -48,7 +48,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
             return  # creating axes was not possible
         ax.set_title('Particles' + parsetimestr(particles.fieldset.U.grid.time_origin, show_time))
         latN, latS, lonE, lonW = parsedomain(domain, particles.fieldset.U)
-        if cartopy is None or projection is None:
+        if cartopy is None:
             if domain is not None:
                 if isinstance(particles.fieldset.U.grid, CurvilinearGrid):
                     ax.set_xlim(particles.fieldset.U.grid.lon[latS, lonW], particles.fieldset.U.grid.lon[latN, lonE])
