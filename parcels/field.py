@@ -256,6 +256,7 @@ class Field(object):
                 index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
                 logger.info("Field '{}' (after cache registration) - {}".format(self._cache_field_name, index_file_list))
     # ========== ========== ========== END ========== ========== ========== #
+
     # == Added to differentiate between field- and scalar constant field == #
     @property
     def isarray(self):
