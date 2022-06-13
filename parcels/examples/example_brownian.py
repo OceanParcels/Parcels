@@ -28,8 +28,8 @@ def test_brownian_example(mode, mesh, npart=3000):
     kh_meridional = 100  # in m^2/s
 
     # Create field of constant Kh_zonal and Kh_meridional
-    fieldset.add_field(Field('Kh_zonal', kh_zonal, lon=0, lat=0, mesh=mesh))
-    fieldset.add_field(Field('Kh_meridional', kh_meridional, lon=0, lat=0, mesh=mesh))
+    fieldset.add_field(Field('Kh_zonal', np.array(kh_zonal, dtype=np.float32), lon=0, lat=0, mesh=mesh))
+    fieldset.add_field(Field('Kh_meridional', np.array(kh_meridional, dtype=np.float32), lon=0, lat=0, mesh=mesh))
 
     # Set random seed
     ParcelsRandom.seed(123456)
