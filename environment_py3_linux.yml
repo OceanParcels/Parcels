@@ -14,7 +14,7 @@ dependencies:
   - mpi4py>=3.0.1
   - mpich>=3.2.1
   - jupyter
-  - matplotlib>=2.0.2
+  - matplotlib-base>=2.0.2
   - netcdf4>=1.1.9
   - numpy>=1.9.1
   - py>=1.4.27
@@ -31,3 +31,4 @@ dependencies:
   - scikit-learn
   - pykdtree
   - portalocker
+  - zarr

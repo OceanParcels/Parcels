@@ -415,7 +415,8 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize, filename='test_sub
     fieldset_file = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, chunksize=chunksize)
 
     fieldset_file.add_field(field_data, "B")
-    assert len(fieldset_file.get_fields()) == 3
+    fields = [f for f in fieldset_file.get_fields() if isinstance(f, Field)]
+    assert len(fields) == 3
     if chunksize == 'auto':
         assert fieldset_file.gridset.size == 3
     else:
@@ -593,7 +594,7 @@ def test_fieldset_write(pset_mode, tmpdir):
     fieldset.U.to_write = True
 
     def UpdateU(particle, fieldset, time):
-        tmp = fieldset.U[particle]  # noqa
+        tmp1, tmp2 = fieldset.UV[particle]  # noqa
         fieldset.U.data[particle.ti, particle.yi, particle.xi] += 1
         fieldset.U.grid.time[0] = time
 
@@ -873,10 +874,11 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     fieldset = FieldSet.from_parcels(filepath, chunksize={'time': ('time_counter', 1), 'depth': ('depthu', 1), 'lat': ('y', 2), 'lon': ('x', 2)})
 
     def SampleField(particle, fieldset, time):
-        particle.u_kernel = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+        particle.u_kernel, particle.v_kernel = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
     class SampleParticle(JITParticle):
         u_kernel = Variable('u_kernel', dtype=np.float32, initial=0.)
+        v_kernel = Variable('v_kernel', dtype=np.float32, initial=0.)
         u_scipy = Variable('u_scipy', dtype=np.float32, initial=fieldset.U)
 
     pset = pset_type['soa']['pset'](fieldset, pclass=SampleParticle, time=[0, time2], lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
@@ -1023,7 +1025,7 @@ def test_deferredload_simplefield(pset_mode, mode, direction, time_extrapolation
     pset = pset_type[pset_mode]['pset'](fieldset, SamplingParticle, lon=0.5, lat=0.5)
 
     def SampleU(particle, fieldset, time):
-        particle.p = fieldset.U[particle]
+        particle.p, tmp = fieldset.UV[particle]
 
     runtime = tdim*2 if time_extrapolation else None
     pset.execute(SampleU, dt=direction, runtime=runtime)
