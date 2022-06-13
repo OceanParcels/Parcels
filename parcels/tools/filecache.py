@@ -1029,9 +1029,7 @@ class FieldFileCache(object):
         cache_size = get_size(self._cache_top_dir)
         if DEBUG:
             logger.info("[before adding] Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
-        # cachefill = (cache_size >= self._cache_upper_limit)
-        # cachefill = (cache_size <= self._cache_lower_limit)
-        cachefill=False
+        cachefill = False
         if DEBUG:
             logger.info("cache_size < self._cache_upper_limit: {}".format(cache_size < self._cache_upper_limit))
             logger.info("not cachefill: {}".format(not cachefill))

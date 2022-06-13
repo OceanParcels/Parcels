@@ -256,6 +256,20 @@ class Field(object):
                 index_file_list = [(i, o) for i, o in enumerate(self.dataFiles)]
                 logger.info("Field '{}' (after cache registration) - {}".format(self._cache_field_name, index_file_list))
     # ========== ========== ========== END ========== ========== ========== #
+    # == Added to differentiate between field- and scalar constant field == #
+    @property
+    def isarray(self):
+        _isarray = False
+        _isarray |= isinstance(self.data, da.core.Array)
+        _isarray |= isinstance(self.data, xr.DataArray)
+        _isarray |= isinstance(self.data, DeferredArray)
+        _isarray |= isinstance(self.data, np.ndarray)
+        return _isarray
+
+    @property
+    def isconstant(self):
+        return not self.isarray or (isinstance(self.data, np.ndarray) and len(self.data) == 1)
+    # ========== ========== ========== END ========== ========== ========== #
 
     @classmethod
     def get_dim_filenames(cls, filenames, dim):

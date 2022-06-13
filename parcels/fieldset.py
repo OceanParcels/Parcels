@@ -115,6 +115,7 @@ class FieldSet(object):
 
         fields = {}
         for name, datafld in data.items():
+            datafld = np.array(float(datafld), dtype=np.float32) if not hasattr(datafld, '__len__') else datafld
             # Use dimensions[name] if dimensions is a dict of dicts
             dims = dimensions[name] if name in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
@@ -189,7 +190,8 @@ class FieldSet(object):
         :param units: Optional UnitConverter object, to convert units
                       (e.g. for Horizontal diffusivity from m2/s to degree2/s)
         """
-        self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh))
+        value = np.array(float(value), dtype=np.float32) if not isinstance(value, np.ndarray) else value
+        self.add_field(Field(name, data=value, lon=0, lat=0, mesh=mesh, to_write=False, allow_time_extrapolation=True))
 
     def add_vector_field(self, vfield):
         """Add a :class:`parcels.field.VectorField` object to the FieldSet
@@ -381,6 +383,10 @@ class FieldSet(object):
         if timestamps is not None and 'time' in dimensions:
             logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
             timestamps = None
+
+        if chunksize is not False and deferred_load is False:
+            logger.warning_once("Cannot perform chunking with deferred loading. Switching on defer loading.")
+            deferred_load = True
 
         fields = {}
         cache_obj = kwargs.pop("cache", None)
