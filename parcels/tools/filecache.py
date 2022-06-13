@@ -176,7 +176,7 @@ class FieldFileCache(object):
     _periodic_wrap_lock = None
     _stopped = None
 
-    def __init__(self, cache_upper_limit=20*1024*1024*1024, cache_lower_limit=3.5*2014*1024*1024, use_thread=False, cache_top_dir=None, remove_cache_dir=True, debug=False):
+    def __init__(self, cache_upper_limit=20*1024*1024*1024, cache_lower_limit=3.5*1024*1024*1024, use_thread=False, cache_top_dir=None, remove_cache_dir=True, debug=False):
         computer_env, cache_head, data_head = get_compute_env()
         global DEBUG
         DEBUG = debug
@@ -292,6 +292,10 @@ class FieldFileCache(object):
 
     def _initialize_comm_files_(self):
         process_tis = None
+        if not os.path.exists(self.cache_top_dir):
+            os.makedirs(self.cache_top_dir, exist_ok=True)
+            if DEBUG:
+                logger.info("Recreating cache folder ...")
         create_ti_dict = not os.path.exists(os.path.join(self._cache_top_dir, self._ti_file))
         if create_ti_dict:
             process_tis = {}
@@ -749,7 +753,7 @@ class FieldFileCache(object):
         :return: None
         """
         if not self.caching_started and not self._use_thread:
-            logger.warn_once("Caching not started yet.")
+            logger.warning_once("Caching not started yet.")
         while not self.caching_started and self._use_thread:
             logger.warn("FieldFileCacheThread not started")
             sleep(0.1)
@@ -758,6 +762,7 @@ class FieldFileCache(object):
         else:
             self.reset_changeflag(name=name)
         if not self._use_thread:
+            logger.info("Reloading cache again ...")
             self._load_cache()
 
     def reset_changeflag(self, name):
@@ -766,6 +771,8 @@ class FieldFileCache(object):
         :param name: name of the field to the renewed in cache
         :return: None
         """
+        if DEBUG:
+            logger.info("{}.reset_changeflag() - have reset changeflag for field '{}'.".format(str(type(self).__name__), name))
         self._changeflags[name] = True
 
     def restart_cache(self, name=None):
@@ -844,8 +851,10 @@ class FieldFileCache(object):
 
         :return: None
         """
-        num_changed_fields = np.sum(list(self._changeflags.values()))
+        num_changed_fields = np.sum([1 if self._changeflags[name] else 0 for name in self._field_names])  # list(self._changeflags.values())
         if num_changed_fields <= 0:
+            if DEBUG:
+                logger.info("no fields changed.")
             return
         if DEBUG:
             logger.info("# changed field: {}".format(num_changed_fields))
@@ -993,6 +1002,7 @@ class FieldFileCache(object):
                             logger.info("Removing file '{}' with (free-boundary) index={} ...".format(self._destination_filepaths[name][wrap_index], i))
                         os.remove(self._destination_filepaths[name][wrap_index])
                         self._available_files[name].remove(self._destination_filepaths[name][wrap_index])
+                        self._changeflags[name] = True
                     else:  # file still in use -> lowest usable index
                         indices[name] = i
                         cacheclean[name] = True
@@ -1019,7 +1029,13 @@ class FieldFileCache(object):
         cache_size = get_size(self._cache_top_dir)
         if DEBUG:
             logger.info("[before adding] Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
-        cachefill = (cache_size >= self._cache_upper_limit)
+        # cachefill = (cache_size >= self._cache_upper_limit)
+        # cachefill = (cache_size <= self._cache_lower_limit)
+        cachefill=False
+        if DEBUG:
+            logger.info("cache_size < self._cache_upper_limit: {}".format(cache_size < self._cache_upper_limit))
+            logger.info("not cachefill: {}".format(not cachefill))
+            logger.info("np.any(list(self._changeflags.values())): {}".format(np.any(list(self._changeflags.values()))))
         while (cache_size < self._cache_upper_limit) and (not cachefill) and np.any(list(self._changeflags.values())):
             cachefill = True
             for name in self._field_names:
@@ -1076,14 +1092,16 @@ class FieldFileCache(object):
                 if self._use_thread:
                     self._occupation_files_lock.release()
                 cachefill &= False
-                if (start_index == end_index) or (((start_index + fi_len) % fi_len) == ((end_index + fi_len) % fi_len)):
+                if (start_index == end_index):
                     self._changeflags[name] = False  # no new file to add to cache in next run
                 cache_range_indices[name] = (i+signdt, cache_range_indices[name][1])
+                # if (((start_index + fi_len) % fi_len) == ((end_index + fi_len) % fi_len)):
+                #     self._changeflags[name] = False
             cache_size = get_size(self._cache_top_dir)
-            if DEBUG and (cachefill or (cache_size >= self._cache_upper_limit)):
+            if DEBUG:  # and (cachefill or (cache_size >= self._cache_upper_limit)):
                 logger.info("[after adding] Current cache size: {} bytes ({} MB).".format(cache_size, int(cache_size/(1024*1024))))
-            if (cache_size >= self._cache_upper_limit) or cachefill or not np.any(list(self._changeflags.values())):
-                break
+            # if (cache_size >= self._cache_upper_limit) or cachefill or not np.any(list(self._changeflags.values())):
+            #     break
 
         self.update_processed_files()
         for name in self._field_names:
