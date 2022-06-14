@@ -297,7 +297,7 @@ def create_parcelsfig_axis(spherical, land=True, projection='PlateCarree', centr
         if isinstance(land, str):
             ax.coastlines(land)
         elif land:
-            ax.coastlines()
+            ax.coastlines(zorder=10)
     else:
         cartopy = None
         fig, ax = plt.subplots(1, 1)
