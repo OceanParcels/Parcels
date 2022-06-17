@@ -1230,7 +1230,7 @@ class Field(object):
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
-    def show(self, animation=False, show_time=None, domain=None, depth_level=0, projection=None, land=True,
+    def show(self, animation=False, show_time=None, domain=None, depth_level=0, projection='PlateCarree', land=True,
              vmin=None, vmax=None, savefile=None, **kwargs):
         """Method to 'show' a Parcels Field
 
