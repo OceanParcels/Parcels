@@ -427,6 +427,13 @@ class Field(object):
                     # In that case, assume that 'name' is the data dimension
                     filebuffer.name = filebuffer.parse_name(variable[1])
                     buffer_data = filebuffer.data
+                    if len(buffer_data.shape) == 4:
+                        errormessage = ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
+                                        'Flag transpose=True could help to reorder the data.' % filebuffer.name)
+                        assert buffer_data.shape[0] == grid.tdim, errormessage
+                        assert buffer_data.shape[2] == grid.ydim - 2 * grid.meridional_halo, errormessage
+                        assert buffer_data.shape[3] == grid.xdim - 2 * grid.zonal_halo, errormessage
+
                     if len(buffer_data.shape) == 2:
                         data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape), ())))
                     elif len(buffer_data.shape) == 3:
