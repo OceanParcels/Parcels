@@ -1018,8 +1018,8 @@ class FieldFileCache(object):
             cache_size = get_size(self._cache_top_dir)
             if DEBUG and (np.any(list(cacheclean.values())) or (cache_size < self._cache_lower_limit)):
                 logger.info("[removed cache] Current cache size: {} bytes ({} MB); cleaned fields: {}.".format(cache_size, int(cache_size/(1024*1024)), cacheclean))
-            if (cache_size < self._cache_lower_limit) or np.all(list(cacheclean.values())):
-                break
+            # if (cache_size < self._cache_lower_limit) or np.all(list(cacheclean.values())):
+            #     break
 
         for name in self._field_names:
             cache_range_indices[name] = (indices[name], cache_range_indices[name][1])
