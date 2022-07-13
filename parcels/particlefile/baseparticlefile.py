@@ -49,7 +49,6 @@ class BaseParticleFile(ABC):
     var_dtypes = None
     var_names_once = None
     var_dtypes_once = None
-    maxid_written = -1
 
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True):
 
@@ -179,11 +178,15 @@ class BaseParticleFile(ABC):
 
         ds = xr.Dataset(attrs=self.metadata)
         attrs = self._create_variables_attribute_dict()
+        datalen = max(pset.id) + 1
+        data = np.nan * np.ones((datalen, 1))
 
         for var, dtype in zip(self.var_names, self.var_dtypes):
             varout = 'z' if var == 'depth' else var
             varout = 'trajectory' if varout == 'id' else varout
-            ds[varout] = xr.DataArray(data=[getattr(pset, var)], dims=["obs", "traj"], attrs=attrs[varout])
+
+            data[pset.id, 0] = getattr(pset, var)
+            ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=attrs[varout])
             if self.written_first and "_FillValue" in ds[varout].attrs:
                 del ds[varout].attrs["_FillValue"]
         if not self.written_first:
