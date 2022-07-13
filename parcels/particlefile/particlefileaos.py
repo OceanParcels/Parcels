@@ -24,19 +24,12 @@ class ParticleFileAOS(BaseParticleFile):
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
-    :param convert_at_end: Boolean to convert npy files to netcdf at end of run. Default is True
-    :param tempwritedir: directories to write temporary files to during executing.
-                     Default is out-XXXXXX where Xs are random capitals. Files for individual
-                     processors are written to subdirectories 0, 1, 2 etc under tempwritedir
-    :param pset_info: dictionary of info on the ParticleSet, stored in tempwritedir/XX/pset_info.npy,
-                     used to create NetCDF file from npy-files.
+    :param convert_at_end: Boolean to convert zarr file to netcdf at end of run. Default is False
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
-                 tempwritedir=None, pset_info=None):
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=False):
         super(ParticleFileAOS, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
-                                              write_ondelete=write_ondelete, convert_at_end=convert_at_end,
-                                              tempwritedir=tempwritedir, pset_info=pset_info)
+                                              write_ondelete=write_ondelete, convert_at_end=convert_at_end)
 
     def __del__(self):
         super(ParticleFileAOS, self).__del__()
@@ -160,7 +153,7 @@ class ParticleFileAOS(BaseParticleFile):
         for var, dtype in zip(self.var_names, self.var_dtypes):
             data = self.read_from_npy(global_file_list, n_timesteps, var, dtype)
             if var == self.var_names[0]:
-                self.open_output_file(data.shape)
+                self.open_output_file()
             varout = 'z' if var == 'depth' else var
             varout = 'trajectory' if varout == 'id' else varout
             ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=self.attrs[varout])
