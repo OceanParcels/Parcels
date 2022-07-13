@@ -33,39 +33,6 @@ def fieldset_ficture(xdim=40, ydim=100):
     return fieldset(xdim=xdim, ydim=ydim)
 
 
-def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
-    if assystemcall:
-        os.system('parcels_convert_npydir_to_netcdf %s' % ofile.tempwritedir_base)
-    else:
-        import parcels.scripts.convert_npydir_to_netcdf as convert
-        convert.convert_npydir_to_netcdf(ofile.tempwritedir_base, pfile_class=ofile.__class__)
-
-    engine = 'zarr' if 'zarr' in str(filepath) else 'netcdf4'
-    ncfile1 = xr.open_dataset(filepath, engine=engine)
-
-    ofile.name = filepath + 'b.nc'
-    ofile.export()
-
-    if engine == 'zarr':
-        assert os.path.getsize(filepath) < os.path.getsize(ofile.name)  # zarr expected to be smaller filesize
-    else:
-        assert os.path.getsize(filepath) == os.path.getsize(ofile.name)
-
-    ncfile2 = xr.open_dataset(filepath + 'b.nc')
-    for v in ncfile2.keys():
-        if v == 'time':
-            assert np.allclose(ncfile1[v].values, ncfile2[v].values, atol=np.timedelta64(1, 's'), equal_nan=True)
-        else:
-            assert np.allclose(ncfile1[v].values, ncfile2[v].values, equal_nan=True)
-
-    for a in ncfile2.attrs:
-        if a != 'parcels_version':
-            assert getattr(ncfile1, a) == getattr(ncfile2, a)
-
-    ncfile2.close()
-    return ncfile1
-
-
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
@@ -79,11 +46,11 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     for p in pset:
         p.time = 1
     pfile.write(pset, 1)
-    ncfile = close_and_compare_netcdffiles(filepath, pfile)
-    timearr = ncfile.variables['time'][:]
-    assert (np.isnat(timearr[3, 1])) and (np.isfinite(timearr[3, 0]))
-    ncfile.close()
 
+    ds = xr.open_zarr(filepath)
+    timearr = ds['time'][:]
+    assert (np.isnat(timearr[3, 1])) and (np.isfinite(timearr[3, 0]))
+    ds.close()
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -100,11 +67,12 @@ def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
         particle.lon += 0.1
 
     pset.execute(Update_lon, runtime=10, output_file=pfile)
-    ncfile = close_and_compare_netcdffiles(filepath, pfile)
-    assert 'time' in ncfile.variables
-    assert 'depth' not in ncfile.variables
-    assert 'lat' not in ncfile.variables
-    ncfile.close()
+
+    ds = xr.open_zarr(filepath)
+    assert 'time' in ds
+    assert 'depth' not in ds
+    assert 'lat' not in ds
+    ds.close()
 
     # For pytest purposes, we need to reset to original status
     pset.set_variable_write_status('depth', True)
@@ -125,9 +93,10 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
         pset.remove_indices(-1)
     pfile.write(pset, 1)
     pfile.write(pset, 2)
-    ncfile = close_and_compare_netcdffiles(filepath, pfile)
-    assert ncfile.variables['time'][:].shape == (npart, 1)
-    ncfile.close()
+
+    ds = xr.open_zarr(filepath)
+    assert ds['time'][:].shape == (npart, 1)
+    ds.close()
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
