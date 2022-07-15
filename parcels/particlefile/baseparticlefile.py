@@ -45,10 +45,6 @@ class BaseParticleFile(ABC):
     parcels_mesh = None
     time_origin = None
     lonlatdepth_dtype = None
-    var_names = None
-    var_dtypes = None
-    var_names_once = None
-    var_dtypes_once = None
 
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True):
 
@@ -63,19 +59,15 @@ class BaseParticleFile(ABC):
             self.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
         self.time_origin = self.particleset.time_origin
         self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
-        self.var_names = []
-        self.var_dtypes = []
-        self.var_names_once = []
-        self.var_dtypes_once = []
+        self.vars_to_write = {}
+        self.vars_to_write_once = {}
         for v in self.particleset.collection.ptype.variables:
             if v.to_write == 'once':
-                self.var_names_once += [v.name]
-                self.var_dtypes_once += [v.dtype]
+                self.vars_to_write_once[v.name] = v.dtype
             elif v.to_write is True:
-                self.var_names += [v.name]
-                self.var_dtypes += [v.dtype]
-        if len(self.var_names_once) > 0:
-            self.written_once = []
+                self.vars_to_write[v.name] = v.dtype
+        # if len(self.var_names_once) > 0:
+        #     self.written_once = []
         self.written_first = False
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
@@ -97,6 +89,8 @@ class BaseParticleFile(ABC):
 
         extension = os.path.splitext(str(self.name))[1]
         self.fname = self.name if extension in ['.nc', '.nc4', '.zarr'] else "%s.zarr" % self.name
+        if extension == '':
+            extension = '.zarr'
         self.outputformat = extension
 
     @abstractmethod
@@ -139,15 +133,15 @@ class BaseParticleFile(ABC):
             attrs['time']['units'] = "seconds since " + str(self.time_origin)
             attrs['time']['calendar'] = 'standard' if self.time_origin.calendar == 'np_datetime64' else self.time_origin.calendar
 
-        for vname, dtype in zip(self.var_names, self.var_dtypes):
+        for vname in self.vars_to_write:
             if vname not in self._reserved_var_names():
-                attrs[vname] = {"_FillValue": self.fill_value_map[dtype],
+                attrs[vname] = {"_FillValue": self.fill_value_map[self.vars_to_write[vname]],
                                 "long_name": "",
                                 "standard_name": vname,
                                 "units": "unknown"}
 
-        for vname, dtype in zip(self.var_names_once, self.var_dtypes_once):
-            attrs[vname] = {"_FillValue": self.fill_value_map[dtype],
+        for vname in self.vars_to_write_once:
+            attrs[vname] = {"_FillValue": self.fill_value_map[self.vars_to_write_once[vname]],
                             "long_name": "",
                             "standard_name": vname,
                             "units": "unknown"}
@@ -179,12 +173,12 @@ class BaseParticleFile(ABC):
         ds = xr.Dataset(attrs=self.metadata)
         attrs = self._create_variables_attribute_dict()
         datalen = max(pset.id) + 1
-        data = np.nan * np.ones((datalen, 1))
 
-        for var, dtype in zip(self.var_names, self.var_dtypes):
+        for var in self.vars_to_write:
             varout = 'z' if var == 'depth' else var
             varout = 'trajectory' if varout == 'id' else varout
 
+            data = np.ones((datalen, 1), dtype=self.vars_to_write[var])
             data[pset.id, 0] = getattr(pset, var)
             ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=attrs[varout])
             if self.written_first and "_FillValue" in ds[varout].attrs:
