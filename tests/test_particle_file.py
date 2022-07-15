@@ -6,7 +6,6 @@ from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 import numpy as np
 import pytest
 import os
-from netCDF4 import Dataset
 import cftime
 import random as py_random
 import xarray as xr
@@ -36,7 +35,7 @@ def fieldset_ficture(xdim=40, ydim=100):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
-    filepath = tmpdir.join("pfile_array_remove_particles.nc")
+    filepath = tmpdir.join("pfile_array_remove_particles.zarr")
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
                                         lat=0.5*np.ones(npart), time=0)
@@ -52,10 +51,11 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     assert (np.isnat(timearr[3, 1])) and (np.isfinite(timearr[3, 0]))
     ds.close()
 
+
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
-    filepath = tmpdir.join("pfile_set_towrite_False.nc")
+    filepath = tmpdir.join("pfile_set_towrite_False.zarr")
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
                                         lat=0.5*np.ones(npart))
@@ -83,7 +83,7 @@ def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
 
-    filepath = tmpdir.join("pfile_array_remove_particles.nc")
+    filepath = tmpdir.join("pfile_array_remove_particles.zarr")
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
                                         lat=0.5*np.ones(npart), time=0)
@@ -101,9 +101,8 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('assystemcall', [True, False])
-def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemcall, npart=3):
-    filepath = tmpdir.join("pfile_on_delete_written_variables.nc")
+def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, npart=3):
+    filepath = tmpdir.join("pfile_on_delete_written_variables.zarr")
 
     def move_west(particle, fieldset, time):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon]  # to trigger out-of-bounds error
@@ -126,17 +125,18 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemca
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
 
-    ncfile = close_and_compare_netcdffiles(filepath, outfile, assystemcall=assystemcall)
-    assert ncfile.runtime == runtime
-    lon = ncfile.variables['lon'][:]
+    ds = xr.open_zarr(filepath)
+    assert ds.runtime == runtime
+    lon = ds['lon'][:]
     assert (lon.size == noutside)
-    ncfile.close()
+    ds.close()
 
+# test_variable_written_ondelete(fieldset(), 'aos', 'jit', '')
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
-    filepath = tmpdir.join("pfile_variable_write_double.nc")
+    filepath = tmpdir.join("pfile_variable_write_double.zarr")
 
     def Update_lon(particle, fieldset, time):
         particle.lon += 0.1
@@ -145,16 +145,16 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     ofile = pset.ParticleFile(name=filepath, outputdt=0.00001)
     pset.execute(pset.Kernel(Update_lon), endtime=0.001, dt=0.00001, output_file=ofile)
 
-    ncfile = close_and_compare_netcdffiles(filepath, ofile)
-    lons = ncfile.variables['lon'][:]
+    ds = xr.open_zarr(filepath)
+    lons = ds['lon'][:]
     assert (isinstance(lons.values[0, 0], np.float64))
-    ncfile.close()
+    ds.close()
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_write_dtypes_pfile(fieldset, mode, pset_mode, tmpdir):
-    filepath = tmpdir.join("pfile_dtypes.nc")
+def test_write_dtypes_pfile(fieldset, pset_mode, mode, tmpdir):
+    filepath = tmpdir.join("pfile_dtypes.zarr")
 
     dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64', 'uint64']
     if mode == 'scipy' or pset_mode == 'soa':
@@ -168,12 +168,13 @@ def test_write_dtypes_pfile(fieldset, mode, pset_mode, tmpdir):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=0)
     pfile = pset.ParticleFile(name=filepath, outputdt=1)
     pfile.write(pset, 0)
-    pfile.close()
-    ncfile = Dataset(filepath, 'r', 'NETCDF4')  # using netCDF4.Dataset here because xarray does not observe all dtypes correctly
+
+    ds = xr.open_zarr(filepath, mask_and_scale=False)  # Note masking issue at https://stackoverflow.com/questions/68460507/xarray-loading-int-data-as-float
     for d in dtypes:
         nc_fmt = d if d != 'bool_' else 'i1'
-        assert ncfile.variables[f'v_{d}'].dtype == nc_fmt
+        assert ds[f'v_{d}'].dtype == nc_fmt
 
+test_write_dtypes_pfile(fieldset(), 'aos', 'jit', '')
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
