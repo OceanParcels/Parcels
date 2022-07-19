@@ -100,7 +100,7 @@ class ParticleCollectionSOA(ParticleCollection):
 
             if mpi_size > 1:
                 if partitions is not False:
-                    if self._pu_indicators is None:
+                    if (self._pu_indicators is None) or (len(self._pu_indicators) != len(lon)):
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
                             kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
