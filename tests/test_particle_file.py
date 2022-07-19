@@ -51,6 +51,7 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     assert (np.isnat(timearr[3, 1])) and (np.isfinite(timearr[3, 0]))
     ds.close()
 
+# test_pfile_array_remove_particles(fieldset(), 'soa', 'jit', '')
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -174,7 +175,6 @@ def test_write_dtypes_pfile(fieldset, pset_mode, mode, tmpdir):
         nc_fmt = d if d != 'bool_' else 'i1'
         assert ds[f'v_{d}'].dtype == nc_fmt
 
-test_write_dtypes_pfile(fieldset(), 'aos', 'jit', '')
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -197,12 +197,13 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
     pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, output_file=ofile)
 
     assert np.allclose(pset.v_once - time - pset.age*10, 0, atol=1e-5)
-    ncfile = close_and_compare_netcdffiles(filepath, ofile)
-    vfile = np.ma.filled(ncfile.variables['v_once'][:], np.nan)
+    ds = xr.open_zarr(filepath)
+    vfile = np.ma.filled(ds['v_once'][:], np.nan)
     assert (vfile.shape == (npart, ))
     assert np.allclose(vfile, time)
-    ncfile.close()
+    ds.close()
 
+# test_variable_written_once(fieldset(), 'soa', 'jit', '', 10)
 
 @pytest.mark.parametrize('type', ['repeatdt', 'timearr'])
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -232,8 +233,8 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
     for i in range(runtime):
         pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
 
-    ncfile = close_and_compare_netcdffiles(outfilepath, pfile)
-    samplevar = ncfile.variables['sample_var'][:]
+    ds = xr.open_zarr(outfilepath)
+    samplevar = ds['sample_var'][:]
     if type == 'repeatdt':
         assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
         assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
@@ -244,8 +245,9 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
         assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
     filesize = os.path.getsize(str(outfilepath))
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
-    ncfile.close()
+    ds.close()
 
+# test_pset_repeated_release_delayed_adding_deleting('repeatdt', fieldset(), 'soa', 'jit', 2, '', 1, 10)
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

@@ -925,7 +925,7 @@ class ParticleCollectionAOS(ParticleCollection):
                 else:
                     indices_to_write = _to_write_particles(self._data, time)
                 if len(indices_to_write) > 0:
-                    for var in pfile.var_names:
+                    for var in pfile.vars_to_write:
                         if 'id' in var:
                             data_dict[var] = np.array([np.int64(getattr(p, var)) for p in self._data[indices_to_write]])
                         else:
@@ -935,12 +935,12 @@ class ParticleCollectionAOS(ParticleCollection):
                 for p in pset_errs:
                     logger.warning_once('time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
 
-                if len(pfile.var_names_once) > 0:
+                if len(pfile.vars_to_write_once) > 0:
                     # _to_write_particles(self._data, time)
                     first_write = [p for p in self._data if _is_particle_started_yet(p, time) and (np.int64(p.id) not in pfile.written_once)]
                     if np.any(first_write):
                         data_dict_once['id'] = np.array([p.id for p in first_write]).astype(dtype=np.int64)
-                        for var in pfile.var_names_once:
+                        for var in pfile.vars_to_write_once:
                             data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
                         pfile.written_once.extend(np.array(data_dict_once['id']).astype(dtype=np.int64).tolist())
 

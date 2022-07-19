@@ -848,18 +848,18 @@ class ParticleCollectionSOA(ParticleCollection):
                 else:
                     indices_to_write = _to_write_particles(self._data, time)
                 if np.any(indices_to_write):
-                    for var in pfile.var_names:
+                    for var in pfile.vars_to_write:
                         data_dict[var] = self._data[var][indices_to_write]
 
                 pset_errs = ((self._data['state'][indices_to_write] != OperationCode.Delete) & np.greater(np.abs(time - self._data['time'][indices_to_write]), 1e-3, where=np.isfinite(self._data['time'][indices_to_write])))
                 if np.count_nonzero(pset_errs) > 0:
                     logger.warning_once('time argument in pfile.write() is {}, but particles have time {}'.format(time, self._data['time'][pset_errs]))
 
-                if len(pfile.var_names_once) > 0:
+                if len(pfile.vars_to_write_once) > 0:
                     first_write = (_to_write_particles(self._data, time) & _is_particle_started_yet(self._data, time) & np.isin(self._data['id'], pfile.written_once, invert=True))
                     if np.any(first_write):
                         data_dict_once['id'] = np.array(self._data['id'][first_write]).astype(dtype=np.int64)
-                        for var in pfile.var_names_once:
+                        for var in pfile.vars_to_write_once:
                             data_dict_once[var] = self._data[var][first_write]
                         pfile.written_once.extend(np.array(self._data['id'][first_write]).astype(dtype=np.int64).tolist())
 

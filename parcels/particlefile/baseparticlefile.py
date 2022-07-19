@@ -4,6 +4,7 @@ from abc import abstractmethod
 import os
 import numpy as np
 import xarray as xr
+import zarr
 
 try:
     from mpi4py import MPI
@@ -68,6 +69,8 @@ class BaseParticleFile(ABC):
                 self.vars_to_write[v.name] = v.dtype
         # if len(self.var_names_once) > 0:
         #     self.written_once = []
+        self.IDs_written = {}
+        self.maxobs = {}
         self.written_first = False
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
@@ -169,22 +172,94 @@ class BaseParticleFile(ABC):
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles
         """
+        data_dict, data_dict_once = pset.to_dict(self, time, deleted_only=deleted_only)
 
-        ds = xr.Dataset(attrs=self.metadata)
-        attrs = self._create_variables_attribute_dict()
-        datalen = max(pset.id) + 1
+        maxtraj = len(self.IDs_written)
+        if len(data_dict) > 0:
+            for i in data_dict['id']:
+                if i not in self.IDs_written:
+                    self.IDs_written[i] = maxtraj
+                    self.maxobs[i] = 0
+                    maxtraj += 1
+                else:
+                    self.maxobs[i] += 1
 
-        for var in self.vars_to_write:
-            varout = 'z' if var == 'depth' else var
-            varout = 'trajectory' if varout == 'id' else varout
+        if len(data_dict) > 0:
+            if not self.written_first:
+                ds = xr.Dataset(attrs=self.metadata)
+                attrs = self._create_variables_attribute_dict()
+                ids = [self.IDs_written[i] for i in data_dict['id']]
+                for var in data_dict:
+                    varout = 'z' if var == 'depth' else var
+                    varout = 'trajectory' if varout == 'id' else varout
+                    data = np.full((maxtraj, 1), np.nan, dtype=self.vars_to_write[var])
+                    data[ids, 0] = data_dict[var]
+                    ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=attrs[varout])
+                ds.to_zarr(self.fname, mode='w')
+                self.written_first = True
+            else:
+                store = zarr.DirectoryStore(self.fname)
+                Z = zarr.group(store=store, overwrite=False)
+                ids = [self.IDs_written[i] for i in data_dict['id']]
+                maxobs = [self.maxobs[i] for i in data_dict['id']]
 
-            data = np.ones((datalen, 1), dtype=self.vars_to_write[var])
-            data[pset.id, 0] = getattr(pset, var)
-            ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=attrs[varout])
-            if self.written_first and "_FillValue" in ds[varout].attrs:
-                del ds[varout].attrs["_FillValue"]
-        if not self.written_first:
-            ds.to_zarr(self.fname, mode='w')
-            self.written_first = True
-        else:
-            ds.to_zarr(self.fname, mode='a', append_dim='obs')
+                for var in data_dict:
+                    varout = 'z' if var == 'depth' else var
+                    varout = 'trajectory' if varout == 'id' else varout
+                    for i, t, v in zip(ids, maxobs, data_dict[var]):
+                        if t >= Z[varout].shape[1]:
+                            a = np.full((Z[varout].shape[0], 1), np.nan, dtype=self.vars_to_write[var])
+                            Z[varout].append(a, axis=1)
+                            zarr.consolidate_metadata(store)
+                        if i >= Z[varout].shape[0]:
+                            a = np.full((maxtraj-Z[varout].shape[0], Z[varout].shape[1]), np.nan, dtype=self.vars_to_write[var])
+                            Z[varout].append(a, axis=0)
+                            zarr.consolidate_metadata(store)
+
+                        Z[varout][i, t] = v
+
+        # if expanded_trajs and self.written_first:
+        #     for z in Z:
+        #         zin = 'id' if z == 'trajectory' else z
+        #         zin = 'depth' if zin == 'z' else zin
+        #
+        #         if Z[z].ndim == 2:
+        #             a = np.full((expanded_trajs, Z[z].shape[1]), np.nan, dtype=self.vars_to_write[zin])
+        #         else:
+        #             a = np.full((expanded_trajs,), np.nan, dtype=self.vars_to_write_once[zin])
+        #         Z[z].append(a)
+        #
+        #
+        # if len(data_dict) > 0:
+        #     ids = [self.IDs_written[i] for i in data_dict['id']]
+        #     for var in data_dict:
+        #         varout = 'z' if var == 'depth' else var
+        #         varout = 'trajectory' if varout == 'id' else varout
+        #         data = np.full((datalen, 1), np.nan, dtype=self.vars_to_write[var])
+        #         data[ids, 0] = data_dict[var]
+        #         ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=attrs[varout])
+        #         if self.written_first and "_FillValue" in ds[varout].attrs:
+        #             del ds[varout].attrs["_FillValue"]
+        #
+        # if len(data_dict_once) > 0:
+        #     ids = [self.IDs_written[i] for i in data_dict_once['id']]
+        #     if self.written_first:
+        #         ds_in = xr.open_zarr(self.name)
+        #     for var in data_dict_once:
+        #         if var != 'id':
+        #             if self.written_first:
+        #                 data = ds_in[var].values
+        #                 print(data, ids)
+        #             else:
+        #                 data = np.full((datalen,), np.nan, dtype=self.vars_to_write_once[var])
+        #             data[ids] = data_dict_once[var]
+        #             ds[var] = xr.DataArray(data=data, dims=["traj"], attrs=attrs[var])
+        #             if self.written_first and "_FillValue" in ds[var].attrs:
+        #                 del ds[var].attrs["_FillValue"]
+        #
+        # if len(ds) > 0:
+        #     if not self.written_first:
+        #         ds.to_zarr(self.fname, mode='w')
+        #         self.written_first = True
+        #     else:
+        #         ds.to_zarr(self.fname, mode='a', append_dim='obs')
