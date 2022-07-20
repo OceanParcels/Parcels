@@ -158,7 +158,7 @@ def test_write_dtypes_pfile(fieldset, pset_mode, mode, tmpdir):
     filepath = tmpdir.join("pfile_dtypes.zarr")
 
     dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64', 'uint64']
-    if mode == 'scipy' or pset_mode == 'soa':
+    if mode == 'scipy':
         dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16'])  # Not implemented in AoS JIT
 
     class MyParticle(ptype[mode]):
@@ -166,15 +166,15 @@ def test_write_dtypes_pfile(fieldset, pset_mode, mode, tmpdir):
             # need an exec() here because we need to dynamically set the variable name
             exec(f'v_{d} = Variable("v_{d}", dtype=np.{d}, initial=0.)')
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=0)
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=0, time=0)
     pfile = pset.ParticleFile(name=filepath, outputdt=1)
     pfile.write(pset, 0)
 
     ds = xr.open_zarr(filepath, mask_and_scale=False)  # Note masking issue at https://stackoverflow.com/questions/68460507/xarray-loading-int-data-as-float
     for d in dtypes:
-        nc_fmt = d if d != 'bool_' else 'i1'
-        assert ds[f'v_{d}'].dtype == nc_fmt
+        assert ds[f'v_{d}'].dtype == d
 
+# test_write_dtypes_pfile(fieldset(), 'soa', 'scipy', '')
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -247,7 +247,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
     ds.close()
 
-# test_pset_repeated_release_delayed_adding_deleting('repeatdt', fieldset(), 'soa', 'jit', 2, '', 1, 10)
+# test_pset_repeated_release_delayed_adding_deleting('timearr', fieldset(), 'soa', 'jit', 1, '', 1, 4)
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -262,9 +262,10 @@ def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     pfile = pset.ParticleFile(name=outfilepath, outputdt=1.)
     pset.execute(pset.Kernel(Update_lon), runtime=4, dt=-1.,
                  output_file=pfile)
-    ncfile = close_and_compare_netcdffiles(outfilepath, pfile)
-    trajs = ncfile.variables['trajectory'][:, 0]
-    assert np.all(np.diff(trajs) > 0)  # all particles written in order of traj ID
+    ds = xr.open_zarr(outfilepath)
+    trajs = ds['trajectory'][:, 0]
+    assert np.all(np.diff(trajs.values) < 0)  # all particles written in order of start time
+    ds.close()
 
 
 def test_set_calendar():
@@ -272,26 +273,6 @@ def test_set_calendar():
         date = getattr(cftime, cf_datetime)(1990, 1, 1)
         assert _set_calendar(date.calendar) == date.calendar
     assert _set_calendar('np_datetime64') == 'standard'
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
-def test_error_duplicate_outputdir(fieldset, tmpdir, pset_mode):
-    outfilepath = tmpdir.join("error_duplicate_outputdir.nc")
-    pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0)
-    pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0)
-
-    py_random.seed(1234)
-    pfile1 = pset1.ParticleFile(name=outfilepath, outputdt=1., convert_at_end=False)
-
-    py_random.seed(1234)
-    error_thrown = False
-    try:
-        pset2.ParticleFile(name=outfilepath, outputdt=1., convert_at_end=False)
-    except IOError:
-        error_thrown = True
-    assert error_thrown
-
-    pfile1.delete_tempwritedir()
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
