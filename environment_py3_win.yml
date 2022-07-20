@@ -3,7 +3,6 @@ channels:
   - conda-forge
 dependencies:
   - python>=3.8
-  - cachetools>=1.0.0
   - cgen>=2020.1
   - coverage
   - ffmpeg>=3.2.3
@@ -14,11 +13,10 @@ dependencies:
   - matplotlib-base>=2.0.2
   - netcdf4>=1.1.9
   - numpy>=1.9.1
+  - psutil
   - py>=1.4.27
   - pymbolic
-  - python-dateutil
   - scipy>=0.16.0
-  - six>=1.10.0
   - tqdm
   - xarray>=0.5.1
   - dask>=2.0
