@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 import os
 import cftime
-import random as py_random
 import xarray as xr
 
 pset_modes = ['soa', 'aos']
@@ -51,7 +50,6 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     assert (np.isnat(timearr[3, 1])) and (np.isfinite(timearr[3, 0]))
     ds.close()
 
-# test_pfile_array_remove_particles(fieldset(), 'soa', 'jit', '')
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -132,7 +130,6 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, npart=3):
     assert (lon.size == noutside)
     ds.close()
 
-# test_variable_written_ondelete(fieldset(), 'aos', 'jit', '')
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -174,7 +171,6 @@ def test_write_dtypes_pfile(fieldset, pset_mode, mode, tmpdir):
     for d in dtypes:
         assert ds[f'v_{d}'].dtype == d
 
-# test_write_dtypes_pfile(fieldset(), 'soa', 'scipy', '')
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -203,7 +199,6 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
     assert np.allclose(vfile, time)
     ds.close()
 
-# test_variable_written_once(fieldset(), 'soa', 'jit', '', 10)
 
 @pytest.mark.parametrize('type', ['repeatdt', 'timearr'])
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -247,7 +242,6 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
     ds.close()
 
-# test_pset_repeated_release_delayed_adding_deleting('timearr', fieldset(), 'soa', 'jit', 1, '', 1, 4)
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
