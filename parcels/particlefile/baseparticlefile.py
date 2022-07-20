@@ -35,10 +35,8 @@ class BaseParticleFile(ABC):
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
-    :param convert_at_end: Boolean to convert npy files to netcdf at end of run. Default is True
     """
     write_ondelete = None
-    convert_at_end = None
     outputdt = None
     lasttime_written = None
     name = None
@@ -47,7 +45,7 @@ class BaseParticleFile(ABC):
     time_origin = None
     lonlatdepth_dtype = None
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True):
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False):
 
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
