@@ -218,27 +218,27 @@ class BaseParticleFile(ABC):
                 for var in data_dict:
                     varout = 'z' if var == 'depth' else var
                     varout = 'trajectory' if varout == 'id' else varout
-                    for i, t, v in zip(ids, maxobs, data_dict[var]):
-                        if t >= Z[varout].shape[1]:
-                            a = np.full((Z[varout].shape[0], 1), np.nan, dtype=self.vars_to_write[var])
-                            Z[varout].append(a, axis=1)
-                            zarr.consolidate_metadata(store)
-                        if i >= Z[varout].shape[0]:
-                            a = np.full((maxtraj-Z[varout].shape[0], Z[varout].shape[1]), np.nan, dtype=self.vars_to_write[var])
-                            Z[varout].append(a, axis=0)
-                            zarr.consolidate_metadata(store)
-                        Z[varout][i, t] = v
+                    if max(maxobs) >= Z[varout].shape[1]:
+                        a = np.full((Z[varout].shape[0], 1), np.nan,
+                                    dtype=self.vars_to_write[var])
+                        Z[varout].append(a, axis=1)
+                        zarr.consolidate_metadata(store)
+                    if max(ids) >= Z[varout].shape[0]:
+                        a = np.full((maxtraj-Z[varout].shape[0], Z[varout].shape[1]), np.nan,
+                                    dtype=self.vars_to_write[var])
+                        Z[varout].append(a, axis=0)
+                        zarr.consolidate_metadata(store)
+                    Z[varout].vindex[ids, maxobs] = data_dict[var]
                 if len(data_dict_once) > 0:
                     ids = [self.IDs_written[i] for i in data_dict_once['id']]
                     for var in data_dict_once:
                         if var != 'id':  # TODO check if needed
-                            for i, v in zip(ids, data_dict_once[var]):
-                                if i >= Z[var].shape[0]:
-                                    a = np.full((maxtraj - Z[var].shape[0],), np.nan,
-                                                dtype=self.vars_to_write_once[var])
-                                    Z[var].append(a, axis=0)
-                                    zarr.consolidate_metadata(store)
-                                Z[var][i] = v
+                            if max(ids) >= Z[var].shape[0]:
+                                a = np.full((maxtraj - Z[var].shape[0],), np.nan,
+                                            dtype=self.vars_to_write_once[var])
+                                Z[var].append(a, axis=0)
+                                zarr.consolidate_metadata(store)
+                            Z[var].vindex[ids] = data_dict_once[var]
 
         # if expanded_trajs and self.written_first:
         #     for z in Z:
