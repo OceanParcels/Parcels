@@ -6,9 +6,9 @@ from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 import numpy as np
 import pytest
 import math
-from netCDF4 import Dataset
 from datetime import timedelta as delta
 from parcels import logger
+import xarray as xr
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -489,21 +489,18 @@ def test_uniform_analytical(pset_mode, mode, u, v, w, direction, tmpdir):
     x0, y0, z0 = 6.1, 6.2, 20
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
 
-    outfile_path = tmpdir.join("uniformanalytical.nc")
+    outfile_path = tmpdir.join("uniformanalytical.zarr")
     outfile = pset.ParticleFile(name=outfile_path, outputdt=1)
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
                  output_file=outfile)
-    outfile.close()
     assert np.abs(pset.lon - x0 - 4 * u * direction) < 1e-6
     assert np.abs(pset.lat - y0 - 4 * v * direction) < 1e-6
     if w:
         assert np.abs(pset.depth - z0 - 4 * w * direction) < 1e-4
 
-    dataset = Dataset(outfile_path, 'r', 'NETCDF4')
-    times = dataset.variables['time'][:]
-    timeref = direction * np.arange(0, 5)
-    logger.info("analytical - time: {}".format(times))
-    logger.info("analytical - reference: {}".format(timeref))
-    assert np.allclose(times, timeref)
-    lons = dataset.variables['lon'][:]
+    ds = xr.open_zarr(outfile_path, mask_and_scale=False)
+    times = ds['time'][:].values.astype('timedelta64[s]')[0]
+    timeref = direction * np.arange(0, 5).astype('timedelta64[s]')
+    assert np.allclose(times, timeref, atol=np.timedelta64(1, 'ms'))
+    lons = ds['lon'][:].values
     assert np.allclose(lons, x0+direction*u*np.arange(0, 5))

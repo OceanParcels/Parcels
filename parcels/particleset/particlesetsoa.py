@@ -414,9 +414,9 @@ class ParticleSetSOA(BaseParticleSet):
 
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
-        """Initialise the ParticleSet from a netcdf ParticleFile.
+        """Initialise the ParticleSet from a zarr ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
-        in a netcdf ParticleFile at a certain time. Particle IDs are preserved if restart=True
+        in a zarr ParticleFile at a certain time. Particle IDs are preserved if restart=True
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
@@ -438,7 +438,7 @@ class ParticleSetSOA(BaseParticleSet):
                            'setting a new repeatdt will start particles from the _new_ particle '
                            'locations.' % filename)
 
-        pfile = xr.open_dataset(str(filename), decode_cf=True)
+        pfile = xr.open_zarr(str(filename))
         pfile_vars = [v for v in pfile.data_vars]
 
         vars = {}
