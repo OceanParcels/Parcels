@@ -33,14 +33,13 @@ def AdvectionDiffusionM1(particle, fieldset, time):
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
 
-    u = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+    u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
     bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
 
     Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat + fieldset.dres, particle.lon]
     Kym1 = fieldset.Kh_meridional[time, particle.depth, particle.lat - fieldset.dres, particle.lon]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
 
-    v = fieldset.V[time, particle.depth, particle.lat, particle.lon]
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
@@ -66,16 +65,18 @@ def AdvectionDiffusionEM(particle, fieldset, time):
     dWx = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
     dWy = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
 
+    u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+
     Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
-    ax = fieldset.U[time, particle.depth, particle.lat, particle.lon] + dKdx
+    ax = u + dKdx
     bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
 
     Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat + fieldset.dres, particle.lon]
     Kym1 = fieldset.Kh_meridional[time, particle.depth, particle.lat - fieldset.dres, particle.lon]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
-    ay = fieldset.V[time, particle.depth, particle.lat, particle.lon] + dKdy
+    ay = v + dKdy
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.

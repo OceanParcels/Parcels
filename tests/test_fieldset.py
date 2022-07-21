@@ -415,7 +415,8 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize, filename='test_sub
     fieldset_file = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, chunksize=chunksize)
 
     fieldset_file.add_field(field_data, "B")
-    assert len(fieldset_file.get_fields()) == 3
+    fields = [f for f in fieldset_file.get_fields() if isinstance(f, Field)]
+    assert len(fields) == 3
     if chunksize == 'auto':
         assert fieldset_file.gridset.size == 3
     else:
@@ -593,7 +594,7 @@ def test_fieldset_write(pset_mode, tmpdir):
     fieldset.U.to_write = True
 
     def UpdateU(particle, fieldset, time):
-        tmp = fieldset.U[particle]  # noqa
+        tmp1, tmp2 = fieldset.UV[particle]  # noqa
         fieldset.U.data[particle.ti, particle.yi, particle.xi] += 1
         fieldset.U.grid.time[0] = time
 
@@ -751,9 +752,11 @@ def test_periodic(pset_mode, mode, time_periodic, dt_sign):
     W = np.zeros((2, 2, 2, tsize), dtype=np.float32)
     temp = np.zeros((2, 2, 2, tsize), dtype=np.float32)
     temp[:, :, :, :] = temp_vec
+    D = np.ones((2, 2), dtype=np.float32)  # adding non-timevarying field
 
-    data = {'U': U, 'V': V, 'W': W, 'temp': temp}
-    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    data = {'U': U, 'V': V, 'W': W, 'temp': temp, 'D': D}
+    full_dims = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    dimensions = {'U': full_dims, 'V': full_dims, 'W': full_dims, 'temp': full_dims, 'D': {'lon': lon, 'lat': lat}}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
 
     def sampleTemp(particle, fieldset, time):
@@ -764,6 +767,8 @@ def test_periodic(pset_mode, mode, time_periodic, dt_sign):
         # test if we can interpolate UV and UVW together
         (particle.u1, particle.v1) = fieldset.UV[time+particle.dt, particle.depth, particle.lat, particle.lon]
         (particle.u2, particle.v2, w_) = fieldset.UVW[time+particle.dt, particle.depth, particle.lat, particle.lon]
+        # test if we can sample a non-timevarying field too
+        particle.d = fieldset.D[0, 0, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         temp = Variable('temp', dtype=np.float32, initial=20.)
@@ -771,6 +776,7 @@ def test_periodic(pset_mode, mode, time_periodic, dt_sign):
         u2 = Variable('u2', dtype=np.float32, initial=0.)
         v1 = Variable('v1', dtype=np.float32, initial=0.)
         v2 = Variable('v2', dtype=np.float32, initial=0.)
+        d = Variable('d', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, pclass=MyParticle, lon=[0.5], lat=[0.5], depth=[0.5])
     pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp), runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
@@ -785,6 +791,7 @@ def test_periodic(pset_mode, mode, time_periodic, dt_sign):
     assert np.allclose(temp_theo, pset.temp[0], atol=1e-5)
     assert np.allclose(pset.u1[0], pset.u2[0])
     assert np.allclose(pset.v1[0], pset.v2[0])
+    assert np.allclose(pset.d[0], 1.)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -873,10 +880,11 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     fieldset = FieldSet.from_parcels(filepath, chunksize={'time': ('time_counter', 1), 'depth': ('depthu', 1), 'lat': ('y', 2), 'lon': ('x', 2)})
 
     def SampleField(particle, fieldset, time):
-        particle.u_kernel = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+        particle.u_kernel, particle.v_kernel = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
     class SampleParticle(JITParticle):
         u_kernel = Variable('u_kernel', dtype=np.float32, initial=0.)
+        v_kernel = Variable('v_kernel', dtype=np.float32, initial=0.)
         u_scipy = Variable('u_scipy', dtype=np.float32, initial=fieldset.U)
 
     pset = pset_type['soa']['pset'](fieldset, pclass=SampleParticle, time=[0, time2], lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
@@ -1023,7 +1031,7 @@ def test_deferredload_simplefield(pset_mode, mode, direction, time_extrapolation
     pset = pset_type[pset_mode]['pset'](fieldset, SamplingParticle, lon=0.5, lat=0.5)
 
     def SampleU(particle, fieldset, time):
-        particle.p = fieldset.U[particle]
+        particle.p, tmp = fieldset.UV[particle]
 
     runtime = tdim*2 if time_extrapolation else None
     pset.execute(SampleU, dt=direction, runtime=runtime)

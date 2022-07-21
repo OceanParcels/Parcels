@@ -516,7 +516,7 @@ class BaseParticleSet(NDCluster):
         if verbose_progress:
             pbar.close()
 
-    def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
+    def show(self, with_particles=True, show_time=None, field=None, domain=None, projection='PlateCarree',
              land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
         """Method to 'show' a Parcels ParticleSet
 

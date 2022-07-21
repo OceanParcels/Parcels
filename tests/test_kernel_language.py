@@ -216,7 +216,7 @@ def test_if_withfield(fieldset, pset_mode, mode):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0], lat=[0])
 
     def kernel(particle, fieldset, time):
-        u = fieldset.U[time, 0, 0, 1.]
+        u, v = fieldset.UV[time, 0, 0, 1.]
         particle.p = 0
         if fieldset.U[time, 0, 0, 1.] == u:
             particle.p += 1
@@ -257,7 +257,7 @@ def test_print(fieldset, pset_mode, mode, capfd):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0.5], lat=[0.5])
 
     def kernel(particle, fieldset, time):
-        particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+        particle.p = fieldset.UV[time, particle.depth, particle.lat, particle.lon][0]
         tmp = 5
         print("%d %f %f" % (particle.id, particle.p, tmp))
     pset.execute(kernel, endtime=1., dt=1.)
