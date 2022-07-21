@@ -34,6 +34,7 @@ class BaseParticleFile(ABC):
     :param outputdt: Interval which dictates the update frequency of file output
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
+    :param chunks: Tuple (trajs, obs) to control the size of chunks in the zarr output.
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
     """
     write_ondelete = None
@@ -44,10 +45,11 @@ class BaseParticleFile(ABC):
     time_origin = None
     lonlatdepth_dtype = None
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False):
+    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False):
 
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
+        self.chunks = chunks
         self.lasttime_written = None  # variable to check if time has been written already
 
         self.particleset = particleset
@@ -200,18 +202,21 @@ class BaseParticleFile(ABC):
 
                 if len(data_dict) > 0:
                     if not self.written_first:
+                        if self.chunks is None:
+                            self.chunks = (maxtraj, 1)
                         ds = xr.Dataset(attrs=self.metadata)
                         attrs = self._create_variables_attribute_dict()
                         ids = [self.IDs_written[i] for i in data_dict['id']]
                         for var in data_dict:
                             varout = 'z' if var == 'depth' else var
                             varout = 'trajectory' if varout == 'id' else varout
-                            data = np.full((maxtraj, 1), np.nan, dtype=self.vars_to_write[var])
+                            data = np.full(self.chunks, np.nan, dtype=self.vars_to_write[var])
                             data[ids, 0] = data_dict[var]
                             ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=attrs[varout])
+                            ds[varout].encoding['chunks'] = self.chunks
                         for var in data_dict_once:
                             if var != 'id':  # TODO check if needed
-                                data = np.full((maxtraj,), np.nan, dtype=self.vars_to_write_once[var])
+                                data = np.full((self.chunks[0],), np.nan, dtype=self.vars_to_write_once[var])
                                 data[ids] = data_dict_once[var]
                                 ds[var] = xr.DataArray(data=data, dims=["traj"], attrs=attrs[var])
                         ds.to_zarr(self.fname, mode='w')

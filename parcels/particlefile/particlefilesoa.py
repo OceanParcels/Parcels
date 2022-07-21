@@ -14,12 +14,13 @@ class ParticleFileSOA(BaseParticleFile):
     :param outputdt: Interval which dictates the update frequency of file output
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
+    :param chunks: Tuple (trajs, obs) to control the size of chunks in the zarr output.
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False):
+    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False):
         super(ParticleFileSOA, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
-                                              write_ondelete=write_ondelete)
+                                              chunks=chunks, write_ondelete=write_ondelete)
 
     def __del__(self):
         super(ParticleFileSOA, self).__del__()
