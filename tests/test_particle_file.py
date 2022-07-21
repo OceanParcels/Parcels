@@ -246,7 +246,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
-    outfilepath = tmpdir.join("pfile_write_timebackward.nc")
+    outfilepath = tmpdir.join("pfile_write_timebackward.zarr")
 
     def Update_lon(particle, fieldset, time):
         particle.lon -= 0.1 * particle.dt
@@ -274,7 +274,7 @@ def test_set_calendar():
 def test_reset_dt(fieldset, pset_mode, mode, tmpdir):
     # Assert that p.dt gets reset when a write_time is not a multiple of dt
     # for p.dt=0.02 to reach outputdt=0.05 and endtime=0.1, the steps should be [0.2, 0.2, 0.1, 0.2, 0.2, 0.1], resulting in 6 kernel executions
-    filepath = tmpdir.join("pfile_reset_dt.nc")
+    filepath = tmpdir.join("pfile_reset_dt.zarr")
 
     def Update_lon(particle, fieldset, time):
         particle.lon += 0.1
