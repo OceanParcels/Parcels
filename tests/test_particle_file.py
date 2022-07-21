@@ -176,7 +176,7 @@ def test_write_dtypes_pfile(fieldset, pset_mode, mode, tmpdir):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('npart', [1, 2, 5])
 def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
-    filepath = tmpdir.join("pfile_once_written_variables.nc")
+    filepath = tmpdir.join("pfile_once_written_variables.zarr")
 
     def Update_v(particle, fieldset, time):
         particle.v_once += 1.

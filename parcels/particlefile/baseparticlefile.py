@@ -39,7 +39,6 @@ class BaseParticleFile(ABC):
     write_ondelete = None
     outputdt = None
     lasttime_written = None
-    name = None
     particleset = None
     parcels_mesh = None
     time_origin = None
@@ -51,7 +50,6 @@ class BaseParticleFile(ABC):
         self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
 
-        self.name = name
         self.particleset = particleset
         self.parcels_mesh = 'spherical'
         if self.particleset.fieldset is not None:
@@ -88,11 +86,10 @@ class BaseParticleFile(ABC):
                                np.uint16: np.iinfo(np.uint16).max, np.uint32: np.iinfo(np.uint32).max,
                                np.uint64: np.iinfo(np.uint64).max}
 
-        extension = os.path.splitext(str(self.name))[1]
-        self.fname = self.name if extension in ['.nc', '.nc4', '.zarr'] else "%s.zarr" % self.name
-        if extension == '':
-            extension = '.zarr'
-        self.outputformat = extension
+        extension = os.path.splitext(str(name))[1]
+        if extension in ['.nc', '.nc4']:
+            raise RuntimeError('Output in NetCDF is not supported anymore. Use .zarr extension for ParticleFile name.')
+        self.fname = name if extension in ['.zarr'] else "%s.zarr" % name
 
     @abstractmethod
     def _reserved_var_names(self):

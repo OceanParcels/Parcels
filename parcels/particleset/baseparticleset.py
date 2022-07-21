@@ -485,7 +485,7 @@ class BaseParticleSet(NDCluster):
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
                             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
-                        fldfilename = str(output_file.name).replace('.zarr', '_%.4d' % fld.to_write)
+                        fldfilename = str(output_file.fname).replace('.zarr', '_%.4d' % fld.to_write)
                         fld.write(fldfilename)
                         fld.to_write += 1
             if abs(time - next_output) < tol:
