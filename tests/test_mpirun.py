@@ -1,8 +1,8 @@
 from os import path, system
-from netCDF4 import Dataset
 import numpy as np
 import pytest
 import sys
+import xarray as xr
 try:
     from mpi4py import MPI
 except:
@@ -17,21 +17,23 @@ def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage):
     if MPI:
         stommel_file = path.join(path.dirname(__file__), '..', 'parcels',
                                  'examples', 'example_stommel.py')
-        outputMPI = tmpdir.join('StommelMPI.nc')
-        outputNoMPI = tmpdir.join('StommelNoMPI.nc')
+        outputMPI = tmpdir.join('StommelMPI.zarr')
+        outputNoMPI = tmpdir.join('StommelNoMPI.zarr')
 
         system('mpirun -np 2 python %s -p 4 -o %s -r %d -a %d -psm %s' % (stommel_file, outputMPI, repeatdt, maxage, pset_mode))
         system('python %s -p 4 -o %s -r %d -a %d -psm %s' % (stommel_file, outputNoMPI, repeatdt, maxage, pset_mode))
 
-        ncfile1 = Dataset(outputMPI, 'r', 'NETCDF4')
-        ncfile2 = Dataset(outputNoMPI, 'r', 'NETCDF4')
+        ds1 = xr.open_zarr(outputMPI)
+        ds2 = xr.open_zarr(outputNoMPI)
 
-        for v in ncfile2.variables.keys():
-            assert np.allclose(ncfile1.variables[v][:], ncfile2.variables[v][:])
+        for v in ds2.variables.keys():
+            if v == 'time':
+                continue  # skip because np.allclose does not work well on np.datetime64
+            assert np.allclose(ds1.variables[v][:], ds2.variables[v][:], equal_nan=True)
 
-        for a in ncfile2.ncattrs():
+        for a in ds2.attrs:
             if a != 'parcels_version':
-                assert getattr(ncfile1, a) == getattr(ncfile2, a)
+                assert ds1.attrs[a] == ds2.attrs[a]
 
-        ncfile1.close()
-        ncfile2.close()
+        ds1.close()
+        ds2.close()
