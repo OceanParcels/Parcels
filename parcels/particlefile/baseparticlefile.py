@@ -204,6 +204,9 @@ class BaseParticleFile(ABC):
                     if not self.written_first:
                         if self.chunks is None:
                             self.chunks = (maxtraj, 1)
+                        if self.chunks[0] < maxtraj:
+                            raise RuntimeError(f"chunks[0] is smaller than the size of the initial particleset ({self.chunks[0]} < {maxtraj}). "
+                                               "Please increase 'chunks' in your ParticleFile.")
                         ds = xr.Dataset(attrs=self.metadata)
                         attrs = self._create_variables_attribute_dict()
                         ids = [self.IDs_written[i] for i in data_dict['id']]
@@ -231,12 +234,13 @@ class BaseParticleFile(ABC):
                             varout = 'z' if var == 'depth' else var
                             varout = 'trajectory' if varout == 'id' else varout
                             if max(maxobs) >= Z[varout].shape[1]:
-                                a = np.full((Z[varout].shape[0], 1), np.nan,
+                                a = np.full((Z[varout].shape[0], self.chunks[1]), np.nan,
                                             dtype=self.vars_to_write[var])
                                 Z[varout].append(a, axis=1)
                                 zarr.consolidate_metadata(store)
                             if max(ids) >= Z[varout].shape[0]:
-                                a = np.full((maxtraj-Z[varout].shape[0], Z[varout].shape[1]), np.nan,
+                                extra_trajs = max(maxtraj-Z[varout].shape[0], self.chunks[0])
+                                a = np.full((extra_trajs, Z[varout].shape[1]), np.nan,
                                             dtype=self.vars_to_write[var])
                                 Z[varout].append(a, axis=0)
                                 zarr.consolidate_metadata(store)
