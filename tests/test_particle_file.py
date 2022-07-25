@@ -80,13 +80,15 @@ def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
+@pytest.mark.parametrize('chunks_obs', [1, None])
+def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, chunks_obs, tmpdir, npart=10):
 
     filepath = tmpdir.join("pfile_array_remove_particles.zarr")
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
                                         lat=0.5*np.ones(npart), time=0)
-    pfile = pset.ParticleFile(filepath)
+    chunks = (npart, chunks_obs) if chunks_obs else None
+    pfile = pset.ParticleFile(filepath, chunks=chunks)
     pfile.write(pset, 0)
     for _ in range(npart):
         pset.remove_indices(-1)
@@ -94,7 +96,12 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
     pfile.write(pset, 2)
 
     ds = xr.open_zarr(filepath)
-    assert ds['time'][:].shape == (npart, 1)
+    assert np.allclose(ds['time'][:, 0], np.timedelta64(0, 's'), atol=np.timedelta64(1, 'ms'))
+    if chunks_obs is not None:
+        assert ds['time'][:].shape == chunks
+    else:
+        assert ds['time'][:].shape[0] == npart
+        assert np.all(np.isnan(ds['time'][:, 1:]))
     ds.close()
 
 
@@ -119,7 +126,7 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, npart=3):
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat)
 
-    outfile = pset.ParticleFile(name=filepath, write_ondelete=True)
+    outfile = pset.ParticleFile(name=filepath, write_ondelete=True, chunks=(len(pset), 1))
     outfile.add_metadata('runtime', runtime)
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
@@ -127,7 +134,7 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, npart=3):
     ds = xr.open_zarr(filepath)
     assert ds.runtime == runtime
     lon = ds['lon'][:]
-    assert (lon.size == noutside)
+    assert (sum(np.isfinite(lon)) == noutside)
     ds.close()
 
 
@@ -219,7 +226,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
     elif type == 'timearr':
         pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
     outfilepath = tmpdir.join("pfile_repeated_release.zarr")
-    pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt))
+    pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt), chunks=(1, 1))
 
     def IncrLon(particle, fieldset, time):
         particle.sample_var += 1.

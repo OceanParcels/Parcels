@@ -490,7 +490,7 @@ def test_uniform_analytical(pset_mode, mode, u, v, w, direction, tmpdir):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
 
     outfile_path = tmpdir.join("uniformanalytical.zarr")
-    outfile = pset.ParticleFile(name=outfile_path, outputdt=1)
+    outfile = pset.ParticleFile(name=outfile_path, outputdt=1, chunks=(1, 1))
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
                  output_file=outfile)
     assert np.abs(pset.lon - x0 - 4 * u * direction) < 1e-6

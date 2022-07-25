@@ -203,7 +203,7 @@ class BaseParticleFile(ABC):
                 if len(data_dict) > 0:
                     if not self.written_first:
                         if self.chunks is None:
-                            self.chunks = (maxtraj, 1)
+                            self.chunks = (maxtraj, 10)
                         if self.chunks[0] < maxtraj:
                             raise RuntimeError(f"chunks[0] is smaller than the size of the initial particleset ({self.chunks[0]} < {maxtraj}). "
                                                "Please increase 'chunks' in your ParticleFile.")
