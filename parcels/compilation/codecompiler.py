@@ -237,7 +237,10 @@ Compilation command: %s
 Source/Destination file: %s
 Log file: %s
 
-Log output: %s""" % (" ".join(cmd), src, logfile.name, logfile2.read())
+Log output: %s
+If you are on macOS, it might help to type 'export CC=gcc'
+
+""" % (" ".join(cmd), src, logfile.name, logfile2.read())
                 raise RuntimeError(err)
         return True
 
