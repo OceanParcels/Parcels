@@ -61,7 +61,7 @@ def test_mitgcm_output_compare():
     run_mitgcm_zonally_reentrant("scipy")
     run_mitgcm_zonally_reentrant("jit")
 
-    ds_jit = xr.open_zarr("MIT_particles_jit.zarr", decode_times=False)
+    ds_jit = xr.open_zarr("MIT_particles_jit.zarr")
     ds_scipy = xr.open_zarr("MIT_particles_scipy.zarr")
 
     np.testing.assert_allclose(ds_jit.lat.data, ds_scipy.lat.data)

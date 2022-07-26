@@ -162,6 +162,14 @@ class BaseParticleFile(ABC):
         """
         self.metadata[name] = message
 
+    def _convert_varout_name(self, var):
+        if var == 'depth':
+            return 'z'
+        elif var == 'id':
+            return 'trajectory'
+        else:
+            return var
+
     def write(self, pset, time, deleted_only=False):
         """Write all data from one time step to the zarr file
 
@@ -169,21 +177,19 @@ class BaseParticleFile(ABC):
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles
         """
-        data_dict, data_dict_once = pset.to_dict(self, time, deleted_only=deleted_only)
+        data_dicts = pset.to_dict(self, time, deleted_only=deleted_only)
 
         if MPI:
-            all_data_dict = MPI.COMM_WORLD.gather(data_dict, root=0)
-            all_data_dict_once = MPI.COMM_WORLD.gather(data_dict_once, root=0)
+            all_data_dicts = MPI.COMM_WORLD.gather(data_dicts, root=0)
             rank = MPI.COMM_WORLD.Get_rank()
         else:
-            all_data_dict = [data_dict]
-            all_data_dict_once = [data_dict_once]
+            all_data_dicts = [data_dicts]
             rank = 0
 
         if rank == 0:
 
             maxtraj = len(self.IDs_written)
-            for data_dict, data_dict_once in zip(all_data_dict, all_data_dict_once):
+            for data_dict, data_dict_once in all_data_dicts:
                 if len(data_dict) > 0:
                     for i in data_dict['id']:
                         if i not in self.IDs_written:
@@ -211,8 +217,7 @@ class BaseParticleFile(ABC):
                         attrs = self._create_variables_attribute_dict()
                         ids = [self.IDs_written[i] for i in data_dict['id']]
                         for var in data_dict:
-                            varout = 'z' if var == 'depth' else var
-                            varout = 'trajectory' if varout == 'id' else varout
+                            varout = self._convert_varout_name(var)
                             data = np.full(self.chunks, np.nan, dtype=self.vars_to_write[var])
                             data[ids, 0] = data_dict[var]
                             ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=attrs[varout])
@@ -231,8 +236,7 @@ class BaseParticleFile(ABC):
                         maxobs = [self.maxobs[i] for i in data_dict['id']]
 
                         for var in data_dict:
-                            varout = 'z' if var == 'depth' else var
-                            varout = 'trajectory' if varout == 'id' else varout
+                            varout = self._convert_varout_name(var)
                             if max(maxobs) >= Z[varout].shape[1]:
                                 a = np.full((Z[varout].shape[0], self.chunks[1]), np.nan,
                                             dtype=self.vars_to_write[var])
