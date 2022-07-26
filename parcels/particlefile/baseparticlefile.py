@@ -58,19 +58,17 @@ class BaseParticleFile(ABC):
             self.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
         self.time_origin = self.particleset.time_origin
         self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
-        self.vars_to_write = {}
-        self.vars_to_write_once = {}
-        for v in self.particleset.collection.ptype.variables:
-            if v.to_write == 'once':
-                self.vars_to_write_once[v.name] = v.dtype
-            elif v.to_write is True:
-                self.vars_to_write[v.name] = v.dtype
-        if len(self.vars_to_write_once) > 0:
-            self.written_once = []
-        self.IDs_written = {}
-        self.maxobs = {}
-        self.maxtraj = 0
+        self.written_once = []
+        self.ids_written = {}
+        self.obs_written = {}
+        self.maxids = 0
+        self.maxobs = 0
         self.written_first = False
+        self.vars_to_write = {}
+        for var in self.particleset.collection.ptype.variables:
+            self.obs_written[var.name] = {}
+            if var.to_write:
+                self.vars_to_write[var.name] = var.dtype
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
                          "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
@@ -141,12 +139,6 @@ class BaseParticleFile(ABC):
                                 "standard_name": vname,
                                 "units": "unknown"}
 
-        for vname in self.vars_to_write_once:
-            attrs[vname] = {"_FillValue": self.fill_value_map[self.vars_to_write_once[vname]],
-                            "long_name": "",
-                            "standard_name": vname,
-                            "units": "unknown"}
-
         return attrs
 
     def __del__(self):
@@ -171,11 +163,14 @@ class BaseParticleFile(ABC):
         else:
             return var
 
+    def write_once(self, var):
+        return self.particleset.collection.ptype[var].to_write == 'once'
+
     def _extend_zarr_dims(self, Z, store, dtype, axis):
         if axis == 1:
             a = np.full((Z.shape[0], self.chunks[1]), np.nan, dtype=dtype)
         else:
-            extra_trajs = max(self.maxtraj - Z.shape[0], self.chunks[0])
+            extra_trajs = max(self.maxids - Z.shape[0], self.chunks[0])
             if len(Z.shape) == 2:
                 a = np.full((extra_trajs, Z.shape[1]), np.nan, dtype=dtype)
             else:
@@ -200,64 +195,54 @@ class BaseParticleFile(ABC):
             rank = 0
 
         if rank == 0:
-
-            for data_dict, data_dict_once in all_data_dicts:
+            for data_dict in all_data_dicts:
                 if len(data_dict) > 0:
-                    for i in data_dict['id']:
-                        if i not in self.IDs_written:
-                            self.IDs_written[i] = self.maxtraj
-                            self.maxobs[i] = 0
-                            self.maxtraj += 1
-                        else:
-                            self.maxobs[i] += 1
+                    for var in data_dict:
+                        for i in data_dict[var].keys():
+                            if i not in self.ids_written:
+                                self.ids_written[i] = self.maxids
+                                self.maxids += 1
+                            if i in self.obs_written[var]:
+                                self.obs_written[var][i] += 1
+                            else:
+                                self.obs_written[var][i] = 0
 
-                if len(data_dict_once) > 0:
-                    for i in data_dict_once['id']:
-                        if i not in self.IDs_written:
-                            self.IDs_written[i] = self.maxtraj
-                            self.maxobs[i] = -1
-                            self.maxtraj += 1
-
-                if len(data_dict) > 0:
                     if not self.written_first:
                         if self.chunks is None:
-                            self.chunks = (self.maxtraj, 10)
-                        if self.chunks[0] < self.maxtraj:
-                            raise RuntimeError(f"chunks[0] is smaller than the size of the initial particleset ({self.chunks[0]} < {self.maxtraj}). "
+                            self.chunks = (self.maxids, 10)
+                        if self.chunks[0] < self.maxids:
+                            raise RuntimeError(f"chunks[0] is smaller than the size of the initial particleset ({self.chunks[0]} < {self.maxids}). "
                                                "Please increase 'chunks' in your ParticleFile.")
                         ds = xr.Dataset(attrs=self.metadata)
                         attrs = self._create_variables_attribute_dict()
-                        ids = [self.IDs_written[i] for i in data_dict['id']]
                         for var in data_dict:
+                            ids = [self.ids_written[i] for i in data_dict[var].keys()]
                             varout = self._convert_varout_name(var)
-                            data = np.full(self.chunks, np.nan, dtype=self.vars_to_write[var])
-                            data[ids, 0] = data_dict[var]
-                            ds[varout] = xr.DataArray(data=data, dims=["traj", "obs"], attrs=attrs[varout])
+                            if self.write_once(var):
+                                data = np.full((self.chunks[0],), np.nan, dtype=self.vars_to_write[var])
+                                data[ids] = [*data_dict[var].values()]
+                                dims = ["traj"]
+                            else:
+                                data = np.full(self.chunks, np.nan, dtype=self.vars_to_write[var])
+                                data[ids, 0] = [*data_dict[var].values()]
+                                dims = ["traj", "obs"]
+                            ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
                             ds[varout].encoding['chunks'] = self.chunks
-                        for var in data_dict_once:
-                            if var != 'id':  # TODO check if needed
-                                data = np.full((self.chunks[0],), np.nan, dtype=self.vars_to_write_once[var])
-                                data[ids] = data_dict_once[var]
-                                ds[var] = xr.DataArray(data=data, dims=["traj"], attrs=attrs[var])
                         ds.to_zarr(self.fname, mode='w')
                         self.written_first = True
                     else:
                         store = zarr.DirectoryStore(self.fname)
                         Z = zarr.group(store=store, overwrite=False)
-                        ids = [self.IDs_written[i] for i in data_dict['id']]
-                        maxobs = [self.maxobs[i] for i in data_dict['id']]
-
                         for var in data_dict:
+                            maxobs = max(self.obs_written[var].values())
+                            obs = [self.obs_written[var][i] for i in data_dict[var].keys()]
+                            ids = [self.ids_written[i] for i in data_dict[var].keys()]
                             varout = self._convert_varout_name(var)
-                            if max(maxobs) >= Z[varout].shape[1]:
-                                self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
-                            if max(ids) >= Z[varout].shape[0]:
+                            if self.maxids > Z[varout].shape[0]:
                                 self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
-                            Z[varout].vindex[ids, maxobs] = data_dict[var]
-                        if len(data_dict_once) > 0:
-                            ids = [self.IDs_written[i] for i in data_dict_once['id']]
-                            for var in data_dict_once:
-                                if var != 'id':  # TODO check if needed
-                                    if max(ids) >= Z[var].shape[0]:
-                                        self._extend_zarr_dims(Z[var], store, dtype=self.vars_to_write_once[var], axis=0)
-                                    Z[var].vindex[ids] = data_dict_once[var]
+                            if self.write_once(var):
+                                Z[varout].vindex[ids] = [*data_dict[var].values()]
+                            else:
+                                if maxobs >= Z[varout].shape[1]:
+                                    self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
+                                Z[varout].vindex[ids, obs] = [*data_dict[var].values()]

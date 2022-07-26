@@ -85,6 +85,11 @@ class ParticleType(object):
     def __repr__(self):
         return "PType<%s>::%s" % (self.name, self.variables)
 
+    def __getitem__(self, item):
+        for v in self.variables:
+            if v.name == item:
+                return v
+
     @property
     def _cache_key(self):
         return "-".join(["%s:%s" % (v.name, v.dtype) for v in self.variables])
