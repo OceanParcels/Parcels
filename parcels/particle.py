@@ -185,7 +185,7 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
-    id = Variable('id', dtype=np.int64)
+    id = Variable('id', dtype=np.int64, to_write='once')
     fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)

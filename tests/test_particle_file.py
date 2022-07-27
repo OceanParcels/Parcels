@@ -264,7 +264,7 @@ def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     pset.execute(pset.Kernel(Update_lon), runtime=4, dt=-1.,
                  output_file=pfile)
     ds = xr.open_zarr(outfilepath)
-    trajs = ds['trajectory'][:, 0]
+    trajs = ds['trajectory'][:]
     assert np.all(np.diff(trajs.values) < 0)  # all particles written in order of start time
     ds.close()
 

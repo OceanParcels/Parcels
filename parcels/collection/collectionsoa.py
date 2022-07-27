@@ -25,15 +25,6 @@ if MPI:
                                'See http://oceanparcels.org/#parallel_install for more information')
 
 
-def _is_particle_started_yet(pd, time):
-    """We don't want to write a particle that is not started yet.
-    Particle will be written if:
-      * particle.time is equal to time argument of pfile.write()
-      * particle.time is before time (in case particle was deleted between previous export and current one)
-    """
-    return np.less_equal(pd['dt']*pd['time'], pd['dt']*time) | np.isclose(pd['time'], time)
-
-
 def _convert_to_flat_array(var):
     """Convert lists and single integers/floats to one-dimensional numpy arrays
 
@@ -821,6 +812,9 @@ class ParticleCollectionSOA(ParticleCollection):
 
     def setvardata(self, var, index, val):
         self._data[var][index] = val
+
+    def setallvardata(self, var, val):
+        self._data[var][:] = val
 
     def toArray(self):
         """

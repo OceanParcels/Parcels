@@ -888,6 +888,10 @@ class ParticleCollectionAOS(ParticleCollection):
     def setvardata(self, var, index, val):
         setattr(self._data[index], var, val)
 
+    def setallvardata(self, var, val):
+        for i in range(len(self._data)):
+            setattr(self._data[i], var, val)
+
     def toArray(self):
         """
         This function converts (or: transforms; reformats; translates) this collection into an array-like structure

@@ -905,6 +905,14 @@ class ParticleCollection(Collection):
         return False
 
     @abstractmethod
+    def getvardata(self, var, indices=None):
+        pass
+
+    @abstractmethod
+    def setvardata(self, var, index, val):
+        pass
+
+    @abstractmethod
     def set_variable_write_status(self, var, write_status):
         """
         Method to set the write status of a Variable

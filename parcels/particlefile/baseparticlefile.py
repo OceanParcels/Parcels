@@ -73,9 +73,8 @@ class BaseParticleFile(ABC):
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
 
-        self.data_dict_time = 0
-        self.indices_time = 0
-        self.writing_time = 0
+        # Reset fileid of each particle, in case new ParticleFile created for a ParticleSet
+        particleset.collection.setallvardata('fileid', -1)
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
                          "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
@@ -221,12 +220,16 @@ class BaseParticleFile(ABC):
                         if deleted_only is not False:
                             if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                                 indices_to_write = np.where(np.isin(pset.collection.getvardata('state'), [OperationCode.Delete]))[0]
-                            elif type(deleted_only) == np.ndarray and set(deleted_only).issubset([0, 1]):
-                                indices_to_write = np.where(deleted_only)[0]
-                            elif type(deleted_only) in [list, np.ndarray]:
-                                indices_to_write = deleted_only
+                            elif type(deleted_only) == np.ndarray:
+                                if set(deleted_only).issubset([0, 1]):
+                                    indices_to_write = np.where(deleted_only)[0]
+                                else:
+                                    indices_to_write = deleted_only
+                            elif type(deleted_only) == list:
+                                indices_to_write = np.array(deleted_only)
                         else:
                             indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
+                            self.lasttime_written = time
                         if len(indices_to_write) > 0:
                             ids2D = pset.collection.getvardata('fileid', indices_to_write)
                             for i in np.where(ids2D == -1)[0]:
@@ -240,9 +243,6 @@ class BaseParticleFile(ABC):
                                     first_write = indices_to_write[first_write]
                                     ids1D = pset.collection.getvardata('fileid', first_write)
                                     self.written_once.extend(first_write)
-
-                    if deleted_only is False:
-                        self.lasttime_written = time
 
                 if len(indices_to_write) > 0:
                     self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
