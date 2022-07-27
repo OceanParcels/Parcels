@@ -1,4 +1,3 @@
-from datetime import timedelta as delta
 from operator import attrgetter  # NOQA
 
 from ctypes import c_void_p
@@ -26,24 +25,6 @@ if MPI:
                                'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleCollectionAOS', 'ParticleCollectionIterableAOS', 'ParticleCollectionIteratorAOS']
-
-
-def _to_write_particles(pd, time):
-    """We don't want to write a particle that is not started yet.
-    Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
-    """
-    return [i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt))
-                                             or (np.isnan(p.dt) and np.equal(time, p.time)))
-                                            and np.isfinite(p.id))]
-
-
-def _is_particle_started_yet(particle, time):
-    """We don't want to write a particle that is not started yet.
-    Particle will be written if:
-      * particle.time is equal to time argument of pfile.write()
-      * particle.time is before time (in case particle was deleted between previous export and current one)
-    """
-    return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
 
 
 def _convert_to_flat_array(var):
@@ -890,60 +871,22 @@ class ParticleCollectionAOS(ParticleCollection):
         cstruct = self._data_c.ctypes.data_as(c_void_p)
         return cstruct
 
-    def toDictionary(self, pfile, time, deleted_only=False):
+    def _to_write_particles(self, pd, time):
+        """We don't want to write a particle that is not started yet.
+        Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
         """
-        Convert all Particle data from one time step to a python dictionary.
-        :param pfile: ParticleFile object requesting the conversion
-        :param time: Time at which to write ParticleSet
-        :param deleted_only: Flag to write only the deleted Particles
-        returns a dictionary with data of all variables to be written
+        return np.array([i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt))
+                                                         or (np.isnan(p.dt) and np.equal(time, p.time)))
+                                                         and np.isfinite(p.id))])
 
-        This function depends on the specific collection in question and thus needs to be specified in specific
-        derivative classes.
-        """
-        data_dict = {}
-        time = time.total_seconds() if isinstance(time, delta) else time
+    def getvardata(self, var, indices=None):
+        if indices is None:
+            return np.array([getattr(p, var) for p in self._data])
+        else:
+            return np.array([getattr(p, var) for p in self._data[indices]])
 
-        indices_to_write = []
-        if pfile.lasttime_written != time and (pfile.write_ondelete is False or deleted_only is not False):
-            if self._ncount == 0:
-                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
-            else:
-                if deleted_only:
-                    if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
-                        data_states = [p.state for p in self._data]
-                        indices_to_write = np.where(np.isin(data_states, [OperationCode.Delete]))[0]
-                    elif type(deleted_only) in [list, np.ndarray] and len(deleted_only) > 0:
-                        if type(deleted_only[0]) in [int, np.int32, np.uint32]:
-                            indices_to_write = deleted_only
-                        elif isinstance(deleted_only[0], ScipyParticle):
-                            indices_to_write = [i for i, p in self._data if p in deleted_only]
-                else:
-                    indices_to_write = _to_write_particles(self._data, time)
-                if len(indices_to_write) > 0:
-                    ids = [np.int64(p.id) for p in self._data[indices_to_write]]
-                    for var in pfile.vars_to_write:
-                        if self.ptype[var].to_write != 'once':
-                            data_dict[var] = dict(zip(ids, [getattr(p, var) for p in self._data[indices_to_write]]))
-
-                    if self.has_write_once_variables():
-                        first_write = [p for p in self._data if _is_particle_started_yet(p, time)
-                                       and (np.int64(p.id) not in pfile.written_once)]
-                        if np.any(first_write):
-                            written_once_ids = [np.int64(p.id) for p in first_write]
-                            pfile.written_once.extend(written_once_ids)
-                            for var in pfile.vars_to_write:
-                                if self.ptype[var].to_write == 'once':
-                                    data_dict[var] = dict(zip(written_once_ids, [getattr(p, var) for p in first_write]))
-
-                pset_errs = [p for p in self._data[indices_to_write] if p.state != OperationCode.Delete and abs(time-p.time) > 1e-3 and np.isfinite(p.time)]
-                for p in pset_errs:
-                    logger.warning_once('time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
-
-            if deleted_only is False:
-                pfile.lasttime_written = time
-
-        return data_dict
+    def setvardata(self, var, index, val):
+        setattr(self._data[index], var, val)
 
     def toArray(self):
         """

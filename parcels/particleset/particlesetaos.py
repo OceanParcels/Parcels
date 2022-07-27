@@ -573,17 +573,6 @@ class ParticleSetAOS(BaseParticleSet):
                    depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
 
-    def to_dict(self, pfile, time, deleted_only=False):
-        """
-        Convert all Particle data from one time step to a python dictionary.
-        :param pfile: ParticleFile object requesting the conversion
-        :param time: Time at which to write ParticleSet
-        :param deleted_only: Flag to write only the deleted Particles
-        returns two dictionaries: one for all variables to be written each outputdt, and one for all variables to be written once
-        """
-        return self._collection.toDictionary(pfile=pfile, time=time,
-                                             deleted_only=deleted_only)
-
     def __iadd__(self, particles):
         """Add particles to the ParticleSet. Note that this is an
         incremental add, the particles will be added to the ParticleSet
