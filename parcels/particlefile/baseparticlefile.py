@@ -72,6 +72,9 @@ class BaseParticleFile(ABC):
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
+        self.fileidoffset = particleset.collection.getvardata('id', [0])
+        if MPI:
+            self.fileidoffset = MPI.COMM_WORLD.bcast(self.fileidoffset, root=0)[0]
 
         # Reset fileid of each particle, in case new ParticleFile created for a ParticleSet
         particleset.collection.setallvardata('fileid', -1)
@@ -214,16 +217,15 @@ class BaseParticleFile(ABC):
                 self.lasttime_written = time
 
             if len(indices_to_write) > 0:
-                ids2D = pset.collection.getvardata('fileid', indices_to_write)
-                new_ids = np.where(ids2D == -1)[0]
+                ids2D = pset.collection.getvardata('id', indices_to_write) - self.fileidoffset
+                once_id = pset.collection.getvardata('fileid', indices_to_write)
+                new_ids = np.where(once_id == -1)[0]
                 ids1D = np.empty((len(new_ids),), dtype=int)
                 first_write = np.empty((len(new_ids),), dtype=int)
                 for i, id in enumerate(new_ids):
-                    ids2D[id] = self.maxids
-                    pset.collection.setvardata('fileid', indices_to_write[id], self.maxids)
-                    ids1D[i] = self.maxids
+                    pset.collection.setvardata('fileid', indices_to_write[id], 1)
+                    ids1D[i] = ids2D[id]
                     first_write[i] = indices_to_write[id]
-                    self.maxids += 1
 
                 if MPI:
                     maxids = MPI.COMM_WORLD.gather(max(ids2D)+1, root=0)
@@ -250,14 +252,18 @@ class BaseParticleFile(ABC):
                     if self.mpi_rank == 0:
                         ds = xr.Dataset(attrs=self.metadata)
                         attrs = self._create_variables_attribute_dict()
+                        if max(ids2D) > self.chunks[0]:
+                            arrsize = (self.maxids, self.chunks[1])
+                        else:
+                            arrsize = self.chunks
                         for var in self.vars_to_write:
                             varout = self._convert_varout_name(var)
                             if self.write_once(var):
-                                data = np.full((self.chunks[0],), np.nan, dtype=self.vars_to_write[var])
+                                data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
                                 data[ids1D] = pset.collection.getvardata(var, first_write)
                                 dims = ["traj"]
                             else:
-                                data = np.full(self.chunks, np.nan, dtype=self.vars_to_write[var])
+                                data = np.full(arrsize, np.nan, dtype=self.vars_to_write[var])
                                 data[ids2D, 0] = pset.collection.getvardata(var, indices_to_write)
                                 dims = ["traj", "obs"]
                             ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
