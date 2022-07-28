@@ -71,6 +71,7 @@ class BaseParticleFile(ABC):
         for var in self.particleset.collection.ptype.variables:
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
+        self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
 
         # Reset fileid of each particle, in case new ParticleFile created for a ParticleSet
         particleset.collection.setallvardata('fileid', -1)
@@ -224,38 +225,77 @@ class BaseParticleFile(ABC):
                     first_write[i] = indices_to_write[id]
                     self.maxids += 1
 
+                if MPI:
+                    maxids = MPI.COMM_WORLD.gather(max(ids2D)+1, root=0)
+                    ids2Dlens = MPI.COMM_WORLD.gather(len(ids2D), root=0)
+
+                    if self.mpi_rank == 0:
+                        maxids = max(maxids)
+                        ids2Dlens = min(ids2Dlens)
+                    minchunks = int(MPI.COMM_WORLD.bcast(ids2Dlens, root=0))
+                    self.maxids = int(MPI.COMM_WORLD.bcast(maxids, root=0))
+                else:
+                    minchunks = len(ids2D)
+                    self.maxids = max(ids2D)+1
+
                 if self.maxids > len(self.obs_written):
                     self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
 
                 if self.create_new_zarrfile:
                     if self.chunks is None:
-                        self.chunks = (self.maxids, 10)
-                    if self.chunks[0] < self.maxids:
+                        self.chunks = (minchunks, 10)
+                    if self.chunks[0] < minchunks:
                         raise RuntimeError(f"chunks[0] is smaller than the size of the initial particleset ({self.chunks[0]} < {self.maxids}). "
                                            "Please increase 'chunks' in your ParticleFile.")
-                    ds = xr.Dataset(attrs=self.metadata)
-                    attrs = self._create_variables_attribute_dict()
-                    for var in self.vars_to_write:
-                        varout = self._convert_varout_name(var)
-                        if self.write_once(var):
-                            data = np.full((self.chunks[0],), np.nan, dtype=self.vars_to_write[var])
-                            data[ids1D] = pset.collection.getvardata(var, first_write)
-                            dims = ["traj"]
-                        else:
-                            data = np.full(self.chunks, np.nan, dtype=self.vars_to_write[var])
-                            data[ids2D, 0] = pset.collection.getvardata(var, indices_to_write)
-                            dims = ["traj", "obs"]
-                        ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
-                        ds[varout].encoding['chunks'] = self.chunks
-                    ds.to_zarr(self.fname, mode='w')
+                    if self.mpi_rank == 0:
+                        ds = xr.Dataset(attrs=self.metadata)
+                        attrs = self._create_variables_attribute_dict()
+                        for var in self.vars_to_write:
+                            varout = self._convert_varout_name(var)
+                            if self.write_once(var):
+                                data = np.full((self.chunks[0],), np.nan, dtype=self.vars_to_write[var])
+                                data[ids1D] = pset.collection.getvardata(var, first_write)
+                                dims = ["traj"]
+                            else:
+                                data = np.full(self.chunks, np.nan, dtype=self.vars_to_write[var])
+                                data[ids2D, 0] = pset.collection.getvardata(var, indices_to_write)
+                                dims = ["traj", "obs"]
+                            ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
+                            ds[varout].encoding['chunks'] = self.chunks
+                        ds.to_zarr(self.fname, mode='w')
                     self.create_new_zarrfile = False
+                    if MPI:
+                        MPI.COMM_WORLD.barrier()
+                    if self.mpi_rank > 0:
+                        store = zarr.DirectoryStore(self.fname)
+                        Z = zarr.group(store=store, overwrite=False)
+                        for var in self.vars_to_write:
+                            varout = self._convert_varout_name(var)
+                            if self.maxids > Z[varout].shape[0]:
+                                self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
+
+                            if self.write_once(var):
+                                if len(ids1D) > 0:
+                                    Z[varout].vindex[ids1D] = pset.collection.getvardata(var, first_write)
+                            else:
+                                obs = self.obs_written[np.array(ids2D)]
+                                if max(obs) >= Z[varout].shape[1]:
+                                    self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
+                                Z[varout].vindex[ids2D, obs] = pset.collection.getvardata(var, indices_to_write)
+
                 else:
                     store = zarr.DirectoryStore(self.fname)
                     Z = zarr.group(store=store, overwrite=False)
                     for var in self.vars_to_write:
                         varout = self._convert_varout_name(var)
                         if self.maxids > Z[varout].shape[0]:
-                            self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
+                            if self.mpi_rank == 0:
+                                self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
+                    if MPI:
+                        MPI.COMM_WORLD.barrier()
+
+                    for var in self.vars_to_write:
+                        varout = self._convert_varout_name(var)
                         if self.write_once(var):
                             if len(ids1D) > 0:
                                 Z[varout].vindex[ids1D] = pset.collection.getvardata(var, first_write)
