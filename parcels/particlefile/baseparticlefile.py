@@ -40,6 +40,7 @@ class BaseParticleFile(ABC):
                      It is either a timedelta object or a positive double.
     :param chunks: Tuple (trajs, obs) to control the size of chunks in the zarr output.
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
+    :param create_new_zarrfile: Boolean to create a new file. Default is True
     """
     write_ondelete = None
     outputdt = None
@@ -49,7 +50,8 @@ class BaseParticleFile(ABC):
     time_origin = None
     lonlatdepth_dtype = None
 
-    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False):
+    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False,
+                 create_new_zarrfile=True):
 
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
@@ -66,7 +68,7 @@ class BaseParticleFile(ABC):
         self.ids_written = {}
         self.obs_written = {}
         self.maxids = 0
-        self.written_first = False
+        self.create_new_zarrfile = create_new_zarrfile
         self.vars_to_write = {}
         self.obs_written = np.empty((0,), dtype=int)
         for var in self.particleset.collection.ptype.variables:
@@ -184,12 +186,6 @@ class BaseParticleFile(ABC):
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
-    def has_write_once_variables(self):
-        for var in self.vars_to_write:
-            if self.write_once(var):
-                return True
-        return False
-
     def write(self, pset, time, deleted_only=False):
         """Write all data from one time step to the zarr file
 
@@ -200,88 +196,78 @@ class BaseParticleFile(ABC):
 
         time = time.total_seconds() if isinstance(time, delta) else time
 
-        # if MPI:
-        #     all_psets = MPI.COMM_WORLD.gather(pset, root=0)
-        #     rank = MPI.COMM_WORLD.Get_rank()
-        # else:
-        all_psets = [pset]
-        rank = 0
+        if self.lasttime_written != time and (self.write_ondelete is False or deleted_only is not False):
+            if pset.collection._ncount == 0:
+                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
+                return
 
-        if rank == 0:
-            for pset in all_psets:
-
-                indices_to_write = []
-                ids1D = []
-                ids2D = []
-                if self.lasttime_written != time and (self.write_ondelete is False or deleted_only is not False):
-                    if pset.collection._ncount == 0:
-                        logger.warning("ParticleSet is empty on writing as array at time %g" % time)
+            if deleted_only is not False:
+                if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
+                    indices_to_write = np.where(np.isin(pset.collection.getvardata('state'), [OperationCode.Delete]))[0]
+                elif type(deleted_only) == np.ndarray:
+                    if set(deleted_only).issubset([0, 1]):
+                        indices_to_write = np.where(deleted_only)[0]
                     else:
-                        if deleted_only is not False:
-                            if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
-                                indices_to_write = np.where(np.isin(pset.collection.getvardata('state'), [OperationCode.Delete]))[0]
-                            elif type(deleted_only) == np.ndarray:
-                                if set(deleted_only).issubset([0, 1]):
-                                    indices_to_write = np.where(deleted_only)[0]
-                                else:
-                                    indices_to_write = deleted_only
-                            elif type(deleted_only) == list:
-                                indices_to_write = np.array(deleted_only)
-                        else:
-                            indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
-                            self.lasttime_written = time
-                        if len(indices_to_write) > 0:
-                            ids2D = pset.collection.getvardata('fileid', indices_to_write)
-                            for i in np.where(ids2D == -1)[0]:
-                                ids2D[i] = self.maxids
-                                pset.collection.setvardata('fileid', indices_to_write[i], self.maxids)
-                                self.maxids += 1
+                        indices_to_write = deleted_only
+                elif type(deleted_only) == list:
+                    indices_to_write = np.array(deleted_only)
+            else:
+                indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
+                self.lasttime_written = time
 
-                            if self.has_write_once_variables():
-                                first_write = np.isin(indices_to_write, self.written_once, invert=True)
-                                if np.any(first_write):
-                                    first_write = indices_to_write[first_write]
-                                    ids1D = pset.collection.getvardata('fileid', first_write)
-                                    self.written_once.extend(first_write)
+            if len(indices_to_write) > 0:
+                ids2D = pset.collection.getvardata('fileid', indices_to_write)
+                for i in np.where(ids2D == -1)[0]:
+                    ids2D[i] = self.maxids
+                    pset.collection.setvardata('fileid', indices_to_write[i], self.maxids)
+                    self.maxids += 1
 
-                if len(indices_to_write) > 0:
+                first_write = np.isin(indices_to_write, self.written_once, invert=True)
+                if np.any(first_write):
+                    first_write = indices_to_write[first_write]
+                    ids1D = pset.collection.getvardata('fileid', first_write)
+                    self.written_once.extend(first_write)
+                else:
+                    ids1D = []
+
+                if self.maxids > len(self.obs_written):
                     self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
 
-                    if not self.written_first:
-                        if self.chunks is None:
-                            self.chunks = (self.maxids, 10)
-                        if self.chunks[0] < self.maxids:
-                            raise RuntimeError(f"chunks[0] is smaller than the size of the initial particleset ({self.chunks[0]} < {self.maxids}). "
-                                               "Please increase 'chunks' in your ParticleFile.")
-                        ds = xr.Dataset(attrs=self.metadata)
-                        attrs = self._create_variables_attribute_dict()
-                        for var in self.vars_to_write:
-                            varout = self._convert_varout_name(var)
-                            if self.write_once(var):
-                                data = np.full((self.chunks[0],), np.nan, dtype=self.vars_to_write[var])
-                                data[ids1D] = pset.collection.getvardata(var, first_write)
-                                dims = ["traj"]
-                            else:
-                                data = np.full(self.chunks, np.nan, dtype=self.vars_to_write[var])
-                                data[ids2D, 0] = pset.collection.getvardata(var, indices_to_write)
-                                dims = ["traj", "obs"]
-                            ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
-                            ds[varout].encoding['chunks'] = self.chunks
-                        ds.to_zarr(self.fname, mode='w')
-                        self.written_first = True
-                    else:
-                        store = zarr.DirectoryStore(self.fname)
-                        Z = zarr.group(store=store, overwrite=False)
-                        for var in self.vars_to_write:
-                            varout = self._convert_varout_name(var)
-                            if self.maxids > Z[varout].shape[0]:
-                                self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
-                            if self.write_once(var):
-                                if len(ids1D) > 0:
-                                    Z[varout].vindex[ids1D] = pset.collection.getvardata(var, first_write)
-                            else:
-                                obs = self.obs_written[np.array(ids2D)]
-                                if max(obs) >= Z[varout].shape[1]:
-                                    self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
-                                Z[varout].vindex[ids2D, obs] = pset.collection.getvardata(var, indices_to_write)
-                    self.obs_written[np.array(ids2D)] += 1
+                if self.create_new_zarrfile:
+                    if self.chunks is None:
+                        self.chunks = (self.maxids, 10)
+                    if self.chunks[0] < self.maxids:
+                        raise RuntimeError(f"chunks[0] is smaller than the size of the initial particleset ({self.chunks[0]} < {self.maxids}). "
+                                           "Please increase 'chunks' in your ParticleFile.")
+                    ds = xr.Dataset(attrs=self.metadata)
+                    attrs = self._create_variables_attribute_dict()
+                    for var in self.vars_to_write:
+                        varout = self._convert_varout_name(var)
+                        if self.write_once(var):
+                            data = np.full((self.chunks[0],), np.nan, dtype=self.vars_to_write[var])
+                            data[ids1D] = pset.collection.getvardata(var, first_write)
+                            dims = ["traj"]
+                        else:
+                            data = np.full(self.chunks, np.nan, dtype=self.vars_to_write[var])
+                            data[ids2D, 0] = pset.collection.getvardata(var, indices_to_write)
+                            dims = ["traj", "obs"]
+                        ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
+                        ds[varout].encoding['chunks'] = self.chunks
+                    ds.to_zarr(self.fname, mode='w')
+                    self.create_new_zarrfile = False
+                else:
+                    store = zarr.DirectoryStore(self.fname)
+                    Z = zarr.group(store=store, overwrite=False)
+                    for var in self.vars_to_write:
+                        varout = self._convert_varout_name(var)
+                        if self.maxids > Z[varout].shape[0]:
+                            self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
+                        if self.write_once(var):
+                            if len(ids1D) > 0:
+                                Z[varout].vindex[ids1D] = pset.collection.getvardata(var, first_write)
+                        else:
+                            obs = self.obs_written[np.array(ids2D)]
+                            if max(obs) >= Z[varout].shape[1]:
+                                self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
+                            Z[varout].vindex[ids2D, obs] = pset.collection.getvardata(var, indices_to_write)
+                self.obs_written[np.array(ids2D)] += 1
