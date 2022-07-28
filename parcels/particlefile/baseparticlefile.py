@@ -64,13 +64,10 @@ class BaseParticleFile(ABC):
             self.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
         self.time_origin = self.particleset.time_origin
         self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
-        self.written_once = []
-        self.ids_written = {}
-        self.obs_written = {}
         self.maxids = 0
+        self.obs_written = np.empty((0,), dtype=int)
         self.create_new_zarrfile = create_new_zarrfile
         self.vars_to_write = {}
-        self.obs_written = np.empty((0,), dtype=int)
         for var in self.particleset.collection.ptype.variables:
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
@@ -217,18 +214,15 @@ class BaseParticleFile(ABC):
 
             if len(indices_to_write) > 0:
                 ids2D = pset.collection.getvardata('fileid', indices_to_write)
-                for i in np.where(ids2D == -1)[0]:
-                    ids2D[i] = self.maxids
-                    pset.collection.setvardata('fileid', indices_to_write[i], self.maxids)
+                new_ids = np.where(ids2D == -1)[0]
+                ids1D = np.empty((len(new_ids),), dtype=int)
+                first_write = np.empty((len(new_ids),), dtype=int)
+                for i, id in enumerate(new_ids):
+                    ids2D[id] = self.maxids
+                    pset.collection.setvardata('fileid', indices_to_write[id], self.maxids)
+                    ids1D[i] = self.maxids
+                    first_write[i] = indices_to_write[id]
                     self.maxids += 1
-
-                first_write = np.isin(indices_to_write, self.written_once, invert=True)
-                if np.any(first_write):
-                    first_write = indices_to_write[first_write]
-                    ids1D = pset.collection.getvardata('fileid', first_write)
-                    self.written_once.extend(first_write)
-                else:
-                    ids1D = []
 
                 if self.maxids > len(self.obs_written):
                     self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
