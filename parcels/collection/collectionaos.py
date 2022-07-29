@@ -883,7 +883,10 @@ class ParticleCollectionAOS(ParticleCollection):
         if indices is None:
             return np.array([getattr(p, var) for p in self._data])
         else:
-            return np.array([getattr(p, var) for p in self._data[indices]])
+            try:
+                return np.array([getattr(p, var) for p in self._data[indices]])
+            except:  # Can occur for zero-length ParticleSets
+                return None
 
     def setvardata(self, var, index, val):
         setattr(self._data[index], var, val)

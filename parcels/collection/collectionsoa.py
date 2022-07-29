@@ -808,7 +808,10 @@ class ParticleCollectionSOA(ParticleCollection):
         if indices is None:
             return self._data[var]
         else:
-            return self._data[var][indices]
+            try:
+                return self._data[var][indices]
+            except:  # Can occur for zero-length ParticleSets
+                return None
 
     def setvardata(self, var, index, val):
         self._data[var][index] = val

@@ -72,7 +72,8 @@ class BaseParticleFile(ABC):
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
-        self.fileidoffset = particleset.collection.getvardata('id', [0])
+        id0 = particleset.collection.getvardata('id', [0])
+        self.fileidoffset = [0] if id0 is None else id0
         if MPI:
             self.fileidoffset = MPI.COMM_WORLD.bcast(self.fileidoffset, root=0)[0]
 
