@@ -293,11 +293,16 @@ class BaseParticleFile(ABC):
                 else:
                     store = zarr.DirectoryStore(self.fname)
                     Z = zarr.group(store=store, overwrite=False)
-                    for var in self.vars_to_write:
-                        varout = self._convert_varout_name(var)
-                        if self.maxids > Z[varout].shape[0]:
-                            if self.mpi_rank == 0:
+                    obs = self.obs_written[np.array(ids2D)]
+                    if self.mpi_rank == 0:
+                        for var in self.vars_to_write:
+                            varout = self._convert_varout_name(var)
+                            if self.maxids > Z[varout].shape[0]:
                                 self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
+                            if not self.write_once(var):
+                                if max(obs) >= Z[varout].shape[1]:
+                                    self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
+
                     if MPI:
                         MPI.COMM_WORLD.barrier()
 
@@ -307,8 +312,5 @@ class BaseParticleFile(ABC):
                             if len(ids1D) > 0:
                                 Z[varout].vindex[ids1D] = pset.collection.getvardata(var, first_write)
                         else:
-                            obs = self.obs_written[np.array(ids2D)]
-                            if max(obs) >= Z[varout].shape[1]:
-                                self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
                             Z[varout].vindex[ids2D, obs] = pset.collection.getvardata(var, indices_to_write)
                 self.obs_written[np.array(ids2D)] += 1
