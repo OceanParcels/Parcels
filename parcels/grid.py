@@ -262,11 +262,11 @@ class RectilinearGrid(Grid):
     """
 
     def __init__(self, lon, lat, time, time_origin, mesh):
-        assert(isinstance(lon, np.ndarray) and len(lon.shape) <= 1), 'lon is not a numpy vector'
-        assert(isinstance(lat, np.ndarray) and len(lat.shape) <= 1), 'lat is not a numpy vector'
+        assert (isinstance(lon, np.ndarray) and len(lon.shape) <= 1), 'lon is not a numpy vector'
+        assert (isinstance(lat, np.ndarray) and len(lat.shape) <= 1), 'lat is not a numpy vector'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
-            assert(len(time.shape) == 1), 'time is not a vector'
+            assert (len(time.shape) == 1), 'time is not a vector'
 
         super(RectilinearGrid, self).__init__(lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.size
@@ -328,7 +328,7 @@ class RectilinearZGrid(RectilinearGrid):
     def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
         super(RectilinearZGrid, self).__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
-            assert(len(depth.shape) <= 1), 'depth is not a vector'
+            assert (len(depth.shape) <= 1), 'depth is not a vector'
 
         self.gtype = GridCode.RectilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
@@ -363,7 +363,7 @@ class RectilinearSGrid(RectilinearGrid):
 
     def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
         super(RectilinearSGrid, self).__init__(lon, lat, time, time_origin, mesh)
-        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
+        assert (isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
 
         self.gtype = GridCode.RectilinearSGrid
         self.depth = depth
@@ -386,8 +386,8 @@ class RectilinearSGrid(RectilinearGrid):
 class CurvilinearGrid(Grid):
 
     def __init__(self, lon, lat, time=None, time_origin=None, mesh='flat'):
-        assert(isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
-        assert(isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
+        assert (isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
+        assert (isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
@@ -458,7 +458,7 @@ class CurvilinearZGrid(CurvilinearGrid):
     def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
         super(CurvilinearZGrid, self).__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
-            assert(len(depth.shape) == 1), 'depth is not a vector'
+            assert (len(depth.shape) == 1), 'depth is not a vector'
 
         self.gtype = GridCode.CurvilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
@@ -492,7 +492,7 @@ class CurvilinearSGrid(CurvilinearGrid):
 
     def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
         super(CurvilinearSGrid, self).__init__(lon, lat, time, time_origin, mesh)
-        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
+        assert (isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
         self.gtype = GridCode.CurvilinearSGrid
         self.depth = depth
