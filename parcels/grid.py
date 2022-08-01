@@ -390,7 +390,7 @@ class CurvilinearGrid(Grid):
         assert (isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
-            assert(len(time.shape) == 1), 'time is not a vector'
+            assert (len(time.shape) == 1), 'time is not a vector'
 
         lon = lon.squeeze()
         lat = lat.squeeze()
