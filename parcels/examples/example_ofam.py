@@ -33,7 +33,7 @@ def set_ofam_fieldset(deferred_load=True, use_xarray=False):
 def test_ofam_fieldset_fillvalues(use_xarray):
     fieldset = set_ofam_fieldset(deferred_load=False, use_xarray=use_xarray)
     # V.data[0, 0, 150] is a landpoint, that makes NetCDF4 generate a masked array, instead of an ndarray
-    assert(fieldset.V.data[0, 0, 150] == 0)
+    assert fieldset.V.data[0, 0, 150] == 0
 
 
 @pytest.mark.parametrize('dt', [delta(minutes=-5), delta(minutes=5)])
@@ -66,5 +66,5 @@ def test_ofam_particles(mode, use_xarray):
 
     pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5))
 
-    assert(abs(pset[0].lon - 173) < 1)
-    assert(abs(pset[0].lat - 11) < 1)
+    assert abs(pset[0].lon - 173) < 1
+    assert abs(pset[0].lat - 11) < 1

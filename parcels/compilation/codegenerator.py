@@ -658,9 +658,9 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
 
     def visit_Compare(self, node):
         self.visit(node.left)
-        assert(len(node.ops) == 1)
+        assert (len(node.ops) == 1)
         self.visit(node.ops[0])
-        assert(len(node.comparators) == 1)
+        assert (len(node.comparators) == 1)
         self.visit(node.comparators[0])
         node.ccode = "%s %s %s" % (node.left.ccode, node.ops[0].ccode,
                                    node.comparators[0].ccode)
