@@ -1079,7 +1079,7 @@ class FieldSet(object):
                     data = f.computeTimeChunk(data, tind)
                 data = f.rescale_and_set_minmax(data)
 
-                if(isinstance(f.data, DeferredArray)):
+                if (isinstance(f.data, DeferredArray)):
                     f.data = DeferredArray()
                 f.data = f.reshape(data)
                 if not f.chunk_set:

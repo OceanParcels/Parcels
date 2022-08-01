@@ -22,13 +22,13 @@ class Timer():
 
     def start(self):
         if self._parent:
-            assert(self._parent._start), ("Timer '%s' cannot be started. Its parent timer does not run" % self._name)
+            assert self._parent._start, ("Timer '%s' cannot be started. Its parent timer does not run" % self._name)
         if self._start is not None:
             raise RuntimeError('Timer %s cannot start since it is already running' % self._name)
         self._start = time.time()
 
     def stop(self):
-        assert(self._start), ("Timer '%s' was stopped before being started" % self._name)
+        assert self._start, ("Timer '%s' was stopped before being started" % self._name)
         self._t += time.time() - self._start
         self._start = None
 

@@ -181,7 +181,7 @@ def periodicBC(particle, fieldset, time):
 def test_advection_periodic_zonal(pset_mode, mode, xdim=100, ydim=100, halosize=3):
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=0.)
     fieldset.add_periodic_halo(zonal=True, halosize=halosize)
-    assert(len(fieldset.U.lon) == xdim + 2 * halosize)
+    assert len(fieldset.U.lon) == xdim + 2 * halosize
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
@@ -193,7 +193,7 @@ def test_advection_periodic_zonal(pset_mode, mode, xdim=100, ydim=100, halosize=
 def test_advection_periodic_meridional(pset_mode, mode, xdim=100, ydim=100):
     fieldset = periodicfields(xdim, ydim, uvel=0., vvel=1.)
     fieldset.add_periodic_halo(meridional=True)
-    assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
+    assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
@@ -205,8 +205,8 @@ def test_advection_periodic_meridional(pset_mode, mode, xdim=100, ydim=100):
 def test_advection_periodic_zonal_meridional(pset_mode, mode, xdim=100, ydim=100):
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=1.)
     fieldset.add_periodic_halo(zonal=True, meridional=True)
-    assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
-    assert(len(fieldset.U.lon) == xdim + 10)  # default halo size is 5 grid points
+    assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
+    assert len(fieldset.U.lon) == xdim + 10  # default halo size is 5 grid points
     assert np.allclose(np.diff(fieldset.U.lat), fieldset.U.lat[1]-fieldset.U.lat[0], rtol=0.001)
     assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1]-fieldset.U.lon[0], rtol=0.001)
 
