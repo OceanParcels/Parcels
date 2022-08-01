@@ -77,8 +77,8 @@ class BaseParticleFile(ABC):
         if MPI:
             self.fileidoffset = MPI.COMM_WORLD.bcast(self.fileidoffset, root=0)[0]
 
-        # Reset fileid of each particle, in case new ParticleFile created for a ParticleSet
-        particleset.collection.setallvardata('fileid', -1)
+        # Reset once-written flag of each particle, in case new ParticleFile created for a ParticleSet
+        particleset.collection.setallvardata('once_written', 0)
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
                          "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
@@ -244,12 +244,12 @@ class BaseParticleFile(ABC):
 
             if len(indices_to_write) > 0:
                 ids2D = pset.collection.getvardata('id', indices_to_write) - self.fileidoffset
-                once_id = pset.collection.getvardata('fileid', indices_to_write)
-                new_ids = np.where(once_id == -1)[0]
+                once_written = pset.collection.getvardata('once_written', indices_to_write)
+                new_ids = np.where(once_written == 0)[0]
                 ids1D = np.empty((len(new_ids),), dtype=int)
                 first_write = np.empty((len(new_ids),), dtype=int)
                 for i, id in enumerate(new_ids):
-                    pset.collection.setvardata('fileid', indices_to_write[id], 1)
+                    pset.collection.setvardata('once_written', indices_to_write[id], 1)
                     ids1D[i] = ids2D[id]
                     first_write[i] = indices_to_write[id]
 
