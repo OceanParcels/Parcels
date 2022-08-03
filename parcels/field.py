@@ -192,6 +192,7 @@ class Field(object):
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
         self._field_fb_class = kwargs.pop('FieldFileBuffer', None)
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
+        self.netcdf_decodewarning = kwargs.pop('netcdf_decodewarning', True)
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
         self.chunksize = kwargs.pop('chunksize', None)
@@ -229,7 +230,8 @@ class Field(object):
             return filenames
 
     @staticmethod
-    def collect_timeslices(timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine):
+    def collect_timeslices(timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine,
+                           netcdf_decodewarning=True):
         if timestamps is not None:
             dataFiles = []
             for findex in range(len(data_filenames)):
@@ -241,7 +243,8 @@ class Field(object):
             timeslices = []
             dataFiles = []
             for fname in data_filenames:
-                with _grid_fb_class(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
+                with _grid_fb_class(fname, dimensions, indices, netcdf_engine=netcdf_engine,
+                                    netcdf_decodewarning=netcdf_decodewarning) as filebuffer:
                     ftime = filebuffer.time
                     timeslices.append(ftime)
                     dataFiles.append([fname] * len(ftime))
@@ -267,7 +270,7 @@ class Field(object):
 
         :param filenames: list of filenames to read for the field. filenames can be a list [files] or
                a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
-               In the latetr case, time values are in filenames[data]
+               In the latter case, time values are in filenames[data]
         :param variable: Tuple mapping field name to variable name in the NetCDF file.
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
@@ -293,6 +296,9 @@ class Field(object):
         :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
                See also the Grid indexing documentation on oceanparcels.org
         :param chunksize: size of the chunks in dask loading
+        :param netcdf_decodewarning: boolean whether to show a warning id there is a problem decoding the netcdf files.
+               Default is True, but in some cases where these warnings are expected, it may be useful to silence them
+               by setting netcdf_decodewarning=False.
 
         For usage examples see the following tutorial:
 
@@ -328,6 +334,7 @@ class Field(object):
             depth_filename = depth_filename[0]
 
         netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
+        netcdf_decodewarning = kwargs.pop('netcdf_decodewarning', True)
 
         indices = {} if indices is None else indices.copy()
         for ind in indices:
@@ -349,7 +356,8 @@ class Field(object):
 
         _grid_fb_class = NetcdfFileBuffer
 
-        with _grid_fb_class(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
+        with _grid_fb_class(lonlat_filename, dimensions, indices, netcdf_engine,
+                            netcdf_decodewarning=netcdf_decodewarning) as filebuffer:
             lon, lat = filebuffer.lonlat
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
@@ -357,7 +365,8 @@ class Field(object):
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
 
         if 'depth' in dimensions:
-            with _grid_fb_class(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
+            with _grid_fb_class(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method,
+                                netcdf_decodewarning=netcdf_decodewarning) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 if dimensions['depth'] == 'not_yet_set':
                     depth = filebuffer.depth_dimensions
@@ -380,7 +389,7 @@ class Field(object):
             # across multiple files
             time, time_origin, timeslices, dataFiles = cls.collect_timeslices(timestamps, data_filenames,
                                                                               _grid_fb_class, dimensions,
-                                                                              indices, netcdf_engine)
+                                                                              indices, netcdf_engine, netcdf_decodewarning)
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             kwargs['dataFiles'] = dataFiles
@@ -388,7 +397,7 @@ class Field(object):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
             _, _, _, dataFiles = cls.collect_timeslices(timestamps, data_filenames, _grid_fb_class,
-                                                        dimensions, indices, netcdf_engine)
+                                                        dimensions, indices, netcdf_engine, netcdf_decodewarning)
             kwargs['dataFiles'] = dataFiles
 
         chunksize = kwargs.get('chunksize', None)
@@ -421,7 +430,7 @@ class Field(object):
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with _field_fb_class(fname, dimensions, indices, netcdf_engine,
                                      interp_method=interp_method, data_full_zdim=data_full_zdim,
-                                     chunksize=chunksize) as filebuffer:
+                                     chunksize=chunksize, netcdf_decodewarning=netcdf_decodewarning) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     filebuffer.name = filebuffer.parse_name(variable[1])
@@ -462,6 +471,7 @@ class Field(object):
         kwargs['indices'] = indices
         kwargs['time_periodic'] = time_periodic
         kwargs['netcdf_engine'] = netcdf_engine
+        kwargs['netcdf_decodewarning'] = netcdf_decodewarning
 
         return cls(variable, data, grid=grid, timestamps=timestamps,
                    allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
@@ -1387,7 +1397,8 @@ class Field(object):
                                           data_full_zdim=self.data_full_zdim,
                                           chunksize=self.chunksize,
                                           rechunk_callback_fields=rechunk_callback_fields,
-                                          chunkdims_name_map=self.netcdf_chunkdims_name_map)
+                                          chunkdims_name_map=self.netcdf_chunkdims_name_map,
+                                          netcdf_decodewarning=self.netcdf_decodewarning)
         filebuffer.__enter__()
         time_data = filebuffer.time
         time_data = g.time_origin.reltime(time_data)
