@@ -31,6 +31,7 @@ class NetcdfFileBuffer(_FileBuffer):
     def __init__(self, *args, **kwargs):
         self.lib = np
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
+        self.netcdf_decodewarning = kwargs.pop('netcdf_decodewarning', True)
         super(NetcdfFileBuffer, self).__init__(*args, **kwargs)
 
     def __enter__(self):
@@ -41,9 +42,10 @@ class NetcdfFileBuffer(_FileBuffer):
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
             self.dataset['decoded'] = True
         except:
-            logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         "
-                                "It will be opened with no decoding. Filling values might be wrongly parsed."
-                                % (self.filename, xr.__version__))
+            if self.netcdf_decodewarning:
+                logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         "
+                                    "It will be opened with no decoding. Filling values might be wrongly parsed."
+                                    % (self.filename, xr.__version__))
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
             self.dataset['decoded'] = False
         for inds in self.indices.values():
