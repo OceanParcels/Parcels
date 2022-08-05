@@ -200,7 +200,7 @@ class BaseParticleFile(ABC):
             # Helper function to write to a zarr file
             store = zarr.DirectoryStore(self.fname)
             Z = zarr.group(store=store, overwrite=False)
-            obs = self.obs_written[np.array(ids2D)]
+            obs = self.obs_written[np.array(ids)]
             if self.mpi_rank == 0:
                 for var in self.vars_to_write:
                     varout = self._convert_varout_name(var)
@@ -216,10 +216,10 @@ class BaseParticleFile(ABC):
             for var in self.vars_to_write:
                 varout = self._convert_varout_name(var)
                 if self.write_once(var):
-                    if len(ids1D) > 0:
-                        Z[varout].vindex[ids1D] = pset.collection.getvardata(var, first_write)
+                    if len(ids_once) > 0:
+                        Z[varout].vindex[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
                 else:
-                    Z[varout].vindex[ids2D, obs] = pset.collection.getvardata(var, indices_to_write)
+                    Z[varout].vindex[ids, obs] = pset.collection.getvardata(var, indices_to_write)
 
         time = time.total_seconds() if isinstance(time, delta) else time
 
@@ -243,19 +243,15 @@ class BaseParticleFile(ABC):
                 self.lasttime_written = time
 
             if len(indices_to_write) > 0:
-                ids2D = pset.collection.getvardata('id', indices_to_write) - self.fileidoffset
-                once_written = pset.collection.getvardata('once_written', indices_to_write)
-                new_ids = np.where(once_written == 0)[0]
-                ids1D = np.empty((len(new_ids),), dtype=int)
-                first_write = np.empty((len(new_ids),), dtype=int)
-                for i, id in enumerate(new_ids):
-                    pset.collection.setvardata('once_written', indices_to_write[id], 1)
-                    ids1D[i] = ids2D[id]
-                    first_write[i] = indices_to_write[id]
+                ids = pset.collection.getvardata('id', indices_to_write) - self.fileidoffset
+                once_ids = np.where(pset.collection.getvardata('once_written', indices_to_write) == 0)[0]
+                ids_once = ids[once_ids]
+                indices_to_write_once = indices_to_write[once_ids]
+                pset.collection.setvardata('once_written', indices_to_write_once, np.ones(len(ids_once)))
 
                 if MPI:
-                    maxids = MPI.COMM_WORLD.gather(max(ids2D)+1, root=0)
-                    ids2Dlens = MPI.COMM_WORLD.gather(len(ids2D), root=0)
+                    ids2Dlens = MPI.COMM_WORLD.gather(len(ids), root=0)
+                    maxids = MPI.COMM_WORLD.gather(max(ids)+1, root=0)
 
                     if self.mpi_rank == 0:
                         maxids = max(maxids)
@@ -263,8 +259,8 @@ class BaseParticleFile(ABC):
                     minchunks = int(MPI.COMM_WORLD.bcast(ids2Dlens, root=0))
                     self.maxids = int(MPI.COMM_WORLD.bcast(maxids, root=0))
                 else:
-                    minchunks = len(ids2D)
-                    self.maxids = max(ids2D)+1
+                    minchunks = len(ids)
+                    self.maxids = max(ids)+1
 
                 if self.maxids > len(self.obs_written):
                     self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
@@ -283,11 +279,11 @@ class BaseParticleFile(ABC):
                             varout = self._convert_varout_name(var)
                             if self.write_once(var):
                                 data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
-                                data[ids1D] = pset.collection.getvardata(var, first_write)
+                                data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
                                 dims = ["traj"]
                             else:
                                 data = np.full(arrsize, np.nan, dtype=self.vars_to_write[var])
-                                data[ids2D, 0] = pset.collection.getvardata(var, indices_to_write)
+                                data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
                                 dims = ["traj", "obs"]
                             ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
                             ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
@@ -299,4 +295,4 @@ class BaseParticleFile(ABC):
                         add_data_to_zarr(firstcall=True)
                 else:
                     add_data_to_zarr()
-                self.obs_written[np.array(ids2D)] += 1
+                self.obs_written[np.array(ids)] += 1

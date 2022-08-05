@@ -889,7 +889,11 @@ class ParticleCollectionAOS(ParticleCollection):
                 return None
 
     def setvardata(self, var, index, val):
-        setattr(self._data[index], var, val)
+        if isinstance(index, (np.int64, int, np.int32)):
+            setattr(self._data[index], var, val)
+        else:
+            for i, v in zip(index, val):
+                setattr(self._data[i], var, v)
 
     def setallvardata(self, var, val):
         for i in range(len(self._data)):
