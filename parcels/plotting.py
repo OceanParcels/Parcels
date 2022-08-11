@@ -104,7 +104,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
               vmin=None, vmax=None, savefile=None, **kwargs):
     """Function to plot a Parcels Field
 
-    :param show_time: Time in seconds after which to show the Field
+    :param show_time: Time in seconds from start after which to show the Field
     :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
     :param depth_level: depth level to be plotted (default 0)
     :param projection: type of cartopy projection to use (default PlateCarree)
