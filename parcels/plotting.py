@@ -96,7 +96,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         plt.show()
     else:
         plt.savefig(savefile)
-        logger.info('Plot saved to ' + savefile + '.png')
+        logger.info(f'Plot saved to {savefile}')
         plt.close()
 
 
