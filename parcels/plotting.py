@@ -17,7 +17,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
                   animation=False, **kwargs):
     """Function to plot a Parcels ParticleSet
 
-    :param show_time: Time at which to show the ParticleSet
+    :param show_time: Time in seconds from start after which to show the ParticleSet
     :param with_particles: Boolean whether particles are also plotted on Field
     :param field: Field to plot under particles (either None, a Field object, or 'vector')
     :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
@@ -96,7 +96,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         plt.show()
     else:
         plt.savefig(savefile)
-        logger.info('Plot saved to ' + savefile + '.png')
+        logger.info(f'Plot saved to {savefile}')
         plt.close()
 
 
@@ -104,7 +104,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
               vmin=None, vmax=None, savefile=None, **kwargs):
     """Function to plot a Parcels Field
 
-    :param show_time: Time at which to show the Field
+    :param show_time: Time in seconds from start after which to show the Field
     :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
     :param depth_level: depth level to be plotted (default 0)
     :param projection: type of cartopy projection to use (default PlateCarree)
