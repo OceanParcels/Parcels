@@ -271,7 +271,7 @@ class BaseParticleFile(ABC):
                     if self.mpi_rank == 0:
                         ds = xr.Dataset(attrs=self.metadata)
                         attrs = self._create_variables_attribute_dict()
-                        if self.maxids > minchunks:
+                        if (self.maxids > minchunks) or (self.maxids > self.chunks[0]):
                             arrsize = (self.maxids, self.chunks[1])
                         else:
                             arrsize = self.chunks
