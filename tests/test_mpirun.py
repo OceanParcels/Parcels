@@ -11,17 +11,17 @@ except:
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="skipping macOS test as problem with file in pytest")
 @pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
-@pytest.mark.parametrize('repeatdt', [200*86400, 10*86400])
-@pytest.mark.parametrize('maxage', [600*86400, 10*86400])
-def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage):
+@pytest.mark.parametrize('repeatdt, maxage', [(20*86400, 600*86400), (10*86400, 10*86400)])
+@pytest.mark.parametrize('nump', [4, 8])
+def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage, nump):
     if MPI:
         stommel_file = path.join(path.dirname(__file__), '..', 'parcels',
                                  'examples', 'example_stommel.py')
         outputMPI = tmpdir.join('StommelMPI.zarr')
         outputNoMPI = tmpdir.join('StommelNoMPI.zarr')
 
-        system('mpirun -np 2 python %s -p 4 -o %s -r %d -a %d -psm %s' % (stommel_file, outputMPI, repeatdt, maxage, pset_mode))
-        system('python %s -p 4 -o %s -r %d -a %d -psm %s' % (stommel_file, outputNoMPI, repeatdt, maxage, pset_mode))
+        system('mpirun -np 2 python %s -p %d -o %s -r %d -a %d -psm %s' % (stommel_file, nump, outputMPI, repeatdt, maxage, pset_mode))
+        system('python %s -p %d -o %s -r %d -a %d -psm %s' % (stommel_file, nump, outputNoMPI, repeatdt, maxage, pset_mode))
 
         ds1 = xr.open_zarr(outputMPI)
         ds2 = xr.open_zarr(outputNoMPI)
