@@ -315,6 +315,7 @@ def test_random_import_direct(fieldset, pset_mode, mode, npart=10):
     This function tests the direct import    
     """
     from parcels.rng import random
+
     def random_kern(particle, fieldset, time):
         rand = random()
         particle.lon += 0.001 * rand
@@ -334,6 +335,7 @@ def test_random_import_submodule(fieldset, pset_mode, mode, npart=10):
     This function tests the submodule import    
     """
     import parcels.rng as ParcelsRandom
+
     def random_kern(particle, fieldset, time):
         rand = ParcelsRandom.random()
         particle.lon += 0.001 * rand
