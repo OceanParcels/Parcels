@@ -98,7 +98,7 @@ class BaseParticleFile(ABC):
         if extension in ['.nc', '.nc4']:
             raise RuntimeError('Output in NetCDF is not supported anymore. Use .zarr extension for ParticleFile name.')
         self.fname = name if extension in ['.zarr'] else "%s.zarr" % name
-        if MPI.COMM_WORLD.Get_size() > 1:
+        if MPI and MPI.COMM_WORLD.Get_size() > 1:
             self.fname = os.path.join(self.fname, f"proc{self.mpi_rank}")  # TODO check if we can also do this with zarr-groups
 
     @abstractmethod
