@@ -1,4 +1,5 @@
 from os import path, system
+from glob import glob
 import numpy as np
 import pytest
 import sys
@@ -23,7 +24,13 @@ def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage, nump):
         system('mpirun -np 2 python %s -p %d -o %s -r %d -a %d -psm %s' % (stommel_file, nump, outputMPI, repeatdt, maxage, pset_mode))
         system('python %s -p %d -o %s -r %d -a %d -psm %s' % (stommel_file, nump, outputNoMPI, repeatdt, maxage, pset_mode))
 
-        ds1 = xr.open_zarr(outputMPI)
+        files = glob(path.join(outputMPI, "proc*"))
+        ds11 = xr.open_zarr(files[0])
+        ds12 = xr.open_zarr(files[1])
+        ds11 = ds11.assign_coords({'traj': ('traj', ds11.trajectory.values)})
+        ds12 = ds12.assign_coords({'traj': ('traj', ds12.trajectory.values)})
+        ds1 = xr.merge([ds11, ds12], compat='no_conflicts')
+
         ds2 = xr.open_zarr(outputNoMPI)
 
         for v in ds2.variables.keys():

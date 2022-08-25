@@ -66,16 +66,13 @@ class BaseParticleFile(ABC):
         self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
         self.maxids = 0
         self.obs_written = np.empty((0,), dtype=int)
+        self.pids_written = {}
         self.create_new_zarrfile = create_new_zarrfile
         self.vars_to_write = {}
         for var in self.particleset.collection.ptype.variables:
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
-        id0 = particleset.collection.getvardata('id', [0])
-        self.fileidoffset = [0] if id0 is None else id0
-        if MPI:
-            self.fileidoffset = MPI.COMM_WORLD.bcast(self.fileidoffset, root=0)[0]
 
         # Reset once-written flag of each particle, in case new ParticleFile created for a ParticleSet
         particleset.collection.setallvardata('once_written', 0)
@@ -101,6 +98,8 @@ class BaseParticleFile(ABC):
         if extension in ['.nc', '.nc4']:
             raise RuntimeError('Output in NetCDF is not supported anymore. Use .zarr extension for ParticleFile name.')
         self.fname = name if extension in ['.zarr'] else "%s.zarr" % name
+        if MPI.COMM_WORLD.Get_size() > 1:
+            self.fname = os.path.join(self.fname, f"proc{self.mpi_rank}")  # TODO check if we can also do this with zarr-groups
 
     @abstractmethod
     def _reserved_var_names(self):
@@ -196,31 +195,6 @@ class BaseParticleFile(ABC):
         :param deleted_only: Flag to write only the deleted Particles
         """
 
-        def add_data_to_zarr(firstcall=False):
-            # Helper function to write to a zarr file
-            store = zarr.DirectoryStore(self.fname)
-            Z = zarr.group(store=store, overwrite=False)
-            obs = self.obs_written[np.array(ids)]
-            if self.mpi_rank == 0:
-                for var in self.vars_to_write:
-                    varout = self._convert_varout_name(var)
-                    if self.maxids > Z[varout].shape[0]:
-                        self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
-                    if not self.write_once(var):
-                        if max(obs) >= Z[varout].shape[1]:
-                            self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
-
-            if MPI and (not firstcall):
-                MPI.COMM_WORLD.barrier()
-
-            for var in self.vars_to_write:
-                varout = self._convert_varout_name(var)
-                if self.write_once(var):
-                    if len(ids_once) > 0:
-                        Z[varout].vindex[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
-                else:
-                    Z[varout].vindex[ids, obs] = pset.collection.getvardata(var, indices_to_write)
-
         time = time.total_seconds() if isinstance(time, delta) else time
 
         if self.lasttime_written != time and (self.write_ondelete is False or deleted_only is not False):
@@ -243,56 +217,58 @@ class BaseParticleFile(ABC):
                 self.lasttime_written = time
 
             if len(indices_to_write) > 0:
-                ids = pset.collection.getvardata('id', indices_to_write) - self.fileidoffset
+                ids = np.zeros(len(indices_to_write), dtype=int)
+                for i, pid in enumerate(pset.collection.getvardata('id', indices_to_write)):  # TODO check if we can avoid for-loop here
+                    if pid not in self.pids_written:
+                        self.pids_written[pid] = self.maxids
+                        self.maxids += 1
+                    ids[i] = self.pids_written[pid]
+
                 once_ids = np.where(pset.collection.getvardata('once_written', indices_to_write) == 0)[0]
                 ids_once = ids[once_ids]
                 indices_to_write_once = indices_to_write[once_ids]
                 pset.collection.setvardata('once_written', indices_to_write_once, np.ones(len(ids_once)))
-
-                if MPI:
-                    ids2Dlens = MPI.COMM_WORLD.gather(len(ids), root=0)
-                    maxids = MPI.COMM_WORLD.gather(max(ids)+1, root=0)
-
-                    if self.mpi_rank == 0:
-                        maxids = max(maxids)
-                        ids2Dlens = min(ids2Dlens)
-                    minchunks = int(MPI.COMM_WORLD.bcast(ids2Dlens, root=0))
-                    self.maxids = int(MPI.COMM_WORLD.bcast(maxids, root=0))
-                else:
-                    minchunks = len(ids)
-                    self.maxids = max(ids)+1
 
                 if self.maxids > len(self.obs_written):
                     self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
 
                 if self.create_new_zarrfile:
                     if self.chunks is None:
-                        self.chunks = (minchunks, 10)
-                    if self.mpi_rank == 0:
-                        ds = xr.Dataset(attrs=self.metadata)
-                        attrs = self._create_variables_attribute_dict()
-                        if (self.maxids > minchunks) or (self.maxids > self.chunks[0]):
-                            arrsize = (self.maxids, self.chunks[1])
+                        self.chunks = (len(ids), 10)
+                    ds = xr.Dataset(attrs=self.metadata)
+                    attrs = self._create_variables_attribute_dict()
+                    if (self.maxids > len(ids)) or (self.maxids > self.chunks[0]):
+                        arrsize = (self.maxids, self.chunks[1])
+                    else:
+                        arrsize = self.chunks
+                    for var in self.vars_to_write:
+                        varout = self._convert_varout_name(var)
+                        if self.write_once(var):
+                            data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
+                            data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
+                            dims = ["traj"]
                         else:
-                            arrsize = self.chunks
-                        for var in self.vars_to_write:
-                            varout = self._convert_varout_name(var)
-                            if self.write_once(var):
-                                data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
-                                data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
-                                dims = ["traj"]
-                            else:
-                                data = np.full(arrsize, np.nan, dtype=self.vars_to_write[var])
-                                data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
-                                dims = ["traj", "obs"]
-                            ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
-                            ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
-                        ds.to_zarr(self.fname, mode='w')
+                            data = np.full(arrsize, np.nan, dtype=self.vars_to_write[var])
+                            data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
+                            dims = ["traj", "obs"]
+                        ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
+                        ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
+                    ds.to_zarr(self.fname, mode='w')  # , group=self.mpi_rank)  #TODO try to get to work with groups
                     self.create_new_zarrfile = False
-                    if MPI:
-                        MPI.COMM_WORLD.barrier()
-                    if self.mpi_rank > 0:
-                        add_data_to_zarr(firstcall=True)
                 else:
-                    add_data_to_zarr()
+                    store = zarr.DirectoryStore(self.fname)
+                    Z = zarr.group(store=store, overwrite=False)  # .create_group(self.mpi_rank)  #TODO try to get to work with groups
+                    obs = self.obs_written[np.array(ids)]
+                    for var in self.vars_to_write:
+                        varout = self._convert_varout_name(var)
+                        if self.maxids > Z[varout].shape[0]:
+                            self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
+                        if self.write_once(var):
+                            if len(ids_once) > 0:
+                                Z[varout].vindex[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
+                        else:
+                            if max(obs) >= Z[varout].shape[1]:
+                                self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
+                            Z[varout].vindex[ids, obs] = pset.collection.getvardata(var, indices_to_write)
+
                 self.obs_written[np.array(ids)] += 1
