@@ -302,3 +302,41 @@ def test_execution_keep_cfiles_and_nocompilation_warnings(pset_mode, fieldset, d
         assert path.exists(cfile)
         with open(logfile) as f:
             assert 'warning' not in f.read(), 'Compilation WARNING in log file'
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_random_import_direct(fieldset, pset_mode, mode, npart=10):
+    """
+    Stemming from issue https://github.com/OceanParcels/parcels/issues/1224
+    Tests whether importing the random functions used within parcels
+    works within kernels via direct and submodule based imports.
+
+    This function tests the direct import    
+    """
+    from parcels.rng import random
+    def random_kern(particle, fieldset, time):
+        rand = random()
+        particle.lon += 0.001 * rand
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.], lat=[0.])
+    pset.execute(pset.Kernel(AdvectionRK4) + pset.Kernel(random_kern), endtime=1., dt=1.)
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_random_import_submodule(fieldset, pset_mode, mode, npart=10):
+    """
+    Stemming from issue https://github.com/OceanParcels/parcels/issues/1224
+    Tests whether importing the random functions used within parcels
+    works within kernels via direct and submodule based imports.
+
+    This function tests the submodule import    
+    """
+    import parcels.rng as ParcelsRandom
+    def random_kern(particle, fieldset, time):
+        rand = ParcelsRandom.random()
+        particle.lon += 0.001 * rand
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.], lat=[0.])
+    pset.execute(pset.Kernel(AdvectionRK4) + pset.Kernel(random_kern), endtime=1., dt=1.)
