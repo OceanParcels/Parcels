@@ -312,7 +312,7 @@ def test_random_import_direct(fieldset, pset_mode, mode, npart=10):
     Tests whether importing the random functions used within parcels
     works within kernels via direct and submodule based imports.
 
-    This function tests the direct import    
+    This function tests the direct import.
     """
     from parcels.rng import random
 
@@ -332,7 +332,7 @@ def test_random_import_submodule(fieldset, pset_mode, mode, npart=10):
     Tests whether importing the random functions used within parcels
     works within kernels via direct and submodule based imports.
 
-    This function tests the submodule import    
+    This function tests the submodule import.
     """
     import parcels.rng as ParcelsRandom
 
