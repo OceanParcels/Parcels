@@ -218,7 +218,8 @@ class BaseParticleFile(ABC):
 
             if len(indices_to_write) > 0:
                 ids = np.zeros(len(indices_to_write), dtype=int)
-                for i, pid in enumerate(pset.collection.getvardata('id', indices_to_write)):  # TODO check if we can avoid for-loop here
+                pids = pset.collection.getvardata('id', indices_to_write)
+                for i, pid in enumerate(pids):  # TODO check if we can avoid for-loop here
                     if pid not in self.pids_written:
                         self.pids_written[pid] = self.maxids
                         self.maxids += 1
@@ -235,7 +236,11 @@ class BaseParticleFile(ABC):
                 if self.create_new_zarrfile:
                     if self.chunks is None:
                         self.chunks = (len(ids), 10)
-                    ds = xr.Dataset(attrs=self.metadata)
+                    elif self.chunks[0] > len(ids):
+                        logger.warning(f'Chunk size for trajectory ({self.chunks[0]}) is larger than length of initial set to write. '
+                                       f'Reducing ParticleFile chunks to ({len(ids)}, {self.chunks[1]})')
+                        self.chunks = (len(ids), self.chunks[1])
+                    ds = xr.Dataset(attrs=self.metadata, coords={"trajectory": ("trajectory", pids)})
                     attrs = self._create_variables_attribute_dict()
                     if (self.maxids > len(ids)) or (self.maxids > self.chunks[0]):
                         arrsize = (self.maxids, self.chunks[1])
@@ -243,14 +248,14 @@ class BaseParticleFile(ABC):
                         arrsize = self.chunks
                     for var in self.vars_to_write:
                         varout = self._convert_varout_name(var)
-                        if self.write_once(var):
+                        if self.write_once(var) and var not in ['trajectory']:
                             data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
                             data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
-                            dims = ["traj"]
+                            dims = ["trajectory"]
                         else:
                             data = np.full(arrsize, np.nan, dtype=self.vars_to_write[var])
                             data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
-                            dims = ["traj", "obs"]
+                            dims = ["trajectory", "obs"]
                         ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
                         ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
                     ds.to_zarr(self.fname, mode='w')  # , group=self.mpi_rank)  #TODO try to get to work with groups

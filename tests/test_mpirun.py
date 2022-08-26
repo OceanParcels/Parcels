@@ -27,8 +27,6 @@ def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage, nump):
         files = glob(path.join(outputMPI, "proc*"))
         ds11 = xr.open_zarr(files[0])
         ds12 = xr.open_zarr(files[1])
-        ds11 = ds11.assign_coords({'traj': ('traj', ds11.trajectory.values)})
-        ds12 = ds12.assign_coords({'traj': ('traj', ds12.trajectory.values)})
         ds1 = xr.merge([ds11, ds12], compat='no_conflicts')
 
         ds2 = xr.open_zarr(outputNoMPI)
