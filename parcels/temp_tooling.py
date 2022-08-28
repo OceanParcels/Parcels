@@ -81,7 +81,6 @@ def delft_to_fieldset(path: Path, return_ds: bool = False, **kwargs) -> FieldSet
     
     if return_ds:
         return ds
-    ds = ds.isel(time=slice(-3, -1))
     field_set = FieldSet.from_xarray_dataset(
         ds,
         variables,
