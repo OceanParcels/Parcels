@@ -99,7 +99,7 @@ class BaseParticleFile(ABC):
             raise RuntimeError('Output in NetCDF is not supported anymore. Use .zarr extension for ParticleFile name.')
         self.fname = name if extension in ['.zarr'] else "%s.zarr" % name
         if MPI and MPI.COMM_WORLD.Get_size() > 1:
-            self.fname = os.path.join(self.fname, f"proc{self.mpi_rank}")  # TODO check if we can also do this with zarr-groups
+            self.fname = os.path.join(self.fname, f"proc{self.mpi_rank:02d}")  # TODO check if we can also do this with zarr-groups
 
     @abstractmethod
     def _reserved_var_names(self):
@@ -178,6 +178,9 @@ class BaseParticleFile(ABC):
     def _extend_zarr_dims(self, Z, store, dtype, axis):
         if axis == 1:
             a = np.full((Z.shape[0], self.chunks[1]), np.nan, dtype=dtype)
+            obs = zarr.group(store=store, overwrite=False)["obs"]
+            if len(obs) == Z.shape[1]:
+                obs.append(np.arange(self.chunks[1])+obs[-1]+1)
         else:
             extra_trajs = max(self.maxids - Z.shape[0], self.chunks[0])
             if len(Z.shape) == 2:
@@ -239,12 +242,13 @@ class BaseParticleFile(ABC):
                         logger.warning(f'Chunk size for trajectory ({self.chunks[0]}) is larger than length of initial set to write. '
                                        f'Reducing ParticleFile chunks to ({len(ids)}, {self.chunks[1]})')
                         self.chunks = (len(ids), self.chunks[1])
-                    ds = xr.Dataset(attrs=self.metadata, coords={"trajectory": ("trajectory", pids)})
-                    attrs = self._create_variables_attribute_dict()
                     if (self.maxids > len(ids)) or (self.maxids > self.chunks[0]):
                         arrsize = (self.maxids, self.chunks[1])
                     else:
                         arrsize = self.chunks
+                    ds = xr.Dataset(attrs=self.metadata, coords={"trajectory": ("trajectory", pids),
+                                                                 "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))})
+                    attrs = self._create_variables_attribute_dict()
                     for var in self.vars_to_write:
                         varout = self._convert_varout_name(var)
                         if self.write_once(var) and var not in ['trajectory']:
