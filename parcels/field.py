@@ -1897,6 +1897,14 @@ class SummedField(list):
                 self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
         self.name = name
 
+    def eval(self, time, z, y, x, particle=None, applyConversion=True):
+        vals = []
+        val = None
+        for iField in range(len(self)):
+            val = list.__getitem__(self, iField).eval(time, z, y, x, applyConversion=applyConversion)
+            vals.append(val)
+        return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
+
     def __getitem__(self, key):
         if isinstance(key, int):
             return list.__getitem__(self, key)

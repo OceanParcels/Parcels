@@ -814,16 +814,20 @@ def test_summedfields(pset_mode, mode, with_W, k_sample_p, mesh):
     fieldsetS.add_field((P1+P4)+(P2+P3), name='P')
     assert np.allclose(fieldsetS.P[0, 0, 0, 0], 60)
 
+    def sample_UV_noconvert(particle, fieldset, time):
+        (particle.u, particle.v) = fieldset.UV.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)  # noqa
+
     if with_W:
         W1 = Field('W', 2*np.ones((zdim * gf, ydim * gf, xdim * gf), dtype=np.float32), grid=U1.grid)
         W2 = Field('W', np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
         fieldsetS.add_field(W1+W2, name='W')
         pset = pset_type[pset_mode]['pset'](fieldsetS, pclass=pclass(mode), lon=[0], lat=[0.9])
-        pset.execute(AdvectionRK4_3D+pset.Kernel(k_sample_p), runtime=2, dt=1)
+        pset.execute(AdvectionRK4_3D+pset.Kernel(k_sample_p)+sample_UV_noconvert, runtime=2, dt=1)
         assert np.isclose(pset.depth[0], 6)
     else:
         pset = pset_type[pset_mode]['pset'](fieldsetS, pclass=pclass(mode), lon=[0], lat=[0.9])
-        pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
+        pset.execute(AdvectionRK4+pset.Kernel(k_sample_p)+sample_UV_noconvert, runtime=2, dt=1)
+    assert np.isclose(pset.u[0], 0.3)
     assert np.isclose(pset.p[0], 60)
     assert np.isclose(pset.lon[0]*conv, 0.6, atol=1e-3)
     assert np.isclose(pset.lat[0], 0.9)

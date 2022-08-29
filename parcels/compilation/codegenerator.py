@@ -118,17 +118,29 @@ class SummedFieldEvalNode(IntrinsicNode):
 
 
 class SummedVectorFieldNode(IntrinsicNode):
+    def __getattr__(self, attr):
+        if attr == "eval":
+            return SummedVectorFieldEvalCallNode(self)
+
     def __getitem__(self, attr):
         return SummedVectorFieldEvalNode(self.obj, attr)
 
 
+class SummedVectorFieldEvalCallNode(IntrinsicNode):
+    def __init__(self, field):
+        self.field = field
+        self.obj = field.obj
+        self.ccode = ""
+
+
 class SummedVectorFieldEvalNode(IntrinsicNode):
-    def __init__(self, fields, args, var, var2, var3):
+    def __init__(self, fields, args, var, var2, var3, convert=True):
         self.fields = fields
         self.args = args
         self.var = var  # the variable in which the interpolated field is written
         self.var2 = var2  # second variable for UV interpolation
         self.var3 = var3  # third variable for UVW interpolation
+        self.convert = convert  # whether to convert the result (like field.applyConversion)
 
 
 class NestedFieldNode(IntrinsicNode):
@@ -319,6 +331,10 @@ class IntrinsicTransformer(ast.NodeTransformer):
                 raise NotImplementedError("Cannot convert numpy functions in kernels to C-code.\n"
                                           "Either use functions from the math library or run Parcels in Scipy mode.\n"
                                           "For more information, see http://oceanparcels.org/faq.html#kernelwriting")
+            elif node.value.id in ['random']:
+                raise NotImplementedError("Cannot convert random functions in kernels to C-code.\n"
+                                          "Use `import parcels.rng as ParcelsRandom` and then ParcelsRandom.random(), ParcelsRandom.uniform() etc.\n"
+                                          "For more information, see http://oceanparcels.org/faq.html#kernelwriting")
             else:
                 raise NotImplementedError("Cannot convert '%s' used in kernel to C-code" % node.value.id)
 
@@ -446,6 +462,28 @@ class IntrinsicTransformer(ast.NodeTransformer):
                 return ast.Tuple([ast.Name(id=tmp1), ast.Name(id=tmp2), ast.Name(id=tmp3)], ast.Load())
             else:
                 return ast.Tuple([ast.Name(id=tmp1), ast.Name(id=tmp2)], ast.Load())
+
+        elif isinstance(node.func, SummedVectorFieldEvalCallNode):
+            # get a temporary value to assign result to
+            tmp = [self.get_tmp() for _ in range(len(node.func.obj))]
+            tmp2 = [self.get_tmp() for _ in range(len(node.func.obj))]
+            tmp3 = [self.get_tmp() if list.__getitem__(node.func.obj, 0).vector_type == '3D' else None for _ in range(len(node.func.obj))]
+            # whether to convert
+            convert = True
+            if "applyConversion" in node.keywords:
+                k = node.keywords["applyConversion"]
+                if isinstance(k, ast.NameConstant):
+                    convert = k.value
+
+            # convert args to Index(Tuple(*args))
+            args = ast.Index(value=ast.Tuple(node.args, ast.Load()))
+
+            self.stmt_stack += [SummedVectorFieldEvalNode(node.func.field, args, tmp, tmp2, tmp3, convert)]
+            if all(tmp3):
+                return ast.Tuple([ast.Name(id='+'.join(tmp)), ast.Name(id='+'.join(tmp2)), ast.Name(id='+'.join(tmp3))], ast.Load())
+            else:
+                return ast.Tuple([ast.Name(id='+'.join(tmp)), ast.Name(id='+'.join(tmp2))], ast.Load())
+
         return node
 
 
@@ -975,14 +1013,14 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
             ccode_eval = fld.ccode_eval_array(var, var2, var3,
                                               fld.U, fld.V, fld.W, *args)
-            if fld.U.interp_method != 'cgrid_velocity':
+            if node.convert and fld.U.interp_method != 'cgrid_velocity':
                 ccode_conv1 = fld.U.ccode_convert(*args)
                 ccode_conv2 = fld.V.ccode_convert(*args)
                 statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
                               c.Statement("%s *= %s" % (var2, ccode_conv2))]
             else:
                 statements = []
-            if fld.vector_type == '3D':
+            if node.convert and fld.vector_type == '3D':
                 ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
@@ -1125,14 +1163,14 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
             ccode_eval = fld.ccode_eval_object(var, var2, var3, fld.U, fld.V, fld.W, *args)
-            if fld.U.interp_method != 'cgrid_velocity':
+            if node.convert and fld.U.interp_method != 'cgrid_velocity':
                 ccode_conv1 = fld.U.ccode_convert(*args)
                 ccode_conv2 = fld.V.ccode_convert(*args)
                 statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
                               c.Statement("%s *= %s" % (var2, ccode_conv2))]
             else:
                 statements = []
-            if fld.vector_type == '3D':
+            if node.convert and fld.vector_type == '3D':
                 ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
