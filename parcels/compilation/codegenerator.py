@@ -331,6 +331,10 @@ class IntrinsicTransformer(ast.NodeTransformer):
                 raise NotImplementedError("Cannot convert numpy functions in kernels to C-code.\n"
                                           "Either use functions from the math library or run Parcels in Scipy mode.\n"
                                           "For more information, see http://oceanparcels.org/faq.html#kernelwriting")
+            elif node.value.id in ['random']:
+                raise NotImplementedError("Cannot convert random functions in kernels to C-code.\n"
+                                          "Use `import parcels.rng as ParcelsRandom` and then ParcelsRandom.random(), ParcelsRandom.uniform() etc.\n"
+                                          "For more information, see http://oceanparcels.org/faq.html#kernelwriting")
             else:
                 raise NotImplementedError("Cannot convert '%s' used in kernel to C-code" % node.value.id)
 
@@ -692,9 +696,9 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
 
     def visit_Compare(self, node):
         self.visit(node.left)
-        assert(len(node.ops) == 1)
+        assert (len(node.ops) == 1)
         self.visit(node.ops[0])
-        assert(len(node.comparators) == 1)
+        assert (len(node.comparators) == 1)
         self.visit(node.comparators[0])
         node.ccode = "%s %s %s" % (node.left.ccode, node.ops[0].ccode,
                                    node.comparators[0].ccode)

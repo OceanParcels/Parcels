@@ -140,7 +140,7 @@ def test_fieldset_polar_with_halo(fieldset_geometric_polar, pset_mode, mode):
     fieldset_geometric_polar.add_periodic_halo(zonal=5)
     pset = pset_type[pset_mode]['pset'](fieldset_geometric_polar, pclass=pclass(mode), lon=0, lat=0)
     pset.execute(runtime=1)
-    assert(pset.lon[0] == 0.)
+    assert pset.lon[0] == 0.
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -497,10 +497,10 @@ def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4), runtime=runtime, dt=delta(hours=1))
 
-    assert(pset.lat[0] - (latstart[0] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
-    assert(pset.lon[0] - lonstart[0] < 1e-4)
-    assert(pset.lat[1] - (latstart[1] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
-    assert(pset.lon[1] - lonstart[1] < 1e-4)
+    assert pset.lat[0] - (latstart[0] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4
+    assert pset.lon[0] - lonstart[0] < 1e-4
+    assert pset.lat[1] - (latstart[1] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4
+    assert pset.lon[1] - lonstart[1] < 1e-4
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -528,14 +528,14 @@ def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
     pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p,
                  runtime=runtime, dt=delta(hours=1))
 
-    assert(pset.lat[0] - latstart[0] < 1e-4)
-    assert(pset.lon[0] - (lonstart[0] + runtime.total_seconds() * maxvel / 1852 / 60
-                          / cos(latstart[0] * pi / 180)) < 1e-4)
-    assert(abs(pset.p[0] - p_fld) < 1e-4)
-    assert(pset.lat[1] - latstart[1] < 1e-4)
-    assert(pset.lon[1] - (lonstart[1] + runtime.total_seconds() * maxvel / 1852 / 60
-                          / cos(latstart[1] * pi / 180)) < 1e-4)
-    assert(abs(pset.p[1] - p_fld) < 1e-4)
+    assert pset.lat[0] - latstart[0] < 1e-4
+    assert pset.lon[0] - (lonstart[0] + runtime.total_seconds() * maxvel / 1852 / 60
+                          / cos(latstart[0] * pi / 180)) < 1e-4
+    assert abs(pset.p[0] - p_fld) < 1e-4
+    assert pset.lat[1] - latstart[1] < 1e-4
+    assert pset.lon[1] - (lonstart[1] + runtime.total_seconds() * maxvel / 1852 / 60
+                          / cos(latstart[1] * pi / 180)) < 1e-4
+    assert abs(pset.p[1] - p_fld) < 1e-4
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -557,7 +557,7 @@ def test_random_field(pset_mode, mode, k_sample_p, xdim=20, ydim=20, npart=100):
                                                    start_field=fieldset.start)
     pset.execute(k_sample_p, endtime=1., dt=1.0)
     sampled = pset.p
-    assert((sampled >= 0.).all())
+    assert (sampled >= 0.).all()
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)

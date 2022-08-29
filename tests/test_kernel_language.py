@@ -101,9 +101,9 @@ def test_expression_bool(pset_mode, mode, name, expr, result, npart=10):
                                         lat=np.zeros(npart) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr, pset_mode), endtime=1., dt=1.)
     if mode == 'jit':
-        assert(np.all(result == (pset.p == 1)))
+        assert np.all(result == (pset.p == 1))
     else:
-        assert(np.all(result == pset.p))
+        assert np.all(result == pset.p)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -509,7 +509,7 @@ def test_UNESCOdensity_kernel(pset_mode, mode, pressure):
 
     pset.execute(UNESCODensity, runtime=0, dt=0)
 
-    if(pressure == 0):
+    if pressure == 0:
         assert np.allclose(pset[0].density, 1005.9465)
-    elif(pressure == 10):
+    elif pressure == 10:
         assert np.allclose(pset[0].density, 1006.4179)
