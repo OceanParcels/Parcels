@@ -251,16 +251,17 @@ class BaseParticleFile(ABC):
                     attrs = self._create_variables_attribute_dict()
                     for var in self.vars_to_write:
                         varout = self._convert_varout_name(var)
-                        if self.write_once(var) and var not in ['trajectory']:
-                            data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
-                            data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
-                            dims = ["trajectory"]
-                        else:
-                            data = np.full(arrsize, np.nan, dtype=self.vars_to_write[var])
-                            data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
-                            dims = ["trajectory", "obs"]
-                        ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
-                        ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
+                        if varout not in ['trajectory']:
+                            if self.write_once(var):
+                                data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
+                                data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
+                                dims = ["trajectory"]
+                            else:
+                                data = np.full(arrsize, np.nan, dtype=self.vars_to_write[var])
+                                data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
+                                dims = ["trajectory", "obs"]
+                            ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
+                            ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
                     ds.to_zarr(self.fname, mode='w')  # , group=self.mpi_rank)  #TODO try to get to work with groups
                     self.create_new_zarrfile = False
                 else:
