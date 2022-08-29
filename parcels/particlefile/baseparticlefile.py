@@ -217,13 +217,12 @@ class BaseParticleFile(ABC):
                 self.lasttime_written = time
 
             if len(indices_to_write) > 0:
-                ids = np.zeros(len(indices_to_write), dtype=int)
                 pids = pset.collection.getvardata('id', indices_to_write)
-                for i, pid in enumerate(pids):  # TODO check if we can avoid for-loop here
-                    if pid not in self.pids_written:
-                        self.pids_written[pid] = self.maxids
-                        self.maxids += 1
-                    ids[i] = self.pids_written[pid]
+                to_add = sorted(set(pids) - set(self.pids_written.keys()))
+                for i, pid in enumerate(to_add):
+                    self.pids_written[pid] = self.maxids + i
+                ids = np.array([self.pids_written[p] for p in pids], dtype=int)
+                self.maxids = len(self.pids_written)
 
                 once_ids = np.where(pset.collection.getvardata('once_written', indices_to_write) == 0)[0]
                 ids_once = ids[once_ids]
