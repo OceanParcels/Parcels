@@ -240,7 +240,7 @@ class BaseParticleFile(ABC):
 
                 if self.create_new_zarrfile:
                     if self.chunks is None:
-                        self.chunks = (len(ids), 10)
+                        self.chunks = (len(ids), 1)
                     elif self.chunks[0] > len(ids):
                         logger.warning(f'Chunk size for trajectory ({self.chunks[0]}) is larger than length of initial set to write. '
                                        f'Reducing ParticleFile chunks to ({len(ids)}, {self.chunks[1]})')
