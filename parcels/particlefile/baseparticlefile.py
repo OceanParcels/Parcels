@@ -97,9 +97,12 @@ class BaseParticleFile(ABC):
         extension = os.path.splitext(str(name))[1]
         if extension in ['.nc', '.nc4']:
             raise RuntimeError('Output in NetCDF is not supported anymore. Use .zarr extension for ParticleFile name.')
-        self.fname = name if extension in ['.zarr'] else "%s.zarr" % name
         if MPI and MPI.COMM_WORLD.Get_size() > 1:
-            self.fname = os.path.join(self.fname, f"proc{self.mpi_rank:02d}")  # TODO check if we can also do this with zarr-groups
+            self.fname = os.path.join(name, f"proc{self.mpi_rank:02d}.zarr")
+            if extension in ['.zarr']:
+                logger.warning(f'The ParticleFile name contains .zarr extension, but zarr files will be written per processor in MPI mode at {self.fname}')
+        else:
+            self.fname = name if extension in ['.zarr'] else "%s.zarr" % name
 
     @abstractmethod
     def _reserved_var_names(self):
@@ -251,7 +254,7 @@ class BaseParticleFile(ABC):
                     attrs = self._create_variables_attribute_dict()
                     for var in self.vars_to_write:
                         varout = self._convert_varout_name(var)
-                        if varout not in ['trajectory']:
+                        if varout not in ['trajectory']:  # because 'trajectory' is written as coordinate
                             if self.write_once(var):
                                 data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
                                 data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
@@ -262,11 +265,11 @@ class BaseParticleFile(ABC):
                                 dims = ["trajectory", "obs"]
                             ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
                             ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
-                    ds.to_zarr(self.fname, mode='w')  # , group=self.mpi_rank)  #TODO try to get to work with groups
+                    ds.to_zarr(self.fname, mode='w')
                     self.create_new_zarrfile = False
                 else:
                     store = zarr.DirectoryStore(self.fname)
-                    Z = zarr.group(store=store, overwrite=False)  # .create_group(self.mpi_rank)  #TODO try to get to work with groups
+                    Z = zarr.group(store=store, overwrite=False)
                     obs = self.obs_written[np.array(ids)]
                     for var in self.vars_to_write:
                         varout = self._convert_varout_name(var)
