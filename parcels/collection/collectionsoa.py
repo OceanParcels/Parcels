@@ -104,6 +104,7 @@ class ParticleCollectionSOA(ParticleCollection):
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
                             kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+                            # New comment
                             self._pu_indicators = kmeans.labels_
                         else:
                             self._pu_indicators = None
