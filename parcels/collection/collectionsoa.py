@@ -102,10 +102,10 @@ class ParticleCollectionSOA(ParticleCollection):
                 if partitions is not False:
                     if (self._pu_indicators is None) or (len(self._pu_indicators) != len(lon)):
                         if mpi_rank == 0:
-                            coords = np.vstack((lon, lat)).transpose()
-                            kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                            # New comment
-                            self._pu_indicators = kmeans.labels_
+                            # distribute particles equally among MPI processors
+                            labels = np.linspace(0, mpi_size, lon.size, endpoint=False)
+                            labels = np.floor(labels)
+                            self._pu_indicators = labels
                         else:
                             self._pu_indicators = None
                         self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
