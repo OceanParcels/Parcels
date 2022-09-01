@@ -3,7 +3,7 @@ from operator import attrgetter
 from ctypes import Structure, POINTER
 from bisect import bisect_left
 from math import floor
-
+import copy
 import numpy as np
 
 from parcels.collection.collections import ParticleCollection
@@ -101,11 +101,20 @@ class ParticleCollectionSOA(ParticleCollection):
             if mpi_size > 1:
                 if partitions is not False:
                     if (self._pu_indicators is None) or (len(self._pu_indicators) != len(lon)):
-                        if mpi_rank == 0:
-                            # distribute particles equally among MPI processors
+                        if mpi_rank == 0:                            
+                            coords = np.vstack((lon, lat)).transpose()
+                            kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
                             labels = np.linspace(0, mpi_size, lon.size, endpoint=False)
                             labels = np.floor(labels)
-                            self._pu_indicators = labels
+                            reorderedCoords = copy.copy(labels)
+                            for i in range(0, len(kmeans.cluster_centers_)):
+                                clusterCentre = kmeans.cluster_centers_[i]
+                                distances = map(lambda point: ((point[0]-clusterCentre[0])**2 + (point[1]-clusterCentre[1])**2), coords)
+                                sortedDistanceIdxs = np.argsort(list(distances))
+                                numberToChoose = sum(labels == i)
+                                reorderedCoords[sortedDistanceIdxs[0:numberToChoose]] = i
+                                coords[sortedDistanceIdxs[0:numberToChoose],:] = float('inf')
+                            self._pu_indicators = reorderedCoords
                         else:
                             self._pu_indicators = None
                         self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
