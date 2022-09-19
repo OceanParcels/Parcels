@@ -39,10 +39,10 @@ def set_globcurrent_fieldset(filename=None, indices=None, deferred_load=True, us
 @pytest.mark.parametrize('use_xarray', [True, False])
 def test_globcurrent_fieldset(use_xarray):
     fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
-    assert(fieldset.U.lon.size == 81)
-    assert(fieldset.U.lat.size == 41)
-    assert(fieldset.V.lon.size == 81)
-    assert(fieldset.V.lat.size == 41)
+    assert fieldset.U.lon.size == 81
+    assert fieldset.U.lat.size == 41
+    assert fieldset.V.lon.size == 81
+    assert fieldset.V.lat.size == 41
 
     if not use_xarray:
         indices = {'lon': [5], 'lat': range(20, 30)}
@@ -88,8 +88,8 @@ def test_globcurrent_particles(mode, use_xarray):
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
 
-    assert(abs(pset[0].lon - 23.8) < 1)
-    assert(abs(pset[0].lat - -35.3) < 1)
+    assert abs(pset[0].lon - 23.8) < 1
+    assert abs(pset[0].lat - -35.3) < 1
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -105,7 +105,8 @@ def test_globcurrent_time_periodic(mode, rundays):
         pset = ParticleSet(fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0])
 
         def SampleU(particle, fieldset, time):
-            particle.sample_var += fieldset.U[time, particle.depth, particle.lat, particle.lon]
+            u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+            particle.sample_var += u
 
         pset.execute(SampleU, runtime=delta(days=rundays), dt=delta(days=1))
         sample_var.append(pset[0].sample_var)

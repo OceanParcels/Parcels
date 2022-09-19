@@ -101,9 +101,9 @@ def test_expression_bool(pset_mode, mode, name, expr, result, npart=10):
                                         lat=np.zeros(npart) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr, pset_mode), endtime=1., dt=1.)
     if mode == 'jit':
-        assert(np.all(result == (pset.p == 1)))
+        assert np.all(result == (pset.p == 1))
     else:
-        assert(np.all(result == pset.p))
+        assert np.all(result == pset.p)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -216,7 +216,7 @@ def test_if_withfield(fieldset, pset_mode, mode):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0], lat=[0])
 
     def kernel(particle, fieldset, time):
-        u = fieldset.U[time, 0, 0, 1.]
+        u, v = fieldset.UV[time, 0, 0, 1.]
         particle.p = 0
         if fieldset.U[time, 0, 0, 1.] == u:
             particle.p += 1
@@ -257,7 +257,7 @@ def test_print(fieldset, pset_mode, mode, capfd):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0.5], lat=[0.5])
 
     def kernel(particle, fieldset, time):
-        particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+        particle.p = fieldset.UV[time, particle.depth, particle.lat, particle.lon][0]
         tmp = 5
         print("%d %f %f" % (particle.id, particle.p, tmp))
     pset.execute(kernel, endtime=1., dt=1.)
@@ -509,7 +509,7 @@ def test_UNESCOdensity_kernel(pset_mode, mode, pressure):
 
     pset.execute(UNESCODensity, runtime=0, dt=0)
 
-    if(pressure == 0):
+    if pressure == 0:
         assert np.allclose(pset[0].density, 1005.9465)
-    elif(pressure == 10):
+    elif pressure == 10:
         assert np.allclose(pset[0].density, 1006.4179)

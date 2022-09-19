@@ -137,8 +137,8 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemca
     filepath = tmpdir.join("pfile_on_delete_written_variables.nc")
 
     def move_west(particle, fieldset, time):
-        tmp = fieldset.U[time, particle.depth, particle.lat, particle.lon]  # to trigger out-of-bounds error
-        particle.lon -= 0.1 + tmp
+        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon]  # to trigger out-of-bounds error
+        particle.lon -= 0.1 + tmp1
 
     def DeleteP(particle, fieldset, time):
         particle.delete()
@@ -187,9 +187,9 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
 def test_write_dtypes_pfile(fieldset, mode, pset_mode, tmpdir):
     filepath = tmpdir.join("pfile_dtypes.nc")
 
-    dtypes = ['float32', 'float64', 'int32', 'int64']
-    if mode == 'scipy':
-        dtypes.append('bool_')  # bool only implemented in scipy
+    dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64', 'uint64']
+    if mode == 'scipy' or pset_mode == 'soa':
+        dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16'])  # Not implemented in AoS JIT
 
     class MyParticle(ptype[mode]):
         for d in dtypes:

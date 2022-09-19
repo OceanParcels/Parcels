@@ -161,8 +161,8 @@ def test_multigrids_pointer(pset_mode, mode):
     w_field = Field('W', w_data, grid=grid_1)
 
     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
-    assert(u_field.grid == v_field.grid)
-    assert(u_field.grid == w_field.grid)  # w_field.grid is now supposed to be grid_1
+    assert u_field.grid == v_field.grid
+    assert u_field.grid == w_field.grid  # w_field.grid is now supposed to be grid_1
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=[0], lat=[0], depth=[1])
 
@@ -343,8 +343,7 @@ def test_curvilinear_grids(pset_mode, mode):
     field_set = FieldSet(u_field, v_field)
 
     def sampleSpeed(particle, fieldset, time):
-        u = fieldset.U[time, particle.depth, particle.lat, particle.lon]
-        v = fieldset.V[time, particle.depth, particle.lat, particle.lon]
+        u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
         particle.speed = math.sqrt(u*u+v*v)
 
     class MyParticle(ptype[mode]):
@@ -352,7 +351,7 @@ def test_curvilinear_grids(pset_mode, mode):
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
-    assert(np.allclose(pset.speed[0], 1000))
+    assert np.allclose(pset.speed[0], 1000)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
