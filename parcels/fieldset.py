@@ -95,7 +95,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param To loop periodically over the time component of the Field. It is set to either :param False or
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either :param False or
                the total timespan that is to be covered by the periodically-repeating field, given either as :type float (in seconds)
                or :type datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False.
