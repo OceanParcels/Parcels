@@ -7,14 +7,15 @@
 Parcels documentation
 ===================================
 
-Welcome to the documentation of parcels. This page provides detailed documentation for each method, class and function. 
+Welcome to the documentation of parcels. This page provides detailed documentation for each method, class and function.
+The documentation corresponds to the latest conda release, for newer documentation see the docstrings in the code.
 
 See http://www.oceanparcels.org for general information on the Parcels project, including how to install and use.
 
 parcels.particleset module
 --------------------------
 
-.. automodule:: parcels.particleset
+.. automodule:: parcels.particleset.particlesetsoa
     :members:
     :show-inheritance:
 
@@ -33,14 +34,14 @@ parcels.field module
     :show-inheritance:
 
 parcels.gridset module
------------------------
+----------------------
 
 .. automodule:: parcels.gridset
     :members:
     :show-inheritance:
 
 parcels.grid module
---------------------
+-------------------
 
 .. automodule:: parcels.grid
     :members:
@@ -53,47 +54,99 @@ parcels.particle module
     :members:
     :show-inheritance:
 
-parcels.kernels.advection module
+parcels.application_kernels.advection module
+--------------------------------------------
+
+.. automodule:: parcels.application_kernels.advection
+    :members:
+    :show-inheritance:
+
+parcels.application_kernels.advectiondiffusion module
+-----------------------------------------------------
+
+
+.. automodule:: parcels.application_kernels.advectiondiffusion
+    :members:
+    :show-inheritance:
+
+parcels.application_kernels.EOSseawaterproperties module
+--------------------------------------------------------
+
+
+.. automodule:: parcels.application_kernels.EOSseawaterproperties
+    :members:
+    :show-inheritance:
+
+parcels.application_kernels.TEOSseawaterdensity module
+------------------------------------------------------
+
+
+.. automodule:: parcels.application_kernels.TEOSseawaterdensity
+    :members:
+    :show-inheritance:
+
+parcels.compilation module
+--------------------------
+
+.. automodule:: parcels.compilation
+    :members:
+    :show-inheritance: yes
+
+parcels.interaction module
+--------------------------
+
+.. automodule:: parcels.interaction
+    :members:
+    :show-inheritance: yes
+
+parcels.interaction.neighborsearch module
+-----------------------------------------
+
+.. automodule:: parcels.interaction.neighborsearch
+    :members:
+    :show-inheritance: yes
+
+parcels.kernel.basekernel module
 --------------------------------
 
-.. automodule:: parcels.kernels.advection
+.. automodule:: parcels.kernel.basekernel
     :members:
-    :show-inheritance:
-
-parcels.kernels.diffusion module
---------------------------------
-
-.. automodule:: parcels.kernels.diffusion
-    :members:
-    :show-inheritance:
-
-parcels.codegenerator module
-----------------------------
-
-.. automodule:: parcels.codegenerator
-    :members:
-    :show-inheritance:
-
-parcels.compiler module
------------------------
-
-.. automodule:: parcels.compiler
-    :members:
-    :show-inheritance:
-
-parcels.kernel module
----------------------
-
-.. automodule:: parcels.kernel
-    :members:
-    :show-inheritance:
-
-parcels.particlefile module
----------------------------
-
-.. automodule:: parcels.particlefile
-    :members: ParticleFile
     :undoc-members:
+
+parcels.kernel.kernelaos module
+-------------------------------
+
+.. automodule:: parcels.kernel.kernelaos
+    :members:
+    :undoc-members:
+
+parcels.kernel.kernelsoa module
+-------------------------------
+
+.. automodule:: parcels.kernel.kernelsoa
+    :members:
+    :undoc-members:
+
+parcels.particlefile.baseparticlefile module
+--------------------------------------------
+
+.. automodule:: parcels.particlefile.baseparticlefile
+    :members:
+    :show-inheritance: yes
+
+parcels.particlefile.particlefileaos module
+-------------------------------------------
+
+.. automodule:: parcels.particlefile.particlefileaos
+    :members:
+    :show-inheritance: yes
+
+parcels.particlefile.particlefilesoa module
+-------------------------------------------
+
+.. automodule:: parcels.particlefile.particlefilesoa
+    :members:
+    :show-inheritance: yes
 
 parcels.rng module
 ------------------
@@ -102,10 +155,24 @@ parcels.rng module
     :members:
     :undoc-members:
 
-parcels.tools.error module
---------------------------
+parcels.particleset.baseparticleset module
+-------------------------------------------
 
-.. automodule:: parcels.tools.error
+.. automodule:: parcels.particleset.baseparticleset
+    :members:
+    :show-inheritance:
+
+parcels.particleset.particlesetaos module
+-----------------------------------------
+
+.. automodule:: parcels.particleset.particlesetaos
+    :members:
+    :show-inheritance:
+
+parcels.tools.statuscodes module
+--------------------------------
+
+.. automodule:: parcels.tools.statuscodes
     :members:
     :show-inheritance:
 

@@ -23,7 +23,7 @@ static inline float parcels_random()
 
 static inline float parcels_uniform(float low, float high)
 {
-  return (float)rand()/(float)(RAND_MAX / (high-low)) + low;
+  return (float)rand()/(float)((float)(RAND_MAX) / (high-low)) + low;
 }
 
 static inline int parcels_randint(int low, int high)
@@ -75,6 +75,9 @@ static inline float parcels_vonmisesvariate(float mu, float kappa)
   }
 
   s = 0.5 / kappa;
+  if (fabs(s) <= FLT_EPSILON * fabs(s)){
+    return mu;
+  }
   r = s + sqrt(1.0 + s * s);
 
   do {

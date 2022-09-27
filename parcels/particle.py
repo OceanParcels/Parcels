@@ -4,11 +4,12 @@ from operator import attrgetter
 import numpy as np
 
 from parcels.field import Field
-from parcels.tools.error import ErrorCode
+from parcels.tools.statuscodes import StateCode, OperationCode
 from parcels.tools.loggers import logger
 
+__all__ = ['ScipyParticle', 'JITParticle', 'Variable', 'ScipyInteractionParticle']
 
-__all__ = ['ScipyParticle', 'JITParticle', 'Variable']
+indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 
 
 class Variable(object):
@@ -18,11 +19,11 @@ class Variable(object):
     :param dtype: Data type (numpy.dtype) of the variable
     :param initial: Initial value of the variable. Note that this can also be a Field object,
              which will then be sampled at the location of the particle
-    :param to_write: Boolean to control whether Variable is written to NetCDF file
+    :param to_write: Boolean or 'once'. Controls whether Variable is written to NetCDF file.
+             If to_write = 'once', the variable will be written as a time-independent 1D array
+    :type to_write: (bool, 'once', optional)
     """
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
-        if name == 'z':
-            raise NotImplementedError("Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
         self.name = name
         self.dtype = dtype
         self.initial = initial
@@ -47,8 +48,7 @@ class Variable(object):
 
     def is64bit(self):
         """Check whether variable is 64-bit"""
-        return True if self.dtype == np.float64 or self.dtype == np.int64 \
-                       or self.dtype == c_void_p else False
+        return True if self.dtype in indicators_64bit else False
 
 
 class ParticleType(object):
@@ -62,7 +62,6 @@ class ParticleType(object):
             raise TypeError("Class object required to derive ParticleType")
         if not issubclass(pclass, ScipyParticle):
             raise TypeError("Class object does not inherit from parcels.ScipyParticle")
-
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
         # Pick Variable objects out of __dict__.
@@ -71,6 +70,13 @@ class ParticleType(object):
             if issubclass(cls, ScipyParticle):
                 # Add inherited particle variables
                 ptype = cls.getPType()
+                for v in self.variables:
+                    if v.name in [v.name for v in ptype.variables]:
+                        raise AttributeError(
+                            "Custom Variable name '%s' is not allowed, as it is also a built-in variable" % v.name)
+                    if v.name == 'z':
+                        raise AttributeError(
+                            "Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
                 self.variables = ptype.variables + self.variables
         # Sort variables with all the 64-bit first so that they are aligned for the JIT cptr
         self.variables = [v for v in self.variables if v.is64bit()] + \
@@ -107,7 +113,7 @@ class ParticleType(object):
         # Developer note: other dtypes (mostly 2-byte ones) are not supported now
         # because implementing and aligning them in cgen.GenerableStruct is a
         # major headache. Perhaps in a later stage
-        return [np.int32, np.int64, np.float32, np.double, np.float64, c_void_p]
+        return [np.int32, np.uint32, np.int64, np.uint64, np.float32, np.double, np.float64, c_void_p]
 
 
 class _Particle(object):
@@ -128,7 +134,8 @@ class _Particle(object):
                 if time is None:
                     raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                        'Add a "time=" to ParticleSet construction')
-                v.initial.fieldset.computeTimeChunk(time, 0)
+                if v.initial.grid.ti < 0:
+                    v.initial.fieldset.computeTimeChunk(time, 0)
                 initial = v.initial[time, depth, lat, lon]
                 logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
             else:
@@ -139,6 +146,9 @@ class _Particle(object):
 
         # Placeholder for explicit error handling
         self.exception = None
+
+    def __del__(self):
+        pass  # superclass is 'object', and object itself has no destructor, hence 'pass'
 
     @classmethod
     def getPType(cls):
@@ -170,11 +180,13 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
-    id = Variable('id', dtype=np.int32)
-    dt = Variable('dt', dtype=np.float32, to_write=False)
-    state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
+    id = Variable('id', dtype=np.int64)
+    fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
+    dt = Variable('dt', dtype=np.float64, to_write=False)
+    state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)
+    next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
-    def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
+    def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0., time=0., cptr=None):
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
@@ -183,9 +195,14 @@ class ScipyParticle(_Particle):
         type(self).time.initial = time
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
+        type(self).fileid.initial = -1
         type(self).dt.initial = None
+        type(self).next_dt.initial = np.nan
+
         super(ScipyParticle, self).__init__()
-        self._next_dt = None
+
+    def __del__(self):
+        super(ScipyParticle, self).__del__()
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
@@ -196,7 +213,19 @@ class ScipyParticle(_Particle):
         return str + "time=%s)" % time_string
 
     def delete(self):
-        self.state = ErrorCode.Delete
+        self.state = OperationCode.Delete
+
+    def set_state(self, state):
+        self.state = state
+
+    def succeeded(self):
+        self.state = StateCode.Success
+
+    def isComputed(self):
+        return self.state == StateCode.Success
+
+    def reset_state(self):
+        self.state = StateCode.Evaluate
 
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):
@@ -211,6 +240,54 @@ class ScipyParticle(_Particle):
                 self._next_dt = None
         else:
             self._next_dt = next_dt
+
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return False
+        ids_eq = (self.id == other.id)
+        attr_eq = True
+        attr_eq &= (self.lon == other.lon)
+        attr_eq &= (self.lat == other.lat)
+        attr_eq &= (self.depth == other.depth)
+        attr_eq &= (self.time == other.time)
+        attr_eq &= (self.dt == other.dt)
+        return ids_eq and attr_eq
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __lt__(self, other):
+        if type(self) is not type(other):
+            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
+            raise AttributeError(err_msg)
+        return self.id < other.id
+
+    def __le__(self, other):
+        if type(self) is not type(other):
+            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
+            raise AttributeError(err_msg)
+        return self.id <= other.id
+
+    def __gt__(self, other):
+        if type(self) is not type(other):
+            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
+            raise AttributeError(err_msg)
+        return self.id > other.id
+
+    def __ge__(self, other):
+        if type(self) is not type(other):
+            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
+            raise AttributeError(err_msg)
+        return self.id >= other.id
+
+    def __sizeof__(self):
+        ptype = self.getPType()
+        return sum([v.size for v in ptype.variables])
+
+
+class ScipyInteractionParticle(ScipyParticle):
+    vert_dist = Variable("vert_dist", dtype=np.float32)
+    horiz_dist = Variable("horiz_dist", dtype=np.float32)
 
 
 class JITParticle(ScipyParticle):
@@ -228,11 +305,6 @@ class JITParticle(ScipyParticle):
 
     """
 
-    cxi = Variable('cxi', dtype=np.dtype(c_void_p), to_write=False)
-    cyi = Variable('cyi', dtype=np.dtype(c_void_p), to_write=False)
-    czi = Variable('czi', dtype=np.dtype(c_void_p), to_write=False)
-    cti = Variable('cti', dtype=np.dtype(c_void_p), to_write=False)
-
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
         if self._cptr is None:
@@ -241,11 +313,47 @@ class JITParticle(ScipyParticle):
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
-        fieldset = kwargs.get('fieldset')
-        for index in ['xi', 'yi', 'zi', 'ti']:
-            if index != 'ti':
-                setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
-            else:
-                setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
-            setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
-            setattr(self, 'c'+index, getattr(self, index+'p').value)
+    def __del__(self):
+        super(JITParticle, self).__del__()
+
+    def cdata(self):
+        if self._cptr is None:
+            return None
+        return self._cptr.ctypes.data_as(c_void_p)
+
+    def set_cptr(self, value):
+        if isinstance(value, np.ndarray):
+            ptype = self.getPType()
+            self._cptr = np.array(value, dtype=ptype.dtype)
+        else:
+            self._cptr = None
+
+    def get_cptr(self):
+        if isinstance(self._cptr, np.ndarray):
+            return self._cptr[0]
+        return self._cptr
+
+    def reset_cptr(self):
+        self._cptr = None
+
+    def __eq__(self, other):
+        return super(JITParticle, self).__eq__(other)
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __lt__(self, other):
+        return super(JITParticle, self).__lt__(other)
+
+    def __le__(self, other):
+        return super(JITParticle, self).__le__(other)
+
+    def __gt__(self, other):
+        return super(JITParticle, self).__gt__(other)
+
+    def __ge__(self, other):
+        return super(JITParticle, self).__ge__(other)
+
+    def __sizeof__(self):
+        ptype = self.getPType()
+        return sum([v.size for v in ptype.variables])

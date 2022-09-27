@@ -3,20 +3,22 @@ from datetime import timedelta as delta
 
 import numpy as np
 import dask.array as da
+import copy
 
 from parcels.field import Field
 from parcels.field import VectorField
 from parcels.grid import CurvilinearGrid
 from parcels.grid import GridCode
-from parcels.tools.error import TimeExtrapolationError
+from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
 
 
-def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-                  land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
+def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None,
+                  projection='PlateCarree', land=True, vmin=None, vmax=None, savefile=None,
+                  animation=False, **kwargs):
     """Function to plot a Parcels ParticleSet
 
-    :param show_time: Time at which to show the ParticleSet
+    :param show_time: Time in seconds from start after which to show the ParticleSet
     :param with_particles: Boolean whether particles are also plotted on Field
     :param field: Field to plot under particles (either None, a Field object, or 'vector')
     :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
@@ -43,12 +45,12 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
 
     if field is None:
         spherical = True if particles.fieldset.U.grid.mesh == 'spherical' else False
-        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection)
+        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection, cartopy_features=kwargs.pop('cartopy_features', []))
         if plt is None:
             return  # creating axes was not possible
         ax.set_title('Particles' + parsetimestr(particles.fieldset.U.grid.time_origin, show_time))
         latN, latS, lonE, lonW = parsedomain(domain, particles.fieldset.U)
-        if cartopy is None or projection is None:
+        if (cartopy is None) or (projection is None):
             if domain is not None:
                 if isinstance(particles.fieldset.U.grid, CurvilinearGrid):
                     ax.set_xlim(particles.fieldset.U.grid.lon[latS, lonW], particles.fieldset.U.grid.lon[latN, lonE])
@@ -76,7 +78,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         depth_level = kwargs.pop('depth_level', 0)
         plt, fig, ax, cartopy = plotfield(field=field, animation=animation, show_time=show_time, domain=domain,
                                           projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=None,
-                                          titlestr='Particles and ', depth_level=depth_level)
+                                          titlestr='Particles and ', depth_level=depth_level, **kwargs)
         if plt is None:
             return  # creating axes was not possible
 
@@ -95,15 +97,15 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         plt.show()
     else:
         plt.savefig(savefile)
-        logger.info('Plot saved to ' + savefile + '.png')
+        logger.info(f'Plot saved to {savefile}')
         plt.close()
 
 
-def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None, land=True,
+def plotfield(field, show_time=None, domain=None, depth_level=0, projection='PlateCarree', land=True,
               vmin=None, vmax=None, savefile=None, **kwargs):
     """Function to plot a Parcels Field
 
-    :param show_time: Time at which to show the Field
+    :param show_time: Time in seconds from start after which to show the Field
     :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
     :param depth_level: depth level to be plotted (default 0)
     :param projection: type of cartopy projection to use (default PlateCarree)
@@ -129,7 +131,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         logger.warning('Field.show() does not always correctly determine the domain for curvilinear grids. '
                        'Use plotting with caution and perhaps use domain argument as in the NEMO 3D tutorial')
 
-    plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection)
+    plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection, cartopy_features=kwargs.pop('cartopy_features', []))
     if plt is None:
         return None, None, None, None  # creating axes was not possible
 
@@ -183,6 +185,9 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         speed = np.where(spd > 0, np.sqrt(spd), 0)
         vmin = speed.min() if vmin is None else vmin
         vmax = speed.max() if vmax is None else vmax
+        ncar_cmap = copy.copy(plt.cm.gist_ncar)
+        ncar_cmap.set_over('k')
+        ncar_cmap.set_under('w')
         if isinstance(field[0].grid, CurvilinearGrid):
             x, y = plotlon[0], plotlat[0]
         else:
@@ -190,12 +195,15 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         u = np.where(speed > 0., data[0]/speed, 0)
         v = np.where(speed > 0., data[1]/speed, 0)
         if cartopy:
-            cs = ax.quiver(np.asarray(x), np.asarray(y), np.asarray(u), np.asarray(v), speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, transform=cartopy.crs.PlateCarree())
+            cs = ax.quiver(np.asarray(x), np.asarray(y), np.asarray(u), np.asarray(v), speed, cmap=ncar_cmap, clim=[vmin, vmax], scale=50, transform=cartopy.crs.PlateCarree())
         else:
-            cs = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
+            cs = ax.quiver(x, y, u, v, speed, cmap=ncar_cmap, clim=[vmin, vmax], scale=50)
     else:
         vmin = data[0].min() if vmin is None else vmin
         vmax = data[0].max() if vmax is None else vmax
+        pc_cmap = copy.copy(plt.cm.get_cmap('viridis'))
+        pc_cmap.set_over('k')
+        pc_cmap.set_under('w')
         assert len(data[0].shape) == 2
         if field[0].interp_method == 'cgrid_tracer':
             d = data[0][1:, 1:]
@@ -215,17 +223,15 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
             d = np.where(data[0][1:, 1:] == 0, 0, d)
             d = np.where(data[0][:-1, 1:] == 0, 0, d)
         if cartopy:
-            cs = ax.pcolormesh(plotlon[0], plotlat[0], d, transform=cartopy.crs.PlateCarree())
+            cs = ax.pcolormesh(plotlon[0], plotlat[0], d, cmap=pc_cmap, transform=cartopy.crs.PlateCarree())
         else:
-            cs = ax.pcolormesh(plotlon[0], plotlat[0], d)
+            cs = ax.pcolormesh(plotlon[0], plotlat[0], d, cmap=pc_cmap)
 
     if cartopy is None:
         ax.set_xlim(np.nanmin(plotlon[0]), np.nanmax(plotlon[0]))
         ax.set_ylim(np.nanmin(plotlat[0]), np.nanmax(plotlat[0]))
     elif domain is not None:
         ax.set_extent([np.nanmin(plotlon[0]), np.nanmax(plotlon[0]), np.nanmin(plotlat[0]), np.nanmax(plotlat[0])], crs=cartopy.crs.PlateCarree())
-    cs.cmap.set_over('k')
-    cs.cmap.set_under('w')
     cs.set_clim(vmin, vmax)
 
     cartopy_colorbar(cs, plt, fig, ax)
@@ -261,35 +267,40 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     return plt, fig, ax, cartopy
 
 
-def create_parcelsfig_axis(spherical, land=True, projection=None, central_longitude=0):
+def create_parcelsfig_axis(spherical, land=True, projection='PlateCarree', central_longitude=0, cartopy_features=[]):
     try:
         import matplotlib.pyplot as plt
     except:
         logger.info("Visualisation is not possible. Matplotlib not found.")
         return None, None, None, None  # creating axes was not possible
 
-    if projection is not None and not spherical:
-        raise RuntimeError('projection not accepted when Field doesn''t have geographic coordinates')
-
-    if spherical:
+    if spherical and projection:
         try:
             import cartopy
         except:
             logger.info("Visualisation of field with geographic coordinates is not possible. Cartopy not found.")
             return None, None, None, None  # creating axes was not possible
 
-        projection = cartopy.crs.PlateCarree(central_longitude) if projection is None else projection
+        projection = cartopy.crs.PlateCarree(central_longitude) if projection == 'PlateCarree' else projection
         fig, ax = plt.subplots(1, 1, subplot_kw={'projection': projection})
         try:  # gridlines not supported for all projections
-            gl = ax.gridlines(crs=projection, draw_labels=True)
-            gl.xlabels_top, gl.ylabels_right = (False, False)
+            if isinstance(projection, cartopy.crs.PlateCarree) and central_longitude != 0:
+                gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), draw_labels=True)  # central_lon=0 necessary for correct xlabels
+            else:
+                gl = ax.gridlines(crs=projection, draw_labels=True)
+            gl.top_labels, gl.right_labels = (False, False)
             gl.xformatter = cartopy.mpl.gridliner.LONGITUDE_FORMATTER
             gl.yformatter = cartopy.mpl.gridliner.LATITUDE_FORMATTER
         except:
             pass
 
-        if land:
-            ax.coastlines()
+        for feature in cartopy_features:
+            ax.add_feature(feature)
+
+        if isinstance(land, str):
+            ax.coastlines(land)
+        elif land:
+            ax.coastlines(zorder=10)
     else:
         cartopy = None
         fig, ax = plt.subplots(1, 1)

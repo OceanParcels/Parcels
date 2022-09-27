@@ -1,3 +1,4 @@
+# flake8: noqa: E999
 import inspect
 from datetime import timedelta as delta
 from math import cos
@@ -53,9 +54,19 @@ class TimeConverter(object):
             return (time - self.time_origin) / np.timedelta64(1, 's')
         elif self.calendar in _get_cftime_calendars():
             if isinstance(time, (list, np.ndarray)):
-                return np.array([(t - self.time_origin).total_seconds() for t in time])
+                try:
+                    return np.array([(t - self.time_origin).total_seconds() for t in time])
+                except ValueError:
+                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
+                                     "Provide 'time' as a %s object?"
+                                     % (type(time), self.calendar, type(self.time_origin)))
             else:
-                return (time - self.time_origin).total_seconds()
+                try:
+                    return (time - self.time_origin).total_seconds()
+                except ValueError:
+                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
+                                     "Provide 'time' as a %s object?"
+                                     % (type(time), self.calendar, type(self.time_origin)))
         elif self.calendar is None:
             return time - self.time_origin
         else:
@@ -89,6 +100,8 @@ class TimeConverter(object):
 
     def __ne__(self, other):
         other = other.time_origin if isinstance(other, TimeConverter) else other
+        if not isinstance(other, type(self.time_origin)):
+            return True
         return self.time_origin != other
 
     def __gt__(self, other):
@@ -212,14 +225,15 @@ unitconverters_map = {'U': GeographicPolar(), 'V': Geographic(),
 def convert_xarray_time_units(ds, time):
     """ Fixes DataArrays that have time.Unit instead of expected time.units
     """
-    if 'units' not in ds[time].attrs and 'Unit' in ds[time].attrs:
-        ds[time].attrs['units'] = ds[time].attrs['Unit']
-    ds2 = xr.Dataset({time: ds[time]})
+    da = ds[time] if isinstance(ds, xr.Dataset) else ds
+    if 'units' not in da.attrs and 'Unit' in da.attrs:
+        da.attrs['units'] = da.attrs['Unit']
+    da2 = xr.Dataset({time: da})
     try:
-        ds2 = xr.decode_cf(ds2)
+        da2 = xr.decode_cf(da2)
     except ValueError:
         raise RuntimeError('Xarray could not convert the calendar. If you''re using from_netcdf, '
                            'try using the timestamps keyword in the construction of your Field. '
                            'See also the tutorial at https://nbviewer.jupyter.org/github/OceanParcels/'
                            'parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb')
-    ds[time] = ds2[time]
+    ds[time] = da2[time]

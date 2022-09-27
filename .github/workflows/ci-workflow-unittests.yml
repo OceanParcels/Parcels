@@ -1,0 +1,61 @@
+name: unit-tests
+on:
+  pull_request:
+jobs:
+  pep8-linter:
+    name: Testing PEP8 linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Lint with flake8
+        run: |
+          pip install wheel
+          pip install flake8
+          python -m flake8 parcels/
+          python -m flake8 tests/
+        shell: bash
+  test_macOS:
+    name: Unittesting on macOS python latest
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Test OSX
+        env:
+          OS_NAME: osx
+          PY_VERSION: 3
+          MINICONDA_NAME: Miniconda3-latest-MacOSX-x86_64.sh
+          CC: gcc
+        run: |
+          ./.github/scripts/linux_install.sh
+          ./.github/scripts/osx_unittest.sh
+        shell: bash
+  test_linux:
+    name: Unittesting on Linux Python 3.6
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Test linux
+        env:
+          OS_NAME: linux
+          PY_VERSION: 3
+          MINICONDA_NAME: Miniconda3-latest-Linux-x86_64.sh
+        run: |
+          ./.github/scripts/linux_install.sh
+          ./.github/scripts/linux_unittest.sh
+        shell: bash
+  test_windows:
+    name: Unittesting on Windows python latest
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Test Windows
+        env:
+          OS_NAME: win
+          PY_VERSION: 3
+          PYTHON_ARCH: 64
+          PYTHON: C:\Miniconda36-x64
+        run: |
+          ./.github/scripts/install_miniconda.ps1
+          ./.github/scripts/windows_install.bat
+          ./.github/scripts/windows_unittest.bat
+        shell: powershell

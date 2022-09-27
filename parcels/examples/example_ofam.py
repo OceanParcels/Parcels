@@ -26,14 +26,14 @@ def set_ofam_fieldset(deferred_load=True, use_xarray=False):
         ds = xr.open_mfdataset([filenames['U'], filenames['V']], combine='by_coords')
         return FieldSet.from_xarray_dataset(ds, variables, dimensions, allow_time_extrapolation=True)
     else:
-        return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, deferred_load=deferred_load)
+        return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, deferred_load=deferred_load, chunksize=False)
 
 
 @pytest.mark.parametrize('use_xarray', [True, False])
 def test_ofam_fieldset_fillvalues(use_xarray):
     fieldset = set_ofam_fieldset(deferred_load=False, use_xarray=use_xarray)
     # V.data[0, 0, 150] is a landpoint, that makes NetCDF4 generate a masked array, instead of an ndarray
-    assert(fieldset.V.data[0, 0, 150] == 0)
+    assert fieldset.V.data[0, 0, 150] == 0
 
 
 @pytest.mark.parametrize('dt', [delta(minutes=-5), delta(minutes=5)])
@@ -66,5 +66,5 @@ def test_ofam_particles(mode, use_xarray):
 
     pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5))
 
-    assert(abs(pset[0].lon - 173) < 1)
-    assert(abs(pset[0].lat - 11) < 1)
+    assert abs(pset[0].lon - 173) < 1
+    assert abs(pset[0].lat - 11) < 1

@@ -35,18 +35,19 @@ class Grid(object):
     """
 
     def __init__(self, lon, lat, time, time_origin, mesh):
+        self.xi = None
+        self.yi = None
+        self.zi = None
+        self.ti = -1
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
         if not self.lon.dtype == np.float32:
-            logger.warning_once("Casting lon data to np.float32")
             self.lon = self.lon.astype(np.float32)
         if not self.lat.dtype == np.float32:
-            logger.warning_once("Casting lat data to np.float32")
             self.lat = self.lat.astype(np.float32)
         if not self.time.dtype == np.float64:
             assert isinstance(self.time[0], (np.integer, np.floating, float, int)), 'Time vector must be an array of int or floats'
-            logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
         self.time_full = self.time  # needed for deferred_loaded Fields
         self.time_origin = TimeConverter() if time_origin is None else time_origin
@@ -63,17 +64,25 @@ class Grid(object):
         self.periods = 0
         self.load_chunk = []
         self.chunk_info = None
+        self.chunksize = None
         self._add_last_periodic_data_timestep = False
+        self.depth_field = None
 
     @staticmethod
     def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
-        if len(lon.shape) == 1:
-            if depth is None or len(depth.shape) == 1:
+        if not isinstance(lon, np.ndarray):
+            lon = np.array(lon)
+        if not isinstance(lat, np.ndarray):
+            lat = np.array(lat)
+        if not (depth is None or isinstance(depth, np.ndarray)):
+            depth = np.array(depth)
+        if len(lon.shape) <= 1:
+            if depth is None or len(depth.shape) <= 1:
                 return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
             else:
                 return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
         else:
-            if depth is None or len(depth.shape) == 1:
+            if depth is None or len(depth.shape) <= 1:
                 return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
             else:
                 return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
@@ -110,7 +119,7 @@ class Grid(object):
                 self.periods.value = 0
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
                                            self.tdim, self.z4d,
-                                           self.mesh == 'spherical', self.zonal_periodic,
+                                           int(self.mesh == 'spherical'), int(self.zonal_periodic),
                                            (c_int * len(self.chunk_info))(*self.chunk_info),
                                            self.load_chunk.ctypes.data_as(POINTER(c_int)),
                                            self.time_full[0], self.time_full[-1], pointer(self.periods),
@@ -150,7 +159,7 @@ class Grid(object):
             raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 
     def check_zonal_periodic(self):
-        if self.zonal_periodic or self.mesh == 'flat':
+        if self.zonal_periodic or self.mesh == 'flat' or self.lon.size == 1:
             return
         dx = (self.lon[1:] - self.lon[:-1]) if len(self.lon.shape) == 1 else self.lon[0, 1:] - self.lon[0, :-1]
         dx = np.where(dx < -180, dx+360, dx)
@@ -183,47 +192,67 @@ class Grid(object):
         prev_time_indices = self.time
         if self.update_status == 'not_updated':
             if self.ti >= 0:
-                if (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time[2]):
+                if time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time[1]:
                     self.ti = -1  # reset
                 elif signdt >= 0 and (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time_full[-1]):
                     self.ti = -1  # reset
                 elif signdt < 0 and (time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time_full[-1]):
                     self.ti = -1  # reset
-                elif signdt >= 0 and time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time[1] and self.ti < len(self.time_full)-3:
+                elif signdt >= 0 and time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time[1] and self.ti < len(self.time_full)-2:
                     self.ti += 1
-                    self.time = self.time_full[self.ti:self.ti+3]
+                    self.time = self.time_full[self.ti:self.ti+2]
                     self.update_status = 'updated'
-                elif signdt == -1 and time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[1] and self.ti > 0:
+                elif signdt < 0 and time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time[0] and self.ti > 0:
                     self.ti -= 1
-                    self.time = self.time_full[self.ti:self.ti+3]
+                    self.time = self.time_full[self.ti:self.ti+2]
                     self.update_status = 'updated'
             if self.ti == -1:
                 self.time = self.time_full
                 self.ti, _ = f.time_index(time)
                 periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
                 if signdt == -1 and self.ti == 0 and (time - periods*(self.time_full[-1]-self.time_full[0])) == self.time[0] and f.time_periodic:
-                    self.ti = len(self.time)-2
+                    self.ti = len(self.time)-1
                     periods -= 1
-                if signdt == -1 and self.ti > 0:
+                if signdt == -1 and self.ti > 0 and self.time_full[self.ti] == time:
                     self.ti -= 1
-                if self.ti >= len(self.time_full) - 2:
-                    self.ti = len(self.time_full) - 3
+                if self.ti >= len(self.time_full) - 1:
+                    self.ti = len(self.time_full) - 2
 
-                self.time = self.time_full[self.ti:self.ti+3]
-                self.tdim = 3
-                if prev_time_indices is None or len(prev_time_indices) != 3 or len(prev_time_indices) != len(self.time):
+                self.time = self.time_full[self.ti:self.ti+2]
+                self.tdim = 2
+                if prev_time_indices is None or len(prev_time_indices) != 2 or len(prev_time_indices) != len(self.time):
                     self.update_status = 'first_updated'
                 elif functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, self.time, prev_time_indices), True) and len(prev_time_indices) == len(self.time):
                     self.update_status = 'not_updated'
-                elif functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, self.time[:2], prev_time_indices[:2]), True) and len(prev_time_indices) == len(self.time):
+                elif functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, self.time[:1], prev_time_indices[:1]), True) and len(prev_time_indices) == len(self.time):
                     self.update_status = 'updated'
                 else:
                     self.update_status = 'first_updated'
-            if signdt >= 0 and (self.ti < len(self.time_full)-3 or not f.allow_time_extrapolation):
-                nextTime_loc = self.time[2] + periods*(self.time_full[-1]-self.time_full[0])
-            elif signdt == -1 and (self.ti > 0 or not f.allow_time_extrapolation):
+            if signdt >= 0 and (self.ti < len(self.time_full)-2 or not f.allow_time_extrapolation):
+                nextTime_loc = self.time[1] + periods*(self.time_full[-1]-self.time_full[0])
+            elif signdt < 0 and (self.ti > 0 or not f.allow_time_extrapolation):
                 nextTime_loc = self.time[0] + periods*(self.time_full[-1]-self.time_full[0])
         return nextTime_loc
+
+    @property
+    def chunk_not_loaded(self):
+        return 0
+
+    @property
+    def chunk_loading_requested(self):
+        return 1
+
+    @property
+    def chunk_loaded_touched(self):
+        return 2
+
+    @property
+    def chunk_deprecated(self):
+        return 3
+
+    @property
+    def chunk_loaded(self):
+        return [2, 3]
 
 
 class RectilinearGrid(Grid):
@@ -233,20 +262,21 @@ class RectilinearGrid(Grid):
     """
 
     def __init__(self, lon, lat, time, time_origin, mesh):
-        assert(isinstance(lon, np.ndarray) and len(lon.shape) == 1), 'lon is not a numpy vector'
-        assert(isinstance(lat, np.ndarray) and len(lat.shape) == 1), 'lat is not a numpy vector'
+        assert (isinstance(lon, np.ndarray) and len(lon.shape) <= 1), 'lon is not a numpy vector'
+        assert (isinstance(lat, np.ndarray) and len(lat.shape) <= 1), 'lat is not a numpy vector'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
-            assert(len(time.shape) == 1), 'time is not a vector'
+            assert (len(time.shape) == 1), 'time is not a vector'
 
         super(RectilinearGrid, self).__init__(lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.size
         self.ydim = self.lat.size
         self.tdim = self.time.size
-        if self.lat[-1] < self.lat[0]:
+        if self.ydim > 1 and self.lat[-1] < self.lat[0]:
             self.lat = np.flip(self.lat, axis=0)
             self.lat_flipped = True
-            logger.warning_once("Flipping lat data from North-South to South-North")
+            logger.warning_once("Flipping lat data from North-South to South-North. "
+                                "Note that this may lead to wrong sign for meridional velocity, so tread very carefully")
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
@@ -298,14 +328,13 @@ class RectilinearZGrid(RectilinearGrid):
     def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
         super(RectilinearZGrid, self).__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
-            assert(len(depth.shape) == 1), 'depth is not a vector'
+            assert (len(depth.shape) <= 1), 'depth is not a vector'
 
         self.gtype = GridCode.RectilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.zdim = self.depth.size
         self.z4d = -1  # only used in RectilinearSGrid
         if not self.depth.dtype == np.float32:
-            logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
 
 
@@ -334,21 +363,21 @@ class RectilinearSGrid(RectilinearGrid):
 
     def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
         super(RectilinearSGrid, self).__init__(lon, lat, time, time_origin, mesh)
-        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
+        assert (isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
 
         self.gtype = GridCode.RectilinearSGrid
         self.depth = depth
         self.zdim = self.depth.shape[-3]
-        self.z4d = len(self.depth.shape) == 4
+        self.z4d = 1 if len(self.depth.shape) == 4 else 0
         if self.z4d:
-            assert self.tdim == self.depth.shape[0], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            # self.depth.shape[0] is 0 for S grids loaded from netcdf file
+            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
         else:
             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
         if not self.depth.dtype == np.float32:
-            logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
         if self.lat_flipped:
             self.depth = np.flip(self.depth, axis=-2)
@@ -357,11 +386,11 @@ class RectilinearSGrid(RectilinearGrid):
 class CurvilinearGrid(Grid):
 
     def __init__(self, lon, lat, time=None, time_origin=None, mesh='flat'):
-        assert(isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
-        assert(isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
+        assert (isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
+        assert (isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
-            assert(len(time.shape) == 1), 'time is not a vector'
+            assert (len(time.shape) == 1), 'time is not a vector'
 
         lon = lon.squeeze()
         lat = lat.squeeze()
@@ -429,14 +458,13 @@ class CurvilinearZGrid(CurvilinearGrid):
     def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
         super(CurvilinearZGrid, self).__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
-            assert(len(depth.shape) == 1), 'depth is not a vector'
+            assert (len(depth.shape) == 1), 'depth is not a vector'
 
         self.gtype = GridCode.CurvilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.zdim = self.depth.size
         self.z4d = -1  # only for SGrid
         if not self.depth.dtype == np.float32:
-            logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
 
 
@@ -464,19 +492,19 @@ class CurvilinearSGrid(CurvilinearGrid):
 
     def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
         super(CurvilinearSGrid, self).__init__(lon, lat, time, time_origin, mesh)
-        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
+        assert (isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
         self.gtype = GridCode.CurvilinearSGrid
         self.depth = depth
         self.zdim = self.depth.shape[-3]
-        self.z4d = len(self.depth.shape) == 4
+        self.z4d = 1 if len(self.depth.shape) == 4 else 0
         if self.z4d:
-            assert self.tdim == self.depth.shape[0], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            # self.depth.shape[0] is 0 for S grids loaded from netcdf file
+            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
         else:
             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
         if not self.depth.dtype == np.float32:
-            logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)

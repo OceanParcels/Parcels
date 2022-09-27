@@ -15,6 +15,11 @@ class GridSet(object):
         grid = field.grid
         existing_grid = False
         for g in self.grids:
+            if field.chunksize == 'auto':
+                break
+            if g == grid:
+                existing_grid = True
+                break
             sameGrid = True
             if grid.time_origin != g.time_origin:
                 continue
@@ -24,11 +29,17 @@ class GridSet(object):
                 if gattr.shape != gridattr.shape or not np.allclose(gattr, gridattr):
                     sameGrid = False
                     break
-            if not sameGrid:
-                continue
-            existing_grid = True
-            field.grid = g
-            break
+
+            if (g.chunksize != grid.chunksize) and (grid.chunksize not in [False, None]):
+                for dim in grid.chunksize:
+                    if grid.chunksize[dim][1] != g.chunksize[dim][1]:
+                        sameGrid &= False
+                        break
+
+            if sameGrid:
+                existing_grid = True
+                field.grid = g
+                break
 
         if not existing_grid:
             self.grids.append(grid)
@@ -42,7 +53,7 @@ class GridSet(object):
 
         maxleft, minright = (-np.inf, np.inf)
         for g in self.grids:
-            if len(getattr(g, dim)) == 1:
+            if getattr(g, dim).size == 1:
                 continue  # not including grids where only one entry
             else:
                 if dim == 'depth':

@@ -2,9 +2,9 @@
 
 **Parcels** (**P**robably **A** **R**eally **C**omputationally **E**fficient **L**agrangian **S**imulator) is a set of Python classes and methods to create customisable particle tracking simulations using output from Ocean Circulation models. Parcels can be used to track passive and active particulates such as water, plankton, [plastic](http://www.topios.org/) and [fish](https://github.com/Jacketless/IKAMOANA).
 
-![AgulhasParticles](https://github.com/OceanParcels/oceanparcels_website/blob/master/images/globcurrent_fullyseeded.gif)
+![Arctic-SO-medusaParticles](https://github.com/OceanParcels/oceanparcels_website/blob/master/images/homepage.gif)
 
-*Animation of virtual particles carried by ocean surface flow in the [Agulhas Current](https://en.wikipedia.org/wiki/Agulhas_Current) off South Africa. The particles are advected with [Parcels](http://oceanparcels.org/) in data from the [GlobCurrent Project](http://globcurrent.ifremer.fr/products-data/products-overview).*
+*Animation of virtual particles carried by ocean surface flow in the global oceans. The particles are advected with [Parcels](http://oceanparcels.org/) in data from the [NEMO Ocean Model](https://www.nemo-ocean.eu/).*
 
 ### Parcels manuscript and code
 
@@ -27,3 +27,5 @@ See [oceanparcels.org](http://oceanparcels.org/) for further information about [
 [![Build Status](https://github.com/oceanparcels/parcels/workflows/test-suite/badge.svg?branch=master)](https://github.com/OceanParcels/parcels/actions?query=workflow%3Atest-suite+branch%3Amaster)
 [![Anaconda-release](https://anaconda.org/conda-forge/parcels/badges/version.svg)](https://anaconda.org/conda-forge/parcels/)
 [![Anaconda-date](https://anaconda.org/conda-forge/parcels/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/parcels/)
+[![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.823561.svg)](https://doi.org/10.5281/zenodo.823561)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5353/badge)](https://bestpractices.coreinfrastructure.org/projects/5353)

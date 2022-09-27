@@ -8,8 +8,10 @@ import xarray as xr
 
 from parcels import AdvectionRK4
 from parcels import ErrorCode
+from parcels import Field
 from parcels import FieldSet
 from parcels import JITParticle
+from parcels import TimeExtrapolationError
 from parcels import ParticleSet
 from parcels import ScipyParticle
 from parcels import Variable
@@ -37,10 +39,10 @@ def set_globcurrent_fieldset(filename=None, indices=None, deferred_load=True, us
 @pytest.mark.parametrize('use_xarray', [True, False])
 def test_globcurrent_fieldset(use_xarray):
     fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
-    assert(fieldset.U.lon.size == 81)
-    assert(fieldset.U.lat.size == 41)
-    assert(fieldset.V.lon.size == 81)
-    assert(fieldset.V.lat.size == 41)
+    assert fieldset.U.lon.size == 81
+    assert fieldset.U.lat.size == 41
+    assert fieldset.V.lon.size == 81
+    assert fieldset.V.lat.size == 41
 
     if not use_xarray:
         indices = {'lon': [5], 'lat': range(20, 30)}
@@ -86,8 +88,8 @@ def test_globcurrent_particles(mode, use_xarray):
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
 
-    assert(abs(pset[0].lon - 23.8) < 1)
-    assert(abs(pset[0].lat - -35.3) < 1)
+    assert abs(pset[0].lon - 23.8) < 1
+    assert abs(pset[0].lat - -35.3) < 1
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -103,7 +105,8 @@ def test_globcurrent_time_periodic(mode, rundays):
         pset = ParticleSet(fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0])
 
         def SampleU(particle, fieldset, time):
-            particle.sample_var += fieldset.U[time, particle.depth, particle.lat, particle.lon]
+            u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+            particle.sample_var += u
 
         pset.execute(SampleU, runtime=delta(days=rundays), dt=delta(days=1))
         sample_var.append(pset[0].sample_var)
@@ -140,8 +143,8 @@ def test_globcurrent_netcdf_timestamps(dt):
     psetT = ParticleSet(fieldsetTimestamps, pclass=JITParticle, lon=lonstart, lat=latstart)
     psetT.execute(AdvectionRK4, runtime=runtime, dt=dt)
 
-    assert np.allclose(psetN[0].lon, psetT[0].lon)
-    assert np.allclose(psetN[0].lat, psetT[0].lat)
+    assert np.allclose(psetN.lon[0], psetT.lon[0])
+    assert np.allclose(psetN.lat[0], psetT.lat[0])
 
 
 def test__particles_init_time():
@@ -195,6 +198,35 @@ def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('dt', [-300, 300])
+@pytest.mark.parametrize('with_starttime', [True, False])
+def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime):
+    fieldset = set_globcurrent_fieldset()
+
+    fnamesFeb = sorted(glob(path.join(path.dirname(__file__), 'GlobCurrent_example_data', '200202*.nc')))
+    fieldset.add_field(Field.from_netcdf(fnamesFeb, ('P', 'eastward_eulerian_current_velocity'),
+                                         {'lat': 'lat', 'lon': 'lon', 'time': 'time'}))
+
+    class MyParticle(ptype[mode]):
+        sample_var = Variable('sample_var', initial=0.)
+
+    def SampleP(particle, fieldset, time):
+        particle.sample_var += fieldset.P[time, particle.depth, particle.lat, particle.lon]
+
+    if with_starttime:
+        time = fieldset.U.grid.time[0] if dt > 0 else fieldset.U.grid.time[-1]
+        pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35], time=time)
+    else:
+        pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35])
+
+    if with_starttime:
+        with pytest.raises(TimeExtrapolationError):
+            pset.execute(pset.Kernel(AdvectionRK4)+SampleP, runtime=delta(days=1), dt=dt)
+    else:
+        pset.execute(pset.Kernel(AdvectionRK4) + SampleP, runtime=delta(days=1), dt=dt)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_globcurrent_particle_independence(mode, rundays=5):
     fieldset = set_globcurrent_fieldset()
     time0 = fieldset.U.grid.time[0]
@@ -206,7 +238,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
     def DeleteParticle(particle, fieldset, time):
         particle.delete()
 
-    pset0 = ParticleSet(fieldset, pclass=JITParticle,
+    pset0 = ParticleSet(fieldset, pclass=ptype[mode],
                         lon=[25, 25],
                         lat=[-35, -35],
                         time=time0)
@@ -216,7 +248,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
                   dt=delta(minutes=5),
                   recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
 
-    pset1 = ParticleSet(fieldset, pclass=JITParticle,
+    pset1 = ParticleSet(fieldset, pclass=ptype[mode],
                         lon=[25, 25],
                         lat=[-35, -35],
                         time=time0)
@@ -241,8 +273,8 @@ def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt, output_file=pfile)
     pfile.close()
 
-    ptype[mode].setLastID(0)  # need to reset to zero
-    pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename)
+    restarttime = np.nanmax if dt > 0 else np.nanmin
+    pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename, restarttime=restarttime)
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
     pset_new.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
 
