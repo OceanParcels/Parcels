@@ -794,8 +794,7 @@ def test_fieldset_defer_loading_with_diff_time_origin(pset_mode, tmpdir, fail, f
     filepath = tmpdir.join(filename)
     data0, dims0 = generate_fieldset(10, 10, 1, 10)
     dims0['time'] = np.arange(0, 10, 1) * 3600
-    fieldset_out = FieldSet.from_data(data0, dims0, allow_time_extrapolation=True
-                                      )
+    fieldset_out = FieldSet.from_data(data0, dims0, allow_time_extrapolation=True)
     fieldset_out.U.grid.time_origin = TimeConverter(np.datetime64('2018-04-20'))
     fieldset_out.V.grid.time_origin = TimeConverter(np.datetime64('2018-04-20'))
     data1, dims1 = generate_fieldset(10, 10, 1, 10)
