@@ -12,11 +12,12 @@ from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
 
 
-def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-                  land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
+def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None,
+                  projection='PlateCarree', land=True, vmin=None, vmax=None, savefile=None,
+                  animation=False, **kwargs):
     """Function to plot a Parcels ParticleSet
 
-    :param show_time: Time at which to show the ParticleSet
+    :param show_time: Time in seconds from start after which to show the ParticleSet
     :param with_particles: Boolean whether particles are also plotted on Field
     :param field: Field to plot under particles (either None, a Field object, or 'vector')
     :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
@@ -48,7 +49,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
             return  # creating axes was not possible
         ax.set_title('Particles' + parsetimestr(particles.fieldset.U.grid.time_origin, show_time))
         latN, latS, lonE, lonW = parsedomain(domain, particles.fieldset.U)
-        if cartopy is None or projection is None:
+        if (cartopy is None) or (projection is None):
             if domain is not None:
                 if isinstance(particles.fieldset.U.grid, CurvilinearGrid):
                     ax.set_xlim(particles.fieldset.U.grid.lon[latS, lonW], particles.fieldset.U.grid.lon[latN, lonE])
@@ -95,15 +96,15 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         plt.show()
     else:
         plt.savefig(savefile)
-        logger.info('Plot saved to ' + savefile + '.png')
+        logger.info(f'Plot saved to {savefile}')
         plt.close()
 
 
-def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None, land=True,
+def plotfield(field, show_time=None, domain=None, depth_level=0, projection='PlateCarree', land=True,
               vmin=None, vmax=None, savefile=None, **kwargs):
     """Function to plot a Parcels Field
 
-    :param show_time: Time at which to show the Field
+    :param show_time: Time in seconds from start after which to show the Field
     :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
     :param depth_level: depth level to be plotted (default 0)
     :param projection: type of cartopy projection to use (default PlateCarree)
@@ -263,24 +264,21 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     return plt, fig, ax, cartopy
 
 
-def create_parcelsfig_axis(spherical, land=True, projection=None, central_longitude=0, cartopy_features=[]):
+def create_parcelsfig_axis(spherical, land=True, projection='PlateCarree', central_longitude=0, cartopy_features=[]):
     try:
         import matplotlib.pyplot as plt
     except:
         logger.info("Visualisation is not possible. Matplotlib not found.")
         return None, None, None, None  # creating axes was not possible
 
-    if projection is not None and not spherical:
-        raise RuntimeError('projection not accepted when Field doesn''t have geographic coordinates')
-
-    if spherical:
+    if spherical and projection:
         try:
             import cartopy
         except:
             logger.info("Visualisation of field with geographic coordinates is not possible. Cartopy not found.")
             return None, None, None, None  # creating axes was not possible
 
-        projection = cartopy.crs.PlateCarree(central_longitude) if projection is None else projection
+        projection = cartopy.crs.PlateCarree(central_longitude) if projection == 'PlateCarree' else projection
         fig, ax = plt.subplots(1, 1, subplot_kw={'projection': projection})
         try:  # gridlines not supported for all projections
             if isinstance(projection, cartopy.crs.PlateCarree) and central_longitude != 0:
@@ -299,7 +297,7 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
         if isinstance(land, str):
             ax.coastlines(land)
         elif land:
-            ax.coastlines()
+            ax.coastlines(zorder=10)
     else:
         cartopy = None
         fig, ax = plt.subplots(1, 1)

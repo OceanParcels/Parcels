@@ -97,7 +97,6 @@ class GNU_parameters(Compiler_parameters):
             mpicc = mpicc_env
             mpicc = "mpicc" if mpicc is None and os._exists("mpicc") else None
             mpicc = "mpiCC" if mpicc is None and os._exists("mpiCC") else None
-            os.system("%s --version" % (mpicc))
         self._compiler = mpicc if MPI and mpicc is not None else cc_env if cc_env is not None else "gcc"
         opt_flags = ['-g', '-O3']
         arch_flag = ['-m64' if calcsize("P") == 8 else '-m32']
@@ -238,7 +237,10 @@ Compilation command: %s
 Source/Destination file: %s
 Log file: %s
 
-Log output: %s""" % (" ".join(cmd), src, logfile.name, logfile2.read())
+Log output: %s
+If you are on macOS, it might help to type 'export CC=gcc'
+
+""" % (" ".join(cmd), src, logfile.name, logfile2.read())
                 raise RuntimeError(err)
         return True
 

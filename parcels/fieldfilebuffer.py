@@ -100,6 +100,7 @@ class NetcdfFileBuffer(_FileBuffer):
     def __init__(self, *args, **kwargs):
         self.lib = np
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
+        self.netcdf_decodewarning = kwargs.pop('netcdf_decodewarning', True)
         super(NetcdfFileBuffer, self).__init__(*args, **kwargs)
 
     def __enter__(self):

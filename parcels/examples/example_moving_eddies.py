@@ -157,8 +157,8 @@ def test_moving_eddies_fieldset(mode, mesh, tmpdir):
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
     else:
-        assert(pset[0].lon < 2.0 and 46.2 < pset[0].lat < 46.25)
-        assert(pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
+        assert (pset[0].lon < 2.0 and 46.2 < pset[0].lat < 46.25)
+        assert (pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
 
 
 def fieldsetfile(mesh, tmpdir):
