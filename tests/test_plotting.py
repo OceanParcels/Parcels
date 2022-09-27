@@ -14,13 +14,13 @@ def periodicBC(particle, fieldset, time):
 def test_field_from_netcdf():
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
-    filenames = { 'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
-                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
-                        'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
-                  'V': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
-                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
-                        'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}
-                  }
+    filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                       'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                       'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
+                 'V': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                       'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                       'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}
+                 }
     variables = {'U': 'U',
                  'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
