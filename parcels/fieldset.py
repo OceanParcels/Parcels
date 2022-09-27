@@ -365,7 +365,7 @@ class FieldSet(object):
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
-        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param do_cache: switch to enable or disable caching (default: False [= disabled])
         :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
 
         For usage examples see the following tutorials:
