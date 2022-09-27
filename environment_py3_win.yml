@@ -25,4 +25,5 @@ dependencies:
   - pytest
   - nbval
   - pykdtree
+  - cartopy
   - zarr

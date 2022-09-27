@@ -28,4 +28,5 @@ dependencies:
   - nbval
   - scikit-learn
   - pykdtree
+  - cartopy
   - zarr
