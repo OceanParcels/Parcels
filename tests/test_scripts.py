@@ -21,7 +21,7 @@ def create_outputfiles(dir, pset_mode):
     npart = 10
     delaytime = delta(hours=1)
     endtime = delta(hours=24)
-    x = 3. * (1. / 1.852 / 60)
+    x = 3. * (1. / 1.852 / 60.)
     y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)
     lat = np.linspace(y[0], y[1], npart)
 
@@ -29,7 +29,7 @@ def create_outputfiles(dir, pset_mode):
     output_file = pset.ParticleFile(name=fp, outputdt=delaytime)
 
     for t in range(npart):
-        time = 0 if len(pset) == 0 else pset[0].time
+        time = 0. if len(pset) == 0 else pset[0].time
         pset.add(pset_type[pset_mode]['pset'](pclass=JITParticle, lon=x, lat=lat[t], fieldset=fieldset, time=time))
         pset.execute(AdvectionRK4, runtime=delaytime, dt=delta(minutes=5), output_file=output_file)
 

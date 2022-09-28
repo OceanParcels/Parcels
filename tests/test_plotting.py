@@ -4,6 +4,7 @@ import numpy as np
 import dask.array as da  # NOQA
 from os import path
 from matplotlib import pyplot as plt  # NOQA
+import pytest
 
 
 def periodicBC(particle, fieldset, time):
@@ -24,8 +25,12 @@ def test_field_from_netcdf():
     variables = {'U': 'U',
                  'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-    return FieldSet.from_netcdf(filenames, variables, dimensions, interp_method='cgrid_velocity', field_chunksize='auto', allow_time_extrapolation=True)
+    return FieldSet.from_netcdf(filenames, variables, dimensions, interp_method='cgrid_velocity', chunksize='auto', allow_time_extrapolation=True)
 
+
+@pytest.fixture(name="fieldset")
+def fieldset_fixture():
+    return test_field_from_netcdf()
 
 def test_pset_create_field(fieldset, npart=100):
     lonp = -180 * np.ones(npart)

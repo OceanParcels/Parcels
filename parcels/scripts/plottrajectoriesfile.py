@@ -116,7 +116,11 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
                 return str(plottimes[index])
 
         if cartopy:
-            scat = ax.scatter(lon[b], lat[b], s=20, color='k', transform=cartopy.crs.Geodetic())
+            scat = None
+            try:
+                scat = ax.scatter(lon[b], lat[b], s=20, color='k', transform=cartopy.crs.Geodetic())
+            except (ValueError,):
+                scat = ax.scatter(lon[b], lat[b], s=20, color='k', transform=cartopy.crs.PlateCarree())
         else:
             scat = ax.scatter(lon[b], lat[b], s=20, color='k')
         ttl = ax.set_title('Particles' + titlestr + ' at time ' + timestr(plottimes, 0))
