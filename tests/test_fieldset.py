@@ -817,7 +817,7 @@ def test_fieldset_defer_loading_with_diff_time_origin(pset_mode, tmpdir, fail, f
     fieldset_out.add_field(fieldW)
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath, extra_fields={'W': 'W'}, allow_time_extrapolation=True)
-    assert fieldset.U.creation_log == 'from_parcels', "Last instruction: {}".format(fieldset.U.creation_log) 
+    assert fieldset.U.creation_log == 'from_parcels', "Last instruction: {}".format(fieldset.U.creation_log)
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
                                                   time=[datetime.datetime(2018, 4, 20, 1)])
     pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
