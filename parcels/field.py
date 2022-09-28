@@ -160,19 +160,21 @@ class Field(object):
         elif self.time_periodic not in [False, None]:
             if isinstance(self.time_periodic, datetime.timedelta):
                 self.time_periodic = self.time_periodic.total_seconds()
+            if isinstance(self.time_periodic, np.timedelta64):
+                self.time_periodic = self.time_periodic / np.timedelta(1, 's')
             if not np.isclose(grid_timespan, self.time_periodic):
-                if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
+                if (self.grid.time[-1] - self.grid.time[0]) > self.time_periodic:
                     grid_dt = self.grid.time[1] - self.grid.time[0]
                     logger.warning_once("The 'time_petriodic' parameter intends to give the total mximum timeframe for which the given field data shall be periodically repeated.\n \
                                         Hence, the provided time period '{} seconds' in invalid as it is smaller than the time frame covered by field '{}', which is '{} seconds'.\n \
                                         Parcels attempts now to clip the provided field (dt(g) = {}) to the requested 'period'.".format(time_periodic, self.name, grid_timespan, grid_dt))
                     tshift = abs(math.ceil(float(self.time_periodic) / float(grid_dt)) * float(grid_dt))
                     tishift = int(math.ceil(tshift / abs(grid_dt)))
-                    self.grid.time = self.grid.time[0:tishift+1]
                     self.grid._add_last_periodic_data_timestep = False
+                    self.grid.time = self.grid.time[0:tishift+1]
                 else:
-                    self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
                     self.grid._add_last_periodic_data_timestep = True
+                    self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
                 self.grid.time_full = self.grid.time
 
         self.vmin = vmin

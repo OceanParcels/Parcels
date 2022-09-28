@@ -989,6 +989,11 @@ class FieldSet(object):
         """
 
         fields = {}
+        cache_obj = kwargs.pop("cache", None)
+        cls._field_file_cache = None  # no file caching with external xarray
+        cache_dir = kwargs.pop("cache_dir", None)
+        do_cache = kwargs.pop("do_cache", False)
+        use_threads = kwargs.pop("use_threads", False)
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_xarray_dataset'
         if 'time' in dimensions:
@@ -1108,8 +1113,10 @@ class FieldSet(object):
         """
         signdt = np.sign(dt)
         nextTime = np.infty if dt > 0 else -np.infty
+        use_fieldcache = False
         if self._field_file_cache is not None and not self._field_file_cache.caching_started:
             self._field_file_cache.start_caching(signdt=signdt)
+            use_fieldcache = True
 
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
@@ -1117,7 +1124,7 @@ class FieldSet(object):
             if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
-                nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
+                nextTime_loc = f.grid.computeTimeChunk(f, time, signdt, modulo=use_fieldcache)
                 if time == nextTime_loc and signdt != 0:
                     raise TimeExtrapolationError(time, field=f, msg='In fset.computeTimeChunk')
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)

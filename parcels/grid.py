@@ -186,7 +186,7 @@ class Grid(object):
                                              self.depth[:, :, 0:halosize, :]), axis=len(self.depth.shape) - 2)
                 assert self.depth.shape[2] == self.ydim, "Third dim must be y."
 
-    def computeTimeChunk(self, f, time, signdt):
+    def computeTimeChunk(self, f, time, signdt, modulo=False):
         nextTime_loc = np.infty if signdt >= 0 else -np.infty
         periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
         prev_time_indices = self.time
@@ -230,9 +230,9 @@ class Grid(object):
                     self.update_status = 'first_updated'
             timespan = self.time_full[-1] - self.time_full[0]
             if signdt >= 0 and (self.ti < len(self.time_full)-2 or not f.allow_time_extrapolation):
-                nextTime_loc = np.fmod(self.time[1] + periods * timespan, timespan)
+                nextTime_loc = np.fmod(self.time[1] + periods * timespan, timespan) if modulo else self.time[1] + periods*(self.time_full[-1]-self.time_full[0])
             elif signdt < 0 and (self.ti > 0 or not f.allow_time_extrapolation):
-                nextTime_loc = np.fmod(self.time[0] + periods * timespan, timespan)
+                nextTime_loc = np.fmod(self.time[0] + periods * timespan, timespan) if modulo else self.time[0] + periods * (self.time_full[-1] - self.time_full[0])
         return nextTime_loc
 
     @property

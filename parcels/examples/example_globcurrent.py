@@ -81,8 +81,8 @@ def test_globcurrent_fieldset_advancetime(mode, dt, lonstart, latstart, use_xarr
 def test_globcurrent_particles(mode, use_xarray):
     fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
 
-    lonstart = [25]
-    latstart = [-35]
+    lonstart = [25.,]
+    latstart = [-35.,]
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lonstart, lat=latstart)
 
@@ -102,7 +102,7 @@ def test_globcurrent_time_periodic(mode, rundays):
         class MyParticle(ptype[mode]):
             sample_var = Variable('sample_var', initial=fieldset.U)
 
-        pset = ParticleSet(fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0])
+        pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25.0], lat=[-35.0], time=fieldset.U.grid.time[0])
 
         def SampleU(particle, fieldset, time):
             u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
@@ -150,12 +150,12 @@ def test_globcurrent_netcdf_timestamps(dt):
 def test__particles_init_time():
     fieldset = set_globcurrent_fieldset()
 
-    lonstart = [25]
-    latstart = [-35]
+    lonstart = [25.,]
+    latstart = [-35.,]
 
     # tests the different ways of initialising the time of a particle
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=np.datetime64('2002-01-15'))
-    pset2 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=14*86400)
+    pset2 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=[14*86400,])
     pset3 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=np.array([np.datetime64('2002-01-15')]))
     pset4 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=[np.datetime64('2002-01-15')])
     assert pset[0].time - pset2[0].time == 0
