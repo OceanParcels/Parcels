@@ -794,8 +794,7 @@ def test_fieldset_defer_loading_with_diff_time_origin(pset_mode, tmpdir, fail, f
     filepath = tmpdir.join(filename)
     data0, dims0 = generate_fieldset(10, 10, 1, 10)
     dims0['time'] = np.arange(0, 10, 1) * 3600
-    fieldset_out = FieldSet.from_data(data0, dims0, allow_time_extrapolation=True
-                                      )
+    fieldset_out = FieldSet.from_data(data0, dims0, allow_time_extrapolation=True)
     fieldset_out.U.grid.time_origin = TimeConverter(np.datetime64('2018-04-20'))
     fieldset_out.V.grid.time_origin = TimeConverter(np.datetime64('2018-04-20'))
     data1, dims1 = generate_fieldset(10, 10, 1, 10)
@@ -811,8 +810,8 @@ def test_fieldset_defer_loading_with_diff_time_origin(pset_mode, tmpdir, fail, f
     fieldW = Field('W', np.zeros(data1['U'].shape), grid=gridW)
     fieldset_out.add_field(fieldW)
     fieldset_out.write(filepath)
-    fieldset = FieldSet.from_parcels(filepath, extra_fields={'W': 'W'})
-    assert fieldset.U.creation_log == 'from_parcels'
+    fieldset = FieldSet.from_parcels(filepath, extra_fields={'W': 'W'}, allow_time_extrapolation=True)
+    assert fieldset.U.creation_log == 'from_parcels', "Last instruction: {}".format(fieldset.U.creation_log) 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
                                                   time=[datetime.datetime(2018, 4, 20, 1)])
     pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
