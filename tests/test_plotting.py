@@ -32,6 +32,7 @@ def test_field_from_netcdf():
 def fieldset_fixture():
     return test_field_from_netcdf()
 
+
 def test_pset_create_field(fieldset, npart=100):
     lonp = -180 * np.ones(npart)
     latp = [i for i in np.linspace(-70, 88, npart)]
