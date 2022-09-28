@@ -250,9 +250,9 @@ class ParticleSetAOS(BaseParticleSet):
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
             if self.repeatdt <= 0:
-                raise('Repeatdt should be > 0')
+                raise 'Repeatdt should be > 0'
             if time[0] and not np.allclose(time, time[0]):
-                raise ('All Particle.time should be the same when repeatdt is not None')
+                raise 'All Particle.time should be the same when repeatdt is not None'
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
 
@@ -663,7 +663,7 @@ def search_kernel(particle, fieldset, time):
         for i, p in enumerate(self):
             try:  # breaks if either p.xi, p.yi, p.zi, p.ti do not exist (in scipy) or field not in fieldset
                 if p.ti[field.igrid] < 0:  # xi, yi, zi, ti, not initialised
-                    raise('error')
+                    raise 'error'
                 xi = p.xi[field.igrid]
                 yi = p.yi[field.igrid]
             except:

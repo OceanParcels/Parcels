@@ -31,11 +31,11 @@ def radial_rotation_fieldset(xdim=200, ydim=200):  # Define 2D flat, square fiel
         for j in range(lat.size):
 
             r = np.sqrt((lon[i]-x0)**2 + (lat[j]-y0)**2)  # Define radial displacement.
-            assert(r >= 0.)
-            assert(r <= np.sqrt(x0**2 + y0**2))
+            assert r >= 0.
+            assert r <= np.sqrt(x0**2 + y0**2)
 
             theta = math.atan2((lat[j]-y0), (lon[i]-x0))  # Define the polar angle.
-            assert(abs(theta) <= np.pi)
+            assert abs(theta) <= np.pi
 
             U[j, i] = r * math.sin(theta) * omega
             V[j, i] = -r * math.cos(theta) * omega
@@ -75,10 +75,10 @@ def test_rotation_example(mode, tmpdir):
     fieldset = radial_rotation_fieldset()
     outfile = tmpdir.join("RadialParticle")
     pset = rotation_example(fieldset, outfile, mode=mode)
-    assert(pset[0].lon == 30. and pset[0].lat == 30.)  # Particle at centre of Field remains stationary.
+    assert (pset[0].lon == 30. and pset[0].lat == 30.)  # Particle at centre of Field remains stationary.
     vals = true_values(pset.time[1])
-    assert(np.allclose(pset[1].lon, vals[0], 1e-5))    # Check advected values against calculated values.
-    assert(np.allclose(pset[1].lat, vals[1], 1e-5))
+    assert np.allclose(pset[1].lon, vals[0], 1e-5)    # Check advected values against calculated values.
+    assert np.allclose(pset[1].lat, vals[1], 1e-5)
 
 
 if __name__ == "__main__":

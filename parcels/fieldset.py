@@ -95,7 +95,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param To loop periodically over the time component of the Field. It is set to either :param False or
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either :param False or
                the total timespan that is to be covered by the periodically-repeating field, given either as :type float (in seconds)
                or :type datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False.
@@ -365,7 +365,7 @@ class FieldSet(object):
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
-        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param do_cache: switch to enable or disable caching (default: False [= disabled])
         :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
 
         For usage examples see the following tutorials:
@@ -522,7 +522,7 @@ class FieldSet(object):
         :param chunksize: size of the chunks in dask loading. Default is None (no chunking)
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
-        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param do_cache: switch to enable or disable caching (default: False [= disabled])
         :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
         """
         if 'creation_log' not in kwargs.keys():
@@ -627,7 +627,7 @@ class FieldSet(object):
         :param chunksize: size of the chunks in dask loading
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
-        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param do_cache: switch to enable or disable caching (default: False [= disabled])
         :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
         """
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
@@ -716,7 +716,7 @@ class FieldSet(object):
         :param chunksize: size of the chunks in dask loading
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
-        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param do_cache: switch to enable or disable caching (default: False [= disabled])
         :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
         :param depth_units: The units of the vertical dimension. Default in Parcels is 'm',
                but many POP outputs are in 'cm'
@@ -803,7 +803,7 @@ class FieldSet(object):
         :param chunksize: size of the chunks in dask loading
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
-        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param do_cache: switch to enable or disable caching (default: False [= disabled])
         :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
 
 
@@ -878,7 +878,7 @@ class FieldSet(object):
         :param chunksize: size of the chunks in dask loading
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
-        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param do_cache: switch to enable or disable caching (default: False [= disabled])
         :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
 
         """
@@ -934,7 +934,7 @@ class FieldSet(object):
         :param chunksize: size of the chunks in dask loading
         :param cache: a custom FieldFileCache object, or None for automatic construction (default: None)
         :param cache_dir: auto-constructing a FieldFileCache object with this given top-leave path as cache directory (default: None)
-        :param do_cache: switch to enable or disable caching (default: True [= enabled])
+        :param do_cache: switch to enable or disable caching (default: False [= disabled])
         :param use_threads: switch to enable or disable threaded operation of caching (default: False [= disabled])
 
         """
@@ -1149,7 +1149,7 @@ class FieldSet(object):
                     data = f.computeTimeChunk(data, tind)
                 data = f.rescale_and_set_minmax(data)
 
-                if(isinstance(f.data, DeferredArray)):
+                if (isinstance(f.data, DeferredArray)):
                     f.data = DeferredArray()
                 f.data = f.reshape(data)
                 if not f.chunk_set:
