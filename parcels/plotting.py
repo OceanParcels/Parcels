@@ -102,7 +102,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
 
 
 def plotfield(field, show_time=None, domain=None, depth_level=0, projection='PlateCarree', land=True,
-              vmin=None, vmax=None, savefile=None, **kwargs):
+              vmin=None, vmax=None, savefile=None, use3D=False, **kwargs):
     """Function to plot a Parcels Field
 
     :param show_time: Time in seconds from start after which to show the Field
@@ -114,6 +114,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
     :param vmax: maximum colour scale (only in single-plot mode)
     :param savefile: Name of a file to save the plot to
     :param animation: Boolean whether result is a single plot, or an animation
+    :param use3D: tells if requested projection is 2D or 3D
     """
 
     if type(field) is VectorField:
@@ -131,7 +132,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
         logger.warning('Field.show() does not always correctly determine the domain for curvilinear grids. '
                        'Use plotting with caution and perhaps use domain argument as in the NEMO 3D tutorial')
 
-    plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection, cartopy_features=kwargs.pop('cartopy_features', []))
+    plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection, cartopy_features=kwargs.pop('cartopy_features', []), use3D=use3D)
     if plt is None:
         return None, None, None, None  # creating axes was not possible
 

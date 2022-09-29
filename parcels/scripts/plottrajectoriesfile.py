@@ -53,7 +53,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
 
     if tracerfile is not None and mode != 'hist2d':
         tracerfld = Field.from_netcdf(tracerfile, tracerfield, {'lon': tracerlon, 'lat': tracerlat})
-        plt, fig, ax, cartopy = plotfield(tracerfld)
+        plt, fig, ax, cartopy = plotfield(tracerfld, use3D=(mode == '3d'))
         if plt is None:
             return  # creating axes was not possible
         titlestr = ' and ' + tracerfield
