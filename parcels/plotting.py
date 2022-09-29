@@ -274,7 +274,11 @@ def create_parcelsfig_axis(spherical, land=True, projection='PlateCarree', centr
         logger.info("Visualisation is not possible. Matplotlib not found.")
         return None, None, None, None  # creating axes was not possible
 
-    if spherical and projection:
+    if use3D:
+        cartopy = None
+        fig, ax = plt.subplots(1, 1, subplot_kw={'projection': '3d'})
+        ax.grid()
+    elif spherical and projection:
         try:
             import cartopy
         except:
@@ -282,7 +286,7 @@ def create_parcelsfig_axis(spherical, land=True, projection='PlateCarree', centr
             return None, None, None, None  # creating axes was not possible
 
         projection = cartopy.crs.PlateCarree(central_longitude) if projection == 'PlateCarree' else projection
-        projection = '3d' if use3D else projection
+        # projection = '3d' if use3D else projection
         fig, ax = plt.subplots(1, 1, subplot_kw={'projection': projection})
         try:  # gridlines not supported for all projections
             if isinstance(projection, cartopy.crs.PlateCarree) and central_longitude != 0:
