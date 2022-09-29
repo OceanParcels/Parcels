@@ -559,10 +559,11 @@ class Field(object):
         """
 
         data = da.data
+        data = data.astype(np.float32) if data.dtype != np.float32 else data  # for JIT, we need to assure data is 32-bit float
         interp_method = kwargs.pop('interp_method', 'linear')
 
-        time = da[dimensions['time']].values if 'time' in dimensions else np.array([0])
-        depth = da[dimensions['depth']].values if 'depth' in dimensions else np.array([0])
+        time = da[dimensions['time']].values if 'time' in dimensions else np.array([0.])
+        depth = da[dimensions['depth']].values if 'depth' in dimensions else np.array([0.])
         lon = da[dimensions['lon']].values
         lat = da[dimensions['lat']].values
 
@@ -571,7 +572,7 @@ class Field(object):
 
         grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         return cls(name, data, grid=grid, allow_time_extrapolation=allow_time_extrapolation,
-                   interp_method=interp_method, **kwargs)
+                   time_periodic=time_periodic, interp_method=interp_method, **kwargs)
 
     def reshape(self, data, transpose=False):
         # Ensure that field data is the right data type

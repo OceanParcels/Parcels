@@ -223,7 +223,13 @@ class ParticleSetAOS(BaseParticleSet):
 
         time = np.array([0.0], dtype=np.float64) if time is None else time
         time = _convert_to_array(time)
-        time = np.repeat(time, lon.size) if not hasattr(time, '__len__') or len(time) == 1 else time
+        try:
+            assert len(time) > 1
+        except TypeError:
+            time = np.repeat(time, lon.size)
+        except AssertionError:
+            time = np.repeat(time, lon.size)
+        # time = np.repeat(time, lon.size) if not isinstance(time, Sized) or len(time) == 1 else time
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
@@ -250,9 +256,9 @@ class ParticleSetAOS(BaseParticleSet):
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
             if self.repeatdt <= 0:
-                raise 'Repeatdt should be > 0'
+                raise AttributeError('Repeatdt should be > 0')
             if time[0] and not np.allclose(time, time[0]):
-                raise 'All Particle.time should be the same when repeatdt is not None'
+                raise AttributeError('All Particle.time should be the same when repeatdt is not None')
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
 
@@ -663,7 +669,7 @@ def search_kernel(particle, fieldset, time):
         for i, p in enumerate(self):
             try:  # breaks if either p.xi, p.yi, p.zi, p.ti do not exist (in scipy) or field not in fieldset
                 if p.ti[field.igrid] < 0:  # xi, yi, zi, ti, not initialised
-                    raise 'error'
+                    raise RuntimeError('error indexing')
                 xi = p.xi[field.igrid]
                 yi = p.yi[field.igrid]
             except:

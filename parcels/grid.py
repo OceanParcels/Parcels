@@ -230,9 +230,9 @@ class Grid(object):
                     self.update_status = 'first_updated'
             timespan = self.time_full[-1] - self.time_full[0]
             if signdt >= 0 and (self.ti < len(self.time_full)-2 or not f.allow_time_extrapolation):
-                nextTime_loc = np.fmod(self.time[1] + periods * timespan, timespan) if modulo else self.time[1] + periods*(self.time_full[-1]-self.time_full[0])
+                nextTime_loc = np.fmod(self.time[1] + periods * timespan, timespan) if modulo else self.time[1] + periods * timespan
             elif signdt < 0 and (self.ti > 0 or not f.allow_time_extrapolation):
-                nextTime_loc = np.fmod(self.time[0] + periods * timespan, timespan) if modulo else self.time[0] + periods * (self.time_full[-1] - self.time_full[0])
+                nextTime_loc = np.fmod(self.time[0] + periods * timespan, timespan) if modulo else self.time[0] + periods * timespan
         return nextTime_loc
 
     @property

@@ -81,8 +81,8 @@ def test_globcurrent_fieldset_advancetime(mode, dt, lonstart, latstart, use_xarr
 def test_globcurrent_particles(mode, use_xarray):
     fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
 
-    lonstart = [25.,]
-    latstart = [-35.,]
+    lonstart = [25., ]
+    latstart = [-35., ]
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lonstart, lat=latstart)
 
@@ -150,12 +150,12 @@ def test_globcurrent_netcdf_timestamps(dt):
 def test__particles_init_time():
     fieldset = set_globcurrent_fieldset()
 
-    lonstart = [25.,]
-    latstart = [-35.,]
+    lonstart = [25., ]
+    latstart = [-35., ]
 
     # tests the different ways of initialising the time of a particle
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=np.datetime64('2002-01-15'))
-    pset2 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=[14*86400,])
+    pset2 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=14*86400.)
     pset3 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=np.array([np.datetime64('2002-01-15')]))
     pset4 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=[np.datetime64('2002-01-15')])
     assert pset[0].time - pset2[0].time == 0
@@ -179,7 +179,7 @@ def test_globcurrent_time_extrapolation_error(mode, use_xarray):
 @pytest.mark.parametrize('use_xarray', [True, False])
 def test_globcurrent_dt0(mode, use_xarray):
     fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25], lat=[-35])
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25.], lat=[-35.])
     pset.execute(AdvectionRK4, dt=0.)
 
 
@@ -192,7 +192,7 @@ def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=fieldset.U)
     time = fieldset.U.grid.time[0] if dt > 0 else fieldset.U.grid.time[-1]
-    pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35], time=time)
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25., ], lat=[-35., ], time=time)
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
 
@@ -201,6 +201,7 @@ def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
 @pytest.mark.parametrize('dt', [-300, 300])
 @pytest.mark.parametrize('with_starttime', [True, False])
 def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime):
+    # This test fails
     fieldset = set_globcurrent_fieldset()
 
     fnamesFeb = sorted(glob(path.join(path.dirname(__file__), 'GlobCurrent_example_data', '200202*.nc')))
@@ -215,9 +216,9 @@ def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime
 
     if with_starttime:
         time = fieldset.U.grid.time[0] if dt > 0 else fieldset.U.grid.time[-1]
-        pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35], time=time)
+        pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25., ], lat=[-35., ], time=time)
     else:
-        pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35])
+        pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25., ], lat=[-35., ])
 
     if with_starttime:
         with pytest.raises(TimeExtrapolationError):
@@ -268,7 +269,7 @@ def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
     fieldset = set_globcurrent_fieldset()
 
     ptype[mode].setLastID(pid_offset)
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25., ], lat=[-35., ])
     pfile = pset.ParticleFile(filename, outputdt=delta(hours=6))
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt, output_file=pfile)
     pfile.close()

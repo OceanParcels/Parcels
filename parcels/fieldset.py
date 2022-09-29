@@ -989,11 +989,11 @@ class FieldSet(object):
         """
 
         fields = {}
-        cache_obj = kwargs.pop("cache", None)
         cls._field_file_cache = None  # no file caching with external xarray
-        cache_dir = kwargs.pop("cache_dir", None)
-        do_cache = kwargs.pop("do_cache", False)
-        use_threads = kwargs.pop("use_threads", False)
+        kwargs.pop("cache", None)
+        kwargs.pop("cache_dir", None)
+        kwargs.pop("do_cache", False)
+        kwargs.pop("use_threads", False)
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_xarray_dataset'
         if 'time' in dimensions:
