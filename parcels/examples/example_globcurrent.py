@@ -201,7 +201,6 @@ def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
 @pytest.mark.parametrize('dt', [-300, 300])
 @pytest.mark.parametrize('with_starttime', [True, False])
 def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime):
-    # This test fails
     fieldset = set_globcurrent_fieldset()
 
     fnamesFeb = sorted(glob(path.join(path.dirname(__file__), 'GlobCurrent_example_data', '200202*.nc')))
@@ -224,7 +223,11 @@ def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime
         with pytest.raises(TimeExtrapolationError):
             pset.execute(pset.Kernel(AdvectionRK4)+SampleP, runtime=delta(days=1), dt=dt)
     else:
-        pset.execute(pset.Kernel(AdvectionRK4) + SampleP, runtime=delta(days=1), dt=dt)
+        if dt > 0:
+            with pytest.raises(TimeExtrapolationError):
+                pset.execute(pset.Kernel(AdvectionRK4) + SampleP, runtime=delta(days=1), dt=dt)
+        else:
+            pset.execute(pset.Kernel(AdvectionRK4) + SampleP, runtime=delta(days=1), dt=dt)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

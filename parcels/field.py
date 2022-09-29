@@ -43,9 +43,6 @@ def _isParticle(key):
         return False
 
 
-# CACHE_DEBUG = True
-
-
 class Field(object):
     """Class that encapsulates access to field data.
 
@@ -150,7 +147,7 @@ class Field(object):
             self.allow_time_extrapolation = allow_time_extrapolation
 
         self.time_periodic = time_periodic
-        grid_timespan = self.grid.time[-1] - self.grid.time[0]
+        grid_timespan = self.grid.time[-1] - self.grid.time[0] if self.grid.time[-1] > self.grid.time[0] else self.grid.time[0] - self.grid.time[-1]
         if self.time_periodic is not False and self.allow_time_extrapolation:
             logger.warning_once("allow_time_extrapolation and time_periodic cannot be used together.\n \
                                  allow_time_extrapolation is set to False")
@@ -163,7 +160,8 @@ class Field(object):
             if isinstance(self.time_periodic, np.timedelta64):
                 self.time_periodic = self.time_periodic / np.timedelta(1, 's')
             if not np.isclose(grid_timespan, self.time_periodic):
-                if (self.grid.time[-1] - self.grid.time[0]) > self.time_periodic:
+                # if (self.grid.time[-1] - self.grid.time[0]) > self.time_periodic:
+                if grid_timespan > self.time_periodic:
                     grid_dt = self.grid.time[1] - self.grid.time[0]
                     logger.warning_once("The 'time_petriodic' parameter intends to give the total mximum timeframe for which the given field data shall be periodically repeated.\n \
                                         Hence, the provided time period '{} seconds' in invalid as it is smaller than the time frame covered by field '{}', which is '{} seconds'.\n \

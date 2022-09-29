@@ -221,7 +221,8 @@ class ParticleSetAOS(BaseParticleSet):
         assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
 
-        time = np.array([0.0], dtype=np.float64) if time is None else time
+        zerotime = fieldset.U.grid.time[0] if self.fieldset is not None else 0.0
+        time = np.array([zerotime], dtype=np.float64) if time is None else time
         time = _convert_to_array(time)
         try:
             assert len(time) > 1

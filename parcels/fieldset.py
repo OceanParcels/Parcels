@@ -1126,7 +1126,7 @@ class FieldSet(object):
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt, modulo=use_fieldcache)
                 if time == nextTime_loc and signdt != 0:
-                    raise TimeExtrapolationError(time, field=f, msg='In fset.computeTimeChunk')
+                    raise TimeExtrapolationError(time, field=f, msg=("In fset.computeTimeChunk (mod = {}), time (={}) == nextTime_loc (={}).".format(use_fieldcache, time, nextTime_loc)))
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.get_fields():

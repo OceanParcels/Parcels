@@ -287,7 +287,7 @@ class BaseParticleSet(NDCluster):
         max_rt = None
         min_rt = None
         for p in self:
-            if np.isnan(p.time):
+            if np.isnan(p.time) or np.isnan(p.time).any():
                 p.time = default
             if max_rt is None or max_rt < p.time:
                 max_rt = p.time
@@ -381,6 +381,7 @@ class BaseParticleSet(NDCluster):
 
         default_release_time = mintime if dt >= 0 else maxtime
         min_rt, max_rt = self._impute_release_times(default_release_time)
+        min_rt, max_rt = (min(mintime, min_rt), max(maxtime, max_rt))
 
         # Derive _starttime and endtime from arguments or fieldset defaults
         _starttime = min_rt if dt >= 0 else max_rt
