@@ -59,7 +59,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         titlestr = ' and ' + tracerfield
     else:
         spherical = False if mode == '3d' or mesh == 'flat' else True
-        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical=spherical, central_longitude=central_longitude)
+        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical=spherical, central_longitude=central_longitude, use3D=(mode == '3d'))
         if plt is None:
             return  # creating axes was not possible
         titlestr = ''
@@ -71,7 +71,8 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     if mode == '3d':
         from mpl_toolkits.mplot3d import Axes3D  # noqa
         plt.clf()  # clear the figure
-        ax = fig.gca(projection='3d')
+        # ax = fig.gca(projection='3d')
+        ax = fig.gca()
         for p in range(len(lon)):
             ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         ax.set_xlabel('Longitude')

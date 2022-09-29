@@ -267,7 +267,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
     return plt, fig, ax, cartopy
 
 
-def create_parcelsfig_axis(spherical, land=True, projection='PlateCarree', central_longitude=0, cartopy_features=[]):
+def create_parcelsfig_axis(spherical, land=True, projection='PlateCarree', central_longitude=0, cartopy_features=[], use3D=False):
     try:
         import matplotlib.pyplot as plt
     except:
@@ -282,6 +282,7 @@ def create_parcelsfig_axis(spherical, land=True, projection='PlateCarree', centr
             return None, None, None, None  # creating axes was not possible
 
         projection = cartopy.crs.PlateCarree(central_longitude) if projection == 'PlateCarree' else projection
+        projection = '3d' if use3D else projection
         fig, ax = plt.subplots(1, 1, subplot_kw={'projection': projection})
         try:  # gridlines not supported for all projections
             if isinstance(projection, cartopy.crs.PlateCarree) and central_longitude != 0:
