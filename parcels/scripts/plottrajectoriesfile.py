@@ -71,7 +71,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     if mode == '3d':
         from mpl_toolkits.mplot3d import Axes3D  # noqa
         plt.clf()  # clear the figure
-        ax = fig.gca(projection='3d')
+        ax = plt.axes(projection='3d')
         for p in range(len(lon)):
             ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         ax.set_xlabel('Longitude')
