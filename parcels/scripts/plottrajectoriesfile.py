@@ -38,9 +38,9 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
 
     environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
     try:
-        pfile = xr.open_dataset(str(filename), decode_cf=True)
+        pfile = xr.open_zarr(str(filename), decode_cf=True)
     except:
-        pfile = xr.open_dataset(str(filename), decode_cf=False)
+        pfile = xr.open_zarr(str(filename), decode_cf=False)
     lon = np.ma.filled(pfile.variables['lon'], np.nan)
     lat = np.ma.filled(pfile.variables['lat'], np.nan)
     time = np.ma.filled(pfile.variables['time'], np.nan)
@@ -71,7 +71,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     if mode == '3d':
         from mpl_toolkits.mplot3d import Axes3D  # noqa
         plt.clf()  # clear the figure
-        ax = fig.gca(projection='3d')
+        ax = plt.axes(projection='3d')
         for p in range(len(lon)):
             ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         ax.set_xlabel('Longitude')
