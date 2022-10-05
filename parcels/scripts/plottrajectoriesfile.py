@@ -38,9 +38,9 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
 
     environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
     try:
-        pfile = xr.open_dataset(str(filename), decode_cf=True)
+        pfile = xr.open_zarr(str(filename), decode_cf=True)
     except:
-        pfile = xr.open_dataset(str(filename), decode_cf=False)
+        pfile = xr.open_zarr(str(filename), decode_cf=False)
     lon = np.ma.filled(pfile.variables['lon'], np.nan)
     lat = np.ma.filled(pfile.variables['lat'], np.nan)
     time = np.ma.filled(pfile.variables['time'], np.nan)

@@ -48,7 +48,7 @@ def run_mitgcm_zonally_reentrant(mode):
         size=10,
     )
     pfile = ParticleFile(
-        "MIT_particles_" + str(mode) + ".nc", pset, outputdt=delta(days=1)
+        "MIT_particles_" + str(mode) + ".zarr", pset, outputdt=delta(days=1), chunks=(len(pset), 1)
     )
     kernels = AdvectionRK4 + pset.Kernel(periodicBC)
     pset.execute(
@@ -61,8 +61,8 @@ def test_mitgcm_output_compare():
     run_mitgcm_zonally_reentrant("scipy")
     run_mitgcm_zonally_reentrant("jit")
 
-    ds_jit = xr.open_dataset("MIT_particles_jit.nc")
-    ds_scipy = xr.open_dataset("MIT_particles_scipy.nc")
+    ds_jit = xr.open_zarr("MIT_particles_jit.zarr")
+    ds_scipy = xr.open_zarr("MIT_particles_scipy.zarr")
 
     np.testing.assert_allclose(ds_jit.lat.data, ds_scipy.lat.data)
     np.testing.assert_allclose(ds_jit.lon.data, ds_scipy.lon.data)

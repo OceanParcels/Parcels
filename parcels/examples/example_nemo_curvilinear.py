@@ -56,7 +56,7 @@ def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
 
 
 def make_plot(trajfile):
-    from netCDF4 import Dataset
+    import xarray as xr
     import matplotlib.pyplot as plt
     import cartopy
 
@@ -66,10 +66,10 @@ def make_plot(trajfile):
 
     def load_particles_file(fname, varnames):
         T = ParticleData()
-        pfile = Dataset(fname, 'r')
-        T.id = pfile.variables['trajectory'][:]
+        ds = xr.open_zarr(fname)
+        T.id = ds['trajectory'][:]
         for v in varnames:
-            setattr(T, v, pfile.variables[v][:])
+            setattr(T, v, ds[v][:])
         return T
 
     T = load_particles_file(trajfile, ['lon', 'lat', 'time'])
@@ -121,4 +121,4 @@ if __name__ == "__main__":
     outfile = "nemo_particles"
 
     run_nemo_curvilinear(args.mode, outfile)
-    make_plot(outfile+'.nc')
+    make_plot(outfile+'.zarr')
