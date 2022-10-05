@@ -507,9 +507,9 @@ class ParticleSetAOS(BaseParticleSet):
 
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
-        """Initialise the ParticleSet from a netcdf ParticleFile.
-        This creates a new ParticleSet based on the last locations and time of all particles
-        in the netcdf ParticleFile. Particle IDs are preserved if restart=True
+        """Initialise the ParticleSet from a zarr ParticleFile.
+        This creates a new ParticleSet based on locations of all particles written
+        in a zarr ParticleFile at a certain time. Particle IDs are preserved if restart=True
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
@@ -517,6 +517,9 @@ class ParticleSetAOS(BaseParticleSet):
         :param filename: Name of the particlefile from which to read initial conditions
         :param restart: Boolean to signal if pset is used for a restart (default is True).
                In that case, Particle IDs are preserved.
+        :param restarttime: time at which the Particles will be restarted. Default is the last time written.
+               Alternatively, restarttime could be a time value (including np.datetime64) or
+               a callable function such as np.nanmin. The last is useful when running with dt < 0.
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -527,7 +530,7 @@ class ParticleSetAOS(BaseParticleSet):
                            'setting a new repeatdt will start particles from the _new_ particle '
                            'locations.' % filename)
 
-        pfile = xr.open_dataset(str(filename), decode_cf=True)
+        pfile = xr.open_zarr(str(filename))
         pfile_vars = [v for v in pfile.data_vars]
 
         vars = {}
@@ -535,7 +538,7 @@ class ParticleSetAOS(BaseParticleSet):
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'fileid', 'state'] \
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'once_written', 'state'] \
                     and v.to_write:
                 raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
             to_write[v.name] = v.to_write
@@ -569,17 +572,6 @@ class ParticleSetAOS(BaseParticleSet):
         return cls(fieldset=fieldset, pclass=pclass, lon=vars['lon'], lat=vars['lat'],
                    depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
-
-    def to_dict(self, pfile, time, deleted_only=False):
-        """
-        Convert all Particle data from one time step to a python dictionary.
-        :param pfile: ParticleFile object requesting the conversion
-        :param time: Time at which to write ParticleSet
-        :param deleted_only: Flag to write only the deleted Particles
-        returns two dictionaries: one for all variables to be written each outputdt, and one for all variables to be written once
-        """
-        return self._collection.toDictionary(pfile=pfile, time=time,
-                                             deleted_only=deleted_only)
 
     def __iadd__(self, particles):
         """Add particles to the ParticleSet. Note that this is an

@@ -25,7 +25,7 @@ def create_outputfiles(dir, pset_mode):
     y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)
     lat = np.linspace(y[0], y[1], npart)
 
-    fp = dir.join("DelayParticle.nc")
+    fp = dir.join("DelayParticle.zarr")
     output_file = pset.ParticleFile(name=fp, outputdt=delaytime)
 
     for t in range(npart):
