@@ -287,7 +287,6 @@ def create_parcelsfig_axis(spherical, land=True, projection='PlateCarree', centr
             return None, None, None, None  # creating axes was not possible
 
         projection = cartopy.crs.PlateCarree(central_longitude) if projection == 'PlateCarree' else projection
-        # projection = '3d' if use3D else projection
         fig, ax = plt.subplots(1, 1, subplot_kw={'projection': projection})
         try:  # gridlines not supported for all projections
             if isinstance(projection, cartopy.crs.PlateCarree) and central_longitude != 0:
