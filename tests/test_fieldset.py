@@ -732,9 +732,10 @@ def test_timestamps(datetype, tmpdir):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('use_xarray', [True, False])
 @pytest.mark.parametrize('time_periodic', [86400., False])
 @pytest.mark.parametrize('dt_sign', [-1, 1])
-def test_periodic(pset_mode, mode, time_periodic, dt_sign):
+def test_periodic(pset_mode, mode, use_xarray, time_periodic, dt_sign):
     lon = np.array([0, 1], dtype=np.float32)
     lat = np.array([0, 1], dtype=np.float32)
     depth = np.array([0, 1], dtype=np.float32)
@@ -754,10 +755,24 @@ def test_periodic(pset_mode, mode, time_periodic, dt_sign):
     temp[:, :, :, :] = temp_vec
     D = np.ones((2, 2), dtype=np.float32)  # adding non-timevarying field
 
-    data = {'U': U, 'V': V, 'W': W, 'temp': temp, 'D': D}
     full_dims = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
     dimensions = {'U': full_dims, 'V': full_dims, 'W': full_dims, 'temp': full_dims, 'D': {'lon': lon, 'lat': lat}}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
+    if use_xarray:
+        coords = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
+        variables = {'U': 'Uxr', 'V': 'Vxr', 'W': 'Wxr', 'temp': 'Txr', 'D': 'Dxr'}
+        dimnames = {'lon': 'lon', 'lat': 'lat', 'depth': 'depth', 'time': 'time'}
+        ds = xr.Dataset({'Uxr': xr.DataArray(U, coords=coords, dims=('lon', 'lat', 'depth', 'time')),
+                         'Vxr': xr.DataArray(V, coords=coords, dims=('lon', 'lat', 'depth', 'time')),
+                         'Wxr': xr.DataArray(W, coords=coords, dims=('lon', 'lat', 'depth', 'time')),
+                         'Txr': xr.DataArray(temp, coords=coords, dims=('lon', 'lat', 'depth', 'time')),
+                         'Dxr': xr.DataArray(D, coords={'lat': lat, 'lon': lon}, dims=('lon', 'lat'))})
+        fieldset = FieldSet.from_xarray_dataset(ds, variables,
+                                                {'U': dimnames, 'V': dimnames, 'W': dimnames, 'temp': dimnames,
+                                                 'D': {'lon': 'lon', 'lat': 'lat'}},
+                                                time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
+    else:
+        data = {'U': U, 'V': V, 'W': W, 'temp': temp, 'D': D}
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
 
     def sampleTemp(particle, fieldset, time):
         # Note that fieldset.temp is interpolated at time=time+dt.

@@ -500,7 +500,7 @@ class Field(object):
         data = da.data
         interp_method = kwargs.pop('interp_method', 'linear')
 
-        time = da[dimensions['time']].values if 'time' in dimensions else np.array([0])
+        time = da[dimensions['time']].values if 'time' in dimensions else np.array([0.])
         depth = da[dimensions['depth']].values if 'depth' in dimensions else np.array([0])
         lon = da[dimensions['lon']].values
         lat = da[dimensions['lat']].values
@@ -509,6 +509,7 @@ class Field(object):
         time = time_origin.reltime(time)
 
         grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        kwargs['time_periodic'] = time_periodic
         return cls(name, data, grid=grid, allow_time_extrapolation=allow_time_extrapolation,
                    interp_method=interp_method, **kwargs)
 
