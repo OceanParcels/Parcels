@@ -19,7 +19,7 @@ jobs:
           ./.github/scripts/osx_integrationtest.sh
         shell: bash
   test_linux:
-    name: Integration testing on Linux Python 3.6
+    name: Integration testing on Linux python latest
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
