@@ -79,7 +79,6 @@ class NetcdfFileBuffer(_FileBuffer):
     def lonlat(self):
         lon = self.dataset[self.dimensions['lon']]
         lat = self.dataset[self.dimensions['lat']]
-        print('self.nolonlatindices', self.nolonlatindices)
         if self.nolonlatindices:
             if len(lon.shape) < 3:
                 lon_subset = np.array(lon)
