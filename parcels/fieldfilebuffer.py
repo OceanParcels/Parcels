@@ -25,6 +25,10 @@ class _FileBuffer(object):
         self.ti = None
         self.interp_method = interp_method
         self.data_full_zdim = data_full_zdim
+        if ('lon' in self.indices) or ('lat' in self.indices):
+            self.nolonlatindices = False
+        else:
+            self.nolonlatindices = True
 
 
 class NetcdfFileBuffer(_FileBuffer):
@@ -75,22 +79,35 @@ class NetcdfFileBuffer(_FileBuffer):
     def lonlat(self):
         lon = self.dataset[self.dimensions['lon']]
         lat = self.dataset[self.dimensions['lat']]
-        xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-        ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-        self.indices['lon'] = self.indices['lon'] if 'lon' in self.indices else range(xdim)
-        self.indices['lat'] = self.indices['lat'] if 'lat' in self.indices else range(ydim)
-        if len(lon.shape) == 1:
-            lon_subset = np.array(lon[self.indices['lon']])
-            lat_subset = np.array(lat[self.indices['lat']])
-        elif len(lon.shape) == 2:
-            lon_subset = np.array(lon[self.indices['lat'], self.indices['lon']])
-            lat_subset = np.array(lat[self.indices['lat'], self.indices['lon']])
-        elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-            lon_subset = np.array(lon[0, self.indices['lat'], self.indices['lon']])
-            lat_subset = np.array(lat[0, self.indices['lat'], self.indices['lon']])
-        elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
-            lon_subset = np.array(lon[0, 0, self.indices['lat'], self.indices['lon']])
-            lat_subset = np.array(lat[0, 0, self.indices['lat'], self.indices['lon']])
+        print('self.nolonlatindices', self.nolonlatindices)
+        if self.nolonlatindices:
+            if len(lon.shape) < 3:
+                lon_subset = np.array(lon)
+                lat_subset = np.array(lat)
+            elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
+                lon_subset = np.array(lon[0, :, :])
+                lat_subset = np.array(lat[0, :, :])
+            elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
+                lon_subset = np.array(lon[0, 0, :, :])
+                lat_subset = np.array(lat[0, 0, :, :])
+        else:
+            xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+            ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+            self.indices['lon'] = self.indices['lon'] if 'lon' in self.indices else range(xdim)
+            self.indices['lat'] = self.indices['lat'] if 'lat' in self.indices else range(ydim)
+            if len(lon.shape) == 1:
+                lon_subset = np.array(lon[self.indices['lon']])
+                lat_subset = np.array(lat[self.indices['lat']])
+            elif len(lon.shape) == 2:
+                lon_subset = np.array(lon[self.indices['lat'], self.indices['lon']])
+                lat_subset = np.array(lat[self.indices['lat'], self.indices['lon']])
+            elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
+                lon_subset = np.array(lon[0, self.indices['lat'], self.indices['lon']])
+                lat_subset = np.array(lat[0, self.indices['lat'], self.indices['lon']])
+            elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
+                lon_subset = np.array(lon[0, 0, self.indices['lat'], self.indices['lon']])
+                lat_subset = np.array(lat[0, 0, self.indices['lat'], self.indices['lon']])
+
         if len(lon.shape) > 1:  # Tests if lon, lat are rectilinear but were stored in arrays
             rectilinear = True
             # test if all columns and rows are the same for lon and lat (in which case grid is rectilinear)
@@ -118,9 +135,15 @@ class NetcdfFileBuffer(_FileBuffer):
             if len(depth.shape) == 1:
                 return np.array(depth[self.indices['depth']])
             elif len(depth.shape) == 3:
-                return np.array(depth[self.indices['depth'], self.indices['lat'], self.indices['lon']])
+                if self.nolonlatindices:
+                    return np.array(depth[self.indices['depth'], :, :])
+                else:
+                    return np.array(depth[self.indices['depth'], self.indices['lat'], self.indices['lon']])
             elif len(depth.shape) == 4:
-                return np.array(depth[:, self.indices['depth'], self.indices['lat'], self.indices['lon']])
+                if self.nolonlatindices:
+                    return np.array(depth[:, self.indices['depth'], :, :])
+                else:
+                    return np.array(depth[:, self.indices['depth'], self.indices['lat'], self.indices['lon']])
         else:
             self.indices['depth'] = [0]
             return np.zeros(1)
@@ -132,7 +155,10 @@ class NetcdfFileBuffer(_FileBuffer):
             depthsize = data.shape[-3]
             self.data_full_zdim = depthsize
             self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
-            return np.empty((0, len(self.indices['depth']), len(self.indices['lat']), len(self.indices['lon'])))
+            if self.nolonlatindices:
+                return np.empty(((0, len(self.indices['depth'])) + data.shape[-2:]))
+            else:
+                return np.empty((0, len(self.indices['depth']), len(self.indices['lat']), len(self.indices['lon'])))
 
     def _check_extend_depth(self, data, di):
         return (self.indices['depth'][-1] == self.data_full_zdim-1
@@ -141,19 +167,37 @@ class NetcdfFileBuffer(_FileBuffer):
 
     def _apply_indices(self, data, ti):
         if len(data.shape) == 2:
-            data = data[self.indices['lat'], self.indices['lon']]
+            if self.nolonlatindices:
+                pass
+            else:
+                data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
             if self._check_extend_depth(data, 0):
-                data = data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
+                if self.nolonlatindices:
+                    data = data[self.indices['depth'][:-1], :, :]
+                else:
+                    data = data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
             elif len(self.indices['depth']) > 1:
-                data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
+                if self.nolonlatindices:
+                    data = data[self.indices['depth'], :, :]
+                else:
+                    data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
             else:
-                data = data[ti, self.indices['lat'], self.indices['lon']]
+                if self.nolonlatindices:
+                    data = data[ti, :, :]
+                else:
+                    data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
             if self._check_extend_depth(data, 1):
-                data = data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
+                if self.nolonlatindices:
+                    data = data[ti, self.indices['depth'][:-1], :, :]
+                else:
+                    data = data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
             else:
-                data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
+                if self.nolonlatindices:
+                    data = data[ti, self.indices['depth'], :, :]
+                else:
+                    data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
         return data
 
     @property
