@@ -30,7 +30,7 @@ jobs:
           ./.github/scripts/osx_unittest.sh
         shell: bash
   test_linux:
-    name: Unittesting on Linux Python 3.6
+    name: Unittesting on Linux python latest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
