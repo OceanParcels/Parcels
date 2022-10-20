@@ -21,8 +21,7 @@ if MPI:
     try:
         from sklearn.cluster import KMeans
     except:
-        raise EnvironmentError('sklearn needs to be available if MPI is installed. '
-                               'See http://oceanparcels.org/#parallel_install for more information')
+        KMeans = None
 
 
 def _convert_to_flat_array(var):
@@ -82,8 +81,13 @@ class ParticleCollectionSOA(ParticleCollection):
                     if (self._pu_indicators is None) or (len(self._pu_indicators) != len(lon)):
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
-                            kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                            self._pu_indicators = kmeans.labels_
+                            if KMeans:
+                                kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+                                self._pu_indicators = kmeans.labels_
+                            else:  # assigning random labels if no KMeans (see https://github.com/OceanParcels/parcels/issues/1261)
+                                logger.warning_once('sklearn needs to be available if MPI is installed. '
+                                                    'See http://oceanparcels.org/#parallel_install for more information')
+                                self._pu_indicators = np.randint(0, mpi_size, size=len(lon))
                         else:
                             self._pu_indicators = None
                         self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
