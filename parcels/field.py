@@ -569,6 +569,7 @@ class Field(object):
         time = time_origin.reltime(time)
 
         grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        kwargs['time_periodic'] = time_periodic
         return cls(name, data, grid=grid, allow_time_extrapolation=allow_time_extrapolation,
                    time_periodic=time_periodic, interp_method=interp_method, **kwargs)
 

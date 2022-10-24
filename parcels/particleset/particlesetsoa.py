@@ -423,9 +423,9 @@ class ParticleSetSOA(BaseParticleSet):
 
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
-        """Initialise the ParticleSet from a netcdf ParticleFile.
+        """Initialise the ParticleSet from a zarr ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
-        in a netcdf ParticleFile at a certain time. Particle IDs are preserved if restart=True
+        in a zarr ParticleFile at a certain time. Particle IDs are preserved if restart=True
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
@@ -447,7 +447,7 @@ class ParticleSetSOA(BaseParticleSet):
                            'setting a new repeatdt will start particles from the _new_ particle '
                            'locations.' % filename)
 
-        pfile = xr.open_dataset(str(filename), decode_cf=True)
+        pfile = xr.open_zarr(str(filename))
         pfile_vars = [v for v in pfile.data_vars]
 
         vars = {}
@@ -455,7 +455,7 @@ class ParticleSetSOA(BaseParticleSet):
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'fileid', 'state'] \
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'once_written', 'state'] \
                     and v.to_write:
                 raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
             to_write[v.name] = v.to_write
@@ -489,17 +489,6 @@ class ParticleSetSOA(BaseParticleSet):
         return cls(fieldset=fieldset, pclass=pclass, lon=vars['lon'], lat=vars['lat'],
                    depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
-
-    def to_dict(self, pfile, time, deleted_only=False):
-        """
-        Convert all Particle data from one time step to a python dictionary.
-        :param pfile: ParticleFile object requesting the conversion
-        :param time: Time at which to write ParticleSet
-        :param deleted_only: Flag to write only the deleted Particles
-        returns two dictionaries: one for all variables to be written each outputdt, and one for all variables to be written once
-        """
-        return self._collection.toDictionary(pfile=pfile, time=time,
-                                             deleted_only=deleted_only)
 
     def compute_neighbor_tree(self, time, dt):
         active_mask = self.active_particles_mask(time, dt)

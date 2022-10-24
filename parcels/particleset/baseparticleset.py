@@ -443,9 +443,7 @@ class BaseParticleSet(NDCluster):
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
                 if output_file:
-                    logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir_base)
-                    logger.info('You can use "parcels_convert_npydir_to_netcdf %s" to convert these '
-                                'to a NetCDF file during the run.' % output_file.tempwritedir_base)
+                    logger.info('Output files are stored in %s.' % output_file.fname)
                 pbar = self.__create_progressbar(_starttime, endtime)
                 verbose_progress = True
 
@@ -495,7 +493,7 @@ class BaseParticleSet(NDCluster):
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
                             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
-                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)
+                        fldfilename = str(output_file.fname).replace('.zarr', '_%.4d' % fld.to_write)
                         fld.write(fldfilename)
                         fld.to_write += 1
             if abs(time - next_output) < tol:

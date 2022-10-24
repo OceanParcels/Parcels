@@ -898,19 +898,18 @@ class ParticleCollection(Collection):
         else:
             return False
 
-    @abstractmethod
-    def toDictionary(self):
-        """
-        Convert all Particle data from one time step to a python dictionary.
-        :param pfile: ParticleFile object requesting the conversion
-        :param time: Time at which to write ParticleSet
-        :param deleted_only: Flag to write only the deleted Particles
-        returns two dictionaries: one for all variables to be written each outputdt,
-         and one for all variables to be written once
+    def has_write_once_variables(self):
+        for var in self.ptype.variables:
+            if var.to_write == 'once':
+                return True
+        return False
 
-         This function depends on the specific collection in question and thus needs to be specified in specific
-         derivatives classes.
-        """
+    @abstractmethod
+    def getvardata(self, var, indices=None):
+        pass
+
+    @abstractmethod
+    def setvardata(self, var, index, val):
         pass
 
     @abstractmethod

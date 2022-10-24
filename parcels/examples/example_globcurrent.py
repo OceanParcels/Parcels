@@ -268,7 +268,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
 @pytest.mark.parametrize('dt', [-300, 300])
 @pytest.mark.parametrize('pid_offset', [0, 20])
 def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
-    filename = tmpdir.join("pset_fromparticlefile.nc")
+    filename = tmpdir.join("pset_fromparticlefile.zarr")
     fieldset = set_globcurrent_fieldset()
 
     ptype[mode].setLastID(pid_offset)

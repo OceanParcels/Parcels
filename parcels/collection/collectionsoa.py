@@ -1,4 +1,3 @@
-from datetime import timedelta as delta
 from operator import attrgetter
 from ctypes import Structure, POINTER
 from bisect import bisect_left
@@ -22,28 +21,7 @@ if MPI:
     try:
         from sklearn.cluster import KMeans
     except:
-        raise EnvironmentError('sklearn needs to be available if MPI is installed. '
-                               'See http://oceanparcels.org/#parallel_install for more information')
-
-
-def _to_write_particles(pd, time):
-    """We don't want to write a particle that is not started yet.
-    Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
-    """
-    return ((np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
-             & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
-             | ((np.isnan(pd['dt'])) & np.equal(time, pd['time'], where=np.isfinite(pd['time']))))
-            & (np.isfinite(pd['id']))
-            & (np.isfinite(pd['time'])))
-
-
-def _is_particle_started_yet(pd, time):
-    """We don't want to write a particle that is not started yet.
-    Particle will be written if:
-      * particle.time is equal to time argument of pfile.write()
-      * particle.time is before time (in case particle was deleted between previous export and current one)
-    """
-    return np.less_equal(pd['dt']*pd['time'], pd['dt']*time) | np.isclose(pd['time'], time)
+        KMeans = None
 
 
 def _convert_to_flat_array(var):
@@ -103,8 +81,13 @@ class ParticleCollectionSOA(ParticleCollection):
                     if (self._pu_indicators is None) or (len(self._pu_indicators) != len(lon)):
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
-                            kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                            self._pu_indicators = kmeans.labels_
+                            if KMeans:
+                                kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+                                self._pu_indicators = kmeans.labels_
+                            else:  # assigning random labels if no KMeans (see https://github.com/OceanParcels/parcels/issues/1261)
+                                logger.warning_once('sklearn needs to be available if MPI is installed. '
+                                                    'See http://oceanparcels.org/#parallel_install for more information')
+                                self._pu_indicators = np.randint(0, mpi_size, size=len(lon))
                         else:
                             self._pu_indicators = None
                         self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
@@ -153,7 +136,7 @@ class ParticleCollectionSOA(ParticleCollection):
             self._data['depth'][:] = depth
             self._data['time'][:] = time
             self._data['id'][:] = pid
-            self._data['fileid'][:] = -1
+            self._data['once_written'][:] = 0
 
             # special case for exceptions which can only be handled from scipy
             self._data['exception'] = np.empty(self.ncount, dtype=object)
@@ -815,58 +798,30 @@ class ParticleCollectionSOA(ParticleCollection):
         cstruct = CParticles(*cdata)
         return cstruct
 
-    def toDictionary(self, pfile, time, deleted_only=False):
+    def _to_write_particles(self, pd, time):
+        """We don't want to write a particle that is not started yet.
+        Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
         """
-        Convert all Particle data from one time step to a python dictionary.
-        :param pfile: ParticleFile object requesting the conversion
-        :param time: Time at which to write ParticleSet
-        :param deleted_only: Flag to write only the deleted Particles
-        returns two dictionaries: one for all variables to be written each outputdt,
-         and one for all variables to be written once
+        return np.where((np.less_equal(time - np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+                        & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+                        | ((np.isnan(pd['dt'])) & np.equal(time, pd['time'], where=np.isfinite(pd['time']))))
+                        & (np.isfinite(pd['id']))
+                        & (np.isfinite(pd['time'])))[0]
 
-        This function depends on the specific collection in question and thus needs to be specified in specific
-        derivative classes.
-        """
+    def getvardata(self, var, indices=None):
+        if indices is None:
+            return self._data[var]
+        else:
+            try:
+                return self._data[var][indices]
+            except:  # Can occur for zero-length ParticleSets
+                return None
 
-        data_dict = {}
-        data_dict_once = {}
+    def setvardata(self, var, index, val):
+        self._data[var][index] = val
 
-        time = time.total_seconds() if isinstance(time, delta) else time
-
-        indices_to_write = []
-        if pfile.lasttime_written != time and \
-           (pfile.write_ondelete is False or deleted_only is not False):
-            if self._data['id'].size == 0:
-                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
-            else:
-                if deleted_only is not False:
-                    if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
-                        indices_to_write = np.where(np.isin(self._data['state'],
-                                                            [OperationCode.Delete]))[0]
-                    elif type(deleted_only) in [list, np.ndarray]:
-                        indices_to_write = deleted_only
-                else:
-                    indices_to_write = _to_write_particles(self._data, time)
-                if np.any(indices_to_write):
-                    for var in pfile.var_names:
-                        data_dict[var] = self._data[var][indices_to_write]
-
-                pset_errs = ((self._data['state'][indices_to_write] != OperationCode.Delete) & np.greater(np.abs(time - self._data['time'][indices_to_write]), 1e-3, where=np.isfinite(self._data['time'][indices_to_write])))
-                if np.count_nonzero(pset_errs) > 0:
-                    logger.warning_once('time argument in pfile.write() is {}, but particles have time {}'.format(time, self._data['time'][pset_errs]))
-
-                if len(pfile.var_names_once) > 0:
-                    first_write = (_to_write_particles(self._data, time) & _is_particle_started_yet(self._data, time) & np.isin(self._data['id'], pfile.written_once, invert=True))
-                    if np.any(first_write):
-                        data_dict_once['id'] = np.array(self._data['id'][first_write]).astype(dtype=np.int64)
-                        for var in pfile.var_names_once:
-                            data_dict_once[var] = self._data[var][first_write]
-                        pfile.written_once.extend(np.array(self._data['id'][first_write]).astype(dtype=np.int64).tolist())
-
-            if deleted_only is False:
-                pfile.lasttime_written = time
-
-        return data_dict, data_dict_once
+    def setallvardata(self, var, val):
+        self._data[var][:] = val
 
     def toArray(self):
         """
