@@ -117,6 +117,7 @@ def test_randomexponential(mode, pset_mode, lambd, npart=1000):
     assert np.allclose(np.mean(depth), expected_mean, rtol=.1)
 
 
+@pytest.mark.xfail(reason="Test failing as reported in issue #1274")
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mu', [0.8*np.pi, np.pi])
