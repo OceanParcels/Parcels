@@ -1,52 +1,46 @@
 name: integration-tests
 on:
+  push:
+    branches:
+      - "master"
+      - "test-me/*"
   pull_request:
+    branches:
+      - "*"
 jobs:
-  test_macOS:
-    name: Integration testing on macOS python latest
+  integration-test:
     if: github.event.pull_request.draft == false
-    runs-on: macOS-latest
+    name: Integration testing on ${{ matrix.os }} with python latest
+    runs-on: ${{ matrix.os }}-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos, ubuntu, windows]
+        include:
+          - os: macOS
+            os-short: osx
+          - os: ubuntu
+            os-short: linux
+          - os: windows
+            os-short: win
     steps:
-      - uses: actions/checkout@master
-      - name: Test OSX
-        env:
-          OS_NAME: osx
-          PY_VERSION: 3
-          MINICONDA_NAME: Miniconda3-latest-MacOSX-x86_64.sh
-          CC: gcc
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v2.2.0
+        with:
+          miniconda-version: "latest"
+          activate-environment: py3_parcels
+          environment-file: environment_py3_${{ matrix.os-short }}.yml
+          auto-activate-base: false
+          auto-update-conda: true
+      - run: conda info
+      - name: Install parcels
+        run: python setup.py install
+      - name: Integration test
         run: |
-          ./.github/scripts/linux_install.sh
-          ./.github/scripts/osx_integrationtest.sh
-        shell: bash
-  test_linux:
-    name: Integration testing on Linux python latest
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - name: Test linux
-        env:
-          OS_NAME: linux
-          PY_VERSION: 3
-          MINICONDA_NAME: Miniconda3-latest-Linux-x86_64.sh
-        run: |
-          ./.github/scripts/linux_install.sh
-          ./.github/scripts/linux_integrationtest.sh
-        shell: bash
-  test_windows:
-    name: Integration testing on Windows python latest
-    if: github.event.pull_request.draft == false
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@master
-      - name: Test Windows
-        env:
-          OS_NAME: win
-          PY_VERSION: 3
-          PYTHON_ARCH: 64
-          PYTHON: C:\Miniconda36-x64
-        run: |
-          ./.github/scripts/install_miniconda.ps1
-          ./.github/scripts/windows_install.bat
-          ./.github/scripts/windows_integrationtest.bat
-        shell: powershell
+          parcels_get_examples examples
+          pytest -v -s --nbval-lax -k "not documentation" examples
