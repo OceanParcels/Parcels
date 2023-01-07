@@ -1,5 +1,6 @@
 name: linting
 on:
+  pull_request:
   push:
 jobs:
   linting:
