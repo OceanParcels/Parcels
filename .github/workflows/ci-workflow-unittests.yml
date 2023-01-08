@@ -41,6 +41,16 @@ jobs:
       - run: conda info
       - name: Install parcels
         run: python setup.py install
+      - name: Set env variables for macos
+        run: |
+          if [[ "${{ matrix.os }}" == "macos" ]]; then
+            echo "Setting CONDA_BUILD_SYSROOT and C_INCLUDE_PATH for macos"
+            echo "CONDA_BUILD_SYSROOT=/" >> $GITHUB_ENV
+            echo "C_INCLUDE_PATH=$C_INCLUDE_PATH:/Applications/Xcode.app/Contents//Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/" >> $GITHUB_ENV
+            echo "CC=gcc" >> $GITHUB_ENV
+          else
+            echo "Platform not macos."
+          fi
       - name: Unit test
         run: |
           pytest -v -s --html=${{ matrix.os }}_unit_test_report.html --self-contained-html tests
