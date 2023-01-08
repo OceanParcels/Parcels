@@ -21,7 +21,7 @@ jobs:
       matrix:
         os: [macos, ubuntu, windows]
         include:
-          - os: macOS
+          - os: macos
             os-short: osx
           - os: ubuntu
             os-short: linux
@@ -43,4 +43,10 @@ jobs:
         run: python setup.py install
       - name: Unit test
         run: |
-          pytest -v -s tests
+          pytest -v -s --html=${{ matrix.os }}_unit_test_report.html --self-contained-html tests
+      - name: Upload test results
+        if: ${{ always() }} # Always run this step, even if tests fail
+        uses: actions/upload-artifact@v2
+        with:
+          name: Unittest report
+          path: ${{ matrix.os }}_unit_test_report.html

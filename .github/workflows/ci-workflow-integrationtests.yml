@@ -22,7 +22,7 @@ jobs:
       matrix:
         os: [macos, ubuntu, windows]
         include:
-          - os: macOS
+          - os: macos
             os-short: osx
           - os: ubuntu
             os-short: linux
@@ -45,4 +45,10 @@ jobs:
       - name: Integration test
         run: |
           parcels_get_examples examples
-          pytest -v -s --nbval-lax -k "not documentation" examples
+          pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html examples
+      - name: Upload test results
+        if: ${{ always() }} # Always run this step, even if tests fail
+        uses: actions/upload-artifact@v2
+        with:
+          name: Integration test report
+          path: ${{ matrix.os }}_integration_test_report.html
