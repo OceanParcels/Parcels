@@ -14,9 +14,6 @@ jobs:
     if: github.event.pull_request.draft == false
     name: Integration testing on ${{ matrix.os }} with python latest
     runs-on: ${{ matrix.os }}-latest
-    defaults:
-      run:
-        shell: bash -l {0}
     strategy:
       fail-fast: false
       matrix:
@@ -31,34 +28,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Setup Miniconda
-        uses: conda-incubator/setup-miniconda@v2.2.0
+      - name: Setup Miniconda and parcels
+        uses: ./.github/actions/install-parcels/action.yml
         with:
-          miniconda-version: "latest"
-          activate-environment: py3_parcels
           environment-file: environment_py3_${{ matrix.os-short }}.yml
-          auto-activate-base: false
-          auto-update-conda: true
-      - run: conda info
-      - name: Install parcels
-        run: python setup.py install
-      - name: Set env variables for macos
-        run: |
-          if [[ "${{ matrix.os }}" == "macos" ]]; then
-            echo "Setting CONDA_BUILD_SYSROOT and C_INCLUDE_PATH for macos"
-            echo "CONDA_BUILD_SYSROOT=/" >> $GITHUB_ENV
-            echo "C_INCLUDE_PATH=$C_INCLUDE_PATH:/Applications/Xcode.app/Contents//Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/" >> $GITHUB_ENV
-            echo "CC=gcc" >> $GITHUB_ENV
-          else
-            echo "Platform not macos."
-          fi
+          environment-name: py3_parcels
       - name: Integration test
         run: |
           parcels_get_examples examples
           pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html examples
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: Integration test report
           path: ${{ matrix.os }}_integration_test_report.html
+
