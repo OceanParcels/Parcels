@@ -17,7 +17,7 @@ runs:
       uses: conda-incubator/setup-miniconda@v2.2.0
       with:
         miniconda-version: "latest"
-        activate-environment: ${{ environment-name }} # Needs to be the same as listed in the env file
+        activate-environment: ${{ inputs.environment-name }} # Needs to be the same as listed in the env file
         environment-file: ${{ inputs.environment-file }}
         auto-activate-base: false
         auto-update-conda: true
@@ -28,7 +28,7 @@ runs:
       shell: bash -el {0}
     - name: Set env variables for macos
       run: |
-        if [[ "${{ runner.os }}" == "macos" ]]; then
+        if [[ "${{ runner.os }}" == mac* ]]; then
           echo "Setting CONDA_BUILD_SYSROOT and C_INCLUDE_PATH for macos"
           echo "CONDA_BUILD_SYSROOT=/" >> $GITHUB_ENV
           echo "C_INCLUDE_PATH=$C_INCLUDE_PATH:/Applications/Xcode.app/Contents//Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/" >> $GITHUB_ENV
@@ -36,3 +36,4 @@ runs:
         else
           echo "Platform not macos."
         fi
+      shell: bash
