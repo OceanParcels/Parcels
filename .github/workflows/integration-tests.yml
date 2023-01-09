@@ -12,7 +12,7 @@ on:
 jobs:
   integration-test:
     if: github.event.pull_request.draft == false
-    name: Integration testing on ${{ matrix.os }} with python latest
+    name: ${{ matrix.os }} integration tests
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
