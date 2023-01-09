@@ -28,7 +28,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Miniconda and parcels
-        uses: ./.github/actions/install-parcels/action.yml
+        uses: ./.github/actions/install-parcels
         with:
           environment-file: environment_py3_${{ matrix.os-short }}.yml
           environment-name: py3_parcels
