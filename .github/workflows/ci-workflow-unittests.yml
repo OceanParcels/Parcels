@@ -48,6 +48,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@master
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
       - name: Test Windows
         env:
           OS_NAME: win
