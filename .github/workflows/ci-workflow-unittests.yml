@@ -48,10 +48,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@master
-      - name: Set Swap Space
-        uses: pierotofy/set-swap-space@master
-        with:
-          swap-size-gb: 10
+      - name: Configure pagefile
+        uses: al-cheb/configure-pagefile-action@v1.2
+      - name: Set up pagefile
+        run: |
+          (Get-CimInstance Win32_PageFileUsage).AllocatedBaseSize      - name: Test Windows
       - name: Test Windows
         env:
           OS_NAME: win
