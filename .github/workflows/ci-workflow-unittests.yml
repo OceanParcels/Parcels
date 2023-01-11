@@ -48,6 +48,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@master
+      - name: Configure pagefile
+        uses: al-cheb/configure-pagefile-action@v1.2
+        with:
+          minimum-size: 8GB
       - name: Test Windows
         env:
           OS_NAME: win
