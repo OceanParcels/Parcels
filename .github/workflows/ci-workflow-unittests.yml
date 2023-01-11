@@ -50,9 +50,8 @@ jobs:
       - uses: actions/checkout@master
       - name: Configure pagefile
         uses: al-cheb/configure-pagefile-action@v1.2
-      - name: Set up pagefile
-        run: |
-          (Get-CimInstance Win32_PageFileUsage).AllocatedBaseSize      - name: Test Windows
+        with:
+          minimum-size: 8GB
       - name: Test Windows
         env:
           OS_NAME: win
