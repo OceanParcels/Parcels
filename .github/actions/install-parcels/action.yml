@@ -14,7 +14,7 @@ runs:
   using: "composite"
   steps:
     - name: Set Swap Space # As per discussion in commit https://github.com/OceanParcels/parcels/pull/1279/commits/cc050be2535cf72a1cb22601154b77a12568b732
-      if: ${{ runner.os }} == 'Windows'
+      if: ${{ runner.os == 'Windows' }}
       uses: pierotofy/set-swap-space@master
       with:
         swap-size-gb: 10
