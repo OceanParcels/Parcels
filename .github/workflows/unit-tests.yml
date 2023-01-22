@@ -37,6 +37,7 @@ jobs:
         with:
           environment-file: environment_py3_${{ matrix.os-short }}.yml
           environment-name: py3_parcels
+      - run: pip install -r requirements-dev.txt
       - name: Unit test
         run: |
           pytest -v -s --html=${{ matrix.os }}_unit_test_report.html --self-contained-html tests
