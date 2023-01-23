@@ -1,4 +1,0 @@
-pytest
-pytest-html
-flake8
-pre-commit
