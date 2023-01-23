@@ -43,6 +43,7 @@ jobs:
         run: |
           parcels_get_examples examples
           coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html examples
+          coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
