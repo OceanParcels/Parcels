@@ -6,7 +6,7 @@ coverage:
     patch:
       default:
         informational: true
-
+comment: false # Only on PR when theres a change in coverage
 
 # When modifying this file, please validate using
 # curl -X POST --data-binary @codecov.yml https://codecov.io/validate
