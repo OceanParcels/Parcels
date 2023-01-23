@@ -40,7 +40,11 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - name: Unit test
         run: |
-          pytest -v -s --html=${{ matrix.os }}_unit_test_report.html --self-contained-html tests
+          coverage run pytest -v -s --html=${{ matrix.os }}_unit_test_report.html --self-contained-html tests
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          flags: unit-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
         uses: actions/upload-artifact@v3.1.2
