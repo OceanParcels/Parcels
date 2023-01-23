@@ -25,6 +25,7 @@ See [oceanparcels.org](http://oceanparcels.org/) for further information about [
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels_examples_binder/master?urlpath=lab/tree/parcels_examples/parcels_tutorial.ipynb)
 [![unit-tests](https://github.com/OceanParcels/parcels/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/OceanParcels/parcels/actions/workflows/unit-tests.yml)
+[![codecov](https://codecov.io/gh/OceanParcels/parcels/branch/master/graph/badge.svg)](https://codecov.io/gh/OceanParcels/parcels)
 [![Anaconda-release](https://anaconda.org/conda-forge/parcels/badges/version.svg)](https://anaconda.org/conda-forge/parcels/)
 [![Anaconda-date](https://anaconda.org/conda-forge/parcels/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/parcels/)
 [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.823561.svg)](https://doi.org/10.5281/zenodo.823561)
