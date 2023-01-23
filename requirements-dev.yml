@@ -1,0 +1,8 @@
+# To be run after environment installation and activation
+# with `conda env update -f requirements-dev.yml`
+dependencies:
+  - pytest
+  - pytest-html
+  - flake8
+  - coverage
+  - sphinx<6
