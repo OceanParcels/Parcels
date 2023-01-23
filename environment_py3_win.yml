@@ -22,8 +22,6 @@ dependencies:
   - dask<=2022.9.0
   - cftime>=1.3.1
   - ipykernel
-  - pytest
-  - pytest-html
   - nbval
   - pykdtree
   - zarr
