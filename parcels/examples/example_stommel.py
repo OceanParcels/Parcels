@@ -166,12 +166,14 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='max age of the particles (after which particles are deleted)')
     p.add_argument('-psm', '--pset_mode', choices=('soa', 'aos'), default='soa',
                    help='max age of the particles (after which particles are deleted)')
+    p.add_argument('-wf', '--write_fields', default=True,
+                   help='Write the hydrodynamic fields to NetCDF')
     args = p.parse_args()
 
     timer.args.stop()
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
     stommel_example(args.particles, mode=args.mode, verbose=args.verbose, method=method[args.method],
-                    outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage)
+                    outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage, write_fields=args.write_fields)
     timer.stommel.stop()
     timer.root.stop()
     timer.root.print_tree()
