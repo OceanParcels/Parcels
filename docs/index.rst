@@ -198,17 +198,17 @@ parcels.plotting module
     :members:
     :undoc-members:
 
-scripts.plottrajectoriesfile module
+parcels.scripts.plottrajectoriesfile module
 -----------------------------------
 
-.. automodule:: scripts.plottrajectoriesfile
+.. automodule:: parcels.scripts.plottrajectoriesfile
     :members:
     :undoc-members:
 
-scripts.get_examples module
+parcels.scripts.get_examples module
 ---------------------------
 
-.. automodule:: scripts.get_examples
+.. automodule:: parcels.scripts.get_examples
     :members:
     :undoc-members:
 
