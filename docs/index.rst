@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+:tocdepth: 2
 
 Parcels documentation
 ===================================
@@ -197,17 +198,17 @@ parcels.plotting module
     :members:
     :undoc-members:
 
-scripts.plottrajectoriesfile module
+parcels.scripts.plottrajectoriesfile module
 -----------------------------------
 
-.. automodule:: scripts.plottrajectoriesfile
+.. automodule:: parcels.scripts.plottrajectoriesfile
     :members:
     :undoc-members:
 
-scripts.get_examples module
+parcels.scripts.get_examples module
 ---------------------------
 
-.. automodule:: scripts.get_examples
+.. automodule:: parcels.scripts.get_examples
     :members:
     :undoc-members:
 
