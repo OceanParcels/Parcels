@@ -9,11 +9,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@master
-      - name: Setup Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.8
-      - run: pip install flake8
+      - name: Python setup
+        run: |
+          pip install wheel
+          pip install flake8
       - name: flake8
         run: |
           python -m flake8 parcels
