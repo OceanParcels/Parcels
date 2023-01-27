@@ -38,7 +38,6 @@ jobs:
         with:
           environment-file: environment_py3_${{ matrix.os-short }}.yml
           environment-name: py3_parcels
-      - run: conda env update -f requirements-dev.yml
       - name: Integration test
         run: |
           parcels_get_examples examples

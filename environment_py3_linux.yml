@@ -5,9 +5,7 @@ channels:
 dependencies:
   - python>=3.8
   - cgen
-  - coverage
   - ffmpeg>=3.2.3
-  - flake8>=2.1.0
   - git
   - gcc_linux-64
   - mpi4py>=3.0.1
@@ -28,3 +26,14 @@ dependencies:
   - scikit-learn
   - pykdtree
   - zarr
+
+  # Testing
+  - pytest
+  - pytest-html
+  - coverage
+
+  # Linting
+  - flake8>=2.1.0
+
+  # Docs
+  - sphinx<6
