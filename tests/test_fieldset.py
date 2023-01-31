@@ -63,6 +63,13 @@ def test_fieldset_extra_syntax():
     assert failed
 
 
+def test_fieldset_vmin_vmax():
+    data, dimensions = generate_fieldset(11, 11)
+    fieldset = FieldSet.from_data(data, dimensions, vmin=3, vmax=7)
+    assert np.isclose(np.amin(fieldset.U.data[fieldset.U.data > 0.]), 3)
+    assert np.isclose(np.amax(fieldset.U.data), 7)
+
+
 @pytest.mark.parametrize('ttype', ['float', 'datetime64'])
 @pytest.mark.parametrize('tdim', [1, 20])
 def test_fieldset_from_data_timedims(ttype, tdim):
