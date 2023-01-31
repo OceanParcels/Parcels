@@ -143,6 +143,7 @@ def test_randomvonmises(mode, pset_mode, mu, kappa, npart=10000):
     angles = np.array([p.angle for p in pset])
 
     assert np.allclose(np.mean(angles), mu, atol=.1)
-    scipy_mises = stats.vonmises.rvs(kappa, loc=mu, size=10000)
-    assert np.allclose(np.mean(angles), np.mean(scipy_mises), atol=.1)
-    assert np.allclose(np.std(angles), np.std(scipy_mises), atol=.1)
+    vonmises_mean = stats.vonmises.mean(kappa=kappa, loc=mu)
+    assert np.allclose(np.mean(angles), vonmises_mean, atol=.1)
+    vonmises_var = stats.vonmises.var(kappa=kappa, loc=mu)
+    assert np.allclose(np.var(angles), vonmises_var, atol=.1)

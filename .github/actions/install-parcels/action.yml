@@ -1,0 +1,44 @@
+name: Setup Anaconda and install parcels
+description: > 
+  In-repo composite action to setup Anaconda and install parcels. Installation of parcels relies on
+  `setup.py` file being available in the root. For general setup of Anaconda environments, just use
+  the `conda-incubator/setup-miniconda` action (setting C variables as required)
+inputs:
+  environment-file:
+    description: "Anaconda environment file"
+    required: true
+  environment-name:
+    description: "Anaconda environment name"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Configure pagefile # Windows compatability fix as per PR #1279
+      if: ${{ runner.os == 'Windows' }}
+      uses: al-cheb/configure-pagefile-action@v1.3
+      with:
+        minimum-size: 8GB
+    - name: Setup Miniconda
+      uses: conda-incubator/setup-miniconda@v2.2.0
+      with:
+        miniconda-version: "latest"
+        activate-environment: ${{ inputs.environment-name }} # Needs to be the same as listed in the env file
+        environment-file: ${{ inputs.environment-file }}
+        auto-activate-base: false
+        auto-update-conda: true
+    - run: conda info
+      shell: bash -el {0}
+    - name: Install parcels
+      run: python setup.py install
+      shell: bash -el {0}
+    - name: Set env variables for macos
+      run: |
+        if [[ "${{ runner.os }}" == macOS ]]; then
+          echo "Setting CONDA_BUILD_SYSROOT and C_INCLUDE_PATH for macos"
+          echo "CONDA_BUILD_SYSROOT=/" >> $GITHUB_ENV
+          echo "C_INCLUDE_PATH=$C_INCLUDE_PATH:/Applications/Xcode.app/Contents//Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/" >> $GITHUB_ENV
+          echo "CC=gcc" >> $GITHUB_ENV
+        else
+          echo "Platform not macos."
+        fi
+      shell: bash
