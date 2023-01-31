@@ -147,7 +147,8 @@ def test_fieldset_nonstandardtime(calendar, cftime_datetime, tmpdir, filename='t
         assert field.grid.time_origin.calendar == calendar
 
 
-def test_field_from_netcdf():
+@pytest.mark.parametrize('with_timestamps', [True, False])
+def test_field_from_netcdf(with_timestamps):
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
     filenames = {'lon': data_path + 'mask_nemo_cross_180lon.nc',
@@ -155,7 +156,11 @@ def test_field_from_netcdf():
                  'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'}
     variable = 'U'
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-    Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity')
+    if with_timestamps:
+        timestamps = [[2]]
+        Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity', timestamps=timestamps)
+    else:
+        Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity')
 
 
 def test_field_from_netcdf_fieldtypes():
