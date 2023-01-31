@@ -488,6 +488,17 @@ def test_fieldset_write_curvilinear(tmpdir):
         assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
 
 
+def test_curv_fieldset_add_periodic_halo():
+    fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+    filenames = {'dx': fname, 'dy': fname, 'mesh_mask': fname}
+    variables = {'dx': 'e1u', 'dy': 'e1v'}
+    dimensions = {'dx': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'dy': {'lon': 'glamu', 'lat': 'gphiu'}}
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
+
+    fieldset.add_periodic_halo(zonal=3, meridional=2)
+
+
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_cellareas(mesh):
     data, dimensions = generate_fieldset(10, 7)
