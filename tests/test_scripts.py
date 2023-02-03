@@ -39,7 +39,7 @@ def create_outputfiles(dir, pset_mode):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['2d', '3d', 'movie2d', 'hist2d'])
-def test_plotting(pset_mode, mode, tmpdir):
+def test_plotting(pset_mode, tmpdir):
     fp = create_outputfiles(tmpdir, pset_mode)
-    plotTrajectoriesFile(fp, mode=mode, show_plt=False)
+    for mode in ['2d', '3d', 'movie2d', 'hist2d']:
+        plotTrajectoriesFile(fp, mode=mode, show_plt=False)
