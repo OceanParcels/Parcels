@@ -5,8 +5,6 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 from os import path
-from parcels.tools.loggers import logger
-import sys
 
 pset_modes = ['soa', 'aos']
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
@@ -43,8 +41,5 @@ def create_outputfiles(dir, pset_mode):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['2d', '3d', 'movie2d', 'hist2d'])
 def test_plotting(pset_mode, mode, tmpdir):
-    if mode == '3d' and sys.platform in ['linux', 'linux2']:
-        logger.info('Skipping 3d test in linux Travis, since it fails to find display to connect')
-        return
     fp = create_outputfiles(tmpdir, pset_mode)
     plotTrajectoriesFile(fp, mode=mode, show_plt=False)
