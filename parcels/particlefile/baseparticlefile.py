@@ -368,7 +368,7 @@ class BaseParticleFile(ABC):
                     ds.to_zarr(self.fname, mode="w")
                     self.create_new_zarrfile = False
                 else:
-                    try:
+                    try:  # don't create dir store if self.fname cannot be interpreted as a path
                         store = zarr.DirectoryStore(self.fname)
                     except TypeError:
                         store = self.fname
