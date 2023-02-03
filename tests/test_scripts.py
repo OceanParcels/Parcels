@@ -5,8 +5,6 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 from os import path
-from parcels.tools.loggers import logger
-import sys
 
 pset_modes = ['soa', 'aos']
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
