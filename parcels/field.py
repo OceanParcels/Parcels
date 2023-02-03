@@ -1375,18 +1375,6 @@ class Field(object):
             raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1]")
         return data
 
-    def advancetime(self, field_new, advanceForward):
-        if isinstance(self.data) is not isinstance(field_new):
-            logger.warning("[Field.advancetime] New field data and persistent field data have different types - time advance not possible.")
-            return
-        lib = np if isinstance(self.data, np.ndarray) else da
-        if advanceForward == 1:  # forward in time, so appending at end
-            self.data = lib.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
-            self.time = self.grid.time
-        else:  # backward in time, so prepending at start
-            self.data = lib.concatenate((field_new.data[:, :, :], self.data[:-1, :, :]), 0)
-            self.time = self.grid.time
-
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         timestamp = self.timestamps
