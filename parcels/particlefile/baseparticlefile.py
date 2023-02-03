@@ -368,7 +368,10 @@ class BaseParticleFile(ABC):
                     ds.to_zarr(self.fname, mode="w")
                     self.create_new_zarrfile = False
                 else:
-                    store = zarr.DirectoryStore(self.fname)
+                    try:
+                        store = zarr.DirectoryStore(self.fname)
+                    except TypeError:
+                        store = self.fname
                     Z = zarr.group(store=store, overwrite=False)
                     obs = self.obs_written[np.array(ids)]
                     for var in self.vars_to_write:
