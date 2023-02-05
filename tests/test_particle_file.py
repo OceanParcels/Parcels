@@ -43,7 +43,7 @@ def test_pfile_array_write_zarr_memorystore(fieldset, pset_mode, mode, npart=10)
     pfile = pset.ParticleFile(zarr_store)
     pfile.write(pset, 0)
 
-    ds = xr.open_zarr(filepath)
+    ds = xr.open_zarr(zarr_store)
     assert ds.dims["trajectory"] == npart
     ds.close()
 
