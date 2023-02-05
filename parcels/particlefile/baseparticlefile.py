@@ -33,7 +33,7 @@ def _set_calendar(origin_calendar):
 class BaseParticleFile(ABC):
     """Initialise trajectory output.
 
-    :param name: Basename of the output file
+    :param name: Basename of the output file. This can also be a Zarr store object.
     :param particleset: ParticleSet to output
     :param outputdt: Interval which dictates the update frequency of file output
                      while ParticleFile is given as an argument of ParticleSet.execute()
@@ -94,6 +94,10 @@ class BaseParticleFile(ABC):
                                np.uint16: np.iinfo(np.uint16).max, np.uint32: np.iinfo(np.uint32).max,
                                np.uint64: np.iinfo(np.uint64).max}
         if issubclass(type(name), zarr.storage.Store):
+            # If we already got a Zarr store, we won't need any of the naming logic below.
+            # But we need to handle incompatibility with MPI mode for now:
+            if MPI:
+                raise ValueError("Currently, MPI mode is not compatible with directly passing a Zarr store.")
             self.fname = name
         else:
             extension = os.path.splitext(str(name))[1]
@@ -270,6 +274,7 @@ class BaseParticleFile(ABC):
                     ds.to_zarr(self.fname, mode='w')
                     self.create_new_zarrfile = False
                 else:
+                    # Either use the store that was provided directly or create a DirectoryStore:
                     if issubclass(type(self.fname), zarr.storage.Store):
                         store = self.fname
                     else:
