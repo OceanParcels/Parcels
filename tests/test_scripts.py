@@ -1,8 +1,6 @@
 from parcels import (FieldSet, JITParticle, AdvectionRK4, plotTrajectoriesFile)
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
-from datetime import timedelta as delta
-import numpy as np
 import pytest
 from os import path
 
@@ -11,35 +9,17 @@ pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel':
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 
 
-def create_outputfiles(dir, pset_mode):
+@pytest.mark.parametrize('pset_mode', pset_modes)
+def test_plotting(pset_mode, tmpdir):
     datafile = path.join(path.dirname(__file__), 'test_data', 'testfields')
 
     fieldset = FieldSet.from_parcels(datafile, allow_time_extrapolation=True)
-    pset = pset_type[pset_mode]['pset'](fieldset=fieldset, lon=[], lat=[], pclass=JITParticle)
-    npart = 10
-    delaytime = delta(hours=1)
-    endtime = delta(hours=24)
-    x = 3. * (1. / 1.852 / 60)
-    y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)
-    lat = np.linspace(y[0], y[1], npart)
+    pset = pset_type[pset_mode]['pset'](fieldset=fieldset, lon=0.1, lat=0.2, pclass=JITParticle)
 
-    fp = dir.join("DelayParticle.zarr")
-    output_file = pset.ParticleFile(name=fp, outputdt=delaytime)
+    fp = tmpdir.join("DelayParticle.zarr")
+    output_file = pset.ParticleFile(name=fp, outputdt=1)
 
-    for t in range(npart):
-        time = 0 if len(pset) == 0 else pset[0].time
-        pset.add(pset_type[pset_mode]['pset'](pclass=JITParticle, lon=x, lat=lat[t], fieldset=fieldset, time=time))
-        pset.execute(AdvectionRK4, runtime=delaytime, dt=delta(minutes=5), output_file=output_file)
+    pset.execute(AdvectionRK4, runtime=10, dt=1, output_file=output_file)
 
-    pset.execute(AdvectionRK4, runtime=endtime-npart*delaytime,
-                 dt=delta(minutes=5), output_file=output_file)
-    output_file.close()
-
-    return fp
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
-def test_plotting(pset_mode, tmpdir):
-    fp = create_outputfiles(tmpdir, pset_mode)
     for mode in ['2d', '3d', 'movie2d', 'hist2d']:
-        plotTrajectoriesFile(fp, mode=mode, show_plt=False)
+        plotTrajectoriesFile(fp, tracerfield=fieldset.U, mode=mode, show_plt=False)
