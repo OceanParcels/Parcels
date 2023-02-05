@@ -8,6 +8,7 @@ import pytest
 import os
 import cftime
 import xarray as xr
+from zarr.storage import MemoryStore
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -29,6 +30,22 @@ def fieldset(xdim=40, ydim=100):
 @pytest.fixture(name="fieldset")
 def fieldset_ficture(xdim=40, ydim=100):
     return fieldset(xdim=xdim, ydim=ydim)
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pfile_array_write_zarr_memorystore(fieldset, pset_mode, mode, npart=10):
+    """Checkt that writing to a Zarr MemoryStore works."""
+    zarr_store = MemoryStore()
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
+                                        lon=np.linspace(0, 1, npart),
+                                        lat=0.5*np.ones(npart), time=0)
+    pfile = pset.ParticleFile(zarr_store)
+    pfile.write(pset, 0)
+
+    ds = xr.open_zarr(filepath)
+    assert ds.dims["trajectory"] == npart
+    ds.close()
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
