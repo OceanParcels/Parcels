@@ -33,7 +33,7 @@ def _set_calendar(origin_calendar):
 class BaseParticleFile(ABC):
     """Initialise trajectory output.
 
-    :param name: Basename of the output file
+    :param name: Basename of the output file. This can also be a Zarr store object.
     :param particleset: ParticleSet to output
     :param outputdt: Interval which dictates the update frequency of file output
                      while ParticleFile is given as an argument of ParticleSet.execute()
@@ -93,16 +93,22 @@ class BaseParticleFile(ABC):
                                np.int64: np.iinfo(np.int64).max, np.uint8: np.iinfo(np.uint8).max,
                                np.uint16: np.iinfo(np.uint16).max, np.uint32: np.iinfo(np.uint32).max,
                                np.uint64: np.iinfo(np.uint64).max}
-
-        extension = os.path.splitext(str(name))[1]
-        if extension in ['.nc', '.nc4']:
-            raise RuntimeError('Output in NetCDF is not supported anymore. Use .zarr extension for ParticleFile name.')
-        if MPI and MPI.COMM_WORLD.Get_size() > 1:
-            self.fname = os.path.join(name, f"proc{self.mpi_rank:02d}.zarr")
-            if extension in ['.zarr']:
-                logger.warning(f'The ParticleFile name contains .zarr extension, but zarr files will be written per processor in MPI mode at {self.fname}')
+        if issubclass(type(name), zarr.storage.Store):
+            # If we already got a Zarr store, we won't need any of the naming logic below.
+            # But we need to handle incompatibility with MPI mode for now:
+            if MPI and MPI.COMM_WORLD.Get_size() > 1:
+                raise ValueError("Currently, MPI mode is not compatible with directly passing a Zarr store.")
+            self.fname = name
         else:
-            self.fname = name if extension in ['.zarr'] else "%s.zarr" % name
+            extension = os.path.splitext(str(name))[1]
+            if extension in ['.nc', '.nc4']:
+                raise RuntimeError('Output in NetCDF is not supported anymore. Use .zarr extension for ParticleFile name.')
+            if MPI and MPI.COMM_WORLD.Get_size() > 1:
+                self.fname = os.path.join(name, f"proc{self.mpi_rank:02d}.zarr")
+                if extension in ['.zarr']:
+                    logger.warning(f'The ParticleFile name contains .zarr extension, but zarr files will be written per processor in MPI mode at {self.fname}')
+            else:
+                self.fname = name if extension in ['.zarr'] else "%s.zarr" % name
 
     @abstractmethod
     def _reserved_var_names(self):
@@ -268,7 +274,11 @@ class BaseParticleFile(ABC):
                     ds.to_zarr(self.fname, mode='w')
                     self.create_new_zarrfile = False
                 else:
-                    store = zarr.DirectoryStore(self.fname)
+                    # Either use the store that was provided directly or create a DirectoryStore:
+                    if issubclass(type(self.fname), zarr.storage.Store):
+                        store = self.fname
+                    else:
+                        store = zarr.DirectoryStore(self.fname)
                     Z = zarr.group(store=store, overwrite=False)
                     obs = self.obs_written[np.array(ids)]
                     for var in self.vars_to_write:
