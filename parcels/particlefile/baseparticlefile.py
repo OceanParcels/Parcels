@@ -96,7 +96,7 @@ class BaseParticleFile(ABC):
         if issubclass(type(name), zarr.storage.Store):
             # If we already got a Zarr store, we won't need any of the naming logic below.
             # But we need to handle incompatibility with MPI mode for now:
-            if MPI:
+            if MPI and MPI.COMM_WORLD.Get_size() > 1:
                 raise ValueError("Currently, MPI mode is not compatible with directly passing a Zarr store.")
             self.fname = name
         else:
