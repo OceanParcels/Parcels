@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_decaying_moving_eddy():
     from parcels.examples.example_decaying_moving_eddy import main
     main()
@@ -8,6 +11,7 @@ def test_moving_eddies():
     main(['jit'])
 
 
+@pytest.mark.xfail(reason="example data not available from within unit-tests")
 def test_nemo_curvilinear():
     from parcels.examples.example_nemo_curvilinear import main
     main(['jit'])

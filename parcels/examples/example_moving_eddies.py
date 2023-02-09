@@ -237,10 +237,8 @@ Example of particle advection around an idealised peninsula""")
     # Generate fieldset files according to given dimensions
     if args.fieldset is not None:
         fieldset = moving_eddies_fieldset(args.fieldset[0], args.fieldset[1], mesh='flat')
-        fieldset.write(filename)
-
-    # Open fieldset files
-    fieldset = FieldSet.from_parcels(filename, extra_fields={'P': 'P'})
+    else:
+        fieldset = moving_eddies_fieldset(mesh='flat')
     outfile = "EddyParticle"
 
     if args.profiling:
