@@ -6,3 +6,8 @@ import pytest
                                      'peninsula', 'radial_rotation', 'stommel'])
 def test_mains(example):
     system(f'python parcels/examples/example_{example}.py')
+
+
+def test_peninsula():
+    from parcels.examples.example_peninsula import main
+    main(['jit'])

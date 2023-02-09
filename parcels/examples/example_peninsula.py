@@ -188,7 +188,7 @@ def test_peninsula_file(mode, mesh, tmpdir):
     assert (err_smpl <= 1.e-3).all()
 
 
-if __name__ == "__main__":
+def main(args=None):
     p = ArgumentParser(description="""
 Example of particle advection around an idealised peninsula""")
     p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
@@ -207,7 +207,7 @@ Example of particle advection around an idealised peninsula""")
                    help='Generate fieldset file with given dimensions')
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
-    args = p.parse_args()
+    args = p.parse_args(args)
 
     filename = 'peninsula'
     if args.fieldset is not None:
@@ -232,3 +232,7 @@ Example of particle advection around an idealised peninsula""")
         peninsula_example(fieldset, outfile, args.particles, mode=args.mode,
                           degree=args.degree, verbose=args.verbose,
                           output=not args.nooutput, method=method[args.method])
+
+
+if __name__ == "__main__":
+    main()
