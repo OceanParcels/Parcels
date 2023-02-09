@@ -145,7 +145,7 @@ def test_stommel_fieldset(pset_mode, mode, grid_type, tmpdir):
     timer.root.print_tree()
 
 
-if __name__ == "__main__":
+def main(args=None):
     timer.root = timer.Timer('Main')
     timer.args = timer.Timer('Args', parent=timer.root)
     p = ArgumentParser(description="""
@@ -168,7 +168,7 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='max age of the particles (after which particles are deleted)')
     p.add_argument('-wf', '--write_fields', default=True,
                    help='Write the hydrodynamic fields to NetCDF')
-    args = p.parse_args()
+    args = p.parse_args(args)
 
     timer.args.stop()
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
@@ -177,3 +177,7 @@ Example of particle advection in the steady-state solution of the Stommel equati
     timer.stommel.stop()
     timer.root.stop()
     timer.root.print_tree()
+
+
+if __name__ == "__main__":
+    main()
