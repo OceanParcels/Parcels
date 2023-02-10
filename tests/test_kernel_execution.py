@@ -302,3 +302,12 @@ def test_execution_keep_cfiles_and_nocompilation_warnings(pset_mode, fieldset, d
         assert path.exists(cfile)
         with open(logfile) as f:
             assert 'warning' not in f.read(), 'Compilation WARNING in log file'
+
+
+def test_compilers():
+    from parcels.compilation.codecompiler import Clang_parameters, MinGW_parameters, VS_parameters, CCompiler_SS
+
+    for param_class in [Clang_parameters, MinGW_parameters, VS_parameters]:
+        params = param_class()  # noqa
+
+    print(CCompiler_SS())
