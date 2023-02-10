@@ -932,7 +932,7 @@ class Field(object):
                                 return 0
                             else:
                                 return self.data[ti, yi+j, xi+i]
-                        elif land[i][j] == 0:
+                        elif land[j][i] == 0:
                             val += self.data[ti, yi+j, xi+i] / distance
                             w_sum += 1 / distance
                 return val / w_sum
@@ -981,7 +981,7 @@ class Field(object):
                                 if land[k][j][i] == 1:  # index search led us directly onto land
                                     return 0
                                 else:
-                                    return self.data[ti, zi+i, yi+j, xi+k]
+                                    return self.data[ti, zi+k, yi+j, xi+i]
                             elif land[k][j][i] == 0:
                                 val += self.data[ti, zi+k, yi+j, xi+i] / distance
                                 w_sum += 1 / distance
