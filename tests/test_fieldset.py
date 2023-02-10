@@ -1,5 +1,6 @@
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode, OutOfTimeError
 from parcels.field import Field, VectorField
+from parcels.fieldfilebuffer import DaskFileBuffer
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes, UnitConverter, GeographicPolar
@@ -1074,3 +1075,17 @@ def test_deferredload_simplefield(pset_mode, mode, direction, time_extrapolation
     runtime = tdim*2 if time_extrapolation else None
     pset.execute(SampleU, dt=direction, runtime=runtime)
     assert pset.p == tdim-1 if time_extrapolation else tdim-2
+
+
+def test_daskfieldfilebuffer_dimnames():
+    DaskFileBuffer.add_to_dimension_name_map_global({'lat': 'nydim', 'lon': 'nxdim'})
+    fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
+    dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
+    fb = DaskFileBuffer(fnameU, dimensions, indices={})
+    assert ('nxdim' in fb._static_name_maps['lon']) and ('ntdim' not in fb._static_name_maps['time'])
+    fb.add_to_dimension_name_map({'time': 'ntdim', 'depth': 'nddim'})
+    assert ('nxdim' in fb._static_name_maps['lon']) and ('ntdim' in fb._static_name_maps['time'])
+    assert fb._get_available_dims_indices_by_request() == {'time': None, 'depth': None, 'lat': 0, 'lon': 1}
+    assert fb._get_available_dims_indices_by_namemap() == {'time': 0, 'depth': 1, 'lat': 2, 'lon': 3}
+    assert fb._is_dimension_chunked('lon') is False
+    assert fb._is_dimension_in_chunksize_request('lon') == (-1, '', 0)
