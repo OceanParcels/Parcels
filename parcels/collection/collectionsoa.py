@@ -1,7 +1,6 @@
 from operator import attrgetter
 from ctypes import Structure, POINTER
 from bisect import bisect_left
-from math import floor
 
 import numpy as np
 
@@ -12,7 +11,7 @@ from parcels.particle import ScipyParticle, JITParticle  # noqa
 from parcels.field import Field
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import OperationCode
+from parcels.tools.statuscodes import NotTestedError
 
 try:
     from mpi4py import MPI
@@ -301,10 +300,11 @@ class ParticleCollectionSOA(ParticleCollection):
         collections (e.g. numpy's ndarrays, dense matrices and dense arrays), whereas internally ordered collections
         shall rather use a get-via-object-reference strategy.
         """
-        super().get_multi_by_indices(indices)
-        if type(indices) is dict:
-            indices = list(indices.values())
-        return ParticleCollectionIteratorSOA(self, subset=indices)
+        raise NotTestedError
+        # super().get_multi_by_indices(indices)
+        # if type(indices) is dict:
+        #     indices = list(indices.values())
+        # return ParticleCollectionIteratorSOA(self, subset=indices)
 
     def get_multi_by_IDs(self, ids):
         """
@@ -318,23 +318,24 @@ class ParticleCollectionSOA(ParticleCollection):
         and their data are appended at the end of the list (largest index). This allows for the use of binary search
         in the look-up. The collection maintains a `sorted` flag to indicate whether this assumption holds.
         """
-        super().get_multi_by_IDs(ids)
-        if type(ids) is dict:
-            ids = list(ids.values())
-
-        if len(ids) == 0:
-            return None
-
-        # Use binary search if the collection is sorted, linear search otherwise
-        indices = np.empty(len(ids), dtype=np.int32)
-        if self._sorted:
-            # This is efficient if len(ids) << self.len
-            sorted_ids = np.sort(np.array(ids))
-            indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
-        else:
-            indices = np.where(np.in1d(self._data['id'], ids))[0]
-
-        return self.get_multi_by_indices(indices)
+        raise NotTestedError
+        # super().get_multi_by_IDs(ids)
+        # if type(ids) is dict:
+        #     ids = list(ids.values())
+        #
+        # if len(ids) == 0:
+        #     return None
+        #
+        # # Use binary search if the collection is sorted, linear search otherwise
+        # indices = np.empty(len(ids), dtype=np.int32)
+        # if self._sorted:
+        #     # This is efficient if len(ids) << self.len
+        #     sorted_ids = np.sort(np.array(ids))
+        #     indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
+        # else:
+        #     indices = np.where(np.in1d(self._data['id'], ids))[0]
+        #
+        # return self.get_multi_by_indices(indices)
 
     def _recursive_ID_lookup(self, low, high, sublist):
         """Identify the middle element of the sublist and perform binary
@@ -344,32 +345,33 @@ class ParticleCollectionSOA(ParticleCollection):
         :param high: Upperbound on the indices to search for IDs.
         :param sublist: (Sub)list of IDs to look for.
         """
-        median = floor(len(sublist) / 2)
-        index = bisect_left(self._data['id'][low:high], sublist[median])
-        if len(sublist) == 1:
-            # edge case
-            if index == len(self._data['id']) or \
-               self._data['id'][index] != sublist[median]:
-                return np.array([])
-            return np.array([index])
-
-        # The edge-cases have to be handled slightly differently
-        if index == len(self._data['id']):
-            # Continue with the same bounds, but drop the median.
-            return self._recursive_ID_lookup(low, high, np.delete(sublist, median))
-        elif self._data['id'][index] != sublist[median]:
-            # We can split, because we received the index that the median
-            # ID would have been inserted in, but we do not return the
-            # index and keep it in our search space.
-            left = self._recursive_ID_lookup(low, index, sublist[:median])
-            right = self._recursive_ID_lookup(index, high, sublist[median + 1:])
-            return np.concatenate((left, right))
-
-        # Otherwise, we located the median, so we include it in our
-        # result, and split the search space on it, without including it.
-        left = self._recursive_ID_lookup(low, index, sublist[:median])
-        right = self._recursive_ID_lookup(index + 1, high, sublist[median + 1:])
-        return np.concatenate((left, np.array(index), right))
+        raise NotTestedError
+        # median = floor(len(sublist) / 2)
+        # index = bisect_left(self._data['id'][low:high], sublist[median])
+        # if len(sublist) == 1:
+        #     # edge case
+        #     if index == len(self._data['id']) or \
+        #        self._data['id'][index] != sublist[median]:
+        #         return np.array([])
+        #     return np.array([index])
+        #
+        # # The edge-cases have to be handled slightly differently
+        # if index == len(self._data['id']):
+        #     # Continue with the same bounds, but drop the median.
+        #     return self._recursive_ID_lookup(low, high, np.delete(sublist, median))
+        # elif self._data['id'][index] != sublist[median]:
+        #     # We can split, because we received the index that the median
+        #     # ID would have been inserted in, but we do not return the
+        #     # index and keep it in our search space.
+        #     left = self._recursive_ID_lookup(low, index, sublist[:median])
+        #     right = self._recursive_ID_lookup(index, high, sublist[median + 1:])
+        #     return np.concatenate((left, right))
+        #
+        # # Otherwise, we located the median, so we include it in our
+        # # result, and split the search space on it, without including it.
+        # left = self._recursive_ID_lookup(low, index, sublist[:median])
+        # right = self._recursive_ID_lookup(index + 1, high, sublist[median + 1:])
+        # return np.concatenate((left, np.array(index), right))
 
     def add_collection(self, pcollection):
         """
@@ -490,9 +492,10 @@ class ParticleCollectionSOA(ParticleCollection):
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
         """
-        super().delete_by_index(index)
-
-        self._data['state'][index] = OperationCode.Delete
+        raise NotTestedError
+        # super().delete_by_index(index)
+        #
+        # self._data['state'][index] = OperationCode.Delete
 
     def delete_by_ID(self, id):
         """
@@ -502,19 +505,20 @@ class ParticleCollectionSOA(ParticleCollection):
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
         """
-        super().delete_by_ID(id)
-
-        # Use binary search if the collection is sorted, linear search otherwise
-        index = -1
-        if self._sorted:
-            index = bisect_left(self._data['id'], id)
-            if index == len(self._data['id']) or \
-               self._data['id'][index] != id:
-                raise ValueError("Trying to delete a particle with a non-existing ID: %s." % id)
-        else:
-            index = np.where(self._data['id'] == id)[0][0]
-
-        self.delete_by_index(index)
+        raise NotTestedError
+        # super().delete_by_ID(id)
+        #
+        # # Use binary search if the collection is sorted, linear search otherwise
+        # index = -1
+        # if self._sorted:
+        #     index = bisect_left(self._data['id'], id)
+        #     if index == len(self._data['id']) or \
+        #        self._data['id'][index] != id:
+        #         raise ValueError("Trying to delete a particle with a non-existing ID: %s." % id)
+        # else:
+        #     index = np.where(self._data['id'] == id)[0][0]
+        #
+        # self.delete_by_index(index)
 
     def remove_single_by_index(self, index):
         """
@@ -558,19 +562,20 @@ class ParticleCollectionSOA(ParticleCollection):
         In cases where a removal-by-ID would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-object or remove-by-index.
         """
-        super().remove_single_by_ID(id)
-
-        # Use binary search if the collection is sorted, linear search otherwise
-        index = -1
-        if self._sorted:
-            index = bisect_left(self._data['id'], id)
-            if index == len(self._data['id']) or \
-               self._data['id'][index] != id:
-                raise ValueError("Trying to remove a particle with a non-existing ID: %s." % id)
-        else:
-            index = np.where(self._data['id'] == id)[0][0]
-
-        self.remove_single_by_index(index)
+        raise NotTestedError
+        # super().remove_single_by_ID(id)
+        #
+        # # Use binary search if the collection is sorted, linear search otherwise
+        # index = -1
+        # if self._sorted:
+        #     index = bisect_left(self._data['id'], id)
+        #     if index == len(self._data['id']) or \
+        #        self._data['id'][index] != id:
+        #         raise ValueError("Trying to remove a particle with a non-existing ID: %s." % id)
+        # else:
+        #     index = np.where(self._data['id'] == id)[0][0]
+        #
+        # self.remove_single_by_index(index)
 
     def remove_same(self, same_class):
         """
@@ -627,23 +632,24 @@ class ParticleCollectionSOA(ParticleCollection):
         strategy would require a collection transformation or by-ID parsing, it is advisable to rather apply a removal-
         by-objects or removal-by-indices scheme.
         """
-        super().remove_multi_by_IDs(ids)
-        if type(ids) is dict:
-            ids = list(ids.values())
-
-        if len(ids) == 0:
-            return
-
-        # Use binary search if the collection is sorted, linear search otherwise
-        indices = np.empty(len(ids), dtype=np.int32)
-        if self._sorted:
-            # This is efficient if len(ids) << self.len
-            sorted_ids = np.sort(np.array(ids))
-            indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
-        else:
-            indices = np.where(np.in1d(self._data['id'], ids))[0]
-
-        self.remove_multi_by_indices(indices)
+        raise NotTestedError
+        # super().remove_multi_by_IDs(ids)
+        # if type(ids) is dict:
+        #     ids = list(ids.values())
+        #
+        # if len(ids) == 0:
+        #     return
+        #
+        # # Use binary search if the collection is sorted, linear search otherwise
+        # indices = np.empty(len(ids), dtype=np.int32)
+        # if self._sorted:
+        #     # This is efficient if len(ids) << self.len
+        #     sorted_ids = np.sort(np.array(ids))
+        #     indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
+        # else:
+        #     indices = np.where(np.in1d(self._data['id'], ids))[0]
+        #
+        # self.remove_multi_by_indices(indices)
 
     def __isub__(self, other):
         """
@@ -654,16 +660,17 @@ class ParticleCollectionSOA(ParticleCollection):
         with 'a' and 'b' begin the two equi-structured objects (or: 'b' being and individual object).
         This operation is equal to an in-place removal of (an) element(s).
         """
-        if other is None:
-            return
-        if type(other) is type(self):
-            self.remove_same(other)
-        elif (isinstance(other, BaseParticleAccessor)
-              or isinstance(other, ScipyParticle)):
-            self.remove_single_by_object(other)
-        else:
-            raise TypeError("Trying to do an incremental removal of an element of type %s, which is not supported." % type(other))
-        return self
+        raise NotTestedError
+        # if other is None:
+        #     return
+        # if type(other) is type(self):
+        #     self.remove_same(other)
+        # elif (isinstance(other, BaseParticleAccessor)
+        #       or isinstance(other, ScipyParticle)):
+        #     self.remove_single_by_object(other)
+        # else:
+        #     raise TypeError("Trying to do an incremental removal of an element of type %s, which is not supported." % type(other))
+        # return self
 
     def pop_single_by_index(self, index):
         """
