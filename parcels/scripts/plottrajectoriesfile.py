@@ -144,7 +144,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         return plt
 
 
-if __name__ == "__main__":
+def main(args=None):
     p = ArgumentParser(description="""Quick and simple plotting of Parcels trajectories""")
     p.add_argument('mode', choices=('2d', '3d', 'hist2d', 'movie2d', 'movie2d_notebook'), nargs='?',
                    default='movie2d', help='Type of display')
@@ -162,9 +162,13 @@ if __name__ == "__main__":
                    help='Name of a variable recorded along trajectory')
     p.add_argument('-bins', type=int, default=20,
                    help='Number of bins for mode=hist2d')
-    args = p.parse_args()
+    args = p.parse_args(args)
 
     plotTrajectoriesFile(args.particlefile, mode=args.mode, tracerfile=args.tracerfile,
                          tracerfield=args.tracerfilefield, tracerlon=args.tracerfilelon,
                          tracerlat=args.tracerfilelat, recordedvar=args.recordedvar,
                          bins=args.bins, show_plt=True)
+
+
+if __name__ == "__main__":
+    main()
