@@ -37,3 +37,6 @@ dependencies:
 
   # Docs
   - sphinx<6
+
+  # Plotting
+  - cartopy
