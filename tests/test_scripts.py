@@ -18,6 +18,7 @@ def test_plotting(from_main, tmpdir):
 
     for mode in ['2d', '3d', 'movie2d', 'hist2d']:
         if from_main:
+            pset.show(field=fieldset.U)
             main([mode, f'-p{fp}'])
         else:
             plotTrajectoriesFile(fp, tracerfield=fieldset.U, mode=mode, show_plt=False)
