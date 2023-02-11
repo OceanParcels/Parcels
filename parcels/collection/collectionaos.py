@@ -10,6 +10,7 @@ from parcels.collection.iterators import BaseParticleCollectionIterator
 from parcels.collection.iterators import BaseParticleCollectionIterable
 from parcels.particle import ScipyParticle, JITParticle  # noqa
 from parcels.field import Field
+from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import OperationCode
 
@@ -25,19 +26,6 @@ if MPI:
                                'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleCollectionAOS', 'ParticleCollectionIterableAOS', 'ParticleCollectionIteratorAOS']
-
-
-def _convert_to_flat_array(var):
-    """Convert lists and single integers/floats to one-dimensional numpy arrays
-
-    :param var: list or numeric to convert to a one-dimensional numpy array
-    """
-    if isinstance(var, np.ndarray):
-        return var.flatten()
-    elif isinstance(var, (int, float, np.float32, np.int32)):
-        return np.array([var])
-    else:
-        return np.array(var)
 
 
 class ParticleCollectionAOS(ParticleCollection):
@@ -63,7 +51,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
         # If partitions is false, the partitions are already initialised
         if partitions is not None and partitions is not False:
-            self._pu_indicators = _convert_to_flat_array(partitions)
+            self._pu_indicators = convert_to_flat_array(partitions)
 
         for kwvar in kwargs:
             assert lon.size == kwargs[kwvar].size, (

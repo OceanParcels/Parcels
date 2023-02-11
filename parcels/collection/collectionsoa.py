@@ -10,6 +10,7 @@ from parcels.collection.iterators import BaseParticleAccessor
 from parcels.collection.iterators import BaseParticleCollectionIterator, BaseParticleCollectionIterable
 from parcels.particle import ScipyParticle, JITParticle  # noqa
 from parcels.field import Field
+from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import OperationCode
 
@@ -22,19 +23,6 @@ if MPI:
         from sklearn.cluster import KMeans
     except:
         KMeans = None
-
-
-def _convert_to_flat_array(var):
-    """Convert lists and single integers/floats to one-dimensional numpy arrays
-
-    :param var: list or numeric to convert to a one-dimensional numpy array
-    """
-    if isinstance(var, np.ndarray):
-        return var.flatten()
-    elif isinstance(var, (int, float, np.float32, np.int32)):
-        return np.array([var])
-    else:
-        return np.array(var)
 
 
 class ParticleCollectionSOA(ParticleCollection):
@@ -61,7 +49,7 @@ class ParticleCollectionSOA(ParticleCollection):
 
         # If partitions is false, the partitions are already initialised
         if partitions is not None and partitions is not False:
-            self._pu_indicators = _convert_to_flat_array(partitions)
+            self._pu_indicators = convert_to_flat_array(partitions)
 
         for kwvar in kwargs:
             assert lon.size == kwargs[kwvar].size, (
