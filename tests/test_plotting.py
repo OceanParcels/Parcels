@@ -14,8 +14,12 @@ def test_plotting(tmpdir):
 
     pset.execute(AdvectionRK4, runtime=10, dt=1, output_file=output_file)
 
-    for fld in [fieldset.U, 'vector', None]:
-        pset.show(field=fld)
+    try:  # only testing when cartopy is found because Github Action hangs otherwise (see https://github.com/OceanParcels/parcels/actions/runs/4151055784/jobs/7183000370)
+        import cartopy  # noqa
+        for fld in [fieldset.U, 'vector', None]:
+            pset.show(field=fld)
+    except:
+        pass
 
     for mode in ['2d', '3d', 'movie2d', 'hist2d']:
         main([mode, f'-p{fp}'])
