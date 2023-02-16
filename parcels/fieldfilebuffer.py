@@ -161,7 +161,7 @@ class NetcdfFileBuffer(_FileBuffer):
 
     def _check_extend_depth(self, data, di):
         return (self.indices['depth'][-1] == self.data_full_zdim-1
-                and data.shape[di] == self.data_full_zdim-1
+                and ((data.shape[di] == self.data_full_zdim-1) or (data.shape[di] == self.data_full_zdim))
                 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'])
 
     def _apply_indices(self, data, ti):
