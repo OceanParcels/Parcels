@@ -17,7 +17,10 @@ def test_plotting(tmpdir):
     if sys.platform.startswith("lin") or sys.platform.startswith("ubu"):  # only testing on linux because Github Action hangs otherwise (see https://github.com/OceanParcels/parcels/actions/runs/4151055784/jobs/7183000370)
         for fld in [fieldset.U, 'vector', None]:
             pset.show(field=fld)
+        tracerfield = fieldset.U
+    else:
+        tracerfield = None
 
     for mode in ['2d', '3d', 'movie2d', 'hist2d']:
         main([mode, f'-p{fp}'])
-        plotTrajectoriesFile(fp, tracerfield=fieldset.U, mode=mode, show_plt=False)
+        plotTrajectoriesFile(fp, tracerfield=tracerfield, mode=mode, show_plt=False)
