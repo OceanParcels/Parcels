@@ -21,8 +21,8 @@ def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage, nump):
         outputMPI = tmpdir.join('StommelMPI')
         outputNoMPI = tmpdir.join('StommelNoMPI.zarr')
 
-        system('mpirun -np 2 python %s -p %d -o %s -r %d -a %d -psm %s' % (stommel_file, nump, outputMPI, repeatdt, maxage, pset_mode))
-        system('python %s -p %d -o %s -r %d -a %d -psm %s' % (stommel_file, nump, outputNoMPI, repeatdt, maxage, pset_mode))
+        system('mpirun -np 2 python %s -p %d -o %s -r %d -a %d -psm %s -wf False' % (stommel_file, nump, outputMPI, repeatdt, maxage, pset_mode))
+        system('python %s -p %d -o %s -r %d -a %d -psm %s -wf False' % (stommel_file, nump, outputNoMPI, repeatdt, maxage, pset_mode))
 
         files = glob(path.join(outputMPI, "proc*"))
         ds1 = xr.concat([xr.open_zarr(f) for f in files], dim='trajectory',

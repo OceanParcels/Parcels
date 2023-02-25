@@ -14,6 +14,7 @@ from parcels.field import SummedField
 from parcels.kernel.kernelaos import KernelAOS
 from parcels.particle import Variable, ScipyParticle, JITParticle # NOQA
 from parcels.particlefile.particlefileaos import ParticleFileAOS
+from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
 from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.collection.collectionaos import ParticleCollectionAOS
@@ -27,18 +28,6 @@ except:
     MPI = None
 
 __all__ = ['ParticleSetAOS']
-
-
-def _convert_to_array(var):
-    """Convert lists and single integers/floats to one-dimensional numpy
-    arrays
-    """
-    if isinstance(var, np.ndarray):
-        return var.flatten()
-    elif isinstance(var, (int, float, np.float32, np.float64, np.int32)):
-        return np.array([var])
-    else:
-        return np.array(var)
 
 
 def _convert_to_reltime(time):
@@ -207,8 +196,8 @@ class ParticleSetAOS(BaseParticleSet):
             self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
 
-        lon = np.empty(shape=0) if lon is None else _convert_to_array(lon)
-        lat = np.empty(shape=0) if lat is None else _convert_to_array(lat)
+        lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
+        lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
 
         if isinstance(pid_orig, (type(None), type(False))):
             pid_orig = np.arange(lon.size)
@@ -217,11 +206,11 @@ class ParticleSetAOS(BaseParticleSet):
             mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
             depth = np.ones(lon.size) * mindepth
         else:
-            depth = _convert_to_array(depth)
+            depth = convert_to_flat_array(depth)
         assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
 
-        time = _convert_to_array(time)
+        time = convert_to_flat_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
@@ -242,7 +231,7 @@ class ParticleSetAOS(BaseParticleSet):
             'lon lat depth precision should be set to either np.float32 or np.float64'
 
         for kwvar in kwargs:
-            kwargs[kwvar] = _convert_to_array(kwargs[kwvar])
+            kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
 

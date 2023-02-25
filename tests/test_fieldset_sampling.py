@@ -145,6 +145,22 @@ def test_fieldset_polar_with_halo(fieldset_geometric_polar, pset_mode, mode):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('zdir', [-1, 1])
+def test_verticalsampling(pset_mode, mode, zdir):
+    dims = (4, 2, 2)
+    dimensions = {'lon': np.linspace(0., 1., dims[2], dtype=np.float32),
+                  'lat': np.linspace(0., 1., dims[1], dtype=np.float32),
+                  'depth': np.linspace(0., 1*zdir, dims[0], dtype=np.float32)}
+    data = {'U': np.zeros(dims, dtype=np.float32),
+            'V': np.zeros(dims, dtype=np.float32)}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=0, lat=0, depth=0.7*zdir)
+    pset.execute(AdvectionRK4, dt=1., runtime=1.)
+    assert pset[0].zi == [2]
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_init_from_field(pset_mode, mode, npart=9):
     dims = (2, 2)
     dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
@@ -234,14 +250,20 @@ def test_nearest_neighbour_interpolation3D(pset_mode, mode, k_sample_p, npart=81
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('withDepth', [True, False])
 @pytest.mark.parametrize('arrtype', ['ones', 'rand'])
-def test_inversedistance_nearland(pset_mode, mode, arrtype, k_sample_p, npart=81):
-    dims = (4, 4, 6)
-    P = np.random.rand(dims[0], dims[1], dims[2])+2 if arrtype == 'rand' else np.ones(dims, dtype=np.float32)
-    P[1, 1:2, 1:6] = np.nan  # setting some values to land (NaN)
-    dimensions = {'lon': np.linspace(0., 1., dims[2], dtype=np.float32),
-                  'lat': np.linspace(0., 1., dims[1], dtype=np.float32),
-                  'depth': np.linspace(0., 1., dims[0], dtype=np.float32)}
+def test_inversedistance_nearland(pset_mode, mode, withDepth, arrtype, k_sample_p, npart=81):
+    dims = (4, 4, 6) if withDepth else (4, 6)
+    dimensions = {'lon': np.linspace(0., 1., dims[-1], dtype=np.float32),
+                  'lat': np.linspace(0., 1., dims[-2], dtype=np.float32)}
+    if withDepth:
+        dimensions['depth'] = np.linspace(0., 1., dims[0], dtype=np.float32)
+        P = np.random.rand(dims[0], dims[1], dims[2])+2 if arrtype == 'rand' else np.ones(dims, dtype=np.float32)
+        P[1, 1:2, 1:6] = np.nan  # setting some values to land (NaN)
+    else:
+        P = np.random.rand(dims[0], dims[1])+2 if arrtype == 'rand' else np.ones(dims, dtype=np.float32)
+        P[1:2, 1:6] = np.nan  # setting some values to land (NaN)
+
     data = {'U': np.zeros(dims, dtype=np.float32),
             'V': np.zeros(dims, dtype=np.float32),
             'P': P}
@@ -249,12 +271,12 @@ def test_inversedistance_nearland(pset_mode, mode, arrtype, k_sample_p, npart=81
     fieldset.P.interp_method = 'linear_invdist_land_tracer'
 
     xv, yv = np.meshgrid(np.linspace(0.1, 0.9, int(np.sqrt(npart))), np.linspace(0.1, 0.9, int(np.sqrt(npart))))
-    # combine a pset at 0m with pset at 1m, as meshgrid does not do 3D
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
                                         depth=np.zeros(npart))
-    pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
-                                         depth=np.ones(npart))
-    pset.add(pset2)
+    if withDepth:
+        pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
+                                             depth=np.ones(npart))
+        pset.add(pset2)
     pset.execute(k_sample_p, endtime=1, dt=1)
     if arrtype == 'rand':
         assert np.all((pset.p > 2) & (pset.p < 3))

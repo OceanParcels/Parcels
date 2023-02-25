@@ -4,9 +4,7 @@ channels:
 dependencies:
   - python>=3.8
   - cgen>=2020.1
-  - coverage
   - ffmpeg>=3.2.3
-  - flake8>=2.1.0
   - git
   - jupyter
   - m2w64-toolchain
@@ -25,3 +23,14 @@ dependencies:
   - nbval
   - pykdtree
   - zarr
+
+  # Testing
+  - pytest
+  - pytest-html
+  - coverage
+
+  # Linting
+  - flake8>=2.1.0
+
+  # Docs
+  - sphinx<6

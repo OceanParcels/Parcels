@@ -10,7 +10,20 @@ import numpy as np
 
 __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
            'GeographicPolarSquare', 'unitconverters_map', 'TimeConverter',
-           'convert_xarray_time_units']
+           'convert_xarray_time_units', 'convert_to_flat_array']
+
+
+def convert_to_flat_array(var):
+    """Convert lists and single integers/floats to one-dimensional numpy arrays
+
+    :param var: list or numeric to convert to a one-dimensional numpy array
+    """
+    if isinstance(var, np.ndarray):
+        return var.flatten()
+    elif isinstance(var, (int, float, np.float32, np.int32)):
+        return np.array([var])
+    else:
+        return np.array(var)
 
 
 def _get_cftime_datetimes():

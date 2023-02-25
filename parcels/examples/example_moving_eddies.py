@@ -216,7 +216,7 @@ def test_periodic_and_computeTimeChunk_eddies(mode):
     pset.execute(kernels, runtime=delta(days=6), dt=delta(hours=1))
 
 
-if __name__ == "__main__":
+def main(args=None):
     p = ArgumentParser(description="""
 Example of particle advection around an idealised peninsula""")
     p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
@@ -231,16 +231,14 @@ Example of particle advection around an idealised peninsula""")
                    help='Generate fieldset file with given dimensions')
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
-    args = p.parse_args()
+    args = p.parse_args(args)
     filename = path.join(path.dirname(__file__), 'MovingEddies_data', 'moving_eddies')
 
     # Generate fieldset files according to given dimensions
     if args.fieldset is not None:
         fieldset = moving_eddies_fieldset(args.fieldset[0], args.fieldset[1], mesh='flat')
-        fieldset.write(filename)
-
-    # Open fieldset files
-    fieldset = FieldSet.from_parcels(filename, extra_fields={'P': 'P'})
+    else:
+        fieldset = moving_eddies_fieldset(mesh='flat')
     outfile = "EddyParticle"
 
     if args.profiling:
@@ -253,3 +251,7 @@ Example of particle advection around an idealised peninsula""")
     else:
         moving_eddies_example(fieldset, outfile, args.particles, mode=args.mode,
                               verbose=args.verbose, method=method[args.method])
+
+
+if __name__ == "__main__":
+    main()

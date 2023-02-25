@@ -38,11 +38,15 @@ jobs:
         with:
           environment-file: environment_py3_${{ matrix.os-short }}.yml
           environment-name: py3_parcels
-      - run: conda env update -f requirements-dev.yml
       - name: Integration test
         run: |
           parcels_get_examples examples
-          pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html examples
+          coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html examples
+          coverage xml
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          flags: integration-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
         uses: actions/upload-artifact@v3.1.2

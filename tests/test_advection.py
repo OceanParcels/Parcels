@@ -14,7 +14,7 @@ pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
-kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
+kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45, 'AA': AdvectionAnalytical,
           'AdvDiffEM': AdvectionDiffusionEM, 'AdvDiffM1': AdvectionDiffusionM1}
 
 # Some constants
@@ -428,9 +428,18 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
     ('AdvDiffEM', 1e-2, True),
     ('AdvDiffM1', 1e-2, True),
     ('RK4', 1e-5, False),
-    ('RK45', 1e-5, False)])
+    ('RK45', 1e-5, False),
+    ('AA', 1e-3, False)])
 def test_decaying_eddy(pset_mode, fieldset_decaying, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_decaying
+    if method == 'AA':
+        if mode == 'jit':
+            return True  # AnalyticalAdvection not implemented in JIT
+        else:
+            # needed for AnalyticalAdvection to work, but comes at expense of accuracy
+            fieldset.U.interp_method = 'cgrid_velocity'
+            fieldset.V.interp_method = 'cgrid_velocity'
+
     if diffField:
         fieldset.add_field(Field('Kh_zonal', np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
         fieldset.add_field(Field('Kh_meridional', np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))

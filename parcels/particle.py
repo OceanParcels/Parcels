@@ -4,7 +4,7 @@ from operator import attrgetter
 import numpy as np
 
 from parcels.field import Field
-from parcels.tools.statuscodes import StateCode, OperationCode
+from parcels.tools.statuscodes import StateCode
 from parcels.tools.loggers import logger
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable', 'ScipyInteractionParticle']
@@ -217,77 +217,11 @@ class ScipyParticle(_Particle):
                 str += "%s=%f, " % (var, getattr(self, var))
         return str + "time=%s)" % time_string
 
-    def delete(self):
-        self.state = OperationCode.Delete
-
-    def set_state(self, state):
-        self.state = state
-
-    def succeeded(self):
-        self.state = StateCode.Success
-
-    def isComputed(self):
-        return self.state == StateCode.Success
-
-    def reset_state(self):
-        self.state = StateCode.Evaluate
-
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):
         cls.lon.dtype = dtype
         cls.lat.dtype = dtype
         cls.depth.dtype = dtype
-
-    def update_next_dt(self, next_dt=None):
-        if next_dt is None:
-            if self._next_dt is not None:
-                self.dt = self._next_dt
-                self._next_dt = None
-        else:
-            self._next_dt = next_dt
-
-    def __eq__(self, other):
-        if type(self) is not type(other):
-            return False
-        ids_eq = (self.id == other.id)
-        attr_eq = True
-        attr_eq &= (self.lon == other.lon)
-        attr_eq &= (self.lat == other.lat)
-        attr_eq &= (self.depth == other.depth)
-        attr_eq &= (self.time == other.time)
-        attr_eq &= (self.dt == other.dt)
-        return ids_eq and attr_eq
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def __lt__(self, other):
-        if type(self) is not type(other):
-            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
-            raise AttributeError(err_msg)
-        return self.id < other.id
-
-    def __le__(self, other):
-        if type(self) is not type(other):
-            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
-            raise AttributeError(err_msg)
-        return self.id <= other.id
-
-    def __gt__(self, other):
-        if type(self) is not type(other):
-            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
-            raise AttributeError(err_msg)
-        return self.id > other.id
-
-    def __ge__(self, other):
-        if type(self) is not type(other):
-            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
-            raise AttributeError(err_msg)
-        return self.id >= other.id
-
-    def __sizeof__(self):
-        ptype = self.getPType()
-        return sum([v.size for v in ptype.variables])
 
 
 class ScipyInteractionParticle(ScipyParticle):
@@ -320,45 +254,3 @@ class JITParticle(ScipyParticle):
 
     def __del__(self):
         super(JITParticle, self).__del__()
-
-    def cdata(self):
-        if self._cptr is None:
-            return None
-        return self._cptr.ctypes.data_as(c_void_p)
-
-    def set_cptr(self, value):
-        if isinstance(value, np.ndarray):
-            ptype = self.getPType()
-            self._cptr = np.array(value, dtype=ptype.dtype)
-        else:
-            self._cptr = None
-
-    def get_cptr(self):
-        if isinstance(self._cptr, np.ndarray):
-            return self._cptr[0]
-        return self._cptr
-
-    def reset_cptr(self):
-        self._cptr = None
-
-    def __eq__(self, other):
-        return super(JITParticle, self).__eq__(other)
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def __lt__(self, other):
-        return super(JITParticle, self).__lt__(other)
-
-    def __le__(self, other):
-        return super(JITParticle, self).__le__(other)
-
-    def __gt__(self, other):
-        return super(JITParticle, self).__gt__(other)
-
-    def __ge__(self, other):
-        return super(JITParticle, self).__ge__(other)
-
-    def __sizeof__(self):
-        ptype = self.getPType()
-        return sum([v.size for v in ptype.variables])

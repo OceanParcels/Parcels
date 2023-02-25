@@ -235,7 +235,8 @@ class Field(object):
         if timestamps is not None:
             dataFiles = []
             for findex in range(len(data_filenames)):
-                for f in [data_filenames[findex], ] * len(timestamps[findex]):
+                stamps_in_file = 1 if isinstance(timestamps[findex], int) else len(timestamps[findex])
+                for f in [data_filenames[findex], ] * stamps_in_file:
                     dataFiles.append(f)
             timeslices = np.array([stamp for file in timestamps for stamp in file])
             time = timeslices
@@ -311,7 +312,13 @@ class Field(object):
             elif isinstance(filenames, dict):
                 for k in filenames.keys():
                     if k not in ['lat', 'lon', 'depth', 'time']:
-                        assert (len(filenames[k]) == len(timestamps)), 'Outer dimension of timestamps should correspond to number of files.'
+                        if isinstance(filenames[k], list):
+                            assert (len(filenames[k]) == len(timestamps)), 'Outer dimension of timestamps should correspond to number of files.'
+                        else:
+                            assert len(timestamps) == 1, 'Outer dimension of timestamps should correspond to number of files.'
+                        for t in timestamps:
+                            assert isinstance(t, (list, np.ndarray)), 'timestamps should be a list for each file'
+
             else:
                 raise TypeError("Filenames type is inconsistent with manual timestamp provision."
                                 + "Should be dict or list")
@@ -932,7 +939,7 @@ class Field(object):
                                 return 0
                             else:
                                 return self.data[ti, yi+j, xi+i]
-                        elif land[i][j] == 0:
+                        elif land[j][i] == 0:
                             val += self.data[ti, yi+j, xi+i] / distance
                             w_sum += 1 / distance
                 return val / w_sum
@@ -981,7 +988,7 @@ class Field(object):
                                 if land[k][j][i] == 1:  # index search led us directly onto land
                                     return 0
                                 else:
-                                    return self.data[ti, zi+i, yi+j, xi+k]
+                                    return self.data[ti, zi+k, yi+j, xi+i]
                             elif land[k][j][i] == 0:
                                 val += self.data[ti, zi+k, yi+j, xi+i] / distance
                                 w_sum += 1 / distance
@@ -1367,18 +1374,6 @@ class Field(object):
         else:
             raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1]")
         return data
-
-    def advancetime(self, field_new, advanceForward):
-        if isinstance(self.data) is not isinstance(field_new):
-            logger.warning("[Field.advancetime] New field data and persistent field data have different types - time advance not possible.")
-            return
-        lib = np if isinstance(self.data, np.ndarray) else da
-        if advanceForward == 1:  # forward in time, so appending at end
-            self.data = lib.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
-            self.time = self.grid.time
-        else:  # backward in time, so prepending at start
-            self.data = lib.concatenate((field_new.data[:, :, :], self.data[:-1, :, :]), 0)
-            self.time = self.grid.time
 
     def computeTimeChunk(self, data, tindex):
         g = self.grid

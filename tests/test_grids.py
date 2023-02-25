@@ -161,6 +161,8 @@ def test_multigrids_pointer(pset_mode, mode):
     w_field = Field('W', w_data, grid=grid_1)
 
     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
+    field_set.add_periodic_halo(zonal=3, meridional=2)  # unit test of halo for SGrid
+
     assert u_field.grid == v_field.grid
     assert u_field.grid == w_field.grid  # w_field.grid is now supposed to be grid_1
 

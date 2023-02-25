@@ -1002,33 +1002,6 @@ class FieldSet(object):
                 if isinstance(v, Field) and (v.name != 'U') and (v.name != 'V'):
                     v.write(filename)
 
-    def advancetime(self, fieldset_new):
-        """Replace oldest time on FieldSet with new FieldSet
-
-        :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
-
-        logger.warning_once("Fieldset.advancetime() is deprecated.\n \
-                             Parcels deals automatically with loading only 2 time steps simultaneously\
-                             such that the total allocated memory remains limited.")
-
-        advance = 0
-        for gnew in fieldset_new.gridset.grids:
-            gnew.advanced = False
-
-        for fnew in fieldset_new.get_fields():
-            if isinstance(fnew, VectorField):
-                continue
-            f = getattr(self, fnew.name)
-            gnew = fnew.grid
-            if not gnew.advanced:
-                g = f.grid
-                advance2 = g.advancetime(gnew)
-                if advance2*advance < 0:
-                    raise RuntimeError("Some Fields of the Fieldset are advanced forward and other backward")
-                advance = advance2
-                gnew.advanced = True
-            f.advancetime(fnew, advance == 1)
-
     def computeTimeChunk(self, time, dt):
         """Load a chunk of three data time steps into the FieldSet.
         This is used when FieldSet uses data imported from netcdf,
