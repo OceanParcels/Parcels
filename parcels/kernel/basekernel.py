@@ -338,7 +338,7 @@ class BaseKernel(object):
                 g.load_chunk = np.where(g.load_chunk == g.chunk_loading_requested,
                                         g.chunk_loaded_touched, g.load_chunk)
                 if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
-                    if not g.load_chunk.flags.c_contiguous:
+                    if not g.load_chunk.flags['C_CONTIGUOUS']:
                         g.load_chunk = np.array(g.load_chunk, order='C')
                 if not g.depth.flags.c_contiguous:
                     g.depth = np.array(g.depth, order='C')
