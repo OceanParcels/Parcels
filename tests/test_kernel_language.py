@@ -300,6 +300,7 @@ def random_series(npart, rngfunc, rngargs, mode):
     func = getattr(random, rngfunc)
     series = [func(*rngargs) for _ in range(npart)]
     random.seed(1234)  # Reset the RNG seed
+    del random
     return series
 
 

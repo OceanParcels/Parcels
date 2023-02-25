@@ -149,21 +149,6 @@ class Grid(object):
             return self.lon_remapping.particle_to_target(lon)
         return lon
 
-    def advancetime(self, grid_new):
-        assert isinstance(grid_new.time_origin, type(self.time_origin)), 'time_origin of new and old grids must be either both None or both a date'
-        if self.time_origin:
-            grid_new.time = grid_new.time + self.time_origin.reltime(grid_new.time_origin)
-        if len(grid_new.time) != 1:
-            raise RuntimeError('New FieldSet needs to have only one snapshot')
-        if grid_new.time > self.time[-1]:  # forward in time, so appending at end
-            self.time = np.concatenate((self.time[1:], grid_new.time))
-            return 1
-        elif grid_new.time < self.time[0]:  # backward in time, so prepending at start
-            self.time = np.concatenate((grid_new.time, self.time[:-1]))
-            return -1
-        else:
-            raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
-
     def check_zonal_periodic(self):
         if self.zonal_periodic or self.mesh == 'flat' or self.lon.size == 1:
             return

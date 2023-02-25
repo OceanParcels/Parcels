@@ -1,0 +1,53 @@
+name: unit-tests
+on:
+  push:
+    branches:
+      - "master"
+      - "test-me/*"
+  pull_request:
+    branches:
+      - "*"
+  schedule:
+    - cron: "0 7 * * 1" # Run every Monday at 7:00 UTC
+
+defaults:
+  run:
+    shell: bash -el {0}
+    
+jobs:
+  unit-test:
+    name: Unittesting on ${{ matrix.os }} with python latest
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos, ubuntu, windows]
+        include:
+          - os: macos
+            os-short: osx
+          - os: ubuntu
+            os-short: linux
+          - os: windows
+            os-short: win
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Miniconda and parcels
+        uses: ./.github/actions/install-parcels
+        with:
+          environment-file: environment_py3_${{ matrix.os-short }}.yml
+          environment-name: py3_parcels
+      - name: Unit test
+        run: |
+          coverage run -m pytest -v -s --html=${{ matrix.os }}_unit_test_report.html --self-contained-html tests
+          coverage xml
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          flags: unit-tests
+      - name: Upload test results
+        if: ${{ always() }} # Always run this step, even if tests fail
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: Unittest report
+          path: ${{ matrix.os }}_unit_test_report.html

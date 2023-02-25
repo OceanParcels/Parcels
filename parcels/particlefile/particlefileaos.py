@@ -9,7 +9,7 @@ __all__ = ['ParticleFileAOS']
 class ParticleFileAOS(BaseParticleFile):
     """Initialise trajectory output.
 
-    :param name: Basename of the output file
+    :param name: Basename of the output file. This can also be a Zarr store.
     :param particleset: ParticleSet to output
     :param outputdt: Interval which dictates the update frequency of file output
                      while ParticleFile is given as an argument of ParticleSet.execute()

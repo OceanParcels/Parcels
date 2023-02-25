@@ -1,5 +1,6 @@
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode, OutOfTimeError
 from parcels.field import Field, VectorField
+from parcels.fieldfilebuffer import DaskFileBuffer
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes, UnitConverter, GeographicPolar
@@ -61,6 +62,13 @@ def test_fieldset_extra_syntax():
     except SyntaxError:
         failed = True
     assert failed
+
+
+def test_fieldset_vmin_vmax():
+    data, dimensions = generate_fieldset(11, 11)
+    fieldset = FieldSet.from_data(data, dimensions, vmin=3, vmax=7)
+    assert np.isclose(np.amin(fieldset.U.data[fieldset.U.data > 0.]), 3)
+    assert np.isclose(np.amax(fieldset.U.data), 7)
 
 
 @pytest.mark.parametrize('ttype', ['float', 'datetime64'])
@@ -140,7 +148,8 @@ def test_fieldset_nonstandardtime(calendar, cftime_datetime, tmpdir, filename='t
         assert field.grid.time_origin.calendar == calendar
 
 
-def test_field_from_netcdf():
+@pytest.mark.parametrize('with_timestamps', [True, False])
+def test_field_from_netcdf(with_timestamps):
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
     filenames = {'lon': data_path + 'mask_nemo_cross_180lon.nc',
@@ -148,7 +157,11 @@ def test_field_from_netcdf():
                  'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'}
     variable = 'U'
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-    Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity')
+    if with_timestamps:
+        timestamps = [[2]]
+        Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity', timestamps=timestamps)
+    else:
+        Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity')
 
 
 def test_field_from_netcdf_fieldtypes():
@@ -488,6 +501,17 @@ def test_fieldset_write_curvilinear(tmpdir):
         assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
 
 
+def test_curv_fieldset_add_periodic_halo():
+    fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+    filenames = {'dx': fname, 'dy': fname, 'mesh_mask': fname}
+    variables = {'dx': 'e1u', 'dy': 'e1v'}
+    dimensions = {'dx': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'dy': {'lon': 'glamu', 'lat': 'gphiu'}}
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
+
+    fieldset.add_periodic_halo(zonal=3, meridional=2)
+
+
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_cellareas(mesh):
     data, dimensions = generate_fieldset(10, 7)
@@ -732,9 +756,10 @@ def test_timestamps(datetype, tmpdir):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('use_xarray', [True, False])
 @pytest.mark.parametrize('time_periodic', [86400., False])
 @pytest.mark.parametrize('dt_sign', [-1, 1])
-def test_periodic(pset_mode, mode, time_periodic, dt_sign):
+def test_periodic(pset_mode, mode, use_xarray, time_periodic, dt_sign):
     lon = np.array([0, 1], dtype=np.float32)
     lat = np.array([0, 1], dtype=np.float32)
     depth = np.array([0, 1], dtype=np.float32)
@@ -754,10 +779,24 @@ def test_periodic(pset_mode, mode, time_periodic, dt_sign):
     temp[:, :, :, :] = temp_vec
     D = np.ones((2, 2), dtype=np.float32)  # adding non-timevarying field
 
-    data = {'U': U, 'V': V, 'W': W, 'temp': temp, 'D': D}
     full_dims = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
     dimensions = {'U': full_dims, 'V': full_dims, 'W': full_dims, 'temp': full_dims, 'D': {'lon': lon, 'lat': lat}}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
+    if use_xarray:
+        coords = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
+        variables = {'U': 'Uxr', 'V': 'Vxr', 'W': 'Wxr', 'temp': 'Txr', 'D': 'Dxr'}
+        dimnames = {'lon': 'lon', 'lat': 'lat', 'depth': 'depth', 'time': 'time'}
+        ds = xr.Dataset({'Uxr': xr.DataArray(U, coords=coords, dims=('lon', 'lat', 'depth', 'time')),
+                         'Vxr': xr.DataArray(V, coords=coords, dims=('lon', 'lat', 'depth', 'time')),
+                         'Wxr': xr.DataArray(W, coords=coords, dims=('lon', 'lat', 'depth', 'time')),
+                         'Txr': xr.DataArray(temp, coords=coords, dims=('lon', 'lat', 'depth', 'time')),
+                         'Dxr': xr.DataArray(D, coords={'lat': lat, 'lon': lon}, dims=('lon', 'lat'))})
+        fieldset = FieldSet.from_xarray_dataset(ds, variables,
+                                                {'U': dimnames, 'V': dimnames, 'W': dimnames, 'temp': dimnames,
+                                                 'D': {'lon': 'lon', 'lat': 'lat'}},
+                                                time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
+    else:
+        data = {'U': U, 'V': V, 'W': W, 'temp': temp, 'D': D}
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
 
     def sampleTemp(particle, fieldset, time):
         # Note that fieldset.temp is interpolated at time=time+dt.
@@ -1036,3 +1075,17 @@ def test_deferredload_simplefield(pset_mode, mode, direction, time_extrapolation
     runtime = tdim*2 if time_extrapolation else None
     pset.execute(SampleU, dt=direction, runtime=runtime)
     assert pset.p == tdim-1 if time_extrapolation else tdim-2
+
+
+def test_daskfieldfilebuffer_dimnames():
+    DaskFileBuffer.add_to_dimension_name_map_global({'lat': 'nydim', 'lon': 'nxdim'})
+    fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
+    dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
+    fb = DaskFileBuffer(fnameU, dimensions, indices={})
+    assert ('nxdim' in fb._static_name_maps['lon']) and ('ntdim' not in fb._static_name_maps['time'])
+    fb.add_to_dimension_name_map({'time': 'ntdim', 'depth': 'nddim'})
+    assert ('nxdim' in fb._static_name_maps['lon']) and ('ntdim' in fb._static_name_maps['time'])
+    assert fb._get_available_dims_indices_by_request() == {'time': None, 'depth': None, 'lat': 0, 'lon': 1}
+    assert fb._get_available_dims_indices_by_namemap() == {'time': 0, 'depth': 1, 'lat': 2, 'lon': 3}
+    assert fb._is_dimension_chunked('lon') is False
+    assert fb._is_dimension_in_chunksize_request('lon') == (-1, '', 0)
