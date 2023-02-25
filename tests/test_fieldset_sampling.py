@@ -145,6 +145,22 @@ def test_fieldset_polar_with_halo(fieldset_geometric_polar, pset_mode, mode):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('zdir', [-1, 1])
+def test_verticalsampling(pset_mode, mode, zdir):
+    dims = (4, 2, 2)
+    dimensions = {'lon': np.linspace(0., 1., dims[2], dtype=np.float32),
+                  'lat': np.linspace(0., 1., dims[1], dtype=np.float32),
+                  'depth': np.linspace(0., 1*zdir, dims[0], dtype=np.float32)}
+    data = {'U': np.zeros(dims, dtype=np.float32),
+            'V': np.zeros(dims, dtype=np.float32)}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=0, lat=0, depth=0.7*zdir)
+    pset.execute(AdvectionRK4, dt=1., runtime=1.)
+    assert pset[0].zi == [2]
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_init_from_field(pset_mode, mode, npart=9):
     dims = (2, 2)
     dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),

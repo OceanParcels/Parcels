@@ -235,7 +235,8 @@ class Field(object):
         if timestamps is not None:
             dataFiles = []
             for findex in range(len(data_filenames)):
-                for f in [data_filenames[findex], ] * len(timestamps[findex]):
+                stamps_in_file = 1 if isinstance(timestamps[findex], int) else len(timestamps[findex])
+                for f in [data_filenames[findex], ] * stamps_in_file:
                     dataFiles.append(f)
             timeslices = np.array([stamp for file in timestamps for stamp in file])
             time = timeslices
@@ -311,7 +312,13 @@ class Field(object):
             elif isinstance(filenames, dict):
                 for k in filenames.keys():
                     if k not in ['lat', 'lon', 'depth', 'time']:
-                        assert (len(filenames[k]) == len(timestamps)), 'Outer dimension of timestamps should correspond to number of files.'
+                        if isinstance(filenames[k], list):
+                            assert (len(filenames[k]) == len(timestamps)), 'Outer dimension of timestamps should correspond to number of files.'
+                        else:
+                            assert len(timestamps) == 1, 'Outer dimension of timestamps should correspond to number of files.'
+                        for t in timestamps:
+                            assert isinstance(t, (list, np.ndarray)), 'timestamps should be a list for each file'
+
             else:
                 raise TypeError("Filenames type is inconsistent with manual timestamp provision."
                                 + "Should be dict or list")

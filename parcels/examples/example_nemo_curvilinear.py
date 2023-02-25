@@ -112,13 +112,17 @@ def test_nemo_3D_samegrid():
     assert fieldset.U.dataFiles is not fieldset.W.dataFiles
 
 
-if __name__ == "__main__":
+def main(args=None):
     p = ArgumentParser(description="""Chose the mode using mode option""")
-    p.add_argument('--mode', choices=('scipy', 'jit'), nargs='?', default='jit',
+    p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
                    help='Execution mode for performing computation')
-    args = p.parse_args()
+    args = p.parse_args(args)
 
     outfile = "nemo_particles"
 
     run_nemo_curvilinear(args.mode, outfile)
     make_plot(outfile+'.zarr')
+
+
+if __name__ == "__main__":
+    main()

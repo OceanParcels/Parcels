@@ -27,7 +27,9 @@ def fieldset_fixture(xdim=100, ydim=100):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_print(fieldset, pset_mode, mode):
-    pset = pset_type[pset_mode]['pset'](fieldset, lon=[0, 1], lat=[0, 1])
+    class TestParticle(ptype[mode]):
+        p = Variable('p', to_write=True)
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0, 1], lat=[0, 1])
     print(pset)
 
 

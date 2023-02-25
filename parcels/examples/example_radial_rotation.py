@@ -81,10 +81,14 @@ def test_rotation_example(mode, tmpdir):
     assert np.allclose(pset[1].lat, vals[1], 1e-5)
 
 
-if __name__ == "__main__":
+def main():
     filename = 'radial_rotation'
     fieldset = radial_rotation_fieldset()
     fieldset.write(filename)
 
     outfile = "RadialParticle"
     rotation_example(fieldset, outfile)
+
+
+if __name__ == "__main__":
+    main()

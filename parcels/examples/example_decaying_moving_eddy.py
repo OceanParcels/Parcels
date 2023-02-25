@@ -77,10 +77,14 @@ def test_rotation_example(mode, tmpdir):
     assert (np.allclose(np.array([[pset[0].lon], [pset[0].lat]]), vals, 1e-2))   # Check advected values against calculated values.
 
 
-if __name__ == "__main__":
+def main():
     fset_filename = 'decaying_moving_eddy'
     outfile = 'DecayingMovingParticle.zarr'
     fieldset = decaying_moving_eddy_fieldset()
     fieldset.write(fset_filename)
 
-    pset = decaying_moving_example(fieldset, outfile)
+    decaying_moving_example(fieldset, outfile)
+
+
+if __name__ == "__main__":
+    main()

@@ -254,10 +254,3 @@ class JITParticle(ScipyParticle):
 
     def __del__(self):
         super(JITParticle, self).__del__()
-
-    def set_cptr(self, value):
-        if isinstance(value, np.ndarray):
-            ptype = self.getPType()
-            self._cptr = np.array(value, dtype=ptype.dtype)
-        else:
-            self._cptr = None
