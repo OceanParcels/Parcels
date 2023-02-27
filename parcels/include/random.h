@@ -51,7 +51,7 @@ static inline float parcels_normalvariate(float loc, float scale)
 }
 
 static inline float parcels_expovariate(float lamb)
-//Function to create an exponentially distributed random variable 
+//Function to create an exponentially distributed random variable
 {
   float u;
   u = (float)rand()/((float)(RAND_MAX) + 1.0);
