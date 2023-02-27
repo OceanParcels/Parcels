@@ -31,6 +31,7 @@ dependencies:
 
   # Linting
   - flake8>=2.1.0
+  - pre_commit
 
   # Docs
   - sphinx<6
