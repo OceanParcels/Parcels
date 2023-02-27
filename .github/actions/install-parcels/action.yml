@@ -1,5 +1,5 @@
 name: Setup Anaconda and install parcels
-description: > 
+description: >
   In-repo composite action to setup Anaconda and install parcels. Installation of parcels relies on
   `setup.py` file being available in the root. For general setup of Anaconda environments, just use
   the `conda-incubator/setup-miniconda` action (setting C variables as required)

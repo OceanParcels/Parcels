@@ -95,5 +95,3 @@
 
            gnu++2a
                GNU dialect of -std=c++2a.  Support is highly experimental, and will almost certainly change in incompatible ways in future releases.
-
-

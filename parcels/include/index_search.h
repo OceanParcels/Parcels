@@ -491,14 +491,14 @@ static inline StatusCode search_time_index(double *t, int size, double *tvals, i
         *t -= *periods * (tfull_max-tfull_min);
       }
       search_time_index(t, size, tvals, ti, time_periodic, tfull_min, tfull_max, periods);
-    }  
+    }
     else if (*t > tvals[size-1]){
       *ti = 0;
       *periods = (int) floor( (*t-tfull_min)/(tfull_max-tfull_min));
       *t -= *periods * (tfull_max-tfull_min);
       search_time_index(t, size, tvals, ti, time_periodic, tfull_min, tfull_max, periods);
-    }  
-  }          
+    }
+  }
   while (*ti < size-1 && *t > tvals[*ti+1]) ++(*ti);
   while (*ti > 0 && *t < tvals[*ti]) --(*ti);
   return SUCCESS;
