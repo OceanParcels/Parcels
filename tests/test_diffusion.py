@@ -16,7 +16,7 @@ pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel':
 
 
 def zeros_fieldset(mesh='spherical', xdim=200, ydim=100, mesh_conversion=1):
-    """Generates a zero velocity field"""
+    """Generates a zero velocity field."""
     lon = np.linspace(-1e5*mesh_conversion, 1e5*mesh_conversion, xdim, dtype=np.float32)
     lat = np.linspace(-1e5*mesh_conversion, 1e5*mesh_conversion, ydim, dtype=np.float32)
 
@@ -62,8 +62,7 @@ def test_fieldKh_Brownian(mesh, mode, pset_mode, xdim=200, ydim=100, kh_zonal=10
 @pytest.mark.parametrize('kernel', [AdvectionDiffusionM1,
                                     AdvectionDiffusionEM])
 def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, pset_mode, kernel, xdim=200, ydim=100):
-    """Test advection-diffusion kernels on a non-uniform diffusivity field
-    with a linear gradient in one direction"""
+    """Test advection-diffusion kernels on a non-uniform diffusivity field with a linear gradient in one direction."""
     mesh_conversion = 1/1852./60 if mesh == 'spherical' else 1
     fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 

@@ -22,8 +22,7 @@ method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
 def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
-    """Construct a fieldset encapsulating the flow field around an
-    idealised peninsula.
+    """Construct a fieldset encapsulating the flow field around an idealised peninsula.
 
     :param xdim: Horizontal dimension of the generated fieldset
     :param xdim: Vertical dimension of the generated fieldset
@@ -139,7 +138,7 @@ def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_peninsula_fieldset(mode, mesh, tmpdir):
-    """Execute peninsula test from fieldset generated in memory"""
+    """Execute peninsula test from fieldset generated in memory."""
     fieldset = peninsula_fieldset(100, 50, mesh)
     outfile = tmpdir.join("Peninsula")
     pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
@@ -154,7 +153,7 @@ def test_peninsula_fieldset(mode, mesh, tmpdir):
 @pytest.mark.parametrize('mode', ['scipy'])  # Analytical Advection only implemented in Scipy mode
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_peninsula_fieldset_AnalyticalAdvection(mode, mesh, tmpdir):
-    """Execute peninsula test using Analytical Advection on C grid"""
+    """Execute peninsula test using Analytical Advection on C grid."""
     fieldset = peninsula_fieldset(101, 51, 'flat', grid_type='C')
     outfile = tmpdir.join("PeninsulaAA")
     pset = peninsula_example(fieldset, outfile, npart=10, mode=mode,
@@ -165,7 +164,7 @@ def test_peninsula_fieldset_AnalyticalAdvection(mode, mesh, tmpdir):
 
 
 def fieldsetfile(mesh, tmpdir):
-    """Generate fieldset files for peninsula test"""
+    """Generate fieldset files for peninsula test."""
     filename = tmpdir.join('peninsula')
     fieldset = peninsula_fieldset(100, 50, mesh=mesh)
     fieldset.write(filename)
@@ -175,7 +174,7 @@ def fieldsetfile(mesh, tmpdir):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_peninsula_file(mode, mesh, tmpdir):
-    """Open fieldset files and execute"""
+    """Open fieldset files and execute."""
     gc.collect()
     fieldset = FieldSet.from_parcels(fieldsetfile(mesh, tmpdir), extra_fields={'P': 'P'}, allow_time_extrapolation=True)
     outfile = tmpdir.join("Peninsula")

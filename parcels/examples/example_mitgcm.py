@@ -16,7 +16,7 @@ ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
 def run_mitgcm_zonally_reentrant(mode):
-    """Function that shows how to load MITgcm data in a zonally periodic domain"""
+    """Function that shows how to load MITgcm data in a zonally periodic domain."""
 
     data_path = path.join(path.dirname(__file__), "MITgcm_example_data/")
     filenames = {

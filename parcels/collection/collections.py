@@ -19,7 +19,8 @@ class Collection(ABC):
     @abstractmethod
     def __init__(self):
         """
-        Collection - Constructor
+        Collection - Constructor.
+
         Initializes a collection by pre-allocating memory (where needed), initialising indexing structures
         (where needed), initialising iterators and preparing the C-JIT-glue.
         """
@@ -28,7 +29,7 @@ class Collection(ABC):
     @abstractmethod
     def __del__(self):
         """
-        Collection - Destructor
+        Collection - Destructor.
         """
         pass
 
@@ -808,7 +809,7 @@ class ParticleCollection(Collection):
 
     def __del__(self):
         """
-        ParticleCollection - Destructor
+        ParticleCollection - Destructor.
         """
         pass
 
@@ -834,7 +835,7 @@ class ParticleCollection(Collection):
     @property
     def pclass(self):
         """
-        'pclass' stores the actual class type of the particles allocated and managed in this collection
+        'pclass' stores the actual class type of the particles allocated and managed in this collection.
         """
         return self._pclass
 

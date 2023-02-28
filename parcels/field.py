@@ -91,6 +91,7 @@ class Field(object):
 
     * `Summed Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_
     """
+
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, cast_data_dtype='float32', time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, gridindexingtype='nemo',
@@ -267,7 +268,7 @@ class Field(object):
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
                     deferred_load=True, **kwargs):
-        """Create field from netCDF file
+        """Create field from netCDF file.
 
         :param filenames: list of filenames to read for the field. filenames can be a list [files] or
                a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
@@ -486,7 +487,7 @@ class Field(object):
     @classmethod
     def from_xarray(cls, da, name, dimensions, mesh='spherical', allow_time_extrapolation=None,
                     time_periodic=False, **kwargs):
-        """Create field from xarray Variable
+        """Create field from xarray Variable.
 
         :param da: Xarray DataArray
         :param name: Name of the Field
@@ -586,19 +587,20 @@ class Field(object):
             self.data *= factor
 
     def set_depth_from_field(self, field):
-        """Define the depth dimensions from another (time-varying) field
+        """Define the depth dimensions from another (time-varying) field.
 
         See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timevaryingdepthdimensions.ipynb>`_
-        for a detailed explanation on how to set up time-evolving depth dimensions
-
+        for a detailed explanation on how to set up time-evolving depth dimensions.
         """
         self.grid.depth_field = field
         if self.grid != field.grid:
             field.grid.depth_field = field
 
     def calc_cell_edge_sizes(self):
-        """Method to calculate cell sizes based on numpy.gradient method
-                Currently only works for Rectilinear Grids"""
+        """Method to calculate cell sizes based on numpy.gradient method.
+
+        Currently only works for Rectilinear Grids
+        """
         if not self.grid.cell_edge_sizes:
             if self.grid.gtype in (GridCode.RectilinearZGrid, GridCode.RectilinearSGrid):
                 self.grid.cell_edge_sizes['x'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
@@ -618,8 +620,10 @@ class Field(object):
                 exit(-1)
 
     def cell_areas(self):
-        """Method to calculate cell sizes based on cell_edge_sizes
-                Currently only works for Rectilinear Grids"""
+        """Method to calculate cell sizes based on cell_edge_sizes.
+
+        Currently only works for Rectilinear Grids
+        """
         if not self.grid.cell_edge_sizes:
             self.calc_cell_edge_sizes()
         return self.grid.cell_edge_sizes['x'] * self.grid.cell_edge_sizes['y']
@@ -1038,8 +1042,7 @@ class Field(object):
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 
     def temporal_interpolate_fullfield(self, ti, time):
-        """Calculate the data of a field between two snapshots,
-        using linear interpolation
+        """Calculate the data of a field between two snapshots using linear interpolation.
 
         :param ti: Index in time array associated with time (via :func:`time_index`)
         :param time: Time to interpolate to
@@ -1057,7 +1060,7 @@ class Field(object):
             return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
     def spatial_interpolation(self, ti, z, y, x, time, particle=None):
-        """Interpolate horizontal field values using a SciPy interpolator"""
+        """Interpolate horizontal field values using a SciPy interpolator."""
 
         if self.grid.zdim == 1:
             val = self.interpolator2D(ti, z, y, x, particle=particle)
@@ -1072,7 +1075,7 @@ class Field(object):
             return val
 
     def time_index(self, time):
-        """Find the index in the time array associated with a given time
+        """Find the index in the time array associated with a given time.
 
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
@@ -1216,8 +1219,7 @@ class Field(object):
 
     @property
     def ctypes_struct(self):
-        """Returns a ctypes struct object containing all relevant
-        pointers and sizes for this field."""
+        """Returns a ctypes struct object containing all relevant pointers and sizes for this field."""
 
         # Ctypes struct corresponding to the type definition in parcels.h
         class CField(Structure):
@@ -1249,7 +1251,7 @@ class Field(object):
 
     def show(self, animation=False, show_time=None, domain=None, depth_level=0, projection='PlateCarree', land=True,
              vmin=None, vmax=None, savefile=None, **kwargs):
-        """Method to 'show' a Parcels Field
+        """Method to 'show' a Parcels Field.
 
         :param animation: Boolean whether result is a single plot, or an animation
         :param show_time: Time in seconds from start after which to show the Field (only in single-plot mode)
@@ -1268,7 +1270,9 @@ class Field(object):
             plt.show()
 
     def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
-        """Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
+        """Add a 'halo' to all Fields in a FieldSet.
+
+        Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
         by copying a small portion of the field on one side of the domain to the other.
         Before adding a periodic halo to the Field, it has to be added to the Grid on which the Field depends
 
@@ -1312,7 +1316,7 @@ class Field(object):
             return data
 
     def write(self, filename, varname=None):
-        """Write a :class:`Field` to a netcdf file
+        """Write a :class:`Field` to a netcdf file.
 
         :param filename: Basename of the file
         :param varname: Name of the field, to be appended to the filename"""
@@ -1643,6 +1647,8 @@ class VectorField(object):
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         """
+        Perform C grid interpolation in 3D.
+
         +---+---+---+
         |   |V1 |   |
         +---+---+---+
@@ -1834,7 +1840,7 @@ class VectorField(object):
 
 
 class DeferredArray():
-    """Class used for throwing error when Field.data is not read in deferred loading mode"""
+    """Class used for throwing error when Field.data is not read in deferred loading mode."""
     data_shape = ()
 
     def __init__(self):
@@ -1857,8 +1863,9 @@ class DeferredArray():
 
 
 class SummedField(list):
-    """Class SummedField is a list of Fields over which Field interpolation
-    is summed. This can e.g. be used when combining multiple flow fields,
+    """Class SummedField is a list of Fields over which Field interpolation is summed.
+
+    This can e.g. be used when combining multiple flow fields,
     where the total flow is the sum of all the individual flows.
     Note that the individual Fields can be on different Grids.
     Also note that, since SummedFields are lists, the individual Fields can
@@ -1927,8 +1934,10 @@ class SummedField(list):
 
 
 class NestedField(list):
-    """Class NestedField is a list of Fields from which the first one to be not declared out-of-boundaries
-    at particle position is interpolated. This induces that the order of the fields in the list matters.
+    """NestedField is a class that allows for interpolation of fields on different grids of potentially varying resolution.
+
+    The NestedField class is a list of Fields where the first Field that contains the particle within the domain is then used for interpolation.
+    This induces that the order of the fields in the list matters.
     Each one it its turn, a field is interpolated: if the interpolation succeeds or if an error other
     than `ErrorOutOfBounds` is thrown, the function is stopped. Otherwise, next field is interpolated.
     NestedField returns an `ErrorOutOfBounds` only if last field is as well out of boundaries.

@@ -120,7 +120,7 @@ class KernelSOA(BaseKernel):
                 self.src_file = src_file_or_files
 
     def execute_jit(self, pset, endtime, dt):
-        """Invokes JIT engine to perform the core update loop"""
+        """Invokes JIT engine to perform the core update loop."""
         self.load_fieldset_jit(pset)
 
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
@@ -130,7 +130,7 @@ class KernelSOA(BaseKernel):
                               c_double(endtime), c_double(dt), *fargs)
 
     def execute_python(self, pset, endtime, dt):
-        """Performs the core update loop via Python"""
+        """Performs the core update loop via Python."""
         # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
         sign_dt = np.sign(dt)
 
@@ -167,8 +167,7 @@ class KernelSOA(BaseKernel):
         return kernel.merge(self, KernelSOA)
 
     def remove_deleted(self, pset, output_file, endtime):
-        """
-        Utility to remove all particles that signalled deletion
+        """Utility to remove all particles that signalled deletion.
 
         This deletion function is targetted to index-addressable, random-access array-collections.
         """
@@ -180,7 +179,7 @@ class KernelSOA(BaseKernel):
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
-        """Execute this Kernel over a ParticleSet for several timesteps"""
+        """Execute this Kernel over a ParticleSet for several timesteps."""
         pset.collection.state[:] = StateCode.Evaluate
 
         if abs(dt) < 1e-6 and not execute_once:

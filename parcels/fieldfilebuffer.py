@@ -300,7 +300,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         return self
 
     def __exit__(self, type, value, traceback):
-        """
+        """Function releases the file handle.
+
         This function releases the file handle. Hence access to the dataset and its header-information is lost. The
         previously executed chunking is lost. Furthermore, if the file access required file locking, the lock-handle
         is freed so other processes can now access the file again.
@@ -308,7 +309,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         self.close()
 
     def close(self):
-        """
+        """Teardown FileBuffer object with dask.
+
         This function can be called to initialise an orderly teardown of a FileBuffer object with dask, meaning
         to release the file handle, deposing the dataset, and releasing the file lock (if required).
         """

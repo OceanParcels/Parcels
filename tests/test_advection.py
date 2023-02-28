@@ -55,9 +55,7 @@ def depth_fixture(zdim=2):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
-    """ Particles at high latitude move geographically faster due to
-        the pole correction in `GeographicPolar`.
-    """
+    """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     data2D = {'U': np.ones((lon.size, lat.size), dtype=np.float32),
               'V': np.zeros((lon.size, lat.size), dtype=np.float32)}
     data3D = {'U': np.ones((lon.size, lat.size, depth.size), dtype=np.float32),
@@ -85,9 +83,7 @@ def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
-    """ Particles at high latitude move geographically faster due to
-        the pole correction in `GeographicPolar`.
-    """
+    """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     data = {'U': np.zeros((lon.size, lat.size), dtype=np.float32),
             'V': np.ones((lon.size, lat.size), dtype=np.float32)}
     dimensions = {'lon': lon, 'lat': lat}
@@ -104,8 +100,7 @@ def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_advection_3D(pset_mode, mode, npart=11):
-    """ 'Flat' 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s
-    """
+    """'Flat' 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
     xdim = ydim = zdim = 2
     dimensions = {'lon': np.linspace(0., 1e4, xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1e4, ydim, dtype=np.float32),

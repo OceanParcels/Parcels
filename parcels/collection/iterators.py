@@ -29,36 +29,27 @@ class BaseParticleCollectionIterator(ABC):
 
     @abstractmethod
     def __next__(self):
-        """Returns a ParticleAccessor for the next particle in the
-        ParticleSet.
-        """
+        """Returns a ParticleAccessor for the next particle in the ParticleSet."""
         pass
 
     @property
     def head(self):
-        """Returns a ParticleAccessor for the first particle in the
-        ParticleSet.
-        """
+        """Returns a ParticleAccessor for the first particle in the ParticleSet."""
         return self._head
 
     @property
     def tail(self):
-        """Returns a ParticleAccessor for the last particle in the
-        ParticleSet.
-        """
+        """Returns a ParticleAccessor for the last particle in the ParticleSet."""
         return self._tail
 
     @property
     def current(self):
-        """Returns a ParticleAccessor for the particle that the iteration
-        is currently at.
-        """
+        """Returns a ParticleAccessor for the particle that the iteration currently at."""
         return self._current
 
     @abstractmethod
     def __repr__(self):
-        """Represents the current position in the iteration.
-        """
+        """Represents the current position in the iteration."""
         pass
 
 
@@ -82,9 +73,7 @@ class BaseParticleAccessor(ABC):
         self.state = OperationCode.Delete
 
     def set_state(self, state):
-        """Syntactic sugar for changing the state of the underlying
-        particle.
-        """
+        """Syntactic sugar for changing the state of the underlying particle."""
         self.state = state
 
     def succeeded(self):

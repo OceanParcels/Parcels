@@ -36,7 +36,7 @@ def test_print(fieldset, pset_mode, mode):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_init(fieldset, pset_mode, mode, npart=10):
-    """Test that checks correct initialisation of custom variables"""
+    """Test that checks correct initialisation of custom variables."""
     class TestParticle(ptype[mode]):
         p_float = Variable('p_float', dtype=np.float32, initial=10.)
         p_double = Variable('p_double', dtype=np.float64, initial=11.)
@@ -60,7 +60,7 @@ def test_variable_init(fieldset, pset_mode, mode, npart=10):
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('type', ['np.int8', 'mp.float', 'np.int16'])
 def test_variable_unsupported_dtypes(fieldset, pset_mode, mode, type):
-    """Test that checks errors thrown for unsupported dtypes in JIT mode"""
+    """Test that checks errors thrown for unsupported dtypes in JIT mode."""
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=type, initial=10.)
     error_thrown = False
@@ -74,7 +74,7 @@ def test_variable_unsupported_dtypes(fieldset, pset_mode, mode, type):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_special_names(fieldset, pset_mode, mode):
-    """Test that checks errors thrown for special names"""
+    """Test that checks errors thrown for special names."""
     for vars in ['z', 'lon']:
         class TestParticle(ptype[mode]):
             tmp = Variable(vars, dtype=np.float32, initial=10.)
@@ -90,7 +90,7 @@ def test_variable_special_names(fieldset, pset_mode, mode):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('coord_type', [np.float32, np.float64])
 def test_variable_init_relative(fieldset, pset_mode, mode, coord_type, npart=10):
-    """Test that checks relative initialisation of custom variables"""
+    """Test that checks relative initialisation of custom variables."""
     lonlat_type = np.float64 if coord_type == 'double' else np.float32
 
     class TestParticle(ptype[mode]):

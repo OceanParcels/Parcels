@@ -13,7 +13,7 @@ indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 
 
 class Variable(object):
-    """Descriptor class that delegates data access to particle data
+    """Descriptor class that delegates data access to particle data.
 
     :param name: Variable name as used within kernels
     :param dtype: Data type (numpy.dtype) of the variable
@@ -47,12 +47,12 @@ class Variable(object):
         return "PVar<%s|%s>" % (self.name, self.dtype)
 
     def is64bit(self):
-        """Check whether variable is 64-bit"""
+        """Check whether variable is 64-bit."""
         return True if self.dtype in indicators_64bit else False
 
 
 class ParticleType(object):
-    """Class encapsulating the type information for custom particles
+    """Class encapsulating the type information for custom particles.
 
     :param user_vars: Optional list of (name, dtype) tuples for custom variables
     """
@@ -96,7 +96,7 @@ class ParticleType(object):
 
     @property
     def dtype(self):
-        """Numpy.dtype object that defines the C struct"""
+        """Numpy.dtype object that defines the C struct."""
         type_list = [(v.name, v.dtype) for v in self.variables]
         for v in self.variables:
             if v.dtype not in self.supported_dtypes:
@@ -108,12 +108,12 @@ class ParticleType(object):
 
     @property
     def size(self):
-        """Size of the underlying particle struct in bytes"""
+        """Size of the underlying particle struct in bytes."""
         return sum([8 if v.is64bit() else 4 for v in self.variables])
 
     @property
     def supported_dtypes(self):
-        """List of all supported numpy dtypes. All others are not supported"""
+        """List of all supported numpy dtypes. All others are not supported."""
 
         # Developer note: other dtypes (mostly 2-byte ones) are not supported now
         # because implementing and aligning them in cgen.GenerableStruct is a
@@ -122,7 +122,7 @@ class ParticleType(object):
 
 
 class _Particle(object):
-    """Private base class for all particle types"""
+    """Private base class for all particle types."""
     lastID = 0  # class-level variable keeping track of last Particle ID used
 
     def __init__(self):
@@ -169,8 +169,7 @@ class _Particle(object):
 
 
 class ScipyParticle(_Particle):
-    """Class encapsulating the basic attributes of a particle,
-    to be executed in SciPy mode
+    """Class encapsulating the basic attributes of a particle, to be executed in SciPy mode.
 
     :param lon: Initial longitude of particle
     :param lat: Initial latitude of particle
@@ -230,7 +229,7 @@ class ScipyInteractionParticle(ScipyParticle):
 
 
 class JITParticle(ScipyParticle):
-    """Particle class for JIT-based (Just-In-Time) Particle objects
+    """Particle class for JIT-based (Just-In-Time) Particle objects.
 
     :param lon: Initial longitude of particle
     :param lat: Initial latitude of particle

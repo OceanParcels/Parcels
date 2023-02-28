@@ -4,9 +4,7 @@ __all__ = ['GridSet']
 
 
 class GridSet(object):
-    """GridSet class that holds the Grids on which the Fields are defined
-
-    """
+    """GridSet class that holds the Grids on which the Fields are defined."""
 
     def __init__(self):
         self.grids = []

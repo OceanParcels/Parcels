@@ -1,4 +1,4 @@
-"""Collection of pre-built eos sea water property kernels"""
+"""Collection of pre-built eos sea water property kernels."""
 import math
 
 __all__ = ['PressureFromLatDepth', 'AdiabticTemperatureGradient', 'PtempFromTemp', 'TempFromPtemp', 'UNESCODensity']

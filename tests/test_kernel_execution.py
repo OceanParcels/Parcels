@@ -20,7 +20,7 @@ def DoNothing(particle, fieldset, time):
 
 
 def fieldset(xdim=20, ydim=20):
-    """ Standard unit mesh fieldset """
+    """Standard unit mesh fieldset."""
     lon = np.linspace(0., 1., xdim, dtype=np.float32)
     lat = np.linspace(0., 1., ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)

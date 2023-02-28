@@ -40,26 +40,26 @@ class BaseNeighborSearch(ABC):
 
     @abstractmethod
     def find_neighbors_by_coor(self, coor):
-        '''Get the neighbors around a certain location.
+        """Get the neighbors around a certain location.
 
         :param coor: Numpy array with [depth, lat, lon].
         :returns List of particle indices.
-        '''
+        """
         raise NotImplementedError
 
     def find_neighbors_by_idx(self, particle_idx):
-        '''Get the neighbors around a certain particle.
+        """Get the neighbors around a certain particle.
 
         Mainly useful for Structure of Array (SoA) datastructure
 
         :param particle_idx: index of the particle (SoA).
         :returns List of particle indices
-        '''
+        """
         coor = self._values[:, particle_idx].reshape(3, 1)
         return self.find_neighbors_by_coor(coor)
 
     def update_values(self, new_values, new_active_mask=None):
-        '''Update the coordinates of the particles.
+        """Update the coordinates of the particles.
 
         This is a default implementation simply rebuilds the structure.
         If the rebuilding is slow, a faster implementation can be provided.
@@ -67,7 +67,7 @@ class BaseNeighborSearch(ABC):
         :param new_values: numpy array ([depth, lat, lon], n_particles) with
                            new coordinates of the particles.
         :param new_active_mask: boolean array indicating active particles.
-        '''
+        """
         self.rebuild(new_values, new_active_mask)
 
     def rebuild(self, values, active_mask=-1):
@@ -89,7 +89,7 @@ class BaseNeighborSearch(ABC):
 
     @property
     def active_idx(self):
-        "Indices of the currently active mask."
+        """Indices of the currently active mask."""
         # See __init__ comments for a more detailed explanation.
         if self._active_mask is None:
             return np.arange(self._values.shape[1])
@@ -127,7 +127,7 @@ class BaseNeighborSearch(ABC):
 
 
 class BaseFlatNeighborSearch(BaseNeighborSearch):
-    "Base class for neighbor searches with a flat mesh."
+    """Base class for neighbor searches with a flat mesh."""
     def _distance(self, coor, subset_idx):
         coor = coor.reshape(3, 1)
         horiz_distance = np.sqrt(np.sum((
@@ -157,7 +157,7 @@ class BaseFlatNeighborSearch(BaseNeighborSearch):
 
 
 class BaseSphericalNeighborSearch(BaseNeighborSearch):
-    "Base class for a neighbor search with a spherical mesh."
+    """Base class for a neighbor search with a spherical mesh."""
     def _distance(self, coor, subset_idx):
         vert_distances, horiz_distances = spherical_distance(
             *coor,

@@ -55,9 +55,7 @@ def k_sample_P_fixture():
 
 
 def fieldset(xdim=200, ydim=100):
-    """ Standard fieldset spanning the earth's coordinates with U and V
-        equivalent to longitude and latitude in deg.
-    """
+    """Standard fieldset spanning the earth's coordinates with U and V equivalent to longitude and latitude in deg."""
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)
@@ -93,8 +91,8 @@ def fieldset_geometric_fixture(xdim=200, ydim=100):
 
 
 def fieldset_geometric_polar(xdim=200, ydim=100):
-    """ Standard earth fieldset with U and V equivalent to lon/lat in m
-        and the inversion of the pole correction applied to U.
+    """Standard earth fieldset with U and V equivalent to lon/lat in m
+    and the inversion of the pole correction applied to U.
     """
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
@@ -500,7 +498,7 @@ def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, pset_mode, m
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
-    """ Create uniform NORTHWARD flow on spherical earth and advect particles
+    """Create uniform NORTHWARD flow on spherical earth and advect particles.
 
     As flow is so simple, it can be directly compared to analytical solution
     """
@@ -528,7 +526,7 @@ def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
-    """ Create uniform EASTWARD flow on spherical earth and advect particles
+    """Create uniform EASTWARD flow on spherical earth and advect particles.
 
     As flow is so simple, it can be directly compared to analytical solution
     Note that in this case the cosine conversion is needed
@@ -563,8 +561,7 @@ def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_random_field(pset_mode, mode, k_sample_p, xdim=20, ydim=20, npart=100):
-    """Sampling test that tests for overshoots by sampling a field of
-    random numbers between 0 and 1.
+    """Sampling test that tests for overshoots by sampling a field of random numbers between 0 and 1.
     """
     np.random.seed(123456)
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),

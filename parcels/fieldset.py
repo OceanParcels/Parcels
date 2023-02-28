@@ -25,7 +25,7 @@ __all__ = ['FieldSet']
 
 
 class FieldSet(object):
-    """FieldSet class that holds hydrodynamic data needed to execute particles
+    """FieldSet class that holds hydrodynamic data needed to execute particles.
 
     :param U: :class:`parcels.field.Field` object for zonal velocity component
     :param V: :class:`parcels.field.Field` object for meridional velocity component
@@ -57,7 +57,7 @@ class FieldSet(object):
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
-        """Initialise FieldSet object from raw data
+        """Initialise FieldSet object from raw data.
 
         :param data: Dictionary mapping field names to numpy arrays.
                Note that at least a 'U' and 'V' numpy array need to be given, and that
@@ -129,7 +129,7 @@ class FieldSet(object):
         return cls(u, v, fields=fields)
 
     def add_field(self, field, name=None):
-        """Add a :class:`parcels.field.Field` object to the FieldSet
+        """Add a :class:`parcels.field.Field` object to the FieldSet.
 
         :param field: :class:`parcels.field.Field` object to be added
         :param name: Name of the :class:`parcels.field.Field` object to be added
@@ -176,7 +176,7 @@ class FieldSet(object):
         self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh))
 
     def add_vector_field(self, vfield):
-        """Add a :class:`parcels.field.VectorField` object to the FieldSet
+        """Add a :class:`parcels.field.VectorField` object to the FieldSet.
 
         :param vfield: :class:`parcels.field.VectorField` object to be added
         """
@@ -293,7 +293,7 @@ class FieldSet(object):
     def from_netcdf(cls, filenames, variables, dimensions, indices=None, fieldtype=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
                     deferred_load=True, chunksize=None, **kwargs):
-        """Initialises FieldSet object from NetCDF files
+        """Initialises FieldSet object from NetCDF files.
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files
@@ -986,7 +986,7 @@ class FieldSet(object):
                 value.add_periodic_halo(zonal, meridional, halosize)
 
     def write(self, filename):
-        """Write FieldSet to NetCDF file using NEMO convention
+        """Write FieldSet to NetCDF file using NEMO convention.
 
         :param filename: Basename of the output fileset"""
 

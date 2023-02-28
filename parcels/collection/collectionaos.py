@@ -150,7 +150,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
     def __del__(self):
         """
-        Collection - Destructor
+        Collection - Destructor.
         """
         super().__del__()
 

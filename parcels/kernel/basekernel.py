@@ -133,7 +133,7 @@ class BaseKernel(object):
 
     @staticmethod
     def fix_indentation(string):
-        """Fix indentation to allow in-lined kernel definitions"""
+        """Fix indentation to allow in-lined kernel definitions."""
         lines = string.split('\n')
         indent = re_indent.match(lines[0])
         if indent:
@@ -142,7 +142,8 @@ class BaseKernel(object):
 
     def check_fieldsets_in_kernels(self, pyfunc):
         """
-        function checks the integrity of the fieldset with the kernels.
+        Checks the integrity of the fieldset with the kernels.
+
         This function is to be called from the derived class when setting up the 'pyfunc'.
         """
         if self.fieldset is not None:
@@ -167,9 +168,6 @@ class BaseKernel(object):
                     raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
 
     def check_kernel_signature_on_version(self):
-        """
-        returns numkernelargs
-        """
         numkernelargs = 0
         if self._pyfunc is not None:
             if version_info[0] < 3:
@@ -207,7 +205,7 @@ class BaseKernel(object):
 
     def get_kernel_compile_files(self):
         """
-        Returns the correct src_file, lib_file, log_file for this kernel
+        Returns the correct src_file, lib_file, log_file for this kernel.
         """
         if MPI:
             mpi_comm = MPI.COMM_WORLD
@@ -315,7 +313,7 @@ class BaseKernel(object):
 
     def load_fieldset_jit(self, pset):
         """
-        Updates the loaded fields of pset's fieldset according to the chunk information within their grids
+        Updates the loaded fields of pset's fieldset according to the chunk information within their grids.
         """
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:

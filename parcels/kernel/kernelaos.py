@@ -133,7 +133,7 @@ class KernelAOS(BaseKernel):
         return kernel.merge(self, KernelAOS)
 
     def execute_jit(self, pset, endtime, dt):
-        """Invokes JIT engine to perform the core update loop"""
+        """Invokes JIT engine to perform the core update loop."""
         self.load_fieldset_jit(pset)
 
         fargs = []
@@ -149,7 +149,7 @@ class KernelAOS(BaseKernel):
             self._function(c_int(len(pset)), pdata, c_double(endtime), c_double(dt))
 
     def execute_python(self, pset, endtime, dt):
-        """Performs the core update loop via Python"""
+        """Performs the core update loop via Python."""
         # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
         sign_dt = np.sign(dt)
 
@@ -170,14 +170,14 @@ class KernelAOS(BaseKernel):
             self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
     def remove_deleted(self, pset, output_file, endtime):
-        """Utility to remove all particles that signalled deletion"""
+        """Utility to remove all particles that signalled deletion."""
         indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
         if len(indices) > 0 and output_file is not None:
             output_file.write(pset, endtime, deleted_only=indices)
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
-        """Execute this Kernel over a ParticleSet for several timesteps"""
+        """Execute this Kernel over a ParticleSet for several timesteps."""
         for p in pset:
             p.reset_state()
 

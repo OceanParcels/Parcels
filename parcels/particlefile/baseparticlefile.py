@@ -1,4 +1,4 @@
-"""Module controlling the writing of ParticleSets to Zarr file"""
+"""Module controlling the writing of ParticleSets to Zarr file."""
 from abc import ABC
 from abc import abstractmethod
 from datetime import timedelta as delta
@@ -166,7 +166,7 @@ class BaseParticleFile(ABC):
         pass
 
     def add_metadata(self, name, message):
-        """Add metadata to :class:`parcels.particleset.ParticleSet`
+        """Add metadata to :class:`parcels.particleset.ParticleSet`.
 
         :param name: Name of the metadata variabale
         :param message: message to be written
@@ -200,7 +200,7 @@ class BaseParticleFile(ABC):
         zarr.consolidate_metadata(store)
 
     def write(self, pset, time, deleted_only=False):
-        """Write all data from one time step to the zarr file
+        """Write all data from one time step to the zarr file.
 
         :param pset: ParticleSet object to write
         :param time: Time at which to write ParticleSet

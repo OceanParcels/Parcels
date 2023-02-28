@@ -39,9 +39,7 @@ __all__ = ['ParticleSetSOA']
 
 
 def _convert_to_reltime(time):
-    """Check to determine if the value of the time parameter needs to be
-    converted to a relative value (relative to the time_origin).
-    """
+    """Check to determine if the value of the time parameter needs to be converted to a relative value (relative to the time_origin)."""
     if isinstance(time, np.datetime64) or (hasattr(time, 'calendar') and time.calendar in _get_cftime_calendars()):
         return True
     return False
@@ -266,8 +264,7 @@ class ParticleSetSOA(BaseParticleSet):
         return np.min(self._collection.data['time']), np.max(self._collection.data['time'])
 
     def data_indices(self, variable_name, compare_values, invert=False):
-        """Get the indices of all particles where the value of
-        `variable_name` equals (one of) `compare_values`.
+        """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.
 
         :param variable_name: Name of the variable to check.
         :param compare_values: Value or list of values to compare to.
@@ -339,7 +336,7 @@ class ParticleSetSOA(BaseParticleSet):
             [StateCode.Success, StateCode.Evaluate], invert=True))
 
     def __getitem__(self, index):
-        """Get a single particle by index"""
+        """Get a single particle by index."""
         return self._collection.get_single_by_index(index)
 
     def cstruct(self):
@@ -515,7 +512,9 @@ class ParticleSetSOA(BaseParticleSet):
         return sys.getsizeof(self._collection)
 
     def __iadd__(self, particles):
-        """Add particles to the ParticleSet. Note that this is an
+        """Add particles to the ParticleSet.
+
+        Note that this is an
         incremental add, the particles will be added to the ParticleSet
         on which this function is called.
 
@@ -548,7 +547,7 @@ class ParticleSetSOA(BaseParticleSet):
         return self
 
     def remove_indices(self, indices):
-        """Method to remove particles from the ParticleSet, based on their `indices`"""
+        """Method to remove particles from the ParticleSet, based on their `indices`."""
         # Removing particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         if type(indices) in [int, np.int32, np.intp]:
@@ -557,14 +556,13 @@ class ParticleSetSOA(BaseParticleSet):
             self._collection.remove_multi_by_indices(indices)
 
     def remove_booleanvector(self, indices):
-        """Method to remove particles from the ParticleSet, based on an array of booleans"""
+        """Method to remove particles from the ParticleSet, based on an array of booleans."""
         # Removing particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         self.remove_indices(np.where(indices)[0])
 
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
-        """Method to calculate the density of particles in a ParticleSet from their locations,
-        through a 2D histogram.
+        """Calculate 2D particle density field from ParticleSet particle locations.
 
         :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
                       on. Default is `fieldset.U`
@@ -620,9 +618,9 @@ def search_kernel(particle, fieldset, time):
         return density
 
     def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
-        """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
-        based on `fieldset` and `ptype` of the ParticleSet
+        """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object.
 
+        Conversion is based on `fieldset` and `ptype` of the ParticleSet.
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
         return Kernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
@@ -634,13 +632,13 @@ def search_kernel(particle, fieldset, time):
         return InteractionKernelSOA(self.fieldset, self.collection.ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
-        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
-        object from the ParticleSet"""
+        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
         return ParticleFile(*args, particleset=self, **kwargs)
 
     def set_variable_write_status(self, var, write_status):
         """
-        Method to set the write status of a Variable
+        Method to set the write status of a Variable.
+
         :param var: Name of the variable (string)
         :param write_status: Write status of the variable (True, False or 'once')
         """

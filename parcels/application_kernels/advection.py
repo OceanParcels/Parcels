@@ -1,4 +1,4 @@
-"""Collection of pre-built advection kernels"""
+"""Collection of pre-built advection kernels."""
 import math
 
 from parcels.tools.statuscodes import OperationCode
@@ -104,7 +104,7 @@ def AdvectionRK45(particle, fieldset, time):
 
 
 def AdvectionAnalytical(particle, fieldset, time):
-    """Advection of particles using 'analytical advection' integration
+    """Advection of particles using 'analytical advection' integration.
 
     Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017).
     Note that the time-dependent scheme is currently implemented with 'intermediate timesteps'

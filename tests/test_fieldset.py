@@ -87,8 +87,7 @@ def test_fieldset_from_data_timedims(ttype, tdim):
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 50])
 def test_fieldset_from_data_different_dimensions(xdim, ydim, zdim=4, tdim=2):
-    """ Test for fieldset initialisation from data using
-    dict-of-dict for dimensions. """
+    """Test for fieldset initialisation from data using dict-of-dict for dimensions."""
 
     lon = np.linspace(0., 1., xdim, dtype=np.float32)
     lat = np.linspace(0., 1., ydim, dtype=np.float32)
