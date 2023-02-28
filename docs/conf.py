@@ -111,7 +111,7 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'bizstyle'
+html_theme = 'pydata_sphinx_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -128,9 +128,6 @@ html_theme = 'bizstyle'
 # A shorter title for the navigation bar.  Default is the same as html_title.
 # html_short_title = None
 
-# The name of an image file (relative to this directory) to place at the top
-# of the sidebar.
-html_logo = 'parcelslogo.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -141,6 +138,29 @@ html_logo = 'parcelslogo.png'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_theme_options = {
+    "logo": {
+        "image_light": "parcelslogo.png",
+        "image_dark": "parcelslogo-inverted.png",
+    },
+    "use_edit_page_button": True,
+    "github_url": "https://github.com/OceanParcels/parcels",
+    "icon_links": [
+        {
+            "name": "Conda Forge",
+            "url": "https://anaconda.org/conda-forge/parcels",  # required
+            "icon": "fa-solid fa-box",
+            "type": "fontawesome",
+        }
+    ]
+}
+
+html_context = {
+    "github_user": "OceanParcels",
+    "github_repo": "parcels",
+    "github_version": "master",
+    "doc_path": "docs",
+}
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
