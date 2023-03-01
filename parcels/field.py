@@ -206,8 +206,8 @@ class Field(object):
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop('data_full_zdim', None)
-        self.data_chunks = []
-        self.c_data_chunks = []
+        self.data_chunks = []   # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
+        self.c_data_chunks = []  # C-pointers to the data_chunks array
         self.nchunks = []
         self.chunk_set = False
         self.filebuffers = [None] * 2
@@ -1182,7 +1182,7 @@ class Field(object):
 
         self.data_chunks = [None] * npartitions
         self.c_data_chunks = [None] * npartitions
-        self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
+        self.grid.load_chunk = np.zeros(npartitions, dtype=c_int, order='C')
         # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #      chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
         self.grid.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
@@ -1198,7 +1198,7 @@ class Field(object):
                 if g.load_chunk[block_id] == g.chunk_loading_requested \
                         or g.load_chunk[block_id] in g.chunk_loaded and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
-                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block])
+                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block], order='C')
                 elif g.load_chunk[block_id] == g.chunk_not_loaded:
                     if isinstance(self.data_chunks, list):
                         self.data_chunks[block_id] = None
@@ -1212,7 +1212,7 @@ class Field(object):
                 self.data_chunks[0, :] = None
             self.c_data_chunks[0] = None
             self.grid.load_chunk[0] = g.chunk_loaded_touched
-            self.data_chunks[0] = np.array(self.data)
+            self.data_chunks[0] = np.array(self.data, order='C')
 
     @property
     def ctypes_struct(self):
@@ -1235,8 +1235,8 @@ class Field(object):
             if self.grid.load_chunk[i] == self.grid.chunk_loading_requested:
                 raise ValueError('data_chunks should have been loaded by now if requested. grid.load_chunk[bid] cannot be 1')
             if self.grid.load_chunk[i] in self.grid.chunk_loaded:
-                if not self.data_chunks[i].flags.c_contiguous:
-                    self.data_chunks[i] = self.data_chunks[i].copy()
+                if not self.data_chunks[i].flags['C_CONTIGUOUS']:
+                    self.data_chunks[i] = np.array(self.data_chunks[i], order='C')
                 self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
             else:
                 self.c_data_chunks[i] = None
