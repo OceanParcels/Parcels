@@ -24,6 +24,9 @@ dependencies:
   - pykdtree
   - zarr
 
+  # Formatting
+  - isort
+
   # Testing
   - pytest
   - pytest-html
