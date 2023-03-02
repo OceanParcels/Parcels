@@ -5,9 +5,8 @@ import numpy as np
 import xarray as xr
 
 from parcels import Field
-from parcels.plotting import cartopy_colorbar
-from parcels.plotting import create_parcelsfig_axis
-from parcels.plotting import plotfield
+from parcels.plotting import cartopy_colorbar, create_parcelsfig_axis, plotfield
+
 try:
     import matplotlib.animation as animation
     from matplotlib import rc

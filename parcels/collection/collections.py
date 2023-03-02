@@ -1,9 +1,10 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
-from abc import ABC
-from abc import abstractmethod
+
+from parcels.particle import ScipyParticle
 
 from .iterators import BaseParticleAccessor
-from parcels.particle import ScipyParticle
 
 """
 Author: Dr. Christian Kehl

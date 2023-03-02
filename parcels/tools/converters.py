@@ -1,12 +1,11 @@
 # flake8: noqa: E999
 import inspect
 from datetime import timedelta as delta
-from math import cos
-from math import pi
-import xarray as xr
+from math import cos, pi
 
 import cftime
 import numpy as np
+import xarray as xr
 
 __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
            'GeographicPolarSquare', 'unitconverters_map', 'TimeConverter',

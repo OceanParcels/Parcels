@@ -1,15 +1,13 @@
 import uuid
-import _ctypes
-from ctypes import c_float
-from ctypes import c_int
-from os import path
-from os import remove
+from ctypes import c_float, c_int
+from os import path, remove
 from sys import platform
 
+import _ctypes
 import numpy.ctypeslib as npct
 
-from parcels.tools import get_cache_dir, get_package_dir
 from parcels.compilation.codecompiler import GNUCompiler
+from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools.loggers import logger
 
 __all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', 'vonmisesvariate']

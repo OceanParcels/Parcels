@@ -1,14 +1,26 @@
-from parcels import (FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode)
-from parcels.particlefile import _set_calendar
-from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+import os
+
+import cftime
 import numpy as np
 import pytest
-import os
-import cftime
 import xarray as xr
 from zarr.storage import MemoryStore
+
+from parcels import (  # noqa
+    ErrorCode,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    ScipyParticle,
+    Variable,
+)
+from parcels.particlefile import _set_calendar
+from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

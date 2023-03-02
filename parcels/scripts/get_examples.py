@@ -1,9 +1,8 @@
 """Get example scripts, notebooks, and data files."""
 import argparse
 import os
-from datetime import datetime
-from datetime import timedelta
 import shutil
+from datetime import datetime, timedelta
 
 import pkg_resources
 from tqdm import tqdm

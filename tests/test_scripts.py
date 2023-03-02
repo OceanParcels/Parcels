@@ -1,10 +1,21 @@
-from parcels import (FieldSet, JITParticle, AdvectionRK4, plotTrajectoriesFile)
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from datetime import timedelta as delta
+from os import path
+
 import numpy as np
 import pytest
-from os import path
+
+from parcels import (  # noqa
+    AdvectionRK4,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    plotTrajectoriesFile,
+)
 
 pset_modes = ['soa', 'aos']
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},

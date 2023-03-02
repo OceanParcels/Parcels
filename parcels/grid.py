@@ -1,12 +1,5 @@
 import functools
-from ctypes import c_double
-from ctypes import c_float
-from ctypes import c_int
-from ctypes import c_void_p
-from ctypes import cast
-from ctypes import POINTER
-from ctypes import pointer
-from ctypes import Structure
+from ctypes import POINTER, Structure, c_double, c_float, c_int, c_void_p, cast, pointer
 from enum import IntEnum
 
 import numpy as np
