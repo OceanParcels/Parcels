@@ -1,7 +1,5 @@
 from parcels.interaction.neighborsearch.bruteforce import (  # noqa
     BruteFlatNeighborSearch,
-)
-from parcels.interaction.neighborsearch.bruteforce import (  # noqa
     BruteSphericalNeighborSearch,
 )
 from parcels.interaction.neighborsearch.hashflat import HashFlatNeighborSearch
