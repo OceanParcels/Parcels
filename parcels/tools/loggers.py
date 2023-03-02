@@ -9,6 +9,7 @@ info_once_level = 26
 
 class DuplicateFilter(object):
     """Utility class to prevent warning_once warnings from being displayed more than once."""
+
     def __init__(self):
         self.msgs = set()
 
@@ -49,5 +50,6 @@ logger.setLevel(10)
 
 class XarrayDecodedFilter(logging.Filter):
     """Filters the warning_once from fieldfilebuffer when cf_decoding fails."""
+
     def filter(self, record):
         return 'Filling values might be wrongly parsed' not in record.getMessage()

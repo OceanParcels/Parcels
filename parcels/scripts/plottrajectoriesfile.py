@@ -35,7 +35,6 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param show_plt: Boolean whether plot should directly be show (for py.test)
     :param central_longitude: Degrees East at which to center the plot
     """
-
     environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
     try:
         pfile = xr.open_zarr(str(filename), decode_cf=True)

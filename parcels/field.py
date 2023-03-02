@@ -504,7 +504,6 @@ class Field(object):
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         """
-
         data = da.data
         interp_method = kwargs.pop('interp_method', 'linear')
 
@@ -1047,7 +1046,8 @@ class Field(object):
         :param ti: Index in time array associated with time (via :func:`time_index`)
         :param time: Time to interpolate to
 
-        :rtype: Linearly interpolated field"""
+        :rtype: Linearly interpolated field.
+        """
         t0 = self.grid.time[ti]
         if time == t0:
             return self.data[ti, :]
@@ -1061,7 +1061,6 @@ class Field(object):
 
     def spatial_interpolation(self, ti, z, y, x, time, particle=None):
         """Interpolate horizontal field values using a SciPy interpolator."""
-
         if self.grid.zdim == 1:
             val = self.interpolator2D(ti, z, y, x, particle=particle)
         else:
@@ -1220,7 +1219,6 @@ class Field(object):
     @property
     def ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant pointers and sizes for this field."""
-
         # Ctypes struct corresponding to the type definition in parcels.h
         class CField(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
@@ -1319,7 +1317,8 @@ class Field(object):
         """Write a :class:`Field` to a netcdf file.
 
         :param filename: Basename of the file
-        :param varname: Name of the field, to be appended to the filename"""
+        :param varname: Name of the field, to be appended to the filename.
+        """
         filepath = str(Path('%s%s.nc' % (filename, self.name)))
         if varname is None:
             varname = self.name
@@ -1435,6 +1434,7 @@ class VectorField(object):
     :param V: field defining the meridional component
     :param W: field defining the vertical component (default: None)
     """
+
     def __init__(self, name, U, V, W=None):
         self.name = name
         self.U = U
@@ -1841,6 +1841,7 @@ class VectorField(object):
 
 class DeferredArray():
     """Class used for throwing error when Field.data is not read in deferred loading mode."""
+
     data_shape = ()
 
     def __init__(self):

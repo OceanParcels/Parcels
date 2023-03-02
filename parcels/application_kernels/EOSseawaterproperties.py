@@ -106,7 +106,6 @@ def PtempFromTemp(particle, fieldset, time):
        Res. Vol20,401-408. doi:10.1016/0011-7471(73)90063-6
 
     """
-
     s = fieldset.psu_salinity[time, particle.depth, particle.lat, particle.lon]
     t = fieldset.temperature[time, particle.depth, particle.lat, particle.lon]
     pres, pr = particle.pressure, fieldset.refpressure

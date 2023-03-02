@@ -95,7 +95,8 @@ class Grid(object):
     @property
     def child_ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
-        pointers and sizes for this grid."""
+        pointers and sizes for this grid.
+        """
 
         class CStructuredGrid(Structure):
             # z4d is only to have same cstruct as RectilinearSGrid

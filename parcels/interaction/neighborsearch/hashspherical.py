@@ -10,6 +10,7 @@ from parcels.interaction.neighborsearch.basehash import hash_split
 class HashSphericalNeighborSearch(BaseHashNeighborSearch,
                                   BaseSphericalNeighborSearch):
     """Neighbor search using a hashtable (similar to octtrees)."""
+
     def __init__(self, inter_dist_vert, inter_dist_horiz,
                  max_depth=100000):
         """Initialize the neighbor data structure.

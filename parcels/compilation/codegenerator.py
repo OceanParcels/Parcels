@@ -281,7 +281,8 @@ Please add '%s' to %s.users_vars or define an appropriate sub-class."""
 class IntrinsicTransformer(ast.NodeTransformer):
     """AST transformer that catches any mention of intrinsic variable
     names, such as 'particle' or 'fieldset', inserts placeholder objects
-    and propagates attribute access."""
+    and propagates attribute access.
+    """
 
     def __init__(self, fieldset=None, ptype=JITParticle):
         self.fieldset = fieldset
@@ -507,7 +508,8 @@ class TupleSplitter(ast.NodeTransformer):
 class AbstractKernelGenerator(ABC, ast.NodeVisitor):
     """Code generator class that translates simple Python kernel functions into C functions.
 
-    Works by populating and accessing the `ccode` attriibute on nodes in the Python AST."""
+    Works by populating and accessing the `ccode` attriibute on nodes in the Python AST.
+    """
 
     # Intrinsic variables that appear as function arguments
     kernel_vars = ['particle', 'fieldset', 'time', 'output_time', 'tol']

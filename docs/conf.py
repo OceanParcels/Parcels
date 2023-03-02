@@ -60,7 +60,7 @@ author = u'The OceanParcels Team'
 # built documents.
 #
 # The short X.Y version.
-import parcels
+import parcels  # noqa: E402
 
 version = parcels.__version__
 # The full version, including alpha/beta/rc tags.
@@ -165,6 +165,7 @@ html_context = {
     "github_version": "master",
     "doc_path": "docs",
 }
+
 
 # based on pandas doc/source/conf.py
 def linkcode_resolve(domain, info):

@@ -28,7 +28,6 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
     :param savefile: Name of a file to save the plot to
     :param animation: Boolean whether result is a single plot, or an animation
     """
-
     show_time = particles[0].time if show_time is None else show_time
     if isinstance(show_time, datetime):
         show_time = np.datetime64(show_time)
@@ -114,7 +113,6 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
     :param savefile: Name of a file to save the plot to
     :param animation: Boolean whether result is a single plot, or an animation
     """
-
     if type(field) is VectorField:
         spherical = True if field.U.grid.mesh == 'spherical' else False
         field = [field.U, field.V]

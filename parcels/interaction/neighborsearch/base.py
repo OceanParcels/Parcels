@@ -128,6 +128,7 @@ class BaseNeighborSearch(ABC):
 
 class BaseFlatNeighborSearch(BaseNeighborSearch):
     """Base class for neighbor searches with a flat mesh."""
+
     def _distance(self, coor, subset_idx):
         coor = coor.reshape(3, 1)
         horiz_distance = np.sqrt(np.sum((
@@ -158,6 +159,7 @@ class BaseFlatNeighborSearch(BaseNeighborSearch):
 
 class BaseSphericalNeighborSearch(BaseNeighborSearch):
     """Base class for a neighbor search with a spherical mesh."""
+
     def _distance(self, coor, subset_idx):
         vert_distances, horiz_distances = spherical_distance(
             *coor,

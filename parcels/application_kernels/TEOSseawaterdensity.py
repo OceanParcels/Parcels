@@ -21,7 +21,6 @@ def PolyTEOS10_bsq(particle, fieldset, time):
     temperature and density of seawater.  Journal of Atmospheric and
     Oceanic Technology, 20, 730-741.
     """
-
     Z = - math.fabs(particle.depth)  # Z needs to be negative
     SA = fieldset.abs_salinity[time, particle.depth, particle.lat, particle.lon]
     CT = fieldset.cons_temperature[time, particle.depth, particle.lat, particle.lon]

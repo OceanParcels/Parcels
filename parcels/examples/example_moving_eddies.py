@@ -93,8 +93,8 @@ def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,
     """Configuration of a particle set that follows two moving eddies.
 
     :arg fieldset: :class FieldSet: that defines the flow field
-    :arg npart: Number of particles to initialise"""
-
+    :arg npart: Number of particles to initialise.
+    """
     # Determine particle class according to mode
     start = (3.3, 46.) if fieldset.U.grid.mesh == 'spherical' else (3.3e5, 1e5)
     finish = (3.3, 47.8) if fieldset.U.grid.mesh == 'spherical' else (3.3e5, 2.8e5)

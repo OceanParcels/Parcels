@@ -199,7 +199,8 @@ class CCompiler(object):
 
     :arg cc: C compiler executable (uses environment variable ``CC`` if not provided).
     :arg cppargs: A list of arguments to the C compiler (optional).
-    :arg ldargs: A list of arguments to the linker (optional)."""
+    :arg ldargs: A list of arguments to the linker (optional).
+    """
 
     def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
         if cppargs is None:
@@ -249,6 +250,7 @@ class CCompiler_SS(CCompiler):
     """
     Single-stage C-compiler; used for a SINGLE source file.
     """
+
     def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
         super(CCompiler_SS, self).__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
 
@@ -275,7 +277,9 @@ class GNUCompiler_SS(CCompiler_SS):
 
     :arg cppargs: A list of arguments to pass to the C compiler
          (optional).
-    :arg ldargs: A list of arguments to pass to the linker (optional)."""
+    :arg ldargs: A list of arguments to pass to the linker (optional).
+    """
+
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
         c_params = GNU_parameters(cppargs, ldargs, incdirs, libdirs, libs)
         super(GNUCompiler_SS, self).__init__(c_params.compiler, cppargs=c_params.cppargs, ldargs=c_params.ldargs, incdirs=c_params.incdirs, libdirs=c_params.libdirs, libs=c_params.libs, tmp_dir=tmp_dir)

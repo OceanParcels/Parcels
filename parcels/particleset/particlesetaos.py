@@ -614,7 +614,6 @@ class ParticleSetAOS(BaseParticleSet):
         :param area_scale: Boolean to control whether the density is scaled by the area
                            (in m^2) of each grid cell. Default is False
         """
-
         field_name = field_name if field_name else "U"
         sampling_name = "UV" if field_name in ["U", "V"] else field_name
         field = getattr(self.fieldset, field_name)
@@ -667,7 +666,8 @@ def search_kernel(particle, fieldset, time):
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
-        object from the ParticleSet."""
+        object from the ParticleSet.
+        """
         return ParticleFileAOS(*args, particleset=self, **kwargs)
 
     def set_variable_write_status(self, var, write_status):

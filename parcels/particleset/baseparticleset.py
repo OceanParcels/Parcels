@@ -27,6 +27,7 @@ class NDCluster(ABC):
 
 class BaseParticleSet(NDCluster):
     """Base ParticleSet."""
+
     _collection = None
     kernel = None
     interaction_kernel = None
@@ -113,7 +114,7 @@ class BaseParticleSet(NDCluster):
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
+            object that defines custom particle
         :param lon: List of initial longitude values for particles
         :param lat: List of initial latitude values for particles
         :param depth: Optional list of initial depth values for particles. Default is 0m
@@ -123,7 +124,7 @@ class BaseParticleSet(NDCluster):
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
-       """
+        """
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod
@@ -147,7 +148,6 @@ class BaseParticleSet(NDCluster):
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
-
         lon = np.linspace(start[0], finish[0], size)
         lat = np.linspace(start[1], finish[1], size)
         if type(depth) in [int, float]:
@@ -183,7 +183,6 @@ class BaseParticleSet(NDCluster):
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
-
         lon, lat = cls.monte_carlo_sample(start_field, size, mode)
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)

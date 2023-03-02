@@ -413,13 +413,12 @@ def test_partialslip_nearland_vertical(pset_mode, mode, boundaryslip, npart=20):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('lat_flip', [False, True])
 def test_fieldset_sample_particle(pset_mode, mode, k_sample_uv, lat_flip, npart=120):
-    """ Sample the fieldset using an array of particles.
+    """Sample the fieldset using an array of particles.
 
     Note that the low tolerances (1.e-6) are due to the first-order
     interpolation in JIT mode and give an indication of the
     corresponding sampling error.
     """
-
     lon = np.linspace(-180, 180, 200, dtype=np.float32)
     if lat_flip:
         lat = np.linspace(90, -90, 100, dtype=np.float32)
@@ -500,9 +499,8 @@ def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, pset_mode, m
 def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
     """Create uniform NORTHWARD flow on spherical earth and advect particles.
 
-    As flow is so simple, it can be directly compared to analytical solution
+    As flow is so simple, it can be directly compared to analytical solution.
     """
-
     maxvel = 1.
     dimensions = {'lon': np.linspace(-180, 180, xdim, dtype=np.float32),
                   'lat': np.linspace(-90, 90, ydim, dtype=np.float32)}

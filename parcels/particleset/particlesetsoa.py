@@ -285,7 +285,6 @@ class ParticleSetSOA(BaseParticleSet):
         This is only intended for curvilinear grids, where the initial index search
         may be quite expensive.
         """
-
         if self.fieldset is None:
             # we need to be attached to a fieldset to have a valid
             # gridset to search for indices
@@ -418,7 +417,6 @@ class ParticleSetSOA(BaseParticleSet):
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
-
         if repeatdt is not None:
             logger.warning('Note that the `repeatdt` argument is not retained from %s, and that '
                            'setting a new repeatdt will start particles from the _new_ particle '
@@ -574,7 +572,6 @@ class ParticleSetSOA(BaseParticleSet):
         :param area_scale: Boolean to control whether the density is scaled by the area
                            (in m^2) of each grid cell. Default is False
         """
-
         field_name = field_name if field_name else "U"
         sampling_name = "UV" if field_name in ["U", "V"] else field_name
         field = getattr(self.fieldset, field_name)

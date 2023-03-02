@@ -53,6 +53,7 @@ class BaseKernel(object):
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
     """
+
     _pyfunc = None
     _fieldset = None
     _ptype = None

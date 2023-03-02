@@ -42,6 +42,7 @@ class BaseParticleFile(ABC):
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
     :param create_new_zarrfile: Boolean to create a new file. Default is True
     """
+
     write_ondelete = None
     outputdt = None
     lasttime_written = None
@@ -113,18 +114,17 @@ class BaseParticleFile(ABC):
     @abstractmethod
     def _reserved_var_names(self):
         """
-        returns the reserved dimension names not to be written just once.
+        Returns the reserved dimension names not to be written just once.
         """
         pass
 
     def _create_variables_attribute_dict(self):
         """
-        creates the dictionary with variable attributes.
+        Creates the dictionary with variable attributes.
 
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
-
         attrs = {'z': {"long_name": "",
                        "standard_name": "depth",
                        "units": "m",
@@ -206,7 +206,6 @@ class BaseParticleFile(ABC):
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles
         """
-
         time = time.total_seconds() if isinstance(time, delta) else time
 
         if self.lasttime_written != time and (self.write_ondelete is False or deleted_only is not False):

@@ -22,6 +22,7 @@ class BaseParticleCollectionIterator(ABC):
     """Interface for the ParticleCollection iterator. Provides the
     ability to iterate over the particles in the ParticleCollection.
     """
+
     def ___init___(self):
         self._head = None
         self._tail = None
@@ -54,8 +55,8 @@ class BaseParticleCollectionIterator(ABC):
 
 
 class BaseParticleAccessor(ABC):
-    """Interface for the ParticleAccessor. Implements a wrapper around
-    particles to provide easy access."""
+    """Interface for the ParticleAccessor. Implements a wrapper around particles to provide easy access."""
+
     _pcoll = None
 
     def __init__(self, pcoll):

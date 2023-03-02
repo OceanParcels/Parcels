@@ -187,7 +187,8 @@ def expovariate(lamb):
 
 def vonmisesvariate(mu, kappa):
     """Returns a randome float of a Von Mises distribution
-    with mean angle mu and concentration parameter kappa"""
+    with mean angle mu and concentration parameter kappa.
+    """
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_vonmisesvariate
     rnd.argtype = [c_float, c_float]

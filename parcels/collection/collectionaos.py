@@ -36,7 +36,6 @@ class ParticleCollectionAOS(ParticleCollection):
         :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
         field references of the ctypes-link of particles that are allocated
         """
-
         super(ParticleCollection, self).__init__()
 
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
@@ -956,6 +955,7 @@ class ParticleAccessorAOS(BaseParticleAccessor):
                   particle is stored in the corresponding data arrays
                   of the ParticleCollecion.
     """
+
     _index = 0
     _next_dt = None
 

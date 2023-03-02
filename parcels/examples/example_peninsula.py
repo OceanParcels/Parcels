@@ -96,9 +96,9 @@ def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
                       verbose=False, output=True, method=AdvectionRK4):
     """Example configuration of particle flow around an idealised Peninsula
 
-    :arg filename: Basename of the input fieldset
-    :arg npart: Number of particles to intialise"""
-
+    :arg filename: Basename of the input fieldset.
+    :arg npart: Number of particles to intialise.
+    """
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p.
     # We determine the particle base class according to mode.

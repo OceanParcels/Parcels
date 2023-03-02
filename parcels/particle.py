@@ -23,6 +23,7 @@ class Variable(object):
              If to_write = 'once', the variable will be written as a time-independent 1D array
     :type to_write: (bool, 'once', optional)
     """
+
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
         self.name = name
         self.dtype = dtype
@@ -114,7 +115,6 @@ class ParticleType(object):
     @property
     def supported_dtypes(self):
         """List of all supported numpy dtypes. All others are not supported."""
-
         # Developer note: other dtypes (mostly 2-byte ones) are not supported now
         # because implementing and aligning them in cgen.GenerableStruct is a
         # major headache. Perhaps in a later stage
@@ -123,6 +123,7 @@ class ParticleType(object):
 
 class _Particle(object):
     """Private base class for all particle types."""
+
     lastID = 0  # class-level variable keeping track of last Particle ID used
 
     def __init__(self):
