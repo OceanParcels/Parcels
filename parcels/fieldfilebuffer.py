@@ -360,9 +360,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
             self._static_name_maps[pcls_dim_name].append(name_map[pcls_dim_name])
 
     def _get_available_dims_indices_by_request(self):
-        """
-        [private function - not to be called from outside the class]
-        Returns a dict mapping 'parcels_dimname' -> [None, int32_index_data_array].
+        """Returns a dict mapping 'parcels_dimname' -> [None, int32_index_data_array].
+
         This dictionary is based on the information provided by the requested dimensions.
         Example: {'time': 0, 'depth': None, 'lat': 1, 'lon': 2}
         """
@@ -385,7 +384,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
     def _get_available_dims_indices_by_namemap(self):
         """
-        [private function - not to be called from outside the class]
         Returns a dict mapping 'parcels_dimname' -> [None, int32_index_data_array].
         This dictionary is based on the information provided by the requested dimensions.
         Example: {'time': 0, 'depth': 1, 'lat': 2, 'lon': 3}
@@ -397,7 +395,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
     def _get_available_dims_indices_by_netcdf_file(self):
         """
-        [private function - not to be called from outside the class]
         [File needs to be open (i.e. self.dataset is not None) for this to work - otherwise generating an error]
         Returns a dict mapping 'parcels_dimname' -> [None, int32_index_data_array].
         This dictionary is based on the information provided by the requested dimensions.
@@ -422,7 +419,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
     def _is_dimension_available(self, dimension_name):
         """
-        [private function - not to be called from outside the class]
         This function returns a boolean value indicating if a certain variable (name) is avaialble in the
         requested dimensions as well as in the actual dataset of the file. If any of the two conditions is not met,
         if returns 'False'.
@@ -433,7 +429,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
     def _is_dimension_chunked(self, dimension_name):
         """
-        [private function - not to be called from outside the class]
         This functions returns a boolean value indicating if a certain variable is available in the requested
         dimensions, the NetCDF file dataset, and is also required to be chunked according to the requested
         chunksize dictionary. If any of the two conditions is not met, if returns 'False'.
@@ -447,7 +442,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
     def _is_dimension_in_dataset(self, parcels_dimension_name, netcdf_dimension_name=None):
         """
-        [private function - not to be called from outside the class]
         [File needs to be open (i.e. self.dataset is not None) for this to work - otherwise generating an error]
         This function returns the index, the name and the size of a NetCDF dimension in the file (in order: index, name, size).
         It requires as input the name of the related parcels dimension (i.e. one of ['time', 'depth', 'lat', 'lon']. If
@@ -475,7 +469,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
     def _is_dimension_in_chunksize_request(self, parcels_dimension_name):
         """
-        [private function - not to be called from outside the class]
         This function returns the dense-array index, the NetCDF dimension name and the requested chunsize of a requested
         parcels dimension(in order: index, name, size). This only works if the chunksize is provided as a dictionary
         of tuples of parcels dimensions and their chunk mapping (i.e. dict(parcels_dim_name => (netcdf_dim_name, chunksize)).
@@ -493,16 +486,12 @@ class DaskFileBuffer(NetcdfFileBuffer):
         return k, dname, dvalue
 
     def _netcdf_DimNotFound_warning_message(self, dimension_name):
-        """
-        [private function - not to be called from outside the class]
-        Helper function that issues a warning message if a certain requested NetCDF dimension is not found in the file.
-        """
+        """Helper function that issues a warning message if a certain requested NetCDF dimension is not found in the file."""
         display_name = dimension_name if (dimension_name not in self.dimensions) else self.dimensions[dimension_name]
         return "Did not find {} in NetCDF dims. Please specifiy chunksize as dictionary for NetCDF dimension names, e.g.\n chunksize={{ '{}': <number>, ... }}.".format(display_name, display_name)
 
     def _chunkmap_to_chunksize(self):
         """
-        [private function - not to be called from outside the class]
         [File needs to be open via the '__enter__'-method for this to work - otherwise generating an error]
         This functions translates the array-index-to-chunksize chunk map into a proper fieldsize dictionary that
         can later be used for re-qunking, if a previously-opened file is re-opened again.
@@ -542,7 +531,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
     def _get_initial_chunk_dictionary_by_dict_(self):
         """
-        [private function - not to be called from outside the class]
         [File needs to be open (i.e. self.dataset is not None) for this to work - otherwise generating an error]
         Maps and correlates the requested dictionary-style chunksize with the requested parcels dimensions, variables
         and the NetCDF-available dimensions. Thus, it takes care to remove chunksize arguments that are not in the
@@ -593,10 +581,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         return chunk_dict, chunk_index_map
 
     def _failsafe_parse_(self):
-        """
-        [private function - not to be called from outside the class]
-        ['name' need to be initialised]
-        """
+        """['name' need to be initialised]"""
         # ==== fail - open it as a normal array and deduce the dimensions from the variable-function names ==== #
         # ==== done by parsing ALL variables in the NetCDF, and comparing their call-parameters with the   ==== #
         # ==== name map available here.                                                                    ==== #
@@ -641,7 +626,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
     def _get_initial_chunk_dictionary(self):
         """
-        [private function - not to be called from outside the class]
         Super-function that maps and correlates the requested chunksize with the requested parcels dimensions, variables
         and the NetCDF-available dimensions. Thus, it takes care to remove chunksize arguments that are not in the
         Parcels- or NetCDF dimensions, or whose chunking would be omitted due to an empty chunk dimension.

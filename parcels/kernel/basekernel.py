@@ -232,7 +232,7 @@ class BaseKernel(object):
         return src_file_or_files, lib_file, log_file
 
     def compile(self, compiler):
-        """ Writes kernel code to file and compiles it."""
+        """Writes kernel code to file and compiles it."""
         all_files_array = []
         if self.src_file is None:
             if self.dyn_srcs is not None:
