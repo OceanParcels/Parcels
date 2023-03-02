@@ -44,7 +44,7 @@ def generate_fieldset(xdim, ydim, zdim=1, tdim=1):
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 200])
 def test_fieldset_from_data(xdim, ydim):
-    """ Simple test for fieldset initialisation from data. """
+    """Simple test for fieldset initialisation from data."""
     data, dimensions = generate_fieldset(xdim, ydim)
     fieldset = FieldSet.from_data(data, dimensions)
     assert len(fieldset.U.data.shape) == 3
@@ -54,7 +54,7 @@ def test_fieldset_from_data(xdim, ydim):
 
 
 def test_fieldset_extra_syntax():
-    """ Simple test for fieldset initialisation from data. """
+    """Simple test for fieldset initialisation from data."""
     data, dimensions = generate_fieldset(10, 10)
     failed = False
     try:
@@ -113,7 +113,7 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim, zdim=4, tdim=2):
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 200])
 def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
-    """ Simple test for fieldset initialisation from Parcels FieldSet file format. """
+    """Simple test for fieldset initialisation from Parcels FieldSet file format."""
     filepath = tmpdir.join(filename)
     data, dimensions = generate_fieldset(xdim, ydim)
     fieldset_out = FieldSet.from_data(data, dimensions)
@@ -238,7 +238,7 @@ def test_fieldset_float64(cast_data_dtype, mode, tmpdir, xdim=10, ydim=5):
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])
 @pytest.mark.parametrize('indslat', [range(30, 60), [22]])
 def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_subsets'):
-    """ Test for subsetting fieldset from file using indices dict. """
+    """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset(100, 100)
     filepath = tmpdir.join(filename)
     fieldsetfull = FieldSet.from_data(data, dimensions)
@@ -343,7 +343,7 @@ def test_add_field_after_pset(pset_mode, fieldtype):
 
 @pytest.mark.parametrize('chunksize', ['auto', None])
 def test_fieldset_samegrids_from_file(tmpdir, chunksize, filename='test_subsets'):
-    """ Test for subsetting fieldset from file using indices dict. """
+    """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset(100, 100)
     filepath1 = tmpdir.join(filename+'_1')
     fieldset1 = FieldSet.from_data(data, dimensions)
@@ -383,7 +383,7 @@ def test_fieldset_dimlength1_cgrid(gridtype):
 
 @pytest.mark.parametrize('chunksize', ['auto', None])
 def test_fieldset_diffgrids_from_file(tmpdir, chunksize, filename='test_subsets'):
-    """ Test for subsetting fieldset from file using indices dict. """
+    """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset(100, 100)
     filepath1 = tmpdir.join(filename+'_1')
     fieldset1 = FieldSet.from_data(data, dimensions)
@@ -408,7 +408,7 @@ def test_fieldset_diffgrids_from_file(tmpdir, chunksize, filename='test_subsets'
 
 @pytest.mark.parametrize('chunksize', ['auto', None])
 def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize, filename='test_subsets'):
-    """ Test for subsetting fieldset from file using indices dict. """
+    """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset(100, 100)
     filepath = tmpdir.join(filename)
     fieldset_data = FieldSet.from_data(data, dimensions)
@@ -436,7 +436,7 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize, filename='test_sub
 
 
 def test_fieldset_samegrids_from_data(tmpdir, filename='test_subsets'):
-    """ Test for subsetting fieldset from file using indices dict. """
+    """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset(100, 100)
     fieldset1 = FieldSet.from_data(data, dimensions)
     field_data = fieldset1.U
@@ -996,7 +996,7 @@ def test_fieldset_frompop(pset_mode, mode):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 def test_fieldset_from_data_gridtypes(pset_mode, xdim=20, ydim=10, zdim=4):
-    """ Simple test for fieldset initialisation from data. """
+    """Simple test for fieldset initialisation from data."""
     lon = np.linspace(0., 10., xdim, dtype=np.float32)
     lat = np.linspace(0., 10., ydim, dtype=np.float32)
     depth = np.linspace(0., 1., zdim, dtype=np.float32)
