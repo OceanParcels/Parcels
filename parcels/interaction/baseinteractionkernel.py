@@ -64,7 +64,7 @@ class BaseInteractionKernel(BaseKernel):
 
     def check_kernel_signature_on_version(self):
         """
-        returns numkernelargs
+        Returns numkernelargs.
         Adaptation of this method in the BaseKernel that works with
         lists of functions.
         """

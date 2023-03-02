@@ -790,8 +790,8 @@ class ParticleCollection(Collection):
     _data = None  # formerly: particle_data
 
     def __init__(self):
-        """
-        ParticleCollection - Constructor
+        """Constructor for ParticleCollection.
+
         Initializes a particle collection by pre-allocating memory (where needed), initialising indexing structures
         (where needed), initialising iterators (if maintaining a persistent iterator) and preparing the C-JIT-glue.
 
@@ -808,9 +808,7 @@ class ParticleCollection(Collection):
         super(ParticleCollection, self).__init__()
 
     def __del__(self):
-        """
-        ParticleCollection - Destructor.
-        """
+        """Destructor for ParticleCollection."""
         pass
 
     @property
