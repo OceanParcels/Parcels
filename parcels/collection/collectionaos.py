@@ -148,9 +148,7 @@ class ParticleCollectionAOS(ParticleCollection):
         self._riterator = None
 
     def __del__(self):
-        """
-        Collection - Destructor.
-        """
+        """Collection - Destructor."""
         super().__del__()
 
     def iterator(self):
@@ -875,9 +873,7 @@ class ParticleCollectionAOS(ParticleCollection):
         self._ncount = 0
 
     def cstruct(self):
-        """
-        'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
-        """
+        """Returns the ctypes mapping of the particle data. This depends on the specific structure in question."""
         cstruct = self._data_c.ctypes.data_as(c_void_p)
         return cstruct
 

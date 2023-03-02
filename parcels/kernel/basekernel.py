@@ -205,9 +205,7 @@ class BaseKernel(object):
                 self.src_file = src_file_or_files
 
     def get_kernel_compile_files(self):
-        """
-        Returns the correct src_file, lib_file, log_file for this kernel.
-        """
+        """Returns the correct src_file, lib_file, log_file for this kernel."""
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -313,9 +311,7 @@ class BaseKernel(object):
         pset.remove_indices(indices)
 
     def load_fieldset_jit(self, pset):
-        """
-        Updates the loaded fields of pset's fieldset according to the chunk information within their grids.
-        """
+        """Updates the loaded fields of pset's fieldset according to the chunk information within their grids."""
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
                 g.cstruct = None  # This force to point newly the grids from Python to C

@@ -113,9 +113,7 @@ class BaseParticleFile(ABC):
 
     @abstractmethod
     def _reserved_var_names(self):
-        """
-        Returns the reserved dimension names not to be written just once.
-        """
+        """Returns the reserved dimension names not to be written just once."""
         pass
 
     def _create_variables_attribute_dict(self):

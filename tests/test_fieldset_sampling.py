@@ -559,8 +559,7 @@ def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_random_field(pset_mode, mode, k_sample_p, xdim=20, ydim=20, npart=100):
-    """Sampling test that tests for overshoots by sampling a field of random numbers between 0 and 1.
-    """
+    """Sampling test that tests for overshoots by sampling a field of random numbers between 0 and 1."""
     np.random.seed(123456)
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1., ydim, dtype=np.float32)}

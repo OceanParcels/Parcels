@@ -28,9 +28,7 @@ class Collection(ABC):
 
     @abstractmethod
     def __del__(self):
-        """
-        Collection - Destructor.
-        """
+        """Collection - Destructor."""
         pass
 
     @property
@@ -749,9 +747,7 @@ class Collection(ABC):
         pass
 
     def __len__(self):
-        """
-        This function returns the length, in terms of 'number of elements, of a collection.
-        """
+        """This function returns the length, in terms of 'number of elements, of a collection."""
         return self._ncount
 
     @abstractmethod
@@ -832,9 +828,7 @@ class ParticleCollection(Collection):
 
     @property
     def pclass(self):
-        """
-        'pclass' stores the actual class type of the particles allocated and managed in this collection.
-        """
+        """Stores the actual class type of the particles allocated and managed in this collection."""
         return self._pclass
 
     @property
@@ -875,9 +869,7 @@ class ParticleCollection(Collection):
 
     @abstractmethod
     def cstruct(self):
-        """
-        'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
-        """
+        """Returns the ctypes mapping of the particle data. This depends on the specific structure in question."""
         pass
 
     @abstractmethod

@@ -247,9 +247,7 @@ If you are on macOS, it might help to type 'export CC=gcc'
 
 
 class CCompiler_SS(CCompiler):
-    """
-    Single-stage C-compiler; used for a SINGLE source file.
-    """
+    """Single-stage C-compiler; used for a SINGLE source file."""
 
     def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
         super(CCompiler_SS, self).__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
