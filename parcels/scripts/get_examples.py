@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 import pkg_resources
 from tqdm import tqdm
 
-
 example_data_files = (
     ["MovingEddies_data/" + fn for fn in [
         "moving_eddiesP.nc", "moving_eddiesU.nc", "moving_eddiesV.nc"]]
