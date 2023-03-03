@@ -3,10 +3,10 @@ import argparse
 import os
 import shutil
 from datetime import datetime, timedelta
+from urllib.request import urlopen
 
 import pkg_resources
 from tqdm import tqdm
-
 
 example_data_files = (
     ["MovingEddies_data/" + fn for fn in [
