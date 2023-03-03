@@ -5,16 +5,22 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 
-from parcels import AdvectionEE
-from parcels import AdvectionRK4
-from parcels import AdvectionRK45
-from parcels import FieldSet
-from parcels import JITParticle
-from parcels import ScipyParticle
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
-from parcels import timer
-from parcels import Variable
+from parcels import (  # noqa
+    AdvectionEE,
+    AdvectionRK4,
+    AdvectionRK45,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    ScipyParticle,
+    Variable,
+    timer,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

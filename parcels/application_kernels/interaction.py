@@ -3,7 +3,6 @@ import numpy as np
 
 from parcels.tools.statuscodes import OperationCode, StateCode
 
-
 __all__ = ['AsymmetricAttraction', 'NearestNeighborWithinRange',
            'MergeWithNearestNeighbor']
 

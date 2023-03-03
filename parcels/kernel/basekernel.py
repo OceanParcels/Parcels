@@ -1,37 +1,38 @@
-import re
-import _ctypes
 import inspect
-import numpy.ctypeslib as npct
-from time import time as ostime
-from os import path
-from os import remove
-from sys import platform
-from sys import version_info
+import re
 from ast import FunctionDef
 from hashlib import md5
-from parcels.tools.loggers import logger
+from os import path, remove
+from sys import platform, version_info
+from time import time as ostime
+
+import _ctypes
 import numpy as np
+import numpy.ctypeslib as npct
 from numpy import ndarray
+
+from parcels.tools.loggers import logger
 
 try:
     from mpi4py import MPI
 except:
     MPI = None
 
-from parcels.tools.global_statics import get_cache_dir
+from parcels.application_kernels.advection import AdvectionAnalytical, AdvectionRK4_3D
 
 # === import just necessary field classes to perform setup checks === #
-from parcels.field import Field
-from parcels.field import VectorField
-from parcels.field import NestedField
-from parcels.field import SummedField
+from parcels.field import (
+    Field,
+    FieldOutOfBoundError,
+    FieldOutOfBoundSurfaceError,
+    NestedField,
+    SummedField,
+    TimeExtrapolationError,
+    VectorField,
+)
 from parcels.grid import GridCode
-from parcels.field import FieldOutOfBoundError
-from parcels.field import FieldOutOfBoundSurfaceError
-from parcels.field import TimeExtrapolationError
-from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
-from parcels.application_kernels.advection import AdvectionRK4_3D
-from parcels.application_kernels.advection import AdvectionAnalytical
+from parcels.tools.global_statics import get_cache_dir
+from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
 
 __all__ = ['BaseKernel']
 

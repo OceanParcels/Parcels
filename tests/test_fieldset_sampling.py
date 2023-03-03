@@ -1,11 +1,27 @@
-from parcels import (FieldSet, Field, NestedField, ScipyParticle, JITParticle, Geographic,
-                     AdvectionRK4, AdvectionRK4_3D, Variable, ErrorCode)
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+from datetime import timedelta as delta
+from math import cos, pi
+
 import numpy as np
 import pytest
-from math import cos, pi
-from datetime import timedelta as delta
+
+from parcels import (  # noqa
+    AdvectionRK4,
+    AdvectionRK4_3D,
+    ErrorCode,
+    Field,
+    FieldSet,
+    Geographic,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    NestedField,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    ScipyParticle,
+    Variable,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

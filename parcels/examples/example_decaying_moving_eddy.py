@@ -3,11 +3,7 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 
-from parcels import AdvectionRK4
-from parcels import FieldSet
-from parcels import JITParticle
-from parcels import ParticleSet
-from parcels import ScipyParticle
+from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 

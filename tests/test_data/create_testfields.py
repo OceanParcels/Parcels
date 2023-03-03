@@ -1,13 +1,18 @@
-from parcels import FieldSet, GridCode
-import numpy as np
 import math
+
+import numpy as np
+
+from parcels import FieldSet, GridCode
+
 try:
     from pympler import asizeof
 except:
     asizeof = None
 
 from os import path
+
 import xarray as xr
+
 try:
     from parcels.tools import perlin2d as PERLIN
 except:

@@ -1,9 +1,22 @@
-from parcels import (FieldSet, Field, ScipyParticle, JITParticle,
-                     Variable, StateCode, OperationCode, CurvilinearZGrid)
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 import numpy as np
 import pytest
+
+from parcels import (  # noqa
+    CurvilinearZGrid,
+    Field,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    OperationCode,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    ScipyParticle,
+    StateCode,
+    Variable,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

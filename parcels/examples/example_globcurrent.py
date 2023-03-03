@@ -6,16 +6,17 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from parcels import AdvectionRK4
-from parcels import ErrorCode
-from parcels import Field
-from parcels import FieldSet
-from parcels import JITParticle
-from parcels import TimeExtrapolationError
-from parcels import ParticleSet
-from parcels import ScipyParticle
-from parcels import Variable
-
+from parcels import (
+    AdvectionRK4,
+    ErrorCode,
+    Field,
+    FieldSet,
+    JITParticle,
+    ParticleSet,
+    ScipyParticle,
+    TimeExtrapolationError,
+    Variable,
+)
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 

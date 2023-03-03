@@ -1,13 +1,31 @@
-from parcels import (FieldSet, Field, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, ErrorCode, UnitConverter)
-from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
-import numpy as np
-import xarray as xr
 import math
-import pytest
-from os import path
 from datetime import timedelta as delta
+from os import path
+
+import numpy as np
+import pytest
+import xarray as xr
+
+from parcels import (  # noqa
+    AdvectionRK4,
+    AdvectionRK4_3D,
+    CurvilinearZGrid,
+    ErrorCode,
+    Field,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    RectilinearSGrid,
+    RectilinearZGrid,
+    ScipyParticle,
+    UnitConverter,
+    Variable,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
