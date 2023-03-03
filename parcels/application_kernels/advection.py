@@ -3,7 +3,6 @@ import math
 
 from parcels.tools.statuscodes import OperationCode
 
-
 __all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D',
            'AdvectionAnalytical']
 
@@ -110,6 +109,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     Note that the time-dependent scheme is currently implemented with 'intermediate timesteps'
     (default 10 per model timestep) and not yet with the full analytical time integration"""
     import numpy as np
+
     import parcels.tools.interpolation_utils as i_u
 
     tol = 1e-10

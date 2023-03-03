@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
 
-from parcels import (
-    FieldSet, ParticleSet, JITParticle, StateCode, Field
-)
-from parcels.particle import ScipyInteractionParticle, Variable, ScipyParticle
-from parcels.application_kernels.interaction import NearestNeighborWithinRange
-from parcels.application_kernels.interaction import AsymmetricAttraction
-from parcels.application_kernels.interaction import MergeWithNearestNeighbor
+from parcels import Field, FieldSet, JITParticle, ParticleSet, StateCode
 from parcels.application_kernels.advection import AdvectionRK4
+from parcels.application_kernels.interaction import (
+    AsymmetricAttraction,
+    MergeWithNearestNeighbor,
+    NearestNeighborWithinRange,
+)
+from parcels.particle import ScipyInteractionParticle, ScipyParticle, Variable
 
 ptype = {'scipy': ScipyInteractionParticle, 'jit': JITParticle}
 

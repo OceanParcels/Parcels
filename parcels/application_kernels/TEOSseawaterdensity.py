@@ -1,7 +1,6 @@
 """Collection of pre-built sea water density kernels"""
 import math
 
-
 __all__ = ['PolyTEOS10_bsq']
 
 

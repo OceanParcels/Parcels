@@ -1,20 +1,18 @@
+import warnings
 from copy import deepcopy
 from glob import glob
 from os import path
 
 import dask.array as da
 import numpy as np
-import warnings
 
-from parcels.field import Field, DeferredArray
-from parcels.field import NestedField
-from parcels.field import SummedField
-from parcels.field import VectorField
+from parcels.field import DeferredArray, Field, NestedField, SummedField, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
-from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import TimeExtrapolationError
+
 try:
     from mpi4py import MPI
 except:

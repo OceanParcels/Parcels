@@ -1,5 +1,7 @@
-from parcels.interaction.neighborsearch.base import BaseFlatNeighborSearch
-from parcels.interaction.neighborsearch.base import BaseSphericalNeighborSearch
+from parcels.interaction.neighborsearch.base import (
+    BaseFlatNeighborSearch,
+    BaseSphericalNeighborSearch,
+)
 
 
 class BruteFlatNeighborSearch(BaseFlatNeighborSearch):

@@ -1,18 +1,20 @@
-from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4
-from datetime import timedelta as delta
+import gc
+import os
+import sys
+import time as ostime
 from argparse import ArgumentParser
-import numpy as np
+from datetime import timedelta as delta
+from glob import glob
+
 import dask as da
 import dask.array as daArray
-from glob import glob
-import time as ostime
 import matplotlib.pyplot as plt
-import os
-import parcels
+import numpy as np
 import psutil
 
-import gc
-import sys
+import parcels
+from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet
+
 try:
     from mpi4py import MPI
 except:

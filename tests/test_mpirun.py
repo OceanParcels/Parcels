@@ -1,9 +1,11 @@
-from os import path, system
+import sys
 from glob import glob
+from os import path, system
+
 import numpy as np
 import pytest
-import sys
 import xarray as xr
+
 try:
     from mpi4py import MPI
 except:

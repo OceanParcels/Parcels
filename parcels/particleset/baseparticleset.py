@@ -1,24 +1,22 @@
-import numpy as np
-from abc import ABC
-from abc import abstractmethod
+import time as time_module
+from abc import ABC, abstractmethod
 from datetime import datetime
 from datetime import timedelta as delta
 from os import path
-import time as time_module
-import cftime
 
+import cftime
+import numpy as np
 from tqdm import tqdm
 
-from parcels.tools.statuscodes import StateCode
-from parcels.tools.global_statics import get_package_dir
-from parcels.compilation.codecompiler import GNUCompiler
-from parcels.field import NestedField
-from parcels.field import SummedField
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.kernel.basekernel import BaseKernel as Kernel
 from parcels.collection.collections import ParticleCollection
-from parcels.tools.loggers import logger
+from parcels.compilation.codecompiler import GNUCompiler
+from parcels.field import NestedField, SummedField
 from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
+from parcels.kernel.basekernel import BaseKernel as Kernel
+from parcels.tools.global_statics import get_package_dir
+from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import StateCode
 
 
 class NDCluster(ABC):

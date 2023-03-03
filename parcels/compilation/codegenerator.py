@@ -1,18 +1,14 @@
 import ast
-from abc import ABC
-from abc import abstractmethod
 import collections
 import math
-import numpy as np
 import random
+from abc import ABC, abstractmethod
 from copy import copy
 
 import cgen as c
+import numpy as np
 
-from parcels.field import Field
-from parcels.field import NestedField
-from parcels.field import SummedField
-from parcels.field import VectorField
+from parcels.field import Field, NestedField, SummedField, VectorField
 from parcels.grid import Grid
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger

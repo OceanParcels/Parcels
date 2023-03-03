@@ -1,30 +1,30 @@
-from datetime import date
-from datetime import datetime
+import sys
+from copy import copy
+from datetime import date, datetime
 from datetime import timedelta as delta
 
-import sys
 import numpy as np
 import xarray as xr
-from copy import copy
 
-from parcels.grid import GridCode
-from parcels.grid import CurvilinearGrid
-from parcels.kernel import Kernel
-from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa
-from parcels.particlefile import ParticleFile
-from parcels.tools.statuscodes import StateCode
-from parcels.particleset.baseparticleset import BaseParticleSet
-from parcels.collection.collectionsoa import ParticleCollectionSOA
-from parcels.collection.collectionsoa import ParticleCollectionIteratorSOA  # noqa
 from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # noqa
-from parcels.tools.converters import convert_to_flat_array
-from parcels.tools.converters import _get_cftime_calendars
-from parcels.tools.loggers import logger
+from parcels.collection.collectionsoa import ParticleCollectionIteratorSOA  # noqa
+from parcels.collection.collectionsoa import ParticleCollectionSOA
+from parcels.grid import CurvilinearGrid, GridCode
 from parcels.interaction.interactionkernelsoa import InteractionKernelSOA
-from parcels.interaction.neighborsearch import BruteSphericalNeighborSearch
-from parcels.interaction.neighborsearch import BruteFlatNeighborSearch
-from parcels.interaction.neighborsearch import KDTreeFlatNeighborSearch
-from parcels.interaction.neighborsearch import HashSphericalNeighborSearch
+from parcels.interaction.neighborsearch import (
+    BruteFlatNeighborSearch,
+    BruteSphericalNeighborSearch,
+    HashSphericalNeighborSearch,
+    KDTreeFlatNeighborSearch,
+)
+from parcels.kernel import Kernel
+from parcels.particle import JITParticle, ScipyParticle, Variable  # noqa
+from parcels.particlefile import ParticleFile
+from parcels.particleset.baseparticleset import BaseParticleSet
+from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
+from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import StateCode
+
 try:
     from mpi4py import MPI
 except:

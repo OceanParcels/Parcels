@@ -1,27 +1,27 @@
-from datetime import date
-from datetime import datetime
+import sys
+from copy import copy
+from ctypes import c_void_p
+from datetime import date, datetime
 from datetime import timedelta as delta
 
-import sys
 import numpy as np
 import xarray as xr
-from ctypes import c_void_p
-from copy import copy
 
+from parcels.collection.collectionaos import (  # NOQA
+    ParticleCollectionAOS,
+    ParticleCollectionIterableAOS,
+    ParticleCollectionIteratorAOS,
+)
+from parcels.field import NestedField, SummedField
 from parcels.grid import GridCode
-from parcels.field import NestedField
-from parcels.field import SummedField
 from parcels.kernel.kernelaos import KernelAOS
-from parcels.particle import Variable, ScipyParticle, JITParticle # NOQA
+from parcels.particle import JITParticle, ScipyParticle, Variable  # NOQA
 from parcels.particlefile.particlefileaos import ParticleFileAOS
-from parcels.tools.converters import convert_to_flat_array
-from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
 from parcels.particleset.baseparticleset import BaseParticleSet
-from parcels.collection.collectionaos import ParticleCollectionAOS
-from parcels.collection.collectionaos import ParticleCollectionIteratorAOS, ParticleCollectionIterableAOS  # NOQA
-
-from parcels.tools.converters import _get_cftime_calendars
+from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import OperationCode, StateCode  # NOQA
+
 try:
     from mpi4py import MPI
 except:

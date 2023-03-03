@@ -3,18 +3,20 @@ from datetime import timedelta as delta
 from glob import glob
 from os import path
 
+import dask
 import numpy as np
 import pytest
-import dask
 
-from parcels import AdvectionRK4
-from parcels import Field
-from parcels import FieldSet
-from parcels import JITParticle
-from parcels import ParticleFile
-from parcels import ParticleSet
-from parcels import ScipyParticle
-from parcels import Variable
+from parcels import (
+    AdvectionRK4,
+    Field,
+    FieldSet,
+    JITParticle,
+    ParticleFile,
+    ParticleSet,
+    ScipyParticle,
+    Variable,
+)
 from parcels.tools.statuscodes import DaskChunkingError
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

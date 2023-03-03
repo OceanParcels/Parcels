@@ -1,15 +1,13 @@
+import copy
 from datetime import datetime
 from datetime import timedelta as delta
 
 import numpy as np
-import copy
 
-from parcels.field import Field
-from parcels.field import VectorField
-from parcels.grid import CurvilinearGrid
-from parcels.grid import GridCode
-from parcels.tools.statuscodes import TimeExtrapolationError
+from parcels.field import Field, VectorField
+from parcels.grid import CurvilinearGrid, GridCode
 from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import TimeExtrapolationError
 
 
 def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None,
