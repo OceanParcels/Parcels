@@ -1,34 +1,36 @@
 import collections
 import datetime
 import math
-from ctypes import c_float
-from ctypes import c_int
-from ctypes import POINTER
-from ctypes import pointer
-from ctypes import Structure
+from ctypes import POINTER, Structure, c_float, c_int, pointer
+from pathlib import Path
 
 import dask.array as da
 import numpy as np
 import xarray as xr
-from pathlib import Path
 
 import parcels.tools.interpolation_utils as i_u
-from .fieldfilebuffer import (NetcdfFileBuffer, DeferredNetcdfFileBuffer,
-                              DaskFileBuffer, DeferredDaskFileBuffer)
-from .grid import CGrid
-from .grid import Grid
-from .grid import GridCode
-from parcels.tools.converters import Geographic
-from parcels.tools.converters import GeographicPolar
-from parcels.tools.converters import TimeConverter
-from parcels.tools.converters import UnitConverter
-from parcels.tools.converters import unitconverters_map
-from parcels.tools.statuscodes import FieldOutOfBoundError
-from parcels.tools.statuscodes import FieldOutOfBoundSurfaceError
-from parcels.tools.statuscodes import FieldSamplingError
-from parcels.tools.statuscodes import TimeExtrapolationError
+from parcels.tools.converters import (
+    Geographic,
+    GeographicPolar,
+    TimeConverter,
+    UnitConverter,
+    unitconverters_map,
+)
 from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import (
+    FieldOutOfBoundError,
+    FieldOutOfBoundSurfaceError,
+    FieldSamplingError,
+    TimeExtrapolationError,
+)
 
+from .fieldfilebuffer import (
+    DaskFileBuffer,
+    DeferredDaskFileBuffer,
+    DeferredNetcdfFileBuffer,
+    NetcdfFileBuffer,
+)
+from .grid import CGrid, Grid, GridCode
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
 

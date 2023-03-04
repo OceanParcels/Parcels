@@ -3,19 +3,17 @@ import random  # noqa
 from collections import defaultdict
 
 import numpy as np
+
 try:
     from mpi4py import MPI
 except:
     MPI = None
 
-from parcels.field import NestedField
-from parcels.field import SummedField
-from parcels.field import VectorField
-from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 import parcels.rng as ParcelsRandom  # noqa
-from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
+from parcels.field import NestedField, SummedField, VectorField
+from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 from parcels.tools.loggers import logger
-
+from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
 
 __all__ = ['InteractionKernelSOA']
 

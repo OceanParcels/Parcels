@@ -1,22 +1,44 @@
-from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode, OutOfTimeError
-from parcels.field import Field, VectorField
-from parcels.fieldfilebuffer import DaskFileBuffer
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
-from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes, UnitConverter, GeographicPolar
-import dask.array as da
-import dask
-from datetime import timedelta as delta
 import datetime
-import numpy as np
-import xarray as xr
-import pytest
-from os import path
-import cftime
 import gc
-import psutil
 import os
 import sys
+from datetime import timedelta as delta
+from os import path
+
+import cftime
+import dask
+import dask.array as da
+import numpy as np
+import psutil
+import pytest
+import xarray as xr
+
+from parcels import (  # noqa
+    AdvectionRK4,
+    AdvectionRK4_3D,
+    ErrorCode,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    OutOfTimeError,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    RectilinearZGrid,
+    ScipyParticle,
+    Variable,
+)
+from parcels.field import Field, VectorField
+from parcels.fieldfilebuffer import DaskFileBuffer
+from parcels.tools.converters import (
+    GeographicPolar,
+    TimeConverter,
+    UnitConverter,
+    _get_cftime_calendars,
+    _get_cftime_datetimes,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

@@ -1,14 +1,31 @@
-from parcels import FieldSet, ScipyParticle, JITParticle, Variable, StateCode
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
-from parcels.application_kernels.TEOSseawaterdensity import PolyTEOS10_bsq
-from parcels.application_kernels.EOSseawaterproperties import PressureFromLatDepth, PtempFromTemp, TempFromPtemp, UNESCODensity
-from parcels import ParcelsRandom
+import random as py_random
+import sys
+from os import path
+
 import numpy as np
 import pytest
-import random as py_random
-from os import path
-import sys
+
+from parcels import (  # noqa
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    ParcelsRandom,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    ScipyParticle,
+    StateCode,
+    Variable,
+)
+from parcels.application_kernels.EOSseawaterproperties import (
+    PressureFromLatDepth,
+    PtempFromTemp,
+    TempFromPtemp,
+    UNESCODensity,
+)
+from parcels.application_kernels.TEOSseawaterdensity import PolyTEOS10_bsq
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

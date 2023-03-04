@@ -1,8 +1,8 @@
 """Module controlling the writing of ParticleSets to Zarr file."""
-from abc import ABC
-from abc import abstractmethod
-from datetime import timedelta as delta
 import os
+from abc import ABC, abstractmethod
+from datetime import timedelta as delta
+
 import numpy as np
 import xarray as xr
 import zarr

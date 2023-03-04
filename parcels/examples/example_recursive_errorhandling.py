@@ -1,12 +1,14 @@
 import numpy as np
 import pytest
 
-from parcels import ErrorCode
-from parcels import FieldSet
-from parcels import JITParticle
-from parcels import ParticleSet
-from parcels import ParcelsRandom
-from parcels import ScipyParticle
+from parcels import (
+    ErrorCode,
+    FieldSet,
+    JITParticle,
+    ParcelsRandom,
+    ParticleSet,
+    ScipyParticle,
+)
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 

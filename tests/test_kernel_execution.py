@@ -1,13 +1,26 @@
+import sys
 from os import path
-from parcels import (
-    FieldSet, ScipyParticle, JITParticle, StateCode, OperationCode, ErrorCode, KernelError,
-    OutOfBoundsError, AdvectionRK4
-)
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+
 import numpy as np
 import pytest
-import sys
+
+from parcels import (  # noqa
+    AdvectionRK4,
+    ErrorCode,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelError,
+    KernelSOA,
+    OperationCode,
+    OutOfBoundsError,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    ScipyParticle,
+    StateCode,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -305,7 +318,12 @@ def test_execution_keep_cfiles_and_nocompilation_warnings(pset_mode, fieldset, d
 
 
 def test_compilers():
-    from parcels.compilation.codecompiler import Clang_parameters, MinGW_parameters, VS_parameters, CCompiler_SS
+    from parcels.compilation.codecompiler import (
+        CCompiler_SS,
+        Clang_parameters,
+        MinGW_parameters,
+        VS_parameters,
+    )
 
     for param_class in [Clang_parameters, MinGW_parameters, VS_parameters]:
         params = param_class()  # noqa

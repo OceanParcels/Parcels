@@ -7,14 +7,15 @@ from os import path
 import numpy as np
 import pytest
 
-from parcels import AdvectionEE
-from parcels import AdvectionRK4
-from parcels import AdvectionRK45
-from parcels import FieldSet
-from parcels import JITParticle
-from parcels import ParticleSet
-from parcels import ScipyParticle
-
+from parcels import (
+    AdvectionEE,
+    AdvectionRK4,
+    AdvectionRK45,
+    FieldSet,
+    JITParticle,
+    ParticleSet,
+    ScipyParticle,
+)
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}

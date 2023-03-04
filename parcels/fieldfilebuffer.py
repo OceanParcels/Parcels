@@ -1,13 +1,13 @@
-import dask.array as da
-from dask import config as da_conf
-from dask import utils as da_utils
-import numpy as np
-import xarray as xr
-from netCDF4 import Dataset as ncDataset
-
 import datetime
 import math
+
+import dask.array as da
+import numpy as np
 import psutil
+import xarray as xr
+from dask import config as da_conf
+from dask import utils as da_utils
+from netCDF4 import Dataset as ncDataset
 
 from parcels.tools.converters import convert_xarray_time_units
 from parcels.tools.loggers import logger

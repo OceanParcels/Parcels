@@ -3,28 +3,24 @@ import math  # noqa
 import random  # noqa
 from ast import parse
 from copy import deepcopy
-from ctypes import byref
-from ctypes import c_double
-from ctypes import c_int
+from ctypes import byref, c_double, c_int
 from os import path
 
 import numpy as np
+
 try:
     from mpi4py import MPI
 except:
     MPI = None
 
-from parcels.kernel.basekernel import BaseKernel
+import parcels.rng as ParcelsRandom  # noqa
 from parcels.compilation.codegenerator import ObjectKernelGenerator as KernelGenerator
 from parcels.compilation.codegenerator import ParticleObjectLoopGenerator
-from parcels.field import NestedField
-from parcels.field import SummedField
-from parcels.field import VectorField
-import parcels.rng as ParcelsRandom  # noqa
-from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode  # noqa
-from parcels.tools.statuscodes import recovery_map as recovery_base_map
+from parcels.field import NestedField, SummedField, VectorField
+from parcels.kernel.basekernel import BaseKernel
 from parcels.tools.loggers import logger
-
+from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode  # noqa
+from parcels.tools.statuscodes import recovery_map as recovery_base_map
 
 __all__ = ['KernelAOS']
 

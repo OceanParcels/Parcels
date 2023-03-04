@@ -1,14 +1,17 @@
-from operator import attrgetter
-from ctypes import Structure, POINTER
 from bisect import bisect_left
+from ctypes import POINTER, Structure
+from operator import attrgetter
 
 import numpy as np
 
 from parcels.collection.collections import ParticleCollection
-from parcels.collection.iterators import BaseParticleAccessor
-from parcels.collection.iterators import BaseParticleCollectionIterator, BaseParticleCollectionIterable
-from parcels.particle import ScipyParticle, JITParticle  # noqa
+from parcels.collection.iterators import (
+    BaseParticleAccessor,
+    BaseParticleCollectionIterable,
+    BaseParticleCollectionIterator,
+)
 from parcels.field import Field
+from parcels.particle import JITParticle, ScipyParticle  # noqa
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import NotTestedError

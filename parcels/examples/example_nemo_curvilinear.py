@@ -6,12 +6,15 @@ from os import path
 import numpy as np
 import pytest
 
-from parcels import AdvectionRK4, AdvectionAnalytical
-from parcels import FieldSet
-from parcels import JITParticle
-from parcels import ParticleFile
-from parcels import ParticleSet
-from parcels import ScipyParticle
+from parcels import (
+    AdvectionAnalytical,
+    AdvectionRK4,
+    FieldSet,
+    JITParticle,
+    ParticleFile,
+    ParticleSet,
+    ScipyParticle,
+)
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 advection = {'RK4': AdvectionRK4, 'AA': AdvectionAnalytical}
@@ -56,9 +59,9 @@ def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
 
 
 def make_plot(trajfile):
-    import xarray as xr
-    import matplotlib.pyplot as plt
     import cartopy
+    import matplotlib.pyplot as plt
+    import xarray as xr
 
     class ParticleData(object):
         def __init__(self):

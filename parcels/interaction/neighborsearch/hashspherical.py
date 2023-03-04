@@ -3,8 +3,10 @@ from math import ceil
 import numpy as np
 
 from parcels.interaction.neighborsearch.base import BaseSphericalNeighborSearch
-from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
-from parcels.interaction.neighborsearch.basehash import hash_split
+from parcels.interaction.neighborsearch.basehash import (
+    BaseHashNeighborSearch,
+    hash_split,
+)
 
 
 class HashSphericalNeighborSearch(BaseHashNeighborSearch,

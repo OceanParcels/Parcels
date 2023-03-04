@@ -1,15 +1,16 @@
-from operator import attrgetter  # NOQA
-
 from ctypes import c_void_p
+from operator import attrgetter  # NOQA
 
 import numpy as np
 
 from parcels.collection.collections import ParticleCollection
-from parcels.collection.iterators import BaseParticleAccessor
-from parcels.collection.iterators import BaseParticleCollectionIterator
-from parcels.collection.iterators import BaseParticleCollectionIterable
-from parcels.particle import ScipyParticle, JITParticle  # noqa
+from parcels.collection.iterators import (
+    BaseParticleAccessor,
+    BaseParticleCollectionIterable,
+    BaseParticleCollectionIterator,
+)
 from parcels.field import Field
+from parcels.particle import JITParticle, ScipyParticle  # noqa
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import NotTestedError

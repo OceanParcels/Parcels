@@ -1,9 +1,9 @@
 """Install Parcels and dependencies."""
 
 try:
-    from setuptools import setup, find_packages
+    from setuptools import find_packages, setup
 except ImportError:
-    from distutils.core import setup, find_packages
+    from distutils.core import find_packages, setup
 
 with open("README.md", "r") as fh:
     long_description = fh.read()

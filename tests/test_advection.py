@@ -1,14 +1,32 @@
-from parcels import (FieldSet, Field, ScipyParticle, JITParticle, ErrorCode, StateCode,
-                     AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D,
-                     AdvectionAnalytical, AdvectionDiffusionM1, AdvectionDiffusionEM)
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
-import numpy as np
-import pytest
 import math
 from datetime import timedelta as delta
-from parcels import logger
+
+import numpy as np
+import pytest
 import xarray as xr
+
+from parcels import (  # noqa
+    AdvectionAnalytical,
+    AdvectionDiffusionEM,
+    AdvectionDiffusionM1,
+    AdvectionEE,
+    AdvectionRK4,
+    AdvectionRK4_3D,
+    AdvectionRK45,
+    ErrorCode,
+    Field,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    ScipyParticle,
+    StateCode,
+    logger,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

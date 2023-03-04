@@ -4,8 +4,8 @@ from operator import attrgetter
 import numpy as np
 
 from parcels.field import Field
-from parcels.tools.statuscodes import StateCode
 from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import StateCode
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable', 'ScipyInteractionParticle']
 

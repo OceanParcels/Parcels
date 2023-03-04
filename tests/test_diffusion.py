@@ -1,13 +1,27 @@
-from parcels import (FieldSet, Field, RectilinearZGrid, JITParticle,
-                     DiffusionUniformKh, AdvectionDiffusionM1, AdvectionDiffusionEM,
-                     ScipyParticle, Variable)
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
-from parcels import ParcelsRandom
 from datetime import timedelta as delta
+
 import numpy as np
 import pytest
 from scipy import stats
+
+from parcels import (  # noqa
+    AdvectionDiffusionEM,
+    AdvectionDiffusionM1,
+    DiffusionUniformKh,
+    Field,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    ParcelsRandom,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    RectilinearZGrid,
+    ScipyParticle,
+    Variable,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
