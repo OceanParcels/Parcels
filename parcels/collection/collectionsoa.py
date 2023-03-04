@@ -148,7 +148,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 if isinstance(v.initial, Field):
                     for i in range(self.ncount):
                         if (time[i] is None) or (np.isnan(time[i])):
-                            raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
+                            raise RuntimeError(f'Cannot initialise a Variable with a Field if no time provided (time-type: {type(time)} values: {time}). Add a "time=" to ParticleSet construction')
                         v.initial.fieldset.computeTimeChunk(time[i], 0)
                         self._data[v.name][i] = v.initial[
                             time[i], depth[i], lat[i], lon[i]
@@ -868,7 +868,7 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         """Initializes the ParticleAccessor to provide access to one
         specific particle.
         """
-        super(ParticleAccessorSOA, self).__init__(pcoll)
+        super().__init__(pcoll)
         self._index = index
         self._next_dt = None
 
@@ -880,7 +880,7 @@ class ParticleAccessorSOA(BaseParticleAccessor):
                  collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
-            result = super(ParticleAccessorSOA, self).__getattr__(name)
+            result = super().__getattr__(name)
         elif name in type(self).__dict__.keys():
             result = object.__getattribute__(self, name)
         else:
@@ -895,7 +895,7 @@ class ParticleAccessorSOA(BaseParticleAccessor):
                       attribute in the underlying collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
-            super(ParticleAccessorSOA, self).__setattr__(name, value)
+            super().__setattr__(name, value)
         elif name in type(self).__dict__.keys():
             object.__setattr__(self, name, value)
         else:
@@ -913,18 +913,18 @@ class ParticleAccessorSOA(BaseParticleAccessor):
             self._next_dt = next_dt
 
     def __repr__(self):
-        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
+        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in self._pcoll.ptype.variables:
             if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
-                str += "%s=%f, " % (var.name, getattr(self, var.name))
+                str += f"{var.name}={getattr(self, var.name):f}, "
         return str + "time=%s)" % time_string
 
 
 class ParticleCollectionIterableSOA(BaseParticleCollectionIterable):
 
     def __init__(self, pcoll, reverse=False, subset=None):
-        super(ParticleCollectionIterableSOA, self).__init__(pcoll, reverse, subset)
+        super().__init__(pcoll, reverse, subset)
 
     def __iter__(self):
         return ParticleCollectionIteratorSOA(pcoll=self._pcoll_immutable, reverse=self._reverse, subset=self._subset)
@@ -997,4 +997,4 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
 
     def __repr__(self):
         dir_str = 'Backward' if self._reverse else 'Forward'
-        return "%s iteration at index %s of %s." % (dir_str, self._index, self.max_len)
+        return f"{dir_str} iteration at index {self._index} of {self.max_len}."

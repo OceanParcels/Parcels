@@ -13,7 +13,7 @@ from parcels.tools.loggers import logger
 __all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', 'vonmisesvariate']
 
 
-class RandomC(object):
+class RandomC:
     stmt_import = """#include "parcels.h"\n\n"""
     fnct_seed = """
 extern void pcls_seed(int seed){
@@ -111,7 +111,7 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
             with open(self.src_file, 'w+') as f:
                 f.write(self.ccode)
             ccompiler.compile(self.src_file, self.lib_file, self.log_file)
-            logger.info("Compiled %s ==> %s" % ("ParcelsRandom", self.lib_file))
+            logger.info("Compiled {} ==> {}".format("ParcelsRandom", self.lib_file))
 
     @property
     def lib(self):

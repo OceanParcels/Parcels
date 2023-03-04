@@ -36,7 +36,7 @@ def _get_cftime_calendars():
     return [getattr(cftime, cf_datetime)(1990, 1, 1).calendar for cf_datetime in _get_cftime_datetimes()]
 
 
-class TimeConverter(object):
+class TimeConverter:
     """ Converter class for dates with different calendars in FieldSets
 
     :param: time_origin: time origin of the class. Currently supported formats are
@@ -133,7 +133,7 @@ class TimeConverter(object):
         return self.time_origin <= other
 
 
-class UnitConverter(object):
+class UnitConverter:
     """ Interface class for spatial unit conversion during field sampling
         that performs no conversion.
     """

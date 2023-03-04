@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import datetime
 import time
 
@@ -35,9 +33,9 @@ class Timer():
 
     def print_local(self):
         if self._start:
-            print("Timer '%s': %g s (process running)" % (self._name, self._t + time.time() - self._start))
+            print(f"Timer '{self._name}': {self._t + time.time() - self._start:g} s (process running)")
         else:
-            print("Timer '%s': %g s" % (self._name, self._t))
+            print(f"Timer '{self._name}': {self._t:g} s")
 
     def local_time(self):
         return self._t + time.time() - self._start if self._start else self._t
@@ -52,7 +50,7 @@ class Timer():
         if step > 0:
             print('(%3d%%) ' % round(time/parent_time*100), end='')
         t_str = '%1.3e s' % time if root_time < 300 else datetime.timedelta(seconds=time)
-        print("Timer %s: %s" % ((self._name).ljust(20 - 2*step + 7*(step == 0)), t_str))
+        print(f"Timer {(self._name).ljust(20 - 2*step + 7*(step == 0))}: {t_str}")
         for child in self._children:
             child.print_tree_sequential(step+1, root_time, time)
 

@@ -240,7 +240,7 @@ def test_advection_periodic_zonal_meridional(pset_mode, mode, xdim=100, ydim=100
 @pytest.mark.parametrize('v', [0.2, np.array(1)])
 @pytest.mark.parametrize('w', [None, -0.2, np.array(0.7)])
 def test_length1dimensions(pset_mode, mode, u, v, w):
-    logger.info("mode: {} pset_mode {}".format(mode, pset_mode))
+    logger.info(f"mode: {mode} pset_mode {pset_mode}")
     (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (0, 1)
     (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (-4, 1)
     (depth, zdim) = (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (3, 1)

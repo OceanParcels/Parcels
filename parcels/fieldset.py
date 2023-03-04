@@ -22,7 +22,7 @@ except:
 __all__ = ['FieldSet']
 
 
-class FieldSet(object):
+class FieldSet:
     """FieldSet class that holds hydrodynamic data needed to execute particles
 
     :param U: :class:`parcels.field.Field` object for zonal velocity component
@@ -208,7 +208,7 @@ class FieldSet(object):
         assert self.V, 'FieldSet does not have a Field named "V"'
         for attr, value in vars(self).items():
             if type(value) is Field:
-                assert value.name == attr, 'Field %s.name (%s) is not consistent' % (value.name, attr)
+                assert value.name == attr, f'Field {value.name}.name ({attr}) is not consistent'
 
         def check_velocityfields(U, V, W):
             if (U.interp_method == 'cgrid_velocity' and V.interp_method != 'cgrid_velocity') or \
@@ -281,10 +281,10 @@ class FieldSet(object):
             paths = sorted(glob(str(paths)))
         if len(paths) == 0:
             notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-            raise IOError("FieldSet files not found for variable %s: %s" % (var, str(notfound_paths)))
+            raise OSError(f"FieldSet files not found for variable {var}: {str(notfound_paths)}")
         for fp in paths:
             if not path.exists(fp):
-                raise IOError("FieldSet file not found: %s" % str(fp))
+                raise OSError("FieldSet file not found: %s" % str(fp))
         return paths
 
     @classmethod
@@ -883,8 +883,7 @@ class FieldSet(object):
         for vars in extra_fields:
             dimensions[vars] = deepcopy(default_dims)
             dimensions[vars]['depth'] = 'depth%s' % vars.lower()
-        filenames = dict([(v, str("%s%s.nc" % (basename, v)))
-                          for v in extra_fields.keys()])
+        filenames = {v: str(f"{basename}{v}.nc") for v in extra_fields.keys()}
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
                                time_periodic=time_periodic, deferred_load=deferred_load,

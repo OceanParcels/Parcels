@@ -42,7 +42,7 @@ def _isParticle(key):
         return False
 
 
-class Field(object):
+class Field:
     """Class that encapsulates access to field data.
 
     :param name: Name of the field
@@ -582,7 +582,7 @@ class Field(object):
         * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
         """
         if self._scaling_factor:
-            raise NotImplementedError(('Scaling factor for field %s already defined.' % self.name))
+            raise NotImplementedError('Scaling factor for field %s already defined.' % self.name)
         self._scaling_factor = factor
         if not self.grid.defer_load:
             self.data *= factor
@@ -1318,7 +1318,7 @@ class Field(object):
 
         :param filename: Basename of the file
         :param varname: Name of the field, to be appended to the filename"""
-        filepath = str(Path('%s%s.nc' % (filename, self.name)))
+        filepath = str(Path(f'{filename}{self.name}.nc'))
         if varname is None:
             varname = self.name
         # Derive name of 'depth' variable for NEMO convention
@@ -1424,7 +1424,7 @@ class Field(object):
             return field
 
 
-class VectorField(object):
+class VectorField:
     """Class VectorField stores 2 or 3 fields which defines together a vector field.
     This enables to interpolate them as one single vector field in the kernels.
 

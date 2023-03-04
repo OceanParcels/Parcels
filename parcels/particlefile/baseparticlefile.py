@@ -17,7 +17,7 @@ except:
 try:
     from parcels._version import version as parcels_version
 except:
-    raise EnvironmentError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
+    raise OSError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
 
 
 __all__ = ['BaseParticleFile']

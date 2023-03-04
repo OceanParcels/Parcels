@@ -23,8 +23,10 @@ if MPI:
     try:
         from sklearn.cluster import KMeans
     except:
-        raise EnvironmentError('sklearn needs to be available if MPI is installed. '
-                               'See http://oceanparcels.org/#parallel_install for more information')
+        raise OSError(
+            'sklearn needs to be available if MPI is installed. '
+            'See http://oceanparcels.org/#parallel_install for more information'
+        )
 
 __all__ = ['ParticleCollectionAOS', 'ParticleCollectionIterableAOS', 'ParticleCollectionIteratorAOS']
 
@@ -138,7 +140,7 @@ class ParticleCollectionAOS(ParticleCollection):
                         init_field.fieldset.computeTimeChunk(time[i], 0)
                     for i in range(self.ncount):
                         if (time[i] is None) or (np.isnan(time[i])):
-                            raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
+                            raise RuntimeError(f'Cannot initialise a Variable with a Field if no time provided (time-type: {type(time)} values: {time}). Add a "time=" to ParticleSet construction')
                         setattr(self._data[i], v.name, init_field[time[i], depth[i], lat[i], lon[i]])
                         logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
 
@@ -964,7 +966,7 @@ class ParticleAccessorAOS(BaseParticleAccessor):
         """Initializes the ParticleAccessor to provide access to one
         specific particle.
         """
-        super(ParticleAccessorAOS, self).__init__(pcoll)
+        super().__init__(pcoll)
         self._index = index
         self._next_dt = None
 
@@ -976,7 +978,7 @@ class ParticleAccessorAOS(BaseParticleAccessor):
                  collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
-            result = super(ParticleAccessorAOS, self).__getattr__(name)
+            result = super().__getattr__(name)
         elif name in type(self).__dict__.keys():
             result = object.__getattribute__(self, name)
         else:
@@ -991,7 +993,7 @@ class ParticleAccessorAOS(BaseParticleAccessor):
                       attribute in the underlying collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
-            super(ParticleAccessorAOS, self).__setattr__(name, value)
+            super().__setattr__(name, value)
         elif name in type(self).__dict__.keys():
             object.__setattr__(self, name, value)
         else:
@@ -1015,7 +1017,7 @@ class ParticleAccessorAOS(BaseParticleAccessor):
 class ParticleCollectionIterableAOS(BaseParticleCollectionIterable):
 
     def __init__(self, pcoll, reverse=False, subset=None):
-        super(ParticleCollectionIterableAOS, self).__init__(pcoll, reverse, subset)
+        super().__init__(pcoll, reverse, subset)
 
     def __iter__(self):
         return ParticleCollectionIteratorAOS(pcoll=self._pcoll_immutable, reverse=self._reverse, subset=self._subset)
@@ -1080,4 +1082,4 @@ class ParticleCollectionIteratorAOS(BaseParticleCollectionIterator):
 
     def __repr__(self):
         dir_str = 'Backward' if self._reverse else 'Forward'
-        return "%s iteration at index %s of %s." % (dir_str, self._index, self.max_len)
+        return f"{dir_str} iteration at index {self._index} of {self.max_len}."

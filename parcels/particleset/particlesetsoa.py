@@ -79,7 +79,7 @@ class ParticleSetSOA(BaseParticleSet):
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
                  pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
-        super(ParticleSetSOA, self).__init__()
+        super().__init__()
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -245,7 +245,7 @@ class ParticleSetSOA(BaseParticleSet):
         self.kernel = None
 
     def __del__(self):
-        super(ParticleSetSOA, self).__del__()
+        super().__del__()
 
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
@@ -527,10 +527,10 @@ class ParticleSetSOA(BaseParticleSet):
         return self
 
     def __iter__(self):
-        return super(ParticleSetSOA, self).__iter__()
+        return super().__iter__()
 
     def iterator(self):
-        return super(ParticleSetSOA, self).iterator()
+        return super().iterator()
 
     def add(self, particles):
         """Add particles to the ParticleSet. Note that this is an

@@ -103,7 +103,7 @@ def main(target_path=None):
         target_path = args.target_path
 
     if os.path.exists(os.path.join(target_path, "MovingEddies_data")):
-        print("Error: {} already exists.".format(target_path))
+        print(f"Error: {target_path} already exists.")
         return
 
     # copy data and examples

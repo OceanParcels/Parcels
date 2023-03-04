@@ -240,7 +240,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
         else:
             gphrase = 'level'
             depth_or_level = depth_level
-        depthstr = ' at %s %g ' % (gphrase, depth_or_level)
+        depthstr = f' at {gphrase} {depth_or_level:g} '
     else:
         depthstr = ''
     if plottype == 'vector':

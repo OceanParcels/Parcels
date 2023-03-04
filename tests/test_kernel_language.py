@@ -34,8 +34,8 @@ pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel':
 
 
 def expr_kernel(name, pset, expr, pset_mode):
-    pycode = """def %s(particle, fieldset, time):
-    particle.p = %s""" % (name, expr)
+    pycode = """def {}(particle, fieldset, time):
+    particle.p = {}""".format(name, expr)
     return pset_type[pset_mode]['kernel'](pset.fieldset, pset.collection.ptype, pyfunc=None,
                                           funccode=pycode, funcname=name, funcvars=['particle'])
 
@@ -338,7 +338,7 @@ def test_random_float(pset_mode, mode, rngfunc, rngargs, npart=10):
     series = random_series(npart, rngfunc, rngargs, mode)
     rnglib = 'ParcelsRandom' if mode == 'jit' else 'random'
     kernel = expr_kernel('TestRandom_%s' % rngfunc, pset,
-                         '%s.%s(%s)' % (rnglib, rngfunc, ', '.join([str(a) for a in rngargs])), pset_mode)
+                         '{}.{}({})'.format(rnglib, rngfunc, ', '.join([str(a) for a in rngargs])), pset_mode)
     pset.execute(kernel, endtime=1., dt=1.)
     assert np.allclose(pset.p, series, atol=1e-9)
 

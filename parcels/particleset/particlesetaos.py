@@ -62,7 +62,7 @@ class ParticleSetAOS(BaseParticleSet):
     """
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
-        super(ParticleSetAOS, self).__init__()
+        super().__init__()
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -270,7 +270,7 @@ class ParticleSetAOS(BaseParticleSet):
         self.kernel = None
 
     def __del__(self):
-        super(ParticleSetAOS, self).__del__()
+        super().__del__()
 
     def delete(self, key):
         """
@@ -389,10 +389,10 @@ class ParticleSetAOS(BaseParticleSet):
         return np.sum([True for p in self._collection if p.state not in [StateCode.Success, StateCode.Evaluate]])
 
     def __iter__(self):
-        return super(ParticleSetAOS, self).__iter__()
+        return super().__iter__()
 
     def iterator(self):
-        return super(ParticleSetAOS, self).iterator()
+        return super().iterator()
 
     def __getitem__(self, index):
         """Get a single particle by index"""
