@@ -327,7 +327,7 @@ class BaseKernel:
                 if type(f) in [VectorField, NestedField, SummedField]:
                     continue
                 if f.data.dtype != np.float32:
-                    raise RuntimeError('Field %s data needs to be float32 in JIT mode' % f.name)
+                    raise RuntimeError(f'Field {f.name} data needs to be float32 in JIT mode')
                 if f in self.field_args.values():
                     f.chunk_data()
                 else:

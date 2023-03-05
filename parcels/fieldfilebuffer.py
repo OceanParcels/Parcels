@@ -47,9 +47,9 @@ class NetcdfFileBuffer(_FileBuffer):
             self.dataset['decoded'] = True
         except:
             if self.netcdf_decodewarning:
-                logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         "
-                                    "It will be opened with no decoding. Filling values might be wrongly parsed."
-                                    % (self.filename, xr.__version__))
+                logger.warning_once(f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}).\n         "
+                                    "It will be opened with no decoding. Filling values might be wrongly parsed.")
+
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
             self.dataset['decoded'] = False
         for inds in self.indices.values():
@@ -286,8 +286,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
             self.dataset['decoded'] = True
         except:
-            logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
-                                % (self.filename, xr.__version__))
+            logger.warning_once(f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}).\n         It will be opened with no decoding. Filling values might be wrongly parsed.")
             if self.lock_file:
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict)
             else:

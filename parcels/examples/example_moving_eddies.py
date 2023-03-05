@@ -103,7 +103,7 @@ def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,
                                  start=start, finish=finish)
 
     if verbose:
-        print("Initial particle positions:\n%s" % pset)
+        print(f"Initial particle positions:\n{pset}")
 
     # Execute for 1 week, with 1 hour timesteps and hourly output
     runtime = delta(days=7)
@@ -113,7 +113,7 @@ def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,
                  moviedt=None)
 
     if verbose:
-        print("Final particle positions:\n%s" % pset)
+        print(f"Final particle positions:\n{pset}")
 
     return pset
 

@@ -58,7 +58,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
         for kwvar in kwargs:
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) do nott have the same lengths.' % kwvar)
+                f'{kwvar} and positions (lon, lat, depth) do nott have the same lengths.')
 
         offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
         if MPI:
@@ -123,7 +123,7 @@ class ParticleCollectionAOS(ParticleCollection):
                     if isinstance(kwvar, Field):
                         continue
                     if not hasattr(self._data[i], kwvar):
-                        raise RuntimeError('Particle class does not have Variable %s' % kwvar)
+                        raise RuntimeError(f'Particle class does not have Variable {kwvar}')
                     setattr(self._data[i], kwvar, kwargs[kwvar][i])
                     if kwvar not in initialised:
                         initialised.add(kwvar)
@@ -946,7 +946,7 @@ class ParticleCollectionAOS(ParticleCollection):
                     attrib.to_write = write_status
                 setattr(p, var, attrib)
         if not var_changed:
-            raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
+            raise SyntaxError(f'Could not change the write status of {var}, because it is not a Variable name')
 
 
 class ParticleAccessorAOS(BaseParticleAccessor):

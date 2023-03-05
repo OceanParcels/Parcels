@@ -73,7 +73,7 @@ class ParticleType:
                 for v in self.variables:
                     if v.name in [v.name for v in ptype.variables]:
                         raise AttributeError(
-                            "Custom Variable name '%s' is not allowed, as it is also a built-in variable" % v.name)
+                            f"Custom Variable name '{v.name}' is not allowed, as it is also a built-in variable")
                     if v.name == 'z':
                         raise AttributeError(
                             "Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
@@ -215,7 +215,7 @@ class ScipyParticle(_Particle):
         for var in vars(type(self)):
             if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
                 str += f"{var}={getattr(self, var):f}, "
-        return str + "time=%s)" % time_string
+        return str + f"time={time_string})"
 
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):

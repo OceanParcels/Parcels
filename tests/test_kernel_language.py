@@ -70,7 +70,7 @@ def test_expression_int(pset_mode, mode, name, expr, result, npart=10):
     pset = pset_type[pset_mode]['pset'](None, pclass=TestParticle,
                                         lon=np.linspace(0., 1., npart),
                                         lat=np.zeros(npart) + 0.5)
-    pset.execute(expr_kernel('Test%s' % name, pset, expr, pset_mode), endtime=1., dt=1.)
+    pset.execute(expr_kernel(f'Test{name}', pset, expr, pset_mode), endtime=1., dt=1.)
     assert np.alltrue([p.p == result for p in pset])
 
 
@@ -90,7 +90,7 @@ def test_expression_float(pset_mode, mode, name, expr, result, npart=10):
     pset = pset_type[pset_mode]['pset'](None, pclass=TestParticle,
                                         lon=np.linspace(0., 1., npart),
                                         lat=np.zeros(npart) + 0.5)
-    pset.execute(expr_kernel('Test%s' % name, pset, expr, pset_mode), endtime=1., dt=1.)
+    pset.execute(expr_kernel(f'Test{name}', pset, expr, pset_mode), endtime=1., dt=1.)
     assert np.alltrue([p.p == result for p in pset])
 
 
@@ -116,7 +116,7 @@ def test_expression_bool(pset_mode, mode, name, expr, result, npart=10):
     pset = pset_type[pset_mode]['pset'](None, pclass=TestParticle,
                                         lon=np.linspace(0., 1., npart),
                                         lat=np.zeros(npart) + 0.5)
-    pset.execute(expr_kernel('Test%s' % name, pset, expr, pset_mode), endtime=1., dt=1.)
+    pset.execute(expr_kernel(f'Test{name}', pset, expr, pset_mode), endtime=1., dt=1.)
     if mode == 'jit':
         assert np.all(result == (pset.p == 1))
     else:
@@ -337,7 +337,7 @@ def test_random_float(pset_mode, mode, rngfunc, rngargs, npart=10):
                                         lat=np.zeros(npart) + 0.5)
     series = random_series(npart, rngfunc, rngargs, mode)
     rnglib = 'ParcelsRandom' if mode == 'jit' else 'random'
-    kernel = expr_kernel('TestRandom_%s' % rngfunc, pset,
+    kernel = expr_kernel(f'TestRandom_{rngfunc}', pset,
                          '{}.{}({})'.format(rnglib, rngfunc, ', '.join([str(a) for a in rngargs])), pset_mode)
     pset.execute(kernel, endtime=1., dt=1.)
     assert np.allclose(pset.p, series, atol=1e-9)

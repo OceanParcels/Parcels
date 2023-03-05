@@ -228,7 +228,7 @@ class CCompiler:
                 subprocess.check_call(cmd, stdout=logfile, stderr=logfile)
             except OSError:
                 err = """OSError during compilation
-Please check if compiler exists: %s""" % self._cc
+Please check if compiler exists: {}""".format(self._cc)
                 raise RuntimeError(err)
             except subprocess.CalledProcessError:
                 with open(log) as logfile2:
@@ -266,7 +266,7 @@ class CCompiler_SS(CCompiler):
     def compile(self, src, obj, log):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
         with open(log, 'w') as logfile:
-            logfile.write("Compiling: %s\n" % " ".join(cc))
+            logfile.write("Compiling: {}\n".format(" ".join(cc)))
         self._create_compile_process_(cc, src, log)
 
 

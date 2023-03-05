@@ -97,11 +97,11 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
         if self.src_file is None or self.lib_file is None or self.log_file is None:
             basename = 'parcels_random_%s' % uuid.uuid4()
             lib_filename = "lib" + basename
-            basepath = path.join(get_cache_dir(), "%s" % basename)
-            libpath = path.join(get_cache_dir(), "%s" % lib_filename)
-            self.src_file = "%s.c" % basepath
-            self.lib_file = "%s.so" % libpath
-            self.log_file = "%s.log" % basepath
+            basepath = path.join(get_cache_dir(), f"{basename}")
+            libpath = path.join(get_cache_dir(), f"{lib_filename}")
+            self.src_file = f"{basepath}.c"
+            self.lib_file = f"{libpath}.so"
+            self.log_file = f"{basepath}.log"
         ccompiler = compiler
         if ccompiler is None:
             cppargs = []

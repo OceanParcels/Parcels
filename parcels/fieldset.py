@@ -50,7 +50,7 @@ class FieldSet:
     def checkvaliddimensionsdict(dims):
         for d in dims:
             if d not in ['lon', 'lat', 'depth', 'time']:
-                raise NameError('%s is not a valid key in the dimensions dictionary' % d)
+                raise NameError(f'{d} is not a valid key in the dimensions dictionary')
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
@@ -143,7 +143,7 @@ class FieldSet:
             raise RuntimeError("FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?")
         name = field.name if name is None else name
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
-            raise RuntimeError("FieldSet already has a Field with name '%s'" % name)
+            raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
         if isinstance(field, SummedField):
             setattr(self, name, field)
             field.name = name
@@ -284,7 +284,7 @@ class FieldSet:
             raise OSError(f"FieldSet files not found for variable {var}: {str(notfound_paths)}")
         for fp in paths:
             if not path.exists(fp):
-                raise OSError("FieldSet file not found: %s" % str(fp))
+                raise OSError(f"FieldSet file not found: {fp}")
         return paths
 
     @classmethod
@@ -988,7 +988,7 @@ class FieldSet:
         :param filename: Basename of the output fileset"""
 
         if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
-            logger.info("Generating FieldSet output with basename: %s" % filename)
+            logger.info(f"Generating FieldSet output with basename: {filename}")
 
             if hasattr(self, 'U'):
                 self.U.write(filename, varname='vozocrtx')

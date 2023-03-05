@@ -160,7 +160,7 @@ class ParticleSetSOA(BaseParticleSet):
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
+                f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -399,7 +399,7 @@ class ParticleSetSOA(BaseParticleSet):
                     (1-xsi)*eta * grid.lat[j+1, i]
             return list(lon), list(lat)
         else:
-            raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
+            raise NotImplementedError(f'Mode {mode} not implemented. Please use "monte carlo" algorithm instead.')
 
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
@@ -423,9 +423,9 @@ class ParticleSetSOA(BaseParticleSet):
         """
 
         if repeatdt is not None:
-            logger.warning('Note that the `repeatdt` argument is not retained from %s, and that '
+            logger.warning(f'Note that the `repeatdt` argument is not retained from {filename}, and that '
                            'setting a new repeatdt will start particles from the _new_ particle '
-                           'locations.' % filename)
+                           'locations.')
 
         pfile = xr.open_zarr(str(filename))
         pfile_vars = [v for v in pfile.data_vars]
@@ -437,7 +437,7 @@ class ParticleSetSOA(BaseParticleSet):
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
             elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'once_written', 'state'] \
                     and v.to_write:
-                raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
+                raise RuntimeError(f'Variable {v.name} is in pclass but not in the particlefile')
             to_write[v.name] = v.to_write
         vars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
         vars['id'] = np.ma.filled(pfile.variables['trajectory'], np.nan)

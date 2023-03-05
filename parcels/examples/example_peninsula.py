@@ -68,7 +68,7 @@ def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
         V[:, 1:] = (P[:, 1:] - P[:, :-1])
         U[1:, :] = -(P[1:, :] - P[:-1, :])
     else:
-        raise RuntimeError('Grid_type %s is not a valid option' % grid_type)
+        raise RuntimeError(f'Grid_type {grid_type} is not a valid option')
 
     # Set land points to NaN
     landpoints = P >= 0.
@@ -120,7 +120,7 @@ def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
                                  start=(x, y[0]), finish=(x, y[1]), time=0)
 
     if verbose:
-        print("Initial particle positions:\n%s" % pset)
+        print(f"Initial particle positions:\n{pset}")
 
     # Advect the particles for 24h
     time = delta(hours=24)
@@ -132,7 +132,7 @@ def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
     pset.execute(k_adv + k_p, runtime=time, dt=dt, output_file=out)
 
     if verbose:
-        print("Final particle positions:\n%s" % pset)
+        print(f"Final particle positions:\n{pset}")
 
     return pset
 

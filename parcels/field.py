@@ -130,7 +130,7 @@ class Field:
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
             else:
-                raise RuntimeError('interp_method is a dictionary but %s is not in it' % name)
+                raise RuntimeError(f'interp_method is a dictionary but {name} is not in it')
         else:
             self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
@@ -214,7 +214,7 @@ class Field:
         self.chunk_set = False
         self.filebuffers = [None] * 2
         if len(kwargs) > 0:
-            raise SyntaxError('Field received an unexpected keyword argument "%s"' % list(kwargs.keys())[0])
+            raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
 
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
@@ -260,9 +260,7 @@ class Field:
 
         if not np.all((time[1:] - time[:-1]) > 0):
             id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
-            raise AssertionError(
-                'Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
-                % (dataFiles[id_not_ordered], dataFiles[id_not_ordered + 1]))
+            raise AssertionError(f'Please make sure your netCDF files are ordered in time. First pair of non-ordered files: {dataFiles[id_not_ordered]}, {dataFiles[id_not_ordered + 1]}')
         return time, time_origin, timeslices, dataFiles
 
     @classmethod
@@ -348,7 +346,7 @@ class Field:
         indices = {} if indices is None else indices.copy()
         for ind in indices:
             if len(indices[ind]) == 0:
-                raise RuntimeError('Indices for %s can not be empty' % ind)
+                raise RuntimeError(f'Indices for {ind} can not be empty')
             assert np.min(indices[ind]) >= 0, \
                 ('Negative indices are currently not allowed in Parcels. '
                  + 'This is related to the non-increasing dimension it could generate '
@@ -361,7 +359,7 @@ class Field:
             if variable[0] in interp_method:
                 interp_method = interp_method[variable[0]]
             else:
-                raise RuntimeError('interp_method is a dictionary but %s is not in it' % variable[0])
+                raise RuntimeError(f'interp_method is a dictionary but {variable[0]} is not in it')
 
         _grid_fb_class = NetcdfFileBuffer
 
@@ -445,8 +443,8 @@ class Field:
                     filebuffer.name = filebuffer.parse_name(variable[1])
                     buffer_data = filebuffer.data
                     if len(buffer_data.shape) == 4:
-                        errormessage = ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
-                                        'Flag transpose=True could help to reorder the data.' % filebuffer.name)
+                        errormessage = (f'Field {filebuffer.name} expecting a data shape of [tdim, zdim, ydim, xdim]. '
+                                        'Flag transpose=True could help to reorder the data.')
                         assert buffer_data.shape[0] == grid.tdim, errormessage
                         assert buffer_data.shape[2] == grid.ydim - 2 * grid.meridional_halo, errormessage
                         assert buffer_data.shape[3] == grid.xdim - 2 * grid.zonal_halo, errormessage
@@ -553,8 +551,8 @@ class Field:
             if len(data.shape) == 4:
                 data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
         if len(data.shape) == 4:
-            errormessage = ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
-                            'Flag transpose=True could help to reorder the data.' % self.name)
+            errormessage = (f'Field {self.name} expecting a data shape of [tdim, zdim, ydim, xdim]. '
+                            'Flag transpose=True could help to reorder the data.')
             assert data.shape[0] == self.grid.tdim, errormessage
             assert data.shape[2] == self.grid.ydim - 2 * self.grid.meridional_halo, errormessage
             assert data.shape[3] == self.grid.xdim - 2 * self.grid.zonal_halo, errormessage
@@ -566,8 +564,8 @@ class Field:
             assert (data.shape == (self.grid.tdim,
                                    self.grid.ydim - 2 * self.grid.meridional_halo,
                                    self.grid.xdim - 2 * self.grid.zonal_halo)), \
-                ('Field %s expecting a data shape of [tdim, ydim, xdim]. '
-                 'Flag transpose=True could help to reorder the data.' % self.name)
+                (f'Field {self.name} expecting a data shape of [tdim, ydim, xdim]. '
+                 'Flag transpose=True could help to reorder the data.')
         if self.grid.meridional_halo > 0 or self.grid.zonal_halo > 0:
             data = self.add_periodic_halo(zonal=self.grid.zonal_halo > 0, meridional=self.grid.meridional_halo > 0, halosize=max(self.grid.meridional_halo, self.grid.zonal_halo), data=data)
         return data
@@ -582,7 +580,7 @@ class Field:
         * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
         """
         if self._scaling_factor:
-            raise NotImplementedError('Scaling factor for field %s already defined.' % self.name)
+            raise NotImplementedError(f'Scaling factor for field {self.name} already defined.')
         self._scaling_factor = factor
         if not self.grid.defer_load:
             self.data *= factor
@@ -954,7 +952,7 @@ class Field:
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, yi+1, xi+1]
         elif self.interp_method == 'cgrid_velocity':
-            raise RuntimeError("%s is a scalar field. cgrid_velocity interpolation method should be used for vector fields (e.g. FieldSet.UV)" % self.name)
+            raise RuntimeError(f"{self.name} is a scalar field. cgrid_velocity interpolation method should be used for vector fields (e.g. FieldSet.UV)")
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
@@ -1145,15 +1143,13 @@ class Field:
     def ccode_eval_array(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
         self._check_velocitysampling()
-        ccode_str = "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s, %s)" \
-                    % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
+        ccode_str = f"temporal_interpolation({x}, {y}, {z}, {t}, {self.ccode_name}, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
         return ccode_str
 
     def ccode_eval_object(self, var, t, z, y, x):
         self._check_velocitysampling()
         # Casting interp_methd to int as easier to pass on in C-code
-        ccode_str = "temporal_interpolation_pstruct(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s, %s)" \
-                    % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
+        ccode_str = f"temporal_interpolation_pstruct({x}, {y}, {z}, {t}, {self.ccode_name}, particle->cxi, particle->cyi, particle->czi, particle->cti, &{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
         return ccode_str
 
     def ccode_convert(self, _, z, y, x):
@@ -1806,32 +1802,24 @@ class VectorField:
         # Casting interp_methd to int as easier to pass on in C-code
         ccode_str = ""
         if self.vector_type == '3D':
-            ccode_str = "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
-                        % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
-                        "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
-                        "&%s, &%s, &%s, %s, %s)" \
-                        % (varU, varV, varW, U.interp_method.upper(), U.gridindexingtype.upper())
+            ccode_str = f"temporal_interpolationUVW({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, {W.ccode_name}, " + \
+                        "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," + \
+                        f"&{varU}, &{varV}, &{varW}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
         else:
-            ccode_str = "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
-                        % (x, y, z, t, U.ccode_name, V.ccode_name) + \
-                        "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
-                        " &%s, &%s, %s, %s)" \
-                        % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
+            ccode_str = f"temporal_interpolationUV({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, " + \
+                        "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," + \
+                        f" &{varU}, &{varV}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
         return ccode_str
 
     def ccode_eval_object(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
         ccode_str = ""
         if self.vector_type == '3D':
-            ccode_str = "temporal_interpolationUVW_pstruct(%s, %s, %s, %s, %s, %s, %s, " \
-                        % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
-                        "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s, %s)" \
-                        % (varU, varV, varW, U.interp_method.upper(), U.gridindexingtype.upper())
+            ccode_str = f"temporal_interpolationUVW_pstruct({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, {W.ccode_name}, " + \
+                        f"particle->cxi, particle->cyi, particle->czi, particle->cti, &{varU}, &{varV}, &{varW}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
         else:
-            ccode_str = "temporal_interpolationUV_pstruct(%s, %s, %s, %s, %s, %s, " \
-                        % (x, y, z, t, U.ccode_name, V.ccode_name) + \
-                        "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s, %s)" \
-                        % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
+            ccode_str = f"temporal_interpolationUV_pstruct({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, " + \
+                        f"particle->cxi, particle->cyi, particle->czi, particle->cti, &{varU}, &{varV}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
         return ccode_str
 
 

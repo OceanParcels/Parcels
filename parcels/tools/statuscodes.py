@@ -176,9 +176,7 @@ class OutOfTimeError(KernelError):
     """Particle kernel error for time extrapolation field sampling"""
 
     def __init__(self, particle, fieldset):
-        message = "Field sampled outside time domain at time %s." % (
-            parse_particletime(particle.time, fieldset)
-        )
+        message = f"Field sampled outside time domain at time {parse_particletime(particle.time, fieldset)}."
         message += " Try setting allow_time_extrapolation to True"
         super().__init__(particle, fieldset=fieldset, msg=message)
 

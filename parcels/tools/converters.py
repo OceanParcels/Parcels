@@ -69,20 +69,18 @@ class TimeConverter:
                 try:
                     return np.array([(t - self.time_origin).total_seconds() for t in time])
                 except ValueError:
-                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
-                                     "Provide 'time' as a %s object?"
-                                     % (type(time), self.calendar, type(self.time_origin)))
+                    raise ValueError(f"Cannot subtract 'time' (a {type(time)} object) from a {self.calendar} calendar.\n"
+                                     f"Provide 'time' as a {type(self.time_origin)} object?")
             else:
                 try:
                     return (time - self.time_origin).total_seconds()
                 except ValueError:
-                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
-                                     "Provide 'time' as a %s object?"
-                                     % (type(time), self.calendar, type(self.time_origin)))
+                    raise ValueError(f"Cannot subtract 'time' (a {type(time)} object) from a {self.calendar} calendar.\n"
+                                     f"Provide 'time' as a {type(self.time_origin)} object?")
         elif self.calendar is None:
             return time - self.time_origin
         else:
-            raise RuntimeError('Calendar %s not implemented in TimeConverter' % (self.calendar))
+            raise RuntimeError(f'Calendar {self.calendar} not implemented in TimeConverter')
 
     def fulltime(self, time):
         """Method to convert a time difference in seconds to a date, based on the time_origin
@@ -101,7 +99,7 @@ class TimeConverter:
         elif self.calendar is None:
             return self.time_origin + time
         else:
-            raise RuntimeError('Calendar %s not implemented in TimeConverter' % (self.calendar))
+            raise RuntimeError(f'Calendar {self.calendar} not implemented in TimeConverter')
 
     def __repr__(self):
         return "%s" % self.time_origin

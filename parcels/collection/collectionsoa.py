@@ -55,7 +55,7 @@ class ParticleCollectionSOA(ParticleCollection):
 
         for kwvar in kwargs:
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
+                f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
 
         offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
         if MPI:
@@ -136,7 +136,7 @@ class ParticleCollectionSOA(ParticleCollection):
             # any fields that were provided on the command line
             for kwvar, kwval in kwargs.items():
                 if not hasattr(pclass, kwvar):
-                    raise RuntimeError('Particle class does not have Variable %s' % kwvar)
+                    raise RuntimeError(f'Particle class does not have Variable {kwvar}')
                 self._data[kwvar][:] = kwval
                 initialised.add(kwvar)
 
@@ -261,7 +261,7 @@ class ParticleCollectionSOA(ParticleCollection):
         if self._sorted:
             index = bisect_left(self._data['id'], id)
             if index == len(self._data['id']) or self._data['id'][index] != id:
-                raise ValueError("Trying to access a particle with a non-existing ID: %s." % id)
+                raise ValueError(f"Trying to access a particle with a non-existing ID: {id}.")
         else:
             index = np.where(self._data['id'] == id)[0][0]
 
@@ -848,7 +848,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 v.to_write = write_status
                 var_changed = True
         if not var_changed:
-            raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
+            raise SyntaxError(f'Could not change the write status of {var}, because it is not a Variable name')
 
 
 class ParticleAccessorSOA(BaseParticleAccessor):
@@ -918,7 +918,7 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         for var in self._pcoll.ptype.variables:
             if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
                 str += f"{var.name}={getattr(self, var.name):f}, "
-        return str + "time=%s)" % time_string
+        return str + f"time={time_string})"
 
 
 class ParticleCollectionIterableSOA(BaseParticleCollectionIterable):

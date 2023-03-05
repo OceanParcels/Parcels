@@ -184,8 +184,7 @@ class MathNode(IntrinsicNode):
                 attr = self.symbol_map[attr]
             return IntrinsicNode(None, ccode=attr)
         else:
-            raise AttributeError("""Unknown math function encountered: %s"""
-                                 % attr)
+            raise AttributeError(f"Unknown math function encountered: {attr}")
 
 
 class RandomNode(IntrinsicNode):
@@ -203,8 +202,7 @@ class RandomNode(IntrinsicNode):
                 attr = self.symbol_map[attr]
             return IntrinsicNode(None, ccode=attr)
         else:
-            raise AttributeError("""Unknown random function encountered: %s"""
-                                 % attr)
+            raise AttributeError(f"Unknown random function encountered: {attr}")
 
 
 class StatusCodeNode(IntrinsicNode):
@@ -219,8 +217,7 @@ class StatusCodeNode(IntrinsicNode):
             attr = self.symbol_map[attr]
             return IntrinsicNode(None, ccode=attr)
         else:
-            raise AttributeError("""Unknown status code encountered: %s"""
-                                 % attr)
+            raise AttributeError(f"Unknown status code encountered: {attr}")
 
 
 class PrintNode(IntrinsicNode):
@@ -269,9 +266,8 @@ class ParticleNode(IntrinsicNode):
         elif attr in ['delete']:
             return self.attr_node_class(self, 'state')
         else:
-            raise AttributeError("""Particle type %s does not define attribute "%s".
-Please add '%s' to %s.users_vars or define an appropriate sub-class."""
-                                 % (self.obj, attr, attr, self.obj))
+            raise AttributeError("""Particle type {} does not define attribute "{}".
+Please add '{}' to {}.users_vars or define an appropriate sub-class.""".format(self.obj, attr, attr, self.obj))
 
 
 class IntrinsicTransformer(ast.NodeTransformer):
@@ -311,7 +307,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         elif node.id == 'print':
             node = PrintNode()
         elif (node.id == 'pnum') or ('parcels_tmpvar' in node.id):
-            raise NotImplementedError("Custom Kernels cannot contain string %s; please change your kernel" % node.id)
+            raise NotImplementedError(f"Custom Kernels cannot contain string {node.id}; please change your kernel")
         elif node.id == 'abs':
             raise NotImplementedError("abs() does not work in JIT Kernels. Use math.fabs() instead")
         return node
@@ -332,7 +328,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
                                           "Use `import parcels.rng as ParcelsRandom` and then ParcelsRandom.random(), ParcelsRandom.uniform() etc.\n"
                                           "For more information, see http://oceanparcels.org/faq.html#kernelwriting")
             else:
-                raise NotImplementedError("Cannot convert '%s' used in kernel to C-code" % node.value.id)
+                raise NotImplementedError(f"Cannot convert '{node.value.id}' used in kernel to C-code")
 
     def visit_Subscript(self, node):
         node.value = self.visit(node.value)
@@ -725,8 +721,7 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         if isinstance(node.value, FieldNode) or isinstance(node.value, VectorFieldNode):
             node.ccode = node.value.__getitem__(node.slice.ccode).ccode
         elif isinstance(node.value, IntrinsicNode):
-            raise NotImplementedError("Subscript not implemented for object type %s"
-                                      % type(node.value).__name__)
+            raise NotImplementedError(f"Subscript not implemented for object type {type(node.value).__name__}")
         else:
             node.ccode = f"{node.value.ccode}[{node.slice.ccode}]"
 

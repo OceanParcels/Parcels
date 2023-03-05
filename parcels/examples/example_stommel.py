@@ -109,7 +109,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
                                                   start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
 
     if verbose:
-        print("Initial particle positions:\n%s" % pset)
+        print(f"Initial particle positions:\n{pset}")
 
     # Execute for 30 days, with 1hour timesteps and 12-hourly output
     runtime = delta(days=600)
@@ -124,7 +124,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
                  moviedt=None, output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     if verbose:
-        print("Final particle positions:\n%s" % pset)
+        print(f"Final particle positions:\n{pset}")
     timer.psetrun.stop()
     timer.pset.stop()
 
