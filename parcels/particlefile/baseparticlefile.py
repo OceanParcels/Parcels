@@ -1,6 +1,7 @@
 """Module controlling the writing of ParticleSets to Zarr file"""
 import os
 from abc import ABC, abstractmethod
+from collections import MutableMapping
 from datetime import timedelta as delta
 
 import numpy as np
@@ -93,7 +94,11 @@ class BaseParticleFile(ABC):
                                np.int64: np.iinfo(np.int64).max, np.uint8: np.iinfo(np.uint8).max,
                                np.uint16: np.iinfo(np.uint16).max, np.uint32: np.iinfo(np.uint32).max,
                                np.uint64: np.iinfo(np.uint64).max}
-        if issubclass(type(name), zarr.storage.Store):
+        try:
+            is_valid_zarr_store = issubclass(type(name), zarr.storage.Store)
+        except AttributeError:
+            is_valid_zarr_store = issubclass(type(name), MutableMapping)
+        if is_valid_zarr_store:
             # If we already got a Zarr store, we won't need any of the naming logic below.
             # But we need to handle incompatibility with MPI mode for now:
             if MPI and MPI.COMM_WORLD.Get_size() > 1:
