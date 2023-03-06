@@ -486,8 +486,9 @@ class Field(object):
                    allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
 
     @classmethod
-    def from_xarray_delft3d_field(cls, da, name, dimensions, mesh='spherical', allow_time_extrapolation=None,
-                    time_periodic=False, **kwargs):
+    def from_xarray_delft3d_field(cls, da, name, dimensions, mesh='spherical',
+                                  allow_time_extrapolation=None,
+                                  time_periodic=False, **kwargs):
         """Create field from Delft3D-FLOW velocity output variables
 
         :param da: Delft3D-FLOW velocity output variables

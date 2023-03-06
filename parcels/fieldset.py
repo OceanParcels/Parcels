@@ -891,7 +891,8 @@ class FieldSet(object):
                                chunksize=chunksize, **kwargs)
 
     @classmethod
-    def from_xarray_delft3d(cls, ds, variables, dimensions, mesh='spherical', allow_time_extrapolation=None,
+    def from_xarray_delft3d(cls, ds, variables, dimensions, mesh='spherical',
+                            allow_time_extrapolation=None,
                             time_periodic=False, **kwargs):
         """Initialises FieldSet data from Delft3D-FLOW velocity output.
         Important note: at the moment it is assumed that the grid is preprocessed to replace the NaN values on land with the lon-lat mesh. This step is not yet included in the fieldset.py code.
@@ -933,8 +934,10 @@ class FieldSet(object):
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
 
-            fields[var] = Field.from_xarray_delft3d_field(ds[name], var, dims, mesh=mesh, allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, **kwargs)
+            fields[var] = Field.from_xarray_delft3d_field(ds[name], var, dims,
+                                                          mesh=mesh,
+                                                          allow_time_extrapolation=allow_time_extrapolation,
+                                                          time_periodic=time_periodic, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
