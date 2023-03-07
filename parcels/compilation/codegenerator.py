@@ -266,8 +266,8 @@ class ParticleNode(IntrinsicNode):
         elif attr in ['delete']:
             return self.attr_node_class(self, 'state')
         else:
-            raise AttributeError("""Particle type {} does not define attribute "{}".
-Please add '{}' to {}.users_vars or define an appropriate sub-class.""".format(self.obj, attr, attr, self.obj))
+            raise AttributeError(f"Particle type {self.obj} does not define attribute '{attr}.\n"
+                                 f"Please add '{attr}' to {self.obj}.users_vars or define an appropriate sub-class.")
 
 
 class IntrinsicTransformer(ast.NodeTransformer):
@@ -690,11 +690,7 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.ops[0])
         assert (len(node.comparators) == 1)
         self.visit(node.comparators[0])
-        node.ccode = "{} {} {}".format(
-            node.left.ccode,
-            node.ops[0].ccode,
-            node.comparators[0].ccode
-        )
+        node.ccode = f"{node.left.ccode} {node.ops[0].ccode} {node.comparators[0].ccode}"
 
     def visit_Index(self, node):
         self.visit(node.value)

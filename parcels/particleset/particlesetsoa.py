@@ -581,10 +581,8 @@ class ParticleSetSOA(BaseParticleSet):
         sampling_name = "UV" if field_name in ["U", "V"] else field_name
         field = getattr(self.fieldset, field_name)
 
-        f_str = """
-def search_kernel(particle, fieldset, time):
-    x = fieldset.{}[time, particle.depth, particle.lat, particle.lon]
-        """.format(sampling_name)
+        f_str = (f"def search_kernel(particle, fieldset, time):\n"
+                 f"    x = fieldset.{sampling_name}[time, particle.depth, particle.lat, particle.lon]")
 
         k = Kernel(
             self.fieldset,

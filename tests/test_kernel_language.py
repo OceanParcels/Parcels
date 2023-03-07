@@ -34,8 +34,8 @@ pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel':
 
 
 def expr_kernel(name, pset, expr, pset_mode):
-    pycode = """def {}(particle, fieldset, time):
-    particle.p = {}""".format(name, expr)
+    pycode = (f"def {name}(particle, fieldset, time):\n"
+              f"    particle.p = {expr}")
     return pset_type[pset_mode]['kernel'](pset.fieldset, pset.collection.ptype, pyfunc=None,
                                           funccode=pycode, funcname=name, funcvars=['particle'])
 

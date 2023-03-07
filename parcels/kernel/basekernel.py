@@ -228,11 +228,11 @@ class BaseKernel:
         if type(basename) in (list, dict, tuple, ndarray):
             src_file_or_files = ["", ] * len(basename)
             for i, src_file in enumerate(basename):
-                src_file_or_files[i] = "%s.c" % path.join(dyn_dir, src_file)
+                src_file_or_files[i] = f"{path.join(dyn_dir, src_file)}.c"
         else:
-            src_file_or_files = "%s.c" % path.join(dyn_dir, basename)
-        lib_file = "{}.{}".format(path.join(dyn_dir, lib_path), 'dll' if platform == 'win32' else 'so')
-        log_file = "%s.log" % path.join(dyn_dir, basename)
+            src_file_or_files = f"{path.join(dyn_dir, basename)}.c"
+        lib_file = f"{path.join(dyn_dir, lib_path)}.{'dll' if platform == 'win32' else 'so'}"
+        log_file = f"{path.join(dyn_dir, basename)}.log"
         return src_file_or_files, lib_file, log_file
 
     def compile(self, compiler):
