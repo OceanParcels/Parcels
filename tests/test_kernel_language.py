@@ -337,8 +337,8 @@ def test_random_float(pset_mode, mode, rngfunc, rngargs, npart=10):
                                         lat=np.zeros(npart) + 0.5)
     series = random_series(npart, rngfunc, rngargs, mode)
     rnglib = 'ParcelsRandom' if mode == 'jit' else 'random'
-    kernel = expr_kernel(f'TestRandom_{rngfunc}', pset,
-                         '{}.{}({})'.format(rnglib, rngfunc, ', '.join([str(a) for a in rngargs])), pset_mode)
+    kernel = expr_kernel(f"TestRandom_{rngfunc}", pset,
+                         f"{rnglib}.{rngfunc}({', '.join([str(a) for a in rngargs])})", pset_mode)
     pset.execute(kernel, endtime=1., dt=1.)
     assert np.allclose(pset.p, series, atol=1e-9)
 

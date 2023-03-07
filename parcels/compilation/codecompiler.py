@@ -227,21 +227,16 @@ class CCompiler:
             try:
                 subprocess.check_call(cmd, stdout=logfile, stderr=logfile)
             except OSError:
-                err = """OSError during compilation
-Please check if compiler exists: {}""".format(self._cc)
-                raise RuntimeError(err)
+                raise RuntimeError(f"OSError during compilation. Please check if compiler exists: {self._cc}")
             except subprocess.CalledProcessError:
                 with open(log) as logfile2:
-                    err = """Error during compilation:
-Compilation command: {}
-Source/Destination file: {}
-Log file: {}
-
-Log output: {}
-If you are on macOS, it might help to type 'export CC=gcc'
-
-""".format(" ".join(cmd), src, logfile.name, logfile2.read())
-                raise RuntimeError(err)
+                    raise RuntimeError(f"Error during compilation:\n"
+                                       f"Compilation command: {cmd}\n"
+                                       f"Source/Destination file: {src}\n"
+                                       f"Log file: {logfile.name}\n"
+                                       f"Log output: {logfile2.read()}\n"
+                                       f"\n"
+                                       f"If you are on macOS, it might help to type 'export CC=gcc'")
         return True
 
 

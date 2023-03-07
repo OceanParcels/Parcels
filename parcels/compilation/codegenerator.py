@@ -667,12 +667,7 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.target)
         self.visit(node.op)
         self.visit(node.value)
-        node.ccode = c.Statement("{} {}= {}".format(
-            node.target.ccode,
-            node.op.ccode,
-            node.value.ccode
-        )
-        )
+        node.ccode = c.Statement(f"{node.target.ccode} {node.op.ccode}= {node.value.ccode}")
 
     def visit_If(self, node):
         self.visit(node.test)
