@@ -338,9 +338,9 @@ def test_swash(mode, chunk_mode):
     compute_swash_particle_advection(field_set, mode, lonp, latp, depthp)
     # SWASH sample file dimensions: t=1, z=7, z_u=6, y=21, x=51
     if chunk_mode not in ['failsafe', ]:
-        assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk)), "U {} vs V {}".format(field_set.U.grid.chunk_info, field_set.V.grid.chunk_info)
+        assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk)), f"U {field_set.U.grid.chunk_info} vs V {field_set.V.grid.chunk_info}"
     if chunk_mode not in ['failsafe', 'auto']:
-        assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk)), "U {} vs W {}".format(field_set.U.grid.chunk_info, field_set.W.grid.chunk_info)
+        assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk)), f"U {field_set.U.grid.chunk_info} vs W {field_set.W.grid.chunk_info}"
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
     else:

@@ -14,7 +14,7 @@ from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import DaskChunkingError
 
 
-class _FileBuffer(object):
+class _FileBuffer:
     def __init__(self, filename, dimensions, indices, timestamp=None,
                  interp_method='linear', data_full_zdim=None, **kwargs):
         self.filename = filename
@@ -36,7 +36,7 @@ class NetcdfFileBuffer(_FileBuffer):
         self.lib = np
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         self.netcdf_decodewarning = kwargs.pop('netcdf_decodewarning', True)
-        super(NetcdfFileBuffer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __enter__(self):
         try:
@@ -47,9 +47,9 @@ class NetcdfFileBuffer(_FileBuffer):
             self.dataset['decoded'] = True
         except:
             if self.netcdf_decodewarning:
-                logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         "
-                                    "It will be opened with no decoding. Filling values might be wrongly parsed."
-                                    % (self.filename, xr.__version__))
+                logger.warning_once(f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}).\n         "
+                                    "It will be opened with no decoding. Filling values might be wrongly parsed.")
+
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
             self.dataset['decoded'] = False
         for inds in self.indices.values():
@@ -72,7 +72,7 @@ class NetcdfFileBuffer(_FileBuffer):
                     name = nm
                     break
         if isinstance(name, list):
-            raise IOError('None of variables in list found in file')
+            raise OSError('None of variables in list found in file')
         return name
 
     @property
@@ -155,7 +155,7 @@ class NetcdfFileBuffer(_FileBuffer):
             self.data_full_zdim = depthsize
             self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
             if self.nolonlatindices:
-                return np.empty(((0, len(self.indices['depth'])) + data.shape[-2:]))
+                return np.empty((0, len(self.indices['depth'])) + data.shape[-2:])
             else:
                 return np.empty((0, len(self.indices['depth']), len(self.indices['lat']), len(self.indices['lon'])))
 
@@ -230,7 +230,7 @@ class NetcdfFileBuffer(_FileBuffer):
 
 class DeferredNetcdfFileBuffer(NetcdfFileBuffer):
     def __init__(self, *args, **kwargs):
-        super(DeferredNetcdfFileBuffer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class DaskFileBuffer(NetcdfFileBuffer):
@@ -256,7 +256,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         self.rechunk_callback_fields = kwargs.pop('rechunk_callback_fields', None)
         self.chunking_finalized = False
         self.autochunkingfailed = False
-        super(DaskFileBuffer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __enter__(self):
         """
@@ -286,8 +286,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
             self.dataset['decoded'] = True
         except:
-            logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
-                                % (self.filename, xr.__version__))
+            logger.warning_once(f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). It will be opened with no decoding. Filling values might be wrongly parsed.")
             if self.lock_file:
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict)
             else:
@@ -409,7 +408,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                      z: [0 75]
         """
         if self.dataset is None:
-            raise IOError("Trying to parse NetCDF header information before opening the file.")
+            raise OSError("Trying to parse NetCDF header information before opening the file.")
         result = {}
         for pcls_dimname in ['time', 'depth', 'lat', 'lon']:
             for nc_dimname in self._static_name_maps[pcls_dimname]:
@@ -453,7 +452,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         is used. If a hint is provided, a connections is made between the designated parcels-dimension and NetCDF dimension.
         """
         if self.dataset is None:
-            raise IOError("Trying to parse NetCDF header information before opening the file.")
+            raise OSError("Trying to parse NetCDF header information before opening the file.")
         k, dname, dvalue = (-1, '', 0)
         dimension_name = parcels_dimension_name.lower()
         dim_indices = self._get_available_dims_indices_by_request()
@@ -496,7 +495,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         Helper function that issues a warning message if a certain requested NetCDF dimension is not found in the file.
         """
         display_name = dimension_name if (dimension_name not in self.dimensions) else self.dimensions[dimension_name]
-        return "Did not find {} in NetCDF dims. Please specifiy chunksize as dictionary for NetCDF dimension names, e.g.\n chunksize={{ '{}': <number>, ... }}.".format(display_name, display_name)
+        return f"Did not find {display_name} in NetCDF dims. Please specifiy chunksize as dictionary for NetCDF dimension names, e.g.\n chunksize={{ '{display_name}': <number>, ... }}."
 
     def _chunkmap_to_chunksize(self):
         """
@@ -700,7 +699,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
             if isinstance(self.chunksize, dict):
                 self.chunksize = init_chunk_dict
         except:
-            logger.warning("Chunking with init_chunk_dict = {} failed - Executing Dask chunking 'failsafe'...".format(init_chunk_dict))
+            logger.warning(f"Chunking with init_chunk_dict = {init_chunk_dict} failed - Executing Dask chunking 'failsafe'...")
             self.autochunkingfailed = True
             if not self.autochunkingfailed:
                 init_chunk_dict = self._failsafe_parse_()
@@ -760,4 +759,4 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
 class DeferredDaskFileBuffer(DaskFileBuffer):
     def __init__(self, *args, **kwargs):
-        super(DeferredDaskFileBuffer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)

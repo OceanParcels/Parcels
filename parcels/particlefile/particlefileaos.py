@@ -19,11 +19,12 @@ class ParticleFileAOS(BaseParticleFile):
     """
 
     def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False):
-        super(ParticleFileAOS, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
-                                              chunks=chunks, write_ondelete=write_ondelete)
+        super().__init__(
+            name=name, particleset=particleset, outputdt=outputdt, chunks=chunks, write_ondelete=write_ondelete
+        )
 
     def __del__(self):
-        super(ParticleFileAOS, self).__del__()
+        super().__del__()
 
     def _reserved_var_names(self):
         """

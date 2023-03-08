@@ -165,7 +165,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
                 elif p.state == OperationCode.Delete:
                     pass
                 else:
-                    logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
+                    logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')
                     p.delete()
 
             # Remove all particles that signalled deletion

@@ -8,7 +8,7 @@ except:
     MPI = None
 
 
-class Compiler_parameters(object):
+class Compiler_parameters:
     def __init__(self):
         self._compiler = ""
         self._cppargs = []
@@ -64,7 +64,7 @@ class Compiler_parameters(object):
 
 class GNU_parameters(Compiler_parameters):
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None):
-        super(GNU_parameters, self).__init__()
+        super().__init__()
         if cppargs is None:
             cppargs = []
         if ldargs is None:
@@ -121,7 +121,7 @@ class GNU_parameters(Compiler_parameters):
 
 class Clang_parameters(Compiler_parameters):
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None):
-        super(Clang_parameters, self).__init__()
+        super().__init__()
         if cppargs is None:
             cppargs = []
         if ldargs is None:
@@ -146,7 +146,7 @@ class Clang_parameters(Compiler_parameters):
 
 class MinGW_parameters(Compiler_parameters):
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None):
-        super(MinGW_parameters, self).__init__()
+        super().__init__()
         if cppargs is None:
             cppargs = []
         if ldargs is None:
@@ -171,7 +171,7 @@ class MinGW_parameters(Compiler_parameters):
 
 class VS_parameters(Compiler_parameters):
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None):
-        super(VS_parameters, self).__init__()
+        super().__init__()
         if cppargs is None:
             cppargs = []
         if ldargs is None:
@@ -194,7 +194,7 @@ class VS_parameters(Compiler_parameters):
         self._exe_ext = "exe"
 
 
-class CCompiler(object):
+class CCompiler:
     """A compiler object for creating and loading shared libraries.
 
     :arg cc: C compiler executable (uses environment variable ``CC`` if not provided).
@@ -227,21 +227,16 @@ class CCompiler(object):
             try:
                 subprocess.check_call(cmd, stdout=logfile, stderr=logfile)
             except OSError:
-                err = """OSError during compilation
-Please check if compiler exists: %s""" % self._cc
-                raise RuntimeError(err)
+                raise RuntimeError(f"OSError during compilation. Please check if compiler exists: {self._cc}")
             except subprocess.CalledProcessError:
-                with open(log, 'r') as logfile2:
-                    err = """Error during compilation:
-Compilation command: %s
-Source/Destination file: %s
-Log file: %s
-
-Log output: %s
-If you are on macOS, it might help to type 'export CC=gcc'
-
-""" % (" ".join(cmd), src, logfile.name, logfile2.read())
-                raise RuntimeError(err)
+                with open(log) as logfile2:
+                    raise RuntimeError(f"Error during compilation:\n"
+                                       f"Compilation command: {cmd}\n"
+                                       f"Source/Destination file: {src}\n"
+                                       f"Log file: {logfile.name}\n"
+                                       f"Log output: {logfile2.read()}\n"
+                                       f"\n"
+                                       f"If you are on macOS, it might help to type 'export CC=gcc'")
         return True
 
 
@@ -250,23 +245,23 @@ class CCompiler_SS(CCompiler):
     single-stage C-compiler; used for a SINGLE source file
     """
     def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
-        super(CCompiler_SS, self).__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
+        super().__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
 
     def __str__(self):
         output = "[CCompiler_SS]: "
-        output += "('cc': {}), ".format(self._cc)
-        output += "('cppargs': {}), ".format(self._cppargs)
-        output += "('ldargs': {}), ".format(self._ldargs)
-        output += "('incdirs': {}), ".format(self._incdirs)
-        output += "('libdirs': {}), ".format(self._libdirs)
-        output += "('libs': {}), ".format(self._libs)
-        output += "('tmp_dir': {}), ".format(self._tmp_dir)
+        output += f"('cc': {self._cc}), "
+        output += f"('cppargs': {self._cppargs}), "
+        output += f"('ldargs': {self._ldargs}), "
+        output += f"('incdirs': {self._incdirs}), "
+        output += f"('libdirs': {self._libdirs}), "
+        output += f"('libs': {self._libs}), "
+        output += f"('tmp_dir': {self._tmp_dir}), "
         return output
 
     def compile(self, src, obj, log):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
         with open(log, 'w') as logfile:
-            logfile.write("Compiling: %s\n" % " ".join(cc))
+            logfile.write(f"Compiling: {cc}\n")
         self._create_compile_process_(cc, src, log)
 
 
@@ -278,7 +273,7 @@ class GNUCompiler_SS(CCompiler_SS):
     :arg ldargs: A list of arguments to pass to the linker (optional)."""
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
         c_params = GNU_parameters(cppargs, ldargs, incdirs, libdirs, libs)
-        super(GNUCompiler_SS, self).__init__(c_params.compiler, cppargs=c_params.cppargs, ldargs=c_params.ldargs, incdirs=c_params.incdirs, libdirs=c_params.libdirs, libs=c_params.libs, tmp_dir=tmp_dir)
+        super().__init__(c_params.compiler, cppargs=c_params.cppargs, ldargs=c_params.ldargs, incdirs=c_params.incdirs, libdirs=c_params.libdirs, libs=c_params.libs, tmp_dir=tmp_dir)
         self._dynlib_ext = c_params.dynlib_ext
         self._stclib_ext = c_params.stclib_ext
         self._obj_ext = c_params.obj_ext
@@ -289,7 +284,7 @@ class GNUCompiler_SS(CCompiler_SS):
         lib_pathdir = os.path.dirname(obj)
         obj = os.path.join(lib_pathdir, lib_pathfile)
 
-        super(GNUCompiler_SS, self).compile(src, obj, log)
+        super().compile(src, obj, log)
 
 
 GNUCompiler = GNUCompiler_SS

@@ -40,7 +40,7 @@ __all__ = ['BaseKernel']
 re_indent = re.compile(r"^(\s+)")
 
 
-class BaseKernel(object):
+class BaseKernel:
     """Base super class for base Kernel objects that encapsulates auto-generated code.
 
     :arg fieldset: FieldSet object providing the field information (possibly None)
@@ -74,7 +74,7 @@ class BaseKernel(object):
         # Derive meta information from pyfunc, if not given
         self._pyfunc = None
         self.funcname = funcname or pyfunc.__name__
-        self.name = "%s%s" % (ptype.name, self.funcname)
+        self.name = f"{ptype.name}{self.funcname}"
         self.ccode = ""
         self.funcvars = funcvars
         self.funccode = funccode
@@ -128,7 +128,7 @@ class BaseKernel(object):
         field_keys = ""
         if self.field_args is not None:
             field_keys = "-".join(
-                ["%s:%s" % (name, field.units.__class__.__name__) for name, field in self.field_args.items()])
+                [f"{name}:{field.units.__class__.__name__}" for name, field in self.field_args.items()])
         key = self.name + self.ptype._cache_key + field_keys + ('TIME:%f' % ostime())
         return md5(key.encode('utf-8')).hexdigest()
 
@@ -228,11 +228,11 @@ class BaseKernel(object):
         if type(basename) in (list, dict, tuple, ndarray):
             src_file_or_files = ["", ] * len(basename)
             for i, src_file in enumerate(basename):
-                src_file_or_files[i] = "%s.c" % path.join(dyn_dir, src_file)
+                src_file_or_files[i] = f"{path.join(dyn_dir, src_file)}.c"
         else:
-            src_file_or_files = "%s.c" % path.join(dyn_dir, basename)
-        lib_file = "%s.%s" % (path.join(dyn_dir, lib_path), 'dll' if platform == 'win32' else 'so')
-        log_file = "%s.log" % path.join(dyn_dir, basename)
+            src_file_or_files = f"{path.join(dyn_dir, basename)}.c"
+        lib_file = f"{path.join(dyn_dir, lib_path)}.{'dll' if platform == 'win32' else 'so'}"
+        log_file = f"{path.join(dyn_dir, basename)}.log"
         return src_file_or_files, lib_file, log_file
 
     def compile(self, compiler):
@@ -253,7 +253,7 @@ class BaseKernel(object):
                     all_files_array.append(self.src_file)
                 compiler.compile(self.src_file, self.lib_file, self.log_file)
         if len(all_files_array) > 0:
-            logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
+            logger.info(f"Compiled {self.name} ==> {self.lib_file}")
             if self.log_file is not None:
                 all_files_array.append(self.log_file)
 
@@ -327,7 +327,7 @@ class BaseKernel(object):
                 if type(f) in [VectorField, NestedField, SummedField]:
                     continue
                 if f.data.dtype != np.float32:
-                    raise RuntimeError('Field %s data needs to be float32 in JIT mode' % f.name)
+                    raise RuntimeError(f'Field {f.name} data needs to be float32 in JIT mode')
                 if f in self.field_args.values():
                     f.chunk_data()
                 else:

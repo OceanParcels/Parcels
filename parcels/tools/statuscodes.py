@@ -7,18 +7,18 @@ __all__ = ['StateCode', 'OperationCode', 'ErrorCode',
            'recovery_map']
 
 
-class StateCode(object):
+class StateCode:
     Success = 0
     Evaluate = 1
 
 
-class OperationCode(object):
+class OperationCode:
     Repeat = 2
     Delete = 3
     StopExecution = 4
 
 
-class ErrorCode(object):
+class ErrorCode:
     Error = 5
     ErrorInterpolation = 51
     ErrorOutOfBounds = 6
@@ -32,8 +32,8 @@ class DaskChunkingError(RuntimeError):
     """
 
     def __init__(self, src_class_type, message):
-        msg = "[{}]: {}".format(str(src_class_type), message)
-        super(DaskChunkingError, self).__init__(msg)
+        msg = f"[{str(src_class_type)}]: {message}"
+        super().__init__(msg)
 
 
 class FieldSamplingError(RuntimeError):
@@ -44,10 +44,8 @@ class FieldSamplingError(RuntimeError):
         self.x = x
         self.y = y
         self.z = z
-        message = "%s sampled at (%f, %f, %f)" % (
-            field.name if field else "Field", self.x, self.y, self.z
-        )
-        super(FieldSamplingError, self).__init__(message)
+        message = f"{field.name if field else 'Field'} sampled at ({self.x}, {self.y}, {self.z})"
+        super().__init__(message)
 
 
 class FieldOutOfBoundError(RuntimeError):
@@ -58,10 +56,8 @@ class FieldOutOfBoundError(RuntimeError):
         self.x = x
         self.y = y
         self.z = z
-        message = "%s sampled out-of-bound, at (%f, %f, %f)" % (
-            field.name if field else "Field", self.x, self.y, self.z
-        )
-        super(FieldOutOfBoundError, self).__init__(message)
+        message = f"{field.name if field else 'Field'} sampled out-of-bound, at ({self.x}, {self.y}, {self.z})"
+        super().__init__(message)
 
 
 class FieldOutOfBoundSurfaceError(RuntimeError):
@@ -73,10 +69,8 @@ class FieldOutOfBoundSurfaceError(RuntimeError):
         self.x = x
         self.y = y
         self.z = z
-        message = "%s sampled out-of-bound at the surface, at (%f, %f, %f)" % (
-            field.name if field else "Field", self.x, self.y, self.z
-        )
-        super(FieldOutOfBoundSurfaceError, self).__init__(message)
+        message = f"{field.name if field else 'Field'} sampled out-of-bound at the surface, at ({self.x}, {self.y}, {self.z})"
+        super().__init__(message)
 
 
 class TimeExtrapolationError(RuntimeError):
@@ -85,28 +79,27 @@ class TimeExtrapolationError(RuntimeError):
     def __init__(self, time, field=None, msg='allow_time_extrapoltion'):
         if field is not None and field.grid.time_origin and time is not None:
             time = field.grid.time_origin.fulltime(time)
-        message = "%s sampled outside time domain at time %s." % (
-            field.name if field else "Field", time)
+        message = f"{field.name if field else 'Field'} sampled outside time domain at time {time}."
         if msg == 'allow_time_extrapoltion':
             message += " Try setting allow_time_extrapolation to True"
         elif msg == 'show_time':
             message += " Try explicitly providing a 'show_time'"
         else:
             message += msg + " Try setting allow_time_extrapolation to True"
-        super(TimeExtrapolationError, self).__init__(message)
+        super().__init__(message)
 
 
 class KernelError(RuntimeError):
     """General particle kernel error with optional custom message"""
 
     def __init__(self, particle, fieldset=None, msg=None):
-        message = ("%s\nParticle %s\nTime: %s,\ttimestep dt: %f\n") % (
-            particle.state, particle, parse_particletime(particle.time, fieldset),
-            particle.dt
-        )
+        message = (f"{particle.state}\n"
+                   f"Particle {particle}\n"
+                   f"Time: {parse_particletime(particle.time, fieldset)}\n"
+                   f"timestep dt: {particle.dt}\n")
         if msg:
             message += msg
-        super(KernelError, self).__init__(message)
+        super().__init__(message)
 
 
 class NotTestedError(Exception):
@@ -123,7 +116,7 @@ def parse_particletime(time, fieldset):
 
 def recovery_kernel_error(particle, fieldset, time):
     """Default error kernel that throws exception"""
-    msg = "Error: %s" % particle.exception if particle.exception else None
+    msg = f"Error: {particle.exception if particle.exception else None}"
     raise KernelError(particle, fieldset=fieldset, msg=msg)
 
 
@@ -132,14 +125,10 @@ class InterpolationError(KernelError):
 
     def __init__(self, particle, fieldset=None, lon=None, lat=None, depth=None):
         if lon and lat:
-            message = "Field interpolation error at (%f, %f, %f)" % (
-                lon, lat, depth
-            )
+            message = f"Field interpolation error at ({lon}, {lat}, {depth})"
         else:
-            message = "Field interpolation error for particle at (%f, %f, %f)" % (
-                particle.lon, particle.lat, particle.depth
-            )
-        super(InterpolationError, self).__init__(particle, fieldset=fieldset, msg=message)
+            message = f"Field interpolation error for particle at ({particle.lon}, {particle.lat}, {particle.depth})"
+        super().__init__(particle, fieldset=fieldset, msg=message)
 
 
 class OutOfBoundsError(KernelError):
@@ -147,14 +136,10 @@ class OutOfBoundsError(KernelError):
 
     def __init__(self, particle, fieldset=None, lon=None, lat=None, depth=None):
         if lon and lat:
-            message = "Field sampled at (%f, %f, %f)" % (
-                lon, lat, depth
-            )
+            message = f"Field sampled at ({lon}, {lat}, {depth})"
         else:
-            message = "Out-of-bounds sampling by particle at (%f, %f, %f)" % (
-                particle.lon, particle.lat, particle.depth
-            )
-        super(OutOfBoundsError, self).__init__(particle, fieldset=fieldset, msg=message)
+            message = f"Out-of-bounds sampling by particle at ({particle.lon}, {particle.lat}, {particle.depth})"
+        super().__init__(particle, fieldset=fieldset, msg=message)
 
 
 class ThroughSurfaceError(KernelError):
@@ -162,25 +147,19 @@ class ThroughSurfaceError(KernelError):
 
     def __init__(self, particle, fieldset=None, lon=None, lat=None, depth=None):
         if lon and lat:
-            message = "Field sampled at (%f, %f, %f)" % (
-                lon, lat, depth
-            )
+            message = f"Field sampled at ({lon}, {lat}, {depth})"
         else:
-            message = "Through-surface sampling by particle at (%f, %f, %f)" % (
-                particle.lon, particle.lat, particle.depth
-            )
-        super(ThroughSurfaceError, self).__init__(particle, fieldset=fieldset, msg=message)
+            message = f"Through-surface sampling by particle at ({particle.lon}, {particle.lat}, {particle.depth})"
+        super().__init__(particle, fieldset=fieldset, msg=message)
 
 
 class OutOfTimeError(KernelError):
     """Particle kernel error for time extrapolation field sampling"""
 
     def __init__(self, particle, fieldset):
-        message = "Field sampled outside time domain at time %s." % (
-            parse_particletime(particle.time, fieldset)
-        )
-        message += " Try setting allow_time_extrapolation to True"
-        super(OutOfTimeError, self).__init__(particle, fieldset=fieldset, msg=message)
+        message = (f"Field sampled outside time domain at time {parse_particletime(particle.time, fieldset)}."
+                   f" Try setting allow_time_extrapolation to True")
+        super().__init__(particle, fieldset=fieldset, msg=message)
 
 
 def recovery_kernel_interpolation(particle, fieldset, time):

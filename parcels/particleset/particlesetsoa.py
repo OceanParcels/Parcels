@@ -79,7 +79,7 @@ class ParticleSetSOA(BaseParticleSet):
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
                  pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
-        super(ParticleSetSOA, self).__init__()
+        super().__init__()
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -160,7 +160,7 @@ class ParticleSetSOA(BaseParticleSet):
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
+                f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -245,7 +245,7 @@ class ParticleSetSOA(BaseParticleSet):
         self.kernel = None
 
     def __del__(self):
-        super(ParticleSetSOA, self).__del__()
+        super().__del__()
 
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
@@ -399,7 +399,7 @@ class ParticleSetSOA(BaseParticleSet):
                     (1-xsi)*eta * grid.lat[j+1, i]
             return list(lon), list(lat)
         else:
-            raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
+            raise NotImplementedError(f'Mode {mode} not implemented. Please use "monte carlo" algorithm instead.')
 
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
@@ -423,9 +423,9 @@ class ParticleSetSOA(BaseParticleSet):
         """
 
         if repeatdt is not None:
-            logger.warning('Note that the `repeatdt` argument is not retained from %s, and that '
+            logger.warning(f'Note that the `repeatdt` argument is not retained from {filename}, and that '
                            'setting a new repeatdt will start particles from the _new_ particle '
-                           'locations.' % filename)
+                           'locations.')
 
         pfile = xr.open_zarr(str(filename))
         pfile_vars = [v for v in pfile.data_vars]
@@ -437,7 +437,7 @@ class ParticleSetSOA(BaseParticleSet):
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
             elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'once_written', 'state'] \
                     and v.to_write:
-                raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
+                raise RuntimeError(f'Variable {v.name} is in pclass but not in the particlefile')
             to_write[v.name] = v.to_write
         vars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
         vars['id'] = np.ma.filled(pfile.variables['trajectory'], np.nan)
@@ -527,10 +527,10 @@ class ParticleSetSOA(BaseParticleSet):
         return self
 
     def __iter__(self):
-        return super(ParticleSetSOA, self).__iter__()
+        return super().__iter__()
 
     def iterator(self):
-        return super(ParticleSetSOA, self).iterator()
+        return super().iterator()
 
     def add(self, particles):
         """Add particles to the ParticleSet. Note that this is an
@@ -581,10 +581,8 @@ class ParticleSetSOA(BaseParticleSet):
         sampling_name = "UV" if field_name in ["U", "V"] else field_name
         field = getattr(self.fieldset, field_name)
 
-        f_str = """
-def search_kernel(particle, fieldset, time):
-    x = fieldset.{}[time, particle.depth, particle.lat, particle.lon]
-        """.format(sampling_name)
+        f_str = (f"def search_kernel(particle, fieldset, time):\n"
+                 f"    x = fieldset.{sampling_name}[time, particle.depth, particle.lat, particle.lon]")
 
         k = Kernel(
             self.fieldset,
