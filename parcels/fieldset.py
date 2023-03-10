@@ -895,7 +895,7 @@ class FieldSet(object):
                             allow_time_extrapolation=None,
                             time_periodic=False, **kwargs):
         """Initialises FieldSet data from Delft3D-FLOW velocity output.
-        Important note: at the moment it is assumed that the grid is preprocessed to replace the NaN values on land with the lon-lat mesh. This step is not yet included in the fieldset.py code.
+        Important note: at the moment the code is only applicable to depth-average flowfields from Delft3D-FLOW (2D flow fields).
 
         :param ds: Delft3D-FLOW output file.
                Note that the built-in Advection kernels assume that U and V are in m/s
@@ -919,6 +919,17 @@ class FieldSet(object):
         :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         """
+
+        # Coercing into mitgcm format
+        ds = ds.assign(U1 = ds.U1.swap_dims({'N':'NC'}),
+                       V1 = ds.V1.swap_dims({'M':'MC'}),
+                       S1 = ds.S1.swap_dims({'N':'NC', 'M': 'MC'}),
+                       XZ = ds.XZ.swap_dims({'N':'NC', 'M':'MC'}),
+                       YZ = ds.YZ.swap_dims({'N':'NC', 'M':'MC'}),
+                       )[['U1', 'V1', 'S1']].drop(['XZ', 'YZ']).isel(KMAXOUT_RESTR=0)
+
+        # Transposing xarray dataset as per https://github.com/OceanParcels/parcels/issues/1180
+        ds = ds.transpose('time', 'NC', 'MC', ...)
 
         fields = {}
         if 'creation_log' not in kwargs.keys():
