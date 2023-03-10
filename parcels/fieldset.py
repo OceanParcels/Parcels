@@ -921,11 +921,11 @@ class FieldSet(object):
         """
 
         # Coercing into mitgcm format
-        ds = ds.assign(U1 = ds.U1.swap_dims({'N':'NC'}),
-                       V1 = ds.V1.swap_dims({'M':'MC'}),
-                       S1 = ds.S1.swap_dims({'N':'NC', 'M': 'MC'}),
-                       XZ = ds.XZ.swap_dims({'N':'NC', 'M':'MC'}),
-                       YZ = ds.YZ.swap_dims({'N':'NC', 'M':'MC'}),
+        ds = ds.assign(U1=ds.U1.swap_dims({'N': 'NC'}),
+                       V1=ds.V1.swap_dims({'M': 'MC'}),
+                       S1=ds.S1.swap_dims({'N': 'NC', 'M': 'MC'}),
+                       XZ=ds.XZ.swap_dims({'N': 'NC', 'M': 'MC'}),
+                       YZ=ds.YZ.swap_dims({'N': 'NC', 'M': 'MC'}),
                        )[['U1', 'V1', 'S1']].drop(['XZ', 'YZ']).isel(KMAXOUT_RESTR=0)
 
         # Transposing xarray dataset as per https://github.com/OceanParcels/parcels/issues/1180
