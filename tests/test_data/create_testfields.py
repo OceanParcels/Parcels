@@ -62,8 +62,8 @@ def generate_perlin_testfield():
     data = {'U': U, 'V': V}
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
     if asizeof is not None:
-        print("Perlin U-field requires {} bytes of memory.".format(U.size * U.itemsize))
-        print("Perlin V-field requires {} bytes of memory.".format(V.size * V.itemsize))
+        print(f"Perlin U-field requires {U.size * U.itemsize} bytes of memory.")
+        print(f"Perlin V-field requires {V.size * V.itemsize} bytes of memory.")
     fieldset = FieldSet.from_data(data, dimensions, mesh='spherical', transpose=False)
     # fieldset.write("perlinfields")  # can also be used, but then has a ghost depth dimension
     write_simple_2Dt(fieldset.U, path.join(path.dirname(__file__), 'perlinfields'), varname='vozocrtx')
@@ -76,7 +76,7 @@ def write_simple_2Dt(field, filename, varname=None):
     :param filename: Basename of the file
     :param varname: Name of the field, to be appended to the filename.
     """
-    filepath = str('%s%s.nc' % (filename, field.name))
+    filepath = str(f'{filename}{field.name}.nc')
     if varname is None:
         varname = field.name
 
@@ -113,7 +113,7 @@ def write_simple_2Dt(field, filename, varname=None):
         mem += asizeof.asizeof(nav_lat)
         mem += asizeof.asizeof(nav_lon)
         mem += asizeof.asizeof(time_counter)
-        print("Field '{}' requires {} bytes of memory.".format(field.name, mem))
+        print(f"Field '{field.name}' requires {mem} bytes of memory.")
 
 
 if __name__ == "__main__":

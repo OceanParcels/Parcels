@@ -63,7 +63,7 @@ def make_plot(trajfile):
     import matplotlib.pyplot as plt
     import xarray as xr
 
-    class ParticleData(object):
+    class ParticleData:
         def __init__(self):
             self.id = []
 

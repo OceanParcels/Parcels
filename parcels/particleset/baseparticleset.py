@@ -433,7 +433,7 @@ class BaseParticleSet(NDCluster):
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
                 if output_file:
-                    logger.info('Output files are stored in %s.' % output_file.fname)
+                    logger.info(f'Output files are stored in {output_file.fname}.')
                 pbar = self.__create_progressbar(_starttime, endtime)
                 verbose_progress = True
 

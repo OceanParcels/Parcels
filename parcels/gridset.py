@@ -3,7 +3,7 @@ import numpy as np
 __all__ = ['GridSet']
 
 
-class GridSet(object):
+class GridSet:
     """GridSet class that holds the Grids on which the Fields are defined."""
 
     def __init__(self):

@@ -33,7 +33,7 @@ class BaseInteractionKernel(BaseKernel):
             else:
                 funcname = pyfunc.__name__
 
-        super(BaseInteractionKernel, self).__init__(
+        super().__init__(
             fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname,
             funccode=funccode, py_ast=py_ast, funcvars=funcvars,
             c_include=c_include, delete_cfiles=delete_cfiles)

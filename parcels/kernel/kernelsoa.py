@@ -40,7 +40,7 @@ class KernelSOA(BaseKernel):
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
                  funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
-        super(KernelSOA, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
+        super().__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
 
         # Derive meta information from pyfunc, if not given
         self.check_fieldsets_in_kernels(pyfunc)
@@ -83,7 +83,7 @@ class KernelSOA(BaseKernel):
         assert numkernelargs == 3, \
             'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
 
-        self.name = "%s%s" % (ptype.name, self.funcname)
+        self.name = f"{ptype.name}{self.funcname}"
 
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
@@ -102,7 +102,7 @@ class KernelSOA(BaseKernel):
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
             if path.isfile(self._c_include):
-                with open(self._c_include, 'r') as f:
+                with open(self._c_include) as f:
                     c_include_str = f.read()
             else:
                 c_include_str = self._c_include
@@ -150,7 +150,7 @@ class KernelSOA(BaseKernel):
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
-        super(KernelSOA, self).__del__()
+        super().__del__()
 
     def __add__(self, kernel):
         if not isinstance(kernel, KernelSOA):
@@ -223,7 +223,7 @@ class KernelSOA(BaseKernel):
                     if p.isComputed():
                         p.reset_state()
                 else:
-                    logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
+                    logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')
                     p.delete()
 
             # Remove all particles that signalled deletion

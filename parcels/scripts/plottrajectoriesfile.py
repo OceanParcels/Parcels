@@ -131,7 +131,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         rc('animation', html='html5')
         anim = animation.FuncAnimation(fig, animate, frames=frames, interval=100, blit=False)
     else:
-        raise RuntimeError('mode %s not known' % mode)
+        raise RuntimeError(f'mode {mode} not known')
 
     if mode == 'movie2d_notebook':
         plt.close()

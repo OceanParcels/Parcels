@@ -96,7 +96,7 @@ class BaseParticleAccessor(ABC):
         corresponding ParticleSet datastructure.
         """
         if name in ['_pcoll', ]:
-            return super(BaseParticleAccessor, self).__getattribute__(name)
+            return super().__getattribute__(name)
         return None
 
     def __setattr__(self, name, value):
@@ -105,7 +105,7 @@ class BaseParticleAccessor(ABC):
         corresponding ParticleSet datastructure.
         """
         if name in ['_pcoll', ]:
-            super(BaseParticleAccessor, self).__setattr__(name, value)
+            super().__setattr__(name, value)
 
     @abstractmethod
     def __repr__(self):
