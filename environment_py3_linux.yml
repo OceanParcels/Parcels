@@ -38,8 +38,8 @@ dependencies:
 
   # Linting
   - flake8>=2.1.0
-  - flake8-docstrings
   - pre_commit
+  - pydocstyle
 
   # Docs
   - sphinx<6
