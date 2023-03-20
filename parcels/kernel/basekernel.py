@@ -54,6 +54,7 @@ class BaseKernel:
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
     """
+
     _pyfunc = None
     _fieldset = None
     _ptype = None
@@ -134,7 +135,7 @@ class BaseKernel:
 
     @staticmethod
     def fix_indentation(string):
-        """Fix indentation to allow in-lined kernel definitions"""
+        """Fix indentation to allow in-lined kernel definitions."""
         lines = string.split('\n')
         indent = re_indent.match(lines[0])
         if indent:
@@ -143,7 +144,8 @@ class BaseKernel:
 
     def check_fieldsets_in_kernels(self, pyfunc):
         """
-        function checks the integrity of the fieldset with the kernels.
+        Checks the integrity of the fieldset with the kernels.
+
         This function is to be called from the derived class when setting up the 'pyfunc'.
         """
         if self.fieldset is not None:
@@ -168,9 +170,6 @@ class BaseKernel:
                     raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
 
     def check_kernel_signature_on_version(self):
-        """
-        returns numkernelargs
-        """
         numkernelargs = 0
         if self._pyfunc is not None:
             if version_info[0] < 3:
@@ -207,9 +206,7 @@ class BaseKernel:
                 self.src_file = src_file_or_files
 
     def get_kernel_compile_files(self):
-        """
-        Returns the correct src_file, lib_file, log_file for this kernel
-        """
+        """Returns the correct src_file, lib_file, log_file for this kernel."""
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -236,7 +233,7 @@ class BaseKernel:
         return src_file_or_files, lib_file, log_file
 
     def compile(self, compiler):
-        """ Writes kernel code to file and compiles it."""
+        """Writes kernel code to file and compiles it."""
         all_files_array = []
         if self.src_file is None:
             if self.dyn_srcs is not None:
@@ -315,9 +312,7 @@ class BaseKernel:
         pset.remove_indices(indices)
 
     def load_fieldset_jit(self, pset):
-        """
-        Updates the loaded fields of pset's fieldset according to the chunk information within their grids
-        """
+        """Updates the loaded fields of pset's fieldset according to the chunk information within their grids."""
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
                 g.cstruct = None  # This force to point newly the grids from Python to C

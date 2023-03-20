@@ -34,7 +34,6 @@ class ParticleCollectionSOA(ParticleCollection):
         :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
         field references of the ctypes-link of particles that are allocated
         """
-
         super(ParticleCollection, self).__init__()
 
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
@@ -166,9 +165,7 @@ class ParticleCollectionSOA(ParticleCollection):
         self._riterator = None
 
     def __del__(self):
-        """
-        Collection - Destructor
-        """
+        """Collection - Destructor"""
         super().__del__()
 
     def iterator(self):
@@ -781,9 +778,7 @@ class ParticleCollectionSOA(ParticleCollection):
         raise NotImplementedError
 
     def cstruct(self):
-        """
-        'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
-        """
+        """Returns the ctypes mapping of the particle data. This depends on the specific structure in question."""
         class CParticles(Structure):
             _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self._ptype.variables]
 
@@ -861,6 +856,7 @@ class ParticleAccessorSOA(BaseParticleAccessor):
                   particle is stored in the corresponding data arrays
                   of the ParticleCollecion.
     """
+
     _index = 0
     _next_dt = None
 

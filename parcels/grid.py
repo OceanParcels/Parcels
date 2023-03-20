@@ -23,9 +23,7 @@ class CGrid(Structure):
 
 
 class Grid:
-    """Grid class that defines a (spatial and temporal) grid on which Fields are defined
-
-    """
+    """Grid class that defines a (spatial and temporal) grid on which Fields are defined."""
 
     def __init__(self, lon, lat, time, time_origin, mesh):
         self.xi = None
@@ -96,7 +94,8 @@ class Grid:
     @property
     def child_ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
-        pointers and sizes for this grid."""
+        pointers and sizes for this grid.
+        """
 
         class CStructuredGrid(Structure):
             # z4d is only to have same cstruct as RectilinearSGrid
@@ -240,8 +239,9 @@ class Grid:
 
 
 class RectilinearGrid(Grid):
-    """Rectilinear Grid
-       Private base class for RectilinearZGrid and RectilinearSGrid
+    """Rectilinear Grid class
+
+    Private base class for RectilinearZGrid and RectilinearSGrid
 
     """
 
@@ -293,7 +293,7 @@ class RectilinearGrid(Grid):
 
 
 class RectilinearZGrid(RectilinearGrid):
-    """Rectilinear Z Grid
+    """Rectilinear Z Grid.
 
     :param lon: Vector containing the longitude coordinates of the grid
     :param lat: Vector containing the latitude coordinates of the grid

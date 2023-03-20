@@ -41,7 +41,7 @@ def expr_kernel(name, pset, expr, pset_mode):
 
 
 def fieldset(xdim=20, ydim=20):
-    """ Standard unit mesh fieldset """
+    """Standard unit mesh fieldset."""
     lon = np.linspace(0., 1., xdim, dtype=np.float32)
     lat = np.linspace(0., 1., ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)
@@ -64,7 +64,7 @@ def fieldset_fixture(xdim=20, ydim=20):
     ('Div', '24 / 4', 6),
 ])
 def test_expression_int(pset_mode, mode, name, expr, result, npart=10):
-    """ Test basic arithmetic expressions """
+    """Test basic arithmetic expressions."""
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
     pset = pset_type[pset_mode]['pset'](None, pclass=TestParticle,
@@ -84,7 +84,7 @@ def test_expression_int(pset_mode, mode, name, expr, result, npart=10):
     ('Pow', '2 ** 3', 8),
 ])
 def test_expression_float(pset_mode, mode, name, expr, result, npart=10):
-    """ Test basic arithmetic expressions """
+    """Test basic arithmetic expressions."""
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
     pset = pset_type[pset_mode]['pset'](None, pclass=TestParticle,
@@ -110,7 +110,7 @@ def test_expression_float(pset_mode, mode, name, expr, result, npart=10):
     ('CheckNaN', 'math.nan != math.nan', True),
 ])
 def test_expression_bool(pset_mode, mode, name, expr, result, npart=10):
-    """ Test basic arithmetic expressions """
+    """Test basic arithmetic expressions."""
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
     pset = pset_type[pset_mode]['pset'](None, pclass=TestParticle,
@@ -126,7 +126,7 @@ def test_expression_bool(pset_mode, mode, name, expr, result, npart=10):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_while_if_break(pset_mode, mode):
-    """Test while, if and break commands"""
+    """Test while, if and break commands."""
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32, initial=0.)
     pset = pset_type[pset_mode]['pset'](pclass=TestParticle, lon=[0], lat=[0])
@@ -145,7 +145,7 @@ def test_while_if_break(pset_mode, mode):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nested_if(pset_mode, mode):
-    """Test nested if commands"""
+    """Test nested if commands."""
     class TestParticle(ptype[mode]):
         p0 = Variable('p0', dtype=np.int32, initial=0)
         p1 = Variable('p1', dtype=np.int32, initial=1)
@@ -164,7 +164,7 @@ def test_nested_if(pset_mode, mode):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pass(pset_mode, mode):
-    """Test pass commands"""
+    """Test pass commands."""
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.int32, initial=0)
     pset = pset_type[pset_mode]['pset'](pclass=TestParticle, lon=0, lat=0)
@@ -190,7 +190,7 @@ def test_dt_as_variable_in_kernel(pset_mode, mode):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 def test_parcels_tmpvar_in_kernel(pset_mode):
-    """Tests for error thrown if variable with 'tmp' defined in custom kernel"""
+    """Tests for error thrown if variable with 'tmp' defined in custom kernel."""
     error_thrown = False
     pset = pset_type[pset_mode]['pset'](pclass=JITParticle, lon=0, lat=0)
 
@@ -210,7 +210,7 @@ def test_parcels_tmpvar_in_kernel(pset_mode):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 def test_abs(pset_mode):
-    """Tests for error thrown if using abs in kernel"""
+    """Tests for error thrown if using abs in kernel."""
     error_thrown = False
     pset = pset_type[pset_mode]['pset'](pclass=JITParticle, lon=0, lat=0)
 
@@ -227,7 +227,7 @@ def test_abs(pset_mode):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_if_withfield(fieldset, pset_mode, mode):
-    """Test combination of if and Field sampling commands"""
+    """Test combination of if and Field sampling commands."""
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32, initial=0.)
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0], lat=[0])
@@ -268,7 +268,7 @@ def test_if_withfield(fieldset, pset_mode, mode):
                       reason="py.test FD capturing does not work for jit on python3 or Win"))
      ])
 def test_print(fieldset, pset_mode, mode, capfd):
-    """Test print statements"""
+    """Test print statements."""
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32, initial=0.)
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0.5], lat=[0.5])
@@ -329,7 +329,7 @@ def random_series(npart, rngfunc, rngargs, mode):
     ('randint', [0, 20]),
 ])
 def test_random_float(pset_mode, mode, rngfunc, rngargs, npart=10):
-    """ Test basic random number generation """
+    """Test basic random number generation."""
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32 if rngfunc == 'randint' else np.float32)
     pset = pset_type[pset_mode]['pset'](pclass=TestParticle,

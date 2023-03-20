@@ -23,12 +23,13 @@ __all__ = ['FieldSet']
 
 
 class FieldSet:
-    """FieldSet class that holds hydrodynamic data needed to execute particles
+    """FieldSet class that holds hydrodynamic data needed to execute particles.
 
     :param U: :class:`parcels.field.Field` object for zonal velocity component
     :param V: :class:`parcels.field.Field` object for meridional velocity component
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
+
     def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
         self.completed = False
@@ -55,7 +56,7 @@ class FieldSet:
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
-        """Initialise FieldSet object from raw data
+        """Initialise FieldSet object from raw data.
 
         :param data: Dictionary mapping field names to numpy arrays.
                Note that at least a 'U' and 'V' numpy array need to be given, and that
@@ -96,7 +97,6 @@ class FieldSet:
         * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
 
         """
-
         fields = {}
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
@@ -127,7 +127,7 @@ class FieldSet:
         return cls(u, v, fields=fields)
 
     def add_field(self, field, name=None):
-        """Add a :class:`parcels.field.Field` object to the FieldSet
+        """Add a :class:`parcels.field.Field` object to the FieldSet.
 
         :param field: :class:`parcels.field.Field` object to be added
         :param name: Name of the :class:`parcels.field.Field` object to be added
@@ -174,7 +174,7 @@ class FieldSet:
         self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh))
 
     def add_vector_field(self, vfield):
-        """Add a :class:`parcels.field.VectorField` object to the FieldSet
+        """Add a :class:`parcels.field.VectorField` object to the FieldSet.
 
         :param vfield: :class:`parcels.field.VectorField` object to be added
         """
@@ -291,7 +291,7 @@ class FieldSet:
     def from_netcdf(cls, filenames, variables, dimensions, indices=None, fieldtype=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
                     deferred_load=True, chunksize=None, **kwargs):
-        """Initialises FieldSet object from NetCDF files
+        """Initialises FieldSet object from NetCDF files.
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files
@@ -484,7 +484,6 @@ class FieldSet:
         :param chunksize: size of the chunks in dask loading. Default is None (no chunking)
 
         """
-
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_nemo'
         if kwargs.pop('gridindexingtype', 'nemo') != 'nemo':
@@ -500,20 +499,21 @@ class FieldSet:
     def from_mitgcm(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                     allow_time_extrapolation=None, time_periodic=False,
                     tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
-        """Initialises FieldSet object from NetCDF files of MITgcm fields.
-           All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
-           gridindexing is set to 'mitgcm' for grids that have the shape
+        """
+        Initialises FieldSet object from NetCDF files of MITgcm fields.
+        All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
+        gridindexing is set to 'mitgcm' for grids that have the shape
 
-           +-----------------------------+-----------------------------+-----------------------------+
-           |                             |         V[k,j+1,i]          |                             |
-           +-----------------------------+-----------------------------+-----------------------------+
-           |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
-           +-----------------------------+-----------------------------+-----------------------------+
-           |                             |         V[k,j,i]            +                             |
-           +-----------------------------+-----------------------------+-----------------------------+
+        +-----------------------------+-----------------------------+-----------------------------+
+        |                             |         V[k,j+1,i]          |                             |
+        +-----------------------------+-----------------------------+-----------------------------+
+        |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
+        +-----------------------------+-----------------------------+-----------------------------+
+        |                             |         V[k,j,i]            +                             |
+        +-----------------------------+-----------------------------+-----------------------------+
 
-           For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
-           Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
+        For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
+        Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
         """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mitgcm'
@@ -582,10 +582,9 @@ class FieldSet:
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
         :param gridindexingtype: The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo()
                See also the Grid indexing documentation on oceanparcels.org
-        :param chunksize: size of the chunks in dask loading
+        :param chunksize: size of the chunks in dask loading.
 
         """
-
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
                              "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
@@ -672,7 +671,6 @@ class FieldSet:
                but many POP outputs are in 'cm'
 
         """
-
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_pop'
         fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
@@ -752,7 +750,6 @@ class FieldSet:
 
 
         """
-
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mom5'
         fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
@@ -820,7 +817,6 @@ class FieldSet:
         :param chunksize: size of the chunks in dask loading
 
         """
-
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U and V. "
                              "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
@@ -870,7 +866,6 @@ class FieldSet:
         :param chunksize: size of the chunks in dask loading
 
         """
-
         if extra_fields is None:
             extra_fields = {}
         if 'creation_log' not in kwargs.keys():
@@ -916,7 +911,6 @@ class FieldSet:
         :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         """
-
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_xarray_dataset'
@@ -937,7 +931,8 @@ class FieldSet:
 
     def get_fields(self):
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
-        objects associated with this FieldSet"""
+        objects associated with this FieldSet.
+        """
         fields = []
         for v in self.__dict__.values():
             if type(v) in [Field, VectorField]:
@@ -975,7 +970,6 @@ class FieldSet:
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
-
         for grid in self.gridset.grids:
             grid.add_periodic_halo(zonal, meridional, halosize)
         for attr, value in iter(self.__dict__.items()):
@@ -983,10 +977,10 @@ class FieldSet:
                 value.add_periodic_halo(zonal, meridional, halosize)
 
     def write(self, filename):
-        """Write FieldSet to NetCDF file using NEMO convention
+        """Write FieldSet to NetCDF file using NEMO convention.
 
-        :param filename: Basename of the output fileset"""
-
+        :param filename: Basename of the output fileset.
+        """
         if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
             logger.info(f"Generating FieldSet output with basename: {filename}")
 

@@ -27,8 +27,8 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
 
     This behaviour can be useful if particles need to be 'pushed out'
     from e.g. land. Note however that current under-the-hood
-    implementation is not extremely efficient, so code could be slow."""
-
+    implementation is not extremely efficient, so code could be slow.
+    """
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1., ydim, dtype=np.float32)}
     data = {'U': np.zeros((ydim, xdim), dtype=np.float32),
@@ -44,13 +44,17 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
 
     def TestLon(particle, fieldset, time):
         """Kernel to check whether a longitude is larger than fieldset.minlon.
-        If not, the Kernel throws an error"""
+
+        If not, the Kernel throws an error.
+        """
         if particle.lon <= fieldset.minlon:
             return ErrorCode.Error
 
     def Error_RandomiseLon(particle, fieldset, time):
         """Error handling kernel that draws a new longitude.
-        Note that this new longitude can be smaller than fieldset.minlon"""
+
+        Note that this new longitude can be smaller than fieldset.minlon.
+        """
         particle.lon = ParcelsRandom.uniform(0., 1.)
 
     ParcelsRandom.seed(123456)

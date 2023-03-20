@@ -1,4 +1,4 @@
-"""Collection of pre-built advection kernels"""
+"""Collection of pre-built advection kernels."""
 import math
 
 from parcels.tools.statuscodes import OperationCode
@@ -10,7 +10,8 @@ __all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D',
 def AdvectionRK4(particle, fieldset, time):
     """Advection of particles using fourth-order Runge-Kutta integration.
 
-    Function needs to be converted to Kernel object before execution"""
+    Function needs to be converted to Kernel object before execution.
+    """
     (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1*.5*particle.dt, particle.lat + v1*.5*particle.dt)
     (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth, lat1, lon1, particle]
@@ -25,7 +26,8 @@ def AdvectionRK4(particle, fieldset, time):
 def AdvectionRK4_3D(particle, fieldset, time):
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
 
-    Function needs to be converted to Kernel object before execution"""
+    Function needs to be converted to Kernel object before execution.
+    """
     (u1, v1, w1) = fieldset.UVW[particle]
     lon1 = particle.lon + u1*.5*particle.dt
     lat1 = particle.lat + v1*.5*particle.dt
@@ -47,7 +49,8 @@ def AdvectionRK4_3D(particle, fieldset, time):
 def AdvectionEE(particle, fieldset, time):
     """Advection of particles using Explicit Euler (aka Euler Forward) integration.
 
-    Function needs to be converted to Kernel object before execution"""
+    Function needs to be converted to Kernel object before execution.
+    """
     (u1, v1) = fieldset.UV[particle]
     particle.lon += u1 * particle.dt
     particle.lat += v1 * particle.dt
@@ -58,7 +61,8 @@ def AdvectionRK45(particle, fieldset, time):
 
     Times-step dt is halved if error is larger than tolerance, and doubled
     if error is smaller than 1/10th of tolerance, with tolerance set to
-    1e-5 * dt by default."""
+    1e-5 * dt by default.
+    """
     rk45tol = 1e-5
     c = [1./4., 3./8., 12./13., 1., 1./2.]
     A = [[1./4., 0., 0., 0., 0.],
@@ -103,11 +107,12 @@ def AdvectionRK45(particle, fieldset, time):
 
 
 def AdvectionAnalytical(particle, fieldset, time):
-    """Advection of particles using 'analytical advection' integration
+    """Advection of particles using 'analytical advection' integration.
 
     Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017).
     Note that the time-dependent scheme is currently implemented with 'intermediate timesteps'
-    (default 10 per model timestep) and not yet with the full analytical time integration"""
+    (default 10 per model timestep) and not yet with the full analytical time integration.
+    """
     import numpy as np
 
     import parcels.tools.interpolation_utils as i_u

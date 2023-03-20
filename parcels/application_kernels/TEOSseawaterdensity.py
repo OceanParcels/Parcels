@@ -1,12 +1,12 @@
-"""Collection of pre-built sea water density kernels"""
+"""Collection of pre-built sea water density kernels."""
 import math
 
 __all__ = ['PolyTEOS10_bsq']
 
 
 def PolyTEOS10_bsq(particle, fieldset, time):
-    '''
-    calculates density based on the polyTEOS10-bsq algorithm from Appendix A.2 of
+    """
+    Calculates density based on the polyTEOS10-bsq algorithm from Appendix A.2 of
     https://www.sciencedirect.com/science/article/pii/S1463500315000566
     requires fieldset.abs_salinity and fieldset.cons_temperature Fields in the fieldset
     and a particle.density Variable in the ParticleSet
@@ -19,8 +19,7 @@ def PolyTEOS10_bsq(particle, fieldset, time):
     Accurate and computationally efficient algorithms for potential
     temperature and density of seawater.  Journal of Atmospheric and
     Oceanic Technology, 20, 730-741.
-    '''
-
+    """
     Z = - math.fabs(particle.depth)  # Z needs to be negative
     SA = fieldset.abs_salinity[time, particle.depth, particle.lat, particle.lon]
     CT = fieldset.cons_temperature[time, particle.depth, particle.lat, particle.lon]

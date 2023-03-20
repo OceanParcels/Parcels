@@ -91,11 +91,11 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
 
 def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,
                           method=AdvectionRK4):
-    """Configuration of a particle set that follows two moving eddies
+    """Configuration of a particle set that follows two moving eddies.
 
     :arg fieldset: :class FieldSet: that defines the flow field
-    :arg npart: Number of particles to initialise"""
-
+    :arg npart: Number of particles to initialise.
+    """
     # Determine particle class according to mode
     start = (3.3, 46.) if fieldset.U.grid.mesh == 'spherical' else (3.3e5, 1e5)
     finish = (3.3, 47.8) if fieldset.U.grid.mesh == 'spherical' else (3.3e5, 2.8e5)
@@ -163,7 +163,7 @@ def test_moving_eddies_fieldset(mode, mesh, tmpdir):
 
 
 def fieldsetfile(mesh, tmpdir):
-    """Generate fieldset files for moving_eddies test"""
+    """Generate fieldset files for moving_eddies test."""
     filename = tmpdir.join('moving_eddies')
     fieldset = moving_eddies_fieldset(200, 350, mesh=mesh)
     fieldset.write(filename)

@@ -17,7 +17,7 @@ except:
 def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
                          tracerlon='x', tracerlat='y', recordedvar=None, movie_forward=True,
                          bins=20, show_plt=True, central_longitude=0):
-    """Quick and simple plotting of Parcels trajectories
+    """Quick and simple plotting of Parcels trajectories.
 
     :param filename: Name of Parcels-generated NetCDF file with particle positions
     :param mode: Type of plot to show. Supported are '2d', '3d', 'hist2d',
@@ -34,7 +34,6 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param show_plt: Boolean whether plot should directly be show (for py.test)
     :param central_longitude: Degrees East at which to center the plot
     """
-
     environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
     try:
         pfile = xr.open_zarr(str(filename), decode_cf=True)

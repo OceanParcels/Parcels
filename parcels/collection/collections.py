@@ -20,7 +20,8 @@ class Collection(ABC):
     @abstractmethod
     def __init__(self):
         """
-        Collection - Constructor
+        Collection - Constructor.
+
         Initializes a collection by pre-allocating memory (where needed), initialising indexing structures
         (where needed), initialising iterators and preparing the C-JIT-glue.
         """
@@ -28,9 +29,7 @@ class Collection(ABC):
 
     @abstractmethod
     def __del__(self):
-        """
-        Collection - Destructor
-        """
+        """Collection - Destructor."""
         pass
 
     @property
@@ -749,9 +748,7 @@ class Collection(ABC):
         pass
 
     def __len__(self):
-        """
-        This function returns the length, in terms of 'number of elements, of a collection.
-        """
+        """This function returns the length, in terms of 'number of elements, of a collection."""
         return self._ncount
 
     @abstractmethod
@@ -790,8 +787,8 @@ class ParticleCollection(Collection):
     _data = None  # formerly: particle_data
 
     def __init__(self):
-        """
-        ParticleCollection - Constructor
+        """Constructor for ParticleCollection.
+
         Initializes a particle collection by pre-allocating memory (where needed), initialising indexing structures
         (where needed), initialising iterators (if maintaining a persistent iterator) and preparing the C-JIT-glue.
 
@@ -808,9 +805,7 @@ class ParticleCollection(Collection):
         super().__init__()
 
     def __del__(self):
-        """
-        ParticleCollection - Destructor
-        """
+        """Destructor for ParticleCollection."""
         pass
 
     @property
@@ -834,9 +829,7 @@ class ParticleCollection(Collection):
 
     @property
     def pclass(self):
-        """
-        'pclass' stores the actual class type of the particles allocated and managed in this collection
-        """
+        """Stores the actual class type of the particles allocated and managed in this collection."""
         return self._pclass
 
     @property
@@ -877,9 +870,7 @@ class ParticleCollection(Collection):
 
     @abstractmethod
     def cstruct(self):
-        """
-        'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
-        """
+        """Returns the ctypes mapping of the particle data. This depends on the specific structure in question."""
         pass
 
     @abstractmethod

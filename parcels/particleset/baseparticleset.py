@@ -25,6 +25,7 @@ class NDCluster(ABC):
 
 class BaseParticleSet(NDCluster):
     """Base ParticleSet."""
+
     _collection = None
     kernel = None
     interaction_kernel = None
@@ -60,9 +61,7 @@ class BaseParticleSet(NDCluster):
         return self._collection.iterator()
 
     def __iter__(self):
-        """Allows for more intuitive iteration over a particleset, while
-        in reality iterating over the particles in the collection.
-        """
+        """Allows for more intuitive iteration over a particleset, while in reality iterating over the particles in the collection."""
         return self.iterator()
 
     def __getattr__(self, name):
@@ -109,11 +108,11 @@ class BaseParticleSet(NDCluster):
 
     @classmethod
     def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
-        """Initialise the ParticleSet from lists of lon and lat
+        """Initialise the ParticleSet from lists of lon and lat.
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
+            object that defines custom particle
         :param lon: List of initial longitude values for particles
         :param lat: List of initial latitude values for particles
         :param depth: Optional list of initial depth values for particles. Default is 0m
@@ -123,12 +122,14 @@ class BaseParticleSet(NDCluster):
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
-       """
+        """
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod
     def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
-        """Initialise the ParticleSet from start/finish coordinates with equidistant spacing
+        """Create a particleset in the shape of a line (according to a cartesian grid).
+
+        Initialise the ParticleSet from start/finish coordinates with equidistant spacing
         Note that this method uses simple numpy.linspace calls and does not take into account
         great circles, so may not be a exact on a globe
 
@@ -145,7 +146,6 @@ class BaseParticleSet(NDCluster):
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
-
         lon = np.linspace(start[0], finish[0], size)
         lat = np.linspace(start[1], finish[1], size)
         if type(depth) in [int, float]:
@@ -166,7 +166,7 @@ class BaseParticleSet(NDCluster):
 
     @classmethod
     def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
-        """Initialise the ParticleSet randomly drawn according to distribution from a field
+        """Initialise the ParticleSet randomly drawn according to distribution from a field.
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
@@ -181,7 +181,6 @@ class BaseParticleSet(NDCluster):
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
-
         lon, lat = cls.monte_carlo_sample(start_field, size, mode)
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
@@ -210,8 +209,7 @@ class BaseParticleSet(NDCluster):
         pass
 
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
-        """Method to calculate the density of particles in a ParticleSet from their locations,
-        through a 2D histogram.
+        """Calculate 2D particle density field from ParticleSet particle locations.
 
         :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
                       on. Default is `fieldset.U`
@@ -227,8 +225,9 @@ class BaseParticleSet(NDCluster):
 
     @abstractmethod
     def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
-        """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
-        based on `fieldset` and `ptype` of the ParticleSet
+        """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object.
+
+        Conversion is based on `fieldset` and `ptype` of the ParticleSet.
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
         pass
@@ -238,8 +237,7 @@ class BaseParticleSet(NDCluster):
 
     @abstractmethod
     def ParticleFile(self, *args, **kwargs):
-        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
-        object from the ParticleSet"""
+        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
         pass
 
     @abstractmethod
@@ -296,8 +294,9 @@ class BaseParticleSet(NDCluster):
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
                 verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
-        """Execute a given kernel function over the particle set for
-        multiple timesteps. Optionally also provide sub-timestepping
+        """Execute a given kernel function over the particle set for multiple timesteps.
+
+        Optionally also provide sub-timestepping
         for particle output.
 
         :param pyfunc: Kernel function to execute. This can be the name of a
@@ -514,7 +513,7 @@ class BaseParticleSet(NDCluster):
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection='PlateCarree',
              land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
-        """Method to 'show' a Parcels ParticleSet
+        """Method to 'show' a Parcels ParticleSet.
 
         :param with_particles: Boolean whether to show particles
         :param show_time: Time at which to show the ParticleSet

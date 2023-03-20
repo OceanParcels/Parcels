@@ -27,7 +27,5 @@ class ParticleFileAOS(BaseParticleFile):
         super().__del__()
 
     def _reserved_var_names(self):
-        """
-        returns the reserved dimension names not to be written just once.
-        """
+        """Returns the reserved dimension names not to be written just once."""
         return ['time', 'lat', 'lon', 'depth', 'id']

@@ -74,7 +74,8 @@ def write_simple_2Dt(field, filename, varname=None):
     """Write a :class:`Field` to a netcdf file
 
     :param filename: Basename of the file
-    :param varname: Name of the field, to be appended to the filename"""
+    :param varname: Name of the field, to be appended to the filename.
+    """
     filepath = str(f'{filename}{field.name}.nc')
     if varname is None:
         varname = field.name

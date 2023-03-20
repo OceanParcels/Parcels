@@ -71,9 +71,7 @@ def k_sample_P_fixture():
 
 
 def fieldset(xdim=200, ydim=100):
-    """ Standard fieldset spanning the earth's coordinates with U and V
-        equivalent to longitude and latitude in deg.
-    """
+    """Standard fieldset spanning the earth's coordinates with U and V equivalent to longitude and latitude in deg."""
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)
@@ -89,7 +87,7 @@ def fieldset_fixture(xdim=200, ydim=100):
 
 
 def fieldset_geometric(xdim=200, ydim=100):
-    """ Standard earth fieldset with U and V equivalent to lon/lat in m. """
+    """Standard earth fieldset with U and V equivalent to lon/lat in m."""
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)
@@ -109,8 +107,8 @@ def fieldset_geometric_fixture(xdim=200, ydim=100):
 
 
 def fieldset_geometric_polar(xdim=200, ydim=100):
-    """ Standard earth fieldset with U and V equivalent to lon/lat in m
-        and the inversion of the pole correction applied to U.
+    """Standard earth fieldset with U and V equivalent to lon/lat in m
+    and the inversion of the pole correction applied to U.
     """
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
@@ -131,7 +129,7 @@ def fieldset_geometric_polar_fixture(xdim=200, ydim=100):
 
 
 def test_fieldset_sample(fieldset, xdim=120, ydim=80):
-    """ Sample the fieldset using indexing notation. """
+    """Sample the fieldset using indexing notation."""
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([fieldset.UV[0, 0., 70., x][1] for x in lon])
@@ -141,7 +139,7 @@ def test_fieldset_sample(fieldset, xdim=120, ydim=80):
 
 
 def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
-    """ Sample the fieldset using the explicit eval function. """
+    """Sample the fieldset using the explicit eval function."""
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([fieldset.UV.eval(0, 0., 70., x)[1] for x in lon])
@@ -431,13 +429,12 @@ def test_partialslip_nearland_vertical(pset_mode, mode, boundaryslip, npart=20):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('lat_flip', [False, True])
 def test_fieldset_sample_particle(pset_mode, mode, k_sample_uv, lat_flip, npart=120):
-    """ Sample the fieldset using an array of particles.
+    """Sample the fieldset using an array of particles.
 
     Note that the low tolerances (1.e-6) are due to the first-order
     interpolation in JIT mode and give an indication of the
     corresponding sampling error.
     """
-
     lon = np.linspace(-180, 180, 200, dtype=np.float32)
     if lat_flip:
         lat = np.linspace(90, -90, 100, dtype=np.float32)
@@ -463,7 +460,7 @@ def test_fieldset_sample_particle(pset_mode, mode, k_sample_uv, lat_flip, npart=
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_sample_geographic(fieldset_geometric, pset_mode, mode, k_sample_uv, npart=120):
-    """ Sample a fieldset with conversion to geographic units (degrees). """
+    """Sample a fieldset with conversion to geographic units (degrees)."""
     fieldset = fieldset_geometric
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
@@ -480,7 +477,7 @@ def test_fieldset_sample_geographic(fieldset_geometric, pset_mode, mode, k_sampl
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_sample_geographic_noconvert(fieldset_geometric, pset_mode, mode, k_sample_uv_noconvert, npart=120):
-    """ Sample a fieldset without conversion to geographic units. """
+    """Sample a fieldset without conversion to geographic units."""
     fieldset = fieldset_geometric
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
@@ -497,7 +494,7 @@ def test_fieldset_sample_geographic_noconvert(fieldset_geometric, pset_mode, mod
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, pset_mode, mode, k_sample_uv, npart=120):
-    """ Sample a fieldset with conversion to geographic units and a pole correction. """
+    """Sample a fieldset with conversion to geographic units and a pole correction."""
     fieldset = fieldset_geometric_polar
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
@@ -516,11 +513,10 @@ def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, pset_mode, m
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
-    """ Create uniform NORTHWARD flow on spherical earth and advect particles
+    """Create uniform NORTHWARD flow on spherical earth and advect particles.
 
-    As flow is so simple, it can be directly compared to analytical solution
+    As flow is so simple, it can be directly compared to analytical solution.
     """
-
     maxvel = 1.
     dimensions = {'lon': np.linspace(-180, 180, xdim, dtype=np.float32),
                   'lat': np.linspace(-90, 90, ydim, dtype=np.float32)}
@@ -544,7 +540,7 @@ def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
-    """ Create uniform EASTWARD flow on spherical earth and advect particles
+    """Create uniform EASTWARD flow on spherical earth and advect particles.
 
     As flow is so simple, it can be directly compared to analytical solution
     Note that in this case the cosine conversion is needed
@@ -579,9 +575,7 @@ def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_random_field(pset_mode, mode, k_sample_p, xdim=20, ydim=20, npart=100):
-    """Sampling test that tests for overshoots by sampling a field of
-    random numbers between 0 and 1.
-    """
+    """Sampling test that tests for overshoots by sampling a field of random numbers between 0 and 1."""
     np.random.seed(123456)
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1., ydim, dtype=np.float32)}

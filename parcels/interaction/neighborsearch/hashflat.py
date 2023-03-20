@@ -8,7 +8,8 @@ from parcels.interaction.neighborsearch.basehash import (
 
 
 class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
-    '''Neighbor search using a hashtable (similar to octtrees).'''
+    """Neighbor search using a hashtable (similar to octtrees)."""
+
     _box = None
 
     def _find_neighbors(self, hash_id, coor):
