@@ -28,11 +28,18 @@ __all__ = ['KernelSOA']
 class KernelSOA(BaseKernel):
     """Kernel object that encapsulates auto-generated code.
 
-    :arg fieldset: FieldSet object providing the field information
-    :arg ptype: PType object for the kernel particle
-    :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+    Parameters
+    ----------
+    fieldset :
+        FieldSet object providing the field information
+    ptype :
+        PType object for the kernel particle
+    delete_cfiles :
+        Boolean whether to delete the C-files after compilation in JIT mode (default is True)
 
-    Note: A Kernel is either created from a compiled <function ...> object
+    Notes
+    -----
+    A Kernel is either created from a compiled <function ...> object
     or the necessary information (funcname, funccode, funcvars) is provided.
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
