@@ -74,7 +74,7 @@ class FieldSet:
                (e.g. dimensions['U'], dimensions['V'], etc).
         :param transpose: Boolean whether to transpose data on read-in
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -88,13 +88,13 @@ class FieldSet:
         Usage examples
         ==============
 
-        * `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`_
+        * `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`__
 
-        * `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`_
+        * `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`__
 
-        * `Interpolation <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_interpolation.ipynb>`_
+        * `Interpolation <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_interpolation.ipynb>`__
 
-        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
+        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__
 
         """
         fields = {}
@@ -134,9 +134,9 @@ class FieldSet:
 
         For usage examples see the following tutorials:
 
-        * `Nested Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`_
+        * `Nested Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`__
 
-        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
+        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__
 
         """
         if self.completed:
@@ -314,7 +314,7 @@ class FieldSet:
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also `this tuturial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
+               units used during velocity interpolation, see also `this tuturial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -344,13 +344,13 @@ class FieldSet:
 
         For usage examples see the following tutorials:
 
-        * `Basic Parcels setup <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb>`_
+        * `Basic Parcels setup <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb>`__
 
-        * `Argo floats <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Argofloats.ipynb>`_
+        * `Argo floats <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Argofloats.ipynb>`__
 
-        * `Timestamps <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb>`_
+        * `Timestamps <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb>`__
 
-        * `Time-evolving depth dimensions <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timevaryingdepthdimensions.ipynb>`_
+        * `Time-evolving depth dimensions <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timevaryingdepthdimensions.ipynb>`__
 
         """
         # Ensure that times are not provided both in netcdf file and in 'timestamps'.
@@ -426,11 +426,11 @@ class FieldSet:
                   tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
-        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_
-        for a detailed tutorial on the setup for 2D NEMO fields and `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_3D.ipynb>`_
+        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`__
+        for a detailed tutorial on the setup for 2D NEMO fields and `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_3D.ipynb>`__
         for the tutorial on the setup for 3D NEMO fields.
 
-        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
+        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`__
         for a more detailed explanation of the different methods that can be used for c-grid datasets.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -469,7 +469,7 @@ class FieldSet:
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -530,7 +530,7 @@ class FieldSet:
                             tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
-        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
+        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`__
         for a more detailed explanation of the different methods that can be used for c-grid datasets.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -654,7 +654,7 @@ class FieldSet:
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -900,7 +900,7 @@ class FieldSet:
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -952,9 +952,9 @@ class FieldSet:
         execution in SciPy mode, they can not be updated in JIT mode.
 
         Tutorials using fieldset.add_constant:
-        `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`_
-        `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`_
-        `Periodic boundaries <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`_
+        `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`__
+        `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`__
+        `Periodic boundaries <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`__
 
         :param name: Name of the constant
         :param value: Value of the constant (stored as 32-bit float)
