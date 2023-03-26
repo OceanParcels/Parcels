@@ -37,7 +37,7 @@ def _get_cftime_calendars():
 
 
 class TimeConverter:
-    """ Converter class for dates with different calendars in FieldSets
+    """Converter class for dates with different calendars in FieldSets
 
     :param: time_origin: time origin of the class. Currently supported formats are
             float, integer, numpy.datetime64, and netcdftime.DatetimeNoLeap
@@ -132,9 +132,8 @@ class TimeConverter:
 
 
 class UnitConverter:
-    """ Interface class for spatial unit conversion during field sampling
-        that performs no conversion.
-    """
+    """Interface class for spatial unit conversion during field sampling that performs no conversion."""
+
     source_unit = None
     target_unit = None
 
@@ -152,7 +151,8 @@ class UnitConverter:
 
 
 class Geographic(UnitConverter):
-    """ Unit converter from geometric to geographic coordinates (m to degree) """
+    """Unit converter from geometric to geographic coordinates (m to degree)"""
+
     source_unit = 'm'
     target_unit = 'degree'
 
@@ -170,9 +170,10 @@ class Geographic(UnitConverter):
 
 
 class GeographicPolar(UnitConverter):
-    """ Unit converter from geometric to geographic coordinates (m to degree)
-        with a correction to account for narrower grid cells closer to the poles.
+    """Unit converter from geometric to geographic coordinates (m to degree)
+    with a correction to account for narrower grid cells closer to the poles.
     """
+
     source_unit = 'm'
     target_unit = 'degree'
 
@@ -190,7 +191,8 @@ class GeographicPolar(UnitConverter):
 
 
 class GeographicSquare(UnitConverter):
-    """ Square distance converter from geometric to geographic coordinates (m2 to degree2) """
+    """Square distance converter from geometric to geographic coordinates (m2 to degree2)"""
+
     source_unit = 'm2'
     target_unit = 'degree2'
 
@@ -208,9 +210,10 @@ class GeographicSquare(UnitConverter):
 
 
 class GeographicPolarSquare(UnitConverter):
-    """ Square distance converter from geometric to geographic coordinates (m2 to degree2)
-        with a correction to account for narrower grid cells closer to the poles.
+    """Square distance converter from geometric to geographic coordinates (m2 to degree2)
+    with a correction to account for narrower grid cells closer to the poles.
     """
+
     source_unit = 'm2'
     target_unit = 'degree2'
 
@@ -233,8 +236,7 @@ unitconverters_map = {'U': GeographicPolar(), 'V': Geographic(),
 
 
 def convert_xarray_time_units(ds, time):
-    """ Fixes DataArrays that have time.Unit instead of expected time.units
-    """
+    """Fixes DataArrays that have time.Unit instead of expected time.units"""
     da = ds[time] if isinstance(ds, xr.Dataset) else ds
     if 'units' not in da.attrs and 'Unit' in da.attrs:
         da.attrs['units'] = da.attrs['Unit']
