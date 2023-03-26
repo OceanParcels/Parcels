@@ -548,7 +548,7 @@ class FieldSet:
         chunksize :
             size of the chunks in dask loading. Default is None (no chunking)
         **kwargs :
-            Keyword arguments passed to the :function:`Fieldset.from_c_grid_dataset` constructor.
+            Keyword arguments passed to the :func:`Fieldset.from_c_grid_dataset` constructor.
 
         """
         if 'creation_log' not in kwargs.keys():
@@ -663,7 +663,7 @@ class FieldSet:
         chunksize :
             size of the chunks in dask loading. (Default value = None)
         **kwargs :
-            Keyword arguments passed to the :function:`Fieldset.from_netcdf` constructor.
+            Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
         """
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
@@ -763,7 +763,7 @@ class FieldSet:
             The units of the vertical dimension. Default in Parcels is 'm',
             but many POP outputs are in 'cm'
         **kwargs :
-            Keyword arguments passed to the :function:`Fieldset.from_b_grid_dataset` constructor.
+            Keyword arguments passed to the :func:`Fieldset.from_b_grid_dataset` constructor.
 
         """
         if 'creation_log' not in kwargs.keys():
@@ -855,7 +855,7 @@ class FieldSet:
         chunksize :
             size of the chunks in dask loading (Default value = None)
         **kwargs :
-            Keyword arguments passed to the :function:`Fieldset.from_b_grid_dataset` constructor.
+            Keyword arguments passed to the :func:`Fieldset.from_b_grid_dataset` constructor.
         """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mom5'
@@ -935,7 +935,7 @@ class FieldSet:
         chunksize :
             size of the chunks in dask loading (Default value = None)
         **kwargs :
-            Keyword arguments passed to the :function:`Fieldset.from_netcdf` constructor.
+            Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
         """
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U and V. "
@@ -999,7 +999,7 @@ class FieldSet:
         vvar :
              (Default value = 'vomecrty')
         **kwargs :
-            Keyword arguments passed to the :function:`Fieldset.from_netcdf` constructor.
+            Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
         """
         if extra_fields is None:
             extra_fields = {}
@@ -1055,7 +1055,7 @@ class FieldSet:
             To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
             This flag overrides the allow_time_interpolation and sets it to False
         **kwargs :
-            Keyword arguments passed to the :function:`Field.from_xarray` constructor.
+            Keyword arguments passed to the :func:`Field.from_xarray` constructor.
         """
         fields = {}
         if 'creation_log' not in kwargs.keys():

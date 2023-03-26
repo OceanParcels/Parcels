@@ -40,7 +40,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
     particles :
 
     **kwargs :
-        Keyword arguments passed to the :ref:`plotfield` function.
+        Keyword arguments passed to the :func:`plotfield` function.
     """
     show_time = particles[0].time if show_time is None else show_time
     if isinstance(show_time, datetime):
@@ -140,7 +140,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
     field :
 
     **kwargs :
-        Provide "titlestr" as the title of the plot, or "cartopy_features" to be used in :ref:`create_parcelsfig_axis`.
+        Provide "titlestr" as the title of the plot, or "cartopy_features" to be used in :func:`create_parcelsfig_axis`.
     """
     if type(field) is VectorField:
         spherical = True if field.U.grid.mesh == 'spherical' else False

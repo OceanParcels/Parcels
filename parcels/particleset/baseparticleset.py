@@ -645,7 +645,7 @@ class BaseParticleSet(NDCluster):
         animation :
             Boolean whether result is a single plot, or an animation (Default value = False)
         **kwargs :
-            Keyword arguments passed to the :ref:`parcels.plotting.plotparticles`.
+            Keyword arguments passed to the :func:`parcels.plotting.plotparticles`.
 
         """
         from parcels.plotting import plotparticles

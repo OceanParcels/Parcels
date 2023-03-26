@@ -87,9 +87,9 @@ def DiffusionUniformKh(particle, fieldset, time):
 
     Assumes that fieldset has constant fields `Kh_zonal` and `Kh_meridional`.
     These can be added via e.g.
-        fieldset.add_constant_field("Kh_zonal", kh_zonal, mesh=mesh)
-
-        fieldset.add_constant_field("Kh_meridional", kh_meridional, mesh=mesh)
+    `fieldset.add_constant_field("Kh_zonal", kh_zonal, mesh=mesh)`
+    or
+    `fieldset.add_constant_field("Kh_meridional", kh_meridional, mesh=mesh)`
     where mesh is either 'flat' or 'spherical'
 
     This kernel assumes diffusivity gradients are zero and is therefore more efficient.

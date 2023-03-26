@@ -12,14 +12,15 @@ def PolyTEOS10_bsq(particle, fieldset, time):
 
     References
     ----------
-    .. [1] Roquet, F., Madec, G., McDougall, T. J., Barker, P. M., 2014: Accurate
+    1. Roquet, F., Madec, G., McDougall, T. J., Barker, P. M., 2014: Accurate
        polynomial expressions for the density and specific volume of
-    seawater using the TEOS-10 standard. Ocean Modelling.
+       seawater using the TEOS-10 standard. Ocean Modelling.
 
-    .. [2] McDougall, T. J., D. R. Jackett, D. G. Wright and R. Feistel, 2003:
+    2. McDougall, T. J., D. R. Jackett, D. G. Wright and R. Feistel, 2003:
        Accurate and computationally efficient algorithms for potential
        temperature and density of seawater.  Journal of Atmospheric and
        Oceanic Technology, 20, 730-741.
+
     """
     Z = - math.fabs(particle.depth)  # Z needs to be negative
     SA = fieldset.abs_salinity[time, particle.depth, particle.lat, particle.lon]

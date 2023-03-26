@@ -15,7 +15,7 @@ def PressureFromLatDepth(particle, fieldset, time):
 
     References
     ----------
-    .. [1] Saunders, Peter M., 1981: Practical Conversion of Pressure to Depth.
+    1. Saunders, Peter M., 1981: Practical Conversion of Pressure to Depth.
        J. Phys. Oceanogr., 11, 573-574.
        doi: 10.1175/1520-0485(1981)011<0573:PCOPTD>2.0.CO;2
     """
@@ -52,12 +52,12 @@ def AdiabticTemperatureGradient(particle, fieldset, time):
 
     References
     ----------
-    .. [1] Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
+    1. Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
        computation of fundamental properties of seawater. UNESCO Tech. Pap. in
        Mar. Sci., No. 44, 53 pp.
        http://unesdoc.unesco.org/images/0005/000598/059832eb.pdf
 
-    .. [2] Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
+    2. Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
        temperature gradient and potential temperature of sea water. Deep-Sea
        Res. Vol20,401-408. doi:10.1016/0011-7471(73)90063-6
 
@@ -107,12 +107,12 @@ def PtempFromTemp(particle, fieldset, time):
 
     References
     ----------
-    .. [1] Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
+    1. Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
        computation of fundamental properties of seawater. UNESCO Tech. Pap. in
        Mar. Sci., No. 44, 53 pp.  Eqn.(31) p.39.
        http://unesdoc.unesco.org/images/0005/000598/059832eb.pdf
 
-    .. [2] Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
+    2. Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
        temperature gradient and potential temperature of sea water. Deep-Sea
        Res. Vol20,401-408. doi:10.1016/0011-7471(73)90063-6
 
@@ -206,12 +206,12 @@ def TempFromPtemp(particle, fieldset, time):
 
     References
     ----------
-    .. [1] Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
+    1. Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
        computation of fundamental properties of seawater. UNESCO Tech. Pap. in
        Mar. Sci., No. 44, 53 pp.  Eqn.(31) p.39.
        http://unesdoc.unesco.org/images/0005/000598/059832eb.pdf
 
-    .. [2] Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
+    2. Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
        temperature gradient and potential temperature of sea water. Deep-Sea
        Res.  Vol20,401-408. doi:10.1016/0011-7471(73)90063-6
 
