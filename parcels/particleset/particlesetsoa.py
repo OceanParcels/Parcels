@@ -347,7 +347,10 @@ class ParticleSetSOA(BaseParticleSet):
     def error_particles(self):
         """Get an iterator over all particles that are in an error state.
 
-        :return: Collection iterator over error particles.
+        Returns
+        -------
+        iterator
+            Collection iterator over error particles.
         """
         error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
         return ParticleCollectionIterableSOA(self._collection, subset=error_indices)
@@ -363,7 +366,10 @@ class ParticleSetSOA(BaseParticleSet):
     def num_error_particles(self):
         """Get the number of particles that are in an error state.
 
-        :return: The number of error particles.
+        Returns
+        -------
+        int
+            Number of error particles.
         """
         return np.sum(np.isin(
             self._collection.data['state'],
@@ -569,13 +575,19 @@ class ParticleSetSOA(BaseParticleSet):
     def __iadd__(self, particles):
         """Add particles to the ParticleSet.
 
-        Note that this is an
-        incremental add, the particles will be added to the ParticleSet
+        Note that this is an incremental add, the particles will be added to the ParticleSet
         on which this function is called.
 
-        :param particles: Another ParticleSet containing particles to add
-                          to this one.
-        :return: The current ParticleSet
+        Parameters
+        ----------
+        particles :
+            Another ParticleSet containing particles to add
+            to this one.
+
+        Returns
+        -------
+        type
+            The current ParticleSet
         """
         self.add(particles)
         return self

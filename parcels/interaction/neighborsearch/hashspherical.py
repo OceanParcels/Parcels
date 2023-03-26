@@ -11,17 +11,21 @@ from parcels.interaction.neighborsearch.basehash import (
 
 class HashSphericalNeighborSearch(BaseHashNeighborSearch,
                                   BaseSphericalNeighborSearch):
-    """Neighbor search using a hashtable (similar to octtrees)."""
+    """Neighbor search using a hashtable (similar to octtrees).
+
+
+    Parameters
+    ----------
+    inter_dist_vert : float
+        Interaction distance (vertical) in m.
+    inter_dist_horiz : float
+        interaction distance (horizontal) in m
+    max_depth : float, optional
+        Maximum depth of the particles (default is 100000m).
+    """
 
     def __init__(self, inter_dist_vert, inter_dist_horiz,
                  max_depth=100000):
-        """Initialize the neighbor data structure.
-
-        :param interaction_distance: maximum horizontal interaction distance.
-        :param interaction_depth: maximum depth of interaction.
-        :param values: depth, lat, lon values for particles.
-        :param max_depth: maximum depth of the ocean.
-        """
         super().__init__(inter_dist_vert, inter_dist_horiz, max_depth)
 
         self._init_structure()

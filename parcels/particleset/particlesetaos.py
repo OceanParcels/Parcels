@@ -407,7 +407,6 @@ class ParticleSetAOS(BaseParticleSet):
         -------
         iterator
             Collection iterator over error particles.
-
         """
         error_indices = [
             i for i, p in enumerate(self)
@@ -439,7 +438,10 @@ class ParticleSetAOS(BaseParticleSet):
         """
         Access a single property of all particles.
 
-        :param name: name of the property
+        Parameters
+        ----------
+        name : str
+            Name of the property to access.
         """
         for v in self._collection.ptype.variables:
             if v.name == name:
@@ -624,13 +626,21 @@ class ParticleSetAOS(BaseParticleSet):
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
 
     def __iadd__(self, particles):
-        """Add particles to the ParticleSet. Note that this is an
-        incremental add, the particles will be added to the ParticleSet
+        """Add particles to the ParticleSet.
+
+        Note that this is an incremental add, the particles will be added to the ParticleSet
         on which this function is called.
 
-        :param particles: Another ParticleSet containing particles to add
-                          to this one.
-        :return: The current ParticleSet
+        Parameters
+        ----------
+        particles :
+            Another ParticleSet containing particles to add
+            to this one.
+
+        Returns
+        -------
+        type
+            The current ParticleSet
         """
         self.add(particles)
         return self

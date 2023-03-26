@@ -18,10 +18,15 @@ class BaseNeighborSearch(ABC):
                  max_depth=100000, periodic_domain_zonal=None):
         """Initialize neighbor search
 
-        :param inter_dist_vert: interaction distance (vertical) in m
-        :param inter_dist_horiz: interaction distance (horizontal in m
-        :param max_depth: maximum depth of the particles (i.e. 100km)
-        :param zperiodic_bc_domain: zonal domain if zonal periodic boundary
+
+        Parameters
+        ----------
+        inter_dist_vert : float
+            Interaction distance (vertical) in m.
+        inter_dist_horiz : float
+            interaction distance (horizontal) in m
+        max_depth : float, optional
+            Maximum depth of the particles (default is 100000m).
         """
         self.inter_dist_vert = inter_dist_vert
         self.inter_dist_horiz = inter_dist_horiz

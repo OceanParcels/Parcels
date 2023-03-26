@@ -25,17 +25,28 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
     """Generate a fieldset encapsulating the flow field consisting of two
     moving eddies, one moving westward and the other moving northwestward.
 
-    :param xdim: Horizontal dimension of the generated fieldset
-    :param xdim: Vertical dimension of the generated fieldset
-    :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+    Parameters
+    ----------
+    xdim :
+        Horizontal dimension of the generated fieldset (Default value = 200)
+    xdim :
+        Vertical dimension of the generated fieldset (Default value = 200)
+    mesh :
+        String indicating the type of mesh coordinates and
+        units used during velocity interpolation:
 
-               1. spherical: Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat  (default): No conversion, lat/lon are assumed to be in m.
+        1. spherical: Lat and lon in degree, with a
+        correction for zonal velocity U near the poles.
+        2. flat  (default): No conversion, lat/lon are assumed to be in m.
+    ydim :
+         (Default value = 350)
 
+
+    Notes
+    -----
     Note that this is not a proper geophysical flow. Rather, a Gaussian eddy is moved
     artificially with uniform velocities. Velocities are calculated from geostrophy.
+
     """
     # Set Parcels FieldSet variables
     time = np.arange(0., 8. * 86400., 86400., dtype=np.float64)
@@ -93,8 +104,21 @@ def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,
                           method=AdvectionRK4):
     """Configuration of a particle set that follows two moving eddies.
 
-    :arg fieldset: :class FieldSet: that defines the flow field
-    :arg npart: Number of particles to initialise.
+
+    Parameters
+    ----------
+    fieldset :
+        :class FieldSet: that defines the flow field
+    outfile :
+
+    npart :
+         Number of particles to initialise. (Default value = 2)
+    mode :
+         (Default value = 'jit')
+    verbose :
+         (Default value = False)
+    method :
+         (Default value = AdvectionRK4)
     """
     # Determine particle class according to mode
     start = (3.3, 46.) if fieldset.U.grid.mesh == 'spherical' else (3.3e5, 1e5)

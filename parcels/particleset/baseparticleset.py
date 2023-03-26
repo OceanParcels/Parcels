@@ -68,7 +68,10 @@ class BaseParticleSet(NDCluster):
         """
         Access a single property of all particles.
 
-        :param name: name of the property
+        Parameters
+        ----------
+        name : str
+            Name of the property
         """
         for v in self._collection.ptype.variables:
             if v.name == name:
@@ -335,7 +338,6 @@ class BaseParticleSet(NDCluster):
 
         This is a fallback implementation, it might be slow.
 
-        :return: Collection iterator over error particles.
 
         Returns
         -------

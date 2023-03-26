@@ -25,22 +25,30 @@ method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
     """Construct a fieldset encapsulating the flow field around an idealised peninsula.
 
-    :param xdim: Horizontal dimension of the generated fieldset
-    :param xdim: Vertical dimension of the generated fieldset
-    :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+    Parameters
+    ----------
+    xdim :
+        Horizontal dimension of the generated fieldset
+    xdim :
+        Vertical dimension of the generated fieldset
+    mesh :
+        String indicating the type of mesh coordinates and
+        units used during velocity interpolation:
 
-               1. spherical: Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat  (default): No conversion, lat/lon are assumed to be in m.
-    :param grid_type: Option whether grid is either Arakawa A (default) or C
+        1. spherical: Lat and lon in degree, with a
+        correction for zonal velocity U near the poles.
+        2. flat  (default): No conversion, lat/lon are assumed to be in m.
+    grid_type :
+        Option whether grid is either Arakawa A (default) or C
 
-    The original test description can be found in Fig. 2.2.3 in:
-    North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
-    recommended practices for modelling physical - biological
-    interactions during fish early life.
-    ICES Cooperative Research Report No. 295. 111 pp.
-    http://archimer.ifremer.fr/doc/00157/26792/24888.pdf
+        The original test description can be found in Fig. 2.2.3 in:
+        North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
+        recommended practices for modelling physical - biological
+        interactions during fish early life.
+        ICES Cooperative Research Report No. 295. 111 pp.
+        http://archimer.ifremer.fr/doc/00157/26792/24888.pdf
+    ydim :
+
 
     """
     # Set Parcels FieldSet variables
@@ -97,8 +105,25 @@ def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
                       verbose=False, output=True, method=AdvectionRK4):
     """Example configuration of particle flow around an idealised Peninsula
 
-    :arg filename: Basename of the input fieldset.
-    :arg npart: Number of particles to intialise.
+    Parameters
+    ----------
+    fieldset :
+
+    outfile : str
+        Basename of the input fieldset.
+    npart : int
+        Number of particles to intialise.
+    mode :
+         (Default value = 'jit')
+    degree :
+         (Default value = 1)
+    verbose :
+         (Default value = False)
+    output :
+         (Default value = True)
+    method :
+         (Default value = AdvectionRK4)
+
     """
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p.

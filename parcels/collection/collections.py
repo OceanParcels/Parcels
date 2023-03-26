@@ -877,10 +877,17 @@ class ParticleCollection(Collection):
     def __getattr__(self, name):
         """
         Access a single property of all particles.
-        NOTE: This is a fallback implementation, and it is NOT efficient.
-        Specific datastructures may implement a more efficient variant.
 
-        :param name: name of the property
+        Parameters
+        ----------
+        name : str
+            Name of the property to access
+
+
+        Notes
+        -----
+        This is a fallback implementation, and it is NOT efficient.
+        Specific datastructures may implement a more efficient variant.
         """
         for v in self.ptype.variables:
             if v.name == name:
@@ -908,10 +915,15 @@ class ParticleCollection(Collection):
     def set_variable_write_status(self, var, write_status):
         """
         Method to set the write status of a Variable
-        :param var: Name of the variable (string)
-        :param status: Write status of the variable (True, False or 'once')
 
-         This function depends on the specific collection in question and thus needs to be specified in specific
+        This function depends on the specific collection in question and thus needs to be specified in specific
          derivatives classes.
+
+        Parameters
+        ----------
+        var : str
+            Name of the variable
+        write_status : bool, str
+            Write status of the variable (True, False or 'once')
         """
         pass
