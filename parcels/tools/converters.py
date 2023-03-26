@@ -15,7 +15,10 @@ __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
 def convert_to_flat_array(var):
     """Convert lists and single integers/floats to one-dimensional numpy arrays
 
-    :param var: list or numeric to convert to a one-dimensional numpy array
+    Parameters
+    ----------
+    var :
+        list or numeric to convert to a one-dimensional numpy array
     """
     if isinstance(var, np.ndarray):
         return var.flatten()
@@ -39,8 +42,11 @@ def _get_cftime_calendars():
 class TimeConverter:
     """Converter class for dates with different calendars in FieldSets
 
-    :param: time_origin: time origin of the class. Currently supported formats are
-            float, integer, numpy.datetime64, and netcdftime.DatetimeNoLeap
+    Parameters
+    ----------
+    time_origin :
+        time origin of the class. Currently supported formats are
+        float, integer, numpy.datetime64, and netcdftime.DatetimeNoLeap
     """
 
     def __init__(self, time_origin=0):
@@ -58,8 +64,16 @@ class TimeConverter:
         """Method to compute the difference, in seconds, between a time and the time_origin
         of the TimeConverter
 
-        :param: time: input time
-        :return: time - self.time_origin
+        Parameters
+        ----------
+        time :
+
+
+        Returns
+        -------
+        type
+            time - self.time_origin
+
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar in ['np_datetime64', 'np_timedelta64']:
@@ -85,8 +99,16 @@ class TimeConverter:
     def fulltime(self, time):
         """Method to convert a time difference in seconds to a date, based on the time_origin
 
-        :param: time: input time
-        :return: self.time_origin + time
+        Parameters
+        ----------
+        time :
+
+
+        Returns
+        -------
+        type
+            self.time_origin + time
+
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar in ['np_datetime64', 'np_timedelta64']:

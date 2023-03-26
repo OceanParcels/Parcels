@@ -15,16 +15,32 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
                   animation=False, **kwargs):
     """Function to plot a Parcels ParticleSet.
 
-    :param show_time: Time in seconds from start after which to show the ParticleSet
-    :param with_particles: Boolean whether particles are also plotted on Field
-    :param field: Field to plot under particles (either None, a Field object, or 'vector')
-    :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
-    :param projection: type of cartopy projection to use (default PlateCarree)
-    :param land: Boolean whether to show land. This is ignored for flat meshes
-    :param vmin: minimum colour scale (only in single-plot mode)
-    :param vmax: maximum colour scale (only in single-plot mode)
-    :param savefile: Name of a file to save the plot to
-    :param animation: Boolean whether result is a single plot, or an animation
+    Parameters
+    ----------
+    show_time :
+        Time in seconds from start after which to show the ParticleSet (Default value = None)
+    with_particles :
+        Boolean whether particles are also plotted on Field (Default value = True)
+    field :
+        Field to plot under particles (either None, a Field object, or 'vector') (Default value = None)
+    domain :
+        dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
+    projection :
+        type of cartopy projection to use (default PlateCarree)
+    land :
+        Boolean whether to show land. This is ignored for flat meshes (Default value = True)
+    vmin :
+        minimum colour scale (only in single-plot mode) (Default value = None)
+    vmax :
+        maximum colour scale (only in single-plot mode) (Default value = None)
+    savefile :
+        Name of a file to save the plot to (Default value = None)
+    animation :
+        Boolean whether result is a single plot, or an animation (Default value = False)
+    particles :
+
+    **kwargs :
+        Keyword arguments passed to the :ref:`plotfield` function.
     """
     show_time = particles[0].time if show_time is None else show_time
     if isinstance(show_time, datetime):
@@ -101,15 +117,30 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
               vmin=None, vmax=None, savefile=None, **kwargs):
     """Function to plot a Parcels Field.
 
-    :param show_time: Time in seconds from start after which to show the Field
-    :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
-    :param depth_level: depth level to be plotted (default 0)
-    :param projection: type of cartopy projection to use (default PlateCarree)
-    :param land: Boolean whether to show land. This is ignored for flat meshes
-    :param vmin: minimum colour scale (only in single-plot mode)
-    :param vmax: maximum colour scale (only in single-plot mode)
-    :param savefile: Name of a file to save the plot to
-    :param animation: Boolean whether result is a single plot, or an animation
+    Parameters
+    ----------
+    show_time :
+        Time in seconds from start after which to show the Field (Default value = None)
+    domain :
+        dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
+    depth_level :
+        depth level to be plotted (default 0)
+    projection :
+        type of cartopy projection to use (default PlateCarree)
+    land :
+        Boolean whether to show land. This is ignored for flat meshes (Default value = True)
+    vmin :
+        minimum colour scale (only in single-plot mode) (Default value = None)
+    vmax :
+        maximum colour scale (only in single-plot mode) (Default value = None)
+    savefile :
+        Name of a file to save the plot to (Default value = None)
+    animation :
+        Boolean whether result is a single plot, or an animation
+    field :
+
+    **kwargs :
+        Provide "titlestr" as the title of the plot, or "cartopy_features" to be used in :ref:`create_parcelsfig_axis`.
     """
     if type(field) is VectorField:
         spherical = True if field.U.grid.mesh == 'spherical' else False

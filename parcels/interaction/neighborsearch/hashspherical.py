@@ -46,9 +46,19 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
     def _values_to_hashes(self, values, active_idx=None):
         """Convert coordinates to cell ids.
 
-        :param values: array of positions of particles to convert
-                       ([depth, lat, lon], # of particles to convert).
-        :returns array of cell ids.
+        Parameters
+        ----------
+        values :
+            array of positions of particles to convert
+            ([depth, lat, lon], # of particles to convert).
+        active_idx :
+             (Default value = None)
+
+        Returns
+        -------
+        type
+            array of cell ids.
+
         """
         if active_idx is None:
             active_idx = np.arange(values.shape[1], dtype=int)
@@ -81,7 +91,12 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
     def rebuild(self, values, active_mask=-1):
         """Recreate the tree with new values.
 
-        :param values: positions of the particles.
+        Parameters
+        ----------
+        values :
+            positions of the particles.
+        active_mask :
+             (Default value = -1)
         """
         super().rebuild(values, active_mask)
         active_idx = self.active_idx
