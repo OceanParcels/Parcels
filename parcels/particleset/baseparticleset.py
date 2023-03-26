@@ -110,18 +110,30 @@ class BaseParticleSet(NDCluster):
     def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from lists of lon and lat.
 
-        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+        Parameters
+        ----------
+        fieldset :
+            mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        pclass :
+            mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
             object that defines custom particle
-        :param lon: List of initial longitude values for particles
-        :param lat: List of initial latitude values for particles
-        :param depth: Optional list of initial depth values for particles. Default is 0m
-        :param time: Optional list of start time values for particles. Default is fieldset.U.time[0]
-        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-               and np.float64 if the interpolation method is 'cgrid_velocity'
-        Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
+        lon :
+            List of initial longitude values for particles
+        lat :
+            List of initial latitude values for particles
+        depth :
+            Optional list of initial depth values for particles. Default is 0m
+        time :
+            Optional list of start time values for particles. Default is fieldset.U.time[0]
+        repeatdt :
+            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
+        lonlatdepth_dtype :
+            Floating precision for lon, lat, depth particle coordinates.
+            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+            and np.float64 if the interpolation method is 'cgrid_velocity'
+            Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
+        **kwargs :
+            Keyword arguments passed to the particleset constructor.
         """
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
@@ -133,18 +145,29 @@ class BaseParticleSet(NDCluster):
         Note that this method uses simple numpy.linspace calls and does not take into account
         great circles, so may not be a exact on a globe
 
-        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
-        :param start: Starting point for initialisation of particles on a straight line.
-        :param finish: End point for initialisation of particles on a straight line.
-        :param size: Initial size of particle set
-        :param depth: Optional list of initial depth values for particles. Default is 0m
-        :param time: Optional start time value for particles. Default is fieldset.U.time[0]
-        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-               and np.float64 if the interpolation method is 'cgrid_velocity'
+        Parameters
+        ----------
+        fieldset :
+            mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        pclass :
+            mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+            object that defines custom particle
+        start :
+            Starting point for initialisation of particles on a straight line.
+        finish :
+            End point for initialisation of particles on a straight line.
+        size :
+            Initial size of particle set
+        depth :
+            Optional list of initial depth values for particles. Default is 0m
+        time :
+            Optional start time value for particles. Default is fieldset.U.time[0]
+        repeatdt :
+            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
+        lonlatdepth_dtype :
+            Floating precision for lon, lat, depth particle coordinates.
+            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+            and np.float64 if the interpolation method is 'cgrid_velocity'
         """
         lon = np.linspace(start[0], finish[0], size)
         lat = np.linspace(start[1], finish[1], size)
@@ -155,12 +178,23 @@ class BaseParticleSet(NDCluster):
     @classmethod
     @abstractmethod
     def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
-        """
-        Converts a starting field into a monte-carlo sample of lons and lats.
+        """Converts a starting field into a monte-carlo sample of lons and lats.
 
-        :param start_field: :mod:`parcels.fieldset.Field` object for initialising particles stochastically (horizontally)  according to the presented density field.
+        Parameters
+        ----------
+        start_field :
+            mod:`parcels.fieldset.Field` object for initialising particles stochastically (horizontally)  according to the presented density field.
+        size :
 
-        returns list(lon), list(lat)
+        mode :
+             (Default value = 'monte_carlo')
+
+        Returns
+        -------
+        list of float
+            A list of longitude values.
+        list of float
+            A list of latitude values.
         """
         pass
 
@@ -168,18 +202,29 @@ class BaseParticleSet(NDCluster):
     def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
         """Initialise the ParticleSet randomly drawn according to distribution from a field.
 
-        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
-        :param start_field: Field for initialising particles stochastically (horizontally)  according to the presented density field.
-        :param size: Initial size of particle set
-        :param mode: Type of random sampling. Currently only 'monte_carlo' is implemented
-        :param depth: Optional list of initial depth values for particles. Default is 0m
-        :param time: Optional start time value for particles. Default is fieldset.U.time[0]
-        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-               and np.float64 if the interpolation method is 'cgrid_velocity'
+        Parameters
+        ----------
+        fieldset :
+            mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        pclass :
+            mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+            object that defines custom particle
+        start_field :
+            Field for initialising particles stochastically (horizontally)  according to the presented density field.
+        size :
+            Initial size of particle set
+        mode :
+            Type of random sampling. Currently only 'monte_carlo' is implemented (Default value = 'monte_carlo')
+        depth :
+            Optional list of initial depth values for particles. Default is 0m
+        time :
+            Optional start time value for particles. Default is fieldset.U.time[0]
+        repeatdt :
+            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
+        lonlatdepth_dtype :
+            Floating precision for lon, lat, depth particle coordinates.
+            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+            and np.float64 if the interpolation method is 'cgrid_velocity'
         """
         lon, lat = cls.monte_carlo_sample(start_field, size, mode)
 
@@ -192,34 +237,53 @@ class BaseParticleSet(NDCluster):
         This creates a new ParticleSet based on locations of all particles written
         in a netcdf ParticleFile at a certain time. Particle IDs are preserved if restart=True
 
-        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
-        :param filename: Name of the particlefile from which to read initial conditions
-        :param restart: Boolean to signal if pset is used for a restart (default is True).
-               In that case, Particle IDs are preserved.
-        :param restarttime: time at which the Particles will be restarted. Default is the last time written.
-               Alternatively, restarttime could be a time value (including np.datetime64) or
-               a callable function such as np.nanmin. The last is useful when running with dt < 0.
-        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-               and np.float64 if the interpolation method is 'cgrid_velocity'
+        Parameters
+        ----------
+        fieldset :
+            mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        pclass :
+            mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+            object that defines custom particle
+        filename :
+            Name of the particlefile from which to read initial conditions
+        restart :
+            Boolean to signal if pset is used for a restart (default is True).
+            In that case, Particle IDs are preserved.
+        restarttime :
+            time at which the Particles will be restarted. Default is the last time written.
+            Alternatively, restarttime could be a time value (including np.datetime64) or
+            a callable function such as np.nanmin. The last is useful when running with dt < 0.
+        repeatdt :
+            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
+        lonlatdepth_dtype :
+            Floating precision for lon, lat, depth particle coordinates.
+            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+            and np.float64 if the interpolation method is 'cgrid_velocity'
+        **kwargs :
+            Keyword arguments passed to the particleset constructor.
         """
         pass
 
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Calculate 2D particle density field from ParticleSet particle locations.
 
-        :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
-                      on. Default is `fieldset.U`
-        :param particle_val: Optional numpy-array of values to weigh each particle with,
-                             or string name of particle variable to use weigh particles with.
-                             Default is None, resulting in a value of 1 for each particle
-        :param relative: Boolean to control whether the density is scaled by the total
-                         weight of all particles. Default is False
-        :param area_scale: Boolean to control whether the density is scaled by the area
-                           (in m^2) of each grid cell. Default is False
+        Parameters
+        ----------
+        field :
+            Optional :mod:`parcels.field.Field` object to calculate the histogram
+            on. Default is `fieldset.U`
+        particle_val :
+            Optional numpy-array of values to weigh each particle with,
+            or string name of particle variable to use weigh particles with.
+            Default is None, resulting in a value of 1 for each particle
+        relative :
+            Boolean to control whether the density is scaled by the total
+            weight of all particles. Default is False
+        area_scale :
+            Boolean to control whether the density is scaled by the area
+            (in m^2) of each grid cell. Default is False
+        field_name :
+             (Default value = None)
         """
         pass
 
@@ -228,7 +292,15 @@ class BaseParticleSet(NDCluster):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object.
 
         Conversion is based on `fieldset` and `ptype` of the ParticleSet.
-        :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+
+        Parameters
+        ----------
+        delete_cfiles :
+            Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        pyfunc :
+
+        c_include :
+             (Default value = "")
         """
         pass
 
@@ -246,8 +318,12 @@ class BaseParticleSet(NDCluster):
 
         This is a fallback implementation, it might be slow.
 
-        :param name: Name of the attribute (str).
-        :param value: New value to set the attribute of the particles to.
+        Parameters
+        ----------
+        name :
+            Name of the attribute (str).
+        value :
+            New value to set the attribute of the particles to.
         """
         for p in self:
             setattr(p, name, value)
@@ -260,6 +336,12 @@ class BaseParticleSet(NDCluster):
         This is a fallback implementation, it might be slow.
 
         :return: Collection iterator over error particles.
+
+        Returns
+        -------
+        iterator
+            Collection iterator over error particles.
+
         """
         error_indices = [
             i for i, p in enumerate(self)
@@ -277,8 +359,16 @@ class BaseParticleSet(NDCluster):
 
         This is a fallback implementation, it might be slow.
 
-        :param default: Default release time.
-        :return: Minimum and maximum release times.
+        Parameters
+        ----------
+        default :
+            Default release time.
+
+        Returns
+        -------
+        type
+            Minimum and maximum release times.
+
         """
         max_rt = None
         min_rt = None
@@ -299,29 +389,44 @@ class BaseParticleSet(NDCluster):
         Optionally also provide sub-timestepping
         for particle output.
 
-        :param pyfunc: Kernel function to execute. This can be the name of a
-                       defined Python function or a :class:`parcels.kernel.Kernel` object.
-                       Kernels can be concatenated using the + operator
-        :param endtime: End time for the timestepping loop.
-                        It is either a datetime object or a positive double.
-        :param runtime: Length of the timestepping loop. Use instead of endtime.
-                        It is either a timedelta object or a positive double.
-        :param dt: Timestep interval to be passed to the kernel.
-                   It is either a timedelta object or a double.
-                   Use a negative value for a backward-in-time simulation.
-        :param moviedt:  Interval for inner sub-timestepping (leap), which dictates
-                         the update frequency of animation.
-                         It is either a timedelta object or a positive double.
-                         None value means no animation.
-        :param output_file: :mod:`parcels.particlefile.ParticleFile` object for particle output
-        :param recovery: Dictionary with additional `:mod:parcels.tools.error`
-                         recovery kernels to allow custom recovery behaviour in case of
-                         kernel errors.
-        :param movie_background_field: field plotted as background in the movie if moviedt is set.
-                                       'vector' shows the velocity as a vector field.
-        :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
-        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
-        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
+        Parameters
+        ----------
+        pyfunc :
+            Kernel function to execute. This can be the name of a
+            defined Python function or a :class:`parcels.kernel.Kernel` object.
+            Kernels can be concatenated using the + operator (Default value = AdvectionRK4)
+        endtime :
+            End time for the timestepping loop.
+            It is either a datetime object or a positive double. (Default value = None)
+        runtime :
+            Length of the timestepping loop. Use instead of endtime.
+            It is either a timedelta object or a positive double. (Default value = None)
+        dt :
+            Timestep interval to be passed to the kernel.
+            It is either a timedelta object or a double.
+            Use a negative value for a backward-in-time simulation. (Default value = 1.)
+        moviedt :
+            Interval for inner sub-timestepping (leap), which dictates
+            the update frequency of animation.
+            It is either a timedelta object or a positive double.
+            None value means no animation. (Default value = None)
+        output_file :
+            mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
+        recovery :
+            Dictionary with additional `:mod:parcels.tools.error`
+            recovery kernels to allow custom recovery behaviour in case of
+            kernel errors. (Default value = None)
+        movie_background_field :
+            field plotted as background in the movie if moviedt is set.
+            'vector' shows the velocity as a vector field. (Default value = None)
+        verbose_progress :
+            Boolean for providing a progress bar for the kernel execution loop. (Default value = None)
+        postIterationCallbacks :
+            Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
+        callbackdt :
+            Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks' (Default value = None)
+        pyfunc_inter :
+             (Default value = None)
         """
         # check if pyfunc has changed since last compile. If so, recompile
         if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
@@ -515,16 +620,31 @@ class BaseParticleSet(NDCluster):
              land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
         """Method to 'show' a Parcels ParticleSet.
 
-        :param with_particles: Boolean whether to show particles
-        :param show_time: Time at which to show the ParticleSet
-        :param field: Field to plot under particles (either None, a Field object, or 'vector')
-        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
-        :param projection: type of cartopy projection to use (default PlateCarree)
-        :param land: Boolean whether to show land. This is ignored for flat meshes
-        :param vmin: minimum colour scale (only in single-plot mode)
-        :param vmax: maximum colour scale (only in single-plot mode)
-        :param savefile: Name of a file to save the plot to
-        :param animation: Boolean whether result is a single plot, or an animation
+        Parameters
+        ----------
+        with_particles :
+            Boolean whether to show particles (Default value = True)
+        show_time :
+            Time at which to show the ParticleSet (Default value = None)
+        field :
+            Field to plot under particles (either None, a Field object, or 'vector') (Default value = None)
+        domain :
+            dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
+        projection :
+            type of cartopy projection to use (default PlateCarree)
+        land :
+            Boolean whether to show land. This is ignored for flat meshes (Default value = True)
+        vmin :
+            minimum colour scale (only in single-plot mode) (Default value = None)
+        vmax :
+            maximum colour scale (only in single-plot mode) (Default value = None)
+        savefile :
+            Name of a file to save the plot to (Default value = None)
+        animation :
+            Boolean whether result is a single plot, or an animation (Default value = False)
+        **kwargs :
+            Keyword arguments passed to the :ref:`parcels.plotting.plotparticles`.
+
         """
         from parcels.plotting import plotparticles
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,

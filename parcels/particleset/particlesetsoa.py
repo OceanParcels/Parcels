@@ -53,25 +53,38 @@ class ParticleSetSOA(BaseParticleSet):
     and individual particles can only be deleted as a set procedually (i.e. by 'particle.delete()'-call during
     kernel execution).
 
-    :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
-           While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
-    :param pclass: Optional :mod:`parcels.particle.JITParticle` or
-                 :mod:`parcels.particle.ScipyParticle` object that defines custom particle
-    :param lon: List of initial longitude values for particles
-    :param lat: List of initial latitude values for particles
-    :param depth: Optional list of initial depth values for particles. Default is 0m
-    :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
-    :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-    :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-           It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-           and np.float64 if the interpolation method is 'cgrid_velocity'
-    :param pid_orig: Optional list of (offsets for) the particle IDs
-    :param partitions: List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
-           are distributed automatically on the processors
-    :param periodic_domain_zonal: Zonal domain size, used to apply zonally periodic boundaries for particle-particle
-           interaction. If None, no zonally periodic boundaries are applied
+    Parameters
+    ----------
+    fieldset :
+        mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
+        While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
+    pclass :
+        Optional :mod:`parcels.particle.JITParticle` or
+        :mod:`parcels.particle.ScipyParticle` object that defines custom particle
+    lon :
+        List of initial longitude values for particles
+    lat :
+        List of initial latitude values for particles
+    depth :
+        Optional list of initial depth values for particles. Default is 0m
+    time :
+        Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
+    repeatdt :
+        Optional interval (in seconds) on which to repeat the release of the ParticleSet
+    lonlatdepth_dtype :
+        Floating precision for lon, lat, depth particle coordinates.
+        It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+        and np.float64 if the interpolation method is 'cgrid_velocity'
+    pid_orig :
+        Optional list of (offsets for) the particle IDs
+    partitions :
+        List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
+        are distributed automatically on the processors
+    periodic_domain_zonal :
+        Zonal domain size, used to apply zonally periodic boundaries for particle-particle
+        interaction. If None, no zonally periodic boundaries are applied
 
-    Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
+        Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
@@ -248,16 +261,28 @@ class ParticleSetSOA(BaseParticleSet):
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
 
-        :param name: Name of the attribute (str).
-        :param value: New value to set the attribute of the particles to.
+        Parameters
+        ----------
+        name :
+            Name of the attribute (str).
+        value :
+            New value to set the attribute of the particles to.
         """
         self.collection._data[name][:] = value
 
     def _impute_release_times(self, default):
         """Set attribute 'time' to default if encountering NaN values.
 
-        :param default: Default release time.
-        :return: Minimum and maximum release times.
+        Parameters
+        ----------
+        default :
+            Default release time.
+
+        Returns
+        -------
+        type
+            Minimum and maximum release times.
+
         """
         if np.any(np.isnan(self._collection.data['time'])):
             self._collection.data['time'][np.isnan(self._collection.data['time'])] = default
@@ -266,12 +291,22 @@ class ParticleSetSOA(BaseParticleSet):
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.
 
-        :param variable_name: Name of the variable to check.
-        :param compare_values: Value or list of values to compare to.
-        :param invert: Whether to invert the selection. I.e., when True,
-                       return all indices that do not equal (one of)
-                       `compare_values`.
-        :return: Numpy array of indices that satisfy the test.
+        Parameters
+        ----------
+        variable_name :
+            Name of the variable to check.
+        compare_values :
+            Value or list of values to compare to.
+        invert :
+            Whether to invert the selection. I.e., when True,
+            return all indices that do not equal (one of)
+            `compare_values`. (Default value = False)
+
+        Returns
+        -------
+        np.ndarray
+            Numpy array of indices that satisfy the test.
+
         """
         compare_values = np.array([compare_values, ]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
         return np.where(np.isin(self._collection.data[variable_name], compare_values, invert=invert))[0]
@@ -339,8 +374,7 @@ class ParticleSetSOA(BaseParticleSet):
         return self._collection.get_single_by_index(index)
 
     def cstruct(self):
-        """
-        'cstruct' returns the ctypes mapping of the combined collections cstruct and the fieldset cstruct.
+        """'cstruct' returns the ctypes mapping of the combined collections cstruct and the fieldset cstruct.
         This depends on the specific structure in question.
         """
         cstruct = self._collection.cstruct()
@@ -352,12 +386,24 @@ class ParticleSetSOA(BaseParticleSet):
 
     @classmethod
     def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
-        """
-        Converts a starting field into a monte-carlo sample of lons and lats.
+        """Converts a starting field into a monte-carlo sample of lons and lats.
 
-        :param start_field: :mod:`parcels.fieldset.Field` object for initialising particles stochastically (horizontally)  according to the presented density field.
+        Parameters
+        ----------
+        start_field :
+            mod:`parcels.fieldset.Field` object for initialising particles stochastically (horizontally)  according to the presented density field.
+        size :
 
-        returns list(lon), list(lat)
+        mode :
+             (Default value = 'monte_carlo')
+
+
+        Returns
+        -------
+        list of float
+            A list of longitude values.
+        list of float
+            A list of latitude values.
         """
         if mode == 'monte_carlo':
             data = start_field.data if isinstance(start_field.data, np.ndarray) else np.array(start_field.data)
@@ -403,19 +449,30 @@ class ParticleSetSOA(BaseParticleSet):
         This creates a new ParticleSet based on locations of all particles written
         in a zarr ParticleFile at a certain time. Particle IDs are preserved if restart=True
 
-        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
-        :param filename: Name of the particlefile from which to read initial conditions
-        :param restart: Boolean to signal if pset is used for a restart (default is True).
-               In that case, Particle IDs are preserved.
-        :param restarttime: time at which the Particles will be restarted. Default is the last time written.
-               Alternatively, restarttime could be a time value (including np.datetime64) or
-               a callable function such as np.nanmin. The last is useful when running with dt < 0.
-        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-               and np.float64 if the interpolation method is 'cgrid_velocity'
+        Parameters
+        ----------
+        fieldset :
+            mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        pclass :
+            mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+            object that defines custom particle
+        filename :
+            Name of the particlefile from which to read initial conditions
+        restart :
+            Boolean to signal if pset is used for a restart (default is True).
+            In that case, Particle IDs are preserved.
+        restarttime :
+            time at which the Particles will be restarted. Default is the last time written.
+            Alternatively, restarttime could be a time value (including np.datetime64) or
+            a callable function such as np.nanmin. The last is useful when running with dt < 0.
+        repeatdt :
+            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
+        lonlatdepth_dtype :
+            Floating precision for lon, lat, depth particle coordinates.
+            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+            and np.float64 if the interpolation method is 'cgrid_velocity'
+        **kwargs :
+            Keyword arguments passed to the particleset constructor.
         """
         if repeatdt is not None:
             logger.warning(f'Note that the `repeatdt` argument is not retained from {filename}, and that '
@@ -534,8 +591,16 @@ class ParticleSetSOA(BaseParticleSet):
         incremental add, the particles will be added to the ParticleSet
         on which this function is called.
 
-        :param particles: Another ParticleSet containing particles to add to this one.
-        :return: The current ParticleSet
+        Parameters
+        ----------
+        particles :
+            Another ParticleSet containing particles to add to this one.
+
+        Returns
+        -------
+        type
+            The current ParticleSet
+
         """
         if isinstance(particles, BaseParticleSet):
             particles = particles.collection
@@ -562,15 +627,23 @@ class ParticleSetSOA(BaseParticleSet):
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Calculate 2D particle density field from ParticleSet particle locations.
 
-        :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
-                      on. Default is `fieldset.U`
-        :param particle_val: Optional numpy-array of values to weigh each particle with,
-                             or string name of particle variable to use weigh particles with.
-                             Default is None, resulting in a value of 1 for each particle
-        :param relative: Boolean to control whether the density is scaled by the total
-                         weight of all particles. Default is False
-        :param area_scale: Boolean to control whether the density is scaled by the area
-                           (in m^2) of each grid cell. Default is False
+        Parameters
+        ----------
+        field :
+            Optional :mod:`parcels.field.Field` object to calculate the histogram
+            on. Default is `fieldset.U`
+        particle_val :
+            Optional numpy-array of values to weigh each particle with,
+            or string name of particle variable to use weigh particles with.
+            Default is None, resulting in a value of 1 for each particle
+        relative :
+            Boolean to control whether the density is scaled by the total
+            weight of all particles. Default is False
+        area_scale :
+            Boolean to control whether the density is scaled by the area
+            (in m^2) of each grid cell. Default is False
+        field_name :
+             (Default value = None)
         """
         field_name = field_name if field_name else "U"
         sampling_name = "UV" if field_name in ["U", "V"] else field_name
@@ -616,7 +689,15 @@ class ParticleSetSOA(BaseParticleSet):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object.
 
         Conversion is based on `fieldset` and `ptype` of the ParticleSet.
-        :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+
+        Parameters
+        ----------
+        delete_cfiles :
+            Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        pyfunc :
+
+        c_include :
+             (Default value = "")
         """
         return Kernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
                       delete_cfiles=delete_cfiles)
@@ -631,10 +712,13 @@ class ParticleSetSOA(BaseParticleSet):
         return ParticleFile(*args, particleset=self, **kwargs)
 
     def set_variable_write_status(self, var, write_status):
-        """
-        Method to set the write status of a Variable.
+        """Method to set the write status of a Variable.
 
-        :param var: Name of the variable (string)
-        :param write_status: Write status of the variable (True, False or 'once')
+        Parameters
+        ----------
+        var :
+            Name of the variable (string)
+        write_status :
+            Write status of the variable (True, False or 'once')
         """
         self._collection.set_variable_write_status(var, write_status)
