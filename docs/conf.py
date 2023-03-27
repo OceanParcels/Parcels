@@ -34,6 +34,7 @@ extensions = [
     'sphinx.ext.todo',
     "sphinx.ext.linkcode",
     "sphinx.ext.napoleon",
+    "numpydoc",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -99,7 +100,7 @@ exclude_patterns = ['_build']
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'monokai'
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -109,7 +110,6 @@ pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -137,6 +137,21 @@ html_theme = 'pydata_sphinx_theme'
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
 # html_favicon = None
+
+# numpydoc support
+# ----------------
+numpydoc_class_members_toctree = False  # https://stackoverflow.com/a/73294408
+
+# full list of numpydoc error codes: https://numpydoc.readthedocs.io/en/latest/validation.html
+numpydoc_validation_checks = {
+    "GL05",
+    "GL06",
+    "GL07",
+    "GL10",
+    "PR05",
+    "PR10",
+    "RT02",
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

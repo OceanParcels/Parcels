@@ -42,6 +42,7 @@ dependencies:
   - pydocstyle
 
   # Docs
+  - numpydoc
   - sphinx<6
   - pydata-sphinx-theme
   - sphinx-autobuild
