@@ -272,9 +272,9 @@ class BaseParticleSet(NDCluster):
 
         Parameters
         ----------
-        field :
-            Optional :mod:`parcels.field.Field` object to calculate the histogram
-            on. Default is `fieldset.U`
+        field_name : str, optional
+            Name of the field from the fieldset to calculate the histogram on.
+            Defaults to using "U".
         particle_val :
             Optional numpy-array of values to weigh each particle with,
             or string name of particle variable to use weigh particles with.
@@ -285,8 +285,6 @@ class BaseParticleSet(NDCluster):
         area_scale :
             Boolean to control whether the density is scaled by the area
             (in m^2) of each grid cell. Default is False
-        field_name :
-             (Default value = None)
         """
         pass
 
