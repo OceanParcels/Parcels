@@ -194,11 +194,13 @@ class FieldSet:
             Name of the :class:`parcels.field.Field` object to be added
         value :
             Value of the constant field (stored as 32-bit float)
-        units :
-            Optional UnitConverter object, to convert units
-            (e.g. for Horizontal diffusivity from m2/s to degree2/s)
-        mesh :
-             (Default value = 'flat')
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
+
+            1. spherical (default): Lat and lon in degree, with a
+            correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
         """
         self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh))
 
