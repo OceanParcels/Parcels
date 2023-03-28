@@ -19,24 +19,24 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
     ----------
     show_time :
         Time in seconds from start after which to show the ParticleSet (Default value = None)
-    with_particles :
-        Boolean whether particles are also plotted on Field (Default value = True)
+    with_particles : bool
+        Whether particles are also plotted on Field (Default value = True)
     field : parcels.Field or str, optional
         Field to plot under particles (either None, a Field object, or 'vector') (Default value = None)
     domain :
         dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
     projection :
         type of cartopy projection to use (default PlateCarree)
-    land :
-        Boolean whether to show land. This is ignored for flat meshes (Default value = True)
+    land : bool
+        Whether to show land. This is ignored for flat meshes (Default value = True)
     vmin : float
         minimum colour scale (only in single-plot mode) (Default value = None)
     vmax : float
         maximum colour scale (only in single-plot mode) (Default value = None)
     savefile :
         Name of a file to save the plot to (Default value = None)
-    animation :
-        Boolean whether result is a single plot, or an animation (Default value = False)
+    animation : bool
+        Whether result is a single plot, or an animation (Default value = False)
     particles :
 
     **kwargs :
@@ -130,7 +130,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
     projection :
         type of cartopy projection to use (default PlateCarree)
     land : bool
-        Boolean whether to show land. This is ignored for flat meshes (Default value = True)
+        Whether to show land. This is ignored for flat meshes (Default value = True)
     vmin : float, optional
         minimum colour scale (only in single-plot mode) (Default value = None)
     vmax : float, optional
@@ -138,7 +138,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
     savefile : str, optional
         Name of a file to save the plot to (Default value = None)
     animation : bool
-        Boolean whether result is a single plot, or an animation
+        Whether result is a single plot, or an animation
     **kwargs :
         Provide "titlestr" as the title of the plot, or "cartopy_features" to be used in :func:`create_parcelsfig_axis`.
     """

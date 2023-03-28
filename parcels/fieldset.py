@@ -76,14 +76,14 @@ class FieldSet:
             2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
             use the flag transpose=False (default value)
             3. If data has any other shape, you first need to reorder it
-        dimensions :
+        dimensions : dict
             Dictionary mapping field dimensions (lon,
             lat, depth, time) to numpy arrays.
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable
             (e.g. dimensions['U'], dimensions['V'], etc).
         transpose : bool
-            Boolean whether to transpose data on read-in (Default value = False)
+            Whether to transpose data on read-in (Default value = False)
         mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
@@ -338,10 +338,10 @@ class FieldSet:
             a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
             or a dictionary of dictionaries {var:{dim:[files]}}.
             time values are in filenames[data]
-        variables :
+        variables : dict
             Dictionary mapping variables to variable names in the netCDF file(s).
             Note that the built-in Advection kernels assume that U and V are in m/s
-        dimensions :
+        dimensions : dict
             Dictionary mapping data dimensions (lon,
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
@@ -499,10 +499,10 @@ class FieldSet:
             a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
             or a dictionary of dictionaries {var:{dim:[files]}}
             time values are in filenames[data]
-        variables :
+        variables : dict
             Dictionary mapping variables to variable names in the netCDF file(s).
             Note that the built-in Advection kernels assume that U and V are in m/s
-        dimensions :
+        dimensions : dict
             Dictionary mapping data dimensions (lon,
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
@@ -612,10 +612,10 @@ class FieldSet:
             a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
             or a dictionary of dictionaries {var:{dim:[files]}}
             time values are in filenames[data]
-        variables :
+        variables : dict
             Dictionary mapping variables to variable
             names in the netCDF file(s).
-        dimensions :
+        dimensions : dict
             Dictionary mapping data dimensions (lon,
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
@@ -707,10 +707,10 @@ class FieldSet:
             a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
             or a dictionary of dictionaries {var:{dim:[files]}}
             time values are in filenames[data]
-        variables :
+        variables : dict
             Dictionary mapping variables to variable names in the netCDF file(s).
             Note that the built-in Advection kernels assume that U and V are in m/s
-        dimensions :
+        dimensions : dict
             Dictionary mapping data dimensions (lon,
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
@@ -804,10 +804,10 @@ class FieldSet:
             a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
             or a dictionary of dictionaries {var:{dim:[files]}}
             time values are in filenames[data]
-        variables :
+        variables : dict
             Dictionary mapping variables to variable names in the netCDF file(s).
             Note that the built-in Advection kernels assume that U and V are in m/s
-        dimensions :
+        dimensions : dict
             Dictionary mapping data dimensions (lon,
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
@@ -885,10 +885,10 @@ class FieldSet:
             a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
             or a dictionary of dictionaries {var:{dim:[files]}}
             time values are in filenames[data]
-        variables :
+        variables : dict
             Dictionary mapping variables to variable
             names in the netCDF file(s).
-        dimensions :
+        dimensions : dict
             Dictionary mapping data dimensions (lon,
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
@@ -1032,9 +1032,9 @@ class FieldSet:
         ds : xr.Dataset
             xarray Dataset.
             Note that the built-in Advection kernels assume that U and V are in m/s
-        variables :
+        variables : dict
             Dictionary mapping parcels variable names to data variables in the xarray Dataset.
-        dimensions :
+        dimensions : dict
             Dictionary mapping data dimensions (lon,
             lat, depth, time, data) to dimensions in the xarray Dataset.
             Note that dimensions can also be a dictionary of dictionaries if
@@ -1124,11 +1124,11 @@ class FieldSet:
 
         Parameters
         ----------
-        zonal :
-            Create a halo in zonal direction (boolean) (Default value = False)
-        meridional :
-            Create a halo in meridional direction (boolean) (Default value = False)
-        halosize :
+        zonal : bool
+            Create a halo in zonal direction (Default value = False)
+        meridional : bool
+            Create a halo in meridional direction (Default value = False)
+        halosize : int
             size of the halo (in grid points). Default is 5 grid points
         """
         for grid in self.gridset.grids:

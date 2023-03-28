@@ -45,10 +45,10 @@ class BaseParticleFile(ABC):
         It is either a timedelta object or a positive double.
     chunks :
         Tuple (trajs, obs) to control the size of chunks in the zarr output.
-    write_ondelete :
-        Boolean to write particle data only when they are deleted. Default is False
-    create_new_zarrfile :
-        Boolean to create a new file. Default is True
+    write_ondelete : bool
+        Whether to write particle data only when they are deleted. Default is False
+    create_new_zarrfile : bool
+        Whether to create a new file. Default is True
 
     Returns
     -------

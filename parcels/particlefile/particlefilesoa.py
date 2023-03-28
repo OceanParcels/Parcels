@@ -22,7 +22,7 @@ class ParticleFileSOA(BaseParticleFile):
     chunks :
         Tuple (trajs, obs) to control the size of chunks in the zarr output.
     write_ondelete :
-        Boolean to write particle data only when they are deleted. Default is False
+        Whether to write particle data only when they are deleted. Default is False
 
     Returns
     -------

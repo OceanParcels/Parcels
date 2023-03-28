@@ -34,8 +34,8 @@ class KernelAOS(BaseKernel):
         FieldSet object providing the field information
     ptype :
         PType object for the kernel particle
-    delete_cfiles :
-        Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+    delete_cfiles : bool
+        Whether to delete the C-files after compilation in JIT mode (default is True)
 
     Notes
     -----

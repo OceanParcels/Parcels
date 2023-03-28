@@ -50,11 +50,11 @@ class BaseKernel:
     ptype :
         PType object for the kernel particle
     pyfunc :
-        aggregated) Kernel function
+        (aggregated) Kernel function
     funcname : str
         function name
     delete_cfiles : bool
-        Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        Whether to delete the C-files after compilation in JIT mode (default is True)
 
     Notes
     -----

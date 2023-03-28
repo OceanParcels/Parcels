@@ -701,8 +701,8 @@ class ParticleSetSOA(BaseParticleSet):
 
         Parameters
         ----------
-        delete_cfiles :
-            Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        delete_cfiles : bool
+            Whether to delete the C-files after compilation in JIT mode (default is True)
         pyfunc :
 
         c_include :

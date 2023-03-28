@@ -1317,18 +1317,18 @@ class Field:
 
         Parameters
         ----------
-        animation :
-            Boolean whether result is a single plot, or an animation (Default value = False)
+        animation : bool
+            Whether result is a single plot, or an animation (Default value = False)
         show_time : float
             Time in seconds from start after which to show the Field (only in single-plot mode) (Default value = None)
-        domain :
+        domain : dict
             dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
         depth_level :
             depth level to be plotted (default 0)
         projection :
             type of cartopy projection to use (default PlateCarree)
         land : bool
-            Boolean whether to show land. This is ignored for flat meshes (Default value = True)
+            Whether to show land. This is ignored for flat meshes (Default value = True)
         vmin : float
             minimum colour scale (only in single-plot mode) (Default value = None)
         vmax : float

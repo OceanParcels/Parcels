@@ -267,11 +267,11 @@ class RectilinearGrid(Grid):
 
         Parameters
         ----------
-        zonal :
-            Create a halo in zonal direction (boolean)
-        meridional :
-            Create a halo in meridional direction (boolean)
-        halosize :
+        zonal : bool
+            Create a halo in zonal direction
+        meridional : bool
+            Create a halo in meridional direction
+        halosize : int
             size of the halo (in grid points). Default is 5 grid points
         """
         if zonal:
@@ -413,11 +413,11 @@ class CurvilinearGrid(Grid):
 
         Parameters
         ----------
-        zonal :
-            Create a halo in zonal direction (boolean)
-        meridional :
-            Create a halo in meridional direction (boolean)
-        halosize :
+        zonal : bool
+            Create a halo in zonal direction
+        meridional : bool
+            Create a halo in meridional direction
+        halosize : int
             size of the halo (in grid points). Default is 5 grid points
         """
         if zonal:

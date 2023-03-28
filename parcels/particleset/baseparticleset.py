@@ -245,7 +245,7 @@ class BaseParticleSet(NDCluster):
             Particle class. May be a particle class as defined in parcels, or a subclass defining a custom particle.
         filename : str
             Name of the particlefile from which to read initial conditions
-        restart :
+        restart : bool
             Boolean to signal if pset is used for a restart (default is True).
             In that case, Particle IDs are preserved.
         restarttime :
@@ -292,8 +292,8 @@ class BaseParticleSet(NDCluster):
 
         Parameters
         ----------
-        delete_cfiles :
-            Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        delete_cfiles : bool
+            Whether to delete the C-files after compilation in JIT mode (default is True)
         pyfunc :
 
         c_include :
@@ -415,7 +415,7 @@ class BaseParticleSet(NDCluster):
         movie_background_field :
             field plotted as background in the movie if moviedt is set.
             'vector' shows the velocity as a vector field. (Default value = None)
-        verbose_progress :
+        verbose_progress : bool
             Boolean for providing a progress bar for the kernel execution loop. (Default value = None)
         postIterationCallbacks :
             Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
@@ -618,8 +618,8 @@ class BaseParticleSet(NDCluster):
 
         Parameters
         ----------
-        with_particles :
-            Boolean whether to show particles (Default value = True)
+        with_particles : bool
+            Whether to show particles (Default value = True)
         show_time :
             Time at which to show the ParticleSet (Default value = None)
         field :
@@ -628,16 +628,16 @@ class BaseParticleSet(NDCluster):
             dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
         projection :
             type of cartopy projection to use (default PlateCarree)
-        land :
-            Boolean whether to show land. This is ignored for flat meshes (Default value = True)
+        land : bool
+            Whether to show land. This is ignored for flat meshes (Default value = True)
         vmin : float
             minimum colour scale (only in single-plot mode) (Default value = None)
         vmax : float
             maximum colour scale (only in single-plot mode) (Default value = None)
-        savefile :
+        savefile : str
             Name of a file to save the plot to (Default value = None)
-        animation :
-            Boolean whether result is a single plot, or an animation (Default value = False)
+        animation : bool
+            Whether result is a single plot, or an animation (Default value = False)
         **kwargs :
             Keyword arguments passed to the :func:`parcels.plotting.plotparticles`.
 

@@ -38,12 +38,12 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     recordedvar :
         Name of variable used to color particles in scatter-plot.
         Only works in 'movie2d' or 'movie2d_notebook' mode. (Default value = None)
-    movie_forward :
-        Boolean whether to show movie in forward or backward mode (default True)
+    movie_forward : bool
+        Whether to show movie in forward or backward mode (default True)
     bins :
         Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html (Default value = 20)
-    show_plt :
-        Boolean whether plot should directly be show (for py.test) (Default value = True)
+    show_plt : bool
+        Whether plot should directly be shown (for py.test) (Default value = True)
     central_longitude :
         Degrees East at which to center the plot (Default value = 0)
     """
