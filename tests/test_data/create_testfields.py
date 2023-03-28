@@ -75,7 +75,7 @@ def write_simple_2Dt(field, filename, varname=None):
 
     Parameters
     ----------
-    field : Field
+    field : parcels.field.Field
         Field to write to file
     filename : str
         Base name of the file to write to

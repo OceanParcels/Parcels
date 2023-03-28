@@ -58,7 +58,7 @@ class ParticleSetSOA(BaseParticleSet):
     fieldset :
         mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
         While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
-    pclass :
+    pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
         Optional :mod:`parcels.particle.JITParticle` or
         :mod:`parcels.particle.ScipyParticle` object that defines custom particle
     lon :
@@ -69,8 +69,8 @@ class ParticleSetSOA(BaseParticleSet):
         Optional list of initial depth values for particles. Default is 0m
     time :
         Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
-    repeatdt :
-        Optional interval (in seconds) on which to repeat the release of the ParticleSet
+    repeatdt : datetime.timedelta or float, optional
+        Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
     lonlatdepth_dtype :
         Floating precision for lon, lat, depth particle coordinates.
         It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -263,9 +263,9 @@ class ParticleSetSOA(BaseParticleSet):
 
         Parameters
         ----------
-        name :
+        name : str
             Name of the attribute (str).
-        value :
+        value : any
             New value to set the attribute of the particles to.
         """
         self.collection._data[name][:] = value
@@ -293,7 +293,7 @@ class ParticleSetSOA(BaseParticleSet):
 
         Parameters
         ----------
-        variable_name :
+        variable_name : str
             Name of the variable to check.
         compare_values :
             Value or list of values to compare to.
@@ -457,22 +457,21 @@ class ParticleSetSOA(BaseParticleSet):
 
         Parameters
         ----------
-        fieldset :
+        fieldset : parcels.fieldset.FieldSet
             mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        pclass :
-            mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-            object that defines custom particle
-        filename :
+        pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
+            Particle class. May be a particle class as defined in parcels, or a subclass defining a custom particle.
+        filename : str
             Name of the particlefile from which to read initial conditions
-        restart :
-            Boolean to signal if pset is used for a restart (default is True).
+        restart : bool
+            BSignal if pset is used for a restart (default is True).
             In that case, Particle IDs are preserved.
         restarttime :
             time at which the Particles will be restarted. Default is the last time written.
             Alternatively, restarttime could be a time value (including np.datetime64) or
             a callable function such as np.nanmin. The last is useful when running with dt < 0.
-        repeatdt :
-            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
+        repeatdt : datetime.timedelta or float, optional
+            Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
         lonlatdepth_dtype :
             Floating precision for lon, lat, depth particle coordinates.
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -648,12 +647,12 @@ class ParticleSetSOA(BaseParticleSet):
             Optional numpy-array of values to weigh each particle with,
             or string name of particle variable to use weigh particles with.
             Default is None, resulting in a value of 1 for each particle
-        relative :
-            Boolean to control whether the density is scaled by the total
-            weight of all particles. Default is False
-        area_scale :
-            Boolean to control whether the density is scaled by the area
-            (in m^2) of each grid cell. Default is False
+        relative : bool
+            Whether the density is scaled by the total weight of all particles.
+            Default is False
+        area_scale : bool
+            Whether the density is scaled by the area (in m^2) of each grid cell.
+            Default is False
         """
         field_name = field_name if field_name else "U"
         sampling_name = "UV" if field_name in ["U", "V"] else field_name

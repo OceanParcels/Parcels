@@ -310,9 +310,9 @@ class RectilinearZGrid(RectilinearGrid):
         The depth of the different layers is thus constant.
     time :
         Vector containing the time coordinates of the grid
-    time_origin :
-        Time origin (TimeConverter object) of the time axis
-    mesh :
+    time_origin : parcels.tools.converters.TimeConverter
+        Time origin of the time axis
+    mesh : str
         String indicating the type of mesh coordinates and
         units used during velocity interpolation:
 
@@ -356,9 +356,9 @@ class RectilinearSGrid(RectilinearGrid):
         depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     time :
         Vector containing the time coordinates of the grid
-    time_origin :
-        Time origin (TimeConverter object) of the time axis
-    mesh :
+    time_origin : parcels.tools.converters.TimeConverter
+        Time origin of the time axis
+    mesh : str
         String indicating the type of mesh coordinates and
         units used during velocity interpolation:
 
@@ -465,9 +465,9 @@ class CurvilinearZGrid(CurvilinearGrid):
         The depth of the different layers is thus constant.
     time :
         Vector containing the time coordinates of the grid
-    time_origin :
-        Time origin (TimeConverter object) of the time axis
-    mesh :
+    time_origin : parcels.tools.converters.TimeConverter
+        Time origin of the time axis
+    mesh : str
         String indicating the type of mesh coordinates and
         units used during velocity interpolation:
 
@@ -510,9 +510,9 @@ class CurvilinearSGrid(CurvilinearGrid):
         depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     time :
         Vector containing the time coordinates of the grid
-    time_origin :
-        Time origin (TimeConverter object) of the time axis
-    mesh :
+    time_origin : parcels.tools.converters.TimeConverter
+        Time origin of the time axis
+    mesh : str
         String indicating the type of mesh coordinates and
         units used during velocity interpolation:
 

@@ -35,7 +35,7 @@ class BaseParticleFile(ABC):
 
     Parameters
     ----------
-    name :
+    name : str
         Basename of the output file. This can also be a Zarr store object.
     particleset :
         ParticleSet to output
@@ -181,9 +181,9 @@ class BaseParticleFile(ABC):
 
         Parameters
         ----------
-        name :
+        name : str
             Name of the metadata variabale
-        message :
+        message : str
             message to be written
         """
         self.metadata[name] = message

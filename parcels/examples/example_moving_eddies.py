@@ -31,7 +31,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
         Horizontal dimension of the generated fieldset (Default value = 200)
     xdim :
         Vertical dimension of the generated fieldset (Default value = 200)
-    mesh :
+    mesh : str
         String indicating the type of mesh coordinates and
         units used during velocity interpolation:
 

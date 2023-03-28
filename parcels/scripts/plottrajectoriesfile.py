@@ -21,7 +21,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
 
     Parameters
     ----------
-    filename :
+    filename : str
         Name of Parcels-generated NetCDF file with particle positions
     mode :
         Type of plot to show. Supported are '2d', '3d', 'hist2d',

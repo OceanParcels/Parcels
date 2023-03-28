@@ -17,7 +17,7 @@ def convert_to_flat_array(var):
 
     Parameters
     ----------
-    var :
+    var : np.ndarray, float or array_like
         list or numeric to convert to a one-dimensional numpy array
     """
     if isinstance(var, np.ndarray):
@@ -44,9 +44,8 @@ class TimeConverter:
 
     Parameters
     ----------
-    time_origin :
-        time origin of the class. Currently supported formats are
-        float, integer, numpy.datetime64, and netcdftime.DatetimeNoLeap
+    time_origin : float, integer, numpy.datetime64 or netcdftime.DatetimeNoLeap
+        time origin of the class.
     """
 
     def __init__(self, time_origin=0):

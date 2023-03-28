@@ -27,12 +27,13 @@ class FieldSet:
 
     Parameters
     ----------
-    U :
-        class:`parcels.field.Field` object for zonal velocity component
-    V :
-        class:`parcels.field.Field` object for meridional velocity component
-    fields :
-        Dictionary of additional :class:`parcels.field.Field` objects
+    U : parcels.field.Field
+        Field object for zonal velocity component
+    V : parcels.field.Field
+        Field object for meridional velocity component
+    fields : dict mapping str to Field
+        Additional fields to include in the FieldSet. These fields can be used
+        in custom kernels.
     """
 
     def __init__(self, U, V, fields=None):
@@ -81,20 +82,20 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable
             (e.g. dimensions['U'], dimensions['V'], etc).
-        transpose :
+        transpose : bool
             Boolean whether to transpose data on read-in (Default value = False)
-        mesh :
+        mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
             correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic : bool, float or datetime.timedelta
             To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
             This flag overrides the allow_time_interpolation and sets it to False
         **kwargs :
@@ -146,9 +147,9 @@ class FieldSet:
 
         Parameters
         ----------
-        field :
-            class:`parcels.field.Field` object to be added
-        name :
+        field : parcels.field.Field
+            Field object to be added
+        name : str
             Name of the :class:`parcels.field.Field` object to be added
 
 
@@ -190,9 +191,9 @@ class FieldSet:
 
         Parameters
         ----------
-        name :
+        name : str
             Name of the :class:`parcels.field.Field` object to be added
-        value :
+        value : float
             Value of the constant field (stored as 32-bit float)
         mesh : str
             String indicating the type of mesh coordinates and
@@ -209,7 +210,7 @@ class FieldSet:
 
         Parameters
         ----------
-        vfield :
+        vfield : parcels.VectorField
             class:`parcels.field.VectorField` object to be added
         """
         setattr(self, vfield.name, vfield)
@@ -354,7 +355,7 @@ class FieldSet:
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None) (Default value = None)
-        mesh :
+        mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tuturial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
@@ -366,22 +367,22 @@ class FieldSet:
             each of the files in filenames. Outer list/array corresponds to files, inner
             array corresponds to indices within files.
             Default is None if dimensions includes time.
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic : bool, float or datetime.timedelta
             To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
             This flag overrides the allow_time_interpolation and sets it to False
-        deferred_load :
+        deferred_load : bool
             boolean whether to only pre-load data (in deferred mode) or
             fully load them (default: True). It is advised to deferred load the data, since in
             that case Parcels deals with a better memory management during particle set execution.
             deferred_load=False is however sometimes necessary for plotting the fields.
-        interp_method :
+        interp_method : str
             Method for interpolation. Options are 'linear' (default), 'nearest',
             'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
-        gridindexingtype :
+        gridindexingtype : str
             The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
             See also the Grid indexing documentation on oceanparcels.org
         chunksize :
@@ -530,21 +531,21 @@ class FieldSet:
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh :
+        mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
             correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic : bool, float or datetime.timedelta
             To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
             This flag overrides the allow_time_interpolation and sets it to False
-        tracer_interp_method :
+        tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
             Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
         chunksize :
@@ -642,24 +643,24 @@ class FieldSet:
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh :
+        mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation:
+            units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
             correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic : bool, float or datetime.timedelta
             To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
             This flag overrides the allow_time_interpolation and sets it to False
-        tracer_interp_method :
+        tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
             Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
-        gridindexingtype :
+        gridindexingtype : str
             The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo()
             See also the Grid indexing documentation on oceanparcels.org (Default value = 'nemo')
         chunksize :
@@ -742,21 +743,21 @@ class FieldSet:
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh :
+        mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
             correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic : bool, float or datetime.timedelta
             To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
             This flag overrides the allow_time_interpolation and sets it to False
-        tracer_interp_method :
+        tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
             Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
         chunksize :
@@ -837,21 +838,21 @@ class FieldSet:
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh :
+        mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
             1. spherical (default): Lat and lon in degree, with a
             correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic:
             To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
             This flag overrides the allow_time_interpolation and sets it to False
-        tracer_interp_method :
+        tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
             Note that in the case of from_mom5() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
         chunksize :
@@ -917,21 +918,21 @@ class FieldSet:
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh :
+        mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation:
+            units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
             correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic : bool, float or datetime.timedelta
             To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
             This flag overrides the allow_time_interpolation and sets it to False
-        tracer_interp_method :
+        tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
             Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
         chunksize :
@@ -969,7 +970,7 @@ class FieldSet:
 
         Parameters
         ----------
-        basename :
+        basename : str
             Base name of the file(s); may contain
             wildcards to indicate multiple files.
         indices :
@@ -982,14 +983,14 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         extra_fields :
             Extra fields to read beyond U and V (Default value = None)
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic : bool, float or datetime.timedelta
             To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
             This flag overrides the allow_time_interpolation and sets it to False
-        deferred_load :
+        deferred_load : bool
             boolean whether to only pre-load data (in deferred mode) or
             fully load them (default: True). It is advised to deferred load the data, since in
             that case Parcels deals with a better memory management during particle set execution.
@@ -1028,7 +1029,7 @@ class FieldSet:
 
         Parameters
         ----------
-        ds :
+        ds : xr.Dataset
             xarray Dataset.
             Note that the built-in Advection kernels assume that U and V are in m/s
         variables :
@@ -1042,18 +1043,18 @@ class FieldSet:
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh :
+        mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
             correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic : bool, float or datetime.timedelta
             To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
             This flag overrides the allow_time_interpolation and sets it to False
         **kwargs :
@@ -1101,7 +1102,7 @@ class FieldSet:
 
         Parameters
         ----------
-        name :
+        name : str
             Name of the constant
         value :
             Value of the constant (stored as 32-bit float)
@@ -1141,7 +1142,7 @@ class FieldSet:
 
         Parameters
         ----------
-        filename :
+        filename : str
             Basename of the output fileset.
         """
         if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:

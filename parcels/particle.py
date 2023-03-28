@@ -17,7 +17,7 @@ class Variable:
 
     Parameters
     ----------
-    name :
+    name : str
         Variable name as used within kernels
     dtype :
         Data type (numpy.dtype) of the variable
@@ -182,15 +182,15 @@ class ScipyParticle(_Particle):
 
     Parameters
     ----------
-    lon :
+    lon : float
         Initial longitude of particle
-    lat :
+    lat : float
         Initial latitude of particle
-    depth :
+    depth : float
         Initial depth of particle
-    fieldset :
+    fieldset : parcels.fieldset.FieldSet
         mod:`parcels.fieldset.FieldSet` object to track this particle on
-    time :
+    time : float
         Current time of the particle
 
 
@@ -252,11 +252,11 @@ class JITParticle(ScipyParticle):
 
     Parameters
     ----------
-    lon :
+    lon : float
         Initial longitude of particle
-    lat :
+    lat : float
         Initial latitude of particle
-    fieldset :
+    fieldset : parcels.fieldset.FieldSet
         mod:`parcels.fieldset.FieldSet` object to track this particle on
     dt :
         Execution timestep for this particle

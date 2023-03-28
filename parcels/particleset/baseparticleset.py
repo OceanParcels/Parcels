@@ -117,9 +117,8 @@ class BaseParticleSet(NDCluster):
         ----------
         fieldset :
             mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        pclass :
-            mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-            object that defines custom particle
+        pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
+            Particle class. May be a particle class as defined in parcels, or a subclass defining a custom particle.
         lon :
             List of initial longitude values for particles
         lat :
@@ -152,9 +151,8 @@ class BaseParticleSet(NDCluster):
         ----------
         fieldset :
             mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        pclass :
-            mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-            object that defines custom particle
+        pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
+            Particle class. May be a particle class as defined in parcels, or a subclass defining a custom particle.
         start :
             Starting point for initialisation of particles on a straight line.
         finish :
@@ -185,7 +183,7 @@ class BaseParticleSet(NDCluster):
 
         Parameters
         ----------
-        start_field :
+        start_field : parcels.field.Field
             mod:`parcels.fieldset.Field` object for initialising particles stochastically (horizontally)  according to the presented density field.
         size :
 
@@ -207,12 +205,11 @@ class BaseParticleSet(NDCluster):
 
         Parameters
         ----------
-        fieldset :
+        fieldset : parcels.fieldset.FieldSet
             mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        pclass :
-            mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-            object that defines custom particle
-        start_field :
+        pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
+            Particle class. May be a particle class as defined in parcels, or a subclass defining a custom particle.
+        start_field : parcels.field.Field
             Field for initialising particles stochastically (horizontally)  according to the presented density field.
         size :
             Initial size of particle set
@@ -244,10 +241,9 @@ class BaseParticleSet(NDCluster):
         ----------
         fieldset :
             mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        pclass :
-            mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-            object that defines custom particle
-        filename :
+        pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
+            Particle class. May be a particle class as defined in parcels, or a subclass defining a custom particle.
+        filename : str
             Name of the particlefile from which to read initial conditions
         restart :
             Boolean to signal if pset is used for a restart (default is True).
@@ -279,12 +275,12 @@ class BaseParticleSet(NDCluster):
             Optional numpy-array of values to weigh each particle with,
             or string name of particle variable to use weigh particles with.
             Default is None, resulting in a value of 1 for each particle
-        relative :
-            Boolean to control whether the density is scaled by the total
-            weight of all particles. Default is False
-        area_scale :
-            Boolean to control whether the density is scaled by the area
-            (in m^2) of each grid cell. Default is False
+        relative : bool
+            Whether the density is scaled by the total weight of all particles.
+            Default is False
+        area_scale : bool
+            Whether the density is scaled by the area (in m^2) of each grid cell.
+            Default is False
         """
         pass
 
@@ -321,7 +317,7 @@ class BaseParticleSet(NDCluster):
 
         Parameters
         ----------
-        name :
+        name : str
             Name of the attribute (str).
         value :
             New value to set the attribute of the particles to.
@@ -634,9 +630,9 @@ class BaseParticleSet(NDCluster):
             type of cartopy projection to use (default PlateCarree)
         land :
             Boolean whether to show land. This is ignored for flat meshes (Default value = True)
-        vmin :
+        vmin : float
             minimum colour scale (only in single-plot mode) (Default value = None)
-        vmax :
+        vmax : float
             maximum colour scale (only in single-plot mode) (Default value = None)
         savefile :
             Name of a file to save the plot to (Default value = None)

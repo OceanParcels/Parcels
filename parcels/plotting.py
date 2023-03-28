@@ -21,7 +21,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         Time in seconds from start after which to show the ParticleSet (Default value = None)
     with_particles :
         Boolean whether particles are also plotted on Field (Default value = True)
-    field :
+    field : parcels.Field or str, optional
         Field to plot under particles (either None, a Field object, or 'vector') (Default value = None)
     domain :
         dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
@@ -29,9 +29,9 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         type of cartopy projection to use (default PlateCarree)
     land :
         Boolean whether to show land. This is ignored for flat meshes (Default value = True)
-    vmin :
+    vmin : float
         minimum colour scale (only in single-plot mode) (Default value = None)
-    vmax :
+    vmax : float
         maximum colour scale (only in single-plot mode) (Default value = None)
     savefile :
         Name of a file to save the plot to (Default value = None)
@@ -119,7 +119,9 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
 
     Parameters
     ----------
-    show_time :
+    field : parcels.field.Field
+        Field to plot
+    show_time : float
         Time in seconds from start after which to show the Field (Default value = None)
     domain :
         dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
@@ -127,18 +129,16 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
         depth level to be plotted (default 0)
     projection :
         type of cartopy projection to use (default PlateCarree)
-    land :
+    land : bool
         Boolean whether to show land. This is ignored for flat meshes (Default value = True)
-    vmin :
+    vmin : float, optional
         minimum colour scale (only in single-plot mode) (Default value = None)
-    vmax :
+    vmax : float, optional
         maximum colour scale (only in single-plot mode) (Default value = None)
-    savefile :
+    savefile : str, optional
         Name of a file to save the plot to (Default value = None)
-    animation :
+    animation : bool
         Boolean whether result is a single plot, or an animation
-    field :
-
     **kwargs :
         Provide "titlestr" as the title of the plot, or "cartopy_features" to be used in :func:`create_parcelsfig_axis`.
     """

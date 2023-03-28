@@ -47,9 +47,9 @@ class Field:
 
     Parameters
     ----------
-    name :
+    name : str
         Name of the field
-    data :
+    data : np.ndarray
         2D, 3D or 4D numpy array of field data.
 
         1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
@@ -57,55 +57,55 @@ class Field:
         2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
         use the flag transpose=False
         3. If data has any other shape, you first need to reorder it
-    lon :
+    lon : np.ndarray or list
         Longitude coordinates (numpy vector or array) of the field (only if grid is None)
-    lat :
+    lat : np.ndarray or list
         Latitude coordinates (numpy vector or array) of the field (only if grid is None)
-    depth :
+    depth : np.ndarray or list
         Depth coordinates (numpy vector or array) of the field (only if grid is None)
-    time :
+    time : np.ndarray
         Time coordinates (numpy vector) of the field (only if grid is None)
-    mesh :
+    mesh : str
         String indicating the type of mesh coordinates and
         units used during velocity interpolation: (only if grid is None)
 
         1. spherical: Lat and lon in degree, with a
         correction for zonal velocity U near the poles.
         2. flat (default): No conversion, lat/lon are assumed to be in m.
-    timestamps :
+    timestamps : np.ndarray
         A numpy array containing the timestamps for each of the files in filenames, for loading
         from netCDF files only. Default is None if the netCDF dimensions dictionary includes time.
-    grid :
-        class:`parcels.grid.Grid` object containing all the lon, lat depth, time
+    grid : parcels.grid.Grid
+        :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
         mesh and time_origin information. Can be constructed from any of the Grid objects
-    fieldtype :
+    fieldtype : str
         Type of Field to be used for UnitConverter when using SummedFields
         (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-    transpose :
+    transpose : bool
         Transpose data to required (lon, lat) layout
-    vmin :
+    vmin : float
         Minimum allowed value on the field. Data below this value are set to zero
-    vmax :
+    vmax : float
         Maximum allowed value on the field. Data above this value are set to zero
-    cast_data_dtype :
-        Cast Field data to dtype. Supported dtypes are np.float32 (default) and np.float64.
-        Note that dtype can only be float32 in JIT mode
-    time_origin :
-        Time origin (TimeConverter object) of the time axis (only if grid is None)
-    interp_method :
+    cast_data_dtype : str
+        Cast Field data to dtype. Supported dtypes are "float32" (np.float32 (default)) and "float64 (np.float64).
+        Note that dtype can only be "float32" in JIT mode
+    time_origin : parcels.tools.converters.TimeConverter
+        Time origin of the time axis (only if grid is None)
+    interp_method : str
         Method for interpolation. Options are 'linear' (default), 'nearest',
         'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
-    allow_time_extrapolation :
+    allow_time_extrapolation : bool
         boolean whether to allow for extrapolation in time
         (i.e. beyond the last available time snapshot)
-    time_periodic :
+    time_periodic : bool, float or datetime.timedelta
         To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
         The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
-        This flag overrides the allow_time_interpolation and sets it to False
-    chunkdims_name_map :
-        opt.): gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
+        This flag overrides the allow_time_extrapolation and sets it to False
+    chunkdims_name_map : str, optional
+        Gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
         required only if currently incompatible OCM field is loaded and chunking is used by 'chunksize' (which is the default)
-    to_write :
+    to_write : bool
         Write the Field in NetCDF format at the same frequency as the ParticleFile outputdt,
         using a filenaming scheme based on the ParticleFile name
 
@@ -296,13 +296,13 @@ class Field:
 
         Parameters
         ----------
-        filenames :
+        filenames : list of str or dict
             list of filenames to read for the field. filenames can be a list [files] or
             a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
             In the latter case, time values are in filenames[data]
-        variable :
+        variable : tuple of str or str
             Tuple mapping field name to variable name in the NetCDF file.
-        dimensions :
+        dimensions : dict
             Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         indices :
             dictionary mapping indices for each dimension to read from file.
@@ -318,25 +318,25 @@ class Field:
         timestamps :
             A numpy array of datetime64 objects containing the timestamps for each of the files in filenames.
             Default is None if dimensions includes time.
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation in time
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic : bool, float or datetime.timedelta
             boolean whether to loop periodically over the time component of the FieldSet
-            This flag overrides the allow_time_interpolation and sets it to False (Default value = False)
-        deferred_load :
+            This flag overrides the allow_time_extrapolation and sets it to False (Default value = False)
+        deferred_load : bool
             boolean whether to only pre-load data (in deferred mode) or
             fully load them (default: True). It is advised to deferred load the data, since in
             that case Parcels deals with a better memory management during particle set execution.
             deferred_load=False is however sometimes necessary for plotting the fields.
-        gridindexingtype :
+        gridindexingtype : str
             The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
             See also the Grid indexing documentation on oceanparcels.org
         chunksize :
             size of the chunks in dask loading
-        netcdf_decodewarning :
-            boolean whether to show a warning id there is a problem decoding the netcdf files.
+        netcdf_decodewarning : bool
+            Whether to show a warning id there is a problem decoding the netcdf files.
             Default is True, but in some cases where these warnings are expected, it may be useful to silence them
             by setting netcdf_decodewarning=False.
         grid :
@@ -536,26 +536,26 @@ class Field:
 
         Parameters
         ----------
-        da :
+        da : xr.DataArray
             Xarray DataArray
-        name :
+        name : str
             Name of the Field
-        dimensions :
+        dimensions : dict
             Dictionary mapping variable names for the relevant dimensions in the DataArray
-        mesh :
+        mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation:
 
             1. spherical (default): Lat and lon in degree, with a
             correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation :
+        allow_time_extrapolation : bool
             boolean whether to allow for extrapolation in time
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic :
+        time_periodic : bool, float or datetime.timedelta
             boolean whether to loop periodically over the time component of the FieldSet
-            This flag overrides the allow_time_interpolation and sets it to False (Default value = False)
+            This flag overrides the allow_time_extrapolation and sets it to False (Default value = False)
         **kwargs :
             Keyword arguments passed to the :class:`Field` constructor.
         """
@@ -1319,7 +1319,7 @@ class Field:
         ----------
         animation :
             Boolean whether result is a single plot, or an animation (Default value = False)
-        show_time :
+        show_time : float
             Time in seconds from start after which to show the Field (only in single-plot mode) (Default value = None)
         domain :
             dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
@@ -1327,13 +1327,13 @@ class Field:
             depth level to be plotted (default 0)
         projection :
             type of cartopy projection to use (default PlateCarree)
-        land :
+        land : bool
             Boolean whether to show land. This is ignored for flat meshes (Default value = True)
-        vmin :
+        vmin : float
             minimum colour scale (only in single-plot mode) (Default value = None)
-        vmax :
+        vmax : float
             maximum colour scale (only in single-plot mode) (Default value = None)
-        savefile :
+        savefile : str, opptional
             Name of a file to save the plot to (Default value = None)
         **kwargs :
             Additional keyword arguments to pass to :func:`parcels.plotting.plotfield`
@@ -1356,12 +1356,12 @@ class Field:
 
         Parameters
         ----------
-        zonal :
-            Create a halo in zonal direction (boolean)
-        meridional :
-            Create a halo in meridional direction (boolean)
-        halosize :
-            size of the halo (in grid points). Default is 5 grid points
+        zonal : bool
+            Create a halo in zonal direction.
+        meridional : bool
+            Create a halo in meridional direction.
+        halosize : int
+            Size of the halo (in grid points). Default is 5 grid points
         data :
             if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned (Default value = None)
         """
@@ -1401,9 +1401,9 @@ class Field:
 
         Parameters
         ----------
-        filename :
-            Basename of the file
-        varname :
+        filename : str
+            Basename of the file (i.e. '{filename}{Field.name}.nc')
+        varname : str
             Name of the field, to be appended to the filename. (Default value = None)
         """
         filepath = str(Path(f'{filename}{self.name}.nc'))
@@ -1518,13 +1518,13 @@ class VectorField:
 
     Parameters
     ----------
-    name :
+    name : str
         Name of the vector field
-    U :
+    U : parcels.field.Field
         field defining the zonal component
-    V :
+    V : parcels.field.Field
         field defining the meridional component
-    W :
+    W : parcels.field.Field
         field defining the vertical component (default: None)
     """
 
@@ -1960,13 +1960,13 @@ class SummedField(list):
 
     Parameters
     ----------
-    name :
+    name : str
         Name of the SummedField
-    F :
+    F : list of Field
         List of fields. F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
-    V :
+    V : list of Field
         List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
-    W :
+    W : list of Field
         List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
 
 
@@ -2041,13 +2041,13 @@ class NestedField(list):
 
     Parameters
     ----------
-    name :
+    name : str
         Name of the NestedField
-    F :
+    F : list of Field
         List of fields (order matters). F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
-    V :
+    V : list of Field
         List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
-    W :
+    W : list of Field
         List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
 
 

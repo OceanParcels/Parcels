@@ -45,15 +45,15 @@ class BaseKernel:
 
     Parameters
     ----------
-    fieldset :
+    fieldset : parcels.Fieldset
         FieldSet object providing the field information (possibly None)
     ptype :
         PType object for the kernel particle
     pyfunc :
         aggregated) Kernel function
-    funcname :
+    funcname : str
         function name
-    delete_cfiles :
+    delete_cfiles : bool
         Boolean whether to delete the C-files after compilation in JIT mode (default is True)
 
     Notes

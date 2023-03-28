@@ -11,7 +11,7 @@ class ParticleFileAOS(BaseParticleFile):
 
     Parameters
     ----------
-    name :
+    name : str
         Basename of the output file. This can also be a Zarr store.
     particleset :
         ParticleSet to output
