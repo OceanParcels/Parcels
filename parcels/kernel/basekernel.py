@@ -43,13 +43,22 @@ re_indent = re.compile(r"^(\s+)")
 class BaseKernel:
     """Base super class for base Kernel objects that encapsulates auto-generated code.
 
-    :arg fieldset: FieldSet object providing the field information (possibly None)
-    :arg ptype: PType object for the kernel particle
-    :arg pyfunc: (aggregated) Kernel function
-    :arg funcname: function name
-    :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+    Parameters
+    ----------
+    fieldset : parcels.Fieldset
+        FieldSet object providing the field information (possibly None)
+    ptype :
+        PType object for the kernel particle
+    pyfunc :
+        (aggregated) Kernel function
+    funcname : str
+        function name
+    delete_cfiles : bool
+        Whether to delete the C-files after compilation in JIT mode (default is True)
 
-    Note: A Kernel is either created from a compiled <function ...> object
+    Notes
+    -----
+    A Kernel is either created from a compiled <function ...> object
     or the necessary information (funcname, funccode, funcvars) is provided.
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
@@ -344,13 +353,22 @@ class BaseKernel:
                     g.lat = np.array(g.lat, order='C')
 
     def evaluate_particle(self, p, endtime, sign_dt, dt, analytical=False):
-        """
-        Execute the kernel evaluation of for an individual particle.
-        :arg p: object of (sub-)type (ScipyParticle, JITParticle) or (sub-)type of BaseParticleAccessor
-        :arg fieldset: fieldset of the containing ParticleSet (e.g. pset.fieldset)
-        :arg analytical: flag indicating the analytical advector or an iterative advection
-        :arg endtime: endtime of this overall kernel evaluation step
-        :arg dt: computational integration timestep
+        """Execute the kernel evaluation of for an individual particle.
+
+        Parameters
+        ----------
+        p :
+            object of (sub-)type (ScipyParticle, JITParticle) or (sub-)type of BaseParticleAccessor
+        fieldset :
+            fieldset of the containing ParticleSet (e.g. pset.fieldset)
+        analytical :
+            flag indicating the analytical advector or an iterative advection (Default value = False)
+        endtime :
+            endtime of this overall kernel evaluation step
+        dt :
+            computational integration timestep
+        sign_dt :
+
         """
         variables = self._ptype.variables
         # back up variables in case of OperationCode.Repeat

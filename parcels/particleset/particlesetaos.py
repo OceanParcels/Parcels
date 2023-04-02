@@ -42,23 +42,34 @@ def _convert_to_reltime(time):
 class ParticleSetAOS(BaseParticleSet):
     """Container class for storing particle and executing kernel over them.
 
-    :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
-           While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
-    :param pclass: Optional :mod:`parcels.particle.JITParticle` or
-                 :mod:`parcels.particle.ScipyParticle` object that defines custom particle
-    :param lon: List of initial longitude values for particles
-    :param lat: List of initial latitude values for particles
-    :param depth: Optional list of initial depth values for particles. Default is 0m
-    :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
-    :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-    :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-           It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-           and np.float64 if the interpolation method is 'cgrid_velocity'
-    :param pid_orig: Optional list of (offsets for) the particle IDs
-    :param partitions: List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
-           are distributed automatically on the processors
+    Parameters
+    ----------
+    fieldset :
+        mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
+        While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
+    pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
+        Particle class. May be a particle class as defined in parcels, or a subclass defining a custom particle.
+    lon :
+        List of initial longitude values for particles
+    lat :
+        List of initial latitude values for particles
+    depth :
+        Optional list of initial depth values for particles. Default is 0m
+    time :
+        Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
+    repeatdt : datetime.timedelta or float, optional
+        Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
+    lonlatdepth_dtype :
+        Floating precision for lon, lat, depth particle coordinates.
+        It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+        and np.float64 if the interpolation method is 'cgrid_velocity'
+    pid_orig :
+        Optional list of (offsets for) the particle IDs
+    partitions :
+        List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
+        are distributed automatically on the processors
 
-    Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
+        Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
@@ -273,8 +284,7 @@ class ParticleSetAOS(BaseParticleSet):
         super().__del__()
 
     def delete(self, key):
-        """
-        This is the generic super-method to indicate obejct deletion of a specific object from this collection.
+        """This is the generic super-method to indicate obejct deletion of a specific object from this collection.
 
         Comment/Annotation:
         Functions for deleting multiple objects are more specialised than just a for-each loop of single-item deletion,
@@ -290,8 +300,7 @@ class ParticleSetAOS(BaseParticleSet):
             self.delete_by_ID(key)
 
     def delete_by_index(self, index):
-        """
-        This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
+        """This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
@@ -300,8 +309,7 @@ class ParticleSetAOS(BaseParticleSet):
         self._collection[index].state = OperationCode.Delete
 
     def delete_by_ID(self, id):
-        """
-        This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
+        """This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
@@ -313,16 +321,28 @@ class ParticleSetAOS(BaseParticleSet):
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
 
-        :param name: Name of the attribute (str).
-        :param value: New value to set the attribute of the particles to.
+        Parameters
+        ----------
+        name : str
+            Name of the attribute.
+        value :
+            New value to set the attribute of the particles to.
         """
         [setattr(p, name, value) for p in self._collection.data]
 
     def _impute_release_times(self, default):
         """Set attribute 'time' to default if encountering NaN values.
 
-        :param default: Default release time.
-        :return: Minimum and maximum release times.
+        Parameters
+        ----------
+        default :
+            Default release time.
+
+        Returns
+        -------
+        type
+            Minimum and maximum release times.
+
         """
         max_rt = None
         min_rt = None
@@ -339,12 +359,21 @@ class ParticleSetAOS(BaseParticleSet):
         """Get the indices of all particles where the value of
         `variable_name` equals (one of) `compare_values`.
 
-        :param variable_name: Name of the variable to check.
-        :param compare_values: Value or list of values to compare to.
-        :param invert: Whether to invert the selection. I.e., when True,
-                       return all indices that do not equal (one of)
-                       `compare_values`.
-        :return: Numpy array of indices that satisfy the test.
+        Parameters
+        ----------
+        variable_name : str
+            Name of the variable to check.
+        compare_values :
+            Value or list of values to compare to.
+        invert :
+            Whether to invert the selection. I.e., when True,
+            return all indices that do not equal (one of)
+            `compare_values`. (Default value = False)
+
+        Returns
+        -------
+        np.ndarray
+            Numpy array of indices that satisfy the test.
         """
         compare_values = np.array([compare_values, ]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
         result = []
@@ -373,7 +402,10 @@ class ParticleSetAOS(BaseParticleSet):
     def error_particles(self):
         """Get an iterator over all particles that are in an error state.
 
-        :return: Collection iterator over error particles.
+        Returns
+        -------
+        iterator
+            Collection iterator over error particles.
         """
         error_indices = [
             i for i, p in enumerate(self)
@@ -384,7 +416,10 @@ class ParticleSetAOS(BaseParticleSet):
     def num_error_particles(self):
         """Get the number of particles that are in an error state.
 
-        :return: The number of error particles.
+        Returns
+        -------
+        int
+            Number of error particles.
         """
         return np.sum([True for p in self._collection if p.state not in [StateCode.Success, StateCode.Evaluate]])
 
@@ -402,7 +437,10 @@ class ParticleSetAOS(BaseParticleSet):
         """
         Access a single property of all particles.
 
-        :param name: name of the property
+        Parameters
+        ----------
+        name : str
+            Name of the property to access.
         """
         for v in self._collection.ptype.variables:
             if v.name == name:
@@ -449,12 +487,25 @@ class ParticleSetAOS(BaseParticleSet):
 
     @classmethod
     def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
-        """
-        Converts a starting field into a monte-carlo sample of lons and lats.
+        """Converts a starting field into a monte-carlo sample of lons and lats.
 
-        :param start_field: :mod:`parcels.fieldset.Field` object for initialising particles stochastically (horizontally)  according to the presented density field.
+        Parameters
+        ----------
+        start_field :
+            mod:`parcels.fieldset.Field` object for initialising particles stochastically (horizontally)  according to the presented density field.
 
-        returns list(lon), list(lat)
+            returns list(lon), list(lat)
+        size :
+
+        mode :
+             (Default value = 'monte_carlo')
+
+        Returns
+        -------
+        list of float
+            A list of longitude values.
+        list of float
+            A list of latitude values.
         """
         if mode == 'monte_carlo':
             data = start_field.data if isinstance(start_field.data, np.ndarray) else np.array(start_field.data)
@@ -500,19 +551,29 @@ class ParticleSetAOS(BaseParticleSet):
         This creates a new ParticleSet based on locations of all particles written
         in a zarr ParticleFile at a certain time. Particle IDs are preserved if restart=True
 
-        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
-        :param filename: Name of the particlefile from which to read initial conditions
-        :param restart: Boolean to signal if pset is used for a restart (default is True).
-               In that case, Particle IDs are preserved.
-        :param restarttime: time at which the Particles will be restarted. Default is the last time written.
-               Alternatively, restarttime could be a time value (including np.datetime64) or
-               a callable function such as np.nanmin. The last is useful when running with dt < 0.
-        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-               and np.float64 if the interpolation method is 'cgrid_velocity'
+        Parameters
+        ----------
+        fieldset :
+            mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
+            Particle class. May be a particle class as defined in parcels, or a subclass defining a custom particle.
+        filename : str
+            Name of the particlefile from which to read initial conditions
+        restart : bool
+            BSignal if pset is used for a restart (default is True).
+            In that case, Particle IDs are preserved.
+        restarttime :
+            time at which the Particles will be restarted. Default is the last time written.
+            Alternatively, restarttime could be a time value (including np.datetime64) or
+            a callable function such as np.nanmin. The last is useful when running with dt < 0.
+        repeatdt : datetime.timedelta or float, optional
+            Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
+        lonlatdepth_dtype :
+            Floating precision for lon, lat, depth particle coordinates.
+            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+            and np.float64 if the interpolation method is 'cgrid_velocity'
+        **kwargs :
+            Keyword arguments passed to the particleset constructor.
         """
         if repeatdt is not None:
             logger.warning(f'Note that the `repeatdt` argument is not retained from {filename}, and that '
@@ -563,13 +624,21 @@ class ParticleSetAOS(BaseParticleSet):
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
 
     def __iadd__(self, particles):
-        """Add particles to the ParticleSet. Note that this is an
-        incremental add, the particles will be added to the ParticleSet
+        """Add particles to the ParticleSet.
+
+        Note that this is an incremental add, the particles will be added to the ParticleSet
         on which this function is called.
 
-        :param particles: Another ParticleSet containing particles to add
-                          to this one.
-        :return: The current ParticleSet
+        Parameters
+        ----------
+        particles :
+            Another ParticleSet containing particles to add
+            to this one.
+
+        Returns
+        -------
+        type
+            The current ParticleSet
         """
         self.add(particles)
         return self
@@ -579,9 +648,17 @@ class ParticleSetAOS(BaseParticleSet):
         incremental add, the particles will be added to the ParticleSet
         on which this function is called.
 
-        :param particles: Another ParticleSet containing particles to add
-                          to this one.
-        :return: The current ParticleSet
+        Parameters
+        ----------
+        particles :
+            Another ParticleSet containing particles to add
+            to this one.
+
+        Returns
+        -------
+        type
+            The current ParticleSet
+
         """
         if isinstance(particles, BaseParticleSet):
             particles = particles.collection
@@ -604,15 +681,21 @@ class ParticleSetAOS(BaseParticleSet):
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Calculate 2D particle density field from ParticleSet particle locations.
 
-        :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
-                      on. Default is `fieldset.U`
-        :param particle_val: Optional numpy-array of values to weigh each particle with,
-                             or string name of particle variable to use weigh particles with.
-                             Default is None, resulting in a value of 1 for each particle
-        :param relative: Boolean to control whether the density is scaled by the total
-                         weight of all particles. Default is False
-        :param area_scale: Boolean to control whether the density is scaled by the area
-                           (in m^2) of each grid cell. Default is False
+        Parameters
+        ----------
+        field_name : str, optional
+            Name of the field from the fieldset to calculate the histogram on.
+            Defaults to using "U".
+        particle_val :
+            Optional numpy-array of values to weigh each particle with,
+            or string name of particle variable to use weigh particles with.
+            Default is None, resulting in a value of 1 for each particle
+        relative : bool
+            Whether the density is scaled by the total weight of all particles.
+            Default is False
+        area_scale : bool
+            Whether the density is scaled by the area (in m^2) of each grid cell.
+            Default is False
         """
         field_name = field_name if field_name else "U"
         sampling_name = "UV" if field_name in ["U", "V"] else field_name
@@ -658,7 +741,10 @@ class ParticleSetAOS(BaseParticleSet):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
         based on `fieldset` and `ptype` of the ParticleSet.
 
-        :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        Parameters
+        ----------
+        delete_cfiles : bool
+            Whether to delete the C-files after compilation in JIT mode (default is True).
         """
         return KernelAOS(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include, delete_cfiles=delete_cfiles)
 
@@ -669,9 +755,13 @@ class ParticleSetAOS(BaseParticleSet):
         return ParticleFileAOS(*args, particleset=self, **kwargs)
 
     def set_variable_write_status(self, var, write_status):
-        """
-        Method to set the write status of a Variable.
-        :param var: Name of the variable (string)
-        :param write_status: Write status of the variable (True, False or 'once')
+        """Method to set the write status of a Variable.
+
+        Parameters
+        ----------
+        var :
+            Name of the variable (string)
+        write_status :
+            Write status of the variable (True, False or 'once')
         """
         self._collection.set_variable_write_status(var, write_status)

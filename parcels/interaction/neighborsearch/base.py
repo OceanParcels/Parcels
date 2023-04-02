@@ -18,10 +18,15 @@ class BaseNeighborSearch(ABC):
                  max_depth=100000, periodic_domain_zonal=None):
         """Initialize neighbor search
 
-        :param inter_dist_vert: interaction distance (vertical) in m
-        :param inter_dist_horiz: interaction distance (horizontal in m
-        :param max_depth: maximum depth of the particles (i.e. 100km)
-        :param zperiodic_bc_domain: zonal domain if zonal periodic boundary
+
+        Parameters
+        ----------
+        inter_dist_vert : float
+            Interaction distance (vertical) in m.
+        inter_dist_horiz : float
+            interaction distance (horizontal) in m
+        max_depth : float, optional
+            Maximum depth of the particles (default is 100000m).
         """
         self.inter_dist_vert = inter_dist_vert
         self.inter_dist_horiz = inter_dist_horiz
@@ -43,8 +48,16 @@ class BaseNeighborSearch(ABC):
     def find_neighbors_by_coor(self, coor):
         """Get the neighbors around a certain location.
 
-        :param coor: Numpy array with [depth, lat, lon].
-        :returns List of particle indices.
+        Parameters
+        ----------
+        coor :
+            Numpy array with [depth, lat, lon].
+
+        Returns
+        -------
+        type
+            List of particle indices.
+
         """
         raise NotImplementedError
 
@@ -53,8 +66,16 @@ class BaseNeighborSearch(ABC):
 
         Mainly useful for Structure of Array (SoA) datastructure
 
-        :param particle_idx: index of the particle (SoA).
-        :returns List of particle indices
+        Parameters
+        ----------
+        particle_idx :
+            index of the particle (SoA).
+
+        Returns
+        -------
+        type
+            List of particle indices
+
         """
         coor = self._values[:, particle_idx].reshape(3, 1)
         return self.find_neighbors_by_coor(coor)
@@ -65,18 +86,26 @@ class BaseNeighborSearch(ABC):
         This is a default implementation simply rebuilds the structure.
         If the rebuilding is slow, a faster implementation can be provided.
 
-        :param new_values: numpy array ([depth, lat, lon], n_particles) with
-                           new coordinates of the particles.
-        :param new_active_mask: boolean array indicating active particles.
+        Parameters
+        ----------
+        new_values :
+            numpy array ([depth, lat, lon], n_particles) with
+            new coordinates of the particles.
+        new_active_mask :
+            boolean array indicating active particles. (Default value = None)
         """
         self.rebuild(new_values, new_active_mask)
 
     def rebuild(self, values, active_mask=-1):
         """Rebuild the neighbor structure from scratch.
 
-        :param values: numpy array with coordinates of particles
-                       (same as update).
-        :param active_mask: boolean array indicating active particles.
+        Parameters
+        ----------
+        values :
+            numpy array with coordinates of particles
+            (same as update).
+        active_mask :
+            boolean array indicating active particles. (Default value = -1)
         """
         if values is not None:
             self._values = values
@@ -102,20 +131,36 @@ class BaseNeighborSearch(ABC):
 
         Distance depends on the mesh (spherical/flat).
 
-        :param coor: Numpy array with 3D coordinates ([depth, lat, lon]).
-        :param subset_idx: Indices of the particles to compute the distance to.
-        :returns horiz_dist: distance in the horizontal direction
-        :returns vert_dist: distance in the vertical direction.
+        Parameters
+        ----------
+        coor :
+            Numpy array with 3D coordinates ([depth, lat, lon]).
+        subset_idx :
+            Indices of the particles to compute the distance to.
+
+        Returns
+        -------
+        type
+            horiz_dist: distance in the horizontal direction
+
         """
         raise NotImplementedError
 
     def _get_close_neighbor_dist(self, coor, subset_idx):
         """Compute distances and remove non-neighbors.
 
-        :param coor: Numpy array with 3D coordinates ([depth, lat, lon]).
-        :param subset_idx: Indices of the particles to compute the distance to.
-        :returns neighbor_idx: Indices within the interaction distance.
-        :returns distances: Distance between coor and the neighbor particles.
+        Parameters
+        ----------
+        coor :
+            Numpy array with 3D coordinates ([depth, lat, lon]).
+        subset_idx :
+            Indices of the particles to compute the distance to.
+
+        Returns
+        -------
+        type
+            neighbor_idx: Indices within the interaction distance.
+
         """
         vert_distance, horiz_distance = self._distance(coor, subset_idx)
         rel_distances = np.sqrt((horiz_distance/self.inter_dist_horiz)**2

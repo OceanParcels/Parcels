@@ -73,8 +73,14 @@ def generate_perlin_testfield():
 def write_simple_2Dt(field, filename, varname=None):
     """Write a :class:`Field` to a netcdf file
 
-    :param filename: Basename of the file
-    :param varname: Name of the field, to be appended to the filename.
+    Parameters
+    ----------
+    field : parcels.field.Field
+        Field to write to file
+    filename : str
+        Base name of the file to write to
+    varname : str, optional
+        Name of the variable to write to file. If None, defaults to field.name
     """
     filepath = str(f'{filename}{field.name}.nc')
     if varname is None:

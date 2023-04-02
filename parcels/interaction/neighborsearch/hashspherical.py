@@ -11,17 +11,21 @@ from parcels.interaction.neighborsearch.basehash import (
 
 class HashSphericalNeighborSearch(BaseHashNeighborSearch,
                                   BaseSphericalNeighborSearch):
-    """Neighbor search using a hashtable (similar to octtrees)."""
+    """Neighbor search using a hashtable (similar to octtrees).
+
+
+    Parameters
+    ----------
+    inter_dist_vert : float
+        Interaction distance (vertical) in m.
+    inter_dist_horiz : float
+        interaction distance (horizontal) in m
+    max_depth : float, optional
+        Maximum depth of the particles (default is 100000m).
+    """
 
     def __init__(self, inter_dist_vert, inter_dist_horiz,
                  max_depth=100000):
-        """Initialize the neighbor data structure.
-
-        :param interaction_distance: maximum horizontal interaction distance.
-        :param interaction_depth: maximum depth of interaction.
-        :param values: depth, lat, lon values for particles.
-        :param max_depth: maximum depth of the ocean.
-        """
         super().__init__(inter_dist_vert, inter_dist_horiz, max_depth)
 
         self._init_structure()
@@ -46,9 +50,19 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
     def _values_to_hashes(self, values, active_idx=None):
         """Convert coordinates to cell ids.
 
-        :param values: array of positions of particles to convert
-                       ([depth, lat, lon], # of particles to convert).
-        :returns array of cell ids.
+        Parameters
+        ----------
+        values :
+            array of positions of particles to convert
+            ([depth, lat, lon], # of particles to convert).
+        active_idx :
+             (Default value = None)
+
+        Returns
+        -------
+        type
+            array of cell ids.
+
         """
         if active_idx is None:
             active_idx = np.arange(values.shape[1], dtype=int)
@@ -81,7 +95,12 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
     def rebuild(self, values, active_mask=-1):
         """Recreate the tree with new values.
 
-        :param values: positions of the particles.
+        Parameters
+        ----------
+        values :
+            positions of the particles.
+        active_mask :
+             (Default value = -1)
         """
         super().rebuild(values, active_mask)
         active_idx = self.active_idx

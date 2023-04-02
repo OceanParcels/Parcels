@@ -31,8 +31,11 @@ class ParticleCollectionSOA(ParticleCollection):
 
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
-        :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
-        field references of the ctypes-link of particles that are allocated
+        Parameters
+        ----------
+        ngrid :
+            number of grids in the fieldset of the overarching ParticleSet - required for initialising the
+            field references of the ctypes-link of particles that are allocated
         """
         super(ParticleCollection, self).__init__()
 
@@ -194,7 +197,10 @@ class ParticleCollectionSOA(ParticleCollection):
         Access a particle in this collection using the fastest access
         method for this collection - by its index.
 
-        :param index: int or np.int32 index of a particle in this collection
+        Parameters
+        ----------
+        index : int
+            Index of the particle to access
         """
         return self.get_single_by_index(index)
 
@@ -202,7 +208,10 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         Access a single property of all particles.
 
-        :param name: name of the property
+        Parameters
+        ----------
+        name : str
+            Name of the property to access
         """
         for v in self.ptype.variables:
             if v.name == name and name in self._data:
@@ -341,9 +350,14 @@ class ParticleCollectionSOA(ParticleCollection):
         """Identify the middle element of the sublist and perform binary
         search on it.
 
-        :param low: Lowerbound on the indices to search for IDs.
-        :param high: Upperbound on the indices to search for IDs.
-        :param sublist: (Sub)list of IDs to look for.
+        Parameters
+        ----------
+        low :
+            Lowerbound on the indices to search for IDs.
+        high :
+            Upperbound on the indices to search for IDs.
+        sublist : list
+            Sublist of IDs to look for.
         """
         raise NotTestedError
         # median = floor(len(sublist) / 2)
@@ -832,10 +846,15 @@ class ParticleCollectionSOA(ParticleCollection):
         raise NotImplementedError
 
     def set_variable_write_status(self, var, write_status):
-        """
-        Method to set the write status of a Variable
-        :param var: Name of the variable (string)
-        :param status: Write status of the variable (True, False or 'once')
+        """Method to set the write status of a Variable
+
+        Parameters
+        ----------
+        var :
+            Name of the variable (string)
+        status :
+            Write status of the variable (True, False or 'once')
+        write_status :
         """
         var_changed = False
         for v in self._ptype.variables:
@@ -850,11 +869,15 @@ class ParticleAccessorSOA(BaseParticleAccessor):
     """Wrapper that provides access to particle data in the collection,
     as if interacting with the particle itself.
 
-    :param pcoll: ParticleCollection that the represented particle
-                  belongs to.
-    :param index: The index at which the data for the represented
-                  particle is stored in the corresponding data arrays
-                  of the ParticleCollecion.
+    Parameters
+    ----------
+    pcoll :
+        ParticleCollection that the represented particle
+        belongs to.
+    index :
+        The index at which the data for the represented
+        particle is stored in the corresponding data arrays
+        of the ParticleCollecion.
     """
 
     _index = 0
@@ -869,11 +892,18 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         self._next_dt = None
 
     def __getattr__(self, name):
-        """Get the value of an attribute of the particle.
+        """
+        Get the value of an attribute of the particle.
 
-        :param name: Name of the requested particle attribute.
-        :return: The value of the particle attribute in the underlying
-                 collection data array.
+        Parameters
+        ----------
+        name : str
+            Name of the requested particle attribute.
+
+        Returns
+        -------
+        any
+            The value of the particle attribute in the underlying collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
             result = super().__getattr__(name)
@@ -884,11 +914,15 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         return result
 
     def __setattr__(self, name, value):
-        """Set the value of an attribute of the particle.
+        """
+        Set the value of an attribute of the particle.
 
-        :param name: Name of the particle attribute.
-        :param value: Value that will be assigned to the particle
-                      attribute in the underlying collection data array.
+        Parameters
+        ----------
+        name : str
+            Name of the particle attribute.
+        value : any
+            Value that will be assigned to the particle attribute in the underlying collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
             super().__setattr__(name, value)
@@ -937,12 +971,17 @@ class ParticleCollectionIterableSOA(BaseParticleCollectionIterable):
 class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
     """Iterator for looping over the particles in the ParticleCollection.
 
-    :param pcoll: ParticleCollection that stores the particles.
-    :param reverse: Flag to indicate reverse iteration (i.e. starting at
-                    the largest index, instead of the smallest).
-    :param subset: Subset of indices to iterate over, this allows the
-                   creation of an iterator that represents part of the
-                   collection.
+    Parameters
+    ----------
+    pcoll :
+        ParticleCollection that stores the particles.
+    reverse :
+        Flag to indicate reverse iteration (i.e. starting at
+        the largest index, instead of the smallest).
+    subset :
+        Subset of indices to iterate over, this allows the
+        creation of an iterator that represents part of the
+        collection.
     """
 
     def __init__(self, pcoll, reverse=False, subset=None):

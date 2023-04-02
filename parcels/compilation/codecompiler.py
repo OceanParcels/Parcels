@@ -197,9 +197,14 @@ class VS_parameters(Compiler_parameters):
 class CCompiler:
     """A compiler object for creating and loading shared libraries.
 
-    :arg cc: C compiler executable (uses environment variable ``CC`` if not provided).
-    :arg cppargs: A list of arguments to the C compiler (optional).
-    :arg ldargs: A list of arguments to the linker (optional).
+    Parameters
+    ----------
+    cc :
+        C compiler executable (uses environment variable ``CC`` if not provided).
+    cppargs :
+        A list of arguments to the C compiler (optional).
+    ldargs :
+        A list of arguments to the linker (optional).
     """
 
     def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
@@ -268,9 +273,13 @@ class CCompiler_SS(CCompiler):
 class GNUCompiler_SS(CCompiler_SS):
     """A compiler object for the GNU Linux toolchain.
 
-    :arg cppargs: A list of arguments to pass to the C compiler
-         (optional).
-    :arg ldargs: A list of arguments to pass to the linker (optional).
+    Parameters
+    ----------
+    cppargs :
+        A list of arguments to pass to the C compiler
+        (optional).
+    ldargs :
+        A list of arguments to pass to the linker (optional).
     """
 
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):

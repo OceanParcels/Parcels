@@ -15,13 +15,18 @@ indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 class Variable:
     """Descriptor class that delegates data access to particle data.
 
-    :param name: Variable name as used within kernels
-    :param dtype: Data type (numpy.dtype) of the variable
-    :param initial: Initial value of the variable. Note that this can also be a Field object,
-             which will then be sampled at the location of the particle
-    :param to_write: Boolean or 'once'. Controls whether Variable is written to NetCDF file.
-             If to_write = 'once', the variable will be written as a time-independent 1D array
-    :type to_write: (bool, 'once', optional)
+    Parameters
+    ----------
+    name : str
+        Variable name as used within kernels
+    dtype :
+        Data type (numpy.dtype) of the variable
+    initial :
+        Initial value of the variable. Note that this can also be a Field object,
+        which will then be sampled at the location of the particle
+    to_write : bool, 'once', optional
+        Boolean or 'once'. Controls whether Variable is written to NetCDF file.
+        If to_write = 'once', the variable will be written as a time-independent 1D array
     """
 
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
@@ -55,7 +60,10 @@ class Variable:
 class ParticleType:
     """Class encapsulating the type information for custom particles.
 
-    :param user_vars: Optional list of (name, dtype) tuples for custom variables
+    Parameters
+    ----------
+    user_vars :
+        Optional list of (name, dtype) tuples for custom variables
     """
 
     def __init__(self, pclass):
@@ -172,12 +180,22 @@ class _Particle:
 class ScipyParticle(_Particle):
     """Class encapsulating the basic attributes of a particle, to be executed in SciPy mode.
 
-    :param lon: Initial longitude of particle
-    :param lat: Initial latitude of particle
-    :param depth: Initial depth of particle
-    :param fieldset: :mod:`parcels.fieldset.FieldSet` object to track this particle on
-    :param time: Current time of the particle
+    Parameters
+    ----------
+    lon : float
+        Initial longitude of particle
+    lat : float
+        Initial latitude of particle
+    depth : float
+        Initial depth of particle
+    fieldset : parcels.fieldset.FieldSet
+        mod:`parcels.fieldset.FieldSet` object to track this particle on
+    time : float
+        Current time of the particle
 
+
+    Notes
+    -----
     Additional Variables can be added via the :Class Variable: objects
     """
 
@@ -232,16 +250,25 @@ class ScipyInteractionParticle(ScipyParticle):
 class JITParticle(ScipyParticle):
     """Particle class for JIT-based (Just-In-Time) Particle objects.
 
-    :param lon: Initial longitude of particle
-    :param lat: Initial latitude of particle
-    :param fieldset: :mod:`parcels.fieldset.FieldSet` object to track this particle on
-    :param dt: Execution timestep for this particle
-    :param time: Current time of the particle
+    Parameters
+    ----------
+    lon : float
+        Initial longitude of particle
+    lat : float
+        Initial latitude of particle
+    fieldset : parcels.fieldset.FieldSet
+        mod:`parcels.fieldset.FieldSet` object to track this particle on
+    dt :
+        Execution timestep for this particle
+    time :
+        Current time of the particle
 
+
+    Notes
+    -----
     Additional Variables can be added via the :Class Variable: objects
 
     Users should use JITParticles for faster advection computation.
-
     """
 
     def __init__(self, *args, **kwargs):

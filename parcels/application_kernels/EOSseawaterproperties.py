@@ -11,14 +11,13 @@ def PressureFromLatDepth(particle, fieldset, time):
     Returns
     -------
     p : array_like
-           pressure [db]
+        pressure [db]
 
     References
     ----------
-    .. [1] Saunders, Peter M., 1981: Practical Conversion of Pressure to Depth.
+    1. Saunders, Peter M., 1981: Practical Conversion of Pressure to Depth.
        J. Phys. Oceanogr., 11, 573-574.
        doi: 10.1175/1520-0485(1981)011<0573:PCOPTD>2.0.CO;2
-
     """
     # Angle conversions.
     deg2rad = math.pi / 180.0
@@ -29,31 +28,36 @@ def PressureFromLatDepth(particle, fieldset, time):
 
 
 def AdiabticTemperatureGradient(particle, fieldset, time):
-    """
-    Calculates adiabatic temperature gradient as per UNESCO 1983 routines.
+    """Calculates adiabatic temperature gradient as per UNESCO 1983 routines.
+
 
     Parameters
     ----------
-    :param particle.S: salinity [psu (PSS-78)]
-    :type particle.S: array_like
-    :param particle.T: temperature [℃ (ITS-90)]
-    :type particle.T: array_like
-    :param particle.pressure: pressure [db]
-    :type particle.pressure: array_like
+    particle :
+        The particle object with the following attributes:
+            - S : array_like
+                Salinity in psu (PSS-78).
+            - T : array_like
+                Temperature in ℃ (ITS-90).
+            - pressure : array_like
+                Pressure in db.
+    fieldset :
+        The fieldset object
 
     Returns
     -------
-    :return: adiabatic temperature gradient [℃ db :sup:`-1`]
-    :type: array_like
+    array_like
+        Adiabatic temperature gradient in ℃ db⁻¹.
+
 
     References
     ----------
-    .. [1] Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
+    1. Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
        computation of fundamental properties of seawater. UNESCO Tech. Pap. in
        Mar. Sci., No. 44, 53 pp.
        http://unesdoc.unesco.org/images/0005/000598/059832eb.pdf
 
-    .. [2] Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
+    2. Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
        temperature gradient and potential temperature of sea water. Deep-Sea
        Res. Vol20,401-408. doi:10.1016/0011-7471(73)90063-6
 
@@ -80,28 +84,35 @@ def PtempFromTemp(particle, fieldset, time):
 
     Parameters
     ----------
-    :param particle.S: salinity [psu (PSS-78)]
-    :type particle.S: array_like
-    :param particle.T: temperature [℃ (ITS-90)]
-    :type particle.T: array_like
-    :param particle.pressure: pressure [db]
-    :type particle.pressure: array_like
-    :param fieldset.refpressure: reference pressure [db], default = 0
-    :type fieldset.refpressure: array_like
+    particle :
+        The particle object with the following attributes:
+            - S : array_like
+                Salinity in psu (PSS-78).
+            - T : array_like
+                Temperature in ℃ (ITS-90).
+            - pressure : array_like
+                Pressure in db.
+    fieldset :
+        The fieldset object with the following attributes:
+            - refpressure : array_like, optional
+                Reference pressure in db (default is 0).
+    time : float
+        Simulation time (not used in this function but required for consistency with other kernels).
 
     Returns
     -------
-    :return: potential temperature relative to PR [℃ (ITS-90)]
-    :type: array_like
+    array_like
+        Potential temperature relative to reference pressure in ℃ (ITS-90).
+
 
     References
     ----------
-    .. [1] Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
+    1. Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
        computation of fundamental properties of seawater. UNESCO Tech. Pap. in
        Mar. Sci., No. 44, 53 pp.  Eqn.(31) p.39.
        http://unesdoc.unesco.org/images/0005/000598/059832eb.pdf
 
-    .. [2] Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
+    2. Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
        temperature gradient and potential temperature of sea water. Deep-Sea
        Res. Vol20,401-408. doi:10.1016/0011-7471(73)90063-6
 
@@ -173,28 +184,34 @@ def TempFromPtemp(particle, fieldset, time):
 
     Parameters
     ----------
-    :param particle.S: salinity [psu (PSS-78)]
-    :type particle.S: array_like
-    :param particle.T: potential temperature [℃ (ITS-90)]
-    :type particle.T: array_like
-    :param particle.pressure: pressure [db]
-    :type particle.pressure: array_like
-    :param fieldset.refpressure: reference pressure [db], default = 0
-    :type fieldset.refpressure: array_like
+    particle :
+        The particle object with the following attributes:
+            - S : array_like
+                Salinity in psu (PSS-78).
+            - T : array_like
+                Potential temperature in ℃ (ITS-90).
+            - pressure : array_like
+                Pressure in db.
+    fieldset :
+        The fieldset object with the following attributes:
+            - refpressure : array_like, optional
+                Reference pressure in db (default is 0).
+    time : float
+        Simulation time (not used in this function but required for consistency with other kernels).
 
     Returns
     -------
-    :return: temperature [℃ (ITS-90)]
-    :type: array_like
+    array_like
+        Temperature in ℃ (ITS-90).
 
     References
     ----------
-    .. [1] Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
+    1. Fofonoff, P. and Millard, R.C. Jr UNESCO 1983. Algorithms for
        computation of fundamental properties of seawater. UNESCO Tech. Pap. in
        Mar. Sci., No. 44, 53 pp.  Eqn.(31) p.39.
        http://unesdoc.unesco.org/images/0005/000598/059832eb.pdf
 
-    .. [2] Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
+    2. Bryden, H. 1973. New Polynomials for thermal expansion, adiabatic
        temperature gradient and potential temperature of sea water. Deep-Sea
        Res.  Vol20,401-408. doi:10.1016/0011-7471(73)90063-6
 

@@ -36,8 +36,11 @@ class ParticleCollectionAOS(ParticleCollection):
 
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
-        :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
-        field references of the ctypes-link of particles that are allocated
+        Parameters
+        ----------
+        ngrid :
+            number of grids in the fieldset of the overarching ParticleSet - required for initialising the
+            field references of the ctypes-link of particles that are allocated
         """
         super(ParticleCollection, self).__init__()
 
@@ -180,7 +183,10 @@ class ParticleCollectionAOS(ParticleCollection):
         Access a particle in this collection using the fastest access
         method for this collection - by its index.
 
-        :param index: int or np.int32 index of a particle in this collection
+        Parameters
+        ----------
+        index : int
+            Index of the particle to access
         """
         return self.get_single_by_index(index)
 
@@ -189,7 +195,10 @@ class ParticleCollectionAOS(ParticleCollection):
         Access a single property of all particles.
         CAUTION: this function is not(!) in-place and is quite slow
 
-        :param name: name of the property
+        Parameters
+        ----------
+        name : str
+            Name of the property to access
         """
         pdtype = None
         for var in self._ptype.variables:
@@ -909,8 +918,7 @@ class ParticleCollectionAOS(ParticleCollection):
             setattr(self._data[i], var, val)
 
     def toArray(self):
-        """
-        This function converts (or: transforms; reformats; translates) this collection into an array-like structure
+        """This function converts (or: transforms; reformats; translates) this collection into an array-like structure
         (e.g. Python list or numpy nD array) that can be addressed by index. In the common case of 'no ID recovery',
         the global ID and the index match exactly.
 
@@ -924,10 +932,15 @@ class ParticleCollectionAOS(ParticleCollection):
         return self._data.tolist()
 
     def set_variable_write_status(self, var, write_status):
-        """
-        Method to set the write status of a Variable
-        :param var: Name of the variable (string)
-        :param status: Write status of the variable (True, False or 'once')
+        """Method to set the write status of a Variable
+
+        Parameters
+        ----------
+        var :
+            Name of the variable (string)
+        write_status :
+            Write status of the variable (True, False or 'once')
+
         """
         var_changed = False
         for v in self._ptype.variables:
@@ -948,11 +961,15 @@ class ParticleAccessorAOS(BaseParticleAccessor):
     """Wrapper that provides access to particle data in the collection,
     as if interacting with the particle itself.
 
-    :param pcoll: ParticleCollection that the represented particle
-                  belongs to.
-    :param index: The index at which the data for the represented
-                  particle is stored in the corresponding data arrays
-                  of the ParticleCollecion.
+    Parameters
+    ----------
+    pcoll :
+        ParticleCollection that the represented particle
+        belongs to.
+    index :
+        The index at which the data for the represented
+        particle is stored in the corresponding data arrays
+        of the ParticleCollecion.
     """
 
     _index = 0
@@ -967,11 +984,18 @@ class ParticleAccessorAOS(BaseParticleAccessor):
         self._next_dt = None
 
     def __getattr__(self, name):
-        """Get the value of an attribute of the particle.
+        """
+        Get the value of an attribute of the particle.
 
-        :param name: Name of the requested particle attribute.
-        :return: The value of the particle attribute in the underlying
-                 collection data array.
+        Parameters
+        ----------
+        name : str
+            Name of the requested particle attribute.
+
+        Returns
+        -------
+        any
+            The value of the particle attribute in the underlying collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
             result = super().__getattr__(name)
@@ -982,11 +1006,15 @@ class ParticleAccessorAOS(BaseParticleAccessor):
         return result
 
     def __setattr__(self, name, value):
-        """Set the value of an attribute of the particle.
+        """
+        Set the value of an attribute of the particle.
 
-        :param name: Name of the particle attribute.
-        :param value: Value that will be assigned to the particle
-                      attribute in the underlying collection data array.
+        Parameters
+        ----------
+        name : str
+            Name of the particle attribute.
+        value : any
+            Value that will be assigned to the particle attribute in the underlying collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
             super().__setattr__(name, value)
@@ -1022,12 +1050,17 @@ class ParticleCollectionIterableAOS(BaseParticleCollectionIterable):
 class ParticleCollectionIteratorAOS(BaseParticleCollectionIterator):
     """Iterator for looping over the particles in the ParticleCollection.
 
-    :param pcoll: ParticleCollection that stores the particles.
-    :param reverse: Flag to indicate reverse iteration (i.e. starting at
-                    the largest index, instead of the smallest).
-    :param subset: Subset of indices to iterate over, this allows the
-                   creation of an iterator that represents part of the
-                   collection.
+    Parameters
+    ----------
+    pcoll :
+        ParticleCollection that stores the particles.
+    reverse :
+        Flag to indicate reverse iteration (i.e. starting at
+        the largest index, instead of the smallest).
+    subset :
+        Subset of indices to iterate over, this allows the
+        creation of an iterator that represents part of the
+        collection.
     """
 
     def __init__(self, pcoll, reverse=False, subset=None):

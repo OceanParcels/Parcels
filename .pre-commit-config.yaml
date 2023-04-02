@@ -10,7 +10,10 @@ repos:
     rev: '6.0.0'
     hooks:
     -   id: flake8
-        additional_dependencies: ["flake8-docstrings"]
+-   repo: https://github.com/pycqa/pydocstyle
+    rev: 4.0.0  # pick a git hash / tag to point to
+    hooks:
+    -   id: pydocstyle
 -   repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
