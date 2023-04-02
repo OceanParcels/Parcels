@@ -199,14 +199,14 @@ parcels.plotting module
     :undoc-members:
 
 parcels.scripts.plottrajectoriesfile module
------------------------------------
+-------------------------------------------
 
 .. automodule:: parcels.scripts.plottrajectoriesfile
     :members:
     :undoc-members:
 
 parcels.scripts.get_examples module
----------------------------
+-----------------------------------
 
 .. automodule:: parcels.scripts.get_examples
     :members:

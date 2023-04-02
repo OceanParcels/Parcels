@@ -19,20 +19,33 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
                          bins=20, show_plt=True, central_longitude=0):
     """Quick and simple plotting of Parcels trajectories.
 
-    :param filename: Name of Parcels-generated NetCDF file with particle positions
-    :param mode: Type of plot to show. Supported are '2d', '3d', 'hist2d',
-                'movie2d' and 'movie2d_notebook'. The latter two give animations,
-                with 'movie2d_notebook' specifically designed for jupyter notebooks
-    :param tracerfile: Name of NetCDF file to show as background
-    :param tracerfield: Name of variable to show as background
-    :param tracerlon: Name of longitude dimension of variable to show as background
-    :param tracerlat: Name of latitude dimension of variable to show as background
-    :param recordedvar: Name of variable used to color particles in scatter-plot.
-                Only works in 'movie2d' or 'movie2d_notebook' mode.
-    :param movie_forward: Boolean whether to show movie in forward or backward mode (default True)
-    :param bins: Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html
-    :param show_plt: Boolean whether plot should directly be show (for py.test)
-    :param central_longitude: Degrees East at which to center the plot
+    Parameters
+    ----------
+    filename : str
+        Name of Parcels-generated NetCDF file with particle positions
+    mode :
+        Type of plot to show. Supported are '2d', '3d', 'hist2d',
+        'movie2d' and 'movie2d_notebook'. The latter two give animations,
+        with 'movie2d_notebook' specifically designed for jupyter notebooks (Default value = '2d')
+    tracerfile :
+        Name of NetCDF file to show as background (Default value = None)
+    tracerfield :
+        Name of variable to show as background (Default value = 'P')
+    tracerlon :
+        Name of longitude dimension of variable to show as background (Default value = 'x')
+    tracerlat :
+        Name of latitude dimension of variable to show as background (Default value = 'y')
+    recordedvar :
+        Name of variable used to color particles in scatter-plot.
+        Only works in 'movie2d' or 'movie2d_notebook' mode. (Default value = None)
+    movie_forward : bool
+        Whether to show movie in forward or backward mode (default True)
+    bins :
+        Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html (Default value = 20)
+    show_plt : bool
+        Whether plot should directly be shown (for py.test) (Default value = True)
+    central_longitude :
+        Degrees East at which to center the plot (Default value = 0)
     """
     environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
     try:
