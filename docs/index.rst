@@ -8,6 +8,5 @@ Welcome to the documentation of parcels.
    :hidden:
 
    Home <self>
-   Installation <installation>
-   API <api>
+   API reference <reference>
    Contributing <contributing>
