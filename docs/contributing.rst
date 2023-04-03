@@ -46,4 +46,10 @@ Once you have a working environment, you can start making changes to the code! H
    Submitting a "draft pull request" is also a great way to give visibility to your branch during development, allowing for faster feedback.
 
 
+Working with documentation
+--------------------------
+The documentation for this project is processed by Sphinx. To view documentation from your changes, you can run
+``sphinx-autobuild docs docs/_build`` to create a server to automatically rebuild the documentation when you make changes.
+
+
 If you have any questions or issues while contributing to parcels, please feel free to `open a discussion <https://github.com/OceanParcels/parcels/discussions>`__. Thank you for your contributions!

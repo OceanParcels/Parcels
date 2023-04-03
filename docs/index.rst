@@ -10,3 +10,4 @@ Welcome to the documentation of parcels.
    Home <self>
    API reference <reference>
    Contributing <contributing>
+   OceanParcels Website <https://oceanparcels.org/>
