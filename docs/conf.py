@@ -11,6 +11,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import datetime
 import inspect
 import os
 import sys
@@ -53,7 +54,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Parcels'
-copyright = '2022, The OceanParcels Team'
+copyright = f'{datetime.datetime.now().year}, The OceanParcels Team'
 author = 'The OceanParcels Team'
 
 # The version info for the project you're documenting, acts as replacement for
