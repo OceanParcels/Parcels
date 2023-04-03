@@ -33,7 +33,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Setup Miniconda and parcels
+      - name: Setup Conda and parcels
         uses: ./.github/actions/install-parcels
         with:
           environment-file: environment_py3_${{ matrix.os-short }}.yml
