@@ -1739,15 +1739,15 @@ class VectorField:
         return (u, v, w)
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None, applyConversion=True):
-        """Perform C grid interpolation in 3D.
+        """Perform C grid interpolation in 3D.::
 
-        +---+---+---+
-        |   |V1 |   |
-        +---+---+---+
-        |U0 |   |U1 |
-        +---+---+---+
-        |   |V0 |   |
-        +---+---+---+
+            +---+---+---+
+            |   |V1 |   |
+            +---+---+---+
+            |U0 |   |U1 |
+            +---+---+---+
+            |   |V0 |   |
+            +---+---+---+
 
         The interpolation is done in the following by
         interpolating linearly U depending on the longitude coordinate and

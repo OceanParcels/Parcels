@@ -508,15 +508,15 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
             Watch out: NEMO is discretised on a C-grid:
-            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html).::
 
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |         V[k,j+1,i+1]        |                             |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |         V[k,j,i+1]          +                             |
-            +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j+1,i+1]        |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j,i+1]          |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
 
             To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
             which are located on the corners of the cells.
@@ -571,15 +571,15 @@ class FieldSet:
                     tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of MITgcm fields.
         All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
-        gridindexing is set to 'mitgcm' for grids that have the shape
+        gridindexing is set to 'mitgcm' for grids that have the shape::
 
-        +-----------------------------+-----------------------------+-----------------------------+
-        |                             |         V[k,j+1,i]          |                             |
-        +-----------------------------+-----------------------------+-----------------------------+
-        |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
-        +-----------------------------+-----------------------------+-----------------------------+
-        |                             |         V[k,j,i]            +                             |
-        +-----------------------------+-----------------------------+-----------------------------+
+            +-----------------------------+-----------------------------+-----------------------------+
+            |                             |         V[k,j+1,i]          |                             |
+            +-----------------------------+-----------------------------+-----------------------------+
+            |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
+            +-----------------------------+-----------------------------+-----------------------------+
+            |                             |         V[k,j,i]            |                             |
+            +-----------------------------+-----------------------------+-----------------------------+
 
         For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
         Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
@@ -621,15 +621,15 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
             Watch out: NEMO is discretised on a C-grid:
-            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).::
 
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |         V[k,j+1,i+1]        |                             |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |         V[k,j,i+1]          +                             |
-            +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j+1,i+1]        |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j,i+1]          |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
 
             To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
             which are located on the corners of the cells.
@@ -716,15 +716,15 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
             Watch out: POP is discretised on a B-grid:
-            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).::
 
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
-            +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j,i],V[k,j,i]            |                             |U[k,j,i+1],V[k,j,i+1]        |
+                +-----------------------------+-----------------------------+-----------------------------+
 
             In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
             T node is at the cell centre and interpolated constant per cell as a C-grid.
@@ -811,15 +811,15 @@ class FieldSet:
             Dictionary mapping data dimensions (lon,
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
-            dimension names are different for each variable.
+            dimension names are different for each variable.::
 
-            +-------------------------------+-------------------------------+-------------------------------+
-            |U[k,j+1,i],V[k,j+1,i]          |                               |U[k,j+1,i+1],V[k,j+1,i+1]      |
-            +-------------------------------+-------------------------------+-------------------------------+
-            |                               |W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]|                               |
-            +-------------------------------+-------------------------------+-------------------------------+
-            |U[k,j,i],V[k,j,i]              |                               +U[k,j,i+1],V[k,j,i+1]          |
-            +-------------------------------+-------------------------------+-------------------------------+
+                +-------------------------------+-------------------------------+-------------------------------+
+                |U[k,j+1,i],V[k,j+1,i]          |                               |U[k,j+1,i+1],V[k,j+1,i+1]      |
+                +-------------------------------+-------------------------------+-------------------------------+
+                |                               |W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]|                               |
+                +-------------------------------+-------------------------------+-------------------------------+
+                |U[k,j,i],V[k,j,i]              |                               |U[k,j,i+1],V[k,j,i+1]          |
+                +-------------------------------+-------------------------------+-------------------------------+
 
             In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
             T node is at the cell centre and interpolated constant per cell as a C-grid.
@@ -893,15 +893,15 @@ class FieldSet:
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
-            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).::
 
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
-            +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j,i],V[k,j,i]            |                             |U[k,j,i+1],V[k,j,i+1]        |
+                +-----------------------------+-----------------------------+-----------------------------+
 
             In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
             T node is at the cell centre and interpolated constant per cell as a C-grid.
