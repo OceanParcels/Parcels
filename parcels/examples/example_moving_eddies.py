@@ -36,7 +36,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
         units used during velocity interpolation:
 
         1. spherical: Lat and lon in degree, with a
-        correction for zonal velocity U near the poles.
+           correction for zonal velocity U near the poles.
         2. flat  (default): No conversion, lat/lon are assumed to be in m.
     ydim :
          (Default value = 350)

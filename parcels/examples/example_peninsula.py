@@ -36,7 +36,7 @@ def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
         units used during velocity interpolation:
 
         1. spherical: Lat and lon in degree, with a
-        correction for zonal velocity U near the poles.
+           correction for zonal velocity U near the poles.
         2. flat  (default): No conversion, lat/lon are assumed to be in m.
     grid_type :
         Option whether grid is either Arakawa A (default) or C

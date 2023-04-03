@@ -317,7 +317,7 @@ class RectilinearZGrid(RectilinearGrid):
         units used during velocity interpolation:
 
         1. spherical (default): Lat and lon in degree, with a
-        correction for zonal velocity U near the poles.
+           correction for zonal velocity U near the poles.
         2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
@@ -363,7 +363,7 @@ class RectilinearSGrid(RectilinearGrid):
         units used during velocity interpolation:
 
         1. spherical (default): Lat and lon in degree, with a
-        correction for zonal velocity U near the poles.
+           correction for zonal velocity U near the poles.
         2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
@@ -472,7 +472,7 @@ class CurvilinearZGrid(CurvilinearGrid):
         units used during velocity interpolation:
 
         1. spherical (default): Lat and lon in degree, with a
-        correction for zonal velocity U near the poles.
+           correction for zonal velocity U near the poles.
         2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
@@ -517,7 +517,7 @@ class CurvilinearSGrid(CurvilinearGrid):
         units used during velocity interpolation:
 
         1. spherical (default): Lat and lon in degree, with a
-        correction for zonal velocity U near the poles.
+           correction for zonal velocity U near the poles.
         2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
