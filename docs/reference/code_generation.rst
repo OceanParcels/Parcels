@@ -14,4 +14,3 @@ parcels.compilation.codecompiler module
 .. automodule:: parcels.compilation.codecompiler
     :members:
     :show-inheritance: yes
-
