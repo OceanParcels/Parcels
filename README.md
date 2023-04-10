@@ -18,7 +18,7 @@ The manuscript detailing version 2.0 of Parcels is available at [Geoscientific M
 
 ### Further information
 
-See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](http://oceanparcels.org/#installing) and [running](http://oceanparcels.org/#tutorials) the Parcels code, as well as extended [documentation](http://oceanparcels.org/gh-pages/html/) of the methods and classes.
+See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](http://oceanparcels.org/#installing) and [running](http://oceanparcels.org/#tutorials) the Parcels code, as well as extended [documentation](https://parcels.readthedocs.io) of the methods and classes.
 
 
 ### Launch Parcels Tutorials on mybinder.org
