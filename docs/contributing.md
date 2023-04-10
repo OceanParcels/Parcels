@@ -9,7 +9,7 @@ This document outlines some guidelines for contributing to the parcels codebase.
 
 To get started contributing to parcels, you'll need to do a few things:
 
-1. Fork our repository on GitHub.
+1. [Fork our repository](https://github.com/OceanParcels/parcels/fork) on GitHub.
 
 2. Clone your fork of the repository to your local machine, and `cd` into your project folder.
 
