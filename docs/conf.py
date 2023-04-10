@@ -11,6 +11,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import datetime
 import inspect
 import os
 import sys
@@ -34,6 +35,7 @@ extensions = [
     'sphinx.ext.todo',
     "sphinx.ext.linkcode",
     "sphinx.ext.napoleon",
+    "myst_parser",
     "numpydoc",
 ]
 
@@ -53,7 +55,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Parcels'
-copyright = '2022, The OceanParcels Team'
+copyright = f'{datetime.datetime.now().year}, The OceanParcels Team'
 author = 'The OceanParcels Team'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -136,7 +138,7 @@ html_theme = 'pydata_sphinx_theme'
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-# html_favicon = None
+html_favicon = "favicon.ico"
 
 # numpydoc support
 # ----------------
@@ -244,7 +246,7 @@ def linkcode_resolve(domain, info):
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
 # directly to the root of the documentation.
-# html_extra_path = []
+html_extra_path = ["robots.txt"]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

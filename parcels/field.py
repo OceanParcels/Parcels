@@ -53,9 +53,9 @@ class Field:
         2D, 3D or 4D numpy array of field data.
 
         1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
-        whichever is relevant for the dataset, use the flag transpose=True
+           whichever is relevant for the dataset, use the flag transpose=True
         2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
-        use the flag transpose=False
+           use the flag transpose=False
         3. If data has any other shape, you first need to reorder it
     lon : np.ndarray or list
         Longitude coordinates (numpy vector or array) of the field (only if grid is None)
@@ -70,7 +70,7 @@ class Field:
         units used during velocity interpolation: (only if grid is None)
 
         1. spherical: Lat and lon in degree, with a
-        correction for zonal velocity U near the poles.
+           correction for zonal velocity U near the poles.
         2. flat (default): No conversion, lat/lon are assumed to be in m.
     timestamps : np.ndarray
         A numpy array containing the timestamps for each of the files in filenames, for loading
@@ -297,8 +297,8 @@ class Field:
         Parameters
         ----------
         filenames : list of str or dict
-            list of filenames to read for the field. filenames can be a list [files] or
-            a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
+            list of filenames to read for the field. filenames can be a list ``[files]`` or
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data)
             In the latter case, time values are in filenames[data]
         variable : tuple of str or str
             Tuple mapping field name to variable name in the NetCDF file.
@@ -313,7 +313,7 @@ class Field:
             units used during velocity interpolation:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         timestamps :
             A numpy array of datetime64 objects containing the timestamps for each of the files in filenames.
@@ -547,7 +547,7 @@ class Field:
             units used during velocity interpolation:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         allow_time_extrapolation : bool
             boolean whether to allow for extrapolation in time
@@ -1739,15 +1739,15 @@ class VectorField:
         return (u, v, w)
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None, applyConversion=True):
-        """Perform C grid interpolation in 3D.
+        """Perform C grid interpolation in 3D. ::
 
-        +---+---+---+
-        |   |V1 |   |
-        +---+---+---+
-        |U0 |   |U1 |
-        +---+---+---+
-        |   |V0 |   |
-        +---+---+---+
+            +---+---+---+
+            |   |V1 |   |
+            +---+---+---+
+            |U0 |   |U1 |
+            +---+---+---+
+            |   |V0 |   |
+            +---+---+---+
 
         The interpolation is done in the following by
         interpolating linearly U depending on the longitude coordinate and

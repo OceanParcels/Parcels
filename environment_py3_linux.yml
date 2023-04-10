@@ -46,3 +46,4 @@ dependencies:
   - sphinx<6
   - pydata-sphinx-theme
   - sphinx-autobuild
+  - myst-parser

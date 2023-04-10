@@ -72,9 +72,9 @@ class FieldSet:
             the built-in Advection kernels assume that U and V are in m/s
 
             1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
-            whichever is relevant for the dataset, use the flag transpose=True
+               whichever is relevant for the dataset, use the flag transpose=True
             2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
-            use the flag transpose=False (default value)
+               use the flag transpose=False (default value)
             3. If data has any other shape, you first need to reorder it
         dimensions : dict
             Dictionary mapping field dimensions (lon,
@@ -89,7 +89,7 @@ class FieldSet:
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
@@ -200,7 +200,7 @@ class FieldSet:
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         """
         self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh))
@@ -334,10 +334,10 @@ class FieldSet:
             Dictionary mapping variables to file(s). The
             filepath may contain wildcards to indicate multiple files
             or be a list of file.
-            filenames can be a list [files], a dictionary {var:[files]},
-            a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries {var:{dim:[files]}}.
-            time values are in filenames[data]
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``.
+            time values are in ``filenames[data]``
         variables : dict
             Dictionary mapping variables to variable names in the netCDF file(s).
             Note that the built-in Advection kernels assume that U and V are in m/s
@@ -360,7 +360,7 @@ class FieldSet:
             units used during velocity interpolation, see also `this tuturial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         timestamps :
             list of lists or array of arrays containing the timestamps for
@@ -388,7 +388,7 @@ class FieldSet:
         chunksize :
             size of the chunks in dask loading. Default is None (no chunking). Can be None or False (no chunking),
             'auto' (chunking is done in the background, but results in one grid per field individually), or a dict in the format
-            '{parcels_varname: {netcdf_dimname : (parcels_dimname, chunksize_as_int)}, ...}', where 'parcels_dimname' is one of ('time', 'depth', 'lat', 'lon')
+            ``{parcels_varname: {netcdf_dimname : (parcels_dimname, chunksize_as_int)}, ...}``, where ``parcels_dimname`` is one of ('time', 'depth', 'lat', 'lon')
         netcdf_engine :
             engine to use for netcdf reading in xarray. Default is 'netcdf',
             but in cases where this doesn't work, setting netcdf_engine='scipy' could help
@@ -495,10 +495,10 @@ class FieldSet:
             Dictionary mapping variables to file(s). The
             filepath may contain wildcards to indicate multiple files,
             or be a list of file.
-            filenames can be a list [files], a dictionary {var:[files]},
-            a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries {var:{dim:[files]}}
-            time values are in filenames[data]
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``
+            time values are in ``filenames[data]``
         variables : dict
             Dictionary mapping variables to variable names in the netCDF file(s).
             Note that the built-in Advection kernels assume that U and V are in m/s
@@ -508,15 +508,15 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
             Watch out: NEMO is discretised on a C-grid:
-            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html). ::
 
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |         V[k,j+1,i+1]        |                             |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |         V[k,j,i+1]          +                             |
-            +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j+1,i+1]        |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j,i+1]          |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
 
             To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
             which are located on the corners of the cells.
@@ -536,7 +536,7 @@ class FieldSet:
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
@@ -571,15 +571,15 @@ class FieldSet:
                     tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of MITgcm fields.
         All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
-        gridindexing is set to 'mitgcm' for grids that have the shape
+        gridindexing is set to 'mitgcm' for grids that have the shape::
 
-        +-----------------------------+-----------------------------+-----------------------------+
-        |                             |         V[k,j+1,i]          |                             |
-        +-----------------------------+-----------------------------+-----------------------------+
-        |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
-        +-----------------------------+-----------------------------+-----------------------------+
-        |                             |         V[k,j,i]            +                             |
-        +-----------------------------+-----------------------------+-----------------------------+
+            +-----------------------------+-----------------------------+-----------------------------+
+            |                             |         V[k,j+1,i]          |                             |
+            +-----------------------------+-----------------------------+-----------------------------+
+            |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
+            +-----------------------------+-----------------------------+-----------------------------+
+            |                             |         V[k,j,i]            |                             |
+            +-----------------------------+-----------------------------+-----------------------------+
 
         For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
         Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
@@ -608,10 +608,10 @@ class FieldSet:
             Dictionary mapping variables to file(s). The
             filepath may contain wildcards to indicate multiple files,
             or be a list of file.
-            filenames can be a list [files], a dictionary {var:[files]},
-            a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries {var:{dim:[files]}}
-            time values are in filenames[data]
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``
+            time values are in ``filenames[data]``
         variables : dict
             Dictionary mapping variables to variable
             names in the netCDF file(s).
@@ -621,15 +621,15 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
             Watch out: NEMO is discretised on a C-grid:
-            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ). ::
 
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |         V[k,j+1,i+1]        |                             |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |         V[k,j,i+1]          +                             |
-            +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j+1,i+1]        |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j,i+1]          |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
 
             To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
             which are located on the corners of the cells.
@@ -648,7 +648,7 @@ class FieldSet:
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
@@ -703,10 +703,10 @@ class FieldSet:
             Dictionary mapping variables to file(s). The
             filepath may contain wildcards to indicate multiple files,
             or be a list of file.
-            filenames can be a list [files], a dictionary {var:[files]},
-            a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries {var:{dim:[files]}}
-            time values are in filenames[data]
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``
+            time values are in ``filenames[data]``
         variables : dict
             Dictionary mapping variables to variable names in the netCDF file(s).
             Note that the built-in Advection kernels assume that U and V are in m/s
@@ -716,15 +716,15 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
             Watch out: POP is discretised on a B-grid:
-            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
 
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
-            +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j,i],V[k,j,i]            |                             |U[k,j,i+1],V[k,j,i+1]        |
+                +-----------------------------+-----------------------------+-----------------------------+
 
             In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
             T node is at the cell centre and interpolated constant per cell as a C-grid.
@@ -748,7 +748,7 @@ class FieldSet:
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
@@ -800,10 +800,10 @@ class FieldSet:
             Dictionary mapping variables to file(s). The
             filepath may contain wildcards to indicate multiple files,
             or be a list of file.
-            filenames can be a list [files], a dictionary {var:[files]},
-            a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries {var:{dim:[files]}}
-            time values are in filenames[data]
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``
+            time values are in ``filenames[data]``
         variables : dict
             Dictionary mapping variables to variable names in the netCDF file(s).
             Note that the built-in Advection kernels assume that U and V are in m/s
@@ -811,15 +811,15 @@ class FieldSet:
             Dictionary mapping data dimensions (lon,
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
-            dimension names are different for each variable.
+            dimension names are different for each variable. ::
 
-            +-------------------------------+-------------------------------+-------------------------------+
-            |U[k,j+1,i],V[k,j+1,i]          |                               |U[k,j+1,i+1],V[k,j+1,i+1]      |
-            +-------------------------------+-------------------------------+-------------------------------+
-            |                               |W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]|                               |
-            +-------------------------------+-------------------------------+-------------------------------+
-            |U[k,j,i],V[k,j,i]              |                               +U[k,j,i+1],V[k,j,i+1]          |
-            +-------------------------------+-------------------------------+-------------------------------+
+                +-------------------------------+-------------------------------+-------------------------------+
+                |U[k,j+1,i],V[k,j+1,i]          |                               |U[k,j+1,i+1],V[k,j+1,i+1]      |
+                +-------------------------------+-------------------------------+-------------------------------+
+                |                               |W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]|                               |
+                +-------------------------------+-------------------------------+-------------------------------+
+                |U[k,j,i],V[k,j,i]              |                               |U[k,j,i+1],V[k,j,i+1]          |
+                +-------------------------------+-------------------------------+-------------------------------+
 
             In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
             T node is at the cell centre and interpolated constant per cell as a C-grid.
@@ -840,10 +840,10 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+            units used during velocity interpolation, see also the `Unit converters tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
@@ -881,10 +881,10 @@ class FieldSet:
             Dictionary mapping variables to file(s). The
             filepath may contain wildcards to indicate multiple files,
             or be a list of file.
-            filenames can be a list [files], a dictionary {var:[files]},
-            a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries {var:{dim:[files]}}
-            time values are in filenames[data]
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``
+            time values are in ``filenames[data]``
         variables : dict
             Dictionary mapping variables to variable
             names in the netCDF file(s).
@@ -893,15 +893,15 @@ class FieldSet:
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
-            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
 
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
-            +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j,i],V[k,j,i]            |                             |U[k,j,i+1],V[k,j,i+1]        |
+                +-----------------------------+-----------------------------+-----------------------------+
 
             In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
             T node is at the cell centre and interpolated constant per cell as a C-grid.
@@ -923,7 +923,7 @@ class FieldSet:
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
@@ -1048,7 +1048,7 @@ class FieldSet:
             units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
-            correction for zonal velocity U near the poles.
+               correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
