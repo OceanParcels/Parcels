@@ -21,4 +21,3 @@ parcels.kernel.kernelsoa module
 .. automodule:: parcels.kernel.kernelsoa
     :members:
     :undoc-members:
-
