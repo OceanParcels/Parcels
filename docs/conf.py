@@ -34,6 +34,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     "sphinx.ext.linkcode",
+    "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "myst_parser",
     "numpydoc",
