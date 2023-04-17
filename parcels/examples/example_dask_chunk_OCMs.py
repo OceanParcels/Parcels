@@ -393,7 +393,7 @@ def test_ofam_3D(mode, chunk_mode):
 @pytest.mark.parametrize('using_add_field', [False, True])
 def test_mitgcm(mode, chunk_mode, using_add_field):
     if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '256KiB'})
+        dask.config.set({'array.chunk-size': '512KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_mitgcm(chunk_mode, using_add_field)
