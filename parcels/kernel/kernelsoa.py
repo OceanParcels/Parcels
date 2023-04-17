@@ -28,11 +28,18 @@ __all__ = ['KernelSOA']
 class KernelSOA(BaseKernel):
     """Kernel object that encapsulates auto-generated code.
 
-    :arg fieldset: FieldSet object providing the field information
-    :arg ptype: PType object for the kernel particle
-    :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+    Parameters
+    ----------
+    fieldset :
+        FieldSet object providing the field information
+    ptype :
+        PType object for the kernel particle
+    delete_cfiles : bool
+        Whether to delete the C-files after compilation in JIT mode (default is True)
 
-    Note: A Kernel is either created from a compiled <function ...> object
+    Notes
+    -----
+    A Kernel is either created from a compiled <function ...> object
     or the necessary information (funcname, funccode, funcvars) is provided.
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
@@ -116,7 +123,7 @@ class KernelSOA(BaseKernel):
                 self.src_file = src_file_or_files
 
     def execute_jit(self, pset, endtime, dt):
-        """Invokes JIT engine to perform the core update loop"""
+        """Invokes JIT engine to perform the core update loop."""
         self.load_fieldset_jit(pset)
 
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
@@ -126,7 +133,7 @@ class KernelSOA(BaseKernel):
                               c_double(endtime), c_double(dt), *fargs)
 
     def execute_python(self, pset, endtime, dt):
-        """Performs the core update loop via Python"""
+        """Performs the core update loop via Python."""
         # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
         sign_dt = np.sign(dt)
 
@@ -163,8 +170,7 @@ class KernelSOA(BaseKernel):
         return kernel.merge(self, KernelSOA)
 
     def remove_deleted(self, pset, output_file, endtime):
-        """
-        Utility to remove all particles that signalled deletion
+        """Utility to remove all particles that signalled deletion.
 
         This deletion function is targetted to index-addressable, random-access array-collections.
         """
@@ -176,7 +182,7 @@ class KernelSOA(BaseKernel):
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
-        """Execute this Kernel over a ParticleSet for several timesteps"""
+        """Execute this Kernel over a ParticleSet for several timesteps."""
         pset.collection.state[:] = StateCode.Evaluate
 
         if abs(dt) < 1e-6 and not execute_once:

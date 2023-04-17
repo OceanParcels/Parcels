@@ -14,9 +14,7 @@ ptype = {'scipy': ScipyInteractionParticle, 'jit': JITParticle}
 
 
 def DummyMoveNeighbor(particle, fieldset, time, neighbors, mutator):
-    """A particle boosts the movement of its nearest neighbor, by adding
-    0.1 to its lat position.
-    """
+    """A particle boosts the movement of its nearest neighbor, by adding 0.1 to its lat position."""
     if len(neighbors) == 0:
         return StateCode.Success
 
@@ -37,7 +35,7 @@ def DoNothing(particle, fieldset, time):
 
 
 def fieldset(xdim=20, ydim=20, mesh='spherical'):
-    """ Standard unit mesh fieldset """
+    """Standard unit mesh fieldset."""
     lon = np.linspace(0., 1., xdim, dtype=np.float32)
     lat = np.linspace(0., 1., ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)

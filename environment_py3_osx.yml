@@ -39,6 +39,11 @@ dependencies:
   # Linting
   - flake8>=2.1.0
   - pre_commit
+  - pydocstyle
 
   # Docs
+  - numpydoc
   - sphinx<6
+  - pydata-sphinx-theme
+  - sphinx-autobuild
+  - myst-parser

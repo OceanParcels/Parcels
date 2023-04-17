@@ -21,7 +21,7 @@ advection = {'RK4': AdvectionRK4, 'AA': AdvectionAnalytical}
 
 
 def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
-    """Function that shows how to read in curvilinear grids, in this case from NEMO"""
+    """Function that shows how to read in curvilinear grids, in this case from NEMO."""
     data_path = path.join(path.dirname(__file__), 'NemoCurvilinear_data/')
 
     filenames = {'U': {'lon': data_path + 'mesh_mask.nc4',

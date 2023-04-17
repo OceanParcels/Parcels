@@ -13,16 +13,22 @@ indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 
 
 class Variable:
-    """Descriptor class that delegates data access to particle data
+    """Descriptor class that delegates data access to particle data.
 
-    :param name: Variable name as used within kernels
-    :param dtype: Data type (numpy.dtype) of the variable
-    :param initial: Initial value of the variable. Note that this can also be a Field object,
-             which will then be sampled at the location of the particle
-    :param to_write: Boolean or 'once'. Controls whether Variable is written to NetCDF file.
-             If to_write = 'once', the variable will be written as a time-independent 1D array
-    :type to_write: (bool, 'once', optional)
+    Parameters
+    ----------
+    name : str
+        Variable name as used within kernels
+    dtype :
+        Data type (numpy.dtype) of the variable
+    initial :
+        Initial value of the variable. Note that this can also be a Field object,
+        which will then be sampled at the location of the particle
+    to_write : bool, 'once', optional
+        Boolean or 'once'. Controls whether Variable is written to NetCDF file.
+        If to_write = 'once', the variable will be written as a time-independent 1D array
     """
+
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
         self.name = name
         self.dtype = dtype
@@ -47,14 +53,17 @@ class Variable:
         return f"PVar<{self.name}|{self.dtype}>"
 
     def is64bit(self):
-        """Check whether variable is 64-bit"""
+        """Check whether variable is 64-bit."""
         return True if self.dtype in indicators_64bit else False
 
 
 class ParticleType:
-    """Class encapsulating the type information for custom particles
+    """Class encapsulating the type information for custom particles.
 
-    :param user_vars: Optional list of (name, dtype) tuples for custom variables
+    Parameters
+    ----------
+    user_vars :
+        Optional list of (name, dtype) tuples for custom variables
     """
 
     def __init__(self, pclass):
@@ -96,7 +105,7 @@ class ParticleType:
 
     @property
     def dtype(self):
-        """Numpy.dtype object that defines the C struct"""
+        """Numpy.dtype object that defines the C struct."""
         type_list = [(v.name, v.dtype) for v in self.variables]
         for v in self.variables:
             if v.dtype not in self.supported_dtypes:
@@ -108,13 +117,12 @@ class ParticleType:
 
     @property
     def size(self):
-        """Size of the underlying particle struct in bytes"""
+        """Size of the underlying particle struct in bytes."""
         return sum([8 if v.is64bit() else 4 for v in self.variables])
 
     @property
     def supported_dtypes(self):
-        """List of all supported numpy dtypes. All others are not supported"""
-
+        """List of all supported numpy dtypes. All others are not supported."""
         # Developer note: other dtypes (mostly 2-byte ones) are not supported now
         # because implementing and aligning them in cgen.GenerableStruct is a
         # major headache. Perhaps in a later stage
@@ -122,7 +130,8 @@ class ParticleType:
 
 
 class _Particle:
-    """Private base class for all particle types"""
+    """Private base class for all particle types."""
+
     lastID = 0  # class-level variable keeping track of last Particle ID used
 
     def __init__(self):
@@ -169,15 +178,24 @@ class _Particle:
 
 
 class ScipyParticle(_Particle):
-    """Class encapsulating the basic attributes of a particle,
-    to be executed in SciPy mode
+    """Class encapsulating the basic attributes of a particle, to be executed in SciPy mode.
 
-    :param lon: Initial longitude of particle
-    :param lat: Initial latitude of particle
-    :param depth: Initial depth of particle
-    :param fieldset: :mod:`parcels.fieldset.FieldSet` object to track this particle on
-    :param time: Current time of the particle
+    Parameters
+    ----------
+    lon : float
+        Initial longitude of particle
+    lat : float
+        Initial latitude of particle
+    depth : float
+        Initial depth of particle
+    fieldset : parcels.fieldset.FieldSet
+        mod:`parcels.fieldset.FieldSet` object to track this particle on
+    time : float
+        Current time of the particle
 
+
+    Notes
+    -----
     Additional Variables can be added via the :Class Variable: objects
     """
 
@@ -230,18 +248,27 @@ class ScipyInteractionParticle(ScipyParticle):
 
 
 class JITParticle(ScipyParticle):
-    """Particle class for JIT-based (Just-In-Time) Particle objects
+    """Particle class for JIT-based (Just-In-Time) Particle objects.
 
-    :param lon: Initial longitude of particle
-    :param lat: Initial latitude of particle
-    :param fieldset: :mod:`parcels.fieldset.FieldSet` object to track this particle on
-    :param dt: Execution timestep for this particle
-    :param time: Current time of the particle
+    Parameters
+    ----------
+    lon : float
+        Initial longitude of particle
+    lat : float
+        Initial latitude of particle
+    fieldset : parcels.fieldset.FieldSet
+        mod:`parcels.fieldset.FieldSet` object to track this particle on
+    dt :
+        Execution timestep for this particle
+    time :
+        Current time of the particle
 
+
+    Notes
+    -----
     Additional Variables can be added via the :Class Variable: objects
 
     Users should use JITParticles for faster advection computation.
-
     """
 
     def __init__(self, *args, **kwargs):

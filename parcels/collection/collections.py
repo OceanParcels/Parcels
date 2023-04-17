@@ -20,7 +20,8 @@ class Collection(ABC):
     @abstractmethod
     def __init__(self):
         """
-        Collection - Constructor
+        Collection - Constructor.
+
         Initializes a collection by pre-allocating memory (where needed), initialising indexing structures
         (where needed), initialising iterators and preparing the C-JIT-glue.
         """
@@ -28,9 +29,7 @@ class Collection(ABC):
 
     @abstractmethod
     def __del__(self):
-        """
-        Collection - Destructor
-        """
+        """Collection - Destructor."""
         pass
 
     @property
@@ -749,9 +748,7 @@ class Collection(ABC):
         pass
 
     def __len__(self):
-        """
-        This function returns the length, in terms of 'number of elements, of a collection.
-        """
+        """This function returns the length, in terms of 'number of elements, of a collection."""
         return self._ncount
 
     @abstractmethod
@@ -790,8 +787,8 @@ class ParticleCollection(Collection):
     _data = None  # formerly: particle_data
 
     def __init__(self):
-        """
-        ParticleCollection - Constructor
+        """Constructor for ParticleCollection.
+
         Initializes a particle collection by pre-allocating memory (where needed), initialising indexing structures
         (where needed), initialising iterators (if maintaining a persistent iterator) and preparing the C-JIT-glue.
 
@@ -808,9 +805,7 @@ class ParticleCollection(Collection):
         super().__init__()
 
     def __del__(self):
-        """
-        ParticleCollection - Destructor
-        """
+        """Destructor for ParticleCollection."""
         pass
 
     @property
@@ -834,9 +829,7 @@ class ParticleCollection(Collection):
 
     @property
     def pclass(self):
-        """
-        'pclass' stores the actual class type of the particles allocated and managed in this collection
-        """
+        """Stores the actual class type of the particles allocated and managed in this collection."""
         return self._pclass
 
     @property
@@ -877,19 +870,24 @@ class ParticleCollection(Collection):
 
     @abstractmethod
     def cstruct(self):
-        """
-        'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
-        """
+        """Returns the ctypes mapping of the particle data. This depends on the specific structure in question."""
         pass
 
     @abstractmethod
     def __getattr__(self, name):
         """
         Access a single property of all particles.
-        NOTE: This is a fallback implementation, and it is NOT efficient.
-        Specific datastructures may implement a more efficient variant.
 
-        :param name: name of the property
+        Parameters
+        ----------
+        name : str
+            Name of the property to access
+
+
+        Notes
+        -----
+        This is a fallback implementation, and it is NOT efficient.
+        Specific datastructures may implement a more efficient variant.
         """
         for v in self.ptype.variables:
             if v.name == name:
@@ -917,10 +915,15 @@ class ParticleCollection(Collection):
     def set_variable_write_status(self, var, write_status):
         """
         Method to set the write status of a Variable
-        :param var: Name of the variable (string)
-        :param status: Write status of the variable (True, False or 'once')
 
-         This function depends on the specific collection in question and thus needs to be specified in specific
+        This function depends on the specific collection in question and thus needs to be specified in specific
          derivatives classes.
+
+        Parameters
+        ----------
+        var : str
+            Name of the variable
+        write_status : bool, str
+            Write status of the variable (True, False or 'once')
         """
         pass

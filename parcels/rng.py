@@ -133,13 +133,13 @@ def _assign_parcels_random_ccodeconverter():
 
 
 def seed(seed):
-    """Sets the seed for parcels internal RNG"""
+    """Sets the seed for parcels internal RNG."""
     _assign_parcels_random_ccodeconverter()
     _parcels_random_ccodeconverter.lib.pcls_seed(c_int(seed))
 
 
 def random():
-    """Returns a random float between 0. and 1."""
+    """Returns a random float between 0.0 and 1.0."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_random
     rnd.argtype = []
@@ -148,7 +148,7 @@ def random():
 
 
 def uniform(low, high):
-    """Returns a random float between `low` and `high`"""
+    """Returns a random float between `low` and `high`."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_uniform
     rnd.argtype = [c_float, c_float]
@@ -157,7 +157,7 @@ def uniform(low, high):
 
 
 def randint(low, high):
-    """Returns a random int between `low` and `high`"""
+    """Returns a random int between `low` and `high`."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_randint
     rnd.argtype = [c_int, c_int]
@@ -166,7 +166,7 @@ def randint(low, high):
 
 
 def normalvariate(loc, scale):
-    """Returns a random float on normal distribution with mean `loc` and width `scale`"""
+    """Returns a random float on normal distribution with mean `loc` and width `scale`."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_normalvariate
     rnd.argtype = [c_float, c_float]
@@ -175,7 +175,7 @@ def normalvariate(loc, scale):
 
 
 def expovariate(lamb):
-    """Returns a randome float of an exponential distribution with parameter lamb"""
+    """Returns a randome float of an exponential distribution with parameter lamb."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_expovariate
     rnd.argtype = c_float
@@ -185,7 +185,8 @@ def expovariate(lamb):
 
 def vonmisesvariate(mu, kappa):
     """Returns a randome float of a Von Mises distribution
-    with mean angle mu and concentration parameter kappa"""
+    with mean angle mu and concentration parameter kappa.
+    """
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_vonmisesvariate
     rnd.argtype = [c_float, c_float]

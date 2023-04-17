@@ -4,9 +4,7 @@ __all__ = ['GridSet']
 
 
 class GridSet:
-    """GridSet class that holds the Grids on which the Fields are defined
-
-    """
+    """GridSet class that holds the Grids on which the Fields are defined."""
 
     def __init__(self):
         self.grids = []
@@ -47,10 +45,10 @@ class GridSet:
 
     def dimrange(self, dim):
         """Returns maximum value of a dimension (lon, lat, depth or time)
-           on 'left' side and minimum value on 'right' side for all grids
-           in a gridset. Useful for finding e.g. longitude range that
-           overlaps on all grids in a gridset"""
-
+        on 'left' side and minimum value on 'right' side for all grids
+        in a gridset. Useful for finding e.g. longitude range that
+        overlaps on all grids in a gridset.
+        """
         maxleft, minright = (-np.inf, np.inf)
         for g in self.grids:
             if getattr(g, dim).size == 1:
