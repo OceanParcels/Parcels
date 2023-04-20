@@ -743,10 +743,27 @@ class ParticleSetAOS(BaseParticleSet):
 
         Parameters
         ----------
+        pyfunc : function or list of functions
+            Python function to convert into kernel. If a list of functions is provided,
+            the functions will be converted to kernels and combined into a single kernel.
         delete_cfiles : bool
             Whether to delete the C-files after compilation in JIT mode (default is True).
         """
-        return KernelAOS(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include, delete_cfiles=delete_cfiles)
+        if isinstance(pyfunc, list):
+            return KernelAOS.from_list(
+                self.fieldset,
+                self.collection.ptype,
+                pyfunc,
+                c_include=c_include,
+                delete_cfiles=delete_cfiles,
+            )
+        return KernelAOS(
+            self.fieldset,
+            self.collection.ptype,
+            pyfunc=pyfunc,
+            c_include=c_include,
+            delete_cfiles=delete_cfiles,
+        )
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`

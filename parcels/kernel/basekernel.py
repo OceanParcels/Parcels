@@ -1,5 +1,7 @@
+import functools
 import inspect
 import re
+import types
 from ast import FunctionDef
 from hashlib import md5
 from os import path, remove
@@ -289,6 +291,36 @@ class BaseKernel:
         if not isinstance(kernel, type(self)):
             kernel = type(self)(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self, type(self))
+
+    @classmethod
+    def from_list(cls, fieldset, ptype, pyfunc_list, *args, **kwargs):
+        """Create a combined kernel from a list of functions.
+
+        Takes a list of functions, converts them to kernels, and joins them
+        together.
+
+        Parameters
+        ----------
+        fieldset : parcels.Fieldset
+            FieldSet object providing the field information (possibly None)
+        ptype :
+            PType object for the kernel particle
+        pyfunc_list : list of functions
+            List of functions to be combined into a single kernel.
+        *args :
+            Additional arguments passed to first kernel during construction.
+        **kwargs :
+            Additional keyword arguments passed to first kernel during construction.
+        """
+        if not isinstance(pyfunc_list, list):
+            raise TypeError(f"Argument function_lst should be a list of functions. Got {type(pyfunc_list)}")
+        if len(pyfunc_list) == 0:
+            raise ValueError("Argument function_lst should have at least one function.")
+        if not all([isinstance(f, types.FunctionType) for f in pyfunc_list]):
+            raise ValueError("Argument function_lst should be a list of functions.")
+
+        pyfunc_list[0] = cls(fieldset, ptype, pyfunc_list[0], *args, **kwargs)
+        return functools.reduce(lambda x, y: x + y, pyfunc_list)
 
     @staticmethod
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):

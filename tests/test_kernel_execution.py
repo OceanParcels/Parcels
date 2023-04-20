@@ -305,7 +305,7 @@ def test_combined_kernel_from_list_error_checking(fieldset, pset_mode):
     with pytest.raises(ValueError):
         pset.Kernel([])
 
-    # Test that list has to be all functions, or mix of functions and valid kernel objects
+    # Test that list has to be all functions
     with pytest.raises(ValueError):
         pset.Kernel([AdvectionRK4, "something else"])
 
