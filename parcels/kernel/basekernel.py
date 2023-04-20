@@ -281,14 +281,14 @@ class BaseKernel:
                       delete_cfiles=delete_cfiles)
 
     def __add__(self, kernel):
-        if not isinstance(kernel, BaseKernel):
-            kernel = BaseKernel(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel, BaseKernel)
+        if not isinstance(kernel, type(self)):
+            kernel = type(self)(self.fieldset, self.ptype, pyfunc=kernel)
+        return self.merge(kernel, type(self))
 
     def __radd__(self, kernel):
-        if not isinstance(kernel, BaseKernel):
-            kernel = BaseKernel(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self, BaseKernel)
+        if not isinstance(kernel, type(self)):
+            kernel = type(self)(self.fieldset, self.ptype, pyfunc=kernel)
+        return kernel.merge(self, type(self))
 
     @staticmethod
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
