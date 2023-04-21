@@ -319,6 +319,7 @@ class BaseKernel:
         if not all([isinstance(f, types.FunctionType) for f in pyfunc_list]):
             raise ValueError("Argument function_lst should be a list of functions.")
 
+        pyfunc_list = pyfunc_list.copy()
         pyfunc_list[0] = cls(fieldset, ptype, pyfunc_list[0], *args, **kwargs)
         return functools.reduce(lambda x, y: x + y, pyfunc_list)
 
