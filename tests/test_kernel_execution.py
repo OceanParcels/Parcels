@@ -240,8 +240,7 @@ def test_multi_kernel_duplicate_varnames(fieldset, pset_mode, mode):
         particle.lon += add_lon
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveWest),
-                 endtime=1., dt=1.)
+    pset.execute([MoveEast, MoveWest], endtime=1., dt=1.)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)
 
 
@@ -261,6 +260,58 @@ def test_multi_kernel_reuse_varnames(fieldset, pset_mode, mode):
     pset.execute(pset.Kernel(MoveEast1) + pset.Kernel(MoveEast2),
                  endtime=1., dt=1.)
     assert np.allclose(pset.lon, [0.9], rtol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+def test_combined_kernel_from_list(fieldset, pset_mode):
+    """
+    Test pset.Kernel(List[function])
+
+    Tests that a Kernel can be created from a list functions, or a list of
+    mixed functions and kernel objects.
+    """
+    def MoveEast(particle, fieldset, time):
+        particle.lon += 0.1
+
+    def MoveNorth(particle, fieldset, time):
+        particle.lat += 0.1
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
+    kernels_single = pset.Kernel([AdvectionRK4])
+    kernels_functions = pset.Kernel([AdvectionRK4, MoveEast, MoveNorth])
+
+    # Check if the kernels were combined correctly
+    assert kernels_single.funcname == "AdvectionRK4"
+    assert kernels_functions.funcname == "AdvectionRK4MoveEastMoveNorth"
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+def test_combined_kernel_from_list_error_checking(fieldset, pset_mode):
+    """
+    Test pset.Kernel(List[function])
+
+    Tests that various error cases raise appropriate messages.
+    """
+    def MoveEast(particle, fieldset, time):
+        particle.lon += 0.1
+
+    def MoveNorth(particle, fieldset, time):
+        particle.lat += 0.1
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
+
+    # Test that list has to be non-empty
+    with pytest.raises(ValueError):
+        pset.Kernel([])
+
+    # Test that list has to be all functions
+    with pytest.raises(ValueError):
+        pset.Kernel([AdvectionRK4, "something else"])
+
+    # Can't mix kernel objects and functions in list
+    with pytest.raises(ValueError):
+        kernels_mixed = pset.Kernel([pset.Kernel(AdvectionRK4), MoveEast, MoveNorth])
+        assert kernels_mixed.funcname == "AdvectionRK4MoveEastMoveNorth"
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)

@@ -701,6 +701,9 @@ class ParticleSetSOA(BaseParticleSet):
 
         Parameters
         ----------
+        pyfunc : function or list of functions
+            Python function to convert into kernel. If a list of functions is provided,
+            the functions will be converted to kernels and combined into a single kernel.
         delete_cfiles : bool
             Whether to delete the C-files after compilation in JIT mode (default is True)
         pyfunc :
@@ -708,8 +711,21 @@ class ParticleSetSOA(BaseParticleSet):
         c_include :
              (Default value = "")
         """
-        return Kernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
-                      delete_cfiles=delete_cfiles)
+        if isinstance(pyfunc, list):
+            return Kernel.from_list(
+                self.fieldset,
+                self.collection.ptype,
+                pyfunc,
+                c_include=c_include,
+                delete_cfiles=delete_cfiles,
+            )
+        return Kernel(
+            self.fieldset,
+            self.collection.ptype,
+            pyfunc=pyfunc,
+            c_include=c_include,
+            delete_cfiles=delete_cfiles,
+        )
 
     def InteractionKernel(self, pyfunc_inter):
         if pyfunc_inter is None:

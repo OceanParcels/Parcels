@@ -153,22 +153,6 @@ class KernelSOA(BaseKernel):
         for p in pset:
             self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
-    def __del__(self):
-        # Clean-up the in-memory dynamic linked libraries.
-        # This is not really necessary, as these programs are not that large, but with the new random
-        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
-        super().__del__()
-
-    def __add__(self, kernel):
-        if not isinstance(kernel, KernelSOA):
-            kernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel, KernelSOA)
-
-    def __radd__(self, kernel):
-        if not isinstance(kernel, KernelSOA):
-            kernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self, KernelSOA)
-
     def remove_deleted(self, pset, output_file, endtime):
         """Utility to remove all particles that signalled deletion.
 
