@@ -240,8 +240,7 @@ def test_multi_kernel_duplicate_varnames(fieldset, pset_mode, mode):
         particle.lon += add_lon
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveWest),
-                 endtime=1., dt=1.)
+    pset.execute([MoveEast, MoveWest], endtime=1., dt=1.)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)
 
 
