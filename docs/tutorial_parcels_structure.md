@@ -11,7 +11,7 @@ Code that uses Parcels is generally build up from four different components:
 We discuss each component in more detail below.
 
 ![png](_static/output_2_0.png)
-    
+
 
 
 
@@ -19,9 +19,9 @@ We discuss each component in more detail below.
 
 Parcels provides a framework to simulate the movement of particles **within an existing flow field environment**. To start a parcels simulation we must define this environment with the [**`FieldSet`** class](https://parcels.readthedocs.io/en/latest/reference/fields.html#module-parcels.fieldset). The minimal requirements for this Fieldset are that it must contain the `'U'` and `'V'` fields: the 2D hydrodynamic data that will move the particles in a horizontal direction. Additionally, it can contain e.g. a temperature or vertical flow field.
 
-A fieldset can be loaded with [**`FieldSet.from_netcdf`**](https://parcels.readthedocs.io/en/latest/reference/fields.html#parcels.fieldset.FieldSet.from_netcdf), if the model output with the fields is written in NetCDF files. This function requires `filenames`, `variables` and `dimensions`. 
+A fieldset can be loaded with [**`FieldSet.from_netcdf`**](https://parcels.readthedocs.io/en/latest/reference/fields.html#parcels.fieldset.FieldSet.from_netcdf), if the model output with the fields is written in NetCDF files. This function requires `filenames`, `variables` and `dimensions`.
 
-In this example, we only load the `'U'` and `'V'` fields, which represent the zonal and meridional flow velocity. First, `fname` points to the location of the model output. 
+In this example, we only load the `'U'` and `'V'` fields, which represent the zonal and meridional flow velocity. First, `fname` points to the location of the model output.
 
 
 ```python
@@ -90,7 +90,7 @@ pset = ParticleSet(fieldset=fieldset,    # the fields that the particleset uses
                    lon=29,               # release longitude
                    lat=-33)              # release latitude
 ```
- 
+
 ### For more advanced tutorials on how to setup your `ParticleSet`:
 * [**Releasing particles** at different times](https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_delaystart.ipynb)
 * [The difference between **JITParticles and ScipyParticles**](https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_jit_vs_scipy.ipynb)
@@ -114,7 +114,7 @@ def NorthVel(particle, fieldset, time):
     if time > 10*86400 and time < 10.2*86400:
         vvel = -1e-4
         particle.lat += vvel * particle.dt
-        
+
 # Create a custom kernel which keeps track of the particle age (minutes)
 def Age(particle, fieldset, time):
     particle.age += particle.dt / 3600
@@ -139,7 +139,7 @@ Some key limitations exist to the Kernels that everyone who wants to write their
         * `print(particle.lon)`
         * `print(f"particle id: {particle.id}")`
         * `print(f"lon: {particle.lon}, lat: {particle.lat}")`
-    
+
       Although note that these `print` statements are not shown in Jupyter notebooks in JIT mode, see [this long-standing Issue](https://github.com/OceanParcels/parcels/issues/369).
     * Local variables can be used in Kernels, and these variables will be accessible in all concatenated Kernels. Note that these local variables are not shared between particles, and also not between time steps.
     * Note that one has to be careful with writing kernels for vector fields on Curvilinear grids. While Parcels automatically rotates the U and V field when necessary, this is not the case for for example wind data. In that case, a custom rotation function will have to be written.
@@ -168,6 +168,6 @@ pset.execute(kernels,                 # the kernel (which defines how particles 
              output_file=output_file)
 ```
 
-After running your simulation, you probably want to analyse the output. Although there is some simple plotting functionality built into Parcels, we **recommend you write your own code** to analyse your specific output and you can probably separate the analysis from the simulation. 
+After running your simulation, you probably want to analyse the output. Although there is some simple plotting functionality built into Parcels, we **recommend you write your own code** to analyse your specific output and you can probably separate the analysis from the simulation.
 ### For more tutorials on the parcels output:
-* [How the output is structured and how to start your own analysis](https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_output.ipynb) 
+* [How the output is structured and how to start your own analysis](https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_output.ipynb)
