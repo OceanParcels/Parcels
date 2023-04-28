@@ -13,6 +13,7 @@ Here, you find the API reference for some recent releases and the latest version
    :hidden:
 
    Home <self>
+   Getting started <tutorial_parcels_structure>
    API reference <reference>
    Contributing <contributing>
    OceanParcels Website <https://oceanparcels.org/>
