@@ -716,7 +716,7 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
             Watch out: POP is discretised on a B-grid:
-            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
+            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
 
                 +-----------------------------+-----------------------------+-----------------------------+
                 |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
@@ -893,7 +893,7 @@ class FieldSet:
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
-            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
+            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
 
                 +-----------------------------+-----------------------------+-----------------------------+
                 |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |

@@ -59,7 +59,10 @@ project = 'Parcels'
 copyright = f'{datetime.datetime.now().year}, The OceanParcels Team'
 author = 'The OceanParcels Team'
 
-linkcheck_ignore = [r'http://localhost:\d+/']
+linkcheck_ignore = [
+    r'http://localhost:\d+/',
+    "http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf",  # Site doesn't allow crawling
+]
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
