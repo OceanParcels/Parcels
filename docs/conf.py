@@ -59,6 +59,8 @@ project = 'Parcels'
 copyright = f'{datetime.datetime.now().year}, The OceanParcels Team'
 author = 'The OceanParcels Team'
 
+linkcheck_ignore = [r'http://localhost:\d+/']
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
