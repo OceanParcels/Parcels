@@ -268,5 +268,5 @@ def convert_xarray_time_units(ds, time):
         raise RuntimeError('Xarray could not convert the calendar. If you''re using from_netcdf, '
                            'try using the timestamps keyword in the construction of your Field. '
                            'See also the tutorial at https://nbviewer.jupyter.org/github/OceanParcels/'
-                           'parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb')
+                           'parcels/blob/master/docs/examples/tutorial_timestamps.ipynb')
     ds[time] = da2[time]

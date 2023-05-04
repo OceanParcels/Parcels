@@ -113,9 +113,9 @@ class Field:
     --------
     For usage examples see the following tutorials:
 
-    * `Nested Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/docs/examples/tutorial_NestedFields.ipynb>`__
+    * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
 
-    * `Summed Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/docs/examples/tutorial_SummedFields.ipynb>`__
+    * `Summed Fields <../examples/tutorial_SummedFields.ipynb>`__
     """
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
@@ -348,7 +348,7 @@ class Field:
         --------
         For usage examples see the following tutorial:
 
-        * `Timestamps <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/docs/examples/tutorial_timestamps.ipynb>`__
+        * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
 
         """
         # Ensure the timestamps array is compatible with the user-provided datafiles.
@@ -638,7 +638,7 @@ class Field:
         --------
         For usage examples see the following tutorial:
 
-        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/docs/examples/tutorial_unitconverters.ipynb>`__
+        * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__
         """
         if self._scaling_factor:
             raise NotImplementedError(f'Scaling factor for field {self.name} already defined.')
@@ -651,7 +651,7 @@ class Field:
 
         Notes
         -----
-        See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/docs/examples/tutorial_timevaryingdepthdimensions.ipynb>`__
+        See `this tutorial <../examples/tutorial_timevaryingdepthdimensions.ipynb>`__
         for a detailed explanation on how to set up time-evolving depth dimensions.
 
         """
@@ -1351,7 +1351,7 @@ class Field:
         by copying a small portion of the field on one side of the domain to the other.
         Before adding a periodic halo to the Field, it has to be added to the Grid on which the Field depends
 
-        See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/docs/examples/tutorial_periodic_boundaries.ipynb>`__
+        See `this tutorial <../examples/tutorial_periodic_boundaries.ipynb>`__
         for a detailed explanation on how to set up periodic boundaries
 
         Parameters
@@ -1972,7 +1972,7 @@ class SummedField(list):
 
     Examples
     --------
-    See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/docs/examples/tutorial_SummedFields.ipynb>`__
+    See `here <../examples/tutorial_SummedFields.ipynb>`__
     for a detailed tutorial
 
     """
@@ -2053,7 +2053,7 @@ class NestedField(list):
 
     Examples
     --------
-    See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/docs/examples/tutorial_NestedFields.ipynb>`__
+    See `here <../examples/tutorial_NestedFields.ipynb>`__
     for a detailed tutorial
 
     """
