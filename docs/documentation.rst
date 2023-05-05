@@ -3,7 +3,6 @@ Documentation and Tutorials
 
 Parcels has several documentation and tutorial Jupyter notebooks which go through various aspects of parcels. Static versions of these notebooks are available below, but can also be downloaded (along with supplementaty data) by running the ``parcels_get_examples`` script which is installed with parcels (e.g. ``parcels_get_examples parcels_examples``).
 
-`link <examples/tutorial_parcels_structure.ipynb>`_
 
 Overview
 --------
