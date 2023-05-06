@@ -1,0 +1,5 @@
+contact_links:
+  - name: Question/Help/Support
+    url: https://github.com/OceanParcels/parcels/discussions
+    about: >
+      Have a question about parcels? Or troubleshooting a specific usecase? Then submit a discussion instead, and we'll be happy to help.
