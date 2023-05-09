@@ -14,9 +14,11 @@
 import datetime
 import inspect
 import os
+import re
+import shutil
 import sys
+import tempfile
 import warnings
-import zipfile
 from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -198,22 +200,25 @@ downloads_folder = Path("_downloads")
 downloads_folder.mkdir(exist_ok=True)
 
 
-def zip_matching_files(src_folder, glob_pattern, zip_path):
-    # Create a ZipFile object
-    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        # Iterate over the files matching the glob pattern
-        for file in Path(src_folder).glob(glob_pattern):
-            # Check if the matched path is a file
-            if file.is_file():
-                # Write the file to the zip archive
-                zipf.write(file, file.relative_to(src_folder))
+def make_filename_safe(filename: str, safe_char: str = '_') -> str:
+    # Replace any characters that are not allowed in a filename with the safe character
+    safe_filename = re.sub(r'[\\/:*?"<>|]', safe_char, filename)
+    return safe_filename
 
 
-zip_matching_files(
-    src_folder="examples",
-    glob_pattern="*",
-    zip_path=downloads_folder / "parcels_tutorials.zip",
-)
+with tempfile.TemporaryDirectory() as temp_dir:
+    temp_dir = Path(temp_dir)
+
+    # Copy examples folder to temp directory (with a folder name matching parcels version)
+    examples_folder = temp_dir / make_filename_safe(f"parcels_tutorials ({version})")
+    shutil.copytree("examples", examples_folder)
+
+    # Zip contents of temp directory and save to _downloads folder
+    shutil.make_archive(
+        "_downloads/parcels_tutorials",
+        "zip",
+        temp_dir,
+    )
 
 
 # based on pandas doc/source/conf.py
