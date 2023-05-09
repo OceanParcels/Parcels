@@ -16,6 +16,8 @@ import inspect
 import os
 import sys
 import warnings
+import zipfile
+from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -189,6 +191,29 @@ html_context = {
     "github_version": "master",
     "doc_path": "docs",
 }
+
+
+# Copy code examples to download directory
+downloads_folder = Path("_downloads")
+downloads_folder.mkdir(exist_ok=True)
+
+
+def zip_matching_files(src_folder, glob_pattern, zip_path):
+    # Create a ZipFile object
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        # Iterate over the files matching the glob pattern
+        for file in Path(src_folder).glob(glob_pattern):
+            # Check if the matched path is a file
+            if file.is_file():
+                # Write the file to the zip archive
+                zipf.write(file, file.relative_to(src_folder))
+
+
+zip_matching_files(
+    src_folder="examples",
+    glob_pattern="*",
+    zip_path=downloads_folder / "parcels_tutorials.zip",
+)
 
 
 # based on pandas doc/source/conf.py

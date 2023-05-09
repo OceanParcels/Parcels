@@ -1,7 +1,7 @@
 Documentation and Tutorials
 ===========================
 
-Parcels has several documentation and tutorial Jupyter notebooks which go through various aspects of parcels. Static versions of these notebooks are available below, but can also be downloaded (along with supplementaty data) by running the ``parcels_get_examples`` script which is installed with parcels (e.g. ``parcels_get_examples parcels_examples``).
+Parcels has several documentation and tutorial Jupyter notebooks which go through various aspects of parcels. Static versions of these notebooks are available below in the site, with the interactive notebooks being available here :download:`parcels_tutorials.zip </_downloads/parcels_tutorials.zip>`.
 
 
 .. toctree::
