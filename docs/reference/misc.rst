@@ -43,9 +43,9 @@ parcels.scripts.plottrajectoriesfile module
     :members:
     :undoc-members:
 
-parcels.scripts.get_examples module
+parcels.utils module
 -----------------------------------
 
-.. automodule:: parcels.scripts.get_examples
+.. automodule:: parcels.utils
     :members:
     :undoc-members:
