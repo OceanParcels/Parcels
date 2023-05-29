@@ -1,0 +1,10 @@
+name: py3_parcels
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - cartopy
+  - ffmpeg
+  - openblas
+  - parcels=2.4.0
