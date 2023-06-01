@@ -1,19 +1,26 @@
 import gc
 from datetime import timedelta as delta
-from os import path
 
 import numpy as np
 import pytest
 import xarray as xr
 
-from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, ScipyParticle
+from parcels import (
+    AdvectionRK4,
+    FieldSet,
+    JITParticle,
+    ParticleSet,
+    ScipyParticle,
+    download_example_dataset,
+)
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def set_ofam_fieldset(deferred_load=True, use_xarray=False):
-    filenames = {'U': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_U.nc'),
-                 'V': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_V.nc')}
+    data_folder = download_example_dataset("OFAM_example_data")
+    filenames = {'U': f"{data_folder}/OFAM_simple_U.nc",
+                 'V': f"{data_folder}/OFAM_simple_V.nc"}
     variables = {'U': 'u', 'V': 'v'}
     dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
                   'time': 'Time'}

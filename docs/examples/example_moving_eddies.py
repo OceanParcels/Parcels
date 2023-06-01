@@ -2,7 +2,6 @@ import gc
 import math
 from argparse import ArgumentParser
 from datetime import timedelta as delta
-from os import path
 
 import numpy as np
 import pytest
@@ -15,6 +14,7 @@ from parcels import (
     JITParticle,
     ParticleSet,
     ScipyParticle,
+    download_example_dataset,
 )
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -211,7 +211,9 @@ def test_moving_eddies_file(mode, mesh, tmpdir):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_periodic_and_computeTimeChunk_eddies(mode):
-    filename = path.join(path.dirname(__file__), 'MovingEddies_data', 'moving_eddies')
+    data_folder = download_example_dataset("MovingEddies_data")
+    filename = str(data_folder / "moving_eddies")
+
     fieldset = FieldSet.from_parcels(filename)
     fieldset.add_constant('halo_west', fieldset.U.grid.lon[0])
     fieldset.add_constant('halo_east', fieldset.U.grid.lon[-1])
@@ -257,7 +259,8 @@ Example of particle advection around an idealised peninsula""")
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args(args)
-    filename = path.join(path.dirname(__file__), 'MovingEddies_data', 'moving_eddies')
+    data_folder = download_example_dataset("MovingEddies_data")
+    filename = str(data_folder / "moving_eddies")
 
     # Generate fieldset files according to given dimensions
     if args.fieldset is not None:

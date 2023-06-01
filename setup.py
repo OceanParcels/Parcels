@@ -17,8 +17,7 @@ setup(name='parcels',
       setup_requires=['setuptools_scm', 'setuptools_scm_git_archive'],
       python_requires='>=3.8',
       packages=find_packages(),
-      package_data={'parcels': ['include/*',
-                                'examples/*']},
+      package_data={'parcels': ['include/*']},
       entry_points={'console_scripts': [
           'parcels_convert_npydir_to_netcdf = parcels.scripts.convert_npydir_to_netcdf:main']}
       )

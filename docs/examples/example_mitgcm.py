@@ -1,5 +1,4 @@
 from datetime import timedelta as delta
-from os import path
 
 import numpy as np
 import xarray as xr
@@ -11,6 +10,7 @@ from parcels import (
     ParticleFile,
     ParticleSet,
     ScipyParticle,
+    download_example_dataset,
 )
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
@@ -18,10 +18,10 @@ ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 def run_mitgcm_zonally_reentrant(mode):
     """Function that shows how to load MITgcm data in a zonally periodic domain."""
-    data_path = path.join(path.dirname(__file__), "MITgcm_example_data/")
+    data_folder = download_example_dataset("MITgcm_example_data")
     filenames = {
-        "U": data_path + "mitgcm_UV_surface_zonally_reentrant.nc",
-        "V": data_path + "mitgcm_UV_surface_zonally_reentrant.nc",
+        "U": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc",
+        "V": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc",
     }
     variables = {"U": "UVEL", "V": "VVEL"}
     dimensions = {

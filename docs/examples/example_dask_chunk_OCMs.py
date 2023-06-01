@@ -1,7 +1,6 @@
 import math
 from datetime import timedelta as delta
 from glob import glob
-from os import path
 
 import dask
 import numpy as np
@@ -16,6 +15,7 @@ from parcels import (
     ParticleSet,
     ScipyParticle,
     Variable,
+    download_example_dataset,
 )
 from parcels.tools.statuscodes import DaskChunkingError
 
@@ -23,11 +23,11 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def fieldset_from_nemo_3D(chunk_mode):
-    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
-    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
-    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
-    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
-    mesh_mask = data_path + 'coordinates.nc'
+    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
+    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
+    wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
+    mesh_mask = f'{data_folder}/coordinates.nc'
 
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
@@ -60,8 +60,8 @@ def fieldset_from_nemo_3D(chunk_mode):
 
 
 def fieldset_from_globcurrent(chunk_mode):
-    filenames = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
-                          '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+    data_folder = download_example_dataset("GlobCurrent_example_data")
+    filenames = str(data_folder / '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
     chs = False
@@ -79,7 +79,8 @@ def fieldset_from_globcurrent(chunk_mode):
 
 
 def fieldset_from_pop_1arcs(chunk_mode):
-    filenames = path.join(path.join(path.dirname(__file__), 'POPSouthernOcean_data'), 't.x1_SAMOC_flux.1690*.nc')
+    data_folder = download_example_dataset('POPSouthernOcean_data')
+    filenames = str(data_folder / 't.x1_SAMOC_flux.1690*.nc')
     variables = {'U': 'UVEL', 'V': 'VVEL', 'W': 'WVEL'}
     timestamps = np.expand_dims(np.array([np.datetime64('2000-%.2d-01' % m) for m in range(1, 7)]), axis=1)
     dimensions = {'lon': 'ULON', 'lat': 'ULAT', 'depth': 'w_dep'}
@@ -96,7 +97,8 @@ def fieldset_from_pop_1arcs(chunk_mode):
 
 
 def fieldset_from_swash(chunk_mode):
-    filenames = path.join(path.join(path.dirname(__file__), 'SWASH_data'), 'field_*.nc')
+    data_folder = download_example_dataset('SWASH_data')
+    filenames = str(data_folder / 'field_*.nc')
     variables = {'U': 'cross-shore velocity',
                  'V': 'along-shore velocity',
                  'W': 'vertical velocity',
@@ -132,8 +134,9 @@ def fieldset_from_swash(chunk_mode):
 
 
 def fieldset_from_ofam(chunk_mode):
-    filenames = {'U': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_U.nc'),
-                 'V': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_V.nc')}
+    data_folder = download_example_dataset("OFAM_example_data")
+    filenames = {'U': f"{data_folder}/OFAM_simple_U.nc",
+                 'V': f"{data_folder}/OFAM_simple_V.nc"}
     variables = {'U': 'u', 'V': 'v'}
     dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
                   'time': 'Time'}
@@ -147,9 +150,9 @@ def fieldset_from_ofam(chunk_mode):
 
 
 def fieldset_from_mitgcm(chunk_mode, using_add_field=True):
-    data_path = path.join(path.dirname(__file__), "MITgcm_example_data/")
-    filenames = {"U": data_path + "mitgcm_UV_surface_zonally_reentrant.nc",
-                 "V": data_path + "mitgcm_UV_surface_zonally_reentrant.nc"}
+    data_folder = download_example_dataset("MITgcm_example_data")
+    filenames = {"U": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc",
+                 "V": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc"}
     variables = {"U": "UVEL", "V": "VVEL"}
     dimensions = {"U": {"lon": "XG", "lat": "YG", "time": "time"},
                   "V": {"lon": "XG", "lat": "YG", "time": "time"}}
@@ -419,10 +422,10 @@ def test_mitgcm(mode, chunk_mode, using_add_field):
 
 @pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_dimensions_chunks(mode):
-    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
-    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
-    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
-    mesh_mask = data_path + 'coordinates.nc'
+    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
+    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
+    mesh_mask = f'{data_folder}/coordinates.nc'
 
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'data': vfiles}}
@@ -443,10 +446,10 @@ def test_diff_entry_dimensions_chunks(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_3d_2dfield_sampling(mode):
-    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
-    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
-    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
-    mesh_mask = data_path + 'coordinates.nc'
+    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
+    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
+    mesh_mask = f'{data_folder}/coordinates.nc'
 
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'data': vfiles},
@@ -480,11 +483,11 @@ def test_3d_2dfield_sampling(mode):
 
 @pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_chunksize_error_nemo_simple(mode):
-    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
-    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
-    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
-    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
-    mesh_mask = data_path + 'coordinates.nc'
+    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
+    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
+    wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
+    mesh_mask = f'{data_folder}/coordinates.nc'
 
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
@@ -509,11 +512,11 @@ def test_diff_entry_chunksize_error_nemo_simple(mode):
 def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     # ==== this test is expected to fall-back to a pre-defined minimal chunk as ==== #
     # ==== the requested chunks don't match, or throw a value error.            ==== #
-    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
-    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
-    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
-    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
-    mesh_mask = data_path + 'coordinates.nc'
+    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
+    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
+    wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
+    mesh_mask = f'{data_folder}/coordinates.nc'
 
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
@@ -563,11 +566,11 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
 def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
     # ==== this test is expected to fall-back to a pre-defined minimal chunk as the ==== #
     # ==== requested chunks don't match, or throw a value error                     ==== #
-    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
-    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
-    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
-    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
-    mesh_mask = data_path + 'coordinates.nc'
+    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
+    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
+    wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
+    mesh_mask = f'{data_folder}/coordinates.nc'
 
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles}}
@@ -586,11 +589,11 @@ def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
 
 @pytest.mark.parametrize('mode', ['jit'])
 def test_erroneous_fieldset_init(mode):
-    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
-    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
-    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
-    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
-    mesh_mask = data_path + 'coordinates.nc'
+    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
+    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
+    wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
+    mesh_mask = f'{data_folder}/coordinates.nc'
 
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
@@ -614,8 +617,8 @@ def test_erroneous_fieldset_init(mode):
 
 @pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_chunksize_correction_globcurrent(mode):
-    filenames = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
-                          '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+    data_folder = download_example_dataset("GlobCurrent_example_data")
+    filenames = str(data_folder / '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
     chs = {'U': {'lat': ('lat', 16), 'lon': ('lon', 16)},

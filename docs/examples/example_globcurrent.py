@@ -1,6 +1,5 @@
 from datetime import timedelta as delta
 from glob import glob
-from os import path
 
 import numpy as np
 import pytest
@@ -16,6 +15,7 @@ from parcels import (
     ScipyParticle,
     TimeExtrapolationError,
     Variable,
+    download_example_dataset,
 )
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -23,8 +23,8 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 def set_globcurrent_fieldset(filename=None, indices=None, deferred_load=True, use_xarray=False, time_periodic=False, timestamps=None):
     if filename is None:
-        filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
-                             '2002*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+        data_folder = download_example_dataset("GlobCurrent_example_data")
+        filename = str(data_folder / '2002*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     if timestamps is None:
         dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
@@ -58,8 +58,8 @@ def test_globcurrent_fieldset(use_xarray):
 @pytest.mark.parametrize('dt, lonstart, latstart', [(3600., 25, -35), (-3600., 20, -39)])
 @pytest.mark.parametrize('use_xarray', [True, False])
 def test_globcurrent_fieldset_advancetime(mode, dt, lonstart, latstart, use_xarray):
-    basepath = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
-                         '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+    data_folder = download_example_dataset("GlobCurrent_example_data")
+    basepath = str(data_folder / '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     files = sorted(glob(str(basepath)))
 
     fieldsetsub = set_globcurrent_fieldset(files[0:10], use_xarray=use_xarray)
@@ -204,7 +204,8 @@ def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
 def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime):
     fieldset = set_globcurrent_fieldset()
 
-    fnamesFeb = sorted(glob(path.join(path.dirname(__file__), 'GlobCurrent_example_data', '200202*.nc')))
+    data_folder = download_example_dataset("GlobCurrent_example_data")
+    fnamesFeb = sorted(glob(f"{data_folder}/200202*.nc"))
     fieldset.add_field(Field.from_netcdf(fnamesFeb, ('P', 'eastward_eulerian_current_velocity'),
                                          {'lat': 'lat', 'lon': 'lon', 'time': 'time'}))
 

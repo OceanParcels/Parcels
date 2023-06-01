@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 from datetime import timedelta as delta
 from glob import glob
-from os import path
 
 import numpy as np
 import pytest
@@ -14,6 +13,7 @@ from parcels import (
     ParticleFile,
     ParticleSet,
     ScipyParticle,
+    download_example_dataset,
 )
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -22,14 +22,14 @@ advection = {'RK4': AdvectionRK4, 'AA': AdvectionAnalytical}
 
 def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
     """Function that shows how to read in curvilinear grids, in this case from NEMO."""
-    data_path = path.join(path.dirname(__file__), 'NemoCurvilinear_data/')
+    data_folder = download_example_dataset('NemoCurvilinear_data')
 
-    filenames = {'U': {'lon': data_path + 'mesh_mask.nc4',
-                       'lat': data_path + 'mesh_mask.nc4',
-                       'data': data_path + 'U_purely_zonal-ORCA025_grid_U.nc4'},
-                 'V': {'lon': data_path + 'mesh_mask.nc4',
-                       'lat': data_path + 'mesh_mask.nc4',
-                       'data': data_path + 'V_purely_zonal-ORCA025_grid_V.nc4'}}
+    filenames = {'U': {'lon': f'{data_folder}/mesh_mask.nc4',
+                       'lat': f'{data_folder}/mesh_mask.nc4',
+                       'data': f'{data_folder}/U_purely_zonal-ORCA025_grid_U.nc4'},
+                 'V': {'lon': f'{data_folder}/mesh_mask.nc4',
+                       'lat': f'{data_folder}/mesh_mask.nc4',
+                       'data': f'{data_folder}/V_purely_zonal-ORCA025_grid_V.nc4'}}
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     chunksize = {'lat': ('y', 256), 'lon': ('x', 512)}
@@ -93,11 +93,11 @@ def test_nemo_curvilinear_AA(tmpdir):
 
 
 def test_nemo_3D_samegrid():
-    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
-    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
-    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
-    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
-    mesh_mask = data_path + 'coordinates.nc'
+    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
+    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
+    wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
+    mesh_mask = f'{data_folder}/coordinates.nc'
 
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
