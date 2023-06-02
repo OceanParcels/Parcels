@@ -343,6 +343,13 @@ html_extra_path = ["robots.txt"]
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'parcelsdoc'
 
+nbsphinx_thumbnails = {
+    'examples/tutorial_parcels_structure': '_images/parcels_user_diagram.png',
+    'examples/tutorial_timestamps': '_images/calendar-icon.jpg',
+    'examples/tutorial_jit_vs_scipy': '_images/clock-icon.png',
+    'examples/documentation_homepage_animation': '_images/homepage.gif',
+    'examples/tutorial_Agulhasparticles': '_images/globcurrent_fullyseeded.gif'
+}
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
