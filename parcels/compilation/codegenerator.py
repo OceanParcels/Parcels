@@ -624,7 +624,7 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
                     else:
                         node.ccode = rhs
             except:
-                raise RuntimeError("Error in converting Kernel to C. See https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/docs/examples/tutorial_parcels_structure.ipynb#3.-Kernel-execution for hints and tips")
+                raise RuntimeError("Error in converting Kernel to C. See https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernel-execution for hints and tips")
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names such as 'particle' or 'fieldset' and inserts our placeholder objects."""
