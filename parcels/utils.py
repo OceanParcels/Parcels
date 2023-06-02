@@ -4,9 +4,8 @@ from pathlib import Path
 from typing import List
 from urllib.request import urlretrieve
 
+import platformdirs
 from tqdm import tqdm
-
-from parcels.external.appdirs import user_cache_dir
 
 __all__ = ["download_example_dataset", "get_data_home", "list_example_datasets"]
 
@@ -98,7 +97,7 @@ def get_data_home(data_home=None):
     .. _seaborn.utils.get_data_home: https://github.com/mwaskom/seaborn/blob/824c102525e6a29cde9bca1ce0096d50588fda6b/seaborn/utils.py#L522-L537
     """
     if data_home is None:
-        data_home = os.environ.get("PARCELS_EXAMPLE_DATA", user_cache_dir("parcels"))
+        data_home = os.environ.get("PARCELS_EXAMPLE_DATA", platformdirs.user_cache_dir("parcels"))
     data_home = os.path.expanduser(data_home)
     if not os.path.exists(data_home):
         os.makedirs(data_home)

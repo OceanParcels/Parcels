@@ -11,6 +11,7 @@ dependencies:
   - matplotlib-base>=2.0.2
   - netcdf4>=1.1.9
   - numpy>=1.9.1
+  - platformdirs
   - psutil
   - py>=1.4.27
   - pymbolic
