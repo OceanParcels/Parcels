@@ -4,16 +4,10 @@ from pathlib import Path
 
 import pytest
 
-# TODO: Broaden scope to all `.py` scripts in `example_folder`?
 example_folder = (Path(__file__).parent / "../docs/examples").resolve()
-example_fnames = [
-    "example_decaying_moving_eddy.py",
-    "example_moving_eddies.py",
-    # "example_nemo_curvilinear.py", #! Imports cartopy, which is not installed in CI
-    "example_peninsula.py",
-    "example_radial_rotation.py",
-    "example_stommel.py",
-]
+example_fnames = [path.name for path in example_folder.glob("*.py")]
+
+example_fnames.remove("example_nemo_curvilinear.py")  # ! Imports cartopy, which is not installed in CI
 
 
 @pytest.mark.parametrize("example_fname", example_fnames)
