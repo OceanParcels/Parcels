@@ -86,7 +86,7 @@ class FieldSet:
             Whether to transpose data on read-in (Default value = False)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -105,13 +105,13 @@ class FieldSet:
         --------
         For usage examples see the following tutorials:
 
-        * `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`__
+        * `Analytical advection <../examples/tutorial_analyticaladvection.ipynb>`__
 
-        * `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`__
+        * `Diffusion <../examples/tutorial_diffusion.ipynb>`__
 
-        * `Interpolation <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_interpolation.ipynb>`__
+        * `Interpolation <../examples/tutorial_interpolation.ipynb>`__
 
-        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__
+        * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__
         """
         fields = {}
         for name, datafld in data.items():
@@ -157,9 +157,9 @@ class FieldSet:
         --------
         For usage examples see the following tutorials:
 
-        * `Nested Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`__
+        * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
 
-        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
+        * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
         if self.completed:
@@ -197,7 +197,7 @@ class FieldSet:
             Value of the constant field (stored as 32-bit float)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -357,7 +357,7 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None) (Default value = None)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tuturial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also `this tuturial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -400,13 +400,13 @@ class FieldSet:
         --------
         For usage examples see the following tutorials:
 
-        * `Basic Parcels setup <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb>`__
+        * `Basic Parcels setup <../examples/parcels_tutorial.ipynb>`__
 
-        * `Argo floats <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Argofloats.ipynb>`__
+        * `Argo floats <../examples/tutorial_Argofloats.ipynb>`__
 
-        * `Timestamps <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb>`__
+        * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
 
-        * `Time-evolving depth dimensions <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timevaryingdepthdimensions.ipynb>`__
+        * `Time-evolving depth dimensions <../examples/tutorial_timevaryingdepthdimensions.ipynb>`__
 
         """
         # Ensure that times are not provided both in netcdf file and in 'timestamps'.
@@ -482,11 +482,11 @@ class FieldSet:
                   tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
-        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`__
-        for a detailed tutorial on the setup for 2D NEMO fields and `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_3D.ipynb>`__
+        See `here <../examples/tutorial_nemo_curvilinear.ipynb>`__
+        for a detailed tutorial on the setup for 2D NEMO fields and `here <../examples/tutorial_nemo_3D.ipynb>`__
         for the tutorial on the setup for 3D NEMO fields.
 
-        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`__
+        See `here <../examples/documentation_indexing.ipynb>`__
         for a more detailed explanation of the different methods that can be used for c-grid datasets.
 
         Parameters
@@ -533,7 +533,7 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -599,7 +599,7 @@ class FieldSet:
                             tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
-        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`__
+        See `here <../examples/documentation_indexing.ipynb>`__
         for a more detailed explanation of the different methods that can be used for c-grid datasets.
 
         Parameters
@@ -645,7 +645,7 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -670,10 +670,10 @@ class FieldSet:
         """
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
-                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
+                             "See also ../examples/documentation_indexing.ipynb")
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
             raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U, V and W. "
-                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
+                             "See also ../examples/documentation_indexing.ipynb")
         if 'interp_method' in kwargs.keys():
             raise TypeError("On a C-grid, the interpolation method for velocities should not be overridden")
 
@@ -716,7 +716,7 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
             Watch out: POP is discretised on a B-grid:
-            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
+            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
 
                 +-----------------------------+-----------------------------+-----------------------------+
                 |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
@@ -745,7 +745,7 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -840,7 +840,7 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also the `Unit converters tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also the `Unit converters tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -893,7 +893,7 @@ class FieldSet:
             lat, depth, time, data) to dimensions in the netCF file(s).
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable.
-            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
+            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
 
                 +-----------------------------+-----------------------------+-----------------------------+
                 |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
@@ -920,7 +920,7 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -942,10 +942,10 @@ class FieldSet:
         """
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U and V. "
-                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
+                             "See also ../examples/documentation_indexing.ipynb")
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
             raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U, V and W. "
-                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
+                             "See also ../examples/documentation_indexing.ipynb")
 
         interp_method = {}
         for v in variables:
@@ -1045,7 +1045,7 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -1111,9 +1111,9 @@ class FieldSet:
         Examples
         --------
         Tutorials using fieldset.add_constant:
-        `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`__
-        `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`__
-        `Periodic boundaries <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`__
+        `Analytical advection <../examples/tutorial_analyticaladvection.ipynb>`__
+        `Diffusion <../examples/tutorial_diffusion.ipynb>`__
+        `Periodic boundaries <../examples/tutorial_periodic_boundaries.ipynb>`__
         """
         setattr(self, name, value)
 

@@ -13,7 +13,7 @@ To get started contributing to parcels, you'll need to do a few things:
 
 2. Clone your fork of the repository to your local machine, and `cd` into your project folder.
 
-3. Install [Anaconda](https://www.anaconda.com/products/distribution) (if you haven't already).
+3. Install [Anaconda](https://www.anaconda.com/download) (if you haven't already).
 
 4. Install the development Anaconda environment by installing from the environment file corresponding to your OS (`environment_py3_linux.yml`, `environment_py3_osx.yml` or `environment_py3_win.yml`) then activate it. E.g. on Linux: `conda env create -f environment_py3_linux.yml` then `conda activate py3_parcels`.
 
@@ -48,7 +48,7 @@ Submitting a "draft pull request" is also a great way to give visibility to your
 ## Working with documentation
 
 The documentation for this project is processed by Sphinx. To view documentation from your changes, you can run
-`sphinx-autobuild docs docs/_build` to create a server to automatically rebuild the documentation when you make changes.
+`sphinx-autobuild --ignore "*.zip" docs docs/_build` to create a server to automatically rebuild the documentation when you make changes.
 
 
 If you have any questions or issues while contributing to parcels, please feel free to [open a discussion](https://github.com/OceanParcels/parcels/discussions). Thank you for your contributions!

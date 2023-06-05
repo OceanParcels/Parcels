@@ -2,17 +2,14 @@ Parcels documentation
 ===================================
 
 Welcome to the documentation of Parcels.
-Here, you find the API reference for some recent releases and the latest version of Parcels.
-
-.. note::
-   For background on how to use Parcels for your simulations, see the `tutorials section <https://oceanparcels.org/#tutorials>`_
-   on the `oceanparcels.org <http://oceanparcels.org>`_ site.
+Here you'll find tutorials, documentation, and the API reference for Parcels. You can browse the documentation for older versions by using the version switcher in the left sidebar.
 
 .. toctree::
    :maxdepth: 2
    :hidden:
 
    Home <self>
+   Tutorials and documentation <documentation>
    API reference <reference>
    Contributing <contributing>
-   OceanParcels Website <https://oceanparcels.org/>
+   OceanParcels website <https://oceanparcels.org/>
