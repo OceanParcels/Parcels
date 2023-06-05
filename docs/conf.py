@@ -348,7 +348,9 @@ nbsphinx_thumbnails = {
     'examples/tutorial_timestamps': '_static/calendar-icon.jpg',
     'examples/tutorial_jit_vs_scipy': '_static/clock-icon.png',
     'examples/documentation_homepage_animation': '_images/homepage.gif',
-    'examples/tutorial_Agulhasparticles': '_images/globcurrent_fullyseeded.gif'
+    'examples/tutorial_Agulhasparticles': '_images/globcurrent_fullyseeded.gif',
+    'examples/tutorial_interaction': '_static/pulled_particles_twoatractors_line.gif',
+    'examples/documentation_LargeRunsOutput': '_static/harddrive.png',
 }
 # -- Options for LaTeX output ---------------------------------------------
 
