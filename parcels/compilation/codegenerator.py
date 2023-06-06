@@ -273,7 +273,8 @@ class ParticleNode(IntrinsicNode):
 class IntrinsicTransformer(ast.NodeTransformer):
     """AST transformer that catches any mention of intrinsic variable
     names, such as 'particle' or 'fieldset', inserts placeholder objects
-    and propagates attribute access."""
+    and propagates attribute access.
+    """
 
     def __init__(self, fieldset=None, ptype=JITParticle):
         self.fieldset = fieldset
@@ -286,14 +287,14 @@ class IntrinsicTransformer(ast.NodeTransformer):
         self.stmt_stack = []
 
     def get_tmp(self):
-        """Create a new temporary veriable name"""
+        """Create a new temporary veriable name."""
         tmp = "parcels_tmpvar%d" % self._tmp_counter
         self._tmp_counter += 1
         self.tmp_vars += [tmp]
         return tmp
 
     def visit_Name(self, node):
-        """Inject IntrinsicNode objects into the tree according to keyword"""
+        """Inject IntrinsicNode objects into the tree according to keyword."""
         if node.id == 'fieldset' and self.fieldset is not None:
             node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
@@ -480,8 +481,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
 
 class TupleSplitter(ast.NodeTransformer):
-    """AST transformer that detects and splits Pythonic tuple
-    assignments into multiple statements for conversion to C."""
+    """AST transformer that detects and splits Pythonic tuple assignments into multiple statements for conversion to C."""
 
     def visit_Assign(self, node):
         if isinstance(node.targets[0], ast.Tuple) \
@@ -498,9 +498,10 @@ class TupleSplitter(ast.NodeTransformer):
 
 
 class AbstractKernelGenerator(ABC, ast.NodeVisitor):
-    """Code generator class that translates simple Python kernel
-    functions into C functions by populating and accessing the `ccode`
-    attriibute on nodes in the Python AST."""
+    """Code generator class that translates simple Python kernel functions into C functions.
+
+    Works by populating and accessing the `ccode` attriibute on nodes in the Python AST.
+    """
 
     # Intrinsic variables that appear as function arguments
     kernel_vars = ['particle', 'fieldset', 'time', 'output_time', 'tol']
@@ -559,9 +560,11 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         pass
 
     def visit_Call(self, node):
-        """Generate C code for simple C-style function calls. Please
-        note that starred and keyword arguments are currently not
-        supported."""
+        """Generate C code for simple C-style function calls.
+
+        Please note that starred and keyword arguments are currently not
+        supported.
+        """
         pointer_args = False
         parcels_customed_Cfunc = False
         if isinstance(node.func, PrintNode):
@@ -621,11 +624,10 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
                     else:
                         node.ccode = rhs
             except:
-                raise RuntimeError("Error in converting Kernel to C. See https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_parcels_structure.ipynb#3.-Kernel-execution for hints and tips")
+                raise RuntimeError("Error in converting Kernel to C. See https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernel-execution for hints and tips")
 
     def visit_Name(self, node):
-        """Catches any mention of intrinsic variable names, such as
-        'particle' or 'fieldset' and inserts our placeholder objects"""
+        """Catches any mention of intrinsic variable names such as 'particle' or 'fieldset' and inserts our placeholder objects."""
         if node.id == 'True':
             node.id = "1"
         if node.id == 'False':
@@ -811,30 +813,30 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         node.ccode = c.Statement("")
 
     def visit_FieldNode(self, node):
-        """Record intrinsic fields used in kernel"""
+        """Record intrinsic fields used in kernel."""
         self.field_args[node.obj.ccode_name] = node.obj
 
     def visit_SummedFieldNode(self, node):
-        """Record intrinsic fields used in kernel"""
+        """Record intrinsic fields used in kernel."""
         for fld in node.obj:
             self.field_args[fld.ccode_name] = fld
 
     def visit_NestedFieldNode(self, node):
-        """Record intrinsic fields used in kernel"""
+        """Record intrinsic fields used in kernel."""
         for fld in node.obj:
             self.field_args[fld.ccode_name] = fld
 
     def visit_VectorFieldNode(self, node):
-        """Record intrinsic fields used in kernel"""
+        """Record intrinsic fields used in kernel."""
         self.vector_field_args[node.obj.ccode_name] = node.obj
 
     def visit_SummedVectorFieldNode(self, node):
-        """Record intrinsic fields used in kernel"""
+        """Record intrinsic fields used in kernel."""
         for fld in node.obj:
             self.vector_field_args[fld.ccode_name] = fld
 
     def visit_NestedVectorFieldNode(self, node):
-        """Record intrinsic fields used in kernel"""
+        """Record intrinsic fields used in kernel."""
         for fld in node.obj:
             self.vector_field_args[fld.ccode_name] = fld
 
@@ -1205,8 +1207,7 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
 
 
 class LoopGenerator:
-    """Code generator class that adds type definitions and the outer
-    loop around kernel functions to generate compilable C code."""
+    """Code generator class that adds type definitions and the outer loop around kernel functions to generate compilable C code."""
 
     def __init__(self, fieldset, ptype=None):
         self.fieldset = fieldset
@@ -1353,8 +1354,7 @@ class LoopGenerator:
 
 
 class ParticleObjectLoopGenerator:
-    """Code generator class that adds type definitions and the outer
-    loop around kernel functions to generate compilable C code."""
+    """Code generator class that adds type definitions and the outer loop around kernel functions to generate compilable C code."""
 
     def __init__(self, fieldset=None, ptype=None):
         self.fieldset = fieldset

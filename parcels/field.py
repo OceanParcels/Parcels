@@ -45,54 +45,79 @@ def _isParticle(key):
 class Field:
     """Class that encapsulates access to field data.
 
-    :param name: Name of the field
-    :param data: 2D, 3D or 4D numpy array of field data.
+    Parameters
+    ----------
+    name : str
+        Name of the field
+    data : np.ndarray
+        2D, 3D or 4D numpy array of field data.
 
-           1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
-              whichever is relevant for the dataset, use the flag transpose=True
-           2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
-              use the flag transpose=False
-           3. If data has any other shape, you first need to reorder it
-    :param lon: Longitude coordinates (numpy vector or array) of the field (only if grid is None)
-    :param lat: Latitude coordinates (numpy vector or array) of the field (only if grid is None)
-    :param depth: Depth coordinates (numpy vector or array) of the field (only if grid is None)
-    :param time: Time coordinates (numpy vector) of the field (only if grid is None)
-    :param mesh: String indicating the type of mesh coordinates and
-           units used during velocity interpolation: (only if grid is None)
+        1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
+           whichever is relevant for the dataset, use the flag transpose=True
+        2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
+           use the flag transpose=False
+        3. If data has any other shape, you first need to reorder it
+    lon : np.ndarray or list
+        Longitude coordinates (numpy vector or array) of the field (only if grid is None)
+    lat : np.ndarray or list
+        Latitude coordinates (numpy vector or array) of the field (only if grid is None)
+    depth : np.ndarray or list
+        Depth coordinates (numpy vector or array) of the field (only if grid is None)
+    time : np.ndarray
+        Time coordinates (numpy vector) of the field (only if grid is None)
+    mesh : str
+        String indicating the type of mesh coordinates and
+        units used during velocity interpolation: (only if grid is None)
 
-           1. spherical: Lat and lon in degree, with a
-              correction for zonal velocity U near the poles.
-           2. flat (default): No conversion, lat/lon are assumed to be in m.
-    :param timestamps: A numpy array containing the timestamps for each of the files in filenames, for loading
-           from netCDF files only. Default is None if the netCDF dimensions dictionary includes time.
-    :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
-           mesh and time_origin information. Can be constructed from any of the Grid objects
-    :param fieldtype: Type of Field to be used for UnitConverter when using SummedFields
-           (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-    :param transpose: Transpose data to required (lon, lat) layout
-    :param vmin: Minimum allowed value on the field. Data below this value are set to zero
-    :param vmax: Maximum allowed value on the field. Data above this value are set to zero
-    :param cast_data_dtype: Cast Field data to dtype. Supported dtypes are np.float32 (default) and np.float64.
-           Note that dtype can only be float32 in JIT mode
-    :param time_origin: Time origin (TimeConverter object) of the time axis (only if grid is None)
-    :param interp_method: Method for interpolation. Options are 'linear' (default), 'nearest',
-           'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
-    :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
-           (i.e. beyond the last available time snapshot)
-    :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
-           The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
-           This flag overrides the allow_time_interpolation and sets it to False
-    :param chunkdims_name_map (opt.): gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
-           required only if currently incompatible OCM field is loaded and chunking is used by 'chunksize' (which is the default)
-    :param to_write: Write the Field in NetCDF format at the same frequency as the ParticleFile outputdt,
-           using a filenaming scheme based on the ParticleFile name
+        1. spherical: Lat and lon in degree, with a
+           correction for zonal velocity U near the poles.
+        2. flat (default): No conversion, lat/lon are assumed to be in m.
+    timestamps : np.ndarray
+        A numpy array containing the timestamps for each of the files in filenames, for loading
+        from netCDF files only. Default is None if the netCDF dimensions dictionary includes time.
+    grid : parcels.grid.Grid
+        :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
+        mesh and time_origin information. Can be constructed from any of the Grid objects
+    fieldtype : str
+        Type of Field to be used for UnitConverter when using SummedFields
+        (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+    transpose : bool
+        Transpose data to required (lon, lat) layout
+    vmin : float
+        Minimum allowed value on the field. Data below this value are set to zero
+    vmax : float
+        Maximum allowed value on the field. Data above this value are set to zero
+    cast_data_dtype : str
+        Cast Field data to dtype. Supported dtypes are "float32" (np.float32 (default)) and "float64 (np.float64).
+        Note that dtype can only be "float32" in JIT mode
+    time_origin : parcels.tools.converters.TimeConverter
+        Time origin of the time axis (only if grid is None)
+    interp_method : str
+        Method for interpolation. Options are 'linear' (default), 'nearest',
+        'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
+    allow_time_extrapolation : bool
+        boolean whether to allow for extrapolation in time
+        (i.e. beyond the last available time snapshot)
+    time_periodic : bool, float or datetime.timedelta
+        To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
+        The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
+        This flag overrides the allow_time_extrapolation and sets it to False
+    chunkdims_name_map : str, optional
+        Gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
+        required only if currently incompatible OCM field is loaded and chunking is used by 'chunksize' (which is the default)
+    to_write : bool
+        Write the Field in NetCDF format at the same frequency as the ParticleFile outputdt,
+        using a filenaming scheme based on the ParticleFile name
 
+    Examples
+    --------
     For usage examples see the following tutorials:
 
-    * `Nested Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`_
+    * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
 
-    * `Summed Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_
+    * `Summed Fields <../examples/tutorial_SummedFields.ipynb>`__
     """
+
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, cast_data_dtype='float32', time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, gridindexingtype='nemo',
@@ -267,43 +292,64 @@ class Field:
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
                     deferred_load=True, **kwargs):
-        """Create field from netCDF file
+        """Create field from netCDF file.
 
-        :param filenames: list of filenames to read for the field. filenames can be a list [files] or
-               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
-               In the latter case, time values are in filenames[data]
-        :param variable: Tuple mapping field name to variable name in the NetCDF file.
-        :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
-        :param indices: dictionary mapping indices for each dimension to read from file.
-               This can be used for reading in only a subregion of the NetCDF file.
-               Note that negative indices are not allowed.
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+        Parameters
+        ----------
+        filenames : list of str or dict
+            list of filenames to read for the field. filenames can be a list ``[files]`` or
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data)
+            In the latter case, time values are in filenames[data]
+        variable : tuple of str or str
+            Tuple mapping field name to variable name in the NetCDF file.
+        dimensions : dict
+            Dictionary mapping variable names for the relevant dimensions in the NetCDF file
+        indices :
+            dictionary mapping indices for each dimension to read from file.
+            This can be used for reading in only a subregion of the NetCDF file.
+            Note that negative indices are not allowed. (Default value = None)
+        mesh :
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation:
 
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param timestamps: A numpy array of datetime64 objects containing the timestamps for each of the files in filenames.
-               Default is None if dimensions includes time.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
-               This flag overrides the allow_time_interpolation and sets it to False
-        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
-               fully load them (default: True). It is advised to deferred load the data, since in
-               that case Parcels deals with a better memory management during particle set execution.
-               deferred_load=False is however sometimes necessary for plotting the fields.
-        :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
-               See also the Grid indexing documentation on oceanparcels.org
-        :param chunksize: size of the chunks in dask loading
-        :param netcdf_decodewarning: boolean whether to show a warning id there is a problem decoding the netcdf files.
-               Default is True, but in some cases where these warnings are expected, it may be useful to silence them
-               by setting netcdf_decodewarning=False.
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        timestamps :
+            A numpy array of datetime64 objects containing the timestamps for each of the files in filenames.
+            Default is None if dimensions includes time.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation in time
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic : bool, float or datetime.timedelta
+            boolean whether to loop periodically over the time component of the FieldSet
+            This flag overrides the allow_time_extrapolation and sets it to False (Default value = False)
+        deferred_load : bool
+            boolean whether to only pre-load data (in deferred mode) or
+            fully load them (default: True). It is advised to deferred load the data, since in
+            that case Parcels deals with a better memory management during particle set execution.
+            deferred_load=False is however sometimes necessary for plotting the fields.
+        gridindexingtype : str
+            The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
+            See also the Grid indexing documentation on oceanparcels.org
+        chunksize :
+            size of the chunks in dask loading
+        netcdf_decodewarning : bool
+            Whether to show a warning id there is a problem decoding the netcdf files.
+            Default is True, but in some cases where these warnings are expected, it may be useful to silence them
+            by setting netcdf_decodewarning=False.
+        grid :
+             (Default value = None)
+        **kwargs :
+            Keyword arguments passed to the :class:`Field` constructor.
 
+        Examples
+        --------
         For usage examples see the following tutorial:
 
-        * `Timestamps <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb>`_
+        * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
+
         """
         # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
@@ -486,24 +532,33 @@ class Field:
     @classmethod
     def from_xarray(cls, da, name, dimensions, mesh='spherical', allow_time_extrapolation=None,
                     time_periodic=False, **kwargs):
-        """Create field from xarray Variable
+        """Create field from xarray Variable.
 
-        :param da: Xarray DataArray
-        :param name: Name of the Field
-        :param dimensions: Dictionary mapping variable names for the relevant dimensions in the DataArray
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+        Parameters
+        ----------
+        da : xr.DataArray
+            Xarray DataArray
+        name : str
+            Name of the Field
+        dimensions : dict
+            Dictionary mapping variable names for the relevant dimensions in the DataArray
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation:
 
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
-               This flag overrides the allow_time_interpolation and sets it to False
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation in time
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic : bool, float or datetime.timedelta
+            boolean whether to loop periodically over the time component of the FieldSet
+            This flag overrides the allow_time_extrapolation and sets it to False (Default value = False)
+        **kwargs :
+            Keyword arguments passed to the :class:`Field` constructor.
         """
-
         data = da.data
         interp_method = kwargs.pop('interp_method', 'linear')
 
@@ -573,11 +628,17 @@ class Field:
     def set_scaling_factor(self, factor):
         """Scales the field data by some constant factor.
 
-        :param factor: scaling factor
+        Parameters
+        ----------
+        factor :
+            scaling factor
 
+
+        Examples
+        --------
         For usage examples see the following tutorial:
 
-        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
+        * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__
         """
         if self._scaling_factor:
             raise NotImplementedError(f'Scaling factor for field {self.name} already defined.')
@@ -586,10 +647,12 @@ class Field:
             self.data *= factor
 
     def set_depth_from_field(self, field):
-        """Define the depth dimensions from another (time-varying) field
+        """Define the depth dimensions from another (time-varying) field.
 
-        See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timevaryingdepthdimensions.ipynb>`_
-        for a detailed explanation on how to set up time-evolving depth dimensions
+        Notes
+        -----
+        See `this tutorial <../examples/tutorial_timevaryingdepthdimensions.ipynb>`__
+        for a detailed explanation on how to set up time-evolving depth dimensions.
 
         """
         self.grid.depth_field = field
@@ -597,8 +660,10 @@ class Field:
             field.grid.depth_field = field
 
     def calc_cell_edge_sizes(self):
-        """Method to calculate cell sizes based on numpy.gradient method
-                Currently only works for Rectilinear Grids"""
+        """Method to calculate cell sizes based on numpy.gradient method.
+
+        Currently only works for Rectilinear Grids
+        """
         if not self.grid.cell_edge_sizes:
             if self.grid.gtype in (GridCode.RectilinearZGrid, GridCode.RectilinearSGrid):
                 self.grid.cell_edge_sizes['x'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
@@ -618,8 +683,10 @@ class Field:
                 exit(-1)
 
     def cell_areas(self):
-        """Method to calculate cell sizes based on cell_edge_sizes
-                Currently only works for Rectilinear Grids"""
+        """Method to calculate cell sizes based on cell_edge_sizes.
+
+        Currently only works for Rectilinear Grids
+        """
         if not self.grid.cell_edge_sizes:
             self.calc_cell_edge_sizes()
         return self.grid.cell_edge_sizes['x'] * self.grid.cell_edge_sizes['y']
@@ -1038,13 +1105,15 @@ class Field:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 
     def temporal_interpolate_fullfield(self, ti, time):
-        """Calculate the data of a field between two snapshots,
-        using linear interpolation
+        """Calculate the data of a field between two snapshots using linear interpolation.
 
-        :param ti: Index in time array associated with time (via :func:`time_index`)
-        :param time: Time to interpolate to
-
-        :rtype: Linearly interpolated field"""
+        Parameters
+        ----------
+        ti :
+            Index in time array associated with time (via :func:`time_index`)
+        time :
+            Time to interpolate to
+        """
         t0 = self.grid.time[ti]
         if time == t0:
             return self.data[ti, :]
@@ -1057,8 +1126,7 @@ class Field:
             return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
     def spatial_interpolation(self, ti, z, y, x, time, particle=None):
-        """Interpolate horizontal field values using a SciPy interpolator"""
-
+        """Interpolate horizontal field values using a SciPy interpolator."""
         if self.grid.zdim == 1:
             val = self.interpolator2D(ti, z, y, x, particle=particle)
         else:
@@ -1072,7 +1140,7 @@ class Field:
             return val
 
     def time_index(self, time):
-        """Find the index in the time array associated with a given time
+        """Find the index in the time array associated with a given time.
 
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
@@ -1214,9 +1282,7 @@ class Field:
 
     @property
     def ctypes_struct(self):
-        """Returns a ctypes struct object containing all relevant
-        pointers and sizes for this field."""
-
+        """Returns a ctypes struct object containing all relevant pointers and sizes for this field."""
         # Ctypes struct corresponding to the type definition in parcels.h
         class CField(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
@@ -1247,17 +1313,30 @@ class Field:
 
     def show(self, animation=False, show_time=None, domain=None, depth_level=0, projection='PlateCarree', land=True,
              vmin=None, vmax=None, savefile=None, **kwargs):
-        """Method to 'show' a Parcels Field
+        """Method to 'show' a Parcels Field.
 
-        :param animation: Boolean whether result is a single plot, or an animation
-        :param show_time: Time in seconds from start after which to show the Field (only in single-plot mode)
-        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
-        :param depth_level: depth level to be plotted (default 0)
-        :param projection: type of cartopy projection to use (default PlateCarree)
-        :param land: Boolean whether to show land. This is ignored for flat meshes
-        :param vmin: minimum colour scale (only in single-plot mode)
-        :param vmax: maximum colour scale (only in single-plot mode)
-        :param savefile: Name of a file to save the plot to
+        Parameters
+        ----------
+        animation : bool
+            Whether result is a single plot, or an animation (Default value = False)
+        show_time : float
+            Time in seconds from start after which to show the Field (only in single-plot mode) (Default value = None)
+        domain : dict
+            dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
+        depth_level :
+            depth level to be plotted (default 0)
+        projection :
+            type of cartopy projection to use (default PlateCarree)
+        land : bool
+            Whether to show land. This is ignored for flat meshes (Default value = True)
+        vmin : float
+            minimum colour scale (only in single-plot mode) (Default value = None)
+        vmax : float
+            maximum colour scale (only in single-plot mode) (Default value = None)
+        savefile : str, opptional
+            Name of a file to save the plot to (Default value = None)
+        **kwargs :
+            Additional keyword arguments to pass to :func:`parcels.plotting.plotfield`
         """
         from parcels.plotting import plotfield
         plt, _, _, _ = plotfield(self, animation=animation, show_time=show_time, domain=domain, depth_level=depth_level,
@@ -1266,17 +1345,25 @@ class Field:
             plt.show()
 
     def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
-        """Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
+        """Add a 'halo' to all Fields in a FieldSet.
+
+        Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
         by copying a small portion of the field on one side of the domain to the other.
         Before adding a periodic halo to the Field, it has to be added to the Grid on which the Field depends
 
-        See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`_
+        See `this tutorial <../examples/tutorial_periodic_boundaries.ipynb>`__
         for a detailed explanation on how to set up periodic boundaries
 
-        :param zonal: Create a halo in zonal direction (boolean)
-        :param meridional: Create a halo in meridional direction (boolean)
-        :param halosize: size of the halo (in grid points). Default is 5 grid points
-        :param data: if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned
+        Parameters
+        ----------
+        zonal : bool
+            Create a halo in zonal direction.
+        meridional : bool
+            Create a halo in meridional direction.
+        halosize : int
+            Size of the halo (in grid points). Default is 5 grid points
+        data :
+            if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned (Default value = None)
         """
         dataNone = not isinstance(data, (np.ndarray, da.core.Array))
         if self.grid.defer_load and dataNone:
@@ -1310,10 +1397,15 @@ class Field:
             return data
 
     def write(self, filename, varname=None):
-        """Write a :class:`Field` to a netcdf file
+        """Write a :class:`Field` to a netcdf file.
 
-        :param filename: Basename of the file
-        :param varname: Name of the field, to be appended to the filename"""
+        Parameters
+        ----------
+        filename : str
+            Basename of the file (i.e. '{filename}{Field.name}.nc')
+        varname : str
+            Name of the field, to be appended to the filename. (Default value = None)
+        """
         filepath = str(Path(f'{filename}{self.name}.nc'))
         if varname is None:
             varname = self.name
@@ -1424,11 +1516,18 @@ class VectorField:
     """Class VectorField stores 2 or 3 fields which defines together a vector field.
     This enables to interpolate them as one single vector field in the kernels.
 
-    :param name: Name of the vector field
-    :param U: field defining the zonal component
-    :param V: field defining the meridional component
-    :param W: field defining the vertical component (default: None)
+    Parameters
+    ----------
+    name : str
+        Name of the vector field
+    U : parcels.field.Field
+        field defining the zonal component
+    V : parcels.field.Field
+        field defining the meridional component
+    W : parcels.field.Field
+        field defining the vertical component (default: None)
     """
+
     def __init__(self, name, U, V, W=None):
         self.name = name
         self.U = U
@@ -1640,14 +1739,15 @@ class VectorField:
         return (u, v, w)
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None, applyConversion=True):
-        """
-        +---+---+---+
-        |   |V1 |   |
-        +---+---+---+
-        |U0 |   |U1 |
-        +---+---+---+
-        |   |V0 |   |
-        +---+---+---+
+        """Perform C grid interpolation in 3D. ::
+
+            +---+---+---+
+            |   |V1 |   |
+            +---+---+---+
+            |U0 |   |U1 |
+            +---+---+---+
+            |   |V0 |   |
+            +---+---+---+
 
         The interpolation is done in the following by
         interpolating linearly U depending on the longitude coordinate and
@@ -1824,7 +1924,8 @@ class VectorField:
 
 
 class DeferredArray():
-    """Class used for throwing error when Field.data is not read in deferred loading mode"""
+    """Class used for throwing error when Field.data is not read in deferred loading mode."""
+
     data_shape = ()
 
     def __init__(self):
@@ -1847,21 +1948,33 @@ class DeferredArray():
 
 
 class SummedField(list):
-    """Class SummedField is a list of Fields over which Field interpolation
-    is summed. This can e.g. be used when combining multiple flow fields,
+    """Class SummedField is a list of Fields over which Field interpolation is summed.
+
+    This can e.g. be used when combining multiple flow fields,
     where the total flow is the sum of all the individual flows.
     Note that the individual Fields can be on different Grids.
     Also note that, since SummedFields are lists, the individual Fields can
     still be queried through their list index (e.g. SummedField[1]).
     SummedField is composed of either Fields or VectorFields.
 
-    See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_
+
+    Parameters
+    ----------
+    name : str
+        Name of the SummedField
+    F : list of Field
+        List of fields. F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
+    V : list of Field
+        List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
+    W : list of Field
+        List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
+
+
+    Examples
+    --------
+    See `here <../examples/tutorial_SummedFields.ipynb>`__
     for a detailed tutorial
 
-    :param name: Name of the SummedField
-    :param F: List of fields. F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
-    :param V: List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
-    :param W: List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
     """
 
     def __init__(self, name, F, V=None, W=None):
@@ -1917,20 +2030,32 @@ class SummedField(list):
 
 
 class NestedField(list):
-    """Class NestedField is a list of Fields from which the first one to be not declared out-of-boundaries
-    at particle position is interpolated. This induces that the order of the fields in the list matters.
+    """NestedField is a class that allows for interpolation of fields on different grids of potentially varying resolution.
+
+    The NestedField class is a list of Fields where the first Field that contains the particle within the domain is then used for interpolation.
+    This induces that the order of the fields in the list matters.
     Each one it its turn, a field is interpolated: if the interpolation succeeds or if an error other
     than `ErrorOutOfBounds` is thrown, the function is stopped. Otherwise, next field is interpolated.
     NestedField returns an `ErrorOutOfBounds` only if last field is as well out of boundaries.
     NestedField is composed of either Fields or VectorFields.
 
-    See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`_
+    Parameters
+    ----------
+    name : str
+        Name of the NestedField
+    F : list of Field
+        List of fields (order matters). F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
+    V : list of Field
+        List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
+    W : list of Field
+        List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
+
+
+    Examples
+    --------
+    See `here <../examples/tutorial_NestedFields.ipynb>`__
     for a detailed tutorial
 
-    :param name: Name of the NestedField
-    :param F: List of fields (order matters). F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
-    :param V: List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
-    :param W: List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
     """
 
     def __init__(self, name, F, V=None, W=None):

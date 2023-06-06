@@ -3,5 +3,12 @@ build:
   os: ubuntu-22.04
   tools:
     python: mambaforge-4.10
+  # jobs:
+  #   pre_build:
+  #     - sphinx-build -b linkcheck docs/ _build/linkcheck
+
+sphinx:
+  configuration: docs/conf.py
+
 conda:
   environment: environment_py3_linux.yml

@@ -197,9 +197,15 @@ class VS_parameters(Compiler_parameters):
 class CCompiler:
     """A compiler object for creating and loading shared libraries.
 
-    :arg cc: C compiler executable (uses environment variable ``CC`` if not provided).
-    :arg cppargs: A list of arguments to the C compiler (optional).
-    :arg ldargs: A list of arguments to the linker (optional)."""
+    Parameters
+    ----------
+    cc :
+        C compiler executable (uses environment variable ``CC`` if not provided).
+    cppargs :
+        A list of arguments to the C compiler (optional).
+    ldargs :
+        A list of arguments to the linker (optional).
+    """
 
     def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
         if cppargs is None:
@@ -241,9 +247,8 @@ class CCompiler:
 
 
 class CCompiler_SS(CCompiler):
-    """
-    single-stage C-compiler; used for a SINGLE source file
-    """
+    """Single-stage C-compiler; used for a SINGLE source file."""
+
     def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
         super().__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
 
@@ -268,9 +273,15 @@ class CCompiler_SS(CCompiler):
 class GNUCompiler_SS(CCompiler_SS):
     """A compiler object for the GNU Linux toolchain.
 
-    :arg cppargs: A list of arguments to pass to the C compiler
-         (optional).
-    :arg ldargs: A list of arguments to pass to the linker (optional)."""
+    Parameters
+    ----------
+    cppargs :
+        A list of arguments to pass to the C compiler
+        (optional).
+    ldargs :
+        A list of arguments to pass to the linker (optional).
+    """
+
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
         c_params = GNU_parameters(cppargs, ldargs, incdirs, libdirs, libs)
         super().__init__(c_params.compiler, cppargs=c_params.cppargs, ldargs=c_params.ldargs, incdirs=c_params.incdirs, libdirs=c_params.libdirs, libs=c_params.libs, tmp_dir=tmp_dir)

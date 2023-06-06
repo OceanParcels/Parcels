@@ -28,11 +28,18 @@ __all__ = ['KernelAOS']
 class KernelAOS(BaseKernel):
     """Kernel object that encapsulates auto-generated code.
 
-    :arg fieldset: FieldSet object providing the field information
-    :arg ptype: PType object for the kernel particle
-    :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+    Parameters
+    ----------
+    fieldset :
+        FieldSet object providing the field information
+    ptype :
+        PType object for the kernel particle
+    delete_cfiles : bool
+        Whether to delete the C-files after compilation in JIT mode (default is True)
 
-    Note: A Kernel is either created from a compiled <function ...> object
+    Notes
+    -----
+    A Kernel is either created from a compiled <function ...> object
     or the necessary information (funcname, funccode, funcvars) is provided.
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
@@ -112,24 +119,8 @@ class KernelAOS(BaseKernel):
             else:
                 self.src_file = src_file_or_files
 
-    def __del__(self):
-        # Clean-up the in-memory dynamic linked libraries.
-        # This is not really necessary, as these programs are not that large, but with the new random
-        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
-        super().__del__()
-
-    def __add__(self, kernel):
-        if not isinstance(kernel, KernelAOS):
-            kernel = KernelAOS(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel, KernelAOS)
-
-    def __radd__(self, kernel):
-        if not isinstance(kernel, KernelAOS):
-            kernel = KernelAOS(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self, KernelAOS)
-
     def execute_jit(self, pset, endtime, dt):
-        """Invokes JIT engine to perform the core update loop"""
+        """Invokes JIT engine to perform the core update loop."""
         self.load_fieldset_jit(pset)
 
         fargs = []
@@ -145,7 +136,7 @@ class KernelAOS(BaseKernel):
             self._function(c_int(len(pset)), pdata, c_double(endtime), c_double(dt))
 
     def execute_python(self, pset, endtime, dt):
-        """Performs the core update loop via Python"""
+        """Performs the core update loop via Python."""
         # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
         sign_dt = np.sign(dt)
 
@@ -166,14 +157,14 @@ class KernelAOS(BaseKernel):
             self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
     def remove_deleted(self, pset, output_file, endtime):
-        """Utility to remove all particles that signalled deletion"""
+        """Utility to remove all particles that signalled deletion."""
         indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
         if len(indices) > 0 and output_file is not None:
             output_file.write(pset, endtime, deleted_only=indices)
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
-        """Execute this Kernel over a ParticleSet for several timesteps"""
+        """Execute this Kernel over a ParticleSet for several timesteps."""
         for p in pset:
             p.reset_state()
 
