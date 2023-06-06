@@ -10,9 +10,6 @@ inputs:
   environment-name:
     description: Name to use for the Conda environment
     default: test
-  extra-specs:
-    description: Extra packages to install
-    required: false
 runs:
   using: "composite"
   steps:
@@ -22,14 +19,12 @@ runs:
       with:
         minimum-size: 8GB
     - name: Install micromamba (${{ inputs.environment-file }})
-      uses: mamba-org/provision-with-micromamba@v15
+      uses: mamba-org/setup-micromamba@v1
       with:
         environment-file: ${{ inputs.environment-file }}
         environment-name: ${{ inputs.environment-name }}
-        extra-specs: ${{ inputs.extra-specs }}
         channels: conda-forge
-        channel-priority: 'strict'
-        cache-env: true
+        cache-environment: true
         cache-downloads: true
     - name: Install parcels
       run: python setup.py install
