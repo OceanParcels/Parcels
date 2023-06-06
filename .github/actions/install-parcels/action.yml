@@ -2,7 +2,7 @@ name: Setup Conda and install parcels
 description: >
   In-repo composite action to setup Conda and install parcels. Installation of parcels relies on
   `setup.py` file being available in the root. For general setup of Anaconda environments, just use
-  the `mamba-org/provision-with-micromamba` action (setting C variables as required), or the `conda-incubator/setup-miniconda` action.
+  the `mamba-org/setup-micromamba@v1` action (setting C variables as required), or the `conda-incubator/setup-miniconda` action.
 inputs:
   environment-file:
     description: Conda environment file to use.
