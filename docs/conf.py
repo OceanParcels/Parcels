@@ -14,8 +14,12 @@
 import datetime
 import inspect
 import os
+import re
+import shutil
 import sys
+import tempfile
 import warnings
+from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -37,6 +41,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "myst_parser",
+    "nbsphinx",
     "numpydoc",
 ]
 
@@ -58,6 +63,11 @@ master_doc = 'index'
 project = 'Parcels'
 copyright = f'{datetime.datetime.now().year}, The OceanParcels Team'
 author = 'The OceanParcels Team'
+
+linkcheck_ignore = [
+    r'http://localhost:\d+/',
+    "http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf",  # Site doesn't allow crawling
+]
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -85,7 +95,7 @@ language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -183,6 +193,32 @@ html_context = {
     "github_version": "master",
     "doc_path": "docs",
 }
+
+
+# Copy code examples to download directory
+downloads_folder = Path("_downloads")
+downloads_folder.mkdir(exist_ok=True)
+
+
+def make_filename_safe(filename: str, safe_char: str = '_') -> str:
+    # Replace any characters that are not allowed in a filename with the safe character
+    safe_filename = re.sub(r'[\\/:*?"<>|]', safe_char, filename)
+    return safe_filename
+
+
+with tempfile.TemporaryDirectory() as temp_dir:
+    temp_dir = Path(temp_dir)
+
+    # Copy examples folder to temp directory (with a folder name matching parcels version)
+    examples_folder = temp_dir / make_filename_safe(f"parcels_tutorials ({version})")
+    shutil.copytree("examples", examples_folder)
+
+    # Zip contents of temp directory and save to _downloads folder
+    shutil.make_archive(
+        "_downloads/parcels_tutorials",
+        "zip",
+        temp_dir,
+    )
 
 
 # based on pandas doc/source/conf.py
@@ -307,6 +343,15 @@ html_extra_path = ["robots.txt"]
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'parcelsdoc'
 
+nbsphinx_thumbnails = {
+    'examples/tutorial_parcels_structure': '_images/parcels_user_diagram.png',
+    'examples/tutorial_timestamps': '_static/calendar-icon.jpg',
+    'examples/tutorial_jit_vs_scipy': '_static/clock-icon.png',
+    'examples/documentation_homepage_animation': '_images/homepage.gif',
+    'examples/tutorial_Agulhasparticles': '_images/globcurrent_fullyseeded.gif',
+    'examples/tutorial_interaction': '_static/pulled_particles_twoatractors_line.gif',
+    'examples/documentation_LargeRunsOutput': '_static/harddrive.png',
+}
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
