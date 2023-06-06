@@ -91,10 +91,6 @@ def get_data_home(data_home=None):
     If the ``data_home`` argument is not provided, it will use a directory
     specified by the ``PARCELS_EXAMPLE_DATA`` environment variable (if it exists)
     or otherwise default to an OS-appropriate user cache location.
-
-    Adapted from `seaborn.utils.get_data_home`_
-
-    .. _seaborn.utils.get_data_home: https://github.com/mwaskom/seaborn/blob/824c102525e6a29cde9bca1ce0096d50588fda6b/seaborn/utils.py#L522-L537
     """
     if data_home is None:
         data_home = os.environ.get("PARCELS_EXAMPLE_DATA", platformdirs.user_cache_dir("parcels"))
