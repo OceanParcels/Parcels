@@ -70,6 +70,10 @@ linkcheck_ignore = [
     r"https://pubs\.acs\.org/doi/10\.1021/acs\.est\.0c01984",  # Site doesn't allow crawling
     r"https://aip\.scitation\.org/doi/10\.1063/1\.4982720",  # Site doesn't allow crawling
     r"https://www\.sciencedirect\.com/.*",  # Site doesn't allow crawling
+    r"https://lxml\.de/",  # Crawler occasionally fails to establish connection
+
+    # To monitor
+    r"http://marine.copernicus.eu/",  # 2023-06-07 Site non-responsive
 ]
 
 # The version info for the project you're documenting, acts as replacement for
