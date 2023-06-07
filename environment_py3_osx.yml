@@ -1,6 +1,5 @@
 name: py3_parcels
 channels:
-  - defaults
   - conda-forge
 dependencies:
   - python>=3.8
