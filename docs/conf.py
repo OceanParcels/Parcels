@@ -66,7 +66,14 @@ author = 'The OceanParcels Team'
 
 linkcheck_ignore = [
     r'http://localhost:\d+/',
-    "http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf",  # Site doesn't allow crawling
+    r"http://www2\.cesm\.ucar\.edu/models/cesm1\.0/pop2/doc/sci/POPRefManual.pdf",  # Site doesn't allow crawling
+    r"https://pubs\.acs\.org/doi/10\.1021/acs\.est\.0c01984",  # Site doesn't allow crawling
+    r"https://aip\.scitation\.org/doi/10\.1063/1\.4982720",  # Site doesn't allow crawling
+    r"https://www\.sciencedirect\.com/.*",  # Site doesn't allow crawling
+    r"https://lxml\.de/",  # Crawler occasionally fails to establish connection
+
+    # To monitor
+    r"http://marine.copernicus.eu/",  # 2023-06-07 Site non-responsive
 ]
 
 # The version info for the project you're documenting, acts as replacement for

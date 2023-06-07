@@ -18,7 +18,7 @@ except:
 @pytest.mark.parametrize('nump', [4, 8])
 def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage, nump):
     if MPI:
-        stommel_file = path.join(path.dirname(__file__), '..', 'parcels',
+        stommel_file = path.join(path.dirname(__file__), '..', 'docs',
                                  'examples', 'example_stommel.py')
         outputMPI = tmpdir.join('StommelMPI')
         outputNoMPI = tmpdir.join('StommelNoMPI.zarr')
