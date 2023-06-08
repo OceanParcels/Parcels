@@ -1,7 +1,7 @@
 Documentation and Tutorials
 ===========================
 
-Parcels has several documentation and tutorial Jupyter notebooks which go through various aspects of parcels. Static versions of these notebooks are available below in the site, with the interactive notebooks being available here :download:`parcels_tutorials.zip </_downloads/parcels_tutorials.zip>`.
+Parcels has several documentation and tutorial Jupyter notebooks which go through various aspects of parcels. Static versions of these notebooks are available below in the site, with the interactive notebooks being available either completely online at the following `Binder link <https://mybinder.org/v2/gh/OceanParcels/parcels/master?labpath=parcels%2Fdocs%2Fexamples>`_, or locally by downloading :download:`parcels_tutorials.zip </_downloads/parcels_tutorials.zip>` and running with your own Parcels installation.
 
 
 
