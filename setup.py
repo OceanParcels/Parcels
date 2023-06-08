@@ -18,6 +18,4 @@ setup(name='parcels',
       python_requires='>=3.8',
       packages=find_packages(),
       package_data={'parcels': ['include/*']},
-      entry_points={'console_scripts': [
-          'parcels_convert_npydir_to_netcdf = parcels.scripts.convert_npydir_to_netcdf:main']}
       )
