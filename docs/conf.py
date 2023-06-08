@@ -358,6 +358,7 @@ nbsphinx_thumbnails = {
     'examples/tutorial_Agulhasparticles': '_images/globcurrent_fullyseeded.gif',
     'examples/tutorial_interaction': '_static/pulled_particles_twoatractors_line.gif',
     'examples/documentation_LargeRunsOutput': '_static/harddrive.png',
+    'examples/documentation_geospatial': '_images/tutorial_geospatial_google_earth.png'
 }
 # -- Options for LaTeX output ---------------------------------------------
 
