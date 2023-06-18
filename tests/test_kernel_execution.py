@@ -49,6 +49,23 @@ def fieldset_fixture(xdim=20, ydim=20):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_execution_order(pset_mode, mode):
+    fieldset = FieldSet.from_data({'U': [[0, 1], [2, 3]], 'V': np.ones((2, 2))}, {'lon': [0, 2], 'lat': [0, 2]}, mesh='flat')
+
+    def MoveLon(particle, fieldset, time):
+        particle.lon += 0.2
+
+    kernels = [MoveLon, AdvectionRK4]
+    lons = []
+    for dir in [1, -1]:
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=0, lat=0)
+        pset.execute(kernels[::dir], endtime=1, dt=1)
+        lons.append(pset.lon)
+    assert np.isclose(lons[0], lons[1])
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('start, end, substeps, dt', [
     (0., 10., 1, 1.),
     (0., 10., 4, 1.),
