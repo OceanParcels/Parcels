@@ -53,7 +53,7 @@ def test_execution_order(pset_mode, mode):
     fieldset = FieldSet.from_data({'U': [[0, 1], [2, 3]], 'V': np.ones((2, 2))}, {'lon': [0, 2], 'lat': [0, 2]}, mesh='flat')
 
     def MoveLon(particle, fieldset, time):
-        particle.lon += 0.2
+        dlon += 0.2
 
     kernels = [MoveLon, AdvectionRK4]
     lons = []
@@ -62,6 +62,7 @@ def test_execution_order(pset_mode, mode):
         pset.execute(kernels[::dir], endtime=1, dt=1)
         lons.append(pset.lon)
     assert np.isclose(lons[0], lons[1])
+    assert(lons[0] > 0.5)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)

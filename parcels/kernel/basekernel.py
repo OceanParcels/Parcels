@@ -313,9 +313,9 @@ class BaseKernel:
             Additional keyword arguments passed to first kernel during construction.
         """
         if not isinstance(pyfunc_list, list):
-            raise TypeError(f"Argument function_lst should be a list of functions. Got {type(pyfunc_list)}")
+            raise TypeError(f"Argument function_list should be a list of functions. Got {type(pyfunc_list)}")
         if len(pyfunc_list) == 0:
-            raise ValueError("Argument function_lst should have at least one function.")
+            raise ValueError("Argument function_list should have at least one function.")
         if not all([isinstance(f, types.FunctionType) for f in pyfunc_list]):
             raise ValueError("Argument function_lst should be a list of functions.")
 
@@ -432,7 +432,21 @@ class BaseKernel:
                 pdt_prekernels = sign_dt * dt_pos
                 p.dt = pdt_prekernels
                 state_prev = p.state
-                res = self._pyfunc(p, self._fieldset, p.time)
+
+                # Adding kernels to set and update the coordinate changes
+                def Setcoords(particle, fieldset, time):
+                    dlon = 0  # noqa
+                    dlat = 0  # noqa
+                    ddepth = 0  # noqa
+
+                def Updatecoords(particle, fieldset, time):
+                    particle.lon += dlon  # noqa
+                    particle.lat += dlat  # noqa
+                    particle.depth += ddepth  # noqa
+
+                full_pyfunc = self.__radd__(Setcoords).__add__(Updatecoords)._pyfunc
+
+                res = full_pyfunc(p, self._fieldset, p.time)
                 if res is None:
                     res = StateCode.Success
 

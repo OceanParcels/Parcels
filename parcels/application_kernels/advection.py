@@ -19,8 +19,8 @@ def AdvectionRK4(particle, fieldset, time):
     (u3, v3) = fieldset.UV[time + .5 * particle.dt, particle.depth, lat2, lon2, particle]
     lon3, lat3 = (particle.lon + u3*particle.dt, particle.lat + v3*particle.dt)
     (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3, particle]
-    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
-    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
+    dlon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt  # noqa
+    dlat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt  # noqa
 
 
 def AdvectionRK4_3D(particle, fieldset, time):
@@ -41,9 +41,9 @@ def AdvectionRK4_3D(particle, fieldset, time):
     lat3 = particle.lat + v3*particle.dt
     dep3 = particle.depth + w3*particle.dt
     (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3, particle]
-    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
-    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
-    particle.depth += (w1 + 2*w2 + 2*w3 + w4) / 6. * particle.dt
+    dlon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt  # noqa
+    dlat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt  # noqa
+    ddepth += (w1 + 2*w2 + 2*w3 + w4) / 6. * particle.dt  # noqa
 
 
 def AdvectionEE(particle, fieldset, time):
@@ -52,8 +52,8 @@ def AdvectionEE(particle, fieldset, time):
     Function needs to be converted to Kernel object before execution.
     """
     (u1, v1) = fieldset.UV[particle]
-    particle.lon += u1 * particle.dt
-    particle.lat += v1 * particle.dt
+    dlon += u1 * particle.dt  # noqa
+    dlat += v1 * particle.dt  # noqa
 
 
 def AdvectionRK45(particle, fieldset, time):
@@ -90,15 +90,15 @@ def AdvectionRK45(particle, fieldset, time):
                   particle.lat + (v1 * A[4][0] + v2 * A[4][1] + v3 * A[4][2] + v4 * A[4][3] + v5 * A[4][4]) * particle.dt)
     (u6, v6) = fieldset.UV[time + c[4] * particle.dt, particle.depth, lat5, lon5, particle]
 
-    lon_4th = particle.lon + (u1 * b4[0] + u2 * b4[1] + u3 * b4[2] + u4 * b4[3] + u5 * b4[4]) * particle.dt
-    lat_4th = particle.lat + (v1 * b4[0] + v2 * b4[1] + v3 * b4[2] + v4 * b4[3] + v5 * b4[4]) * particle.dt
-    lon_5th = particle.lon + (u1 * b5[0] + u2 * b5[1] + u3 * b5[2] + u4 * b5[3] + u5 * b5[4] + u6 * b5[5]) * particle.dt
-    lat_5th = particle.lat + (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * particle.dt
+    lon_4th = (u1 * b4[0] + u2 * b4[1] + u3 * b4[2] + u4 * b4[3] + u5 * b4[4]) * particle.dt
+    lat_4th = (v1 * b4[0] + v2 * b4[1] + v3 * b4[2] + v4 * b4[3] + v5 * b4[4]) * particle.dt
+    lon_5th = (u1 * b5[0] + u2 * b5[1] + u3 * b5[2] + u4 * b5[3] + u5 * b5[4] + u6 * b5[5]) * particle.dt
+    lat_5th = (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * particle.dt
 
     kappa2 = math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2)
     if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol), 2):
-        particle.lon = lon_4th
-        particle.lat = lat_4th
+        dlon += lon_4th  # noqa
+        dlat += lat_4th  # noqa
         if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol / 10), 2):
             particle.update_next_dt(particle.dt * 2)
     else:
