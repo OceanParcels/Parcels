@@ -1,0 +1,24 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-ast
+    -   id: check-json
+        types: [text]
+        files: \.(json|ipynb)$
+-   repo: https://github.com/pycqa/flake8
+    rev: '6.0.0'
+    hooks:
+    -   id: flake8
+-   repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0  # pick a git hash / tag to point to
+    hooks:
+    -   id: pydocstyle
+-   repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+    -   id: isort
+        name: isort (python)

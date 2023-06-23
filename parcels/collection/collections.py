@@ -1,9 +1,10 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
-from abc import ABC
-from abc import abstractmethod
+
+from parcels.particle import ScipyParticle
 
 from .iterators import BaseParticleAccessor
-from parcels.particle import ScipyParticle
 
 """
 Author: Dr. Christian Kehl
@@ -19,7 +20,8 @@ class Collection(ABC):
     @abstractmethod
     def __init__(self):
         """
-        Collection - Constructor
+        Collection - Constructor.
+
         Initializes a collection by pre-allocating memory (where needed), initialising indexing structures
         (where needed), initialising iterators and preparing the C-JIT-glue.
         """
@@ -27,9 +29,7 @@ class Collection(ABC):
 
     @abstractmethod
     def __del__(self):
-        """
-        Collection - Destructor
-        """
+        """Collection - Destructor."""
         pass
 
     @property
@@ -166,7 +166,7 @@ class Collection(ABC):
         In cases where a get-by-index would result in a performance malus, it is highly-advisable to use a different
         get function, e.g. get-by-ID.
         """
-        assert type(index) in [int, np.int32, np.intp], "Trying to get a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
+        assert type(index) in [int, np.int32, np.intp], f"Trying to get a particle by index, but index {index} is not a 32-bit integer - invalid operation."
 
     @abstractmethod
     def get_single_by_object(self, particle_obj):
@@ -189,7 +189,7 @@ class Collection(ABC):
         In cases where a get-by-ID would result in a performance malus, it is highly-advisable to use a different
         get function, e.g. get-by-index.
         """
-        assert type(id) in [np.int64, np.uint64], "Trying to get a particle by ID, but ID {} is not a 64-bit (signed or unsigned) iteger - invalid operation.".format(id)
+        assert type(id) in [np.int64, np.uint64], f"Trying to get a particle by ID, but ID {id} is not a 64-bit (signed or unsigned) iteger - invalid operation."
 
     @abstractmethod
     def get_same(self, same_class):
@@ -197,7 +197,7 @@ class Collection(ABC):
         This function gets particles from this collection that are themselves stored in another object of an equi-
         structured ParticleCollection.
         """
-        assert same_class is not None, "Trying to get another {} from this one, but the other one is None - invalid operation.".format(type(self))
+        assert same_class is not None, f"Trying to get another {type(self)} from this one, but the other one is None - invalid operation."
         assert type(same_class) is type(self)
 
     @abstractmethod
@@ -297,7 +297,7 @@ class Collection(ABC):
         both collections. The fact that they are of the same ParticleCollection's derivative simplifies
         parsing and concatenation.
         """
-        assert same_class is not None, "Trying to add another {} to this one, but the other one is None - invalid operation.".format(type(self))
+        assert same_class is not None, f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
         assert type(same_class) is type(self)
 
     @abstractmethod
@@ -311,7 +311,7 @@ class Collection(ABC):
         This operation is equal to an in-place addition of (an) element(s).
         """
         assert same_class is not None
-        assert type(same_class) is type(self), "Trying to increment-add collection of type {} into collection of type {} - invalid operation.".format(type(same_class), type(self))
+        assert type(same_class) is type(self), f"Trying to increment-add collection of type {type(same_class)} into collection of type {type(self)} - invalid operation."
 
     @abstractmethod
     def insert(self, obj, index=None):
@@ -396,7 +396,7 @@ class Collection(ABC):
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
         """
-        assert type(index) in [int, np.int32, np.intp], "Trying to delete a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
+        assert type(index) in [int, np.int32, np.intp], f"Trying to delete a particle by index, but index {index} is not a 32-bit integer - invalid operation."
 
     @abstractmethod
     def delete_by_ID(self, id):
@@ -407,7 +407,7 @@ class Collection(ABC):
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
         """
-        assert type(id) in [np.int64, np.uint64], "Trying to delete a particle by ID, but ID {} is not a 64-bit (signed or unsigned) integer - invalid operation.".format(id)
+        assert type(id) in [np.int64, np.uint64], f"Trying to delete a particle by ID, but ID {id} is not a 64-bit (signed or unsigned) integer - invalid operation."
 
     def __sub__(self, other):
         """
@@ -480,7 +480,7 @@ class Collection(ABC):
         In cases where a removal-by-index would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-object or remove-by-ID.
         """
-        assert type(index) in [int, np.int32, np.intp], "Trying to remove a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
+        assert type(index) in [int, np.int32, np.intp], f"Trying to remove a particle by index, but index {index} is not a 32-bit integer - invalid operation."
 
     @abstractmethod
     def remove_single_by_object(self, particle_obj):
@@ -504,7 +504,7 @@ class Collection(ABC):
         In cases where a removal-by-ID would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-object or remove-by-index.
         """
-        assert type(id) in [np.int64, np.uint64], "Trying to remove a particle by ID, but ID {} is not a 64-bit (signed or unsigned) iteger - invalid operation.".format(id)
+        assert type(id) in [np.int64, np.uint64], f"Trying to remove a particle by ID, but ID {id} is not a 64-bit (signed or unsigned) iteger - invalid operation."
 
     @abstractmethod
     def remove_same(self, same_class):
@@ -513,7 +513,7 @@ class Collection(ABC):
         structured ParticleCollection. As the structures of both collections are the same, a more efficient M-in-N
         removal can be applied without an in-between reformatting.
         """
-        assert same_class is not None, "Trying to remove another {} from this one, but the other one is None - invalid operation.".format(type(self))
+        assert same_class is not None, f"Trying to remove another {type(self)} from this one, but the other one is None - invalid operation."
         assert type(same_class) is type(self)
 
     @abstractmethod
@@ -627,7 +627,7 @@ class Collection(ABC):
         If index is out of bounds, throws and OutOfRangeException.
         If Particle cannot be retrieved, returns None.
         """
-        assert type(index) in [int, np.int32, np.intp], "Trying to pop a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
+        assert type(index) in [int, np.int32, np.intp], f"Trying to pop a particle by index, but index {index} is not a 32-bit integer - invalid operation."
         return None
 
     @abstractmethod
@@ -636,7 +636,7 @@ class Collection(ABC):
         Searches for Particle with ID 'id', removes that Particle from the Collection and returns that Particle (or: ParticleAccessor).
         If Particle cannot be retrieved (e.g. because the ID is not available), returns None.
         """
-        assert type(id) in [np.int64, np.uint64], "Trying to pop a particle by ID, but ID {} is not a 64-bit (signed or unsigned) iteger - invalid operation.".format(id)
+        assert type(id) in [np.int64, np.uint64], f"Trying to pop a particle by ID, but ID {id} is not a 64-bit (signed or unsigned) iteger - invalid operation."
         return None
 
     @abstractmethod
@@ -729,7 +729,7 @@ class Collection(ABC):
         This function returns and informative string about the collection (i.e. the type of collection) and a summary
         of its internal, distinct values.
         """
-        return "ParticleCollection - N: {}".format(self._ncount)
+        return f"ParticleCollection - N: {self._ncount}"
 
     @abstractmethod
     def toArray(self):
@@ -748,9 +748,7 @@ class Collection(ABC):
         pass
 
     def __len__(self):
-        """
-        This function returns the length, in terms of 'number of elements, of a collection.
-        """
+        """This function returns the length, in terms of 'number of elements, of a collection."""
         return self._ncount
 
     @abstractmethod
@@ -789,8 +787,8 @@ class ParticleCollection(Collection):
     _data = None  # formerly: particle_data
 
     def __init__(self):
-        """
-        ParticleCollection - Constructor
+        """Constructor for ParticleCollection.
+
         Initializes a particle collection by pre-allocating memory (where needed), initialising indexing structures
         (where needed), initialising iterators (if maintaining a persistent iterator) and preparing the C-JIT-glue.
 
@@ -804,12 +802,10 @@ class ParticleCollection(Collection):
         self._ptype = None
         self._latlondepth_dtype = np.float32
         self._data = None  # formerly: particle_data
-        super(ParticleCollection, self).__init__()
+        super().__init__()
 
     def __del__(self):
-        """
-        ParticleCollection - Destructor
-        """
+        """Destructor for ParticleCollection."""
         pass
 
     @property
@@ -833,9 +829,7 @@ class ParticleCollection(Collection):
 
     @property
     def pclass(self):
-        """
-        'pclass' stores the actual class type of the particles allocated and managed in this collection
-        """
+        """Stores the actual class type of the particles allocated and managed in this collection."""
         return self._pclass
 
     @property
@@ -876,19 +870,24 @@ class ParticleCollection(Collection):
 
     @abstractmethod
     def cstruct(self):
-        """
-        'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
-        """
+        """Returns the ctypes mapping of the particle data. This depends on the specific structure in question."""
         pass
 
     @abstractmethod
     def __getattr__(self, name):
         """
         Access a single property of all particles.
-        NOTE: This is a fallback implementation, and it is NOT efficient.
-        Specific datastructures may implement a more efficient variant.
 
-        :param name: name of the property
+        Parameters
+        ----------
+        name : str
+            Name of the property to access
+
+
+        Notes
+        -----
+        This is a fallback implementation, and it is NOT efficient.
+        Specific datastructures may implement a more efficient variant.
         """
         for v in self.ptype.variables:
             if v.name == name:
@@ -898,29 +897,33 @@ class ParticleCollection(Collection):
         else:
             return False
 
-    @abstractmethod
-    def toDictionary(self):
-        """
-        Convert all Particle data from one time step to a python dictionary.
-        :param pfile: ParticleFile object requesting the conversion
-        :param time: Time at which to write ParticleSet
-        :param deleted_only: Flag to write only the deleted Particles
-        returns two dictionaries: one for all variables to be written each outputdt,
-         and one for all variables to be written once
+    def has_write_once_variables(self):
+        for var in self.ptype.variables:
+            if var.to_write == 'once':
+                return True
+        return False
 
-         This function depends on the specific collection in question and thus needs to be specified in specific
-         derivatives classes.
-        """
+    @abstractmethod
+    def getvardata(self, var, indices=None):
+        pass
+
+    @abstractmethod
+    def setvardata(self, var, index, val):
         pass
 
     @abstractmethod
     def set_variable_write_status(self, var, write_status):
         """
         Method to set the write status of a Variable
-        :param var: Name of the variable (string)
-        :param status: Write status of the variable (True, False or 'once')
 
-         This function depends on the specific collection in question and thus needs to be specified in specific
+        This function depends on the specific collection in question and thus needs to be specified in specific
          derivatives classes.
+
+        Parameters
+        ----------
+        var : str
+            Name of the variable
+        write_status : bool, str
+            Write status of the variable (True, False or 'once')
         """
         pass

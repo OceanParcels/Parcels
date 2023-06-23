@@ -1,13 +1,31 @@
-from parcels import (FieldSet, Field, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, ErrorCode, UnitConverter)
-from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
-import numpy as np
-import xarray as xr
 import math
-import pytest
-from os import path
 from datetime import timedelta as delta
+from os import path
+
+import numpy as np
+import pytest
+import xarray as xr
+
+from parcels import (  # noqa
+    AdvectionRK4,
+    AdvectionRK4_3D,
+    CurvilinearZGrid,
+    ErrorCode,
+    Field,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    RectilinearSGrid,
+    RectilinearZGrid,
+    ScipyParticle,
+    UnitConverter,
+    Variable,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -161,8 +179,10 @@ def test_multigrids_pointer(pset_mode, mode):
     w_field = Field('W', w_data, grid=grid_1)
 
     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
-    assert(u_field.grid == v_field.grid)
-    assert(u_field.grid == w_field.grid)  # w_field.grid is now supposed to be grid_1
+    field_set.add_periodic_halo(zonal=3, meridional=2)  # unit test of halo for SGrid
+
+    assert u_field.grid == v_field.grid
+    assert u_field.grid == w_field.grid  # w_field.grid is now supposed to be grid_1
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=[0], lat=[0], depth=[1])
 
@@ -262,8 +282,8 @@ def test_rectilinear_s_grids_advect1(pset_mode, mode):
 
     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
 
-    lon = np.zeros((11))
-    lat = np.zeros((11))
+    lon = np.zeros(11)
+    lat = np.zeros(11)
     ratio = [min(i/10., .99) for i in range(11)]
     depth = bath_func(lon)*ratio
     pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=lon, lat=lat, depth=depth)
@@ -343,8 +363,7 @@ def test_curvilinear_grids(pset_mode, mode):
     field_set = FieldSet(u_field, v_field)
 
     def sampleSpeed(particle, fieldset, time):
-        u = fieldset.U[time, particle.depth, particle.lat, particle.lon]
-        v = fieldset.V[time, particle.depth, particle.lat, particle.lon]
+        u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
         particle.speed = math.sqrt(u*u+v*v)
 
     class MyParticle(ptype[mode]):
@@ -352,7 +371,7 @@ def test_curvilinear_grids(pset_mode, mode):
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
-    assert(np.allclose(pset.speed[0], 1000))
+    assert np.allclose(pset.speed[0], 1000)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -634,7 +653,8 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
-def test_cgrid_indexing(pset_mode, mode, gridindexingtype):
+@pytest.mark.parametrize('coordtype', ['rectilinear', 'curvilinear'])
+def test_cgrid_indexing(pset_mode, mode, gridindexingtype, coordtype):
     xdim, ydim = 151, 201
     a = b = 20000  # domain size
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
@@ -645,24 +665,53 @@ def test_cgrid_indexing(pset_mode, mode, gridindexingtype):
     index_signs = {'nemo': -1, 'mitgcm': 1}
     isign = index_signs[gridindexingtype]
 
+    def rotate_coords(lon, lat, alpha=0):
+        rotmat = np.array([[np.cos(alpha), np.sin(alpha)],
+                           [-np.sin(alpha), np.cos(alpha)]])
+        lons, lats = np.meshgrid(lon, lat)
+        rotated = np.einsum('ji, mni -> jmn', rotmat, np.dstack([lons, lats]))
+        return rotated[0], rotated[1]
+
+    if coordtype == 'rectilinear':
+        alpha = 0
+    elif coordtype == 'curvilinear':
+        alpha = 15*np.pi/180
+        lon, lat = rotate_coords(lon, lat, alpha)
+
     def calc_r_phi(ln, lt):
         return np.sqrt(ln ** 2 + lt ** 2), np.arctan2(ln, lt)
 
-    def calculate_UVR(lat, lon, dx, dy, omega):
-        U = np.zeros((lat.size, lon.size), dtype=np.float32)
-        V = np.zeros((lat.size, lon.size), dtype=np.float32)
-        R = np.zeros((lat.size, lon.size), dtype=np.float32)
-        for i in range(lon.size):
-            for j in range(lat.size):
-                r, phi = calc_r_phi(lon[i], lat[j])
-                R[j, i] = r
-                r, phi = calc_r_phi(lon[i] + isign * dx / 2, lat[j])
-                V[j, i] = -omega * r * np.sin(phi)
-                r, phi = calc_r_phi(lon[i], lat[j] + isign * dy / 2)
-                U[j, i] = omega * r * np.cos(phi)
-        return U, V, R
+    if coordtype == 'rectilinear':
+        def calculate_UVR(lat, lon, dx, dy, omega, alpha):
+            U = np.zeros((lat.size, lon.size), dtype=np.float32)
+            V = np.zeros((lat.size, lon.size), dtype=np.float32)
+            R = np.zeros((lat.size, lon.size), dtype=np.float32)
+            for i in range(lon.size):
+                for j in range(lat.size):
+                    r, phi = calc_r_phi(lon[i], lat[j])
+                    R[j, i] = r
+                    r, phi = calc_r_phi(lon[i] + isign * dx / 2, lat[j])
+                    V[j, i] = -omega * r * np.sin(phi)
+                    r, phi = calc_r_phi(lon[i], lat[j] + isign * dy / 2)
+                    U[j, i] = omega * r * np.cos(phi)
+            return U, V, R
+    elif coordtype == 'curvilinear':
+        def calculate_UVR(lat, lon, dx, dy, omega, alpha):
+            U = np.zeros(lat.shape, dtype=np.float32)
+            V = np.zeros(lat.shape, dtype=np.float32)
+            R = np.zeros(lat.shape, dtype=np.float32)
+            for i in range(lat.shape[1]):
+                for j in range(lat.shape[0]):
+                    r, phi = calc_r_phi(lon[j, i], lat[j, i])
+                    R[j, i] = r
+                    r, phi = calc_r_phi(lon[j, i] + isign * (dx / 2) * np.cos(alpha), lat[j, i] - isign * (dx / 2) * np.sin(alpha))
+                    V[j, i] = np.sin(alpha) * (omega * r * np.cos(phi)) + np.cos(alpha) * (-omega * r * np.sin(phi))
+                    r, phi = calc_r_phi(lon[j, i] + isign * (dy / 2) * np.sin(alpha), lat[j, i] + isign * (dy / 2) * np.cos(alpha))
+                    U[j, i] = np.cos(alpha) * (omega * r * np.cos(phi)) - np.sin(alpha) * (-omega * r * np.sin(phi))
+            return U, V, R
 
-    U, V, R = calculate_UVR(lat, lon, dx, dy, omega)
+    U, V, R = calculate_UVR(lat, lon, dx, dy, omega, alpha)
+
     data = {'U': U, 'V': V, 'R': R}
     dimensions = {'lon': lon, 'lat': lat}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', gridindexingtype=gridindexingtype)

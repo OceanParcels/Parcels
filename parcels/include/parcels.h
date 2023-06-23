@@ -140,7 +140,7 @@ static inline StatusCode spatial_interpolation_trilinear_invdist_land(double xsi
   // count the number of surrounding land points (assume land is where the value is close to zero)
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 2; j++) {
-      for (k = 0; k < 2; k++) {  
+      for (k = 0; k < 2; k++) {
         if(is_zero_flt(data[i][j][k])) {
 	      land[i][j][k] = 1;
 	      nb_land++;
@@ -171,7 +171,7 @@ static inline StatusCode spatial_interpolation_trilinear_invdist_land(double xsi
   *value = 0.;
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 2; j++) {
-        for (k = 0; k < 2; k++) {  
+        for (k = 0; k < 2; k++) {
           float distance = pow((zeta - i), 2) + pow((eta - j), 2) + pow((xsi - k), 2);
           if (is_zero_flt(distance)) {
 	        if (land[i][j][k] == 1) {

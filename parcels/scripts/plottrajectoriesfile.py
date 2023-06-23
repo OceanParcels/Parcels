@@ -5,9 +5,8 @@ import numpy as np
 import xarray as xr
 
 from parcels import Field
-from parcels.plotting import cartopy_colorbar
-from parcels.plotting import create_parcelsfig_axis
-from parcels.plotting import plotfield
+from parcels.plotting import cartopy_colorbar, create_parcelsfig_axis, plotfield
+
 try:
     import matplotlib.animation as animation
     from matplotlib import rc
@@ -18,36 +17,48 @@ except:
 def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
                          tracerlon='x', tracerlat='y', recordedvar=None, movie_forward=True,
                          bins=20, show_plt=True, central_longitude=0):
-    """Quick and simple plotting of Parcels trajectories
+    """Quick and simple plotting of Parcels trajectories.
 
-    :param filename: Name of Parcels-generated NetCDF file with particle positions
-    :param mode: Type of plot to show. Supported are '2d', '3d', 'hist2d',
-                'movie2d' and 'movie2d_notebook'. The latter two give animations,
-                with 'movie2d_notebook' specifically designed for jupyter notebooks
-    :param tracerfile: Name of NetCDF file to show as background
-    :param tracerfield: Name of variable to show as background
-    :param tracerlon: Name of longitude dimension of variable to show as background
-    :param tracerlat: Name of latitude dimension of variable to show as background
-    :param recordedvar: Name of variable used to color particles in scatter-plot.
-                Only works in 'movie2d' or 'movie2d_notebook' mode.
-    :param movie_forward: Boolean whether to show movie in forward or backward mode (default True)
-    :param bins: Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html
-    :param show_plt: Boolean whether plot should directly be show (for py.test)
-    :param central_longitude: Degrees East at which to center the plot
+    Parameters
+    ----------
+    filename : str
+        Name of Parcels-generated NetCDF file with particle positions
+    mode :
+        Type of plot to show. Supported are '2d', '3d', 'hist2d',
+        'movie2d' and 'movie2d_notebook'. The latter two give animations,
+        with 'movie2d_notebook' specifically designed for jupyter notebooks (Default value = '2d')
+    tracerfile :
+        Name of NetCDF file to show as background (Default value = None)
+    tracerfield :
+        Name of variable to show as background (Default value = 'P')
+    tracerlon :
+        Name of longitude dimension of variable to show as background (Default value = 'x')
+    tracerlat :
+        Name of latitude dimension of variable to show as background (Default value = 'y')
+    recordedvar :
+        Name of variable used to color particles in scatter-plot.
+        Only works in 'movie2d' or 'movie2d_notebook' mode. (Default value = None)
+    movie_forward : bool
+        Whether to show movie in forward or backward mode (default True)
+    bins :
+        Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html (Default value = 20)
+    show_plt : bool
+        Whether plot should directly be shown (for py.test) (Default value = True)
+    central_longitude :
+        Degrees East at which to center the plot (Default value = 0)
     """
-
     environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
     try:
-        pfile = xr.open_dataset(str(filename), decode_cf=True)
+        pfile = xr.open_zarr(str(filename), decode_cf=True)
     except:
-        pfile = xr.open_dataset(str(filename), decode_cf=False)
+        pfile = xr.open_zarr(str(filename), decode_cf=False)
     lon = np.ma.filled(pfile.variables['lon'], np.nan)
     lat = np.ma.filled(pfile.variables['lat'], np.nan)
     time = np.ma.filled(pfile.variables['time'], np.nan)
     z = np.ma.filled(pfile.variables['z'], np.nan)
     mesh = pfile.attrs['parcels_mesh'] if 'parcels_mesh' in pfile.attrs else 'spherical'
 
-    if(recordedvar is not None):
+    if recordedvar is not None:
         record = np.ma.filled(pfile.variables[recordedvar], np.nan)
     pfile.close()
 
@@ -71,7 +82,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     if mode == '3d':
         from mpl_toolkits.mplot3d import Axes3D  # noqa
         plt.clf()  # clear the figure
-        ax = fig.gca(projection='3d')
+        ax = plt.axes(projection='3d')
         for p in range(len(lon)):
             ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         ax.set_xlabel('Longitude')
@@ -133,7 +144,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         rc('animation', html='html5')
         anim = animation.FuncAnimation(fig, animate, frames=frames, interval=100, blit=False)
     else:
-        raise RuntimeError('mode %s not known' % mode)
+        raise RuntimeError(f'mode {mode} not known')
 
     if mode == 'movie2d_notebook':
         plt.close()
@@ -144,7 +155,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         return plt
 
 
-if __name__ == "__main__":
+def main(args=None):
     p = ArgumentParser(description="""Quick and simple plotting of Parcels trajectories""")
     p.add_argument('mode', choices=('2d', '3d', 'hist2d', 'movie2d', 'movie2d_notebook'), nargs='?',
                    default='movie2d', help='Type of display')
@@ -162,9 +173,13 @@ if __name__ == "__main__":
                    help='Name of a variable recorded along trajectory')
     p.add_argument('-bins', type=int, default=20,
                    help='Number of bins for mode=hist2d')
-    args = p.parse_args()
+    args = p.parse_args(args)
 
     plotTrajectoriesFile(args.particlefile, mode=args.mode, tracerfile=args.tracerfile,
                          tracerfield=args.tracerfilefield, tracerlon=args.tracerfilelon,
                          tracerlat=args.tracerfilelat, recordedvar=args.recordedvar,
                          bins=args.bins, show_plt=True)
+
+
+if __name__ == "__main__":
+    main()

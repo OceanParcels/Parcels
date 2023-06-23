@@ -3,19 +3,17 @@ import random  # noqa
 from collections import defaultdict
 
 import numpy as np
+
 try:
     from mpi4py import MPI
 except:
     MPI = None
 
-from parcels.field import NestedField
-from parcels.field import SummedField
-from parcels.field import VectorField
-from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 import parcels.rng as ParcelsRandom  # noqa
-from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
+from parcels.field import NestedField, SummedField, VectorField
+from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 from parcels.tools.loggers import logger
-
+from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
 
 __all__ = ['InteractionKernelSOA']
 
@@ -71,7 +69,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
         return kernel.merge(self, InteractionKernelSOA)
 
     def execute_python(self, pset, endtime, dt):
-        """Performs the core update loop via Python
+        """Performs the core update loop via Python.
 
         InteractionKernels do not implement ways to catch or recover from
         errors caused during execution of the kernel function(s).
@@ -124,7 +122,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
                 pset[particle_idx].dt = dt
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
-        """Execute this Kernel over a ParticleSet for several timesteps
+        """Execute this Kernel over a ParticleSet for several timesteps.
 
         InteractionKernels do not implement ways to catch or recover from
         errors caused during execution of the kernel function(s).
@@ -167,7 +165,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
                 elif p.state == OperationCode.Delete:
                     pass
                 else:
-                    logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
+                    logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')
                     p.delete()
 
             # Remove all particles that signalled deletion

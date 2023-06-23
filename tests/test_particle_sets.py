@@ -1,9 +1,22 @@
-from parcels import (FieldSet, Field, ScipyParticle, JITParticle,
-                     Variable, StateCode, OperationCode, CurvilinearZGrid)
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 import numpy as np
 import pytest
+
+from parcels import (  # noqa
+    CurvilinearZGrid,
+    Field,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    OperationCode,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    ScipyParticle,
+    StateCode,
+    Variable,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -70,7 +83,7 @@ def test_pset_create_list_with_customvariable(fieldset, pset_mode, mode, npart=1
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('restart', [True, False])
 def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir):
-    filename = tmpdir.join("pset_fromparticlefile.nc")
+    filename = tmpdir.join("pset_fromparticlefile.zarr")
     lon = np.linspace(0, 1, 10, dtype=np.float32)
     lat = np.linspace(1, 0, 10, dtype=np.float32)
 
@@ -252,7 +265,7 @@ def test_pset_access(fieldset, pset_mode, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode])
-    assert(pset.size == 100)
+    assert pset.size == 100
     assert np.allclose([pset[i].lon for i in range(pset.size)], lon, rtol=1e-12)
     assert np.allclose([pset[i].lat for i in range(pset.size)], lat, rtol=1e-12)
 
@@ -267,7 +280,7 @@ def test_pset_custom_ptype(fieldset, pset_mode, mode, npart=100):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle,
                                         lon=np.linspace(0, 1, npart),
                                         lat=np.linspace(1, 0, npart))
-    assert(pset.size == npart)
+    assert pset.size == npart
     assert np.allclose([p.p - 0.33 for p in pset], np.zeros(npart), atol=1e-5)
     assert np.allclose([p.n - 2 for p in pset], np.zeros(npart), rtol=1e-12)
 
@@ -282,7 +295,7 @@ def test_pset_add_explicit(fieldset, pset_mode, mode, npart=100):
         particle = pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=lon[i], lat=lat[i],
                                                 fieldset=fieldset, lonlatdepth_dtype=np.float64)
         pset.add(particle)
-    assert(pset.size == 100)
+    assert pset.size == npart
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
 
@@ -295,7 +308,7 @@ def test_pset_add_shorthand(fieldset, pset_mode, mode, npart=100):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode])
     for i in range(npart):
         pset += pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=lon[i], lat=lat[i], fieldset=fieldset)
-    assert(pset.size == 100)
+    assert pset.size == npart
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
 
@@ -323,10 +336,10 @@ def test_pset_merge_inplace(fieldset, pset_mode, mode, npart=100):
     pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                          lon=np.linspace(0, 1, npart),
                                          lat=np.linspace(0, 1, npart))
-    assert(pset1.size == 100)
-    assert(pset2.size == 100)
+    assert pset1.size == npart
+    assert pset2.size == npart
     pset1.add(pset2)
-    assert(pset1.size == 200)
+    assert pset1.size == 2*npart
 
 
 @pytest.mark.xfail(reason="ParticleSet duplication has not been implemented yet")
@@ -340,9 +353,9 @@ def test_pset_merge_duplicate(fieldset, pset_mode, mode, npart=100):
                                          lon=np.linspace(0, 1, npart),
                                          lat=np.linspace(0, 1, npart))
     pset3 = pset1 + pset2
-    assert(pset1.size == 100)
-    assert(pset2.size == 100)
-    assert(pset3.size == 200)
+    assert pset1.size == npart
+    assert pset2.size == npart
+    assert pset3.size == 2*npart
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -352,10 +365,10 @@ def test_pset_remove_index(fieldset, pset_mode, mode, npart=100):
     lat = np.linspace(1, 0, npart)
     pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode], lonlatdepth_dtype=np.float64)
     for ilon, ilat in zip(lon[::-1], lat[::-1]):
-        assert(pset[-1].lon == ilon)
-        assert(pset[-1].lat == ilat)
+        assert pset[-1].lon == ilon
+        assert pset[-1].lat == ilat
         pset.remove_indices(-1)
-    assert(pset.size == 0)
+    assert pset.size == 0
 
 
 @pytest.mark.xfail(reason="Particle removal has not been implemented yet")
@@ -366,10 +379,10 @@ def test_pset_remove_particle(fieldset, pset_mode, mode, npart=100):
     lat = np.linspace(1, 0, npart)
     pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, pclass=ptype[mode])
     for ilon, ilat in zip(lon[::-1], lat[::-1]):
-        assert(pset.lon[-1] == ilon)
-        assert(pset.lat[-1] == ilat)
+        assert pset.lon[-1] == ilon
+        assert pset.lat[-1] == ilat
         pset.remove_indices(pset[-1])
-    assert(pset.size == 0)
+    assert pset.size == 0
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -383,7 +396,7 @@ def test_pset_remove_kernel(fieldset, pset_mode, mode, npart=100):
                                         lon=np.linspace(0, 1, npart),
                                         lat=np.linspace(1, 0, npart))
     pset.execute(pset.Kernel(DeleteKernel), endtime=1., dt=1.0)
-    assert(pset.size == 40)
+    assert pset.size == 40
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -427,7 +440,7 @@ def test_density(fieldset, pset_mode, mode, area_scale):
     if area_scale:
         assert np.allclose(arr, 1 / fieldset.U.cell_areas(), rtol=1e-3)  # check that density equals 1/area
     else:
-        assert(np.sum(arr) == lons.size)  # check conservation of particles
+        assert np.sum(arr) == lons.size  # check conservation of particles
         inds = np.where(arr)
         for i in range(len(inds[0])):  # check locations (low atol because of coarse grid)
             assert np.allclose(fieldset.U.lon[inds[1][i]], pset[i].lon, atol=fieldset.U.lon[1]-fieldset.U.lon[0])

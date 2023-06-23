@@ -1,18 +1,20 @@
-from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4
-from datetime import timedelta as delta
+import gc
+import os
+import sys
+import time as ostime
 from argparse import ArgumentParser
-import numpy as np
+from datetime import timedelta as delta
+from glob import glob
+
 import dask as da
 import dask.array as daArray
-from glob import glob
-import time as ostime
 import matplotlib.pyplot as plt
-import os
-import parcels
+import numpy as np
 import psutil
 
-import gc
-import sys
+import parcels
+from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet
+
 try:
     from mpi4py import MPI
 except:
@@ -92,7 +94,7 @@ def print_field_info(fieldset):
         if type(f) in [parcels.VectorField, parcels.NestedField, parcels.SummedField] or not f.grid.defer_load:
             continue
         if isinstance(f.data, daArray.core.Array):
-            sys.stdout.write("Array of Field[name={}] is dask.Array\n".format(f.name))
+            sys.stdout.write(f"Array of Field[name={f.name}] is dask.Array\n")
             sys.stdout.write(
                 "Chunk info of Field[name={}]: field.nchunks={}; shape(field.data.nchunks)={}; field.data.numblocks={}; shape(f.data)={}\n".format(
                     f.name, f.nchunks, (len(f.data.chunks[0]), len(f.data.chunks[1]), len(f.data.chunks[2])),
@@ -186,7 +188,7 @@ if __name__ == '__main__':
         mpi_rank = mpi_comm.Get_rank()
         mpi_size = mpi_comm.Get_size()
         if mpi_rank == 0:
-            print("MPI - # workers: {}\n".format(mpi_size))
+            print(f"MPI - # workers: {mpi_size}\n")
             print("Dask global config - array.chunk-size: {}\n".format(da.config.get('array.chunk-size')))
     else:
         print("Dask global config - array.chunk-size: {}\n".format(da.config.get('array.chunk-size')))

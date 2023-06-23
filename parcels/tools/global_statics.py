@@ -1,8 +1,9 @@
 import os
 import sys
-import _ctypes
-from tempfile import gettempdir
 from pathlib import Path
+from tempfile import gettempdir
+
+import _ctypes
 
 try:
     from os import getuid

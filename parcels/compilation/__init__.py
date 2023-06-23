@@ -1,2 +1,2 @@
-from .codegenerator import *  # noqa
 from .codecompiler import *  # noqa
+from .codegenerator import *  # noqa

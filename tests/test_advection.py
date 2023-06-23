@@ -1,20 +1,38 @@
-from parcels import (FieldSet, Field, ScipyParticle, JITParticle, ErrorCode, StateCode,
-                     AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D,
-                     AdvectionAnalytical, AdvectionDiffusionM1, AdvectionDiffusionEM)
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+import math
+from datetime import timedelta as delta
+
 import numpy as np
 import pytest
-import math
-from netCDF4 import Dataset
-from datetime import timedelta as delta
-from parcels import logger
+import xarray as xr
+
+from parcels import (  # noqa
+    AdvectionAnalytical,
+    AdvectionDiffusionEM,
+    AdvectionDiffusionM1,
+    AdvectionEE,
+    AdvectionRK4,
+    AdvectionRK4_3D,
+    AdvectionRK45,
+    ErrorCode,
+    Field,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    ScipyParticle,
+    StateCode,
+    logger,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
-kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
+kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45, 'AA': AdvectionAnalytical,
           'AdvDiffEM': AdvectionDiffusionEM, 'AdvDiffM1': AdvectionDiffusionM1}
 
 # Some constants
@@ -55,9 +73,7 @@ def depth_fixture(zdim=2):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
-    """ Particles at high latitude move geographically faster due to
-        the pole correction in `GeographicPolar`.
-    """
+    """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     data2D = {'U': np.ones((lon.size, lat.size), dtype=np.float32),
               'V': np.zeros((lon.size, lat.size), dtype=np.float32)}
     data3D = {'U': np.ones((lon.size, lat.size, depth.size), dtype=np.float32),
@@ -85,9 +101,7 @@ def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
-    """ Particles at high latitude move geographically faster due to
-        the pole correction in `GeographicPolar`.
-    """
+    """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     data = {'U': np.zeros((lon.size, lat.size), dtype=np.float32),
             'V': np.ones((lon.size, lat.size), dtype=np.float32)}
     dimensions = {'lon': lon, 'lat': lat}
@@ -104,8 +118,7 @@ def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_advection_3D(pset_mode, mode, npart=11):
-    """ 'Flat' 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s
-    """
+    """Flat 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
     xdim = ydim = zdim = 2
     dimensions = {'lon': np.linspace(0., 1e4, xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1e4, ydim, dtype=np.float32),
@@ -181,7 +194,7 @@ def periodicBC(particle, fieldset, time):
 def test_advection_periodic_zonal(pset_mode, mode, xdim=100, ydim=100, halosize=3):
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=0.)
     fieldset.add_periodic_halo(zonal=True, halosize=halosize)
-    assert(len(fieldset.U.lon) == xdim + 2 * halosize)
+    assert len(fieldset.U.lon) == xdim + 2 * halosize
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
@@ -193,7 +206,7 @@ def test_advection_periodic_zonal(pset_mode, mode, xdim=100, ydim=100, halosize=
 def test_advection_periodic_meridional(pset_mode, mode, xdim=100, ydim=100):
     fieldset = periodicfields(xdim, ydim, uvel=0., vvel=1.)
     fieldset.add_periodic_halo(meridional=True)
-    assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
+    assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
@@ -205,8 +218,8 @@ def test_advection_periodic_meridional(pset_mode, mode, xdim=100, ydim=100):
 def test_advection_periodic_zonal_meridional(pset_mode, mode, xdim=100, ydim=100):
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=1.)
     fieldset.add_periodic_halo(zonal=True, meridional=True)
-    assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
-    assert(len(fieldset.U.lon) == xdim + 10)  # default halo size is 5 grid points
+    assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
+    assert len(fieldset.U.lon) == xdim + 10  # default halo size is 5 grid points
     assert np.allclose(np.diff(fieldset.U.lat), fieldset.U.lat[1]-fieldset.U.lat[0], rtol=0.001)
     assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1]-fieldset.U.lon[0], rtol=0.001)
 
@@ -222,7 +235,7 @@ def test_advection_periodic_zonal_meridional(pset_mode, mode, xdim=100, ydim=100
 @pytest.mark.parametrize('v', [0.2, np.array(1)])
 @pytest.mark.parametrize('w', [None, -0.2, np.array(0.7)])
 def test_length1dimensions(pset_mode, mode, u, v, w):
-    logger.info("mode: {} pset_mode {}".format(mode, pset_mode))
+    logger.info(f"mode: {mode} pset_mode {pset_mode}")
     (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (0, 1)
     (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (-4, 1)
     (depth, zdim) = (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (3, 1)
@@ -428,9 +441,18 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
     ('AdvDiffEM', 1e-2, True),
     ('AdvDiffM1', 1e-2, True),
     ('RK4', 1e-5, False),
-    ('RK45', 1e-5, False)])
+    ('RK45', 1e-5, False),
+    ('AA', 1e-3, False)])
 def test_decaying_eddy(pset_mode, fieldset_decaying, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_decaying
+    if method == 'AA':
+        if mode == 'jit':
+            return True  # AnalyticalAdvection not implemented in JIT
+        else:
+            # needed for AnalyticalAdvection to work, but comes at expense of accuracy
+            fieldset.U.interp_method = 'cgrid_velocity'
+            fieldset.V.interp_method = 'cgrid_velocity'
+
     if diffField:
         fieldset.add_field(Field('Kh_zonal', np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
         fieldset.add_field(Field('Kh_meridional', np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
@@ -489,21 +511,18 @@ def test_uniform_analytical(pset_mode, mode, u, v, w, direction, tmpdir):
     x0, y0, z0 = 6.1, 6.2, 20
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
 
-    outfile_path = tmpdir.join("uniformanalytical.nc")
-    outfile = pset.ParticleFile(name=outfile_path, outputdt=1)
+    outfile_path = tmpdir.join("uniformanalytical.zarr")
+    outfile = pset.ParticleFile(name=outfile_path, outputdt=1, chunks=(1, 1))
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
                  output_file=outfile)
-    outfile.close()
     assert np.abs(pset.lon - x0 - 4 * u * direction) < 1e-6
     assert np.abs(pset.lat - y0 - 4 * v * direction) < 1e-6
     if w:
         assert np.abs(pset.depth - z0 - 4 * w * direction) < 1e-4
 
-    dataset = Dataset(outfile_path, 'r', 'NETCDF4')
-    times = dataset.variables['time'][:]
-    timeref = direction * np.arange(0, 5)
-    logger.info("analytical - time: {}".format(times))
-    logger.info("analytical - reference: {}".format(timeref))
-    assert np.allclose(times, timeref)
-    lons = dataset.variables['lon'][:]
+    ds = xr.open_zarr(outfile_path, mask_and_scale=False)
+    times = ds['time'][:].values.astype('timedelta64[s]')[0]
+    timeref = direction * np.arange(0, 5).astype('timedelta64[s]')
+    assert np.allclose(times, timeref, atol=np.timedelta64(1, 'ms'))
+    lons = ds['lon'][:].values
     assert np.allclose(lons, x0+direction*u*np.arange(0, 5))

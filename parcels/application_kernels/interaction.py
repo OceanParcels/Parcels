@@ -1,15 +1,14 @@
-"""Collection of pre-built interaction kernels"""
+"""Collection of pre-built interaction kernels."""
 import numpy as np
 
 from parcels.tools.statuscodes import OperationCode, StateCode
-
 
 __all__ = ['AsymmetricAttraction', 'NearestNeighborWithinRange',
            'MergeWithNearestNeighbor']
 
 
 def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
-    """Computes the nearest neighbor within range for each particle
+    """Computes the nearest neighbor within range for each particle.
 
     Particle has to have the nearest_neighbor property. If no particle
     is in range, set nearest_neighbor property to -1.

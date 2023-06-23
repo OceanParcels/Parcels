@@ -1,13 +1,27 @@
-from parcels import (FieldSet, Field, RectilinearZGrid, JITParticle,
-                     DiffusionUniformKh, AdvectionDiffusionM1, AdvectionDiffusionEM,
-                     ScipyParticle, Variable)
-from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
-from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
-from parcels import ParcelsRandom
 from datetime import timedelta as delta
+
 import numpy as np
 import pytest
 from scipy import stats
+
+from parcels import (  # noqa
+    AdvectionDiffusionEM,
+    AdvectionDiffusionM1,
+    DiffusionUniformKh,
+    Field,
+    FieldSet,
+    JITParticle,
+    KernelAOS,
+    KernelSOA,
+    ParcelsRandom,
+    ParticleFileAOS,
+    ParticleFileSOA,
+    ParticleSetAOS,
+    ParticleSetSOA,
+    RectilinearZGrid,
+    ScipyParticle,
+    Variable,
+)
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -16,7 +30,7 @@ pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel':
 
 
 def zeros_fieldset(mesh='spherical', xdim=200, ydim=100, mesh_conversion=1):
-    """Generates a zero velocity field"""
+    """Generates a zero velocity field."""
     lon = np.linspace(-1e5*mesh_conversion, 1e5*mesh_conversion, xdim, dtype=np.float32)
     lat = np.linspace(-1e5*mesh_conversion, 1e5*mesh_conversion, ydim, dtype=np.float32)
 
@@ -62,8 +76,7 @@ def test_fieldKh_Brownian(mesh, mode, pset_mode, xdim=200, ydim=100, kh_zonal=10
 @pytest.mark.parametrize('kernel', [AdvectionDiffusionM1,
                                     AdvectionDiffusionEM])
 def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, pset_mode, kernel, xdim=200, ydim=100):
-    """Test advection-diffusion kernels on a non-uniform diffusivity field
-    with a linear gradient in one direction"""
+    """Test advection-diffusion kernels on a non-uniform diffusivity field with a linear gradient in one direction."""
     mesh_conversion = 1/1852./60 if mesh == 'spherical' else 1
     fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
@@ -88,7 +101,7 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, pset_mode, kernel, xdim=2
     tol = 2000*mesh_conversion  # effectively 2000 m errors (because of low numbers of particles)
     assert np.allclose(np.mean(lons), 0, atol=tol)
     assert np.allclose(np.mean(lats), 0, atol=tol)
-    assert(stats.skew(lons) > stats.skew(lats))
+    assert stats.skew(lons) > stats.skew(lats)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -143,6 +156,7 @@ def test_randomvonmises(mode, pset_mode, mu, kappa, npart=10000):
     angles = np.array([p.angle for p in pset])
 
     assert np.allclose(np.mean(angles), mu, atol=.1)
-    scipy_mises = stats.vonmises.rvs(kappa, loc=mu, size=10000)
-    assert np.allclose(np.mean(angles), np.mean(scipy_mises), atol=.1)
-    assert np.allclose(np.std(angles), np.std(scipy_mises), atol=.1)
+    vonmises_mean = stats.vonmises.mean(kappa=kappa, loc=mu)
+    assert np.allclose(np.mean(angles), vonmises_mean, atol=.1)
+    vonmises_var = stats.vonmises.var(kappa=kappa, loc=mu)
+    assert np.allclose(np.var(angles), vonmises_var, atol=.1)

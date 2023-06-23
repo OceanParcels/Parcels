@@ -1,4 +1,4 @@
-"""Module controlling the writing of ParticleSets to NetCDF file"""
+"""Module controlling the writing of ParticleSets to NetCDF file."""
 
 from .baseparticlefile import BaseParticleFile  # noqa: F401
 from .baseparticlefile import _set_calendar  # noqa: F401

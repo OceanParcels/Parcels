@@ -1,13 +1,18 @@
-from parcels import FieldSet, GridCode
-import numpy as np
 import math
+
+import numpy as np
+
+from parcels import FieldSet, GridCode
+
 try:
     from pympler import asizeof
 except:
     asizeof = None
 
 from os import path
+
 import xarray as xr
+
 try:
     from parcels.tools import perlin2d as PERLIN
 except:
@@ -57,8 +62,8 @@ def generate_perlin_testfield():
     data = {'U': U, 'V': V}
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
     if asizeof is not None:
-        print("Perlin U-field requires {} bytes of memory.".format(U.size * U.itemsize))
-        print("Perlin V-field requires {} bytes of memory.".format(V.size * V.itemsize))
+        print(f"Perlin U-field requires {U.size * U.itemsize} bytes of memory.")
+        print(f"Perlin V-field requires {V.size * V.itemsize} bytes of memory.")
     fieldset = FieldSet.from_data(data, dimensions, mesh='spherical', transpose=False)
     # fieldset.write("perlinfields")  # can also be used, but then has a ghost depth dimension
     write_simple_2Dt(fieldset.U, path.join(path.dirname(__file__), 'perlinfields'), varname='vozocrtx')
@@ -68,9 +73,16 @@ def generate_perlin_testfield():
 def write_simple_2Dt(field, filename, varname=None):
     """Write a :class:`Field` to a netcdf file
 
-    :param filename: Basename of the file
-    :param varname: Name of the field, to be appended to the filename"""
-    filepath = str('%s%s.nc' % (filename, field.name))
+    Parameters
+    ----------
+    field : parcels.field.Field
+        Field to write to file
+    filename : str
+        Base name of the file to write to
+    varname : str, optional
+        Name of the variable to write to file. If None, defaults to field.name
+    """
+    filepath = str(f'{filename}{field.name}.nc')
     if varname is None:
         varname = field.name
 
@@ -107,7 +119,7 @@ def write_simple_2Dt(field, filename, varname=None):
         mem += asizeof.asizeof(nav_lat)
         mem += asizeof.asizeof(nav_lon)
         mem += asizeof.asizeof(time_counter)
-        print("Field '{}' requires {} bytes of memory.".format(field.name, mem))
+        print(f"Field '{field.name}' requires {mem} bytes of memory.")
 
 
 if __name__ == "__main__":

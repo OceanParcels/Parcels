@@ -1,21 +1,19 @@
 import uuid
-import _ctypes
-from ctypes import c_float
-from ctypes import c_int
-from os import path
-from os import remove
+from ctypes import c_float, c_int
+from os import path, remove
 from sys import platform
 
+import _ctypes
 import numpy.ctypeslib as npct
 
-from parcels.tools import get_cache_dir, get_package_dir
 from parcels.compilation.codecompiler import GNUCompiler
+from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools.loggers import logger
 
 __all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', 'vonmisesvariate']
 
 
-class RandomC(object):
+class RandomC:
     stmt_import = """#include "parcels.h"\n\n"""
     fnct_seed = """
 extern void pcls_seed(int seed){
@@ -99,11 +97,11 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
         if self.src_file is None or self.lib_file is None or self.log_file is None:
             basename = 'parcels_random_%s' % uuid.uuid4()
             lib_filename = "lib" + basename
-            basepath = path.join(get_cache_dir(), "%s" % basename)
-            libpath = path.join(get_cache_dir(), "%s" % lib_filename)
-            self.src_file = "%s.c" % basepath
-            self.lib_file = "%s.so" % libpath
-            self.log_file = "%s.log" % basepath
+            basepath = path.join(get_cache_dir(), f"{basename}")
+            libpath = path.join(get_cache_dir(), f"{lib_filename}")
+            self.src_file = f"{basepath}.c"
+            self.lib_file = f"{libpath}.so"
+            self.log_file = f"{basepath}.log"
         ccompiler = compiler
         if ccompiler is None:
             cppargs = []
@@ -113,7 +111,7 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
             with open(self.src_file, 'w+') as f:
                 f.write(self.ccode)
             ccompiler.compile(self.src_file, self.lib_file, self.log_file)
-            logger.info("Compiled %s ==> %s" % ("ParcelsRandom", self.lib_file))
+            logger.info(f"Compiled ParcelsRandom ==> {self.lib_file}")
 
     @property
     def lib(self):
@@ -135,13 +133,13 @@ def _assign_parcels_random_ccodeconverter():
 
 
 def seed(seed):
-    """Sets the seed for parcels internal RNG"""
+    """Sets the seed for parcels internal RNG."""
     _assign_parcels_random_ccodeconverter()
     _parcels_random_ccodeconverter.lib.pcls_seed(c_int(seed))
 
 
 def random():
-    """Returns a random float between 0. and 1."""
+    """Returns a random float between 0.0 and 1.0."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_random
     rnd.argtype = []
@@ -150,7 +148,7 @@ def random():
 
 
 def uniform(low, high):
-    """Returns a random float between `low` and `high`"""
+    """Returns a random float between `low` and `high`."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_uniform
     rnd.argtype = [c_float, c_float]
@@ -159,7 +157,7 @@ def uniform(low, high):
 
 
 def randint(low, high):
-    """Returns a random int between `low` and `high`"""
+    """Returns a random int between `low` and `high`."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_randint
     rnd.argtype = [c_int, c_int]
@@ -168,7 +166,7 @@ def randint(low, high):
 
 
 def normalvariate(loc, scale):
-    """Returns a random float on normal distribution with mean `loc` and width `scale`"""
+    """Returns a random float on normal distribution with mean `loc` and width `scale`."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_normalvariate
     rnd.argtype = [c_float, c_float]
@@ -177,7 +175,7 @@ def normalvariate(loc, scale):
 
 
 def expovariate(lamb):
-    """Returns a randome float of an exponential distribution with parameter lamb"""
+    """Returns a randome float of an exponential distribution with parameter lamb."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_expovariate
     rnd.argtype = c_float
@@ -187,7 +185,8 @@ def expovariate(lamb):
 
 def vonmisesvariate(mu, kappa):
     """Returns a randome float of a Von Mises distribution
-    with mean angle mu and concentration parameter kappa"""
+    with mean angle mu and concentration parameter kappa.
+    """
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_vonmisesvariate
     rnd.argtype = [c_float, c_float]
