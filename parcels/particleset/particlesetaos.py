@@ -195,6 +195,10 @@ class ParticleSetAOS(BaseParticleSet):
         # ==== dynamic re-classing completed ==== #
         _pclass = object_class
 
+        if 'repeatdt' in kwargs.keys():
+            raise NotImplementedError('The repeatdt option has been deprecated after v2.4.2. '
+                                      'See https://docs.oceanparcels.org/en/latest/examples/tutorial_delaystart.html for how to release a particleset over multiple times')
+
         self.fieldset = fieldset
         if self.fieldset is None:
             logger.warning_once("No FieldSet provided in ParticleSet generation. "
