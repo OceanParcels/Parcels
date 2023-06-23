@@ -435,14 +435,14 @@ class BaseKernel:
 
                 # Adding kernels to set and update the coordinate changes
                 def Setcoords(particle, fieldset, time):
-                    dlon = 0  # noqa
-                    dlat = 0  # noqa
-                    ddepth = 0  # noqa
+                    particle_dlon = 0  # noqa
+                    particle_dlat = 0  # noqa
+                    particle_ddepth = 0  # noqa
 
                 def Updatecoords(particle, fieldset, time):
-                    particle.lon += dlon  # noqa
-                    particle.lat += dlat  # noqa
-                    particle.depth += ddepth  # noqa
+                    particle.lon += particle_dlon  # noqa
+                    particle.lat += particle_dlat  # noqa
+                    particle.depth += particle_ddepth  # noqa
 
                 full_pyfunc = self.__radd__(Setcoords).__add__(Updatecoords)._pyfunc
 

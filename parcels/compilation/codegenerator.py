@@ -532,8 +532,8 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         used_vars = []
         funcvars_copy = copy(funcvars)  # editing a list while looping over it is dangerous
         for kvar in funcvars:
-            if kvar in used_vars + ['dlon', 'dlat', 'ddepth']:
-                if kvar not in ['particle', 'fieldset', 'time', 'dlon', 'dlat', 'ddepth']:
+            if kvar in used_vars + ['particle_dlon', 'particle_dlat', 'particle_ddepth']:
+                if kvar not in ['particle', 'fieldset', 'time', 'particle_dlon', 'particle_dlat', 'particle_ddepth']:
                     logger.warning(kvar+" declared in multiple Kernels")
                 funcvars_copy.remove(kvar)
             else:
@@ -947,10 +947,10 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         # Create function body as C-code object
         body = []
         for coord in ['lon', 'lat', 'depth']:
-            body += [c.Statement(f"type_coord d{coord} = 0")]
+            body += [c.Statement(f"type_coord particle_d{coord} = 0")]
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
         for coord in ['lon', 'lat', 'depth']:
-            body += [c.Statement(f"particles->{coord}[pnum] += d{coord}")]
+            body += [c.Statement(f"particles->{coord}[pnum] += particle_d{coord}")]
         body += [c.Statement("return SUCCESS")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
@@ -1104,10 +1104,10 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         # Create function body as C-code object
         body = []
         for coord in ['lon', 'lat', 'depth']:
-            body += [c.Statement(f"type_coord d{coord} = 0")]
+            body += [c.Statement(f"type_coord particle_d{coord} = 0")]
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
         for coord in ['lon', 'lat', 'depth']:
-            body += [c.Statement(f"particle->{coord} += d{coord}")]
+            body += [c.Statement(f"particle->{coord} += particle_d{coord}")]
         body += [c.Statement("return SUCCESS")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
