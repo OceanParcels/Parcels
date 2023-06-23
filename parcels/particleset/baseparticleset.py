@@ -31,22 +31,10 @@ class BaseParticleSet(NDCluster):
     interaction_kernel = None
     fieldset = None
     time_origin = None
-    repeat_starttime = None
-    repeatlon = None
-    repeatlat = None
-    repeatdepth = None
-    repeatpclass = None
-    repeatkwargs = None
 
     def __init__(self, fieldset=None, pclass=None, lon=None, lat=None,
-                 depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+                 depth=None, time=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         self._collection = None
-        self.repeat_starttime = None
-        self.repeatlon = None
-        self.repeatlat = None
-        self.repeatdepth = None
-        self.repeatpclass = None
-        self.repeatkwargs = None
         self.kernel = None
         self.interaction_kernel = None
         self.fieldset = None
@@ -110,7 +98,7 @@ class BaseParticleSet(NDCluster):
         return pbar
 
     @classmethod
-    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
+    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from lists of lon and lat.
 
         Parameters
@@ -127,8 +115,6 @@ class BaseParticleSet(NDCluster):
             Optional list of initial depth values for particles. Default is 0m
         time :
             Optional list of start time values for particles. Default is fieldset.U.time[0]
-        repeatdt :
-            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
         lonlatdepth_dtype :
             Floating precision for lon, lat, depth particle coordinates.
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -137,10 +123,10 @@ class BaseParticleSet(NDCluster):
         **kwargs :
             Keyword arguments passed to the particleset constructor.
         """
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod
-    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
+    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, lonlatdepth_dtype=None):
         """Create a particleset in the shape of a line (according to a cartesian grid).
 
         Initialise the ParticleSet from start/finish coordinates with equidistant spacing
@@ -163,8 +149,6 @@ class BaseParticleSet(NDCluster):
             Optional list of initial depth values for particles. Default is 0m
         time :
             Optional start time value for particles. Default is fieldset.U.time[0]
-        repeatdt :
-            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
         lonlatdepth_dtype :
             Floating precision for lon, lat, depth particle coordinates.
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -174,7 +158,7 @@ class BaseParticleSet(NDCluster):
         lat = np.linspace(start[1], finish[1], size)
         if type(depth) in [int, float]:
             depth = [depth] * size
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype)
 
     @classmethod
     @abstractmethod
@@ -200,7 +184,7 @@ class BaseParticleSet(NDCluster):
         pass
 
     @classmethod
-    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
+    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, lonlatdepth_dtype=None):
         """Initialise the ParticleSet randomly drawn according to distribution from a field.
 
         Parameters
@@ -219,8 +203,6 @@ class BaseParticleSet(NDCluster):
             Optional list of initial depth values for particles. Default is 0m
         time :
             Optional start time value for particles. Default is fieldset.U.time[0]
-        repeatdt :
-            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
         lonlatdepth_dtype :
             Floating precision for lon, lat, depth particle coordinates.
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -228,11 +210,11 @@ class BaseParticleSet(NDCluster):
         """
         lon, lat = cls.monte_carlo_sample(start_field, size, mode)
 
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype)
 
     @classmethod
     @abstractmethod
-    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from a netcdf ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
         in a netcdf ParticleFile at a certain time. Particle IDs are preserved if restart=True
@@ -252,8 +234,6 @@ class BaseParticleSet(NDCluster):
             time at which the Particles will be restarted. Default is the last time written.
             Alternatively, restarttime could be a time value (including np.datetime64) or
             a callable function such as np.nanmin. The last is useful when running with dt < 0.
-        repeatdt :
-            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
         lonlatdepth_dtype :
             Floating precision for lon, lat, depth particle coordinates.
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -482,8 +462,6 @@ class BaseParticleSet(NDCluster):
 
         # Derive _starttime and endtime from arguments or fieldset defaults
         _starttime = min_rt if dt >= 0 else max_rt
-        if self.repeatdt is not None and self.repeat_starttime is None:
-            self.repeat_starttime = _starttime
         if runtime is not None:
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
@@ -511,14 +489,8 @@ class BaseParticleSet(NDCluster):
             moviedt = np.infty
         if callbackdt is None:
             interupt_dts = [np.infty, moviedt, outputdt]
-            if self.repeatdt is not None:
-                interupt_dts.append(self.repeatdt)
             callbackdt = np.min(np.array(interupt_dts))
         time = _starttime
-        if self.repeatdt:
-            next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
-        else:
-            next_prelease = np.infty if dt > 0 else - np.infty
         next_output = time + outputdt if dt > 0 else time - outputdt
         next_movie = time + moviedt if dt > 0 else time - moviedt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
@@ -539,9 +511,9 @@ class BaseParticleSet(NDCluster):
                 verbose_progress = True
 
             if dt > 0:
-                next_time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+                next_time = min(next_input, next_output, next_movie, next_callback, endtime)
             else:
-                next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+                next_time = max(next_input, next_output, next_movie, next_callback, endtime)
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
@@ -567,17 +539,6 @@ class BaseParticleSet(NDCluster):
                         break
             # End of interaction specific code
             time = next_time
-            if abs(time-next_prelease) < tol:
-                pset_new = self.__class__(
-                    fieldset=self.fieldset, time=time, lon=self.repeatlon,
-                    lat=self.repeatlat, depth=self.repeatdepth,
-                    pclass=self.repeatpclass,
-                    lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
-                    partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
-                for p in pset_new:
-                    p.dt = dt
-                self.add(pset_new)
-                next_prelease += self.repeatdt * np.sign(dt)
             if abs(time - next_output) < tol or dt == 0:
                 for fld in self.fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:

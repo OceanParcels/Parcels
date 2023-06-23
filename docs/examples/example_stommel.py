@@ -87,7 +87,7 @@ def AgeP(particle, fieldset, time):
 
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
-                    outfile="StommelParticle.zarr", repeatdt=None, maxage=None, write_fields=True, pset_mode='soa'):
+                    outfile="StommelParticle.zarr", maxage=None, write_fields=True, pset_mode='soa'):
     timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
     fieldset = stommel_fieldset(grid_type=grid_type)
     if write_fields:
@@ -105,7 +105,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
         p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
         age = Variable('age', dtype=np.float32, initial=0.)
 
-    pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
+    pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, pclass=MyParticle,
                                                   start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
 
     if verbose:
@@ -166,8 +166,6 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='Numerical method used for advection')
     p.add_argument('-o', '--outfile', default='StommelParticle.zarr',
                    help='Name of output file')
-    p.add_argument('-r', '--repeatdt', default=None, type=int,
-                   help='repeatdt of the ParticleSet')
     p.add_argument('-a', '--maxage', default=None, type=int,
                    help='max age of the particles (after which particles are deleted)')
     p.add_argument('-psm', '--pset_mode', choices=('soa', 'aos'), default='soa',
@@ -179,7 +177,7 @@ Example of particle advection in the steady-state solution of the Stommel equati
     timer.args.stop()
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
     stommel_example(args.particles, mode=args.mode, verbose=args.verbose, method=method[args.method],
-                    outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage, write_fields=args.write_fields)
+                    outfile=args.outfile, maxage=args.maxage, write_fields=args.write_fields)
     timer.stommel.stop()
     timer.root.stop()
     timer.root.print_tree()

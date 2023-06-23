@@ -1,8 +1,6 @@
 import sys
-from copy import copy
 from ctypes import c_void_p
 from datetime import date, datetime
-from datetime import timedelta as delta
 
 import numpy as np
 import xarray as xr
@@ -57,8 +55,6 @@ class ParticleSetAOS(BaseParticleSet):
         Optional list of initial depth values for particles. Default is 0m
     time :
         Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
-    repeatdt : datetime.timedelta or float, optional
-        Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
     lonlatdepth_dtype :
         Floating precision for lon, lat, depth particle coordinates.
         It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -72,7 +68,7 @@ class ParticleSetAOS(BaseParticleSet):
         Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super().__init__()
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
@@ -246,37 +242,8 @@ class ParticleSetAOS(BaseParticleSet):
             assert lon.size == kwargs[kwvar].size, (
                 f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
 
-        self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
-        if self.repeatdt:
-            if self.repeatdt <= 0:
-                raise 'Repeatdt should be > 0'
-            if time[0] and not np.allclose(time, time[0]):
-                raise 'All Particle.time should be the same when repeatdt is not None'
-            self.repeatpclass = pclass
-            self.repeatkwargs = kwargs
-
         ngrids = fieldset.gridset.size if fieldset is not None else 0
         self._collection = ParticleCollectionAOS(_pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
-
-        if self.repeatdt:
-            if len(time) > 0 and time[0] is None:
-                self.repeat_starttime = time[0]
-            else:
-                collect_time = self._collection.time
-                if collect_time[0] and not np.allclose(collect_time, collect_time[0]):
-                    raise ValueError('All Particle.time should be the same when repeatdt is not None')
-                self.repeat_starttime = copy(collect_time[0])
-            self.repeatlon = copy(self._collection.lon)
-            self.repeatlat = copy(self._collection.lat)
-            self.repeatdepth = copy(self._collection.depth)
-            for kwvar in kwargs:
-                self.repeatkwargs[kwvar] = copy(getattr(self._collection, kwvar))
-
-        if self.repeatdt:
-            if MPI and self._collection.pu_indicators is not None:
-                mpi_comm = MPI.COMM_WORLD
-                mpi_rank = mpi_comm.Get_rank()
-                self.repeatpid = pid_orig[self._collection.pu_indicators == mpi_rank]
 
         self.kernel = None
 
@@ -546,7 +513,7 @@ class ParticleSetAOS(BaseParticleSet):
             raise NotImplementedError(f'Mode {mode} not implemented. Please use "monte carlo" algorithm instead.')
 
     @classmethod
-    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from a zarr ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
         in a zarr ParticleFile at a certain time. Particle IDs are preserved if restart=True
@@ -566,8 +533,6 @@ class ParticleSetAOS(BaseParticleSet):
             time at which the Particles will be restarted. Default is the last time written.
             Alternatively, restarttime could be a time value (including np.datetime64) or
             a callable function such as np.nanmin. The last is useful when running with dt < 0.
-        repeatdt : datetime.timedelta or float, optional
-            Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
         lonlatdepth_dtype :
             Floating precision for lon, lat, depth particle coordinates.
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -575,10 +540,6 @@ class ParticleSetAOS(BaseParticleSet):
         **kwargs :
             Keyword arguments passed to the particleset constructor.
         """
-        if repeatdt is not None:
-            logger.warning(f'Note that the `repeatdt` argument is not retained from {filename}, and that '
-                           'setting a new repeatdt will start particles from the _new_ particle '
-                           'locations.')
 
         pfile = xr.open_zarr(str(filename))
         pfile_vars = [v for v in pfile.data_vars]
@@ -621,7 +582,7 @@ class ParticleSetAOS(BaseParticleSet):
 
         return cls(fieldset=fieldset, pclass=pclass, lon=vars['lon'], lat=vars['lat'],
                    depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
-                   lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
+                   lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     def __iadd__(self, particles):
         """Add particles to the ParticleSet.

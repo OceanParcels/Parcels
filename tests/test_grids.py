@@ -97,7 +97,7 @@ def test_multi_structured_grids(pset_mode, mode):
         temp0 = Variable('temp0', dtype=np.float32, initial=20.)
         temp1 = Variable('temp1', dtype=np.float32, initial=20.)
 
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3001], lat=[5001], repeatdt=1)
+    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3001]*np.ones(3), lat=[5001]*np.ones(3), time=range(3))
 
     pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=3, dt=1)
 

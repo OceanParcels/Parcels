@@ -104,7 +104,7 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
     pfile.close()
 
     pset_new = pset_type[pset_mode]['pset'].from_particlefile(fieldset, pclass=TestParticle, filename=filename,
-                                                              restart=restart, repeatdt=1)
+                                                              restart=restart)
 
     for var in ['lon', 'lat', 'depth', 'time', 'p', 'p2', 'p3']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
@@ -112,7 +112,7 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
     if restart:
         assert np.allclose([p.id for p in pset], [p.id for p in pset_new])
     pset_new.execute(Kernel, runtime=2, dt=1)
-    assert len(pset_new) == 3*len(pset)
+    assert len(pset_new) == 2*len(pset)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -219,31 +219,6 @@ def test_pset_dt0(fieldset, pset_mode, mode, npart=10):
     pset.execute(IncrLon, dt=0., runtime=npart)
     assert np.allclose([p.lon for p in pset], 1.)
     assert np.allclose([p.time for p in pset], 0.)
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
-def test_pset_repeatdt_check_dt(pset_mode, fieldset):
-    pset = pset_type[pset_mode]['pset'](fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5)
-
-    def IncrLon(particle, fieldset, time):
-        particle.lon = 1.
-    pset.execute(IncrLon, dt=2, runtime=21)
-    assert np.allclose([p.lon for p in pset], 1)  # if p.dt is nan, it won't be executed so p.lon will be 0
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pset_repeatdt_custominit(fieldset, pset_mode, mode):
-    class MyParticle(ptype[mode]):
-        sample_var = Variable('sample_var')
-
-    pset = pset_type[pset_mode]['pset'](fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5)
-
-    def DoNothing(particle, fieldset, time):
-        return StateCode.Success
-
-    pset.execute(DoNothing, dt=1, runtime=21)
-    assert np.allclose([p.sample_var for p in pset], 5.)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)

@@ -236,13 +236,11 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
     ds.close()
 
 
-@pytest.mark.parametrize('type', ['repeatdt', 'timearr'])
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
 @pytest.mark.parametrize('maxvar', [2, 4, 10])
-def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
+def test_pset_timearr_release_delayed_adding_deleting(fieldset, pset_mode, mode, tmpdir, dt, maxvar, runtime=10):
     fieldset.maxvar = maxvar
     pset = None
 
@@ -250,11 +248,8 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
         sample_var = Variable('sample_var', initial=0.)
         v_once = Variable('v_once', dtype=np.float64, initial=0., to_write='once')
 
-    if type == 'repeatdt':
-        pset = pset_type[pset_mode]['pset'](fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
-    elif type == 'timearr':
-        pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
-    outfilepath = tmpdir.join("pfile_repeated_release.zarr")
+    pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
+    outfilepath = tmpdir.join("pfile_timearr_release.zarr")
     pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt), chunks=(1, 1))
 
     def IncrLon(particle, fieldset, time):
@@ -266,11 +261,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
 
     ds = xr.open_zarr(outfilepath)
     samplevar = ds['sample_var'][:]
-    if type == 'repeatdt':
-        assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
-        assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
-    elif type == 'timearr':
-        assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
+    assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
     # test whether samplevar[:, k] = k
     for k in range(samplevar.shape[1]):
         assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
