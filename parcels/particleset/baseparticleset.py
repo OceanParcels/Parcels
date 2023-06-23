@@ -16,7 +16,7 @@ from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 from parcels.kernel.basekernel import BaseKernel as Kernel
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import StateCode, OperationCode
+from parcels.tools.statuscodes import OperationCode, StateCode
 
 
 class NDCluster(ABC):
