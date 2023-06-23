@@ -544,7 +544,6 @@ class ParticleSetAOS(BaseParticleSet):
         **kwargs :
             Keyword arguments passed to the particleset constructor.
         """
-
         pfile = xr.open_zarr(str(filename))
         pfile_vars = [v for v in pfile.data_vars]
 
