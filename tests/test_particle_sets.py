@@ -112,7 +112,7 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
     if restart:
         assert np.allclose([p.id for p in pset], [p.id for p in pset_new])
     pset_new.execute(Kernel, runtime=2, dt=1)
-    assert len(pset_new) == 2*len(pset)
+    assert len(pset_new) == len(pset)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
