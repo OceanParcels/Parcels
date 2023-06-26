@@ -5,7 +5,6 @@ from typing import List
 from urllib.request import urlretrieve
 
 import platformdirs
-from tqdm import tqdm
 
 __all__ = ["download_example_dataset", "get_data_home", "list_example_datasets"]
 
@@ -146,7 +145,7 @@ def download_example_dataset(dataset: str, data_home=None):
     if not dataset_folder.exists():
         dataset_folder.mkdir(parents=True)
 
-    for filename in tqdm(example_data_files[dataset]):
+    for filename in example_data_files[dataset]:
         filepath = dataset_folder / filename
         if not filepath.exists():
             url = f"{example_data_url}/{dataset}/{filename}"
