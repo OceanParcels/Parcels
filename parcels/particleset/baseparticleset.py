@@ -1,3 +1,4 @@
+import sys
 import time as time_module
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -105,7 +106,7 @@ class BaseParticleSet(NDCluster):
         pass
 
     def __create_progressbar(self, starttime, endtime):
-        pbar = tqdm(total=abs(endtime - starttime))
+        pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
         pbar.prevtime = starttime
         return pbar
 
