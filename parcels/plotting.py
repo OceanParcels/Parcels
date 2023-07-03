@@ -216,8 +216,8 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection='Pla
             x, y = plotlon[0], plotlat[0]
         else:
             x, y = np.meshgrid(plotlon[0], plotlat[0])
-        u = np.where(speed > 0., data[0]/speed, 0)
-        v = np.where(speed > 0., data[1]/speed, 0)
+        u = np.divide(data[0], speed, where=speed > 0.)
+        v = np.divide(data[1], speed, where=speed > 0.)
         if cartopy:
             cs = ax.quiver(np.asarray(x), np.asarray(y), np.asarray(u), np.asarray(v), speed, cmap=ncar_cmap, clim=[vmin, vmax], scale=50, transform=cartopy.crs.PlateCarree())
         else:
