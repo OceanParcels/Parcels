@@ -25,7 +25,7 @@ dependencies:
   - nbval
   - scikit-learn
   - pykdtree
-  - zarr
+  - zarr>=2.11.0
 
   # Formatting
   - black
