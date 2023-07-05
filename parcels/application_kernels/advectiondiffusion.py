@@ -42,8 +42,8 @@ def AdvectionDiffusionM1(particle, fieldset, time):
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
-    particle.lon += u * particle.dt + 0.5 * dKdx * (dWx**2 + particle.dt) + bx * dWx
-    particle.lat += v * particle.dt + 0.5 * dKdy * (dWy**2 + particle.dt) + by * dWy
+    particle_dlon += u * particle.dt + 0.5 * dKdx * (dWx**2 + particle.dt) + bx * dWx  # noqa
+    particle_dlat += v * particle.dt + 0.5 * dKdy * (dWy**2 + particle.dt) + by * dWy  # noqa
 
 
 def AdvectionDiffusionEM(particle, fieldset, time):
@@ -78,8 +78,8 @@ def AdvectionDiffusionEM(particle, fieldset, time):
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
-    particle.lon += ax * particle.dt + bx * dWx
-    particle.lat += ay * particle.dt + by * dWy
+    particle_dlon += ax * particle.dt + bx * dWx  # noqa
+    particle_dlat += ay * particle.dt + by * dWy  # noqa
 
 
 def DiffusionUniformKh(particle, fieldset, time):
@@ -94,7 +94,7 @@ def DiffusionUniformKh(particle, fieldset, time):
 
     This kernel assumes diffusivity gradients are zero and is therefore more efficient.
     Since the perturbation due to diffusion is in this case isotropic independent, this
-    kernel contains no advection and can be used in combination with a seperate
+    kernel contains no advection and can be used in combination with a separate
     advection kernel.
 
     The Wiener increment `dW` is normally distributed with zero
@@ -107,5 +107,5 @@ def DiffusionUniformKh(particle, fieldset, time):
     bx = math.sqrt(2 * fieldset.Kh_zonal[particle])
     by = math.sqrt(2 * fieldset.Kh_meridional[particle])
 
-    particle.lon += bx * dWx
-    particle.lat += by * dWy
+    particle_dlon += bx * dWx  # noqa
+    particle_dlat += by * dWy  # noqa
