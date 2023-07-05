@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "parcels/_version_setup.py"
+local_scheme = "no-local-version"
+
+[project]
+name = "parcels"
+description = "Framework for Lagrangian tracking of virtual ocean particles in the petascale age."
+readme = "README.md"
+dynamic = ["version"]
+authors = [{name = "oceanparcels.org team"}]
+requires-python = ">=3.8"
+
+[tool.setuptools]
+packages = ["parcels"]
+
+[tool.setuptools.package-data]
+parcels = ["parcels/include/*"]
