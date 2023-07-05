@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -30,6 +30,10 @@ packages = ["parcels"]
 
 [tool.setuptools.package-data]
 parcels = ["parcels/include/*"]
+
+[tool.setuptools_scm]
+write_to = "parcels/_version_setup.py"
+local_scheme = "no-local-version"
 
 [tool.isort]
 profile = "black"
