@@ -96,6 +96,7 @@ class BaseKernel:
         self.src_file = None
         self.lib_file = None
         self.log_file = None
+        self.scipy_positionupdate_kernels_added = False
 
         # Generate the kernel function and add the outer loop
         if self._ptype.uses_jit:
@@ -152,6 +153,20 @@ class BaseKernel:
         if indent:
             lines = [line.replace(indent.groups()[0], '', 1) for line in lines]
         return "\n".join(lines)
+
+    def add_scipy_positionupdate_kernels(self):
+        # Adding kernels that set and update the coordinate changes
+        def Setcoords(particle, fieldset, time):
+            particle_dlon = 0  # noqa
+            particle_dlat = 0  # noqa
+            particle_ddepth = 0  # noqa
+
+        def Updatecoords(particle, fieldset, time):
+            particle.lon += particle_dlon  # noqa
+            particle.lat += particle_dlat  # noqa
+            particle.depth += particle_ddepth  # noqa
+
+        self._pyfunc = self.__radd__(Setcoords).__add__(Updatecoords)._pyfunc
 
     def check_fieldsets_in_kernels(self, pyfunc):
         """
@@ -433,20 +448,7 @@ class BaseKernel:
                 p.dt = pdt_prekernels
                 state_prev = p.state
 
-                # Adding kernels to set and update the coordinate changes
-                def Setcoords(particle, fieldset, time):
-                    particle_dlon = 0  # noqa
-                    particle_dlat = 0  # noqa
-                    particle_ddepth = 0  # noqa
-
-                def Updatecoords(particle, fieldset, time):
-                    particle.lon += particle_dlon  # noqa
-                    particle.lat += particle_dlat  # noqa
-                    particle.depth += particle_ddepth  # noqa
-
-                full_pyfunc = self.__radd__(Setcoords).__add__(Updatecoords)._pyfunc
-
-                res = full_pyfunc(p, self._fieldset, p.time)
+                res = self._pyfunc(p, self._fieldset, p.time)
                 if res is None:
                     res = StateCode.Success
 

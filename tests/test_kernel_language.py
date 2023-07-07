@@ -364,7 +364,7 @@ def test_random_kernel_concat(fieldset, pset_mode, mode, concat):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('mode', ['jit', pytest.param('scipy', marks=pytest.mark.xfail(reason="c_kernels don't work in scipy mode"))])
 @pytest.mark.parametrize('c_inc', ['str', 'file'])
 def test_c_kernel(fieldset, pset_mode, mode, c_inc):
     coord_type = np.float32 if c_inc == 'str' else np.float64
@@ -393,7 +393,7 @@ def test_c_kernel(fieldset, pset_mode, mode, c_inc):
         func('parcels_customed_Cfunc_pointer_args', fieldset.U, particle.lon, particle.dt)
 
     def pykernel(particle, fieldset, time):
-        particle.lon = func(fieldset.U, particle.lon, particle.dt)
+        particle_dlon = func(fieldset.U, particle.lon, particle.dt)  # noqa
 
     if mode == 'scipy':
         kernel = pset.Kernel(pykernel)

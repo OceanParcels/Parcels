@@ -153,6 +153,10 @@ class KernelAOS(BaseKernel):
                     continue
                 f.data = np.array(f.data)
 
+        if not self.scipy_positionupdate_kernels_added:
+            self.add_scipy_positionupdate_kernels()
+            self.scipy_positionupdate_kernels_added = True
+
         for p in pset:
             self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
