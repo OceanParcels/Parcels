@@ -157,7 +157,9 @@ def test_advection_3D_outofbounds(pset_mode, mode, direction, wErrorThroughSurfa
 
     def SubmergeParticle(particle, fieldset, time):
         particle.depth = 0
-        AdvectionRK4(particle, fieldset, time)  # perform a 2D advection because vertical flow will always push up in this case
+        (u1, v1) = fieldset.UV[particle]
+        particle.lon += u1 * particle.dt  # noqa
+        particle.lat += v1 * particle.dt  # noqa
         particle.time = time + particle.dt  # to not trigger kernels again, otherwise infinite loop
         particle.set_state(StateCode.Success)
 
