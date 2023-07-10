@@ -64,6 +64,7 @@ def AdvectionRK45(particle, fieldset, time):
     1e-5 * dt by default.
     """
     rk45tol = 1e-5
+    min_dt = 1e-3
     c = [1./4., 3./8., 12./13., 1., 1./2.]
     A = [[1./4., 0., 0., 0., 0.],
          [3./32., 9./32., 0., 0., 0.],
@@ -96,7 +97,7 @@ def AdvectionRK45(particle, fieldset, time):
     lat_5th = (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * particle.dt
 
     kappa2 = math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2)
-    if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol), 2):
+    if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol), 2) or particle.dt < min_dt:
         particle_dlon += lon_4th  # noqa
         particle_dlat += lat_4th  # noqa
         if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol / 10), 2):
