@@ -121,7 +121,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     timer.psetinit.stop()
     timer.psetrun = timer.Timer('Pset_run', parent=timer.pset)
     pset.execute(method + pset.Kernel(UpdateP) + pset.Kernel(AgeP), runtime=runtime, dt=dt,
-                 moviedt=None, output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
+                 output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     if verbose:
         print(f"Final particle positions:\n{pset}")
