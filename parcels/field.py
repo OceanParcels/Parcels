@@ -1311,39 +1311,6 @@ class Field:
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
-    def show(self, animation=False, show_time=None, domain=None, depth_level=0, projection='PlateCarree', land=True,
-             vmin=None, vmax=None, savefile=None, **kwargs):
-        """Method to 'show' a Parcels Field.
-
-        Parameters
-        ----------
-        animation : bool
-            Whether result is a single plot, or an animation (Default value = False)
-        show_time : float
-            Time in seconds from start after which to show the Field (only in single-plot mode) (Default value = None)
-        domain : dict
-            dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
-        depth_level :
-            depth level to be plotted (default 0)
-        projection :
-            type of cartopy projection to use (default PlateCarree)
-        land : bool
-            Whether to show land. This is ignored for flat meshes (Default value = True)
-        vmin : float
-            minimum colour scale (only in single-plot mode) (Default value = None)
-        vmax : float
-            maximum colour scale (only in single-plot mode) (Default value = None)
-        savefile : str, opptional
-            Name of a file to save the plot to (Default value = None)
-        **kwargs :
-            Additional keyword arguments to pass to :func:`parcels.plotting.plotfield`
-        """
-        from parcels.plotting import plotfield
-        plt, _, _, _ = plotfield(self, animation=animation, show_time=show_time, domain=domain, depth_level=depth_level,
-                                 projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, **kwargs)
-        if plt:
-            plt.show()
-
     def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
         """Add a 'halo' to all Fields in a FieldSet.
 
