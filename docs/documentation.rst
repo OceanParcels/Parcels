@@ -67,4 +67,3 @@ Parcels has several documentation and tutorial Jupyter notebooks which go throug
 
    examples/tutorial_Argofloats.ipynb
    examples/documentation_homepage_animation.ipynb
-   examples/tutorial_Agulhasparticles.ipynb

@@ -1,4 +1,4 @@
-#
+"""Sphinx configuration file for Parcels documentation."""
 # parcels documentation build configuration file, created by
 # sphinx-quickstart on Tue Oct 20 09:58:20 2015.
 #
@@ -209,6 +209,7 @@ downloads_folder.mkdir(exist_ok=True)
 
 
 def make_filename_safe(filename: str, safe_char: str = '_') -> str:
+    """Make a filename safe for saving to disk."""
     # Replace any characters that are not allowed in a filename with the safe character
     safe_filename = re.sub(r'[\\/:*?"<>|]', safe_char, filename)
     return safe_filename
@@ -356,7 +357,6 @@ nbsphinx_thumbnails = {
     'examples/tutorial_timestamps': '_static/calendar-icon.jpg',
     'examples/tutorial_jit_vs_scipy': '_static/clock-icon.png',
     'examples/documentation_homepage_animation': '_images/homepage.gif',
-    'examples/tutorial_Agulhasparticles': '_images/globcurrent_fullyseeded.gif',
     'examples/tutorial_interaction': '_static/pulled_particles_twoatractors_line.gif',
     'examples/documentation_LargeRunsOutput': '_static/harddrive.png',
     'examples/documentation_geospatial': '_images/tutorial_geospatial_google_earth.png'
