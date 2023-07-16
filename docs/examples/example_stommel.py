@@ -164,7 +164,7 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='Print particle information before and after execution')
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
-    p.add_argument('-o', '--outfile', default='StommelParticle.zarr',
+    p.add_argument('-o', '--outfile', default='StommelParticle.parquet',
                    help='Name of output file')
     p.add_argument('-r', '--repeatdt', default=None, type=int,
                    help='repeatdt of the ParticleSet')

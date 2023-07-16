@@ -1,11 +1,13 @@
-"""Module controlling the writing of ParticleSets to Zarr file."""
+"""Module controlling the writing of ParticleSets to parquet file."""
 import os
+import shutil
 from abc import ABC, abstractmethod
 from datetime import timedelta as delta
+from pathlib import Path
 
+# import fastparquet as fpq  # needed because pyarrow can't append to parquet files (https://github.com/apache/arrow/issues/33362)
 import numpy as np
-import xarray as xr
-import zarr
+import pandas as pd
 
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import OperationCode
@@ -36,19 +38,15 @@ class BaseParticleFile(ABC):
     Parameters
     ----------
     name : str
-        Basename of the output file. This can also be a Zarr store object.
+        Basename of the output file. This can also be a Zarr store object.  # TODO make sure can also write to parquet store?
     particleset :
         ParticleSet to output
     outputdt :
         Interval which dictates the update frequency of file output
         while ParticleFile is given as an argument of ParticleSet.execute()
         It is either a timedelta object or a positive double.
-    chunks :
-        Tuple (trajs, obs) to control the size of chunks in the zarr output.
     write_ondelete : bool
         Whether to write particle data only when they are deleted. Default is False
-    create_new_zarrfile : bool
-        Whether to create a new file. Default is True
 
     Returns
     -------
@@ -65,11 +63,10 @@ class BaseParticleFile(ABC):
     lonlatdepth_dtype = None
 
     def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False,
-                 create_new_zarrfile=True):
+                 create_new_zarrfile=True):  # TODO remove chunks and create_new_zarrfile
 
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
-        self.chunks = chunks
         self.lasttime_written = None  # variable to check if time has been written already
 
         self.particleset = particleset
@@ -81,7 +78,6 @@ class BaseParticleFile(ABC):
         self.maxids = 0
         self.obs_written = np.empty((0,), dtype=int)
         self.pids_written = {}
-        self.create_new_zarrfile = create_new_zarrfile
         self.vars_to_write = {}
         for var in self.particleset.collection.ptype.variables:
             if var.to_write:
@@ -107,22 +103,37 @@ class BaseParticleFile(ABC):
                                np.int64: np.iinfo(np.int64).max, np.uint8: np.iinfo(np.uint8).max,
                                np.uint16: np.iinfo(np.uint16).max, np.uint32: np.iinfo(np.uint32).max,
                                np.uint64: np.iinfo(np.uint64).max}
-        if issubclass(type(name), zarr.storage.Store):
-            # If we already got a Zarr store, we won't need any of the naming logic below.
-            # But we need to handle incompatibility with MPI mode for now:
-            if MPI and MPI.COMM_WORLD.Get_size() > 1:
-                raise ValueError("Currently, MPI mode is not compatible with directly passing a Zarr store.")
-            self.fname = name
+        if False:  # if issubclass(type(name), zarr.storage.Store):
+            #     # If we already got a Zarr store, we won't need any of the naming logic below.
+            #     # But we need to handle incompatibility with MPI mode for now:
+            #     if MPI and MPI.COMM_WORLD.Get_size() > 1:
+            #         raise ValueError("Currently, MPI mode is not compatible with directly passing a Zarr store.")
+            #     self.fname = name
+            #     self.store = name
+            pass  # TODO implement parquet store?
         else:
             extension = os.path.splitext(str(name))[1]
-            if extension in ['.nc', '.nc4']:
-                raise RuntimeError('Output in NetCDF is not supported anymore. Use .zarr extension for ParticleFile name.')
-            if MPI and MPI.COMM_WORLD.Get_size() > 1:
-                self.fname = os.path.join(name, f"proc{self.mpi_rank:02d}.zarr")
-                if extension in ['.zarr']:
-                    logger.warning(f'The ParticleFile name contains .zarr extension, but zarr files will be written per processor in MPI mode at {self.fname}')
+            if extension in ['.parquet', '.pqt', '.parq']:
+                pass
+            elif extension in ['.nc', '.nc4']:
+                raise RuntimeError('Output in NetCDF is not supported anymore. Use .parquet or extension for ParticleFile name.')
+            elif extension in ['.zarr']:
+                raise RuntimeError('Output in zarr is not supported anymore. Use .parquet extension for ParticleFile name.')
             else:
-                self.fname = name if extension in ['.zarr'] else "%s.zarr" % name
+                raise RuntimeError(f"Output format {extension} not supported. Use .parquet extension for ParticleFile name.")
+
+            if MPI and MPI.COMM_WORLD.Get_size() > 1:
+                self.fname = os.path.join(name, f"proc{self.mpi_rank:02d}.parquet")
+                if extension in ['.parquet', '.pqt', '.parq']:
+                    logger.warning(f'The ParticleFile name contains .parquet extension, but parquet files will be written per processor in MPI mode at {self.fname}')
+            else:
+                self.fname = name if extension in ['.parquet', '.pqt', '.parq'] else "%s.parquet" % name
+                self.nfiles = 0
+                parquet_folder = Path(self.fname)
+
+                if parquet_folder.exists():
+                    shutil.rmtree(parquet_folder)
+                parquet_folder.mkdir(parents=True)
 
     @abstractmethod
     def _reserved_var_names(self):
@@ -199,23 +210,8 @@ class BaseParticleFile(ABC):
     def write_once(self, var):
         return self.particleset.collection.ptype[var].to_write == 'once'
 
-    def _extend_zarr_dims(self, Z, store, dtype, axis):
-        if axis == 1:
-            a = np.full((Z.shape[0], self.chunks[1]), np.nan, dtype=dtype)
-            obs = zarr.group(store=store, overwrite=False)["obs"]
-            if len(obs) == Z.shape[1]:
-                obs.append(np.arange(self.chunks[1])+obs[-1]+1)
-        else:
-            extra_trajs = max(self.maxids - Z.shape[0], self.chunks[0])
-            if len(Z.shape) == 2:
-                a = np.full((extra_trajs, Z.shape[1]), np.nan, dtype=dtype)
-            else:
-                a = np.full((extra_trajs,), np.nan, dtype=dtype)
-        Z.append(a, axis=axis)
-        zarr.consolidate_metadata(store)
-
     def write(self, pset, time, deleted_only=False):
-        """Write all data from one time step to the zarr file.
+        """Write all data from one time step to the parquet file.
 
         Parameters
         ----------
@@ -260,56 +256,34 @@ class BaseParticleFile(ABC):
                 indices_to_write_once = indices_to_write[once_ids]
                 pset.collection.setvardata('once_written', indices_to_write_once, np.ones(len(ids_once)))
 
+                dfdict = {}
+
+                for var in self.vars_to_write:
+                    varout = self._convert_varout_name(var)
+                    if varout not in ['trajectory']:  # because 'trajectory' is written as index
+                        if self.write_once(var):
+                            dfdict[varout] = pset.collection.getvardata(var, indices_to_write_once)
+                        else:
+                            dfdict[varout] = pset.collection.getvardata(var, indices_to_write)
+                # if self.create_new_zarrfile:
+                if self.nfiles == 0:
+                    self.obs_written = np.zeros(len(ids), dtype=np.int)
+
                 if self.maxids > len(self.obs_written):
                     self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
 
-                if self.create_new_zarrfile:
-                    if self.chunks is None:
-                        self.chunks = (len(ids), 1)
-                    elif self.chunks[0] > len(ids):
-                        logger.warning(f'Chunk size for trajectory ({self.chunks[0]}) is larger than length of initial set to write. '
-                                       f'Reducing ParticleFile chunks to ({len(ids)}, {self.chunks[1]})')
-                        self.chunks = (len(ids), self.chunks[1])
-                    if (self.maxids > len(ids)) or (self.maxids > self.chunks[0]):
-                        arrsize = (self.maxids, self.chunks[1])
-                    else:
-                        arrsize = self.chunks
-                    ds = xr.Dataset(attrs=self.metadata, coords={"trajectory": ("trajectory", pids),
-                                                                 "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))})
-                    attrs = self._create_variables_attribute_dict()
-                    for var in self.vars_to_write:
-                        varout = self._convert_varout_name(var)
-                        if varout not in ['trajectory']:  # because 'trajectory' is written as coordinate
-                            if self.write_once(var):
-                                data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
-                                data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
-                                dims = ["trajectory"]
-                            else:
-                                data = np.full(arrsize, np.nan, dtype=self.vars_to_write[var])
-                                data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
-                                dims = ["trajectory", "obs"]
-                            ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
-                            ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
-                    ds.to_zarr(self.fname, mode='w')
-                    self.create_new_zarrfile = False
-                else:
-                    # Either use the store that was provided directly or create a DirectoryStore:
-                    if issubclass(type(self.fname), zarr.storage.Store):
-                        store = self.fname
-                    else:
-                        store = zarr.DirectoryStore(self.fname)
-                    Z = zarr.group(store=store, overwrite=False)
-                    obs = self.obs_written[np.array(ids)]
-                    for var in self.vars_to_write:
-                        varout = self._convert_varout_name(var)
-                        if self.maxids > Z[varout].shape[0]:
-                            self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
-                        if self.write_once(var):
-                            if len(ids_once) > 0:
-                                Z[varout].vindex[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
-                        else:
-                            if max(obs) >= Z[varout].shape[1]:
-                                self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
-                            Z[varout].vindex[ids, obs] = pset.collection.getvardata(var, indices_to_write)
+                obs = self.obs_written[np.array(ids)]
+                index = pd.MultiIndex.from_tuples(list(zip(pids, obs)), names=['trajectory', 'obs'])
+                df = pd.DataFrame(data=dfdict, index=index)
+                fname = self.fname + '/p%03d.parquet' % self.nfiles
+                self.nfiles += 1
+                df.to_parquet(fname, engine='pyarrow')
+
+                # TODO remove this version using fastparquet
+                # if self.create_new_zarrfile:
+                #     fpq.write(self.fname, df, compression='GZIP', append=False)
+                #     self.create_new_zarrfile = False
+                # else:
+                #     fpq.write(self.fname, df, compression='GZIP', append=True)
 
                 self.obs_written[np.array(ids)] += 1
