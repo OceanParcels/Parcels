@@ -23,7 +23,7 @@ dependencies:
   - ipykernel
   - nbval
   - pykdtree
-  - zarr>=2.11.0
+  - pyarrow
 
   # Formatting
   - black
