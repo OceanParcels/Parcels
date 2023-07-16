@@ -16,6 +16,9 @@ out-*
 *.pyc
 *.dSYM/*
 **/*.zarr/*
+**/*.parq
+**/*.parquet
+**/*.pqt
 
 .idea/*
 Profile.prof
