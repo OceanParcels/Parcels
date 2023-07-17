@@ -90,9 +90,8 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
     class TestParticle(ptype[mode]):
         p = Variable('p', np.float32, initial=0.33)
         p2 = Variable('p2', np.float32, initial=1, to_write=False)
-        p3 = Variable('p3', np.float32, to_write='once')
 
-    pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, depth=[4]*len(lon), pclass=TestParticle, p3=np.arange(len(lon)))
+    pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, depth=[4]*len(lon), pclass=TestParticle)
     pfile = pset.ParticleFile(filename, outputdt=1)
 
     def Kernel(particle, fieldset, time):
@@ -105,7 +104,7 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
     pset_new = pset_type[pset_mode]['pset'].from_particlefile(fieldset, pclass=TestParticle, filename=filename,
                                                               restart=restart, repeatdt=1)
 
-    for var in ['lon', 'lat', 'depth', 'time', 'p', 'p2', 'p3']:
+    for var in ['lon', 'lat', 'depth', 'time', 'p', 'p2']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
 
     if restart:

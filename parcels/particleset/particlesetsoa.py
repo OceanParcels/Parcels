@@ -4,6 +4,7 @@ from datetime import date, datetime
 from datetime import timedelta as delta
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # noqa
@@ -451,9 +452,9 @@ class ParticleSetSOA(BaseParticleSet):
 
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
-        """Initialise the ParticleSet from a zarr ParticleFile.
+        """Initialise the ParticleSet from a parquet ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
-        in a zarr ParticleFile at a certain time. Particle IDs are preserved if restart=True
+        in a parquet ParticleFile at a certain time. Particle IDs are preserved if restart=True
 
         Parameters
         ----------
@@ -484,7 +485,7 @@ class ParticleSetSOA(BaseParticleSet):
                            'setting a new repeatdt will start particles from the _new_ particle '
                            'locations.')
 
-        pfile = xr.open_zarr(str(filename))
+        pfile = xr.Dataset.from_dataframe(pd.read_parquet(str(filename)))
         pfile_vars = [v for v in pfile.data_vars]
 
         vars = {}
@@ -492,7 +493,7 @@ class ParticleSetSOA(BaseParticleSet):
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'once_written', 'state'] \
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'state'] \
                     and v.to_write:
                 raise RuntimeError(f'Variable {v.name} is in pclass but not in the particlefile')
             to_write[v.name] = v.to_write
@@ -513,9 +514,7 @@ class ParticleSetSOA(BaseParticleSet):
         for v in vars:
             if to_write[v] is True:
                 vars[v] = vars[v][inds]
-            elif to_write[v] == 'once':
-                vars[v] = vars[v][inds[0]]
-            if v not in ['lon', 'lat', 'depth', 'time', 'id']:
+            if v not in ['lon', 'lat', 'depth', 'time', 'id', 'obs']:
                 kwargs[v] = vars[v]
 
         if restart:
@@ -744,6 +743,6 @@ class ParticleSetSOA(BaseParticleSet):
         var :
             Name of the variable (string)
         write_status :
-            Write status of the variable (True, False or 'once')
+            Write status of the variable (True or False)
         """
         self._collection.set_variable_write_status(var, write_status)
