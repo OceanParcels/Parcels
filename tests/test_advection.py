@@ -2,6 +2,7 @@ import math
 from datetime import timedelta as delta
 
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
@@ -511,8 +512,8 @@ def test_uniform_analytical(pset_mode, mode, u, v, w, direction, tmpdir):
     x0, y0, z0 = 6.1, 6.2, 20
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
 
-    outfile_path = tmpdir.join("uniformanalytical.zarr")
-    outfile = pset.ParticleFile(name=outfile_path, outputdt=1, chunks=(1, 1))
+    outfile_path = tmpdir.join("uniformanalytical.parquet")
+    outfile = pset.ParticleFile(name=outfile_path, outputdt=1)
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
                  output_file=outfile)
     assert np.abs(pset.lon - x0 - 4 * u * direction) < 1e-6
@@ -520,7 +521,7 @@ def test_uniform_analytical(pset_mode, mode, u, v, w, direction, tmpdir):
     if w:
         assert np.abs(pset.depth - z0 - 4 * w * direction) < 1e-4
 
-    ds = xr.open_zarr(outfile_path, mask_and_scale=False)
+    ds = xr.Dataset.from_dataframe(pd.read_parquet(outfile_path))
     times = ds['time'][:].values.astype('timedelta64[s]')[0]
     timeref = direction * np.arange(0, 5).astype('timedelta64[s]')
     assert np.allclose(times, timeref, atol=np.timedelta64(1, 'ms'))

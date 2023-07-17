@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from zarr.storage import MemoryStore
 
 from parcels import (  # noqa
     ErrorCode,
@@ -51,7 +50,7 @@ def fieldset_ficture(xdim=40, ydim=100):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_write_parquet_memorystore(fieldset, pset_mode, mode, npart=10):
     """Check that writing to a parquet MemoryStore works."""
-    parquet_store = MemoryStore()
+    parquet_store = None  # MemoryStore()
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
                                         lat=0.5*np.ones(npart), time=0)

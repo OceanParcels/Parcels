@@ -87,7 +87,7 @@ def AgeP(particle, fieldset, time):
 
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
-                    outfile="StommelParticle.zarr", repeatdt=None, maxage=None, write_fields=True, pset_mode='soa'):
+                    outfile="StommelParticle.parquet", repeatdt=None, maxage=None, write_fields=True, pset_mode='soa'):
     timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
     fieldset = stommel_fieldset(grid_type=grid_type)
     if write_fields:

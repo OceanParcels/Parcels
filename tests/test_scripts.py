@@ -34,7 +34,7 @@ def create_outputfiles(dir, pset_mode):
     y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)
     lat = np.linspace(y[0], y[1], npart)
 
-    fp = dir.join("DelayParticle.zarr")
+    fp = dir.join("DelayParticle.parquet")
     output_file = pset.ParticleFile(name=fp, outputdt=delaytime)
 
     for t in range(npart):
@@ -44,7 +44,6 @@ def create_outputfiles(dir, pset_mode):
 
     pset.execute(AdvectionRK4, runtime=endtime-npart*delaytime,
                  dt=delta(minutes=5), output_file=output_file)
-    output_file.close()
 
     return fp
 

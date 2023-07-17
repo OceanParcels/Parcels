@@ -83,7 +83,7 @@ def test_pset_create_list_with_customvariable(fieldset, pset_mode, mode, npart=1
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('restart', [True, False])
 def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir):
-    filename = tmpdir.join("pset_fromparticlefile.zarr")
+    filename = tmpdir.join("pset_fromparticlefile.parquet")
     lon = np.linspace(0, 1, 10, dtype=np.float32)
     lat = np.linspace(1, 0, 10, dtype=np.float32)
 
@@ -101,7 +101,6 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
             particle.delete()
 
     pset.execute(Kernel, runtime=2, dt=1, output_file=pfile)
-    pfile.close()
 
     pset_new = pset_type[pset_mode]['pset'].from_particlefile(fieldset, pclass=TestParticle, filename=filename,
                                                               restart=restart, repeatdt=1)

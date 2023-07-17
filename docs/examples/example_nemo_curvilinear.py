@@ -3,6 +3,7 @@ from datetime import timedelta as delta
 from glob import glob
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from parcels import (
@@ -69,7 +70,7 @@ def make_plot(trajfile):
 
     def load_particles_file(fname, varnames):
         T = ParticleData()
-        ds = xr.open_zarr(fname)
+        ds = xr.Dataset.from_dataframe(pd.read_parquet(fname))
         T.id = ds['trajectory'][:]
         for v in varnames:
             setattr(T, v, ds[v][:])
@@ -124,7 +125,7 @@ def main(args=None):
     outfile = "nemo_particles"
 
     run_nemo_curvilinear(args.mode, outfile)
-    make_plot(outfile+'.zarr')
+    make_plot(outfile+'.parquet')
 
 
 if __name__ == "__main__":
