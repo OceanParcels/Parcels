@@ -21,6 +21,7 @@ out-*
 **/*.pqt
 
 .idea/*
+.env
 Profile.prof
 **/.ipynb_checkpoints/*
 .cache/*

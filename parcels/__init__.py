@@ -15,6 +15,5 @@ from parcels.kernel import *  # noqa
 from parcels.particle import *  # noqa
 from parcels.particlefile import *  # noqa
 from parcels.particleset import *  # noqa
-from parcels.scripts import *  # noqa
 from parcels.tools import *  # noqa
 from parcels.utils import *  # noqa
