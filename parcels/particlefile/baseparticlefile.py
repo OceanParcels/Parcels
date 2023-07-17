@@ -1,7 +1,7 @@
 """Module controlling the writing of ParticleSets to parquet file."""
 import os
 import shutil
-from abc import ABC, abstractmethod
+from abc import ABC
 from datetime import timedelta as delta
 from pathlib import Path
 
@@ -62,8 +62,7 @@ class BaseParticleFile(ABC):
     time_origin = None
     lonlatdepth_dtype = None
 
-    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False,
-                 create_new_zarrfile=True):  # TODO remove chunks and create_new_zarrfile
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False):
 
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
@@ -75,17 +74,11 @@ class BaseParticleFile(ABC):
             self.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
         self.time_origin = self.particleset.time_origin
         self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
-        self.maxids = 0
-        self.obs_written = np.empty((0,), dtype=int)
-        self.pids_written = {}
         self.vars_to_write = {}
         for var in self.particleset.collection.ptype.variables:
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
-
-        # Reset once-written flag of each particle, in case new ParticleFile created for a ParticleSet
-        particleset.collection.setallvardata('once_written', 0)
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
                          "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
@@ -113,7 +106,7 @@ class BaseParticleFile(ABC):
             pass  # TODO implement parquet store?
         else:
             extension = os.path.splitext(str(name))[1]
-            if extension in ['.parquet', '.pqt', '.parq']:
+            if extension in ['.parquet', '.pqt', '.parq', '']:
                 pass
             elif extension in ['.nc', '.nc4']:
                 raise RuntimeError('Output in NetCDF is not supported anymore. Use .parquet or extension for ParticleFile name.')
@@ -135,11 +128,6 @@ class BaseParticleFile(ABC):
                     shutil.rmtree(parquet_folder)
                 parquet_folder.mkdir(parents=True)
 
-    @abstractmethod
-    def _reserved_var_names(self):
-        """Returns the reserved dimension names not to be written just once."""
-        pass
-
     def _create_variables_attribute_dict(self):
         """Creates the dictionary with variable attributes.
 
@@ -147,6 +135,7 @@ class BaseParticleFile(ABC):
         -----
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
+        # TODO check if attributes can be added in parquet
         attrs = {'z': {"long_name": "",
                        "standard_name": "depth",
                        "units": "m",
@@ -173,11 +162,10 @@ class BaseParticleFile(ABC):
             attrs['time']['calendar'] = 'standard' if self.time_origin.calendar == 'np_datetime64' else self.time_origin.calendar
 
         for vname in self.vars_to_write:
-            if vname not in self._reserved_var_names():
-                attrs[vname] = {"_FillValue": self.fill_value_map[self.vars_to_write[vname]],
-                                "long_name": "",
-                                "standard_name": vname,
-                                "units": "unknown"}
+            attrs[vname] = {"_FillValue": self.fill_value_map[self.vars_to_write[vname]],
+                            "long_name": "",
+                            "standard_name": vname,
+                            "units": "unknown"}
 
         return attrs
 
@@ -187,7 +175,7 @@ class BaseParticleFile(ABC):
     def close(self, delete_tempfiles=True):
         pass
 
-    def add_metadata(self, name, message):
+    def add_metadata(self, name, message):  # TODO check if metadata can be added in parquet
         """Add metadata to :class:`parcels.particleset.ParticleSet`.
 
         Parameters
@@ -206,9 +194,6 @@ class BaseParticleFile(ABC):
             return 'trajectory'
         else:
             return var
-
-    def write_once(self, var):
-        return self.particleset.collection.ptype[var].to_write == 'once'
 
     def write(self, pset, time, deleted_only=False):
         """Write all data from one time step to the parquet file.
@@ -244,40 +229,23 @@ class BaseParticleFile(ABC):
                 self.lasttime_written = time
 
             if len(indices_to_write) > 0:
-                pids = pset.collection.getvardata('id', indices_to_write)
-                to_add = sorted(set(pids) - set(self.pids_written.keys()))
-                for i, pid in enumerate(to_add):
-                    self.pids_written[pid] = self.maxids + i
-                ids = np.array([self.pids_written[p] for p in pids], dtype=int)
-                self.maxids = len(self.pids_written)
-
-                once_ids = np.where(pset.collection.getvardata('once_written', indices_to_write) == 0)[0]
-                ids_once = ids[once_ids]
-                indices_to_write_once = indices_to_write[once_ids]
-                pset.collection.setvardata('once_written', indices_to_write_once, np.ones(len(ids_once)))
+                trajectory = pset.collection.getvardata('id', indices_to_write)
+                obs = pset.collection.getvardata('obs', indices_to_write)
+                index = pd.MultiIndex.from_tuples(list(zip(trajectory, obs)), names=['trajectory', 'obs'])
 
                 dfdict = {}
-
                 for var in self.vars_to_write:
                     varout = self._convert_varout_name(var)
-                    if varout not in ['trajectory']:  # because 'trajectory' is written as index
-                        if self.write_once(var):
-                            dfdict[varout] = pset.collection.getvardata(var, indices_to_write_once)
-                        else:
-                            dfdict[varout] = pset.collection.getvardata(var, indices_to_write)
-                # if self.create_new_zarrfile:
-                if self.nfiles == 0:
-                    self.obs_written = np.zeros(len(ids), dtype=np.int)
+                    if varout not in ['trajectory', 'obs']:  # because 'trajectory' and 'obs' are written as index
+                        dfdict[varout] = pset.collection.getvardata(var, indices_to_write)
 
-                if self.maxids > len(self.obs_written):
-                    self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
-
-                obs = self.obs_written[np.array(ids)]
-                index = pd.MultiIndex.from_tuples(list(zip(pids, obs)), names=['trajectory', 'obs'])
                 df = pd.DataFrame(data=dfdict, index=index)
+
                 fname = self.fname + '/p%03d.parquet' % self.nfiles
-                self.nfiles += 1
                 df.to_parquet(fname, engine='pyarrow')
+
+                self.nfiles += 1
+                pset.collection.setvardata('obs', indices_to_write, obs+1)
 
                 # TODO remove this version using fastparquet
                 # if self.create_new_zarrfile:
@@ -285,5 +253,3 @@ class BaseParticleFile(ABC):
                 #     self.create_new_zarrfile = False
                 # else:
                 #     fpq.write(self.fname, df, compression='GZIP', append=True)
-
-                self.obs_written[np.array(ids)] += 1

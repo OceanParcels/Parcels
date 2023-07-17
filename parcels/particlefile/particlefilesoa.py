@@ -1,4 +1,4 @@
-"""Module controlling the writing of ParticleSets to NetCDF file"""
+"""Module controlling the writing of ParticleSets to parquet file"""
 import numpy as np
 
 from parcels.particlefile.baseparticlefile import BaseParticleFile
@@ -12,15 +12,13 @@ class ParticleFileSOA(BaseParticleFile):
     Parameters
     ----------
     name : str
-        Basename of the output file.  This can also be a Zarr store.
+        Basename of the output file.  This can also be a parquet store.
     particleset :
         ParticleSet to output
     outputdt :
         Interval which dictates the update frequency of file output
         while ParticleFile is given as an argument of ParticleSet.execute()
         It is either a timedelta object or a positive double.
-    chunks :
-        Tuple (trajs, obs) to control the size of chunks in the zarr output.
     write_ondelete :
         Whether to write particle data only when they are deleted. Default is False
 
@@ -31,9 +29,9 @@ class ParticleFileSOA(BaseParticleFile):
 
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False):
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False):
         super().__init__(
-            name=name, particleset=particleset, outputdt=outputdt, chunks=chunks, write_ondelete=write_ondelete
+            name=name, particleset=particleset, outputdt=outputdt, write_ondelete=write_ondelete
         )
 
     def __del__(self):
