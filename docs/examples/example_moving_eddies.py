@@ -133,8 +133,7 @@ def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,
     runtime = delta(days=7)
     print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
     pset.execute(method, runtime=runtime, dt=delta(hours=1),
-                 output_file=pset.ParticleFile(name=outfile, outputdt=delta(hours=1)),
-                 moviedt=None)
+                 output_file=pset.ParticleFile(name=outfile, outputdt=delta(hours=1)))
 
     if verbose:
         print(f"Final particle positions:\n{pset}")

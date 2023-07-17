@@ -29,20 +29,6 @@ parcels.tools.loggers module
     :members:
     :undoc-members:
 
-parcels.plotting module
------------------------
-
-.. automodule:: parcels.plotting
-    :members:
-    :undoc-members:
-
-parcels.scripts.plottrajectoriesfile module
--------------------------------------------
-
-.. automodule:: parcels.scripts.plottrajectoriesfile
-    :members:
-    :undoc-members:
-
 parcels.utils module
 -----------------------------------
 
