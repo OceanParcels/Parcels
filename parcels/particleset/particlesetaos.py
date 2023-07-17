@@ -608,7 +608,9 @@ class ParticleSetAOS(BaseParticleSet):
 
         inds = np.where(vars['time'] == restarttime)
         for v in vars:
-            if to_write[v] is True:
+            if v == 'id':
+                vars[v] = vars[v][inds[0]]
+            elif to_write[v] is True:
                 vars[v] = vars[v][inds]
             if v not in ['lon', 'lat', 'depth', 'time', 'id', 'obs']:
                 kwargs[v] = vars[v]

@@ -24,9 +24,8 @@ class Variable:
     initial :
         Initial value of the variable. Note that this can also be a Field object,
         which will then be sampled at the location of the particle
-    to_write : bool, 'once', optional
-        Boolean or 'once'. Controls whether Variable is written to NetCDF file.
-        If to_write = 'once', the variable will be written as a time-independent 1D array
+    to_write : bool, optional
+        Boolean. Controls whether Variable is written to NetCDF file.
     """
 
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):

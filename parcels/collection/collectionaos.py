@@ -939,7 +939,7 @@ class ParticleCollectionAOS(ParticleCollection):
         var :
             Name of the variable (string)
         write_status :
-            Write status of the variable (True, False or 'once')
+            Write status of the variable (True or False)
 
         """
         var_changed = False

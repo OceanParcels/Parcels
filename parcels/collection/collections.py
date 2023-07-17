@@ -897,12 +897,6 @@ class ParticleCollection(Collection):
         else:
             return False
 
-    def has_write_once_variables(self):
-        for var in self.ptype.variables:
-            if var.to_write == 'once':
-                return True
-        return False
-
     @abstractmethod
     def getvardata(self, var, indices=None):
         pass
@@ -924,6 +918,6 @@ class ParticleCollection(Collection):
         var : str
             Name of the variable
         write_status : bool, str
-            Write status of the variable (True, False or 'once')
+            Write status of the variable (True or False)
         """
         pass
