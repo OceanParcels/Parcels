@@ -4,7 +4,6 @@ from datetime import timedelta as delta
 from glob import glob
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from parcels import (

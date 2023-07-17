@@ -169,12 +169,6 @@ class BaseParticleFile(ABC):
 
         return attrs
 
-    def __del__(self):
-        self.close()
-
-    def close(self, delete_tempfiles=True):
-        pass
-
     def add_metadata(self, name, message):  # TODO check if metadata can be added in parquet
         """Add metadata to :class:`parcels.particleset.ParticleSet`.
 
