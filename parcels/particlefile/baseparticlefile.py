@@ -27,13 +27,6 @@ except:
 __all__ = ['BaseParticleFile']
 
 
-def _set_calendar(origin_calendar):
-    if origin_calendar == 'np_datetime64':
-        return 'standard'
-    else:
-        return origin_calendar
-
-
 class BaseParticleFile(ABC):
     """Initialise trajectory output.
 

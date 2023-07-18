@@ -1,6 +1,5 @@
 import os
 
-import cftime
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
@@ -20,8 +19,6 @@ from parcels import (  # noqa
     ScipyParticle,
     Variable,
 )
-from parcels.particlefile import _set_calendar
-from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -297,13 +294,6 @@ def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     assert np.all(np.diff(trajs.values) > 0)
     assert np.allclose(dt[np.isfinite(dt)], np.timedelta64(-1, 's'), atol=np.timedelta64(1, 'us'))
     ds.close()
-
-
-def test_set_calendar():
-    for calendar_name, cf_datetime in zip(_get_cftime_calendars(), _get_cftime_datetimes()):
-        date = getattr(cftime, cf_datetime)(1990, 1, 1)
-        assert _set_calendar(date.calendar) == date.calendar
-    assert _set_calendar('np_datetime64') == 'standard'
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
