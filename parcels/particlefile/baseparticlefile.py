@@ -176,7 +176,7 @@ class BaseParticleFile(ABC):
                     if varout == 'time':
                         dfdict[varout] = self.time_origin.fulltime(pset.collection.getvardata(var, indices_to_write))
                         if self.time_origin.calendar is None:
-                            dfdict[varout] = dfdict[varout].astype('timedelta64[s]')
+                            dfdict[varout] = (np.round(dfdict[varout])*1e9).astype('timedelta64[ns]')  # to avoid rounding errors for negative times
                     elif varout not in ['trajectory', 'obs']:  # because 'trajectory' and 'obs' are written as index
                         dfdict[varout] = pset.collection.getvardata(var, indices_to_write)
 
