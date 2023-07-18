@@ -87,17 +87,6 @@ class BaseParticleFile(ABC):
                          "parcels_version": parcels_version,
                          "parcels_mesh": self.parcels_mesh}
 
-        # Create dictionary to translate datatypes and fill_values
-        self.fmt_map = {np.float16: 'f2', np.float32: 'f4', np.float64: 'f8',
-                        np.bool_: 'i1', np.int8: 'i1', np.int16: 'i2',
-                        np.int32: 'i4', np.int64: 'i8', np.uint8: 'u1',
-                        np.uint16: 'u2', np.uint32: 'u4', np.uint64: 'u8'}
-        self.fill_value_map = {np.float16: np.nan, np.float32: np.nan, np.float64: np.nan,
-                               np.bool_: np.iinfo(np.int8).max, np.int8: np.iinfo(np.int8).max,
-                               np.int16: np.iinfo(np.int16).max, np.int32: np.iinfo(np.int32).max,
-                               np.int64: np.iinfo(np.int64).max, np.uint8: np.iinfo(np.uint8).max,
-                               np.uint16: np.iinfo(np.uint16).max, np.uint32: np.iinfo(np.uint32).max,
-                               np.uint64: np.iinfo(np.uint64).max}
         if False:  # if issubclass(type(name), zarr.storage.Store):
             #     # If we already got a Zarr store, we won't need any of the naming logic below.
             #     # But we need to handle incompatibility with MPI mode for now:
@@ -129,47 +118,6 @@ class BaseParticleFile(ABC):
                 if parquet_folder.exists():
                     shutil.rmtree(parquet_folder)
                 parquet_folder.mkdir(parents=True)
-
-    def _create_variables_attribute_dict(self):
-        """Creates the dictionary with variable attributes.
-
-        Notes
-        -----
-        For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
-        """
-        # TODO check if attributes can be added in parquet
-        attrs = {'z': {"long_name": "",
-                       "standard_name": "depth",
-                       "units": "m",
-                       "positive": "down"},
-                 'trajectory': {"long_name": "Unique identifier for each particle",
-                                "cf_role": "trajectory_id",
-                                "_FillValue": self.fill_value_map[np.int64]},
-                 'time': {"long_name": "",
-                          "standard_name": "time",
-                          "units": "seconds",
-                          "axis": "T"},
-                 'lon': {"long_name": "",
-                         "standard_name": "longitude",
-                         "units": "degrees_east",
-                         "axis":
-                             "X"},
-                 'lat': {"long_name": "",
-                         "standard_name": "latitude",
-                         "units": "degrees_north",
-                         "axis": "Y"}}
-
-        if self.time_origin.calendar is not None:
-            attrs['time']['units'] = "seconds since " + str(self.time_origin)
-            attrs['time']['calendar'] = 'standard' if self.time_origin.calendar == 'np_datetime64' else self.time_origin.calendar
-
-        for vname in self.vars_to_write:
-            attrs[vname] = {"_FillValue": self.fill_value_map[self.vars_to_write[vname]],
-                            "long_name": "",
-                            "standard_name": vname,
-                            "units": "unknown"}
-
-        return attrs
 
     def add_metadata(self, name, message):  # TODO check if metadata can be added in parquet
         """Add metadata to :class:`parcels.particleset.ParticleSet`.
@@ -243,7 +191,7 @@ class BaseParticleFile(ABC):
                 metadata = {**self.metadata, **(table.schema.metadata or {})}
                 table = table.replace_schema_metadata(metadata)
 
-                fname = self.fname + '/p%03d.parquet' % self.nfiles
+                fname = os.path.join(f"{self.fname}", f"p{self.nfiles:03d}.parquet")
                 pq.write_table(table, fname, compression='GZIP')
 
                 self.nfiles += 1
