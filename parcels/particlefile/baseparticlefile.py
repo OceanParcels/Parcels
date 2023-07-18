@@ -8,6 +8,8 @@ from pathlib import Path
 # import fastparquet as fpq  # needed because pyarrow can't append to parquet files (https://github.com/apache/arrow/issues/33362)
 import numpy as np
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import OperationCode
@@ -80,8 +82,8 @@ class BaseParticleFile(ABC):
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
 
-        self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
-                         "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
+        self.metadata = {"feature_type": "trajectory",
+                         "Conventions": "CF-1.6/CF-1.7",
                          "parcels_version": parcels_version,
                          "parcels_mesh": self.parcels_mesh}
 
@@ -179,7 +181,7 @@ class BaseParticleFile(ABC):
         message : str
             message to be written
         """
-        self.metadata[name] = message
+        self.metadata[name] = str(message)
 
     def _convert_varout_name(self, var):
         if var == 'depth':
@@ -237,10 +239,12 @@ class BaseParticleFile(ABC):
                     elif varout not in ['trajectory', 'obs']:  # because 'trajectory' and 'obs' are written as index
                         dfdict[varout] = pset.collection.getvardata(var, indices_to_write)
 
-                df = pd.DataFrame(data=dfdict, index=index)
+                table = pa.Table.from_pandas(pd.DataFrame(data=dfdict, index=index))
+                metadata = {**self.metadata, **(table.schema.metadata or {})}
+                table = table.replace_schema_metadata(metadata)
 
                 fname = self.fname + '/p%03d.parquet' % self.nfiles
-                df.to_parquet(fname, engine='pyarrow')
+                pq.write_table(table, fname, compression='GZIP')
 
                 self.nfiles += 1
                 pset.collection.setvardata('obs', indices_to_write, obs+1)

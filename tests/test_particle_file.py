@@ -3,6 +3,7 @@ import os
 import cftime
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 import pytest
 import xarray as xr
 
@@ -156,8 +157,10 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, npart=3):
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
 
+    metadata = pq.read_table(filepath).schema.metadata
+    assert np.isclose(float(metadata[b'runtime']), runtime)
+
     ds = xr.Dataset.from_dataframe(pd.read_parquet(filepath))
-    # assert ds.runtime == runtime  # TODO runtime is in metadata
     lon = ds['lon'][:]
     assert (sum(np.isfinite(lon)) == noutside)
     ds.close()
