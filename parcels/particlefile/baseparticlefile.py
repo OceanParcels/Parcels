@@ -230,7 +230,11 @@ class BaseParticleFile(ABC):
                 dfdict = {}
                 for var in self.vars_to_write:
                     varout = self._convert_varout_name(var)
-                    if varout not in ['trajectory', 'obs']:  # because 'trajectory' and 'obs' are written as index
+                    if varout == 'time':
+                        dfdict[varout] = self.time_origin.fulltime(pset.collection.getvardata(var, indices_to_write))
+                        if self.time_origin.calendar is None:
+                            dfdict[varout] = dfdict[varout].astype('timedelta64[s]')
+                    elif varout not in ['trajectory', 'obs']:  # because 'trajectory' and 'obs' are written as index
                         dfdict[varout] = pset.collection.getvardata(var, indices_to_write)
 
                 df = pd.DataFrame(data=dfdict, index=index)

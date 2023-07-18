@@ -44,8 +44,7 @@ def fieldset_ficture(xdim=40, ydim=100):
     return fieldset(xdim=xdim, ydim=ydim)
 
 
-@pytest.mark.skip("Parquet store writing not yet implemented")
-# TODO fix test for writing to parquet store (if that even exists)
+@pytest.mark.skip("Parquet store writing not yet implemented")  # TODO fix test for writing to parquet store (if that even exists)
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_write_parquet_memorystore(fieldset, pset_mode, mode, npart=10):
@@ -78,7 +77,7 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
 
     ds = xr.Dataset.from_dataframe(pd.read_parquet(filepath))
     timearr = ds['time'][:]
-    assert (np.isnan(timearr[3, 1])) and (np.isfinite(timearr[3, 0]))  # TODO check if time dtype can de a datetime64[ns]
+    assert (np.isnat(timearr[3, 1])) and (np.isfinite(timearr[3, 0]))
     ds.close()
 
 
@@ -125,7 +124,7 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
     pfile.write(pset, 2)
 
     ds = xr.Dataset.from_dataframe(pd.read_parquet(filepath))
-    # assert np.allclose(ds['time'][:, 0], np.timedelta64(0, 's'), atol=np.timedelta64(1, 'ms'))  # TODO set dtype for time to timedelta64[ns]
+    assert np.allclose(ds['time'][:, 0], np.timedelta64(0, 's'), atol=np.timedelta64(1, 'ms'))
     assert ds['time'][:].shape[0] == npart
     assert np.all(np.isnan(ds['time'][:, 1:]))
     ds.close()
@@ -293,7 +292,7 @@ def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     dt = np.diff(ds['time'][:])
     assert trajs.values.dtype == 'int64'
     assert np.all(np.diff(trajs.values) > 0)
-    assert np.allclose(dt[np.isfinite(dt)], -1)
+    assert np.allclose(dt[np.isfinite(dt)], np.timedelta64(-1, 's'), atol=np.timedelta64(1, 'us'))
     ds.close()
 
 
