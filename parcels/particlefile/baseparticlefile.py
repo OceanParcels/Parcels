@@ -3,6 +3,7 @@ import os
 import shutil
 from abc import ABC
 from datetime import timedelta as delta
+from datetime import datetime as datetime
 from pathlib import Path
 
 # import fastparquet as fpq  # needed because pyarrow can't append to parquet files (https://github.com/apache/arrow/issues/33362)
@@ -175,7 +176,10 @@ class BaseParticleFile(ABC):
                     varout = self._convert_varout_name(var)
                     if varout == 'time':
                         dfdict[varout] = self.time_origin.fulltime(pset.collection.getvardata(var, indices_to_write))
-                        if self.time_origin.calendar is None:
+                        if self.time_origin.calendar in ['360_day']:
+                            logger.warning_once("360_day calendar is not supported in Parquet output. Converting output to standard calendar.")
+                            dfdict[varout] = [datetime.strptime(str(t), '%Y-%m-%d %H:%M:%S') for t in dfdict[varout]]
+                        elif self.time_origin.calendar is None:
                             dfdict[varout] = (np.round(dfdict[varout])*1e9).astype('timedelta64[ns]')  # to avoid rounding errors for negative times
                     elif varout not in ['trajectory', 'obs']:  # because 'trajectory' and 'obs' are written as index
                         dfdict[varout] = pset.collection.getvardata(var, indices_to_write)

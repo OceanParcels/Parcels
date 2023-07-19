@@ -116,7 +116,10 @@ class TimeConverter:
             else:
                 return self.time_origin + np.timedelta64(int(time), 's')
         elif self.calendar in _get_cftime_calendars():
-            return self.time_origin + delta(seconds=time)
+            if isinstance(time, (list, np.ndarray)):
+                return [self.time_origin + delta(seconds=t) for t in time]
+            else:
+                return self.time_origin + delta(seconds=time)
         elif self.calendar is None:
             return self.time_origin + time
         else:
