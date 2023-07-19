@@ -147,7 +147,7 @@ class BaseParticleFile(ABC):
         """
         time = time.total_seconds() if isinstance(time, delta) else time
 
-        if self.lasttime_written != time and (self.write_ondelete is False or deleted_only is not False):
+        if (self.lasttime_written is None or ~np.isclose(self.lasttime_written, time)) and (self.write_ondelete is False or deleted_only is not False):
             if pset.collection._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
                 return
