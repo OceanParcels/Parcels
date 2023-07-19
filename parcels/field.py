@@ -1449,6 +1449,7 @@ class Field:
                                           interp_method=self.interp_method,
                                           data_full_zdim=self.data_full_zdim,
                                           chunksize=self.chunksize,
+                                          cast_data_dtype=self.cast_data_dtype,
                                           rechunk_callback_fields=rechunk_callback_fields,
                                           chunkdims_name_map=self.netcdf_chunkdims_name_map,
                                           netcdf_decodewarning=self.netcdf_decodewarning)
