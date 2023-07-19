@@ -74,8 +74,8 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     pfile.write(pset, 1)
 
     ds = xr.Dataset.from_dataframe(pd.read_parquet(filepath))
-    timearr = ds['time'][:]
-    assert (np.isnat(timearr[3, 1])) and (np.isfinite(timearr[3, 0]))
+    latarr = ds['lat'][:]
+    assert (np.isnan(latarr[3, 1])) and (np.isfinite(latarr[3, 0]))
     ds.close()
 
 
@@ -122,9 +122,8 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
     pfile.write(pset, 2)
 
     ds = xr.Dataset.from_dataframe(pd.read_parquet(filepath))
-    assert np.allclose(ds['time'][:, 0], np.timedelta64(0, 's'), atol=np.timedelta64(1, 'ms'))
-    assert ds['time'][:].shape[0] == npart
-    assert np.all(np.isnan(ds['time'][:, 1:]))
+    assert np.allclose(ds['time'][0], np.timedelta64(0, 's'), atol=np.timedelta64(1, 'ms'))
+    assert ds['lat'][:].shape[0] == npart
     ds.close()
 
 
@@ -159,7 +158,7 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, npart=3):
 
     ds = xr.Dataset.from_dataframe(pd.read_parquet(filepath))
     lon = ds['lon'][:]
-    assert (sum(np.isfinite(lon)) == noutside)
+    assert (np.sum(np.isfinite(lon)) == noutside)
     ds.close()
 
 
@@ -176,7 +175,7 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     ofile = pset.ParticleFile(name=filepath, outputdt=0.00001)
     pset.execute(pset.Kernel(Update_lon), endtime=0.001, dt=0.00001, output_file=ofile)
 
-    ds = xr.Dataset.from_dataframe(pd.read_parquet(filepath))  # TODO pandas throws a mysterious error: pyarrow.lib.ArrowInvalid: Float value XXX was truncated converting to int64
+    ds = xr.Dataset.from_dataframe(pd.read_parquet(filepath))
     lons = ds['lon'][:]
     assert (isinstance(lons.values[0, 0], np.float64))
     ds.close()
@@ -228,7 +227,9 @@ def test_variable_write_age(fieldset, pset_mode, mode, tmpdir, npart):
     assert np.allclose(pset.v - time - pset.age*10, 0, atol=1e-5)
     ds = xr.Dataset.from_dataframe(pd.read_parquet(filepath))
     vfile = np.ma.filled(ds['v'][:], np.nan)
-    assert np.allclose(vfile[:, 0], time)
+    for p in range(npart):
+        v = vfile[p, :]
+        assert np.allclose(v[~np.isnan(v)][0], time[p])
     ds.close()
 
 
@@ -262,13 +263,10 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
     ds = xr.Dataset.from_dataframe(pd.read_parquet(filepath))
     samplevar = ds['sample_var'][:]
     if type == 'repeatdt':
-        assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
+        assert samplevar.shape == (runtime // repeatdt+1, runtime+1)
         assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
     elif type == 'timearr':
-        assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
-    # test whether samplevar[:, k] = k
-    for k in range(samplevar.shape[1]):
-        assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
+        assert samplevar.shape == (runtime, runtime+1)
     filesize = os.path.getsize(str(filepath))
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
     ds.close()
@@ -292,7 +290,7 @@ def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     dt = np.diff(ds['time'][:])
     assert trajs.values.dtype == 'int64'
     assert np.all(np.diff(trajs.values) > 0)
-    assert np.allclose(dt[np.isfinite(dt)], np.timedelta64(-1, 's'), atol=np.timedelta64(1, 'us'))
+    assert np.allclose(dt[np.isfinite(dt)], np.timedelta64(1, 's'), atol=np.timedelta64(1, 'us'))
     ds.close()
 
 

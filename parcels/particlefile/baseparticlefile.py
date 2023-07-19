@@ -168,22 +168,21 @@ class BaseParticleFile(ABC):
 
             if len(indices_to_write) > 0:
                 trajectory = pset.collection.getvardata('id', indices_to_write)
-                obs = pset.collection.getvardata('obs', indices_to_write)
-                index = pd.MultiIndex.from_tuples(list(zip(trajectory, obs)), names=['trajectory', 'obs'])
 
                 dfdict = {}
                 for var in self.vars_to_write:
                     varout = self._convert_varout_name(var)
                     if varout == 'time':
-                        dfdict[varout] = self.time_origin.fulltime(pset.collection.getvardata(var, indices_to_write))
+                        dftime = self.time_origin.fulltime(pset.collection.getvardata(var, indices_to_write))
                         if self.time_origin.calendar in ['360_day']:
                             logger.warning_once("360_day calendar is not supported in Parquet output. Converting output to standard calendar.")
-                            dfdict[varout] = [datetime.strptime(str(t), '%Y-%m-%d %H:%M:%S') for t in dfdict[varout]]
+                            dftime = [datetime.strptime(str(t), '%Y-%m-%d %H:%M:%S') for t in dftime]
                         elif self.time_origin.calendar is None:
-                            dfdict[varout] = (np.round(dfdict[varout])*1e9).astype('timedelta64[ns]')  # to avoid rounding errors for negative times
+                            dftime = (np.round(dftime*1e9)).astype('timedelta64[ns]')  # to avoid rounding errors for negative times
                     elif varout not in ['trajectory', 'obs']:  # because 'trajectory' and 'obs' are written as index
                         dfdict[varout] = pset.collection.getvardata(var, indices_to_write)
-
+                # print(trajectory, dftime[0], type(trajectory), type(dftime[0]))
+                index = pd.MultiIndex.from_tuples(list(zip(trajectory, dftime)), names=['trajectory', 'time'])
                 table = pa.Table.from_pandas(pd.DataFrame(data=dfdict, index=index))
                 metadata = {**self.metadata, **(table.schema.metadata or {})}
                 table = table.replace_schema_metadata(metadata)
@@ -192,7 +191,6 @@ class BaseParticleFile(ABC):
                 pq.write_table(table, fname, compression='GZIP')
 
                 self.nfiles += 1
-                pset.collection.setvardata('obs', indices_to_write, obs+1)
 
                 # TODO remove this version using fastparquet
                 # if self.create_new_zarrfile:
