@@ -285,7 +285,6 @@ class BaseParticleFile(ABC):
                                 data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
                                 dims = ["trajectory"]
                             else:
-                                # nan_val = np.nan if self.vars_to_write[var] in [np.float32, np.float64] else np.iinfo(self.vars_to_write[var]).max
                                 data = np.full(arrsize, self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
                                 data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
                                 dims = ["trajectory", "obs"]
