@@ -22,6 +22,7 @@ class _FileBuffer:
         self.indices = indices
         self.dataset = None
         self.timestamp = timestamp
+        self.cast_data_dtype = kwargs.pop('cast_data_dtype', np.float32)
         self.ti = None
         self.interp_method = interp_method
         self.data_full_zdim = data_full_zdim
@@ -207,7 +208,7 @@ class NetcdfFileBuffer(_FileBuffer):
         data = self.dataset[self.name]
         ti = range(data.shape[0]) if self.ti is None else self.ti
         data = self._apply_indices(data, ti)
-        return np.array(data)
+        return np.array(data, dtype=self.cast_data_dtype)
 
     @property
     def time(self):
@@ -740,7 +741,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 self.rechunk_callback_fields()
                 self.chunking_finalized = True
 
-        return data
+        return data.astype(self.cast_data_dtype)
 
 
 class DeferredDaskFileBuffer(DaskFileBuffer):
