@@ -490,10 +490,6 @@ class BaseParticleSet(NDCluster):
 
         self._set_particle_vector('dt', dt)
 
-        # First write output_file, because particles could have been added
-        if output_file:
-            output_file.write(self, _starttime)
-
         if callbackdt is None:
             interupt_dts = [np.infty, outputdt]
             if self.repeatdt is not None:
@@ -563,7 +559,7 @@ class BaseParticleSet(NDCluster):
                 self.add(pset_new)
                 next_prelease += self.repeatdt * np.sign(dt)
             if abs(time - next_output) < tol or dt == 0:
-                for fld in self.fieldset.get_fields():
+                for fld in self.fieldset.get_fields():  # TODO only run if fld.to_write is True
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
                             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
@@ -571,9 +567,7 @@ class BaseParticleSet(NDCluster):
                         fld.write(fldfilename)
                         fld.to_write += 1
             if abs(time - next_output) < tol:
-                if output_file:
-                    output_file.write(self, time)
-                next_output += outputdt * np.sign(dt)
+                next_output += outputdt * np.sign(dt)  # TODO remove next_output altogether
             # ==== insert post-process here to also allow for memory clean-up via external func ==== #
             if abs(time-next_callback) < tol:
                 if postIterationCallbacks is not None:
@@ -588,7 +582,5 @@ class BaseParticleSet(NDCluster):
                 pbar.update(abs(time - pbar.prevtime))
                 pbar.prevtime = time
 
-        if output_file:
-            output_file.write(self, time)
         if verbose_progress:
             pbar.close()

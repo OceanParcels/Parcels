@@ -2,6 +2,9 @@ from datetime import timedelta as delta
 from math import cos, pi
 
 import numpy as np
+import pandas as pd
+import xarray as xr
+
 import pytest
 
 from parcels import (  # noqa
@@ -939,3 +942,40 @@ def test_nestedfields(pset_mode, mode, k_sample_p):
     assert np.isclose(pset.lat[0], -1)
     assert np.isclose(pset.p[0], 999)
     assert np.allclose(fieldset.UV[0][0, 0, 0, 0], [.1, .2])
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def test_vecorial_summing_sampling(pset_mode, mode, tmpdir, npart=2):
+    xdim, ydim, tdim = 10, 20, 6
+    U = Field('U', np.zeros((tdim, ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 100., xdim, dtype=np.float32),
+              lat=np.linspace(0., 100., ydim, dtype=np.float32),
+              time=np.arange(0., tdim, dtype=np.float64))
+    V = Field('V', np.ones((tdim, ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 100., xdim, dtype=np.float32),
+              lat=np.linspace(0., 100., ydim, dtype=np.float32),
+              time=np.arange(0., tdim, dtype=np.float64))
+    for t in range(tdim):
+        V.data[t, :, :] *= t
+    fieldset = FieldSet(U, V)
+    fieldset.add_constant('nfiles', 0)
+
+    def SampleV(particle, fieldset, time):
+        particle.p = fieldset.V[time, particle.depth, particle.lat, particle.lon]
+
+    lats = 0.5 * np.ones(npart)
+    lons = np.linspace(0.1, 0.9, npart)
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=lons, lat=lats)
+
+    filename = tmpdir.join("test_vecorial_summing_sampling.parquet")
+    fieldset.add_constant('output_file', filename)
+
+    pfile = pset.ParticleFile(filename, outputdt=1)
+
+    pset.execute(AdvectionRK4+pset.Kernel(SampleV), runtime=tdim-1, dt=1, output_file=pfile)
+
+    ds = xr.Dataset.from_dataframe(pd.read_parquet(filename))
+    for t in range(tdim-1):
+        assert np.allclose(ds.p[:, t], t)
+        assert np.allclose(ds.lat[0, t], 0.5 + np.sum(np.arange(0.5, t, 1)))

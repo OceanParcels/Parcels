@@ -157,11 +157,32 @@ class BaseKernel:
     def add_scipy_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
         def Setcoords(particle, fieldset, time):
+            from datetime import datetime as datetime  # noqa
+            from os import path  # noqa
+            import pyarrow as pa  # noqa
+            import pyarrow.parquet as pq  # noqa
+
             particle_dlon = 0  # noqa
             particle_dlat = 0  # noqa
             particle_ddepth = 0  # noqa
 
         def Updatecoords(particle, fieldset, time):
+
+            dfdict = {'lon': particle.lon, 'lat': particle.lat, 'depth': particle.depth, 'p': particle.p}
+            dftime = particle.time
+            if fieldset.time_origin.calendar in ['360_day']:
+                logger.warning_once("360_day calendar is not supported in Parquet output. Converting output to standard calendar.")
+                dftime = datetime.strptime(str(dftime), '%Y-%m-%d %H:%M:%S')  # noqa
+            elif fieldset.time_origin.calendar is None:
+                dftime = (np.round(dftime*1e9)).astype('timedelta64[ns]')  # to avoid rounding errors for negative times
+
+            index = pd.MultiIndex.from_tuples([(particle.id, dftime)], names=['trajectory', 'time'])  # noqa
+            table = pa.Table.from_pandas(pd.DataFrame(data=dfdict, index=index))  # noqa
+            fname = path.join(fieldset.output_file, f"p{fieldset.nfiles:03d}.parquet")
+            fieldset.nfiles += 1
+
+            pq.write_table(table, fname, compression='GZIP')  # noqa
+
             particle.lon += particle_dlon  # noqa
             particle.lat += particle_dlat  # noqa
             particle.depth += particle_ddepth  # noqa
