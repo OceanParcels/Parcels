@@ -136,39 +136,6 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, chunks_obs,
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, npart=3):
-    filepath = tmpdir.join("pfile_on_delete_written_variables.zarr")
-
-    def move_west(particle, fieldset, time):
-        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon]  # to trigger out-of-bounds error
-        particle.lon -= 0.1 + tmp1
-
-    def DeleteP(particle, fieldset, time):
-        particle.delete()
-
-    lon = np.linspace(0.05, 0.95, npart)
-    lat = np.linspace(0.95, 0.05, npart)
-
-    (dt, runtime) = (0.1, 0.8)
-    lon_end = lon - runtime/dt*0.1
-    noutside = len(lon_end[lon_end < 0])
-
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat)
-
-    outfile = pset.ParticleFile(name=filepath, write_ondelete=True, chunks=(len(pset), 1))
-    outfile.add_metadata('runtime', runtime)
-    pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
-                 recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
-
-    ds = xr.open_zarr(filepath)
-    assert ds.runtime == runtime
-    lon = ds['lon'][:]
-    assert (sum(np.isfinite(lon)) == noutside)
-    ds.close()
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     filepath = tmpdir.join("pfile_variable_write_double.zarr")
 

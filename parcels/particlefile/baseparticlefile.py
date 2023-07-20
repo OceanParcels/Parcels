@@ -8,7 +8,6 @@ import xarray as xr
 import zarr
 
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import OperationCode
 
 try:
     from mpi4py import MPI
@@ -45,8 +44,6 @@ class BaseParticleFile(ABC):
         It is either a timedelta object or a positive double.
     chunks :
         Tuple (trajs, obs) to control the size of chunks in the zarr output.
-    write_ondelete : bool
-        Whether to write particle data only when they are deleted. Default is False
     create_new_zarrfile : bool
         Whether to create a new file. Default is True
 
@@ -56,7 +53,6 @@ class BaseParticleFile(ABC):
         ParticleFile object that can be used to write particle data to file
     """
 
-    write_ondelete = None
     outputdt = None
     lasttime_written = None
     particleset = None
@@ -64,10 +60,8 @@ class BaseParticleFile(ABC):
     time_origin = None
     lonlatdepth_dtype = None
 
-    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False,
-                 create_new_zarrfile=True):
+    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, create_new_zarrfile=True):
 
-        self.write_ondelete = write_ondelete
         self.outputdt = outputdt
         self.chunks = chunks
         self.lasttime_written = None  # variable to check if time has been written already
@@ -214,7 +208,7 @@ class BaseParticleFile(ABC):
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
-    def write(self, pset, time, deleted_only=False):
+    def write(self, pset, time):
         """Write all data from one time step to the zarr file.
 
         Parameters
@@ -223,29 +217,16 @@ class BaseParticleFile(ABC):
             ParticleSet object to write
         time :
             Time at which to write ParticleSet
-        deleted_only :
-            Flag to write only the deleted Particles (Default value = False)
         """
         time = time.total_seconds() if isinstance(time, delta) else time
 
-        if self.lasttime_written != time and (self.write_ondelete is False or deleted_only is not False):
+        if (self.lasttime_written is None or ~np.isclose(self.lasttime_written, time)):
             if pset.collection._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
                 return
 
-            if deleted_only is not False:
-                if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
-                    indices_to_write = np.where(np.isin(pset.collection.getvardata('state'), [OperationCode.Delete]))[0]
-                elif type(deleted_only) == np.ndarray:
-                    if set(deleted_only).issubset([0, 1]):
-                        indices_to_write = np.where(deleted_only)[0]
-                    else:
-                        indices_to_write = deleted_only
-                elif type(deleted_only) == list:
-                    indices_to_write = np.array(deleted_only)
-            else:
-                indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
-                self.lasttime_written = time
+            indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
+            self.lasttime_written = time
 
             if len(indices_to_write) > 0:
                 pids = pset.collection.getvardata('id', indices_to_write)
