@@ -159,6 +159,7 @@ class BaseKernel:
         def Setcoords(particle, fieldset, time):
             from datetime import datetime as datetime  # noqa
             from os import path  # noqa
+
             import pyarrow as pa  # noqa
             import pyarrow.parquet as pq  # noqa
 

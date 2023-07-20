@@ -2,8 +2,8 @@
 import os
 import shutil
 from abc import ABC
-from datetime import timedelta as delta
 from datetime import datetime as datetime
+from datetime import timedelta as delta
 from pathlib import Path
 
 import numpy as np

@@ -3,9 +3,8 @@ from math import cos, pi
 
 import numpy as np
 import pandas as pd
-import xarray as xr
-
 import pytest
+import xarray as xr
 
 from parcels import (  # noqa
     AdvectionRK4,
