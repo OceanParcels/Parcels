@@ -153,7 +153,7 @@ class KernelSOA(BaseKernel):
         for p in pset:
             self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
-    def remove_deleted(self, pset, output_file, endtime):
+    def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion.
 
         This deletion function is targetted to index-addressable, random-access array-collections.
@@ -161,8 +161,6 @@ class KernelSOA(BaseKernel):
         # Indices marked for deletion.
         bool_indices = pset.collection.state == OperationCode.Delete
         indices = np.where(bool_indices)[0]
-        if len(indices) > 0 and output_file is not None:
-            output_file.write(pset, endtime, deleted_only=bool_indices)
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
@@ -192,7 +190,7 @@ class KernelSOA(BaseKernel):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
+        self.remove_deleted(pset)
 
         # Identify particles that threw errors
         n_error = pset.num_error_particles
@@ -218,7 +216,7 @@ class KernelSOA(BaseKernel):
                     p.delete()
 
             # Remove all particles that signalled deletion
-            self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
+            self.remove_deleted(pset)
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:

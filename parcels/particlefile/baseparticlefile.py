@@ -6,14 +6,12 @@ from datetime import timedelta as delta
 from datetime import datetime as datetime
 from pathlib import Path
 
-# import fastparquet as fpq  # needed because pyarrow can't append to parquet files (https://github.com/apache/arrow/issues/33362)
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import OperationCode
 
 try:
     from mpi4py import MPI
@@ -41,8 +39,6 @@ class BaseParticleFile(ABC):
         Interval which dictates the update frequency of file output
         while ParticleFile is given as an argument of ParticleSet.execute()
         It is either a timedelta object or a positive double.
-    write_ondelete : bool
-        Whether to write particle data only when they are deleted. Default is False
 
     Returns
     -------
@@ -50,7 +46,6 @@ class BaseParticleFile(ABC):
         ParticleFile object that can be used to write particle data to file
     """
 
-    write_ondelete = None
     outputdt = None
     lasttime_written = None
     particleset = None
@@ -58,9 +53,8 @@ class BaseParticleFile(ABC):
     time_origin = None
     lonlatdepth_dtype = None
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False):
+    def __init__(self, name, particleset, outputdt=np.infty):
 
-        self.write_ondelete = write_ondelete
         self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
 
@@ -133,7 +127,7 @@ class BaseParticleFile(ABC):
         else:
             return var
 
-    def write(self, pset, time, deleted_only=False):
+    def write(self, pset, time):
         """Write all data from one time step to the parquet file.
 
         Parameters
@@ -142,29 +136,16 @@ class BaseParticleFile(ABC):
             ParticleSet object to write
         time :
             Time at which to write ParticleSet
-        deleted_only :
-            Flag to write only the deleted Particles (Default value = False)
         """
         time = time.total_seconds() if isinstance(time, delta) else time
 
-        if (self.lasttime_written is None or ~np.isclose(self.lasttime_written, time)) and (self.write_ondelete is False or deleted_only is not False):
+        if (self.lasttime_written is None or ~np.isclose(self.lasttime_written, time)):
             if pset.collection._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
                 return
 
-            if deleted_only is not False:
-                if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
-                    indices_to_write = np.where(np.isin(pset.collection.getvardata('state'), [OperationCode.Delete]))[0]
-                elif type(deleted_only) == np.ndarray:
-                    if set(deleted_only).issubset([0, 1]):
-                        indices_to_write = np.where(deleted_only)[0]
-                    else:
-                        indices_to_write = deleted_only
-                elif type(deleted_only) == list:
-                    indices_to_write = np.array(deleted_only)
-            else:
-                indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
-                self.lasttime_written = time
+            indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
+            self.lasttime_written = time
 
             if len(indices_to_write) > 0:
                 trajectory = pset.collection.getvardata('id', indices_to_write)
@@ -181,7 +162,6 @@ class BaseParticleFile(ABC):
                             dftime = (np.round(dftime*1e9)).astype('timedelta64[ns]')  # to avoid rounding errors for negative times
                     elif varout not in ['trajectory', 'obs']:  # because 'trajectory' and 'obs' are written as index
                         dfdict[varout] = pset.collection.getvardata(var, indices_to_write)
-                # print(trajectory, dftime[0], type(trajectory), type(dftime[0]))
                 index = pd.MultiIndex.from_tuples(list(zip(trajectory, dftime)), names=['trajectory', 'time'])
                 table = pa.Table.from_pandas(pd.DataFrame(data=dfdict, index=index))
                 metadata = {**self.metadata, **(table.schema.metadata or {})}
@@ -191,10 +171,3 @@ class BaseParticleFile(ABC):
                 pq.write_table(table, fname, compression='GZIP')
 
                 self.nfiles += 1
-
-                # TODO remove this version using fastparquet
-                # if self.create_new_zarrfile:
-                #     fpq.write(self.fname, df, compression='GZIP', append=False)
-                #     self.create_new_zarrfile = False
-                # else:
-                #     fpq.write(self.fname, df, compression='GZIP', append=True)

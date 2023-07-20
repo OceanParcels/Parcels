@@ -156,11 +156,9 @@ class KernelAOS(BaseKernel):
         for p in pset:
             self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
-    def remove_deleted(self, pset, output_file, endtime):
+    def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""
         indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
-        if len(indices) > 0 and output_file is not None:
-            output_file.write(pset, endtime, deleted_only=indices)
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
@@ -191,7 +189,7 @@ class KernelAOS(BaseKernel):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        self.remove_deleted(pset, output_file=output_file, endtime=endtime)
+        self.remove_deleted(pset)
 
         # Identify particles that threw errors
         error_particles = [p for p in pset if p.state not in [StateCode.Success, StateCode.Evaluate]]
@@ -216,7 +214,7 @@ class KernelAOS(BaseKernel):
                     p.delete()
 
             # Remove all particles that signalled deletion
-            self.remove_deleted(pset, output_file=output_file, endtime=endtime)
+            self.remove_deleted(pset)
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:

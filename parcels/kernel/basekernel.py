@@ -342,15 +342,13 @@ class BaseKernel:
             except:
                 pass
 
-    def remove_deleted(self, pset, output_file, endtime):
+    def remove_deleted(self, pset):
         """
         Utility to remove all particles that signalled deletion.
 
         This version is generally applicable to all structures and collections
         """
         indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
-        if len(indices) > 0 and output_file is not None:
-            output_file.write(pset, endtime, deleted_only=indices)
         pset.remove_indices(indices)
 
     def load_fieldset_jit(self, pset):
