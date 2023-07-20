@@ -128,7 +128,6 @@ class ParticleCollectionSOA(ParticleCollection):
             self._data['depth'][:] = depth
             self._data['time'][:] = time
             self._data['id'][:] = pid
-            self._data['once_written'][:] = 0
 
             # special case for exceptions which can only be handled from scipy
             self._data['exception'] = np.empty(self.ncount, dtype=object)
@@ -853,7 +852,7 @@ class ParticleCollectionSOA(ParticleCollection):
         var :
             Name of the variable (string)
         status :
-            Write status of the variable (True, False or 'once')
+            Write status of the variable (True or False)
         write_status :
         """
         var_changed = False

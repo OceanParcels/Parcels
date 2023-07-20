@@ -624,7 +624,7 @@ def test_add_second_vector_field(pset_mode, mode):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 def test_fieldset_write(pset_mode, tmpdir):
-    filepath = tmpdir.join("fieldset_write.zarr")
+    filepath = tmpdir.join("fieldset_write.parquet")
     xdim, ydim = 3, 4
     lon = np.linspace(0., 10., xdim, dtype=np.float32)
     lat = np.linspace(0., 10., ydim, dtype=np.float32)
@@ -648,7 +648,7 @@ def test_fieldset_write(pset_mode, tmpdir):
 
     assert fieldset.U.data[0, 1, 0] == 11
 
-    da = xr.open_dataset(str(filepath).replace('.zarr', '_0005U.nc'))
+    da = xr.open_dataset(str(filepath).replace('.parquet', '_0005U.nc'))
     assert np.allclose(fieldset.U.data, da['U'].values)
 
 

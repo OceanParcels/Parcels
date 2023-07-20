@@ -83,16 +83,15 @@ def test_pset_create_list_with_customvariable(fieldset, pset_mode, mode, npart=1
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('restart', [True, False])
 def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir):
-    filename = tmpdir.join("pset_fromparticlefile.zarr")
+    filename = tmpdir.join("pset_fromparticlefile.parquet")
     lon = np.linspace(0, 1, 10, dtype=np.float32)
     lat = np.linspace(1, 0, 10, dtype=np.float32)
 
     class TestParticle(ptype[mode]):
         p = Variable('p', np.float32, initial=0.33)
         p2 = Variable('p2', np.float32, initial=1, to_write=False)
-        p3 = Variable('p3', np.float32, to_write='once')
 
-    pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, depth=[4]*len(lon), pclass=TestParticle, p3=np.arange(len(lon)))
+    pset = pset_type[pset_mode]['pset'](fieldset, lon=lon, lat=lat, depth=[4]*len(lon), pclass=TestParticle)
     pfile = pset.ParticleFile(filename, outputdt=1)
 
     def Kernel(particle, fieldset, time):
@@ -101,12 +100,11 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
             particle.delete()
 
     pset.execute(Kernel, runtime=2, dt=1, output_file=pfile)
-    pfile.close()
 
     pset_new = pset_type[pset_mode]['pset'].from_particlefile(fieldset, pclass=TestParticle, filename=filename,
                                                               restart=restart, repeatdt=1)
 
-    for var in ['lon', 'lat', 'depth', 'time', 'p', 'p2', 'p3']:
+    for var in ['lon', 'lat', 'depth', 'time', 'p', 'p2']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
 
     if restart:

@@ -58,7 +58,6 @@ Parcels has several documentation and tutorial Jupyter notebooks which go throug
    examples/documentation_unstuck_Agrid.ipynb
    examples/documentation_LargeRunsOutput.ipynb
    examples/documentation_geospatial.ipynb
-   examples/tutorial_plotting.ipynb
    examples/documentation_advanced_zarr.ipynb
 
 
@@ -68,4 +67,3 @@ Parcels has several documentation and tutorial Jupyter notebooks which go throug
 
    examples/tutorial_Argofloats.ipynb
    examples/documentation_homepage_animation.ipynb
-   examples/tutorial_Agulhasparticles.ipynb

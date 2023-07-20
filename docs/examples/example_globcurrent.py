@@ -266,14 +266,13 @@ def test_globcurrent_particle_independence(mode, rundays=5):
 @pytest.mark.parametrize('dt', [-300, 300])
 @pytest.mark.parametrize('pid_offset', [0, 20])
 def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
-    filename = tmpdir.join("pset_fromparticlefile.zarr")
+    filename = tmpdir.join("pset_fromparticlefile.parquet")
     fieldset = set_globcurrent_fieldset()
 
     ptype[mode].setLastID(pid_offset)
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
     pfile = pset.ParticleFile(filename, outputdt=delta(hours=6))
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt, output_file=pfile)
-    pfile.close()
 
     restarttime = np.nanmax if dt > 0 else np.nanmin
     pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename, restarttime=restarttime)

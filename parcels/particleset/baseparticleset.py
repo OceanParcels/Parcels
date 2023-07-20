@@ -379,8 +379,7 @@ class BaseParticleSet(NDCluster):
         return min_rt, max_rt
 
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
-                moviedt=None, recovery=None, output_file=None, movie_background_field=None,
-                verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
+                recovery=None, output_file=None, verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for multiple timesteps.
 
         Optionally also provide sub-timestepping
@@ -402,20 +401,12 @@ class BaseParticleSet(NDCluster):
             Timestep interval to be passed to the kernel.
             It is either a timedelta object or a double.
             Use a negative value for a backward-in-time simulation. (Default value = 1.)
-        moviedt :
-            Interval for inner sub-timestepping (leap), which dictates
-            the update frequency of animation.
-            It is either a timedelta object or a positive double.
-            None value means no animation. (Default value = None)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
         recovery :
             Dictionary with additional `:mod:parcels.tools.error`
             recovery kernels to allow custom recovery behaviour in case of
             kernel errors. (Default value = None)
-        movie_background_field :
-            field plotted as background in the movie if moviedt is set.
-            'vector' shows the velocity as a vector field. (Default value = None)
         verbose_progress : bool
             Boolean for providing a progress bar for the kernel execution loop. (Default value = None)
         postIterationCallbacks :
@@ -464,14 +455,11 @@ class BaseParticleSet(NDCluster):
         outputdt = output_file.outputdt if output_file else np.infty
         if isinstance(outputdt, delta):
             outputdt = outputdt.total_seconds()
-        if isinstance(moviedt, delta):
-            moviedt = moviedt.total_seconds()
         if isinstance(callbackdt, delta):
             callbackdt = callbackdt.total_seconds()
 
         assert runtime is None or runtime >= 0, 'runtime must be positive'
         assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
-        assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
 
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
@@ -505,13 +493,9 @@ class BaseParticleSet(NDCluster):
         # First write output_file, because particles could have been added
         if output_file:
             output_file.write(self, _starttime)
-        if moviedt:
-            self.show(field=movie_background_field, show_time=_starttime, animation=True)
 
-        if moviedt is None:
-            moviedt = np.infty
         if callbackdt is None:
-            interupt_dts = [np.infty, moviedt, outputdt]
+            interupt_dts = [np.infty, outputdt]
             if self.repeatdt is not None:
                 interupt_dts.append(self.repeatdt)
             callbackdt = np.min(np.array(interupt_dts))
@@ -521,7 +505,6 @@ class BaseParticleSet(NDCluster):
         else:
             next_prelease = np.infty if dt > 0 else - np.infty
         next_output = time + outputdt if dt > 0 else time - outputdt
-        next_movie = time + moviedt if dt > 0 else time - moviedt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
@@ -540,9 +523,9 @@ class BaseParticleSet(NDCluster):
                 verbose_progress = True
 
             if dt > 0:
-                next_time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+                next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
             else:
-                next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+                next_time = max(next_prelease, next_input, next_output, next_callback, endtime)
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
@@ -584,16 +567,13 @@ class BaseParticleSet(NDCluster):
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
                             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
-                        fldfilename = str(output_file.fname).replace('.zarr', '_%.4d' % fld.to_write)
+                        fldfilename = str(output_file.fname).replace('.parquet', '_%.4d' % fld.to_write)
                         fld.write(fldfilename)
                         fld.to_write += 1
             if abs(time - next_output) < tol:
                 if output_file:
                     output_file.write(self, time)
                 next_output += outputdt * np.sign(dt)
-            if abs(time-next_movie) < tol:
-                self.show(field=movie_background_field, show_time=time, animation=True)
-                next_movie += moviedt * np.sign(dt)
             # ==== insert post-process here to also allow for memory clean-up via external func ==== #
             if abs(time-next_callback) < tol:
                 if postIterationCallbacks is not None:
@@ -612,37 +592,3 @@ class BaseParticleSet(NDCluster):
             output_file.write(self, time)
         if verbose_progress:
             pbar.close()
-
-    def show(self, with_particles=True, show_time=None, field=None, domain=None, projection='PlateCarree',
-             land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
-        """Method to 'show' a Parcels ParticleSet.
-
-        Parameters
-        ----------
-        with_particles : bool
-            Whether to show particles (Default value = True)
-        show_time :
-            Time at which to show the ParticleSet (Default value = None)
-        field :
-            Field to plot under particles (either None, a Field object, or 'vector') (Default value = None)
-        domain :
-            dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show (Default value = None)
-        projection :
-            type of cartopy projection to use (default PlateCarree)
-        land : bool
-            Whether to show land. This is ignored for flat meshes (Default value = True)
-        vmin : float
-            minimum colour scale (only in single-plot mode) (Default value = None)
-        vmax : float
-            maximum colour scale (only in single-plot mode) (Default value = None)
-        savefile : str
-            Name of a file to save the plot to (Default value = None)
-        animation : bool
-            Whether result is a single plot, or an animation (Default value = False)
-        **kwargs :
-            Keyword arguments passed to the :func:`parcels.plotting.plotparticles`.
-
-        """
-        from parcels.plotting import plotparticles
-        plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
-                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)

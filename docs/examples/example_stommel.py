@@ -87,7 +87,7 @@ def AgeP(particle, fieldset, time):
 
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
-                    outfile="StommelParticle.zarr", repeatdt=None, maxage=None, write_fields=True, pset_mode='soa'):
+                    outfile="StommelParticle.parquet", repeatdt=None, maxage=None, write_fields=True, pset_mode='soa'):
     timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
     fieldset = stommel_fieldset(grid_type=grid_type)
     if write_fields:
@@ -121,7 +121,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     timer.psetinit.stop()
     timer.psetrun = timer.Timer('Pset_run', parent=timer.pset)
     pset.execute(method + pset.Kernel(UpdateP) + pset.Kernel(AgeP), runtime=runtime, dt=dt,
-                 moviedt=None, output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
+                 output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     if verbose:
         print(f"Final particle positions:\n{pset}")
@@ -164,7 +164,7 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='Print particle information before and after execution')
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
-    p.add_argument('-o', '--outfile', default='StommelParticle.zarr',
+    p.add_argument('-o', '--outfile', default='StommelParticle.parquet',
                    help='Name of output file')
     p.add_argument('-r', '--repeatdt', default=None, type=int,
                    help='repeatdt of the ParticleSet')

@@ -58,7 +58,7 @@ def decaying_moving_example(fieldset, outfile, mode='scipy', method=AdvectionRK4
     runtime = delta(days=2)
     outputdt = delta(hours=1)
 
-    pset.execute(method, runtime=runtime, dt=dt, moviedt=None,
+    pset.execute(method, runtime=runtime, dt=dt,
                  output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     return pset
@@ -66,7 +66,7 @@ def decaying_moving_example(fieldset, outfile, mode='scipy', method=AdvectionRK4
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_rotation_example(mode, tmpdir):
-    outfile = tmpdir.join('DecayingMovingParticle.zarr')
+    outfile = tmpdir.join('DecayingMovingParticle.parquet')
     fieldset = decaying_moving_eddy_fieldset()
     pset = decaying_moving_example(fieldset, outfile, mode=mode)
     vals = true_values(pset[0].time, start_lon, start_lat)  # Calculate values for the particle.
@@ -75,7 +75,7 @@ def test_rotation_example(mode, tmpdir):
 
 def main():
     fset_filename = 'decaying_moving_eddy'
-    outfile = 'DecayingMovingParticle.zarr'
+    outfile = 'DecayingMovingParticle.parquet'
     fieldset = decaying_moving_eddy_fieldset()
     fieldset.write(fset_filename)
 

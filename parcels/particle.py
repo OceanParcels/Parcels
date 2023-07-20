@@ -24,9 +24,8 @@ class Variable:
     initial :
         Initial value of the variable. Note that this can also be a Field object,
         which will then be sampled at the location of the particle
-    to_write : bool, 'once', optional
-        Boolean or 'once'. Controls whether Variable is written to NetCDF file.
-        If to_write = 'once', the variable will be written as a time-independent 1D array
+    to_write : bool, optional
+        Boolean. Controls whether Variable is written to NetCDF file.
     """
 
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
@@ -203,8 +202,7 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
-    id = Variable('id', dtype=np.int64, to_write='once')
-    once_written = Variable('once_written', dtype=np.int32, initial=0, to_write=False)  # np.bool not implemented in JIT
+    id = Variable('id', dtype=np.int64, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)
     next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
@@ -218,7 +216,6 @@ class ScipyParticle(_Particle):
         type(self).time.initial = time
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
-        type(self).once_written.initial = 0
         type(self).dt.initial = None
         type(self).next_dt.initial = np.nan
 

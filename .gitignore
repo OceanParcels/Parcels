@@ -16,8 +16,12 @@ out-*
 *.pyc
 *.dSYM/*
 **/*.zarr/*
+**/*.parq
+**/*.parquet
+**/*.pqt
 
 .idea/*
+.env
 Profile.prof
 **/.ipynb_checkpoints/*
 .cache/*

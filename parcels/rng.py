@@ -111,7 +111,7 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
             with open(self.src_file, 'w+') as f:
                 f.write(self.ccode)
             ccompiler.compile(self.src_file, self.lib_file, self.log_file)
-            logger.info(f"Compiled ParcelsRandom ==> {self.lib_file}")
+            logger.info(f"Compiled ParcelsRandom ==> {self.src_file}")
 
     @property
     def lib(self):
