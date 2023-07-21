@@ -19,6 +19,8 @@ out-*
 **/*.parq
 **/*.parquet
 **/*.pqt
+**/*.db
+**/*.sqlite
 
 .idea/*
 .env

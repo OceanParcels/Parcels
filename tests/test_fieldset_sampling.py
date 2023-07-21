@@ -4,6 +4,7 @@ from math import cos, pi
 import numpy as np
 import pandas as pd
 import pytest
+import sqlite3
 import xarray as xr
 
 from parcels import (  # noqa
@@ -966,13 +967,15 @@ def test_vecorial_summing_sampling(pset_mode, mode, tmpdir, npart=2):
     lons = np.linspace(0.1, 0.9, npart)
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=lons, lat=lats)
 
-    filename = tmpdir.join("test_vecorial_summing_sampling.parquet")
+    filename = tmpdir.join("test_vectorial_summing_sampling.sqlite")
 
     pfile = pset.ParticleFile(filename, outputdt=1)
 
-    pset.execute(AdvectionRK4+pset.Kernel(SampleV), runtime=tdim-1, dt=1, output_file=pfile)
+    pset.execute(AdvectionRK4+pset.Kernel(SampleV, delete_cfiles=False), runtime=tdim-1, dt=1, output_file=pfile)
 
-    ds = xr.Dataset.from_dataframe(pd.read_parquet(filename))
+    con = sqlite3.connect(filename)
+    df = pd.read_sql_query("SELECT * from particles", con, index_col=['trajectory', 'time'])
+    ds = xr.Dataset.from_dataframe(df)
     for t in range(tdim-1):
         assert np.allclose(ds.p[:, t], t)
         assert np.allclose(ds.lat[0, t], 0.5 + np.sum(np.arange(0.5, t, 1)))

@@ -159,6 +159,7 @@ class KernelAOS(BaseKernel):
 
         for p in pset:
             self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+        self.fieldset.particlefile.con.commit()
 
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""

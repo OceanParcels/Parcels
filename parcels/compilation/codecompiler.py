@@ -76,6 +76,7 @@ class GNU_parameters(Compiler_parameters):
         if libs is None:
             libs = []
         libs.append("m")
+        libs.append("sqlite3")
 
         Iflags = []
         if isinstance(incdirs, list):

@@ -9,6 +9,7 @@ extern "C" {
 #include <stdbool.h>
 #include <math.h>
 #include <float.h>
+#include <sqlite3.h>
 #include "random.h"
 #include "index_search.h"
 #include "interpolation_utils.h"
