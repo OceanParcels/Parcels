@@ -952,15 +952,11 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
             body += [c.Statement(f"type_coord particle_d{coord} = 0")]
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
 
-        body += [c.Statement('sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES (?, ?, ?, ?, ?, ?, ?, ?)", -1, &stmt, NULL)')]
-        body += [c.Statement('sqlite3_bind_int(stmt, 1, particles->id[pnum])')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 2, particles->time[pnum])')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 3, particles->lon[pnum])')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 4, particles->lat[pnum])')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 5, particles->depth[pnum])')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 6, particles->u[pnum])')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 7, particles->v[pnum])')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 8, particles->p[pnum])')]
+        dtype_map = {np.float32: 'double', np.float64: 'double', np.int32: 'int', np.int64: 'int'}
+        query = ', '.join('?' * len(self.fieldset.particlefile.vars_to_write))
+        body += [c.Statement(f'sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES ({query})", -1, &stmt, NULL)')]
+        for i, var in enumerate(self.fieldset.particlefile.vars_to_write.items()):
+            body += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particles->{var[0]}[pnum])")]
         body += [c.Statement('sqlite3_step(stmt)')]
         body += [c.Statement('sqlite3_finalize(stmt)')]
 
@@ -1123,15 +1119,11 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
             body += [c.Statement(f"type_coord particle_d{coord} = 0")]
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
 
-        body += [c.Statement('sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES (?, ?, ?, ?, ?, ?, ?, ?)", -1, &stmt, NULL)')]
-        body += [c.Statement('sqlite3_bind_int(stmt, 1, particle->id)')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 2, particle->time)')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 3, particle->lon)')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 4, particle->lat)')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 5, particle->depth)')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 6, particle->u)')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 7, particle->v)')]
-        body += [c.Statement('sqlite3_bind_double(stmt, 8, particle->p)')]
+        dtype_map = {np.float32: 'double', np.float64: 'double', np.int32: 'int', np.int64: 'int'}
+        query = ', '.join('?' * len(self.fieldset.particlefile.vars_to_write))
+        body += [c.Statement(f'sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES ({query})", -1, &stmt, NULL)')]
+        for i, var in enumerate(self.fieldset.particlefile.vars_to_write.items()):
+            body += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particle->{var[0]})")]
         body += [c.Statement('sqlite3_step(stmt)')]
         body += [c.Statement('sqlite3_finalize(stmt)')]
 
