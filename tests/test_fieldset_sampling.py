@@ -958,7 +958,6 @@ def test_vecorial_summing_sampling(pset_mode, mode, tmpdir, npart=2):
     for t in range(tdim):
         V.data[t, :, :] *= t
     fieldset = FieldSet(U, V)
-    fieldset.add_constant('nfiles', 0)
 
     def SampleV(particle, fieldset, time):
         particle.p = fieldset.V[time, particle.depth, particle.lat, particle.lon]
@@ -968,7 +967,6 @@ def test_vecorial_summing_sampling(pset_mode, mode, tmpdir, npart=2):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=lons, lat=lats)
 
     filename = tmpdir.join("test_vecorial_summing_sampling.parquet")
-    fieldset.add_constant('output_file', filename)
 
     pfile = pset.ParticleFile(filename, outputdt=1)
 

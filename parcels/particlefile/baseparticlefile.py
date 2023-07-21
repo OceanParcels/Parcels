@@ -106,6 +106,7 @@ class BaseParticleFile(ABC):
                 if parquet_folder.exists():
                     shutil.rmtree(parquet_folder)
                 parquet_folder.mkdir(parents=True)
+        self.particleset.fieldset.particlefile = self
 
     def add_metadata(self, name, message):  # TODO check if metadata can be added in parquet
         """Add metadata to :class:`parcels.particleset.ParticleSet`.

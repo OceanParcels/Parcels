@@ -179,8 +179,8 @@ class BaseKernel:
 
             index = pd.MultiIndex.from_tuples([(particle.id, dftime)], names=['trajectory', 'time'])  # noqa
             table = pa.Table.from_pandas(pd.DataFrame(data=dfdict, index=index))  # noqa
-            fname = path.join(fieldset.output_file, f"p{fieldset.nfiles:03d}.parquet")
-            fieldset.nfiles += 1
+            fname = path.join(fieldset.particlefile.fname, f"p{fieldset.particlefile.nfiles:03d}.parquet")
+            fieldset.particlefile.nfiles += 1
 
             pq.write_table(table, fname, compression='GZIP')  # noqa
 
