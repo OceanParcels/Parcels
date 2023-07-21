@@ -958,7 +958,9 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         for i, var in enumerate(self.fieldset.particlefile.vars_to_write.items()):
             body += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particles->{var[0]}[pnum])")]
         body += [c.Statement('sqlite3_step(stmt)')]
-        body += [c.Statement('sqlite3_finalize(stmt)')]
+        # body += [c.Statement('sqlite3_clear_bindings(stmt)')]  # TODO this seems not to increase speed?
+        # body += [c.Statement('sqlite3_reset(stmt)')]
+        # body += [c.Statement('sqlite3_finalize(stmt)')]
 
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particles->{coord}[pnum] += particle_d{coord}")]
@@ -1125,7 +1127,9 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         for i, var in enumerate(self.fieldset.particlefile.vars_to_write.items()):
             body += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particle->{var[0]})")]
         body += [c.Statement('sqlite3_step(stmt)')]
-        body += [c.Statement('sqlite3_finalize(stmt)')]
+        # body += [c.Statement('sqlite3_clear_bindings(stmt)')]  # TODO this seems not to increase speed?
+        # body += [c.Statement('sqlite3_reset(stmt)')]
+        # body += [c.Statement('sqlite3_finalize(stmt)')]
 
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particle->{coord} += particle_d{coord}")]

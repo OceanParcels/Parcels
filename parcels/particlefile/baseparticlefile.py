@@ -109,6 +109,9 @@ class BaseParticleFile(ABC):
         self.cur = self.con.cursor()
         varstr = ', '.join([f'{_convert_varout_name(var)}' for var in self.vars_to_write.keys()])
         self.cur.execute(f"CREATE TABLE particles({varstr})")
+        self.cur.execute("PRAGMA journal_mode = WAL")
+        self.cur.execute("PRAGMA synchronous = normal")
+        # self.cur.execute("PRAGMA journal_size_limit = 6144000")  # TODO check if this speeds up writing
         self.particleset.fieldset.particlefile = self
 
     def add_metadata(self, name, message):  # TODO check if metadata can be added in sqlite
