@@ -543,6 +543,8 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
             if kvar in funcvars:
                 funcvars.remove(kvar)
         self.ccode.body.insert(0, c.Value('StatusCode', 'err'))
+        query = ', '.join('?' * len(self.fieldset.particlefile.vars_to_write))
+        self.ccode.body.insert(0, c.Statement(f'sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES ({query})", -1, &stmt, NULL)'))
         self.ccode.body.insert(0, c.Statement("sqlite3_stmt *stmt"))
         if len(funcvars) > 0:
             self.ccode.body.insert(0, c.Value("type_coord", ", ".join(funcvars)))
@@ -953,13 +955,11 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
 
         dtype_map = {np.float32: 'double', np.float64: 'double', np.int32: 'int', np.int64: 'int'}
-        query = ', '.join('?' * len(self.fieldset.particlefile.vars_to_write))
-        body += [c.Statement(f'sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES ({query})", -1, &stmt, NULL)')]
         for i, var in enumerate(self.fieldset.particlefile.vars_to_write.items()):
             body += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particles->{var[0]}[pnum])")]
         body += [c.Statement('sqlite3_step(stmt)')]
-        # body += [c.Statement('sqlite3_clear_bindings(stmt)')]  # TODO this seems not to increase speed?
-        # body += [c.Statement('sqlite3_reset(stmt)')]
+        body += [c.Statement('sqlite3_clear_bindings(stmt)')]  # TODO this seems not to increase speed?
+        body += [c.Statement('sqlite3_reset(stmt)')]
         # body += [c.Statement('sqlite3_finalize(stmt)')]
 
         for coord in ['lon', 'lat', 'depth']:
@@ -1122,8 +1122,6 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
 
         dtype_map = {np.float32: 'double', np.float64: 'double', np.int32: 'int', np.int64: 'int'}
-        query = ', '.join('?' * len(self.fieldset.particlefile.vars_to_write))
-        body += [c.Statement(f'sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES ({query})", -1, &stmt, NULL)')]
         for i, var in enumerate(self.fieldset.particlefile.vars_to_write.items()):
             body += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particle->{var[0]})")]
         body += [c.Statement('sqlite3_step(stmt)')]
