@@ -2,10 +2,9 @@
 import os
 import sqlite3
 from abc import ABC
+from datetime import timedelta as delta
 
 import numpy as np
-
-from datetime import timedelta as delta
 
 from parcels.tools.loggers import logger
 
