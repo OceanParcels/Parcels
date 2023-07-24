@@ -25,7 +25,6 @@ dependencies:
   - ipykernel
   - nbval
   - pykdtree
-  - pyarrow
 
   # Formatting
   - black

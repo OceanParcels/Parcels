@@ -27,7 +27,6 @@ dependencies:
   - nbval
   - scikit-learn
   - pykdtree
-  - pyarrow
 
   # Formatting
   - black
