@@ -452,14 +452,20 @@ class BaseParticleSet(NDCluster):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):
             dt = dt.total_seconds()
-        outputdt = output_file.outputdt if output_file else np.infty
-        if isinstance(outputdt, delta):
-            outputdt = outputdt.total_seconds()
+
+        has_fieldstowrite = False
+        for fld in self.fieldset.get_fields():
+            if hasattr(fld, 'to_write') and fld.to_write:
+                has_fieldstowrite = True
+        field_outputdt = output_file.outputdt if (output_file and has_fieldstowrite) else np.infty
+        if isinstance(field_outputdt, delta):
+            field_outputdt = field_outputdt.total_seconds()
+
         if isinstance(callbackdt, delta):
             callbackdt = callbackdt.total_seconds()
 
         assert runtime is None or runtime >= 0, 'runtime must be positive'
-        assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
+        assert field_outputdt is None or field_outputdt >= 0, 'outputdt must be positive'
 
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
@@ -479,7 +485,7 @@ class BaseParticleSet(NDCluster):
             mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
             endtime = maxtime if dt >= 0 else mintime
 
-        execute_once = False
+        execute_once = False  # TODO check if this still needed
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
             runtime = 0
@@ -490,18 +496,16 @@ class BaseParticleSet(NDCluster):
 
         self._set_particle_vector('dt', dt)
 
-        if callbackdt is None:
-            interupt_dts = [np.infty, outputdt]
-            if self.repeatdt is not None:
-                interupt_dts.append(self.repeatdt)
-            callbackdt = np.min(np.array(interupt_dts))
         time = _starttime
         if self.repeatdt:
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
             next_prelease = np.infty if dt > 0 else - np.infty
-        next_output = time + outputdt if dt > 0 else time - outputdt
-        next_callback = time + callbackdt if dt > 0 else time - callbackdt
+        if callbackdt:
+            next_callback = time + callbackdt if dt > 0 else time - callbackdt
+        else:
+            next_callback = np.infty if dt > 0 else - np.infty
+        next_field_output = time + field_outputdt if dt > 0 else time - field_outputdt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
         tol = 1e-12
@@ -519,9 +523,9 @@ class BaseParticleSet(NDCluster):
                 verbose_progress = True
 
             if dt > 0:
-                next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
+                next_time = min(next_prelease, next_input, next_field_output, next_callback, endtime)
             else:
-                next_time = max(next_prelease, next_input, next_output, next_callback, endtime)
+                next_time = max(next_prelease, next_input, next_field_output, next_callback, endtime)
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
@@ -558,16 +562,15 @@ class BaseParticleSet(NDCluster):
                     p.dt = dt
                 self.add(pset_new)
                 next_prelease += self.repeatdt * np.sign(dt)
-            if abs(time - next_output) < tol or dt == 0:
-                for fld in self.fieldset.get_fields():  # TODO only run if fld.to_write is True
+            if abs(time - next_field_output) < tol or (dt == 0 and np.isfinite(field_outputdt)):
+                for fld in self.fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
                             raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
                         fldfilename = str(output_file.fname).replace('.parquet', '_%.4d' % fld.to_write)
                         fld.write(fldfilename)
                         fld.to_write += 1
-            if abs(time - next_output) < tol:
-                next_output += outputdt * np.sign(dt)  # TODO remove next_output altogether
+                next_field_output += field_outputdt * np.sign(dt)
             # ==== insert post-process here to also allow for memory clean-up via external func ==== #
             if abs(time-next_callback) < tol:
                 if postIterationCallbacks is not None:
