@@ -163,7 +163,7 @@ class BaseKernel:
 
         def Updatecoords(particle, fieldset, time):
             varstr = ', '.join(f"{getattr(particle, var)}" for var in fieldset.particlefile.vars_to_write.keys())
-            fieldset.particlefile.cur.execute(f"INSERT INTO particles VALUES ({varstr})")
+            fieldset.particlefile.cur.execute(f"INSERT INTO particles VALUES ({varstr})")  # TODO check if this can be sped up with sql bindings
 
             particle.lon += particle_dlon  # noqa
             particle.lat += particle_dlat  # noqa

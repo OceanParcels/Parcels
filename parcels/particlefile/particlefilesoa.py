@@ -1,6 +1,4 @@
 """Module controlling the writing of ParticleSets to parquet file"""
-import numpy as np
-
 from parcels.particlefile.baseparticlefile import BaseParticleFile
 
 __all__ = ['ParticleFileSOA']
@@ -27,7 +25,7 @@ class ParticleFileSOA(BaseParticleFile):
 
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty):
+    def __init__(self, name, particleset, outputdt=None):
         super().__init__(name=name, particleset=particleset, outputdt=outputdt)
 
     def _reserved_var_names(self):

@@ -543,9 +543,6 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
             if kvar in funcvars:
                 funcvars.remove(kvar)
         self.ccode.body.insert(0, c.Value('StatusCode', 'err'))
-        query = ', '.join('?' * len(self.fieldset.particlefile.vars_to_write))
-        self.ccode.body.insert(0, c.Statement(f'sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES ({query})", -1, &stmt, NULL)'))
-        self.ccode.body.insert(0, c.Statement("sqlite3_stmt *stmt"))
         if len(funcvars) > 0:
             self.ccode.body.insert(0, c.Value("type_coord", ", ".join(funcvars)))
         if len(transformer.tmp_vars) > 0:
@@ -946,7 +943,7 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
                     pass  # field.W does not always exist
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
-        args += [c.Pointer(c.Value("sqlite3", "sql_db"))]
+        args += [c.Pointer(c.Value("sqlite3_stmt", "stmt"))]
 
         # Create function body as C-code object
         body = []
@@ -955,12 +952,11 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
 
         dtype_map = {np.float32: 'double', np.float64: 'double', np.int32: 'int', np.int64: 'int'}
+        sqlbody = [c.Statement('sqlite3_reset(stmt)')]
         for i, var in enumerate(self.fieldset.particlefile.vars_to_write.items()):
-            body += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particles->{var[0]}[pnum])")]
-        body += [c.Statement('sqlite3_step(stmt)')]
-        body += [c.Statement('sqlite3_clear_bindings(stmt)')]  # TODO this seems not to increase speed?
-        body += [c.Statement('sqlite3_reset(stmt)')]
-        # body += [c.Statement('sqlite3_finalize(stmt)')]
+            sqlbody += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particles->{var[0]}[pnum])")]
+        sqlbody += [c.Statement('sqlite3_step(stmt)')]
+        body += [c.If(f"abs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(sqlbody))]
 
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particles->{coord}[pnum] += particle_d{coord}")]
@@ -1113,7 +1109,7 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
                     pass  # field.W does not always exist
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
-        args += [c.Pointer(c.Value("sqlite3", "sql_db"))]
+        args += [c.Pointer(c.Value("sqlite3_stmt", "stmt"))]
 
         # Create function body as C-code object
         body = []
@@ -1122,12 +1118,11 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
 
         dtype_map = {np.float32: 'double', np.float64: 'double', np.int32: 'int', np.int64: 'int'}
+        sqlbody = [c.Statement('sqlite3_reset(stmt)')]
         for i, var in enumerate(self.fieldset.particlefile.vars_to_write.items()):
-            body += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particle->{var[0]})")]
-        body += [c.Statement('sqlite3_step(stmt)')]
-        # body += [c.Statement('sqlite3_clear_bindings(stmt)')]  # TODO this seems not to increase speed?
-        # body += [c.Statement('sqlite3_reset(stmt)')]
-        # body += [c.Statement('sqlite3_finalize(stmt)')]
+            sqlbody += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particle->{var[0]})")]
+        sqlbody += [c.Statement('sqlite3_step(stmt)')]
+        body += [c.If(f"abs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(sqlbody))]
 
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particle->{coord} += particle_d{coord}")]
@@ -1316,7 +1311,7 @@ class LoopGenerator:
         for const, _ in const_args.items():
             args += [c.Value("double", const)]  # are we SURE those const's are double's ?
         fargs_str = ", ".join(['particles->time[pnum]'] + list(field_args.keys())
-                              + list(const_args.keys()) + ["sql_db"])
+                              + list(const_args.keys()) + ["stmt"])
         # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
         particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
@@ -1375,15 +1370,20 @@ class LoopGenerator:
         time_loop = c.While("(particles->state[pnum] == EVALUATE || particles->state[pnum] == REPEAT) || is_zero_dbl(particles->dt[pnum])", c.Block(body))
         part_loop = c.For("pnum = 0", "pnum < num_particles", "++pnum",
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
+        query = ', '.join('?' * len(self.fieldset.particlefile.vars_to_write))
         fbody = c.Block([c.Value("int", "pnum, sign_dt, sign_end_part"),
                          c.Value("StatusCode", "res"),
                          c.Value("double", "reset_dt"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Pointer(c.Value("sqlite3", "sql_db")),
+                         c.Statement("sqlite3_stmt *stmt"),
                          c.Statement(f'sqlite3_open("{self.fieldset.particlefile.fname}", &sql_db)'),
+                         c.Statement(f'sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES ({query})", -1, &stmt, NULL)'),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, particle_backup, part_loop,
-                         c.Statement('sqlite3_close(sql_db)')])
+                         c.Statement('sqlite3_finalize(stmt)'),
+                         c.Statement('sqlite3_close_v2(sql_db)')
+                         ])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)
@@ -1467,7 +1467,7 @@ class ParticleObjectLoopGenerator:
         for const, _ in const_args.items():
             args += [c.Value("double", const)]  # are we SURE those const's are double's ?
         fargs_str = ", ".join(['particles[p].time'] + list(field_args.keys())
-                              + list(const_args.keys()) + ["sql_db"])
+                              + list(const_args.keys()) + ["stmt"])
         # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
         particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
@@ -1526,15 +1526,20 @@ class ParticleObjectLoopGenerator:
         time_loop = c.While("(particles[p].state == EVALUATE || particles[p].state == REPEAT) || is_zero_dbl(particles[p].dt)", c.Block(body))
         part_loop = c.For("p = 0", "p < num_particles", "++p",
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
+        query = ', '.join('?' * len(self.fieldset.particlefile.vars_to_write))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"),
                          c.Value("StatusCode", "res"),
                          c.Value("int", "reset_dt"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Pointer(c.Value("sqlite3", "sql_db")),
+                         c.Statement("sqlite3_stmt *stmt"),
                          c.Statement(f'sqlite3_open("{self.fieldset.particlefile.fname}", &sql_db)'),
+                         c.Statement(f'sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES ({query})", -1, &stmt, NULL)'),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, particle_backup, part_loop,
-                         c.Statement('sqlite3_close(sql_db)')])
+                         c.Statement('sqlite3_finalize(stmt)'),
+                         c.Statement('sqlite3_close_v2(sql_db)')
+                         ])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)

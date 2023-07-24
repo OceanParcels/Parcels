@@ -1,6 +1,4 @@
 """Module controlling the writing of ParticleSets to parquet file"""
-import numpy as np
-
 from parcels.particlefile.baseparticlefile import BaseParticleFile
 
 __all__ = ['ParticleFileAOS']
@@ -26,7 +24,7 @@ class ParticleFileAOS(BaseParticleFile):
         ParticleFile object that can be used to write particle data to file
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty):
+    def __init__(self, name, particleset, outputdt=None):
         super().__init__(name=name, particleset=particleset, outputdt=outputdt)
 
     def _reserved_var_names(self):

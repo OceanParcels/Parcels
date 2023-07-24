@@ -20,7 +20,7 @@ out-*
 **/*.parquet
 **/*.pqt
 **/*.db
-**/*.sqlite
+**/*.sqlite*
 
 .idea/*
 .env

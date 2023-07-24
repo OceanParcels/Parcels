@@ -5,6 +5,8 @@ from abc import ABC
 
 import numpy as np
 
+from datetime import timedelta as delta
+
 from parcels.tools.loggers import logger
 
 try:
@@ -47,11 +49,15 @@ class BaseParticleFile(ABC):
     time_origin = None
     lonlatdepth_dtype = None
 
-    def __init__(self, name, particleset, outputdt=np.infty):
+    def __init__(self, name, particleset, outputdt=None):
 
         self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
 
+        if isinstance(self.outputdt, delta):
+            self.outputdt = self.outputdt.total_seconds()
+        if (not isinstance(self.outputdt, (int, float, delta))) or self.outputdt < 0:
+            raise SyntaxError('outputdt in ParticleFile must be a timedelta object or a positive double')
         self.particleset = particleset
         self.parcels_mesh = 'spherical'
         if self.particleset.fieldset is not None:
@@ -113,6 +119,10 @@ class BaseParticleFile(ABC):
         self.cur.execute("PRAGMA synchronous = normal")
         # self.cur.execute("PRAGMA journal_size_limit = 6144000")  # TODO check if this speeds up writing
         self.particleset.fieldset.particlefile = self
+
+    def __del__(self):
+        if hasattr(self, 'con'):
+            self.con.close()
 
     def add_metadata(self, name, message):  # TODO check if metadata can be added in sqlite
         """Add metadata to :class:`parcels.particleset.ParticleSet`.
