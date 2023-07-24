@@ -7,8 +7,7 @@ import pytest
 import sqlite3
 import xarray as xr
 
-from parcels import (  # noqa
-    ErrorCode,
+from parcels import (
     FieldSet,
     JITParticle,
     KernelAOS,
@@ -53,6 +52,10 @@ def convert_sqlite_file(fname):
         metadata = pd.read_sql_query("SELECT * from metadata", con).to_dict('records')[0]
     ds = xr.Dataset.from_dataframe(df)
     ds.attrs['metadata'] = metadata
+    if 'timedelta64' in ds.metadata['calendar']:
+        ds['time'] = ds['time'].astype(ds.metadata['calendar'])
+    else:
+        ds['time'] = pd.to_datetime(ds['time'], origin=pd.Timestamp(ds.metadata['time_origin']))
     return ds
 
 
@@ -154,8 +157,23 @@ def test_metadata(fieldset, pset_mode, mode, tmpdir):
 
     ds = convert_sqlite_file(filepath)
     assert np.isclose(ds.metadata['runtime'], runtime)
-    assert ds.metadata['calendar'] == fieldset.time_origin.calendar
     assert np.isclose(ds.metadata['time_origin'], fieldset.time_origin.time_origin)
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_calendar(pset_mode, mode, tmpdir):
+
+    time = np.datetime64('2000-01-01')
+    fieldset = FieldSet.from_data({'U': 0., 'V': 0.}, {'lat': 0., 'lon': 0., 'time': [time]})
+    filepath = tmpdir.join("pfile_calendar.sqlite")
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=0, lat=0)
+    outfile = pset.ParticleFile(name=filepath, outputdt=1)
+    pset.execute(DoNothing, runtime=1, dt=1, output_file=outfile)
+    ds = convert_sqlite_file(filepath)
+
+    assert ds['time'][0] == time
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -181,9 +199,7 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
 def test_write_dtypes_pfile(fieldset, pset_mode, mode, tmpdir):
     filepath = tmpdir.join("pfile_dtypes.sqlite")
 
-    dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64', 'uint64']
-    if mode == 'scipy':
-        dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16'])  # Not implemented in AoS JIT
+    dtypes = ['float64', 'int64']  # only these dtypes are supported by sqlite3
 
     class MyParticle(ptype[mode]):
         for d in dtypes:
@@ -192,7 +208,7 @@ def test_write_dtypes_pfile(fieldset, pset_mode, mode, tmpdir):
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=0, time=0)
     pfile = pset.ParticleFile(name=filepath, outputdt=1)
-    pfile.write(pset, 0)
+    pset.execute(DoNothing, runtime=1, dt=1, output_file=pfile)
 
     ds = convert_sqlite_file(filepath)
     for d in dtypes:

@@ -113,11 +113,17 @@ class BaseParticleFile(ABC):
         self.cur.execute("PRAGMA journal_mode = WAL")
         self.cur.execute("PRAGMA synchronous = normal")
 
+        if self.particleset.time_origin.calendar is None:
+            calendar = 'timedelta64[s]'
+            time_origin = self.particleset.time_origin.time_origin
+        else:
+            calendar = self.particleset.time_origin.calendar
+            time_origin = str(self.particleset.time_origin.time_origin)
         self.metadata = {"feature_type": "trajectory",
                          "Conventions": "CF-1.6/CF-1.7",
                          "parcels_version": parcels_version,
-                         "calendar": self.particleset.time_origin.calendar,
-                         "time_origin": self.particleset.time_origin.time_origin,
+                         "calendar": calendar,
+                         "time_origin": time_origin,
                          "parcels_mesh": self.parcels_mesh}
         meta_varstr = ', '.join([f'{mvar}' for mvar in self.metadata.keys()])
         self.cur.execute(f"CREATE TABLE metadata({meta_varstr})")
