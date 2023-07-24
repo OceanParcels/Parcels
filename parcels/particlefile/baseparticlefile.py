@@ -71,11 +71,6 @@ class BaseParticleFile(ABC):
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
 
-        self.metadata = {"feature_type": "trajectory",
-                         "Conventions": "CF-1.6/CF-1.7",
-                         "parcels_version": parcels_version,
-                         "parcels_mesh": self.parcels_mesh}
-
         if False:  # if issubclass(type(name), zarr.storage.Store):
             #     # If we already got a Zarr store, we won't need any of the naming logic below.
             #     # But we need to handle incompatibility with MPI mode for now:
@@ -117,7 +112,18 @@ class BaseParticleFile(ABC):
         self.cur.execute(f"CREATE TABLE particles({varstr})")
         self.cur.execute("PRAGMA journal_mode = WAL")
         self.cur.execute("PRAGMA synchronous = normal")
-        # self.cur.execute("PRAGMA journal_size_limit = 6144000")  # TODO check if this speeds up writing
+
+        self.metadata = {"feature_type": "trajectory",
+                         "Conventions": "CF-1.6/CF-1.7",
+                         "parcels_version": parcels_version,
+                         "calendar": self.particleset.time_origin.calendar,
+                         "time_origin": self.particleset.time_origin.time_origin,
+                         "parcels_mesh": self.parcels_mesh}
+        meta_varstr = ', '.join([f'{mvar}' for mvar in self.metadata.keys()])
+        self.cur.execute(f"CREATE TABLE metadata({meta_varstr})")
+        meta_str = ', '.join('?' * len(self.metadata))
+        self.cur.execute(f"INSERT INTO metadata VALUES ({meta_str})", list(self.metadata.values()))
+        self.con.commit()
         self.particleset.fieldset.particlefile = self
 
     def __del__(self):
@@ -134,4 +140,6 @@ class BaseParticleFile(ABC):
         message : str
             message to be written
         """
-        self.metadata[name] = str(message)
+        self.cur.execute(f"alter table metadata add column {name}")
+        self.cur.execute(f"UPDATE metadata SET {name} = {message} where rowid = 1")
+        self.con.commit()

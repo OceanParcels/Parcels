@@ -50,8 +50,10 @@ def DoNothing(particle, fieldset, time):
 def convert_sqlite_file(fname):
     with contextlib.closing(sqlite3.connect(fname)) as con:
         df = pd.read_sql_query("SELECT * from particles", con, index_col=['trajectory', 'time'])
-    con.close()
-    return xr.Dataset.from_dataframe(df)
+        metadata = pd.read_sql_query("SELECT * from metadata", con).to_dict('records')[0]
+    ds = xr.Dataset.from_dataframe(df)
+    ds.attrs['metadata'] = metadata
+    return ds
 
 
 @pytest.mark.skip("Parquet store writing not yet implemented")  # TODO fix test for writing to parquet store (if that even exists)
@@ -140,18 +142,20 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_metadata(fieldset, pset_mode, mode, tmpdir, npart=3):
+def test_metadata(fieldset, pset_mode, mode, tmpdir):
     filepath = tmpdir.join("pfile_metadata.sqlite")
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=0, lat=0)
 
     runtime = 2
-    outfile = pset.ParticleFile(name=filepath)
+    outfile = pset.ParticleFile(name=filepath, outputdt=1)
     outfile.add_metadata('runtime', runtime)
     pset.execute(DoNothing, runtime=runtime, dt=1, output_file=outfile)
 
-    metadata = False  # TODO implement metadata reading
-    assert np.isclose(float(metadata[b'runtime']), runtime)
+    ds = convert_sqlite_file(filepath)
+    assert np.isclose(ds.metadata['runtime'], runtime)
+    assert ds.metadata['calendar'] == fieldset.time_origin.calendar
+    assert np.isclose(ds.metadata['time_origin'], fieldset.time_origin.time_origin)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
