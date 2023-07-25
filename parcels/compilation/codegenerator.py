@@ -957,7 +957,7 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
             for i, var in enumerate(self.fieldset.particlefile.vars_to_write.items()):
                 sqlbody += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particles->{var[0]}[pnum])")]
             sqlbody += [c.Statement('sqlite3_step(stmt)')]
-            body += [c.If(f"abs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(sqlbody))]
+            body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(sqlbody))]
 
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particles->{coord}[pnum] += particle_d{coord}")]
@@ -1124,7 +1124,7 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
             for i, var in enumerate(self.fieldset.particlefile.vars_to_write.items()):
                 sqlbody += [c.Statement(f"sqlite3_bind_{dtype_map[var[1]]}(stmt, {i+1}, particle->{var[0]})")]
             sqlbody += [c.Statement('sqlite3_step(stmt)')]
-            body += [c.If(f"abs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(sqlbody))]
+            body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(sqlbody))]
 
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particle->{coord} += particle_d{coord}")]
