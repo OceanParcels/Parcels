@@ -71,14 +71,12 @@ class BaseParticleFile(ABC):
         self.analytical = False
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
 
-        if False:  # if issubclass(type(name), zarr.storage.Store):
-            #     # If we already got a Zarr store, we won't need any of the naming logic below.
-            #     # But we need to handle incompatibility with MPI mode for now:
-            #     if MPI and MPI.COMM_WORLD.Get_size() > 1:
-            #         raise ValueError("Currently, MPI mode is not compatible with directly passing a Zarr store.")
-            #     self.fname = name
-            #     self.store = name
-            pass  # TODO implement sqlite in memory store?
+        if isinstance(name, str) and ':memory:' in name:
+            # If we get a :memory: store, we won't need any of the naming logic below.
+            # But we need to handle incompatibility with MPI mode for now:
+            if MPI and MPI.COMM_WORLD.Get_size() > 1:
+                raise ValueError("Currently, MPI mode is not compatible with directly passing a :memory: store.")
+            self.fname = name
         else:
             extension = os.path.splitext(str(name))[1]
             if extension in ['.db', '.sqlite', '']:
@@ -91,8 +89,7 @@ class BaseParticleFile(ABC):
                 if extension in ['.db', '.sqlite']:
                     logger.warning(f'The ParticleFile name contains .sqlite extension, but sqlite files will be written per processor in MPI mode at {self.fname}')
             else:
-                self.fname = name if extension in ['.db', '.sqlite'] else "%s.sqlite" % name
-                self.nfiles = 0
+                self.fname = name if extension in ['.db', '.sqlite'] else f"{name}.sqlite"
                 try:
                     os.remove(self.fname)
                 except OSError:
@@ -106,7 +103,7 @@ class BaseParticleFile(ABC):
             else:
                 return var
 
-        self.con = sqlite3.connect(self.fname)
+        self.con = sqlite3.connect(self.fname, uri=True)
         self.cur = self.con.cursor()
         varstr = ', '.join([f'{_convert_varout_name(var)}' for var in self.vars_to_write.keys()])
         self.cur.execute(f"CREATE TABLE particles({varstr})")

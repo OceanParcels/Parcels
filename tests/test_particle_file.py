@@ -47,7 +47,7 @@ def DoNothing(particle, fieldset, time):
 
 
 def convert_sqlite_file(fname):
-    with contextlib.closing(sqlite3.connect(fname)) as con:
+    with contextlib.closing(sqlite3.connect(fname, uri=True)) as con:
         df = pd.read_sql_query("SELECT * from particles", con, index_col=['trajectory', 'time'])
         metadata = pd.read_sql_query("SELECT * from metadata", con).to_dict('records')[0]
     ds = xr.Dataset.from_dataframe(df)
@@ -59,21 +59,22 @@ def convert_sqlite_file(fname):
     return ds
 
 
-@pytest.mark.skip("Parquet store writing not yet implemented")  # TODO fix test for writing to parquet store (if that even exists)
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pfile_array_write_parquet_memorystore(fieldset, pset_mode, mode, npart=10):
-    """Check that writing to a parquet MemoryStore works."""
-    parquet_store = None  # MemoryStore()
+@pytest.mark.parametrize('mode', ['scipy'])  # TODO does not work in 'jit' yet, probably because memory is not shared
+def test_pfile_array_write_sqlite_memorystore(fieldset, pset_mode, mode, npart=10):
+    """Check that writing to sqlite memory works."""
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
                                         lat=0.5*np.ones(npart), time=0)
-    pfile = pset.ParticleFile(parquet_store)
-    pfile.write(pset, 0)
+    memname = 'file::memory:?cache=shared'
+    pfile = pset.ParticleFile(memname, outputdt=1)
+    pset.execute(pset.Kernel(DoNothing, delete_cfiles=False), runtime=1, dt=1, output_file=pfile)
 
-    ds = xr.Dataset.from_dataframe(pd.read_parquet(parquet_store))
+    ds = convert_sqlite_file(memname)
     assert ds.dims["trajectory"] == npart
     ds.close()
+
+    pfile.con.close()
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -118,7 +119,7 @@ def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
     assert 'lat' not in ds
     ds.close()
 
-    # For pytest purposes, we need to reset to original status  # TODO: is this really necessary?
+    # For pytest purposes, we need to reset to original status
     pset.set_variable_write_status('depth', True)
     pset.set_variable_write_status('lat', True)
 
@@ -177,7 +178,7 @@ def test_calendar(pset_mode, mode, tmpdir):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['jit', 'scipy'])  # TODO pytest.param('scipy', marks=pytest.mark.xfail(reason="pandas throws a mysterious error: pyarrow.lib.ArrowInvalid: Float value XXX was truncated converting to int64"))])
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     filepath = tmpdir.join("pfile_variable_write_double.sqlite")
 
