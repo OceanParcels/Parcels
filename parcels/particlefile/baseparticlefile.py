@@ -68,6 +68,7 @@ class BaseParticleFile(ABC):
         for var in self.particleset.collection.ptype.variables:
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
+        self.analytical = False
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
 
         if False:  # if issubclass(type(name), zarr.storage.Store):

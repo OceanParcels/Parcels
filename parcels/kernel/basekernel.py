@@ -1,5 +1,6 @@
 import functools
 import inspect
+import math
 import re
 import types
 from ast import FunctionDef
@@ -162,8 +163,9 @@ class BaseKernel:
             particle_ddepth = 0  # noqa
 
         def Updatecoords(particle, fieldset, time):
-            varstr = ', '.join(f"{getattr(particle, var)}" for var in fieldset.particlefile.vars_to_write.keys())
-            fieldset.particlefile.cur.execute(f"INSERT INTO particles VALUES ({varstr})")  # TODO check if this can be sped up with sql bindings
+            if fieldset.particlefile is not None and (abs(math.fmod(particle.time, fieldset.particlefile.outputdt)) < 1e-6 or fieldset.particlefile.analytical):
+                varstr = ', '.join(f"{getattr(particle, var)}" for var in fieldset.particlefile.vars_to_write.keys())
+                fieldset.particlefile.cur.execute(f"INSERT INTO particles VALUES ({varstr})")  # TODO check if this can be sped up with sql bindings
 
             particle.lon += particle_dlon  # noqa
             particle.lat += particle_dlat  # noqa

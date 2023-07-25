@@ -4,6 +4,7 @@ from datetime import timedelta as delta
 import numpy as np
 import pandas as pd
 import pytest
+import sqlite3
 import xarray as xr
 
 from parcels import (  # noqa
@@ -514,7 +515,7 @@ def test_uniform_analytical(pset_mode, mode, u, v, w, direction, tmpdir):
     x0, y0, z0 = 6.1, 6.2, 20
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
 
-    outfile_path = tmpdir.join("uniformanalytical.parquet")
+    outfile_path = tmpdir.join("uniformanalytical.sqlite")
     outfile = pset.ParticleFile(name=outfile_path, outputdt=1)
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
                  output_file=outfile)
@@ -523,9 +524,9 @@ def test_uniform_analytical(pset_mode, mode, u, v, w, direction, tmpdir):
     if w:
         assert np.abs(pset.depth - z0 - 4 * w * direction) < 1e-4
 
-    ds = xr.Dataset.from_dataframe(pd.read_parquet(outfile_path))
-    times = ds['time'][:].values.astype('timedelta64[s]')[0]
-    timeref = direction * np.arange(0, 5).astype('timedelta64[s]')
-    assert np.allclose(times, timeref, atol=np.timedelta64(1, 'ms'))
+    con = sqlite3.connect(outfile_path)
+    df = pd.read_sql_query("SELECT * from particles", con, index_col=['trajectory', 'time'])
+    ds = xr.Dataset.from_dataframe(df)
+    times = ds['time'][:].values
     lons = ds['lon'][:].values
-    assert np.allclose(lons, x0+direction*u*np.arange(0, 5))
+    assert np.allclose(lons, x0+u*times)

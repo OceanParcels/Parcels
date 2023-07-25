@@ -143,6 +143,8 @@ class KernelSOA(BaseKernel):
             if not np.isinf(dt):
                 logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
             dt = np.inf
+            if self.fieldset.particlefile is not None:
+                self.fieldset.particlefile.analytical = True
 
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
@@ -156,7 +158,8 @@ class KernelSOA(BaseKernel):
 
         for p in pset:
             self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
-        self.fieldset.particlefile.con.commit()
+        if self.fieldset.particlefile is not None:
+            self.fieldset.particlefile.con.commit()
 
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion.
