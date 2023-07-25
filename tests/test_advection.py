@@ -1,10 +1,10 @@
 import math
+import sqlite3
 from datetime import timedelta as delta
 
 import numpy as np
 import pandas as pd
 import pytest
-import sqlite3
 import xarray as xr
 
 from parcels import (  # noqa
