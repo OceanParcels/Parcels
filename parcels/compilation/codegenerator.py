@@ -10,8 +10,8 @@ import numpy as np
 
 from parcels.field import Field, NestedField, SummedField, VectorField
 from parcels.grid import Grid
-from parcels.particlefile import ParticleFile
 from parcels.particle import JITParticle
+from parcels.particlefile import ParticleFile
 from parcels.tools.loggers import logger
 
 
