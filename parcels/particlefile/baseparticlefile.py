@@ -95,17 +95,9 @@ class BaseParticleFile(ABC):
                 except OSError:
                     pass
 
-        def _convert_varout_name(var):
-            if var == 'depth':
-                return 'z'
-            elif var == 'id':
-                return 'trajectory'
-            else:
-                return var
-
         self.con = sqlite3.connect(self.fname, uri=True)
         self.cur = self.con.cursor()
-        varstr = ', '.join([f'{_convert_varout_name(var)}' for var in self.vars_to_write.keys()])
+        varstr = ', '.join([f'{self._convert_varout_name(var)}' for var in self.vars_to_write.keys()])
         self.cur.execute(f"CREATE TABLE particles({varstr})")
         self.cur.execute("PRAGMA journal_mode = WAL")
         self.cur.execute("PRAGMA synchronous = normal")
@@ -128,6 +120,15 @@ class BaseParticleFile(ABC):
         self.cur.execute(f"INSERT INTO metadata VALUES ({meta_str})", list(self.metadata.values()))
         self.con.commit()
         self.particleset.fieldset.particlefile = self
+
+    @staticmethod
+    def _convert_varout_name(var):
+        if var == 'depth':
+            return 'z'
+        elif var == 'id':
+            return 'trajectory'
+        else:
+            return var
 
     def __del__(self):
         if hasattr(self, 'con'):

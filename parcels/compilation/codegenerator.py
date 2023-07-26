@@ -10,6 +10,7 @@ import numpy as np
 
 from parcels.field import Field, NestedField, SummedField, VectorField
 from parcels.grid import Grid
+from parcels.particlefile import ParticleFile
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
 
@@ -1374,9 +1375,20 @@ class LoopGenerator:
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
         if self.fieldset.particlefile is not None:
             query = ', '.join('?' * len(self.fieldset.particlefile.vars_to_write))
-            sql_body1 = [c.Statement(f'sqlite3_open("{self.fieldset.particlefile.fname}", &sql_db)'),
+            varstr = ', '.join([f'{ParticleFile._convert_varout_name(var)}' for var in self.fieldset.particlefile.vars_to_write.keys()])
+            sql_body1 = [c.Statement(f'sqlite3_open(":memory:", &sql_db)'),
+                         c.Statement(f'sqlite3_exec(sql_db, "CREATE TABLE IF NOT EXISTS particles ({varstr})", NULL, NULL, NULL)'),
                          c.Statement(f'sqlite3_prepare_v2(sql_db, "INSERT INTO particles VALUES ({query})", -1, &stmt, NULL)')]
-            sql_body2 = [c.Statement('sqlite3_finalize(stmt)'), c.Statement('sqlite3_close_v2(sql_db)')]
+            sql_body2 = [c.Statement('sqlite3_finalize(stmt)'),
+                         c.Statement('sqlite3 *sql_db_2'),
+                         c.Statement(f'sqlite3_open("{self.fieldset.particlefile.fname}", &sql_db_2)'),
+                         c.Statement('sqlite3_backup *pBackup'),
+                         c.Statement(f'pBackup = sqlite3_backup_init(sql_db_2, "main", sql_db, "main")'),
+                         c.Statement('sqlite3_backup_step(pBackup, -1)'),
+                         c.Statement('sqlite3_backup_finish(pBackup)'),
+                         c.Statement('sqlite3_close_v2(sql_db)'),
+                         c.Statement('sqlite3_close_v2(sql_db_2)'),
+                         ]
         else:
             sql_body1 = []
             sql_body2 = []
