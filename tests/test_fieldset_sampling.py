@@ -3,6 +3,7 @@ from math import cos, pi
 
 import numpy as np
 import pytest
+import xarray as xr
 
 from parcels import (  # noqa
     AdvectionRK4,
@@ -939,3 +940,46 @@ def test_nestedfields(pset_mode, mode, k_sample_p):
     assert np.isclose(pset.lat[0], -1)
     assert np.isclose(pset.p[0], 999)
     assert np.allclose(fieldset.UV[0][0, 0, 0, 0], [.1, .2])
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def fieldset_sampling_updating_order(pset_mode, mode, tmpdir):
+    def calc_p(t, y, x):
+        return 10 * t + x + 0.2 * y
+
+    dims = [2, 4, 5]
+    dimensions = {
+        "lon": np.linspace(0.0, 1.0, dims[2], dtype=np.float32),
+        "lat": np.linspace(0.0, 1.0, dims[1], dtype=np.float32),
+        "time": np.arange(dims[0], dtype=np.float32),
+    }
+
+    p = np.zeros(dims, dtype=np.float32)
+    for i, x in enumerate(dimensions["lon"]):
+        for j, y in enumerate(dimensions["lat"]):
+            for n, t in enumerate(dimensions["time"]):
+                p[n, j, i] = calc_p(t, y, x)
+
+    data = {
+        "U": 0.5 * np.ones(dims, dtype=np.float32),
+        "V": np.zeros(dims, dtype=np.float32),
+        "P": p,
+    }
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+
+    xv, yv = np.meshgrid(np.arange(0, 1, 0.5), np.arange(0, 1, 0.5))
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten())
+
+    def SampleP(particle, fieldset, time):
+        particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
+
+    kernels = [AdvectionRK4, SampleP]
+
+    filename = tmpdir.join("interpolation_offset.zarr")
+    pfile = pset.ParticleFile(filename, outputdt=1)
+    pset.execute(kernels, endtime=1, dt=1, output_file=pfile)
+
+    ds = xr.open_zarr(filename).isel(obs=1)
+    for i in range(len(ds["p"])):
+        assert np.isclose(ds["p"].values[i], calc_p(float(ds["time"].values[i]) / 1e9, ds["lat"].values[i], ds["lon"].values[i]))
