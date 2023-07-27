@@ -1,4 +1,4 @@
-name: py3_parcels
+name: parcels
 channels:
   - conda-forge
 dependencies:
