@@ -140,7 +140,7 @@ class _Particle:
         for v in ptype.variables:
             if isinstance(v.initial, attrgetter):
                 initial = v.initial(self)
-            elif isinstance(v.initial, Field):
+            elif isinstance(v.initial, Field):  # TODO remove this functionality as not needed anymore
                 lon = self.getInitialValue(ptype, name='lon')
                 lat = self.getInitialValue(ptype, name='lat')
                 depth = self.getInitialValue(ptype, name='depth')
@@ -199,10 +199,14 @@ class ScipyParticle(_Particle):
     Additional Variables can be added via the :Class Variable: objects
     """
 
-    lon = Variable('lon', dtype=np.float32)
-    lat = Variable('lat', dtype=np.float32)
-    depth = Variable('depth', dtype=np.float32)
-    time = Variable('time', dtype=np.float64)
+    lon = Variable('lon', dtype=np.float32, to_write=False)
+    lon_towrite = Variable('lon_towrite', dtype=np.float32)
+    lat = Variable('lat', dtype=np.float32, to_write=False)
+    lat_towrite = Variable('lat_towrite', dtype=np.float32)
+    depth = Variable('depth', dtype=np.float32, to_write=False)
+    depth_towrite = Variable('depth_towrite', dtype=np.float32)
+    time = Variable('time', dtype=np.float64, to_write=False)
+    time_towrite = Variable('time_towrite', dtype=np.float32)  # TODO check if this is needed (can also use p.time-p.dt?)
     id = Variable('id', dtype=np.int64, to_write='once')
     once_written = Variable('once_written', dtype=np.int32, initial=0, to_write=False)  # np.bool not implemented in JIT
     dt = Variable('dt', dtype=np.float64, to_write=False)
@@ -213,9 +217,13 @@ class ScipyParticle(_Particle):
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
+        type(self).lon_towrite.initial = lon
         type(self).lat.initial = lat
+        type(self).lat_towrite.initial = lat
         type(self).depth.initial = depth
+        type(self).depth_towrite.initial = depth
         type(self).time.initial = time
+        type(self).time_towrite.initial = time
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
         type(self).once_written.initial = 0

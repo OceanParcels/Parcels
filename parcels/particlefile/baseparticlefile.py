@@ -81,6 +81,7 @@ class BaseParticleFile(ABC):
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
+        self.particleset.fieldset.particlefile = self
 
         # Reset once-written flag of each particle, in case new ParticleFile created for a ParticleSet
         particleset.collection.setallvardata('once_written', 0)
@@ -183,8 +184,14 @@ class BaseParticleFile(ABC):
         self.metadata[name] = message
 
     def _convert_varout_name(self, var):
-        if var == 'depth':
+        if var == 'lon_towrite':
+            return 'lon'
+        elif var == 'lat_towrite':
+            return 'lat'
+        elif var == 'depth_towrite':
             return 'z'
+        elif var == 'time_towrite':
+            return 'time'
         elif var == 'id':
             return 'trajectory'
         else:

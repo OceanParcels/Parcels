@@ -147,7 +147,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 if v.name in initialised:
                     continue
 
-                if isinstance(v.initial, Field):
+                if isinstance(v.initial, Field):  # TODO remove as not needed anymore
                     for i in range(self.ncount):
                         if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError(f'Cannot initialise a Variable with a Field if no time provided (time-type: {type(time)} values: {time}). Add a "time=" to ParticleSet construction')
