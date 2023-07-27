@@ -276,7 +276,7 @@ class BaseKernel:
                     all_files_array.append(self.src_file)
                 compiler.compile(self.src_file, self.lib_file, self.log_file)
         if len(all_files_array) > 0:
-            logger.info(f"Compiled {self.name} ==> {self.lib_file}")
+            logger.info(f"Compiled {self.name} ==> {self.src_file}")
             if self.log_file is not None:
                 all_files_array.append(self.log_file)
 

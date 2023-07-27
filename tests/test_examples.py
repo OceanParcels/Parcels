@@ -7,8 +7,6 @@ import pytest
 example_folder = (Path(__file__).parent / "../docs/examples").resolve()
 example_fnames = [path.name for path in example_folder.glob("*.py")]
 
-example_fnames.remove("example_nemo_curvilinear.py")  # ! Imports cartopy, which is not installed in CI
-
 
 @pytest.mark.parametrize("example_fname", example_fnames)
 def test_example_script(example_fname):
