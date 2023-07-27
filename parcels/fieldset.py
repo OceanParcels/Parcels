@@ -39,6 +39,7 @@ class FieldSet:
     def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
         self.completed = False
+        self.particlefile = None
         if U:
             self.add_field(U, 'U')
             self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin

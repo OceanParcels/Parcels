@@ -445,7 +445,6 @@ class BaseKernel:
                 pdt_prekernels = sign_dt * dt_pos
                 p.dt = pdt_prekernels
                 state_prev = p.state
-
                 res = self._pyfunc(p, self._fieldset, p.time)
                 if res is None:
                     res = StateCode.Success
