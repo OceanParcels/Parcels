@@ -10,7 +10,7 @@ Here you'll find tutorials, documentation, and the API reference for Parcels. Yo
 
    Home <self>
    Installation <installation>
-   Tutorials and documentation <documentation>
+   Tutorials & Documentation <documentation>
    API reference <reference>
    Contributing <contributing>
    OceanParcels website <https://oceanparcels.org/>
