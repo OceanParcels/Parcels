@@ -53,7 +53,7 @@ The steps below are the installation instructions for Linux / macOS and for Wind
 Installation for developers
 ===========================
 
-Parcels depends on a working Python installation, a netCDF installation, a C compiler, and various Python packages. If you prefer to maintain your own Python installation providing all this, download one of the environment files for `linux <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment_py3_linux.yml>`_, for `macOS <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment_py3_osx.yml>`_ or for `Windows <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment_py3_win.yml>`_ and install it with:
+If you would prefer to have a development installation of Parcels (i.e., where the code can be actively editted), you can do so by cloning the Parcels repo, installing dependencies using the environment file (which includes Python, netCDF tooling, a C compiler, and various Python packages), and then installing Parcels in an editable mode such that changes to the cloned code can be tested during development.
 
     .. code-block:: bash
 
