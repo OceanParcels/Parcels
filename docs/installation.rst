@@ -7,13 +7,11 @@ The steps below are the installation instructions for Linux / macOS and for Wind
 
 #. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/, making sure to select the Python-3 version. If you're on Linux /macOS, it also assumes that you installed Miniconda-3 to your home directory.
 
-#. Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the root (or base) environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, and the nice-to-have cartopy and jupyter packages:
+#. Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the ``base`` environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, and the nice-to-have cartopy and jupyter packages:
 
     .. code-block:: bash
 
-      conda activate root  # Linux / macOS
-      activate root        # Windows
-
+      conda activate base
       conda create -n parcels -c conda-forge parcels cartopy
 
     .. note::
