@@ -16,7 +16,7 @@ The steps below are the installation instructions for Linux / macOS and for Wind
 
     .. note::
 
-        For some of the examples, ``pytest`` needs to be installed with ``conda install -n parcels pytest``
+        For some of the examples, ``pytest`` also needs to be installed. This can be quickly done with ``conda install -n parcels pytest`` which installs ``pytest`` directly into the newly created ``parcels`` environment.
 
 #. Activate the newly created Parcels environment:
 
