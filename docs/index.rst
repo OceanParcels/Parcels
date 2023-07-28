@@ -9,7 +9,7 @@ Here you'll find tutorials, documentation, and the API reference for Parcels. Yo
    :hidden:
 
    Home <self>
-   Installing Parcels <installation>
+   Installation <installation>
    Tutorials and documentation <documentation>
    API reference <reference>
    Contributing <contributing>
