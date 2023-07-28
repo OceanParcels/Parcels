@@ -22,10 +22,9 @@ The steps below are the installation instructions for Linux / macOS and for Wind
 
     .. code-block:: bash
 
-      conda activate parcels  # Linux / macOS
-      activate parcels        # Windows</code></pre>
+      conda activate parcels
 
-#. Get a zipped copy of the Parcels tutorials and examples from `here <https://docs.oceanparcels.org/en/latest/_downloads/307c382eb1813dc691e8a80d6c0098f7/parcels_tutorials.zip>`_ and unzip it.
+#. Download `a zipped copy <https://docs.oceanparcels.org/en/latest/_downloads/307c382eb1813dc691e8a80d6c0098f7/parcels_tutorials.zip>`_ of the Parcels tutorials and examples and unzip it.
 
 #. Go to the unzipped folder and run one of the examples to validate that you have a working Parcels setup:
 
@@ -46,8 +45,7 @@ The steps below are the installation instructions for Linux / macOS and for Wind
 
     .. code-block:: bash
 
-      conda activate parcels  # Linux / macOS
-      activate parcels        # Windows
+      conda activate parcels
 
 
 Installation for developers
@@ -60,7 +58,15 @@ If you would prefer to have a development installation of Parcels (i.e., where t
       git clone https://github.com/OceanParcels/parcels.git
       conda env create -f environment_py3_<OS>.yml  # where <OS> is either linux, osx or win
 
-Then, add the directory where you stored the Parcels code to your ``$PYTHONPATH`` environment variable. For example, if you cloned the Parcels code to ``/home/username/parcels``, add the following line to your ``.bashrc`` or ``.zshrc`` file:
+Then activate the environment and install Parcels in editable mode:
+
+    .. code-block:: bash
+
+      conda activate parcels
+      cd parcels
+      pip install -e .
+
+If Python does not find the ``parcels`` module, you can try adding the directory where you stored the Parcels code to your ``$PYTHONPATH`` environment variable. For example, if you cloned the Parcels code to ``/home/username/parcels``, add the following line to your ``.bashrc`` or ``.zshrc`` file:
 
     .. code-block:: bash
 
