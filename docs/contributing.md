@@ -8,7 +8,7 @@ This document outlines some guidelines for contributing to the parcels codebase.
 
 ## Getting Started
 
-To get started contributing to parcels, you'll need to install the developer version of Parcels following [the instructions](installation#installation-for-developers). This will install the latest version of Parcels from the `master` branch of the repository.
+To get started contributing to parcels, you'll need to install the developer version of Parcels following [our installation instructions](installation.rst#installation-for-developers). This will install the latest version of Parcels from the `master` branch of the repository.
 
 **Optional:** Setup `pre-commit` hooks by running `pre-commit install`. This ensures that code is formatted correctly before you commit it.
 
