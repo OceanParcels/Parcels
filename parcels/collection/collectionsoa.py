@@ -124,8 +124,11 @@ class ParticleCollectionSOA(ParticleCollection):
 
             # mimic the variables that get initialised in the constructor
             self._data['lat'][:] = lat
+            self._data['lat_towrite'][:] = lat
             self._data['lon'][:] = lon
+            self._data['lon_towrite'][:] = lon
             self._data['depth'][:] = depth
+            self._data['depth_towrite'][:] = depth
             self._data['time'][:] = time
             self._data['id'][:] = pid
             self._data['once_written'][:] = 0
@@ -133,7 +136,7 @@ class ParticleCollectionSOA(ParticleCollection):
             # special case for exceptions which can only be handled from scipy
             self._data['exception'] = np.empty(self.ncount, dtype=object)
 
-            initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
+            initialised |= {'lat', 'lat_towrite', 'lon', 'lon_towrite', 'depth', 'depth_towrite', 'time', 'id'}
 
             # any fields that were provided on the command line
             for kwvar, kwval in kwargs.items():
@@ -949,6 +952,8 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in self._pcoll.ptype.variables:
+            if var.name in ['lon_towrite', 'lat_towrite', 'depth_towrite']:
+                continue
             if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
                 str += f"{var.name}={getattr(self, var.name):f}, "
         return str + f"time={time_string})"

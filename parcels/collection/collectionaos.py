@@ -130,7 +130,7 @@ class ParticleCollectionAOS(ParticleCollection):
                     if kwvar not in initialised:
                         initialised.add(kwvar)
 
-            initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
+            initialised |= {'lat', 'lat_towrite', 'lon', 'lon_towrite', 'depth', 'depth_towrite', 'time', 'id'}
 
             for v in self._ptype.variables:
                 if v.name in initialised:
