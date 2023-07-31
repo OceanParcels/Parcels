@@ -951,7 +951,7 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
         if self.fieldset.particlefile is not None:
             writebody = []
-            for coord in ['lon', 'lat', 'depth', 'time']:
+            for coord in ['lon', 'lat', 'depth']:
                 writebody += [c.Statement(f"particles->{coord}_towrite[pnum] = particles->{coord}[pnum]")]
 
             body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
@@ -1116,7 +1116,7 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
 
         if self.fieldset.particlefile is not None:
             writebody = []
-            for coord in ['lon', 'lat', 'depth', 'time']:
+            for coord in ['lon', 'lat', 'depth']:
                 writebody += [c.Statement(f"particle->{coord}_towrite = particle->{coord}")]
 
             body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]

@@ -856,6 +856,9 @@ class ParticleCollectionSOA(ParticleCollection):
             Write status of the variable (True, False or 'once')
         write_status :
         """
+        if var in ['depth', 'lat', 'lon']:  # These are the variable names that are written for lon, lat and depth
+            var = var + '_towrite'
+
         var_changed = False
         for v in self._ptype.variables:
             if v.name == var:

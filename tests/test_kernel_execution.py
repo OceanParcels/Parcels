@@ -20,6 +20,7 @@ from parcels import (  # noqa
     ParticleSetSOA,
     ScipyParticle,
     StateCode,
+    Variable
 )
 
 pset_modes = ['soa', 'aos']
@@ -49,20 +50,39 @@ def fieldset_fixture(xdim=20, ydim=20):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_execution_order(pset_mode, mode):
+@pytest.mark.parametrize('kernel_type', ['update_lon', 'update_dlon'])
+def test_execution_order(pset_mode, mode, kernel_type):
     fieldset = FieldSet.from_data({'U': [[0, 1], [2, 3]], 'V': np.ones((2, 2))}, {'lon': [0, 2], 'lat': [0, 2]}, mesh='flat')
 
-    def MoveLon(particle, fieldset, time):
+    def MoveLon_Update_Lon(particle, fieldset, time):
+       particle.lon += 0.2  # noqa
+
+    def MoveLon_Update_dlon(particle, fieldset, time):
        particle_dlon += 0.2  # noqa
 
-    kernels = [MoveLon, AdvectionRK4]
+    def SampleP(particle, fieldset, time):
+        particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+
+    class SampleParticle(ptype[mode]):
+        p = Variable('p', dtype=np.float32, initial=0.)
+
+    MoveLon = MoveLon_Update_dlon if kernel_type == 'update_dlon' else MoveLon_Update_Lon
+
+    kernels = [MoveLon, SampleP]
     lons = []
+    ps = []
     for dir in [1, -1]:
-        pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=0, lat=0)
+        pset = pset_type[pset_mode]['pset'](fieldset, pclass=SampleParticle, lon=0, lat=0)
         pset.execute(kernels[::dir], endtime=1, dt=1)
         lons.append(pset.lon)
-    assert np.isclose(lons[0], lons[1])
-    assert lons[0] > 0.5
+        ps.append(pset.p)
+
+    if kernel_type == 'update_dlon':
+        assert np.isclose(lons[0], lons[1])
+        assert np.isclose(ps[0], ps[1])
+    else:
+        assert np.isclose(ps[0] - ps[1], 0.1)
+    assert np.allclose(lons[0], 0.2)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)

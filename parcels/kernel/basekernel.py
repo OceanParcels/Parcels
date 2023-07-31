@@ -162,6 +162,13 @@ class BaseKernel:
             particle_ddepth = 0  # noqa
 
         def Updatecoords(particle, fieldset, time):
+            if fieldset.particlefile is not None and \
+              (abs(math.fmod(particle.time, fieldset.particlefile.outputdt)) < 1e-6  # noqa
+               or fieldset.particlefile.analytical):
+                particle.lon_towrite = particle.lon
+                particle.lat_towrite = particle.lat
+                particle.depth_towrite = particle.depth
+
             particle.lon += particle_dlon  # noqa
             particle.lat += particle_dlat  # noqa
             particle.depth += particle_ddepth  # noqa
@@ -188,6 +195,8 @@ class BaseKernel:
                     logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
                                         '  If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
             elif pyfunc is AdvectionAnalytical:
+                if self.fieldset.particlefile is not None:
+                    self.fieldset.particlefile.analytical = True
                 if self._ptype.uses_jit:
                     raise NotImplementedError('Analytical Advection only works in Scipy mode')
                 if self._fieldset.U.interp_method != 'cgrid_velocity':

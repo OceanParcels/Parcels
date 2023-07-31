@@ -205,8 +205,7 @@ class ScipyParticle(_Particle):
     lat_towrite = Variable('lat_towrite', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32, to_write=False)
     depth_towrite = Variable('depth_towrite', dtype=np.float32)
-    time = Variable('time', dtype=np.float64, to_write=False)
-    time_towrite = Variable('time_towrite', dtype=np.float32)  # TODO check if this is needed (can also use p.time-p.dt?)
+    time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int64, to_write='once')
     once_written = Variable('once_written', dtype=np.int32, initial=0, to_write=False)  # np.bool not implemented in JIT
     dt = Variable('dt', dtype=np.float64, to_write=False)
@@ -223,7 +222,6 @@ class ScipyParticle(_Particle):
         type(self).depth.initial = depth
         type(self).depth_towrite.initial = depth
         type(self).time.initial = time
-        type(self).time_towrite.initial = time
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
         type(self).once_written.initial = 0
@@ -248,6 +246,9 @@ class ScipyParticle(_Particle):
         cls.lon.dtype = dtype
         cls.lat.dtype = dtype
         cls.depth.dtype = dtype
+        cls.lon_towrite.dtype = dtype
+        cls.lat_towrite.dtype = dtype
+        cls.depth_towrite.dtype = dtype
 
 
 class ScipyInteractionParticle(ScipyParticle):

@@ -165,6 +165,8 @@ class KernelSOA(BaseKernel):
         # Indices marked for deletion.
         bool_indices = pset.collection.state == OperationCode.Delete
         indices = np.where(bool_indices)[0]
+        if len(indices) > 0 and self.fieldset.particlefile is not None:
+            self.fieldset.particlefile.write(pset, None, indices=bool_indices)
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):

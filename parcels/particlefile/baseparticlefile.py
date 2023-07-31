@@ -82,6 +82,7 @@ class BaseParticleFile(ABC):
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
         self.particleset.fieldset.particlefile = self
+        self.analytical = False  # Flag to indicate if ParticleFile is used for analytical trajectories
 
         # Reset once-written flag of each particle, in case new ParticleFile created for a ParticleSet
         particleset.collection.setallvardata('once_written', 0)
@@ -215,7 +216,7 @@ class BaseParticleFile(ABC):
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
-    def write(self, pset, time):
+    def write(self, pset, time, indices=None):
         """Write all data from one time step to the zarr file.
 
         Parameters
@@ -227,13 +228,14 @@ class BaseParticleFile(ABC):
         """
         time = time.total_seconds() if isinstance(time, delta) else time
 
-        if (self.lasttime_written is None or ~np.isclose(self.lasttime_written, time)):
+        if (indices is not None or self.lasttime_written is None or ~np.isclose(self.lasttime_written, time)):
             if pset.collection._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
                 return
 
-            indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
-            self.lasttime_written = time
+            indices_to_write = pset.collection._to_write_particles(pset.collection._data, time) if indices is None else indices
+            if time is not None:
+                self.lasttime_written = time
 
             if len(indices_to_write) > 0:
                 pids = pset.collection.getvardata('id', indices_to_write)
@@ -244,9 +246,10 @@ class BaseParticleFile(ABC):
                 self.maxids = len(self.pids_written)
 
                 once_ids = np.where(pset.collection.getvardata('once_written', indices_to_write) == 0)[0]
-                ids_once = ids[once_ids]
-                indices_to_write_once = indices_to_write[once_ids]
-                pset.collection.setvardata('once_written', indices_to_write_once, np.ones(len(ids_once)))
+                if len(once_ids) > 0:
+                    ids_once = ids[once_ids]
+                    indices_to_write_once = indices_to_write[once_ids]
+                    pset.collection.setvardata('once_written', indices_to_write_once, np.ones(len(ids_once)))
 
                 if self.maxids > len(self.obs_written):
                     self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
@@ -293,7 +296,7 @@ class BaseParticleFile(ABC):
                         if self.maxids > Z[varout].shape[0]:
                             self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
                         if self.write_once(var):
-                            if len(ids_once) > 0:
+                            if len(once_ids) > 0:
                                 Z[varout].vindex[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
                         else:
                             if max(obs) >= Z[varout].shape[1]:

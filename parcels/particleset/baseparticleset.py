@@ -490,10 +490,6 @@ class BaseParticleSet(NDCluster):
 
         self._set_particle_vector('dt', dt)
 
-        # First write output_file, because particles could have been added
-        if output_file:
-            output_file.write(self, _starttime)
-
         if callbackdt is None:
             interupt_dts = [np.infty, outputdt]
             if self.repeatdt is not None:
@@ -504,7 +500,7 @@ class BaseParticleSet(NDCluster):
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
             next_prelease = np.infty if dt > 0 else - np.infty
-        next_output = time + outputdt if dt > 0 else time - outputdt
+        next_output = time
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
@@ -514,13 +510,28 @@ class BaseParticleSet(NDCluster):
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
 
-        while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
+        lastexecution = True
+        while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0 or lastexecution:
+            if np.isclose(time, endtime, atol=1e-5):
+                lastexecution = False
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
                 if output_file:
                     logger.info(f'Output files are stored in {output_file.fname}.')
                 pbar = self.__create_progressbar(_starttime, endtime)
                 verbose_progress = True
+
+            if abs(time-next_prelease) < tol:
+                pset_new = self.__class__(
+                    fieldset=self.fieldset, time=time, lon=self.repeatlon,
+                    lat=self.repeatlat, depth=self.repeatdepth,
+                    pclass=self.repeatpclass,
+                    lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
+                    partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
+                for p in pset_new:
+                    p.dt = dt
+                self.add(pset_new)
+                next_prelease += self.repeatdt * np.sign(dt)
 
             if dt > 0:
                 next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
@@ -550,18 +561,12 @@ class BaseParticleSet(NDCluster):
                     if dt == 0:
                         break
             # End of interaction specific code
-            time = next_time
-            if abs(time-next_prelease) < tol:
-                pset_new = self.__class__(
-                    fieldset=self.fieldset, time=time, lon=self.repeatlon,
-                    lat=self.repeatlat, depth=self.repeatdepth,
-                    pclass=self.repeatpclass,
-                    lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
-                    partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
-                for p in pset_new:
-                    p.dt = dt
-                self.add(pset_new)
-                next_prelease += self.repeatdt * np.sign(dt)
+
+            if abs(time - next_output) < tol or not lastexecution:
+                if output_file:
+                    output_file.write(self, time)
+                next_output += outputdt * np.sign(dt)
+
             if abs(time - next_output) < tol or dt == 0:
                 for fld in self.fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:
@@ -570,16 +575,14 @@ class BaseParticleSet(NDCluster):
                         fldfilename = str(output_file.fname).replace('.zarr', '_%.4d' % fld.to_write)
                         fld.write(fldfilename)
                         fld.to_write += 1
-            if abs(time - next_output) < tol:
-                if output_file:
-                    output_file.write(self, time)
-                next_output += outputdt * np.sign(dt)
+
             # ==== insert post-process here to also allow for memory clean-up via external func ==== #
             if abs(time-next_callback) < tol:
                 if postIterationCallbacks is not None:
                     for extFunc in postIterationCallbacks:
                         extFunc()
                 next_callback += callbackdt * np.sign(dt)
+
             if time != endtime:
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
@@ -588,7 +591,7 @@ class BaseParticleSet(NDCluster):
                 pbar.update(abs(time - pbar.prevtime))
                 pbar.prevtime = time
 
-        if output_file:
-            output_file.write(self, time)
+            time = next_time
+
         if verbose_progress:
             pbar.close()

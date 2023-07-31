@@ -163,6 +163,8 @@ class KernelAOS(BaseKernel):
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""
         indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
+        if len(indices) > 0 and self.fieldset.particlefile is not None:
+            self.fieldset.particlefile.write(pset, None, indices=indices)
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):

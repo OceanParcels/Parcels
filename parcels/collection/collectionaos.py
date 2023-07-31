@@ -942,6 +942,9 @@ class ParticleCollectionAOS(ParticleCollection):
             Write status of the variable (True, False or 'once')
 
         """
+        if var in ['depth', 'lat', 'lon']:  # These are the variable names that are written for lon, lat and depth
+            var = var + '_towrite'
+
         var_changed = False
         for v in self._ptype.variables:
             if v.name == var and hasattr(v, 'to_write'):
