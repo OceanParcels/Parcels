@@ -236,12 +236,12 @@ class BaseParticleFile(ABC):
             if deleted_only is not False:
                 if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                     indices_to_write = np.where(np.isin(pset.collection.getvardata('state'), [OperationCode.Delete]))[0]
-                elif type(deleted_only) == np.ndarray:
+                elif type(deleted_only) is np.ndarray:
                     if set(deleted_only).issubset([0, 1]):
                         indices_to_write = np.where(deleted_only)[0]
                     else:
                         indices_to_write = deleted_only
-                elif type(deleted_only) == list:
+                elif type(deleted_only) is list:
                     indices_to_write = np.array(deleted_only)
             else:
                 indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
