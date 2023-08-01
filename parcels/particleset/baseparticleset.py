@@ -500,7 +500,7 @@ class BaseParticleSet(NDCluster):
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
             next_prelease = np.infty if dt > 0 else - np.infty
-        next_output = time
+        next_output = time + outputdt if dt > 0 else time - outputdt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
@@ -512,6 +512,7 @@ class BaseParticleSet(NDCluster):
 
         lastexecution = True
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0 or lastexecution:
+            time_at_startofloop = time
             if np.isclose(time, endtime, atol=1e-5):
                 lastexecution = False
             if verbose_progress is None and time_module.time() - walltime_start > 10:
@@ -537,6 +538,7 @@ class BaseParticleSet(NDCluster):
                 next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
             else:
                 next_time = max(next_prelease, next_input, next_output, next_callback, endtime)
+            time = next_time
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
@@ -564,8 +566,9 @@ class BaseParticleSet(NDCluster):
 
             if abs(time - next_output) < tol or not lastexecution:
                 if output_file:
-                    output_file.write(self, time)
-                next_output += outputdt * np.sign(dt)
+                    output_file.write(self, time_at_startofloop)
+                if np.isfinite(outputdt):
+                    next_output += outputdt * np.sign(dt)
 
             if abs(time - next_output) < tol or dt == 0:
                 for fld in self.fieldset.get_fields():
@@ -590,8 +593,6 @@ class BaseParticleSet(NDCluster):
             if verbose_progress:
                 pbar.update(abs(time - pbar.prevtime))
                 pbar.prevtime = time
-
-            time = next_time
 
         if verbose_progress:
             pbar.close()
