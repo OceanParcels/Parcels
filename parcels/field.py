@@ -22,6 +22,7 @@ from parcels.tools.statuscodes import (
     FieldOutOfBoundSurfaceError,
     FieldSamplingError,
     TimeExtrapolationError,
+    ErrorCode
 )
 
 from .fieldfilebuffer import (
@@ -1182,6 +1183,19 @@ class Field:
         else:
             return self.eval(*key)
 
+        # try:  # TODO check if this is needed
+        # if _isParticle(key):
+        #     val = self.eval(key.time, key.depth, key.lat, key.lon, key)
+        # else:
+        #     val = self.eval(*key)
+        # except (FieldOutOfBoundError, FieldSamplingError):
+        #     val = np.nan
+        #     if _isParticle(key):
+        #         key.state = ErrorCode.ErrorOutOfBounds
+        #     elif _isParticle(key[-1]):
+        #         key[-1].state = ErrorCode.ErrorOutOfBounds
+        # return val
+
     def eval(self, time, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.
 
@@ -2058,7 +2072,17 @@ class NestedField(list):
                     break
                 except (FieldOutOfBoundError, FieldSamplingError):
                     if iField == len(self)-1:
-                        raise
+                        if isinstance(self[iField], VectorField):
+                            if self[iField].vector_type == '3D':
+                                val = (np.nan, np.nan, np.nan)
+                            else:
+                                val = (np.nan, np.nan)
+                        else:
+                            val = np.nan
+                        if _isParticle(key):
+                            key.state = ErrorCode.ErrorOutOfBounds
+                        elif _isParticle(key[-1]):
+                            key[-1].state = ErrorCode.ErrorOutOfBounds
                     else:
                         pass
             return val
