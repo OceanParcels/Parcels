@@ -952,7 +952,7 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in self._pcoll.ptype.variables:
-            if var.name in ['lon_towrite', 'lat_towrite', 'depth_towrite']:
+            if var.name in ['lon_towrite', 'lat_towrite', 'depth_towrite', 'time_towrite']:  # TODO check if time_towrite is needed (or can work with time-dt?)
                 continue
             if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
                 str += f"{var.name}={getattr(self, var.name):f}, "

@@ -130,7 +130,7 @@ class ParticleCollectionAOS(ParticleCollection):
                     if kwvar not in initialised:
                         initialised.add(kwvar)
 
-            initialised |= {'lat', 'lat_towrite', 'lon', 'lon_towrite', 'depth', 'depth_towrite', 'time', 'id'}
+            initialised |= {'lat', 'lat_towrite', 'lon', 'lon_towrite', 'depth', 'depth_towrite', 'time', 'time_towrite', 'id'}
 
             for v in self._ptype.variables:
                 if v.name in initialised:
@@ -893,8 +893,8 @@ class ParticleCollectionAOS(ParticleCollection):
         """We don't want to write a particle that is not started yet.
         Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
         """
-        return np.array([i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt))
-                                                         or (np.isnan(p.dt) and np.equal(time, p.time)))
+        return np.array([i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time_towrite < time + np.abs(p.dt))
+                                                         or (np.isnan(p.dt) and np.equal(time, p.time_towrite)))
                                                          and np.isfinite(p.id))])
 
     def getvardata(self, var, indices=None):
@@ -942,7 +942,7 @@ class ParticleCollectionAOS(ParticleCollection):
             Write status of the variable (True, False or 'once')
 
         """
-        if var in ['depth', 'lat', 'lon']:  # These are the variable names that are written for lon, lat and depth
+        if var in ['time', 'depth', 'lat', 'lon']:  # These are the variable names that are written for lon, lat and depth
             var = var + '_towrite'
 
         var_changed = False

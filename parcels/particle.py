@@ -205,7 +205,8 @@ class ScipyParticle(_Particle):
     lat_towrite = Variable('lat_towrite', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32, to_write=False)
     depth_towrite = Variable('depth_towrite', dtype=np.float32)
-    time = Variable('time', dtype=np.float64)
+    time = Variable('time', dtype=np.float64, to_write=False)
+    time_towrite = Variable('time_towrite', dtype=np.float64)
     id = Variable('id', dtype=np.int64, to_write='once')
     once_written = Variable('once_written', dtype=np.int32, initial=0, to_write=False)  # np.bool not implemented in JIT
     dt = Variable('dt', dtype=np.float64, to_write=False)
@@ -222,6 +223,7 @@ class ScipyParticle(_Particle):
         type(self).depth.initial = depth
         type(self).depth_towrite.initial = depth
         type(self).time.initial = time
+        type(self).time_towrite.initial = time
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
         type(self).once_written.initial = 0
@@ -237,7 +239,7 @@ class ScipyParticle(_Particle):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in vars(type(self)):
-            if var in ['lon_towrite', 'lat_towrite', 'depth_towrite']:
+            if var in ['lon_towrite', 'lat_towrite', 'depth_towrite', 'time_towrite']:
                 continue
             if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
                 str += f"{var}={getattr(self, var):f}, "

@@ -168,10 +168,12 @@ class BaseKernel:
                 particle.lon_towrite = particle.lon
                 particle.lat_towrite = particle.lat
                 particle.depth_towrite = particle.depth
+                particle.time_towrite = particle.time  # TODO check if needed (or done with dt)
 
             particle.lon += particle_dlon  # noqa
             particle.lat += particle_dlat  # noqa
             particle.depth += particle_ddepth  # noqa
+            particle.time += particle.dt  # noqa
 
         self._pyfunc = self.__radd__(Setcoords).__add__(Updatecoords)._pyfunc
 

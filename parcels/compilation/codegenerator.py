@@ -946,17 +946,17 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
 
         # Create function body as C-code object
         body = []
-        for coord in ['lon', 'lat', 'depth']:
+        for coord in ['lon', 'lat', 'depth', 'time']:
             body += [c.Statement(f"type_coord particle_d{coord} = 0")]
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
         if self.fieldset.particlefile is not None:
             writebody = []
-            for coord in ['lon', 'lat', 'depth']:
+            for coord in ['lon', 'lat', 'depth', 'time']:
                 writebody += [c.Statement(f"particles->{coord}_towrite[pnum] = particles->{coord}[pnum]")]
 
             body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
 
-        for coord in ['lon', 'lat', 'depth']:
+        for coord in ['lon', 'lat', 'depth', 'time']:
             body += [c.Statement(f"particles->{coord}[pnum] += particle_d{coord}")]
         body += [c.Statement("return SUCCESS")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
@@ -1110,18 +1110,18 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
 
         # Create function body as C-code object
         body = []
-        for coord in ['lon', 'lat', 'depth']:
+        for coord in ['lon', 'lat', 'depth', 'time']:
             body += [c.Statement(f"type_coord particle_d{coord} = 0")]
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
 
         if self.fieldset.particlefile is not None:
             writebody = []
-            for coord in ['lon', 'lat', 'depth']:
+            for coord in ['lon', 'lat', 'depth', 'time']:
                 writebody += [c.Statement(f"particle->{coord}_towrite = particle->{coord}")]
 
             body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
 
-        for coord in ['lon', 'lat', 'depth']:
+        for coord in ['lon', 'lat', 'depth', 'time']:
             body += [c.Statement(f"particle->{coord} += particle_d{coord}")]
         body += [c.Statement("return SUCCESS")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
