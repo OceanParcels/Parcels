@@ -946,7 +946,7 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
 
         # Create function body as C-code object
         body = []
-        for coord in ['lon', 'lat', 'depth', 'time']:
+        for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"type_coord particle_d{coord} = 0")]
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
         if self.fieldset.particlefile is not None:
@@ -956,8 +956,9 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
 
             body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
 
-        for coord in ['lon', 'lat', 'depth', 'time']:
+        for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particles->{coord}[pnum] += particle_d{coord}")]
+        body += [c.Statement("particles->time[pnum] += particles->dt[pnum]")]
         body += [c.Statement("return SUCCESS")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
@@ -1110,7 +1111,7 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
 
         # Create function body as C-code object
         body = []
-        for coord in ['lon', 'lat', 'depth', 'time']:
+        for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"type_coord particle_d{coord} = 0")]
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
 
@@ -1121,8 +1122,9 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
 
             body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
 
-        for coord in ['lon', 'lat', 'depth', 'time']:
+        for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particle->{coord} += particle_d{coord}")]
+        body += [c.Statement("particle->time += particle->dt")]
         body += [c.Statement("return SUCCESS")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
