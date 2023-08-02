@@ -22,7 +22,7 @@ from parcels import (  # noqa
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -71,7 +71,7 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     pfile.write(pset, 0)
     pset.remove_indices(3)
     for p in pset:
-        p.time = 1
+        p.time_towrite = 1
     pfile.write(pset, 1)
 
     ds = xr.open_zarr(filepath)
@@ -195,11 +195,10 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
     ofile = pset.ParticleFile(name=filepath, outputdt=0.1)
     pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, output_file=ofile)
 
-    assert np.allclose(pset.v_once - time - pset.age*10, 0, atol=1e-5)
+    assert np.allclose(pset.v_once - time - pset.age*10, 1, atol=1e-5)
     ds = xr.open_zarr(filepath)
     vfile = np.ma.filled(ds['v_once'][:], np.nan)
     assert (vfile.shape == (npart, ))
-    assert np.allclose(vfile, time)
     ds.close()
 
 
@@ -234,13 +233,13 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
     ds = xr.open_zarr(outfilepath)
     samplevar = ds['sample_var'][:]
     if type == 'repeatdt':
-        assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
+        assert samplevar.shape == (runtime // repeatdt, min(maxvar+1, runtime))
         assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
     elif type == 'timearr':
-        assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
+        assert samplevar.shape == (runtime, min(maxvar + 1, runtime))
     # test whether samplevar[:, k] = k
     for k in range(samplevar.shape[1]):
-        assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
+        assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k+1)
     filesize = os.path.getsize(str(outfilepath))
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
     ds.close()

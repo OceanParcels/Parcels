@@ -1284,8 +1284,10 @@ class LoopGenerator:
         body = []
         body += [c.Value("double", "pre_dt")]
         body += [c.Statement("pre_dt = particles->dt[pnum]")]
-        body += [c.Value("StatusCode", "state_prev"), c.Assign("state_prev", "particles->state[pnum]")]
-        body += [c.If("particles->time[pnum] >= endtime", c.Statement("break"))]
+        body += [c.If("sign_dt*particles->time[pnum] >= sign_dt*(endtime)", c.Statement("break"))]
+        body += [c.If("fabs(endtime - particles->time[pnum]) < fabs(particles->dt[pnum])-1e-6",
+                      c.Statement("particles->dt[pnum] = fabs(endtime - particles->time[pnum]) * sign_dt"))]
+        body += [c.Value("StatusCode", "state_prev"), c.Assign("state_prev", "particles->state[pnum]")]  # TODO can go?
         body += [c.Assign("particles->state[pnum]", f"{funcname}(particles, pnum, {fargs_str})")]
         body += [c.If("(particles->state[pnum] == SUCCESS)",
                       c.If("particles->time[pnum] < endtime",
@@ -1298,8 +1300,8 @@ class LoopGenerator:
         time_loop = c.While("(particles->state[pnum] == EVALUATE || particles->state[pnum] == REPEAT)", c.Block(body))
         part_loop = c.For("pnum = 0", "pnum < num_particles", "++pnum",
                           c.Block([sign_end_part, time_loop]))
-        fbody = c.Block([c.Value("int", "pnum, sign_dt, sign_end_part"),
-                         c.Value("double", "reset_dt"),
+        fbody = c.Block([c.Value("int", "pnum, sign_end_part"),
+                         c.Value("double", "reset_dt, sign_dt"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, part_loop,

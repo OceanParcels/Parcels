@@ -426,17 +426,21 @@ class BaseKernel:
         """
         while p.state in [StateCode.Evaluate, OperationCode.Repeat]:
             pre_dt = p.dt
-            if abs(endtime - p.time) < abs(p.dt):
+
+            sign_dt = np.sign(dt)
+            if sign_dt*p.time >= sign_dt*endtime:
+                return p
+
+            if abs(endtime - p.time) < abs(p.dt)+1e-6:
                 p.dt = abs(endtime - p.time) * sign_dt
 
-            res = self._pyfunc(p, self._fieldset, p.time)
+            self._pyfunc(p, self._fieldset, p.time)
 
-            if res is None:
+            if p.state is None:
                 if p.time < endtime:
-                    res = StateCode.Evaluate
+                    p.state = StateCode.Evaluate
                 else:
-                    res = StateCode.Success
-            p.set_state(res)
+                    p.state = StateCode.Success
 
             p.dt = pre_dt
         return p

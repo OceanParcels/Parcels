@@ -228,16 +228,16 @@ class BaseParticleFile(ABC):
         """
         time = time.total_seconds() if isinstance(time, delta) else time
 
-        if (indices is not None or self.lasttime_written is None or ~np.isclose(self.lasttime_written, time)):
+        if True:  # (indices is not None or self.lasttime_written is None or ~np.isclose(self.lasttime_written, time)):  #TODO remove lasttime_written?
             if pset.collection._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
                 return
 
             indices_to_write = pset.collection._to_write_particles(pset.collection._data, time) if indices is None else indices
-            if time is not None:
-                self.lasttime_written = time
 
             if len(indices_to_write) > 0:
+                if time is not None:
+                    self.lasttime_written = time
                 pids = pset.collection.getvardata('id', indices_to_write)
                 to_add = sorted(set(pids) - set(self.pids_written.keys()))
                 for i, pid in enumerate(to_add):
