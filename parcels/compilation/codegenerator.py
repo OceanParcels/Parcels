@@ -417,7 +417,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
         if isinstance(node.func, GenericParticleAttributeNode) \
            and node.func.attr == 'state':
-            node = IntrinsicNode(node, "return DELETE")
+            node = IntrinsicNode(node, "particles->state[pnum] = DELETE")
 
         elif isinstance(node.func, FieldEvalCallNode):
             # get a temporary value to assign result to
@@ -954,7 +954,7 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
             for coord in ['lon', 'lat', 'depth', 'time']:
                 writebody += [c.Statement(f"particles->{coord}_towrite[pnum] = particles->{coord}[pnum]")]
 
-            body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
+            body += [c.If(f"fabs(fmod(particles->time[pnum], {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
 
         # body += [c.Statement('printf("RES NOW %d\\n", particles->state[pnum])')]
         for coord in ['lon', 'lat', 'depth']:
@@ -1279,7 +1279,6 @@ class LoopGenerator:
         # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
         sign_end_part = c.Assign("sign_end_part", "(endtime - particles->time[pnum]) > 0 ? 1 : -1")
-        reset_res_state = c.Assign("res", "particles->state[pnum]")
 
         # ==== main computation body ==== #
         body = []
@@ -1287,20 +1286,19 @@ class LoopGenerator:
         body += [c.Statement("pre_dt = particles->dt[pnum]")]
         body += [c.Value("StatusCode", "state_prev"), c.Assign("state_prev", "particles->state[pnum]")]
         body += [c.If("particles->time[pnum] >= endtime", c.Statement("break"))]
-        body += [c.Assign("res", f"{funcname}(particles, pnum, {fargs_str})")]
-        body += [c.If("(res == SUCCESS)",
+        body += [c.Assign("particles->state[pnum]", f"{funcname}(particles, pnum, {fargs_str})")]
+        body += [c.If("(particles->state[pnum] == SUCCESS)",
                       c.If("particles->time[pnum] < endtime",
                            c.Block([c.Assign("particles->state[pnum]", "EVALUATE")]),
                            c.Block([c.Assign("particles->state[pnum]", "SUCCESS")])))
                  ]
         body += [c.Statement("particles->dt[pnum] = pre_dt")]
-        body += [c.If("(res == REPEAT)", c.Block([c.Statement('break')]))]
+        body += [c.If("(particles->state[pnum] == REPEAT || particles->state[pnum] == DELETE)", c.Block([c.Statement('break')]))]
 
         time_loop = c.While("(particles->state[pnum] == EVALUATE || particles->state[pnum] == REPEAT)", c.Block(body))
         part_loop = c.For("pnum = 0", "pnum < num_particles", "++pnum",
-                          c.Block([sign_end_part, reset_res_state, time_loop]))
+                          c.Block([sign_end_part, time_loop]))
         fbody = c.Block([c.Value("int", "pnum, sign_dt, sign_end_part"),
-                         c.Value("StatusCode", "res"),
                          c.Value("double", "reset_dt"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
