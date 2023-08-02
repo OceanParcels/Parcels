@@ -812,11 +812,11 @@ class ParticleCollectionSOA(ParticleCollection):
         """We don't want to write a particle that is not started yet.
         Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
         """
-        return np.where((np.less_equal(time - np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
-                        & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
-                        | ((np.isnan(pd['dt'])) & np.equal(time, pd['time'], where=np.isfinite(pd['time']))))
+        return np.where((np.less_equal(time - np.abs(pd['dt'] / 2), pd['time_towrite'], where=np.isfinite(pd['time_towrite']))
+                        & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time_towrite'], where=np.isfinite(pd['time_towrite']))
+                        | ((np.isnan(pd['dt'])) & np.equal(time, pd['time_towrite'], where=np.isfinite(pd['time_towrite']))))
                         & (np.isfinite(pd['id']))
-                        & (np.isfinite(pd['time'])))[0]
+                        & (np.isfinite(pd['time_towrite'])))[0]
 
     def getvardata(self, var, indices=None):
         if indices is None:
