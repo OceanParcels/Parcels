@@ -960,7 +960,7 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particles->{coord}[pnum] += particle_d{coord}")]
         body += [c.Statement("particles->time[pnum] += particles->dt[pnum]")]
-        body += [c.Statement("return SUCCESS")]
+        body += [c.Statement("return particles->state[pnum]")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
     def visit_FieldEvalNode(self, node):

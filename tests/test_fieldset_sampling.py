@@ -21,6 +21,7 @@ from parcels import (  # noqa
     ParticleSetAOS,
     ParticleSetSOA,
     ScipyParticle,
+    StateCode,
     Variable,
 )
 
@@ -853,6 +854,7 @@ def test_nestedfields(pset_mode, mode, k_sample_p):
             particle.lon = 0
             particle.lat = 0
             particle.p = 999
+            particle.state = StateCode.Success
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[.3])
     pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)

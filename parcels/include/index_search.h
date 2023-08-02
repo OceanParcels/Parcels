@@ -9,7 +9,7 @@ extern "C" {
 #include <math.h>
 
 #define CHECKSTATUS(res) do {if (res != SUCCESS) return res;} while (0)
-#define CHECKSTATUS_KERNELLOOP(res) {if (res == REPEAT || res == ERROR_TIME_EXTRAPOLATION) return res;}
+#define CHECKSTATUS_KERNELLOOP(res) {if (res == REPEAT) return res;}
 #define rtol 1.e-5
 #define atol 1.e-8
 
