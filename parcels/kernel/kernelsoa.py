@@ -20,6 +20,7 @@ from parcels.field import NestedField, SummedField, VectorField
 from parcels.kernel.basekernel import BaseKernel
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
+from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.statuscodes import recovery_map as recovery_base_map
 
 __all__ = ['KernelSOA']
@@ -197,3 +198,33 @@ class KernelSOA(BaseKernel):
 
         # Remove all particles that signalled deletion
         self.remove_deleted(pset)
+
+        # Identify particles that threw errors
+        n_error = pset.num_error_particles
+
+        while n_error > 0:
+            error_pset = pset.error_particles
+            # Apply recovery kernel
+            for p in error_pset:
+                if p.state == OperationCode.StopExecution:
+                    return
+                if p.state == OperationCode.Repeat:
+                    p.reset_state()
+                elif p.state == ErrorCode.ErrorTimeExtrapolation:
+                    raise TimeExtrapolationError(p.time)
+                elif p.state == OperationCode.Delete:
+                    pass
+                else:
+                    logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')
+                    p.delete()
+
+            # Remove all particles that signalled deletion
+            self.remove_deleted(pset)   # Generalizable version!
+
+            # Execute core loop again to continue interrupted particles
+            if self.ptype.uses_jit:
+                self.execute_jit(pset, endtime, dt)
+            else:
+                self.execute_python(pset, endtime, dt)
+
+            n_error = pset.num_error_particles

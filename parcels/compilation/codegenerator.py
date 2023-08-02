@@ -619,8 +619,8 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
                     self.visit(node.func)
                     rhs = f"{node.func.ccode}({ccode_args})"
                     if parcels_customed_Cfunc:
-                        node.ccode = str(c.Block([c.Assign("err", rhs),
-                                                  c.Statement("CHECKSTATUS(err)")]))
+                        node.ccode = str(c.Block([c.Assign("particles->state[pnum]", rhs),
+                                                  c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")]))
                     else:
                         node.ccode = rhs
             except:
@@ -956,6 +956,7 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
 
             body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
 
+        # body += [c.Statement('printf("RES NOW %d\\n", particles->state[pnum])')]
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particles->{coord}[pnum] += particle_d{coord}")]
         body += [c.Statement("particles->time[pnum] += particles->dt[pnum]")]
@@ -967,14 +968,14 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
         ccode_eval = node.field.obj.ccode_eval_array(node.var, *args)
-        stmts = [c.Assign("err", ccode_eval)]
+        stmts = [c.Assign("particles->state[pnum]", ccode_eval)]
 
         if node.convert:
             ccode_conv = node.field.obj.ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             stmts += [conv_stat]
 
-        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS(err)")])
+        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
 
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
@@ -993,8 +994,8 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
             ccode_conv3 = node.field.obj.W.ccode_convert(*args)
             statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
         conv_stat = c.Block(statements)
-        node.ccode = c.Block([c.Assign("err", ccode_eval),
-                              conv_stat, c.Statement("CHECKSTATUS(err)")])
+        node.ccode = c.Block([c.Assign("particles->state[pnum]", ccode_eval),
+                              conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
 
     def visit_SummedFieldEvalNode(self, node):
         self.visit(node.fields)
@@ -1005,7 +1006,7 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
             ccode_eval = fld.ccode_eval_array(var, *args)
             ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement(f"{var} *= {ccode_conv}")
-            cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKSTATUS(err)")]
+            cstat += [c.Assign("particles->state[pnum]", ccode_eval), conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")]
         node.ccode = c.Block(cstat)
 
     def visit_SummedVectorFieldEvalNode(self, node):
@@ -1026,8 +1027,8 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
             if node.convert and fld.vector_type == '3D':
                 ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement(f"{var3} *= {ccode_conv3}"))
-            cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
-        cstat += [c.Statement("CHECKSTATUS(err)")]
+            cstat += [c.Assign("particles->state[pnum]", ccode_eval), c.Block(statements)]
+        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")]
         node.ccode = c.Block(cstat)
 
     def visit_NestedFieldEvalNode(self, node):
@@ -1039,10 +1040,10 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
             ccode_eval = fld.ccode_eval_array(node.var, *args)
             ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
-            cstat += [c.Assign("err", ccode_eval),
+            cstat += [c.Assign("particles->state[pnum]", ccode_eval),
                       conv_stat,
-                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
+                      c.If("particles->state[pnum] != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
     def visit_NestedVectorFieldEvalNode(self, node):
@@ -1063,10 +1064,10 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
             if fld.vector_type == '3D':
                 ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
-            cstat += [c.Assign("err", ccode_eval),
+            cstat += [c.Assign("particles->state[pnum]", ccode_eval),
                       c.Block(statements),
-                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
+                      c.If("particles->state[pnum] != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
 
@@ -1259,42 +1260,6 @@ class LoopGenerator:
         vdecl = [c.POD(v.dtype, v.name) for v in self.ptype.variables if v.dtype != np.uint64]
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
-        args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
-                c.Pointer(c.Value(pname, "particles")),
-                c.Value("int", "pnum")]
-        p_back_set_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "set_particle_backup"),
-                                                         spec='inline')), args)
-        body = []
-        for v in self.ptype.variables:
-            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
-                body += [c.Assign(("particle_backup->%s" % v.name), ("particles->%s[pnum]" % v.name))]
-        p_back_set_body = c.Block(body)
-        p_back_set = str(c.FunctionBody(p_back_set_decl, p_back_set_body))
-        ccode += [p_back_set]
-
-        args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
-                c.Pointer(c.Value(pname, "particles")),
-                c.Value("int", "pnum")]
-        p_back_get_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "get_particle_backup"),
-                                                         spec='inline')), args)
-        body = []
-        for v in self.ptype.variables:
-            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
-                body += [c.Assign(("particles->%s[pnum]" % v.name), ("particle_backup->%s" % v.name))]
-        p_back_get_body = c.Block(body)
-        p_back_get = str(c.FunctionBody(p_back_get_decl, p_back_get_body))
-        ccode += [p_back_get]
-
-        update_next_dt_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "update_next_dt"),
-                                                             spec='inline')), [c.Value('double', 'dt')])
-        if 'update_next_dt' in str(kernel_ast):
-            body = []
-            body += [c.Assign("_next_dt", "dt")]
-            body += [c.Assign("_next_dt_set", "1")]
-            update_next_dt_body = c.Block(body)
-            update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
-            ccode += [update_next_dt]
-
         if c_include:
             ccode += [c_include]
 
@@ -1313,68 +1278,34 @@ class LoopGenerator:
                               + list(const_args.keys()))
         # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
-        particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
         sign_end_part = c.Assign("sign_end_part", "(endtime - particles->time[pnum]) > 0 ? 1 : -1")
         reset_res_state = c.Assign("res", "particles->state[pnum]")
-        update_state = c.Assign("particles->state[pnum]", "res")
-        update_pdt = c.If("_next_dt_set == 1",
-                          c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles->dt[pnum]", "_next_dt")]))
-
-        dt_pos = c.If("fabs(endtime - particles->time[pnum])<fabs(particles->dt[pnum])",
-                      c.Block([c.Assign("__dt", "fabs(endtime - particles->time[pnum])"), c.Assign("reset_dt", "1")]),
-                      c.Block([c.Assign("__dt", "fabs(particles->dt[pnum])"), c.Assign("reset_dt", "0")]))
-        reset_dt = c.If("(reset_dt == 1) && is_equal_dbl(__pdt_prekernels, particles->dt[pnum])",
-                        c.Block([c.Assign("particles->dt[pnum]", "dt")]))
-
-        pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
-        partdt = c.Assign("particles->dt[pnum]", "__pdt_prekernels")
-        check_pdt = c.If("(res == SUCCESS) & !is_equal_dbl(__pdt_prekernels, particles->dt[pnum])", c.Assign("res", "REPEAT"))
-
-        dt_0_break = c.If("is_zero_dbl(particles->dt[pnum])", c.Statement("break"))
-
-        notstarted_continue = c.If("(( sign_end_part != sign_dt) || is_close_dbl(__dt, 0) ) && !is_zero_dbl(particles->dt[pnum])",
-                                   c.Block([
-                                       c.If("fabs(particles->time[pnum]) >= fabs(endtime)",
-                                            c.Assign("particles->state[pnum]", "SUCCESS")),
-                                       c.Statement("continue")
-                                   ]))
 
         # ==== main computation body ==== #
-        body = [c.Statement("set_particle_backup(&particle_backup, particles, pnum)")]
-        body += [pdt_eq_dt_pos]
-        body += [partdt]
+        body = []
+        body += [c.Value("double", "pre_dt")]
+        body += [c.Statement("pre_dt = particles->dt[pnum]")]
         body += [c.Value("StatusCode", "state_prev"), c.Assign("state_prev", "particles->state[pnum]")]
+        body += [c.If("particles->time[pnum] >= endtime", c.Statement("break"))]
         body += [c.Assign("res", f"{funcname}(particles, pnum, {fargs_str})")]
-        body += [c.If("(res==SUCCESS) && (particles->state[pnum] != state_prev)", c.Assign("res", "particles->state[pnum]"))]
-        body += [check_pdt]
-        body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles->time[pnum] += particles->dt[pnum]"),
-                                                                  reset_dt,
-                                                                  update_pdt,
-                                                                  dt_pos,
-                                                                  sign_end_part,
-                                                                  c.If("(res != DELETE) && !is_close_dbl(__dt, 0) && (sign_dt == sign_end_part)",
-                                                                       c.Assign("res", "EVALUATE")),
-                                                                  c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
-                                                                  update_state,
-                                                                  dt_0_break
-                                                                  ]),
-                      c.Block([c.Statement("get_particle_backup(&particle_backup, particles, pnum)"),
-                               dt_pos,
-                               sign_end_part,
-                               c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
-                               update_state,
-                               c.Statement("break")])
-                      )]
+        body += [c.If("(res == SUCCESS)",
+                      c.If("particles->time[pnum] < endtime",
+                           c.Block([c.Assign("particles->state[pnum]", "EVALUATE")]),
+                           c.Block([c.Assign("particles->state[pnum]", "SUCCESS")])))
+                 ]
+        body += [c.Statement("particles->dt[pnum] = pre_dt")]
+        body += [c.If("(res == REPEAT)", c.Block([c.Statement('break')]))]
 
-        time_loop = c.While("(particles->state[pnum] == EVALUATE || particles->state[pnum] == REPEAT) || is_zero_dbl(particles->dt[pnum])", c.Block(body))
+        time_loop = c.While("(particles->state[pnum] == EVALUATE || particles->state[pnum] == REPEAT)", c.Block(body))
         part_loop = c.For("pnum = 0", "pnum < num_particles", "++pnum",
-                          c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
+                          c.Block([sign_end_part, reset_res_state, time_loop]))
         fbody = c.Block([c.Value("int", "pnum, sign_dt, sign_end_part"),
                          c.Value("StatusCode", "res"),
                          c.Value("double", "reset_dt"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
-                         sign_dt, particle_backup, part_loop])
+                         sign_dt, part_loop,
+                         ])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)
