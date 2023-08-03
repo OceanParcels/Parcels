@@ -53,21 +53,15 @@ Installation for developers
 
 If you would prefer to have a development installation of Parcels (i.e., where the code can be actively editted), you can do so by cloning the Parcels repo, installing dependencies using the environment file (which includes Python, netCDF tooling, a C compiler, and various Python packages), and then installing Parcels in an editable mode such that changes to the cloned code can be tested during development.
 
-    .. code-block:: bash
+.. code-block:: bash
 
-      git clone https://github.com/OceanParcels/parcels.git
-      conda env create -f environment_py3_<OS>.yml  # where <OS> is either linux, osx or win
+  git clone https://github.com/OceanParcels/parcels.git
+  conda env create -f environment_py3_<OS>.yml  # where <OS> is either linux, osx or win
 
 Then activate the environment and install Parcels in editable mode:
 
-    .. code-block:: bash
+.. code-block:: bash
 
-      conda activate parcels
-      cd parcels
-      pip install -e .
-
-If Python does not find the ``parcels`` module, you can try adding the directory where you stored the Parcels code to your ``$PYTHONPATH`` environment variable. For example, if you cloned the Parcels code to ``/home/username/parcels``, add the following line to your ``.bashrc`` or ``.zshrc`` file:
-
-    .. code-block:: bash
-
-      export PYTHONPATH=/home/username/parcels:$PYTHONPATH
+  conda activate parcels
+  cd parcels
+  pip install --no-build-isolation --no-deps -e .
