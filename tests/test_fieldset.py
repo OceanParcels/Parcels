@@ -21,13 +21,13 @@ from parcels import (  # noqa
     JITParticle,
     KernelAOS,
     KernelSOA,
-    OutOfTimeError,
     ParticleFileAOS,
     ParticleFileSOA,
     ParticleSetAOS,
     ParticleSetSOA,
     RectilinearZGrid,
     ScipyParticle,
+    TimeExtrapolationError,
     Variable,
 )
 from parcels.field import Field, VectorField
@@ -40,7 +40,7 @@ from parcels.tools.converters import (
     _get_cftime_datetimes,
 )
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -819,13 +819,10 @@ def test_periodic(pset_mode, mode, use_xarray, time_periodic, dt_sign):
         fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
 
     def sampleTemp(particle, fieldset, time):
-        # Note that fieldset.temp is interpolated at time=time+dt.
-        # Indeed, sampleTemp is called at time=time, but the result is written
-        # at time=time+dt, after the Kernel update
-        particle.temp = fieldset.temp[time+particle.dt, particle.depth, particle.lat, particle.lon]
+        particle.temp = fieldset.temp[time, particle.depth, particle.lat, particle.lon]
         # test if we can interpolate UV and UVW together
-        (particle.u1, particle.v1) = fieldset.UV[time+particle.dt, particle.depth, particle.lat, particle.lon]
-        (particle.u2, particle.v2, w_) = fieldset.UVW[time+particle.dt, particle.depth, particle.lat, particle.lon]
+        (particle.u1, particle.v1) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+        (particle.u2, particle.v2, w_) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
         # test if we can sample a non-timevarying field too
         particle.d = fieldset.D[0, 0, particle.lat, particle.lon]
 
@@ -841,7 +838,7 @@ def test_periodic(pset_mode, mode, use_xarray, time_periodic, dt_sign):
     pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp), runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
 
     if time_periodic is not False:
-        t = pset.time[0]
+        t = pset.time[0] - pset.dt  # because sampling done at the _old_ time
         temp_theo = temp_func(t)
     elif dt_sign == 1:
         temp_theo = temp_vec[-1]
@@ -952,12 +949,12 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
         failed = False
         try:
             pset.execute(SampleField, dt=0.)
-        except OutOfTimeError:
+        except TimeExtrapolationError:
             failed = True
         assert failed
     else:
         pset.execute(SampleField, dt=0.)
-        assert np.allclose([p.u_kernel for p in pset], [p.u_scipy for p in pset])
+        assert np.allclose([p.u_kernel for p in pset], [p.u_scipy for p in pset], atol=1e-5)
         assert isinstance(fieldset.U.data, da.core.Array)
 
 

@@ -869,7 +869,7 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
 
     def visit_Return(self, node):
         self.visit(node.value)
-        node.ccode = c.Statement('return %s' % node.value.ccode)
+        node.ccode = c.Statement('particles->state[pnum] = %s' % node.value.ccode)
 
     def visit_Print(self, node):
         for n in node.values:
