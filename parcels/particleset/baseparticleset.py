@@ -552,12 +552,6 @@ class BaseParticleSet(NDCluster):
                         break
             # End of interaction specific code
 
-            if abs(time - next_output) < tol:  # or not lastexecution:
-                if output_file:
-                    output_file.write(self, time_at_startofloop)
-                if np.isfinite(outputdt):
-                    next_output += outputdt * np.sign(dt)
-
             if abs(time - next_output) < tol or dt == 0:
                 for fld in self.fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:
@@ -566,6 +560,12 @@ class BaseParticleSet(NDCluster):
                         fldfilename = str(output_file.fname).replace('.zarr', '_%.4d' % fld.to_write)
                         fld.write(fldfilename)
                         fld.to_write += 1
+
+            if abs(time - next_output) < tol:  # or not lastexecution:
+                if output_file:
+                    output_file.write(self, time_at_startofloop)
+                if np.isfinite(outputdt):
+                    next_output += outputdt * np.sign(dt)
 
             # ==== insert post-process here to also allow for memory clean-up via external func ==== #
             if abs(time-next_callback) < tol:

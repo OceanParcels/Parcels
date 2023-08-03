@@ -62,7 +62,7 @@ class BaseParticleFile(ABC):
 
     def __init__(self, name, particleset, outputdt=np.infty, chunks=None, create_new_zarrfile=True):
 
-        self.outputdt = outputdt
+        self.outputdt = outputdt.total_seconds() if isinstance(outputdt, delta) else outputdt
         self.chunks = chunks
         self.lasttime_written = None  # variable to check if time has been written already
 
