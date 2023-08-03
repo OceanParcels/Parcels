@@ -4,7 +4,7 @@
 __all__ = ['StateCode', 'OperationCode', 'ErrorCode',
            'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
            'KernelError', 'OutOfBoundsError', 'ThroughSurfaceError', 'OutOfTimeError',
-           'recovery_map']
+           'recovery_map', 'AllParcelsErrors', 'AllParcelsErrorCodes']
 
 
 class StateCode:
@@ -161,6 +161,21 @@ class OutOfTimeError(KernelError):
         message = (f"Field sampled outside time domain at time {parse_particletime(particle.time, fieldset)}."
                    f" Try setting allow_time_extrapolation to True")
         super().__init__(particle, fieldset=fieldset, msg=message)
+
+
+AllParcelsErrors = (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError, TimeExtrapolationError,  # TODO see if we can use only the dictionary, not also this list
+                    KernelError, OutOfBoundsError, ThroughSurfaceError, OutOfTimeError)
+
+
+AllParcelsErrorCodes = {FieldSamplingError: ErrorCode.Error,
+                        FieldOutOfBoundError: ErrorCode.ErrorOutOfBounds,  # TODO check why we need both FieldOutOfBoundError and OutOfBoundsError
+                        FieldOutOfBoundSurfaceError: ErrorCode.ErrorThroughSurface,
+                        TimeExtrapolationError: ErrorCode.ErrorTimeExtrapolation,
+                        KernelError: ErrorCode.Error,
+                        OutOfBoundsError: ErrorCode.ErrorOutOfBounds,
+                        ThroughSurfaceError: ErrorCode.ErrorThroughSurface,
+                        OutOfTimeError: ErrorCode.ErrorTimeExtrapolation
+                        }
 
 
 def recovery_kernel_interpolation(particle, fieldset, time):

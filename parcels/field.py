@@ -22,7 +22,8 @@ from parcels.tools.statuscodes import (
     FieldOutOfBoundSurfaceError,
     FieldSamplingError,
     TimeExtrapolationError,
-    ErrorCode
+    AllParcelsErrors,
+    AllParcelsErrorCodes
 )
 
 from .fieldfilebuffer import (
@@ -41,6 +42,19 @@ def _isParticle(key):
         return True
     else:
         return False
+
+
+def _deal_with_errors(error, key, vector_type):
+    if _isParticle(key):
+        key.state = AllParcelsErrorCodes[type(error)]
+    elif _isParticle(key[-1]):
+        key[-1].state = AllParcelsErrorCodes[type(error)]
+    if vector_type == '3D':
+        return (0, 0, 0)
+    elif vector_type == '2D':
+        return (0, 0)
+    else:
+        return 0
 
 
 class Field:
@@ -1875,10 +1889,13 @@ class VectorField:
                     return interp[self.U.interp_method]['2D'](ti, z, y, x, grid.time[ti], particle=particle, applyConversion=applyConversion)
 
     def __getitem__(self, key):
-        if _isParticle(key):
-            return self.eval(key.time, key.depth, key.lat, key.lon, key)
-        else:
-            return self.eval(*key)
+        try:
+            if _isParticle(key):
+                return self.eval(key.time, key.depth, key.lat, key.lon, key)
+            else:
+                return self.eval(*key)
+        except AllParcelsErrors as error:
+            return _deal_with_errors(error, key, vector_type=self.vector_type)
 
     def ccode_eval_array(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
@@ -2070,19 +2087,10 @@ class NestedField(list):
                     else:
                         val = list.__getitem__(self, iField).eval(*key)
                     break
-                except (FieldOutOfBoundError, FieldSamplingError):
+                except AllParcelsErrors as error:
                     if iField == len(self)-1:
-                        if isinstance(self[iField], VectorField):
-                            if self[iField].vector_type == '3D':
-                                val = (np.nan, np.nan, np.nan)
-                            else:
-                                val = (np.nan, np.nan)
-                        else:
-                            val = np.nan
-                        if _isParticle(key):
-                            key.state = ErrorCode.ErrorOutOfBounds
-                        elif _isParticle(key[-1]):
-                            key[-1].state = ErrorCode.ErrorOutOfBounds
+                        vector_type = self[iField].vector_type if isinstance(self[iField], VectorField) else None
+                        return _deal_with_errors(error, key, vector_type=vector_type)
                     else:
                         pass
             return val

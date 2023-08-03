@@ -57,12 +57,15 @@ def AdvectionEE(particle, fieldset, time):
 
 
 def AdvectionRK45(particle, fieldset, time):
-    """Advection of particles using adadptive Runge-Kutta 4/5 integration.
+    """Advection of particles using adaptive Runge-Kutta 4/5 integration.
 
     Times-step dt is halved if error is larger than tolerance, and doubled
     if error is smaller than 1/10th of tolerance, with tolerance set to
     1e-5 * dt by default.
+
+    Note that this kernel requires a Particle Class that has an extra Variable 'next_dt'
     """
+    particle.dt = particle.next_dt
     rk45tol = 1e-5
     min_dt = 1e-3
     c = [1./4., 3./8., 12./13., 1., 1./2.]
@@ -101,9 +104,9 @@ def AdvectionRK45(particle, fieldset, time):
         particle_dlon += lon_4th  # noqa
         particle_dlat += lat_4th  # noqa
         if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol / 10), 2):
-            particle.update_next_dt(particle.dt * 2)
+            particle.next_dt *= 2
     else:
-        particle.dt /= 2
+        particle.next_dt /= 2
         return OperationCode.Repeat
 
 
@@ -265,4 +268,8 @@ def AdvectionAnalytical(particle, fieldset, time):
         particle.depth = (1.-rs_z) * pz[0] + rs_z * pz[1]
 
     # update the passed time for the main loop
-    particle.dt = direction * s_min * (dxdy * dz)
+    particle.time_towrite += particle.time + particle.dt
+    if particle.dt > 0:
+        particle.dt = max(direction * s_min * (dxdy * dz), 1e-7)
+    else:
+        particle.dt = min(direction * s_min * (dxdy * dz), -1e-7)
