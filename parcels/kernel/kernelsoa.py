@@ -19,8 +19,15 @@ from parcels.compilation.codegenerator import LoopGenerator
 from parcels.field import NestedField, SummedField, VectorField
 from parcels.kernel.basekernel import BaseKernel
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
-from parcels.tools.statuscodes import FieldOutOfBoundError, FieldOutOfBoundSurfaceError, FieldSamplingError, TimeExtrapolationError
+from parcels.tools.statuscodes import (
+    ErrorCode,
+    FieldOutOfBoundError,
+    FieldOutOfBoundSurfaceError,
+    FieldSamplingError,
+    OperationCode,
+    StateCode,
+    TimeExtrapolationError,
+)
 from parcels.tools.statuscodes import recovery_map as recovery_base_map
 
 __all__ = ['KernelSOA']

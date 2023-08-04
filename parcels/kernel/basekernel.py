@@ -23,12 +23,7 @@ except:
 from parcels.application_kernels.advection import AdvectionAnalytical, AdvectionRK4_3D
 
 # === import just necessary field classes to perform setup checks === #
-from parcels.field import (
-    Field,
-    NestedField,
-    SummedField,
-    VectorField,
-)
+from parcels.field import Field, NestedField, SummedField, VectorField
 from parcels.grid import GridCode
 from parcels.tools.global_statics import get_cache_dir
 from parcels.tools.statuscodes import OperationCode, StateCode

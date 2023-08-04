@@ -18,12 +18,12 @@ from parcels.tools.converters import (
 )
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
+    AllParcelsErrorCodes,
+    AllParcelsErrors,
     FieldOutOfBoundError,
     FieldOutOfBoundSurfaceError,
     FieldSamplingError,
     TimeExtrapolationError,
-    AllParcelsErrors,
-    AllParcelsErrorCodes
 )
 
 from .fieldfilebuffer import (
