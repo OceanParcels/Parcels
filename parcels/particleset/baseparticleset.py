@@ -452,6 +452,8 @@ class BaseParticleSet(NDCluster):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):
             dt = dt.total_seconds()
+        if dt > 0 and dt <= 1e-6:
+            raise ValueError('Time step dt is too small')
         outputdt = output_file.outputdt if output_file else np.infty
         if isinstance(outputdt, delta):
             outputdt = outputdt.total_seconds()
