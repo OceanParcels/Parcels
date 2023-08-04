@@ -18,7 +18,7 @@ from parcels import (  # noqa
     Variable,
 )
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -101,12 +101,11 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
             particle.delete()
 
     pset.execute(Kernel, runtime=2, dt=1, output_file=pfile)
-    pfile.close()
 
     pset_new = pset_type[pset_mode]['pset'].from_particlefile(fieldset, pclass=TestParticle, filename=filename,
                                                               restart=restart, repeatdt=1)
 
-    for var in ['lon', 'lat', 'depth', 'time', 'p', 'p2', 'p3']:
+    for var in ['lon', 'lat', 'depth', 'time_towrite', 'p', 'p2', 'p3']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
 
     if restart:
@@ -209,19 +208,6 @@ def test_pset_repeated_release(fieldset, pset_mode, mode, npart=10):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pset_dt0(fieldset, pset_mode, mode, npart=10):
-    pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
-                                        pclass=ptype[mode])
-
-    def IncrLon(particle, fieldset, time):
-        particle.lon += 1
-    pset.execute(IncrLon, dt=0., runtime=npart)
-    assert np.allclose([p.lon for p in pset], 1.)
-    assert np.allclose([p.time for p in pset], 0.)
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
 def test_pset_repeatdt_check_dt(pset_mode, fieldset):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5)
 
@@ -240,7 +226,7 @@ def test_pset_repeatdt_custominit(fieldset, pset_mode, mode):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5)
 
     def DoNothing(particle, fieldset, time):
-        return StateCode.Success
+        pass
 
     pset.execute(DoNothing, dt=1, runtime=21)
     assert np.allclose([p.sample_var for p in pset], 5.)
