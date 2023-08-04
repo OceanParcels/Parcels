@@ -437,7 +437,7 @@ class BaseKernel:
             res = self._pyfunc(p, self._fieldset, p.time)
 
             if res is None:
-                if p.time < endtime and p.state == StateCode.Success:
+                if sign_dt*p.time < sign_dt*endtime and p.state == StateCode.Success:
                     p.state = StateCode.Evaluate
             else:
                 p.state = res

@@ -918,7 +918,7 @@ def test_fieldset_defer_loading_function(pset_mode, zdim, scale_fac, tmpdir, fil
     pset = pset_type[pset_mode]['pset'](fieldset, JITParticle, 0, 0)
 
     def DoNothing(particle, fieldset, time):
-        return ErrorCode.Success
+        pass
 
     pset.execute(DoNothing, dt=3600)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)

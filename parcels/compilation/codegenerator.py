@@ -1290,7 +1290,7 @@ class LoopGenerator:
         body += [c.Value("StatusCode", "state_prev"), c.Assign("state_prev", "particles->state[pnum]")]  # TODO can go?
         body += [c.Assign("particles->state[pnum]", f"{funcname}(particles, pnum, {fargs_str})")]
         body += [c.If("(particles->state[pnum] == SUCCESS)",
-                      c.If("particles->time[pnum] < endtime",
+                      c.If("sign_dt*particles->time[pnum] < sign_dt*endtime",
                            c.Block([c.Assign("particles->state[pnum]", "EVALUATE")]),
                            c.Block([c.Assign("particles->state[pnum]", "SUCCESS")])))
                  ]
