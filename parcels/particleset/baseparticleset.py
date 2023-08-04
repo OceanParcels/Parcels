@@ -527,7 +527,6 @@ class BaseParticleSet(NDCluster):
                 next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
             else:
                 next_time = max(next_prelease, next_input, next_output, next_callback, endtime)
-            time = next_time
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
@@ -552,6 +551,7 @@ class BaseParticleSet(NDCluster):
                     if dt == 0:
                         break
             # End of interaction specific code
+            time = next_time
 
             if abs(time - next_output) < tol or dt == 0:
                 for fld in self.fieldset.get_fields():
