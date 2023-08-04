@@ -23,6 +23,7 @@ from parcels import (  # noqa
     KernelSOA,
     ParticleFileAOS,
     ParticleFileSOA,
+    ParticleSet,
     ParticleSetAOS,
     ParticleSetSOA,
     RectilinearZGrid,
@@ -236,7 +237,7 @@ def test_fieldset_float64(cast_data_dtype, mode, tmpdir, xdim=10, ydim=5):
         assert fieldset.U.data.dtype == np.float32
     else:
         assert fieldset.U.data.dtype == np.float64
-    pset = ParticleSetAOS(fieldset, ptype[mode], lon=1, lat=2)
+    pset = ParticleSet(fieldset, ptype[mode], lon=1, lat=2)
 
     failed = False
     try:
