@@ -480,13 +480,9 @@ class BaseParticleSet(NDCluster):
             endtime = maxtime if dt >= 0 else mintime
 
         execute_once = False
-        if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
-            dt = 0
-            runtime = 0
-            endtime = _starttime
-            logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
-                                "The kernels will be executed once, without incrementing time")
-            execute_once = True
+        if (abs(endtime-_starttime) < 1e-5 or runtime == 0) and dt == 0:
+            raise RuntimeError("dt and runtime are zero, or endtime is equal to Particle.time. "
+                                "ParticleSet.execute() will not do anything.")
 
         self._set_particle_vector('dt', dt)
 

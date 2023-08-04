@@ -1192,23 +1192,13 @@ class Field:
 
     def __getitem__(self, key):
         self._check_velocitysampling()
-        if _isParticle(key):
-            return self.eval(key.time, key.depth, key.lat, key.lon, key)
-        else:
-            return self.eval(*key)
-
-        # try:  # TODO check if this is needed
-        # if _isParticle(key):
-        #     val = self.eval(key.time, key.depth, key.lat, key.lon, key)
-        # else:
-        #     val = self.eval(*key)
-        # except (FieldOutOfBoundError, FieldSamplingError):
-        #     val = np.nan
-        #     if _isParticle(key):
-        #         key.state = ErrorCode.ErrorOutOfBounds
-        #     elif _isParticle(key[-1]):
-        #         key[-1].state = ErrorCode.ErrorOutOfBounds
-        # return val
+        try:
+            if _isParticle(key):
+                return self.eval(key.time, key.depth, key.lat, key.lon, key)
+            else:
+                return self.eval(*key)
+        except AllParcelsErrors as error:
+            return _deal_with_errors(error, key, vector_type=None)
 
     def eval(self, time, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.

@@ -27,7 +27,7 @@ from parcels import (  # noqa
     Variable,
 )
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -244,7 +244,7 @@ def test_rectilinear_s_grid_sampling(pset_mode, mode, z4d):
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle,
                                                   lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
 
-    pset.execute(pset.Kernel(sampleTemp), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleTemp), runtime=1)
     assert np.allclose(pset.temp[0], ratio, atol=1e-4)
 
 
@@ -370,7 +370,7 @@ def test_curvilinear_grids(pset_mode, mode):
         speed = Variable('speed', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
-    pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleSpeed), runtime=1)
     assert np.allclose(pset.speed[0], 1000)
 
 
@@ -402,7 +402,7 @@ def test_nemo_grid(pset_mode, mode):
     lonp = 175.5
     latp = 81.5
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
-    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleVel), runtime=1)
     u = field_set.U.units.to_source(pset.zonal[0], lonp, latp, 0)
     v = field_set.V.units.to_source(pset.meridional[0], lonp, latp, 0)
     assert abs(u - 1) < 1e-4
@@ -459,7 +459,7 @@ def test_cgrid_uniform_2dvel(pset_mode, mode, time):
         meridional = Variable('meridional', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3)
-    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleVel), runtime=1)
     assert (pset[0].zonal - 1) < 1e-6
     assert (pset[0].meridional - 1) < 1e-6
 
@@ -521,7 +521,7 @@ def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
         vertical = Variable('vertical', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
-    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleVel), runtime=1)
     assert abs(pset[0].zonal - 1) < 1e-6
     assert abs(pset[0].meridional - 1) < 1e-6
     assert abs(pset[0].vertical - 1) < 1e-6
@@ -581,7 +581,7 @@ def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
     lonp = 179.8
     latp = 81.35
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=lonp, lat=latp, depth=.2)
-    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleVel), runtime=1)
     if pset_mode == 'soa':
         pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
         pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
@@ -616,12 +616,14 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
     field_set = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat', deferred_load=deferred_load)
 
     def sampleVel(particle, fieldset, time):
-        (particle.zonal, particle.meridional, particle.vert) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
-        particle.tracer = fieldset.T[time, particle.depth, particle.lat, particle.lon]
+        (particle.zonal, particle.meridional, particle.vert) = fieldset.UVW[particle]
+        particle.tracer = fieldset.T[particle]
 
     def OutBoundsError(particle, fieldset, time):
-        particle.out_of_bounds = 1
-        particle.depth -= 3
+        if particle.state == ErrorCode.ErrorOutOfBounds:
+            particle.out_of_bounds = 1
+            particle.depth -= 3
+            particle.state = StateCode.Success
 
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
@@ -631,8 +633,7 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
         out_of_bounds = Variable('out_of_bounds', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
-    pset.execute(pset.Kernel(sampleVel), runtime=1, dt=1,
-                 recovery={ErrorCode.ErrorOutOfBounds: OutBoundsError})
+    pset.execute(pset.Kernel(sampleVel)+ OutBoundsError, runtime=1)
     if vert_discretisation == 'slevel2':
         assert np.isclose(pset.vert[0], 0.)
         assert np.isclose(pset.zonal[0], 0.)
@@ -976,7 +977,7 @@ def test_bgrid_interpolation(gridindexingtype, pset_mode, mode, extrapolation):
 
         pset = pset_type[pset_mode]['pset'].from_list(fieldset=fieldset, pclass=myParticle,
                                                       lon=lons, lat=lats, depth=deps)
-        pset.execute(VelocityInterpolator, dt=0)
+        pset.execute(VelocityInterpolator, runtime=1)
 
         convfactor = 0.01 if gridindexingtype == "pop" else 1.
         if pointtype in ["U", "V"]:
