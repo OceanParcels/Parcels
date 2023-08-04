@@ -503,7 +503,7 @@ class BaseParticleSet(NDCluster):
         if output_file:
             next_output = time + dt
         else:
-            next_output = time + np.infty * np.sign(dt)
+            next_output = time + np.infty if dt > 0 else - np.infty
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 

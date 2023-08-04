@@ -948,12 +948,12 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     if time2 > 1:
         failed = False
         try:
-            pset.execute(SampleField, dt=0.)
+            pset.execute(SampleField, runtime=10)
         except TimeExtrapolationError:
             failed = True
         assert failed
     else:
-        pset.execute(SampleField, dt=0.)
+        pset.execute(SampleField, runtime=1)
         assert np.allclose([p.u_kernel for p in pset], [p.u_scipy for p in pset], atol=1e-5)
         assert isinstance(fieldset.U.data, da.core.Array)
 
