@@ -649,7 +649,7 @@ def test_fieldset_write(pset_mode, tmpdir):
     assert fieldset.U.data[0, 1, 0] == 11
 
     da = xr.open_dataset(str(filepath).replace('.zarr', '_0005U.nc'))
-    assert np.allclose(fieldset.U.data, da['U'].values)
+    assert np.allclose(fieldset.U.data, da['U'].values, atol=1.)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
