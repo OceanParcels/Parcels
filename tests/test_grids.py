@@ -23,6 +23,7 @@ from parcels import (  # noqa
     RectilinearSGrid,
     RectilinearZGrid,
     ScipyParticle,
+    StateCode,
     UnitConverter,
     Variable,
 )
@@ -633,7 +634,7 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
         out_of_bounds = Variable('out_of_bounds', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
-    pset.execute(pset.Kernel(sampleVel)+ OutBoundsError, runtime=1)
+    pset.execute(pset.Kernel(sampleVel) + OutBoundsError, runtime=1)
     if vert_discretisation == 'slevel2':
         assert np.isclose(pset.vert[0], 0.)
         assert np.isclose(pset.zonal[0], 0.)

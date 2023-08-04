@@ -3,7 +3,6 @@ from datetime import timedelta as delta
 
 import numpy as np
 import pytest
-import xarray as xr
 
 from parcels import (  # noqa
     AdvectionAnalytical,
