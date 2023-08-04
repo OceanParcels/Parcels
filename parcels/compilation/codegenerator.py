@@ -542,7 +542,6 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
-        self.ccode.body.insert(0, c.Value('StatusCode', 'err'))
         if len(funcvars) > 0:
             self.ccode.body.insert(0, c.Value("type_coord", ", ".join(funcvars)))
         if len(transformer.tmp_vars) > 0:
@@ -1278,7 +1277,6 @@ class LoopGenerator:
                               + list(const_args.keys()))
         # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
-        sign_end_part = c.Assign("sign_end_part", "(endtime - particles->time[pnum]) > 0 ? 1 : -1")
 
         # ==== main computation body ==== #
         body = []
@@ -1287,23 +1285,20 @@ class LoopGenerator:
         body += [c.If("sign_dt*particles->time[pnum] >= sign_dt*(endtime)", c.Statement("break"))]
         body += [c.If("fabs(endtime - particles->time[pnum]) < fabs(particles->dt[pnum])-1e-6",
                       c.Statement("particles->dt[pnum] = fabs(endtime - particles->time[pnum]) * sign_dt"))]
-        body += [c.Value("StatusCode", "state_prev"), c.Assign("state_prev", "particles->state[pnum]")]  # TODO can go?
         body += [c.Assign("particles->state[pnum]", f"{funcname}(particles, pnum, {fargs_str})")]
-        body += [c.If("(particles->state[pnum] == SUCCESS)",
-                      c.If("sign_dt*particles->time[pnum] < sign_dt*endtime",
-                           c.Block([c.Assign("particles->state[pnum]", "EVALUATE")]),
-                           c.Block([c.Assign("particles->state[pnum]", "SUCCESS")])))
-                 ]
+        body += [c.If("particles->state[pnum] == SUCCESS",
+                      c.Block([c.If("sign_dt*particles->time[pnum] < sign_dt*endtime",
+                                    c.Block([c.Assign("particles->state[pnum]", "EVALUATE")]),
+                                    c.Block([c.Assign("particles->state[pnum]", "SUCCESS")]))
+                               ]))]
         body += [c.Statement("particles->dt[pnum] = pre_dt")]
         body += [c.If("(particles->state[pnum] == REPEAT || particles->state[pnum] == DELETE)", c.Block([c.Statement('break')]))]
 
         time_loop = c.While("(particles->state[pnum] == EVALUATE || particles->state[pnum] == REPEAT)", c.Block(body))
         part_loop = c.For("pnum = 0", "pnum < num_particles", "++pnum",
-                          c.Block([sign_end_part, time_loop]))
-        fbody = c.Block([c.Value("int", "pnum, sign_end_part"),
-                         c.Value("double", "reset_dt, sign_dt"),
-                         c.Value("double", "__pdt_prekernels"),
-                         c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
+                          c.Block([time_loop]))
+        fbody = c.Block([c.Value("int", "pnum"),
+                         c.Value("double", "sign_dt"),
                          sign_dt, part_loop,
                          ])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)

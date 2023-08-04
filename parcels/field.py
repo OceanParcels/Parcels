@@ -49,6 +49,9 @@ def _deal_with_errors(error, key, vector_type):
         key.state = AllParcelsErrorCodes[type(error)]
     elif _isParticle(key[-1]):
         key[-1].state = AllParcelsErrorCodes[type(error)]
+    else:
+        raise RuntimeError(f"{error}. Error could not be handled because particle was not part of the Field Sampling.")
+
     if vector_type == '3D':
         return (0, 0, 0)
     elif vector_type == '2D':

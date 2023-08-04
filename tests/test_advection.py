@@ -154,7 +154,7 @@ def test_advection_3D_outofbounds(pset_mode, mode, direction, wErrorThroughSurfa
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
     def DeleteParticle(particle, fieldset, time):
-        if particle.state == ErrorCode.ErrorThroughSurface:
+        if particle.state == ErrorCode.ErrorOutOfBounds or particle.state == ErrorCode.ErrorThroughSurface:
             particle.delete()
 
     def SubmergeParticle(particle, fieldset, time):
@@ -166,10 +166,10 @@ def test_advection_3D_outofbounds(pset_mode, mode, direction, wErrorThroughSurfa
             particle_ddepth = 0.  # noqa
             particle.state = StateCode.Evaluate
 
+    kernels = [AdvectionRK4_3D]
     if wErrorThroughSurface:
-        kernels = [AdvectionRK4_3D, SubmergeParticle]
-    else:
-        kernels = [AdvectionRK4_3D, DeleteParticle]
+        kernels.append(SubmergeParticle)
+    kernels.append(DeleteParticle)
 
     pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
     pset.execute(kernels, runtime=10., dt=1)

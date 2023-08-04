@@ -20,7 +20,7 @@ from parcels.field import NestedField, SummedField, VectorField
 from parcels.kernel.basekernel import BaseKernel
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
-from parcels.tools.statuscodes import TimeExtrapolationError
+from parcels.tools.statuscodes import FieldOutOfBoundError, FieldOutOfBoundSurfaceError, FieldSamplingError, TimeExtrapolationError
 from parcels.tools.statuscodes import recovery_map as recovery_base_map
 
 __all__ = ['KernelSOA']
@@ -212,6 +212,12 @@ class KernelSOA(BaseKernel):
                     p.reset_state()
                 elif p.state == ErrorCode.ErrorTimeExtrapolation:
                     raise TimeExtrapolationError(p.time)
+                elif p.state == ErrorCode.ErrorOutOfBounds:
+                    raise FieldOutOfBoundError(p.lon, p.lat, p.depth)
+                elif p.state == ErrorCode.ErrorThroughSurface:
+                    raise FieldOutOfBoundSurfaceError(p.lon, p.lat, p.depth)
+                elif p.state == ErrorCode.Error:
+                    raise FieldSamplingError(p.lon, p.lat, p.depth)
                 elif p.state == OperationCode.Delete:
                     pass
                 else:
