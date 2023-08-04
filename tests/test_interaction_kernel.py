@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from parcels import Field, FieldSet, JITParticle, ParticleSet, StateCode
+from parcels import Field, FieldSet, JITParticle, ParticleSet
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.application_kernels.interaction import (
     AsymmetricAttraction,
@@ -16,7 +16,7 @@ ptype = {'scipy': ScipyInteractionParticle, 'jit': JITParticle}
 def DummyMoveNeighbor(particle, fieldset, time, neighbors, mutator):
     """A particle boosts the movement of its nearest neighbor, by adding 0.1 to its lat position."""
     if len(neighbors) == 0:
-        return StateCode.Success
+        pass
 
     distances = [np.sqrt(n.vert_dist**2 + n.horiz_dist**2) for n in neighbors]
     i_min_dist = np.argmin(distances)
@@ -27,11 +27,11 @@ def DummyMoveNeighbor(particle, fieldset, time, neighbors, mutator):
     neighbor_id = neighbors[i_min_dist].id
     mutator[neighbor_id].append((f, ()))
 
-    return StateCode.Success
+    pass
 
 
 def DoNothing(particle, fieldset, time):
-    return StateCode.Success
+    pass
 
 
 def fieldset(xdim=20, ydim=20, mesh='spherical'):

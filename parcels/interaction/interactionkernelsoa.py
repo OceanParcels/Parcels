@@ -149,7 +149,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
+        self.remove_deleted(pset)   # Generalizable version!
 
         # Identify particles that threw errors
         n_error = pset.num_error_particles
@@ -169,7 +169,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
                     p.delete()
 
             # Remove all particles that signalled deletion
-            self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
+            self.remove_deleted(pset)   # Generalizable version!
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:
