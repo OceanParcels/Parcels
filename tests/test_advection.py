@@ -158,11 +158,11 @@ def test_advection_3D_outofbounds(pset_mode, mode, direction, wErrorThroughSurfa
 
     def SubmergeParticle(particle, fieldset, time):
         if particle.state == ErrorCode.ErrorThroughSurface:
-            particle.depth = 0
             (u, v) = fieldset.UV[particle]
             particle_dlon = u * particle.dt  # noqa
             particle_dlat = v * particle.dt  # noqa
             particle_ddepth = 0.  # noqa
+            particle.depth = 0
             particle.state = StateCode.Evaluate
 
     kernels = [AdvectionRK4_3D]
