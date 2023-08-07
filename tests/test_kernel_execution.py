@@ -19,7 +19,7 @@ from parcels import (  # noqa
     ParticleSetSOA,
     ScipyParticle,
     StateCode,
-    Variable
+    Variable,
 )
 
 pset_modes = ['soa']
