@@ -61,6 +61,7 @@ If you would prefer to have a development installation of Parcels (i.e., where t
 .. code-block:: bash
 
   git clone https://github.com/OceanParcels/parcels.git
+  cd parcels
   conda env create -f environment_py3_<OS>.yml  # where <OS> is either linux, osx or win
 
 Then activate the environment and install Parcels in editable mode:
@@ -68,5 +69,4 @@ Then activate the environment and install Parcels in editable mode:
 .. code-block:: bash
 
   conda activate parcels
-  cd parcels
   pip install --no-build-isolation --no-deps -e .
