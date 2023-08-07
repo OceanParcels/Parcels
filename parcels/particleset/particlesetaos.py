@@ -12,7 +12,7 @@ from parcels.collection.collectionaos import (  # NOQA
     ParticleCollectionIterableAOS,
     ParticleCollectionIteratorAOS,
 )
-from parcels.field import NestedField, SummedField
+from parcels.field import NestedField
 from parcels.grid import GridCode
 from parcels.kernel.kernelaos import KernelAOS
 from parcels.particle import JITParticle, ScipyParticle, Variable  # NOQA
@@ -474,7 +474,7 @@ class ParticleSetAOS(BaseParticleSet):
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
-        if type(field) in [SummedField, NestedField]:
+        if isinstance(field, NestedField):
             for f in field:
                 if f.interp_method == 'cgrid_velocity':
                     return np.float64

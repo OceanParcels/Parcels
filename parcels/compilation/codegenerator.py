@@ -8,7 +8,7 @@ from copy import copy
 import cgen as c
 import numpy as np
 
-from parcels.field import Field, NestedField, SummedField, VectorField
+from parcels.field import Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
@@ -31,13 +31,6 @@ class FieldSetNode(IntrinsicNode):
                                              ccode=f"{self.ccode}->{attr}")
             else:
                 return NestedFieldNode(getattr(self.obj, attr),
-                                       ccode=f"{self.ccode}->{attr}")
-        elif isinstance(getattr(self.obj, attr), SummedField) or isinstance(getattr(self.obj, attr), list):
-            if isinstance(getattr(self.obj, attr)[0], VectorField):
-                return SummedVectorFieldNode(getattr(self.obj, attr),
-                                             ccode=f"{self.ccode}->{attr}")
-            else:
-                return SummedFieldNode(getattr(self.obj, attr),
                                        ccode=f"{self.ccode}->{attr}")
         elif isinstance(getattr(self.obj, attr), VectorField):
             return VectorFieldNode(getattr(self.obj, attr),
@@ -94,44 +87,6 @@ class VectorFieldEvalCallNode(IntrinsicNode):
 class VectorFieldEvalNode(IntrinsicNode):
     def __init__(self, field, args, var, var2, var3, convert=True):
         self.field = field
-        self.args = args
-        self.var = var  # the variable in which the interpolated field is written
-        self.var2 = var2  # second variable for UV interpolation
-        self.var3 = var3  # third variable for UVW interpolation
-        self.convert = convert  # whether to convert the result (like field.applyConversion)
-
-
-class SummedFieldNode(IntrinsicNode):
-    def __getitem__(self, attr):
-        return SummedFieldEvalNode(self.obj, attr)
-
-
-class SummedFieldEvalNode(IntrinsicNode):
-    def __init__(self, fields, args, var):
-        self.fields = fields
-        self.args = args
-        self.var = var  # the variable in which the interpolated field is written
-
-
-class SummedVectorFieldNode(IntrinsicNode):
-    def __getattr__(self, attr):
-        if attr == "eval":
-            return SummedVectorFieldEvalCallNode(self)
-
-    def __getitem__(self, attr):
-        return SummedVectorFieldEvalNode(self.obj, attr)
-
-
-class SummedVectorFieldEvalCallNode(IntrinsicNode):
-    def __init__(self, field):
-        self.field = field
-        self.obj = field.obj
-        self.ccode = ""
-
-
-class SummedVectorFieldEvalNode(IntrinsicNode):
-    def __init__(self, fields, args, var, var2, var3, convert=True):
-        self.fields = fields
         self.args = args
         self.var = var  # the variable in which the interpolated field is written
         self.var2 = var2  # second variable for UV interpolation
@@ -337,24 +292,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
         # If we encounter field evaluation we replace it with a
         # temporary variable and put the evaluation call on the stack.
-        if isinstance(node.value, SummedFieldNode):
-            tmp = [self.get_tmp() for _ in node.value.obj]
-            # Insert placeholder node for field eval ...
-            self.stmt_stack += [SummedFieldEvalNode(node.value, node.slice, tmp)]
-            # .. and return the name of the temporary that will be populated
-            return ast.Name(id='+'.join(tmp))
-        elif isinstance(node.value, SummedVectorFieldNode):
-            tmp = [self.get_tmp() for _ in range(len(node.value.obj))]
-            tmp2 = [self.get_tmp() for _ in range(len(node.value.obj))]
-            tmp3 = [self.get_tmp() if list.__getitem__(node.value.obj, 0).vector_type == '3D' else None for _ in range(len(node.value.obj))]
-            # Insert placeholder node for field eval ...
-            self.stmt_stack += [SummedVectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
-            # .. and return the name of the temporary that will be populated
-            if all(tmp3):
-                return ast.Tuple([ast.Name(id='+'.join(tmp)), ast.Name(id='+'.join(tmp2)), ast.Name(id='+'.join(tmp3))], ast.Load())
-            else:
-                return ast.Tuple([ast.Name(id='+'.join(tmp)), ast.Name(id='+'.join(tmp2))], ast.Load())
-        elif isinstance(node.value, FieldNode):
+        if isinstance(node.value, FieldNode):
             tmp = self.get_tmp()
             # Insert placeholder node for field eval ...
             self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp)]
@@ -455,27 +393,6 @@ class IntrinsicTransformer(ast.NodeTransformer):
                 return ast.Tuple([ast.Name(id=tmp1), ast.Name(id=tmp2), ast.Name(id=tmp3)], ast.Load())
             else:
                 return ast.Tuple([ast.Name(id=tmp1), ast.Name(id=tmp2)], ast.Load())
-
-        elif isinstance(node.func, SummedVectorFieldEvalCallNode):
-            # get a temporary value to assign result to
-            tmp = [self.get_tmp() for _ in range(len(node.func.obj))]
-            tmp2 = [self.get_tmp() for _ in range(len(node.func.obj))]
-            tmp3 = [self.get_tmp() if list.__getitem__(node.func.obj, 0).vector_type == '3D' else None for _ in range(len(node.func.obj))]
-            # whether to convert
-            convert = True
-            if "applyConversion" in node.keywords:
-                k = node.keywords["applyConversion"]
-                if isinstance(k, ast.NameConstant):
-                    convert = k.value
-
-            # convert args to Index(Tuple(*args))
-            args = ast.Index(value=ast.Tuple(node.args, ast.Load()))
-
-            self.stmt_stack += [SummedVectorFieldEvalNode(node.func.field, args, tmp, tmp2, tmp3, convert)]
-            if all(tmp3):
-                return ast.Tuple([ast.Name(id='+'.join(tmp)), ast.Name(id='+'.join(tmp2)), ast.Name(id='+'.join(tmp3))], ast.Load())
-            else:
-                return ast.Tuple([ast.Name(id='+'.join(tmp)), ast.Name(id='+'.join(tmp2))], ast.Load())
 
         return node
 
@@ -815,11 +732,6 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         """Record intrinsic fields used in kernel."""
         self.field_args[node.obj.ccode_name] = node.obj
 
-    def visit_SummedFieldNode(self, node):
-        """Record intrinsic fields used in kernel."""
-        for fld in node.obj:
-            self.field_args[fld.ccode_name] = fld
-
     def visit_NestedFieldNode(self, node):
         """Record intrinsic fields used in kernel."""
         for fld in node.obj:
@@ -828,11 +740,6 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
     def visit_VectorFieldNode(self, node):
         """Record intrinsic fields used in kernel."""
         self.vector_field_args[node.obj.ccode_name] = node.obj
-
-    def visit_SummedVectorFieldNode(self, node):
-        """Record intrinsic fields used in kernel."""
-        for fld in node.obj:
-            self.vector_field_args[fld.ccode_name] = fld
 
     def visit_NestedVectorFieldNode(self, node):
         """Record intrinsic fields used in kernel."""
@@ -848,14 +755,6 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
 
     @abstractmethod
     def visit_VectorFieldEvalNode(self, node):
-        pass
-
-    @abstractmethod
-    def visit_SummedFieldEvalNode(self, node):
-        pass
-
-    @abstractmethod
-    def visit_SummedVectorFieldEvalNode(self, node):
         pass
 
     @abstractmethod
@@ -996,40 +895,6 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         node.ccode = c.Block([c.Assign("particles->state[pnum]", ccode_eval),
                               conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
 
-    def visit_SummedFieldEvalNode(self, node):
-        self.visit(node.fields)
-        self.visit(node.args)
-        cstat = []
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        for fld, var in zip(node.fields.obj, node.var):
-            ccode_eval = fld.ccode_eval_array(var, *args)
-            ccode_conv = fld.ccode_convert(*args)
-            conv_stat = c.Statement(f"{var} *= {ccode_conv}")
-            cstat += [c.Assign("particles->state[pnum]", ccode_eval), conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")]
-        node.ccode = c.Block(cstat)
-
-    def visit_SummedVectorFieldEvalNode(self, node):
-        self.visit(node.fields)
-        self.visit(node.args)
-        cstat = []
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
-            ccode_eval = fld.ccode_eval_array(var, var2, var3,
-                                              fld.U, fld.V, fld.W, *args)
-            if node.convert and fld.U.interp_method != 'cgrid_velocity':
-                ccode_conv1 = fld.U.ccode_convert(*args)
-                ccode_conv2 = fld.V.ccode_convert(*args)
-                statements = [c.Statement(f"{var} *= {ccode_conv1}"),
-                              c.Statement(f"{var2} *= {ccode_conv2}")]
-            else:
-                statements = []
-            if node.convert and fld.vector_type == '3D':
-                ccode_conv3 = fld.W.ccode_convert(*args)
-                statements.append(c.Statement(f"{var3} *= {ccode_conv3}"))
-            cstat += [c.Assign("particles->state[pnum]", ccode_eval), c.Block(statements)]
-        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")]
-        node.ccode = c.Block(cstat)
-
     def visit_NestedFieldEvalNode(self, node):
         self.visit(node.fields)
         self.visit(node.args)
@@ -1160,39 +1025,6 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         conv_stat = c.Block(statements)
         node.ccode = c.Block([c.Assign("err", ccode_eval),
                               conv_stat, c.Statement("CHECKSTATUS(err)")])
-
-    def visit_SummedFieldEvalNode(self, node):
-        self.visit(node.fields)
-        self.visit(node.args)
-        cstat = []
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        for fld, var in zip(node.fields.obj, node.var):
-            ccode_eval = fld.ccode_eval_object(var, *args)
-            ccode_conv = fld.ccode_convert(*args)
-            conv_stat = c.Statement(f"{var} *= {ccode_conv}")
-            cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKSTATUS(err)")]
-        node.ccode = c.Block(cstat)
-
-    def visit_SummedVectorFieldEvalNode(self, node):
-        self.visit(node.fields)
-        self.visit(node.args)
-        cstat = []
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
-            ccode_eval = fld.ccode_eval_object(var, var2, var3, fld.U, fld.V, fld.W, *args)
-            if node.convert and fld.U.interp_method != 'cgrid_velocity':
-                ccode_conv1 = fld.U.ccode_convert(*args)
-                ccode_conv2 = fld.V.ccode_convert(*args)
-                statements = [c.Statement(f"{var} *= {ccode_conv1}"),
-                              c.Statement(f"{var2} *= {ccode_conv2}")]
-            else:
-                statements = []
-            if node.convert and fld.vector_type == '3D':
-                ccode_conv3 = fld.W.ccode_convert(*args)
-                statements.append(c.Statement(f"{var3} *= {ccode_conv3}"))
-            cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
-        cstat += [c.Statement("CHECKSTATUS(err)")]
-        node.ccode = c.Block(cstat)
 
     def visit_NestedFieldEvalNode(self, node):
         self.visit(node.fields)

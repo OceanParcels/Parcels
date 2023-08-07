@@ -23,7 +23,7 @@ except:
 from parcels.application_kernels.advection import AdvectionAnalytical, AdvectionRK4_3D
 
 # === import just necessary field classes to perform setup checks === #
-from parcels.field import Field, NestedField, SummedField, VectorField
+from parcels.field import Field, NestedField, VectorField
 from parcels.grid import GridCode
 from parcels.tools.global_statics import get_cache_dir
 from parcels.tools.statuscodes import OperationCode, StateCode
@@ -181,7 +181,7 @@ class BaseKernel:
                 if isinstance(self._fieldset.W, Field) and self._fieldset.W.creation_log != 'from_nemo' and \
                    self._fieldset.W._scaling_factor is not None and self._fieldset.W._scaling_factor > 0:
                     warning = True
-                if type(self._fieldset.W) in [SummedField, NestedField]:
+                if isinstance(self._fieldset.W, NestedField):
                     for f in self._fieldset.W:
                         if f.creation_log != 'from_nemo' and f._scaling_factor is not None and f._scaling_factor > 0:
                             warning = True
@@ -377,7 +377,7 @@ class BaseKernel:
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
             for f in pset.fieldset.get_fields():
-                if type(f) in [VectorField, NestedField, SummedField]:
+                if isinstance(f, (VectorField, NestedField)):
                     continue
                 if f.data.dtype != np.float32:
                     raise RuntimeError(f'Field {f.name} data needs to be float32 in JIT mode')

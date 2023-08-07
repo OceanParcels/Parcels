@@ -12,7 +12,7 @@ from tqdm import tqdm
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.collection.collections import ParticleCollection
 from parcels.compilation.codecompiler import GNUCompiler
-from parcels.field import NestedField, SummedField
+from parcels.field import NestedField
 from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 from parcels.kernel.basekernel import BaseKernel as Kernel
 from parcels.tools.global_statics import get_package_dir
@@ -84,7 +84,7 @@ class BaseParticleSet(NDCluster):
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
-        if type(field) in [SummedField, NestedField]:
+        if isinstance(field, NestedField):
             for f in field:
                 if f.interp_method == 'cgrid_velocity':
                     return np.float64

@@ -34,7 +34,7 @@ from .fieldfilebuffer import (
 )
 from .grid import CGrid, Grid, GridCode
 
-__all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
+__all__ = ['Field', 'VectorField', 'NestedField']
 
 
 def _isParticle(key):
@@ -97,8 +97,7 @@ class Field:
         :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
         mesh and time_origin information. Can be constructed from any of the Grid objects
     fieldtype : str
-        Type of Field to be used for UnitConverter when using SummedFields
-        (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+        Type of Field to be used for UnitConverter (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
     transpose : bool
         Transpose data to required (lon, lat) layout
     vmin : float
@@ -132,8 +131,6 @@ class Field:
     For usage examples see the following tutorials:
 
     * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
-
-    * `Summed Fields <../examples/tutorial_SummedFields.ipynb>`__
     """
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
@@ -1492,14 +1489,6 @@ class Field:
         self.filebuffers[tindex] = filebuffer
         return data
 
-    def __add__(self, field):
-        if isinstance(self, Field) and isinstance(field, Field):
-            return SummedField('_SummedField', [self, field])
-        elif isinstance(field, SummedField):
-            assert isinstance(self, type(field[0])), 'Fields in a SummedField should be either all scalars or all vectors'
-            field.insert(0, self)
-            return field
-
 
 class VectorField:
     """Class VectorField stores 2 or 3 fields which defines together a vector field.
@@ -1937,88 +1926,6 @@ class DeferredArray():
 
     def __getitem__(self, key):
         raise RuntimeError("Field is in deferred_load mode, so can't be accessed. Use .computeTimeChunk() method to force loading of data")
-
-
-class SummedField(list):
-    """Class SummedField is a list of Fields over which Field interpolation is summed.
-
-    This can e.g. be used when combining multiple flow fields,
-    where the total flow is the sum of all the individual flows.
-    Note that the individual Fields can be on different Grids.
-    Also note that, since SummedFields are lists, the individual Fields can
-    still be queried through their list index (e.g. SummedField[1]).
-    SummedField is composed of either Fields or VectorFields.
-
-
-    Parameters
-    ----------
-    name : str
-        Name of the SummedField
-    F : list of Field
-        List of fields. F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
-    V : list of Field
-        List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
-    W : list of Field
-        List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
-
-
-    Examples
-    --------
-    See `here <../examples/tutorial_SummedFields.ipynb>`__
-    for a detailed tutorial
-
-    """
-
-    def __init__(self, name, F, V=None, W=None):
-        if V is None:
-            if isinstance(F[0], VectorField):
-                vector_type = F[0].vector_type
-            for Fi in F:
-                assert isinstance(Fi, Field) or (isinstance(Fi, VectorField) and Fi.vector_type == vector_type), 'Components of a SummedField must be Field or VectorField'
-                self.append(Fi)
-        elif W is None:
-            for (i, Fi, Vi) in zip(range(len(F)), F, V):
-                assert isinstance(Fi, Field) and isinstance(Vi, Field), \
-                    'F, and V components of a SummedField must be Field'
-                self.append(VectorField(name+'_%d' % i, Fi, Vi))
-        else:
-            for (i, Fi, Vi, Wi) in zip(range(len(F)), F, V, W):
-                assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
-                    'F, V and W components of a SummedField must be Field'
-                self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
-        self.name = name
-
-    def eval(self, time, z, y, x, particle=None, applyConversion=True):
-        vals = []
-        val = None
-        for iField in range(len(self)):
-            val = list.__getitem__(self, iField).eval(time, z, y, x, applyConversion=applyConversion)
-            vals.append(val)
-        return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list.__getitem__(self, key)
-        else:
-            vals = []
-            val = None
-            for iField in range(len(self)):
-                if _isParticle(key):
-                    val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
-                else:
-                    val = list.__getitem__(self, iField).eval(*key)
-                vals.append(val)
-            return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
-
-    def __add__(self, field):
-        if isinstance(field, Field):
-            assert isinstance(self[0], type(field)), 'Fields in a SummedField should be either all scalars or all vectors'
-            self.append(field)
-        elif isinstance(field, SummedField):
-            assert isinstance(self[0], type(field[0])), 'Fields in a SummedField should be either all scalars or all vectors'
-            for fld in field:
-                self.append(fld)
-        return self
 
 
 class NestedField(list):

@@ -16,7 +16,7 @@ except:
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.compilation.codegenerator import ObjectKernelGenerator as KernelGenerator
 from parcels.compilation.codegenerator import ParticleObjectLoopGenerator
-from parcels.field import NestedField, SummedField, VectorField
+from parcels.field import NestedField, VectorField
 from parcels.kernel.basekernel import BaseKernel
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode  # noqa
@@ -148,7 +148,7 @@ class KernelAOS(BaseKernel):
 
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
-                if type(f) in [VectorField, NestedField, SummedField]:
+                if isinstance(f, (VectorField, NestedField)):
                     continue
                 f.data = np.array(f.data)
 
