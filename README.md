@@ -22,10 +22,10 @@ The manuscript detailing the performance of Parcels v2.4 is available at [Comput
 
 ### Further information
 
-See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](http://oceanparcels.org/#installing) and [running](http://oceanparcels.org/#tutorials) the Parcels code, as well as extended [documentation](https://parcels.readthedocs.io) of the methods and classes.
+See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](https://docs.oceanparcels.org/en/latest/installation.html) and [running](https://docs.oceanparcels.org/en/latest/documentation.html) the Parcels code, as well as extended [documentation](https://docs.oceanparcels.org/en/latest/reference.html) of the methods and classes.
 
 
-### Launch Parcels Tutorials on mybinder.org
+### Launch Parcels Tutorials on [mybinder.org](https://mybinder.org/v2/gh/OceanParcels/parcels/master?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels/master?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
 [![unit-tests](https://github.com/OceanParcels/parcels/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/OceanParcels/parcels/actions/workflows/unit-tests.yml)

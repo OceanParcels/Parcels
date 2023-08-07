@@ -5,21 +5,12 @@ Even if you don't want to contribute directly to the codebase, getting involved 
 
 This document outlines some guidelines for contributing to the parcels codebase. If you have any questions or suggestions for how we can improve this document, please let us know.
 
+
 ## Getting Started
 
-To get started contributing to parcels, you'll need to do a few things:
+To get started contributing to parcels, you'll need to install the developer version of Parcels following [our installation instructions](installation.rst#installation-for-developers). This will install the latest version of Parcels from the `master` branch of the repository.
 
-1. [Fork our repository](https://github.com/OceanParcels/parcels/fork) on GitHub.
-
-2. Clone your fork of the repository to your local machine, and `cd` into your project folder.
-
-3. Install [Anaconda](https://www.anaconda.com/download) (if you haven't already).
-
-4. Install the development Anaconda environment by installing from the environment file corresponding to your OS (`environment_py3_linux.yml`, `environment_py3_osx.yml` or `environment_py3_win.yml`) then activate it. E.g. on Linux: `conda env create -f environment_py3_linux.yml` then `conda activate py3_parcels`.
-
-5. Install your local copy of parcels in editable mode by running `pip install -e .`.
-
-6. **Optional:** Setup `pre-commit` hooks by running `pre-commit install`. This ensures that code is formatted correctly before you commit it.
+**Optional:** Setup `pre-commit` hooks by running `pre-commit install`. This ensures that code is formatted correctly before you commit it.
 
 
 ## Making Changes
