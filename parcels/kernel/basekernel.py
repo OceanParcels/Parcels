@@ -446,5 +446,5 @@ class BaseKernel:
     def execute_python(self, pset, endtime, dt):
         pass
 
-    def execute(self, pset, endtime, dt, output_file=None, execute_once=False):
+    def execute(self, pset, endtime, dt, output_file=None):
         pass

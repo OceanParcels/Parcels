@@ -121,7 +121,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
             for particle_idx in reset_particle_idx:
                 pset[particle_idx].dt = dt
 
-    def execute(self, pset, endtime, dt, output_file=None, execute_once=False):
+    def execute(self, pset, endtime, dt, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps.
 
         InteractionKernels do not implement ways to catch or recover from
@@ -131,7 +131,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
         """
         pset.collection.state[:] = StateCode.Evaluate
 
-        if abs(dt) < 1e-6 and not execute_once:
+        if abs(dt) < 1e-6:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
 
         if pset.fieldset is not None:

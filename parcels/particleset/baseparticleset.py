@@ -477,7 +477,6 @@ class BaseParticleSet(NDCluster):
             mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
             endtime = maxtime if dt >= 0 else mintime
 
-        execute_once = False
         if (abs(endtime-_starttime) < 1e-5 or runtime == 0) and dt == 0:
             raise RuntimeError("dt and runtime are zero, or endtime is equal to Particle.time. "
                                "ParticleSet.execute() will not do anything.")
@@ -526,8 +525,7 @@ class BaseParticleSet(NDCluster):
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
-                self.kernel.execute(self, endtime=next_time, dt=dt, output_file=output_file,
-                                    execute_once=execute_once)
+                self.kernel.execute(self, endtime=next_time, dt=dt, output_file=output_file)
             # Interaction: interleave the interaction and non-interaction kernel for each time step.
             # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
             else:
@@ -538,11 +536,9 @@ class BaseParticleSet(NDCluster):
                     else:
                         cur_end_time = max(cur_time+dt, next_time)
                     self.interaction_kernel.execute(
-                        self, endtime=cur_end_time, dt=dt,
-                        output_file=output_file, execute_once=execute_once)
+                        self, endtime=cur_end_time, dt=dt, output_file=output_file)
                     self.kernel.execute(
-                        self, endtime=cur_end_time, dt=dt,
-                        output_file=output_file, execute_once=execute_once)
+                        self, endtime=cur_end_time, dt=dt, output_file=output_file)
                     cur_time += dt
                     if dt == 0:
                         break
