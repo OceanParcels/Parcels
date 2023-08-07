@@ -1,10 +1,9 @@
-"""Collection of pre-built recovery kernels."""
+"""Handling of Errors and particle status codes"""
 
 
 __all__ = ['StateCode', 'OperationCode', 'ErrorCode',
            'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
-           'KernelError', 'OutOfBoundsError', 'ThroughSurfaceError', 'OutOfTimeError',
-           'recovery_map', 'AllParcelsErrors', 'AllParcelsErrorCodes']
+           'KernelError', 'AllParcelsErrors', 'AllParcelsErrorCodes']
 
 
 class StateCode:
@@ -35,7 +34,7 @@ class DaskChunkingError(RuntimeError):
 
 
 class FieldSamplingError(RuntimeError):
-    """Utility error class to propagate erroneous field sampling in Scipy mode."""
+    """Utility error class to propagate erroneous field sampling."""
 
     def __init__(self, x, y, z, field=None):
         self.field = field
@@ -47,7 +46,7 @@ class FieldSamplingError(RuntimeError):
 
 
 class FieldOutOfBoundError(RuntimeError):
-    """Utility error class to propagate out-of-bound field sampling in Scipy mode."""
+    """Utility error class to propagate out-of-bound field sampling."""
 
     def __init__(self, x, y, z, field=None):
         self.field = field
@@ -59,9 +58,7 @@ class FieldOutOfBoundError(RuntimeError):
 
 
 class FieldOutOfBoundSurfaceError(RuntimeError):
-    """Utility error class to propagate out-of-bound field sampling at the surface in Scipy mode.
-
-    Note that if ErrorThroughSurface is not part of the recovery kernel, Parcels will use ErrorOutOfBounds.
+    """Utility error class to propagate out-of-bound field sampling at the surface.
     """
 
     def __init__(self, x, y, z, field=None):
@@ -74,7 +71,7 @@ class FieldOutOfBoundSurfaceError(RuntimeError):
 
 
 class TimeExtrapolationError(RuntimeError):
-    """Utility error class to propagate erroneous time extrapolation sampling in Scipy mode."""
+    """Utility error class to propagate erroneous time extrapolation sampling."""
 
     def __init__(self, time, field=None, msg='allow_time_extrapoltion'):
         if field is not None and field.grid.time_origin and time is not None:
@@ -115,12 +112,6 @@ def parse_particletime(time, fieldset):
     return time
 
 
-def recovery_kernel_error(particle, fieldset, time):
-    """Default error kernel that throws exception."""
-    msg = f"Error: {particle.exception if particle.exception else None}"
-    raise KernelError(particle, fieldset=fieldset, msg=msg)
-
-
 class InterpolationError(KernelError):
     """Particle kernel error for interpolation error."""
 
@@ -132,94 +123,13 @@ class InterpolationError(KernelError):
         super().__init__(particle, fieldset=fieldset, msg=message)
 
 
-class OutOfBoundsError(KernelError):
-    """Particle kernel error for out-of-bounds field sampling."""
-
-    def __init__(self, particle, fieldset=None, lon=None, lat=None, depth=None):
-        if lon and lat:
-            message = f"Field sampled at ({lon}, {lat}, {depth})"
-        else:
-            message = f"Out-of-bounds sampling by particle at ({particle.lon}, {particle.lat}, {particle.depth})"
-        super().__init__(particle, fieldset=fieldset, msg=message)
-
-
-class ThroughSurfaceError(KernelError):
-    """Particle kernel error for field sampling at surface."""
-
-    def __init__(self, particle, fieldset=None, lon=None, lat=None, depth=None):
-        if lon and lat:
-            message = f"Field sampled at ({lon}, {lat}, {depth})"
-        else:
-            message = f"Through-surface sampling by particle at ({particle.lon}, {particle.lat}, {particle.depth})"
-        super().__init__(particle, fieldset=fieldset, msg=message)
-
-
-class OutOfTimeError(KernelError):
-    """Particle kernel error for time extrapolation field sampling."""
-
-    def __init__(self, particle, fieldset):
-        message = (f"Field sampled outside time domain at time {parse_particletime(particle.time, fieldset)}."
-                   f" Try setting allow_time_extrapolation to True")
-        super().__init__(particle, fieldset=fieldset, msg=message)
-
-
 AllParcelsErrors = (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError, TimeExtrapolationError,  # TODO see if we can use only the dictionary, not also this list
-                    KernelError, OutOfBoundsError, ThroughSurfaceError, OutOfTimeError)
+                    KernelError)
 
 
 AllParcelsErrorCodes = {FieldSamplingError: ErrorCode.Error,
-                        FieldOutOfBoundError: ErrorCode.ErrorOutOfBounds,  # TODO check why we need both FieldOutOfBoundError and OutOfBoundsError
+                        FieldOutOfBoundError: ErrorCode.ErrorOutOfBounds,
                         FieldOutOfBoundSurfaceError: ErrorCode.ErrorThroughSurface,
                         TimeExtrapolationError: ErrorCode.ErrorTimeExtrapolation,
                         KernelError: ErrorCode.Error,
-                        OutOfBoundsError: ErrorCode.ErrorOutOfBounds,
-                        ThroughSurfaceError: ErrorCode.ErrorThroughSurface,
-                        OutOfTimeError: ErrorCode.ErrorTimeExtrapolation
                         }
-
-
-def recovery_kernel_interpolation(particle, fieldset, time):
-    """Default sampling error kernel that throws InterpolationError."""
-    if particle.exception is None:
-        # TODO: JIT does not yet provide the context that created
-        # the exception. We need to pass that info back from C.
-        raise InterpolationError(particle, fieldset)
-    else:
-        error = particle.exception
-        raise InterpolationError(particle, fieldset, error.x, error.y, error.z)
-
-
-def recovery_kernel_out_of_bounds(particle, fieldset, time):
-    """Default sampling error kernel that throws OutOfBoundsError."""
-    if particle.exception is None:
-        # TODO: JIT does not yet provide the context that created
-        # the exception. We need to pass that info back from C.
-        raise OutOfBoundsError(particle, fieldset)
-    else:
-        error = particle.exception
-        raise OutOfBoundsError(particle, fieldset, error.x, error.y, error.z)
-
-
-def recovery_kernel_through_surface(particle, fieldset, time):
-    """Default sampling error kernel that throws OutOfBoundsError."""
-    if particle.exception is None:
-        # TODO: JIT does not yet provide the context that created
-        # the exception. We need to pass that info back from C.
-        raise ThroughSurfaceError(particle, fieldset)
-    else:
-        error = particle.exception
-        raise ThroughSurfaceError(particle, fieldset, error.z)
-
-
-def recovery_kernel_time_extrapolation(particle, fieldset, time):
-    """Default sampling error kernel that throws OutOfTimeError."""
-    raise OutOfTimeError(particle, fieldset)
-
-
-# Default mapping of failure types (KernelOp)
-# to recovery kernels.
-recovery_map = {ErrorCode.Error: recovery_kernel_error,
-                ErrorCode.ErrorInterpolation: recovery_kernel_interpolation,
-                ErrorCode.ErrorOutOfBounds: recovery_kernel_out_of_bounds,
-                ErrorCode.ErrorTimeExtrapolation: recovery_kernel_time_extrapolation,
-                ErrorCode.ErrorThroughSurface: recovery_kernel_through_surface}

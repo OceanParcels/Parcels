@@ -28,7 +28,6 @@ from parcels.tools.statuscodes import (
     StateCode,
     TimeExtrapolationError,
 )
-from parcels.tools.statuscodes import recovery_map as recovery_base_map
 
 __all__ = ['KernelSOA']
 
@@ -177,19 +176,12 @@ class KernelSOA(BaseKernel):
             self.fieldset.particlefile.write(pset, None, indices=indices)
         pset.remove_indices(indices)
 
-    def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
+    def execute(self, pset, endtime, dt, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps."""
         pset.collection.state[:] = StateCode.Evaluate
 
         if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
-
-        if recovery is None:
-            recovery = {}
-        elif ErrorCode.ErrorOutOfBounds in recovery and ErrorCode.ErrorThroughSurface not in recovery:
-            recovery[ErrorCode.ErrorThroughSurface] = recovery[ErrorCode.ErrorOutOfBounds]
-        recovery_map = recovery_base_map.copy()
-        recovery_map.update(recovery)
 
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:

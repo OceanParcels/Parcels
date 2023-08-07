@@ -303,8 +303,7 @@ class ParticleSetAOS(BaseParticleSet):
         """This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
+        In result, the particle still remains in the collection.
         """
         self._collection[index].state = OperationCode.Delete
 
@@ -312,8 +311,7 @@ class ParticleSetAOS(BaseParticleSet):
         """This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
+        In result, the particle still remains in the collection.
         """
         p = self._collection.get_single_by_ID(id)
         p.state = OperationCode.Delete

@@ -121,7 +121,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
             for particle_idx in reset_particle_idx:
                 pset[particle_idx].dt = dt
 
-    def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
+    def execute(self, pset, endtime, dt, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps.
 
         InteractionKernels do not implement ways to catch or recover from

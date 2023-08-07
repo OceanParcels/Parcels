@@ -507,8 +507,7 @@ class ParticleCollectionSOA(ParticleCollection):
         This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
+        In result, the particle still remains in the collection.
         """
         raise NotTestedError
         # super().delete_by_index(index)
@@ -520,8 +519,7 @@ class ParticleCollectionSOA(ParticleCollection):
         This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
+        In result, the particle still remains in the collection.
         """
         raise NotTestedError
         # super().delete_by_ID(id)

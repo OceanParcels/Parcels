@@ -379,7 +379,7 @@ class BaseParticleSet(NDCluster):
         return min_rt, max_rt
 
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
-                recovery=None, output_file=None, verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
+                output_file=None, verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for multiple timesteps.
 
         Optionally also provide sub-timestepping
@@ -403,10 +403,6 @@ class BaseParticleSet(NDCluster):
             Use a negative value for a backward-in-time simulation. (Default value = 1.)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
-        recovery :
-            Dictionary with additional `:mod:parcels.tools.error`
-            recovery kernels to allow custom recovery behaviour in case of
-            kernel errors. (Default value = None)
         verbose_progress : bool
             Boolean for providing a progress bar for the kernel execution loop. (Default value = None)
         postIterationCallbacks :
@@ -530,7 +526,7 @@ class BaseParticleSet(NDCluster):
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
-                self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
+                self.kernel.execute(self, endtime=next_time, dt=dt, output_file=output_file,
                                     execute_once=execute_once)
             # Interaction: interleave the interaction and non-interaction kernel for each time step.
             # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
@@ -542,10 +538,10 @@ class BaseParticleSet(NDCluster):
                     else:
                         cur_end_time = max(cur_time+dt, next_time)
                     self.interaction_kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
+                        self, endtime=cur_end_time, dt=dt,
                         output_file=output_file, execute_once=execute_once)
                     self.kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
+                        self, endtime=cur_end_time, dt=dt,
                         output_file=output_file, execute_once=execute_once)
                     cur_time += dt
                     if dt == 0:
