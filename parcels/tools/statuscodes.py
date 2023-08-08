@@ -58,8 +58,7 @@ class FieldOutOfBoundError(RuntimeError):
 
 
 class FieldOutOfBoundSurfaceError(RuntimeError):
-    """Utility error class to propagate out-of-bound field sampling at the surface.
-    """
+    """Utility error class to propagate out-of-bound field sampling at the surface."""
 
     def __init__(self, x, y, z, field=None):
         self.field = field
