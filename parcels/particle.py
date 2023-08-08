@@ -194,7 +194,7 @@ class ScipyParticle(_Particle):
     time = Variable('time', dtype=np.float64, to_write=False)
     time_towrite = Variable('time_towrite', dtype=np.float64)
     id = Variable('id', dtype=np.int64, to_write='once')
-    once_written = Variable('once_written', dtype=np.int32, initial=0, to_write=False)  # np.bool not implemented in JIT
+    obs_written = Variable('obs_written', dtype=np.int32, initial=0, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=StatusCode.Evaluate, to_write=False)
     next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
@@ -212,7 +212,7 @@ class ScipyParticle(_Particle):
         type(self).time_towrite.initial = time
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
-        type(self).once_written.initial = 0
+        type(self).obs_written.initial = 0
         type(self).dt.initial = None
         type(self).next_dt.initial = np.nan
 

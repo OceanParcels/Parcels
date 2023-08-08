@@ -131,12 +131,12 @@ class ParticleCollectionSOA(ParticleCollection):
             self._data['time'][:] = time
             self._data['time_towrite'][:] = time
             self._data['id'][:] = pid
-            self._data['once_written'][:] = 0
+            self._data['obs_written'][:] = 0
 
             # special case for exceptions which can only be handled from scipy
             self._data['exception'] = np.empty(self.ncount, dtype=object)
 
-            initialised |= {'lat', 'lat_towrite', 'lon', 'lon_towrite', 'depth', 'depth_towrite', 'time', 'time_towrite', 'id'}
+            initialised |= {'lat', 'lat_towrite', 'lon', 'lon_towrite', 'depth', 'depth_towrite', 'time', 'time_towrite', 'id', 'obs_written'}
 
             # any fields that were provided on the command line
             for kwvar, kwval in kwargs.items():

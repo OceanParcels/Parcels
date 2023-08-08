@@ -63,7 +63,6 @@ class BaseParticleFile(ABC):
 
         self.outputdt = outputdt.total_seconds() if isinstance(outputdt, delta) else outputdt
         self.chunks = chunks
-
         self.particleset = particleset
         self.parcels_mesh = 'spherical'
         if self.particleset.fieldset is not None:
@@ -71,7 +70,6 @@ class BaseParticleFile(ABC):
         self.time_origin = self.particleset.time_origin
         self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
         self.maxids = 0
-        self.obs_written = np.empty((0,), dtype=int)
         self.pids_written = {}
         self.create_new_zarrfile = create_new_zarrfile
         self.vars_to_write = {}
@@ -82,8 +80,8 @@ class BaseParticleFile(ABC):
         self.particleset.fieldset.particlefile = self
         self.analytical = False  # Flag to indicate if ParticleFile is used for analytical trajectories
 
-        # Reset once-written flag of each particle, in case new ParticleFile created for a ParticleSet
-        particleset.collection.setallvardata('once_written', 0)
+        # Reset obs_written of each particle, in case new ParticleFile created for a ParticleSet
+        particleset.collection.setallvardata('obs_written', 0)
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
                          "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
@@ -91,10 +89,6 @@ class BaseParticleFile(ABC):
                          "parcels_mesh": self.parcels_mesh}
 
         # Create dictionary to translate datatypes and fill_values
-        self.fmt_map = {np.float16: 'f2', np.float32: 'f4', np.float64: 'f8',
-                        np.bool_: 'i1', np.int8: 'i1', np.int16: 'i2',
-                        np.int32: 'i4', np.int64: 'i8', np.uint8: 'u1',
-                        np.uint16: 'u2', np.uint32: 'u4', np.uint64: 'u8'}
         self.fill_value_map = {np.float16: np.nan, np.float32: np.nan, np.float64: np.nan,
                                np.bool_: np.iinfo(np.int8).max, np.int8: np.iinfo(np.int8).max,
                                np.int16: np.iinfo(np.int16).max, np.int32: np.iinfo(np.int32).max,
@@ -234,14 +228,10 @@ class BaseParticleFile(ABC):
             ids = np.array([self.pids_written[p] for p in pids], dtype=int)
             self.maxids = len(self.pids_written)
 
-            once_ids = np.where(pset.collection.getvardata('once_written', indices_to_write) == 0)[0]
+            once_ids = np.where(pset.collection.getvardata('obs_written', indices_to_write) == 0)[0]
             if len(once_ids) > 0:
                 ids_once = ids[once_ids]
                 indices_to_write_once = indices_to_write[once_ids]
-                pset.collection.setvardata('once_written', indices_to_write_once, np.ones(len(ids_once)))
-
-            if self.maxids > len(self.obs_written):
-                self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
 
             if self.create_new_zarrfile:
                 if self.chunks is None:
@@ -257,6 +247,7 @@ class BaseParticleFile(ABC):
                 ds = xr.Dataset(attrs=self.metadata, coords={"trajectory": ("trajectory", pids),
                                                              "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))})
                 attrs = self._create_variables_attribute_dict()
+                obs = np.zeros((self.maxids), dtype=np.int32)
                 for var in self.vars_to_write:
                     varout = self._convert_varout_name(var)
                     if varout not in ['trajectory']:  # because 'trajectory' is written as coordinate
@@ -279,7 +270,7 @@ class BaseParticleFile(ABC):
                 else:
                     store = zarr.DirectoryStore(self.fname)
                 Z = zarr.group(store=store, overwrite=False)
-                obs = self.obs_written[np.array(ids)]
+                obs = pset.collection.getvardata('obs_written', indices_to_write)
                 for var in self.vars_to_write:
                     varout = self._convert_varout_name(var)
                     if self.maxids > Z[varout].shape[0]:
@@ -292,4 +283,4 @@ class BaseParticleFile(ABC):
                             self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
                         Z[varout].vindex[ids, obs] = pset.collection.getvardata(var, indices_to_write)
 
-            self.obs_written[np.array(ids)] += 1
+            pset.collection.setvardata('obs_written', indices_to_write, obs+1)
