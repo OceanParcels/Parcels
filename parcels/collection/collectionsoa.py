@@ -10,7 +10,6 @@ from parcels.collection.iterators import (
     BaseParticleCollectionIterable,
     BaseParticleCollectionIterator,
 )
-from parcels.field import Field
 from parcels.particle import JITParticle, ScipyParticle  # noqa
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
@@ -151,16 +150,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 if v.name in initialised:
                     continue
 
-                if isinstance(v.initial, Field):  # TODO remove as not needed anymore
-                    for i in range(self.ncount):
-                        if (time[i] is None) or (np.isnan(time[i])):
-                            raise RuntimeError(f'Cannot initialise a Variable with a Field if no time provided (time-type: {type(time)} values: {time}). Add a "time=" to ParticleSet construction')
-                        v.initial.fieldset.computeTimeChunk(time[i], 0)
-                        self._data[v.name][i] = v.initial[
-                            time[i], depth[i], lat[i], lon[i]
-                        ]
-                        logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
-                elif isinstance(v.initial, attrgetter):
+                if isinstance(v.initial, attrgetter):
                     self._data[v.name][:] = v.initial(self)
                 else:
                     self._data[v.name][:] = v.initial

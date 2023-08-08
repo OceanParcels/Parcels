@@ -720,11 +720,13 @@ def test_cgrid_indexing(pset_mode, mode, gridindexingtype, coordtype):
     fieldset.V.interp_method = 'cgrid_velocity'
 
     def UpdateR(particle, fieldset, time):
+        if time == 0:
+            particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         radius = Variable('radius', dtype=np.float32, initial=0.)
-        radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
+        radius_start = Variable('radius_start', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=4e3, time=0)
 
@@ -797,11 +799,13 @@ def test_cgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
     fieldset.W.interp_method = "cgrid_velocity"
 
     def UpdateR(particle, fieldset, time):
+        if time == 0:
+            particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         radius = Variable('radius', dtype=np.float32, initial=0.)
-        radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
+        radius_start = Variable('radius_start', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, depth=4e3, lon=0, lat=0, time=0)
 
@@ -875,11 +879,13 @@ def test_bgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
     fieldset.W.interp_method = "bgrid_w_velocity"
 
     def UpdateR(particle, fieldset, time):
+        if time == 0:
+            particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         radius = Variable('radius', dtype=np.float32, initial=0.)
-        radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
+        radius_start = Variable('radius_start', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
 

@@ -472,10 +472,13 @@ def test_from_field_exact_val(pset_mode, staggered_grid):
         fieldset.add_field(FMask)
 
     class SampleParticle(ptype['scipy']):
-        mask = Variable('mask', initial=fieldset.mask)
+        mask = Variable('mask', initial=0)
+
+    def SampleMask(particle, fieldset, time):
+        particle.mask = fieldset.mask[particle]
 
     pset = pset_type[pset_mode]['pset'].from_field(fieldset, size=400, pclass=SampleParticle, start_field=FMask, time=0)
-    # pset.show(field=FMask)
+    pset.execute(SampleMask, dt=1, runtime=1)
     assert np.allclose([p.mask for p in pset], 1)
     assert (np.array([p.lon for p in pset]) <= 1).all()
     test = np.logical_or(np.array([p.lon for p in pset]) <= 0, np.array([p.lat for p in pset]) >= 51)

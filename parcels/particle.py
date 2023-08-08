@@ -3,8 +3,6 @@ from operator import attrgetter
 
 import numpy as np
 
-from parcels.field import Field
-from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable', 'ScipyInteractionParticle']
@@ -140,18 +138,6 @@ class _Particle:
         for v in ptype.variables:
             if isinstance(v.initial, attrgetter):
                 initial = v.initial(self)
-            elif isinstance(v.initial, Field):  # TODO remove this functionality as not needed anymore
-                lon = self.getInitialValue(ptype, name='lon')
-                lat = self.getInitialValue(ptype, name='lat')
-                depth = self.getInitialValue(ptype, name='depth')
-                time = self.getInitialValue(ptype, name='time')
-                if time is None:
-                    raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
-                                       'Add a "time=" to ParticleSet construction')
-                if v.initial.grid.ti < 0:
-                    v.initial.fieldset.computeTimeChunk(time, 0)
-                initial = v.initial[time, depth, lat, lon]
-                logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
             else:
                 initial = v.initial
             # Enforce type of initial value

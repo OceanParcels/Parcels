@@ -176,26 +176,6 @@ def test_verticalsampling(pset_mode, mode, zdir):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_variable_init_from_field(pset_mode, mode, npart=9):
-    dims = (2, 2)
-    dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
-                  'lat': np.linspace(0., 1., dims[1], dtype=np.float32)}
-    data = {'U': np.zeros(dims, dtype=np.float32),
-            'V': np.zeros(dims, dtype=np.float32),
-            'P': np.zeros(dims, dtype=np.float32)}
-    data['P'][0, 0] = 1.
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
-    xv, yv = np.meshgrid(np.linspace(0, 1, int(np.sqrt(npart))), np.linspace(0, 1, int(np.sqrt(npart))))
-
-    class VarParticle(pclass(mode)):
-        a = Variable('a', dtype=np.float32, initial=fieldset.P)
-
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=VarParticle, lon=xv.flatten(), lat=yv.flatten(), time=0)
-    assert np.all([abs(pset.a[i] - fieldset.P[pset.time[i], pset.depth[i], pset.lat[i], pset.lon[i]]) < 1e-6 for i in range(pset.size)])
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_from_field(pset_mode, mode, xdim=10, ydim=20, npart=10000):
     np.random.seed(123456)
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),

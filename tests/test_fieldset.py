@@ -941,7 +941,7 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     class SampleParticle(JITParticle):
         u_kernel = Variable('u_kernel', dtype=np.float32, initial=0.)
         v_kernel = Variable('v_kernel', dtype=np.float32, initial=0.)
-        u_scipy = Variable('u_scipy', dtype=np.float32, initial=fieldset.U)
+        u_scipy = Variable('u_scipy', dtype=np.float32, initial=0.)
 
     pset = pset_type['soa']['pset'](fieldset, pclass=SampleParticle, time=[0, time2], lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
 

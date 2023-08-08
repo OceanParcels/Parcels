@@ -77,6 +77,8 @@ def stommel_fieldset(xdim=200, ydim=200, grid_type='A'):
 
 
 def UpdateP(particle, fieldset, time):
+    if time == 0:
+        particle.p_start = fieldset.P[time, particle.depth, particle.lat, particle.lon]
     particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
@@ -102,7 +104,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
 
     class MyParticle(ParticleClass):
         p = Variable('p', dtype=np.float32, initial=0.)
-        p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
+        p_start = Variable('p_start', dtype=np.float32, initial=0.)
         age = Variable('age', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
