@@ -7,6 +7,7 @@ __all__ = ['StatusCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtr
 
 class StatusCode:
     """Class defining the status codes for particles.state."""
+
     Success = 0
     Evaluate = 1
     Repeat = 2
