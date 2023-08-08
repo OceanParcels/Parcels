@@ -460,9 +460,11 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
             if kvar in funcvars:
                 funcvars.remove(kvar)
         if len(funcvars) > 0:
-            self.ccode.body.insert(0, c.Value("type_coord", ", ".join(funcvars)))
+            for f in funcvars:
+                self.ccode.body.insert(0, c.Statement(f"type_coord {f} = 0"))
         if len(transformer.tmp_vars) > 0:
-            self.ccode.body.insert(0, c.Value("float", ", ".join(transformer.tmp_vars)))
+            for f in transformer.tmp_vars:
+                self.ccode.body.insert(0, c.Statement(f"float {f} = 0"))
 
         return self.ccode
 
