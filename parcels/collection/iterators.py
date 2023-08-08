@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from parcels.tools.statuscodes import OperationCode, StateCode
+from parcels.tools.statuscodes import StatusCode
 
 
 class BaseParticleCollectionIterable(ABC):
@@ -71,20 +71,20 @@ class BaseParticleAccessor(ABC):
 
     def delete(self):
         """Signal the underlying particle for deletion."""
-        self.state = OperationCode.Delete
+        self.state = StatusCode.Delete
 
     def set_state(self, state):
         """Syntactic sugar for changing the state of the underlying particle."""
         self.state = state
 
     def succeeded(self):
-        self.state = StateCode.Success
+        self.state = StatusCode.Success
 
     def isComputed(self):
-        return self.state == StateCode.Success
+        return self.state == StatusCode.Success
 
     def reset_state(self):
-        self.state = StateCode.Evaluate
+        self.state = StatusCode.Evaluate
 
     @abstractmethod
     def getPType(self):

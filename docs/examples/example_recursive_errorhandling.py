@@ -2,12 +2,12 @@ import numpy as np
 import pytest
 
 from parcels import (
-    ErrorCode,
     FieldSet,
     JITParticle,
     ParcelsRandom,
     ParticleSet,
     ScipyParticle,
+    StatusCode,
 )
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -48,7 +48,7 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
         If not, the Kernel throws an error.
         """
         if particle.lon <= fieldset.minlon:
-            return ErrorCode.Error
+            return StatusCode.Error
 
     def Error_RandomiseLon(particle, fieldset, time):
         """Error handling kernel that draws a new longitude.
@@ -60,9 +60,9 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
     ParcelsRandom.seed(123456)
 
     # The .execute below is only run for one timestep. Yet the
-    # recovery={ErrorCode.Error: Error_RandomiseLon} assures Parcels keeps
+    # recovery={StatusCode.Error: Error_RandomiseLon} assures Parcels keeps
     # attempting to move all particles beyond 0.7 longitude
     pset.execute(pset.Kernel(TestLon), runtime=1, dt=1,
-                 recovery={ErrorCode.Error: Error_RandomiseLon})
+                 recovery={StatusCode.Error: Error_RandomiseLon})
 
     assert (pset.lon > fieldset.minlon).all()

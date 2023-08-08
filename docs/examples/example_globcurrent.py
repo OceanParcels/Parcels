@@ -7,12 +7,12 @@ import xarray as xr
 
 from parcels import (
     AdvectionRK4,
-    ErrorCode,
     Field,
     FieldSet,
     JITParticle,
     ParticleSet,
     ScipyParticle,
+    StatusCode,
     TimeExtrapolationError,
     Variable,
     download_example_dataset,
@@ -235,7 +235,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
 
     def DeleteP0(particle, fieldset, time):
         if particle.id == 0:
-            return ErrorCode.ErrorOutOfBounds  # we want to pass through recov loop
+            return StatusCode.ErrorOutOfBounds  # we want to pass through recov loop
 
     def DeleteParticle(particle, fieldset, time):
         particle.delete()
@@ -248,7 +248,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
     pset0.execute(pset0.Kernel(DeleteP0)+AdvectionRK4,
                   runtime=delta(days=rundays),
                   dt=delta(minutes=5),
-                  recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+                  recovery={StatusCode.ErrorOutOfBounds: DeleteParticle})
 
     pset1 = ParticleSet(fieldset, pclass=ptype[mode],
                         lon=[25, 25],

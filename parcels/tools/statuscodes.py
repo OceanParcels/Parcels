@@ -1,23 +1,17 @@
 """Handling of Errors and particle status codes"""
 
 
-__all__ = ['StateCode', 'OperationCode', 'ErrorCode',
-           'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
-           'KernelError', 'AllParcelsErrors', 'AllParcelsErrorCodes']
+__all__ = ['StatusCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
+           'KernelError', 'AllParcelsErrorCodes']
 
 
-class StateCode:
+class StatusCode:
+    """Class defining the status codes for particles.state."""
     Success = 0
     Evaluate = 1
-
-
-class OperationCode:
     Repeat = 2
     Delete = 3
     StopExecution = 4
-
-
-class ErrorCode:
     Error = 5
     ErrorInterpolation = 51
     ErrorOutOfBounds = 6
@@ -122,13 +116,9 @@ class InterpolationError(KernelError):
         super().__init__(particle, fieldset=fieldset, msg=message)
 
 
-AllParcelsErrors = (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError, TimeExtrapolationError,  # TODO see if we can use only the dictionary, not also this list
-                    KernelError)
-
-
-AllParcelsErrorCodes = {FieldSamplingError: ErrorCode.Error,
-                        FieldOutOfBoundError: ErrorCode.ErrorOutOfBounds,
-                        FieldOutOfBoundSurfaceError: ErrorCode.ErrorThroughSurface,
-                        TimeExtrapolationError: ErrorCode.ErrorTimeExtrapolation,
-                        KernelError: ErrorCode.Error,
+AllParcelsErrorCodes = {FieldSamplingError: StatusCode.Error,
+                        FieldOutOfBoundError: StatusCode.ErrorOutOfBounds,
+                        FieldOutOfBoundSurfaceError: StatusCode.ErrorThroughSurface,
+                        TimeExtrapolationError: StatusCode.ErrorTimeExtrapolation,
+                        KernelError: StatusCode.Error,
                         }

@@ -815,7 +815,7 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         raise NotTestedError
         # data_states = [p.state for p in self._data]
-        # indices = np.where(data_states == OperationCode)
+        # indices = np.where(data_states == StatusCode)
         # indices = None if len(indices) == 0 else indices[0]
         # indices = None if indices.size == 0 else indices
         # if indices is None:

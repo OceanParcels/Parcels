@@ -512,7 +512,7 @@ class ParticleCollectionSOA(ParticleCollection):
         raise NotTestedError
         # super().delete_by_index(index)
         #
-        # self._data['state'][index] = OperationCode.Delete
+        # self._data['state'][index] = StatusCode.Delete
 
     def delete_by_ID(self, id):
         """

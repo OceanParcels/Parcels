@@ -26,7 +26,7 @@ from parcels.application_kernels.advection import AdvectionAnalytical, Advection
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import GridCode
 from parcels.tools.global_statics import get_cache_dir
-from parcels.tools.statuscodes import OperationCode, StateCode
+from parcels.tools.statuscodes import StatusCode
 
 __all__ = ['BaseKernel']
 
@@ -366,7 +366,7 @@ class BaseKernel:
 
         This version is generally applicable to all structures and collections
         """
-        indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
+        indices = [i for i, p in enumerate(pset) if p.state == StatusCode.Delete]
         pset.remove_indices(indices)
 
     def load_fieldset_jit(self, pset):
@@ -419,7 +419,7 @@ class BaseKernel:
         sign_dt :
 
         """
-        while p.state in [StateCode.Evaluate, OperationCode.Repeat]:
+        while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
             pre_dt = p.dt
 
             sign_dt = np.sign(p.dt)
@@ -432,8 +432,8 @@ class BaseKernel:
             res = self._pyfunc(p, self._fieldset, p.time)
 
             if res is None:
-                if sign_dt*p.time < sign_dt*endtime and p.state == StateCode.Success:
-                    p.state = StateCode.Evaluate
+                if sign_dt*p.time < sign_dt*endtime and p.state == StatusCode.Success:
+                    p.state = StatusCode.Evaluate
             else:
                 p.state = res
 

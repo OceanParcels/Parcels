@@ -16,7 +16,6 @@ import xarray as xr
 from parcels import (  # noqa
     AdvectionRK4,
     AdvectionRK4_3D,
-    ErrorCode,
     FieldSet,
     JITParticle,
     KernelAOS,

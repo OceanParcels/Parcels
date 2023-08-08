@@ -7,7 +7,6 @@ import xarray as xr
 from zarr.storage import MemoryStore
 
 from parcels import (  # noqa
-    ErrorCode,
     FieldSet,
     JITParticle,
     KernelAOS,

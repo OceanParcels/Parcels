@@ -17,7 +17,7 @@ from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 from parcels.kernel.basekernel import BaseKernel as Kernel
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import StateCode
+from parcels.tools.statuscodes import StatusCode
 
 
 class NDCluster(ABC):
@@ -342,13 +342,13 @@ class BaseParticleSet(NDCluster):
         """
         error_indices = [
             i for i, p in enumerate(self)
-            if p.state not in [StateCode.Success, StateCode.Evaluate]]
+            if p.state not in [StatusCode.Success, StatusCode.Evaluate]]
         return self.collection.get_multi_by_indices(indices=error_indices)
 
     @property
     def num_error_particles(self):
         """Get the number of particles that are in an error state."""
-        return len([True if p.state not in [StateCode.Success, StateCode.Evaluate] else None for p in self])
+        return len([True if p.state not in [StatusCode.Success, StatusCode.Evaluate] else None for p in self])
 
     @abstractmethod
     def _impute_release_times(self, default):

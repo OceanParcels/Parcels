@@ -12,7 +12,6 @@ from parcels import (  # noqa
     AdvectionRK4,
     AdvectionRK4_3D,
     AdvectionRK45,
-    ErrorCode,
     Field,
     FieldSet,
     JITParticle,
@@ -23,7 +22,7 @@ from parcels import (  # noqa
     ParticleSetAOS,
     ParticleSetSOA,
     ScipyParticle,
-    StateCode,
+    StatusCode,
     Variable,
     logger,
 )
@@ -153,17 +152,17 @@ def test_advection_3D_outofbounds(pset_mode, mode, direction, wErrorThroughSurfa
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
     def DeleteParticle(particle, fieldset, time):
-        if particle.state == ErrorCode.ErrorOutOfBounds or particle.state == ErrorCode.ErrorThroughSurface:
+        if particle.state == StatusCode.ErrorOutOfBounds or particle.state == StatusCode.ErrorThroughSurface:
             particle.delete()
 
     def SubmergeParticle(particle, fieldset, time):
-        if particle.state == ErrorCode.ErrorThroughSurface:
+        if particle.state == StatusCode.ErrorThroughSurface:
             (u, v) = fieldset.UV[particle]
             particle_dlon = u * particle.dt  # noqa
             particle_dlat = v * particle.dt  # noqa
             particle_ddepth = 0.  # noqa
             particle.depth = 0
-            particle.state = StateCode.Evaluate
+            particle.state = StatusCode.Evaluate
 
     kernels = [AdvectionRK4_3D]
     if wErrorThroughSurface:

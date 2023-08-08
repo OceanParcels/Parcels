@@ -16,7 +16,6 @@ from parcels import (  # noqa
     ParticleSetAOS,
     ParticleSetSOA,
     ScipyParticle,
-    StateCode,
     Variable,
 )
 from parcels.application_kernels.EOSseawaterproperties import (

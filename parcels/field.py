@@ -19,7 +19,6 @@ from parcels.tools.converters import (
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
     AllParcelsErrorCodes,
-    AllParcelsErrors,
     FieldOutOfBoundError,
     FieldOutOfBoundSurfaceError,
     FieldSamplingError,
@@ -1197,7 +1196,7 @@ class Field:
                 return self.eval(key.time, key.depth, key.lat, key.lon, key)
             else:
                 return self.eval(*key)
-        except AllParcelsErrors as error:
+        except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=None)
 
     def eval(self, time, z, y, x, particle=None, applyConversion=True):
@@ -1876,7 +1875,7 @@ class VectorField:
                 return self.eval(key.time, key.depth, key.lat, key.lon, key)
             else:
                 return self.eval(*key)
-        except AllParcelsErrors as error:
+        except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
 
     def ccode_eval_array(self, varU, varV, varW, U, V, W, t, z, y, x):
@@ -1987,7 +1986,7 @@ class NestedField(list):
                     else:
                         val = list.__getitem__(self, iField).eval(*key)
                     break
-                except AllParcelsErrors as error:
+                except tuple(AllParcelsErrorCodes.keys()) as error:
                     if iField == len(self)-1:
                         vector_type = self[iField].vector_type if isinstance(self[iField], VectorField) else None
                         return _deal_with_errors(error, key, vector_type=vector_type)

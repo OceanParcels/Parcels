@@ -23,7 +23,7 @@ from parcels.particlefile import ParticleFile
 from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import StateCode
+from parcels.tools.statuscodes import StatusCode
 
 try:
     from mpi4py import MPI
@@ -352,12 +352,12 @@ class ParticleSetSOA(BaseParticleSet):
         iterator
             Collection iterator over error particles.
         """
-        error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
+        error_indices = self.data_indices('state', [StatusCode.Success, StatusCode.Evaluate], invert=True)
         return ParticleCollectionIterableSOA(self._collection, subset=error_indices)
 
     def active_particles_mask(self, time, dt):
         active_indices = (time - self._collection.data['time'])/dt >= 0
-        non_err_indices = np.isin(self._collection.data['state'], [StateCode.Success, StateCode.Evaluate])
+        non_err_indices = np.isin(self._collection.data['state'], [StatusCode.Success, StatusCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
         self._active_particle_idx = np.where(active_indices)[0]
         return active_indices
@@ -373,7 +373,7 @@ class ParticleSetSOA(BaseParticleSet):
         """
         return np.sum(np.isin(
             self._collection.data['state'],
-            [StateCode.Success, StateCode.Evaluate], invert=True))
+            [StatusCode.Success, StatusCode.Evaluate], invert=True))
 
     def __getitem__(self, index):
         """Get a single particle by index."""

@@ -8,13 +8,12 @@ from parcels import (  # noqa
     JITParticle,
     KernelAOS,
     KernelSOA,
-    OperationCode,
     ParticleFileAOS,
     ParticleFileSOA,
     ParticleSetAOS,
     ParticleSetSOA,
     ScipyParticle,
-    StateCode,
+    StatusCode,
     Variable,
 )
 
@@ -239,7 +238,7 @@ def test_pset_stop_simulation(fieldset, pset_mode, mode):
 
     def Delete(particle, fieldset, time):
         if time == 4:
-            return OperationCode.StopExecution
+            return StatusCode.StopExecution
 
     pset.execute(Delete, dt=1, runtime=21)
     assert pset[0].time == 4

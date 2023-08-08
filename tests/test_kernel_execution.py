@@ -6,19 +6,17 @@ import pytest
 
 from parcels import (  # noqa
     AdvectionRK4,
-    ErrorCode,
     FieldOutOfBoundError,
     FieldSet,
     JITParticle,
     KernelAOS,
     KernelSOA,
-    OperationCode,
     ParticleFileAOS,
     ParticleFileSOA,
     ParticleSetAOS,
     ParticleSetSOA,
     ScipyParticle,
-    StateCode,
+    StatusCode,
     Variable,
 )
 
@@ -173,9 +171,9 @@ def test_execution_recover_out_of_bounds(fieldset, pset_mode, mode, npart=2):
         particle.lon += 0.1
 
     def MoveLeft(particle, fieldset, time):
-        if particle.state == ErrorCode.ErrorOutOfBounds:
+        if particle.state == StatusCode.ErrorOutOfBounds:
             particle.lon -= 1.
-            particle.state = StateCode.Success
+            particle.state = StatusCode.Success
 
     lon = np.linspace(0.05, 0.95, npart)
     lat = np.linspace(1, 0, npart)
@@ -194,7 +192,7 @@ def test_execution_delete_out_of_bounds(fieldset, pset_mode, mode, npart=10):
         particle.lon += 0.1
 
     def DeleteMe(particle, fieldset, time):
-        if particle.state == ErrorCode.ErrorOutOfBounds:
+        if particle.state == StatusCode.ErrorOutOfBounds:
             particle.delete()
 
     lon = np.linspace(0.05, 0.95, npart)

@@ -12,6 +12,7 @@ from parcels.field import Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import StatusCode
 
 
 class IntrinsicNode(ast.AST):
@@ -161,16 +162,10 @@ class RandomNode(IntrinsicNode):
 
 
 class StatusCodeNode(IntrinsicNode):
-    symbol_map = {'Success': 'SUCCESS', 'Evaluate': 'EVALUATE',  # StateCodes
-                  'Repeat': 'REPEAT', 'Delete': 'DELETE', 'StopExecution': 'STOP_EXECUTION',  # OperationCodes
-                  'Error': 'ERROR', 'ErrorInterpolation': 'ERROR_INTERPOLATION',  # ErrorCodes
-                  'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS', 'ErrorThroughSurface': 'ERROR_THROUGH_SURFACE',
-                  'ErrorTimeExtrapolation': 'ERROR_TIME_EXTRAPOLATION'}
-
     def __getattr__(self, attr):
-        if attr in self.symbol_map:
-            attr = self.symbol_map[attr]
-            return IntrinsicNode(None, ccode=attr)
+        statuscodes = [c for c in vars(StatusCode) if not c.startswith('_')]
+        if attr in statuscodes:
+            return IntrinsicNode(None, ccode=attr.upper())
         else:
             raise AttributeError(f"Unknown status code encountered: {attr}")
 
@@ -254,7 +249,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
             node = ParticleNode(self.ptype)
-        elif node.id in ['StateCode', 'OperationCode', 'ErrorCode', 'Error']:
+        elif node.id in ['StatusCode']:
             node = StatusCodeNode(math, ccode='')
         elif node.id == 'math':
             node = MathNode(math, ccode='')
@@ -856,7 +851,6 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
 
             body += [c.If(f"fabs(fmod(particles->time[pnum], {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
 
-        # body += [c.Statement('printf("RES NOW %d\\n", particles->state[pnum])')]
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particles->{coord}[pnum] += particle_d{coord}")]
         body += [c.Statement("particles->time[pnum] += particles->dt[pnum]")]
@@ -908,7 +902,7 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             cstat += [c.Assign("particles->state[pnum]", ccode_eval),
                       conv_stat,
-                      c.If("particles->state[pnum] != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
+                      c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
         cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
@@ -932,7 +926,7 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
                 statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
             cstat += [c.Assign("particles->state[pnum]", ccode_eval),
                       c.Block(statements),
-                      c.If("particles->state[pnum] != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
+                      c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
         cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
@@ -1039,7 +1033,7 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             cstat += [c.Assign("err", ccode_eval),
                       conv_stat,
-                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
+                      c.If("err != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
         cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
@@ -1062,7 +1056,7 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
                 statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
             cstat += [c.Assign("err", ccode_eval),
                       c.Block(statements),
-                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
+                      c.If("err != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
         cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 

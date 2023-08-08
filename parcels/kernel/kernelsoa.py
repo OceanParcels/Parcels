@@ -20,12 +20,10 @@ from parcels.field import NestedField, VectorField
 from parcels.kernel.basekernel import BaseKernel
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
-    ErrorCode,
     FieldOutOfBoundError,
     FieldOutOfBoundSurfaceError,
     FieldSamplingError,
-    OperationCode,
-    StateCode,
+    StatusCode,
     TimeExtrapolationError,
 )
 
@@ -76,9 +74,7 @@ class KernelSOA(BaseKernel):
                 user_ctx['math'] = globals()['math']
                 user_ctx['ParcelsRandom'] = globals()['ParcelsRandom']
                 user_ctx['random'] = globals()['random']
-                user_ctx['StateCode'] = globals()['StateCode']
-                user_ctx['OperationCode'] = globals()['OperationCode']
-                user_ctx['ErrorCode'] = globals()['ErrorCode']
+                user_ctx['StatusCode'] = globals()['StatusCode']
             except:
                 logger.warning("Could not access user context when merging kernels")
                 user_ctx = globals()
@@ -170,7 +166,7 @@ class KernelSOA(BaseKernel):
         This deletion function is targetted to index-addressable, random-access array-collections.
         """
         # Indices marked for deletion.
-        bool_indices = pset.collection.state == OperationCode.Delete
+        bool_indices = pset.collection.state == StatusCode.Delete
         indices = np.where(bool_indices)[0]
         if len(indices) > 0 and self.fieldset.particlefile is not None:
             self.fieldset.particlefile.write(pset, None, indices=indices)
@@ -178,7 +174,7 @@ class KernelSOA(BaseKernel):
 
     def execute(self, pset, endtime, dt, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps."""
-        pset.collection.state[:] = StateCode.Evaluate
+        pset.collection.state[:] = StatusCode.Evaluate
 
         if abs(dt) < 1e-6:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
@@ -205,19 +201,19 @@ class KernelSOA(BaseKernel):
             error_pset = pset.error_particles
             # Apply recovery kernel
             for p in error_pset:
-                if p.state == OperationCode.StopExecution:
+                if p.state == StatusCode.StopExecution:
                     return
-                if p.state == OperationCode.Repeat:
+                if p.state == StatusCode.Repeat:
                     p.reset_state()
-                elif p.state == ErrorCode.ErrorTimeExtrapolation:
+                elif p.state == StatusCode.ErrorTimeExtrapolation:
                     raise TimeExtrapolationError(p.time)
-                elif p.state == ErrorCode.ErrorOutOfBounds:
+                elif p.state == StatusCode.ErrorOutOfBounds:
                     raise FieldOutOfBoundError(p.lon, p.lat, p.depth)
-                elif p.state == ErrorCode.ErrorThroughSurface:
+                elif p.state == StatusCode.ErrorThroughSurface:
                     raise FieldOutOfBoundSurfaceError(p.lon, p.lat, p.depth)
-                elif p.state == ErrorCode.Error:
+                elif p.state == StatusCode.Error:
                     raise FieldSamplingError(p.lon, p.lat, p.depth)
-                elif p.state == OperationCode.Delete:
+                elif p.state == StatusCode.Delete:
                     pass
                 else:
                     logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')

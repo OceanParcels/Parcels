@@ -10,7 +10,6 @@ from parcels import (  # noqa
     AdvectionRK4,
     AdvectionRK4_3D,
     CurvilinearZGrid,
-    ErrorCode,
     Field,
     FieldSet,
     JITParticle,
@@ -23,7 +22,7 @@ from parcels import (  # noqa
     RectilinearSGrid,
     RectilinearZGrid,
     ScipyParticle,
-    StateCode,
+    StatusCode,
     UnitConverter,
     Variable,
 )
@@ -621,10 +620,10 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
         particle.tracer = fieldset.T[particle]
 
     def OutBoundsError(particle, fieldset, time):
-        if particle.state == ErrorCode.ErrorOutOfBounds:
+        if particle.state == StatusCode.ErrorOutOfBounds:
             particle.out_of_bounds = 1
             particle.depth -= 3
-            particle.state = StateCode.Success
+            particle.state = StatusCode.Success
 
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)

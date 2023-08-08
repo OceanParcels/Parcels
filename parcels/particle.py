@@ -5,7 +5,7 @@ import numpy as np
 
 from parcels.field import Field
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import StateCode
+from parcels.tools.statuscodes import StatusCode
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable', 'ScipyInteractionParticle']
 
@@ -210,7 +210,7 @@ class ScipyParticle(_Particle):
     id = Variable('id', dtype=np.int64, to_write='once')
     once_written = Variable('once_written', dtype=np.int32, initial=0, to_write=False)  # np.bool not implemented in JIT
     dt = Variable('dt', dtype=np.float64, to_write=False)
-    state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)
+    state = Variable('state', dtype=np.int32, initial=StatusCode.Evaluate, to_write=False)
     next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0., time=0., cptr=None):

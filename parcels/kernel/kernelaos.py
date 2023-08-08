@@ -19,7 +19,7 @@ from parcels.compilation.codegenerator import ParticleObjectLoopGenerator
 from parcels.field import NestedField, VectorField
 from parcels.kernel.basekernel import BaseKernel
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode  # noqa
+from parcels.tools.statuscodes import StatusCode  # noqa
 
 __all__ = ['KernelAOS']
 
@@ -68,9 +68,7 @@ class KernelAOS(BaseKernel):
                 user_ctx['math'] = globals()['math']
                 user_ctx['ParcelsRandom'] = globals()['ParcelsRandom']
                 user_ctx['random'] = globals()['random']
-                user_ctx['StateCode'] = globals()['StateCode']
-                user_ctx['OperationCode'] = globals()['OperationCode']
-                user_ctx['ErrorCode'] = globals()['ErrorCode']
+                user_ctx['StatusCode'] = globals()['StatusCode']
             except:
                 logger.warning("Could not access user context when merging kernels")
                 user_ctx = globals()
@@ -161,7 +159,7 @@ class KernelAOS(BaseKernel):
 
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""
-        indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
+        indices = [i for i, p in enumerate(pset) if p.state == StatusCode.Delete]
         if len(indices) > 0 and self.fieldset.particlefile is not None:
             self.fieldset.particlefile.write(pset, None, indices=indices)
         pset.remove_indices(indices)

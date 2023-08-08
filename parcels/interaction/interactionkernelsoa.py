@@ -13,7 +13,7 @@ import parcels.rng as ParcelsRandom  # noqa
 from parcels.field import NestedField, VectorField
 from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
+from parcels.tools.statuscodes import StatusCode
 
 __all__ = ['InteractionKernelSOA']
 
@@ -103,12 +103,12 @@ class InteractionKernelSOA(BaseInteractionKernel):
                 try:
                     res = pyfunc(p, pset.fieldset, p.time, neighbors, mutator)
                 except Exception as e:
-                    res = ErrorCode.Error
+                    res = StatusCode.Error
                     p.exception = e
 
                 # InteractionKernels do not implement a way to recover
                 # from errors.
-                if res != StateCode.Success:
+                if res != StatusCode.Success:
                     logger.warning_once("Some InteractionKernel was not completed succesfully, likely because a Particle threw an error that was not captured.")
 
             for particle_idx in active_idx:
@@ -129,7 +129,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
         It is strongly recommended not to sample from fields inside an
         InteractionKernel.
         """
-        pset.collection.state[:] = StateCode.Evaluate
+        pset.collection.state[:] = StatusCode.Evaluate
 
         if abs(dt) < 1e-6:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
@@ -158,11 +158,11 @@ class InteractionKernelSOA(BaseInteractionKernel):
             error_pset = pset.error_particles
             # Apply recovery kernel
             for p in error_pset:
-                if p.state == OperationCode.StopExecution:
+                if p.state == StatusCode.StopExecution:
                     return
-                if p.state == OperationCode.Repeat:
-                    p.set_state(StateCode.Evaluate)
-                elif p.state == OperationCode.Delete:
+                if p.state == StatusCode.Repeat:
+                    p.set_state(StatusCode.Evaluate)
+                elif p.state == StatusCode.Delete:
                     pass
                 else:
                     logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')
