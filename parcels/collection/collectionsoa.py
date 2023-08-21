@@ -59,12 +59,12 @@ def partitionParticles4MPI_default(coords,mpi_size=1):
 
     if KMeans:
         kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-        mpiProcs = kmeans.labels_    
+        mpiProcs = kmeans.labels_
     else:  # assigning random labels if no KMeans (see https://github.com/OceanParcels/parcels/issues/1261)
         logger.warning_once('sklearn needs to be available if MPI is installed. '
                             'See http://oceanparcels.org/#parallel_install for more information')
         mpiProcs = np.randint(0, mpi_size, size=len(lon))
-        
+
     #print('Using default KMeans partitioning of particles to MPI processes',flush=True)
 
     return mpiProcs
@@ -73,7 +73,7 @@ def partitionParticles4MPI_default(coords,mpi_size=1):
 partitionParticles4MPI=partitionParticles4MPI_default
 
 #This function, if called before the particle set is created, will alter how the
-#particle set is partitioned between MPI jobs. 
+#particle set is partitioned between MPI jobs.
 def setPartitionFunction(partitionFunction):
     global partitionParticles4MPI
     partitionParticles4MPI=partitionFunction
@@ -81,7 +81,7 @@ def setPartitionFunction(partitionFunction):
 #=============================================================================
 
 
-        
+
 class ParticleCollectionSOA(ParticleCollection):
 
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
