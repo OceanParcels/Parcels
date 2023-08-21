@@ -134,7 +134,6 @@ class ParticleCollectionSOA(ParticleCollection):
                             # the call to setPartiionParticles4MPI()
                             # before the particle set is created.
                             self._pu_indicators = partitionParticles4MPI(coords,mpi_size=mpi_size)
-                            #print('In rank 0, _pu_indicators is',self._pu_indicators,flush=True)
                         else:
                             self._pu_indicators = None
                         self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
