@@ -26,15 +26,72 @@ if MPI:
     except:
         KMeans = None
 
+#=============================================================================
+# The function partitionParticles4MPI_default() is the default scheme
+# to partition the different particles into different MPI
+# processes. The function setPartitionFunction() will, if called
+# before the particle set is created, allow the user to specify their
+# own scheme for partitioning the particles to different MPI jobs by
+# passing a new partitioning function to setPartitionFunction(). The
+# arguements of this new function must match those of
+# partitionParticles4MPI_default(), as described in the comments to
+# that function.
 
+def partitionParticles4MPI_default(coords,mpi_size=1):
+    '''This function takes the coordinates of the particle starting
+    positions and returns which MPI process will process each
+    particle.
+
+    Input:
+
+    coords: numpy array with rows of [lon, lat] so that
+    coords.shape[0] is the number of particles and coords.shape[1] is 2.
+
+    mpi_size=1: the number of MPI processes.
+
+    Output:
+
+    mpiProcs: an integer array with values from 0 to mpi_size-1
+    specifying which MPI job will run which particles. len(mpiProcs)
+    must equal coords.shape[0]
+
+    '''
+
+    if KMeans:
+        kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+        mpiProcs = kmeans.labels_    
+    else:  # assigning random labels if no KMeans (see https://github.com/OceanParcels/parcels/issues/1261)
+        logger.warning_once('sklearn needs to be available if MPI is installed. '
+                            'See http://oceanparcels.org/#parallel_install for more information')
+        mpiProcs = np.randint(0, mpi_size, size=len(lon))
+        
+    #print('Using default KMeans partitioning of particles to MPI processes',flush=True)
+
+    return mpiProcs
+
+#by default, the partition is done by the functiond defined above
+partitionParticles4MPI=partitionParticles4MPI_default
+
+#This function, if called before the particle set is created, will alter how the
+#particle set is partitioned between MPI jobs. 
+def setPartitionFunction(partitionFunction):
+    global partitionParticles4MPI
+    partitionParticles4MPI=partitionFunction
+    return None
+#=============================================================================
+
+
+        
 class ParticleCollectionSOA(ParticleCollection):
 
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
-        :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
-        field references of the ctypes-link of particles that are allocated
+        Parameters
+        ----------
+        ngrid :
+            number of grids in the fieldset of the overarching ParticleSet - required for initialising the
+            field references of the ctypes-link of particles that are allocated
         """
-
         super(ParticleCollection, self).__init__()
 
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
@@ -55,7 +112,7 @@ class ParticleCollectionSOA(ParticleCollection):
 
         for kwvar in kwargs:
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
+                f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
 
         offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
         if MPI:
@@ -71,13 +128,13 @@ class ParticleCollectionSOA(ParticleCollection):
                     if (self._pu_indicators is None) or (len(self._pu_indicators) != len(lon)):
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
-                            if KMeans:
-                                kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                                self._pu_indicators = kmeans.labels_
-                            else:  # assigning random labels if no KMeans (see https://github.com/OceanParcels/parcels/issues/1261)
-                                logger.warning_once('sklearn needs to be available if MPI is installed. '
-                                                    'See http://oceanparcels.org/#parallel_install for more information')
-                                self._pu_indicators = np.randint(0, mpi_size, size=len(lon))
+                            # partitionParticles is a function which
+                            # decides which MPI jobs will process
+                            # which particles. It can be specified in
+                            # the call to setPartiionParticles4MPI()
+                            # before the particle set is created.
+                            self._pu_indicators = partitionParticles4MPI(coords,mpi_size=mpi_size)
+                            #print('In rank 0, _pu_indicators is',self._pu_indicators,flush=True)
                         else:
                             self._pu_indicators = None
                         self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
@@ -136,7 +193,7 @@ class ParticleCollectionSOA(ParticleCollection):
             # any fields that were provided on the command line
             for kwvar, kwval in kwargs.items():
                 if not hasattr(pclass, kwvar):
-                    raise RuntimeError('Particle class does not have Variable %s' % kwvar)
+                    raise RuntimeError(f'Particle class does not have Variable {kwvar}')
                 self._data[kwvar][:] = kwval
                 initialised.add(kwvar)
 
@@ -148,7 +205,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 if isinstance(v.initial, Field):
                     for i in range(self.ncount):
                         if (time[i] is None) or (np.isnan(time[i])):
-                            raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
+                            raise RuntimeError(f'Cannot initialise a Variable with a Field if no time provided (time-type: {type(time)} values: {time}). Add a "time=" to ParticleSet construction')
                         v.initial.fieldset.computeTimeChunk(time[i], 0)
                         self._data[v.name][i] = v.initial[
                             time[i], depth[i], lat[i], lon[i]
@@ -166,9 +223,7 @@ class ParticleCollectionSOA(ParticleCollection):
         self._riterator = None
 
     def __del__(self):
-        """
-        Collection - Destructor
-        """
+        """Collection - Destructor"""
         super().__del__()
 
     def iterator(self):
@@ -197,7 +252,10 @@ class ParticleCollectionSOA(ParticleCollection):
         Access a particle in this collection using the fastest access
         method for this collection - by its index.
 
-        :param index: int or np.int32 index of a particle in this collection
+        Parameters
+        ----------
+        index : int
+            Index of the particle to access
         """
         return self.get_single_by_index(index)
 
@@ -205,7 +263,10 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         Access a single property of all particles.
 
-        :param name: name of the property
+        Parameters
+        ----------
+        name : str
+            Name of the property to access
         """
         for v in self.ptype.variables:
             if v.name == name and name in self._data:
@@ -261,7 +322,7 @@ class ParticleCollectionSOA(ParticleCollection):
         if self._sorted:
             index = bisect_left(self._data['id'], id)
             if index == len(self._data['id']) or self._data['id'][index] != id:
-                raise ValueError("Trying to access a particle with a non-existing ID: %s." % id)
+                raise ValueError(f"Trying to access a particle with a non-existing ID: {id}.")
         else:
             index = np.where(self._data['id'] == id)[0][0]
 
@@ -344,9 +405,14 @@ class ParticleCollectionSOA(ParticleCollection):
         """Identify the middle element of the sublist and perform binary
         search on it.
 
-        :param low: Lowerbound on the indices to search for IDs.
-        :param high: Upperbound on the indices to search for IDs.
-        :param sublist: (Sub)list of IDs to look for.
+        Parameters
+        ----------
+        low :
+            Lowerbound on the indices to search for IDs.
+        high :
+            Upperbound on the indices to search for IDs.
+        sublist : list
+            Sublist of IDs to look for.
         """
         raise NotTestedError
         # median = floor(len(sublist) / 2)
@@ -781,9 +847,7 @@ class ParticleCollectionSOA(ParticleCollection):
         raise NotImplementedError
 
     def cstruct(self):
-        """
-        'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
-        """
+        """Returns the ctypes mapping of the particle data. This depends on the specific structure in question."""
         class CParticles(Structure):
             _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self._ptype.variables]
 
@@ -837,10 +901,15 @@ class ParticleCollectionSOA(ParticleCollection):
         raise NotImplementedError
 
     def set_variable_write_status(self, var, write_status):
-        """
-        Method to set the write status of a Variable
-        :param var: Name of the variable (string)
-        :param status: Write status of the variable (True, False or 'once')
+        """Method to set the write status of a Variable
+
+        Parameters
+        ----------
+        var :
+            Name of the variable (string)
+        status :
+            Write status of the variable (True, False or 'once')
+        write_status :
         """
         var_changed = False
         for v in self._ptype.variables:
@@ -848,19 +917,24 @@ class ParticleCollectionSOA(ParticleCollection):
                 v.to_write = write_status
                 var_changed = True
         if not var_changed:
-            raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
+            raise SyntaxError(f'Could not change the write status of {var}, because it is not a Variable name')
 
 
 class ParticleAccessorSOA(BaseParticleAccessor):
     """Wrapper that provides access to particle data in the collection,
     as if interacting with the particle itself.
 
-    :param pcoll: ParticleCollection that the represented particle
-                  belongs to.
-    :param index: The index at which the data for the represented
-                  particle is stored in the corresponding data arrays
-                  of the ParticleCollecion.
+    Parameters
+    ----------
+    pcoll :
+        ParticleCollection that the represented particle
+        belongs to.
+    index :
+        The index at which the data for the represented
+        particle is stored in the corresponding data arrays
+        of the ParticleCollecion.
     """
+
     _index = 0
     _next_dt = None
 
@@ -868,19 +942,26 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         """Initializes the ParticleAccessor to provide access to one
         specific particle.
         """
-        super(ParticleAccessorSOA, self).__init__(pcoll)
+        super().__init__(pcoll)
         self._index = index
         self._next_dt = None
 
     def __getattr__(self, name):
-        """Get the value of an attribute of the particle.
+        """
+        Get the value of an attribute of the particle.
 
-        :param name: Name of the requested particle attribute.
-        :return: The value of the particle attribute in the underlying
-                 collection data array.
+        Parameters
+        ----------
+        name : str
+            Name of the requested particle attribute.
+
+        Returns
+        -------
+        any
+            The value of the particle attribute in the underlying collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
-            result = super(ParticleAccessorSOA, self).__getattr__(name)
+            result = super().__getattr__(name)
         elif name in type(self).__dict__.keys():
             result = object.__getattribute__(self, name)
         else:
@@ -888,14 +969,18 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         return result
 
     def __setattr__(self, name, value):
-        """Set the value of an attribute of the particle.
+        """
+        Set the value of an attribute of the particle.
 
-        :param name: Name of the particle attribute.
-        :param value: Value that will be assigned to the particle
-                      attribute in the underlying collection data array.
+        Parameters
+        ----------
+        name : str
+            Name of the particle attribute.
+        value : any
+            Value that will be assigned to the particle attribute in the underlying collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
-            super(ParticleAccessorSOA, self).__setattr__(name, value)
+            super().__setattr__(name, value)
         elif name in type(self).__dict__.keys():
             object.__setattr__(self, name, value)
         else:
@@ -913,18 +998,18 @@ class ParticleAccessorSOA(BaseParticleAccessor):
             self._next_dt = next_dt
 
     def __repr__(self):
-        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
+        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in self._pcoll.ptype.variables:
             if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
-                str += "%s=%f, " % (var.name, getattr(self, var.name))
-        return str + "time=%s)" % time_string
+                str += f"{var.name}={getattr(self, var.name):f}, "
+        return str + f"time={time_string})"
 
 
 class ParticleCollectionIterableSOA(BaseParticleCollectionIterable):
 
     def __init__(self, pcoll, reverse=False, subset=None):
-        super(ParticleCollectionIterableSOA, self).__init__(pcoll, reverse, subset)
+        super().__init__(pcoll, reverse, subset)
 
     def __iter__(self):
         return ParticleCollectionIteratorSOA(pcoll=self._pcoll_immutable, reverse=self._reverse, subset=self._subset)
@@ -941,12 +1026,17 @@ class ParticleCollectionIterableSOA(BaseParticleCollectionIterable):
 class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
     """Iterator for looping over the particles in the ParticleCollection.
 
-    :param pcoll: ParticleCollection that stores the particles.
-    :param reverse: Flag to indicate reverse iteration (i.e. starting at
-                    the largest index, instead of the smallest).
-    :param subset: Subset of indices to iterate over, this allows the
-                   creation of an iterator that represents part of the
-                   collection.
+    Parameters
+    ----------
+    pcoll :
+        ParticleCollection that stores the particles.
+    reverse :
+        Flag to indicate reverse iteration (i.e. starting at
+        the largest index, instead of the smallest).
+    subset :
+        Subset of indices to iterate over, this allows the
+        creation of an iterator that represents part of the
+        collection.
     """
 
     def __init__(self, pcoll, reverse=False, subset=None):
@@ -997,4 +1087,4 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
 
     def __repr__(self):
         dir_str = 'Backward' if self._reverse else 'Forward'
-        return "%s iteration at index %s of %s." % (dir_str, self._index, self.max_len)
+        return f"{dir_str} iteration at index {self._index} of {self.max_len}."
