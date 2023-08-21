@@ -65,7 +65,6 @@ def partitionParticles4MPI_default(coords,mpi_size=1):
                             'See http://oceanparcels.org/#parallel_install for more information')
         mpiProcs = np.randint(0, mpi_size, size=len(lon))
 
-    #print('Using default KMeans partitioning of particles to MPI processes',flush=True)
 
     return mpiProcs
 
