@@ -22,6 +22,7 @@ class BaseParticleCollectionIterator(ABC):
     """Interface for the ParticleCollection iterator. Provides the
     ability to iterate over the particles in the ParticleCollection.
     """
+
     def ___init___(self):
         self._head = None
         self._tail = None
@@ -29,42 +30,33 @@ class BaseParticleCollectionIterator(ABC):
 
     @abstractmethod
     def __next__(self):
-        """Returns a ParticleAccessor for the next particle in the
-        ParticleSet.
-        """
+        """Returns a ParticleAccessor for the next particle in the ParticleSet."""
         pass
 
     @property
     def head(self):
-        """Returns a ParticleAccessor for the first particle in the
-        ParticleSet.
-        """
+        """Returns a ParticleAccessor for the first particle in the ParticleSet."""
         return self._head
 
     @property
     def tail(self):
-        """Returns a ParticleAccessor for the last particle in the
-        ParticleSet.
-        """
+        """Returns a ParticleAccessor for the last particle in the ParticleSet."""
         return self._tail
 
     @property
     def current(self):
-        """Returns a ParticleAccessor for the particle that the iteration
-        is currently at.
-        """
+        """Returns a ParticleAccessor for the particle that the iteration currently at."""
         return self._current
 
     @abstractmethod
     def __repr__(self):
-        """Represents the current position in the iteration.
-        """
+        """Represents the current position in the iteration."""
         pass
 
 
 class BaseParticleAccessor(ABC):
-    """Interface for the ParticleAccessor. Implements a wrapper around
-    particles to provide easy access."""
+    """Interface for the ParticleAccessor. Implements a wrapper around particles to provide easy access."""
+
     _pcoll = None
 
     def __init__(self, pcoll):
@@ -82,9 +74,7 @@ class BaseParticleAccessor(ABC):
         self.state = OperationCode.Delete
 
     def set_state(self, state):
-        """Syntactic sugar for changing the state of the underlying
-        particle.
-        """
+        """Syntactic sugar for changing the state of the underlying particle."""
         self.state = state
 
     def succeeded(self):
@@ -106,7 +96,7 @@ class BaseParticleAccessor(ABC):
         corresponding ParticleSet datastructure.
         """
         if name in ['_pcoll', ]:
-            return super(BaseParticleAccessor, self).__getattribute__(name)
+            return super().__getattribute__(name)
         return None
 
     def __setattr__(self, name, value):
@@ -115,7 +105,7 @@ class BaseParticleAccessor(ABC):
         corresponding ParticleSet datastructure.
         """
         if name in ['_pcoll', ]:
-            super(BaseParticleAccessor, self).__setattr__(name, value)
+            super().__setattr__(name, value)
 
     @abstractmethod
     def __repr__(self):

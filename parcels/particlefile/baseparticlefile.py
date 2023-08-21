@@ -1,4 +1,4 @@
-"""Module controlling the writing of ParticleSets to Zarr file"""
+"""Module controlling the writing of ParticleSets to Zarr file."""
 import os
 from abc import ABC, abstractmethod
 from datetime import timedelta as delta
@@ -17,7 +17,7 @@ except:
 try:
     from parcels._version import version as parcels_version
 except:
-    raise EnvironmentError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
+    raise OSError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
 
 
 __all__ = ['BaseParticleFile']
@@ -33,15 +33,29 @@ def _set_calendar(origin_calendar):
 class BaseParticleFile(ABC):
     """Initialise trajectory output.
 
-    :param name: Basename of the output file. This can also be a Zarr store object.
-    :param particleset: ParticleSet to output
-    :param outputdt: Interval which dictates the update frequency of file output
-                     while ParticleFile is given as an argument of ParticleSet.execute()
-                     It is either a timedelta object or a positive double.
-    :param chunks: Tuple (trajs, obs) to control the size of chunks in the zarr output.
-    :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
-    :param create_new_zarrfile: Boolean to create a new file. Default is True
+    Parameters
+    ----------
+    name : str
+        Basename of the output file. This can also be a Zarr store object.
+    particleset :
+        ParticleSet to output
+    outputdt :
+        Interval which dictates the update frequency of file output
+        while ParticleFile is given as an argument of ParticleSet.execute()
+        It is either a timedelta object or a positive double.
+    chunks :
+        Tuple (trajs, obs) to control the size of chunks in the zarr output.
+    write_ondelete : bool
+        Whether to write particle data only when they are deleted. Default is False
+    create_new_zarrfile : bool
+        Whether to create a new file. Default is True
+
+    Returns
+    -------
+    BaseParticleFile
+        ParticleFile object that can be used to write particle data to file
     """
+
     write_ondelete = None
     outputdt = None
     lasttime_written = None
@@ -112,19 +126,16 @@ class BaseParticleFile(ABC):
 
     @abstractmethod
     def _reserved_var_names(self):
-        """
-        returns the reserved dimension names not to be written just once.
-        """
+        """Returns the reserved dimension names not to be written just once."""
         pass
 
     def _create_variables_attribute_dict(self):
-        """
-        creates the dictionary with variable attributes.
+        """Creates the dictionary with variable attributes.
 
-        Attention:
+        Notes
+        -----
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
-
         attrs = {'z': {"long_name": "",
                        "standard_name": "depth",
                        "units": "m",
@@ -166,10 +177,14 @@ class BaseParticleFile(ABC):
         pass
 
     def add_metadata(self, name, message):
-        """Add metadata to :class:`parcels.particleset.ParticleSet`
+        """Add metadata to :class:`parcels.particleset.ParticleSet`.
 
-        :param name: Name of the metadata variabale
-        :param message: message to be written
+        Parameters
+        ----------
+        name : str
+            Name of the metadata variabale
+        message : str
+            message to be written
         """
         self.metadata[name] = message
 
@@ -186,27 +201,31 @@ class BaseParticleFile(ABC):
 
     def _extend_zarr_dims(self, Z, store, dtype, axis):
         if axis == 1:
-            a = np.full((Z.shape[0], self.chunks[1]), np.nan, dtype=dtype)
+            a = np.full((Z.shape[0], self.chunks[1]), self.fill_value_map[dtype], dtype=dtype)
             obs = zarr.group(store=store, overwrite=False)["obs"]
             if len(obs) == Z.shape[1]:
                 obs.append(np.arange(self.chunks[1])+obs[-1]+1)
         else:
             extra_trajs = max(self.maxids - Z.shape[0], self.chunks[0])
             if len(Z.shape) == 2:
-                a = np.full((extra_trajs, Z.shape[1]), np.nan, dtype=dtype)
+                a = np.full((extra_trajs, Z.shape[1]), self.fill_value_map[dtype], dtype=dtype)
             else:
-                a = np.full((extra_trajs,), np.nan, dtype=dtype)
+                a = np.full((extra_trajs,), self.fill_value_map[dtype], dtype=dtype)
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
     def write(self, pset, time, deleted_only=False):
-        """Write all data from one time step to the zarr file
+        """Write all data from one time step to the zarr file.
 
-        :param pset: ParticleSet object to write
-        :param time: Time at which to write ParticleSet
-        :param deleted_only: Flag to write only the deleted Particles
+        Parameters
+        ----------
+        pset :
+            ParticleSet object to write
+        time :
+            Time at which to write ParticleSet
+        deleted_only :
+            Flag to write only the deleted Particles (Default value = False)
         """
-
         time = time.total_seconds() if isinstance(time, delta) else time
 
         if self.lasttime_written != time and (self.write_ondelete is False or deleted_only is not False):
@@ -217,12 +236,12 @@ class BaseParticleFile(ABC):
             if deleted_only is not False:
                 if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                     indices_to_write = np.where(np.isin(pset.collection.getvardata('state'), [OperationCode.Delete]))[0]
-                elif type(deleted_only) == np.ndarray:
+                elif type(deleted_only) is np.ndarray:
                     if set(deleted_only).issubset([0, 1]):
                         indices_to_write = np.where(deleted_only)[0]
                     else:
                         indices_to_write = deleted_only
-                elif type(deleted_only) == list:
+                elif type(deleted_only) is list:
                     indices_to_write = np.array(deleted_only)
             else:
                 indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
@@ -262,11 +281,11 @@ class BaseParticleFile(ABC):
                         varout = self._convert_varout_name(var)
                         if varout not in ['trajectory']:  # because 'trajectory' is written as coordinate
                             if self.write_once(var):
-                                data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
+                                data = np.full((arrsize[0],), self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
                                 data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
                                 dims = ["trajectory"]
                             else:
-                                data = np.full(arrsize, np.nan, dtype=self.vars_to_write[var])
+                                data = np.full(arrsize, self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
                                 data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
                                 dims = ["trajectory", "obs"]
                             ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])

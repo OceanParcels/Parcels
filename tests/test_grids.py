@@ -282,8 +282,8 @@ def test_rectilinear_s_grids_advect1(pset_mode, mode):
 
     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
 
-    lon = np.zeros((11))
-    lat = np.zeros((11))
+    lon = np.zeros(11)
+    lat = np.zeros(11)
     ratio = [min(i/10., .99) for i in range(11)]
     depth = bath_func(lon)*ratio
     pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=lon, lat=lat, depth=depth)

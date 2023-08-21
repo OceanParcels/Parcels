@@ -1,0 +1,5 @@
+contact_links:
+  - name: Parcels use question, help, or support
+    url: https://github.com/OceanParcels/parcels/discussions
+    about: >
+      Have a question about Parcels? Or do you need troubleshooting for a specific usecase? Then start a Discussion thread instead, and we'll be happy to help.

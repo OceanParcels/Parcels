@@ -5,23 +5,39 @@ import numpy as np
 
 class BaseHashNeighborSearch(ABC):
     def find_neighbors_by_coor(self, coor):
-        '''Get the neighbors around a certain location.
+        """Get the neighbors around a certain location.
 
-        :param coor: Numpy array with [depth, lat, lon].
-        :returns List of particle indices.
-        '''
+        Parameters
+        ----------
+        coor :
+            Numpy array with [depth, lat, lon].
+
+        Returns
+        -------
+        type
+            List of particle indices.
+
+        """
         coor = coor.reshape(3, 1)
         hash_id = self._values_to_hashes(coor)[0]
         return self._find_neighbors(hash_id, coor)
 
     def find_neighbors_by_idx(self, particle_idx):
-        '''Get the neighbors around a certain particle.
+        """Get the neighbors around a certain particle.
 
         Mainly useful for Structure of Array (SoA) datastructure
 
-        :param particle_idx: index of the particle (SoA).
-        :returns List of particle indices
-        '''
+        Parameters
+        ----------
+        particle_idx :
+            index of the particle (SoA).
+
+        Returns
+        -------
+        type
+            List of particle indices
+
+        """
         hash_id = self._particle_hashes[particle_idx]
         coor = self._values[:, particle_idx].reshape(3, 1)
         return self._find_neighbors(hash_id, coor)
@@ -31,10 +47,10 @@ class BaseHashNeighborSearch(ABC):
         raise NotImplementedError
 
     def consistency_check(self):
-        '''See if all values are in their proper place.
+        """See if all values are in their proper place.
 
         Only used for debugging purposes.
-        '''
+        """
         active_idx = self.active_idx
         if active_idx is None:
             active_idx = np.arange(self._values.shape[1])
@@ -54,13 +70,18 @@ class BaseHashNeighborSearch(ABC):
         assert np.all(cur_hashes == self._particle_hashes[active_idx])
 
     def update_values(self, new_values, new_active_mask=None):
-        '''Update the locations of (some) of the particles.
+        """Update the locations of (some) of the particles.
 
         Particles that stay in the same location are computationally cheap.
         The order and number of the particles is assumed to remain the same.
 
-        :param new_values: new (depth, lat, lon) values for particles.
-        '''
+        Parameters
+        ----------
+        new_values :
+            new (depth, lat, lon) values for particles.
+        new_active_mask :
+             (Default value = None)
+        """
         if self._values is None:
             self.rebuild(new_values, new_active_mask)
             return
@@ -103,14 +124,23 @@ class BaseHashNeighborSearch(ABC):
 
         The hashes correspond to the cells that particles reside in.
 
-        :param values: 3D coordinates to be hashed.
-        :param active_idx: Active particle indices (relative to values).
-        :returns all_hashes: An array of length len(values) with hashes.
+        Parameters
+        ----------
+        values :
+            3D coordinates to be hashed.
+        active_idx :
+            Active particle indices (relative to values). (Default value = None)
+
+        Returns
+        -------
+        type
+            all_hashes: An array of length len(values) with hashes.
+
         """
         raise NotImplementedError
 
     def _deactivate_particles(self, particle_idx):
-        "Remove particles from the hashtable."
+        """Remove particles from the hashtable."""
         # Get the hashes of the particles to be removed.
         remove_split = hash_split(self._particle_hashes[particle_idx])
         for cur_hash, remove_idx in remove_split.items():
@@ -127,7 +157,7 @@ class BaseHashNeighborSearch(ABC):
                     len(self._hashtable[cur_hash]))
 
     def _activate_particles(self, particle_idx):
-        "Add particles to the hashtable"
+        """Add particles to the hashtable"""
         # See _deactivate_particles.
         add_split = hash_split(self._particle_hashes[particle_idx])
         for cur_hash, add_idx in add_split.items():
@@ -143,15 +173,24 @@ class BaseHashNeighborSearch(ABC):
 
 
 def hash_split(hash_ids, active_idx=None):
-    '''Create a hashtable.
+    """Create a hashtable.
 
     Multiple particles that are found in the same cell are put in a list
     with that particular hash.
 
-    :param hash_ids: Hash values for the particles.
-    :param active_idx: Subset on which to compute the hash split.
-    :returns hash_split: Dictionary with {hash: [idx_1, idx_2, ..], ..}
-    '''
+    Parameters
+    ----------
+    hash_ids :
+        Hash values for the particles.
+    active_idx :
+        Subset on which to compute the hash split. (Default value = None)
+
+    Returns
+    -------
+    type
+        hash_split: Dictionary with {hash: [idx_1, idx_2, ..], ..}
+
+    """
     if len(hash_ids) == 0:
         return {}
     if active_idx is not None:

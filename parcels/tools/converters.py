@@ -15,7 +15,10 @@ __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
 def convert_to_flat_array(var):
     """Convert lists and single integers/floats to one-dimensional numpy arrays
 
-    :param var: list or numeric to convert to a one-dimensional numpy array
+    Parameters
+    ----------
+    var : np.ndarray, float or array_like
+        list or numeric to convert to a one-dimensional numpy array
     """
     if isinstance(var, np.ndarray):
         return var.flatten()
@@ -36,11 +39,13 @@ def _get_cftime_calendars():
     return [getattr(cftime, cf_datetime)(1990, 1, 1).calendar for cf_datetime in _get_cftime_datetimes()]
 
 
-class TimeConverter(object):
-    """ Converter class for dates with different calendars in FieldSets
+class TimeConverter:
+    """Converter class for dates with different calendars in FieldSets
 
-    :param: time_origin: time origin of the class. Currently supported formats are
-            float, integer, numpy.datetime64, and netcdftime.DatetimeNoLeap
+    Parameters
+    ----------
+    time_origin : float, integer, numpy.datetime64 or netcdftime.DatetimeNoLeap
+        time origin of the class.
     """
 
     def __init__(self, time_origin=0):
@@ -58,8 +63,16 @@ class TimeConverter(object):
         """Method to compute the difference, in seconds, between a time and the time_origin
         of the TimeConverter
 
-        :param: time: input time
-        :return: time - self.time_origin
+        Parameters
+        ----------
+        time :
+
+
+        Returns
+        -------
+        type
+            time - self.time_origin
+
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar in ['np_datetime64', 'np_timedelta64']:
@@ -69,26 +82,32 @@ class TimeConverter(object):
                 try:
                     return np.array([(t - self.time_origin).total_seconds() for t in time])
                 except ValueError:
-                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
-                                     "Provide 'time' as a %s object?"
-                                     % (type(time), self.calendar, type(self.time_origin)))
+                    raise ValueError(f"Cannot subtract 'time' (a {type(time)} object) from a {self.calendar} calendar.\n"
+                                     f"Provide 'time' as a {type(self.time_origin)} object?")
             else:
                 try:
                     return (time - self.time_origin).total_seconds()
                 except ValueError:
-                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
-                                     "Provide 'time' as a %s object?"
-                                     % (type(time), self.calendar, type(self.time_origin)))
+                    raise ValueError(f"Cannot subtract 'time' (a {type(time)} object) from a {self.calendar} calendar.\n"
+                                     f"Provide 'time' as a {type(self.time_origin)} object?")
         elif self.calendar is None:
             return time - self.time_origin
         else:
-            raise RuntimeError('Calendar %s not implemented in TimeConverter' % (self.calendar))
+            raise RuntimeError(f'Calendar {self.calendar} not implemented in TimeConverter')
 
     def fulltime(self, time):
         """Method to convert a time difference in seconds to a date, based on the time_origin
 
-        :param: time: input time
-        :return: self.time_origin + time
+        Parameters
+        ----------
+        time :
+
+
+        Returns
+        -------
+        type
+            self.time_origin + time
+
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar in ['np_datetime64', 'np_timedelta64']:
@@ -101,7 +120,7 @@ class TimeConverter(object):
         elif self.calendar is None:
             return self.time_origin + time
         else:
-            raise RuntimeError('Calendar %s not implemented in TimeConverter' % (self.calendar))
+            raise RuntimeError(f'Calendar {self.calendar} not implemented in TimeConverter')
 
     def __repr__(self):
         return "%s" % self.time_origin
@@ -133,10 +152,9 @@ class TimeConverter(object):
         return self.time_origin <= other
 
 
-class UnitConverter(object):
-    """ Interface class for spatial unit conversion during field sampling
-        that performs no conversion.
-    """
+class UnitConverter:
+    """Interface class for spatial unit conversion during field sampling that performs no conversion."""
+
     source_unit = None
     target_unit = None
 
@@ -154,7 +172,8 @@ class UnitConverter(object):
 
 
 class Geographic(UnitConverter):
-    """ Unit converter from geometric to geographic coordinates (m to degree) """
+    """Unit converter from geometric to geographic coordinates (m to degree)"""
+
     source_unit = 'm'
     target_unit = 'degree'
 
@@ -172,9 +191,10 @@ class Geographic(UnitConverter):
 
 
 class GeographicPolar(UnitConverter):
-    """ Unit converter from geometric to geographic coordinates (m to degree)
-        with a correction to account for narrower grid cells closer to the poles.
+    """Unit converter from geometric to geographic coordinates (m to degree)
+    with a correction to account for narrower grid cells closer to the poles.
     """
+
     source_unit = 'm'
     target_unit = 'degree'
 
@@ -192,7 +212,8 @@ class GeographicPolar(UnitConverter):
 
 
 class GeographicSquare(UnitConverter):
-    """ Square distance converter from geometric to geographic coordinates (m2 to degree2) """
+    """Square distance converter from geometric to geographic coordinates (m2 to degree2)"""
+
     source_unit = 'm2'
     target_unit = 'degree2'
 
@@ -210,9 +231,10 @@ class GeographicSquare(UnitConverter):
 
 
 class GeographicPolarSquare(UnitConverter):
-    """ Square distance converter from geometric to geographic coordinates (m2 to degree2)
-        with a correction to account for narrower grid cells closer to the poles.
+    """Square distance converter from geometric to geographic coordinates (m2 to degree2)
+    with a correction to account for narrower grid cells closer to the poles.
     """
+
     source_unit = 'm2'
     target_unit = 'degree2'
 
@@ -235,8 +257,7 @@ unitconverters_map = {'U': GeographicPolar(), 'V': Geographic(),
 
 
 def convert_xarray_time_units(ds, time):
-    """ Fixes DataArrays that have time.Unit instead of expected time.units
-    """
+    """Fixes DataArrays that have time.Unit instead of expected time.units"""
     da = ds[time] if isinstance(ds, xr.Dataset) else ds
     if 'units' not in da.attrs and 'Unit' in da.attrs:
         da.attrs['units'] = da.attrs['Unit']
@@ -246,6 +267,6 @@ def convert_xarray_time_units(ds, time):
     except ValueError:
         raise RuntimeError('Xarray could not convert the calendar. If you''re using from_netcdf, '
                            'try using the timestamps keyword in the construction of your Field. '
-                           'See also the tutorial at https://nbviewer.jupyter.org/github/OceanParcels/'
-                           'parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb')
+                           'See also the tutorial at https://docs.oceanparcels.org/en/latest/'
+                           'examples/tutorial_timestamps.html')
     ds[time] = da2[time]

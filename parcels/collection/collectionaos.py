@@ -23,8 +23,10 @@ if MPI:
     try:
         from sklearn.cluster import KMeans
     except:
-        raise EnvironmentError('sklearn needs to be available if MPI is installed. '
-                               'See http://oceanparcels.org/#parallel_install for more information')
+        raise OSError(
+            'sklearn needs to be available if MPI is installed. '
+            'See http://oceanparcels.org/#parallel_install for more information'
+        )
 
 __all__ = ['ParticleCollectionAOS', 'ParticleCollectionIterableAOS', 'ParticleCollectionIteratorAOS']
 
@@ -34,10 +36,12 @@ class ParticleCollectionAOS(ParticleCollection):
 
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
-        :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
-        field references of the ctypes-link of particles that are allocated
+        Parameters
+        ----------
+        ngrid :
+            number of grids in the fieldset of the overarching ParticleSet - required for initialising the
+            field references of the ctypes-link of particles that are allocated
         """
-
         super(ParticleCollection, self).__init__()
 
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
@@ -56,7 +60,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
         for kwvar in kwargs:
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) do nott have the same lengths.' % kwvar)
+                f'{kwvar} and positions (lon, lat, depth) do nott have the same lengths.')
 
         offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
         if MPI:
@@ -121,7 +125,7 @@ class ParticleCollectionAOS(ParticleCollection):
                     if isinstance(kwvar, Field):
                         continue
                     if not hasattr(self._data[i], kwvar):
-                        raise RuntimeError('Particle class does not have Variable %s' % kwvar)
+                        raise RuntimeError(f'Particle class does not have Variable {kwvar}')
                     setattr(self._data[i], kwvar, kwargs[kwvar][i])
                     if kwvar not in initialised:
                         initialised.add(kwvar)
@@ -138,7 +142,7 @@ class ParticleCollectionAOS(ParticleCollection):
                         init_field.fieldset.computeTimeChunk(time[i], 0)
                     for i in range(self.ncount):
                         if (time[i] is None) or (np.isnan(time[i])):
-                            raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
+                            raise RuntimeError(f'Cannot initialise a Variable with a Field if no time provided (time-type: {type(time)} values: {time}). Add a "time=" to ParticleSet construction')
                         setattr(self._data[i], v.name, init_field[time[i], depth[i], lat[i], lon[i]])
                         logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
 
@@ -150,9 +154,7 @@ class ParticleCollectionAOS(ParticleCollection):
         self._riterator = None
 
     def __del__(self):
-        """
-        Collection - Destructor
-        """
+        """Collection - Destructor."""
         super().__del__()
 
     def iterator(self):
@@ -181,7 +183,10 @@ class ParticleCollectionAOS(ParticleCollection):
         Access a particle in this collection using the fastest access
         method for this collection - by its index.
 
-        :param index: int or np.int32 index of a particle in this collection
+        Parameters
+        ----------
+        index : int
+            Index of the particle to access
         """
         return self.get_single_by_index(index)
 
@@ -190,7 +195,10 @@ class ParticleCollectionAOS(ParticleCollection):
         Access a single property of all particles.
         CAUTION: this function is not(!) in-place and is quite slow
 
-        :param name: name of the property
+        Parameters
+        ----------
+        name : str
+            Name of the property to access
         """
         pdtype = None
         for var in self._ptype.variables:
@@ -877,9 +885,7 @@ class ParticleCollectionAOS(ParticleCollection):
         self._ncount = 0
 
     def cstruct(self):
-        """
-        'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
-        """
+        """Returns the ctypes mapping of the particle data. This depends on the specific structure in question."""
         cstruct = self._data_c.ctypes.data_as(c_void_p)
         return cstruct
 
@@ -912,8 +918,7 @@ class ParticleCollectionAOS(ParticleCollection):
             setattr(self._data[i], var, val)
 
     def toArray(self):
-        """
-        This function converts (or: transforms; reformats; translates) this collection into an array-like structure
+        """This function converts (or: transforms; reformats; translates) this collection into an array-like structure
         (e.g. Python list or numpy nD array) that can be addressed by index. In the common case of 'no ID recovery',
         the global ID and the index match exactly.
 
@@ -927,10 +932,15 @@ class ParticleCollectionAOS(ParticleCollection):
         return self._data.tolist()
 
     def set_variable_write_status(self, var, write_status):
-        """
-        Method to set the write status of a Variable
-        :param var: Name of the variable (string)
-        :param status: Write status of the variable (True, False or 'once')
+        """Method to set the write status of a Variable
+
+        Parameters
+        ----------
+        var :
+            Name of the variable (string)
+        write_status :
+            Write status of the variable (True, False or 'once')
+
         """
         var_changed = False
         for v in self._ptype.variables:
@@ -944,19 +954,24 @@ class ParticleCollectionAOS(ParticleCollection):
                     attrib.to_write = write_status
                 setattr(p, var, attrib)
         if not var_changed:
-            raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
+            raise SyntaxError(f'Could not change the write status of {var}, because it is not a Variable name')
 
 
 class ParticleAccessorAOS(BaseParticleAccessor):
     """Wrapper that provides access to particle data in the collection,
     as if interacting with the particle itself.
 
-    :param pcoll: ParticleCollection that the represented particle
-                  belongs to.
-    :param index: The index at which the data for the represented
-                  particle is stored in the corresponding data arrays
-                  of the ParticleCollecion.
+    Parameters
+    ----------
+    pcoll :
+        ParticleCollection that the represented particle
+        belongs to.
+    index :
+        The index at which the data for the represented
+        particle is stored in the corresponding data arrays
+        of the ParticleCollecion.
     """
+
     _index = 0
     _next_dt = None
 
@@ -964,19 +979,26 @@ class ParticleAccessorAOS(BaseParticleAccessor):
         """Initializes the ParticleAccessor to provide access to one
         specific particle.
         """
-        super(ParticleAccessorAOS, self).__init__(pcoll)
+        super().__init__(pcoll)
         self._index = index
         self._next_dt = None
 
     def __getattr__(self, name):
-        """Get the value of an attribute of the particle.
+        """
+        Get the value of an attribute of the particle.
 
-        :param name: Name of the requested particle attribute.
-        :return: The value of the particle attribute in the underlying
-                 collection data array.
+        Parameters
+        ----------
+        name : str
+            Name of the requested particle attribute.
+
+        Returns
+        -------
+        any
+            The value of the particle attribute in the underlying collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
-            result = super(ParticleAccessorAOS, self).__getattr__(name)
+            result = super().__getattr__(name)
         elif name in type(self).__dict__.keys():
             result = object.__getattribute__(self, name)
         else:
@@ -984,14 +1006,18 @@ class ParticleAccessorAOS(BaseParticleAccessor):
         return result
 
     def __setattr__(self, name, value):
-        """Set the value of an attribute of the particle.
+        """
+        Set the value of an attribute of the particle.
 
-        :param name: Name of the particle attribute.
-        :param value: Value that will be assigned to the particle
-                      attribute in the underlying collection data array.
+        Parameters
+        ----------
+        name : str
+            Name of the particle attribute.
+        value : any
+            Value that will be assigned to the particle attribute in the underlying collection data array.
         """
         if name in BaseParticleAccessor.__dict__.keys():
-            super(ParticleAccessorAOS, self).__setattr__(name, value)
+            super().__setattr__(name, value)
         elif name in type(self).__dict__.keys():
             object.__setattr__(self, name, value)
         else:
@@ -1015,7 +1041,7 @@ class ParticleAccessorAOS(BaseParticleAccessor):
 class ParticleCollectionIterableAOS(BaseParticleCollectionIterable):
 
     def __init__(self, pcoll, reverse=False, subset=None):
-        super(ParticleCollectionIterableAOS, self).__init__(pcoll, reverse, subset)
+        super().__init__(pcoll, reverse, subset)
 
     def __iter__(self):
         return ParticleCollectionIteratorAOS(pcoll=self._pcoll_immutable, reverse=self._reverse, subset=self._subset)
@@ -1024,12 +1050,17 @@ class ParticleCollectionIterableAOS(BaseParticleCollectionIterable):
 class ParticleCollectionIteratorAOS(BaseParticleCollectionIterator):
     """Iterator for looping over the particles in the ParticleCollection.
 
-    :param pcoll: ParticleCollection that stores the particles.
-    :param reverse: Flag to indicate reverse iteration (i.e. starting at
-                    the largest index, instead of the smallest).
-    :param subset: Subset of indices to iterate over, this allows the
-                   creation of an iterator that represents part of the
-                   collection.
+    Parameters
+    ----------
+    pcoll :
+        ParticleCollection that stores the particles.
+    reverse :
+        Flag to indicate reverse iteration (i.e. starting at
+        the largest index, instead of the smallest).
+    subset :
+        Subset of indices to iterate over, this allows the
+        creation of an iterator that represents part of the
+        collection.
     """
 
     def __init__(self, pcoll, reverse=False, subset=None):
@@ -1080,4 +1111,4 @@ class ParticleCollectionIteratorAOS(BaseParticleCollectionIterator):
 
     def __repr__(self):
         dir_str = 'Backward' if self._reverse else 'Forward'
-        return "%s iteration at index %s of %s." % (dir_str, self._index, self.max_len)
+        return f"{dir_str} iteration at index {self._index} of {self.max_len}."

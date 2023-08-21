@@ -33,15 +33,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Setup Miniconda and parcels
+      - name: Setup Conda and parcels
         uses: ./.github/actions/install-parcels
         with:
           environment-file: environment_py3_${{ matrix.os-short }}.yml
           environment-name: py3_parcels
       - name: Integration test
         run: |
-          parcels_get_examples examples
-          coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html examples
+          coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html docs/examples
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v3.1.1

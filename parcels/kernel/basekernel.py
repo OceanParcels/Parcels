@@ -1,5 +1,7 @@
+import functools
 import inspect
 import re
+import types
 from ast import FunctionDef
 from hashlib import md5
 from os import path, remove
@@ -40,20 +42,30 @@ __all__ = ['BaseKernel']
 re_indent = re.compile(r"^(\s+)")
 
 
-class BaseKernel(object):
+class BaseKernel:
     """Base super class for base Kernel objects that encapsulates auto-generated code.
 
-    :arg fieldset: FieldSet object providing the field information (possibly None)
-    :arg ptype: PType object for the kernel particle
-    :arg pyfunc: (aggregated) Kernel function
-    :arg funcname: function name
-    :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+    Parameters
+    ----------
+    fieldset : parcels.Fieldset
+        FieldSet object providing the field information (possibly None)
+    ptype :
+        PType object for the kernel particle
+    pyfunc :
+        (aggregated) Kernel function
+    funcname : str
+        function name
+    delete_cfiles : bool
+        Whether to delete the C-files after compilation in JIT mode (default is True)
 
-    Note: A Kernel is either created from a compiled <function ...> object
+    Notes
+    -----
+    A Kernel is either created from a compiled <function ...> object
     or the necessary information (funcname, funccode, funcvars) is provided.
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
     """
+
     _pyfunc = None
     _fieldset = None
     _ptype = None
@@ -74,7 +86,7 @@ class BaseKernel(object):
         # Derive meta information from pyfunc, if not given
         self._pyfunc = None
         self.funcname = funcname or pyfunc.__name__
-        self.name = "%s%s" % (ptype.name, self.funcname)
+        self.name = f"{ptype.name}{self.funcname}"
         self.ccode = ""
         self.funcvars = funcvars
         self.funccode = funccode
@@ -128,13 +140,13 @@ class BaseKernel(object):
         field_keys = ""
         if self.field_args is not None:
             field_keys = "-".join(
-                ["%s:%s" % (name, field.units.__class__.__name__) for name, field in self.field_args.items()])
+                [f"{name}:{field.units.__class__.__name__}" for name, field in self.field_args.items()])
         key = self.name + self.ptype._cache_key + field_keys + ('TIME:%f' % ostime())
         return md5(key.encode('utf-8')).hexdigest()
 
     @staticmethod
     def fix_indentation(string):
-        """Fix indentation to allow in-lined kernel definitions"""
+        """Fix indentation to allow in-lined kernel definitions."""
         lines = string.split('\n')
         indent = re_indent.match(lines[0])
         if indent:
@@ -143,7 +155,8 @@ class BaseKernel(object):
 
     def check_fieldsets_in_kernels(self, pyfunc):
         """
-        function checks the integrity of the fieldset with the kernels.
+        Checks the integrity of the fieldset with the kernels.
+
         This function is to be called from the derived class when setting up the 'pyfunc'.
         """
         if self.fieldset is not None:
@@ -168,9 +181,6 @@ class BaseKernel(object):
                     raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
 
     def check_kernel_signature_on_version(self):
-        """
-        returns numkernelargs
-        """
         numkernelargs = 0
         if self._pyfunc is not None:
             if version_info[0] < 3:
@@ -207,9 +217,7 @@ class BaseKernel(object):
                 self.src_file = src_file_or_files
 
     def get_kernel_compile_files(self):
-        """
-        Returns the correct src_file, lib_file, log_file for this kernel
-        """
+        """Returns the correct src_file, lib_file, log_file for this kernel."""
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -228,15 +236,15 @@ class BaseKernel(object):
         if type(basename) in (list, dict, tuple, ndarray):
             src_file_or_files = ["", ] * len(basename)
             for i, src_file in enumerate(basename):
-                src_file_or_files[i] = "%s.c" % path.join(dyn_dir, src_file)
+                src_file_or_files[i] = f"{path.join(dyn_dir, src_file)}.c"
         else:
-            src_file_or_files = "%s.c" % path.join(dyn_dir, basename)
-        lib_file = "%s.%s" % (path.join(dyn_dir, lib_path), 'dll' if platform == 'win32' else 'so')
-        log_file = "%s.log" % path.join(dyn_dir, basename)
+            src_file_or_files = f"{path.join(dyn_dir, basename)}.c"
+        lib_file = f"{path.join(dyn_dir, lib_path)}.{'dll' if platform == 'win32' else 'so'}"
+        log_file = f"{path.join(dyn_dir, basename)}.log"
         return src_file_or_files, lib_file, log_file
 
     def compile(self, compiler):
-        """ Writes kernel code to file and compiles it."""
+        """Writes kernel code to file and compiles it."""
         all_files_array = []
         if self.src_file is None:
             if self.dyn_srcs is not None:
@@ -253,7 +261,7 @@ class BaseKernel(object):
                     all_files_array.append(self.src_file)
                 compiler.compile(self.src_file, self.lib_file, self.log_file)
         if len(all_files_array) > 0:
-            logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
+            logger.info(f"Compiled {self.name} ==> {self.src_file}")
             if self.log_file is not None:
                 all_files_array.append(self.log_file)
 
@@ -275,14 +283,45 @@ class BaseKernel(object):
                       delete_cfiles=delete_cfiles)
 
     def __add__(self, kernel):
-        if not isinstance(kernel, BaseKernel):
-            kernel = BaseKernel(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel, BaseKernel)
+        if not isinstance(kernel, type(self)):
+            kernel = type(self)(self.fieldset, self.ptype, pyfunc=kernel)
+        return self.merge(kernel, type(self))
 
     def __radd__(self, kernel):
-        if not isinstance(kernel, BaseKernel):
-            kernel = BaseKernel(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self, BaseKernel)
+        if not isinstance(kernel, type(self)):
+            kernel = type(self)(self.fieldset, self.ptype, pyfunc=kernel)
+        return kernel.merge(self, type(self))
+
+    @classmethod
+    def from_list(cls, fieldset, ptype, pyfunc_list, *args, **kwargs):
+        """Create a combined kernel from a list of functions.
+
+        Takes a list of functions, converts them to kernels, and joins them
+        together.
+
+        Parameters
+        ----------
+        fieldset : parcels.Fieldset
+            FieldSet object providing the field information (possibly None)
+        ptype :
+            PType object for the kernel particle
+        pyfunc_list : list of functions
+            List of functions to be combined into a single kernel.
+        *args :
+            Additional arguments passed to first kernel during construction.
+        **kwargs :
+            Additional keyword arguments passed to first kernel during construction.
+        """
+        if not isinstance(pyfunc_list, list):
+            raise TypeError(f"Argument function_lst should be a list of functions. Got {type(pyfunc_list)}")
+        if len(pyfunc_list) == 0:
+            raise ValueError("Argument function_lst should have at least one function.")
+        if not all([isinstance(f, types.FunctionType) for f in pyfunc_list]):
+            raise ValueError("Argument function_lst should be a list of functions.")
+
+        pyfunc_list = pyfunc_list.copy()
+        pyfunc_list[0] = cls(fieldset, ptype, pyfunc_list[0], *args, **kwargs)
+        return functools.reduce(lambda x, y: x + y, pyfunc_list)
 
     @staticmethod
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
@@ -315,9 +354,7 @@ class BaseKernel(object):
         pset.remove_indices(indices)
 
     def load_fieldset_jit(self, pset):
-        """
-        Updates the loaded fields of pset's fieldset according to the chunk information within their grids
-        """
+        """Updates the loaded fields of pset's fieldset according to the chunk information within their grids."""
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
                 g.cstruct = None  # This force to point newly the grids from Python to C
@@ -327,7 +364,7 @@ class BaseKernel(object):
                 if type(f) in [VectorField, NestedField, SummedField]:
                     continue
                 if f.data.dtype != np.float32:
-                    raise RuntimeError('Field %s data needs to be float32 in JIT mode' % f.name)
+                    raise RuntimeError(f'Field {f.name} data needs to be float32 in JIT mode')
                 if f in self.field_args.values():
                     f.chunk_data()
                 else:
@@ -349,13 +386,22 @@ class BaseKernel(object):
                     g.lat = np.array(g.lat, order='C')
 
     def evaluate_particle(self, p, endtime, sign_dt, dt, analytical=False):
-        """
-        Execute the kernel evaluation of for an individual particle.
-        :arg p: object of (sub-)type (ScipyParticle, JITParticle) or (sub-)type of BaseParticleAccessor
-        :arg fieldset: fieldset of the containing ParticleSet (e.g. pset.fieldset)
-        :arg analytical: flag indicating the analytical advector or an iterative advection
-        :arg endtime: endtime of this overall kernel evaluation step
-        :arg dt: computational integration timestep
+        """Execute the kernel evaluation of for an individual particle.
+
+        Parameters
+        ----------
+        p :
+            object of (sub-)type (ScipyParticle, JITParticle) or (sub-)type of BaseParticleAccessor
+        fieldset :
+            fieldset of the containing ParticleSet (e.g. pset.fieldset)
+        analytical :
+            flag indicating the analytical advector or an iterative advection (Default value = False)
+        endtime :
+            endtime of this overall kernel evaluation step
+        dt :
+            computational integration timestep
+        sign_dt :
+
         """
         variables = self._ptype.variables
         # back up variables in case of OperationCode.Repeat
