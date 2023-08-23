@@ -34,10 +34,10 @@ if MPI:
 # own scheme for partitioning the particles to different MPI jobs by
 # passing a new partitioning function to setPartitionFunction(). The
 # arguements of this new function must match those of
-# partitionParticles4MPI_default(), as described in the comments to
+# partitionParticlesMPI_default(), as described in the comments to
 # that function.
 
-def partitionParticles4MPI_default(coords,mpi_size=1):
+def partitionParticlesMPI_default(coords,mpi_size=1):
     '''This function takes the coordinates of the particle starting
     positions and returns which MPI process will process each
     particle.
@@ -69,13 +69,18 @@ def partitionParticles4MPI_default(coords,mpi_size=1):
     return mpiProcs
 
 #by default, the partition is done by the functiond defined above
-partitionParticles4MPI=partitionParticles4MPI_default
+#the line beflow does not actually do anything except initialize the
+#global to this module variable partitionParticlesMPI. The function
+#setPartitionFunction() should be called as part of the particleset
+#creation in particlesetsoa.py. However, the value assigned below
+#will work if we somehow skip that step. 
+partitionParticlesMPI=partitionParticlesMPI_default
 
 #This function, if called before the particle set is created, will alter how the
 #particle set is partitioned between MPI jobs.
 def setPartitionFunction(partitionFunction):
-    global partitionParticles4MPI
-    partitionParticles4MPI=partitionFunction
+    global partitionParticlesMPI
+    partitionParticlesMPI=partitionFunction
     return None
 #=============================================================================
 
@@ -130,9 +135,9 @@ class ParticleCollectionSOA(ParticleCollection):
                             # partitionParticles is a function which
                             # decides which MPI jobs will process
                             # which particles. It can be specified in
-                            # the call to setPartiionParticles4MPI()
+                            # the call to setPartiionParticlesMPI()
                             # before the particle set is created.
-                            self._pu_indicators = partitionfunction(coords,mpi_size=mpi_size)
+                            self._pu_indicators = partitionParticlesMPI(coords,mpi_size=mpi_size)
                         else:
                             self._pu_indicators = None
                         self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
