@@ -132,7 +132,7 @@ class ParticleCollectionSOA(ParticleCollection):
                             # which particles. It can be specified in
                             # the call to setPartiionParticles4MPI()
                             # before the particle set is created.
-                            self._pu_indicators = partitionParticles4MPI(coords,mpi_size=mpi_size)
+                            self._pu_indicators = partitionfunction(coords,mpi_size=mpi_size)
                         else:
                             self._pu_indicators = None
                         self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
