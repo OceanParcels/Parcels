@@ -27,7 +27,7 @@ if MPI:
         KMeans = None
 
 #=============================================================================
-# The function partitionParticles4MPI_default() is the default scheme
+# The function partitionParticlesMPI_default() is the default scheme
 # to partition the different particles into different MPI
 # processes. The function setPartitionFunction() will, if called
 # before the particle set is created, allow the user to specify their
