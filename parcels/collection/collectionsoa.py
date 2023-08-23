@@ -73,7 +73,7 @@ def partitionParticlesMPI_default(coords,mpi_size=1):
 #global to this module variable partitionParticlesMPI. The function
 #setPartitionFunction() should be called as part of the particleset
 #creation in particlesetsoa.py. However, the value assigned below
-#will work if we somehow skip that step. 
+#will work if we somehow skip that step.
 partitionParticlesMPI=partitionParticlesMPI_default
 
 #This function, if called before the particle set is created, will alter how the

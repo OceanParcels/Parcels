@@ -8,8 +8,11 @@ import xarray as xr
 
 from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # noqa
 from parcels.collection.collectionsoa import ParticleCollectionIteratorSOA  # noqa
-from parcels.collection.collectionsoa import partitionParticlesMPI_default,setPartitionFunction
-from parcels.collection.collectionsoa import ParticleCollectionSOA
+from parcels.collection.collectionsoa import (
+    ParticleCollectionSOA,
+    partitionParticlesMPI_default,
+    setPartitionFunction,
+)
 from parcels.grid import CurvilinearGrid, GridCode
 from parcels.interaction.interactionkernelsoa import InteractionKernelSOA
 from parcels.interaction.neighborsearch import (
