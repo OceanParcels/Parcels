@@ -138,14 +138,12 @@ class ParticleSetSOA(BaseParticleSet):
             self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
 
-        #cjmp
         #if a partioning function for MPI runs has been passed into the
         #particle creation with the "partitionFunction" kwarg, retrieve it here.
         #if it has not, assign the default function, partitionParticlesMPI_defualt(),
         #which is defined in collectionsoa.py
         partitionFunction=kwargs.pop('partitionFunction',partitionParticlesMPI_default)
         setPartitionFunction(partitionFunction)
-        #cjmp end
 
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
