@@ -26,18 +26,8 @@ if MPI:
     except:
         KMeans = None
 
-#=============================================================================
-# The function partitionParticlesMPI_default() is the default scheme
-# to partition the different particles into different MPI
-# processes. The function setPartitionFunction() will, if called
-# before the particle set is created, allow the user to specify their
-# own scheme for partitioning the particles to different MPI jobs by
-# passing a new partitioning function to setPartitionFunction(). The
-# arguements of this new function must match those of
-# partitionParticlesMPI_default(), as described in the comments to
-# that function.
 
-def partitionParticlesMPI_default(coords,mpi_size=1):
+def partitionParticlesMPI_default(coords, mpi_size=1):
     '''This function takes the coordinates of the particle starting
     positions and returns which MPI process will process each
     particle.
@@ -63,27 +53,9 @@ def partitionParticlesMPI_default(coords,mpi_size=1):
     else:  # assigning random labels if no KMeans (see https://github.com/OceanParcels/parcels/issues/1261)
         logger.warning_once('sklearn needs to be available if MPI is installed. '
                             'See http://oceanparcels.org/#parallel_install for more information')
-        mpiProcs = np.randint(0, mpi_size, size=len(lon))
-
+        mpiProcs = np.randint(0, mpi_size, size=coords.shape[0])
 
     return mpiProcs
-
-#by default, the partition is done by the functiond defined above
-#the line beflow does not actually do anything except initialize the
-#global to this module variable partitionParticlesMPI. The function
-#setPartitionFunction() should be called as part of the particleset
-#creation in particlesetsoa.py. However, the value assigned below
-#will work if we somehow skip that step.
-partitionParticlesMPI=partitionParticlesMPI_default
-
-#This function, if called before the particle set is created, will alter how the
-#particle set is partitioned between MPI jobs.
-def setPartitionFunction(partitionFunction):
-    global partitionParticlesMPI
-    partitionParticlesMPI=partitionFunction
-    return None
-#=============================================================================
-
 
 
 class ParticleCollectionSOA(ParticleCollection):
@@ -124,6 +96,11 @@ class ParticleCollectionSOA(ParticleCollection):
             mpi_rank = mpi_comm.Get_rank()
             mpi_size = mpi_comm.Get_size()
 
+            # If a partitioning function for MPI runs has been passed into the
+            # particle creation with the "partition_function" kwarg, retrieve it here.
+            # If it has not, assign the default function, partitionParticlesMPI_defualt()
+            partition_function = kwargs.pop('partition_function', partitionParticlesMPI_default)
+
             if lon.size < mpi_size and mpi_size > 1:
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
@@ -132,12 +109,7 @@ class ParticleCollectionSOA(ParticleCollection):
                     if (self._pu_indicators is None) or (len(self._pu_indicators) != len(lon)):
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
-                            # partitionParticles is a function which
-                            # decides which MPI jobs will process
-                            # which particles. It can be specified in
-                            # the call to setPartiionParticlesMPI()
-                            # before the particle set is created.
-                            self._pu_indicators = partitionParticlesMPI(coords,mpi_size=mpi_size)
+                            self._pu_indicators = partition_function(coords, mpi_size=mpi_size)
                         else:
                             self._pu_indicators = None
                         self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)

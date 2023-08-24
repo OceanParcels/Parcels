@@ -8,11 +8,7 @@ import xarray as xr
 
 from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # noqa
 from parcels.collection.collectionsoa import ParticleCollectionIteratorSOA  # noqa
-from parcels.collection.collectionsoa import (
-    ParticleCollectionSOA,
-    partitionParticlesMPI_default,
-    setPartitionFunction,
-)
+from parcels.collection.collectionsoa import ParticleCollectionSOA
 from parcels.grid import CurvilinearGrid, GridCode
 from parcels.interaction.interactionkernelsoa import InteractionKernelSOA
 from parcels.interaction.neighborsearch import (
@@ -87,6 +83,8 @@ class ParticleSetSOA(BaseParticleSet):
     periodic_domain_zonal :
         Zonal domain size, used to apply zonally periodic boundaries for particle-particle
         interaction. If None, no zonally periodic boundaries are applied
+    partition_function :
+        Function to use for partitioning particles over processors. Default is to use kMeans
 
         Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
@@ -137,13 +135,6 @@ class ParticleSetSOA(BaseParticleSet):
         else:
             self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
-
-        #if a partioning function for MPI runs has been passed into the
-        #particle creation with the "partitionFunction" kwarg, retrieve it here.
-        #if it has not, assign the default function, partitionParticlesMPI_defualt(),
-        #which is defined in collectionsoa.py
-        partitionFunction=kwargs.pop('partitionFunction',partitionParticlesMPI_default)
-        setPartitionFunction(partitionFunction)
 
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
