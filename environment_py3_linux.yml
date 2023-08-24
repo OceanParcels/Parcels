@@ -6,7 +6,6 @@ dependencies:
   - cgen
   - ffmpeg>=3.2.3
   - git
-  - gcc_linux-64
   - mpi4py>=3.0.1
   - mpich>=3.2.1
   - jupyter

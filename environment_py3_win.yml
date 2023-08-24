@@ -7,7 +7,6 @@ dependencies:
   - ffmpeg>=3.2.3
   - git
   - jupyter
-  - m2w64-toolchain
   - matplotlib-base>=2.0.2
   - netcdf4>=1.1.9
   - numpy>=1.9.1
