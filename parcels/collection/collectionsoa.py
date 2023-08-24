@@ -45,7 +45,6 @@ def partitionParticlesMPI_default(coords, mpi_size=1):
     specifying which MPI job will run which particles. len(mpiProcs)
     must equal coords.shape[0]
     """
-
     if KMeans:
         kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
         mpiProcs = kmeans.labels_
