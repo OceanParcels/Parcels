@@ -201,16 +201,16 @@ class BaseParticleFile(ABC):
 
     def _extend_zarr_dims(self, Z, store, dtype, axis):
         if axis == 1:
-            a = np.full((Z.shape[0], self.chunks[1]), np.nan, dtype=dtype)
+            a = np.full((Z.shape[0], self.chunks[1]), self.fill_value_map[dtype], dtype=dtype)
             obs = zarr.group(store=store, overwrite=False)["obs"]
             if len(obs) == Z.shape[1]:
                 obs.append(np.arange(self.chunks[1])+obs[-1]+1)
         else:
             extra_trajs = max(self.maxids - Z.shape[0], self.chunks[0])
             if len(Z.shape) == 2:
-                a = np.full((extra_trajs, Z.shape[1]), np.nan, dtype=dtype)
+                a = np.full((extra_trajs, Z.shape[1]), self.fill_value_map[dtype], dtype=dtype)
             else:
-                a = np.full((extra_trajs,), np.nan, dtype=dtype)
+                a = np.full((extra_trajs,), self.fill_value_map[dtype], dtype=dtype)
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
@@ -236,12 +236,12 @@ class BaseParticleFile(ABC):
             if deleted_only is not False:
                 if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                     indices_to_write = np.where(np.isin(pset.collection.getvardata('state'), [OperationCode.Delete]))[0]
-                elif type(deleted_only) == np.ndarray:
+                elif type(deleted_only) is np.ndarray:
                     if set(deleted_only).issubset([0, 1]):
                         indices_to_write = np.where(deleted_only)[0]
                     else:
                         indices_to_write = deleted_only
-                elif type(deleted_only) == list:
+                elif type(deleted_only) is list:
                     indices_to_write = np.array(deleted_only)
             else:
                 indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
@@ -281,11 +281,11 @@ class BaseParticleFile(ABC):
                         varout = self._convert_varout_name(var)
                         if varout not in ['trajectory']:  # because 'trajectory' is written as coordinate
                             if self.write_once(var):
-                                data = np.full((arrsize[0],), np.nan, dtype=self.vars_to_write[var])
+                                data = np.full((arrsize[0],), self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
                                 data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
                                 dims = ["trajectory"]
                             else:
-                                data = np.full(arrsize, np.nan, dtype=self.vars_to_write[var])
+                                data = np.full(arrsize, self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
                                 data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
                                 dims = ["trajectory", "obs"]
                             ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
