@@ -59,8 +59,9 @@ class ParticleCollectionAOS(ParticleCollection):
             self._pu_indicators = convert_to_flat_array(partitions)
 
         for kwvar in kwargs:
-            assert lon.size == kwargs[kwvar].size, (
-                f'{kwvar} and positions (lon, lat, depth) do nott have the same lengths.')
+            if kwvar not in ['partition_function']:
+                assert lon.size == kwargs[kwvar].size, (
+                    f'{kwvar} and positions (lon, lat, depth) do nott have the same lengths.')
 
         offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
         if MPI:
@@ -123,6 +124,8 @@ class ParticleCollectionAOS(ParticleCollection):
                 # Set other Variables if provided
                 for kwvar in kwargs:
                     if isinstance(kwvar, Field):
+                        continue
+                    if kwvar in ['partition_function']:
                         continue
                     if not hasattr(self._data[i], kwvar):
                         raise RuntimeError(f'Particle class does not have Variable {kwvar}')
