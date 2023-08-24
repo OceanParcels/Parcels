@@ -113,11 +113,11 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
 
     if custom_partition_function:
         pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
-                                                start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0,
-                                                partition_function=simple_partition_function)
+                                                      start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0,
+                                                      partition_function=simple_partition_function)
     else:
         pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
-                                                    start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
+                                                      start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
 
     if verbose:
         print(f"Initial particle positions:\n{pset}")
