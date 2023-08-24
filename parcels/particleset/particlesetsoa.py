@@ -77,14 +77,11 @@ class ParticleSetSOA(BaseParticleSet):
         and np.float64 if the interpolation method is 'cgrid_velocity'
     pid_orig :
         Optional list of (offsets for) the particle IDs
-    partitions :
-        List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
-        are distributed automatically on the processors
+    partition_function :
+        Function to use for partitioning particles over processors. Default is to use kMeans
     periodic_domain_zonal :
         Zonal domain size, used to apply zonally periodic boundaries for particle-particle
         interaction. If None, no zonally periodic boundaries are applied
-    partition_function :
-        Function to use for partitioning particles over processors. Default is to use kMeans
 
         Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
@@ -134,7 +131,6 @@ class ParticleSetSOA(BaseParticleSet):
             logger.warning_once("No FieldSet provided in ParticleSet generation. This breaks most Parcels functionality")
         else:
             self.fieldset.check_complete()
-        partitions = kwargs.pop('partitions', None)
 
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
@@ -171,9 +167,10 @@ class ParticleSetSOA(BaseParticleSet):
             'lon lat depth precision should be set to either np.float32 or np.float64'
 
         for kwvar in kwargs:
-            kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
-            assert lon.size == kwargs[kwvar].size, (
-                f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
+            if kwvar not in ['partition_function']:
+                kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
+                assert lon.size == kwargs[kwvar].size, (
+                    f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -183,6 +180,7 @@ class ParticleSetSOA(BaseParticleSet):
                 raise 'All Particle.time should be the same when repeatdt is not None'
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
+            self.repeatkwargs.pop('partition_function', None)
 
         ngrids = fieldset.gridset.size if fieldset is not None else 1
 
@@ -200,7 +198,7 @@ class ParticleSetSOA(BaseParticleSet):
         self._collection = ParticleCollectionSOA(
             _pclass, lon=lon, lat=lat, depth=depth, time=time,
             lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig,
-            partitions=partitions, ngrid=ngrids, **kwargs)
+            ngrid=ngrids, **kwargs)
 
         # Initialize neighbor search data structure (used for interaction).
         if interaction_distance is not None:
@@ -247,7 +245,8 @@ class ParticleSetSOA(BaseParticleSet):
             self.repeatlat = copy(self._collection.data['lat'])
             self.repeatdepth = copy(self._collection.data['depth'])
             for kwvar in kwargs:
-                self.repeatkwargs[kwvar] = copy(self._collection.data[kwvar])
+                if kwvar not in ['partition_function']:
+                    self.repeatkwargs[kwvar] = copy(self._collection.data[kwvar])
 
         if self.repeatdt:
             if MPI and self._collection.pu_indicators is not None:

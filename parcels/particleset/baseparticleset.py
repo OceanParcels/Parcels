@@ -141,7 +141,7 @@ class BaseParticleSet(NDCluster):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod
-    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
+    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Create a particleset in the shape of a line (according to a cartesian grid).
 
         Initialise the ParticleSet from start/finish coordinates with equidistant spacing
@@ -175,7 +175,7 @@ class BaseParticleSet(NDCluster):
         lat = np.linspace(start[1], finish[1], size)
         if type(depth) in [int, float]:
             depth = [depth] * size
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod
     @abstractmethod
@@ -557,7 +557,7 @@ class BaseParticleSet(NDCluster):
                     lat=self.repeatlat, depth=self.repeatdepth,
                     pclass=self.repeatpclass,
                     lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
-                    partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
+                    partition_function=False, pid_orig=self.repeatpid, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)

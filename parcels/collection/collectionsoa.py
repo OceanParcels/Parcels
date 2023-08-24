@@ -12,7 +12,6 @@ from parcels.collection.iterators import (
 )
 from parcels.field import Field
 from parcels.particle import JITParticle, ScipyParticle  # noqa
-from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import NotTestedError
 
@@ -58,7 +57,7 @@ def partitionParticlesMPI_default(coords, mpi_size=1):
 
 class ParticleCollectionSOA(ParticleCollection):
 
-    def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
+    def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, ngrid=1, **kwargs):
         """
         Parameters
         ----------
@@ -80,9 +79,10 @@ class ParticleCollectionSOA(ParticleCollection):
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
-        # If partitions is false, the partitions are already initialised
-        if partitions is not None and partitions is not False:
-            self._pu_indicators = convert_to_flat_array(partitions)
+        # If a partitioning function for MPI runs has been passed into the
+        # particle creation with the "partition_function" kwarg, retrieve it here.
+        # If it has not, assign the default function, partitionParticlesMPI_defualt()
+        partition_function = kwargs.pop('partition_function', partitionParticlesMPI_default)
 
         for kwvar in kwargs:
             assert lon.size == kwargs[kwvar].size, (
@@ -94,16 +94,11 @@ class ParticleCollectionSOA(ParticleCollection):
             mpi_rank = mpi_comm.Get_rank()
             mpi_size = mpi_comm.Get_size()
 
-            # If a partitioning function for MPI runs has been passed into the
-            # particle creation with the "partition_function" kwarg, retrieve it here.
-            # If it has not, assign the default function, partitionParticlesMPI_defualt()
-            partition_function = kwargs.pop('partition_function', partitionParticlesMPI_default)
-
             if lon.size < mpi_size and mpi_size > 1:
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
             if mpi_size > 1:
-                if partitions is not False:
+                if partition_function is not False:
                     if (self._pu_indicators is None) or (len(self._pu_indicators) != len(lon)):
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
