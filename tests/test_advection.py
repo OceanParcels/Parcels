@@ -546,9 +546,9 @@ def test_uniform_analytical(pset_mode, mode, u, v, w, direction, tmpdir):
     if w:
         assert np.abs(pset.depth - z0 - 4 * w * direction) < 1e-4
 
-    ds = xr.open_zarr(outfile_path, mask_and_scale=False)  # TODO fix writing for AnalyticalAdvection
-    times = ds['time'][:].values.astype('timedelta64[s]')[0]
-    timeref = direction * np.arange(1, 5).astype('timedelta64[s]')
+    ds = xr.open_zarr(outfile_path)
+    times = (direction*ds['time'][:]).values.astype('timedelta64[s]')[0]
+    timeref = np.arange(1, 5).astype('timedelta64[s]')
     assert np.allclose(times, timeref, atol=np.timedelta64(1, 'ms'))
     lons = ds['lon'][:].values
     assert np.allclose(lons, x0+direction*u*np.arange(1, 5))
