@@ -54,7 +54,6 @@ def run_mitgcm_zonally_reentrant(mode):
     pset.execute(
         kernels, runtime=delta(days=5), dt=delta(minutes=30), output_file=pfile
     )
-    pfile.close()
 
 
 def test_mitgcm_output_compare():
