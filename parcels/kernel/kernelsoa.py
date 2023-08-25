@@ -143,9 +143,6 @@ class KernelSOA(BaseKernel):
         analytical = False
         if 'AdvectionAnalytical' in self._pyfunc.__name__:
             analytical = True
-            if not np.isinf(dt):
-                logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
-            dt = np.inf
 
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():

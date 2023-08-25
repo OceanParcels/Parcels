@@ -556,7 +556,10 @@ class BaseParticleSet(NDCluster):
 
             if abs(time - next_output) < tol:  # or not lastexecution:
                 if output_file:
-                    output_file.write(self, time_at_startofloop)
+                    if output_file.analytical:  # output analytical solution at later time
+                        output_file.write_latest_locations(self, time)
+                    else:
+                        output_file.write(self, time_at_startofloop)
                 if np.isfinite(outputdt):
                     next_output += outputdt * np.sign(dt)
 
