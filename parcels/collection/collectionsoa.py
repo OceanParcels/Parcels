@@ -49,7 +49,7 @@ def partitionParticlesMPI_default(coords, mpi_size=1):
         mpiProcs = kmeans.labels_
     else:  # assigning random labels if no KMeans (see https://github.com/OceanParcels/parcels/issues/1261)
         logger.warning_once('sklearn needs to be available if MPI is installed. '
-                            'See http://oceanparcels.org/#parallel_install for more information')
+                            'See https://docs.oceanparcels.org/en/latest/installation.html#installation-for-developers for more information')
         mpiProcs = np.randint(0, mpi_size, size=coords.shape[0])
 
     return mpiProcs
