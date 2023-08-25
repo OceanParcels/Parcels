@@ -203,7 +203,8 @@ class BaseParticleFile(ABC):
         zarr.consolidate_metadata(store)
 
     def write(self, pset, time, indices=None):
-        """Write all data from one time step to the zarr file.
+        """Write all data from one time step to the zarr file,
+        before the particle locations are updated.
 
         Parameters
         ----------
@@ -284,3 +285,21 @@ class BaseParticleFile(ABC):
                         Z[varout].vindex[ids, obs] = pset.collection.getvardata(var, indices_to_write)
 
             pset.collection.setvardata('obs_written', indices_to_write, obs+1)
+
+    def write_latest_locations(self, pset, time):
+        """Write the current (latest) particle locations to zarr file.
+        This can be useful at the end of a pset.execute(), when the last locations are not written yet.
+        Note that this only updates the locations, not any of the other Variables. Therefore, use with care.
+
+        Parameters
+        ----------
+        pset :
+            ParticleSet object to write
+        time :
+            Time at which to write ParticleSet
+        """
+
+        for var in ['lon', 'lat', 'depth', 'time']:
+            pset.collection.setallvardata(f"{var}_towrite", pset.collection.getvardata(f"{var}"))
+
+        self.write(pset, time)

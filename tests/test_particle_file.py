@@ -70,8 +70,8 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     pfile.write(pset, 0)
     pset.remove_indices(3)
     for p in pset:
-        p.time_towrite = 1
-    pfile.write(pset, 1)  # TODO add functionality so that calling write updates _towrite
+        p.time = 1
+    pfile.write_latest_locations(pset, 1)
 
     ds = xr.open_zarr(filepath)
     timearr = ds['time'][:]
