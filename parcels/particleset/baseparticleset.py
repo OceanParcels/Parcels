@@ -506,11 +506,8 @@ class BaseParticleSet(NDCluster):
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
 
-        # lastexecution = True # TODO remove lastexecution
-        while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:  # or lastexecution:
+        while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             time_at_startofloop = time
-            # if np.isclose(time, endtime, atol=1e-5):
-            #     lastexecution = False
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
                 if output_file:
@@ -554,7 +551,7 @@ class BaseParticleSet(NDCluster):
                         fld.write(fldfilename)
                         fld.to_write += 1
 
-            if abs(time - next_output) < tol:  # or not lastexecution:
+            if abs(time - next_output) < tol:
                 if output_file:
                     if output_file.analytical:  # output analytical solution at later time
                         output_file.write_latest_locations(self, time)
