@@ -298,7 +298,6 @@ class BaseParticleFile(ABC):
         time :
             Time at which to write ParticleSet
         """
-
         for var in ['lon', 'lat', 'depth', 'time']:
             pset.collection.setallvardata(f"{var}_towrite", pset.collection.getvardata(f"{var}"))
 
