@@ -25,7 +25,7 @@ if MPI:
     except:
         raise OSError(
             'sklearn needs to be available if MPI is installed. '
-            'See http://oceanparcels.org/#parallel_install for more information'
+            'See https://docs.oceanparcels.org/en/latest/installation.html#installation-for-developers for more information'
         )
 
 __all__ = ['ParticleCollectionAOS', 'ParticleCollectionIterableAOS', 'ParticleCollectionIteratorAOS']
