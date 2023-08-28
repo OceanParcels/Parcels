@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="skipping macOS test as problem with file in pytest")
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows as mpi4py not available for windows")
 @pytest.mark.parametrize('pset_mode', ['soa'])
