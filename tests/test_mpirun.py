@@ -13,8 +13,7 @@ import xarray as xr
 @pytest.mark.parametrize('repeatdt, maxage', [(20*86400, 600*86400), (10*86400, 10*86400)])
 @pytest.mark.parametrize('nump', [4, 8])
 def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage, nump):
-    stommel_file = path.join(path.dirname(__file__), '..', 'docs',
-                                'examples', 'example_stommel.py')
+    stommel_file = path.join(path.dirname(__file__), '..', 'docs', 'examples', 'example_stommel.py')
     outputMPI = tmpdir.join('StommelMPI')
     outputMPI_partition_function = tmpdir.join('StommelMPI_partition_function')
     outputNoMPI = tmpdir.join('StommelNoMPI.zarr')
