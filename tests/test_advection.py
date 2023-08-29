@@ -134,7 +134,7 @@ def test_advection_3D(pset_mode, mode, npart=11):
                                         depth=np.linspace(0, 1, npart))
     time = delta(hours=2).total_seconds()
     pset.execute(AdvectionRK4, runtime=time, dt=delta(seconds=30))
-    assert np.allclose(pset.depth*time, pset.lon, atol=1.e-1)
+    assert np.allclose(pset.depth*pset.time, pset.lon, atol=1.e-1)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -171,7 +171,7 @@ def test_advection_3D_outofbounds(pset_mode, mode, direction, wErrorThroughSurfa
     kernels.append(DeleteParticle)
 
     pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
-    pset.execute(kernels, runtime=10., dt=1)
+    pset.execute(kernels, runtime=11., dt=1)
 
     if direction == 'up' and wErrorThroughSurface:
         assert np.allclose(pset.lon[0], 0.6)
@@ -270,7 +270,7 @@ def test_length1dimensions(pset_mode, mode, u, v, w):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
     pfunc = AdvectionRK4 if w is None else AdvectionRK4_3D
     kernel = pset.Kernel(pfunc)
-    pset.execute(kernel, runtime=4)
+    pset.execute(kernel, runtime=5, dt=1)
 
     assert (len(pset.lon) == len([p.lon for p in pset]))
     assert ((np.array([p.lon - x0 for p in pset]) - 4 * u) < 1e-6).all()
@@ -327,8 +327,8 @@ def test_stationary_eddy(pset_mode, fieldset_stationary, mode, method, rtol, dif
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(pset.Kernel(kernel[method], delete_cfiles=False), dt=dt, endtime=endtime)
 
-    exp_lon = [truth_stationary(x, y, endtime)[0] for x, y, in zip(lon, lat)]
-    exp_lat = [truth_stationary(x, y, endtime)[1] for x, y, in zip(lon, lat)]
+    exp_lon = [truth_stationary(x, y, pset[0].time)[0] for x, y, in zip(lon, lat)]
+    exp_lat = [truth_stationary(x, y, pset[0].time)[1] for x, y, in zip(lon, lat)]
     assert np.allclose(pset.lon, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
@@ -340,6 +340,7 @@ def test_stationary_eddy_vertical(pset_mode, mode, npart=1):
     lat = np.linspace(10000, 20000, npart)
     depth = np.linspace(12500, 12500, npart)
     endtime = delta(hours=6).total_seconds()
+    dt = delta(minutes=3).total_seconds()
 
     xdim = ydim = 100
     lon_data = np.linspace(0, 25000, xdim, dtype=np.float32)
@@ -354,9 +355,10 @@ def test_stationary_eddy_vertical(pset_mode, mode, npart=1):
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
-    pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
-    exp_lon = [truth_stationary(x, z, endtime)[0] for x, z, in zip(lon, depth)]
-    exp_depth = [truth_stationary(x, z, endtime)[1] for x, z, in zip(lon, depth)]
+    pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
+    exp_lon = [truth_stationary(x, z, pset[0].time)[0] for x, z, in zip(lon, depth)]
+    exp_depth = [truth_stationary(x, z, pset[0].time)[1] for x, z, in zip(lon, depth)]
+    print(pset, exp_lon)
     assert np.allclose(pset.lon, exp_lon, rtol=1e-5)
     assert np.allclose(pset.lat, lat, rtol=1e-5)
     assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
@@ -365,9 +367,9 @@ def test_stationary_eddy_vertical(pset_mode, mode, npart=1):
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
-    pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
-    exp_depth = [truth_stationary(z, y, endtime)[0] for z, y, in zip(depth, lat)]
-    exp_lat = [truth_stationary(z, y, endtime)[1] for z, y, in zip(depth, lat)]
+    pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
+    exp_depth = [truth_stationary(z, y, pset[0].time)[0] for z, y, in zip(depth, lat)]
+    exp_lat = [truth_stationary(z, y, pset[0].time)[1] for z, y, in zip(depth, lat)]
     assert np.allclose(pset.lon, lon, rtol=1e-5)
     assert np.allclose(pset.lat, exp_lat, rtol=1e-5)
     assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
@@ -421,8 +423,8 @@ def test_moving_eddy(pset_mode, fieldset_moving, mode, method, rtol, diffField, 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
-    exp_lon = [truth_moving(x, y, endtime)[0] for x, y, in zip(lon, lat)]
-    exp_lat = [truth_moving(x, y, endtime)[1] for x, y, in zip(lon, lat)]
+    exp_lon = [truth_moving(x, y, pset.time)[0] for x, y, in zip(lon, lat)]
+    exp_lat = [truth_moving(x, y, pset.time)[1] for x, y, in zip(lon, lat)]
     assert np.allclose(pset.lon, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
@@ -488,8 +490,8 @@ def test_decaying_eddy(pset_mode, fieldset_decaying, mode, method, rtol, diffFie
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
-    exp_lon = [truth_decaying(x, y, endtime)[0] for x, y, in zip(lon, lat)]
-    exp_lat = [truth_decaying(x, y, endtime)[1] for x, y, in zip(lon, lat)]
+    exp_lon = [truth_decaying(x, y, pset.time)[0] for x, y, in zip(lon, lat)]
+    exp_lat = [truth_decaying(x, y, pset.time)[1] for x, y, in zip(lon, lat)]
     assert np.allclose(pset.lon, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
@@ -541,10 +543,10 @@ def test_uniform_analytical(pset_mode, mode, u, v, w, direction, tmpdir):
     outfile = pset.ParticleFile(name=outfile_path, outputdt=1, chunks=(1, 1))
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
                  output_file=outfile)
-    assert np.abs(pset.lon - x0 - 4 * u * direction) < 1e-6
-    assert np.abs(pset.lat - y0 - 4 * v * direction) < 1e-6
+    assert np.abs(pset.lon - x0 - pset.time * u) < 1e-6
+    assert np.abs(pset.lat - y0 - pset.time * v) < 1e-6
     if w:
-        assert np.abs(pset.depth - z0 - 4 * w * direction) < 1e-4
+        assert np.abs(pset.depth - z0 - pset.time * w) < 1e-4
 
     ds = xr.open_zarr(outfile_path)
     times = (direction*ds['time'][:]).values.astype('timedelta64[s]')[0]

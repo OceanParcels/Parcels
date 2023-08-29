@@ -123,20 +123,20 @@ class ParticleCollectionSOA(ParticleCollection):
 
             # mimic the variables that get initialised in the constructor
             self._data['lat'][:] = lat
-            self._data['lat_towrite'][:] = lat
+            self._data['lat_nextloop'][:] = lat
             self._data['lon'][:] = lon
-            self._data['lon_towrite'][:] = lon
+            self._data['lon_nextloop'][:] = lon
             self._data['depth'][:] = depth
-            self._data['depth_towrite'][:] = depth
+            self._data['depth_nextloop'][:] = depth
             self._data['time'][:] = time
-            self._data['time_towrite'][:] = time
+            self._data['time_nextloop'][:] = time
             self._data['id'][:] = pid
             self._data['obs_written'][:] = 0
 
             # special case for exceptions which can only be handled from scipy
             self._data['exception'] = np.empty(self.ncount, dtype=object)
 
-            initialised |= {'lat', 'lat_towrite', 'lon', 'lon_towrite', 'depth', 'depth_towrite', 'time', 'time_towrite', 'id', 'obs_written'}
+            initialised |= {'lat', 'lat_nextloop', 'lon', 'lon_nextloop', 'depth', 'depth_nextloop', 'time', 'time_nextloop', 'id', 'obs_written'}
 
             # any fields that were provided on the command line
             for kwvar, kwval in kwargs.items():
@@ -801,11 +801,11 @@ class ParticleCollectionSOA(ParticleCollection):
         """We don't want to write a particle that is not started yet.
         Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
         """
-        return np.where((np.less_equal(time - np.abs(pd['dt'] / 2), pd['time_towrite'], where=np.isfinite(pd['time_towrite']))
-                        & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time_towrite'], where=np.isfinite(pd['time_towrite']))
-                        | ((np.isnan(pd['dt'])) & np.equal(time, pd['time_towrite'], where=np.isfinite(pd['time_towrite']))))
+        return np.where((np.less_equal(time - np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+                        & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+                        | ((np.isnan(pd['dt'])) & np.equal(time, pd['time'], where=np.isfinite(pd['time']))))
                         & (np.isfinite(pd['id']))
-                        & (np.isfinite(pd['time_towrite'])))[0]
+                        & (np.isfinite(pd['time'])))[0]
 
     def getvardata(self, var, indices=None):
         if indices is None:
@@ -848,9 +848,6 @@ class ParticleCollectionSOA(ParticleCollection):
             Write status of the variable (True, False or 'once')
         write_status :
         """
-        if var in ['depth', 'lat', 'lon']:  # These are the variable names that are written for lon, lat and depth
-            var = var + '_towrite'
-
         var_changed = False
         for v in self._ptype.variables:
             if v.name == var:
@@ -941,7 +938,7 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in self._pcoll.ptype.variables:
-            if var.name in ['lon_towrite', 'lat_towrite', 'depth_towrite', 'time_towrite']:  # TODO check if time_towrite is needed (or can work with time-dt?)
+            if var.name in ['lon_nextloop', 'lat_nextloop', 'depth_nextloop', 'time_nextloop']:  # TODO check if time_nextloop is needed (or can work with time-dt?)
                 continue
             if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
                 str += f"{var.name}={getattr(self, var.name):f}, "

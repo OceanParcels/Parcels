@@ -171,14 +171,8 @@ class BaseParticleFile(ABC):
         self.metadata[name] = message
 
     def _convert_varout_name(self, var):
-        if var == 'lon_towrite':
-            return 'lon'
-        elif var == 'lat_towrite':
-            return 'lat'
-        elif var == 'depth_towrite':
+        if var == 'depth':
             return 'z'
-        elif var == 'time_towrite':
-            return 'time'
         elif var == 'id':
             return 'trajectory'
         else:
@@ -299,6 +293,6 @@ class BaseParticleFile(ABC):
             Time at which to write ParticleSet
         """
         for var in ['lon', 'lat', 'depth', 'time']:
-            pset.collection.setallvardata(f"{var}_towrite", pset.collection.getvardata(f"{var}"))
+            pset.collection.setallvardata(f"{var}", pset.collection.getvardata(f"{var}_nextloop"))
 
         self.write(pset, time)

@@ -350,34 +350,6 @@ class BaseParticleSet(NDCluster):
         """Get the number of particles that are in an error state."""
         return len([True if p.state not in [StatusCode.Success, StatusCode.Evaluate] else None for p in self])
 
-    @abstractmethod
-    def _impute_release_times(self, default):
-        """Set attribute 'time' to default if encountering NaN values.
-
-        This is a fallback implementation, it might be slow.
-
-        Parameters
-        ----------
-        default :
-            Default release time.
-
-        Returns
-        -------
-        type
-            Minimum and maximum release times.
-
-        """
-        max_rt = None
-        min_rt = None
-        for p in self:
-            if np.isnan(p.time):
-                p.time = default
-            if max_rt is None or max_rt < p.time:
-                max_rt = p.time
-            if min_rt is None or min_rt > p.time:
-                min_rt = p.time
-        return min_rt, max_rt
-
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
                 output_file=None, verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for multiple timesteps.

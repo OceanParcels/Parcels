@@ -843,17 +843,14 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         body = []
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"type_coord particle_d{coord} = 0")]
-        body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
-        if self.fieldset.particlefile is not None:
-            writebody = []
-            for coord in ['lon', 'lat', 'depth', 'time']:
-                writebody += [c.Statement(f"particles->{coord}_towrite[pnum] = particles->{coord}[pnum]")]
+            body += [c.Statement(f"particles->{coord}[pnum] = particles->{coord}_nextloop[pnum]")]
+        body += [c.Statement("particles->time[pnum] = particles->time_nextloop[pnum]")]
 
-            body += [c.If(f"fabs(fmod(particles->time[pnum], {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
+        body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
 
         for coord in ['lon', 'lat', 'depth']:
-            body += [c.Statement(f"particles->{coord}[pnum] += particle_d{coord}")]
-        body += [c.Statement("particles->time[pnum] += particles->dt[pnum]")]
+            body += [c.Statement(f"particles->{coord}_nextloop[pnum] = particles->{coord}[pnum] + particle_d{coord}")]
+        body += [c.Statement("particles->time_nextloop[pnum] = particles->time[pnum] + particles->dt[pnum]")]
         body += [c.Statement("return particles->state[pnum]")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
@@ -974,18 +971,14 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         body = []
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"type_coord particle_d{coord} = 0")]
+            body += [c.Statement(f"particle->{coord} = particle->{coord}_nextloop")]
+        body += [c.Statement("particle->time = particle->time_nextloop")]
+
         body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
 
-        if self.fieldset.particlefile is not None:
-            writebody = []
-            for coord in ['lon', 'lat', 'depth', 'time']:
-                writebody += [c.Statement(f"particle->{coord}_towrite = particle->{coord}")]
-
-            body += [c.If(f"fabs(fmod(time, {self.fieldset.particlefile.outputdt})) < 1e-6", c.Block(writebody))]
-
         for coord in ['lon', 'lat', 'depth']:
-            body += [c.Statement(f"particle->{coord} += particle_d{coord}")]
-        body += [c.Statement("particle->time += particle->dt")]
+            body += [c.Statement(f"particle->{coord}_nextloop = particle->{coord} + particle_d{coord}")]
+        body += [c.Statement("particle->time_nextloop = particle->time + particle->dt")]
         body += [c.Statement("return SUCCESS")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
@@ -1101,7 +1094,7 @@ class LoopGenerator:
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         for const, _ in const_args.items():
             args += [c.Value("double", const)]  # are we SURE those const's are double's ?
-        fargs_str = ", ".join(['particles->time[pnum]'] + list(field_args.keys())
+        fargs_str = ", ".join(['particles->time_nextloop[pnum]'] + list(field_args.keys())
                               + list(const_args.keys()))
         # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
@@ -1110,9 +1103,9 @@ class LoopGenerator:
         body = []
         body += [c.Value("double", "pre_dt")]
         body += [c.Statement("pre_dt = particles->dt[pnum]")]
-        body += [c.If("sign_dt*particles->time[pnum] >= sign_dt*(endtime)", c.Statement("break"))]
-        body += [c.If("fabs(endtime - particles->time[pnum]) < fabs(particles->dt[pnum])-1e-6",
-                      c.Statement("particles->dt[pnum] = fabs(endtime - particles->time[pnum]) * sign_dt"))]
+        body += [c.If("sign_dt*particles->time_nextloop[pnum] >= sign_dt*(endtime)", c.Statement("break"))]
+        body += [c.If("fabs(endtime - particles->time_nextloop[pnum]) < fabs(particles->dt[pnum])-1e-6",
+                      c.Statement("particles->dt[pnum] = fabs(endtime - particles->time_nextloop[pnum]) * sign_dt"))]
         body += [c.Assign("particles->state[pnum]", f"{funcname}(particles, pnum, {fargs_str})")]
         body += [c.If("particles->state[pnum] == SUCCESS",
                       c.Block([c.If("sign_dt*particles->time[pnum] < sign_dt*endtime",

@@ -104,7 +104,7 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
     pset_new = pset_type[pset_mode]['pset'].from_particlefile(fieldset, pclass=TestParticle, filename=filename,
                                                               restart=restart, repeatdt=1)
 
-    for var in ['lon', 'lat', 'depth', 'time_towrite', 'p', 'p2', 'p3']:
+    for var in ['lon', 'lat', 'depth', 'time', 'p', 'p2', 'p3']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
 
     if restart:
