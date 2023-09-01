@@ -77,9 +77,10 @@ def test_execution_order(pset_mode, mode, kernel_type):
     if kernel_type == 'update_dlon':
         assert np.isclose(lons[0], lons[1])
         assert np.isclose(ps[0], ps[1])
+        assert np.allclose(lons[0], 0)
     else:
         assert np.isclose(ps[0] - ps[1], 0.1)
-    assert np.allclose(lons[0], 0.2)
+        assert np.allclose(lons[0], 0.2)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -97,7 +98,7 @@ def test_execution_endtime(fieldset, pset_mode, mode, start, end, substeps, dt, 
                                         lon=np.linspace(0, 1, npart),
                                         lat=np.linspace(1, 0, npart))
     pset.execute(DoNothing, endtime=end, dt=dt)
-    assert np.allclose(pset.time, end)
+    assert np.allclose(pset.time_nextloop, end)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -117,7 +118,7 @@ def test_execution_runtime(fieldset, pset_mode, mode, start, end, substeps, dt, 
     t_step = abs(end - start) / substeps
     for _ in range(substeps):
         pset.execute(DoNothing, runtime=t_step, dt=dt)
-    assert np.allclose(pset.time, end)
+    assert np.allclose(pset.time_nextloop, end)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)

@@ -414,7 +414,7 @@ def test_dt_modif_by_kernel(pset_mode, mode):
         particle.dt = 2
 
     endtime = 4
-    pset.execute(modif_dt, endtime=endtime, dt=1.)
+    pset.execute(modif_dt, endtime=endtime+1, dt=1.)
     assert np.isclose(pset.time[0], endtime)
 
 
@@ -430,7 +430,7 @@ def test_small_dt(pset_mode, mode, dt, npart=10):
 
     raisederror = False
     try:
-        pset.execute(DoNothing, dt=dt, runtime=dt*100)
+        pset.execute(DoNothing, dt=dt, runtime=dt*101)
     except ValueError:
         raisederror = True
     if dt < 1e-5:

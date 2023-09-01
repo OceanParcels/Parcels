@@ -287,7 +287,7 @@ class ParticleSetSOA(BaseParticleSet):
         if np.any(np.isnan(self._collection.data['time'])):
             self._collection.data['time'][np.isnan(self._collection.data['time'])] = default
             self._collection.data['time_nextloop'][np.isnan(self._collection.data['time_nextloop'])] = default
-        return np.min(self._collection.data['time']), np.max(self._collection.data['time'])
+        return np.min(self._collection.data['time_nextloop']), np.max(self._collection.data['time_nextloop'])
 
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.
