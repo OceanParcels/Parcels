@@ -65,10 +65,6 @@ class BaseParticleAccessor(ABC):
         """
         self._pcoll = pcoll
 
-    @abstractmethod
-    def update_next_dt(self, next_dt=None):
-        pass
-
     def delete(self):
         """Signal the underlying particle for deletion."""
         self.state = StatusCode.Delete

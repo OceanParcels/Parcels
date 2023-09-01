@@ -197,7 +197,6 @@ class ScipyParticle(_Particle):
     obs_written = Variable('obs_written', dtype=np.int32, initial=0, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=StatusCode.Evaluate, to_write=False)
-    next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0., time=0., cptr=None):
 
@@ -214,7 +213,6 @@ class ScipyParticle(_Particle):
         _Particle.lastID = max(_Particle.lastID, pid)
         type(self).obs_written.initial = 0
         type(self).dt.initial = None
-        type(self).next_dt.initial = np.nan
 
         super().__init__()
 

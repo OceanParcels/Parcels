@@ -443,7 +443,7 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         # once. If variables occur in multiple Kernels, give a warning
         used_vars = []
         funcvars_copy = copy(funcvars)  # editing a list while looping over it is dangerous
-        for kvar in funcvars:
+        for kvar in funcvars:  # TODO throw warning/error of particle.lon changed inside kernel
             if kvar in used_vars + ['particle_dlon', 'particle_dlat', 'particle_ddepth']:
                 if kvar not in ['particle', 'fieldset', 'time', 'particle_dlon', 'particle_dlat', 'particle_ddepth']:
                     logger.warning(kvar+" declared in multiple Kernels")

@@ -493,7 +493,7 @@ class ParticleSetSOA(BaseParticleSet):
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'obs_written', 'state',
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', 'depth', 'id', 'obs_written', 'state',
                                 'lon_nextloop', 'lat_nextloop', 'depth_nextloop', 'time_nextloop'] \
                     and v.to_write:
                 raise RuntimeError(f'Variable {v.name} is in pclass but not in the particlefile')

@@ -976,7 +976,6 @@ class ParticleAccessorAOS(BaseParticleAccessor):
     """
 
     _index = 0
-    _next_dt = None
 
     def __init__(self, pcoll, index):
         """Initializes the ParticleAccessor to provide access to one
@@ -984,7 +983,6 @@ class ParticleAccessorAOS(BaseParticleAccessor):
         """
         super().__init__(pcoll)
         self._index = index
-        self._next_dt = None
 
     def __getattr__(self, name):
         """
@@ -1028,14 +1026,6 @@ class ParticleAccessorAOS(BaseParticleAccessor):
 
     def getPType(self):
         return self._pcoll.data[self._index].getPType()
-
-    def update_next_dt(self, next_dt=None):
-        if next_dt is None:
-            if self._next_dt is not None:
-                self._pcoll._data[self._index].dt = self._next_dt
-                self._next_dt = None
-        else:
-            self._next_dt = next_dt
 
     def __repr__(self):
         return repr(self._pcoll.data[self._index])

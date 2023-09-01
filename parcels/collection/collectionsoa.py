@@ -873,7 +873,6 @@ class ParticleAccessorSOA(BaseParticleAccessor):
     """
 
     _index = 0
-    _next_dt = None
 
     def __init__(self, pcoll, index):
         """Initializes the ParticleAccessor to provide access to one
@@ -881,7 +880,6 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         """
         super().__init__(pcoll)
         self._index = index
-        self._next_dt = None
 
     def __getattr__(self, name):
         """
@@ -925,14 +923,6 @@ class ParticleAccessorSOA(BaseParticleAccessor):
 
     def getPType(self):
         return self._pcoll.ptype
-
-    def update_next_dt(self, next_dt=None):
-        if next_dt is None:
-            if self._next_dt is not None:
-                self._pcoll._data['dt'][self._index] = self._next_dt
-                self._next_dt = None
-        else:
-            self._next_dt = next_dt
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
