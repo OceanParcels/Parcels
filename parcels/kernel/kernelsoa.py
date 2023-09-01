@@ -140,10 +140,6 @@ class KernelSOA(BaseKernel):
         # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
         sign_dt = np.sign(dt)
 
-        analytical = False
-        if 'AdvectionAnalytical' in self._pyfunc.__name__:
-            analytical = True
-
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
                 if isinstance(f, (VectorField, NestedField)):
@@ -155,7 +151,7 @@ class KernelSOA(BaseKernel):
             self.scipy_positionupdate_kernels_added = True
 
         for p in pset:
-            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+            self.evaluate_particle(p, endtime, sign_dt)
 
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion.

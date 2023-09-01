@@ -397,7 +397,7 @@ class BaseKernel:
                 if not g.lat.flags.c_contiguous:
                     g.lat = np.array(g.lat, order='C')
 
-    def evaluate_particle(self, p, endtime, sign_dt, dt, analytical=False):  # TODO check arguments to this function
+    def evaluate_particle(self, p, endtime, sign_dt):
         """Execute the kernel evaluation of for an individual particle.
 
         Parameters
