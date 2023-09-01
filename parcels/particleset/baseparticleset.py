@@ -496,7 +496,7 @@ class BaseParticleSet(NDCluster):
             if self.interaction_kernel is None:
                 self.kernel.execute(self, endtime=next_time, dt=dt, output_file=output_file)
             # Interaction: interleave the interaction and non-interaction kernel for each time step.
-            # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
+            # E.g. Normal -> Inter -> Normal -> Inter if endtime-time == 2*dt
             else:
                 cur_time = time
                 while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
@@ -504,9 +504,9 @@ class BaseParticleSet(NDCluster):
                         cur_end_time = min(cur_time+dt, next_time)
                     else:
                         cur_end_time = max(cur_time+dt, next_time)
-                    self.interaction_kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, output_file=output_file)
                     self.kernel.execute(
+                        self, endtime=cur_end_time, dt=dt, output_file=output_file)
+                    self.interaction_kernel.execute(
                         self, endtime=cur_end_time, dt=dt, output_file=output_file)
                     cur_time += dt
                     if dt == 0:

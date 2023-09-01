@@ -290,7 +290,7 @@ class BaseParticleFile(ABC):
         pset :
             ParticleSet object to write
         time :
-            Time at which to write ParticleSet
+            Time at which to write ParticleSet. Note that typically this would be pset.time_nextloop
         """
         for var in ['lon', 'lat', 'depth', 'time']:
             pset.collection.setallvardata(f"{var}", pset.collection.getvardata(f"{var}_nextloop"))
