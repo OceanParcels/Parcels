@@ -49,7 +49,7 @@ def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
 
     def periodicBC(particle, fieldSet, time):
         if particle.lon > 180:
-            particle.lon -= 360
+            particle_dlon -= 360  # noqa
 
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile(outfile, pset, outputdt=delta(days=1))

@@ -320,6 +320,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def visit_AugAssign(self, node):
         node.target = self.visit(node.target)
+        if isinstance(node.target, ArrayParticleAttributeNode) and node.target.attr in ['lon', 'lat', 'depth', 'time']:
+            logger.warning_once("Don't change the location of a particle directly in a Kernel. Use particle_dlon, particle_dlat, etc.")
         node.op = self.visit(node.op)
         node.value = self.visit(node.value)
         stmts = [node]
@@ -441,7 +443,7 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         # once. If variables occur in multiple Kernels, give a warning
         used_vars = []
         funcvars_copy = copy(funcvars)  # editing a list while looping over it is dangerous
-        for kvar in funcvars:  # TODO throw warning/error of particle.lon changed inside kernel
+        for kvar in funcvars:
             if kvar in used_vars + ['particle_dlon', 'particle_dlat', 'particle_ddepth']:
                 if kvar not in ['particle', 'fieldset', 'time', 'particle_dlon', 'particle_dlat', 'particle_ddepth']:
                     logger.warning(kvar+" declared in multiple Kernels")

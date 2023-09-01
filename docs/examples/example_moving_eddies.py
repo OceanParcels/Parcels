@@ -235,17 +235,17 @@ def test_periodic_and_computeTimeChunk_eddies(mode):
 
     def periodicBC(particle, fieldset, time):
         if particle.lon < fieldset.halo_west:
-            particle.lon += fieldset.halo_east - fieldset.halo_west
+            particle_dlon += fieldset.halo_east - fieldset.halo_west  # noqa
         elif particle.lon > fieldset.halo_east:
-            particle.lon -= fieldset.halo_east - fieldset.halo_west
+            particle_dlon -= fieldset.halo_east - fieldset.halo_west  # noqa
         if particle.lat < fieldset.halo_south:
-            particle.lat += fieldset.halo_north - fieldset.halo_south
+            particle_dlat += fieldset.halo_north - fieldset.halo_south  # noqa
         elif particle.lat > fieldset.halo_north:
-            particle.lat -= fieldset.halo_north - fieldset.halo_south
+            particle_dlat -= fieldset.halo_north - fieldset.halo_south  # noqa
 
     def slowlySouthWestward(particle, fieldset, time):
-        particle.lon = particle.lon - 5 * particle.dt / 1e5
-        particle.lat -= 3 * particle.dt / 1e5
+        particle_dlon -= 5 * particle.dt / 1e5  # noqa
+        particle_dlat -= 3 * particle.dt / 1e5  # noqa
 
     kernels = pset.Kernel(AdvectionRK4)+slowlySouthWestward+periodicBC
     pset.execute(kernels, runtime=delta(days=6), dt=delta(hours=1))

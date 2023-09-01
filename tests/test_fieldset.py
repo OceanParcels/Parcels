@@ -683,13 +683,13 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
 
     def periodicBoundaryConditions(particle, fieldset, time):
         while particle.lon > 180.:
-            particle.lon -= 360.
+            particle_dlon -= 360.  # noqa
         while particle.lon < -180.:
-            particle.lon += 360.
+            particle_dlon += 360.  # noqa
         while particle.lat > 90.:
-            particle.lat -= 180.
+            particle_dlat -= 180.  # noqa
         while particle.lat < -90.:
-            particle.lat += 180.
+            particle_dlat += 180.  # noqa
 
     process = psutil.Process(os.getpid())
     mem_0 = process.memory_info().rss

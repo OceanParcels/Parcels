@@ -149,7 +149,7 @@ def test_execution_fail_python_exception(fieldset, pset_mode, mode, npart=10):
 def test_execution_fail_out_of_bounds(fieldset, pset_mode, mode, npart=10):
     def MoveRight(particle, fieldset, time):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]  # noqa
-        particle.lon += 0.1
+        particle_dlon += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
@@ -169,17 +169,17 @@ def test_execution_fail_out_of_bounds(fieldset, pset_mode, mode, npart=10):
 def test_execution_recover_out_of_bounds(fieldset, pset_mode, mode, npart=2):
     def MoveRight(particle, fieldset, time):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]  # noqa
-        particle.lon += 0.1
+        particle_dlon += 0.1  # noqa
 
     def MoveLeft(particle, fieldset, time):
         if particle.state == StatusCode.ErrorOutOfBounds:
-            particle.lon -= 1.
+            particle_dlon -= 1.  # noqa
             particle.state = StatusCode.Success
 
     lon = np.linspace(0.05, 0.95, npart)
     lat = np.linspace(1, 0, npart)
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat)
-    pset.execute([MoveRight, MoveLeft], endtime=10., dt=1.)
+    pset.execute([MoveRight, MoveLeft], endtime=11., dt=1.)
     assert len(pset) == npart
     assert np.allclose(pset.lon, lon, rtol=1e-5)
     assert np.allclose(pset.lat, lat, rtol=1e-5)
@@ -190,7 +190,7 @@ def test_execution_recover_out_of_bounds(fieldset, pset_mode, mode, npart=2):
 def test_execution_delete_out_of_bounds(fieldset, pset_mode, mode, npart=10):
     def MoveRight(particle, fieldset, time):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]  # noqa
-        particle.lon += 0.1
+        particle_dlon += 0.1  # noqa
 
     def DeleteMe(particle, fieldset, time):
         if particle.state == StatusCode.ErrorOutOfBounds:
@@ -207,14 +207,14 @@ def test_execution_delete_out_of_bounds(fieldset, pset_mode, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_kernel_add_no_new_variables(fieldset, pset_mode, mode):
     def MoveEast(particle, fieldset, time):
-        particle.lon += 0.1
+        particle_dlon += 0.1  # noqa
 
     def MoveNorth(particle, fieldset, time):
-        particle.lat += 0.1
+        particle_dlat += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveNorth),
-                 endtime=1., dt=1.)
+                 endtime=2., dt=1.)
     assert np.allclose(pset.lon, 0.6, rtol=1e-5)
     assert np.allclose(pset.lat, 0.6, rtol=1e-5)
 
@@ -226,14 +226,14 @@ def test_multi_kernel_duplicate_varnames(fieldset, pset_mode, mode):
     # Should throw a warning, but go ahead regardless
     def MoveEast(particle, fieldset, time):
         add_lon = 0.1
-        particle.lon += add_lon
+        particle_dlon += add_lon  # noqa
 
     def MoveWest(particle, fieldset, time):
         add_lon = -0.3
-        particle.lon += add_lon
+        particle_dlon += add_lon  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute([MoveEast, MoveWest], endtime=1., dt=1.)
+    pset.execute([MoveEast, MoveWest], endtime=2., dt=1.)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)
 
 
@@ -244,14 +244,14 @@ def test_multi_kernel_reuse_varnames(fieldset, pset_mode, mode):
     # Should throw a warning, but go ahead regardless
     def MoveEast1(particle, fieldset, time):
         add_lon = 0.2
-        particle.lon += add_lon
+        particle_dlon += add_lon  # noqa
 
     def MoveEast2(particle, fieldset, time):
-        particle.lon += add_lon  # NOQA - no flake8 testing of this line
+        particle_dlon += add_lon  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast1) + pset.Kernel(MoveEast2),
-                 endtime=1., dt=1.)
+                 endtime=2., dt=1.)
     assert np.allclose(pset.lon, [0.9], rtol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
 
 
@@ -264,10 +264,10 @@ def test_combined_kernel_from_list(fieldset, pset_mode):
     mixed functions and kernel objects.
     """
     def MoveEast(particle, fieldset, time):
-        particle.lon += 0.1
+        particle_dlon += 0.1  # noqa
 
     def MoveNorth(particle, fieldset, time):
-        particle.lat += 0.1
+        particle_dlat += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
     kernels_single = pset.Kernel([AdvectionRK4])
@@ -286,10 +286,10 @@ def test_combined_kernel_from_list_error_checking(fieldset, pset_mode):
     Tests that various error cases raise appropriate messages.
     """
     def MoveEast(particle, fieldset, time):
-        particle.lon += 0.1
+        particle_dlon += 0.1  # noqa
 
     def MoveNorth(particle, fieldset, time):
-        particle.lat += 0.1
+        particle_dlat += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
 
@@ -314,15 +314,15 @@ def test_update_kernel_in_script(fieldset, pset_mode, mode):
     # Should throw a warning, but go ahead regardless
     def MoveEast(particle, fieldset, time):
         add_lon = 0.1
-        particle.lon += add_lon
+        particle_dlon += add_lon  # noqa
 
     def MoveWest(particle, fieldset, time):
         add_lon = -0.3
-        particle.lon += add_lon
+        particle_dlon += add_lon  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast), endtime=1., dt=1.)
-    pset.execute(pset.Kernel(MoveWest), endtime=2., dt=1.)
+    pset.execute(pset.Kernel(MoveWest), endtime=3., dt=1.)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)  # should be 0.5 + 0.1 - 0.3 = 0.3
 
 

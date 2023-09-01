@@ -91,7 +91,7 @@ def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
     pfile = pset.ParticleFile(filepath, outputdt=1)
 
     def Update_lon(particle, fieldset, time):
-        particle.lon += 0.1
+        particle_dlon += 0.1  # noqa
 
     pset.execute(Update_lon, runtime=10, output_file=pfile)
 
@@ -139,7 +139,7 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     filepath = tmpdir.join("pfile_variable_write_double.zarr")
 
     def Update_lon(particle, fieldset, time):
-        particle.lon += 0.1
+        particle_dlon += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
     ofile = pset.ParticleFile(name=filepath, outputdt=0.00001)
@@ -250,7 +250,7 @@ def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     outfilepath = tmpdir.join("pfile_write_timebackward.zarr")
 
     def Update_lon(particle, fieldset, time):
-        particle.lon -= 0.1 * particle.dt
+        particle_dlon -= 0.1 * particle.dt  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lat=np.linspace(0, 1, 3), lon=[0, 0, 0], time=[1, 2, 3])
@@ -279,10 +279,10 @@ def test_reset_dt(fieldset, pset_mode, mode, tmpdir):
     filepath = tmpdir.join("pfile_reset_dt.zarr")
 
     def Update_lon(particle, fieldset, time):
-        particle.lon += 0.1
+        particle_dlon += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
     ofile = pset.ParticleFile(name=filepath, outputdt=0.05)
-    pset.execute(pset.Kernel(Update_lon), endtime=0.1, dt=0.02, output_file=ofile)
+    pset.execute(pset.Kernel(Update_lon), endtime=0.12, dt=0.02, output_file=ofile)
 
     assert np.allclose(pset.lon, .6)

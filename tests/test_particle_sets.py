@@ -186,9 +186,9 @@ def test_pset_not_multipldt_time(fieldset, pset_mode, mode):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=[0]*2, lat=[0]*2, pclass=ptype[mode], time=times)
 
     def Addlon(particle, fieldset, time):
-        particle.lon += particle.dt
+        particle_dlon += particle.dt  # noqa
 
-    pset.execute(Addlon, dt=1, runtime=2)
+    pset.execute(Addlon, dt=1, runtime=3)
     assert np.allclose([p.lon for p in pset], [2 - t for t in times])
 
 
@@ -201,8 +201,8 @@ def test_pset_repeated_release(fieldset, pset_mode, mode, npart=10):
     assert np.allclose([p.time for p in pset], time)
 
     def IncrLon(particle, fieldset, time):
-        particle.lon += 1.
-    pset.execute(IncrLon, dt=1., runtime=npart)
+        particle_dlon += 1.  # noqa
+    pset.execute(IncrLon, dt=1., runtime=npart+1)
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
 
 
@@ -211,7 +211,7 @@ def test_pset_repeatdt_check_dt(pset_mode, fieldset):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5)
 
     def IncrLon(particle, fieldset, time):
-        particle.lon = 1.
+        particle_dlon = 1.  # noqa
     pset.execute(IncrLon, dt=2, runtime=21)
     assert np.allclose([p.lon for p in pset], 1)  # if p.dt is nan, it won't be executed so p.lon will be 0
 
@@ -302,7 +302,7 @@ def test_pset_add_shorthand(fieldset, pset_mode, mode, npart=100):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_add_execute(fieldset, pset_mode, mode, npart=10):
     def AddLat(particle, fieldset, time):
-        particle.lat += 0.1
+        particle_dlat += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode])
     for i in range(npart):
@@ -388,7 +388,7 @@ def test_pset_remove_kernel(fieldset, pset_mode, mode, npart=100):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_multi_execute(fieldset, pset_mode, mode, npart=10, n=5):
     def AddLat(particle, fieldset, time):
-        particle.lat += 0.1
+        particle_dlat += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
@@ -403,7 +403,7 @@ def test_pset_multi_execute(fieldset, pset_mode, mode, npart=10, n=5):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_multi_execute_delete(fieldset, pset_mode, mode, npart=10, n=5):
     def AddLat(particle, fieldset, time):
-        particle.lat += 0.1
+        particle_dlat += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
