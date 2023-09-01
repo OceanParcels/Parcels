@@ -166,9 +166,12 @@ def test_moving_eddies_fwdbwd(mode, mesh, tmpdir, npart=2):
     pset.execute(method, endtime=0, dt=-dt,
                  output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
+    # Also include last timestep
+    for var in ['lon', 'lat', 'depth', 'time']:
+        pset.collection.setallvardata(f"{var}", pset.collection.getvardata(f"{var}_nextloop"))
+
     assert np.allclose(pset.lon, lons)
     assert np.allclose(pset.lat, lats)
-    return pset
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -177,6 +180,9 @@ def test_moving_eddies_fieldset(mode, mesh, tmpdir):
     fieldset = moving_eddies_fieldset(mesh=mesh)
     outfile = tmpdir.join("EddyParticle")
     pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
+    # Also include last timestep
+    for var in ['lon', 'lat', 'depth', 'time']:
+        pset.collection.setallvardata(f"{var}", pset.collection.getvardata(f"{var}_nextloop"))
     if mesh == 'flat':
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
@@ -200,6 +206,9 @@ def test_moving_eddies_file(mode, mesh, tmpdir):
     fieldset = FieldSet.from_parcels(fieldsetfile(mesh, tmpdir), extra_fields={'P': 'P'})
     outfile = tmpdir.join("EddyParticle")
     pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
+    # Also include last timestep
+    for var in ['lon', 'lat', 'depth', 'time']:
+        pset.collection.setallvardata(f"{var}", pset.collection.getvardata(f"{var}_nextloop"))
     if mesh == 'flat':
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
