@@ -46,6 +46,7 @@ Parcels has several documentation and tutorial Jupyter notebooks which go throug
    examples/tutorial_particle_field_interaction.ipynb
    examples/tutorial_interaction.ipynb
    examples/tutorial_analyticaladvection.ipynb
+   examples/tutorial_kernelloop.ipynb
 
 
 .. nbgallery::

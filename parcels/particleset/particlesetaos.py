@@ -586,7 +586,7 @@ class ParticleSetAOS(BaseParticleSet):
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'obs_written', 'state'] \
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', 'depth', 'id', 'obs_written', 'state'] \
                     and v.to_write:
                 raise RuntimeError(f'Variable {v.name} is in pclass but not in the particlefile')
             to_write[v.name] = v.to_write

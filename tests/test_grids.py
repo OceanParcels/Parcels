@@ -326,7 +326,7 @@ def test_rectilinear_s_grids_advect2(pset_mode, mode):
         relDepth = Variable('relDepth', dtype=np.float32, initial=20.)
 
     def moveEast(particle, fieldset, time):
-        particle.lon += 5 * particle.dt
+        particle_dlon += 5 * particle.dt  # noqa
         particle.relDepth = fieldset.relDepth[time, particle.depth, particle.lat, particle.lon]
 
     depth = .9
@@ -622,7 +622,7 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
     def OutBoundsError(particle, fieldset, time):
         if particle.state == StatusCode.ErrorOutOfBounds:
             particle.out_of_bounds = 1
-            particle.depth -= 3
+            particle_ddepth -= 3  # noqa
             particle.state = StatusCode.Success
 
     class MyParticle(ptype[mode]):

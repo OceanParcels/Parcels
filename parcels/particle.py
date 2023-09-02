@@ -185,36 +185,34 @@ class ScipyParticle(_Particle):
     Additional Variables can be added via the :Class Variable: objects
     """
 
-    lon = Variable('lon', dtype=np.float32, to_write=False)
-    lon_towrite = Variable('lon_towrite', dtype=np.float32)
-    lat = Variable('lat', dtype=np.float32, to_write=False)
-    lat_towrite = Variable('lat_towrite', dtype=np.float32)
-    depth = Variable('depth', dtype=np.float32, to_write=False)
-    depth_towrite = Variable('depth_towrite', dtype=np.float32)
-    time = Variable('time', dtype=np.float64, to_write=False)
-    time_towrite = Variable('time_towrite', dtype=np.float64)
+    lon = Variable('lon', dtype=np.float32)
+    lon_nextloop = Variable('lon_nextloop', dtype=np.float32, to_write=False)
+    lat = Variable('lat', dtype=np.float32)
+    lat_nextloop = Variable('lat_nextloop', dtype=np.float32, to_write=False)
+    depth = Variable('depth', dtype=np.float32)
+    depth_nextloop = Variable('depth_nextloop', dtype=np.float32, to_write=False)
+    time = Variable('time', dtype=np.float64)
+    time_nextloop = Variable('time_nextloop', dtype=np.float64, to_write=False)
     id = Variable('id', dtype=np.int64, to_write='once')
     obs_written = Variable('obs_written', dtype=np.int32, initial=0, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=StatusCode.Evaluate, to_write=False)
-    next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)  # TODO check if this next_dt can be removed or used in RK45
 
     def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0., time=0., cptr=None):
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
-        type(self).lon_towrite.initial = lon
+        type(self).lon_nextloop.initial = lon
         type(self).lat.initial = lat
-        type(self).lat_towrite.initial = lat
+        type(self).lat_nextloop.initial = lat
         type(self).depth.initial = depth
-        type(self).depth_towrite.initial = depth
+        type(self).depth_nextloop.initial = depth
         type(self).time.initial = time
-        type(self).time_towrite.initial = time
+        type(self).time_nextloop.initial = time
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
         type(self).obs_written.initial = 0
         type(self).dt.initial = None
-        type(self).next_dt.initial = np.nan
 
         super().__init__()
 
@@ -225,7 +223,7 @@ class ScipyParticle(_Particle):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in vars(type(self)):
-            if var in ['lon_towrite', 'lat_towrite', 'depth_towrite', 'time_towrite']:
+            if var in ['lon_nextloop', 'lat_nextloop', 'depth_nextloop', 'time_nextloop']:
                 continue
             if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
                 str += f"{var}={getattr(self, var):f}, "
@@ -236,9 +234,9 @@ class ScipyParticle(_Particle):
         cls.lon.dtype = dtype
         cls.lat.dtype = dtype
         cls.depth.dtype = dtype
-        cls.lon_towrite.dtype = dtype
-        cls.lat_towrite.dtype = dtype
-        cls.depth_towrite.dtype = dtype
+        cls.lon_nextloop.dtype = dtype
+        cls.lat_nextloop.dtype = dtype
+        cls.depth_nextloop.dtype = dtype
 
 
 class ScipyInteractionParticle(ScipyParticle):

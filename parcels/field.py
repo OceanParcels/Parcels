@@ -37,7 +37,7 @@ __all__ = ['Field', 'VectorField', 'NestedField']
 
 
 def _isParticle(key):
-    if hasattr(key, '_next_dt'):
+    if hasattr(key, 'obs_written'):
         return True
     else:
         return False

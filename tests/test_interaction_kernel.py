@@ -22,7 +22,7 @@ def DummyMoveNeighbor(particle, fieldset, time, neighbors, mutator):
     i_min_dist = np.argmin(distances)
 
     def f(p):
-        p.lat += 0.1
+        p.lat_nextloop += 0.1
 
     neighbor_id = neighbors[i_min_dist].id
     mutator[neighbor_id].append((f, ()))
@@ -62,7 +62,7 @@ def test_simple_interaction_kernel(fieldset, mode):
     interaction_distance = 6371000*0.2*np.pi/180
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats,
                        interaction_distance=interaction_distance)
-    pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=1., dt=1.)
+    pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=2., dt=1.)
     assert np.allclose(pset.lat, [0.1, 0.2, 0.1, 0.0], rtol=1e-5)
 
 
@@ -75,7 +75,7 @@ def test_zonal_periodic_distance(mode, mesh, periodic_domain_zonal):
     lons = [0.05, 0.4, 0.95]
     pset = ParticleSet(fset, pclass=ptype[mode], lon=lons, lat=[0.5]*len(lons),
                        interaction_distance=interaction_distance, periodic_domain_zonal=periodic_domain_zonal)
-    pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=1., dt=1.)
+    pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=2., dt=1.)
     if periodic_domain_zonal:
         assert np.allclose([pset[0].lat, pset[2].lat], 0.6)
         assert np.allclose(pset[1].lat, 0.5)
@@ -94,12 +94,12 @@ def test_concatenate_interaction_kernels(fieldset, mode):
                        interaction_distance=interaction_distance)
     pset.execute(DoNothing,
                  pyfunc_inter=pset.InteractionKernel(DummyMoveNeighbor)
-                 + pset.InteractionKernel(DummyMoveNeighbor), endtime=1.,
+                 + pset.InteractionKernel(DummyMoveNeighbor), endtime=2.,
                  dt=1.)
     # The kernel results are only applied after all interactionkernels
     # have been executed, so we expect the result to be double the
     # movement from executing the kernel once.
-    assert np.allclose(pset.lat, [0.2, 0.4, 0.1, 0.0], rtol=1e-5)
+    assert np.allclose(pset.lat, [0.2, 0.4, 0.2, 0.0], rtol=1e-5)
 
 
 @pytest.mark.parametrize('mode', ['scipy'])
@@ -113,15 +113,14 @@ def test_concatenate_interaction_kernels_as_pyfunc(fieldset, mode):
                        interaction_distance=interaction_distance)
     pset.execute(DoNothing,
                  pyfunc_inter=pset.InteractionKernel(DummyMoveNeighbor)
-                 + DummyMoveNeighbor, endtime=1., dt=1.)
+                 + DummyMoveNeighbor, endtime=2., dt=1.)
     # The kernel results are only applied after all interactionkernels
     # have been executed, so we expect the result to be double the
     # movement from executing the kernel once.
-    assert np.allclose(pset.lat, [0.2, 0.4, 0.1, 0.0], rtol=1e-5)
+    assert np.allclose(pset.lat, [0.2, 0.4, 0.2, 0.0], rtol=1e-5)
 
 
-@pytest.mark.parametrize('mode', ['scipy'])
-def test_neighbor_merge(fieldset, mode):
+def test_neighbor_merge(fieldset):
     lons = [0.0, 0.1, 0.25, 0.44]
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
@@ -161,12 +160,12 @@ def test_asymmetric_attraction(fieldset, mode):
 
 def ConstantMoveInteraction(particle, fieldset, time, neighbors, mutator):
     def f(p):
-        p.lat += p.dt
+        p.lat_nextloop += p.dt
     mutator[particle.id].append((f, ()))
 
 
-@pytest.mark.parametrize('runtime,dt',
-                         [(1, 1e-4),
+@pytest.mark.parametrize('runtime, dt',
+                         [(1, 1e-2),
                           (1, -2.1234e-3),
                           (1, -3.12452-3)])
 def test_pseudo_interaction(runtime, dt):
