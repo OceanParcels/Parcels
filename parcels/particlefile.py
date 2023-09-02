@@ -19,7 +19,7 @@ except:
     raise OSError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
 
 
-__all__ = ['BaseParticleFile']
+__all__ = ['ParticleFile']
 
 
 def _set_calendar(origin_calendar):
@@ -29,7 +29,7 @@ def _set_calendar(origin_calendar):
         return origin_calendar
 
 
-class BaseParticleFile(ABC):
+class ParticleFile(ABC):
     """Initialise trajectory output.
 
     Parameters
@@ -49,7 +49,7 @@ class BaseParticleFile(ABC):
 
     Returns
     -------
-    BaseParticleFile
+    ParticleFile
         ParticleFile object that can be used to write particle data to file
     """
 
@@ -112,11 +112,6 @@ class BaseParticleFile(ABC):
             else:
                 self.fname = name if extension in ['.zarr'] else "%s.zarr" % name
 
-    @abstractmethod
-    def _reserved_var_names(self):
-        """Returns the reserved dimension names not to be written just once."""
-        pass
-
     def _create_variables_attribute_dict(self):
         """Creates the dictionary with variable attributes.
 
@@ -150,7 +145,7 @@ class BaseParticleFile(ABC):
             attrs['time']['calendar'] = 'standard' if self.time_origin.calendar == 'np_datetime64' else self.time_origin.calendar
 
         for vname in self.vars_to_write:
-            if vname not in self._reserved_var_names():
+            if vname not in ['time', 'lat', 'lon', 'depth', 'id']:
                 attrs[vname] = {"_FillValue": self.fill_value_map[self.vars_to_write[vname]],
                                 "long_name": "",
                                 "standard_name": vname,
