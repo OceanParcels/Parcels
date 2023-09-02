@@ -46,9 +46,9 @@ def MergeWithNearestNeighbor(particle, fieldset, time, neighbors, mutator):
         p.state = StatusCode.Delete
 
     def merge_with_neighbor(p, nlat, nlon, ndepth, nmass):
-        p.lat = (p.mass * p.lat + nmass * nlat) / (p.mass + nmass)
-        p.lon = (p.mass * p.lon + nmass * nlon) / (p.mass + nmass)
-        p.depth = (p.mass * p.depth + nmass * ndepth) / (p.mass + nmass)
+        p.lat_nextloop = (p.mass * p.lat + nmass * nlat) / (p.mass + nmass)
+        p.lon_nextloop = (p.mass * p.lon + nmass * nlon) / (p.mass + nmass)
+        p.depth_nextloop = (p.mass * p.depth + nmass * ndepth) / (p.mass + nmass)
         p.mass = p.mass + nmass
 
     for n in neighbors:
@@ -96,9 +96,9 @@ def AsymmetricAttraction(particle, fieldset, time, neighbors, mutator):
         d_vec = distance*dx/dx_norm
 
         def f(n, dlat, dlon, ddepth):
-            n.lat += dlat
-            n.lon += dlon
-            n.depth += ddepth
+            n.lat_nextloop += dlat
+            n.lon_nextloop += dlon
+            n.depth_nextloop += ddepth
 
         mutator[n.id].append((f, d_vec))
 

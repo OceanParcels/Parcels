@@ -152,20 +152,16 @@ class BaseKernel:
             particle_dlon = 0  # noqa
             particle_dlat = 0  # noqa
             particle_ddepth = 0  # noqa
+            particle.lon = particle.lon_nextloop
+            particle.lat = particle.lat_nextloop
+            particle.depth = particle.depth_nextloop
+            particle.time = particle.time_nextloop
 
         def Updatecoords(particle, fieldset, time):
-            if fieldset.particlefile is not None and \
-              (abs(math.fmod(particle.time, fieldset.particlefile.outputdt)) < 1e-6  # noqa
-               or fieldset.particlefile.analytical):
-                particle.lon_towrite = particle.lon
-                particle.lat_towrite = particle.lat
-                particle.depth_towrite = particle.depth
-                particle.time_towrite = particle.time  # TODO check if needed (or done with dt)
-
-            particle.lon += particle_dlon  # noqa
-            particle.lat += particle_dlat  # noqa
-            particle.depth += particle_ddepth  # noqa
-            particle.time += particle.dt  # noqa
+            particle.lon_nextloop = particle.lon + particle_dlon  # noqa
+            particle.lat_nextloop = particle.lat + particle_dlat  # noqa
+            particle.depth_nextloop = particle.depth + particle_ddepth  # noqa
+            particle.time_nextloop = particle.time + particle.dt
 
         self._pyfunc = self.__radd__(Setcoords).__add__(Updatecoords)._pyfunc
 
@@ -401,7 +397,7 @@ class BaseKernel:
                 if not g.lat.flags.c_contiguous:
                     g.lat = np.array(g.lat, order='C')
 
-    def evaluate_particle(self, p, endtime, sign_dt, dt, analytical=False):  # TODO check arguments to this function
+    def evaluate_particle(self, p, endtime, sign_dt):
         """Execute the kernel evaluation of for an individual particle.
 
         Parameters
@@ -423,13 +419,12 @@ class BaseKernel:
             pre_dt = p.dt
 
             sign_dt = np.sign(p.dt)
-            if sign_dt*p.time >= sign_dt*endtime:
+            if sign_dt*p.time_nextloop >= sign_dt*endtime:
                 return p
 
-            if abs(endtime - p.time) < abs(p.dt)-1e-6:
-                p.dt = abs(endtime - p.time) * sign_dt
-
-            res = self._pyfunc(p, self._fieldset, p.time)
+            if abs(endtime - p.time_nextloop) < abs(p.dt)-1e-6:
+                p.dt = abs(endtime - p.time_nextloop) * sign_dt
+            res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:
                 if sign_dt*p.time < sign_dt*endtime and p.state == StatusCode.Success:

@@ -130,7 +130,7 @@ class ParticleCollectionAOS(ParticleCollection):
                     if kwvar not in initialised:
                         initialised.add(kwvar)
 
-            initialised |= {'lat', 'lat_towrite', 'lon', 'lon_towrite', 'depth', 'depth_towrite', 'time', 'time_towrite', 'id'}
+            initialised |= {'lat', 'lat_nextloop', 'lon', 'lon_nextloop', 'depth', 'depth_nextloop', 'time', 'time_nextloop', 'id'}
 
             for v in self._ptype.variables:
                 if v.name in initialised:
@@ -893,8 +893,8 @@ class ParticleCollectionAOS(ParticleCollection):
         """We don't want to write a particle that is not started yet.
         Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
         """
-        return np.array([i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time_towrite < time + np.abs(p.dt))
-                                                         or (np.isnan(p.dt) and np.equal(time, p.time_towrite)))
+        return np.array([i for i, p in enumerate(pd) if (((time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt))
+                                                         or (np.isnan(p.dt) and np.equal(time, p.time)))
                                                          and np.isfinite(p.id))])
 
     def getvardata(self, var, indices=None):
@@ -943,7 +943,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
         """
         if var in ['time', 'depth', 'lat', 'lon']:  # These are the variable names that are written for lon, lat and depth
-            var = var + '_towrite'
+            var = var + '_nextloop'
 
         var_changed = False
         for v in self._ptype.variables:
@@ -976,7 +976,6 @@ class ParticleAccessorAOS(BaseParticleAccessor):
     """
 
     _index = 0
-    _next_dt = None
 
     def __init__(self, pcoll, index):
         """Initializes the ParticleAccessor to provide access to one
@@ -984,7 +983,6 @@ class ParticleAccessorAOS(BaseParticleAccessor):
         """
         super().__init__(pcoll)
         self._index = index
-        self._next_dt = None
 
     def __getattr__(self, name):
         """
@@ -1028,14 +1026,6 @@ class ParticleAccessorAOS(BaseParticleAccessor):
 
     def getPType(self):
         return self._pcoll.data[self._index].getPType()
-
-    def update_next_dt(self, next_dt=None):
-        if next_dt is None:
-            if self._next_dt is not None:
-                self._pcoll._data[self._index].dt = self._next_dt
-                self._next_dt = None
-        else:
-            self._next_dt = next_dt
 
     def __repr__(self):
         return repr(self._pcoll.data[self._index])

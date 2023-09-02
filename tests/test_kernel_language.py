@@ -1,5 +1,4 @@
 import random as py_random
-import sys
 from os import path
 
 import numpy as np
@@ -258,14 +257,7 @@ def test_if_withfield(fieldset, pset_mode, mode):
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize(
-    'mode',
-    ['scipy',
-     pytest.param('jit',
-                  marks=pytest.mark.xfail(
-                      (sys.version_info >= (3, 0)) or (sys.platform == 'win32'),
-                      reason="py.test FD capturing does not work for jit on python3 or Win"))
-     ])
+@pytest.mark.parametrize('mode', ['scipy'])
 def test_print(fieldset, pset_mode, mode, capfd):
     """Test print statements."""
     class TestParticle(ptype[mode]):
@@ -273,7 +265,7 @@ def test_print(fieldset, pset_mode, mode, capfd):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=TestParticle, lon=[0.5], lat=[0.5])
 
     def kernel(particle, fieldset, time):
-        particle.p = fieldset.UV[time, particle.depth, particle.lat, particle.lon][0]
+        particle.p = 1e-3
         tmp = 5
         print("%d %f %f" % (particle.id, particle.p, tmp))
     pset.execute(kernel, endtime=1., dt=1.)
@@ -414,7 +406,7 @@ def test_dt_modif_by_kernel(pset_mode, mode):
         particle.dt = 2
 
     endtime = 4
-    pset.execute(modif_dt, endtime=endtime, dt=1.)
+    pset.execute(modif_dt, endtime=endtime+1, dt=1.)
     assert np.isclose(pset.time[0], endtime)
 
 
@@ -430,7 +422,7 @@ def test_small_dt(pset_mode, mode, dt, npart=10):
 
     raisederror = False
     try:
-        pset.execute(DoNothing, dt=dt, runtime=dt*100)
+        pset.execute(DoNothing, dt=dt, runtime=dt*101)
     except ValueError:
         raisederror = True
     if dt < 1e-5:

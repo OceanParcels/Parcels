@@ -35,9 +35,9 @@ def run_mitgcm_zonally_reentrant(mode):
 
     def periodicBC(particle, fieldset, time):
         if particle.lon < 0:
-            particle.lon += fieldset.domain_width
+            particle_dlon += fieldset.domain_width  # noqa
         elif particle.lon > fieldset.domain_width:
-            particle.lon -= fieldset.domain_width
+            particle_dlon -= fieldset.domain_width  # noqa
 
     # Release particles 5 cells away from the Eastern boundary
     pset = ParticleSet.from_line(

@@ -304,7 +304,7 @@ def test_partialslip_nearland_zonal(pset_mode, mode, boundaryslip, withW, withT,
                   'lat': np.linspace(0., 4., dims[1], dtype=np.float32),
                   'depth': np.linspace(-10, 10, dims[0])}
     if withT:
-        dimensions['time'] = [0, 1]
+        dimensions['time'] = [0, 2]
         U = np.tile(U, (2, 1, 1, 1))
         V = np.tile(V, (2, 1, 1, 1))
     if withW:
@@ -321,7 +321,7 @@ def test_partialslip_nearland_zonal(pset_mode, mode, boundaryslip, withW, withT,
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=np.zeros(npart),
                                         lat=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
     kernel = AdvectionRK4_3D if withW else AdvectionRK4
-    pset.execute(kernel, endtime=1, dt=1)
+    pset.execute(kernel, endtime=2, dt=1)
     if boundaryslip == 'partialslip':
         assert np.allclose([p.lon for p in pset if p.lat >= 0.5 and p.lat <= 3.5], 0.1)
         assert np.allclose([pset[0].lon, pset[-1].lon], 0.06)
@@ -363,7 +363,7 @@ def test_partialslip_nearland_meridional(pset_mode, mode, boundaryslip, withW, n
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lat=np.zeros(npart),
                                         lon=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
     kernel = AdvectionRK4_3D if withW else AdvectionRK4
-    pset.execute(kernel, endtime=1, dt=1)
+    pset.execute(kernel, endtime=2, dt=1)
     if boundaryslip == 'partialslip':
         assert np.allclose([p.lat for p in pset if p.lon >= 0.5 and p.lon <= 3.5], 0.1)
         assert np.allclose([pset[0].lat, pset[-1].lat], 0.06)
@@ -395,7 +395,7 @@ def test_partialslip_nearland_vertical(pset_mode, mode, boundaryslip, npart=20):
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=np.zeros(npart), lat=np.zeros(npart),
                                         depth=np.linspace(0.1, 3.9, npart))
-    pset.execute(AdvectionRK4, endtime=1, dt=1)
+    pset.execute(AdvectionRK4, endtime=2, dt=1)
     if boundaryslip == 'partialslip':
         assert np.allclose([p.lon for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
         assert np.allclose([p.lat for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
@@ -836,12 +836,12 @@ def test_nestedfields(pset_mode, mode, k_sample_p):
             particle.state = StatusCode.Evaluate
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[.3])
-    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)
+    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
     assert np.isclose(pset.lat[0], .5)
     assert np.isclose(pset.p[0], .1)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[1.3])
-    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)
-    assert np.isclose(pset.lat[0], 1.7)
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[1.1])
+    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
+    assert np.isclose(pset.lat[0], 1.5)
     assert np.isclose(pset.p[0], .2)
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[2.3])
     pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p + Recover, runtime=1, dt=1)

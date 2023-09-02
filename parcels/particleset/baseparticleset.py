@@ -350,34 +350,6 @@ class BaseParticleSet(NDCluster):
         """Get the number of particles that are in an error state."""
         return len([True if p.state not in [StatusCode.Success, StatusCode.Evaluate] else None for p in self])
 
-    @abstractmethod
-    def _impute_release_times(self, default):
-        """Set attribute 'time' to default if encountering NaN values.
-
-        This is a fallback implementation, it might be slow.
-
-        Parameters
-        ----------
-        default :
-            Default release time.
-
-        Returns
-        -------
-        type
-            Minimum and maximum release times.
-
-        """
-        max_rt = None
-        min_rt = None
-        for p in self:
-            if np.isnan(p.time):
-                p.time = default
-            if max_rt is None or max_rt < p.time:
-                max_rt = p.time
-            if min_rt is None or min_rt > p.time:
-                min_rt = p.time
-        return min_rt, max_rt
-
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
                 output_file=None, verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for multiple timesteps.
@@ -524,7 +496,7 @@ class BaseParticleSet(NDCluster):
             if self.interaction_kernel is None:
                 self.kernel.execute(self, endtime=next_time, dt=dt, output_file=output_file)
             # Interaction: interleave the interaction and non-interaction kernel for each time step.
-            # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
+            # E.g. Normal -> Inter -> Normal -> Inter if endtime-time == 2*dt
             else:
                 cur_time = time
                 while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
@@ -532,9 +504,9 @@ class BaseParticleSet(NDCluster):
                         cur_end_time = min(cur_time+dt, next_time)
                     else:
                         cur_end_time = max(cur_time+dt, next_time)
-                    self.interaction_kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, output_file=output_file)
                     self.kernel.execute(
+                        self, endtime=cur_end_time, dt=dt, output_file=output_file)
+                    self.interaction_kernel.execute(
                         self, endtime=cur_end_time, dt=dt, output_file=output_file)
                     cur_time += dt
                     if dt == 0:

@@ -183,13 +183,13 @@ def compute_nemo_particle_advection(field_set, mode, lonp, latp):
 
     def periodicBC(particle, fieldSet, time):
         if particle.lon > 15.0:
-            particle.lon -= 15.0
+            particle_dlon -= 15.0  # noqa
         if particle.lon < 0:
-            particle.lon += 15.0
+            particle_dlon += 15.0  # noqa
         if particle.lat > 60.0:
-            particle.lat -= 11.0
+            particle_dlat -= 11.0  # noqa
         if particle.lat < 49.0:
-            particle.lat += 11.0
+            particle_dlat += 11.0  # noqa
 
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile("nemo_particles_chunk", pset, outputdt=delta(days=1))

@@ -260,15 +260,13 @@ def AdvectionAnalytical(particle, fieldset, time):
     rs_x = compute_rs(ds_x, xsi, B_x, delta_x, s_min)
     rs_y = compute_rs(ds_y, eta, B_y, delta_y, s_min)
 
-    particle.lon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3]  # TODO ignore warning that particle.lon is changed in kernel
-    particle.lat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3]
+    particle_dlon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3] - particle.lon  # noqa
+    particle_dlat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3] - particle.lat  # noqa
 
     if withW:
         rs_z = compute_rs(ds_z, zeta, B_z, delta_z, s_min)
         particle.depth = (1.-rs_z) * pz[0] + rs_z * pz[1]
 
-    # update the passed time for the main loop
-    particle.time_towrite += particle.time + particle.dt
     if particle.dt > 0:
         particle.dt = max(direction * s_min * (dxdy * dz), 1e-7)
     else:
