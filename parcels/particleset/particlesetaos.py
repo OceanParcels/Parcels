@@ -242,9 +242,10 @@ class ParticleSetAOS(BaseParticleSet):
             'lon lat depth precision should be set to either np.float32 or np.float64'
 
         for kwvar in kwargs:
-            kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
-            assert lon.size == kwargs[kwvar].size, (
-                f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
+            if kwvar not in ['partition_function']:
+                kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
+                assert lon.size == kwargs[kwvar].size, (
+                    f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -270,7 +271,8 @@ class ParticleSetAOS(BaseParticleSet):
             self.repeatlat = copy(self._collection.lat)
             self.repeatdepth = copy(self._collection.depth)
             for kwvar in kwargs:
-                self.repeatkwargs[kwvar] = copy(getattr(self._collection, kwvar))
+                if kwvar not in ['partition_function']:
+                    self.repeatkwargs[kwvar] = copy(getattr(self._collection, kwvar))
 
         if self.repeatdt:
             if MPI and self._collection.pu_indicators is not None:
