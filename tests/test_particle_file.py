@@ -6,13 +6,7 @@ import pytest
 import xarray as xr
 from zarr.storage import MemoryStore
 
-from parcels import (
-    FieldSet,
-    JITParticle,
-    ParticleSet,
-    ScipyParticle,
-    Variable,
-)
+from parcels import FieldSet, JITParticle, ParticleSet, ScipyParticle, Variable
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 

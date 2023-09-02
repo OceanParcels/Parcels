@@ -8,8 +8,8 @@ from os import path
 
 import cftime
 import numpy as np
-from tqdm import tqdm
 import xarray as xr
+from tqdm import tqdm
 
 try:
     from mpi4py import MPI
@@ -40,7 +40,6 @@ from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_arra
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
-
 
 __all__ = ['ParticleSet']
 

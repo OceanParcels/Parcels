@@ -1,7 +1,8 @@
 import inspect
-import numpy as np
 from collections import defaultdict
 from sys import version_info
+
+import numpy as np
 
 try:
     from mpi4py import MPI

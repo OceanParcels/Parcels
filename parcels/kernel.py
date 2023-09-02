@@ -22,12 +22,12 @@ try:
 except:
     MPI = None
 
+import parcels.rng as ParcelsRandom  # noqa
 from parcels.application_kernels.advection import AdvectionAnalytical, AdvectionRK4_3D
 from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
 from parcels.compilation.codegenerator import LoopGenerator
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import GridCode
-import parcels.rng as ParcelsRandom  # noqa
 from parcels.tools.global_statics import get_cache_dir
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
