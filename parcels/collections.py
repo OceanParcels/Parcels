@@ -1,19 +1,14 @@
+from abc import ABC
 from bisect import bisect_left
 from ctypes import POINTER, Structure
 from operator import attrgetter
 
 import numpy as np
 
-from parcels.collection.collections import ParticleCollection
-from parcels.collection.iterators import (
-    BaseParticleAccessor,
-    BaseParticleCollectionIterable,
-    BaseParticleCollectionIterator,
-)
-from parcels.particle import JITParticle, ScipyParticle  # noqa
+from parcels.particle import ScipyParticle
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import NotTestedError
+from parcels.tools.statuscodes import NotTestedError, StatusCode
 
 try:
     from mpi4py import MPI
@@ -26,7 +21,10 @@ if MPI:
         KMeans = None
 
 
-class ParticleCollectionSOA(ParticleCollection):
+class ParticleCollection(ABC):
+    _ncount = -1
+    _iterator = None
+    _riterator = None
 
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
@@ -36,7 +34,6 @@ class ParticleCollectionSOA(ParticleCollection):
             number of grids in the fieldset of the overarching ParticleSet - required for initialising the
             field references of the ctypes-link of particles that are allocated
         """
-        super(ParticleCollection, self).__init__()
 
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
         pid = pid_orig + pclass.lastID
@@ -163,10 +160,85 @@ class ParticleCollectionSOA(ParticleCollection):
 
     def __del__(self):
         """Collection - Destructor"""
-        super().__del__()
+        pass
+
+    @property
+    def pu_indicators(self):
+        """
+        The 'pu_indicator' is an [array or dictionary]-of-indicators, where each indicator entry tells per item
+        (i.e. particle) in the collection to which processing unit (PU) in a parallelised setup it belongs to.
+        """
+        return self._pu_indicators
+
+    @property
+    def pu_centers(self):
+        """
+        The 'pu_centers" is an array of 2D/3D vectors storing the center of each cluster-of-particle partion that
+        is handled by the respective PU. Storing the centers allows us to only run the initial kMeans segmentation
+        once and then, on later particle additions, just (i) makes a closest-distance calculation, (ii) attaches the
+        new particle to the closest cluster and (iii) updates the new cluster center. The last part may require at some
+        point to merge overlaying clusters and them split them again in equi-sized partions.
+        """
+        return self._pu_centers
+
+    @property
+    def pclass(self):
+        """Stores the actual class type of the particles allocated and managed in this collection."""
+        return self._pclass
+
+    @property
+    def ptype(self):
+        """
+        'ptype' returns an instance of the particular type of class 'ParticleType' of the particle class of the particles
+        in this collection.
+
+        basically:
+        pytpe -> pclass().getPType()
+        """
+        return self._ptype
+
+    @property
+    def lonlatdepth_dtype(self):
+        """
+        'lonlatdepth_dtype' stores the numeric data type that is used to represent the lon, lat and depth of a particle.
+        This can be either 'float32' (default) or 'float64'
+        """
+        return self._lonlatdepth_dtype
+
+    @property
+    def data(self):
+        """
+        'data' is a reference to the actual barebone-storage of the particle data, and thus depends directly on the
+        specific collection in question.
+        """
+        return self._data
+
+    @property
+    def particle_data(self):
+        """
+        'particle_data' is a reference to the actual barebone-storage of the particle data, and thus depends directly on the
+        specific collection in question. This property is just available for convenience and backward-compatibility, and
+        this returns the same as 'data'.
+        """
+        return self._data
+
+    @property
+    def ncount(self):
+        return self._ncount
+
+    def __len__(self):
+        """This function returns the length, in terms of 'number of elements, of a collection."""
+        return self._ncount
+
+    def empty(self):
+        """
+        This function retuns a boolean value, expressing if a collection is emoty (i.e. does not [anymore] contain any
+        elements) or not.
+        """
+        return (self._ncount < 1)
 
     def iterator(self):
-        self._iterator = ParticleCollectionIteratorSOA(self)
+        self._iterator = ParticleCollectionIterator(self)
         return self._iterator
 
     def __iter__(self):
@@ -176,7 +248,7 @@ class ParticleCollectionSOA(ParticleCollection):
         return self.iterator()
 
     def reverse_iterator(self):
-        self._riterator = ParticleCollectionIteratorSOA(self, True)
+        self._riterator = ParticleCollectionIterator(self, True)
         return self._riterator
 
     def __reversed__(self):
@@ -221,9 +293,8 @@ class ParticleCollectionSOA(ParticleCollection):
         In cases where a get-by-index would result in a performance malus, it is highly-advisable to use a different
         get function, e.g. get-by-ID.
         """
-        super().get_single_by_index(index)
-
-        return ParticleAccessorSOA(self, index)
+        assert type(index) in [int, np.int32, np.intp], f"Trying to get a particle by index, but index {index} is not a 32-bit integer - invalid operation."
+        return ParticleAccessor(self, index)
 
     def get_single_by_object(self, particle_obj):
         """
@@ -239,8 +310,7 @@ class ParticleCollectionSOA(ParticleCollection):
         has the nice property of being stored in an ordered list (if the
         collection is sorted)
         """
-        super().get_single_by_object(particle_obj)
-
+        assert (isinstance(particle_obj, ParticleAccessor) or isinstance(particle_obj, ScipyParticle))
         return self.get_single_by_ID(particle_obj.id)
 
     def get_single_by_ID(self, id):
@@ -254,7 +324,7 @@ class ParticleCollectionSOA(ParticleCollection):
         This function uses binary search if we know the ID list to be sorted, and linear search otherwise. We assume
         IDs are unique.
         """
-        super().get_single_by_ID(id)
+        assert type(id) in [np.int64, np.uint64], f"Trying to get a particle by ID, but ID {id} is not a 64-bit (signed or unsigned) iteger - invalid operation."
 
         # Use binary search if the collection is sorted, linear search otherwise
         index = -1
@@ -272,7 +342,8 @@ class ParticleCollectionSOA(ParticleCollection):
         This function gets particles from this collection that are themselves stored in another object of an equi-
         structured ParticleCollection.
         """
-        super().get_same(same_class)
+        assert same_class is not None, f"Trying to get another {type(self)} from this one, but the other one is None - invalid operation."
+        assert type(same_class) is type(self)
         raise NotImplementedError
 
     def get_collection(self, pcollection):
@@ -281,7 +352,9 @@ class ParticleCollectionSOA(ParticleCollection):
         is differently structured than this one. That means the other-collection has to be re-formatted first in an
         intermediary format.
         """
-        super().get_collection(pcollection)
+        assert pcollection is not None, "Trying to get another particle collection from this one, but the other one is None - invalid operation."
+        assert isinstance(pcollection, ParticleCollection), "Trying to get another particle collection from this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
+        assert type(pcollection) is not type(self)
         raise NotImplementedError
 
     def get_multi_by_PyCollection_Particles(self, pycollectionp):
@@ -294,7 +367,7 @@ class ParticleCollectionSOA(ParticleCollection):
         For collections where get-by-object incurs a performance malus, it is advisable to multi-get particles
         by indices or IDs.
         """
-        super().get_multi_by_PyCollection_Particles(pycollectionp)
+        assert type(pycollectionp) in [list, dict, np.ndarray], "Trying to get a collection of Particles, but their container is not a valid Python-collection - invalid operation."
         raise NotImplementedError
 
     def get_multi_by_indices(self, indices):
@@ -304,10 +377,15 @@ class ParticleCollectionSOA(ParticleCollection):
         shall rather use a get-via-object-reference strategy.
         """
         raise NotTestedError
-        # super().get_multi_by_indices(indices)
+        # assert indices is not None, "Trying to get particles by their collection indices, but the index list is None - invalid operation."
+        # assert type(indices) in [list, dict, np.ndarray], "Trying to get particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
+        # if type(indices) is not dict:
+        #     assert len(indices) == 0 or type(indices[0]) in [int, np.int32, np.intp], "Trying to get particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+        # else:
+        #     assert len(list(indices.values())) == 0 or type(list(indices.values())[0]) in [int, np.int32, np.intp], "Trying to get particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
         # if type(indices) is dict:
         #     indices = list(indices.values())
-        # return ParticleCollectionIteratorSOA(self, subset=indices)
+        # return ParticleCollectionIterator(self, subset=indices)
 
     def get_multi_by_IDs(self, ids):
         """
@@ -322,7 +400,12 @@ class ParticleCollectionSOA(ParticleCollection):
         in the look-up. The collection maintains a `sorted` flag to indicate whether this assumption holds.
         """
         raise NotTestedError
-        # super().get_multi_by_IDs(ids)
+        # assert ids is not None, "Trying to get particles by their IDs, but the ID list is None - invalid operation."
+        # assert type(ids) in [list, dict, np.ndarray], "Trying to get particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
+        # if type(ids) is not dict:
+        #     assert len(ids) == 0 or type(ids[0]) in [np.int64, np.uint64], "Trying to get particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
+        # else:
+        #     assert len(list(ids.values())) == 0 or type(list(ids.values())[0]) in [np.int64, np.uint64], "Trying to get particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
         # if type(ids) is dict:
         #     ids = list(ids.values())
         #
@@ -386,7 +469,9 @@ class ParticleCollectionSOA(ParticleCollection):
         Adds another, differently structured ParticleCollection to this collection. This is done by, for example,
         appending/adding the items of the other collection to this collection.
         """
-        super().add_collection(pcollection)
+        assert pcollection is not None, "Trying to add another particle collection to this one, but the other one is None - invalid operation."
+        assert isinstance(pcollection, ParticleCollection), "Trying to add another particle collection to this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
+        assert type(pcollection) is not type(self)
         raise NotImplementedError
 
     def add_single(self, particle_obj):
@@ -394,7 +479,7 @@ class ParticleCollectionSOA(ParticleCollection):
         Adding a single Particle to the collection - either as a 'Particle; object in parcels itself, or
         via its ParticleAccessor.
         """
-        super().add_single(particle_obj)
+        assert (isinstance(particle_obj, ParticleAccessor) or isinstance(particle_obj, ScipyParticle))
         raise NotImplementedError
 
     def add_same(self, same_class):
@@ -403,7 +488,8 @@ class ParticleCollectionSOA(ParticleCollection):
         both collections. The fact that they are of the same ParticleCollection's derivative simplifies
         parsing and concatenation.
         """
-        super().add_same(same_class)
+        assert same_class is not None, f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
+        assert type(same_class) is type(self)
 
         if same_class.ncount == 0:
             return
@@ -436,6 +522,8 @@ class ParticleCollectionSOA(ParticleCollection):
         with 'a' and 'b' begin the two equi-structured objects (or: 'b' being and individual object).
         This operation is equal to an in-place addition of (an) element(s).
         """
+        assert same_class is not None
+        assert type(same_class) is type(self), f"Trying to increment-add collection of type {type(same_class)} into collection of type {type(self)} - invalid operation."
         self.add_same(same_class)
         return self
 
@@ -492,6 +580,23 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         self.delete_by_index(key)
 
+    def delete(self, key):
+        """
+        This is the generic super-method to indicate obejct deletion of a specific object from this collection.
+
+        Comment/Annotation:
+        Functions for deleting multiple objects are more specialised than just a for-each loop of single-item deletion,
+        because certain data structures can delete multiple objects in-bulk faster with specialised function than making a
+        roundtrip per-item delete operation. Because of the sheer size of those containers and the resulting
+        performance demands, we need to make use of those specialised 'del' functions, where available.
+        """
+        if key is None:
+            return
+        if type(key) in [int, np.int32, np.intp]:
+            self.delete_by_index(key)
+        elif type(key) in [np.int64, np.uint64]:
+            self.delete_by_ID(key)
+
     def delete_by_index(self, index):
         """
         This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
@@ -500,7 +605,7 @@ class ParticleCollectionSOA(ParticleCollection):
         In result, the particle still remains in the collection.
         """
         raise NotTestedError
-        # super().delete_by_index(index)
+        # assert type(index) in [int, np.int32, np.intp], f"Trying to delete a particle by index, but index {index} is not a 32-bit integer - invalid operation."
         #
         # self._data['state'][index] = StatusCode.Delete
 
@@ -512,7 +617,7 @@ class ParticleCollectionSOA(ParticleCollection):
         In result, the particle still remains in the collection.
         """
         raise NotTestedError
-        # super().delete_by_ID(id)
+        # assert type(id) in [np.int64, np.uint64], f"Trying to delete a particle by ID, but ID {id} is not a 64-bit (signed or unsigned) integer - invalid operation."
         #
         # # Use binary search if the collection is sorted, linear search otherwise
         # index = -1
@@ -536,7 +641,7 @@ class ParticleCollectionSOA(ParticleCollection):
         In cases where a removal-by-index would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-object or remove-by-ID.
         """
-        super().remove_single_by_index(index)
+        assert type(index) in [int, np.int32, np.intp], f"Trying to remove a particle by index, but index {index} is not a 32-bit integer - invalid operation."
 
         for d in self._data:
             self._data[d] = np.delete(self._data[d], index, axis=0)
@@ -552,7 +657,7 @@ class ParticleCollectionSOA(ParticleCollection):
         In cases where a removal-by-object would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-index or remove-by-ID.
         """
-        super().remove_single_by_object(particle_obj)
+        assert (isinstance(particle_obj, ParticleAccessor) or isinstance(particle_obj, ScipyParticle))
 
         # We cannot look for the object directly, so we will look for one of
         # its properties that has the nice property of being stored in an
@@ -569,7 +674,7 @@ class ParticleCollectionSOA(ParticleCollection):
         removal functions, e.g. remove-by-object or remove-by-index.
         """
         raise NotTestedError
-        # super().remove_single_by_ID(id)
+        # assert type(id) in [np.int64, np.uint64], f"Trying to remove a particle by ID, but ID {id} is not a 64-bit (signed or unsigned) iteger - invalid operation."
         #
         # # Use binary search if the collection is sorted, linear search otherwise
         # index = -1
@@ -589,7 +694,8 @@ class ParticleCollectionSOA(ParticleCollection):
         structured ParticleCollection. As the structures of both collections are the same, a more efficient M-in-N
         removal can be applied without an in-between reformatting.
         """
-        super().remove_same(same_class)
+        assert same_class is not None, f"Trying to remove another {type(self)} from this one, but the other one is None - invalid operation."
+        assert type(same_class) is type(self)
         raise NotImplementedError
 
     def remove_collection(self, pcollection):
@@ -601,7 +707,9 @@ class ParticleCollectionSOA(ParticleCollection):
         lists, dicts, numpy's nD arrays & dense arrays). Despite this, due to the reformatting, in some cases it may
         be more efficient to remove items then rather by IDs oder indices.
         """
-        super().remove_collection(pcollection)
+        assert pcollection is not None, "Trying to remove another particle collection from this one, but the other one is None - invalid operation."
+        assert isinstance(pcollection, ParticleCollection), "Trying to remove another particle collection from this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
+        assert type(pcollection) is not type(self)
         raise NotImplementedError
 
     def remove_multi_by_PyCollection_Particles(self, pycollectionp):
@@ -614,7 +722,7 @@ class ParticleCollectionSOA(ParticleCollection):
         For collections where removal-by-object incurs a performance malus, it is advisable to multi-remove particles
         by indices or IDs.
         """
-        super().remove_multi_by_PyCollection_Particles(pycollectionp)
+        assert type(pycollectionp) in [list, dict, np.ndarray], "Trying to remove a collection of Particles, but their container is not a valid Python-collection - invalid operation."
         raise NotImplementedError
 
     def remove_multi_by_indices(self, indices):
@@ -623,7 +731,12 @@ class ParticleCollectionSOA(ParticleCollection):
         collections (e.g. numpy's ndarrays, dense matrices and dense arrays), whereas internally ordered collections
         shall rather use a removal-via-object-reference strategy.
         """
-        super().remove_multi_by_indices(indices)
+        assert indices is not None, "Trying to remove particles by their collection indices, but the index list is None - invalid operation."
+        assert type(indices) in [list, dict, np.ndarray], "Trying to remove particles by their indices, but the index container is not a valid Python-collection - invalid operation."
+        if type(indices) is not dict:
+            assert len(indices) == 0 or type(indices[0]) in [int, np.int32, np.intp], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+        else:
+            assert len(list(indices.values())) == 0 or type(list(indices.values())[0]) in [int, np.int32, np.intp], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
         if type(indices) is dict:
             indices = list(indices.values())
 
@@ -639,7 +752,12 @@ class ParticleCollectionSOA(ParticleCollection):
         by-objects or removal-by-indices scheme.
         """
         raise NotTestedError
-        # super().remove_multi_by_IDs(ids)
+        # assert ids is not None, "Trying to remove particles by their IDs, but the ID list is None - invalid operation."
+        # assert type(ids) in [list, dict, np.ndarray], "Trying to remove particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
+        # if type(ids) is not dict:
+        #     assert len(ids) == 0 or type(ids[0]) in [np.int64, np.uint64], "Trying to remove particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
+        # else:
+        #     assert len(list(ids.values())) == 0 or type(list(ids.values())[0]) in [np.int64, np.uint64], "Trying to remove particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
         # if type(ids) is dict:
         #     ids = list(ids.values())
         #
@@ -671,7 +789,7 @@ class ParticleCollectionSOA(ParticleCollection):
         #     return
         # if type(other) is type(self):
         #     self.remove_same(other)
-        # elif (isinstance(other, BaseParticleAccessor)
+        # elif (isinstance(other, ParticleAccessor)
         #       or isinstance(other, ScipyParticle)):
         #     self.remove_single_by_object(other)
         # else:
@@ -686,7 +804,7 @@ class ParticleCollectionSOA(ParticleCollection):
         If index is out of bounds, throws and OutOfRangeException.
         If Particle cannot be retrieved, returns None.
         """
-        super().pop_single_by_index(index)
+        assert type(index) in [int, np.int32, np.intp], f"Trying to pop a particle by index, but index {index} is not a 32-bit integer - invalid operation."
         raise NotImplementedError
 
     def pop_single_by_ID(self, id):
@@ -694,7 +812,7 @@ class ParticleCollectionSOA(ParticleCollection):
         Searches for Particle with ID 'id', removes that Particle from the Collection and returns that Particle (or: ParticleAccessor).
         If Particle cannot be retrieved (e.g. because the ID is not available), returns None.
         """
-        super().pop_single_by_ID(id)
+        assert type(id) in [np.int64, np.uint64], f"Trying to pop a particle by ID, but ID {id} is not a 64-bit (signed or unsigned) iteger - invalid operation."
         raise NotImplementedError
 
     def pop_multi_by_indices(self, indices):
@@ -706,7 +824,12 @@ class ParticleCollectionSOA(ParticleCollection):
         If index in 'indices' is out of bounds, throws and OutOfRangeException.
         If Particles cannot be retrieved, returns None.
         """
-        super().pop_multi_by_indices(indices)
+        assert indices is not None, "Trying to pop particles by their collection indices, but the index list is None - invalid operation."
+        assert type(indices) in [list, dict, np.ndarray], "Trying to pop particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
+        if type(indices) is not dict:
+            assert len(indices) == 0 or type(indices[0]) in [int, np.int32, np.intp], "Trying to pop particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+        else:
+            assert len(list(indices.values())) == 0 or type(list(indices.values())[0]) in [int, np.int32, np.intp], "Trying to pop particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
         raise NotImplementedError
 
     def pop_multi_by_IDs(self, ids):
@@ -714,7 +837,12 @@ class ParticleCollectionSOA(ParticleCollection):
         Searches for Particles with the IDs registered in 'ids', removes the Particles from the Collection and returns the Particles (or: their ParticleAccessors).
         If Particles cannot be retrieved (e.g. because the IDs are not available), returns None.
         """
-        super().pop_multi_by_IDs(ids)
+        assert ids is not None, "Trying to pop particles by their IDs, but the ID list is None - invalid operation."
+        assert type(ids) in [list, dict, np.ndarray], "Trying to pop particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
+        if type(ids) is not dict:
+            assert len(ids) == 0 or type(ids[0]) in [np.int64, np.uint64], "Trying to pop particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
+        else:
+            assert len(list(ids.values())) == 0 or type(list(ids.values())[0]) in [np.int64, np.uint64], "Trying to pop particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
         raise NotImplementedError
 
     def _clear_deleted_(self):
@@ -766,6 +894,13 @@ class ParticleCollectionSOA(ParticleCollection):
         results from a collection split or this very collection, containing the newly-split particles.
         """
         raise NotImplementedError
+
+    def __str__(self):
+        """
+        This function returns and informative string about the collection (i.e. the type of collection) and a summary
+        of its internal, distinct values.
+        """
+        return f"ParticleCollection - N: {self._ncount}"
 
     def __sizeof__(self):
         """
@@ -857,7 +992,7 @@ class ParticleCollectionSOA(ParticleCollection):
             raise SyntaxError(f'Could not change the write status of {var}, because it is not a Variable name')
 
 
-class ParticleAccessorSOA(BaseParticleAccessor):
+class ParticleAccessor(ABC):
     """Wrapper that provides access to particle data in the collection,
     as if interacting with the particle itself.
 
@@ -872,13 +1007,14 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         of the ParticleCollecion.
     """
 
+    _pcoll = None
     _index = 0
 
     def __init__(self, pcoll, index):
         """Initializes the ParticleAccessor to provide access to one
         specific particle.
         """
-        super().__init__(pcoll)
+        self._pcoll = pcoll
         self._index = index
 
     def __getattr__(self, name):
@@ -895,8 +1031,8 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         any
             The value of the particle attribute in the underlying collection data array.
         """
-        if name in BaseParticleAccessor.__dict__.keys():
-            result = super().__getattr__(name)
+        if name in self.__dict__.keys():
+            result = self.__getattribute__(name)
         elif name in type(self).__dict__.keys():
             result = object.__getattribute__(self, name)
         else:
@@ -914,8 +1050,8 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         value : any
             Value that will be assigned to the particle attribute in the underlying collection data array.
         """
-        if name in BaseParticleAccessor.__dict__.keys():
-            super().__setattr__(name, value)
+        if name in self.__dict__.keys():
+            self.__setattr__(name, value)
         elif name in type(self).__dict__.keys():
             object.__setattr__(self, name, value)
         else:
@@ -934,14 +1070,33 @@ class ParticleAccessorSOA(BaseParticleAccessor):
                 str += f"{var.name}={getattr(self, var.name):f}, "
         return str + f"time={time_string})"
 
+    def delete(self):
+        """Signal the underlying particle for deletion."""
+        self.state = StatusCode.Delete
 
-class ParticleCollectionIterableSOA(BaseParticleCollectionIterable):
+    def set_state(self, state):
+        """Syntactic sugar for changing the state of the underlying particle."""
+        self.state = state
+
+    def succeeded(self):
+        self.state = StatusCode.Success
+
+    def isComputed(self):
+        return self.state == StatusCode.Success
+
+    def reset_state(self):
+        self.state = StatusCode.Evaluate
+
+
+class ParticleCollectionIterable(ABC):
 
     def __init__(self, pcoll, reverse=False, subset=None):
-        super().__init__(pcoll, reverse, subset)
+        self._pcoll_immutable = pcoll
+        self._reverse = reverse
+        self._subset = subset
 
     def __iter__(self):
-        return ParticleCollectionIteratorSOA(pcoll=self._pcoll_immutable, reverse=self._reverse, subset=self._subset)
+        return ParticleCollectionIterator(pcoll=self._pcoll_immutable, reverse=self._reverse, subset=self._subset)
 
     def __len__(self):
         """Implementation needed for particle-particle interaction"""
@@ -949,10 +1104,10 @@ class ParticleCollectionIterableSOA(BaseParticleCollectionIterable):
 
     def __getitem__(self, items):
         """Implementation needed for particle-particle interaction"""
-        return ParticleAccessorSOA(self._pcoll_immutable, self._subset[items])
+        return ParticleAccessor(self._pcoll_immutable, self._subset[items])
 
 
-class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
+class ParticleCollectionIterator(ABC):
     """Iterator for looping over the particles in the ParticleCollection.
 
     Parameters
@@ -993,9 +1148,8 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
         self._head = None
         self._tail = None
         if len(self._indices) > 0:
-            self._head = ParticleAccessorSOA(pcoll, self._indices[0])
-            self._tail = ParticleAccessorSOA(pcoll,
-                                             self._indices[self.max_len - 1])
+            self._head = ParticleAccessor(pcoll, self._indices[0])
+            self._tail = ParticleAccessor(pcoll, self._indices[self.max_len - 1])
         self.p = self._head
 
     def __next__(self):
@@ -1003,12 +1157,21 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
         ParticleSet.
         """
         if self._index < self.max_len:
-            self.p = ParticleAccessorSOA(self._pcoll,
-                                         self._indices[self._index])
+            self.p = ParticleAccessor(self._pcoll, self._indices[self._index])
             self._index += 1
             return self.p
 
         raise StopIteration
+
+    @property
+    def head(self):
+        """Returns a ParticleAccessor for the first particle in the ParticleSet."""
+        return self._head
+
+    @property
+    def tail(self):
+        """Returns a ParticleAccessor for the last particle in the ParticleSet."""
+        return self._tail
 
     @property
     def current(self):

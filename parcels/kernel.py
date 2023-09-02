@@ -1,8 +1,12 @@
 import functools
 import inspect
+import math  # noqa
+import random  # noqa
 import re
 import types
-from ast import FunctionDef
+from ast import FunctionDef, parse
+from copy import deepcopy
+from ctypes import byref, c_double, c_int
 from hashlib import md5
 from os import path, remove
 from sys import platform, version_info
@@ -13,55 +17,32 @@ import numpy as np
 import numpy.ctypeslib as npct
 from numpy import ndarray
 
-from parcels.tools.loggers import logger
-
 try:
     from mpi4py import MPI
 except:
     MPI = None
 
 from parcels.application_kernels.advection import AdvectionAnalytical, AdvectionRK4_3D
-
-# === import just necessary field classes to perform setup checks === #
+from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
+from parcels.compilation.codegenerator import LoopGenerator
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import GridCode
+import parcels.rng as ParcelsRandom  # noqa
 from parcels.tools.global_statics import get_cache_dir
-from parcels.tools.statuscodes import StatusCode
+from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import (
+    FieldOutOfBoundError,
+    FieldOutOfBoundSurfaceError,
+    FieldSamplingError,
+    StatusCode,
+    TimeExtrapolationError,
+)
 
-__all__ = ['BaseKernel']
-
-
-re_indent = re.compile(r"^(\s+)")
+__all__ = ['Kernel', 'BaseKernel']
 
 
 class BaseKernel:
-    """Base super class for base Kernel objects that encapsulates auto-generated code.
-
-    Parameters
-    ----------
-    fieldset : parcels.Fieldset
-        FieldSet object providing the field information (possibly None)
-    ptype :
-        PType object for the kernel particle
-    pyfunc :
-        (aggregated) Kernel function
-    funcname : str
-        function name
-    delete_cfiles : bool
-        Whether to delete the C-files after compilation in JIT mode (default is True)
-
-    Notes
-    -----
-    A Kernel is either created from a compiled <function ...> object
-    or the necessary information (funcname, funccode, funcvars) is provided.
-    The py_ast argument may be derived from the code string, but for
-    concatenation, the merged AST plus the new header definition is required.
-    """
-
-    _pyfunc = None
-    _fieldset = None
-    _ptype = None
-    funcname = None
+    """Superclass for 'normal' and Interactive Kernels"""
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None,
                  c_include="", delete_cfiles=True):
@@ -141,10 +122,158 @@ class BaseKernel:
     def fix_indentation(string):
         """Fix indentation to allow in-lined kernel definitions."""
         lines = string.split('\n')
-        indent = re_indent.match(lines[0])
+        indent = re.compile(r"^(\s+)").match(lines[0])
         if indent:
             lines = [line.replace(indent.groups()[0], '', 1) for line in lines]
         return "\n".join(lines)
+
+    def remove_deleted(self, pset):
+        """Utility to remove all particles that signalled deletion."""
+        bool_indices = pset.collection.state == StatusCode.Delete
+        indices = np.where(bool_indices)[0]
+        if len(indices) > 0 and self.fieldset.particlefile is not None:
+            self.fieldset.particlefile.write(pset, None, indices=indices)
+        pset.remove_indices(indices)
+
+
+class Kernel(BaseKernel):
+    """Kernel object that encapsulates auto-generated code.
+
+    Parameters
+    ----------
+    fieldset : parcels.Fieldset
+        FieldSet object providing the field information (possibly None)
+    ptype :
+        PType object for the kernel particle
+    pyfunc :
+        (aggregated) Kernel function
+    funcname : str
+        function name
+    delete_cfiles : bool
+        Whether to delete the C-files after compilation in JIT mode (default is True)
+
+    Notes
+    -----
+    A Kernel is either created from a compiled <function ...> object
+    or the necessary information (funcname, funccode, funcvars) is provided.
+    The py_ast argument may be derived from the code string, but for
+    concatenation, the merged AST plus the new header definition is required.
+    """
+
+    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None,
+                 c_include="", delete_cfiles=True):
+        super().__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode,
+                         py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
+
+        # Derive meta information from pyfunc, if not given
+        self.check_fieldsets_in_kernels(pyfunc)
+
+        if funcvars is not None:
+            self.funcvars = funcvars
+        elif hasattr(pyfunc, '__code__'):
+            self.funcvars = list(pyfunc.__code__.co_varnames)
+        else:
+            self.funcvars = None
+        self.funccode = funccode or inspect.getsource(pyfunc.__code__)
+        # Parse AST if it is not provided explicitly
+        self.py_ast = py_ast or parse(BaseKernel.fix_indentation(self.funccode)).body[0]
+        if pyfunc is None:
+            # Extract user context by inspecting the call stack
+            stack = inspect.stack()
+            try:
+                user_ctx = stack[-1][0].f_globals
+                user_ctx['math'] = globals()['math']
+                user_ctx['ParcelsRandom'] = globals()['ParcelsRandom']
+                user_ctx['random'] = globals()['random']
+                user_ctx['StatusCode'] = globals()['StatusCode']
+            except:
+                logger.warning("Could not access user context when merging kernels")
+                user_ctx = globals()
+            finally:
+                del stack  # Remove cyclic references
+            # Compile and generate Python function from AST
+            py_mod = parse("")
+            py_mod.body = [self.py_ast]
+            exec(compile(py_mod, "<ast>", "exec"), user_ctx)
+            self._pyfunc = user_ctx[self.funcname]
+        else:
+            self._pyfunc = pyfunc
+
+        numkernelargs = self.check_kernel_signature_on_version()
+
+        assert numkernelargs == 3, \
+            'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
+
+        self.name = f"{ptype.name}{self.funcname}"
+
+        # Generate the kernel function and add the outer loop
+        if self.ptype.uses_jit:
+            kernelgen = KernelGenerator(fieldset, ptype)
+            kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
+                                              self.funcvars)
+            self.field_args = kernelgen.field_args
+            self.vector_field_args = kernelgen.vector_field_args
+            fieldset = self.fieldset
+            for f in self.vector_field_args.values():
+                Wname = f.W.ccode_name if f.W else 'not_defined'
+                for sF_name, sF_component in zip([f.U.ccode_name, f.V.ccode_name, Wname], ['U', 'V', 'W']):
+                    if sF_name not in self.field_args:
+                        if sF_name != 'not_defined':
+                            self.field_args[sF_name] = getattr(f, sF_component)
+            self.const_args = kernelgen.const_args
+            loopgen = LoopGenerator(fieldset, ptype)
+            if path.isfile(self._c_include):
+                with open(self._c_include) as f:
+                    c_include_str = f.read()
+            else:
+                c_include_str = self._c_include
+            self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
+                                          kernel_ccode, c_include_str)
+
+            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
+            if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
+                self.dyn_srcs = src_file_or_files
+            else:
+                self.src_file = src_file_or_files
+
+    def __del__(self):
+        # Clean-up the in-memory dynamic linked libraries.
+        # This is not really necessary, as these programs are not that large, but with the new random
+        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
+        try:
+            self.remove_lib()
+        except:
+            pass
+        self._fieldset = None
+        self.field_args = None
+        self.const_args = None
+        self.funcvars = None
+        self.funccode = None
+
+    @property
+    def ptype(self):
+        return self._ptype
+
+    @property
+    def pyfunc(self):
+        return self._pyfunc
+
+    @property
+    def fieldset(self):
+        return self._fieldset
+
+    @property
+    def c_include(self):
+        return self._c_include
+
+    @property
+    def _cache_key(self):
+        field_keys = ""
+        if self.field_args is not None:
+            field_keys = "-".join(
+                [f"{name}:{field.units.__class__.__name__}" for name, field in self.field_args.items()])
+        key = self.name + self.ptype._cache_key + field_keys + ('TIME:%f' % ostime())
+        return md5(key.encode('utf-8')).hexdigest()
 
     def add_scipy_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
@@ -205,7 +334,7 @@ class BaseKernel:
 
     def remove_lib(self):
         if self._lib is not None:
-            BaseKernel.cleanup_unload_lib(self._lib)
+            self.cleanup_unload_lib(self._lib)
             del self._lib
             self._lib = None
 
@@ -219,7 +348,7 @@ class BaseKernel:
         if self.log_file is not None:
             all_files_array.append(self.log_file)
         if self.lib_file is not None and all_files_array is not None and self.delete_cfiles is not None:
-            BaseKernel.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
+            self.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
 
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
@@ -356,15 +485,6 @@ class BaseKernel:
             except:
                 pass
 
-    def remove_deleted(self, pset):
-        """
-        Utility to remove all particles that signalled deletion.
-
-        This version is generally applicable to all structures and collections
-        """
-        indices = [i for i, p in enumerate(pset) if p.state == StatusCode.Delete]
-        pset.remove_indices(indices)
-
     def load_fieldset_jit(self, pset):
         """Updates the loaded fields of pset's fieldset according to the chunk information within their grids."""
         if pset.fieldset is not None:
@@ -396,6 +516,92 @@ class BaseKernel:
                     g.lon = np.array(g.lon, order='C')
                 if not g.lat.flags.c_contiguous:
                     g.lat = np.array(g.lat, order='C')
+
+    def execute_jit(self, pset, endtime, dt):
+        """Invokes JIT engine to perform the core update loop."""
+        self.load_fieldset_jit(pset)
+
+        fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
+        fargs += [c_double(f) for f in self.const_args.values()]
+        particle_data = byref(pset.ctypes_struct)
+        return self._function(c_int(len(pset)), particle_data,
+                              c_double(endtime), c_double(dt), *fargs)
+
+    def execute_python(self, pset, endtime, dt):
+        """Performs the core update loop via Python."""
+        # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
+        sign_dt = np.sign(dt)
+
+        if self.fieldset is not None:
+            for f in self.fieldset.get_fields():
+                if isinstance(f, (VectorField, NestedField)):
+                    continue
+                f.data = np.array(f.data)
+
+        if not self.scipy_positionupdate_kernels_added:
+            self.add_scipy_positionupdate_kernels()
+            self.scipy_positionupdate_kernels_added = True
+
+        for p in pset:
+            self.evaluate_particle(p, endtime, sign_dt)
+
+    def execute(self, pset, endtime, dt, output_file=None):
+        """Execute this Kernel over a ParticleSet for several timesteps."""
+        pset.collection.state[:] = StatusCode.Evaluate
+
+        if abs(dt) < 1e-6:
+            logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
+
+        if pset.fieldset is not None:
+            for g in pset.fieldset.gridset.grids:
+                if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
+                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
+                                            g.chunk_deprecated, g.load_chunk)
+
+        # Execute the kernel over the particle set
+        if self.ptype.uses_jit:
+            self.execute_jit(pset, endtime, dt)
+        else:
+            self.execute_python(pset, endtime, dt)
+
+        # Remove all particles that signalled deletion
+        self.remove_deleted(pset)
+
+        # Identify particles that threw errors
+        n_error = pset.num_error_particles
+
+        while n_error > 0:
+            error_pset = pset.error_particles
+            # Apply recovery kernel
+            for p in error_pset:
+                if p.state == StatusCode.StopExecution:
+                    return
+                if p.state == StatusCode.Repeat:
+                    p.reset_state()
+                elif p.state == StatusCode.ErrorTimeExtrapolation:
+                    raise TimeExtrapolationError(p.time)
+                elif p.state == StatusCode.ErrorOutOfBounds:
+                    raise FieldOutOfBoundError(p.lon, p.lat, p.depth)
+                elif p.state == StatusCode.ErrorThroughSurface:
+                    raise FieldOutOfBoundSurfaceError(p.lon, p.lat, p.depth)
+                elif p.state == StatusCode.Error:
+                    raise FieldSamplingError(p.lon, p.lat, p.depth)
+                elif p.state == StatusCode.Delete:
+                    pass
+                else:
+                    logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')
+                    p.delete()
+
+            # Remove all particles that signalled deletion
+            self.remove_deleted(pset)   # Generalizable version!
+
+            # Execute core loop again to continue interrupted particles
+            if self.ptype.uses_jit:
+                self.execute_jit(pset, endtime, dt)
+            else:
+                self.execute_python(pset, endtime, dt)
+
+            n_error = pset.num_error_particles
 
     def evaluate_particle(self, p, endtime, sign_dt):
         """Execute the kernel evaluation of for an individual particle.
@@ -434,12 +640,3 @@ class BaseKernel:
 
             p.dt = pre_dt
         return p
-
-    def execute_jit(self, pset, endtime, dt):
-        pass
-
-    def execute_python(self, pset, endtime, dt):
-        pass
-
-    def execute(self, pset, endtime, dt, output_file=None):
-        pass
