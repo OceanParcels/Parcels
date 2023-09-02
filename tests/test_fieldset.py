@@ -18,13 +18,7 @@ from parcels import (  # noqa
     AdvectionRK4_3D,
     FieldSet,
     JITParticle,
-    KernelAOS,
-    KernelSOA,
-    ParticleFileAOS,
-    ParticleFileSOA,
     ParticleSet,
-    ParticleSetAOS,
-    ParticleSetSOA,
     RectilinearZGrid,
     ScipyParticle,
     TimeExtrapolationError,
@@ -40,10 +34,7 @@ from parcels.tools.converters import (
     _get_cftime_datetimes,
 )
 
-pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 
 
 def generate_fieldset(xdim, ydim, zdim=1, tdim=1):
@@ -342,12 +333,11 @@ def test_add_duplicate_field(dupobject):
     assert error_thrown
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('fieldtype', ['normal', 'vector'])
-def test_add_field_after_pset(pset_mode, fieldtype):
+def test_add_field_after_pset(fieldtype):
     data, dimensions = generate_fieldset(100, 100)
     fieldset = FieldSet.from_data(data, dimensions)
-    pset = pset_type[pset_mode]['pset'](fieldset, ScipyParticle, lon=0, lat=0)  # noqa ; to trigger fieldset.check_complete
+    pset = ParticleSet(fieldset, ScipyParticle, lon=0, lat=0)  # noqa ; to trigger fieldset.check_complete
     field1 = Field('field1', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     field2 = Field('field2', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     vfield = VectorField('vfield', field1, field2)
@@ -549,9 +539,8 @@ def addConst(particle, fieldset, time):
     particle.lon = particle.lon + fieldset.movewest + fieldset.moveeast
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_fieldset_constant(pset_mode, mode):
+def test_fieldset_constant(mode):
     data, dimensions = generate_fieldset(100, 100)
     fieldset = FieldSet.from_data(data, dimensions)
     westval = -0.2
@@ -560,15 +549,14 @@ def test_fieldset_constant(pset_mode, mode):
     fieldset.add_constant('moveeast', eastval)
     assert fieldset.movewest == westval
 
-    pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=1, pclass=ptype[mode], start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode], start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
     assert abs(pset.lon[0] - (0.5 + westval + eastval)) < 1e-4
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('swapUV', [False, True])
-def test_vector_fields(pset_mode, mode, swapUV):
+def test_vector_fields(mode, swapUV):
     lon = np.linspace(0., 10., 12, dtype=np.float32)
     lat = np.linspace(0., 10., 10, dtype=np.float32)
     U = np.ones((10, 12), dtype=np.float32)
@@ -581,7 +569,7 @@ def test_vector_fields(pset_mode, mode, swapUV):
         UV = VectorField('UV', fieldset.V, fieldset.U)
         fieldset.add_vector_field(UV)
 
-    pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=1, pclass=ptype[mode], start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode], start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(AdvectionRK4, dt=1, runtime=2)
     if swapUV:
         assert abs(pset.lon[0] - .5) < 1e-9
@@ -591,9 +579,8 @@ def test_vector_fields(pset_mode, mode, swapUV):
         assert abs(pset.lat[0] - .5) < 1e-9
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_add_second_vector_field(pset_mode, mode):
+def test_add_second_vector_field(mode):
     lon = np.linspace(0., 10., 12, dtype=np.float32)
     lat = np.linspace(0., 10., 10, dtype=np.float32)
     U = np.ones((10, 12), dtype=np.float32)
@@ -615,15 +602,14 @@ def test_add_second_vector_field(pset_mode, mode):
         particle_dlon += u * particle.dt  # noqa
         particle_dlat += v * particle.dt  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=0.5, lat=0.5)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0.5, lat=0.5)
     pset.execute(AdvectionRK4+pset.Kernel(SampleUV2), dt=1, runtime=2)
 
     assert abs(pset.lon[0] - 2.5) < 1e-9
     assert abs(pset.lat[0] - .5) < 1e-9
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
-def test_fieldset_write(pset_mode, tmpdir):
+def test_fieldset_write(tmpdir):
     filepath = tmpdir.join("fieldset_write.zarr")
     xdim, ydim = 3, 4
     lon = np.linspace(0., 10., xdim, dtype=np.float32)
@@ -642,7 +628,7 @@ def test_fieldset_write(pset_mode, tmpdir):
         fieldset.U.data[particle.ti, particle.yi, particle.xi] += 1
         fieldset.U.grid.time[0] = time
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ScipyParticle, lon=5, lat=5)
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=5, lat=5)
     ofile = pset.ParticleFile(name=filepath, outputdt=2.)
     pset.execute(UpdateU, dt=1, runtime=10, output_file=ofile)
 
@@ -652,14 +638,13 @@ def test_fieldset_write(pset_mode, tmpdir):
     assert np.allclose(fieldset.U.data, da['U'].values, atol=1.)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
 @pytest.mark.parametrize('dt', [-3600, 3600])
 @pytest.mark.parametrize('chunksize', [False, 'auto', {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
 @pytest.mark.parametrize('with_GC', [False, True])
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows memory leaks (#787)")
-def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chunksize, with_GC):
+def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with_GC):
     if time_periodic and dt < 0:
         return True  # time_periodic does not work in backward-time mode
     if chunksize == 'auto':
@@ -708,7 +693,7 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     postProcessFuncs = [perflog.advance, ]
     if with_GC:
         postProcessFuncs.append(perIterGC)
-    pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=[0.5, ], lat=[0.5, ])
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=[0.5, ], lat=[0.5, ])
     mem_0 = process.memory_info().rss
     mem_exhausted = False
     try:
@@ -723,12 +708,11 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     assert not mem_exhausted
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
 @pytest.mark.parametrize('chunksize', [False, 'auto', {'lat': ('y', 32), 'lon': ('x', 32)}, {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
 @pytest.mark.parametrize('deferLoad', [True, False])
-def test_from_netcdf_chunking(pset_mode, mode, time_periodic, chunksize, deferLoad):
+def test_from_netcdf_chunking(mode, time_periodic, chunksize, deferLoad):
     fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
@@ -740,7 +724,7 @@ def test_from_netcdf_chunking(pset_mode, mode, time_periodic, chunksize, deferLo
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
 
     fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, deferred_load=deferLoad, allow_time_extrapolation=True if time_periodic in [False, None] else False, chunksize=chunksize)
-    pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=1, pclass=ptype[mode], start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode], start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(AdvectionRK4, dt=1, runtime=1)
 
 
@@ -774,12 +758,11 @@ def test_timestamps(datetype, tmpdir):
         assert np.allclose(fieldset3.U.data, fieldset4.U.data)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('use_xarray', [True, False])
 @pytest.mark.parametrize('time_periodic', [86400., False])
 @pytest.mark.parametrize('dt_sign', [-1, 1])
-def test_periodic(pset_mode, mode, use_xarray, time_periodic, dt_sign):
+def test_periodic(mode, use_xarray, time_periodic, dt_sign):
     lon = np.array([0, 1], dtype=np.float32)
     lat = np.array([0, 1], dtype=np.float32)
     depth = np.array([0, 1], dtype=np.float32)
@@ -834,7 +817,7 @@ def test_periodic(pset_mode, mode, use_xarray, time_periodic, dt_sign):
         v2 = Variable('v2', dtype=np.float32, initial=0.)
         d = Variable('d', dtype=np.float32, initial=0.)
 
-    pset = pset_type[pset_mode]['pset'].from_list(fieldset, pclass=MyParticle, lon=[0.5], lat=[0.5], depth=[0.5])
+    pset = ParticleSet.from_list(fieldset, pclass=MyParticle, lon=[0.5], lat=[0.5], depth=[0.5])
     pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp), runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
 
     if time_periodic is not False:
@@ -850,9 +833,8 @@ def test_periodic(pset_mode, mode, use_xarray, time_periodic, dt_sign):
     assert np.allclose(pset.d[0], 1.)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('fail', [False, pytest.param(True, marks=pytest.mark.xfail(strict=True))])
-def test_fieldset_defer_loading_with_diff_time_origin(pset_mode, tmpdir, fail, filename='test_parcels_defer_loading'):
+def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='test_parcels_defer_loading'):
     filepath = tmpdir.join(filename)
     data0, dims0 = generate_fieldset(10, 10, 1, 10)
     dims0['time'] = np.arange(0, 10, 1) * 3600
@@ -874,15 +856,14 @@ def test_fieldset_defer_loading_with_diff_time_origin(pset_mode, tmpdir, fail, f
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath, extra_fields={'W': 'W'})
     assert fieldset.U.creation_log == 'from_parcels'
-    pset = pset_type[pset_mode]['pset'].from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
-                                                  time=[datetime.datetime(2018, 4, 20, 1)])
+    pset = ParticleSet.from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
+                                 time=[datetime.datetime(2018, 4, 20, 1)])
     pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('zdim', [2, 8])
 @pytest.mark.parametrize('scale_fac', [0.2, 4, 1])
-def test_fieldset_defer_loading_function(pset_mode, zdim, scale_fac, tmpdir, filename='test_parcels_defer_loading'):
+def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test_parcels_defer_loading'):
     filepath = tmpdir.join(filename)
     data0, dims0 = generate_fieldset(3, 3, zdim, 10)
     data0['U'][:, 0, :, :] = np.nan  # setting first layer to nan, which will be changed to zero (and all other layers to 1)
@@ -915,7 +896,7 @@ def test_fieldset_defer_loading_function(pset_mode, zdim, scale_fac, tmpdir, fil
     assert isinstance(fieldset.U.data, da.core.Array)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, JITParticle, 0, 0)
+    pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
     def DoNothing(particle, fieldset, time):
         pass
@@ -943,7 +924,7 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
         v_kernel = Variable('v_kernel', dtype=np.float32, initial=0.)
         u_scipy = Variable('u_scipy', dtype=np.float32, initial=0.)
 
-    pset = pset_type['soa']['pset'](fieldset, pclass=SampleParticle, time=[0, time2], lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
+    pset = ParticleSet(fieldset, pclass=SampleParticle, time=[0, time2], lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
 
     if time2 > 1:
         failed = False
@@ -958,9 +939,8 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
         assert isinstance(fieldset.U.data, da.core.Array)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('tdim', [10, None])
-def test_fieldset_from_xarray(pset_mode, tdim):
+def test_fieldset_from_xarray(tdim):
     def generate_dataset(xdim, ydim, zdim=1, tdim=1):
         lon = np.linspace(0., 12, xdim, dtype=np.float32)
         lat = np.linspace(0., 12, ydim, dtype=np.float32)
@@ -992,7 +972,7 @@ def test_fieldset_from_xarray(pset_mode, tdim):
     fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh='flat')
     assert fieldset.U.creation_log == 'from_xarray_dataset'
 
-    pset = pset_type[pset_mode]['pset'](fieldset, JITParticle, 0, 0, depth=20)
+    pset = ParticleSet(fieldset, JITParticle, 0, 0, depth=20)
 
     pset.execute(AdvectionRK4, dt=1, runtime=10)
     if tdim == 10:
@@ -1001,20 +981,18 @@ def test_fieldset_from_xarray(pset_mode, tdim):
         assert np.allclose(pset.lon_nextloop[0], 5.0) and np.allclose(pset.lat_nextloop[0], 10)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_fieldset_frompop(pset_mode, mode):
+def test_fieldset_frompop(mode):
     filenames = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
     variables = {'U': 'U', 'V': 'V', 'W': 'W', 'T': 'T'}
     dimensions = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
 
     fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat')
-    pset = pset_type[pset_mode]['pset'].from_list(fieldset, ptype[mode], lon=[3, 5, 1], lat=[3, 5, 1])
+    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=[3, 5, 1], lat=[3, 5, 1])
     pset.execute(AdvectionRK4, runtime=3, dt=1)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
-def test_fieldset_from_data_gridtypes(pset_mode, xdim=20, ydim=10, zdim=4):
+def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
     """Simple test for fieldset initialisation from data."""
     lon = np.linspace(0., 10., xdim, dtype=np.float32)
     lat = np.linspace(0., 10., ydim, dtype=np.float32)
@@ -1031,7 +1009,7 @@ def test_fieldset_from_data_gridtypes(pset_mode, xdim=20, ydim=10, zdim=4):
 
     # Rectilinear Z grid
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-    pset = pset_type[pset_mode]['pset'](fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=.5)
     plon = pset.lon
     plat = pset.lat
@@ -1042,7 +1020,7 @@ def test_fieldset_from_data_gridtypes(pset_mode, xdim=20, ydim=10, zdim=4):
     # Rectilinear S grid
     dimensions['depth'] = depth_s
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-    pset = pset_type[pset_mode]['pset'](fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=.5)
     assert np.allclose(plon, pset.lon)
     assert np.allclose(plat, pset.lat)
@@ -1052,7 +1030,7 @@ def test_fieldset_from_data_gridtypes(pset_mode, xdim=20, ydim=10, zdim=4):
     dimensions['lat'] = latm
     dimensions['depth'] = depth
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-    pset = pset_type[pset_mode]['pset'](fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=.5)
     assert np.allclose(plon, pset.lon)
     assert np.allclose(plat, pset.lat)
@@ -1060,17 +1038,16 @@ def test_fieldset_from_data_gridtypes(pset_mode, xdim=20, ydim=10, zdim=4):
     # Curvilinear S grid
     dimensions['depth'] = depth_s
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-    pset = pset_type[pset_mode]['pset'](fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=.5)
     assert np.allclose(plon, pset.lon)
     assert np.allclose(plat, pset.lat)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('direction', [1, -1])
 @pytest.mark.parametrize('time_extrapolation', [True, False])
-def test_deferredload_simplefield(pset_mode, mode, direction, time_extrapolation, tmpdir, tdim=10):
+def test_deferredload_simplefield(mode, direction, time_extrapolation, tmpdir, tdim=10):
     filename = tmpdir.join("simplefield_deferredload.nc")
     data = np.zeros((tdim, 2, 2))
     for ti in range(tdim):
@@ -1084,7 +1061,7 @@ def test_deferredload_simplefield(pset_mode, mode, direction, time_extrapolation
 
     class SamplingParticle(ptype[mode]):
         p = Variable('p')
-    pset = pset_type[pset_mode]['pset'](fieldset, SamplingParticle, lon=0.5, lat=0.5)
+    pset = ParticleSet(fieldset, SamplingParticle, lon=0.5, lat=0.5)
 
     def SampleU(particle, fieldset, time):
         particle.p, tmp = fieldset.UV[particle]

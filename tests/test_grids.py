@@ -6,19 +6,14 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from parcels import (  # noqa
+from parcels import (
     AdvectionRK4,
     AdvectionRK4_3D,
     CurvilinearZGrid,
     Field,
     FieldSet,
     JITParticle,
-    KernelAOS,
-    KernelSOA,
-    ParticleFileAOS,
-    ParticleFileSOA,
-    ParticleSetAOS,
-    ParticleSetSOA,
+    ParticleSet,
     RectilinearSGrid,
     RectilinearZGrid,
     ScipyParticle,
@@ -27,15 +22,11 @@ from parcels import (  # noqa
     Variable,
 )
 
-pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_multi_structured_grids(pset_mode, mode):
+def test_multi_structured_grids(mode):
 
     def temp_func(lon, lat):
         return 20 + lat/1000. + 2 * np.sin(lon*2*np.pi/5000.)
@@ -97,7 +88,7 @@ def test_multi_structured_grids(pset_mode, mode):
         temp0 = Variable('temp0', dtype=np.float32, initial=20.)
         temp1 = Variable('temp1', dtype=np.float32, initial=20.)
 
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3001], lat=[5001], repeatdt=1)
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3001], lat=[5001], repeatdt=1)
 
     pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=3, dt=1)
 
@@ -151,9 +142,8 @@ def test_avoid_repeated_grids():
     assert field_set.V.grid is not field_set.U.grid
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_multigrids_pointer(pset_mode, mode):
+def test_multigrids_pointer(mode):
     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
     depth_g0 = np.zeros((5, lat_g0.size, lon_g0.size), dtype=np.float32)
@@ -184,16 +174,15 @@ def test_multigrids_pointer(pset_mode, mode):
     assert u_field.grid == v_field.grid
     assert u_field.grid == w_field.grid  # w_field.grid is now supposed to be grid_1
 
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=[0], lat=[0], depth=[1])
+    pset = ParticleSet.from_list(field_set, ptype[mode], lon=[0], lat=[0], depth=[1])
 
     for i in range(10):
         pset.execute(AdvectionRK4_3D, runtime=1000, dt=500)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('z4d', ['True', 'False'])
-def test_rectilinear_s_grid_sampling(pset_mode, mode, z4d):
+def test_rectilinear_s_grid_sampling(mode, z4d):
     lon_g0 = np.linspace(-3e4, 3e4, 61, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
@@ -241,16 +230,15 @@ def test_rectilinear_s_grid_sampling(pset_mode, mode, z4d):
     lon = 400
     lat = 0
     ratio = .3
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle,
-                                                  lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
+    pset = ParticleSet.from_list(field_set, MyParticle,
+                                 lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
 
     pset.execute(pset.Kernel(sampleTemp), runtime=1)
     assert np.allclose(pset.temp[0], ratio, atol=1e-4)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_rectilinear_s_grids_advect1(pset_mode, mode):
+def test_rectilinear_s_grids_advect1(mode):
     # Constant water transport towards the east. check that the particle stays at the same relative depth (z/bath)
     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
@@ -286,15 +274,14 @@ def test_rectilinear_s_grids_advect1(pset_mode, mode):
     lat = np.zeros(11)
     ratio = [min(i/10., .99) for i in range(11)]
     depth = bath_func(lon)*ratio
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=lon, lat=lat, depth=depth)
+    pset = ParticleSet.from_list(field_set, ptype[mode], lon=lon, lat=lat, depth=depth)
 
     pset.execute(AdvectionRK4_3D, runtime=10000, dt=500)
     assert np.allclose(pset.depth/bath_func(pset.lon), ratio)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_rectilinear_s_grids_advect2(pset_mode, mode):
+def test_rectilinear_s_grids_advect2(mode):
     # Move particle towards the east, check relative depth evolution
     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
@@ -330,7 +317,7 @@ def test_rectilinear_s_grids_advect2(pset_mode, mode):
         particle.relDepth = fieldset.relDepth[time, particle.depth, particle.lat, particle.lon]
 
     depth = .9
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[0], lat=[0], depth=[depth])
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[0], lat=[0], depth=[depth])
 
     kernel = pset.Kernel(moveEast)
     for _ in range(10):
@@ -338,9 +325,8 @@ def test_rectilinear_s_grids_advect2(pset_mode, mode):
         assert np.allclose(pset.relDepth[0], depth/bath_func(pset.lon[0]))
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_curvilinear_grids(pset_mode, mode):
+def test_curvilinear_grids(mode):
 
     x = np.linspace(0, 1e3, 7, dtype=np.float32)
     y = np.linspace(0, 1e3, 5, dtype=np.float32)
@@ -369,14 +355,13 @@ def test_curvilinear_grids(pset_mode, mode):
     class MyParticle(ptype[mode]):
         speed = Variable('speed', dtype=np.float32, initial=0.)
 
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=1)
     assert np.allclose(pset.speed[0], 1000)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_nemo_grid(pset_mode, mode):
+def test_nemo_grid(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
@@ -390,7 +375,7 @@ def test_nemo_grid(pset_mode, mode):
     field_set = FieldSet.from_nemo(filenames, variables, dimensions)
 
     # test ParticleSet.from_field on curvilinear grids
-    pset_type[pset_mode]['pset'].from_field(field_set, ptype[mode], start_field=field_set.U, size=5)
+    ParticleSet.from_field(field_set, ptype[mode], start_field=field_set.U, size=5)
 
     def sampleVel(particle, fieldset, time):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
@@ -401,7 +386,7 @@ def test_nemo_grid(pset_mode, mode):
 
     lonp = 175.5
     latp = 81.5
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
     pset.execute(pset.Kernel(sampleVel), runtime=1)
     u = field_set.U.units.to_source(pset.zonal[0], lonp, latp, 0)
     v = field_set.V.units.to_source(pset.meridional[0], lonp, latp, 0)
@@ -409,9 +394,8 @@ def test_nemo_grid(pset_mode, mode):
     assert abs(v) < 1e-4
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advect_nemo(pset_mode, mode):
+def test_advect_nemo(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
@@ -426,15 +410,14 @@ def test_advect_nemo(pset_mode, mode):
 
     lonp = 175.5
     latp = 81.5
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, ptype[mode], lon=[lonp], lat=[latp])
+    pset = ParticleSet.from_list(field_set, ptype[mode], lon=[lonp], lat=[latp])
     pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
     assert abs(pset.lat[0] - latp) < 1e-3
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time', [True, False])
-def test_cgrid_uniform_2dvel(pset_mode, mode, time):
+def test_cgrid_uniform_2dvel(mode, time):
     lon = np.array([[0, 2], [.4, 1.5]])
     lat = np.array([[0, -.5], [.8, .5]])
     U = np.array([[-99, -99], [4.4721359549995793e-01, 1.3416407864998738e+00]])
@@ -458,17 +441,16 @@ def test_cgrid_uniform_2dvel(pset_mode, mode, time):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
         meridional = Variable('meridional', dtype=np.float32, initial=0.)
 
-    pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3)
+    pset = ParticleSet.from_list(fieldset, MyParticle, lon=.7, lat=.3)
     pset.execute(pset.Kernel(sampleVel), runtime=1)
     assert (pset[0].zonal - 1) < 1e-6
     assert (pset[0].meridional - 1) < 1e-6
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1', 'slev2'])
 @pytest.mark.parametrize('time', [True, False])
-def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
+def test_cgrid_uniform_3dvel(mode, vert_mode, time):
 
     lon = np.array([[0, 2], [.4, 1.5]])
     lat = np.array([[0, -.5], [.8, .5]])
@@ -520,18 +502,17 @@ def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
         meridional = Variable('meridional', dtype=np.float32, initial=0.)
         vertical = Variable('vertical', dtype=np.float32, initial=0.)
 
-    pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
+    pset = ParticleSet.from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=1)
     assert abs(pset[0].zonal - 1) < 1e-6
     assert abs(pset[0].meridional - 1) < 1e-6
     assert abs(pset[0].vertical - 1) < 1e-6
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1'])
 @pytest.mark.parametrize('time', [True, False])
-def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
+def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
     data_path = path.join(path.dirname(__file__), 'test_data/')
     dim_file = xr.open_dataset(data_path + 'mask_nemo_cross_180lon.nc')
     u_file = xr.open_dataset(data_path + 'Uu_eastward_nemo_cross_180lon.nc')
@@ -580,24 +561,19 @@ def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
 
     lonp = 179.8
     latp = 81.35
-    pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=lonp, lat=latp, depth=.2)
+    pset = ParticleSet.from_list(fieldset, MyParticle, lon=lonp, lat=latp, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=1)
-    if pset_mode == 'soa':
-        pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
-        pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
-    elif pset_mode == 'aos':
-        pset[0].zonal = fieldset.U.units.to_source(pset[0].zonal, lonp, latp, 0)
-        pset[0].meridional = fieldset.V.units.to_source(pset[0].meridional, lonp, latp, 0)
+    pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
+    pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
     assert abs(pset[0].zonal - 1) < 1e-3
     assert abs(pset[0].meridional) < 1e-3
     assert abs(pset[0].vertical - 1) < 1e-3
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
 @pytest.mark.parametrize('deferred_load', [True, False])
-def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
+def test_popgrid(mode, vert_discretisation, deferred_load):
     mesh = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
     if vert_discretisation == 'zlevel':
         w_dep = 'w_dep'
@@ -632,7 +608,7 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
         tracer = Variable('tracer', dtype=np.float32, initial=0.)
         out_of_bounds = Variable('out_of_bounds', dtype=np.float32, initial=0.)
 
-    pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
     pset.execute(pset.Kernel(sampleVel) + OutBoundsError, runtime=1)
     if vert_discretisation == 'slevel2':
         assert np.isclose(pset.vert[0], 0.)
@@ -651,11 +627,10 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
         assert np.allclose(pset.tracer, 1)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 @pytest.mark.parametrize('coordtype', ['rectilinear', 'curvilinear'])
-def test_cgrid_indexing(pset_mode, mode, gridindexingtype, coordtype):
+def test_cgrid_indexing(mode, gridindexingtype, coordtype):
     xdim, ydim = 151, 201
     a = b = 20000  # domain size
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
@@ -728,18 +703,17 @@ def test_cgrid_indexing(pset_mode, mode, gridindexingtype, coordtype):
         radius = Variable('radius', dtype=np.float32, initial=0.)
         radius_start = Variable('radius_start', dtype=np.float32, initial=0.)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=4e3, time=0)
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=4e3, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4,
                  runtime=delta(hours=14), dt=delta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 @pytest.mark.parametrize('withtime', [False, True])
-def test_cgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
+def test_cgrid_indexing_3D(mode, gridindexingtype, withtime):
     xdim = zdim = 201
     ydim = 2
     a = c = 20000  # domain size
@@ -807,18 +781,17 @@ def test_cgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
         radius = Variable('radius', dtype=np.float32, initial=0.)
         radius_start = Variable('radius_start', dtype=np.float32, initial=0.)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, depth=4e3, lon=0, lat=0, time=0)
+    pset = ParticleSet(fieldset, pclass=MyParticle, depth=4e3, lon=0, lat=0, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
                  runtime=delta(hours=14), dt=delta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
 @pytest.mark.parametrize('withtime', [False, True])
-def test_bgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
+def test_bgrid_indexing_3D(mode, gridindexingtype, withtime):
     xdim = zdim = 201
     ydim = 2
     a = c = 20000  # domain size
@@ -887,7 +860,7 @@ def test_bgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
         radius = Variable('radius', dtype=np.float32, initial=0.)
         radius_start = Variable('radius_start', dtype=np.float32, initial=0.)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
+    pset = ParticleSet(fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
                  runtime=delta(hours=14), dt=delta(minutes=5))
@@ -895,10 +868,9 @@ def test_bgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
 
 
 @pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('extrapolation', [True, False])
-def test_bgrid_interpolation(gridindexingtype, pset_mode, mode, extrapolation):
+def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
     xi, yi = 3, 2
     if extrapolation:
         zi = 0 if gridindexingtype == 'mom5' else -1
@@ -981,8 +953,8 @@ def test_bgrid_interpolation(gridindexingtype, pset_mode, mode, extrapolation):
             if extrapolation:
                 deps = 0
 
-        pset = pset_type[pset_mode]['pset'].from_list(fieldset=fieldset, pclass=myParticle,
-                                                      lon=lons, lat=lats, depth=deps)
+        pset = ParticleSet.from_list(fieldset=fieldset, pclass=myParticle,
+                                     lon=lons, lat=lats, depth=deps)
         pset.execute(VelocityInterpolator, runtime=1)
 
         convfactor = 0.01 if gridindexingtype == "pop" else 1.
