@@ -86,8 +86,14 @@ def AgeP(particle, fieldset, time):
         particle.delete()
 
 
+def simple_partition_function(coords, mpi_size=1):
+    """A very simple partition function that assigns particles to processors (for MPI testing purposes))"""
+    return np.array([int(i) for i in np.linspace(0, mpi_size, coords.shape[0], endpoint=False)])
+
+
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
-                    outfile="StommelParticle.zarr", repeatdt=None, maxage=None, write_fields=True, pset_mode='soa'):
+                    outfile="StommelParticle.zarr", repeatdt=None, maxage=None, write_fields=True,
+                    custom_partition_function=False, pset_mode='soa'):
     timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
     fieldset = stommel_fieldset(grid_type=grid_type)
     if write_fields:
@@ -105,8 +111,13 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
         p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
         age = Variable('age', dtype=np.float32, initial=0.)
 
-    pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
-                                                  start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
+    if custom_partition_function:
+        pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
+                                                      start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0,
+                                                      partition_function=simple_partition_function)
+    else:
+        pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
+                                                      start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
 
     if verbose:
         print(f"Initial particle positions:\n{pset}")
@@ -174,12 +185,15 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='max age of the particles (after which particles are deleted)')
     p.add_argument('-wf', '--write_fields', default=True,
                    help='Write the hydrodynamic fields to NetCDF')
+    p.add_argument('-cpf', '--custom_partition_function', default=False,
+                   help='Use a custom partition_function (for MPI testing purposes)')
     args = p.parse_args(args)
 
     timer.args.stop()
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
     stommel_example(args.particles, mode=args.mode, verbose=args.verbose, method=method[args.method],
-                    outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage, write_fields=args.write_fields)
+                    outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage, write_fields=args.write_fields,
+                    custom_partition_function=args.custom_partition_function)
     timer.stommel.stop()
     timer.root.stop()
     timer.root.print_tree()
