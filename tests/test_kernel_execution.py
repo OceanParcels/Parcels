@@ -185,6 +185,20 @@ def test_execution_recover_out_of_bounds(fieldset, pset_mode, mode, npart=2):
     assert np.allclose(pset.lat, lat, rtol=1e-5)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_execution_check_all_errors(fieldset, mode):
+    def MoveRight(particle, fieldset, time):
+        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon, particle]  # noqa
+
+    def RecoverAllErrors(particle, fieldset, time):
+        if particle.state > 4:
+            particle.state = StatusCode.Delete
+
+    pset = ParticleSetSOA(fieldset, pclass=ptype[mode], lon=10, lat=0)
+    pset.execute([MoveRight, RecoverAllErrors], endtime=11., dt=1.)
+    assert len(pset) == 0
+
+
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_delete_out_of_bounds(fieldset, pset_mode, mode, npart=10):
