@@ -88,7 +88,7 @@ def AgeP(particle, fieldset, time):
 
 def simple_partition_function(coords, mpi_size=1):
     """A very simple partition function that assigns particles to processors (for MPI testing purposes))"""
-    return np.array([int(i) for i in np.linspace(0, mpi_size, coords.shape[0], endpoint=False)])
+    return np.linspace(0, mpi_size, coords.shape[0], endpoint=False, dtype=np.int32)
 
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
