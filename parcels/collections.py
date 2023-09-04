@@ -34,7 +34,6 @@ class ParticleCollection(ABC):
             number of grids in the fieldset of the overarching ParticleSet - required for initialising the
             field references of the ctypes-link of particles that are allocated
         """
-
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
         pid = pid_orig + pclass.lastID
 

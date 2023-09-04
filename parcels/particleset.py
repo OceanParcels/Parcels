@@ -25,7 +25,7 @@ from parcels.application_kernels.advection import AdvectionRK4
 from parcels.collections import ParticleCollection, ParticleCollectionIterable
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
-from parcels.grid import GridCode
+from parcels.grid import CurvilinearGrid, GridCode
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.interaction.neighborsearch import (
     BruteFlatNeighborSearch,
@@ -320,9 +320,6 @@ class ParticleSet(ABC):
         return self._collection
 
     def cstruct(self):
-        """cstruct returns the ctypes mapping of the combined collections cstruct and the fieldset cstruct.
-        This depends on the specific structure in question.
-        """
         cstruct = self._collection.cstruct()
         return cstruct
 
@@ -442,6 +439,35 @@ class ParticleSet(ABC):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
         neighbor_ids = self._collection.data['id'][neighbor_idx]
         return neighbor_ids
+
+    def populate_indices(self):
+        """Pre-populate guesses of particle xi/yi indices using a kdtree.
+
+        This is only intended for curvilinear grids, where the initial index search
+        may be quite expensive.
+        """
+        if self.fieldset is None:
+            # we need to be attached to a fieldset to have a valid
+            # gridset to search for indices
+            return
+
+        if KDTree is None:
+            return
+        else:
+            for i, grid in enumerate(self.fieldset.gridset.grids):
+                if not isinstance(grid, CurvilinearGrid):
+                    continue
+
+                tree_data = np.stack((grid.lon.flat, grid.lat.flat), axis=-1)
+                tree = KDTree(tree_data)
+                # stack all the particle positions for a single query
+                pts = np.stack((self._collection.data['lon'], self._collection.data['lat']), axis=-1)
+                # query datatype needs to match tree datatype
+                _, idx = tree.query(pts.astype(tree_data.dtype))
+                yi, xi = np.unravel_index(idx, grid.lon.shape)
+
+                self._collection.data['xi'][:, i] = xi
+                self._collection.data['yi'][:, i] = yi
 
     @classmethod
     def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
