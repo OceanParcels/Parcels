@@ -22,9 +22,6 @@ if MPI:
 
 
 class ParticleCollection(ABC):
-    _ncount = -1
-    _iterator = None
-    _riterator = None
 
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
@@ -34,6 +31,15 @@ class ParticleCollection(ABC):
             number of grids in the fieldset of the overarching ParticleSet - required for initialising the
             field references of the ctypes-link of particles that are allocated
         """
+        self._ncount = -1
+        self._pu_indicators = None
+        self._pu_centers = None
+        self._offset = 0
+        self._pclass = None
+        self._ptype = None
+        self._latlondepth_dtype = np.float32
+        self._data = None
+
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
         pid = pid_orig + pclass.lastID
 
@@ -65,7 +71,7 @@ class ParticleCollection(ABC):
 
             if mpi_size > 1:
                 if partitions is not False:
-                    if (self._pu_indicators is None) or (len(self._pu_indicators) != len(lon)):
+                    if (self._pu_indicators is None): # or (len(self._pu_indicators) != len(lon)):
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
                             if KMeans:

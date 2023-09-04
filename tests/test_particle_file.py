@@ -138,7 +138,7 @@ def test_write_dtypes_pfile(fieldset, mode, tmpdir):
 
     dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64', 'uint64']
     if mode == 'scipy':
-        dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16'])  # Not implemented in AoS JIT
+        dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16'])
 
     class MyParticle(ptype[mode]):
         for d in dtypes:
