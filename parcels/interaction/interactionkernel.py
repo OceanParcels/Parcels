@@ -247,7 +247,7 @@ class InteractionKernel(BaseKernel):
                 if p.state == StatusCode.StopExecution:
                     return
                 if p.state == StatusCode.Repeat:
-                    p.set_state(StatusCode.Evaluate)
+                    p.state = StatusCode.Evaluate
                 elif p.state == StatusCode.Delete:
                     pass
                 else:

@@ -93,13 +93,6 @@ class KernelError(RuntimeError):
         super().__init__(message)
 
 
-class NotTestedError(Exception):
-    """Raised when the function is not tested. Code is commented."""
-
-    def __init__(self):
-        super().__init__("Method has not been tested. Code has been commented out until unit tests are available.")
-
-
 def parse_particletime(time, fieldset):
     if fieldset is not None and fieldset.time_origin:
         time = fieldset.time_origin.fulltime(time)

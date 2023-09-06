@@ -808,7 +808,7 @@ class ParticleSet(ABC):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
         return ParticleFile(*args, particleset=self, **kwargs)
 
-    def _set_particle_vector(self, name, value):  # TODO check if needed
+    def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
 
         Parameters
@@ -1028,7 +1028,7 @@ class ParticleSet(ABC):
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
-                self.kernel.execute(self, endtime=next_time, dt=dt, output_file=output_file)
+                self.kernel.execute(self, endtime=next_time, dt=dt)
             # Interaction: interleave the interaction and non-interaction kernel for each time step.
             # E.g. Normal -> Inter -> Normal -> Inter if endtime-time == 2*dt
             else:
@@ -1038,10 +1038,8 @@ class ParticleSet(ABC):
                         cur_end_time = min(cur_time+dt, next_time)
                     else:
                         cur_end_time = max(cur_time+dt, next_time)
-                    self.kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, output_file=output_file)
-                    self.interaction_kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, output_file=output_file)
+                    self.kernel.execute(self, endtime=cur_end_time, dt=dt)
+                    self.interaction_kernel.execute(self, endtime=cur_end_time, dt=dt)
                     cur_time += dt
                     if dt == 0:
                         break

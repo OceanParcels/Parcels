@@ -545,7 +545,7 @@ class Kernel(BaseKernel):
         for p in pset:
             self.evaluate_particle(p, endtime, sign_dt)
 
-    def execute(self, pset, endtime, dt, output_file=None):
+    def execute(self, pset, endtime, dt):
         """Execute this Kernel over a ParticleSet for several timesteps."""
         pset.collection.state[:] = StatusCode.Evaluate
 
@@ -577,7 +577,7 @@ class Kernel(BaseKernel):
                 if p.state == StatusCode.StopExecution:
                     return
                 if p.state == StatusCode.Repeat:
-                    p.reset_state()
+                    p.state = StatusCode.Evaluate
                 elif p.state == StatusCode.ErrorTimeExtrapolation:
                     raise TimeExtrapolationError(p.time)
                 elif p.state == StatusCode.ErrorOutOfBounds:

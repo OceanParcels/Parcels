@@ -95,14 +95,14 @@ def test_multi_structured_grids(mode):
     # check if particle xi and yi are different for the two grids
     # assert np.all([pset.xi[i, 0] != pset.xi[i, 1] for i in range(3)])
     # assert np.all([pset.yi[i, 0] != pset.yi[i, 1] for i in range(3)])
-    assert np.alltrue([pset[i].xi[0] != pset[i].xi[1] for i in range(3)])
-    assert np.alltrue([pset[i].yi[0] != pset[i].yi[1] for i in range(3)])
+    assert np.all([pset[i].xi[0] != pset[i].xi[1] for i in range(3)])
+    assert np.all([pset[i].yi[0] != pset[i].yi[1] for i in range(3)])
 
     # advect without updating temperature to test particle deletion
     pset.remove_indices(np.array([1]))
     pset.execute(AdvectionRK4, runtime=1, dt=1)
 
-    assert np.alltrue([np.isclose(p.temp0, p.temp1, atol=1e-3) for p in pset])
+    assert np.all([np.isclose(p.temp0, p.temp1, atol=1e-3) for p in pset])
 
 
 @pytest.mark.xfail(reason="Grid cannot be computed using a time vector which is neither float nor int", strict=True)
