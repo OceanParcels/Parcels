@@ -22,7 +22,7 @@ except:
     KDTree = None
 
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.collections import ParticleCollection, ParticleCollectionIterable
+from parcels.collections import ParticleCollection, ParticleCollectionIterator
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.grid import CurvilinearGrid, GridCode
@@ -433,7 +433,7 @@ class ParticleSet(ABC):
         if 'horiz_dist' in self._collection._ptype.variables:
             self._collection.data['vert_dist'][neighbor_idx] = distances[0, mask]
             self._collection.data['horiz_dist'][neighbor_idx] = distances[1, mask]
-        return ParticleCollectionIterable(self._collection, subset=neighbor_idx)
+        return ParticleCollectionIterator(self._collection, subset=neighbor_idx)
 
     def neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
@@ -853,7 +853,7 @@ class ParticleSet(ABC):
             Collection iterator over error particles.
         """
         error_indices = self.data_indices('state', [StatusCode.Success, StatusCode.Evaluate], invert=True)
-        return ParticleCollectionIterable(self._collection, subset=error_indices)
+        return ParticleCollectionIterator(self._collection, subset=error_indices)
 
     @property
     def num_error_particles(self):

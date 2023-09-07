@@ -480,24 +480,6 @@ class ParticleAccessor(ABC):
         self.state = StatusCode.Delete
 
 
-class ParticleCollectionIterable(ABC):
-
-    def __init__(self, pcoll, subset=None):
-        self._pcoll_immutable = pcoll
-        self._subset = subset
-
-    def __iter__(self):
-        return ParticleCollectionIterator(pcoll=self._pcoll_immutable, subset=self._subset)
-
-    def __len__(self):
-        """Implementation needed for particle-particle interaction"""
-        return len(self._subset)
-
-    def __getitem__(self, items):
-        """Implementation needed for particle-particle interaction"""
-        return ParticleAccessor(self._pcoll_immutable, self._subset[items])
-
-
 class ParticleCollectionIterator(ABC):
     """Iterator for looping over the particles in the ParticleCollection.
 
@@ -526,12 +508,10 @@ class ParticleCollectionIterator(ABC):
 
         self._pcoll = pcoll
         self._index = 0
-        self._head = None
-        self._tail = None
-        if len(self._indices) > 0:
-            self._head = ParticleAccessor(pcoll, self._indices[0])
-            self._tail = ParticleAccessor(pcoll, self._indices[self.max_len - 1])
-        self.p = self._head
+
+    def __iter__(self):
+        """Returns the iterator itself."""
+        return self
 
     def __next__(self):
         """Returns a ParticleAccessor for the next particle in the
