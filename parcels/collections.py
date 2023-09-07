@@ -208,13 +208,6 @@ class ParticleCollection(ABC):
         """This function returns the length, in terms of 'number of elements, of a collection."""
         return self._ncount
 
-    def empty(self):
-        """
-        This function retuns a boolean value, expressing if a collection is emoty (i.e. does not [anymore] contain any
-        elements) or not.
-        """
-        return (self._ncount < 1)
-
     def iterator(self):
         self._iterator = ParticleCollectionIterator(self)
         return self._iterator
@@ -224,17 +217,6 @@ class ParticleCollection(ABC):
         elements in the ParticleCollection (e.g. `for p in pset:`).
         """
         return self.iterator()
-
-    def reverse_iterator(self):
-        self._riterator = ParticleCollectionIterator(self, True)
-        return self._riterator
-
-    def __reversed__(self):
-        """Returns an Iterator that allows for backwards iteration over
-        the elements in the ParticleCollection (e.g.
-        `for p in reversed(pset):`).
-        """
-        return self.reverse_iterator()
 
     def __getitem__(self, index):
         """
@@ -355,13 +337,6 @@ class ParticleCollection(ABC):
             self._data[d] = np.delete(self._data[d], indices, axis=0)
 
         self._ncount -= len(indices)
-
-    def __str__(self):
-        """
-        This function returns and informative string about the collection (i.e. the type of collection) and a summary
-        of its internal, distinct values.
-        """
-        return f"ParticleCollection - N: {self._ncount}"
 
     def cstruct(self):
         """Returns the ctypes mapping of the particle data. This depends on the specific structure in question."""
@@ -507,13 +482,12 @@ class ParticleAccessor(ABC):
 
 class ParticleCollectionIterable(ABC):
 
-    def __init__(self, pcoll, reverse=False, subset=None):
+    def __init__(self, pcoll, subset=None):
         self._pcoll_immutable = pcoll
-        self._reverse = reverse
         self._subset = subset
 
     def __iter__(self):
-        return ParticleCollectionIterator(pcoll=self._pcoll_immutable, reverse=self._reverse, subset=self._subset)
+        return ParticleCollectionIterator(pcoll=self._pcoll_immutable, subset=self._subset)
 
     def __len__(self):
         """Implementation needed for particle-particle interaction"""
@@ -531,35 +505,25 @@ class ParticleCollectionIterator(ABC):
     ----------
     pcoll :
         ParticleCollection that stores the particles.
-    reverse :
-        Flag to indicate reverse iteration (i.e. starting at
-        the largest index, instead of the smallest).
     subset :
         Subset of indices to iterate over, this allows the
         creation of an iterator that represents part of the
         collection.
     """
 
-    def __init__(self, pcoll, reverse=False, subset=None):
+    def __init__(self, pcoll, subset=None):
 
         if subset is not None:
             if len(subset) > 0 and type(subset[0]) not in [int, np.int32, np.intp]:
                 raise TypeError("Iteration over a subset of particles in the"
                                 " particleset requires a list or numpy array"
                                 " of indices (of type int or np.int32).")
-            if reverse:
-                self._indices = subset.reverse()
-            else:
-                self._indices = subset
+            self._indices = subset
             self.max_len = len(subset)
         else:
             self.max_len = len(pcoll)
-            if reverse:
-                self._indices = range(self.max_len - 1, -1, -1)
-            else:
-                self._indices = range(self.max_len)
+            self._indices = range(self.max_len)
 
-        self._reverse = reverse
         self._pcoll = pcoll
         self._index = 0
         self._head = None
@@ -579,21 +543,3 @@ class ParticleCollectionIterator(ABC):
             return self.p
 
         raise StopIteration
-
-    @property
-    def head(self):
-        """Returns a ParticleAccessor for the first particle in the ParticleSet."""
-        return self._head
-
-    @property
-    def tail(self):
-        """Returns a ParticleAccessor for the last particle in the ParticleSet."""
-        return self._tail
-
-    @property
-    def current(self):
-        return self.p
-
-    def __repr__(self):
-        dir_str = 'Backward' if self._reverse else 'Forward'
-        return f"{dir_str} iteration at index {self._index} of {self.max_len}."
