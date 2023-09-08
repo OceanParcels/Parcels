@@ -6,25 +6,11 @@ import pytest
 import xarray as xr
 from zarr.storage import MemoryStore
 
-from parcels import (  # noqa
-    FieldSet,
-    JITParticle,
-    KernelAOS,
-    KernelSOA,
-    ParticleFileAOS,
-    ParticleFileSOA,
-    ParticleSetAOS,
-    ParticleSetSOA,
-    ScipyParticle,
-    Variable,
-)
+from parcels import FieldSet, JITParticle, ParticleSet, ScipyParticle, Variable
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 
-pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 
 
 def fieldset(xdim=40, ydim=100):
@@ -43,14 +29,13 @@ def fieldset_ficture(xdim=40, ydim=100):
     return fieldset(xdim=xdim, ydim=ydim)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pfile_array_write_zarr_memorystore(fieldset, pset_mode, mode, npart=10):
+def test_pfile_array_write_zarr_memorystore(fieldset, mode, npart=10):
     """Checkt that writing to a Zarr MemoryStore works."""
     zarr_store = MemoryStore()
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
-                                        lon=np.linspace(0, 1, npart),
-                                        lat=0.5*np.ones(npart), time=0)
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart),
+                       lat=0.5*np.ones(npart), time=0)
     pfile = pset.ParticleFile(zarr_store)
     pfile.write(pset, 0)
 
@@ -59,13 +44,12 @@ def test_pfile_array_write_zarr_memorystore(fieldset, pset_mode, mode, npart=10)
     ds.close()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
+def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_array_remove_particles.zarr")
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
-                                        lon=np.linspace(0, 1, npart),
-                                        lat=0.5*np.ones(npart), time=0)
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart),
+                       lat=0.5*np.ones(npart), time=0)
     pfile = pset.ParticleFile(filepath)
     pfile.write(pset, 0)
     pset.remove_indices(3)
@@ -79,13 +63,12 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     ds.close()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
+def test_pfile_set_towrite_False(fieldset, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_set_towrite_False.zarr")
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
-                                        lon=np.linspace(0, 1, npart),
-                                        lat=0.5*np.ones(npart))
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart),
+                       lat=0.5*np.ones(npart))
     pset.set_variable_write_status('depth', False)
     pset.set_variable_write_status('lat', False)
     pfile = pset.ParticleFile(filepath, outputdt=1)
@@ -106,15 +89,14 @@ def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
     pset.set_variable_write_status('lat', True)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('chunks_obs', [1, None])
-def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, chunks_obs, tmpdir, npart=10):
+def test_pfile_array_remove_all_particles(fieldset, mode, chunks_obs, tmpdir, npart=10):
 
     filepath = tmpdir.join("pfile_array_remove_particles.zarr")
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
-                                        lon=np.linspace(0, 1, npart),
-                                        lat=0.5*np.ones(npart), time=0)
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart),
+                       lat=0.5*np.ones(npart), time=0)
     chunks = (npart, chunks_obs) if chunks_obs else None
     pfile = pset.ParticleFile(filepath, chunks=chunks)
     pfile.write(pset, 0)
@@ -133,15 +115,14 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, chunks_obs,
     ds.close()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
+def test_variable_write_double(fieldset, mode, tmpdir):
     filepath = tmpdir.join("pfile_variable_write_double.zarr")
 
     def Update_lon(particle, fieldset, time):
         particle_dlon += 0.1  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
     ofile = pset.ParticleFile(name=filepath, outputdt=0.00001)
     pset.execute(pset.Kernel(Update_lon), endtime=0.001, dt=0.00001, output_file=ofile)
 
@@ -151,21 +132,20 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     ds.close()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_write_dtypes_pfile(fieldset, pset_mode, mode, tmpdir):
+def test_write_dtypes_pfile(fieldset, mode, tmpdir):
     filepath = tmpdir.join("pfile_dtypes.zarr")
 
     dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64', 'uint64']
     if mode == 'scipy':
-        dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16'])  # Not implemented in AoS JIT
+        dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16'])
 
     class MyParticle(ptype[mode]):
         for d in dtypes:
             # need an exec() here because we need to dynamically set the variable name
             exec(f'v_{d} = Variable("v_{d}", dtype=np.{d}, initial=0.)')
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=0, time=0)
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=0, time=0)
     pfile = pset.ParticleFile(name=filepath, outputdt=1)
     pfile.write(pset, 0)
 
@@ -174,10 +154,9 @@ def test_write_dtypes_pfile(fieldset, pset_mode, mode, tmpdir):
         assert ds[f'v_{d}'].dtype == d
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('npart', [1, 2, 5])
-def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
+def test_variable_written_once(fieldset, mode, tmpdir, npart):
     filepath = tmpdir.join("pfile_once_written_variables.zarr")
 
     def Update_v(particle, fieldset, time):
@@ -190,7 +169,7 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
     time = np.arange(0, npart/10., 0.1, dtype=np.float64)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=lon, lat=lat, time=time, v_once=time)
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat, time=time, v_once=time)
     ofile = pset.ParticleFile(name=filepath, outputdt=0.1)
     pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, output_file=ofile)
 
@@ -202,12 +181,11 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
 
 
 @pytest.mark.parametrize('type', ['repeatdt', 'timearr'])
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
 @pytest.mark.parametrize('maxvar', [2, 4, 10])
-def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
+def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
     fieldset.maxvar = maxvar
     pset = None
 
@@ -216,9 +194,9 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
         v_once = Variable('v_once', dtype=np.float64, initial=0., to_write='once')
 
     if type == 'repeatdt':
-        pset = pset_type[pset_mode]['pset'](fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
+        pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
     elif type == 'timearr':
-        pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
+        pset = ParticleSet(fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
     outfilepath = tmpdir.join("pfile_repeated_release.zarr")
     pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt), chunks=(1, 1))
 
@@ -244,16 +222,15 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
     ds.close()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
+def test_write_timebackward(fieldset, mode, tmpdir):
     outfilepath = tmpdir.join("pfile_write_timebackward.zarr")
 
     def Update_lon(particle, fieldset, time):
         particle_dlon -= 0.1 * particle.dt  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
-                                        lat=np.linspace(0, 1, 3), lon=[0, 0, 0], time=[1, 2, 3])
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lat=np.linspace(0, 1, 3), lon=[0, 0, 0], time=[1, 2, 3])
     pfile = pset.ParticleFile(name=outfilepath, outputdt=1.)
     pset.execute(pset.Kernel(Update_lon), runtime=4, dt=-1.,
                  output_file=pfile)
@@ -271,9 +248,8 @@ def test_set_calendar():
     assert _set_calendar('np_datetime64') == 'standard'
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_reset_dt(fieldset, pset_mode, mode, tmpdir):
+def test_reset_dt(fieldset, mode, tmpdir):
     # Assert that p.dt gets reset when a write_time is not a multiple of dt
     # for p.dt=0.02 to reach outputdt=0.05 and endtime=0.1, the steps should be [0.2, 0.2, 0.1, 0.2, 0.2, 0.1], resulting in 6 kernel executions
     filepath = tmpdir.join("pfile_reset_dt.zarr")
@@ -281,7 +257,7 @@ def test_reset_dt(fieldset, pset_mode, mode, tmpdir):
     def Update_lon(particle, fieldset, time):
         particle_dlon += 0.1  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
     ofile = pset.ParticleFile(name=filepath, outputdt=0.05)
     pset.execute(pset.Kernel(Update_lon), endtime=0.12, dt=0.02, output_file=ofile)
 

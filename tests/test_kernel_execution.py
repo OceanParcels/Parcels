@@ -4,26 +4,18 @@ from os import path
 import numpy as np
 import pytest
 
-from parcels import (  # noqa
+from parcels import (
     AdvectionRK4,
     FieldOutOfBoundError,
     FieldSet,
     JITParticle,
-    KernelAOS,
-    KernelSOA,
-    ParticleFileAOS,
-    ParticleFileSOA,
-    ParticleSetAOS,
-    ParticleSetSOA,
+    ParticleSet,
     ScipyParticle,
     StatusCode,
     Variable,
 )
 
-pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 
 
 def DoNothing(particle, fieldset, time):
@@ -45,10 +37,9 @@ def fieldset_fixture(xdim=20, ydim=20):
     return fieldset(xdim=xdim, ydim=ydim)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('kernel_type', ['update_lon', 'update_dlon'])
-def test_execution_order(pset_mode, mode, kernel_type):
+def test_execution_order(mode, kernel_type):
     fieldset = FieldSet.from_data({'U': [[0, 1], [2, 3]], 'V': np.ones((2, 2))}, {'lon': [0, 2], 'lat': [0, 2]}, mesh='flat')
 
     def MoveLon_Update_Lon(particle, fieldset, time):
@@ -69,7 +60,7 @@ def test_execution_order(pset_mode, mode, kernel_type):
     lons = []
     ps = []
     for dir in [1, -1]:
-        pset = pset_type[pset_mode]['pset'](fieldset, pclass=SampleParticle, lon=0, lat=0)
+        pset = ParticleSet(fieldset, pclass=SampleParticle, lon=0, lat=0)
         pset.execute(kernels[::dir], endtime=1, dt=1)
         lons.append(pset.lon)
         ps.append(pset.p)
@@ -83,7 +74,6 @@ def test_execution_order(pset_mode, mode, kernel_type):
         assert np.allclose(lons[0], 0.2)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('start, end, substeps, dt', [
     (0., 10., 1, 1.),
@@ -93,15 +83,14 @@ def test_execution_order(pset_mode, mode, kernel_type):
     (20., 10., 4, -1.),
     (20., -10., 7, -2.),
 ])
-def test_execution_endtime(fieldset, pset_mode, mode, start, end, substeps, dt, npart=10):
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], time=start,
-                                        lon=np.linspace(0, 1, npart),
-                                        lat=np.linspace(1, 0, npart))
+def test_execution_endtime(fieldset, mode, start, end, substeps, dt, npart=10):
+    pset = ParticleSet(fieldset, pclass=ptype[mode], time=start,
+                       lon=np.linspace(0, 1, npart),
+                       lat=np.linspace(1, 0, npart))
     pset.execute(DoNothing, endtime=end, dt=dt)
     assert np.allclose(pset.time_nextloop, end)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('start, end, substeps, dt', [
     (0., 10., 1, 1.),
@@ -111,28 +100,27 @@ def test_execution_endtime(fieldset, pset_mode, mode, start, end, substeps, dt, 
     (20., 10., 4, -1.),
     (20., -10., 7, -2.),
 ])
-def test_execution_runtime(fieldset, pset_mode, mode, start, end, substeps, dt, npart=10):
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], time=start,
-                                        lon=np.linspace(0, 1, npart),
-                                        lat=np.linspace(1, 0, npart))
+def test_execution_runtime(fieldset, mode, start, end, substeps, dt, npart=10):
+    pset = ParticleSet(fieldset, pclass=ptype[mode], time=start,
+                       lon=np.linspace(0, 1, npart),
+                       lat=np.linspace(1, 0, npart))
     t_step = abs(end - start) / substeps
     for _ in range(substeps):
         pset.execute(DoNothing, runtime=t_step, dt=dt)
     assert np.allclose(pset.time_nextloop, end)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy'])
-def test_execution_fail_python_exception(fieldset, pset_mode, mode, npart=10):
+def test_execution_fail_python_exception(fieldset, mode, npart=10):
     def PythonFail(particle, fieldset, time):
         if particle.time >= 10.:
             raise RuntimeError("Enough is enough!")
         else:
             pass
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
-                                        lon=np.linspace(0, 1, npart),
-                                        lat=np.linspace(1, 0, npart))
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart),
+                       lat=np.linspace(1, 0, npart))
     error_thrown = False
     try:
         pset.execute(PythonFail, endtime=20., dt=2.)
@@ -144,16 +132,15 @@ def test_execution_fail_python_exception(fieldset, pset_mode, mode, npart=10):
     assert np.allclose(pset.time[1:], 0.)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_execution_fail_out_of_bounds(fieldset, pset_mode, mode, npart=10):
+def test_execution_fail_out_of_bounds(fieldset, mode, npart=10):
     def MoveRight(particle, fieldset, time):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]  # noqa
         particle_dlon += 0.1  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
-                                        lon=np.linspace(0, 1, npart),
-                                        lat=np.linspace(1, 0, npart))
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart),
+                       lat=np.linspace(1, 0, npart))
     error_thrown = False
     try:
         pset.execute(MoveRight, endtime=10., dt=1.)
@@ -164,9 +151,8 @@ def test_execution_fail_out_of_bounds(fieldset, pset_mode, mode, npart=10):
     assert (pset.lon - 1. > -1.e12).all()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_execution_recover_out_of_bounds(fieldset, pset_mode, mode, npart=2):
+def test_execution_recover_out_of_bounds(fieldset, mode, npart=2):
     def MoveRight(particle, fieldset, time):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]  # noqa
         particle_dlon += 0.1  # noqa
@@ -178,7 +164,7 @@ def test_execution_recover_out_of_bounds(fieldset, pset_mode, mode, npart=2):
 
     lon = np.linspace(0.05, 0.95, npart)
     lat = np.linspace(1, 0, npart)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     pset.execute([MoveRight, MoveLeft], endtime=11., dt=1.)
     assert len(pset) == npart
     assert np.allclose(pset.lon, lon, rtol=1e-5)
@@ -194,14 +180,13 @@ def test_execution_check_all_errors(fieldset, mode):
         if particle.state > 4:
             particle.state = StatusCode.Delete
 
-    pset = ParticleSetSOA(fieldset, pclass=ptype[mode], lon=10, lat=0)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=10, lat=0)
     pset.execute([MoveRight, RecoverAllErrors], endtime=11., dt=1.)
     assert len(pset) == 0
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_execution_delete_out_of_bounds(fieldset, pset_mode, mode, npart=10):
+def test_execution_delete_out_of_bounds(fieldset, mode, npart=10):
     def MoveRight(particle, fieldset, time):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]  # noqa
         particle_dlon += 0.1  # noqa
@@ -212,30 +197,28 @@ def test_execution_delete_out_of_bounds(fieldset, pset_mode, mode, npart=10):
 
     lon = np.linspace(0.05, 0.95, npart)
     lat = np.linspace(1, 0, npart)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     pset.execute([MoveRight, DeleteMe], endtime=10., dt=1.)
     assert len(pset) == 0
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_kernel_add_no_new_variables(fieldset, pset_mode, mode):
+def test_kernel_add_no_new_variables(fieldset, mode):
     def MoveEast(particle, fieldset, time):
         particle_dlon += 0.1  # noqa
 
     def MoveNorth(particle, fieldset, time):
         particle_dlat += 0.1  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveNorth),
                  endtime=2., dt=1.)
     assert np.allclose(pset.lon, 0.6, rtol=1e-5)
     assert np.allclose(pset.lat, 0.6, rtol=1e-5)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_multi_kernel_duplicate_varnames(fieldset, pset_mode, mode):
+def test_multi_kernel_duplicate_varnames(fieldset, mode):
     # Testing for merging of two Kernels with the same variable declared
     # Should throw a warning, but go ahead regardless
     def MoveEast(particle, fieldset, time):
@@ -246,14 +229,13 @@ def test_multi_kernel_duplicate_varnames(fieldset, pset_mode, mode):
         add_lon = -0.3
         particle_dlon += add_lon  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute([MoveEast, MoveWest], endtime=2., dt=1.)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_multi_kernel_reuse_varnames(fieldset, pset_mode, mode):
+def test_multi_kernel_reuse_varnames(fieldset, mode):
     # Testing for merging of two Kernels with the same variable declared
     # Should throw a warning, but go ahead regardless
     def MoveEast1(particle, fieldset, time):
@@ -263,14 +245,13 @@ def test_multi_kernel_reuse_varnames(fieldset, pset_mode, mode):
     def MoveEast2(particle, fieldset, time):
         particle_dlon += add_lon  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast1) + pset.Kernel(MoveEast2),
                  endtime=2., dt=1.)
     assert np.allclose(pset.lon, [0.9], rtol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
-def test_combined_kernel_from_list(fieldset, pset_mode):
+def test_combined_kernel_from_list(fieldset):
     """
     Test pset.Kernel(List[function])
 
@@ -283,7 +264,7 @@ def test_combined_kernel_from_list(fieldset, pset_mode):
     def MoveNorth(particle, fieldset, time):
         particle_dlat += 0.1  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
     kernels_single = pset.Kernel([AdvectionRK4])
     kernels_functions = pset.Kernel([AdvectionRK4, MoveEast, MoveNorth])
 
@@ -292,8 +273,7 @@ def test_combined_kernel_from_list(fieldset, pset_mode):
     assert kernels_functions.funcname == "AdvectionRK4MoveEastMoveNorth"
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
-def test_combined_kernel_from_list_error_checking(fieldset, pset_mode):
+def test_combined_kernel_from_list_error_checking(fieldset):
     """
     Test pset.Kernel(List[function])
 
@@ -305,7 +285,7 @@ def test_combined_kernel_from_list_error_checking(fieldset, pset_mode):
     def MoveNorth(particle, fieldset, time):
         particle_dlat += 0.1  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
 
     # Test that list has to be non-empty
     with pytest.raises(ValueError):
@@ -321,9 +301,8 @@ def test_combined_kernel_from_list_error_checking(fieldset, pset_mode):
         assert kernels_mixed.funcname == "AdvectionRK4MoveEastMoveNorth"
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_update_kernel_in_script(fieldset, pset_mode, mode):
+def test_update_kernel_in_script(fieldset, mode):
     # Testing what happens when kernels are updated during runtime of a script
     # Should throw a warning, but go ahead regardless
     def MoveEast(particle, fieldset, time):
@@ -334,17 +313,16 @@ def test_update_kernel_in_script(fieldset, pset_mode, mode):
         add_lon = -0.3
         particle_dlon += add_lon  # noqa
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast), endtime=1., dt=1.)
     pset.execute(pset.Kernel(MoveWest), endtime=3., dt=1.)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)  # should be 0.5 + 0.1 - 0.3 = 0.3
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('delete_cfiles', [True, False])
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows compiler generates warning")
-def test_execution_keep_cfiles_and_nocompilation_warnings(pset_mode, fieldset, delete_cfiles):
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lon=[0.], lat=[0.])
+def test_execution_keep_cfiles_and_nocompilation_warnings(fieldset, delete_cfiles):
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.], lat=[0.])
     pset.execute(pset.Kernel(AdvectionRK4, delete_cfiles=delete_cfiles), endtime=1., dt=1.)
     cfile = pset.kernel.src_file
     logfile = pset.kernel.log_file

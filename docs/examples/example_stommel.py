@@ -5,28 +5,20 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 
-from parcels import (  # noqa
+from parcels import (
     AdvectionEE,
     AdvectionRK4,
     AdvectionRK45,
     FieldSet,
     JITParticle,
-    KernelAOS,
-    KernelSOA,
-    ParticleFileAOS,
-    ParticleFileSOA,
-    ParticleSetAOS,
-    ParticleSetSOA,
+    ParticleSet,
     ScipyParticle,
     Variable,
     timer,
 )
 
-pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
-pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 
 
 def stommel_fieldset(xdim=200, ydim=200, grid_type='A'):
@@ -95,7 +87,7 @@ def simple_partition_function(coords, mpi_size=1):
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
                     outfile="StommelParticle.zarr", repeatdt=None, maxage=None, write_fields=True,
-                    custom_partition_function=False, pset_mode='soa'):
+                    custom_partition_function=False):
     timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
     fieldset = stommel_fieldset(grid_type=grid_type)
     if write_fields:
@@ -120,12 +112,12 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
         age = Variable('age', dtype=np.float32, initial=0.)
 
     if custom_partition_function:
-        pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
-                                                      start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0,
-                                                      partition_function=simple_partition_function)
+        pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
+                                     start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0,
+                                     partition_function=simple_partition_function)
     else:
-        pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
-                                                      start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
+        pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
+                                     start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
 
     if verbose:
         print(f"Initial particle positions:\n{pset}")
@@ -146,15 +138,14 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     return pset
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('grid_type', ['A', 'C'])
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_stommel_fieldset(pset_mode, mode, grid_type, tmpdir):
+def test_stommel_fieldset(mode, grid_type, tmpdir):
     timer.root = timer.Timer('Main')
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
     outfile = tmpdir.join("StommelParticle")
-    psetRK4 = stommel_example(1, mode=mode, method=method['RK4'], grid_type=grid_type, outfile=outfile, write_fields=False, pset_mode=pset_mode)
-    psetRK45 = stommel_example(1, mode=mode, method=method['RK45'], grid_type=grid_type, outfile=outfile, write_fields=False, pset_mode=pset_mode)
+    psetRK4 = stommel_example(1, mode=mode, method=method['RK4'], grid_type=grid_type, outfile=outfile, write_fields=False)
+    psetRK45 = stommel_example(1, mode=mode, method=method['RK45'], grid_type=grid_type, outfile=outfile, write_fields=False)
     assert np.allclose(psetRK4.lon, psetRK45.lon, rtol=1e-3)
     assert np.allclose(psetRK4.lat, psetRK45.lat, rtol=1.1e-3)
     err_adv = np.abs(psetRK4.p_start - psetRK4.p)
@@ -184,8 +175,6 @@ Example of particle advection in the steady-state solution of the Stommel equati
     p.add_argument('-r', '--repeatdt', default=None, type=int,
                    help='repeatdt of the ParticleSet')
     p.add_argument('-a', '--maxage', default=None, type=int,
-                   help='max age of the particles (after which particles are deleted)')
-    p.add_argument('-psm', '--pset_mode', choices=('soa', 'aos'), default='soa',
                    help='max age of the particles (after which particles are deleted)')
     p.add_argument('-wf', '--write_fields', default=True,
                    help='Write the hydrodynamic fields to NetCDF')

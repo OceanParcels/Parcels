@@ -5,29 +5,21 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from parcels import (  # noqa
+from parcels import (
     AdvectionRK4,
     AdvectionRK4_3D,
     Field,
     FieldSet,
     Geographic,
     JITParticle,
-    KernelAOS,
-    KernelSOA,
     NestedField,
-    ParticleFileAOS,
-    ParticleFileSOA,
-    ParticleSetAOS,
-    ParticleSetSOA,
+    ParticleSet,
     ScipyParticle,
     StatusCode,
     Variable,
 )
 
-pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
-             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 
 
 def pclass(mode):
@@ -149,19 +141,17 @@ def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
     assert np.allclose(u_s, lat, rtol=1e-7)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_fieldset_polar_with_halo(fieldset_geometric_polar, pset_mode, mode):
+def test_fieldset_polar_with_halo(fieldset_geometric_polar, mode):
     fieldset_geometric_polar.add_periodic_halo(zonal=5)
-    pset = pset_type[pset_mode]['pset'](fieldset_geometric_polar, pclass=pclass(mode), lon=0, lat=0)
+    pset = ParticleSet(fieldset_geometric_polar, pclass=pclass(mode), lon=0, lat=0)
     pset.execute(runtime=1)
     assert pset.lon[0] == 0.
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('zdir', [-1, 1])
-def test_verticalsampling(pset_mode, mode, zdir):
+def test_verticalsampling(mode, zdir):
     dims = (4, 2, 2)
     dimensions = {'lon': np.linspace(0., 1., dims[2], dtype=np.float32),
                   'lat': np.linspace(0., 1., dims[1], dtype=np.float32),
@@ -169,14 +159,13 @@ def test_verticalsampling(pset_mode, mode, zdir):
     data = {'U': np.zeros(dims, dtype=np.float32),
             'V': np.zeros(dims, dtype=np.float32)}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=0, lat=0, depth=0.7*zdir)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=0, lat=0, depth=0.7*zdir)
     pset.execute(AdvectionRK4, dt=1., runtime=1.)
     assert pset[0].zi == [2]
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pset_from_field(pset_mode, mode, xdim=10, ydim=20, npart=10000):
+def test_pset_from_field(mode, xdim=10, ydim=20, npart=10000):
     np.random.seed(123456)
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1., ydim, dtype=np.float32)}
@@ -193,14 +182,13 @@ def test_pset_from_field(pset_mode, mode, xdim=10, ydim=20, npart=10000):
                       lat=np.linspace(-1./(ydim*2), 1.+1./(ydim*2), ydim+1, dtype=np.float32), transpose=True)
 
     fieldset.add_field(densfield)
-    pset = pset_type[pset_mode]['pset'].from_field(fieldset, size=npart, pclass=pclass(mode), start_field=fieldset.start)
+    pset = ParticleSet.from_field(fieldset, size=npart, pclass=pclass(mode), start_field=fieldset.start)
     pdens = np.histogram2d(pset.lon, pset.lat, bins=[np.linspace(0., 1., xdim+1), np.linspace(0., 1., ydim+1)])[0]
     assert np.allclose(pdens/sum(pdens.flatten()), startfield/sum(startfield.flatten()), atol=1e-2)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_nearest_neighbour_interpolation2D(pset_mode, mode, k_sample_p, npart=81):
+def test_nearest_neighbour_interpolation2D(mode, k_sample_p, npart=81):
     dims = (2, 2)
     dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
                   'lat': np.linspace(0., 1., dims[1], dtype=np.float32)}
@@ -211,15 +199,14 @@ def test_nearest_neighbour_interpolation2D(pset_mode, mode, k_sample_p, npart=81
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
     fieldset.P.interp_method = 'nearest'
     xv, yv = np.meshgrid(np.linspace(0., 1.0, int(np.sqrt(npart))), np.linspace(0., 1.0, int(np.sqrt(npart))))
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten())
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten())
     pset.execute(k_sample_p, endtime=1, dt=1)
     assert np.allclose(pset.p[(pset.lon < 0.5) & (pset.lat > 0.5)], 1.0, rtol=1e-5)
     assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5)], 0.0, rtol=1e-5)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_nearest_neighbour_interpolation3D(pset_mode, mode, k_sample_p, npart=81):
+def test_nearest_neighbour_interpolation3D(mode, k_sample_p, npart=81):
     dims = (2, 2, 2)
     dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
                   'lat': np.linspace(0., 1., dims[1], dtype=np.float32),
@@ -232,22 +219,20 @@ def test_nearest_neighbour_interpolation3D(pset_mode, mode, k_sample_p, npart=81
     fieldset.P.interp_method = 'nearest'
     xv, yv = np.meshgrid(np.linspace(0, 1.0, int(np.sqrt(npart))), np.linspace(0, 1.0, int(np.sqrt(npart))))
     # combine a pset at 0m with pset at 1m, as meshgrid does not do 3D
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
-                                        depth=np.zeros(npart))
-    pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
-                                         depth=np.ones(npart))
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
+                       depth=np.zeros(npart))
+    pset2 = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
+                        depth=np.ones(npart))
     pset.add(pset2)
-
     pset.execute(k_sample_p, endtime=1, dt=1)
     assert np.allclose(pset.p[(pset.lon < 0.5) & (pset.lat > 0.5) & (pset.depth > 0.5)], 1.0, rtol=1e-5)
     assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5) & (pset.depth < 0.5)], 0.0, rtol=1e-5)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('withDepth', [True, False])
 @pytest.mark.parametrize('arrtype', ['ones', 'rand'])
-def test_inversedistance_nearland(pset_mode, mode, withDepth, arrtype, k_sample_p, npart=81):
+def test_inversedistance_nearland(mode, withDepth, arrtype, k_sample_p, npart=81):
     dims = (4, 4, 6) if withDepth else (4, 6)
     dimensions = {'lon': np.linspace(0., 1., dims[-1], dtype=np.float32),
                   'lat': np.linspace(0., 1., dims[-2], dtype=np.float32)}
@@ -266,11 +251,11 @@ def test_inversedistance_nearland(pset_mode, mode, withDepth, arrtype, k_sample_
     fieldset.P.interp_method = 'linear_invdist_land_tracer'
 
     xv, yv = np.meshgrid(np.linspace(0.1, 0.9, int(np.sqrt(npart))), np.linspace(0.1, 0.9, int(np.sqrt(npart))))
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
-                                        depth=np.zeros(npart))
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
+                       depth=np.zeros(npart))
     if withDepth:
-        pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
-                                             depth=np.ones(npart))
+        pset2 = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(),
+                            depth=np.ones(npart))
         pset.add(pset2)
     pset.execute(k_sample_p, endtime=1, dt=1)
     if arrtype == 'rand':
@@ -287,12 +272,11 @@ def test_inversedistance_nearland(pset_mode, mode, withDepth, arrtype, k_sample_
     assert success
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('boundaryslip', ['freeslip', 'partialslip'])
 @pytest.mark.parametrize('withW', [False, True])
 @pytest.mark.parametrize('withT', [False, True])
-def test_partialslip_nearland_zonal(pset_mode, mode, boundaryslip, withW, withT, npart=20):
+def test_partialslip_nearland_zonal(mode, boundaryslip, withW, withT, npart=20):
     dims = (3, 9, 3)
     U = 0.1*np.ones(dims, dtype=np.float32)
     U[:, 0, :] = np.nan
@@ -318,8 +302,8 @@ def test_partialslip_nearland_zonal(pset_mode, mode, boundaryslip, withW, withT,
         data = {'U': U, 'V': V}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', interp_method=boundaryslip)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=np.zeros(npart),
-                                        lat=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=np.zeros(npart),
+                       lat=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
     kernel = AdvectionRK4_3D if withW else AdvectionRK4
     pset.execute(kernel, endtime=2, dt=1)
     if boundaryslip == 'partialslip':
@@ -336,11 +320,10 @@ def test_partialslip_nearland_zonal(pset_mode, mode, boundaryslip, withW, withT,
             assert np.allclose([p.depth for p in pset], 0.1)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('boundaryslip', ['freeslip', 'partialslip'])
 @pytest.mark.parametrize('withW', [False, True])
-def test_partialslip_nearland_meridional(pset_mode, mode, boundaryslip, withW, npart=20):
+def test_partialslip_nearland_meridional(mode, boundaryslip, withW, npart=20):
     dims = (1, 1, 9)
     U = np.zeros(dims, dtype=np.float32)
     U[:, :, 0] = np.nan
@@ -360,8 +343,8 @@ def test_partialslip_nearland_meridional(pset_mode, mode, boundaryslip, withW, n
         interp_method = {'U': boundaryslip, 'V': boundaryslip}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', interp_method=interp_method)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lat=np.zeros(npart),
-                                        lon=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=np.zeros(npart),
+                       lon=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
     kernel = AdvectionRK4_3D if withW else AdvectionRK4
     pset.execute(kernel, endtime=2, dt=1)
     if boundaryslip == 'partialslip':
@@ -378,10 +361,9 @@ def test_partialslip_nearland_meridional(pset_mode, mode, boundaryslip, withW, n
             assert np.allclose([p.depth for p in pset], 0.1)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('boundaryslip', ['freeslip', 'partialslip'])
-def test_partialslip_nearland_vertical(pset_mode, mode, boundaryslip, npart=20):
+def test_partialslip_nearland_vertical(mode, boundaryslip, npart=20):
     dims = (9, 1, 1)
     U = 0.1*np.ones(dims, dtype=np.float32)
     U[0, :, :] = np.nan
@@ -393,8 +375,8 @@ def test_partialslip_nearland_vertical(pset_mode, mode, boundaryslip, npart=20):
     data = {'U': U, 'V': V}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', interp_method={'U': boundaryslip, 'V': boundaryslip})
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=np.zeros(npart), lat=np.zeros(npart),
-                                        depth=np.linspace(0.1, 3.9, npart))
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=np.zeros(npart), lat=np.zeros(npart),
+                       depth=np.linspace(0.1, 3.9, npart))
     pset.execute(AdvectionRK4, endtime=2, dt=1)
     if boundaryslip == 'partialslip':
         assert np.allclose([p.lon for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
@@ -406,10 +388,9 @@ def test_partialslip_nearland_vertical(pset_mode, mode, boundaryslip, npart=20):
         assert np.allclose([p.lat for p in pset], 0.1)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('lat_flip', [False, True])
-def test_fieldset_sample_particle(pset_mode, mode, k_sample_uv, lat_flip, npart=120):
+def test_fieldset_sample_particle(mode, k_sample_uv, lat_flip, npart=120):
     """Sample the fieldset using an array of particles.
 
     Note that the low tolerances (1.e-6) are due to the first-order
@@ -429,71 +410,67 @@ def test_fieldset_sample_particle(pset_mode, mode, k_sample_uv, lat_flip, npart=
 
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(pset.v, lon, rtol=1e-6)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(pset.u, lat, rtol=1e-6)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_fieldset_sample_geographic(fieldset_geometric, pset_mode, mode, k_sample_uv, npart=120):
+def test_fieldset_sample_geographic(fieldset_geometric, mode, k_sample_uv, npart=120):
     """Sample a fieldset with conversion to geographic units (degrees)."""
     fieldset = fieldset_geometric
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(pset.v, lon, rtol=1e-6)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(pset.u, lat, rtol=1e-6)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_fieldset_sample_geographic_noconvert(fieldset_geometric, pset_mode, mode, k_sample_uv_noconvert, npart=120):
+def test_fieldset_sample_geographic_noconvert(fieldset_geometric, mode, k_sample_uv_noconvert, npart=120):
     """Sample a fieldset without conversion to geographic units."""
     fieldset = fieldset_geometric
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
     pset.execute(pset.Kernel(k_sample_uv_noconvert), endtime=1., dt=1.)
     assert np.allclose(pset.v, lon * 1000 * 1.852 * 60, rtol=1e-6)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv_noconvert), endtime=1., dt=1.)
     assert np.allclose(pset.u, lat * 1000 * 1.852 * 60, rtol=1e-6)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, pset_mode, mode, k_sample_uv, npart=120):
+def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, mode, k_sample_uv, npart=120):
     """Sample a fieldset with conversion to geographic units and a pole correction."""
     fieldset = fieldset_geometric_polar
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(pset.v, lon, rtol=1e-6)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     # Note: 1.e-2 is a very low rtol, so there seems to be a rather
     # large sampling error for the JIT correction.
     assert np.allclose(pset.u, lat, rtol=1e-2)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
+def test_meridionalflow_spherical(mode, xdim=100, ydim=200):
     """Create uniform NORTHWARD flow on spherical earth and advect particles.
 
     As flow is so simple, it can be directly compared to analytical solution.
@@ -509,7 +486,7 @@ def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
     lonstart = [0, 45]
     latstart = [0, 45]
     runtime = delta(hours=24)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=lonstart, lat=latstart)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4), runtime=runtime, dt=delta(hours=1))
 
     assert pset.lat[0] - (latstart[0] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4
@@ -518,9 +495,8 @@ def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
     assert pset.lon[1] - lonstart[1] < 1e-4
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
+def test_zonalflow_spherical(mode, k_sample_p, xdim=100, ydim=200):
     """Create uniform EASTWARD flow on spherical earth and advect particles.
 
     As flow is so simple, it can be directly compared to analytical solution
@@ -539,7 +515,7 @@ def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
     lonstart = [0, 45]
     latstart = [0, 45]
     runtime = delta(hours=24)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=lonstart, lat=latstart)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p,
                  runtime=runtime, dt=delta(hours=1))
 
@@ -553,9 +529,8 @@ def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
     assert abs(pset.p[1] - p_fld) < 1e-4
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_random_field(pset_mode, mode, k_sample_p, xdim=20, ydim=20, npart=100):
+def test_random_field(mode, k_sample_p, xdim=20, ydim=20, npart=100):
     """Sampling test that tests for overshoots by sampling a field of random numbers between 0 and 1."""
     np.random.seed(123456)
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
@@ -566,17 +541,16 @@ def test_random_field(pset_mode, mode, k_sample_p, xdim=20, ydim=20, npart=100):
             'start': np.ones((xdim, ydim), dtype=np.float32)}
 
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
-    pset = pset_type[pset_mode]['pset'].from_field(fieldset, size=npart, pclass=pclass(mode),
-                                                   start_field=fieldset.start)
+    pset = ParticleSet.from_field(fieldset, size=npart, pclass=pclass(mode),
+                                  start_field=fieldset.start)
     pset.execute(k_sample_p, endtime=1., dt=1.0)
     sampled = pset.p
     assert (sampled >= 0.).all()
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('allow_time_extrapolation', [True, False])
-def test_sampling_out_of_bounds_time(pset_mode, mode, allow_time_extrapolation, k_sample_p,
+def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
                                      xdim=10, ydim=10, tdim=10):
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1., ydim, dtype=np.float32),
@@ -587,7 +561,7 @@ def test_sampling_out_of_bounds_time(pset_mode, mode, allow_time_extrapolation, 
 
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat',
                                   allow_time_extrapolation=allow_time_extrapolation, transpose=True)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=-1.0)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=-1.0)
     if allow_time_extrapolation:
         pset.execute(k_sample_p, endtime=-0.9, dt=0.1)
         assert np.allclose(pset.p, 0.0, rtol=1e-5)
@@ -595,19 +569,19 @@ def test_sampling_out_of_bounds_time(pset_mode, mode, allow_time_extrapolation, 
         with pytest.raises(RuntimeError):
             pset.execute(k_sample_p, endtime=-0.9, dt=0.1)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=0)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=0)
     pset.execute(k_sample_p, runtime=0.1, dt=0.1)
     assert np.allclose(pset.p, 0.0, rtol=1e-5)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=0.5)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=0.5)
     pset.execute(k_sample_p, runtime=0.1, dt=0.1)
     assert np.allclose(pset.p, 0.5, rtol=1e-5)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=1.0)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=1.0)
     pset.execute(k_sample_p, runtime=0.1, dt=0.1)
     assert np.allclose(pset.p, 1.0, rtol=1e-5)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=2.0)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=2.0)
     if allow_time_extrapolation:
         pset.execute(k_sample_p, runtime=0.1, dt=0.1)
         assert np.allclose(pset.p, 1.0, rtol=1e-5)
@@ -616,11 +590,10 @@ def test_sampling_out_of_bounds_time(pset_mode, mode, allow_time_extrapolation, 
             pset.execute(k_sample_p, runtime=0.1, dt=0.1)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('npart', [1, 10])
 @pytest.mark.parametrize('chs', [False, 'auto', {'lat': ('y', 10), 'lon': ('x', 10)}])
-def test_sampling_multigrids_non_vectorfield_from_file(pset_mode, mode, npart, tmpdir, chs, filename='test_subsets'):
+def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs, filename='test_subsets'):
     xdim, ydim = 100, 200
     filepath = tmpdir.join(filename)
     U = Field('U', np.zeros((ydim, xdim), dtype=np.float32),
@@ -658,8 +631,7 @@ def test_sampling_multigrids_non_vectorfield_from_file(pset_mode, mode, npart, t
     class TestParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
 
-    pset = pset_type[pset_mode]['pset'].from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7],
-                                                  size=npart)
+    pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
 
     def test_sample(particle, fieldset, time):
         particle.sample_var += fieldset.B[time, fieldset.sample_depth, particle.lat, particle.lon]
@@ -668,33 +640,22 @@ def test_sampling_multigrids_non_vectorfield_from_file(pset_mode, mode, npart, t
     pset.execute(kernels, runtime=10, dt=1)
     assert np.allclose(pset.sample_var, 10.0)
     if mode == 'jit':
-        if pset_mode == 'soa':
-            assert len(pset.xi.shape) == 2
-            assert pset.xi.shape[0] == len(pset.lon)
-            assert pset.xi.shape[1] == fieldset.gridset.size
-            assert np.all(pset.xi >= 0)
-            assert np.all(pset.xi[:, fieldset.B.igrid] < xdim * 4)
-            assert np.all(pset.xi[:, 0] < xdim)
-            assert pset.yi.shape[0] == len(pset.lon)
-            assert pset.yi.shape[1] == fieldset.gridset.size
-            assert np.all(pset.yi >= 0)
-            assert np.all(pset.yi[:, fieldset.B.igrid] < ydim * 3)
-            assert np.all(pset.yi[:, 0] < ydim)
-        elif pset_mode == 'aos':
-            assert np.alltrue([[pxi > 0 for pxi in p.xi] for p in pset])
-            assert np.alltrue([len(p.xi) == fieldset.gridset.size for p in pset])
-            assert np.alltrue([p.xi[fieldset.B.igrid] < xdim * 4 for p in pset])
-            assert np.alltrue([p.xi[0] < xdim for p in pset])
-            assert np.alltrue([[pyi > 0 for pyi in p.yi] for p in pset])
-            assert np.alltrue([len(p.yi) == fieldset.gridset.size for p in pset])
-            assert np.alltrue([p.yi[fieldset.B.igrid] < ydim * 3 for p in pset])
-            assert np.alltrue([p.yi[0] < ydim for p in pset])
+        assert len(pset.xi.shape) == 2
+        assert pset.xi.shape[0] == len(pset.lon)
+        assert pset.xi.shape[1] == fieldset.gridset.size
+        assert np.all(pset.xi >= 0)
+        assert np.all(pset.xi[:, fieldset.B.igrid] < xdim * 4)
+        assert np.all(pset.xi[:, 0] < xdim)
+        assert pset.yi.shape[0] == len(pset.lon)
+        assert pset.yi.shape[1] == fieldset.gridset.size
+        assert np.all(pset.yi >= 0)
+        assert np.all(pset.yi[:, fieldset.B.igrid] < ydim * 3)
+        assert np.all(pset.yi[:, 0] < ydim)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('npart', [1, 10])
-def test_sampling_multigrids_non_vectorfield(pset_mode, mode, npart):
+def test_sampling_multigrids_non_vectorfield(mode, npart):
     xdim, ydim = 100, 200
     U = Field('U', np.zeros((ydim, xdim), dtype=np.float32),
               lon=np.linspace(0., 1., xdim, dtype=np.float32),
@@ -714,8 +675,7 @@ def test_sampling_multigrids_non_vectorfield(pset_mode, mode, npart):
     class TestParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
 
-    pset = pset_type[pset_mode]['pset'].from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7],
-                                                  size=npart)
+    pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
 
     def test_sample(particle, fieldset, time):
         particle.sample_var += fieldset.B[time, fieldset.sample_depth, particle.lat, particle.lon]
@@ -724,33 +684,22 @@ def test_sampling_multigrids_non_vectorfield(pset_mode, mode, npart):
     pset.execute(kernels, runtime=10, dt=1)
     assert np.allclose(pset.sample_var, 10.0)
     if mode == 'jit':
-        if pset_mode == 'soa':
-            assert len(pset.xi.shape) == 2
-            assert pset.xi.shape[0] == len(pset.lon)
-            assert pset.xi.shape[1] == fieldset.gridset.size
-            assert np.all(pset.xi >= 0)
-            assert np.all(pset.xi[:, fieldset.B.igrid] < xdim * 4)
-            assert np.all(pset.xi[:, 0] < xdim)
-            assert pset.yi.shape[0] == len(pset.lon)
-            assert pset.yi.shape[1] == fieldset.gridset.size
-            assert np.all(pset.yi >= 0)
-            assert np.all(pset.yi[:, fieldset.B.igrid] < ydim * 3)
-            assert np.all(pset.yi[:, 0] < ydim)
-        elif pset_mode == 'aos':
-            assert np.alltrue([[pxi > 0 for pxi in p.xi] for p in pset])
-            assert np.alltrue([len(p.xi) == fieldset.gridset.size for p in pset])
-            assert np.alltrue([p.xi[fieldset.B.igrid] < xdim * 4 for p in pset])
-            assert np.alltrue([p.xi[0] < xdim for p in pset])
-            assert np.alltrue([[pyi > 0 for pyi in p.yi] for p in pset])
-            assert np.alltrue([len(p.yi) == fieldset.gridset.size for p in pset])
-            assert np.alltrue([p.yi[fieldset.B.igrid] < ydim * 3 for p in pset])
-            assert np.alltrue([p.yi[0] < ydim for p in pset])
+        assert len(pset.xi.shape) == 2
+        assert pset.xi.shape[0] == len(pset.lon)
+        assert pset.xi.shape[1] == fieldset.gridset.size
+        assert np.all(pset.xi >= 0)
+        assert np.all(pset.xi[:, fieldset.B.igrid] < xdim * 4)
+        assert np.all(pset.xi[:, 0] < xdim)
+        assert pset.yi.shape[0] == len(pset.lon)
+        assert pset.yi.shape[1] == fieldset.gridset.size
+        assert np.all(pset.yi >= 0)
+        assert np.all(pset.yi[:, fieldset.B.igrid] < ydim * 3)
+        assert np.all(pset.yi[:, 0] < ydim)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('ugridfactor', [1, 10])
-def test_sampling_multiple_grid_sizes(pset_mode, mode, ugridfactor):
+def test_sampling_multiple_grid_sizes(mode, ugridfactor):
     xdim, ydim = 10, 20
     U = Field('U', np.zeros((ydim*ugridfactor, xdim*ugridfactor), dtype=np.float32),
               lon=np.linspace(0., 1., xdim*ugridfactor, dtype=np.float32),
@@ -759,7 +708,7 @@ def test_sampling_multiple_grid_sizes(pset_mode, mode, ugridfactor):
               lon=np.linspace(0., 1., xdim, dtype=np.float32),
               lat=np.linspace(0., 1., ydim, dtype=np.float32))
     fieldset = FieldSet(U, V)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0.8], lat=[0.9])
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.8], lat=[0.9])
 
     if ugridfactor > 1:
         assert fieldset.U.grid is not fieldset.V.grid
@@ -780,7 +729,7 @@ def test_multiple_grid_addlater_error():
               lat=np.linspace(0., 1., ydim, dtype=np.float32))
     fieldset = FieldSet(U, V)
 
-    pset = pset_type['soa']['pset'](fieldset, pclass=pclass('jit'), lon=[0.8], lat=[0.9])  # noqa ; to trigger fieldset.check_complete
+    pset = ParticleSet(fieldset, pclass=pclass('jit'), lon=[0.8], lat=[0.9])  # noqa ; to trigger fieldset.check_complete
 
     P = Field('P', np.zeros((ydim*10, xdim*10), dtype=np.float32),
               lon=np.linspace(0., 1., xdim*10, dtype=np.float32),
@@ -794,9 +743,8 @@ def test_multiple_grid_addlater_error():
     assert fail
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_nestedfields(pset_mode, mode, k_sample_p):
+def test_nestedfields(mode, k_sample_p):
     xdim = 10
     ydim = 20
 
@@ -835,24 +783,23 @@ def test_nestedfields(pset_mode, mode, k_sample_p):
             particle.p = 999
             particle.state = StatusCode.Evaluate
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[.3])
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[.3])
     pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
     assert np.isclose(pset.lat[0], .5)
     assert np.isclose(pset.p[0], .1)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[1.1])
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[1.1])
     pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
     assert np.isclose(pset.lat[0], 1.5)
     assert np.isclose(pset.p[0], .2)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[2.3])
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[2.3])
     pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p + Recover, runtime=1, dt=1)
     assert np.isclose(pset.lat[0], 0)
     assert np.isclose(pset.p[0], 999)
     assert np.allclose(fieldset.UV[0][0, 0, 0, 0], [.1, .2])
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def fieldset_sampling_updating_order(pset_mode, mode, tmpdir):
+def fieldset_sampling_updating_order(mode, tmpdir):
     def calc_p(t, y, x):
         return 10 * t + x + 0.2 * y
 
@@ -877,7 +824,7 @@ def fieldset_sampling_updating_order(pset_mode, mode, tmpdir):
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
 
     xv, yv = np.meshgrid(np.arange(0, 1, 0.5), np.arange(0, 1, 0.5))
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten())
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten())
 
     def SampleP(particle, fieldset, time):
         particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
