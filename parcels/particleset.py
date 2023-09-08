@@ -22,7 +22,6 @@ except:
     KDTree = None
 
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.grid import CurvilinearGrid, GridCode
@@ -35,6 +34,7 @@ from parcels.interaction.neighborsearch import (
 )
 from parcels.kernel import Kernel
 from parcels.particle import JITParticle, Variable
+from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.global_statics import get_package_dir
