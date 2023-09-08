@@ -509,6 +509,12 @@ class ParticleCollectionIterator(ABC):
         self._pcoll = pcoll
         self._index = 0
 
+    def __len__(self):
+        return len(self._indices)
+
+    def __getitem__(self, items):
+        return ParticleCollectionAccessor(self._pcoll, self._indices[items])
+
     def __iter__(self):
         """Returns the iterator itself."""
         return self
