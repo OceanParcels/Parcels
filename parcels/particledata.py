@@ -4,7 +4,6 @@ from operator import attrgetter
 
 import numpy as np
 
-from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
 
@@ -19,9 +18,33 @@ if MPI:
         KMeans = None
 
 
+def partitionParticlesMPI_default(coords, mpi_size=1):
+    """This function takes the coordinates of the particle starting
+    positions and returns which MPI process will process each particle.
+
+    Input:
+
+    coords: numpy array with rows of [lon, lat] so that coords.shape[0] is the number of particles and coords.shape[1] is 2.
+
+    mpi_size=1: the number of MPI processes.
+
+    Output:
+    mpiProcs: an integer array with values from 0 to mpi_size-1 specifying which MPI job will run which particles. len(mpiProcs) must equal coords.shape[0]
+    """
+    if KMeans:
+        kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+        mpiProcs = kmeans.labels_
+    else:  # assigning random labels if no KMeans (see https://github.com/OceanParcels/parcels/issues/1261)
+        logger.warning_once('sklearn needs to be available if MPI is installed. '
+                            'See https://docs.oceanparcels.org/en/latest/installation.html#installation-for-developers for more information')
+        mpiProcs = np.randint(0, mpi_size, size=coords.shape[0])
+
+    return mpiProcs
+
+
 class ParticleData(ABC):
 
-    def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
+    def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, ngrid=1, **kwargs):
         """
         Parameters
         ----------
@@ -47,9 +70,10 @@ class ParticleData(ABC):
 
         assert lon.size == time.size, ('time and positions (lon, lat, depth) don''t have the same lengths.')
 
-        # If partitions is false, the partitions are already initialised
-        if partitions is not None and partitions is not False:
-            self._pu_indicators = convert_to_flat_array(partitions)
+        # If a partitioning function for MPI runs has been passed into the
+        # particle creation with the "partition_function" kwarg, retrieve it here.
+        # If it has not, assign the default function, partitionParticlesMPI_defualt()
+        partition_function = kwargs.pop('partition_function', partitionParticlesMPI_default)
 
         for kwvar in kwargs:
             assert lon.size == kwargs[kwvar].size, (
@@ -65,17 +89,11 @@ class ParticleData(ABC):
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
             if mpi_size > 1:
-                if partitions is not False:
+                if partition_function is not False:
                     if (self._pu_indicators is None) or (len(self._pu_indicators) != len(lon)):
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
-                            if KMeans:
-                                kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                                self._pu_indicators = kmeans.labels_
-                            else:  # assigning random labels if no KMeans (see https://github.com/OceanParcels/parcels/issues/1261)
-                                logger.warning_once('sklearn needs to be available if MPI is installed. '
-                                                    'See https://docs.oceanparcels.org/en/latest/installation.html#installation-for-developers for more information')
-                                self._pu_indicators = np.randint(0, mpi_size, size=len(lon))
+                            self._pu_indicators = partition_function(coords, mpi_size=mpi_size)
                         else:
                             self._pu_indicators = None
                         self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
