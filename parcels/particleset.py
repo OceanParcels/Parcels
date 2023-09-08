@@ -83,9 +83,8 @@ class ParticleSet(ABC):
         and np.float64 if the interpolation method is 'cgrid_velocity'
     pid_orig :
         Optional list of (offsets for) the particle IDs
-    partitions :
-        List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
-        are distributed automatically on the processors
+    partition_function :
+        Function to use for partitioning particles over processors. Default is to use kMeans
     periodic_domain_zonal :
         Zonal domain size, used to apply zonally periodic boundaries for particle-particle
         interaction. If None, no zonally periodic boundaries are applied
@@ -148,7 +147,6 @@ class ParticleSet(ABC):
             logger.warning_once("No FieldSet provided in ParticleSet generation. This breaks most Parcels functionality")
         else:
             self.fieldset.check_complete()
-        partitions = kwargs.pop('partitions', None)
 
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
@@ -185,9 +183,10 @@ class ParticleSet(ABC):
             'lon lat depth precision should be set to either np.float32 or np.float64'
 
         for kwvar in kwargs:
-            kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
-            assert lon.size == kwargs[kwvar].size, (
-                f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
+            if kwvar not in ['partition_function']:
+                kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
+                assert lon.size == kwargs[kwvar].size, (
+                    f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -197,6 +196,7 @@ class ParticleSet(ABC):
                 raise 'All Particle.time should be the same when repeatdt is not None'
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
+            self.repeatkwargs.pop('partition_function', None)
 
         ngrids = fieldset.gridset.size if fieldset is not None else 1
 
@@ -214,7 +214,7 @@ class ParticleSet(ABC):
         self.particledata = ParticleData(
             _pclass, lon=lon, lat=lat, depth=depth, time=time,
             lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig,
-            partitions=partitions, ngrid=ngrids, **kwargs)
+            ngrid=ngrids, **kwargs)
 
         # Initialize neighbor search data structure (used for interaction).
         if interaction_distance is not None:
@@ -261,7 +261,8 @@ class ParticleSet(ABC):
             self.repeatlat = copy(self.particledata.data['lat'])
             self.repeatdepth = copy(self.particledata.data['depth'])
             for kwvar in kwargs:
-                self.repeatkwargs[kwvar] = copy(self.particledata.data[kwvar])
+                if kwvar not in ['partition_function']:
+                    self.repeatkwargs[kwvar] = copy(self.particledata.data[kwvar])
 
         if self.repeatdt:
             if MPI and self.particledata.pu_indicators is not None:
@@ -496,7 +497,7 @@ class ParticleSet(ABC):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod
-    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
+    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Create a particleset in the shape of a line (according to a cartesian grid).
 
         Initialise the ParticleSet from start/finish coordinates with equidistant spacing
@@ -530,7 +531,7 @@ class ParticleSet(ABC):
         lat = np.linspace(start[1], finish[1], size)
         if type(depth) in [int, float]:
             depth = [depth] * size
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod
     def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
@@ -1073,7 +1074,7 @@ class ParticleSet(ABC):
                     lat=self.repeatlat, depth=self.repeatdepth,
                     pclass=self.repeatpclass,
                     lonlatdepth_dtype=self.particledata.lonlatdepth_dtype,
-                    partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
+                    partition_function=False, pid_orig=self.repeatpid, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
