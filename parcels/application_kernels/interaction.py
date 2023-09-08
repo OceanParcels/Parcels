@@ -1,7 +1,7 @@
 """Collection of pre-built interaction kernels."""
 import numpy as np
 
-from parcels.tools.statuscodes import OperationCode, StateCode
+from parcels.tools.statuscodes import StatusCode
 
 __all__ = ['AsymmetricAttraction', 'NearestNeighborWithinRange',
            'MergeWithNearestNeighbor']
@@ -31,7 +31,7 @@ def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
         p.nearest_neighbor = neighbor
     mutator[particle.id].append((f, [neighbor_id]))
 
-    return StateCode.Success
+    return StatusCode.Success
 
 
 def MergeWithNearestNeighbor(particle, fieldset, time, neighbors, mutator):
@@ -43,12 +43,12 @@ def MergeWithNearestNeighbor(particle, fieldset, time, neighbors, mutator):
     neighbors will be merged.
     """
     def delete_particle(p):
-        p.state = OperationCode.Delete
+        p.state = StatusCode.Delete
 
     def merge_with_neighbor(p, nlat, nlon, ndepth, nmass):
-        p.lat = (p.mass * p.lat + nmass * nlat) / (p.mass + nmass)
-        p.lon = (p.mass * p.lon + nmass * nlon) / (p.mass + nmass)
-        p.depth = (p.mass * p.depth + nmass * ndepth) / (p.mass + nmass)
+        p.lat_nextloop = (p.mass * p.lat + nmass * nlat) / (p.mass + nmass)
+        p.lon_nextloop = (p.mass * p.lon + nmass * nlon) / (p.mass + nmass)
+        p.depth_nextloop = (p.mass * p.depth + nmass * ndepth) / (p.mass + nmass)
         p.mass = p.mass + nmass
 
     for n in neighbors:
@@ -61,11 +61,11 @@ def MergeWithNearestNeighbor(particle, fieldset, time, neighbors, mutator):
                 args = np.array([n.lat, n.lon, n.depth, n.mass])
                 mutator[particle.id].append((merge_with_neighbor, args))
 
-                return StateCode.Success
+                return StatusCode.Success
             else:
-                return StateCode.Success
+                return StatusCode.Success
 
-    return StateCode.Success
+    return StatusCode.Success
 
 
 def AsymmetricAttraction(particle, fieldset, time, neighbors, mutator):
@@ -78,7 +78,7 @@ def AsymmetricAttraction(particle, fieldset, time, neighbors, mutator):
     """
     na_neighbors = []
     if not particle.attractor:
-        return StateCode.Success
+        return StatusCode.Success
     for n in neighbors:
         if n.attractor:
             continue
@@ -96,10 +96,10 @@ def AsymmetricAttraction(particle, fieldset, time, neighbors, mutator):
         d_vec = distance*dx/dx_norm
 
         def f(n, dlat, dlon, ddepth):
-            n.lat += dlat
-            n.lon += dlon
-            n.depth += ddepth
+            n.lat_nextloop += dlat
+            n.lon_nextloop += dlon
+            n.depth_nextloop += ddepth
 
         mutator[n.id].append((f, d_vec))
 
-    return StateCode.Success
+    return StatusCode.Success

@@ -361,7 +361,8 @@ nbsphinx_thumbnails = {
     'examples/tutorial_interaction': '_static/pulled_particles_twoatractors_line.gif',
     'examples/documentation_LargeRunsOutput': '_static/harddrive.png',
     'examples/tutorial_unitconverters': '_static/globe-icon.jpg',
-    'examples/documentation_geospatial': '_images/tutorial_geospatial_google_earth.png'
+    'examples/documentation_geospatial': '_images/tutorial_geospatial_google_earth.png',
+    'examples/tutorial_kernelloop': '_static/loop-icon.jpeg',
 }
 # -- Options for LaTeX output ---------------------------------------------
 

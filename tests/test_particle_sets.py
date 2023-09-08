@@ -8,17 +8,16 @@ from parcels import (  # noqa
     JITParticle,
     KernelAOS,
     KernelSOA,
-    OperationCode,
     ParticleFileAOS,
     ParticleFileSOA,
     ParticleSetAOS,
     ParticleSetSOA,
     ScipyParticle,
-    StateCode,
+    StatusCode,
     Variable,
 )
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -101,7 +100,6 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
             particle.delete()
 
     pset.execute(Kernel, runtime=2, dt=1, output_file=pfile)
-    pfile.close()
 
     pset_new = pset_type[pset_mode]['pset'].from_particlefile(fieldset, pclass=TestParticle, filename=filename,
                                                               restart=restart, repeatdt=1)
@@ -188,10 +186,10 @@ def test_pset_not_multipldt_time(fieldset, pset_mode, mode):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=[0]*2, lat=[0]*2, pclass=ptype[mode], time=times)
 
     def Addlon(particle, fieldset, time):
-        particle.lon += particle.dt
+        particle_dlon += particle.dt  # noqa
 
     pset.execute(Addlon, dt=1, runtime=2)
-    assert np.allclose([p.lon for p in pset], [2 - t for t in times])
+    assert np.allclose([p.lon_nextloop for p in pset], [2 - t for t in times])
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -203,22 +201,9 @@ def test_pset_repeated_release(fieldset, pset_mode, mode, npart=10):
     assert np.allclose([p.time for p in pset], time)
 
     def IncrLon(particle, fieldset, time):
-        particle.lon += 1.
-    pset.execute(IncrLon, dt=1., runtime=npart)
+        particle_dlon += 1.  # noqa
+    pset.execute(IncrLon, dt=1., runtime=npart+1)
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pset_dt0(fieldset, pset_mode, mode, npart=10):
-    pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
-                                        pclass=ptype[mode])
-
-    def IncrLon(particle, fieldset, time):
-        particle.lon += 1
-    pset.execute(IncrLon, dt=0., runtime=npart)
-    assert np.allclose([p.lon for p in pset], 1.)
-    assert np.allclose([p.time for p in pset], 0.)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -240,7 +225,7 @@ def test_pset_repeatdt_custominit(fieldset, pset_mode, mode):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5)
 
     def DoNothing(particle, fieldset, time):
-        return StateCode.Success
+        pass
 
     pset.execute(DoNothing, dt=1, runtime=21)
     assert np.allclose([p.sample_var for p in pset], 5.)
@@ -253,7 +238,7 @@ def test_pset_stop_simulation(fieldset, pset_mode, mode):
 
     def Delete(particle, fieldset, time):
         if time == 4:
-            return OperationCode.StopExecution
+            return StatusCode.StopExecution
 
     pset.execute(Delete, dt=1, runtime=21)
     assert pset[0].time == 4
@@ -317,12 +302,12 @@ def test_pset_add_shorthand(fieldset, pset_mode, mode, npart=100):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_add_execute(fieldset, pset_mode, mode, npart=10):
     def AddLat(particle, fieldset, time):
-        particle.lat += 0.1
+        particle_dlat += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, lon=[], lat=[], pclass=ptype[mode])
     for i in range(npart):
         pset += pset_type[pset_mode]['pset'](pclass=ptype[mode], lon=0.1, lat=0.1, fieldset=fieldset)
-    for _ in range(3):
+    for _ in range(4):
         pset.execute(pset.Kernel(AddLat), runtime=1., dt=1.0)
     assert np.allclose(np.array([p.lat for p in pset]), 0.4, rtol=1e-12)
 
@@ -403,13 +388,13 @@ def test_pset_remove_kernel(fieldset, pset_mode, mode, npart=100):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_multi_execute(fieldset, pset_mode, mode, npart=10, n=5):
     def AddLat(particle, fieldset, time):
-        particle.lat += 0.1
+        particle_dlat += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
                                         lat=np.zeros(npart))
     k_add = pset.Kernel(AddLat)
-    for _ in range(n):
+    for _ in range(n+1):
         pset.execute(k_add, runtime=1., dt=1.0)
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart), rtol=1e-12)
 
@@ -418,16 +403,16 @@ def test_pset_multi_execute(fieldset, pset_mode, mode, npart=10, n=5):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_multi_execute_delete(fieldset, pset_mode, mode, npart=10, n=5):
     def AddLat(particle, fieldset, time):
-        particle.lat += 0.1
+        particle_dlat += 0.1  # noqa
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
                                         lon=np.linspace(0, 1, npart),
                                         lat=np.zeros(npart))
     k_add = pset.Kernel(AddLat)
-    for _ in range(n):
+    for _ in range(n+1):
         pset.execute(k_add, runtime=1., dt=1.0)
         pset.remove_indices(-1)
-    assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart - n), rtol=1e-12)
+    assert np.allclose(pset.lat, n*0.1, atol=1e-12)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -487,10 +472,13 @@ def test_from_field_exact_val(pset_mode, staggered_grid):
         fieldset.add_field(FMask)
 
     class SampleParticle(ptype['scipy']):
-        mask = Variable('mask', initial=fieldset.mask)
+        mask = Variable('mask', initial=0)
+
+    def SampleMask(particle, fieldset, time):
+        particle.mask = fieldset.mask[particle]
 
     pset = pset_type[pset_mode]['pset'].from_field(fieldset, size=400, pclass=SampleParticle, start_field=FMask, time=0)
-    # pset.show(field=FMask)
+    pset.execute(SampleMask, dt=1, runtime=1)
     assert np.allclose([p.mask for p in pset], 1)
     assert (np.array([p.lon for p in pset]) <= 1).all()
     test = np.logical_or(np.array([p.lon for p in pset]) <= 0, np.array([p.lat for p in pset]) >= 51)

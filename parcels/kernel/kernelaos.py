@@ -16,11 +16,10 @@ except:
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.compilation.codegenerator import ObjectKernelGenerator as KernelGenerator
 from parcels.compilation.codegenerator import ParticleObjectLoopGenerator
-from parcels.field import NestedField, SummedField, VectorField
+from parcels.field import NestedField, VectorField
 from parcels.kernel.basekernel import BaseKernel
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode  # noqa
-from parcels.tools.statuscodes import recovery_map as recovery_base_map
+from parcels.tools.statuscodes import StatusCode  # noqa
 
 __all__ = ['KernelAOS']
 
@@ -69,9 +68,7 @@ class KernelAOS(BaseKernel):
                 user_ctx['math'] = globals()['math']
                 user_ctx['ParcelsRandom'] = globals()['ParcelsRandom']
                 user_ctx['random'] = globals()['random']
-                user_ctx['StateCode'] = globals()['StateCode']
-                user_ctx['OperationCode'] = globals()['OperationCode']
-                user_ctx['ErrorCode'] = globals()['ErrorCode']
+                user_ctx['StatusCode'] = globals()['StatusCode']
             except:
                 logger.warning("Could not access user context when merging kernels")
                 user_ctx = globals()
@@ -140,43 +137,33 @@ class KernelAOS(BaseKernel):
         # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
         sign_dt = np.sign(dt)
 
-        analytical = False
-        if 'AdvectionAnalytical' in self._pyfunc.__name__:
-            analytical = True
-            if not np.isinf(dt):
-                logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
-            dt = np.inf
-
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
-                if type(f) in [VectorField, NestedField, SummedField]:
+                if isinstance(f, (VectorField, NestedField)):
                     continue
                 f.data = np.array(f.data)
 
-        for p in pset:
-            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+        if not self.scipy_positionupdate_kernels_added:
+            self.add_scipy_positionupdate_kernels()
+            self.scipy_positionupdate_kernels_added = True
 
-    def remove_deleted(self, pset, output_file, endtime):
+        for p in pset:
+            self.evaluate_particle(p, endtime, sign_dt)
+
+    def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""
-        indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
-        if len(indices) > 0 and output_file is not None:
-            output_file.write(pset, endtime, deleted_only=indices)
+        indices = [i for i, p in enumerate(pset) if p.state == StatusCode.Delete]
+        if len(indices) > 0 and self.fieldset.particlefile is not None:
+            self.fieldset.particlefile.write(pset, None, indices=indices)
         pset.remove_indices(indices)
 
-    def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
+    def execute(self, pset, endtime, dt, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps."""
         for p in pset:
             p.reset_state()
 
-        if abs(dt) < 1e-6 and not execute_once:
+        if abs(dt) < 1e-6:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
-
-        if recovery is None:
-            recovery = {}
-        elif ErrorCode.ErrorOutOfBounds in recovery and ErrorCode.ErrorThroughSurface not in recovery:
-            recovery[ErrorCode.ErrorThroughSurface] = recovery[ErrorCode.ErrorOutOfBounds]
-        recovery_map = recovery_base_map.copy()
-        recovery_map.update(recovery)
 
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
@@ -191,37 +178,4 @@ class KernelAOS(BaseKernel):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        self.remove_deleted(pset, output_file=output_file, endtime=endtime)
-
-        # Identify particles that threw errors
-        error_particles = [p for p in pset if p.state not in [StateCode.Success, StateCode.Evaluate]]
-
-        while len(error_particles) > 0:
-            # Apply recovery kernel
-            for p in error_particles:
-                if p.state == OperationCode.StopExecution:
-                    return
-                if p.state == OperationCode.Repeat:
-                    p.reset_state()
-                elif p.state == OperationCode.Delete:
-                    pass
-                elif p.state in recovery_map:
-                    recovery_kernel = recovery_map[p.state]
-                    p.set_state(StateCode.Success)
-                    recovery_kernel(p, self.fieldset, p.time)
-                    if p.isComputed():
-                        p.reset_state()
-                else:
-                    logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')
-                    p.delete()
-
-            # Remove all particles that signalled deletion
-            self.remove_deleted(pset, output_file=output_file, endtime=endtime)
-
-            # Execute core loop again to continue interrupted particles
-            if self.ptype.uses_jit:
-                self.execute_jit(pset, endtime, dt)
-            else:
-                self.execute_python(pset, endtime, dt)
-
-            error_particles = [p for p in pset if p.state not in [StateCode.Success, StateCode.Evaluate]]
+        self.remove_deleted(pset)

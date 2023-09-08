@@ -23,7 +23,7 @@ from parcels.particlefile import ParticleFile
 from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import StateCode
+from parcels.tools.statuscodes import StatusCode
 
 try:
     from mpi4py import MPI
@@ -287,7 +287,8 @@ class ParticleSetSOA(BaseParticleSet):
         """
         if np.any(np.isnan(self._collection.data['time'])):
             self._collection.data['time'][np.isnan(self._collection.data['time'])] = default
-        return np.min(self._collection.data['time']), np.max(self._collection.data['time'])
+            self._collection.data['time_nextloop'][np.isnan(self._collection.data['time_nextloop'])] = default
+        return np.min(self._collection.data['time_nextloop']), np.max(self._collection.data['time_nextloop'])
 
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.
@@ -353,12 +354,12 @@ class ParticleSetSOA(BaseParticleSet):
         iterator
             Collection iterator over error particles.
         """
-        error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
+        error_indices = self.data_indices('state', [StatusCode.Success, StatusCode.Evaluate], invert=True)
         return ParticleCollectionIterableSOA(self._collection, subset=error_indices)
 
     def active_particles_mask(self, time, dt):
         active_indices = (time - self._collection.data['time'])/dt >= 0
-        non_err_indices = np.isin(self._collection.data['state'], [StateCode.Success, StateCode.Evaluate])
+        non_err_indices = np.isin(self._collection.data['state'], [StatusCode.Success, StatusCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
         self._active_particle_idx = np.where(active_indices)[0]
         return active_indices
@@ -374,7 +375,7 @@ class ParticleSetSOA(BaseParticleSet):
         """
         return np.sum(np.isin(
             self._collection.data['state'],
-            [StateCode.Success, StateCode.Evaluate], invert=True))
+            [StatusCode.Success, StatusCode.Evaluate], invert=True))
 
     def __getitem__(self, index):
         """Get a single particle by index."""
@@ -493,12 +494,16 @@ class ParticleSetSOA(BaseParticleSet):
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'once_written', 'state'] \
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', 'depth', 'id', 'obs_written', 'state',
+                                'lon_nextloop', 'lat_nextloop', 'depth_nextloop', 'time_nextloop'] \
                     and v.to_write:
                 raise RuntimeError(f'Variable {v.name} is in pclass but not in the particlefile')
             to_write[v.name] = v.to_write
         vars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
         vars['id'] = np.ma.filled(pfile.variables['trajectory'], np.nan)
+
+        for v in ['lon', 'lat', 'depth', 'time']:
+            to_write[v] = True
 
         if isinstance(vars['time'][0, 0], np.timedelta64):
             vars['time'] = np.array([t/np.timedelta64(1, 's') for t in vars['time']])

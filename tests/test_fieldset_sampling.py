@@ -3,11 +3,11 @@ from math import cos, pi
 
 import numpy as np
 import pytest
+import xarray as xr
 
 from parcels import (  # noqa
     AdvectionRK4,
     AdvectionRK4_3D,
-    ErrorCode,
     Field,
     FieldSet,
     Geographic,
@@ -20,10 +20,11 @@ from parcels import (  # noqa
     ParticleSetAOS,
     ParticleSetSOA,
     ScipyParticle,
+    StatusCode,
     Variable,
 )
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -175,26 +176,6 @@ def test_verticalsampling(pset_mode, mode, zdir):
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_variable_init_from_field(pset_mode, mode, npart=9):
-    dims = (2, 2)
-    dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
-                  'lat': np.linspace(0., 1., dims[1], dtype=np.float32)}
-    data = {'U': np.zeros(dims, dtype=np.float32),
-            'V': np.zeros(dims, dtype=np.float32),
-            'P': np.zeros(dims, dtype=np.float32)}
-    data['P'][0, 0] = 1.
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
-    xv, yv = np.meshgrid(np.linspace(0, 1, int(np.sqrt(npart))), np.linspace(0, 1, int(np.sqrt(npart))))
-
-    class VarParticle(pclass(mode)):
-        a = Variable('a', dtype=np.float32, initial=fieldset.P)
-
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=VarParticle, lon=xv.flatten(), lat=yv.flatten(), time=0)
-    assert np.all([abs(pset.a[i] - fieldset.P[pset.time[i], pset.depth[i], pset.lat[i], pset.lon[i]]) < 1e-6 for i in range(pset.size)])
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_from_field(pset_mode, mode, xdim=10, ydim=20, npart=10000):
     np.random.seed(123456)
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
@@ -213,8 +194,8 @@ def test_pset_from_field(pset_mode, mode, xdim=10, ydim=20, npart=10000):
 
     fieldset.add_field(densfield)
     pset = pset_type[pset_mode]['pset'].from_field(fieldset, size=npart, pclass=pclass(mode), start_field=fieldset.start)
-    pdens = pset.density(field_name='densfield', relative=True)[:-1, :-1]
-    assert np.allclose(np.transpose(pdens), startfield/np.sum(startfield), atol=1e-2)
+    pdens = np.histogram2d(pset.lon, pset.lat, bins=[np.linspace(0., 1., xdim+1), np.linspace(0., 1., ydim+1)])[0]
+    assert np.allclose(pdens/sum(pdens.flatten()), startfield/sum(startfield.flatten()), atol=1e-2)
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -323,7 +304,7 @@ def test_partialslip_nearland_zonal(pset_mode, mode, boundaryslip, withW, withT,
                   'lat': np.linspace(0., 4., dims[1], dtype=np.float32),
                   'depth': np.linspace(-10, 10, dims[0])}
     if withT:
-        dimensions['time'] = [0, 1]
+        dimensions['time'] = [0, 2]
         U = np.tile(U, (2, 1, 1, 1))
         V = np.tile(V, (2, 1, 1, 1))
     if withW:
@@ -340,7 +321,7 @@ def test_partialslip_nearland_zonal(pset_mode, mode, boundaryslip, withW, withT,
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=np.zeros(npart),
                                         lat=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
     kernel = AdvectionRK4_3D if withW else AdvectionRK4
-    pset.execute(kernel, endtime=1, dt=1)
+    pset.execute(kernel, endtime=2, dt=1)
     if boundaryslip == 'partialslip':
         assert np.allclose([p.lon for p in pset if p.lat >= 0.5 and p.lat <= 3.5], 0.1)
         assert np.allclose([pset[0].lon, pset[-1].lon], 0.06)
@@ -382,7 +363,7 @@ def test_partialslip_nearland_meridional(pset_mode, mode, boundaryslip, withW, n
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lat=np.zeros(npart),
                                         lon=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
     kernel = AdvectionRK4_3D if withW else AdvectionRK4
-    pset.execute(kernel, endtime=1, dt=1)
+    pset.execute(kernel, endtime=2, dt=1)
     if boundaryslip == 'partialslip':
         assert np.allclose([p.lat for p in pset if p.lon >= 0.5 and p.lon <= 3.5], 0.1)
         assert np.allclose([pset[0].lat, pset[-1].lat], 0.06)
@@ -414,7 +395,7 @@ def test_partialslip_nearland_vertical(pset_mode, mode, boundaryslip, npart=20):
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=np.zeros(npart), lat=np.zeros(npart),
                                         depth=np.linspace(0.1, 3.9, npart))
-    pset.execute(AdvectionRK4, endtime=1, dt=1)
+    pset.execute(AdvectionRK4, endtime=2, dt=1)
     if boundaryslip == 'partialslip':
         assert np.allclose([p.lon for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
         assert np.allclose([p.lat for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
@@ -815,82 +796,6 @@ def test_multiple_grid_addlater_error():
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-@pytest.mark.parametrize('with_W', [True, False])
-@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_summedfields(pset_mode, mode, with_W, k_sample_p, mesh):
-    xdim = 10
-    ydim = 20
-    zdim = 4
-    gf = 10  # factor by which the resolution of grid1 is higher than of grid2
-    U1 = Field('U', 0.2*np.ones((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32),
-               lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
-               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32),
-               depth=np.linspace(0., 20., zdim*gf, dtype=np.float32),
-               mesh=mesh)
-    U2 = Field('U', 0.1*np.ones((zdim, ydim, xdim), dtype=np.float32),
-               lon=np.linspace(0., 1., xdim, dtype=np.float32),
-               lat=np.linspace(0., 1., ydim, dtype=np.float32),
-               depth=np.linspace(0., 20., zdim, dtype=np.float32),
-               mesh=mesh)
-    V1 = Field('V', np.zeros((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid, fieldtype='V')
-    V2 = Field('V', np.zeros((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid, fieldtype='V')
-    fieldsetS = FieldSet(U1+U2, V1+V2)
-
-    conv = 1852*60 if mesh == 'spherical' else 1.
-    assert np.allclose(fieldsetS.U[0, 0, 0, 0]*conv, 0.3)
-
-    P1 = Field('P', 30*np.ones((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid)
-    P2 = Field('P', 20*np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
-    P3 = Field('P', 10*np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
-    P4 = Field('P', 0*np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
-    fieldsetS.add_field((P1+P4)+(P2+P3), name='P')
-    assert np.allclose(fieldsetS.P[0, 0, 0, 0], 60)
-
-    def sample_UV_noconvert(particle, fieldset, time):
-        (particle.u, particle.v) = fieldset.UV.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)  # noqa
-
-    if with_W:
-        W1 = Field('W', 2*np.ones((zdim * gf, ydim * gf, xdim * gf), dtype=np.float32), grid=U1.grid)
-        W2 = Field('W', np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
-        fieldsetS.add_field(W1+W2, name='W')
-        pset = pset_type[pset_mode]['pset'](fieldsetS, pclass=pclass(mode), lon=[0], lat=[0.9])
-        pset.execute(AdvectionRK4_3D+pset.Kernel(k_sample_p)+sample_UV_noconvert, runtime=2, dt=1)
-        assert np.isclose(pset.depth[0], 6)
-    else:
-        pset = pset_type[pset_mode]['pset'](fieldsetS, pclass=pclass(mode), lon=[0], lat=[0.9])
-        pset.execute(AdvectionRK4+pset.Kernel(k_sample_p)+sample_UV_noconvert, runtime=2, dt=1)
-    assert np.isclose(pset.u[0], 0.3)
-    assert np.isclose(pset.p[0], 60)
-    assert np.isclose(pset.lon[0]*conv, 0.6, atol=1e-3)
-    assert np.isclose(pset.lat[0], 0.9)
-    assert np.allclose(fieldsetS.UV[0][0, 0, 0, 0], [.2/conv, 0])
-
-
-@pytest.mark.parametrize('boundaryslip', ['freeslip', 'partialslip'])
-def test_summedfields_slipinterp_warning(boundaryslip):
-    xdim = 10
-    ydim = 20
-    zdim = 4
-    gf = 10  # factor by which the resolution of grid1 is higher than of grid2
-    U1 = Field('U', 0.2*np.ones((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32),
-               lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
-               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32),
-               depth=np.linspace(0., 20., zdim*gf, dtype=np.float32),
-               interp_method=boundaryslip)
-    U2 = Field('U', 0.1*np.ones((zdim, ydim, xdim), dtype=np.float32),
-               lon=np.linspace(0., 1., xdim, dtype=np.float32),
-               lat=np.linspace(0., 1., ydim, dtype=np.float32),
-               depth=np.linspace(0., 20., zdim, dtype=np.float32))
-    V1 = Field('V', np.zeros((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid, fieldtype='V')
-    V2 = Field('V', np.zeros((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid, fieldtype='V')
-    fieldsetS = FieldSet(U1+U2, V1+V2)
-
-    with pytest.warns(UserWarning):
-        fieldsetS.check_complete()
-
-
-@pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_nestedfields(pset_mode, mode, k_sample_p):
     xdim = 10
     ydim = 20
@@ -921,21 +826,69 @@ def test_nestedfields(pset_mode, mode, k_sample_p):
     fieldset.add_field(P)
 
     def Recover(particle, fieldset, time):
-        particle.lon = -1
-        particle.lat = -1
-        particle.p = 999
-        particle.time = particle.time + particle.dt
+        if particle.state == StatusCode.ErrorOutOfBounds:
+            particle_dlon = 0  # noqa
+            particle_dlat = 0  # noqa
+            particle_ddepth = 0  # noqa
+            particle.lon = 0
+            particle.lat = 0
+            particle.p = 999
+            particle.state = StatusCode.Evaluate
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[.3])
-    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)
+    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
     assert np.isclose(pset.lat[0], .5)
     assert np.isclose(pset.p[0], .1)
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[1.3])
-    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)
-    assert np.isclose(pset.lat[0], 1.7)
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[1.1])
+    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
+    assert np.isclose(pset.lat[0], 1.5)
     assert np.isclose(pset.p[0], .2)
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=[0], lat=[2.3])
-    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1, recovery={ErrorCode.ErrorOutOfBounds: Recover})
-    assert np.isclose(pset.lat[0], -1)
+    pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p + Recover, runtime=1, dt=1)
+    assert np.isclose(pset.lat[0], 0)
     assert np.isclose(pset.p[0], 999)
     assert np.allclose(fieldset.UV[0][0, 0, 0, 0], [.1, .2])
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def fieldset_sampling_updating_order(pset_mode, mode, tmpdir):
+    def calc_p(t, y, x):
+        return 10 * t + x + 0.2 * y
+
+    dims = [2, 4, 5]
+    dimensions = {
+        "lon": np.linspace(0.0, 1.0, dims[2], dtype=np.float32),
+        "lat": np.linspace(0.0, 1.0, dims[1], dtype=np.float32),
+        "time": np.arange(dims[0], dtype=np.float32),
+    }
+
+    p = np.zeros(dims, dtype=np.float32)
+    for i, x in enumerate(dimensions["lon"]):
+        for j, y in enumerate(dimensions["lat"]):
+            for n, t in enumerate(dimensions["time"]):
+                p[n, j, i] = calc_p(t, y, x)
+
+    data = {
+        "U": 0.5 * np.ones(dims, dtype=np.float32),
+        "V": np.zeros(dims, dtype=np.float32),
+        "P": p,
+    }
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+
+    xv, yv = np.meshgrid(np.arange(0, 1, 0.5), np.arange(0, 1, 0.5))
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten())
+
+    def SampleP(particle, fieldset, time):
+        particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
+
+    kernels = [AdvectionRK4, SampleP]
+
+    filename = tmpdir.join("interpolation_offset.zarr")
+    pfile = pset.ParticleFile(filename, outputdt=1)
+    pset.execute(kernels, endtime=1, dt=1, output_file=pfile)
+
+    ds = xr.open_zarr(filename)
+    for t in range(len(ds["obs"])):
+        for i in range(len(ds["trajectory"])):
+            assert np.isclose(ds["p"].values[i, t], calc_p(float(ds["time"].values[i, t]) / 1e9, ds["lat"].values[i, t], ds["lon"].values[i, t]))

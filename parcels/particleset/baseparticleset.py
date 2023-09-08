@@ -12,12 +12,12 @@ from tqdm import tqdm
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.collection.collections import ParticleCollection
 from parcels.compilation.codecompiler import GNUCompiler
-from parcels.field import NestedField, SummedField
+from parcels.field import NestedField
 from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 from parcels.kernel.basekernel import BaseKernel as Kernel
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import StateCode
+from parcels.tools.statuscodes import StatusCode
 
 
 class NDCluster(ABC):
@@ -84,7 +84,7 @@ class BaseParticleSet(NDCluster):
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
-        if type(field) in [SummedField, NestedField]:
+        if isinstance(field, NestedField):
             for f in field:
                 if f.interp_method == 'cgrid_velocity':
                     return np.float64
@@ -342,44 +342,16 @@ class BaseParticleSet(NDCluster):
         """
         error_indices = [
             i for i, p in enumerate(self)
-            if p.state not in [StateCode.Success, StateCode.Evaluate]]
+            if p.state not in [StatusCode.Success, StatusCode.Evaluate]]
         return self.collection.get_multi_by_indices(indices=error_indices)
 
     @property
     def num_error_particles(self):
         """Get the number of particles that are in an error state."""
-        return len([True if p.state not in [StateCode.Success, StateCode.Evaluate] else None for p in self])
-
-    @abstractmethod
-    def _impute_release_times(self, default):
-        """Set attribute 'time' to default if encountering NaN values.
-
-        This is a fallback implementation, it might be slow.
-
-        Parameters
-        ----------
-        default :
-            Default release time.
-
-        Returns
-        -------
-        type
-            Minimum and maximum release times.
-
-        """
-        max_rt = None
-        min_rt = None
-        for p in self:
-            if np.isnan(p.time):
-                p.time = default
-            if max_rt is None or max_rt < p.time:
-                max_rt = p.time
-            if min_rt is None or min_rt > p.time:
-                min_rt = p.time
-        return min_rt, max_rt
+        return len([True if p.state not in [StatusCode.Success, StatusCode.Evaluate] else None for p in self])
 
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
-                recovery=None, output_file=None, verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
+                output_file=None, verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for multiple timesteps.
 
         Optionally also provide sub-timestepping
@@ -403,10 +375,6 @@ class BaseParticleSet(NDCluster):
             Use a negative value for a backward-in-time simulation. (Default value = 1.)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
-        recovery :
-            Dictionary with additional `:mod:parcels.tools.error`
-            recovery kernels to allow custom recovery behaviour in case of
-            kernel errors. (Default value = None)
         verbose_progress : bool
             Boolean for providing a progress bar for the kernel execution loop. (Default value = None)
         postIterationCallbacks :
@@ -452,6 +420,8 @@ class BaseParticleSet(NDCluster):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):
             dt = dt.total_seconds()
+        if dt > 0 and dt <= 1e-6:
+            raise ValueError('Time step dt is too small')
         outputdt = output_file.outputdt if output_file else np.infty
         if isinstance(outputdt, delta):
             outputdt = outputdt.total_seconds()
@@ -479,20 +449,11 @@ class BaseParticleSet(NDCluster):
             mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
             endtime = maxtime if dt >= 0 else mintime
 
-        execute_once = False
-        if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
-            dt = 0
-            runtime = 0
-            endtime = _starttime
-            logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
-                                "The kernels will be executed once, without incrementing time")
-            execute_once = True
+        if (abs(endtime-_starttime) < 1e-5 or runtime == 0) and dt == 0:
+            raise RuntimeError("dt and runtime are zero, or endtime is equal to Particle.time. "
+                               "ParticleSet.execute() will not do anything.")
 
         self._set_particle_vector('dt', dt)
-
-        # First write output_file, because particles could have been added
-        if output_file:
-            output_file.write(self, _starttime)
 
         if callbackdt is None:
             interupt_dts = [np.infty, outputdt]
@@ -504,7 +465,10 @@ class BaseParticleSet(NDCluster):
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
             next_prelease = np.infty if dt > 0 else - np.infty
-        next_output = time + outputdt if dt > 0 else time - outputdt
+        if output_file:
+            next_output = time + dt
+        else:
+            next_output = time + np.infty if dt > 0 else - np.infty
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
@@ -515,6 +479,7 @@ class BaseParticleSet(NDCluster):
             pbar = self.__create_progressbar(_starttime, endtime)
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
+            time_at_startofloop = time
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
                 if output_file:
@@ -529,10 +494,9 @@ class BaseParticleSet(NDCluster):
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
-                self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
-                                    execute_once=execute_once)
+                self.kernel.execute(self, endtime=next_time, dt=dt, output_file=output_file)
             # Interaction: interleave the interaction and non-interaction kernel for each time step.
-            # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
+            # E.g. Normal -> Inter -> Normal -> Inter if endtime-time == 2*dt
             else:
                 cur_time = time
                 while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
@@ -540,17 +504,41 @@ class BaseParticleSet(NDCluster):
                         cur_end_time = min(cur_time+dt, next_time)
                     else:
                         cur_end_time = max(cur_time+dt, next_time)
-                    self.interaction_kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
-                        output_file=output_file, execute_once=execute_once)
                     self.kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
-                        output_file=output_file, execute_once=execute_once)
+                        self, endtime=cur_end_time, dt=dt, output_file=output_file)
+                    self.interaction_kernel.execute(
+                        self, endtime=cur_end_time, dt=dt, output_file=output_file)
                     cur_time += dt
                     if dt == 0:
                         break
             # End of interaction specific code
             time = next_time
+
+            if abs(time - next_output) < tol or dt == 0:
+                for fld in self.fieldset.get_fields():
+                    if hasattr(fld, 'to_write') and fld.to_write:
+                        if fld.grid.tdim > 1:
+                            raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
+                        fldfilename = str(output_file.fname).replace('.zarr', '_%.4d' % fld.to_write)
+                        fld.write(fldfilename)
+                        fld.to_write += 1
+
+            if abs(time - next_output) < tol:
+                if output_file:
+                    if output_file.analytical:  # output analytical solution at later time
+                        output_file.write_latest_locations(self, time)
+                    else:
+                        output_file.write(self, time_at_startofloop)
+                if np.isfinite(outputdt):
+                    next_output += outputdt * np.sign(dt)
+
+            # ==== insert post-process here to also allow for memory clean-up via external func ==== #
+            if abs(time-next_callback) < tol:
+                if postIterationCallbacks is not None:
+                    for extFunc in postIterationCallbacks:
+                        extFunc()
+                next_callback += callbackdt * np.sign(dt)
+
             if abs(time-next_prelease) < tol:
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
@@ -562,24 +550,7 @@ class BaseParticleSet(NDCluster):
                     p.dt = dt
                 self.add(pset_new)
                 next_prelease += self.repeatdt * np.sign(dt)
-            if abs(time - next_output) < tol or dt == 0:
-                for fld in self.fieldset.get_fields():
-                    if hasattr(fld, 'to_write') and fld.to_write:
-                        if fld.grid.tdim > 1:
-                            raise RuntimeError('Field writing during execution only works for Fields with one snapshot in time')
-                        fldfilename = str(output_file.fname).replace('.zarr', '_%.4d' % fld.to_write)
-                        fld.write(fldfilename)
-                        fld.to_write += 1
-            if abs(time - next_output) < tol:
-                if output_file:
-                    output_file.write(self, time)
-                next_output += outputdt * np.sign(dt)
-            # ==== insert post-process here to also allow for memory clean-up via external func ==== #
-            if abs(time-next_callback) < tol:
-                if postIterationCallbacks is not None:
-                    for extFunc in postIterationCallbacks:
-                        extFunc()
-                next_callback += callbackdt * np.sign(dt)
+
             if time != endtime:
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
@@ -588,7 +559,5 @@ class BaseParticleSet(NDCluster):
                 pbar.update(abs(time - pbar.prevtime))
                 pbar.prevtime = time
 
-        if output_file:
-            output_file.write(self, time)
         if verbose_progress:
             pbar.close()

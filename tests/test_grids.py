@@ -10,7 +10,6 @@ from parcels import (  # noqa
     AdvectionRK4,
     AdvectionRK4_3D,
     CurvilinearZGrid,
-    ErrorCode,
     Field,
     FieldSet,
     JITParticle,
@@ -23,11 +22,12 @@ from parcels import (  # noqa
     RectilinearSGrid,
     RectilinearZGrid,
     ScipyParticle,
+    StatusCode,
     UnitConverter,
     Variable,
 )
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -244,7 +244,7 @@ def test_rectilinear_s_grid_sampling(pset_mode, mode, z4d):
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle,
                                                   lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
 
-    pset.execute(pset.Kernel(sampleTemp), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleTemp), runtime=1)
     assert np.allclose(pset.temp[0], ratio, atol=1e-4)
 
 
@@ -326,7 +326,7 @@ def test_rectilinear_s_grids_advect2(pset_mode, mode):
         relDepth = Variable('relDepth', dtype=np.float32, initial=20.)
 
     def moveEast(particle, fieldset, time):
-        particle.lon += 5 * particle.dt
+        particle_dlon += 5 * particle.dt  # noqa
         particle.relDepth = fieldset.relDepth[time, particle.depth, particle.lat, particle.lon]
 
     depth = .9
@@ -370,7 +370,7 @@ def test_curvilinear_grids(pset_mode, mode):
         speed = Variable('speed', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
-    pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleSpeed), runtime=1)
     assert np.allclose(pset.speed[0], 1000)
 
 
@@ -402,7 +402,7 @@ def test_nemo_grid(pset_mode, mode):
     lonp = 175.5
     latp = 81.5
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
-    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleVel), runtime=1)
     u = field_set.U.units.to_source(pset.zonal[0], lonp, latp, 0)
     v = field_set.V.units.to_source(pset.meridional[0], lonp, latp, 0)
     assert abs(u - 1) < 1e-4
@@ -459,7 +459,7 @@ def test_cgrid_uniform_2dvel(pset_mode, mode, time):
         meridional = Variable('meridional', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3)
-    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleVel), runtime=1)
     assert (pset[0].zonal - 1) < 1e-6
     assert (pset[0].meridional - 1) < 1e-6
 
@@ -521,7 +521,7 @@ def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
         vertical = Variable('vertical', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
-    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleVel), runtime=1)
     assert abs(pset[0].zonal - 1) < 1e-6
     assert abs(pset[0].meridional - 1) < 1e-6
     assert abs(pset[0].vertical - 1) < 1e-6
@@ -581,7 +581,7 @@ def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
     lonp = 179.8
     latp = 81.35
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=lonp, lat=latp, depth=.2)
-    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    pset.execute(pset.Kernel(sampleVel), runtime=1)
     if pset_mode == 'soa':
         pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
         pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
@@ -616,12 +616,14 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
     field_set = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat', deferred_load=deferred_load)
 
     def sampleVel(particle, fieldset, time):
-        (particle.zonal, particle.meridional, particle.vert) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
-        particle.tracer = fieldset.T[time, particle.depth, particle.lat, particle.lon]
+        (particle.zonal, particle.meridional, particle.vert) = fieldset.UVW[particle]
+        particle.tracer = fieldset.T[particle]
 
     def OutBoundsError(particle, fieldset, time):
-        particle.out_of_bounds = 1
-        particle.depth -= 3
+        if particle.state == StatusCode.ErrorOutOfBounds:
+            particle.out_of_bounds = 1
+            particle_ddepth -= 3  # noqa
+            particle.state = StatusCode.Success
 
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
@@ -631,8 +633,7 @@ def test_popgrid(pset_mode, mode, vert_discretisation, deferred_load):
         out_of_bounds = Variable('out_of_bounds', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'].from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
-    pset.execute(pset.Kernel(sampleVel), runtime=1, dt=1,
-                 recovery={ErrorCode.ErrorOutOfBounds: OutBoundsError})
+    pset.execute(pset.Kernel(sampleVel) + OutBoundsError, runtime=1)
     if vert_discretisation == 'slevel2':
         assert np.isclose(pset.vert[0], 0.)
         assert np.isclose(pset.zonal[0], 0.)
@@ -719,11 +720,13 @@ def test_cgrid_indexing(pset_mode, mode, gridindexingtype, coordtype):
     fieldset.V.interp_method = 'cgrid_velocity'
 
     def UpdateR(particle, fieldset, time):
+        if time == 0:
+            particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         radius = Variable('radius', dtype=np.float32, initial=0.)
-        radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
+        radius_start = Variable('radius_start', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, lon=0, lat=4e3, time=0)
 
@@ -796,11 +799,13 @@ def test_cgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
     fieldset.W.interp_method = "cgrid_velocity"
 
     def UpdateR(particle, fieldset, time):
+        if time == 0:
+            particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         radius = Variable('radius', dtype=np.float32, initial=0.)
-        radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
+        radius_start = Variable('radius_start', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, depth=4e3, lon=0, lat=0, time=0)
 
@@ -874,11 +879,13 @@ def test_bgrid_indexing_3D(pset_mode, mode, gridindexingtype, withtime):
     fieldset.W.interp_method = "bgrid_w_velocity"
 
     def UpdateR(particle, fieldset, time):
+        if time == 0:
+            particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         radius = Variable('radius', dtype=np.float32, initial=0.)
-        radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
+        radius_start = Variable('radius_start', dtype=np.float32, initial=0.)
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
 
@@ -976,7 +983,7 @@ def test_bgrid_interpolation(gridindexingtype, pset_mode, mode, extrapolation):
 
         pset = pset_type[pset_mode]['pset'].from_list(fieldset=fieldset, pclass=myParticle,
                                                       lon=lons, lat=lats, depth=deps)
-        pset.execute(VelocityInterpolator, dt=0)
+        pset.execute(VelocityInterpolator, runtime=1)
 
         convfactor = 0.01 if gridindexingtype == "pop" else 1.
         if pointtype in ["U", "V"]:

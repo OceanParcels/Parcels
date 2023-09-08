@@ -23,18 +23,10 @@ except:
 from parcels.application_kernels.advection import AdvectionAnalytical, AdvectionRK4_3D
 
 # === import just necessary field classes to perform setup checks === #
-from parcels.field import (
-    Field,
-    FieldOutOfBoundError,
-    FieldOutOfBoundSurfaceError,
-    NestedField,
-    SummedField,
-    TimeExtrapolationError,
-    VectorField,
-)
+from parcels.field import Field, NestedField, VectorField
 from parcels.grid import GridCode
 from parcels.tools.global_statics import get_cache_dir
-from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
+from parcels.tools.statuscodes import StatusCode
 
 __all__ = ['BaseKernel']
 
@@ -96,6 +88,7 @@ class BaseKernel:
         self.src_file = None
         self.lib_file = None
         self.log_file = None
+        self.scipy_positionupdate_kernels_added = False
 
         # Generate the kernel function and add the outer loop
         if self._ptype.uses_jit:
@@ -153,6 +146,25 @@ class BaseKernel:
             lines = [line.replace(indent.groups()[0], '', 1) for line in lines]
         return "\n".join(lines)
 
+    def add_scipy_positionupdate_kernels(self):
+        # Adding kernels that set and update the coordinate changes
+        def Setcoords(particle, fieldset, time):
+            particle_dlon = 0  # noqa
+            particle_dlat = 0  # noqa
+            particle_ddepth = 0  # noqa
+            particle.lon = particle.lon_nextloop
+            particle.lat = particle.lat_nextloop
+            particle.depth = particle.depth_nextloop
+            particle.time = particle.time_nextloop
+
+        def Updatecoords(particle, fieldset, time):
+            particle.lon_nextloop = particle.lon + particle_dlon  # noqa
+            particle.lat_nextloop = particle.lat + particle_dlat  # noqa
+            particle.depth_nextloop = particle.depth + particle_ddepth  # noqa
+            particle.time_nextloop = particle.time + particle.dt
+
+        self._pyfunc = self.__radd__(Setcoords).__add__(Updatecoords)._pyfunc
+
     def check_fieldsets_in_kernels(self, pyfunc):
         """
         Checks the integrity of the fieldset with the kernels.
@@ -165,7 +177,7 @@ class BaseKernel:
                 if isinstance(self._fieldset.W, Field) and self._fieldset.W.creation_log != 'from_nemo' and \
                    self._fieldset.W._scaling_factor is not None and self._fieldset.W._scaling_factor > 0:
                     warning = True
-                if type(self._fieldset.W) in [SummedField, NestedField]:
+                if isinstance(self._fieldset.W, NestedField):
                     for f in self._fieldset.W:
                         if f.creation_log != 'from_nemo' and f._scaling_factor is not None and f._scaling_factor > 0:
                             warning = True
@@ -173,6 +185,8 @@ class BaseKernel:
                     logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
                                         '  If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
             elif pyfunc is AdvectionAnalytical:
+                if self.fieldset.particlefile is not None:
+                    self.fieldset.particlefile.analytical = True
                 if self._ptype.uses_jit:
                     raise NotImplementedError('Analytical Advection only works in Scipy mode')
                 if self._fieldset.U.interp_method != 'cgrid_velocity':
@@ -313,9 +327,9 @@ class BaseKernel:
             Additional keyword arguments passed to first kernel during construction.
         """
         if not isinstance(pyfunc_list, list):
-            raise TypeError(f"Argument function_lst should be a list of functions. Got {type(pyfunc_list)}")
+            raise TypeError(f"Argument function_list should be a list of functions. Got {type(pyfunc_list)}")
         if len(pyfunc_list) == 0:
-            raise ValueError("Argument function_lst should have at least one function.")
+            raise ValueError("Argument function_list should have at least one function.")
         if not all([isinstance(f, types.FunctionType) for f in pyfunc_list]):
             raise ValueError("Argument function_lst should be a list of functions.")
 
@@ -342,15 +356,13 @@ class BaseKernel:
             except:
                 pass
 
-    def remove_deleted(self, pset, output_file, endtime):
+    def remove_deleted(self, pset):
         """
         Utility to remove all particles that signalled deletion.
 
         This version is generally applicable to all structures and collections
         """
-        indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
-        if len(indices) > 0 and output_file is not None:
-            output_file.write(pset, endtime, deleted_only=indices)
+        indices = [i for i, p in enumerate(pset) if p.state == StatusCode.Delete]
         pset.remove_indices(indices)
 
     def load_fieldset_jit(self, pset):
@@ -361,7 +373,7 @@ class BaseKernel:
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
             for f in pset.fieldset.get_fields():
-                if type(f) in [VectorField, NestedField, SummedField]:
+                if isinstance(f, (VectorField, NestedField)):
                     continue
                 if f.data.dtype != np.float32:
                     raise RuntimeError(f'Field {f.name} data needs to be float32 in JIT mode')
@@ -385,7 +397,7 @@ class BaseKernel:
                 if not g.lat.flags.c_contiguous:
                     g.lat = np.array(g.lat, order='C')
 
-    def evaluate_particle(self, p, endtime, sign_dt, dt, analytical=False):
+    def evaluate_particle(self, p, endtime, sign_dt):
         """Execute the kernel evaluation of for an individual particle.
 
         Parameters
@@ -403,101 +415,24 @@ class BaseKernel:
         sign_dt :
 
         """
-        variables = self._ptype.variables
-        # back up variables in case of OperationCode.Repeat
-        p_var_back = {}
-        pdt_prekernels = .0
-        # Don't execute particles that aren't started yet
-        sign_end_part = np.sign(endtime - p.time)
-        # Compute min/max dt for first timestep. Only use endtime-p.time for one timestep
-        reset_dt = False
-        if abs(endtime - p.time) < abs(p.dt):
-            dt_pos = abs(endtime - p.time)
-            reset_dt = True
-        else:
-            dt_pos = abs(p.dt)
-            reset_dt = False
+        while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
+            pre_dt = p.dt
 
-        # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
-        # as they fulfil the condition here on entering at the final calculation here. ==== #
-        if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
-            if abs(p.time) >= abs(endtime):
-                p.set_state(StateCode.Success)
-            return p
+            sign_dt = np.sign(p.dt)
+            if sign_dt*p.time_nextloop >= sign_dt*endtime:
+                return p
 
-        while p.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
-            for var in variables:
-                p_var_back[var.name] = getattr(p, var.name)
-            try:
-                pdt_prekernels = sign_dt * dt_pos
-                p.dt = pdt_prekernels
-                state_prev = p.state
-                res = self._pyfunc(p, self._fieldset, p.time)
-                if res is None:
-                    res = StateCode.Success
+            if abs(endtime - p.time_nextloop) < abs(p.dt)-1e-6:
+                p.dt = abs(endtime - p.time_nextloop) * sign_dt
+            res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
-                if res is StateCode.Success and p.state != state_prev:
-                    res = p.state
-
-                if not analytical and res == StateCode.Success and not np.isclose(p.dt, pdt_prekernels):
-                    res = OperationCode.Repeat
-
-            except FieldOutOfBoundError as fse_xy:
-                res = ErrorCode.ErrorOutOfBounds
-                p.exception = fse_xy
-            except FieldOutOfBoundSurfaceError as fse_z:
-                res = ErrorCode.ErrorThroughSurface
-                p.exception = fse_z
-            except TimeExtrapolationError as fse_t:
-                res = ErrorCode.ErrorTimeExtrapolation
-                p.exception = fse_t
-
-            except Exception as e:
-                res = ErrorCode.Error
-                p.exception = e
-
-            # Handle particle time and time loop
-            if res in [StateCode.Success, OperationCode.Delete]:
-                # Update time and repeat
-                p.time += p.dt
-                if reset_dt and p.dt == pdt_prekernels:
-                    p.dt = dt
-                p.update_next_dt()
-                if analytical:
-                    p.dt = np.inf
-                if abs(endtime - p.time) < abs(p.dt):
-                    dt_pos = abs(endtime - p.time)
-                    reset_dt = True
-                else:
-                    dt_pos = abs(p.dt)
-                    reset_dt = False
-
-                sign_end_part = np.sign(endtime - p.time)
-                if res != OperationCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
-                    res = StateCode.Evaluate
-                if sign_end_part != sign_dt:
-                    dt_pos = 0
-
-                p.set_state(res)
-                if np.isclose(dt, 0):
-                    break
+            if res is None:
+                if sign_dt*p.time < sign_dt*endtime and p.state == StatusCode.Success:
+                    p.state = StatusCode.Evaluate
             else:
-                p.set_state(res)
-                # Try again without time update
-                for var in variables:
-                    if var.name not in ['dt', 'state']:
-                        setattr(p, var.name, p_var_back[var.name])
-                if abs(endtime - p.time) < abs(p.dt):
-                    dt_pos = abs(endtime - p.time)
-                    reset_dt = True
-                else:
-                    dt_pos = abs(p.dt)
-                    reset_dt = False
+                p.state = res
 
-                sign_end_part = np.sign(endtime - p.time)
-                if sign_end_part != sign_dt:
-                    dt_pos = 0
-                break
+            p.dt = pre_dt
         return p
 
     def execute_jit(self, pset, endtime, dt):
@@ -506,5 +441,5 @@ class BaseKernel:
     def execute_python(self, pset, endtime, dt):
         pass
 
-    def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
+    def execute(self, pset, endtime, dt, output_file=None):
         pass

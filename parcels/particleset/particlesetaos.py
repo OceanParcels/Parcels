@@ -12,7 +12,7 @@ from parcels.collection.collectionaos import (  # NOQA
     ParticleCollectionIterableAOS,
     ParticleCollectionIteratorAOS,
 )
-from parcels.field import NestedField, SummedField
+from parcels.field import NestedField
 from parcels.grid import GridCode
 from parcels.kernel.kernelaos import KernelAOS
 from parcels.particle import JITParticle, ScipyParticle, Variable  # NOQA
@@ -20,7 +20,7 @@ from parcels.particlefile.particlefileaos import ParticleFileAOS
 from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import OperationCode, StateCode  # NOQA
+from parcels.tools.statuscodes import StatusCode  # NOQA
 
 try:
     from mpi4py import MPI
@@ -305,20 +305,18 @@ class ParticleSetAOS(BaseParticleSet):
         """This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
+        In result, the particle still remains in the collection.
         """
-        self._collection[index].state = OperationCode.Delete
+        self._collection[index].state = StatusCode.Delete
 
     def delete_by_ID(self, id):
         """This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
+        In result, the particle still remains in the collection.
         """
         p = self._collection.get_single_by_ID(id)
-        p.state = OperationCode.Delete
+        p.state = StatusCode.Delete
 
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
@@ -411,7 +409,7 @@ class ParticleSetAOS(BaseParticleSet):
         """
         error_indices = [
             i for i, p in enumerate(self)
-            if p.state not in [StateCode.Success, StateCode.Evaluate]]
+            if p.state not in [StatusCode.Success, StatusCode.Evaluate]]
         return self._collection.get_multi_by_indices(indices=error_indices)
 
     @property
@@ -423,7 +421,7 @@ class ParticleSetAOS(BaseParticleSet):
         int
             Number of error particles.
         """
-        return np.sum([True for p in self._collection if p.state not in [StateCode.Success, StateCode.Evaluate]])
+        return np.sum([True for p in self._collection if p.state not in [StatusCode.Success, StatusCode.Evaluate]])
 
     def __iter__(self):
         return super().__iter__()
@@ -478,7 +476,7 @@ class ParticleSetAOS(BaseParticleSet):
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
-        if type(field) in [SummedField, NestedField]:
+        if isinstance(field, NestedField):
             for f in field:
                 if f.interp_method == 'cgrid_velocity':
                     return np.float64
@@ -590,7 +588,7 @@ class ParticleSetAOS(BaseParticleSet):
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'once_written', 'state'] \
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', 'depth', 'id', 'obs_written', 'state'] \
                     and v.to_write:
                 raise RuntimeError(f'Variable {v.name} is in pclass but not in the particlefile')
             to_write[v.name] = v.to_write

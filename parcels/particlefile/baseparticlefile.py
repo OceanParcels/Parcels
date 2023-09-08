@@ -8,7 +8,6 @@ import xarray as xr
 import zarr
 
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import OperationCode
 
 try:
     from mpi4py import MPI
@@ -45,8 +44,6 @@ class BaseParticleFile(ABC):
         It is either a timedelta object or a positive double.
     chunks :
         Tuple (trajs, obs) to control the size of chunks in the zarr output.
-    write_ondelete : bool
-        Whether to write particle data only when they are deleted. Default is False
     create_new_zarrfile : bool
         Whether to create a new file. Default is True
 
@@ -56,22 +53,16 @@ class BaseParticleFile(ABC):
         ParticleFile object that can be used to write particle data to file
     """
 
-    write_ondelete = None
     outputdt = None
-    lasttime_written = None
     particleset = None
     parcels_mesh = None
     time_origin = None
     lonlatdepth_dtype = None
 
-    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False,
-                 create_new_zarrfile=True):
+    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, create_new_zarrfile=True):
 
-        self.write_ondelete = write_ondelete
-        self.outputdt = outputdt
+        self.outputdt = outputdt.total_seconds() if isinstance(outputdt, delta) else outputdt
         self.chunks = chunks
-        self.lasttime_written = None  # variable to check if time has been written already
-
         self.particleset = particleset
         self.parcels_mesh = 'spherical'
         if self.particleset.fieldset is not None:
@@ -79,7 +70,6 @@ class BaseParticleFile(ABC):
         self.time_origin = self.particleset.time_origin
         self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
         self.maxids = 0
-        self.obs_written = np.empty((0,), dtype=int)
         self.pids_written = {}
         self.create_new_zarrfile = create_new_zarrfile
         self.vars_to_write = {}
@@ -87,9 +77,11 @@ class BaseParticleFile(ABC):
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
+        self.particleset.fieldset.particlefile = self
+        self.analytical = False  # Flag to indicate if ParticleFile is used for analytical trajectories
 
-        # Reset once-written flag of each particle, in case new ParticleFile created for a ParticleSet
-        particleset.collection.setallvardata('once_written', 0)
+        # Reset obs_written of each particle, in case new ParticleFile created for a ParticleSet
+        particleset.collection.setallvardata('obs_written', 0)
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
                          "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
@@ -97,10 +89,6 @@ class BaseParticleFile(ABC):
                          "parcels_mesh": self.parcels_mesh}
 
         # Create dictionary to translate datatypes and fill_values
-        self.fmt_map = {np.float16: 'f2', np.float32: 'f4', np.float64: 'f8',
-                        np.bool_: 'i1', np.int8: 'i1', np.int16: 'i2',
-                        np.int32: 'i4', np.int64: 'i8', np.uint8: 'u1',
-                        np.uint16: 'u2', np.uint32: 'u4', np.uint64: 'u8'}
         self.fill_value_map = {np.float16: np.nan, np.float32: np.nan, np.float64: np.nan,
                                np.bool_: np.iinfo(np.int8).max, np.int8: np.iinfo(np.int8).max,
                                np.int16: np.iinfo(np.int16).max, np.int32: np.iinfo(np.int32).max,
@@ -170,12 +158,6 @@ class BaseParticleFile(ABC):
 
         return attrs
 
-    def __del__(self):
-        self.close()
-
-    def close(self, delete_tempfiles=True):
-        pass
-
     def add_metadata(self, name, message):
         """Add metadata to :class:`parcels.particleset.ParticleSet`.
 
@@ -214,8 +196,9 @@ class BaseParticleFile(ABC):
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
-    def write(self, pset, time, deleted_only=False):
-        """Write all data from one time step to the zarr file.
+    def write(self, pset, time, indices=None):
+        """Write all data from one time step to the zarr file,
+        before the particle locations are updated.
 
         Parameters
         ----------
@@ -223,93 +206,93 @@ class BaseParticleFile(ABC):
             ParticleSet object to write
         time :
             Time at which to write ParticleSet
-        deleted_only :
-            Flag to write only the deleted Particles (Default value = False)
         """
         time = time.total_seconds() if isinstance(time, delta) else time
 
-        if self.lasttime_written != time and (self.write_ondelete is False or deleted_only is not False):
-            if pset.collection._ncount == 0:
-                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
-                return
+        if pset.collection._ncount == 0:
+            logger.warning("ParticleSet is empty on writing as array at time %g" % time)
+            return
 
-            if deleted_only is not False:
-                if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
-                    indices_to_write = np.where(np.isin(pset.collection.getvardata('state'), [OperationCode.Delete]))[0]
-                elif type(deleted_only) is np.ndarray:
-                    if set(deleted_only).issubset([0, 1]):
-                        indices_to_write = np.where(deleted_only)[0]
-                    else:
-                        indices_to_write = deleted_only
-                elif type(deleted_only) is list:
-                    indices_to_write = np.array(deleted_only)
-            else:
-                indices_to_write = pset.collection._to_write_particles(pset.collection._data, time)
-                self.lasttime_written = time
+        indices_to_write = pset.collection._to_write_particles(pset.collection._data, time) if indices is None else indices
 
-            if len(indices_to_write) > 0:
-                pids = pset.collection.getvardata('id', indices_to_write)
-                to_add = sorted(set(pids) - set(self.pids_written.keys()))
-                for i, pid in enumerate(to_add):
-                    self.pids_written[pid] = self.maxids + i
-                ids = np.array([self.pids_written[p] for p in pids], dtype=int)
-                self.maxids = len(self.pids_written)
+        if len(indices_to_write) > 0:
+            pids = pset.collection.getvardata('id', indices_to_write)
+            to_add = sorted(set(pids) - set(self.pids_written.keys()))
+            for i, pid in enumerate(to_add):
+                self.pids_written[pid] = self.maxids + i
+            ids = np.array([self.pids_written[p] for p in pids], dtype=int)
+            self.maxids = len(self.pids_written)
 
-                once_ids = np.where(pset.collection.getvardata('once_written', indices_to_write) == 0)[0]
+            once_ids = np.where(pset.collection.getvardata('obs_written', indices_to_write) == 0)[0]
+            if len(once_ids) > 0:
                 ids_once = ids[once_ids]
                 indices_to_write_once = indices_to_write[once_ids]
-                pset.collection.setvardata('once_written', indices_to_write_once, np.ones(len(ids_once)))
 
-                if self.maxids > len(self.obs_written):
-                    self.obs_written = np.append(self.obs_written, np.zeros((self.maxids-len(self.obs_written)), dtype=int))
-
-                if self.create_new_zarrfile:
-                    if self.chunks is None:
-                        self.chunks = (len(ids), 1)
-                    elif self.chunks[0] > len(ids):
-                        logger.warning(f'Chunk size for trajectory ({self.chunks[0]}) is larger than length of initial set to write. '
-                                       f'Reducing ParticleFile chunks to ({len(ids)}, {self.chunks[1]})')
-                        self.chunks = (len(ids), self.chunks[1])
-                    if (self.maxids > len(ids)) or (self.maxids > self.chunks[0]):
-                        arrsize = (self.maxids, self.chunks[1])
-                    else:
-                        arrsize = self.chunks
-                    ds = xr.Dataset(attrs=self.metadata, coords={"trajectory": ("trajectory", pids),
-                                                                 "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))})
-                    attrs = self._create_variables_attribute_dict()
-                    for var in self.vars_to_write:
-                        varout = self._convert_varout_name(var)
-                        if varout not in ['trajectory']:  # because 'trajectory' is written as coordinate
-                            if self.write_once(var):
-                                data = np.full((arrsize[0],), self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
-                                data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
-                                dims = ["trajectory"]
-                            else:
-                                data = np.full(arrsize, self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
-                                data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
-                                dims = ["trajectory", "obs"]
-                            ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
-                            ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
-                    ds.to_zarr(self.fname, mode='w')
-                    self.create_new_zarrfile = False
+            if self.create_new_zarrfile:
+                if self.chunks is None:
+                    self.chunks = (len(ids), 1)
+                elif self.chunks[0] > len(ids):
+                    logger.warning(f'Chunk size for trajectory ({self.chunks[0]}) is larger than length of initial set to write. '
+                                   f'Reducing ParticleFile chunks to ({len(ids)}, {self.chunks[1]})')
+                    self.chunks = (len(ids), self.chunks[1])
+                if (self.maxids > len(ids)) or (self.maxids > self.chunks[0]):
+                    arrsize = (self.maxids, self.chunks[1])
                 else:
-                    # Either use the store that was provided directly or create a DirectoryStore:
-                    if issubclass(type(self.fname), zarr.storage.Store):
-                        store = self.fname
-                    else:
-                        store = zarr.DirectoryStore(self.fname)
-                    Z = zarr.group(store=store, overwrite=False)
-                    obs = self.obs_written[np.array(ids)]
-                    for var in self.vars_to_write:
-                        varout = self._convert_varout_name(var)
-                        if self.maxids > Z[varout].shape[0]:
-                            self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
+                    arrsize = self.chunks
+                ds = xr.Dataset(attrs=self.metadata, coords={"trajectory": ("trajectory", pids),
+                                                             "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))})
+                attrs = self._create_variables_attribute_dict()
+                obs = np.zeros((self.maxids), dtype=np.int32)
+                for var in self.vars_to_write:
+                    varout = self._convert_varout_name(var)
+                    if varout not in ['trajectory']:  # because 'trajectory' is written as coordinate
                         if self.write_once(var):
-                            if len(ids_once) > 0:
-                                Z[varout].vindex[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
+                            data = np.full((arrsize[0],), self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
+                            data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
+                            dims = ["trajectory"]
                         else:
-                            if max(obs) >= Z[varout].shape[1]:
-                                self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
-                            Z[varout].vindex[ids, obs] = pset.collection.getvardata(var, indices_to_write)
+                            data = np.full(arrsize, self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
+                            data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
+                            dims = ["trajectory", "obs"]
+                        ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
+                        ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
+                ds.to_zarr(self.fname, mode='w')
+                self.create_new_zarrfile = False
+            else:
+                # Either use the store that was provided directly or create a DirectoryStore:
+                if issubclass(type(self.fname), zarr.storage.Store):
+                    store = self.fname
+                else:
+                    store = zarr.DirectoryStore(self.fname)
+                Z = zarr.group(store=store, overwrite=False)
+                obs = pset.collection.getvardata('obs_written', indices_to_write)
+                for var in self.vars_to_write:
+                    varout = self._convert_varout_name(var)
+                    if self.maxids > Z[varout].shape[0]:
+                        self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
+                    if self.write_once(var):
+                        if len(once_ids) > 0:
+                            Z[varout].vindex[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
+                    else:
+                        if max(obs) >= Z[varout].shape[1]:
+                            self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
+                        Z[varout].vindex[ids, obs] = pset.collection.getvardata(var, indices_to_write)
 
-                self.obs_written[np.array(ids)] += 1
+            pset.collection.setvardata('obs_written', indices_to_write, obs+1)
+
+    def write_latest_locations(self, pset, time):
+        """Write the current (latest) particle locations to zarr file.
+        This can be useful at the end of a pset.execute(), when the last locations are not written yet.
+        Note that this only updates the locations, not any of the other Variables. Therefore, use with care.
+
+        Parameters
+        ----------
+        pset :
+            ParticleSet object to write
+        time :
+            Time at which to write ParticleSet. Note that typically this would be pset.time_nextloop
+        """
+        for var in ['lon', 'lat', 'depth', 'time']:
+            pset.collection.setallvardata(f"{var}", pset.collection.getvardata(f"{var}_nextloop"))
+
+        self.write(pset, time)

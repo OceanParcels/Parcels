@@ -10,10 +10,10 @@ except:
     MPI = None
 
 import parcels.rng as ParcelsRandom  # noqa
-from parcels.field import NestedField, SummedField, VectorField
+from parcels.field import NestedField, VectorField
 from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
+from parcels.tools.statuscodes import StatusCode
 
 __all__ = ['InteractionKernelSOA']
 
@@ -78,7 +78,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
         """
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
-                if type(f) in [VectorField, NestedField, SummedField]:
+                if isinstance(f, (VectorField, NestedField)):
                     continue
                 f.data = np.array(f.data)
 
@@ -103,12 +103,12 @@ class InteractionKernelSOA(BaseInteractionKernel):
                 try:
                     res = pyfunc(p, pset.fieldset, p.time, neighbors, mutator)
                 except Exception as e:
-                    res = ErrorCode.Error
+                    res = StatusCode.Error
                     p.exception = e
 
                 # InteractionKernels do not implement a way to recover
                 # from errors.
-                if res != StateCode.Success:
+                if res != StatusCode.Success:
                     logger.warning_once("Some InteractionKernel was not completed succesfully, likely because a Particle threw an error that was not captured.")
 
             for particle_idx in active_idx:
@@ -121,7 +121,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
             for particle_idx in reset_particle_idx:
                 pset[particle_idx].dt = dt
 
-    def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
+    def execute(self, pset, endtime, dt, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps.
 
         InteractionKernels do not implement ways to catch or recover from
@@ -129,9 +129,9 @@ class InteractionKernelSOA(BaseInteractionKernel):
         It is strongly recommended not to sample from fields inside an
         InteractionKernel.
         """
-        pset.collection.state[:] = StateCode.Evaluate
+        pset.collection.state[:] = StatusCode.Evaluate
 
-        if abs(dt) < 1e-6 and not execute_once:
+        if abs(dt) < 1e-6:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
 
         if pset.fieldset is not None:
@@ -149,7 +149,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
+        self.remove_deleted(pset)   # Generalizable version!
 
         # Identify particles that threw errors
         n_error = pset.num_error_particles
@@ -158,18 +158,18 @@ class InteractionKernelSOA(BaseInteractionKernel):
             error_pset = pset.error_particles
             # Apply recovery kernel
             for p in error_pset:
-                if p.state == OperationCode.StopExecution:
+                if p.state == StatusCode.StopExecution:
                     return
-                if p.state == OperationCode.Repeat:
-                    p.set_state(StateCode.Evaluate)
-                elif p.state == OperationCode.Delete:
+                if p.state == StatusCode.Repeat:
+                    p.set_state(StatusCode.Evaluate)
+                elif p.state == StatusCode.Delete:
                     pass
                 else:
                     logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')
                     p.delete()
 
             # Remove all particles that signalled deletion
-            self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
+            self.remove_deleted(pset)   # Generalizable version!
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:

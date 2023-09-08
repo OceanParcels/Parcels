@@ -21,8 +21,6 @@ class ParticleFileAOS(BaseParticleFile):
         It is either a timedelta object or a positive double.
     chunks :
         Tuple (trajs, obs) to control the size of chunks in the zarr output.
-    write_ondelete :
-        Boolean to write particle data only when they are deleted. Default is False
 
     Returns
     -------
@@ -32,11 +30,7 @@ class ParticleFileAOS(BaseParticleFile):
 
     def __init__(self, name, particleset, outputdt=np.infty, chunks=None, write_ondelete=False):
         super().__init__(
-            name=name, particleset=particleset, outputdt=outputdt, chunks=chunks, write_ondelete=write_ondelete
-        )
-
-    def __del__(self):
-        super().__del__()
+            name=name, particleset=particleset, outputdt=outputdt, chunks=chunks)
 
     def _reserved_var_names(self):
         """Returns the reserved dimension names not to be written just once."""

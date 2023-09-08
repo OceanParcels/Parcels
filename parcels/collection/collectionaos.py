@@ -133,7 +133,7 @@ class ParticleCollectionAOS(ParticleCollection):
                     if kwvar not in initialised:
                         initialised.add(kwvar)
 
-            initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
+            initialised |= {'lat', 'lat_nextloop', 'lon', 'lon_nextloop', 'depth', 'depth_nextloop', 'time', 'time_nextloop', 'id'}
 
             for v in self._ptype.variables:
                 if v.name in initialised:
@@ -818,7 +818,7 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         raise NotTestedError
         # data_states = [p.state for p in self._data]
-        # indices = np.where(data_states == OperationCode)
+        # indices = np.where(data_states == StatusCode)
         # indices = None if len(indices) == 0 else indices[0]
         # indices = None if indices.size == 0 else indices
         # if indices is None:
@@ -945,6 +945,9 @@ class ParticleCollectionAOS(ParticleCollection):
             Write status of the variable (True, False or 'once')
 
         """
+        if var in ['time', 'depth', 'lat', 'lon']:  # These are the variable names that are written for lon, lat and depth
+            var = var + '_nextloop'
+
         var_changed = False
         for v in self._ptype.variables:
             if v.name == var and hasattr(v, 'to_write'):
@@ -976,7 +979,6 @@ class ParticleAccessorAOS(BaseParticleAccessor):
     """
 
     _index = 0
-    _next_dt = None
 
     def __init__(self, pcoll, index):
         """Initializes the ParticleAccessor to provide access to one
@@ -984,7 +986,6 @@ class ParticleAccessorAOS(BaseParticleAccessor):
         """
         super().__init__(pcoll)
         self._index = index
-        self._next_dt = None
 
     def __getattr__(self, name):
         """
@@ -1028,14 +1029,6 @@ class ParticleAccessorAOS(BaseParticleAccessor):
 
     def getPType(self):
         return self._pcoll.data[self._index].getPType()
-
-    def update_next_dt(self, next_dt=None):
-        if next_dt is None:
-            if self._next_dt is not None:
-                self._pcoll._data[self._index].dt = self._next_dt
-                self._next_dt = None
-        else:
-            self._next_dt = next_dt
 
     def __repr__(self):
         return repr(self._pcoll.data[self._index])

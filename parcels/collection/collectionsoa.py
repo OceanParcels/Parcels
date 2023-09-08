@@ -10,7 +10,6 @@ from parcels.collection.iterators import (
     BaseParticleCollectionIterable,
     BaseParticleCollectionIterator,
 )
-from parcels.field import Field
 from parcels.particle import JITParticle, ScipyParticle  # noqa
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import NotTestedError
@@ -147,16 +146,20 @@ class ParticleCollectionSOA(ParticleCollection):
 
             # mimic the variables that get initialised in the constructor
             self._data['lat'][:] = lat
+            self._data['lat_nextloop'][:] = lat
             self._data['lon'][:] = lon
+            self._data['lon_nextloop'][:] = lon
             self._data['depth'][:] = depth
+            self._data['depth_nextloop'][:] = depth
             self._data['time'][:] = time
+            self._data['time_nextloop'][:] = time
             self._data['id'][:] = pid
-            self._data['once_written'][:] = 0
+            self._data['obs_written'][:] = 0
 
             # special case for exceptions which can only be handled from scipy
             self._data['exception'] = np.empty(self.ncount, dtype=object)
 
-            initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
+            initialised |= {'lat', 'lat_nextloop', 'lon', 'lon_nextloop', 'depth', 'depth_nextloop', 'time', 'time_nextloop', 'id', 'obs_written'}
 
             # any fields that were provided on the command line
             for kwvar, kwval in kwargs.items():
@@ -170,16 +173,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 if v.name in initialised:
                     continue
 
-                if isinstance(v.initial, Field):
-                    for i in range(self.ncount):
-                        if (time[i] is None) or (np.isnan(time[i])):
-                            raise RuntimeError(f'Cannot initialise a Variable with a Field if no time provided (time-type: {type(time)} values: {time}). Add a "time=" to ParticleSet construction')
-                        v.initial.fieldset.computeTimeChunk(time[i], 0)
-                        self._data[v.name][i] = v.initial[
-                            time[i], depth[i], lat[i], lon[i]
-                        ]
-                        logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
-                elif isinstance(v.initial, attrgetter):
+                if isinstance(v.initial, attrgetter):
                     self._data[v.name][:] = v.initial(self)
                 else:
                     self._data[v.name][:] = v.initial
@@ -526,21 +520,19 @@ class ParticleCollectionSOA(ParticleCollection):
         This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
+        In result, the particle still remains in the collection.
         """
         raise NotTestedError
         # super().delete_by_index(index)
         #
-        # self._data['state'][index] = OperationCode.Delete
+        # self._data['state'][index] = StatusCode.Delete
 
     def delete_by_ID(self, id):
         """
         This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
+        In result, the particle still remains in the collection.
         """
         raise NotTestedError
         # super().delete_by_ID(id)
@@ -904,7 +896,6 @@ class ParticleAccessorSOA(BaseParticleAccessor):
     """
 
     _index = 0
-    _next_dt = None
 
     def __init__(self, pcoll, index):
         """Initializes the ParticleAccessor to provide access to one
@@ -912,7 +903,6 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         """
         super().__init__(pcoll)
         self._index = index
-        self._next_dt = None
 
     def __getattr__(self, name):
         """
@@ -957,18 +947,12 @@ class ParticleAccessorSOA(BaseParticleAccessor):
     def getPType(self):
         return self._pcoll.ptype
 
-    def update_next_dt(self, next_dt=None):
-        if next_dt is None:
-            if self._next_dt is not None:
-                self._pcoll._data['dt'][self._index] = self._next_dt
-                self._next_dt = None
-        else:
-            self._next_dt = next_dt
-
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in self._pcoll.ptype.variables:
+            if var.name in ['lon_nextloop', 'lat_nextloop', 'depth_nextloop', 'time_nextloop']:  # TODO check if time_nextloop is needed (or can work with time-dt?)
+                continue
             if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
                 str += f"{var.name}={getattr(self, var.name):f}, "
         return str + f"time={time_string})"

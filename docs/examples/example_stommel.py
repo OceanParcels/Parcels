@@ -22,7 +22,7 @@ from parcels import (  # noqa
     timer,
 )
 
-pset_modes = ['soa', 'aos']
+pset_modes = ['soa']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
@@ -77,6 +77,8 @@ def stommel_fieldset(xdim=200, ydim=200, grid_type='A'):
 
 
 def UpdateP(particle, fieldset, time):
+    if time == 0:
+        particle.p_start = fieldset.P[time, particle.depth, particle.lat, particle.lon]
     particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
@@ -106,9 +108,15 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     timer.psetinit = timer.Timer('Pset_init', parent=timer.pset)
     ParticleClass = JITParticle if mode == 'jit' else ScipyParticle
 
+    # Execute for 600 days, with 1-hour timesteps and 5-day output
+    runtime = delta(days=600)
+    dt = delta(hours=1)
+    outputdt = delta(days=5)
+
     class MyParticle(ParticleClass):
         p = Variable('p', dtype=np.float32, initial=0.)
-        p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
+        p_start = Variable('p_start', dtype=np.float32, initial=0.)
+        next_dt = Variable('next_dt', dtype=np.float64, initial=dt.total_seconds())
         age = Variable('age', dtype=np.float32, initial=0.)
 
     if custom_partition_function:
@@ -122,10 +130,6 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     if verbose:
         print(f"Initial particle positions:\n{pset}")
 
-    # Execute for 30 days, with 1hour timesteps and 12-hourly output
-    runtime = delta(days=600)
-    dt = delta(hours=1)
-    outputdt = delta(days=5)
     maxage = runtime.total_seconds() if maxage is None else maxage
     fieldset.add_constant('maxage', maxage)
     print("Stommel: Advecting %d particles for %s" % (npart, runtime))

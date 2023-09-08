@@ -16,11 +16,16 @@ except:
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
 from parcels.compilation.codegenerator import LoopGenerator
-from parcels.field import NestedField, SummedField, VectorField
+from parcels.field import NestedField, VectorField
 from parcels.kernel.basekernel import BaseKernel
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
-from parcels.tools.statuscodes import recovery_map as recovery_base_map
+from parcels.tools.statuscodes import (
+    FieldOutOfBoundError,
+    FieldOutOfBoundSurfaceError,
+    FieldSamplingError,
+    StatusCode,
+    TimeExtrapolationError,
+)
 
 __all__ = ['KernelSOA']
 
@@ -69,9 +74,7 @@ class KernelSOA(BaseKernel):
                 user_ctx['math'] = globals()['math']
                 user_ctx['ParcelsRandom'] = globals()['ParcelsRandom']
                 user_ctx['random'] = globals()['random']
-                user_ctx['StateCode'] = globals()['StateCode']
-                user_ctx['OperationCode'] = globals()['OperationCode']
-                user_ctx['ErrorCode'] = globals()['ErrorCode']
+                user_ctx['StatusCode'] = globals()['StatusCode']
             except:
                 logger.warning("Could not access user context when merging kernels")
                 user_ctx = globals()
@@ -137,47 +140,37 @@ class KernelSOA(BaseKernel):
         # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
         sign_dt = np.sign(dt)
 
-        analytical = False
-        if 'AdvectionAnalytical' in self._pyfunc.__name__:
-            analytical = True
-            if not np.isinf(dt):
-                logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
-            dt = np.inf
-
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
-                if type(f) in [VectorField, NestedField, SummedField]:
+                if isinstance(f, (VectorField, NestedField)):
                     continue
                 f.data = np.array(f.data)
 
-        for p in pset:
-            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
+        if not self.scipy_positionupdate_kernels_added:
+            self.add_scipy_positionupdate_kernels()
+            self.scipy_positionupdate_kernels_added = True
 
-    def remove_deleted(self, pset, output_file, endtime):
+        for p in pset:
+            self.evaluate_particle(p, endtime, sign_dt)
+
+    def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion.
 
         This deletion function is targetted to index-addressable, random-access array-collections.
         """
         # Indices marked for deletion.
-        bool_indices = pset.collection.state == OperationCode.Delete
+        bool_indices = pset.collection.state == StatusCode.Delete
         indices = np.where(bool_indices)[0]
-        if len(indices) > 0 and output_file is not None:
-            output_file.write(pset, endtime, deleted_only=bool_indices)
+        if len(indices) > 0 and self.fieldset.particlefile is not None:
+            self.fieldset.particlefile.write(pset, None, indices=indices)
         pset.remove_indices(indices)
 
-    def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
+    def execute(self, pset, endtime, dt, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps."""
-        pset.collection.state[:] = StateCode.Evaluate
+        pset.collection.state[:] = StatusCode.Evaluate
 
-        if abs(dt) < 1e-6 and not execute_once:
+        if abs(dt) < 1e-6:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
-
-        if recovery is None:
-            recovery = {}
-        elif ErrorCode.ErrorOutOfBounds in recovery and ErrorCode.ErrorThroughSurface not in recovery:
-            recovery[ErrorCode.ErrorThroughSurface] = recovery[ErrorCode.ErrorOutOfBounds]
-        recovery_map = recovery_base_map.copy()
-        recovery_map.update(recovery)
 
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
@@ -192,7 +185,7 @@ class KernelSOA(BaseKernel):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
+        self.remove_deleted(pset)
 
         # Identify particles that threw errors
         n_error = pset.num_error_particles
@@ -201,24 +194,26 @@ class KernelSOA(BaseKernel):
             error_pset = pset.error_particles
             # Apply recovery kernel
             for p in error_pset:
-                if p.state == OperationCode.StopExecution:
+                if p.state == StatusCode.StopExecution:
                     return
-                if p.state == OperationCode.Repeat:
+                if p.state == StatusCode.Repeat:
                     p.reset_state()
-                elif p.state == OperationCode.Delete:
+                elif p.state == StatusCode.ErrorTimeExtrapolation:
+                    raise TimeExtrapolationError(p.time)
+                elif p.state == StatusCode.ErrorOutOfBounds:
+                    raise FieldOutOfBoundError(p.lon, p.lat, p.depth)
+                elif p.state == StatusCode.ErrorThroughSurface:
+                    raise FieldOutOfBoundSurfaceError(p.lon, p.lat, p.depth)
+                elif p.state == StatusCode.Error:
+                    raise FieldSamplingError(p.lon, p.lat, p.depth)
+                elif p.state == StatusCode.Delete:
                     pass
-                elif p.state in recovery_map:
-                    recovery_kernel = recovery_map[p.state]
-                    p.set_state(StateCode.Success)
-                    recovery_kernel(p, self.fieldset, p.time)
-                    if p.isComputed():
-                        p.reset_state()
                 else:
                     logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')
                     p.delete()
 
             # Remove all particles that signalled deletion
-            self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
+            self.remove_deleted(pset)   # Generalizable version!
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:

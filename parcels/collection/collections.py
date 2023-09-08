@@ -393,8 +393,7 @@ class Collection(ABC):
         This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
+        In result, the particle still remains in the collection.
         """
         assert type(index) in [int, np.int32, np.intp], f"Trying to delete a particle by index, but index {index} is not a 32-bit integer - invalid operation."
 
@@ -404,8 +403,7 @@ class Collection(ABC):
         This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
         Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
         instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
+        In result, the particle still remains in the collection.
         """
         assert type(id) in [np.int64, np.uint64], f"Trying to delete a particle by ID, but ID {id} is not a 64-bit (signed or unsigned) integer - invalid operation."
 
