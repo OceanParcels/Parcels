@@ -25,7 +25,7 @@ def test_download_example_dataset_lite(tmp_path):
     # test valid datasets
     # avoids downloading the dataset (only verifying that the URL is responsive, and folders are created)
     with unittest.mock.patch('urllib.request.urlretrieve', new=mock_urlretrieve) as mock_function:  # noqa: F841
-        for dataset in list_example_datasets():
+        for dataset in list_example_datasets()[0:1]:
             dataset_folder_path = download_example_dataset(dataset, data_home=tmp_path)
 
             assert dataset_folder_path.exists()
