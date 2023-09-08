@@ -68,12 +68,12 @@ class ParticleFile(ABC):
         if self.particleset.fieldset is not None:
             self.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
         self.time_origin = self.particleset.time_origin
-        self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
+        self.lonlatdepth_dtype = self.particleset.particledata.lonlatdepth_dtype
         self.maxids = 0
         self.pids_written = {}
         self.create_new_zarrfile = create_new_zarrfile
         self.vars_to_write = {}
-        for var in self.particleset.collection.ptype.variables:
+        for var in self.particleset.particledata.ptype.variables:
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
@@ -81,7 +81,7 @@ class ParticleFile(ABC):
         self.analytical = False  # Flag to indicate if ParticleFile is used for analytical trajectories
 
         # Reset obs_written of each particle, in case new ParticleFile created for a ParticleSet
-        particleset.collection.setallvardata('obs_written', 0)
+        particleset.particledata.setallvardata('obs_written', 0)
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
                          "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
@@ -174,7 +174,7 @@ class ParticleFile(ABC):
             return var
 
     def write_once(self, var):
-        return self.particleset.collection.ptype[var].to_write == 'once'
+        return self.particleset.particledata.ptype[var].to_write == 'once'
 
     def _extend_zarr_dims(self, Z, store, dtype, axis):
         if axis == 1:
@@ -204,21 +204,21 @@ class ParticleFile(ABC):
         """
         time = time.total_seconds() if isinstance(time, delta) else time
 
-        if pset.collection._ncount == 0:
+        if pset.particledata._ncount == 0:
             logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             return
 
-        indices_to_write = pset.collection._to_write_particles(pset.collection._data, time) if indices is None else indices
+        indices_to_write = pset.particledata._to_write_particles(pset.particledata._data, time) if indices is None else indices
 
         if len(indices_to_write) > 0:
-            pids = pset.collection.getvardata('id', indices_to_write)
+            pids = pset.particledata.getvardata('id', indices_to_write)
             to_add = sorted(set(pids) - set(self.pids_written.keys()))
             for i, pid in enumerate(to_add):
                 self.pids_written[pid] = self.maxids + i
             ids = np.array([self.pids_written[p] for p in pids], dtype=int)
             self.maxids = len(self.pids_written)
 
-            once_ids = np.where(pset.collection.getvardata('obs_written', indices_to_write) == 0)[0]
+            once_ids = np.where(pset.particledata.getvardata('obs_written', indices_to_write) == 0)[0]
             if len(once_ids) > 0:
                 ids_once = ids[once_ids]
                 indices_to_write_once = indices_to_write[once_ids]
@@ -243,11 +243,11 @@ class ParticleFile(ABC):
                     if varout not in ['trajectory']:  # because 'trajectory' is written as coordinate
                         if self.write_once(var):
                             data = np.full((arrsize[0],), self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
-                            data[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
+                            data[ids_once] = pset.particledata.getvardata(var, indices_to_write_once)
                             dims = ["trajectory"]
                         else:
                             data = np.full(arrsize, self.fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var])
-                            data[ids, 0] = pset.collection.getvardata(var, indices_to_write)
+                            data[ids, 0] = pset.particledata.getvardata(var, indices_to_write)
                             dims = ["trajectory", "obs"]
                         ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
                         ds[varout].encoding['chunks'] = self.chunks[0] if self.write_once(var) else self.chunks
@@ -260,20 +260,20 @@ class ParticleFile(ABC):
                 else:
                     store = zarr.DirectoryStore(self.fname)
                 Z = zarr.group(store=store, overwrite=False)
-                obs = pset.collection.getvardata('obs_written', indices_to_write)
+                obs = pset.particledata.getvardata('obs_written', indices_to_write)
                 for var in self.vars_to_write:
                     varout = self._convert_varout_name(var)
                     if self.maxids > Z[varout].shape[0]:
                         self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
                     if self.write_once(var):
                         if len(once_ids) > 0:
-                            Z[varout].vindex[ids_once] = pset.collection.getvardata(var, indices_to_write_once)
+                            Z[varout].vindex[ids_once] = pset.particledata.getvardata(var, indices_to_write_once)
                     else:
                         if max(obs) >= Z[varout].shape[1]:
                             self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
-                        Z[varout].vindex[ids, obs] = pset.collection.getvardata(var, indices_to_write)
+                        Z[varout].vindex[ids, obs] = pset.particledata.getvardata(var, indices_to_write)
 
-            pset.collection.setvardata('obs_written', indices_to_write, obs+1)
+            pset.particledata.setvardata('obs_written', indices_to_write, obs+1)
 
     def write_latest_locations(self, pset, time):
         """Write the current (latest) particle locations to zarr file.
@@ -288,6 +288,6 @@ class ParticleFile(ABC):
             Time at which to write ParticleSet. Note that typically this would be pset.time_nextloop
         """
         for var in ['lon', 'lat', 'depth', 'time']:
-            pset.collection.setallvardata(f"{var}", pset.collection.getvardata(f"{var}_nextloop"))
+            pset.particledata.setallvardata(f"{var}", pset.particledata.getvardata(f"{var}_nextloop"))
 
         self.write(pset, time)

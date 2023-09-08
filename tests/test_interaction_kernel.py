@@ -190,4 +190,4 @@ def test_pseudo_interaction(runtime, dt):
     # Check to see whether they have moved as predicted.
     assert np.all(pset.lon == pset2.lon)
     assert np.all(pset2.lat == pset2.lon)
-    assert np.all(pset2._collection.data["time"][0] == pset._collection.data["time"][0])
+    assert np.all(pset2.particledata.data["time"][0] == pset.particledata.data["time"][0])

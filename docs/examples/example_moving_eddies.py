@@ -168,7 +168,7 @@ def test_moving_eddies_fwdbwd(mode, mesh, tmpdir, npart=2):
 
     # Also include last timestep
     for var in ['lon', 'lat', 'depth', 'time']:
-        pset.collection.setallvardata(f"{var}", pset.collection.getvardata(f"{var}_nextloop"))
+        pset.particledata.setallvardata(f"{var}", pset.particledata.getvardata(f"{var}_nextloop"))
 
     assert np.allclose(pset.lon, lons)
     assert np.allclose(pset.lat, lats)
@@ -182,7 +182,7 @@ def test_moving_eddies_fieldset(mode, mesh, tmpdir):
     pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
     # Also include last timestep
     for var in ['lon', 'lat', 'depth', 'time']:
-        pset.collection.setallvardata(f"{var}", pset.collection.getvardata(f"{var}_nextloop"))
+        pset.particledata.setallvardata(f"{var}", pset.particledata.getvardata(f"{var}_nextloop"))
     if mesh == 'flat':
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
@@ -208,7 +208,7 @@ def test_moving_eddies_file(mode, mesh, tmpdir):
     pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
     # Also include last timestep
     for var in ['lon', 'lat', 'depth', 'time']:
-        pset.collection.setallvardata(f"{var}", pset.collection.getvardata(f"{var}_nextloop"))
+        pset.particledata.setallvardata(f"{var}", pset.particledata.getvardata(f"{var}_nextloop"))
     if mesh == 'flat':
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)

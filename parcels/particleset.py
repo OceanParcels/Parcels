@@ -22,7 +22,7 @@ except:
     KDTree = None
 
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.collections import ParticleCollection, ParticleCollectionIterator
+from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.grid import CurvilinearGrid, GridCode
@@ -96,7 +96,7 @@ class ParticleSet(ABC):
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
                  pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
-        self._collection = None
+        self.particledata = None
         self.repeat_starttime = None
         self.repeatlon = None
         self.repeatlat = None
@@ -211,7 +211,7 @@ class ParticleSet(ABC):
         # it is set to True here.
         self._dirty_neighbor = True
 
-        self._collection = ParticleCollection(
+        self.particledata = ParticleData(
             _pclass, lon=lon, lat=lat, depth=depth, time=time,
             lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig,
             partitions=partitions, ngrid=ngrids, **kwargs)
@@ -254,33 +254,33 @@ class ParticleSet(ABC):
             if len(time) > 0 and time[0] is None:
                 self.repeat_starttime = time[0]
             else:
-                if self._collection.data['time'][0] and not np.allclose(self._collection.data['time'], self._collection.data['time'][0]):
+                if self.particledata.data['time'][0] and not np.allclose(self.particledata.data['time'], self.particledata.data['time'][0]):
                     raise ValueError('All Particle.time should be the same when repeatdt is not None')
-                self.repeat_starttime = copy(self._collection.data['time'][0])
-            self.repeatlon = copy(self._collection.data['lon'])
-            self.repeatlat = copy(self._collection.data['lat'])
-            self.repeatdepth = copy(self._collection.data['depth'])
+                self.repeat_starttime = copy(self.particledata.data['time'][0])
+            self.repeatlon = copy(self.particledata.data['lon'])
+            self.repeatlat = copy(self.particledata.data['lat'])
+            self.repeatdepth = copy(self.particledata.data['depth'])
             for kwvar in kwargs:
-                self.repeatkwargs[kwvar] = copy(self._collection.data[kwvar])
+                self.repeatkwargs[kwvar] = copy(self.particledata.data[kwvar])
 
         if self.repeatdt:
-            if MPI and self._collection.pu_indicators is not None:
+            if MPI and self.particledata.pu_indicators is not None:
                 mpi_comm = MPI.COMM_WORLD
                 mpi_rank = mpi_comm.Get_rank()
-                self.repeatpid = pid_orig[self._collection.pu_indicators == mpi_rank]
+                self.repeatpid = pid_orig[self.particledata.pu_indicators == mpi_rank]
 
         self.kernel = None
 
     def __del__(self):
-        if self._collection is not None and isinstance(self._collection, ParticleCollection):
-            del self._collection
-        self._collection = None
+        if self.particledata is not None and isinstance(self.particledata, ParticleData):
+            del self.particledata
+        self.particledata = None
 
     def iterator(self):
-        return self._collection.iterator()
+        return self.particledata.iterator()
 
     def __iter__(self):
-        """Allows for more intuitive iteration over a particleset, while in reality iterating over the particles in the collection."""
+        """Allows for more intuitive iteration over a particleset, while in reality iterating over the particles in the ParticleData instance."""
         return self.iterator()
 
     def __getattr__(self, name):
@@ -292,9 +292,9 @@ class ParticleSet(ABC):
         name : str
             Name of the property
         """
-        for v in self._collection.ptype.variables:
+        for v in self.particledata.ptype.variables:
             if v.name == name:
-                return getattr(self._collection, name)
+                return getattr(self.particledata, name)
         if name in self.__dict__ and name[0] != '_':
             return self.__dict__[name]
         else:
@@ -302,7 +302,7 @@ class ParticleSet(ABC):
 
     def __getitem__(self, index):
         """Get a single particle by index."""
-        return self._collection.get_single_by_index(index)
+        return self.particledata.get_single_by_index(index)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
@@ -315,12 +315,8 @@ class ParticleSet(ABC):
                 return np.float64
         return np.float32
 
-    @property
-    def collection(self):
-        return self._collection
-
     def cstruct(self):
-        cstruct = self._collection.cstruct()
+        cstruct = self.particledata.cstruct()
         return cstruct
 
     @property
@@ -335,16 +331,16 @@ class ParticleSet(ABC):
     @property
     def size(self):
         # ==== to change at some point - len and size are different things ==== #
-        return len(self._collection)
+        return len(self.particledata)
 
     def __repr__(self):
         return "\n".join([str(p) for p in self])
 
     def __len__(self):
-        return len(self._collection)
+        return len(self.particledata)
 
     def __sizeof__(self):
-        return sys.getsizeof(self._collection)
+        return sys.getsizeof(self.particledata)
 
     def add(self, particles):
         """Add particles to the ParticleSet. Note that this is an
@@ -363,8 +359,8 @@ class ParticleSet(ABC):
 
         """
         if isinstance(particles, type(self)):
-            particles = particles.collection
-        self._collection += particles
+            particles = particles.particledata
+        self.particledata += particles
         # Adding particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         return self
@@ -393,9 +389,9 @@ class ParticleSet(ABC):
         # Removing particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         if type(indices) in [int, np.int32, np.intp]:
-            self._collection.remove_single_by_index(indices)
+            self.particledata.remove_single_by_index(indices)
         else:
-            self._collection.remove_multi_by_indices(indices)
+            self.particledata.remove_multi_by_indices(indices)
 
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans."""
@@ -404,8 +400,8 @@ class ParticleSet(ABC):
         self.remove_indices(np.where(indices)[0])
 
     def active_particles_mask(self, time, dt):
-        active_indices = (time - self._collection.data['time'])/dt >= 0
-        non_err_indices = np.isin(self._collection.data['state'], [StatusCode.Success, StatusCode.Evaluate])
+        active_indices = (time - self.particledata.data['time'])/dt >= 0
+        non_err_indices = np.isin(self.particledata.data['state'], [StatusCode.Success, StatusCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
         self._active_particle_idx = np.where(active_indices)[0]
         return active_indices
@@ -414,9 +410,9 @@ class ParticleSet(ABC):
         active_mask = self.active_particles_mask(time, dt)
 
         self._values = np.vstack((
-            self._collection.data['depth'],
-            self._collection.data['lat'],
-            self._collection.data['lon'],
+            self.particledata.data['depth'],
+            self.particledata.data['lat'],
+            self.particledata.data['lon'],
         ))
         if self._dirty_neighbor:
             self._neighbor_tree.rebuild(self._values, active_mask=active_mask)
@@ -430,14 +426,14 @@ class ParticleSet(ABC):
         neighbor_idx = self._active_particle_idx[neighbor_idx]
         mask = (neighbor_idx != particle_idx)
         neighbor_idx = neighbor_idx[mask]
-        if 'horiz_dist' in self._collection._ptype.variables:
-            self._collection.data['vert_dist'][neighbor_idx] = distances[0, mask]
-            self._collection.data['horiz_dist'][neighbor_idx] = distances[1, mask]
-        return ParticleCollectionIterator(self._collection, subset=neighbor_idx)
+        if 'horiz_dist' in self.particledata._ptype.variables:
+            self.particledata.data['vert_dist'][neighbor_idx] = distances[0, mask]
+            self.particledata.data['horiz_dist'][neighbor_idx] = distances[1, mask]
+        return ParticleDataIterator(self.particledata, subset=neighbor_idx)
 
     def neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
-        neighbor_ids = self._collection.data['id'][neighbor_idx]
+        neighbor_ids = self.particledata.data['id'][neighbor_idx]
         return neighbor_ids
 
     def populate_indices(self):
@@ -461,13 +457,13 @@ class ParticleSet(ABC):
                 tree_data = np.stack((grid.lon.flat, grid.lat.flat), axis=-1)
                 tree = KDTree(tree_data)
                 # stack all the particle positions for a single query
-                pts = np.stack((self._collection.data['lon'], self._collection.data['lat']), axis=-1)
+                pts = np.stack((self.particledata.data['lon'], self.particledata.data['lat']), axis=-1)
                 # query datatype needs to match tree datatype
                 _, idx = tree.query(pts.astype(tree_data.dtype))
                 yi, xi = np.unravel_index(idx, grid.lon.shape)
 
-                self._collection.data['xi'][:, i] = xi
-                self._collection.data['yi'][:, i] = yi
+                self.particledata.data['xi'][:, i] = xi
+                self.particledata.data['yi'][:, i] = yi
 
     @classmethod
     def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
@@ -735,7 +731,7 @@ class ParticleSet(ABC):
 
         k = Kernel(
             self.fieldset,
-            self._collection.ptype,
+            self.particledata.ptype,
             funcname="search_kernel",
             funcvars=["particle", "fieldset", "time", "x"],
             funccode=f_str,
@@ -743,7 +739,7 @@ class ParticleSet(ABC):
         self.execute(pyfunc=k, runtime=0)
 
         if isinstance(particle_val, str):
-            particle_val = self._collection._data[particle_val]
+            particle_val = self.particledata._data[particle_val]
         else:
             particle_val = particle_val if particle_val else np.ones(self.size)
         density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
@@ -786,14 +782,14 @@ class ParticleSet(ABC):
         if isinstance(pyfunc, list):
             return Kernel.from_list(
                 self.fieldset,
-                self.collection.ptype,
+                self.particledata.ptype,
                 pyfunc,
                 c_include=c_include,
                 delete_cfiles=delete_cfiles,
             )
         return Kernel(
             self.fieldset,
-            self.collection.ptype,
+            self.particledata.ptype,
             pyfunc=pyfunc,
             c_include=c_include,
             delete_cfiles=delete_cfiles,
@@ -802,7 +798,7 @@ class ParticleSet(ABC):
     def InteractionKernel(self, pyfunc_inter):
         if pyfunc_inter is None:
             return None
-        return InteractionKernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc_inter)
+        return InteractionKernel(self.fieldset, self.particledata.ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
@@ -818,7 +814,7 @@ class ParticleSet(ABC):
         value : any
             New value to set the attribute of the particles to.
         """
-        self.collection._data[name][:] = value
+        self.particledata._data[name][:] = value
 
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.
@@ -841,7 +837,7 @@ class ParticleSet(ABC):
 
         """
         compare_values = np.array([compare_values, ]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
-        return np.where(np.isin(self._collection.data[variable_name], compare_values, invert=invert))[0]
+        return np.where(np.isin(self.particledata.data[variable_name], compare_values, invert=invert))[0]
 
     @property
     def error_particles(self):
@@ -850,10 +846,10 @@ class ParticleSet(ABC):
         Returns
         -------
         iterator
-            Collection iterator over error particles.
+            ParticleDataIterator over error particles.
         """
         error_indices = self.data_indices('state', [StatusCode.Success, StatusCode.Evaluate], invert=True)
-        return ParticleCollectionIterator(self._collection, subset=error_indices)
+        return ParticleDataIterator(self.particledata, subset=error_indices)
 
     @property
     def num_error_particles(self):
@@ -865,7 +861,7 @@ class ParticleSet(ABC):
             Number of error particles.
         """
         return np.sum(np.isin(
-            self._collection.data['state'],
+            self.particledata.data['state'],
             [StatusCode.Success, StatusCode.Evaluate], invert=True))
 
     def set_variable_write_status(self, var, write_status):
@@ -878,7 +874,7 @@ class ParticleSet(ABC):
         write_status :
             Write status of the variable (True, False or 'once')
         """
-        self._collection.set_variable_write_status(var, write_status)
+        self.particledata.set_variable_write_status(var, write_status)
 
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
                 output_file=None, verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
@@ -922,9 +918,9 @@ class ParticleSet(ABC):
             else:
                 self.kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
-            if self.collection.ptype.uses_jit:
+            if self.particledata.ptype.uses_jit:
                 self.kernel.remove_lib()
-                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.particledata.lonlatdepth_dtype else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
 
@@ -967,11 +963,11 @@ class ParticleSet(ABC):
         mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
 
         default_release_time = mintime if dt >= 0 else maxtime
-        if np.any(np.isnan(self._collection.data['time'])):
-            self._collection.data['time'][np.isnan(self._collection.data['time'])] = default_release_time
-            self._collection.data['time_nextloop'][np.isnan(self._collection.data['time_nextloop'])] = default_release_time
-        min_rt = np.min(self._collection.data['time_nextloop'])
-        max_rt = np.max(self._collection.data['time_nextloop'])
+        if np.any(np.isnan(self.particledata.data['time'])):
+            self.particledata.data['time'][np.isnan(self.particledata.data['time'])] = default_release_time
+            self.particledata.data['time_nextloop'][np.isnan(self.particledata.data['time_nextloop'])] = default_release_time
+        min_rt = np.min(self.particledata.data['time_nextloop'])
+        max_rt = np.max(self.particledata.data['time_nextloop'])
 
         # Derive _starttime and endtime from arguments or fieldset defaults
         _starttime = min_rt if dt >= 0 else max_rt
@@ -1076,7 +1072,7 @@ class ParticleSet(ABC):
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
                     lat=self.repeatlat, depth=self.repeatdepth,
                     pclass=self.repeatpclass,
-                    lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
+                    lonlatdepth_dtype=self.particledata.lonlatdepth_dtype,
                     partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt

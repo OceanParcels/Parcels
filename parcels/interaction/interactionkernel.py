@@ -215,7 +215,7 @@ class InteractionKernel(BaseKernel):
         It is strongly recommended not to sample from fields inside an
         InteractionKernel.
         """
-        pset.collection.state[:] = StatusCode.Evaluate
+        pset.particledata.state[:] = StatusCode.Evaluate
 
         if abs(dt) < 1e-6:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")

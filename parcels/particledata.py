@@ -19,7 +19,7 @@ if MPI:
         KMeans = None
 
 
-class ParticleCollection(ABC):
+class ParticleData(ABC):
 
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
@@ -37,17 +37,15 @@ class ParticleCollection(ABC):
         self._latlondepth_dtype = np.float32
         self._data = None
 
-        assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
+        assert pid_orig is not None, "particle IDs are None - incompatible with the ParticleData class. Invalid state."
         pid = pid_orig + pclass.lastID
 
         self._sorted = np.all(np.diff(pid) >= 0)
 
-        assert depth is not None, "particle's initial depth is None - incompatible with the collection. Invalid state."
-        assert lon.size == lat.size and lon.size == depth.size, (
-            'lon, lat, depth don''t all have the same lenghts')
+        assert depth is not None, "particle's initial depth is None - incompatible with the ParticleData class. Invalid state."
+        assert lon.size == lat.size and lon.size == depth.size, ('lon, lat, depth don''t all have the same lenghts.')
 
-        assert lon.size == time.size, (
-            'time and positions (lon, lat, depth) don''t have the same lengths.')
+        assert lon.size == time.size, ('time and positions (lon, lat, depth) don''t have the same lengths.')
 
         # If partitions is false, the partitions are already initialised
         if partitions is not None and partitions is not False:
@@ -157,31 +155,28 @@ class ParticleCollection(ABC):
                 initialised.add(v.name)
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
-        self._iterator = None
-        self._riterator = None
 
     def __del__(self):
-        """Collection - Destructor"""
         pass
 
     @property
     def pu_indicators(self):
         """
         The 'pu_indicator' is an [array or dictionary]-of-indicators, where each indicator entry tells per item
-        (i.e. particle) in the collection to which processing unit (PU) in a parallelised setup it belongs to.
+        (i.e. particle) in the ParticleData instance to which processing unit (PU) in a parallelised setup it belongs to.
         """
         return self._pu_indicators
 
     @property
     def pclass(self):
-        """Stores the actual class type of the particles allocated and managed in this collection."""
+        """Class type of the particles allocated and managed in this ParticleData instance."""
         return self._pclass
 
     @property
     def ptype(self):
         """
         'ptype' returns an instance of the particular type of class 'ParticleType' of the particle class of the particles
-        in this collection.
+        in this ParticleData instance.
 
         basically:
         pytpe -> pclass().getPType()
@@ -198,36 +193,22 @@ class ParticleCollection(ABC):
 
     @property
     def data(self):
-        """
-        'data' is a reference to the actual barebone-storage of the particle data, and thus depends directly on the
-        specific collection in question.
-        """
+        """'data' is a reference to the actual barebone-storage of the particle data."""
         return self._data
 
     def __len__(self):
-        """This function returns the length, in terms of 'number of elements, of a collection."""
+        """Return the length, in terms of 'number of elements, of a ParticleData instance."""
         return self._ncount
 
     def iterator(self):
-        self._iterator = ParticleCollectionIterator(self)
-        return self._iterator
+        return ParticleDataIterator(self)
 
     def __iter__(self):
-        """Returns an Iterator that allows for forward iteration over the
-        elements in the ParticleCollection (e.g. `for p in pset:`).
-        """
+        """Return an Iterator that allows for forward iteration over the elements in the ParticleData (e.g. `for p in pset:`)."""
         return self.iterator()
 
     def __getitem__(self, index):
-        """
-        Access a particle in this collection using the fastest access
-        method for this collection - by its index.
-
-        Parameters
-        ----------
-        index : int
-            Index of the particle to access
-        """
+        """Get a particle object from the ParticleData instance based on its index."""
         return self.get_single_by_index(index)
 
     def __getattr__(self, name):
@@ -245,23 +226,12 @@ class ParticleCollection(ABC):
         return False
 
     def get_single_by_index(self, index):
-        """
-        This function gets a (particle) object from the collection based on its index within the collection. For
-        collections that are not based on random access (e.g. ordered lists, sets, trees), this function involves a
-        translation of the index into the specific object reference in the collection - or (if unavoidable) the
-        translation of the collection from a none-indexable, none-random-access structure into an indexable structure.
-        In cases where a get-by-index would result in a performance malus, it is highly-advisable to use a different
-        get function, e.g. get-by-ID.
-        """
+        """Get a particle object from the ParticleData instance based on its index."""
         assert type(index) in [int, np.int32, np.intp], f"Trying to get a particle by index, but index {index} is not a 32-bit integer - invalid operation."
-        return ParticleAccessor(self, index)
+        return ParticleDataAccessor(self, index)
 
     def add_same(self, same_class):
-        """
-        Adds another, equi-structured ParticleCollection to this collection. This is done by concatenating
-        both collections. The fact that they are of the same ParticleCollection's derivative simplifies
-        parsing and concatenation.
-        """
+        """Add another ParticleData instance to this ParticleData instance. This is done by concatenating both instances."""
         assert same_class is not None, f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
         assert type(same_class) is type(self)
 
@@ -287,30 +257,13 @@ class ParticleCollection(ABC):
                 self._data[d] = np.concatenate((self._data[d], same_class._data[d]))
             self._ncount += same_class._ncount
 
-    def __iadd__(self, same_class):
-        """
-        Performs an incremental addition of the equi-structured ParticleCollections, such to allow
-
-        a += b,
-
-        with 'a' and 'b' begin the two equi-structured objects (or: 'b' being and individual object).
-        This operation is equal to an in-place addition of (an) element(s).
-        """
-        assert same_class is not None
-        assert type(same_class) is type(self), f"Trying to increment-add collection of type {type(same_class)} into collection of type {type(self)} - invalid operation."
-        self.add_same(same_class)
+    def __iadd__(self, instance):
+        """Perform an incremental addition of ParticleData instances, such to allow a += b."""
+        self.add_same(instance)
         return self
 
     def remove_single_by_index(self, index):
-        """
-        This function removes a (particle) object from the collection based on its index within the collection. For
-        collections that are not based on random access (e.g. ordered lists, sets, trees), this function involves a
-        translation of the index into the specific object reference in the collection - or (if unavoidable) the
-        translation of the collection from a none-indexable, none-random-access structure into an indexable structure,
-        and then perform the removal.
-        In cases where a removal-by-index would result in a performance malus, it is highly-advisable to use a different
-        removal functions, e.g. remove-by-object or remove-by-ID.
-        """
+        """Remove a particle from the ParticleData instance based on its index."""
         assert type(index) in [int, np.int32, np.intp], f"Trying to remove a particle by index, but index {index} is not a 32-bit integer - invalid operation."
 
         for d in self._data:
@@ -319,12 +272,8 @@ class ParticleCollection(ABC):
         self._ncount -= 1
 
     def remove_multi_by_indices(self, indices):
-        """
-        This function removes particles from this collection based on their indices. This works best for random-access
-        collections (e.g. numpy's ndarrays, dense matrices and dense arrays), whereas internally ordered collections
-        shall rather use a removal-via-object-reference strategy.
-        """
-        assert indices is not None, "Trying to remove particles by their collection indices, but the index list is None - invalid operation."
+        """Remove particles from the ParticleData instance based on their indices."""
+        assert indices is not None, "Trying to remove particles by their ParticleData instance indices, but the index list is None - invalid operation."
         assert type(indices) in [list, dict, np.ndarray], "Trying to remove particles by their indices, but the index container is not a valid Python-collection - invalid operation."
         if type(indices) is not dict:
             assert len(indices) == 0 or type(indices[0]) in [int, np.int32, np.intp], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
@@ -339,7 +288,7 @@ class ParticleCollection(ABC):
         self._ncount -= len(indices)
 
     def cstruct(self):
-        """Returns the ctypes mapping of the particle data. This depends on the specific structure in question."""
+        """Return the ctypes mapping of the particle data."""
         class CParticles(Structure):
             _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self._ptype.variables]
 
@@ -353,9 +302,7 @@ class ParticleCollection(ABC):
         return cstruct
 
     def _to_write_particles(self, pd, time):
-        """We don't want to write a particle that is not started yet.
-        Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
-        """
+        """Return the Particles that need to be written at time: if particle.time is between time-dt/2 and time+dt (/2)"""
         return np.where((np.less_equal(time - np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
                         & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
                         | ((np.isnan(pd['dt'])) & np.equal(time, pd['time'], where=np.isfinite(pd['time']))))
@@ -384,9 +331,8 @@ class ParticleCollection(ABC):
         ----------
         var :
             Name of the variable (string)
-        status :
-            Write status of the variable (True, False or 'once')
         write_status :
+            Write status of the variable (True, False or 'once')
         """
         var_changed = False
         for v in self._ptype.variables:
@@ -397,28 +343,22 @@ class ParticleCollection(ABC):
             raise SyntaxError(f'Could not change the write status of {var}, because it is not a Variable name')
 
 
-class ParticleAccessor(ABC):
-    """Wrapper that provides access to particle data in the collection,
-    as if interacting with the particle itself.
+class ParticleDataAccessor(ABC):
+    """Wrapper that provides access to particle data, as if interacting with the particle itself.
 
     Parameters
     ----------
     pcoll :
-        ParticleCollection that the represented particle
-        belongs to.
+        ParticleData that the particle belongs to.
     index :
-        The index at which the data for the represented
-        particle is stored in the corresponding data arrays
-        of the ParticleCollecion.
+        The index at which the data for the particle is stored in the corresponding data arrays of the ParticleData instance.
     """
 
     _pcoll = None
     _index = 0
 
     def __init__(self, pcoll, index):
-        """Initializes the ParticleAccessor to provide access to one
-        specific particle.
-        """
+        """Initializes the ParticleDataAccessor to provide access to one specific particle."""
         self._pcoll = pcoll
         self._index = index
 
@@ -434,7 +374,7 @@ class ParticleAccessor(ABC):
         Returns
         -------
         any
-            The value of the particle attribute in the underlying collection data array.
+            The value of the particle attribute in the underlying data array.
         """
         if name in self.__dict__.keys():
             result = self.__getattribute__(name)
@@ -453,7 +393,7 @@ class ParticleAccessor(ABC):
         name : str
             Name of the particle attribute.
         value : any
-            Value that will be assigned to the particle attribute in the underlying collection data array.
+            Value that will be assigned to the particle attribute in the underlying data array.
         """
         if name in self.__dict__.keys():
             self.__setattr__(name, value)
@@ -476,30 +416,26 @@ class ParticleAccessor(ABC):
         return str + f"time={time_string})"
 
     def delete(self):
-        """Signal the underlying particle for deletion."""
+        """Signal the particle for deletion."""
         self.state = StatusCode.Delete
 
 
-class ParticleCollectionIterator(ABC):
-    """Iterator for looping over the particles in the ParticleCollection.
+class ParticleDataIterator(ABC):
+    """Iterator for looping over the particles in the ParticleData.
 
     Parameters
     ----------
     pcoll :
-        ParticleCollection that stores the particles.
+        ParticleData that stores the particles.
     subset :
-        Subset of indices to iterate over, this allows the
-        creation of an iterator that represents part of the
-        collection.
+        Subset of indices to iterate over.
     """
 
     def __init__(self, pcoll, subset=None):
 
         if subset is not None:
             if len(subset) > 0 and type(subset[0]) not in [int, np.int32, np.intp]:
-                raise TypeError("Iteration over a subset of particles in the"
-                                " particleset requires a list or numpy array"
-                                " of indices (of type int or np.int32).")
+                raise TypeError("Iteration over a subset of particles in the particleset requires a list or numpy array of indices (of type int or np.int32).")
             self._indices = subset
             self.max_len = len(subset)
         else:
@@ -513,18 +449,16 @@ class ParticleCollectionIterator(ABC):
         return len(self._indices)
 
     def __getitem__(self, items):
-        return ParticleCollectionAccessor(self._pcoll, self._indices[items])
+        return ParticleDataAccessor(self._pcoll, self._indices[items])
 
     def __iter__(self):
-        """Returns the iterator itself."""
+        """Return the iterator itself."""
         return self
 
     def __next__(self):
-        """Returns a ParticleAccessor for the next particle in the
-        ParticleSet.
-        """
+        """Return a ParticleDataAccessor for the next particle in the ParticleData instance."""
         if self._index < self.max_len:
-            self.p = ParticleAccessor(self._pcoll, self._indices[self._index])
+            self.p = ParticleDataAccessor(self._pcoll, self._indices[self._index])
             self._index += 1
             return self.p
 

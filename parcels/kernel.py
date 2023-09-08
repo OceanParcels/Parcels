@@ -129,7 +129,7 @@ class BaseKernel:
 
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""
-        bool_indices = pset.collection.state == StatusCode.Delete
+        bool_indices = pset.particledata.state == StatusCode.Delete
         indices = np.where(bool_indices)[0]
         if len(indices) > 0 and self.fieldset.particlefile is not None:
             self.fieldset.particlefile.write(pset, None, indices=indices)
@@ -547,7 +547,7 @@ class Kernel(BaseKernel):
 
     def execute(self, pset, endtime, dt):
         """Execute this Kernel over a ParticleSet for several timesteps."""
-        pset.collection.state[:] = StatusCode.Evaluate
+        pset.particledata.state[:] = StatusCode.Evaluate
 
         if abs(dt) < 1e-6:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
@@ -609,7 +609,7 @@ class Kernel(BaseKernel):
         Parameters
         ----------
         p :
-            object of (sub-)type (ScipyParticle, JITParticle) or (sub-)type of BaseParticleAccessor
+            object of (sub-)type (ScipyParticle, JITParticle)
         fieldset :
             fieldset of the containing ParticleSet (e.g. pset.fieldset)
         analytical :
