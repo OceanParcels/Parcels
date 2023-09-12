@@ -273,7 +273,7 @@ def test_globcurrent_2D(mode, chunk_mode):
         # we removed the failsafe, so now if all chunksize dimensions are incorrect, there is nothing left to chunk,
         # which raises an error saying so. This is the expected behaviour
         if chunk_mode == 'failsafe':
-            return True
+            return
     # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
     if chunk_mode != 'failsafe':  # chunking time but not lat
         assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))

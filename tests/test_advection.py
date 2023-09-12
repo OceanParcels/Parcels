@@ -402,8 +402,8 @@ def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField, npart=1):
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
-    exp_lon = [truth_moving(x, y, pset.time)[0] for x, y, in zip(lon, lat)]
-    exp_lat = [truth_moving(x, y, pset.time)[1] for x, y, in zip(lon, lat)]
+    exp_lon = [truth_moving(x, y, t)[0] for x, y, t in zip(lon, lat, pset.time)]
+    exp_lat = [truth_moving(x, y, t)[1] for x, y, t in zip(lon, lat, pset.time)]
     assert np.allclose(pset.lon, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
@@ -446,7 +446,7 @@ def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1
     fieldset = fieldset_decaying
     if method == 'AA':
         if mode == 'jit':
-            return True  # AnalyticalAdvection not implemented in JIT
+            return  # AnalyticalAdvection not implemented in JIT
         else:
             # needed for AnalyticalAdvection to work, but comes at expense of accuracy
             fieldset.U.interp_method = 'cgrid_velocity'
@@ -468,8 +468,8 @@ def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
-    exp_lon = [truth_decaying(x, y, pset.time)[0] for x, y, in zip(lon, lat)]
-    exp_lat = [truth_decaying(x, y, pset.time)[1] for x, y, in zip(lon, lat)]
+    exp_lon = [truth_decaying(x, y, t)[0] for x, y, t in zip(lon, lat, pset.time)]
+    exp_lat = [truth_decaying(x, y, t)[1] for x, y, t in zip(lon, lat, pset.time)]
     assert np.allclose(pset.lon, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 

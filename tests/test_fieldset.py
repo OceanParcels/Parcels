@@ -646,7 +646,7 @@ def test_fieldset_write(tmpdir):
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows memory leaks (#787)")
 def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with_GC):
     if time_periodic and dt < 0:
-        return True  # time_periodic does not work in backward-time mode
+        return  # time_periodic does not work in backward-time mode
     if chunksize == 'auto':
         dask.config.set({'array.chunk-size': '2MiB'})
     else:
@@ -704,7 +704,7 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
     if with_GC:
         assert np.allclose(mem_steps_np[8:], perflog.memory_steps[-1], rtol=0.01)
     if (chunksize is not False or with_GC) and mode != 'scipy':
-        assert np.alltrue((mem_steps_np-mem_0) <= 5275648)  # represents 4 x [U|V] * sizeof(field data) + 562816
+        assert np.all((mem_steps_np-mem_0) <= 5275648)  # represents 4 x [U|V] * sizeof(field data) + 562816
     assert not mem_exhausted
 
 
