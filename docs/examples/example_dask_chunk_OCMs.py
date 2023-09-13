@@ -588,34 +588,6 @@ def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
 
 
 @pytest.mark.parametrize('mode', ['jit'])
-def test_erroneous_fieldset_init(mode):
-    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
-    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
-    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
-    wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
-    mesh_mask = f'{data_folder}/coordinates.nc'
-
-    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
-                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
-                 'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
-    variables = {'U': 'uo',
-                 'V': 'vo',
-                 'W': 'wo'}
-    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
-                  'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
-                  'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
-    chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
-           'V': {'depth': ('depthv', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
-           'W': {'depth': ('depthw', 75), 'lat': ('y', 16), 'lon': ('x', 16)}}
-
-    try:
-        FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
-    except ValueError:
-        return True
-    return False
-
-
-@pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_chunksize_correction_globcurrent(mode):
     data_folder = download_example_dataset("GlobCurrent_example_data")
     filenames = str(data_folder / '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')

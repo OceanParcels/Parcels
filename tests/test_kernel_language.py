@@ -61,7 +61,7 @@ def test_expression_int(mode, name, expr, result, npart=10):
                        lon=np.linspace(0., 1., npart),
                        lat=np.zeros(npart) + 0.5)
     pset.execute(expr_kernel(f'Test{name}', pset, expr), endtime=1., dt=1.)
-    assert np.alltrue([p.p == result for p in pset])
+    assert np.all([p.p == result for p in pset])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -80,7 +80,7 @@ def test_expression_float(mode, name, expr, result, npart=10):
                        lon=np.linspace(0., 1., npart),
                        lat=np.zeros(npart) + 0.5)
     pset.execute(expr_kernel(f'Test{name}', pset, expr), endtime=1., dt=1.)
-    assert np.alltrue([p.p == result for p in pset])
+    assert np.all([p.p == result for p in pset])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
