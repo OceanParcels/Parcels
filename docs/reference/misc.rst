@@ -29,9 +29,9 @@ parcels.tools.loggers module
     :members:
     :undoc-members:
 
-parcels.utils module
+parcels.tools.exampledata_utils module
 -----------------------------------
 
-.. automodule:: parcels.utils
+.. automodule:: parcels.tools.exampledata_utils
     :members:
     :undoc-members:
