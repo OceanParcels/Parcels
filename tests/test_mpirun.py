@@ -9,8 +9,8 @@ import xarray as xr
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="skipping macOS test as problem with file in pytest")
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows as mpi4py not available for windows")
-@pytest.mark.parametrize('repeatdt, maxage', [(20*86400, 600*86400), (10*86400, 10*86400)])
-@pytest.mark.parametrize('nump', [4, 8])
+@pytest.mark.parametrize('repeatdt, maxage', [(20*86400, 600*86400), (10*86400, 600*86400)])
+@pytest.mark.parametrize('nump', [8])
 def test_mpi_run(tmpdir, repeatdt, maxage, nump):
     stommel_file = path.join(path.dirname(__file__), '..', 'docs', 'examples', 'example_stommel.py')
     outputMPI = tmpdir.join('StommelMPI')

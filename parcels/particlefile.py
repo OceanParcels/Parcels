@@ -226,14 +226,14 @@ class ParticleFile(ABC):
             if self.create_new_zarrfile:
                 if self.chunks is None:
                     self.chunks = (len(ids), 1)
-                elif self.chunks[0] > len(ids):
-                    logger.warning(f'Chunk size for trajectory ({self.chunks[0]}) is larger than length of initial set to write. '
-                                   f'Reducing ParticleFile chunks to ({len(ids)}, {self.chunks[1]})')
-                    self.chunks = (len(ids), self.chunks[1])
+                if pset.repeatpclass is not None and self.chunks[0] < 1e4:
+                    logger.warning(f'ParticleFile chunks are set to {self.chunks}, but this may lead to '
+                                   f'a significant slowdown in Parcels when many calls to repeatdt. '
+                                   f'Consider setting a larger chunk size for your ParticleFile (e.g. chunks=(int(1e4), 1)).')
                 if (self.maxids > len(ids)) or (self.maxids > self.chunks[0]):
                     arrsize = (self.maxids, self.chunks[1])
                 else:
-                    arrsize = self.chunks
+                    arrsize = (len(ids), 1)
                 ds = xr.Dataset(attrs=self.metadata, coords={"trajectory": ("trajectory", pids),
                                                              "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))})
                 attrs = self._create_variables_attribute_dict()
