@@ -33,9 +33,9 @@ def test_mpi_run(tmpdir, repeatdt, maxage, nump):
                 continue  # skip because np.allclose does not work well on np.datetime64
             assert np.allclose(ds1.variables[v][:], ds2.variables[v][:], equal_nan=True)
 
-    for a in ds2.attrs:
-        if a != 'parcels_version':
-            assert ds1.attrs[a] == ds2.attrs[a]
+        for a in ds2.attrs:
+            if a != 'parcels_version':
+                assert ds1.attrs[a] == ds2.attrs[a]
 
         ds1.close()
     ds2.close()
