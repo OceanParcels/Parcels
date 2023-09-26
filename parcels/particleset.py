@@ -109,7 +109,7 @@ class ParticleSet(ABC):
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
-        class_name = "Array"+pclass.__name__
+        class_name = pclass.__name__
         array_class = None
         if class_name not in dir():
             def ArrayClass_init(self, *args, **kwargs):
@@ -924,6 +924,8 @@ class ParticleSet(ABC):
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.particledata.lonlatdepth_dtype else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
+        if output_file:
+            output_file.add_metadata('parcels_kernels', self.kernel.name)
 
         # Set up the interaction kernel(s) if not set and given.
         if self.interaction_kernel is None and pyfunc_inter is not None:

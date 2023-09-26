@@ -199,14 +199,8 @@ class ParticleNode(IntrinsicNode):
     def __init__(self, obj):
         ccode = ""
         attr_node_class = None
-        if 'Array' in obj.name:
-            attr_node_class = ArrayParticleAttributeNode
-            ccode = 'particles'
-        elif 'Object' in obj.name:
-            attr_node_class = ObjectParticleAttributeNode
-            ccode = 'particle'
-        else:
-            raise AttributeError("Particle Base Class neither matches an 'Array' nor an 'Object' type - cgen class interpretation invalid.")
+        attr_node_class = ArrayParticleAttributeNode
+        ccode = 'particles'
         super().__init__(obj, ccode)
         self.attr_node_class = attr_node_class
 
