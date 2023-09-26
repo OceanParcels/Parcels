@@ -572,7 +572,7 @@ class Kernel(BaseKernel):
 
         while n_error > 0:
             error_pset = pset.error_particles
-            # Apply recovery kernel
+            # Check for StatusCodes
             for p in error_pset:
                 if p.state == StatusCode.StopExecution:
                     return
