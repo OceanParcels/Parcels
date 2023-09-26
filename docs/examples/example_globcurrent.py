@@ -7,7 +7,6 @@ import xarray as xr
 
 from parcels import (
     AdvectionRK4,
-    ErrorCode,
     Field,
     FieldSet,
     JITParticle,
@@ -68,8 +67,8 @@ def test_globcurrent_fieldset_advancetime(mode, dt, lonstart, latstart, use_xarr
     fieldsetall = set_globcurrent_fieldset(files[0:10], deferred_load=False, use_xarray=use_xarray)
     psetall = ParticleSet.from_list(fieldset=fieldsetall, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
     if dt < 0:
-        psetsub[0].time = fieldsetsub.U.grid.time[-1]
-        psetall[0].time = fieldsetall.U.grid.time[-1]
+        psetsub[0].time_nextloop = fieldsetsub.U.grid.time[-1]
+        psetall[0].time_nextloop = fieldsetall.U.grid.time[-1]
 
     psetsub.execute(AdvectionRK4, runtime=delta(days=7), dt=dt)
     psetall.execute(AdvectionRK4, runtime=delta(days=7), dt=dt)
@@ -101,7 +100,7 @@ def test_globcurrent_time_periodic(mode, rundays):
         fieldset = set_globcurrent_fieldset(time_periodic=delta(days=365), deferred_load=deferred_load)
 
         class MyParticle(ptype[mode]):
-            sample_var = Variable('sample_var', initial=fieldset.U)
+            sample_var = Variable('sample_var', initial=0.)
 
         pset = ParticleSet(fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0])
 
@@ -186,20 +185,6 @@ def test_globcurrent_dt0(mode, use_xarray):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('dt', [-300, 300])
-@pytest.mark.parametrize('use_xarray', [True, False])
-def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
-    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
-
-    class MyParticle(ptype[mode]):
-        sample_var = Variable('sample_var', initial=fieldset.U)
-    time = fieldset.U.grid.time[0] if dt > 0 else fieldset.U.grid.time[-1]
-    pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35], time=time)
-
-    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
-
-
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('dt', [-300, 300])
 @pytest.mark.parametrize('with_starttime', [True, False])
 def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime):
     fieldset = set_globcurrent_fieldset()
@@ -235,10 +220,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
 
     def DeleteP0(particle, fieldset, time):
         if particle.id == 0:
-            return ErrorCode.ErrorOutOfBounds  # we want to pass through recov loop
-
-    def DeleteParticle(particle, fieldset, time):
-        particle.delete()
+            particle.delete()
 
     pset0 = ParticleSet(fieldset, pclass=ptype[mode],
                         lon=[25, 25],
@@ -247,8 +229,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
 
     pset0.execute(pset0.Kernel(DeleteP0)+AdvectionRK4,
                   runtime=delta(days=rundays),
-                  dt=delta(minutes=5),
-                  recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+                  dt=delta(minutes=5))
 
     pset1 = ParticleSet(fieldset, pclass=ptype[mode],
                         lon=[25, 25],
@@ -273,7 +254,7 @@ def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
     pfile = pset.ParticleFile(filename, outputdt=delta(hours=6))
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt, output_file=pfile)
-    pfile.close()
+    pfile.write_latest_locations(pset, max(pset.time_nextloop))
 
     restarttime = np.nanmax if dt > 0 else np.nanmin
     pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename, restarttime=restarttime)

@@ -179,7 +179,7 @@ def geo_hash_to_neighbors(hash_id, coor, bits, inter_arc_dist):
                 neighbors.extend(
                     all_neigh_depth(new_i_lat, new_i_lon, new_lat_sign))
         else:
-            start_i_lon = int(np.floor(coor[2]/d_lon))
+            start_i_lon = int(np.floor(coor[2][0]/d_lon))
             for delta_lon in [-1, 0, 1]:
                 new_i_lon = (start_i_lon+delta_lon+n_new_lon) % n_new_lon
                 neighbors.extend(

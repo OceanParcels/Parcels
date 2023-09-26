@@ -183,13 +183,13 @@ def compute_nemo_particle_advection(field_set, mode, lonp, latp):
 
     def periodicBC(particle, fieldSet, time):
         if particle.lon > 15.0:
-            particle.lon -= 15.0
+            particle_dlon -= 15.0  # noqa
         if particle.lon < 0:
-            particle.lon += 15.0
+            particle_dlon += 15.0  # noqa
         if particle.lat > 60.0:
-            particle.lat -= 11.0
+            particle_dlat -= 11.0  # noqa
         if particle.lat < 49.0:
-            particle.lat += 11.0
+            particle_dlat += 11.0  # noqa
 
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile("nemo_particles_chunk", pset, outputdt=delta(days=1))
@@ -273,7 +273,7 @@ def test_globcurrent_2D(mode, chunk_mode):
         # we removed the failsafe, so now if all chunksize dimensions are incorrect, there is nothing left to chunk,
         # which raises an error saying so. This is the expected behaviour
         if chunk_mode == 'failsafe':
-            return True
+            return
     # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
     if chunk_mode != 'failsafe':  # chunking time but not lat
         assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
@@ -585,34 +585,6 @@ def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
     compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-
-
-@pytest.mark.parametrize('mode', ['jit'])
-def test_erroneous_fieldset_init(mode):
-    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
-    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
-    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
-    wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
-    mesh_mask = f'{data_folder}/coordinates.nc'
-
-    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
-                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
-                 'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
-    variables = {'U': 'uo',
-                 'V': 'vo',
-                 'W': 'wo'}
-    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
-                  'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
-                  'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
-    chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
-           'V': {'depth': ('depthv', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
-           'W': {'depth': ('depthw', 75), 'lat': ('y', 16), 'lon': ('x', 16)}}
-
-    try:
-        FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
-    except ValueError:
-        return True
-    return False
 
 
 @pytest.mark.parametrize('mode', ['jit'])
