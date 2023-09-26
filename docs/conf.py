@@ -71,6 +71,7 @@ linkcheck_ignore = [
     r"https://aip\.scitation\.org/doi/10\.1063/1\.4982720",  # Site doesn't allow crawling
     r"https://www\.sciencedirect\.com/.*",  # Site doesn't allow crawling
     r"https://lxml\.de/",  # Crawler occasionally fails to establish connection
+    r"https://linux\.die\.net/",  # Site doesn't allow crawling
 
     # To monitor
     r"http://marine.copernicus.eu/",  # 2023-06-07 Site non-responsive
