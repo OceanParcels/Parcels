@@ -27,7 +27,7 @@ runs:
         cache-environment: true
         cache-downloads: true
     - name: Install parcels
-      run: pip install .
+      run: pip install --no-build-isolation --no-deps -e .
       shell: bash -el {0}
     - name: Set env variables for macos
       run: |
