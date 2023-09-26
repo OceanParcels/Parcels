@@ -24,8 +24,7 @@ except:
 
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.application_kernels.advection import AdvectionAnalytical, AdvectionRK4_3D
-from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
-from parcels.compilation.codegenerator import LoopGenerator
+from parcels.compilation.codegenerator import KernelGenerator, LoopGenerator
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import GridCode
 from parcels.tools.global_statics import get_cache_dir

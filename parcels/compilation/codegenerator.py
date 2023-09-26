@@ -2,7 +2,7 @@ import ast
 import collections
 import math
 import random
-from abc import ABC, abstractmethod
+from abc import ABC
 from copy import copy
 
 import cgen as c
@@ -175,33 +175,19 @@ class PrintNode(IntrinsicNode):
         self.obj = 'print'
 
 
-class GenericParticleAttributeNode(IntrinsicNode):
-    def __init__(self, obj, attr, ccode=""):
-        super().__init__(obj, ccode)
+class ParticleAttributeNode(IntrinsicNode):
+    def __init__(self, obj, attr):
+        self.ccode = f"{obj.ccode}->{attr}[pnum]"
         self.attr = attr
-
-
-class ObjectParticleAttributeNode(GenericParticleAttributeNode):
-    def __init__(self, obj, attr):
-        ccode = f"{obj.ccode}->{attr}"
-        super().__init__(obj, attr, ccode)
-
-
-class ArrayParticleAttributeNode(GenericParticleAttributeNode):
-    def __init__(self, obj, attr):
-        ccode = f"{obj.ccode}->{attr}[pnum]"
-        super().__init__(obj, attr, ccode)
 
 
 class ParticleNode(IntrinsicNode):
     attr_node_class = None
 
     def __init__(self, obj):
-        ccode = ""
         attr_node_class = None
-        attr_node_class = ArrayParticleAttributeNode
-        ccode = 'particles'
-        super().__init__(obj, ccode)
+        attr_node_class = ParticleAttributeNode
+        super().__init__(obj, ccode='particles')
         self.attr_node_class = attr_node_class
 
     def __getattr__(self, attr):
@@ -314,7 +300,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def visit_AugAssign(self, node):
         node.target = self.visit(node.target)
-        if isinstance(node.target, ArrayParticleAttributeNode) and node.target.attr in ['lon', 'lat', 'depth', 'time']:
+        if isinstance(node.target, ParticleAttributeNode) and node.target.attr in ['lon', 'lat', 'depth', 'time']:
             logger.warning_once("Don't change the location of a particle directly in a Kernel. Use particle_dlon, particle_dlat, etc.")
         node.op = self.visit(node.op)
         node.value = self.visit(node.value)
@@ -342,8 +328,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         node.args = [self.visit(a) for a in node.args]
         node.keywords = {kw.arg: self.visit(kw.value) for kw in node.keywords}
 
-        if isinstance(node.func, GenericParticleAttributeNode) \
-           and node.func.attr == 'state':
+        if isinstance(node.func, ParticleAttributeNode) and node.func.attr == 'state':
             node = IntrinsicNode(node, "particles->state[pnum] = DELETE")
 
         elif isinstance(node.func, FieldEvalCallNode):
@@ -403,10 +388,10 @@ class TupleSplitter(ast.NodeTransformer):
         return node
 
 
-class AbstractKernelGenerator(ABC, ast.NodeVisitor):
+class KernelGenerator(ABC, ast.NodeVisitor):
     """Code generator class that translates simple Python kernel functions into C functions.
 
-    Works by populating and accessing the `ccode` attriibute on nodes in the Python AST.
+    Works by populating and accessing the `ccode` attribute on nodes in the Python AST.
     """
 
     # Intrinsic variables that appear as function arguments
@@ -458,13 +443,54 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
         return self.ccode
 
     @staticmethod
-    @abstractmethod
     def _check_FieldSamplingArguments(ccode):
-        return None
+        if ccode == 'particles':
+            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+        elif ccode[-1] == 'particles':
+            args = ccode[:-1]
+        else:
+            args = ccode
+        return args
 
-    @abstractmethod
     def visit_FunctionDef(self, node):
-        pass
+        # Generate "ccode" attribute by traversing the Python AST
+        for stmt in node.body:
+            if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str):  # ignore docstrings
+                self.visit(stmt)
+
+        # Create function declaration and argument list
+        decl = c.Static(c.DeclSpecifier(c.Value("StatusCode", node.name), spec='inline'))
+        args = [c.Pointer(c.Value(self.ptype.name + 'p', "particles")),
+                c.Value("int", "pnum"),
+                c.Value("double", "time")]
+        for field in self.field_args.values():
+            args += [c.Pointer(c.Value("CField", "%s" % field.ccode_name))]
+        for field in self.vector_field_args.values():
+            for fcomponent in ['U', 'V', 'W']:
+                try:
+                    f = getattr(field, fcomponent)
+                    if f.ccode_name not in self.field_args:
+                        args += [c.Pointer(c.Value("CField", "%s" % f.ccode_name))]
+                        self.field_args[f.ccode_name] = f
+                except:
+                    pass  # field.W does not always exist
+        for const, _ in self.const_args.items():
+            args += [c.Value("float", const)]
+
+        # Create function body as C-code object
+        body = []
+        for coord in ['lon', 'lat', 'depth']:
+            body += [c.Statement(f"type_coord particle_d{coord} = 0")]
+            body += [c.Statement(f"particles->{coord}[pnum] = particles->{coord}_nextloop[pnum]")]
+        body += [c.Statement("particles->time[pnum] = particles->time_nextloop[pnum]")]
+
+        body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
+
+        for coord in ['lon', 'lat', 'depth']:
+            body += [c.Statement(f"particles->{coord}_nextloop[pnum] = particles->{coord}[pnum] + particle_d{coord}")]
+        body += [c.Statement("particles->time_nextloop[pnum] = particles->time[pnum] + particles->dt[pnum]")]
+        body += [c.Statement("return particles->state[pnum]")]
+        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
     def visit_Call(self, node):
         """Generate C code for simple C-style function calls.
@@ -740,113 +766,9 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
     def visit_ConstNode(self, node):
         self.const_args[node.ccode] = node.obj
 
-    @abstractmethod
-    def visit_FieldEvalNode(self, node):
-        pass
-
-    @abstractmethod
-    def visit_VectorFieldEvalNode(self, node):
-        pass
-
-    @abstractmethod
-    def visit_NestedFieldEvalNode(self, node):
-        pass
-
-    @abstractmethod
-    def visit_NestedVectorFieldEvalNode(self, node):
-        pass
-
     def visit_Return(self, node):
         self.visit(node.value)
         node.ccode = c.Statement('return %s' % node.value.ccode)
-
-    def visit_Print(self, node):
-        for n in node.values:
-            self.visit(n)
-        if hasattr(node.values[0], 's'):
-            node.ccode = c.Statement('printf("%s\\n")' % (n.ccode))
-            return
-        if hasattr(node.values[0], 's_print'):
-            args = node.values[0].right.ccode
-            s = ('printf("%s\\n"' % node.values[0].left.ccode)
-            if isinstance(args, str):
-                s = s + (", %s)" % args)
-            else:
-                for arg in args:
-                    s = s + (", %s" % arg)
-                s = s + ")"
-            node.ccode = c.Statement(s)
-            return
-        vars = ', '.join([n.ccode for n in node.values])
-        int_vars = ['particle->id', 'particle->xi', 'particle->yi', 'particle->zi']
-        stat = ', '.join(["%d" if n.ccode in int_vars else "%f" for n in node.values])
-        node.ccode = c.Statement(f'printf("{stat}\\n", {vars})')
-
-    def visit_Constant(self, node):
-        if node.s == 'parcels_customed_Cfunc_pointer_args':
-            node.ccode = node.s
-        elif isinstance(node.s, str):
-            node.ccode = ''  # skip strings from docstrings or comments
-        elif isinstance(node.s, bool):
-            node.ccode = "1" if node.s is True else "0"
-        else:
-            node.ccode = str(node.n)
-
-
-class ArrayKernelGenerator(AbstractKernelGenerator):
-
-    def __init__(self, fieldset=None, ptype=JITParticle):
-        super().__init__(fieldset, ptype)
-
-    @staticmethod
-    def _check_FieldSamplingArguments(ccode):
-        if ccode == 'particles':
-            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
-        elif ccode[-1] == 'particles':
-            args = ccode[:-1]
-        else:
-            args = ccode
-        return args
-
-    def visit_FunctionDef(self, node):
-        # Generate "ccode" attribute by traversing the Python AST
-        for stmt in node.body:
-            if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str):  # ignore docstrings
-                self.visit(stmt)
-
-        # Create function declaration and argument list
-        decl = c.Static(c.DeclSpecifier(c.Value("StatusCode", node.name), spec='inline'))
-        args = [c.Pointer(c.Value(self.ptype.name + 'p', "particles")),
-                c.Value("int", "pnum"),
-                c.Value("double", "time")]
-        for field in self.field_args.values():
-            args += [c.Pointer(c.Value("CField", "%s" % field.ccode_name))]
-        for field in self.vector_field_args.values():
-            for fcomponent in ['U', 'V', 'W']:
-                try:
-                    f = getattr(field, fcomponent)
-                    if f.ccode_name not in self.field_args:
-                        args += [c.Pointer(c.Value("CField", "%s" % f.ccode_name))]
-                        self.field_args[f.ccode_name] = f
-                except:
-                    pass  # field.W does not always exist
-        for const, _ in self.const_args.items():
-            args += [c.Value("float", const)]
-
-        # Create function body as C-code object
-        body = []
-        for coord in ['lon', 'lat', 'depth']:
-            body += [c.Statement(f"type_coord particle_d{coord} = 0")]
-            body += [c.Statement(f"particles->{coord}[pnum] = particles->{coord}_nextloop[pnum]")]
-        body += [c.Statement("particles->time[pnum] = particles->time_nextloop[pnum]")]
-
-        body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
-
-        for coord in ['lon', 'lat', 'depth']:
-            body += [c.Statement(f"particles->{coord}_nextloop[pnum] = particles->{coord}[pnum] + particle_d{coord}")]
-        body += [c.Statement("particles->time_nextloop[pnum] = particles->time[pnum] + particles->dt[pnum]")]
-        body += [c.Statement("return particles->state[pnum]")]
-        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
@@ -921,131 +843,37 @@ class ArrayKernelGenerator(AbstractKernelGenerator):
         cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
-
-class ObjectKernelGenerator(AbstractKernelGenerator):
-
-    def __init__(self, fieldset=None, ptype=JITParticle):
-        super().__init__(fieldset, ptype)
-
-    @staticmethod
-    def _check_FieldSamplingArguments(ccode):
-        if ccode == 'particle':
-            ccodes = ('time', 'particle->depth', 'particle->lat', 'particle->lon')
-        elif ccode[-1] == 'particle':
-            ccodes = ccode[:-1]
-        else:
-            ccodes = ccode
-        return ccodes
-
-    def visit_FunctionDef(self, node):
-        # Generate "ccode" attribute by traversing the Python AST
-        for stmt in node.body:
-            if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str):  # ignore docstrings
-                self.visit(stmt)
-
-        # Create function declaration and argument list
-        decl = c.Static(c.DeclSpecifier(c.Value("StatusCode", node.name), spec='inline'))
-        args = [c.Pointer(c.Value(self.ptype.name, "particle")),
-                c.Value("double", "time")]
-        for field in self.field_args.values():
-            args += [c.Pointer(c.Value("CField", "%s" % field.ccode_name))]
-        for field in self.vector_field_args.values():
-            for fcomponent in ['U', 'V', 'W']:
-                try:
-                    f = getattr(field, fcomponent)
-                    if f.ccode_name not in self.field_args:
-                        args += [c.Pointer(c.Value("CField", "%s" % f.ccode_name))]
-                        self.field_args[f.ccode_name] = f
-                except:
-                    pass  # field.W does not always exist
-        for const, _ in self.const_args.items():
-            args += [c.Value("float", const)]
-
-        # Create function body as C-code object
-        body = []
-        for coord in ['lon', 'lat', 'depth']:
-            body += [c.Statement(f"type_coord particle_d{coord} = 0")]
-            body += [c.Statement(f"particle->{coord} = particle->{coord}_nextloop")]
-        body += [c.Statement("particle->time = particle->time_nextloop")]
-
-        body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
-
-        for coord in ['lon', 'lat', 'depth']:
-            body += [c.Statement(f"particle->{coord}_nextloop = particle->{coord} + particle_d{coord}")]
-        body += [c.Statement("particle->time_nextloop = particle->time + particle->dt")]
-        body += [c.Statement("return SUCCESS")]
-        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
-
-    def visit_FieldEvalNode(self, node):
-        self.visit(node.field)
-        self.visit(node.args)
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval_object(node.var, *args)
-        stmts = [c.Assign("err", ccode_eval)]
-
-        if node.convert:
-            ccode_conv = node.field.obj.ccode_convert(*args)
-            conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
-            stmts += [conv_stat]
-
-        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS(err)")])
-
-    def visit_VectorFieldEvalNode(self, node):
-        self.visit(node.field)
-        self.visit(node.args)
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval_object(node.var, node.var2, node.var3, node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
-        if node.convert and node.field.obj.U.interp_method != 'cgrid_velocity':
-            ccode_conv1 = node.field.obj.U.ccode_convert(*args)
-            ccode_conv2 = node.field.obj.V.ccode_convert(*args)
-            statements = [c.Statement(f"{node.var} *= {ccode_conv1}"),
-                          c.Statement(f"{node.var2} *= {ccode_conv2}")]
-        else:
-            statements = []
-        if node.convert and node.field.obj.vector_type == '3D':
-            ccode_conv3 = node.field.obj.W.ccode_convert(*args)
-            statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
-        conv_stat = c.Block(statements)
-        node.ccode = c.Block([c.Assign("err", ccode_eval),
-                              conv_stat, c.Statement("CHECKSTATUS(err)")])
-
-    def visit_NestedFieldEvalNode(self, node):
-        self.visit(node.fields)
-        self.visit(node.args)
-        cstat = []
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval_object(node.var, *args)
-            ccode_conv = fld.ccode_convert(*args)
-            conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
-            cstat += [c.Assign("err", ccode_eval),
-                      conv_stat,
-                      c.If("err != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
-        node.ccode = c.While("1==1", c.Block(cstat))
-
-    def visit_NestedVectorFieldEvalNode(self, node):
-        self.visit(node.fields)
-        self.visit(node.args)
-        cstat = []
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval_object(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *args)
-            if fld.U.interp_method != 'cgrid_velocity':
-                ccode_conv1 = fld.U.ccode_convert(*args)
-                ccode_conv2 = fld.V.ccode_convert(*args)
-                statements = [c.Statement(f"{node.var} *= {ccode_conv1}"),
-                              c.Statement(f"{node.var2} *= {ccode_conv2}")]
+    def visit_Print(self, node):
+        for n in node.values:
+            self.visit(n)
+        if hasattr(node.values[0], 's'):
+            node.ccode = c.Statement('printf("%s\\n")' % (n.ccode))
+            return
+        if hasattr(node.values[0], 's_print'):
+            args = node.values[0].right.ccode
+            s = ('printf("%s\\n"' % node.values[0].left.ccode)
+            if isinstance(args, str):
+                s = s + (", %s)" % args)
             else:
-                statements = []
-            if fld.vector_type == '3D':
-                ccode_conv3 = fld.W.ccode_convert(*args)
-                statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
-            cstat += [c.Assign("err", ccode_eval),
-                      c.Block(statements),
-                      c.If("err != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
-        node.ccode = c.While("1==1", c.Block(cstat))
+                for arg in args:
+                    s = s + (", %s" % arg)
+                s = s + ")"
+            node.ccode = c.Statement(s)
+            return
+        vars = ', '.join([n.ccode for n in node.values])
+        int_vars = ['particle->id', 'particle->xi', 'particle->yi', 'particle->zi']
+        stat = ', '.join(["%d" if n.ccode in int_vars else "%f" for n in node.values])
+        node.ccode = c.Statement(f'printf("{stat}\\n", {vars})')
+
+    def visit_Constant(self, node):
+        if node.s == 'parcels_customed_Cfunc_pointer_args':
+            node.ccode = node.s
+        elif isinstance(node.s, str):
+            node.ccode = ''  # skip strings from docstrings or comments
+        elif isinstance(node.s, bool):
+            node.ccode = "1" if node.s is True else "0"
+        else:
+            node.ccode = str(node.n)
 
 
 class LoopGenerator:
@@ -1114,139 +942,6 @@ class LoopGenerator:
                          c.Value("double", "sign_dt"),
                          sign_dt, part_loop,
                          ])
-        fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
-        ccode += [str(c.FunctionBody(fdecl, fbody))]
-        return "\n\n".join(ccode)
-
-
-class ParticleObjectLoopGenerator:
-    """Code generator class that adds type definitions and the outer loop around kernel functions to generate compilable C code."""
-
-    def __init__(self, fieldset=None, ptype=None):
-        self.fieldset = fieldset
-        self.ptype = ptype
-
-    def generate(self, funcname, field_args, const_args, kernel_ast, c_include):
-        ccode = []
-
-        # ==== Add include for Parcels and math header ==== #
-        ccode += [str(c.Include("parcels.h", system=False))]
-        ccode += [str(c.Include("math.h", system=False))]
-        ccode += [str(c.Assign('const int ngrid', str(self.fieldset.gridset.size if self.fieldset is not None else 1)))]
-
-        # ==== Generate type definition for particle type ==== #
-        vdecl = []
-        for v in self.ptype.variables:
-            if v.dtype == np.uint64:
-                vdecl.append(c.Pointer(c.POD(np.void, v.name)))
-            else:
-                vdecl.append(c.POD(v.dtype, v.name))
-
-        ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
-
-        args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
-                c.Pointer(c.Value(self.ptype.name, "particle"))]
-        p_back_set_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "set_particle_backup"),
-                                                         spec='inline')), args)
-        body = []
-        for v in self.ptype.variables:
-            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
-                body += [c.Assign(("particle_backup->%s" % v.name), ("particle->%s" % v.name))]
-        p_back_set_body = c.Block(body)
-        p_back_set = str(c.FunctionBody(p_back_set_decl, p_back_set_body))
-        ccode += [p_back_set]
-
-        args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
-                c.Pointer(c.Value(self.ptype.name, "particle"))]
-        p_back_get_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "get_particle_backup"),
-                                                         spec='inline')), args)
-        body = []
-        for v in self.ptype.variables:
-            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
-                body += [c.Assign(("particle->%s" % v.name), ("particle_backup->%s" % v.name))]
-        p_back_get_body = c.Block(body)
-        p_back_get = str(c.FunctionBody(p_back_get_decl, p_back_get_body))
-        ccode += [p_back_get]
-
-        if c_include:
-            ccode += [c_include]
-
-        # ==== Insert kernel code ==== #
-        ccode += [str(kernel_ast)]
-
-        # Generate outer loop for repeated kernel invocation
-        args = [c.Value("int", "num_particles"),
-                c.Pointer(c.Value(self.ptype.name, "particles")),
-                c.Value("double", "endtime"),
-                c.Value("double", "dt")
-                ]
-        for field, _ in field_args.items():
-            args += [c.Pointer(c.Value("CField", "%s" % field))]
-        for const, _ in const_args.items():
-            args += [c.Value("double", const)]  # are we SURE those const's are double's ?
-        fargs_str = ", ".join(['particles[p].time'] + list(field_args.keys())
-                              + list(const_args.keys()))
-        # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
-        sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
-        particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
-        sign_end_part = c.Assign("sign_end_part", "(endtime - particles[p].time) > 0 ? 1 : -1")
-        reset_res_state = c.Assign("res", "particles[p].state")
-        update_state = c.Assign("particles[p].state", "res")
-
-        dt_pos = c.If("fabs(endtime - particles[p].time) < fabs(particles[p].dt)",
-                      c.Block([c.Assign("__dt", "fabs(endtime - particles[p].time)"), c.Assign("reset_dt", "1")]),
-                      c.Block([c.Assign("__dt", "fabs(particles[p].dt)"), c.Assign("reset_dt", "0")]))
-        reset_dt = c.If("(reset_dt == 1) && is_equal_dbl(__pdt_prekernels, particles[p].dt)",
-                        c.Block([c.Assign("particles[p].dt", "dt")]))
-
-        pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
-        partdt = c.Assign("particles[p].dt", "__pdt_prekernels")
-        check_pdt = c.If("(res == SUCCESS) & !is_equal_dbl(__pdt_prekernels, particles[p].dt)", c.Assign("res", "REPEAT"))
-
-        dt_0_break = c.If("is_zero_dbl(particles[p].dt)", c.Statement("break"))
-
-        notstarted_continue = c.If("( ( sign_end_part != sign_dt) || is_close_dbl(__dt, 0) ) && !is_zero_dbl(particles[p].dt)",
-                                   c.Block([
-                                       c.If("fabs(particles[p].time) >= fabs(endtime)",
-                                            c.Assign("particles[p].state", "SUCCESS")),
-                                       c.Statement("continue")
-                                   ]))
-
-        # ==== main computation body ==== #
-        body = [c.Statement("set_particle_backup(&particle_backup, &(particles[p]))")]
-        body += [pdt_eq_dt_pos]
-        body += [partdt]
-        body += [c.Value("StatusCode", "state_prev"), c.Assign("state_prev", "particles[p].state")]
-        body += [c.Assign("res", f"{funcname}(&(particles[p]), {fargs_str})")]
-        body += [c.If("(res == SUCCESS) && (particles[p].state != state_prev)", c.Assign("res", "particles[p].state"))]
-        body += [check_pdt]
-        body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles[p].time += particles[p].dt"),
-                                                                  reset_dt,
-                                                                  dt_pos,
-                                                                  sign_end_part,
-                                                                  c.If("(res != DELETE) && !is_close_dbl(__dt, 0) && (sign_dt == sign_end_part)",
-                                                                       c.Assign("res", "EVALUATE")),
-                                                                  c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
-                                                                  update_state,
-                                                                  dt_0_break
-                                                                  ]),
-                      c.Block([c.Statement("get_particle_backup(&particle_backup, &(particles[p]))"),
-                               dt_pos,
-                               sign_end_part,
-                               c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
-                               update_state,
-                               c.Statement("break")])
-                      )]
-
-        time_loop = c.While("(particles[p].state == EVALUATE || particles[p].state == REPEAT) || is_zero_dbl(particles[p].dt)", c.Block(body))
-        part_loop = c.For("p = 0", "p < num_particles", "++p",
-                          c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
-        fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"),
-                         c.Value("StatusCode", "res"),
-                         c.Value("int", "reset_dt"),
-                         c.Value("double", "__pdt_prekernels"),
-                         c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
-                         sign_dt, particle_backup, part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)
