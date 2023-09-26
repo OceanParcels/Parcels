@@ -30,7 +30,7 @@ parcels.tools.loggers module
     :undoc-members:
 
 parcels.tools.exampledata_utils module
------------------------------------
+--------------------------------------
 
 .. automodule:: parcels.tools.exampledata_utils
     :members:
