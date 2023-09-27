@@ -27,5 +27,5 @@ runs:
         cache-environment: true
         cache-downloads: true
     - name: Install parcels
-      run: pip install --no-build-isolation --no-deps -e .
+      run: pip install .
       shell: bash -el {0}
