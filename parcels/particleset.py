@@ -872,7 +872,7 @@ class ParticleSet(ABC):
         self.particledata.set_variable_write_status(var, write_status)
 
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
-                output_file=None, postIterationCallbacks=None, callbackdt=None):
+                output_file=None, verbose_progress=True, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for multiple timesteps.
 
         Optionally also provide sub-timestepping
@@ -896,6 +896,8 @@ class ParticleSet(ABC):
             Use a negative value for a backward-in-time simulation. (Default value = 1.)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
+        verbose_progress : bool
+            Boolean for providing a progress bar for the kernel execution loop. (Default value = True)
         postIterationCallbacks :
             Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
         callbackdt :
@@ -1000,7 +1002,8 @@ class ParticleSet(ABC):
         if output_file:
             logger.info(f'Output files are stored in {output_file.fname}.')
 
-        pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
+        if verbose_progress:
+            pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
 
         tol = 1e-12
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
@@ -1072,6 +1075,8 @@ class ParticleSet(ABC):
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
                 break
-            pbar.update(abs(time - time_at_startofloop))
+            if verbose_progress:
+                pbar.update(abs(time - time_at_startofloop))
 
-        pbar.close()
+        if verbose_progress:
+            pbar.close()

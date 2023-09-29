@@ -259,7 +259,7 @@ def test_print(fieldset, mode, capfd):
     def kernel2(particle, fieldset, time):
         tmp = 3
         print("%f" % (tmp))
-    pset.execute(kernel2, endtime=2., dt=1.)
+    pset.execute(kernel2, endtime=2., dt=1., verbose_progress=False)
     out, err = capfd.readouterr()
     lst = out.split(' ')
     assert abs(float(lst[0]) - 3) < tol
