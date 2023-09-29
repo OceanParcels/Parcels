@@ -1,5 +1,4 @@
 import sys
-import time as time_module
 from abc import ABC
 from copy import copy
 from datetime import date, datetime
@@ -323,11 +322,6 @@ class ParticleSet(ABC):
     @property
     def ctypes_struct(self):
         return self.cstruct()
-
-    def __create_progressbar(self, starttime, endtime):
-        pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
-        pbar.prevtime = starttime
-        return pbar
 
     @property
     def size(self):
@@ -878,7 +872,7 @@ class ParticleSet(ABC):
         self.particledata.set_variable_write_status(var, write_status)
 
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
-                output_file=None, verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
+                output_file=None, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for multiple timesteps.
 
         Optionally also provide sub-timestepping
@@ -902,8 +896,6 @@ class ParticleSet(ABC):
             Use a negative value for a backward-in-time simulation. (Default value = 1.)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
-        verbose_progress : bool
-            Boolean for providing a progress bar for the kernel execution loop. (Default value = None)
         postIterationCallbacks :
             Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
         callbackdt :
@@ -1005,20 +997,14 @@ class ParticleSet(ABC):
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
-        tol = 1e-12
-        if verbose_progress is None:
-            walltime_start = time_module.time()
-        if verbose_progress:
-            pbar = self.__create_progressbar(_starttime, endtime)
+        if output_file:
+            logger.info(f'Output files are stored in {output_file.fname}.')
 
+        pbar = tqdm(total=abs(endtime - _starttime), file=sys.stdout)
+
+        tol = 1e-12
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             time_at_startofloop = time
-            if verbose_progress is None and time_module.time() - walltime_start > 10:
-                # Showing progressbar if runtime > 10 seconds
-                if output_file:
-                    logger.info(f'Output files are stored in {output_file.fname}.')
-                pbar = self.__create_progressbar(_starttime, endtime)
-                verbose_progress = True
 
             if dt > 0:
                 next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
@@ -1086,9 +1072,6 @@ class ParticleSet(ABC):
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
                 break
-            if verbose_progress:
-                pbar.update(abs(time - pbar.prevtime))
-                pbar.prevtime = time
+            pbar.update(abs(time - time_at_startofloop))
 
-        if verbose_progress:
-            pbar.close()
+        pbar.close()
