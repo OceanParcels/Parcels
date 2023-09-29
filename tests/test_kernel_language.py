@@ -250,7 +250,7 @@ def test_print(fieldset, mode, capfd):
         particle.p = 1e-3
         tmp = 5
         print("%d %f %f" % (particle.id, particle.p, tmp))
-    pset.execute(kernel, endtime=1., dt=1.)
+    pset.execute(kernel, endtime=1., dt=1., verbose_progress=False)
     out, err = capfd.readouterr()
     lst = out.split(' ')
     tol = 1e-8
