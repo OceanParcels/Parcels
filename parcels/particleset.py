@@ -964,17 +964,17 @@ class ParticleSet(ABC):
         min_rt = np.min(self.particledata.data['time_nextloop'])
         max_rt = np.max(self.particledata.data['time_nextloop'])
 
-        # Derive _starttime and endtime from arguments or fieldset defaults
-        _starttime = min_rt if dt >= 0 else max_rt
+        # Derive starttime and endtime from arguments or fieldset defaults
+        starttime = min_rt if dt >= 0 else max_rt
         if self.repeatdt is not None and self.repeat_starttime is None:
-            self.repeat_starttime = _starttime
+            self.repeat_starttime = starttime
         if runtime is not None:
-            endtime = _starttime + runtime * np.sign(dt)
+            endtime = starttime + runtime * np.sign(dt)
         elif endtime is None:
             mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
             endtime = maxtime if dt >= 0 else mintime
 
-        if (abs(endtime-_starttime) < 1e-5 or runtime == 0) and dt == 0:
+        if (abs(endtime-starttime) < 1e-5 or runtime == 0) and dt == 0:
             raise RuntimeError("dt and runtime are zero, or endtime is equal to Particle.time. "
                                "ParticleSet.execute() will not do anything.")
 
@@ -985,7 +985,7 @@ class ParticleSet(ABC):
             if self.repeatdt is not None:
                 interupt_dts.append(self.repeatdt)
             callbackdt = np.min(np.array(interupt_dts))
-        time = _starttime
+        time = starttime
         if self.repeatdt:
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
@@ -1000,7 +1000,7 @@ class ParticleSet(ABC):
         if output_file:
             logger.info(f'Output files are stored in {output_file.fname}.')
 
-        pbar = tqdm(total=abs(endtime - _starttime), file=sys.stdout)
+        pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
 
         tol = 1e-12
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:

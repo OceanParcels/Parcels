@@ -529,7 +529,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
                     s = s + ")"
                 node.ccode = str(c.Statement(s))
             else:
-                raise RuntimeError("This print statement is not supported in Python3 version of Parcels")
+                raise RuntimeError("This print statement is not supported")
         else:
             for a in node.args:
                 self.visit(a)
