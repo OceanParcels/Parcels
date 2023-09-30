@@ -53,7 +53,7 @@ def fieldset_from_nemo_3D(chunk_mode):
         dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                       'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
         chs = {'U': {'time': ('time_counter', 1), 'depth': ('depthu', 25), 'lat': ('y', -1), 'lon': ('x', -1)},
-               'V': {'time': ('time_counter', 1), 'depth': ('time_counter', 25), 'lat': ('y', 8), 'lon': ('x', 8)}}
+               'V': {'time': ('time_counter', 1), 'depth': ('depthv', 75), 'lat': ('y', -1), 'lon': ('x', -1)}}
 
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
     return fieldset
@@ -251,9 +251,9 @@ def test_nemo_3D(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(75.0/75.0)) * int(math.ceil(201.0/16.0)) * int(math.ceil(151.0/16.0))))
     elif chunk_mode == 'failsafe':  # chunking time and depth but not lat and lon
         assert (len(field_set.U.grid.load_chunk) != 1)
-        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(75.0/25.0)) * int(math.ceil(201.0/201.0)) * int(math.ceil(151.0/151.0))))
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(75.0/25.0)) * int(math.ceil(201.0/171.0)) * int(math.ceil(151.0/151.0))))
         assert (len(field_set.V.grid.load_chunk) != 1)
-        assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(75.0/75.0)) * int(math.ceil(201.0/8.0)) * int(math.ceil(151.0/8.0))))
+        assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(75.0/75.0)) * int(math.ceil(201.0/171.0)) * int(math.ceil(151.0/151.0))))
 
 
 @pytest.mark.parametrize('mode', ['jit'])
