@@ -11,7 +11,6 @@ from parcels import (
     Field,
     FieldSet,
     JITParticle,
-    ParticleFile,
     ParticleSet,
     ScipyParticle,
     Variable,
@@ -22,7 +21,34 @@ from parcels.tools.statuscodes import DaskChunkingError
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def fieldset_from_nemo_3D(chunk_mode):
+def compute_nemo_particle_advection(fieldset, mode):
+    npart = 20
+    lonp = 2.5 * np.ones(npart)
+    latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
+
+    def periodicBC(particle, fieldSet, time):
+        if particle.lon > 15.0:
+            particle_dlon -= 15.0  # noqa
+        if particle.lon < 0:
+            particle_dlon += 15.0  # noqa
+        if particle.lat > 60.0:
+            particle_dlat -= 11.0  # noqa
+        if particle.lat < 49.0:
+            particle_dlat += 11.0  # noqa
+
+    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
+    kernels = pset.Kernel(AdvectionRK4) + periodicBC
+    pset.execute(kernels, runtime=delta(days=4), dt=delta(hours=6))
+    return pset
+
+
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific', 'failsafe'])
+def test_nemo_3D(mode, chunk_mode):
+    if chunk_mode in ['auto', ]:
+        dask.config.set({'array.chunk-size': '256KiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
     data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
     ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
     vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
@@ -56,10 +82,33 @@ def fieldset_from_nemo_3D(chunk_mode):
                'V': {'time': ('time_counter', 1), 'depth': ('depthv', 75), 'lat': ('y', -1), 'lon': ('x', -1)}}
 
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
-    return fieldset
+
+    compute_nemo_particle_advection(fieldset, mode)
+    # Nemo sample file dimensions: depthu=75, y=201, x=151
+    if chunk_mode != 'failsafe':
+        assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+        assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
+    if chunk_mode is False:
+        assert (len(fieldset.U.grid.load_chunk) == 1)
+    elif chunk_mode == 'auto':
+        assert fieldset.gridset.size == 3  # because three different grids in 'auto' mode
+        assert (len(fieldset.U.grid.load_chunk) != 1)
+    elif chunk_mode == 'specific':
+        assert (len(fieldset.U.grid.load_chunk) == (1 * int(math.ceil(75.0/75.0)) * int(math.ceil(201.0/16.0)) * int(math.ceil(151.0/16.0))))
+    elif chunk_mode == 'failsafe':  # chunking time and depth but not lat and lon
+        assert (len(fieldset.U.grid.load_chunk) != 1)
+        assert (len(fieldset.U.grid.load_chunk) == (1 * int(math.ceil(75.0/25.0)) * int(math.ceil(201.0/171.0)) * int(math.ceil(151.0/151.0))))
+        assert (len(fieldset.V.grid.load_chunk) != 1)
+        assert (len(fieldset.V.grid.load_chunk) == (1 * int(math.ceil(75.0/75.0)) * int(math.ceil(201.0/171.0)) * int(math.ceil(151.0/151.0))))
 
 
-def fieldset_from_globcurrent(chunk_mode):
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific', 'failsafe'])
+def test_globcurrent_2D(mode, chunk_mode):
+    if chunk_mode in ['auto', ]:
+        dask.config.set({'array.chunk-size': '16KiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
     data_folder = download_example_dataset("GlobCurrent_example_data")
     filenames = str(data_folder / '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
@@ -75,10 +124,37 @@ def fieldset_from_globcurrent(chunk_mode):
                'V': {'time': ('time', 1), 'lat': ('lat', -1), 'lon': ('lon', -1)}}
 
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, chunksize=chs)
-    return fieldset
+    try:
+        pset = ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
+        pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+    except DaskChunkingError:
+        # we removed the failsafe, so now if all chunksize dimensions are incorrect, there is nothing left to chunk,
+        # which raises an error saying so. This is the expected behaviour
+        if chunk_mode == 'failsafe':
+            return
+    # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
+    if chunk_mode != 'failsafe':  # chunking time but not lat
+        assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+    if chunk_mode is False:
+        assert (len(fieldset.U.grid.load_chunk) == 1)
+    elif chunk_mode == 'auto':
+        assert (len(fieldset.U.grid.load_chunk) != 1)
+    elif chunk_mode == 'specific':
+        assert (len(fieldset.U.grid.load_chunk) == (1 * int(math.ceil(41.0/8.0)) * int(math.ceil(81.0/8.0))))
+    elif chunk_mode == 'failsafe':  # chunking time but not lat
+        assert (len(fieldset.U.grid.load_chunk) != 1)
+        assert (len(fieldset.V.grid.load_chunk) != 1)
+    assert abs(pset[0].lon - 23.8) < 1
+    assert abs(pset[0].lat - -35.3) < 1
 
 
-def fieldset_from_pop_1arcs(chunk_mode):
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific', 'failsafe'])
+def test_pop(mode, chunk_mode):
+    if chunk_mode in ['auto', ]:
+        dask.config.set({'array.chunk-size': '256KiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
     data_folder = download_example_dataset('POPSouthernOcean_data')
     filenames = str(data_folder / 't.x1_SAMOC_flux.1690*.nc')
     variables = {'U': 'UVEL', 'V': 'VVEL', 'W': 'WVEL'}
@@ -93,10 +169,43 @@ def fieldset_from_pop_1arcs(chunk_mode):
         chs = {'depth': ('wz', 3), 'lat': ('j', 8), 'lon': ('i', 8)}
 
     fieldset = FieldSet.from_pop(filenames, variables, dimensions, chunksize=chs, timestamps=timestamps)
-    return fieldset
+
+    npart = 20
+    lonp = 70.0 * np.ones(npart)
+    latp = [i for i in -45.0+(-0.25+np.random.rand(npart)*2.0*0.25)]
+    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
+    pset.execute(AdvectionRK4, runtime=delta(days=90), dt=delta(days=2))
+    # POP sample file dimensions: k=21, j=60, i=60
+    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
+    if chunk_mode is False:
+        assert fieldset.gridset.size == 1
+        assert (len(fieldset.U.grid.load_chunk) == 1)
+        assert (len(fieldset.V.grid.load_chunk) == 1)
+        assert (len(fieldset.W.grid.load_chunk) == 1)
+    elif chunk_mode == 'auto':
+        assert fieldset.gridset.size == 3  # because three different grids in 'auto' mode
+        assert (len(fieldset.U.grid.load_chunk) != 1)
+        assert (len(fieldset.V.grid.load_chunk) != 1)
+        assert (len(fieldset.W.grid.load_chunk) != 1)
+    elif chunk_mode == 'specific':
+        assert fieldset.gridset.size == 1
+        assert (len(fieldset.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
+    elif chunk_mode == 'failsafe':   # here: done a typo in the netcdf dimname field
+        assert fieldset.gridset.size == 1
+        assert (len(fieldset.U.grid.load_chunk) != 1)
+        assert (len(fieldset.V.grid.load_chunk) != 1)
+        assert (len(fieldset.W.grid.load_chunk) != 1)
+        assert (len(fieldset.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
 
 
-def fieldset_from_swash(chunk_mode):
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific', 'failsafe'])
+def test_swash(mode, chunk_mode):
+    if chunk_mode in ['auto', ]:
+        dask.config.set({'array.chunk-size': '32KiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
     data_folder = download_example_dataset('SWASH_data')
     filenames = str(data_folder / 'field_*.nc')
     variables = {'U': 'cross-shore velocity',
@@ -130,215 +239,13 @@ def fieldset_from_swash(chunk_mode):
     fieldset.U.set_depth_from_field(fieldset.depth_u)
     fieldset.V.set_depth_from_field(fieldset.depth_u)
     fieldset.W.set_depth_from_field(fieldset.depth_w)
-    return fieldset
 
-
-def fieldset_from_ofam(chunk_mode):
-    data_folder = download_example_dataset("OFAM_example_data")
-    filenames = {'U': f"{data_folder}/OFAM_simple_U.nc",
-                 'V': f"{data_folder}/OFAM_simple_V.nc"}
-    variables = {'U': 'u', 'V': 'v'}
-    dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
-                  'time': 'Time'}
-
-    chs = False
-    if chunk_mode == 'auto':
-        chs = 'auto'
-    elif chunk_mode == 'specific':
-        chs = {'lon': ('xu_ocean', 100), 'lat': ('yu_ocean', 50), 'depth': ('st_edges_ocean', 60), 'time': ('Time', 1)}
-    return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=chs)
-
-
-def fieldset_from_mitgcm(chunk_mode, using_add_field=True):
-    data_folder = download_example_dataset("MITgcm_example_data")
-    filenames = {"U": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc",
-                 "V": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc"}
-    variables = {"U": "UVEL", "V": "VVEL"}
-    dimensions = {"U": {"lon": "XG", "lat": "YG", "time": "time"},
-                  "V": {"lon": "XG", "lat": "YG", "time": "time"}}
-
-    chs = False
-    if chunk_mode == 'auto':
-        chs = 'auto'
-    elif chunk_mode == 'specific_same':
-        chs = {'U': {'lat': ('YC', 50), 'lon': ('XG', 100)},
-               'V': {'lat': ('YG', 50), 'lon': ('XC', 100)}}
-    elif chunk_mode == 'specific_different':
-        chs = {'U': {'lat': ('YC', 50), 'lon': ('XG', 100)},
-               'V': {'lat': ('YG', 40), 'lon': ('XC', 100)}}
-    if using_add_field:
-        if chs in [False, 'auto']:
-            chs = {'U': chs, 'V': chs}
-        fieldset = FieldSet.from_mitgcm(filenames['U'], {'U': variables['U']}, dimensions['U'],
-                                        mesh='flat', chunksize=chs['U'])
-        fieldset2 = FieldSet.from_mitgcm(filenames['V'], {'V': variables['V']}, dimensions['V'],
-                                         mesh='flat', chunksize=chs['V'])
-        fieldset.add_field(fieldset2.V)
-    else:
-        fieldset = FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', chunksize=chs)
-    return fieldset
-
-
-def compute_nemo_particle_advection(fieldset, mode, lonp, latp):
-
-    def periodicBC(particle, fieldSet, time):
-        if particle.lon > 15.0:
-            particle_dlon -= 15.0  # noqa
-        if particle.lon < 0:
-            particle_dlon += 15.0  # noqa
-        if particle.lat > 60.0:
-            particle_dlat -= 11.0  # noqa
-        if particle.lat < 49.0:
-            particle_dlat += 11.0  # noqa
-
-    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
-    pfile = ParticleFile("nemo_particles_chunk", pset, outputdt=delta(days=1))
-    kernels = pset.Kernel(AdvectionRK4) + periodicBC
-    pset.execute(kernels, runtime=delta(days=4), dt=delta(hours=6), output_file=pfile)
-    return pset
-
-
-def compute_globcurrent_particle_advection(fieldset, mode, lonp, latp):
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lonp, lat=latp)
-    pfile = ParticleFile("globcurrent_particles_chunk", pset, outputdt=delta(hours=2))
-    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5), output_file=pfile)
-    return pset
-
-
-def compute_pop_particle_advection(fieldset, mode, lonp, latp):
-    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
-    pfile = ParticleFile("globcurrent_particles_chunk", pset, outputdt=delta(days=15))
-    pset.execute(AdvectionRK4, runtime=delta(days=90), dt=delta(days=2), output_file=pfile)
-    return pset
-
-
-def compute_swash_particle_advection(fieldset, mode, lonp, latp, depthp):
-    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp, depth=depthp)
-    pfile = ParticleFile("swash_particles_chunk", pset, outputdt=delta(seconds=0.05))
-    pset.execute(AdvectionRK4, runtime=delta(seconds=0.2), dt=delta(seconds=0.005), output_file=pfile)
-    return pset
-
-
-def compute_ofam_particle_advection(fieldset, mode, lonp, latp, depthp):
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lonp, lat=latp, depth=depthp)
-    pfile = ParticleFile("ofam_particles_chunk", pset, outputdt=delta(days=1))
-    pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5), output_file=pfile)
-    return pset
-
-
-@pytest.mark.parametrize('mode', ['jit'])
-@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific', 'failsafe'])
-def test_nemo_3D(mode, chunk_mode):
-    if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '256KiB'})
-    else:
-        dask.config.set({'array.chunk-size': '128MiB'})
-    fieldset = fieldset_from_nemo_3D(chunk_mode)
-    npart = 20
-    lonp = 2.5 * np.ones(npart)
-    latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-    # Nemo sample file dimensions: depthu=75, y=201, x=151
-    if chunk_mode != 'failsafe':
-        assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
-        assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
-    if chunk_mode is False:
-        assert (len(fieldset.U.grid.load_chunk) == 1)
-    elif chunk_mode == 'auto':
-        assert fieldset.gridset.size == 3  # because three different grids in 'auto' mode
-        assert (len(fieldset.U.grid.load_chunk) != 1)
-    elif chunk_mode == 'specific':
-        assert (len(fieldset.U.grid.load_chunk) == (1 * int(math.ceil(75.0/75.0)) * int(math.ceil(201.0/16.0)) * int(math.ceil(151.0/16.0))))
-    elif chunk_mode == 'failsafe':  # chunking time and depth but not lat and lon
-        assert (len(fieldset.U.grid.load_chunk) != 1)
-        assert (len(fieldset.U.grid.load_chunk) == (1 * int(math.ceil(75.0/25.0)) * int(math.ceil(201.0/171.0)) * int(math.ceil(151.0/151.0))))
-        assert (len(fieldset.V.grid.load_chunk) != 1)
-        assert (len(fieldset.V.grid.load_chunk) == (1 * int(math.ceil(75.0/75.0)) * int(math.ceil(201.0/171.0)) * int(math.ceil(151.0/151.0))))
-
-
-@pytest.mark.parametrize('mode', ['jit'])
-@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific', 'failsafe'])
-def test_globcurrent_2D(mode, chunk_mode):
-    if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '16KiB'})
-    else:
-        dask.config.set({'array.chunk-size': '128MiB'})
-    fieldset = fieldset_from_globcurrent(chunk_mode)
-    lonp = [25]
-    latp = [-35]
-    pset = None
-    try:
-        pset = compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
-    except DaskChunkingError:
-        # we removed the failsafe, so now if all chunksize dimensions are incorrect, there is nothing left to chunk,
-        # which raises an error saying so. This is the expected behaviour
-        if chunk_mode == 'failsafe':
-            return
-    # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
-    if chunk_mode != 'failsafe':  # chunking time but not lat
-        assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
-    if chunk_mode is False:
-        assert (len(fieldset.U.grid.load_chunk) == 1)
-    elif chunk_mode == 'auto':
-        assert (len(fieldset.U.grid.load_chunk) != 1)
-    elif chunk_mode == 'specific':
-        assert (len(fieldset.U.grid.load_chunk) == (1 * int(math.ceil(41.0/8.0)) * int(math.ceil(81.0/8.0))))
-    elif chunk_mode == 'failsafe':  # chunking time but not lat
-        assert (len(fieldset.U.grid.load_chunk) != 1)
-        assert (len(fieldset.V.grid.load_chunk) != 1)
-    assert abs(pset[0].lon - 23.8) < 1
-    assert abs(pset[0].lat - -35.3) < 1
-
-
-@pytest.mark.parametrize('mode', ['jit'])
-@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific', 'failsafe'])
-def test_pop(mode, chunk_mode):
-    if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '256KiB'})
-    else:
-        dask.config.set({'array.chunk-size': '128MiB'})
-    fieldset = fieldset_from_pop_1arcs(chunk_mode)
-    npart = 20
-    lonp = 70.0 * np.ones(npart)
-    latp = [i for i in -45.0+(-0.25+np.random.rand(npart)*2.0*0.25)]
-    compute_pop_particle_advection(fieldset, mode, lonp, latp)
-    # POP sample file dimensions: k=21, j=60, i=60
-    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
-    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
-    if chunk_mode is False:
-        assert fieldset.gridset.size == 1
-        assert (len(fieldset.U.grid.load_chunk) == 1)
-        assert (len(fieldset.V.grid.load_chunk) == 1)
-        assert (len(fieldset.W.grid.load_chunk) == 1)
-    elif chunk_mode == 'auto':
-        assert fieldset.gridset.size == 3  # because three different grids in 'auto' mode
-        assert (len(fieldset.U.grid.load_chunk) != 1)
-        assert (len(fieldset.V.grid.load_chunk) != 1)
-        assert (len(fieldset.W.grid.load_chunk) != 1)
-    elif chunk_mode == 'specific':
-        assert fieldset.gridset.size == 1
-        assert (len(fieldset.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
-    elif chunk_mode == 'failsafe':   # here: done a typo in the netcdf dimname field
-        assert fieldset.gridset.size == 1
-        assert (len(fieldset.U.grid.load_chunk) != 1)
-        assert (len(fieldset.V.grid.load_chunk) != 1)
-        assert (len(fieldset.W.grid.load_chunk) != 1)
-        assert (len(fieldset.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
-
-
-@pytest.mark.parametrize('mode', ['jit'])
-@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific', 'failsafe'])
-def test_swash(mode, chunk_mode):
-    if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '32KiB'})
-    else:
-        dask.config.set({'array.chunk-size': '128MiB'})
-    fieldset = fieldset_from_swash(chunk_mode)
     npart = 20
     lonp = [i for i in 9.5 + (-0.2 + np.random.rand(npart) * 2.0 * 0.2)]
     latp = [i for i in np.arange(start=12.3, stop=13.1, step=0.04)[0:20]]
     depthp = [-0.1, ] * npart
-    compute_swash_particle_advection(fieldset, mode, lonp, latp, depthp)
+    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp, depth=depthp)
+    pset.execute(AdvectionRK4, runtime=delta(seconds=0.2), dt=delta(seconds=0.005))
     # SWASH sample file dimensions: t=1, z=7, z_u=6, y=21, x=51
     if chunk_mode not in ['failsafe', ]:
         assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)), f"U {fieldset.U.grid.chunk_info} vs V {fieldset.V.grid.chunk_info}"
@@ -363,11 +270,23 @@ def test_ofam_3D(mode, chunk_mode):
         dask.config.set({'array.chunk-size': '1024KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
-    fieldset = fieldset_from_ofam(chunk_mode)
-    lonp = [180]
-    latp = [10]
-    depthp = [2.5]  # the depth of the first layer in OFAM
-    pset = compute_ofam_particle_advection(fieldset, mode, lonp, latp, depthp)
+
+    data_folder = download_example_dataset("OFAM_example_data")
+    filenames = {'U': f"{data_folder}/OFAM_simple_U.nc",
+                 'V': f"{data_folder}/OFAM_simple_V.nc"}
+    variables = {'U': 'u', 'V': 'v'}
+    dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
+                  'time': 'Time'}
+
+    chs = False
+    if chunk_mode == 'auto':
+        chs = 'auto'
+    elif chunk_mode == 'specific':
+        chs = {'lon': ('xu_ocean', 100), 'lat': ('yu_ocean', 50), 'depth': ('st_edges_ocean', 60), 'time': ('Time', 1)}
+    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=chs)
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=180, lat=10, depth=2.5)
+    pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5))
     # OFAM sample file dimensions: time=UNLIMITED, st_ocean=1, st_edges_ocean=52, lat=601, lon=2001
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
     if chunk_mode is False:
@@ -399,10 +318,34 @@ def test_mitgcm(mode, chunk_mode, using_add_field):
         dask.config.set({'array.chunk-size': '512KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
-    fieldset = fieldset_from_mitgcm(chunk_mode, using_add_field)
-    lons, lats = 5e5, 5e5
+    data_folder = download_example_dataset("MITgcm_example_data")
+    filenames = {"U": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc",
+                 "V": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc"}
+    variables = {"U": "UVEL", "V": "VVEL"}
+    dimensions = {"U": {"lon": "XG", "lat": "YG", "time": "time"},
+                  "V": {"lon": "XG", "lat": "YG", "time": "time"}}
 
-    pset = ParticleSet.from_list(fieldset=fieldset, pclass=ptype[mode], lon=lons, lat=lats)
+    chs = False
+    if chunk_mode == 'auto':
+        chs = 'auto'
+    elif chunk_mode == 'specific_same':
+        chs = {'U': {'lat': ('YC', 50), 'lon': ('XG', 100)},
+               'V': {'lat': ('YG', 50), 'lon': ('XC', 100)}}
+    elif chunk_mode == 'specific_different':
+        chs = {'U': {'lat': ('YC', 50), 'lon': ('XG', 100)},
+               'V': {'lat': ('YG', 40), 'lon': ('XC', 100)}}
+    if using_add_field:
+        if chs in [False, 'auto']:
+            chs = {'U': chs, 'V': chs}
+        fieldset = FieldSet.from_mitgcm(filenames['U'], {'U': variables['U']}, dimensions['U'],
+                                        mesh='flat', chunksize=chs['U'])
+        fieldset2 = FieldSet.from_mitgcm(filenames['V'], {'V': variables['V']}, dimensions['V'],
+                                         mesh='flat', chunksize=chs['V'])
+        fieldset.add_field(fieldset2.V)
+    else:
+        fieldset = FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', chunksize=chs)
+
+    pset = ParticleSet.from_list(fieldset=fieldset, pclass=ptype[mode], lon=5e5, lat=5e5)
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
     # MITgcm sample file dimensions: time=10, XG=400, YG=200
     if chunk_mode != 'specific_different':
@@ -436,10 +379,7 @@ def test_diff_entry_dimensions_chunks(mode):
     chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
            'V': {'depth': ('depthv', 75), 'lat': ('y', 16), 'lon': ('x', 16)}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
-    npart = 20
-    lonp = 5.2 * np.ones(npart)
-    latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
+    compute_nemo_particle_advection(fieldset, mode)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
 
@@ -482,33 +422,6 @@ def test_3d_2dfield_sampling(mode):
 
 
 @pytest.mark.parametrize('mode', ['jit'])
-def test_diff_entry_chunksize_error_nemo_simple(mode):
-    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
-    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
-    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
-    wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
-    mesh_mask = f'{data_folder}/coordinates.nc'
-
-    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
-                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
-                 'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
-    variables = {'U': 'uo',
-                 'V': 'vo',
-                 'W': 'wo'}
-    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
-                  'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
-                  'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
-    chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
-           'V': {'depth': ('depthv', 20), 'lat': ('y', 4), 'lon': ('x', 16)},
-           'W': {'depth': ('depthw', 16), 'lat': ('y', 16), 'lon': ('x', 4)}}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
-    npart = 20
-    lonp = 5.2 * np.ones(npart)
-    latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-
-
-@pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     # ==== this test is expected to fall-back to a pre-defined minimal chunk as ==== #
     # ==== the requested chunks don't match, or throw a value error.            ==== #
@@ -531,10 +444,7 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
            'V': {'depth': ('depthv', 75), 'lat': ('y', 4), 'lon': ('x', 16)},
            'W': {'depth': ('depthw', 75), 'lat': ('y', 16), 'lon': ('x', 4)}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
-    npart = 20
-    lonp = 5.2 * np.ones(npart)
-    latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
+    compute_nemo_particle_advection(fieldset, mode)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
@@ -563,31 +473,6 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
 
 
 @pytest.mark.parametrize('mode', ['jit'])
-def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
-    # ==== this test is expected to fall-back to a pre-defined minimal chunk as the ==== #
-    # ==== requested chunks don't match, or throw a value error                     ==== #
-    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
-    ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
-    vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
-    wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
-    mesh_mask = f'{data_folder}/coordinates.nc'
-
-    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
-                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles}}
-    variables = {'U': 'uo',
-                 'V': 'vo'}
-    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
-                  'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
-    chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
-           'V': {'depth': ('depthv', 15), 'lat': ('y', 4), 'lon': ('x', 16)}}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
-    npart = 20
-    lonp = 5.2 * np.ones(npart)
-    latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-
-
-@pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_chunksize_correction_globcurrent(mode):
     data_folder = download_example_dataset("GlobCurrent_example_data")
     filenames = str(data_folder / '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
@@ -596,9 +481,8 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
     chs = {'U': {'lat': ('lat', 16), 'lon': ('lon', 16)},
            'V': {'lat': ('lat', 16), 'lon': ('lon', 4)}}
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, chunksize=chs)
-    lonp = [25]
-    latp = [-35]
-    compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
     # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
