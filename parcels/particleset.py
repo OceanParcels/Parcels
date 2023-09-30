@@ -704,65 +704,6 @@ class ParticleSet(ABC):
                    depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
 
-    def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
-        """Calculate 2D particle density field from ParticleSet particle locations.
-
-        Parameters
-        ----------
-        field_name : str, optional
-            Name of the field from the fieldset to calculate the histogram on.
-            Defaults to using "U".
-        particle_val :
-            Optional numpy-array of values to weigh each particle with,
-            or string name of particle variable to use weigh particles with.
-            Default is None, resulting in a value of 1 for each particle
-        relative : bool
-            Whether the density is scaled by the total weight of all particles.
-            Default is False
-        area_scale : bool
-            Whether the density is scaled by the area (in m^2) of each grid cell.
-            Default is False
-        """
-        field_name = field_name if field_name else "U"
-        sampling_name = "UV" if field_name in ["U", "V"] else field_name
-        field = getattr(self.fieldset, field_name)
-
-        f_str = (f"def search_kernel(particle, fieldset, time):\n"
-                 f"    x = fieldset.{sampling_name}[time, particle.depth, particle.lat, particle.lon]")
-
-        k = Kernel(
-            self.fieldset,
-            self.particledata.ptype,
-            funcname="search_kernel",
-            funcvars=["particle", "fieldset", "time", "x"],
-            funccode=f_str,
-        )
-        self.execute(pyfunc=k, runtime=0)
-
-        if isinstance(particle_val, str):
-            particle_val = self.particledata._data[particle_val]
-        else:
-            particle_val = particle_val if particle_val else np.ones(self.size)
-        density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
-
-        for i, p in enumerate(self):
-            try:  # breaks if either p.xi, p.yi, p.zi, p.ti do not exist (in scipy) or field not in fieldset
-                if p.ti[field.igrid] < 0:  # xi, yi, zi, ti, not initialised
-                    raise 'error'
-                xi = p.xi[field.igrid]
-                yi = p.yi[field.igrid]
-            except:
-                _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0, search2D=True)
-            density[yi, xi] += particle_val[i]
-
-        if relative:
-            density /= np.sum(particle_val)
-
-        if area_scale:
-            density /= field.cell_areas()
-
-        return density
-
     def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object.
 

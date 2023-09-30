@@ -75,7 +75,7 @@ def test_multi_structured_grids(mode):
     other_fields['temp0'] = temp0_field
     other_fields['temp1'] = temp1_field
 
-    field_set = FieldSet(u_field, v_field, fields=other_fields)
+    fieldset = FieldSet(u_field, v_field, fields=other_fields)
 
     def sampleTemp(particle, fieldset, time):
         # Note that fieldset.temp is interpolated at time=time+dt.
@@ -88,7 +88,7 @@ def test_multi_structured_grids(mode):
         temp0 = Variable('temp0', dtype=np.float32, initial=20.)
         temp1 = Variable('temp1', dtype=np.float32, initial=20.)
 
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3001], lat=[5001], repeatdt=1)
+    pset = ParticleSet.from_list(fieldset, MyParticle, lon=[3001], lat=[5001], repeatdt=1)
 
     pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=3, dt=1)
 
@@ -136,10 +136,10 @@ def test_avoid_repeated_grids():
     other_fields = {}
     other_fields['temp'] = temp0_field
 
-    field_set = FieldSet(u_field, v_field, fields=other_fields)
-    assert field_set.gridset.size == 2
-    assert field_set.U.grid is field_set.temp.grid
-    assert field_set.V.grid is not field_set.U.grid
+    fieldset = FieldSet(u_field, v_field, fields=other_fields)
+    assert fieldset.gridset.size == 2
+    assert fieldset.U.grid is fieldset.temp.grid
+    assert fieldset.V.grid is not fieldset.U.grid
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -168,13 +168,13 @@ def test_multigrids_pointer(mode):
     v_field = Field('V', v_data, grid=grid_0)
     w_field = Field('W', w_data, grid=grid_1)
 
-    field_set = FieldSet(u_field, v_field, fields={'W': w_field})
-    field_set.add_periodic_halo(zonal=3, meridional=2)  # unit test of halo for SGrid
+    fieldset = FieldSet(u_field, v_field, fields={'W': w_field})
+    fieldset.add_periodic_halo(zonal=3, meridional=2)  # unit test of halo for SGrid
 
     assert u_field.grid == v_field.grid
     assert u_field.grid == w_field.grid  # w_field.grid is now supposed to be grid_1
 
-    pset = ParticleSet.from_list(field_set, ptype[mode], lon=[0], lat=[0], depth=[1])
+    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=[0], lat=[0], depth=[1])
 
     for i in range(10):
         pset.execute(AdvectionRK4_3D, runtime=1000, dt=500)
@@ -219,7 +219,7 @@ def test_rectilinear_s_grid_sampling(mode, z4d):
 
     other_fields = {}
     other_fields['temp'] = temp_field
-    field_set = FieldSet(u_field, v_field, fields=other_fields)
+    fieldset = FieldSet(u_field, v_field, fields=other_fields)
 
     def sampleTemp(particle, fieldset, time):
         particle.temp = fieldset.temp[time, particle.depth, particle.lat, particle.lon]
@@ -230,7 +230,7 @@ def test_rectilinear_s_grid_sampling(mode, z4d):
     lon = 400
     lat = 0
     ratio = .3
-    pset = ParticleSet.from_list(field_set, MyParticle,
+    pset = ParticleSet.from_list(fieldset, MyParticle,
                                  lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
 
     pset.execute(pset.Kernel(sampleTemp), runtime=1)
@@ -268,13 +268,13 @@ def test_rectilinear_s_grids_advect1(mode):
     v_field = Field('V', v_data, grid=grid)
     w_field = Field('W', w_data, grid=grid)
 
-    field_set = FieldSet(u_field, v_field, fields={'W': w_field})
+    fieldset = FieldSet(u_field, v_field, fields={'W': w_field})
 
     lon = np.zeros(11)
     lat = np.zeros(11)
     ratio = [min(i/10., .99) for i in range(11)]
     depth = bath_func(lon)*ratio
-    pset = ParticleSet.from_list(field_set, ptype[mode], lon=lon, lat=lat, depth=depth)
+    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lon, lat=lat, depth=depth)
 
     pset.execute(AdvectionRK4_3D, runtime=10000, dt=500)
     assert np.allclose(pset.depth/bath_func(pset.lon), ratio)
@@ -307,7 +307,7 @@ def test_rectilinear_s_grids_advect2(mode):
     u_field = Field('U', u_data, grid=grid)
     v_field = Field('V', v_data, grid=grid)
     rel_depth_field = Field('relDepth', rel_depth_data, grid=grid)
-    field_set = FieldSet(u_field, v_field, fields={'relDepth': rel_depth_field})
+    fieldset = FieldSet(u_field, v_field, fields={'relDepth': rel_depth_field})
 
     class MyParticle(ptype[mode]):
         relDepth = Variable('relDepth', dtype=np.float32, initial=20.)
@@ -317,7 +317,7 @@ def test_rectilinear_s_grids_advect2(mode):
         particle.relDepth = fieldset.relDepth[time, particle.depth, particle.lat, particle.lon]
 
     depth = .9
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[0], lat=[0], depth=[depth])
+    pset = ParticleSet.from_list(fieldset, MyParticle, lon=[0], lat=[0], depth=[depth])
 
     kernel = pset.Kernel(moveEast)
     for _ in range(10):
@@ -346,7 +346,7 @@ def test_curvilinear_grids(mode):
     u_data[0, :, :] = lon[:, :] + lat[:, :]
     u_field = Field('U', u_data, grid=grid, transpose=False)
     v_field = Field('V', v_data, grid=grid, transpose=False)
-    field_set = FieldSet(u_field, v_field)
+    fieldset = FieldSet(u_field, v_field)
 
     def sampleSpeed(particle, fieldset, time):
         u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
@@ -355,7 +355,7 @@ def test_curvilinear_grids(mode):
     class MyParticle(ptype[mode]):
         speed = Variable('speed', dtype=np.float32, initial=0.)
 
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
+    pset = ParticleSet.from_list(fieldset, MyParticle, lon=[400, -200], lat=[600, 600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=1)
     assert np.allclose(pset.speed[0], 1000)
 
@@ -372,10 +372,10 @@ def test_nemo_grid(mode):
                        'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}}
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-    field_set = FieldSet.from_nemo(filenames, variables, dimensions)
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
 
     # test ParticleSet.from_field on curvilinear grids
-    ParticleSet.from_field(field_set, ptype[mode], start_field=field_set.U, size=5)
+    ParticleSet.from_field(fieldset, ptype[mode], start_field=fieldset.U, size=5)
 
     def sampleVel(particle, fieldset, time):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
@@ -386,10 +386,10 @@ def test_nemo_grid(mode):
 
     lonp = 175.5
     latp = 81.5
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
+    pset = ParticleSet.from_list(fieldset, MyParticle, lon=[lonp], lat=[latp])
     pset.execute(pset.Kernel(sampleVel), runtime=1)
-    u = field_set.U.units.to_source(pset.zonal[0], lonp, latp, 0)
-    v = field_set.V.units.to_source(pset.meridional[0], lonp, latp, 0)
+    u = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
+    v = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
     assert abs(u - 1) < 1e-4
     assert abs(v) < 1e-4
 
@@ -406,11 +406,11 @@ def test_advect_nemo(mode):
                        'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}}
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-    field_set = FieldSet.from_nemo(filenames, variables, dimensions)
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
 
     lonp = 175.5
     latp = 81.5
-    pset = ParticleSet.from_list(field_set, ptype[mode], lon=[lonp], lat=[latp])
+    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=[lonp], lat=[latp])
     pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
     assert abs(pset.lat[0] - latp) < 1e-3
 
@@ -589,7 +589,7 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
                  'T': 'T'}
     dimensions = {'lon': 'lon', 'lat': 'lat', 'depth': w_dep, 'time': 'time'}
 
-    field_set = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat', deferred_load=deferred_load)
+    fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat', deferred_load=deferred_load)
 
     def sampleVel(particle, fieldset, time):
         (particle.zonal, particle.meridional, particle.vert) = fieldset.UVW[particle]
@@ -608,7 +608,7 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
         tracer = Variable('tracer', dtype=np.float32, initial=0.)
         out_of_bounds = Variable('out_of_bounds', dtype=np.float32, initial=0.)
 
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
+    pset = ParticleSet.from_list(fieldset, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
     pset.execute(pset.Kernel(sampleVel) + OutBoundsError, runtime=1)
     if vert_discretisation == 'slevel2':
         assert np.isclose(pset.vert[0], 0.)
