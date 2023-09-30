@@ -56,17 +56,25 @@ The steps below are the installation instructions for Linux, macOS and Windows.
 Installation for developers
 ===========================
 
-If you would prefer to have a development installation of Parcels (i.e., where the code can be actively editted), you can do so by cloning the Parcels repo, installing dependencies using the environment file (which includes Python, netCDF tooling, a C compiler, and various Python packages), and then installing Parcels in an editable mode such that changes to the cloned code can be tested during development.
+If you would prefer to have a development installation of Parcels (i.e., where the code can be actively edited), you can do so by cloning the Parcels repo, installing dependencies using the environment file, and then installing Parcels in an editable mode such that changes to the cloned code can be tested during development.
+
+**Step 1:** Install `micromamba <https://mamba.readthedocs.io/en/latest/index.html>`_, a lightweight version of conda, following the instructions `here <https://mamba.readthedocs.io/en/latest/micromamba-installation.html#umamba-install>`_.
+
+**Step 2:** Clone the Parcels repo and create a new environment with the dependencies:
 
 .. code-block:: bash
 
   git clone https://github.com/OceanParcels/parcels.git
   cd parcels
-  conda env create -f environment_py3_<OS>.yml  # where <OS> is either linux, osx or win
+  micromamba env create -f environment.yml
 
-Then activate the environment and install Parcels in editable mode:
+**Step 3:** Activate the environment and install Parcels in editable mode:
 
 .. code-block:: bash
 
-  conda activate parcels
+  micromamba activate parcels
   pip install --no-build-isolation --no-deps -e .
+
+.. note::
+
+  If you prefer to work with Anaconda or Miniconda instead of Micromamba, you will have to remove the ``sel(unix):`` commands in the ``environment.yml`` file (or remove these lines altogether if you're on Windows), since conda does not (yet) support these `selectors`. After that, just replace ``micromamba`` with ``conda`` in the above commands.
