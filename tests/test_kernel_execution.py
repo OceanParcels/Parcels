@@ -195,7 +195,7 @@ def test_execution_check_stopallexecution(fieldset, mode):
             particle.state = StatusCode.StopAllExecution
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0, 1], lat=[0, 0])
-    pset.execute(pset.Kernel(addoneLon, delete_cfiles=False), endtime=20., dt=1.)
+    pset.execute(addoneLon, endtime=20., dt=1.)
     assert pset[0].lon == 9
     assert pset[0].time == 9
     assert pset[1].lon == 1
