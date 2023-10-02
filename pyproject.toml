@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "parcels"
+description = "Framework for Lagrangian tracking of virtual ocean particles in the petascale age."
+readme = "README.md"
+dynamic = ["version"]
+authors = [{name = "oceanparcels.org team"}]
+requires-python = ">=3.8"
+license = {file = "LICENSE.md"}
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering",
+  "Intended Audience :: Science/Research",
+]
+
+[project.urls]
+homepage = "https://oceanparcels.org/"
+repository = "https://github.com/OceanParcels/parcels"
+Tracker = "https://github.com/OceanParcels/parcels/issues"
+
+[tool.setuptools]
+packages = ["parcels"]
+
+[tool.setuptools.package-data]
+parcels = ["parcels/include/*"]
+
+[tool.setuptools_scm]
+write_to = "parcels/_version_setup.py"
+local_scheme = "no-local-version"
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py", "example_*.py", "*tutorial*"]
+
+[tool.pydocstyle]
+ignore = [
+    # Numpy docstring format http://www.pydocstyle.org/en/latest/error_codes.html#default-conventions
+    "D107", "D203", "D212", "D213", "D402", "D413", "D415", "D416", "D417",
+
+    # TODO: once vvv is fixed, replace `ignore = ` section with `convention = numpy`
+    # IGNORE FOR NOW (requires more work)
+    # Missing docstring in public module
+    "D100",
+    # Missing docstring in public class
+    "D101",
+    # Missing docstring in public method
+    "D102",
+    # Missing docstring in public function
+    "D103",
+    # Missing docstring in public package
+    "D104",
+    # Missing docstring in magic method
+    "D105",
+    # Missing docstring in __init__
+    "D400",
+    # First line should be in imperative mood (requires writing of summaries)
+    "D401",
+    # First word of the docstring should not be `This`
+    "D404",
+    # 1 blank line required between summary line and description (requires writing of summaries)
+    "D205",
+]

@@ -1,12 +1,15 @@
 import numpy as np
 
 from parcels.interaction.neighborsearch.base import BaseFlatNeighborSearch
-from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
-from parcels.interaction.neighborsearch.basehash import hash_split
+from parcels.interaction.neighborsearch.basehash import (
+    BaseHashNeighborSearch,
+    hash_split,
+)
 
 
 class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
-    '''Neighbor search using a hashtable (similar to octtrees).'''
+    """Neighbor search using a hashtable (similar to octtrees)."""
+
     _box = None
 
     def _find_neighbors(self, hash_id, coor):
@@ -30,9 +33,18 @@ class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
     def _check_box(self, new_values, new_active_mask):
         """Check whether particles have moved out of the overall box.
 
-        :param new_values: New particle coordinates (depth, lat, lon) to be checked.
-        :param new_active_mask: New active mask for the particles.
-        :returns True if box is still big enough, False if not.
+        Parameters
+        ----------
+        new_values :
+            New particle coordinates (depth, lat, lon) to be checked.
+        new_active_mask :
+            New active mask for the particles.
+
+        Returns
+        -------
+        type
+            True if box is still big enough, False if not.
+
         """
         if self._box is None:
             return False
@@ -108,9 +120,18 @@ class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
 def hash_to_neighbors(hash_id, bits):
     """Compute neighboring cells from a hash.
 
-    :param hash_id: hash value of the current cell.
-    :param bits: key to compute the hashesh.
-    :returns neighbors: List of cells neighboring hash_id.
+    Parameters
+    ----------
+    hash_id :
+        hash value of the current cell.
+    bits :
+        key to compute the hashesh.
+
+    Returns
+    -------
+    type
+        neighbors: List of cells neighboring hash_id.
+
     """
     coor = np.zeros((len(bits),), dtype=np.int32)
     new_coor = np.zeros((len(bits),), dtype=np.int32)

@@ -4,17 +4,14 @@ from os import path
 
 import dask.array as da
 import numpy as np
-import warnings
 
-from parcels.field import Field, DeferredArray
-from parcels.field import NestedField
-from parcels.field import SummedField
-from parcels.field import VectorField
+from parcels.field import DeferredArray, Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
-from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import TimeExtrapolationError
+
 try:
     from mpi4py import MPI
 except:
@@ -24,16 +21,24 @@ except:
 __all__ = ['FieldSet']
 
 
-class FieldSet(object):
-    """FieldSet class that holds hydrodynamic data needed to execute particles
+class FieldSet:
+    """FieldSet class that holds hydrodynamic data needed to execute particles.
 
-    :param U: :class:`parcels.field.Field` object for zonal velocity component
-    :param V: :class:`parcels.field.Field` object for meridional velocity component
-    :param fields: Dictionary of additional :class:`parcels.field.Field` objects
+    Parameters
+    ----------
+    U : parcels.field.Field
+        Field object for zonal velocity component
+    V : parcels.field.Field
+        Field object for meridional velocity component
+    fields : dict mapping str to Field
+        Additional fields to include in the FieldSet. These fields can be used
+        in custom kernels.
     """
+
     def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
         self.completed = False
+        self.particlefile = None
         if U:
             self.add_field(U, 'U')
             self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
@@ -46,58 +51,68 @@ class FieldSet(object):
                 self.add_field(field, name)
 
         self.compute_on_defer = None
+        self.add_UVfield()
 
     @staticmethod
     def checkvaliddimensionsdict(dims):
         for d in dims:
             if d not in ['lon', 'lat', 'depth', 'time']:
-                raise NameError('%s is not a valid key in the dimensions dictionary' % d)
+                raise NameError(f'{d} is not a valid key in the dimensions dictionary')
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
-        """Initialise FieldSet object from raw data
+        """Initialise FieldSet object from raw data.
 
-        :param data: Dictionary mapping field names to numpy arrays.
-               Note that at least a 'U' and 'V' numpy array need to be given, and that
-               the built-in Advection kernels assume that U and V are in m/s
+        Parameters
+        ----------
+        data :
+            Dictionary mapping field names to numpy arrays.
+            Note that at least a 'U' and 'V' numpy array need to be given, and that
+            the built-in Advection kernels assume that U and V are in m/s
 
-               1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
-                  whichever is relevant for the dataset, use the flag transpose=True
-               2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
-                  use the flag transpose=False (default value)
-               3. If data has any other shape, you first need to reorder it
-        :param dimensions: Dictionary mapping field dimensions (lon,
-               lat, depth, time) to numpy arrays.
-               Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable
-               (e.g. dimensions['U'], dimensions['V'], etc).
-        :param transpose: Boolean whether to transpose data on read-in
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
+            1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
+               whichever is relevant for the dataset, use the flag transpose=True
+            2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
+               use the flag transpose=False (default value)
+            3. If data has any other shape, you first need to reorder it
+        dimensions : dict
+            Dictionary mapping field dimensions (lon,
+            lat, depth, time) to numpy arrays.
+            Note that dimensions can also be a dictionary of dictionaries if
+            dimension names are different for each variable
+            (e.g. dimensions['U'], dimensions['V'], etc).
+        transpose : bool
+            Whether to transpose data on read-in (Default value = False)
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-               This flag overrides the allow_time_interpolation and sets it to False
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic : bool, float or datetime.timedelta
+            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+            This flag overrides the allow_time_extrapolation and sets it to False
+        **kwargs :
+            Keyword arguments passed to the :class:`Field` constructor.
 
-        Usage examples
-        ==============
+        Examples
+        --------
+        For usage examples see the following tutorials:
 
-        * `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`_
+        * `Analytical advection <../examples/tutorial_analyticaladvection.ipynb>`__
 
-        * `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`_
+        * `Diffusion <../examples/tutorial_diffusion.ipynb>`__
 
-        * `Interpolation <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_interpolation.ipynb>`_
+        * `Interpolation <../examples/tutorial_interpolation.ipynb>`__
 
-        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
-
+        * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__
         """
-
         fields = {}
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
@@ -128,36 +143,35 @@ class FieldSet(object):
         return cls(u, v, fields=fields)
 
     def add_field(self, field, name=None):
-        """Add a :class:`parcels.field.Field` object to the FieldSet
+        """Add a :class:`parcels.field.Field` object to the FieldSet.
 
-        :param field: :class:`parcels.field.Field` object to be added
-        :param name: Name of the :class:`parcels.field.Field` object to be added
+        Parameters
+        ----------
+        field : parcels.field.Field
+            Field object to be added
+        name : str
+            Name of the :class:`parcels.field.Field` object to be added
 
+
+        Examples
+        --------
         For usage examples see the following tutorials:
 
-        * `Nested Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`_
+        * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
 
-        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
+        * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
         if self.completed:
             raise RuntimeError("FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?")
         name = field.name if name is None else name
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
-            raise RuntimeError("FieldSet already has a Field with name '%s'" % name)
-        if isinstance(field, SummedField):
-            setattr(self, name, field)
-            field.name = name
-            for fld in field:
-                self.gridset.add_grid(fld)
-                fld.fieldset = self
-        elif isinstance(field, NestedField):
+            raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
+        if isinstance(field, NestedField):
             setattr(self, name, field)
             for fld in field:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
-        elif isinstance(field, list):
-            raise NotImplementedError('FieldLists have been replaced by SummedFields. Use the + operator instead of []')
         else:
             setattr(self, name, field)
             self.gridset.add_grid(field)
@@ -167,17 +181,29 @@ class FieldSet(object):
         """Wrapper function to add a Field that is constant in space,
            useful e.g. when using constant horizontal diffusivity
 
-        :param name: Name of the :class:`parcels.field.Field` object to be added
-        :param value: Value of the constant field (stored as 32-bit float)
-        :param units: Optional UnitConverter object, to convert units
-                      (e.g. for Horizontal diffusivity from m2/s to degree2/s)
+        Parameters
+        ----------
+        name : str
+            Name of the :class:`parcels.field.Field` object to be added
+        value : float
+            Value of the constant field (stored as 32-bit float)
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
+
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
         """
         self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh))
 
     def add_vector_field(self, vfield):
-        """Add a :class:`parcels.field.VectorField` object to the FieldSet
+        """Add a :class:`parcels.field.VectorField` object to the FieldSet.
 
-        :param vfield: :class:`parcels.field.VectorField` object to be added
+        Parameters
+        ----------
+        vfield : parcels.VectorField
+            class:`parcels.field.VectorField` object to be added
         """
         setattr(self, vfield.name, vfield)
         for v in vfield.__dict__.values():
@@ -188,12 +214,24 @@ class FieldSet(object):
             for f in vfield:
                 f.fieldset = self
 
+    def add_UVfield(self):
+        if not hasattr(self, 'UV') and hasattr(self, 'U') and hasattr(self, 'V'):
+            if isinstance(self.U, NestedField):
+                self.add_vector_field(NestedField('UV', self.U, self.V))
+            else:
+                self.add_vector_field(VectorField('UV', self.U, self.V))
+        if not hasattr(self, 'UVW') and hasattr(self, 'W'):
+            if isinstance(self.U, NestedField):
+                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
+            else:
+                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
+
     def check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
         assert self.V, 'FieldSet does not have a Field named "V"'
         for attr, value in vars(self).items():
             if type(value) is Field:
-                assert value.name == attr, 'Field %s.name (%s) is not consistent' % (value.name, attr)
+                assert value.name == attr, f'Field {value.name}.name ({attr}) is not consistent'
 
         def check_velocityfields(U, V, W):
             if (U.interp_method == 'cgrid_velocity' and V.interp_method != 'cgrid_velocity') or \
@@ -216,17 +254,13 @@ class FieldSet(object):
             if U.cast_data_dtype != V.cast_data_dtype or (W and W.cast_data_dtype != U.cast_data_dtype):
                 raise ValueError('Not all velocity Fields have the same dtype')
 
-        if isinstance(self.U, (SummedField, NestedField)):
+        if isinstance(self.U, NestedField):
             w = self.W if hasattr(self, 'W') else [None]*len(self.U)
             for U, V, W in zip(self.U, self.V, w):
                 check_velocityfields(U, V, W)
         else:
             W = self.W if hasattr(self, 'W') else None
             check_velocityfields(self.U, self.V, W)
-
-        for fld in [self.U, self.V]:
-            if isinstance(fld, SummedField) and fld[0].interp_method in ['partialslip', 'freeslip'] and np.any([fld[0].grid is not f.grid for f in fld]):
-                warnings.warn('Slip boundary conditions may not work well with SummedFields. Be careful', UserWarning)
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()
@@ -237,20 +271,7 @@ class FieldSet(object):
             if g.defer_load:
                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
             g.time_origin = self.time_origin
-        if not hasattr(self, 'UV'):
-            if isinstance(self.U, SummedField):
-                self.add_vector_field(SummedField('UV', self.U, self.V))
-            elif isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField('UV', self.U, self.V))
-            else:
-                self.add_vector_field(VectorField('UV', self.U, self.V))
-        if not hasattr(self, 'UVW') and hasattr(self, 'W'):
-            if isinstance(self.U, SummedField):
-                self.add_vector_field(SummedField('UVW', self.U, self.V, self.W))
-            elif isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
-            else:
-                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
+        self.add_UVfield()
 
         ccode_fieldnames = []
         counter = 1
@@ -263,7 +284,7 @@ class FieldSet(object):
             ccode_fieldnames.append(fld.ccode_name)
 
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or f.dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
                 if f.grid.depth_field == 'not_yet_set':
@@ -279,76 +300,97 @@ class FieldSet(object):
             paths = sorted(glob(str(paths)))
         if len(paths) == 0:
             notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-            raise IOError("FieldSet files not found for variable %s: %s" % (var, str(notfound_paths)))
+            raise OSError(f"FieldSet files not found for variable {var}: {str(notfound_paths)}")
         for fp in paths:
             if not path.exists(fp):
-                raise IOError("FieldSet file not found: %s" % str(fp))
+                raise OSError(f"FieldSet file not found: {fp}")
         return paths
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None, fieldtype=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
                     deferred_load=True, chunksize=None, **kwargs):
-        """Initialises FieldSet object from NetCDF files
+        """Initialises FieldSet object from NetCDF files.
 
-        :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files
-               or be a list of file.
-               filenames can be a list [files], a dictionary {var:[files]},
-               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-               or a dictionary of dictionaries {var:{dim:[files]}}.
-               time values are in filenames[data]
-        :param variables: Dictionary mapping variables to variable names in the netCDF file(s).
-               Note that the built-in Advection kernels assume that U and V are in m/s
-        :param dimensions: Dictionary mapping data dimensions (lon,
-               lat, depth, time, data) to dimensions in the netCF file(s).
-               Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable
-               (e.g. dimensions['U'], dimensions['V'], etc).
-        :param indices: Optional dictionary of indices for each dimension
-               to read from file(s), to allow for reading of subset of data.
-               Default is to read the full extent of each dimension.
-               Note that negative indices are not allowed.
-        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also `this tuturial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
+        Parameters
+        ----------
+        filenames :
+            Dictionary mapping variables to file(s). The
+            filepath may contain wildcards to indicate multiple files
+            or be a list of file.
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``.
+            time values are in ``filenames[data]``
+        variables : dict
+            Dictionary mapping variables to variable names in the netCDF file(s).
+            Note that the built-in Advection kernels assume that U and V are in m/s
+        dimensions : dict
+            Dictionary mapping data dimensions (lon,
+            lat, depth, time, data) to dimensions in the netCF file(s).
+            Note that dimensions can also be a dictionary of dictionaries if
+            dimension names are different for each variable
+            (e.g. dimensions['U'], dimensions['V'], etc).
+        indices :
+            Optional dictionary of indices for each dimension
+            to read from file(s), to allow for reading of subset of data.
+            Default is to read the full extent of each dimension.
+            Note that negative indices are not allowed.
+        fieldtype :
+            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None) (Default value = None)
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tuturial <../examples/tutorial_unitconverters.ipynb>`__:
 
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param timestamps: list of lists or array of arrays containing the timestamps for
-               each of the files in filenames. Outer list/array corresponds to files, inner
-               array corresponds to indices within files.
-               Default is None if dimensions includes time.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-               This flag overrides the allow_time_interpolation and sets it to False
-        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
-               fully load them (default: True). It is advised to deferred load the data, since in
-               that case Parcels deals with a better memory management during particle set execution.
-               deferred_load=False is however sometimes necessary for plotting the fields.
-        :param interp_method: Method for interpolation. Options are 'linear' (default), 'nearest',
-               'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
-        :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
-               See also the Grid indexing documentation on oceanparcels.org
-        :param chunksize: size of the chunks in dask loading. Default is None (no chunking). Can be None or False (no chunking),
-               'auto' (chunking is done in the background, but results in one grid per field individually), or a dict in the format
-               '{parcels_varname: {netcdf_dimname : (parcels_dimname, chunksize_as_int)}, ...}', where 'parcels_dimname' is one of ('time', 'depth', 'lat', 'lon')
-        :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
-               but in cases where this doesn't work, setting netcdf_engine='scipy' could help
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        timestamps :
+            list of lists or array of arrays containing the timestamps for
+            each of the files in filenames. Outer list/array corresponds to files, inner
+            array corresponds to indices within files.
+            Default is None if dimensions includes time.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic : bool, float or datetime.timedelta
+            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+            This flag overrides the allow_time_extrapolation and sets it to False
+        deferred_load : bool
+            boolean whether to only pre-load data (in deferred mode) or
+            fully load them (default: True). It is advised to deferred load the data, since in
+            that case Parcels deals with a better memory management during particle set execution.
+            deferred_load=False is however sometimes necessary for plotting the fields.
+        interp_method : str
+            Method for interpolation. Options are 'linear' (default), 'nearest',
+            'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
+        gridindexingtype : str
+            The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
+            See also the Grid indexing documentation on oceanparcels.org
+        chunksize :
+            size of the chunks in dask loading. Default is None (no chunking). Can be None or False (no chunking),
+            'auto' (chunking is done in the background, but results in one grid per field individually), or a dict in the format
+            ``{parcels_varname: {netcdf_dimname : (parcels_dimname, chunksize_as_int)}, ...}``, where ``parcels_dimname`` is one of ('time', 'depth', 'lat', 'lon')
+        netcdf_engine :
+            engine to use for netcdf reading in xarray. Default is 'netcdf',
+            but in cases where this doesn't work, setting netcdf_engine='scipy' could help
+        **kwargs :
+            Keyword arguments passed to the :class:`parcels.Field` constructor.
 
+
+        Examples
+        --------
         For usage examples see the following tutorials:
 
-        * `Basic Parcels setup <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb>`_
+        * `Basic Parcels setup <../examples/parcels_tutorial.ipynb>`__
 
-        * `Argo floats <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Argofloats.ipynb>`_
+        * `Argo floats <../examples/tutorial_Argofloats.ipynb>`__
 
-        * `Timestamps <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb>`_
+        * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
 
-        * `Time-evolving depth dimensions <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timevaryingdepthdimensions.ipynb>`_
+        * `Time-evolving depth dimensions <../examples/tutorial_timevaryingdepthdimensions.ipynb>`__
 
         """
         # Ensure that times are not provided both in netcdf file and in 'timestamps'.
@@ -424,65 +466,78 @@ class FieldSet(object):
                   tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
-        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_
-        for a detailed tutorial on the setup for 2D NEMO fields and `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_3D.ipynb>`_
+        See `here <../examples/tutorial_nemo_curvilinear.ipynb>`__
+        for a detailed tutorial on the setup for 2D NEMO fields and `here <../examples/tutorial_nemo_3D.ipynb>`__
         for the tutorial on the setup for 3D NEMO fields.
 
-        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
+        See `here <../examples/documentation_indexing.ipynb>`__
         for a more detailed explanation of the different methods that can be used for c-grid datasets.
 
-        :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files,
-               or be a list of file.
-               filenames can be a list [files], a dictionary {var:[files]},
-               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-               or a dictionary of dictionaries {var:{dim:[files]}}
-               time values are in filenames[data]
-        :param variables: Dictionary mapping variables to variable names in the netCDF file(s).
-               Note that the built-in Advection kernels assume that U and V are in m/s
-        :param dimensions: Dictionary mapping data dimensions (lon,
-               lat, depth, time, data) to dimensions in the netCF file(s).
-               Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable.
-               Watch out: NEMO is discretised on a C-grid:
-               U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+        Parameters
+        ----------
+        filenames :
+            Dictionary mapping variables to file(s). The
+            filepath may contain wildcards to indicate multiple files,
+            or be a list of file.
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``
+            time values are in ``filenames[data]``
+        variables : dict
+            Dictionary mapping variables to variable names in the netCDF file(s).
+            Note that the built-in Advection kernels assume that U and V are in m/s
+        dimensions : dict
+            Dictionary mapping data dimensions (lon,
+            lat, depth, time, data) to dimensions in the netCF file(s).
+            Note that dimensions can also be a dictionary of dictionaries if
+            dimension names are different for each variable.
+            Watch out: NEMO is discretised on a C-grid:
+            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html). ::
 
-               +-----------------------------+-----------------------------+-----------------------------+
-               |                             |         V[k,j+1,i+1]        |                             |
-               +-----------------------------+-----------------------------+-----------------------------+
-               |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
-               +-----------------------------+-----------------------------+-----------------------------+
-               |                             |         V[k,j,i+1]          +                             |
-               +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j+1,i+1]        |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j,i+1]          |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
 
-               To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
-               which are located on the corners of the cells.
-               (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
-               In 3D, the depth is the one corresponding to W nodes
-               The gridindexingtype is set to 'nemo'. See also the Grid indexing documentation on oceanparcels.org
-        :param indices: Optional dictionary of indices for each dimension
-               to read from file(s), to allow for reading of subset of data.
-               Default is to read the full extent of each dimension.
-               Note that negative indices are not allowed.
-        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
+            To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
+            which are located on the corners of the cells.
+            (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
+            In 3D, the depth is the one corresponding to W nodes
+            The gridindexingtype is set to 'nemo'. See also the Grid indexing documentation on oceanparcels.org
+        indices :
+            Optional dictionary of indices for each dimension
+            to read from file(s), to allow for reading of subset of data.
+            Default is to read the full extent of each dimension.
+            Note that negative indices are not allowed.
+        fieldtype :
+            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-               This flag overrides the allow_time_interpolation and sets it to False
-        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
-               Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
-        :param chunksize: size of the chunks in dask loading. Default is None (no chunking)
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic : bool, float or datetime.timedelta
+            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+            This flag overrides the allow_time_extrapolation and sets it to False
+        tracer_interp_method : str
+            Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
+            Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
+        chunksize :
+            size of the chunks in dask loading. Default is None (no chunking)
+        **kwargs :
+            Keyword arguments passed to the :func:`Fieldset.from_c_grid_dataset` constructor.
 
         """
-
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_nemo'
         if kwargs.pop('gridindexingtype', 'nemo') != 'nemo':
@@ -499,19 +554,19 @@ class FieldSet(object):
                     allow_time_extrapolation=None, time_periodic=False,
                     tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of MITgcm fields.
-           All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
-           gridindexing is set to 'mitgcm' for grids that have the shape
+        All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
+        gridindexing is set to 'mitgcm' for grids that have the shape::
 
-           +-----------------------------+-----------------------------+-----------------------------+
-           |                             |         V[k,j+1,i]          |                             |
-           +-----------------------------+-----------------------------+-----------------------------+
-           |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
-           +-----------------------------+-----------------------------+-----------------------------+
-           |                             |         V[k,j,i]            +                             |
-           +-----------------------------+-----------------------------+-----------------------------+
+            +-----------------------------+-----------------------------+-----------------------------+
+            |                             |         V[k,j+1,i]          |                             |
+            +-----------------------------+-----------------------------+-----------------------------+
+            |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
+            +-----------------------------+-----------------------------+-----------------------------+
+            |                             |         V[k,j,i]            |                             |
+            +-----------------------------+-----------------------------+-----------------------------+
 
-           For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
-           Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
+        For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
+        Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
         """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mitgcm'
@@ -528,68 +583,81 @@ class FieldSet(object):
                             tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
-        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
+        See `here <../examples/documentation_indexing.ipynb>`__
         for a more detailed explanation of the different methods that can be used for c-grid datasets.
 
-        :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files,
-               or be a list of file.
-               filenames can be a list [files], a dictionary {var:[files]},
-               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-               or a dictionary of dictionaries {var:{dim:[files]}}
-               time values are in filenames[data]
-        :param variables: Dictionary mapping variables to variable
-               names in the netCDF file(s).
-        :param dimensions: Dictionary mapping data dimensions (lon,
-               lat, depth, time, data) to dimensions in the netCF file(s).
-               Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable.
-               Watch out: NEMO is discretised on a C-grid:
-               U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+        Parameters
+        ----------
+        filenames :
+            Dictionary mapping variables to file(s). The
+            filepath may contain wildcards to indicate multiple files,
+            or be a list of file.
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``
+            time values are in ``filenames[data]``
+        variables : dict
+            Dictionary mapping variables to variable
+            names in the netCDF file(s).
+        dimensions : dict
+            Dictionary mapping data dimensions (lon,
+            lat, depth, time, data) to dimensions in the netCF file(s).
+            Note that dimensions can also be a dictionary of dictionaries if
+            dimension names are different for each variable.
+            Watch out: NEMO is discretised on a C-grid:
+            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ). ::
 
-               +-----------------------------+-----------------------------+-----------------------------+
-               |                             |         V[k,j+1,i+1]        |                             |
-               +-----------------------------+-----------------------------+-----------------------------+
-               |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
-               +-----------------------------+-----------------------------+-----------------------------+
-               |                             |         V[k,j,i+1]          +                             |
-               +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j+1,i+1]        |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |         V[k,j,i+1]          |                             |
+                +-----------------------------+-----------------------------+-----------------------------+
 
-               To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
-               which are located on the corners of the cells.
-               (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
-               In 3D, the depth is the one corresponding to W nodes.
-        :param indices: Optional dictionary of indices for each dimension
-               to read from file(s), to allow for reading of subset of data.
-               Default is to read the full extent of each dimension.
-               Note that negative indices are not allowed.
-        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+            To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
+            which are located on the corners of the cells.
+            (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
+            In 3D, the depth is the one corresponding to W nodes.
+        indices :
+            Optional dictionary of indices for each dimension
+            to read from file(s), to allow for reading of subset of data.
+            Default is to read the full extent of each dimension.
+            Note that negative indices are not allowed.
+        fieldtype :
+            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-               This flag overrides the allow_time_interpolation and sets it to False
-        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
-               Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
-        :param gridindexingtype: The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo()
-               See also the Grid indexing documentation on oceanparcels.org
-        :param chunksize: size of the chunks in dask loading
-
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic : bool, float or datetime.timedelta
+            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+            This flag overrides the allow_time_extrapolation and sets it to False
+        tracer_interp_method : str
+            Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
+            Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
+        gridindexingtype : str
+            The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo()
+            See also the Grid indexing documentation on oceanparcels.org (Default value = 'nemo')
+        chunksize :
+            size of the chunks in dask loading. (Default value = None)
+        **kwargs :
+            Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
         """
-
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
-                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
+                             "See also ../examples/documentation_indexing.ipynb")
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
             raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U, V and W. "
-                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
+                             "See also ../examples/documentation_indexing.ipynb")
         if 'interp_method' in kwargs.keys():
             raise TypeError("On a C-grid, the interpolation method for velocities should not be overridden")
 
@@ -613,64 +681,78 @@ class FieldSet(object):
         """Initialises FieldSet object from NetCDF files of POP fields.
             It is assumed that the velocities in the POP fields is in cm/s.
 
-        :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files,
-               or be a list of file.
-               filenames can be a list [files], a dictionary {var:[files]},
-               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-               or a dictionary of dictionaries {var:{dim:[files]}}
-               time values are in filenames[data]
-        :param variables: Dictionary mapping variables to variable names in the netCDF file(s).
-               Note that the built-in Advection kernels assume that U and V are in m/s
-        :param dimensions: Dictionary mapping data dimensions (lon,
-               lat, depth, time, data) to dimensions in the netCF file(s).
-               Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable.
-               Watch out: POP is discretised on a B-grid:
-               U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+        Parameters
+        ----------
+        filenames :
+            Dictionary mapping variables to file(s). The
+            filepath may contain wildcards to indicate multiple files,
+            or be a list of file.
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``
+            time values are in ``filenames[data]``
+        variables : dict
+            Dictionary mapping variables to variable names in the netCDF file(s).
+            Note that the built-in Advection kernels assume that U and V are in m/s
+        dimensions : dict
+            Dictionary mapping data dimensions (lon,
+            lat, depth, time, data) to dimensions in the netCF file(s).
+            Note that dimensions can also be a dictionary of dictionaries if
+            dimension names are different for each variable.
+            Watch out: POP is discretised on a B-grid:
+            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
 
-               +-----------------------------+-----------------------------+-----------------------------+
-               |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
-               +-----------------------------+-----------------------------+-----------------------------+
-               |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
-               +-----------------------------+-----------------------------+-----------------------------+
-               |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
-               +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j,i],V[k,j,i]            |                             |U[k,j,i+1],V[k,j,i+1]        |
+                +-----------------------------+-----------------------------+-----------------------------+
 
-               In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
-                      T node is at the cell centre and interpolated constant per cell as a C-grid.
-               In 3D: U and V nodes are at the middle of the cell vertical edges,
-                      They are interpolated bilinearly (independently of z) in the cell.
-                      W nodes are at the centre of the horizontal interfaces.
-                      They are interpolated linearly (as a function of z) in the cell.
-                      T node is at the cell centre, and constant per cell.
-                      Note that Parcels assumes that the length of the depth dimension (at the W-points)
-                      is one larger than the size of the velocity and tracer fields in the depth dimension.
-        :param indices: Optional dictionary of indices for each dimension
-               to read from file(s), to allow for reading of subset of data.
-               Default is to read the full extent of each dimension.
-               Note that negative indices are not allowed.
-        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
+            In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
+            T node is at the cell centre and interpolated constant per cell as a C-grid.
+            In 3D: U and V nodes are at the middle of the cell vertical edges,
+            They are interpolated bilinearly (independently of z) in the cell.
+            W nodes are at the centre of the horizontal interfaces.
+            They are interpolated linearly (as a function of z) in the cell.
+            T node is at the cell centre, and constant per cell.
+            Note that Parcels assumes that the length of the depth dimension (at the W-points)
+            is one larger than the size of the velocity and tracer fields in the depth dimension.
+        indices :
+            Optional dictionary of indices for each dimension
+            to read from file(s), to allow for reading of subset of data.
+            Default is to read the full extent of each dimension.
+            Note that negative indices are not allowed.
+        fieldtype :
+            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-               This flag overrides the allow_time_interpolation and sets it to False
-        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-               Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
-        :param chunksize: size of the chunks in dask loading
-        :param depth_units: The units of the vertical dimension. Default in Parcels is 'm',
-               but many POP outputs are in 'cm'
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic : bool, float or datetime.timedelta
+            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+            This flag overrides the allow_time_extrapolation and sets it to False
+        tracer_interp_method : str
+            Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
+            Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
+        chunksize :
+            size of the chunks in dask loading (Default value = None)
+        depth_units :
+            The units of the vertical dimension. Default in Parcels is 'm',
+            but many POP outputs are in 'cm'
+        **kwargs :
+            Keyword arguments passed to the :func:`Fieldset.from_b_grid_dataset` constructor.
 
         """
-
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_pop'
         fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
@@ -696,61 +778,72 @@ class FieldSet(object):
                   tracer_interp_method='bgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of MOM5 fields.
 
-        :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files,
-               or be a list of file.
-               filenames can be a list [files], a dictionary {var:[files]},
-               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-               or a dictionary of dictionaries {var:{dim:[files]}}
-               time values are in filenames[data]
-        :param variables: Dictionary mapping variables to variable names in the netCDF file(s).
-               Note that the built-in Advection kernels assume that U and V are in m/s
-        :param dimensions: Dictionary mapping data dimensions (lon,
-               lat, depth, time, data) to dimensions in the netCF file(s).
-               Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable.
+        Parameters
+        ----------
+        filenames :
+            Dictionary mapping variables to file(s). The
+            filepath may contain wildcards to indicate multiple files,
+            or be a list of file.
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``
+            time values are in ``filenames[data]``
+        variables : dict
+            Dictionary mapping variables to variable names in the netCDF file(s).
+            Note that the built-in Advection kernels assume that U and V are in m/s
+        dimensions : dict
+            Dictionary mapping data dimensions (lon,
+            lat, depth, time, data) to dimensions in the netCF file(s).
+            Note that dimensions can also be a dictionary of dictionaries if
+            dimension names are different for each variable. ::
 
-               +-------------------------------+-------------------------------+-------------------------------+
-               |U[k,j+1,i],V[k,j+1,i]          |                               |U[k,j+1,i+1],V[k,j+1,i+1]      |
-               +-------------------------------+-------------------------------+-------------------------------+
-               |                               |W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]|                               |
-               +-------------------------------+-------------------------------+-------------------------------+
-               |U[k,j,i],V[k,j,i]              |                               +U[k,j,i+1],V[k,j,i+1]          |
-               +-------------------------------+-------------------------------+-------------------------------+
+                +-------------------------------+-------------------------------+-------------------------------+
+                |U[k,j+1,i],V[k,j+1,i]          |                               |U[k,j+1,i+1],V[k,j+1,i+1]      |
+                +-------------------------------+-------------------------------+-------------------------------+
+                |                               |W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]|                               |
+                +-------------------------------+-------------------------------+-------------------------------+
+                |U[k,j,i],V[k,j,i]              |                               |U[k,j,i+1],V[k,j,i+1]          |
+                +-------------------------------+-------------------------------+-------------------------------+
 
-               In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
-                      T node is at the cell centre and interpolated constant per cell as a C-grid.
-               In 3D: U and V nodes are at the midlle of the cell vertical edges,
-                      They are interpolated bilinearly (independently of z) in the cell.
-                      W nodes are at the centre of the horizontal interfaces, but below the U and V.
-                      They are interpolated linearly (as a function of z) in the cell.
-                      Note that W is normally directed upward in MOM5, but Parcels requires W
-                      in the positive z-direction (downward) so W is multiplied by -1.
-                      T node is at the cell centre, and constant per cell.
-        :param indices: Optional dictionary of indices for each dimension
-               to read from file(s), to allow for reading of subset of data.
-               Default is to read the full extent of each dimension.
-               Note that negative indices are not allowed.
-        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+            In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
+            T node is at the cell centre and interpolated constant per cell as a C-grid.
+            In 3D: U and V nodes are at the midlle of the cell vertical edges,
+            They are interpolated bilinearly (independently of z) in the cell.
+            W nodes are at the centre of the horizontal interfaces, but below the U and V.
+            They are interpolated linearly (as a function of z) in the cell.
+            Note that W is normally directed upward in MOM5, but Parcels requires W
+            in the positive z-direction (downward) so W is multiplied by -1.
+            T node is at the cell centre, and constant per cell.
+        indices :
+            Optional dictionary of indices for each dimension
+            to read from file(s), to allow for reading of subset of data.
+            Default is to read the full extent of each dimension.
+            Note that negative indices are not allowed.
+        fieldtype :
+            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also the `Unit converters tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-               This flag overrides the allow_time_interpolation and sets it to False
-        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-               Note that in the case of from_mom5() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
-        :param chunksize: size of the chunks in dask loading
-
-
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic:
+            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+            This flag overrides the allow_time_extrapolation and sets it to False
+        tracer_interp_method : str
+            Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
+            Note that in the case of from_mom5() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
+        chunksize :
+            size of the chunks in dask loading (Default value = None)
+        **kwargs :
+            Keyword arguments passed to the :func:`Fieldset.from_b_grid_dataset` constructor.
         """
-
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mom5'
         fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
@@ -766,65 +859,77 @@ class FieldSet(object):
                             tracer_interp_method='bgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Bgrid fields.
 
-        :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files,
-               or be a list of file.
-               filenames can be a list [files], a dictionary {var:[files]},
-               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
-               or a dictionary of dictionaries {var:{dim:[files]}}
-               time values are in filenames[data]
-        :param variables: Dictionary mapping variables to variable
-               names in the netCDF file(s).
-        :param dimensions: Dictionary mapping data dimensions (lon,
-               lat, depth, time, data) to dimensions in the netCF file(s).
-               Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable.
-               U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+        Parameters
+        ----------
+        filenames :
+            Dictionary mapping variables to file(s). The
+            filepath may contain wildcards to indicate multiple files,
+            or be a list of file.
+            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
+            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
+            or a dictionary of dictionaries ``{var:{dim:[files]}}``
+            time values are in ``filenames[data]``
+        variables : dict
+            Dictionary mapping variables to variable
+            names in the netCDF file(s).
+        dimensions : dict
+            Dictionary mapping data dimensions (lon,
+            lat, depth, time, data) to dimensions in the netCF file(s).
+            Note that dimensions can also be a dictionary of dictionaries if
+            dimension names are different for each variable.
+            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
 
-               +-----------------------------+-----------------------------+-----------------------------+
-               |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
-               +-----------------------------+-----------------------------+-----------------------------+
-               |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
-               +-----------------------------+-----------------------------+-----------------------------+
-               |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
-               +-----------------------------+-----------------------------+-----------------------------+
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
+                +-----------------------------+-----------------------------+-----------------------------+
+                |U[k,j,i],V[k,j,i]            |                             |U[k,j,i+1],V[k,j,i+1]        |
+                +-----------------------------+-----------------------------+-----------------------------+
 
-               In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
-                      T node is at the cell centre and interpolated constant per cell as a C-grid.
-               In 3D: U and V nodes are at the midlle of the cell vertical edges,
-                      They are interpolated bilinearly (independently of z) in the cell.
-                      W nodes are at the centre of the horizontal interfaces.
-                      They are interpolated linearly (as a function of z) in the cell.
-                      T node is at the cell centre, and constant per cell.
-        :param indices: Optional dictionary of indices for each dimension
-               to read from file(s), to allow for reading of subset of data.
-               Default is to read the full extent of each dimension.
-               Note that negative indices are not allowed.
-        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+            In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
+            T node is at the cell centre and interpolated constant per cell as a C-grid.
+            In 3D: U and V nodes are at the midlle of the cell vertical edges,
+            They are interpolated bilinearly (independently of z) in the cell.
+            W nodes are at the centre of the horizontal interfaces.
+            They are interpolated linearly (as a function of z) in the cell.
+            T node is at the cell centre, and constant per cell.
+        indices :
+            Optional dictionary of indices for each dimension
+            to read from file(s), to allow for reading of subset of data.
+            Default is to read the full extent of each dimension.
+            Note that negative indices are not allowed.
+        fieldtype :
+            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-               This flag overrides the allow_time_interpolation and sets it to False
-        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-               Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
-        :param chunksize: size of the chunks in dask loading
-
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic : bool, float or datetime.timedelta
+            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+            This flag overrides the allow_time_extrapolation and sets it to False
+        tracer_interp_method : str
+            Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
+            Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
+        chunksize :
+            size of the chunks in dask loading (Default value = None)
+        **kwargs :
+            Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
         """
-
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U and V. "
-                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
+                             "See also ../examples/documentation_indexing.ipynb")
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
             raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U, V and W. "
-                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
+                             "See also ../examples/documentation_indexing.ipynb")
 
         interp_method = {}
         for v in variables:
@@ -847,28 +952,42 @@ class FieldSet(object):
                      chunksize=None, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
-        :param basename: Base name of the file(s); may contain
-               wildcards to indicate multiple files.
-        :param indices: Optional dictionary of indices for each dimension
-               to read from file(s), to allow for reading of subset of data.
-               Default is to read the full extent of each dimension.
-               Note that negative indices are not allowed.
-        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        :param extra_fields: Extra fields to read beyond U and V
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-               This flag overrides the allow_time_interpolation and sets it to False
-        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
-               fully load them (default: True). It is advised to deferred load the data, since in
-               that case Parcels deals with a better memory management during particle set execution.
-               deferred_load=False is however sometimes necessary for plotting the fields.
-        :param chunksize: size of the chunks in dask loading
-
+        Parameters
+        ----------
+        basename : str
+            Base name of the file(s); may contain
+            wildcards to indicate multiple files.
+        indices :
+            Optional dictionary of indices for each dimension
+            to read from file(s), to allow for reading of subset of data.
+            Default is to read the full extent of each dimension.
+            Note that negative indices are not allowed.
+        fieldtype :
+            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+        extra_fields :
+            Extra fields to read beyond U and V (Default value = None)
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic : bool, float or datetime.timedelta
+            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+            This flag overrides the allow_time_extrapolation and sets it to False
+        deferred_load : bool
+            boolean whether to only pre-load data (in deferred mode) or
+            fully load them (default: True). It is advised to deferred load the data, since in
+            that case Parcels deals with a better memory management during particle set execution.
+            deferred_load=False is however sometimes necessary for plotting the fields.
+        chunksize :
+            size of the chunks in dask loading (Default value = None)
+        uvar :
+             (Default value = 'vozocrtx')
+        vvar :
+             (Default value = 'vomecrty')
+        **kwargs :
+            Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
         """
-
         if extra_fields is None:
             extra_fields = {}
         if 'creation_log' not in kwargs.keys():
@@ -881,8 +1000,7 @@ class FieldSet(object):
         for vars in extra_fields:
             dimensions[vars] = deepcopy(default_dims)
             dimensions[vars]['depth'] = 'depth%s' % vars.lower()
-        filenames = dict([(v, str("%s%s.nc" % (basename, v)))
-                          for v in extra_fields.keys()])
+        filenames = {v: str(f"{basename}{v}.nc") for v in extra_fields.keys()}
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
                                time_periodic=time_periodic, deferred_load=deferred_load,
@@ -893,29 +1011,39 @@ class FieldSet(object):
                             time_periodic=False, **kwargs):
         """Initialises FieldSet data from xarray Datasets.
 
-        :param ds: xarray Dataset.
-               Note that the built-in Advection kernels assume that U and V are in m/s
-        :param variables: Dictionary mapping parcels variable names to data variables in the xarray Dataset.
-        :param dimensions: Dictionary mapping data dimensions (lon,
-               lat, depth, time, data) to dimensions in the xarray Dataset.
-               Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable
-               (e.g. dimensions['U'], dimensions['V'], etc).
-        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
+        Parameters
+        ----------
+        ds : xr.Dataset
+            xarray Dataset.
+            Note that the built-in Advection kernels assume that U and V are in m/s
+        variables : dict
+            Dictionary mapping parcels variable names to data variables in the xarray Dataset.
+        dimensions : dict
+            Dictionary mapping data dimensions (lon,
+            lat, depth, time, data) to dimensions in the xarray Dataset.
+            Note that dimensions can also be a dictionary of dictionaries if
+            dimension names are different for each variable
+            (e.g. dimensions['U'], dimensions['V'], etc).
+        fieldtype :
+            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
-               (i.e. beyond the last available time snapshot)
-               Default is False if dimensions includes time, else True
-        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-               This flag overrides the allow_time_interpolation and sets it to False
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        time_periodic : bool, float or datetime.timedelta
+            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+            This flag overrides the allow_time_extrapolation and sets it to False
+        **kwargs :
+            Keyword arguments passed to the :func:`Field.from_xarray` constructor.
         """
-
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_xarray_dataset'
@@ -936,13 +1064,14 @@ class FieldSet(object):
 
     def get_fields(self):
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
-        objects associated with this FieldSet"""
+        objects associated with this FieldSet.
+        """
         fields = []
         for v in self.__dict__.values():
             if type(v) in [Field, VectorField]:
                 if v not in fields:
                     fields.append(v)
-            elif type(v) in [NestedField, SummedField]:
+            elif isinstance(v, NestedField):
                 if v not in fields:
                     fields.append(v)
                 for v2 in v:
@@ -955,13 +1084,20 @@ class FieldSet(object):
         stored as 32-bit floats. While constants can be updated during
         execution in SciPy mode, they can not be updated in JIT mode.
 
-        Tutorials using fieldset.add_constant:
-        `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`_
-        `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`_
-        `Periodic boundaries <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`_
+        Parameters
+        ----------
+        name : str
+            Name of the constant
+        value :
+            Value of the constant (stored as 32-bit float)
 
-        :param name: Name of the constant
-        :param value: Value of the constant (stored as 32-bit float)
+
+        Examples
+        --------
+        Tutorials using fieldset.add_constant:
+        `Analytical advection <../examples/tutorial_analyticaladvection.ipynb>`__
+        `Diffusion <../examples/tutorial_diffusion.ipynb>`__
+        `Periodic boundaries <../examples/tutorial_periodic_boundaries.ipynb>`__
         """
         setattr(self, name, value)
 
@@ -970,11 +1106,15 @@ class FieldSet(object):
         through extending the Field (and lon/lat) by copying a small portion
         of the field on one side of the domain to the other.
 
-        :param zonal: Create a halo in zonal direction (boolean)
-        :param meridional: Create a halo in meridional direction (boolean)
-        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        Parameters
+        ----------
+        zonal : bool
+            Create a halo in zonal direction (Default value = False)
+        meridional : bool
+            Create a halo in meridional direction (Default value = False)
+        halosize : int
+            size of the halo (in grid points). Default is 5 grid points
         """
-
         for grid in self.gridset.grids:
             grid.add_periodic_halo(zonal, meridional, halosize)
         for attr, value in iter(self.__dict__.items()):
@@ -982,12 +1122,15 @@ class FieldSet(object):
                 value.add_periodic_halo(zonal, meridional, halosize)
 
     def write(self, filename):
-        """Write FieldSet to NetCDF file using NEMO convention
+        """Write FieldSet to NetCDF file using NEMO convention.
 
-        :param filename: Basename of the output fileset"""
-
+        Parameters
+        ----------
+        filename : str
+            Basename of the output fileset.
+        """
         if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
-            logger.info("Generating FieldSet output with basename: %s" % filename)
+            logger.info(f"Generating FieldSet output with basename: {filename}")
 
             if hasattr(self, 'U'):
                 self.U.write(filename, varname='vozocrtx')
@@ -995,35 +1138,8 @@ class FieldSet(object):
                 self.V.write(filename, varname='vomecrty')
 
             for v in self.get_fields():
-                if (v.name != 'U') and (v.name != 'V'):
+                if isinstance(v, Field) and (v.name != 'U') and (v.name != 'V'):
                     v.write(filename)
-
-    def advancetime(self, fieldset_new):
-        """Replace oldest time on FieldSet with new FieldSet
-
-        :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
-
-        logger.warning_once("Fieldset.advancetime() is deprecated.\n \
-                             Parcels deals automatically with loading only 2 time steps simultaneously\
-                             such that the total allocated memory remains limited.")
-
-        advance = 0
-        for gnew in fieldset_new.gridset.grids:
-            gnew.advanced = False
-
-        for fnew in fieldset_new.get_fields():
-            if isinstance(fnew, VectorField):
-                continue
-            f = getattr(self, fnew.name)
-            gnew = fnew.grid
-            if not gnew.advanced:
-                g = f.grid
-                advance2 = g.advancetime(gnew)
-                if advance2*advance < 0:
-                    raise RuntimeError("Some Fields of the Fieldset are advanced forward and other backward")
-                advance = advance2
-                gnew.advanced = True
-            f.advancetime(fnew, advance == 1)
 
     def computeTimeChunk(self, time, dt):
         """Load a chunk of three data time steps into the FieldSet.
@@ -1031,8 +1147,12 @@ class FieldSet(object):
         with default option deferred_load. The loaded time steps are at or immediatly before time
         and the two time steps immediately following time if dt is positive (and inversely for negative dt)
 
-        :param time: Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
-        :param dt: time step of the integration scheme
+        Parameters
+        ----------
+        time :
+            Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
+        dt :
+            time step of the integration scheme
         """
         signdt = np.sign(dt)
         nextTime = np.infty if dt > 0 else -np.infty
@@ -1040,7 +1160,7 @@ class FieldSet(object):
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load:
+            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
@@ -1049,7 +1169,7 @@ class FieldSet(object):
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
@@ -1075,7 +1195,7 @@ class FieldSet(object):
                     data = f.computeTimeChunk(data, tind)
                 data = f.rescale_and_set_minmax(data)
 
-                if(isinstance(f.data, DeferredArray)):
+                if (isinstance(f.data, DeferredArray)):
                     f.data = DeferredArray()
                 f.data = f.reshape(data)
                 if not f.chunk_set:
@@ -1163,7 +1283,7 @@ class FieldSet(object):
 
         # update time varying grid depth
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f.dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
                 depth_data = f.grid.depth_field.data

@@ -1,0 +1,13 @@
+name: py3_parcels
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.8
+  - parcels
+  - ffmpeg>=3.2.3
+  - mpi4py>=3.0.1
+  - mpich>=3.2.1
+  - py>=1.4.27
+  - scikit-learn
+  - pykdtree

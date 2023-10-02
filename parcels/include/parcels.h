@@ -140,7 +140,7 @@ static inline StatusCode spatial_interpolation_trilinear_invdist_land(double xsi
   // count the number of surrounding land points (assume land is where the value is close to zero)
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 2; j++) {
-      for (k = 0; k < 2; k++) {  
+      for (k = 0; k < 2; k++) {
         if(is_zero_flt(data[i][j][k])) {
 	      land[i][j][k] = 1;
 	      nb_land++;
@@ -171,7 +171,7 @@ static inline StatusCode spatial_interpolation_trilinear_invdist_land(double xsi
   *value = 0.;
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 2; j++) {
-        for (k = 0; k < 2; k++) {  
+        for (k = 0; k < 2; k++) {
           float distance = pow((zeta - i), 2) + pow((eta - j), 2) + pow((xsi - k), 2);
           if (is_zero_flt(distance)) {
 	        if (land[i][j][k] == 1) {
@@ -444,7 +444,7 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
 
   /* Find time index for temporal interpolation */
   if (f->time_periodic == 0 && f->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
-    return ERROR_TIME_EXTRAPOLATION;
+    return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], f->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
 
@@ -652,7 +652,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
 
   /* Find time index for temporal interpolation */
   if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
-    return ERROR_TIME_EXTRAPOLATION;
+    return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
 
@@ -870,7 +870,7 @@ static inline StatusCode temporal_interpolationUVW_c_grid(type_coord x, type_coo
 
   /* Find time index for temporal interpolation */
   if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
-    return ERROR_TIME_EXTRAPOLATION;
+    return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
 
@@ -1090,7 +1090,7 @@ static inline StatusCode temporal_interpolation_slip(type_coord x, type_coord y,
 
   /* Find time index for temporal interpolation */
   if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
-    return ERROR_TIME_EXTRAPOLATION;
+    return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
 

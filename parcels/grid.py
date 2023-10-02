@@ -1,12 +1,5 @@
 import functools
-from ctypes import c_double
-from ctypes import c_float
-from ctypes import c_int
-from ctypes import c_void_p
-from ctypes import cast
-from ctypes import POINTER
-from ctypes import pointer
-from ctypes import Structure
+from ctypes import POINTER, Structure, c_double, c_float, c_int, c_void_p, cast, pointer
 from enum import IntEnum
 
 import numpy as np
@@ -29,10 +22,8 @@ class CGrid(Structure):
                 ('grid', c_void_p)]
 
 
-class Grid(object):
-    """Grid class that defines a (spatial and temporal) grid on which Fields are defined
-
-    """
+class Grid:
+    """Grid class that defines a (spatial and temporal) grid on which Fields are defined."""
 
     def __init__(self, lon, lat, time, time_origin, mesh):
         self.xi = None
@@ -40,8 +31,14 @@ class Grid(object):
         self.zi = None
         self.ti = -1
         self.lon = lon
+        if not self.lon.flags['C_CONTIGUOUS']:
+            self.lon = np.array(self.lon, order='C')
         self.lat = lat
+        if not self.lat.flags['C_CONTIGUOUS']:
+            self.lat = np.array(self.lat, order='C')
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
+        if not self.time.flags['C_CONTIGUOUS']:
+            self.time = np.array(self.time, order='C')
         if not self.lon.dtype == np.float32:
             self.lon = self.lon.astype(np.float32)
         if not self.lat.dtype == np.float32:
@@ -97,8 +94,8 @@ class Grid(object):
     @property
     def child_ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
-        pointers and sizes for this grid."""
-
+        pointers and sizes for this grid.
+        """
         class CStructuredGrid(Structure):
             # z4d is only to have same cstruct as RectilinearSGrid
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
@@ -142,21 +139,6 @@ class Grid(object):
         if self.lon_remapping:
             return self.lon_remapping.particle_to_target(lon)
         return lon
-
-    def advancetime(self, grid_new):
-        assert isinstance(grid_new.time_origin, type(self.time_origin)), 'time_origin of new and old grids must be either both None or both a date'
-        if self.time_origin:
-            grid_new.time = grid_new.time + self.time_origin.reltime(grid_new.time_origin)
-        if len(grid_new.time) != 1:
-            raise RuntimeError('New FieldSet needs to have only one snapshot')
-        if grid_new.time > self.time[-1]:  # forward in time, so appending at end
-            self.time = np.concatenate((self.time[1:], grid_new.time))
-            return 1
-        elif grid_new.time < self.time[0]:  # backward in time, so prepending at start
-            self.time = np.concatenate((grid_new.time, self.time[:-1]))
-            return -1
-        else:
-            raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 
     def check_zonal_periodic(self):
         if self.zonal_periodic or self.mesh == 'flat' or self.lon.size == 1:
@@ -256,19 +238,20 @@ class Grid(object):
 
 
 class RectilinearGrid(Grid):
-    """Rectilinear Grid
-       Private base class for RectilinearZGrid and RectilinearSGrid
+    """Rectilinear Grid class
+
+    Private base class for RectilinearZGrid and RectilinearSGrid
 
     """
 
     def __init__(self, lon, lat, time, time_origin, mesh):
-        assert(isinstance(lon, np.ndarray) and len(lon.shape) <= 1), 'lon is not a numpy vector'
-        assert(isinstance(lat, np.ndarray) and len(lat.shape) <= 1), 'lat is not a numpy vector'
+        assert (isinstance(lon, np.ndarray) and len(lon.shape) <= 1), 'lon is not a numpy vector'
+        assert (isinstance(lat, np.ndarray) and len(lat.shape) <= 1), 'lat is not a numpy vector'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
-            assert(len(time.shape) == 1), 'time is not a vector'
+            assert (len(time.shape) == 1), 'time is not a vector'
 
-        super(RectilinearGrid, self).__init__(lon, lat, time, time_origin, mesh)
+        super().__init__(lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.size
         self.ydim = self.lat.size
         self.tdim = self.time.size
@@ -282,9 +265,14 @@ class RectilinearGrid(Grid):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
         similarly to the halo created for the Fields
 
-        :param zonal: Create a halo in zonal direction (boolean)
-        :param meridional: Create a halo in meridional direction (boolean)
-        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        Parameters
+        ----------
+        zonal : bool
+            Create a halo in zonal direction
+        meridional : bool
+            Create a halo in meridional direction
+        halosize : int
+            size of the halo (in grid points). Default is 5 grid points
         """
         if zonal:
             lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
@@ -309,29 +297,39 @@ class RectilinearGrid(Grid):
 
 
 class RectilinearZGrid(RectilinearGrid):
-    """Rectilinear Z Grid
+    """Rectilinear Z Grid.
 
-    :param lon: Vector containing the longitude coordinates of the grid
-    :param lat: Vector containing the latitude coordinates of the grid
-    :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
-           The depth of the different layers is thus constant.
-    :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (TimeConverter object) of the time axis
-    :param mesh: String indicating the type of mesh coordinates and
-           units used during velocity interpolation:
+    Parameters
+    ----------
+    lon :
+        Vector containing the longitude coordinates of the grid
+    lat :
+        Vector containing the latitude coordinates of the grid
+    depth :
+        Vector containing the vertical coordinates of the grid, which are z-coordinates.
+        The depth of the different layers is thus constant.
+    time :
+        Vector containing the time coordinates of the grid
+    time_origin : parcels.tools.converters.TimeConverter
+        Time origin of the time axis
+    mesh : str
+        String indicating the type of mesh coordinates and
+        units used during velocity interpolation:
 
-           1. spherical (default): Lat and lon in degree, with a
-              correction for zonal velocity U near the poles.
-           2. flat: No conversion, lat/lon are assumed to be in m.
+        1. spherical (default): Lat and lon in degree, with a
+           correction for zonal velocity U near the poles.
+        2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
     def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
-        super(RectilinearZGrid, self).__init__(lon, lat, time, time_origin, mesh)
+        super().__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
-            assert(len(depth.shape) <= 1), 'depth is not a vector'
+            assert (len(depth.shape) <= 1), 'depth is not a vector'
 
         self.gtype = GridCode.RectilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        if not self.depth.flags['C_CONTIGUOUS']:
+            self.depth = np.array(self.depth, order='C')
         self.zdim = self.depth.size
         self.z4d = -1  # only used in RectilinearSGrid
         if not self.depth.dtype == np.float32:
@@ -342,31 +340,41 @@ class RectilinearSGrid(RectilinearGrid):
     """Rectilinear S Grid. Same horizontal discretisation as a rectilinear z grid,
        but with s vertical coordinates
 
-    :param lon: Vector containing the longitude coordinates of the grid
-    :param lat: Vector containing the latitude coordinates of the grid
-    :param depth: 4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
-           which are s-coordinates.
-           s-coordinates can be terrain-following (sigma) or iso-density (rho) layers,
-           or any generalised vertical discretisation.
-           The depth of each node depends then on the horizontal position (lon, lat),
-           the number of the layer and the time is depth is a 4D array.
-           depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
-    :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (TimeConverter object) of the time axis
-    :param mesh: String indicating the type of mesh coordinates and
-           units used during velocity interpolation:
+    Parameters
+    ----------
+    lon :
+        Vector containing the longitude coordinates of the grid
+    lat :
+        Vector containing the latitude coordinates of the grid
+    depth :
+        4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
+        which are s-coordinates.
+        s-coordinates can be terrain-following (sigma) or iso-density (rho) layers,
+        or any generalised vertical discretisation.
+        The depth of each node depends then on the horizontal position (lon, lat),
+        the number of the layer and the time is depth is a 4D array.
+        depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
+    time :
+        Vector containing the time coordinates of the grid
+    time_origin : parcels.tools.converters.TimeConverter
+        Time origin of the time axis
+    mesh : str
+        String indicating the type of mesh coordinates and
+        units used during velocity interpolation:
 
-           1. spherical (default): Lat and lon in degree, with a
-              correction for zonal velocity U near the poles.
-           2. flat: No conversion, lat/lon are assumed to be in m.
+        1. spherical (default): Lat and lon in degree, with a
+           correction for zonal velocity U near the poles.
+        2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
     def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
-        super(RectilinearSGrid, self).__init__(lon, lat, time, time_origin, mesh)
-        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
+        super().__init__(lon, lat, time, time_origin, mesh)
+        assert (isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
 
         self.gtype = GridCode.RectilinearSGrid
         self.depth = depth
+        if not self.depth.flags['C_CONTIGUOUS']:
+            self.depth = np.array(self.depth, order='C')
         self.zdim = self.depth.shape[-3]
         self.z4d = 1 if len(self.depth.shape) == 4 else 0
         if self.z4d:
@@ -386,15 +394,15 @@ class RectilinearSGrid(RectilinearGrid):
 class CurvilinearGrid(Grid):
 
     def __init__(self, lon, lat, time=None, time_origin=None, mesh='flat'):
-        assert(isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
-        assert(isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
+        assert (isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
+        assert (isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
-            assert(len(time.shape) == 1), 'time is not a vector'
+            assert (len(time.shape) == 1), 'time is not a vector'
 
         lon = lon.squeeze()
         lat = lat.squeeze()
-        super(CurvilinearGrid, self).__init__(lon, lat, time, time_origin, mesh)
+        super().__init__(lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
         self.tdim = self.time.size
@@ -403,9 +411,14 @@ class CurvilinearGrid(Grid):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
         similarly to the halo created for the Fields
 
-        :param zonal: Create a halo in zonal direction (boolean)
-        :param meridional: Create a halo in meridional direction (boolean)
-        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        Parameters
+        ----------
+        zonal : bool
+            Create a halo in zonal direction
+        meridional : bool
+            Create a halo in meridional direction
+        halosize : int
+            size of the halo (in grid points). Default is 5 grid points
         """
         if zonal:
             lonshift = self.lon[:, -1] - 2 * self.lon[:, 0] + self.lon[:, 1]
@@ -441,27 +454,37 @@ class CurvilinearGrid(Grid):
 class CurvilinearZGrid(CurvilinearGrid):
     """Curvilinear Z Grid.
 
-    :param lon: 2D array containing the longitude coordinates of the grid
-    :param lat: 2D array containing the latitude coordinates of the grid
-    :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
-           The depth of the different layers is thus constant.
-    :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (TimeConverter object) of the time axis
-    :param mesh: String indicating the type of mesh coordinates and
-           units used during velocity interpolation:
+    Parameters
+    ----------
+    lon :
+        2D array containing the longitude coordinates of the grid
+    lat :
+        2D array containing the latitude coordinates of the grid
+    depth :
+        Vector containing the vertical coordinates of the grid, which are z-coordinates.
+        The depth of the different layers is thus constant.
+    time :
+        Vector containing the time coordinates of the grid
+    time_origin : parcels.tools.converters.TimeConverter
+        Time origin of the time axis
+    mesh : str
+        String indicating the type of mesh coordinates and
+        units used during velocity interpolation:
 
-           1. spherical (default): Lat and lon in degree, with a
-              correction for zonal velocity U near the poles.
-           2. flat: No conversion, lat/lon are assumed to be in m.
+        1. spherical (default): Lat and lon in degree, with a
+           correction for zonal velocity U near the poles.
+        2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
     def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
-        super(CurvilinearZGrid, self).__init__(lon, lat, time, time_origin, mesh)
+        super().__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
-            assert(len(depth.shape) == 1), 'depth is not a vector'
+            assert (len(depth.shape) == 1), 'depth is not a vector'
 
         self.gtype = GridCode.CurvilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        if not self.depth.flags['C_CONTIGUOUS']:
+            self.depth = np.array(self.depth, order='C')
         self.zdim = self.depth.size
         self.z4d = -1  # only for SGrid
         if not self.depth.dtype == np.float32:
@@ -471,31 +494,41 @@ class CurvilinearZGrid(CurvilinearGrid):
 class CurvilinearSGrid(CurvilinearGrid):
     """Curvilinear S Grid.
 
-    :param lon: 2D array containing the longitude coordinates of the grid
-    :param lat: 2D array containing the latitude coordinates of the grid
-    :param depth: 4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
-           which are s-coordinates.
-           s-coordinates can be terrain-following (sigma) or iso-density (rho) layers,
-           or any generalised vertical discretisation.
-           The depth of each node depends then on the horizontal position (lon, lat),
-           the number of the layer and the time is depth is a 4D array.
-           depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
-    :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (TimeConverter object) of the time axis
-    :param mesh: String indicating the type of mesh coordinates and
-           units used during velocity interpolation:
+    Parameters
+    ----------
+    lon :
+        2D array containing the longitude coordinates of the grid
+    lat :
+        2D array containing the latitude coordinates of the grid
+    depth :
+        4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
+        which are s-coordinates.
+        s-coordinates can be terrain-following (sigma) or iso-density (rho) layers,
+        or any generalised vertical discretisation.
+        The depth of each node depends then on the horizontal position (lon, lat),
+        the number of the layer and the time is depth is a 4D array.
+        depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
+    time :
+        Vector containing the time coordinates of the grid
+    time_origin : parcels.tools.converters.TimeConverter
+        Time origin of the time axis
+    mesh : str
+        String indicating the type of mesh coordinates and
+        units used during velocity interpolation:
 
-           1. spherical (default): Lat and lon in degree, with a
-              correction for zonal velocity U near the poles.
-           2. flat: No conversion, lat/lon are assumed to be in m.
+        1. spherical (default): Lat and lon in degree, with a
+           correction for zonal velocity U near the poles.
+        2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
     def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
-        super(CurvilinearSGrid, self).__init__(lon, lat, time, time_origin, mesh)
-        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
+        super().__init__(lon, lat, time, time_origin, mesh)
+        assert (isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
         self.gtype = GridCode.CurvilinearSGrid
-        self.depth = depth
+        self.depth = depth  # should be a C-contiguous array of floats
+        if not self.depth.flags['C_CONTIGUOUS']:
+            self.depth = np.array(self.depth, order='C')
         self.zdim = self.depth.shape[-3]
         self.z4d = 1 if len(self.depth.shape) == 4 else 0
         if self.z4d:

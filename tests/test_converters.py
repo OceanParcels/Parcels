@@ -1,6 +1,7 @@
-from parcels.tools.converters import TimeConverter, _get_cftime_datetimes
 import cftime
 import numpy as np
+
+from parcels.tools.converters import TimeConverter, _get_cftime_datetimes
 
 
 def test_TimeConverter():

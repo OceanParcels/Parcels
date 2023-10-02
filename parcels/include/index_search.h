@@ -9,6 +9,7 @@ extern "C" {
 #include <math.h>
 
 #define CHECKSTATUS(res) do {if (res != SUCCESS) return res;} while (0)
+#define CHECKSTATUS_KERNELLOOP(res) {if (res == REPEAT) return res;}
 #define rtol 1.e-5
 #define atol 1.e-8
 
@@ -50,7 +51,7 @@ typedef struct
 
 typedef enum
   {
-    SUCCESS=0, EVALUATE=1, REPEAT=2, DELETE=3, STOP_EXECUTION=4, ERROR=5, ERROR_INTERPOLATION=51, ERROR_OUT_OF_BOUNDS=6, ERROR_THROUGH_SURFACE=61, ERROR_TIME_EXTRAPOLATION=7
+    SUCCESS=0, EVALUATE=1, REPEAT=2, DELETE=3, STOPEXECUTION=4, ERROR=5, ERRORINTERPOLATION=51, ERROROUTOFBOUNDS=6, ERRORTHROUGHSURFACE=61, ERRORTIMEEXTRAPOLATION=7
   } StatusCode;
 
 typedef enum
@@ -104,14 +105,14 @@ static inline StatusCode search_indices_vertical_z(type_coord z, int zdim, float
       *zeta = z / zvals[0];
       return SUCCESS;
     }
-    if (z < zvals[0]) {return ERROR_THROUGH_SURFACE;}
-    if (z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    if (z < zvals[0]) {return ERRORTHROUGHSURFACE;}
+    if (z > zvals[zdim-1]) {return ERROROUTOFBOUNDS;}
     while (*zi < zdim-1 && z > zvals[*zi+1]) ++(*zi);
     while (*zi > 0 && z < zvals[*zi]) --(*zi);
   }
   else{
-    if (z > zvals[0]) {return ERROR_THROUGH_SURFACE;}
-    if (z < zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    if (z > zvals[0]) {return ERRORTHROUGHSURFACE;}
+    if (z < zvals[zdim-1]) {return ERROROUTOFBOUNDS;}
     while (*zi < zdim-1 && z < zvals[*zi+1]) ++(*zi);
     while (*zi > 0 && z > zvals[*zi]) --(*zi);
   }
@@ -161,14 +162,14 @@ static inline StatusCode search_indices_vertical_s(type_coord z, int xdim, int y
   }
 
   if (zcol[zdim-1] > zcol[0]){
-    if (z < zcol[0]) {return ERROR_THROUGH_SURFACE;}
-    if (z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    if (z < zcol[0]) {return ERRORTHROUGHSURFACE;}
+    if (z > zcol[zdim-1]) {return ERROROUTOFBOUNDS;}
     while (*zi < zdim-1 && z > zcol[*zi+1]) ++(*zi);
     while (*zi > 0 && z < zcol[*zi]) --(*zi);
   }
   else{
-    if (z > zcol[0]) {return ERROR_THROUGH_SURFACE;}
-    if (z < zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    if (z > zcol[0]) {return ERRORTHROUGHSURFACE;}
+    if (z < zcol[zdim-1]) {return ERROROUTOFBOUNDS;}
     while (*zi < zdim-1 && z < zcol[*zi+1]) ++(*zi);
     while (*zi > 0 && z > zcol[*zi]) --(*zi);
   }
@@ -224,10 +225,10 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
 
   if (zonal_periodic == 0){
     if ((xdim > 1) && ((x < xy_minmax[0]) || (x > xy_minmax[1])))
-      return ERROR_OUT_OF_BOUNDS;
+      return ERROROUTOFBOUNDS;
   }
   if ((ydim > 1) && ((y < xy_minmax[2]) || (y > xy_minmax[3])))
-    return ERROR_OUT_OF_BOUNDS;
+    return ERROROUTOFBOUNDS;
 
   if (xdim == 1){
     *xi = 0;
@@ -264,7 +265,7 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
       if (xvalsi1 > xvalsi + 180) xvalsi1 -= 360;
       it++;
       if (it > itMax){
-        return ERROR_OUT_OF_BOUNDS;
+        return ERROROUTOFBOUNDS;
       }
     }
 
@@ -293,7 +294,7 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
                                         z4d, ti, tdim, time, t0, t1, interp_method);
         break;
       default:
-        status = ERROR_INTERPOLATION;
+        status = ERRORINTERPOLATION;
     }
     CHECKSTATUS(status);
   }
@@ -307,9 +308,9 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
   if ( (*zeta < 0) && (is_zero_dbl(*zeta)) )      {*zeta = 0.;}
   if ( (*zeta > 1) && (is_close_dbl(*zeta, 1.)) ) {*zeta = 1.;}
 
-  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_INTERPOLATION;
-  if ( (*eta < 0) || (*eta > 1) ) return ERROR_INTERPOLATION;
-  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_INTERPOLATION;
+  if ( (*xsi < 0) || (*xsi > 1) ) return ERRORINTERPOLATION;
+  if ( (*eta < 0) || (*eta > 1) ) return ERRORINTERPOLATION;
+  if ( (*zeta < 0) || (*zeta > 1) ) return ERRORINTERPOLATION;
 
   return SUCCESS;
 }
@@ -340,12 +341,12 @@ static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, 
 
   if (zonal_periodic == 0){
     if ((x < xy_minmax[0]) || (x > xy_minmax[1])){
-      if (xgrid[0][0] < xgrid[0][xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-      else if (x < xgrid[0][0] && x > xgrid[0][xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+      if (xgrid[0][0] < xgrid[0][xdim-1]) {return ERROROUTOFBOUNDS;}
+      else if (x < xgrid[0][0] && x > xgrid[0][xdim-1]) {return ERROROUTOFBOUNDS;}
     }
   }
   if ((y < xy_minmax[2]) || (y > xy_minmax[3]))
-    return ERROR_OUT_OF_BOUNDS;
+    return ERROROUTOFBOUNDS;
 
   double a[4], b[4];
 
@@ -390,9 +391,9 @@ static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, 
     else
       *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
     if ( (*xsi < 0) && (*eta < 0) && (*xi == 0) && (*yi == 0) )
-      return ERROR_OUT_OF_BOUNDS;
+      return ERROROUTOFBOUNDS;
     if ( (*xsi > 1) && (*eta > 1) && (*xi == xdim-1) && (*yi == ydim-1) )
-      return ERROR_OUT_OF_BOUNDS;
+      return ERROROUTOFBOUNDS;
     if (*xsi < -tol)
       (*xi)--;
     if (*xsi > 1+tol)
@@ -409,7 +410,7 @@ static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, 
       printf("            new particle indices: (yi, xi) %d %d\n", *yi, *xi);
       printf("            Mesh 2d shape:  %d %d\n", ydim, xdim);
       printf("            Relative particle position:  (xsi, eta) %1.16e %1.16e\n", *xsi, *eta);
-      return ERROR_OUT_OF_BOUNDS;
+      return ERROROUTOFBOUNDS;
     }
   }
   if ( (*xsi != *xsi) || (*eta != *eta) ){  // check if nan
@@ -418,7 +419,7 @@ static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, 
       printf("            new particle indices: (yi, xi) %d %d\n", *yi, *xi);
       printf("            Mesh 2d shape:  %d %d\n", ydim, xdim);
       printf("            Relative particle position:  (xsi, eta) %1.16e %1.16e\n", *xsi, *eta);
-      return ERROR_OUT_OF_BOUNDS;
+      return ERROROUTOFBOUNDS;
   }
   if (*xsi < 0) *xsi = 0;
   if (*xsi > 1) *xsi = 1;
@@ -437,16 +438,16 @@ static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, 
                                         z4d, ti, tdim, time, t0, t1, interp_method);
         break;
       default:
-        status = ERROR_INTERPOLATION;
+        status = ERRORINTERPOLATION;
     }
     CHECKSTATUS(status);
   }
   else
     *zeta = 0;
 
-  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_INTERPOLATION;
-  if ( (*eta < 0) || (*eta > 1) ) return ERROR_INTERPOLATION;
-  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_INTERPOLATION;
+  if ( (*xsi < 0) || (*xsi > 1) ) return ERRORINTERPOLATION;
+  if ( (*eta < 0) || (*eta > 1) ) return ERRORINTERPOLATION;
+  if ( (*zeta < 0) || (*zeta > 1) ) return ERRORINTERPOLATION;
 
   return SUCCESS;
 }
@@ -491,14 +492,14 @@ static inline StatusCode search_time_index(double *t, int size, double *tvals, i
         *t -= *periods * (tfull_max-tfull_min);
       }
       search_time_index(t, size, tvals, ti, time_periodic, tfull_min, tfull_max, periods);
-    }  
+    }
     else if (*t > tvals[size-1]){
       *ti = 0;
       *periods = (int) floor( (*t-tfull_min)/(tfull_max-tfull_min));
       *t -= *periods * (tfull_max-tfull_min);
       search_time_index(t, size, tvals, ti, time_periodic, tfull_min, tfull_max, periods);
-    }  
-  }          
+    }
+  }
   while (*ti < size-1 && *t > tvals[*ti+1]) ++(*ti);
   while (*ti > 0 && *t < tvals[*ti]) --(*ti);
   return SUCCESS;

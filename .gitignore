@@ -1,8 +1,10 @@
 build/*
 docs/_build/*
+docs/_downloads
 gh-pages/*
 lib/
 bin/
+parcels_examples
 
 *.so
 *.log
@@ -16,10 +18,9 @@ out-*
 **/*.zarr/*
 
 .idea/*
+.env
 Profile.prof
-.ipynb_checkpoints/*
 **/.ipynb_checkpoints/*
-parcels/examples/.ipynb_checkpoints/*
 .cache/*
 .pytest_cache/*
 .eggs/*

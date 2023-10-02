@@ -1,0 +1,54 @@
+name: integration-tests
+on:
+  push:
+    branches:
+      - "master"
+      - "test-me/*"
+  pull_request:
+    branches:
+      - "*"
+  schedule:
+    - cron: "0 7 * * 1" # Run every Monday at 7:00 UTC
+
+defaults:
+  run:
+    shell: bash -el {0}
+
+jobs:
+  integration-test:
+    if: github.event.pull_request.draft == false
+    name: ${{ matrix.os }} integration tests
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos, ubuntu, windows]
+        include:
+          - os: macos
+            os-short: osx
+          - os: ubuntu
+            os-short: linux
+          - os: windows
+            os-short: win
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Conda and parcels
+        uses: ./.github/actions/install-parcels
+        with:
+          environment-file: environment.yml
+          environment-name: py3_parcels
+      - name: Integration test
+        run: |
+          coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html docs/examples
+          coverage xml
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          flags: integration-tests
+      - name: Upload test results
+        if: ${{ always() }} # Always run this step, even if tests fail
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: Integration test report
+          path: ${{ matrix.os }}_integration_test_report.html

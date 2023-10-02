@@ -1,37 +1,40 @@
+import sys
+from glob import glob
 from os import path, system
-from netCDF4 import Dataset
+
 import numpy as np
 import pytest
-import sys
-try:
-    from mpi4py import MPI
-except:
-    MPI = None
+import xarray as xr
 
 
-@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="skipping macOS test as problem with file in pytest")
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
-@pytest.mark.parametrize('repeatdt', [200*86400, 10*86400])
-@pytest.mark.parametrize('maxage', [600*86400, 10*86400])
-def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage):
-    if MPI:
-        stommel_file = path.join(path.dirname(__file__), '..', 'parcels',
-                                 'examples', 'example_stommel.py')
-        outputMPI = tmpdir.join('StommelMPI.nc')
-        outputNoMPI = tmpdir.join('StommelNoMPI.nc')
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows as mpi4py not available for windows")
+@pytest.mark.parametrize('repeatdt, maxage', [(200*86400, 600*86400), (100*86400, 100*86400)])
+@pytest.mark.parametrize('nump', [8])
+def test_mpi_run(tmpdir, repeatdt, maxage, nump):
+    stommel_file = path.join(path.dirname(__file__), '..', 'docs', 'examples', 'example_stommel.py')
+    outputMPI = tmpdir.join('StommelMPI')
+    outputMPI_partition_function = tmpdir.join('StommelMPI_partition_function')
+    outputNoMPI = tmpdir.join('StommelNoMPI.zarr')
 
-        system('mpirun -np 2 python %s -p 4 -o %s -r %d -a %d -psm %s' % (stommel_file, outputMPI, repeatdt, maxage, pset_mode))
-        system('python %s -p 4 -o %s -r %d -a %d -psm %s' % (stommel_file, outputNoMPI, repeatdt, maxage, pset_mode))
+    system('mpirun -np 2 python %s -p %d -o %s -r %d -a %d -wf False -cpf True' % (stommel_file, nump, outputMPI_partition_function, repeatdt, maxage))
+    system('mpirun -np 2 python %s -p %d -o %s -r %d -a %d -wf False' % (stommel_file, nump, outputMPI, repeatdt, maxage))
+    system('python %s -p %d -o %s -r %d -a %d -wf False' % (stommel_file, nump, outputNoMPI, repeatdt, maxage))
 
-        ncfile1 = Dataset(outputMPI, 'r', 'NETCDF4')
-        ncfile2 = Dataset(outputNoMPI, 'r', 'NETCDF4')
+    ds2 = xr.open_zarr(outputNoMPI)
 
-        for v in ncfile2.variables.keys():
-            assert np.allclose(ncfile1.variables[v][:], ncfile2.variables[v][:])
+    for mpi_run in [outputMPI, outputMPI_partition_function]:
+        files = glob(path.join(mpi_run, "proc*"))
+        ds1 = xr.concat([xr.open_zarr(f) for f in files], dim='trajectory',
+                        compat='no_conflicts', coords='minimal').sortby(['trajectory'])
 
-        for a in ncfile2.ncattrs():
+        for v in ds2.variables.keys():
+            if v == 'time':
+                continue  # skip because np.allclose does not work well on np.datetime64
+            assert np.allclose(ds1.variables[v][:], ds2.variables[v][:], equal_nan=True)
+
+        for a in ds2.attrs:
             if a != 'parcels_version':
-                assert getattr(ncfile1, a) == getattr(ncfile2, a)
+                assert ds1.attrs[a] == ds2.attrs[a]
 
-        ncfile1.close()
-        ncfile2.close()
+        ds1.close()
+    ds2.close()
