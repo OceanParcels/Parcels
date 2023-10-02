@@ -13,6 +13,7 @@ class StatusCode:
     Repeat = 2
     Delete = 3
     StopExecution = 4
+    StopAllExecution = 41
     Error = 5
     ErrorInterpolation = 51
     ErrorOutOfBounds = 6
