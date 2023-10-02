@@ -60,6 +60,10 @@ If you would prefer to have a development installation of Parcels (i.e., where t
 
 **Step 1:** Install `micromamba <https://mamba.readthedocs.io/en/latest/index.html>`_, a lightweight version of conda, following the instructions `here <https://mamba.readthedocs.io/en/latest/micromamba-installation.html#umamba-install>`_.
 
+.. note::
+
+  If you prefer to work with Anaconda or Miniconda instead of Micromamba, you will have to remove the ``sel(unix):`` commands in the ``environment.yml`` file (or remove these lines altogether if you're on Windows), since conda does not (yet) support these `selectors`. After that, just replace ``micromamba`` with ``conda`` in the commands below.
+
 **Step 2:** Clone the Parcels repo and create a new environment with the dependencies:
 
 .. code-block:: bash
@@ -74,7 +78,3 @@ If you would prefer to have a development installation of Parcels (i.e., where t
 
   micromamba activate parcels
   pip install --no-build-isolation --no-deps -e .
-
-.. note::
-
-  If you prefer to work with Anaconda or Miniconda instead of Micromamba, you will have to remove the ``sel(unix):`` commands in the ``environment.yml`` file (or remove these lines altogether if you're on Windows), since conda does not (yet) support these `selectors`. After that, just replace ``micromamba`` with ``conda`` in the above commands.
