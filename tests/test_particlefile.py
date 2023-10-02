@@ -30,6 +30,20 @@ def fieldset_ficture(xdim=40, ydim=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_metadata(fieldset, mode, tmpdir):
+    filepath = tmpdir.join("pfile_metadata.zarr")
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
+
+    def DoNothing(particle, fieldset, time):
+        pass
+
+    pset.execute(DoNothing, runtime=1, output_file=pset.ParticleFile(filepath))
+
+    ds = xr.open_zarr(filepath)
+    assert ds.attrs['parcels_kernels'].lower() == f'{mode}ParticleDoNothing'.lower()
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_write_zarr_memorystore(fieldset, mode, npart=10):
     """Checkt that writing to a Zarr MemoryStore works."""
     zarr_store = MemoryStore()

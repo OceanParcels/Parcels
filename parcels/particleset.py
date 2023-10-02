@@ -1,5 +1,4 @@
 import sys
-import time as time_module
 from abc import ABC
 from copy import copy
 from datetime import date, datetime
@@ -109,7 +108,7 @@ class ParticleSet(ABC):
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
-        class_name = "Array"+pclass.__name__
+        class_name = pclass.__name__
         array_class = None
         if class_name not in dir():
             def ArrayClass_init(self, *args, **kwargs):
@@ -323,11 +322,6 @@ class ParticleSet(ABC):
     @property
     def ctypes_struct(self):
         return self.cstruct()
-
-    def __create_progressbar(self, starttime, endtime):
-        pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
-        pbar.prevtime = starttime
-        return pbar
 
     @property
     def size(self):
@@ -819,7 +813,7 @@ class ParticleSet(ABC):
         self.particledata.set_variable_write_status(var, write_status)
 
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
-                output_file=None, verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
+                output_file=None, verbose_progress=True, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for multiple timesteps.
 
         Optionally also provide sub-timestepping
@@ -844,7 +838,7 @@ class ParticleSet(ABC):
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
         verbose_progress : bool
-            Boolean for providing a progress bar for the kernel execution loop. (Default value = None)
+            Boolean for providing a progress bar for the kernel execution loop. (Default value = True)
         postIterationCallbacks :
             Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
         callbackdt :
@@ -865,6 +859,8 @@ class ParticleSet(ABC):
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.particledata.lonlatdepth_dtype else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
+        if output_file:
+            output_file.add_metadata('parcels_kernels', self.kernel.name)
 
         # Set up the interaction kernel(s) if not set and given.
         if self.interaction_kernel is None and pyfunc_inter is not None:
@@ -911,17 +907,17 @@ class ParticleSet(ABC):
         min_rt = np.min(self.particledata.data['time_nextloop'])
         max_rt = np.max(self.particledata.data['time_nextloop'])
 
-        # Derive _starttime and endtime from arguments or fieldset defaults
-        _starttime = min_rt if dt >= 0 else max_rt
+        # Derive starttime and endtime from arguments or fieldset defaults
+        starttime = min_rt if dt >= 0 else max_rt
         if self.repeatdt is not None and self.repeat_starttime is None:
-            self.repeat_starttime = _starttime
+            self.repeat_starttime = starttime
         if runtime is not None:
-            endtime = _starttime + runtime * np.sign(dt)
+            endtime = starttime + runtime * np.sign(dt)
         elif endtime is None:
             mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
             endtime = maxtime if dt >= 0 else mintime
 
-        if (abs(endtime-_starttime) < 1e-5 or runtime == 0) and dt == 0:
+        if (abs(endtime-starttime) < 1e-5 or runtime == 0) and dt == 0:
             raise RuntimeError("dt and runtime are zero, or endtime is equal to Particle.time. "
                                "ParticleSet.execute() will not do anything.")
 
@@ -932,7 +928,7 @@ class ParticleSet(ABC):
             if self.repeatdt is not None:
                 interupt_dts.append(self.repeatdt)
             callbackdt = np.min(np.array(interupt_dts))
-        time = _starttime
+        time = starttime
         if self.repeatdt:
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
@@ -944,20 +940,15 @@ class ParticleSet(ABC):
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
-        tol = 1e-12
-        if verbose_progress is None:
-            walltime_start = time_module.time()
-        if verbose_progress:
-            pbar = self.__create_progressbar(_starttime, endtime)
+        if output_file:
+            logger.info(f'Output files are stored in {output_file.fname}.')
 
+        if verbose_progress:
+            pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
+
+        tol = 1e-12
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             time_at_startofloop = time
-            if verbose_progress is None and time_module.time() - walltime_start > 10:
-                # Showing progressbar if runtime > 10 seconds
-                if output_file:
-                    logger.info(f'Output files are stored in {output_file.fname}.')
-                pbar = self.__create_progressbar(_starttime, endtime)
-                verbose_progress = True
 
             if dt > 0:
                 next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
@@ -1026,8 +1017,7 @@ class ParticleSet(ABC):
             if dt == 0:
                 break
             if verbose_progress:
-                pbar.update(abs(time - pbar.prevtime))
-                pbar.prevtime = time
+                pbar.update(abs(time - time_at_startofloop))
 
         if verbose_progress:
             pbar.close()
