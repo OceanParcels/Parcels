@@ -8,6 +8,7 @@ from zarr.storage import MemoryStore
 
 from parcels import (
     AdvectionRK4,
+    Field,
     FieldSet,
     JITParticle,
     ParticleSet,
@@ -264,8 +265,9 @@ def test_write_timebackward(fieldset, mode, tmpdir):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_write_xiyi(fieldset, mode, tmpdir):
-    outfilepath = tmpdir.join("pfile_xi.zarr")
+    outfilepath = tmpdir.join("pfile_xiyi.zarr")
     fieldset.U.data[:] = 1  # set a non-zero zonal velocity
+    fieldset.add_field(Field(name='P', data=np.zeros((2, 2)), lon=[0, 1], lat=[0, 2]))
     dt = 3600
 
     class XiYiParticle(ptype[mode]):
@@ -274,9 +276,9 @@ def test_write_xiyi(fieldset, mode, tmpdir):
 
     def Get_XiYi(particle, fieldset, time):
         """Kernel to sample the grid indices of the particle.
-        Note, this is sampling the indices of the _first_ grid only when multiple grids.
-        Also, note that this sampling should be done _before_ the advection kernel
+        Note that this sampling should be done _before_ the advection kernel
         and that the first outputted value is zero.
+        Be careful when using multiple grids, as the index may be different for the grids.
         """
         particle.pxi = particle.xi[0]
         particle.pyi = particle.yi[0]

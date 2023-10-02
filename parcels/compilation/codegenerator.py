@@ -314,6 +314,14 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def visit_Assign(self, node):
         node.targets = [self.visit(t) for t in node.targets]
+        if (isinstance(node.targets[0], ParticleAttributeNode) and hasattr(node.value, 'value')
+                and hasattr(node.value.value, 'attr') and node.value.value.attr in ['xi', 'yi', 'zi']):
+            node.value = node.value.value
+            ngridstr = []
+            if self.fieldset.gridset.size > 1:
+                ngridstr = "Also be careful that particle.xi is not well-defined in JIT mode when using multiple grids."
+            logger.warning_once(f"Be careful when sampling particle.{node.value.attr}, as this is updated in the kernel loop. "
+                                f"Best to place the sampling statement before advection. {ngridstr}")
         node.value = self.visit(node.value)
         stmts = [node]
 
