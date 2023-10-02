@@ -6,7 +6,7 @@ import pytest
 import xarray as xr
 from zarr.storage import MemoryStore
 
-from parcels import FieldSet, JITParticle, ParticleSet, ScipyParticle, Variable
+from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, ScipyParticle, Variable
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 
@@ -252,6 +252,43 @@ def test_write_timebackward(fieldset, mode, tmpdir):
     trajs = ds['trajectory'][:]
     assert trajs.values.dtype == 'int64'
     assert np.all(np.diff(trajs.values) < 0)  # all particles written in order of release
+    ds.close()
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_write_xiyi(fieldset, mode, tmpdir):
+    outfilepath = tmpdir.join("pfile_xi.zarr")
+    fieldset.U.data[:] = 1  # set a non-zero zonal velocity
+    dt = 3600
+
+    class XiYiParticle(ptype[mode]):
+        pxi = Variable('pxi', dtype=np.int32, initial=0.)
+        pyi = Variable('pyi', dtype=np.int32, initial=0.)
+
+    def Get_XiYi(particle, fieldset, time):
+        """Kernel to sample the grid indices of the particle.
+        Note, this is sampling the indices of the _first_ grid only when multiple grids.
+        Also, note that this sampling should be done _before_ the advection kernel
+        and that the first outputted value is zero.
+        """
+        particle.pxi = particle.xi[0]
+        particle.pyi = particle.yi[0]
+
+    pset = ParticleSet(fieldset, pclass=XiYiParticle, lon=[0], lat=[0.2], lonlatdepth_dtype=np.float64)
+    pfile = pset.ParticleFile(name=outfilepath, outputdt=dt)
+    pset.execute([Get_XiYi, AdvectionRK4], endtime=10*dt, dt=dt, output_file=pfile)
+
+    ds = xr.open_zarr(outfilepath)
+    pxi = ds['pxi'][:].values[0].astype(np.int32)
+    lons = ds['lon'][:].values[0]
+    pyi = ds['pyi'][:].values[0].astype(np.int32)
+    lats = ds['lat'][:].values[0]
+
+    assert (pxi[0] == 0) and (pxi[-1] == 11)  # check that particle has moved
+    for xi, lon in zip(pxi[1:], lons[1:]):
+        assert fieldset.U.grid.lon[xi] <= lon < fieldset.U.grid.lon[xi+1]
+    for yi, lat in zip(pyi[1:], lats[1:]):
+        assert fieldset.U.grid.lat[yi] <= lat < fieldset.U.grid.lat[yi+1]
     ds.close()
 
 
