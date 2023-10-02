@@ -774,7 +774,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval_array(node.var, *args)
+        ccode_eval = node.field.obj.ccode_eval(node.var, *args)
         stmts = [c.Assign("particles->state[pnum]", ccode_eval)]
 
         if node.convert:
@@ -788,8 +788,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval_array(node.var, node.var2, node.var3,
-                                                     node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
+        ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
+                                               node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
         if node.convert and node.field.obj.U.interp_method != 'cgrid_velocity':
             ccode_conv1 = node.field.obj.U.ccode_convert(*args)
             ccode_conv2 = node.field.obj.V.ccode_convert(*args)
@@ -810,7 +810,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval_array(node.var, *args)
+            ccode_eval = fld.ccode_eval(node.var, *args)
             ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             cstat += [c.Assign("particles->state[pnum]", ccode_eval),
@@ -825,8 +825,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval_array(node.var, node.var2, node.var3,
-                                              fld.U, fld.V, fld.W, *args)
+            ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *args)
             if fld.U.interp_method != 'cgrid_velocity':
                 ccode_conv1 = fld.U.ccode_convert(*args)
                 ccode_conv2 = fld.V.ccode_convert(*args)
