@@ -36,7 +36,7 @@ jobs:
       - name: Setup Conda and parcels
         uses: ./.github/actions/install-parcels
         with:
-          environment-file: environment_py3_${{ matrix.os-short }}.yml
+          environment-file: environment.yml
           environment-name: py3_parcels
       - name: Integration test
         run: |
