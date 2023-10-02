@@ -1,3 +1,4 @@
+"""Example script that runs a set of particles in a NEMO curvilinear grid."""
 from argparse import ArgumentParser
 from datetime import timedelta as delta
 from glob import glob
@@ -21,7 +22,7 @@ advection = {'RK4': AdvectionRK4, 'AA': AdvectionAnalytical}
 
 
 def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
-    """Function that shows how to read in curvilinear grids, in this case from NEMO."""
+    """Run parcels on the NEMO curvilinear grid."""
     data_folder = download_example_dataset('NemoCurvilinear_data')
 
     filenames = {'U': {'lon': f'{data_folder}/mesh_mask.nc4',
@@ -48,7 +49,7 @@ def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
 
     def periodicBC(particle, fieldSet, time):
         if particle.lon > 180:
-            particle.lon -= 360
+            particle_dlon -= 360  # noqa
 
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile(outfile, pset, outputdt=delta(days=1))
@@ -58,41 +59,21 @@ def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
     assert np.allclose(pset.lat - latp, 0, atol=2e-2)
 
 
-def make_plot(trajfile):
-    import cartopy
-    import matplotlib.pyplot as plt
-    import xarray as xr
-
-    class ParticleData:
-        def __init__(self):
-            self.id = []
-
-    def load_particles_file(fname, varnames):
-        T = ParticleData()
-        ds = xr.open_zarr(fname)
-        T.id = ds['trajectory'][:]
-        for v in varnames:
-            setattr(T, v, ds[v][:])
-        return T
-
-    T = load_particles_file(trajfile, ['lon', 'lat', 'time'])
-    plt.axes(projection=cartopy.crs.PlateCarree())
-    plt.scatter(T.lon, T.lat, c=T.time, s=10)
-    plt.show()
-
-
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
 def test_nemo_curvilinear(mode, tmpdir):
+    """Test the NEMO curvilinear example."""
     outfile = tmpdir.join('nemo_particles')
     run_nemo_curvilinear(mode, outfile)
 
 
 def test_nemo_curvilinear_AA(tmpdir):
+    """Test the NEMO curvilinear example with analytical advection."""
     outfile = tmpdir.join('nemo_particlesAA')
     run_nemo_curvilinear('scipy', outfile, 'AA')
 
 
 def test_nemo_3D_samegrid():
+    """Test that the same grid is used for U and V in 3D NEMO fields."""
     data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
     ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
     vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
@@ -116,6 +97,7 @@ def test_nemo_3D_samegrid():
 
 
 def main(args=None):
+    """Run the example with given arguments."""
     p = ArgumentParser(description="""Chose the mode using mode option""")
     p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
                    help='Execution mode for performing computation')
@@ -124,7 +106,6 @@ def main(args=None):
     outfile = "nemo_particles"
 
     run_nemo_curvilinear(args.mode, outfile)
-    make_plot(outfile+'.zarr')
 
 
 if __name__ == "__main__":

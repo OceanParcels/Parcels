@@ -444,7 +444,7 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
 
   /* Find time index for temporal interpolation */
   if (f->time_periodic == 0 && f->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
-    return ERROR_TIME_EXTRAPOLATION;
+    return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], f->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
 
@@ -652,7 +652,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
 
   /* Find time index for temporal interpolation */
   if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
-    return ERROR_TIME_EXTRAPOLATION;
+    return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
 
@@ -870,7 +870,7 @@ static inline StatusCode temporal_interpolationUVW_c_grid(type_coord x, type_coo
 
   /* Find time index for temporal interpolation */
   if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
-    return ERROR_TIME_EXTRAPOLATION;
+    return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
 
@@ -1090,7 +1090,7 @@ static inline StatusCode temporal_interpolation_slip(type_coord x, type_coord y,
 
   /* Find time index for temporal interpolation */
   if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
-    return ERROR_TIME_EXTRAPOLATION;
+    return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
 

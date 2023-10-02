@@ -1,4 +1,4 @@
-#
+"""Sphinx configuration file for Parcels documentation."""
 # parcels documentation build configuration file, created by
 # sphinx-quickstart on Tue Oct 20 09:58:20 2015.
 #
@@ -71,10 +71,12 @@ linkcheck_ignore = [
     r"https://aip\.scitation\.org/doi/10\.1063/1\.4982720",  # Site doesn't allow crawling
     r"https://www\.sciencedirect\.com/.*",  # Site doesn't allow crawling
     r"https://lxml\.de/",  # Crawler occasionally fails to establish connection
+    r"https://linux\.die\.net/",  # Site doesn't allow crawling
 
     # To monitor
     r"http://marine.copernicus.eu/",  # 2023-06-07 Site non-responsive
     r"https://www\.nodc\.noaa\.gov/",  # 2023-06-23 Site non-responsive
+    r"https://mybinder\.org/",  # 2023-09-02 Site non-responsive
 ]
 
 # The version info for the project you're documenting, acts as replacement for
@@ -209,6 +211,7 @@ downloads_folder.mkdir(exist_ok=True)
 
 
 def make_filename_safe(filename: str, safe_char: str = '_') -> str:
+    """Make a filename safe for saving to disk."""
     # Replace any characters that are not allowed in a filename with the safe character
     safe_filename = re.sub(r'[\\/:*?"<>|]', safe_char, filename)
     return safe_filename
@@ -356,10 +359,11 @@ nbsphinx_thumbnails = {
     'examples/tutorial_timestamps': '_static/calendar-icon.jpg',
     'examples/tutorial_jit_vs_scipy': '_static/clock-icon.png',
     'examples/documentation_homepage_animation': '_images/homepage.gif',
-    'examples/tutorial_Agulhasparticles': '_images/globcurrent_fullyseeded.gif',
     'examples/tutorial_interaction': '_static/pulled_particles_twoatractors_line.gif',
     'examples/documentation_LargeRunsOutput': '_static/harddrive.png',
-    'examples/documentation_geospatial': '_images/tutorial_geospatial_google_earth.png'
+    'examples/tutorial_unitconverters': '_static/globe-icon.jpg',
+    'examples/documentation_geospatial': '_images/tutorial_geospatial_google_earth.png',
+    'examples/tutorial_kernelloop': '_static/loop-icon.jpeg',
 }
 # -- Options for LaTeX output ---------------------------------------------
 

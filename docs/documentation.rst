@@ -18,16 +18,15 @@ Parcels has several documentation and tutorial Jupyter notebooks which go throug
    :caption: Setting up FieldSets
    :name: tutorial-fieldsets
 
+   examples/documentation_indexing.ipynb
    examples/tutorial_nemo_curvilinear.ipynb
    examples/tutorial_nemo_3D.ipynb
-   examples/tutorial_SummedFields.ipynb
    examples/tutorial_NestedFields.ipynb
    examples/tutorial_timevaryingdepthdimensions.ipynb
    examples/tutorial_periodic_boundaries.ipynb
    examples/tutorial_interpolation.ipynb
    examples/tutorial_unitconverters.ipynb
    examples/tutorial_timestamps.ipynb
-   examples/documentation_indexing.ipynb
 
 
 .. nbgallery::
@@ -47,6 +46,7 @@ Parcels has several documentation and tutorial Jupyter notebooks which go throug
    examples/tutorial_particle_field_interaction.ipynb
    examples/tutorial_interaction.ipynb
    examples/tutorial_analyticaladvection.ipynb
+   examples/tutorial_kernelloop.ipynb
 
 
 .. nbgallery::
@@ -58,7 +58,6 @@ Parcels has several documentation and tutorial Jupyter notebooks which go throug
    examples/documentation_unstuck_Agrid.ipynb
    examples/documentation_LargeRunsOutput.ipynb
    examples/documentation_geospatial.ipynb
-   examples/tutorial_plotting.ipynb
    examples/documentation_advanced_zarr.ipynb
 
 
@@ -68,4 +67,3 @@ Parcels has several documentation and tutorial Jupyter notebooks which go throug
 
    examples/tutorial_Argofloats.ipynb
    examples/documentation_homepage_animation.ipynb
-   examples/tutorial_Agulhasparticles.ipynb

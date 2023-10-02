@@ -1,23 +1,9 @@
 Particlefile
 ============
 
-parcels.particlefile.baseparticlefile module
+parcels.particlefile module
 --------------------------------------------
 
-.. automodule:: parcels.particlefile.baseparticlefile
-    :members:
-    :show-inheritance: yes
-
-parcels.particlefile.particlefileaos module
--------------------------------------------
-
-.. automodule:: parcels.particlefile.particlefileaos
-    :members:
-    :show-inheritance: yes
-
-parcels.particlefile.particlefilesoa module
--------------------------------------------
-
-.. automodule:: parcels.particlefile.particlefilesoa
+.. automodule:: parcels.particlefile
     :members:
     :show-inheritance: yes
