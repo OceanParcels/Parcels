@@ -895,9 +895,6 @@ class LoopGenerator:
         # ==== Generate type definition for particle type ==== #
         vdeclp = [c.Pointer(c.POD(v.dtype, v.name)) for v in self.ptype.variables]
         ccode += [str(c.Typedef(c.GenerableStruct("", vdeclp, declname=pname)))]
-        # ==== Generate type definition for single particle type ==== #
-        vdecl = [c.POD(v.dtype, v.name) for v in self.ptype.variables if v.dtype != np.uint64]
-        ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
         if c_include:
             ccode += [c_include]
