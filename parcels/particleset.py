@@ -957,7 +957,9 @@ class ParticleSet(ABC):
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
-                self.kernel.execute(self, endtime=next_time, dt=dt)
+                res = self.kernel.execute(self, endtime=next_time, dt=dt)
+                if res == StatusCode.StopAllExecution:
+                    return StatusCode.StopAllExecution
             # Interaction: interleave the interaction and non-interaction kernel for each time step.
             # E.g. Normal -> Inter -> Normal -> Inter if endtime-time == 2*dt
             else:

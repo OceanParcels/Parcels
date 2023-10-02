@@ -544,6 +544,8 @@ class Kernel(BaseKernel):
 
         for p in pset:
             self.evaluate_particle(p, endtime, sign_dt)
+            if p.state == StatusCode.StopAllExecution:
+                return StatusCode.StopAllExecution
 
     def execute(self, pset, endtime, dt):
         """Execute this Kernel over a ParticleSet for several timesteps."""
@@ -576,6 +578,8 @@ class Kernel(BaseKernel):
             for p in error_pset:
                 if p.state == StatusCode.StopExecution:
                     return
+                if p.state == StatusCode.StopAllExecution:
+                    return StatusCode.StopAllExecution
                 if p.state == StatusCode.Repeat:
                     p.state = StatusCode.Evaluate
                 elif p.state == StatusCode.ErrorTimeExtrapolation:
