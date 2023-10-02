@@ -655,7 +655,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 if predefined_cap is not None:
                     chunk_cap = da_utils.parse_bytes(predefined_cap)
                 else:
-                    logger.info_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see http://oceanparcels.org/faq.html#field_chunking_config and https://docs.dask.org).")
+                    logger.info_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically."
+                                     "Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.oceanparcels.org/en/latest/examples/documentation_MPI.html#Chunking-the-FieldSet-with-dask and https://docs.dask.org).")
             loni, lonname, lonvalue = self._is_dimension_in_dataset('lon')
             lati, latname, latvalue = self._is_dimension_in_dataset('lat')
             if lati is not None and loni is not None and lati >= 0 and loni >= 0:

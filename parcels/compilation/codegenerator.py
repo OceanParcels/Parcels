@@ -251,11 +251,11 @@ class IntrinsicTransformer(ast.NodeTransformer):
             if node.value.id in ['np', 'numpy']:
                 raise NotImplementedError("Cannot convert numpy functions in kernels to C-code.\n"
                                           "Either use functions from the math library or run Parcels in Scipy mode.\n"
-                                          "For more information, see http://oceanparcels.org/faq.html#kernelwriting")
+                                          "For more information, see https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernels")
             elif node.value.id in ['random']:
                 raise NotImplementedError("Cannot convert random functions in kernels to C-code.\n"
                                           "Use `import parcels.rng as ParcelsRandom` and then ParcelsRandom.random(), ParcelsRandom.uniform() etc.\n"
-                                          "For more information, see http://oceanparcels.org/faq.html#kernelwriting")
+                                          "For more information, see https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernels")
             else:
                 raise NotImplementedError(f"Cannot convert '{node.value.id}' used in kernel to C-code")
 
