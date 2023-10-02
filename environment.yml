@@ -6,11 +6,10 @@ dependencies:
   - cgen
   - ffmpeg>=3.2.3
   - git
-  - gcc_linux-64
-  - mpi4py>=3.0.1
-  - mpich>=3.2.1
   - jupyter
   - matplotlib-base>=2.0.2
+  - sel(unix): mpi4py
+  - sel(unix): mpich
   - netcdf4>=1.1.9
   - numpy>=1.9.1
   - platformdirs

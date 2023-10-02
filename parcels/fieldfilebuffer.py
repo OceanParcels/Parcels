@@ -48,7 +48,7 @@ class NetcdfFileBuffer(_FileBuffer):
             self.dataset['decoded'] = True
         except:
             if self.netcdf_decodewarning:
-                logger.warning_once(f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}).\n         "
+                logger.warning_once(f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
                                     "It will be opened with no decoding. Filling values might be wrongly parsed.")
 
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
