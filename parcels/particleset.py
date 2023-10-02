@@ -740,18 +740,6 @@ class ParticleSet(ABC):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
         return ParticleFile(*args, particleset=self, **kwargs)
 
-    def _set_particle_vector(self, name, value):
-        """Set attributes of all particles to new values.
-
-        Parameters
-        ----------
-        name : str
-            Name of the attribute (str).
-        value : any
-            New value to set the attribute of the particles to.
-        """
-        self.particledata._data[name][:] = value
-
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.
 
@@ -921,7 +909,7 @@ class ParticleSet(ABC):
             raise RuntimeError("dt and runtime are zero, or endtime is equal to Particle.time. "
                                "ParticleSet.execute() will not do anything.")
 
-        self._set_particle_vector('dt', dt)
+        self.particledata._data['dt'][:] = dt
 
         if callbackdt is None:
             interupt_dts = [np.infty, outputdt]
