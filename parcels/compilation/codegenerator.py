@@ -6,7 +6,6 @@ from abc import ABC
 from copy import copy
 
 import cgen as c
-import numpy as np
 
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import Grid
