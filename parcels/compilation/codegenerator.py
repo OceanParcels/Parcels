@@ -940,6 +940,7 @@ class LoopGenerator:
                                     c.Block([c.Assign("particles->state[pnum]", "EVALUATE")]),
                                     c.Block([c.Assign("particles->state[pnum]", "SUCCESS")]))
                                ]))]
+        body += [c.If("particles->state[pnum] == STOPALLEXECUTION", c.Statement("return"))]
         body += [c.Statement("particles->dt[pnum] = pre_dt")]
         body += [c.If("(particles->state[pnum] == REPEAT || particles->state[pnum] == DELETE)", c.Block([c.Statement('break')]))]
 
