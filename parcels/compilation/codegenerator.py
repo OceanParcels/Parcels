@@ -191,8 +191,8 @@ class ParticleNode(IntrinsicNode):
         elif attr in ['delete']:
             return ParticleAttributeNode(self, 'state')
         else:
-            raise AttributeError(f"Particle type {self.obj} does not define attribute '{attr}.\n"
-                                 f"Please add '{attr}' to {self.obj}.users_vars or define an appropriate sub-class.")
+            raise AttributeError(f"Particle type {self.obj.name} does not define attribute '{attr}. "
+                                 f"Please add '{attr}' as a Variable in {self.obj.name}.")
 
 
 class IntrinsicTransformer(ast.NodeTransformer):
