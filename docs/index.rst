@@ -9,7 +9,7 @@ Welcome to the documentation of Parcels. **Parcels** (Probably A Really Computat
 
 Here you'll find `installation instructions <installation.rst>`_, `tutorials and documentation <documentation.rst>`_, and the `API reference <reference.rst>`_ for Parcels. You can browse the documentation for older versions by using the version switcher in the left sidebar.
 
-If you need more help with Parcels, try the `Discussions page on GitHub <https://github.com/OceanParcels/parcels/discussions>`_. If you think you found a bug, file an `Issue on GitHub <https://github.com/OceanParcels/parcels/issues>`_. If you want to help improve Parcels, see the `Contributing <contributing.html>`_ page.
+If you need more help with Parcels, try the `Discussions page on GitHub <https://github.com/OceanParcels/parcels/discussions>`_. If you think you found a bug, file an `Issue on GitHub <https://github.com/OceanParcels/parcels/issues>`_. If you want to help improve Parcels, see the `Contributing <contributing.rst>`_ page.
 
 .. toctree::
    :maxdepth: 2
