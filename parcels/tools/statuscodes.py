@@ -9,16 +9,16 @@ class StatusCode:
     """Class defining the status codes for particles.state."""
 
     Success = 0
-    Evaluate = 1
-    Repeat = 2
-    Delete = 3
-    StopExecution = 4
+    Evaluate = 10
+    Repeat = 20
+    Delete = 30
+    StopExecution = 40
     StopAllExecution = 41
-    Error = 5
+    Error = 50
     ErrorInterpolation = 51
-    ErrorOutOfBounds = 6
+    ErrorOutOfBounds = 60
     ErrorThroughSurface = 61
-    ErrorTimeExtrapolation = 7
+    ErrorTimeExtrapolation = 70
 
 
 class DaskChunkingError(RuntimeError):
