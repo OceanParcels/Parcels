@@ -181,19 +181,15 @@ class ParticleAttributeNode(IntrinsicNode):
 
 
 class ParticleNode(IntrinsicNode):
-    attr_node_class = None
 
     def __init__(self, obj):
-        attr_node_class = None
-        attr_node_class = ParticleAttributeNode
         super().__init__(obj, ccode='particles')
-        self.attr_node_class = attr_node_class
 
     def __getattr__(self, attr):
         if attr in [v.name for v in self.obj.variables]:
-            return self.attr_node_class(self, attr)
+            return ParticleAttributeNode(self, attr)
         elif attr in ['delete']:
-            return self.attr_node_class(self, 'state')
+            return ParticleAttributeNode(self, 'state')
         else:
             raise AttributeError(f"Particle type {self.obj} does not define attribute '{attr}.\n"
                                  f"Please add '{attr}' to {self.obj}.users_vars or define an appropriate sub-class.")
