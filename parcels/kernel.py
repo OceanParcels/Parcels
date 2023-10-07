@@ -529,8 +529,6 @@ class Kernel(BaseKernel):
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python."""
-        # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
-        sign_dt = np.sign(dt)
 
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
@@ -543,7 +541,7 @@ class Kernel(BaseKernel):
             self.scipy_positionupdate_kernels_added = True
 
         for p in pset:
-            self.evaluate_particle(p, endtime, sign_dt)
+            self.evaluate_particle(p, endtime)
             if p.state == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution
 
@@ -607,23 +605,17 @@ class Kernel(BaseKernel):
 
             n_error = pset.num_error_particles
 
-    def evaluate_particle(self, p, endtime, sign_dt):
+    def evaluate_particle(self, p, endtime):
         """Execute the kernel evaluation of for an individual particle.
 
         Parameters
         ----------
         p :
             object of (sub-)type (ScipyParticle, JITParticle)
-        fieldset :
-            fieldset of the containing ParticleSet (e.g. pset.fieldset)
-        analytical :
-            flag indicating the analytical advector or an iterative advection (Default value = False)
         endtime :
             endtime of this overall kernel evaluation step
         dt :
             computational integration timestep
-        sign_dt :
-
         """
         while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
             pre_dt = p.dt
