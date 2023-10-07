@@ -181,6 +181,14 @@ class ParticleAttributeNode(IntrinsicNode):
         self.attr = attr
 
 
+class ParticleXiYiZiTiAttributeNode(IntrinsicNode):
+    def __init__(self, obj, attr):
+        logger.warning_once(f"Be careful when sampling particle.{attr}, as this is updated in the kernel loop. "
+                            "Best to place the sampling statement before advection.")
+        self.obj = obj.ccode
+        self.attr = attr
+
+
 class ParticleNode(IntrinsicNode):
     attr_node_class = None
 
@@ -191,13 +199,15 @@ class ParticleNode(IntrinsicNode):
         self.attr_node_class = attr_node_class
 
     def __getattr__(self, attr):
+        if attr in ['xi', 'yi', 'zi', 'ti']:
+            return ParticleXiYiZiTiAttributeNode(self, attr)
         if attr in [v.name for v in self.obj.variables]:
             return self.attr_node_class(self, attr)
         elif attr in ['delete']:
             return self.attr_node_class(self, 'state')
         else:
-            raise AttributeError(f"Particle type {self.obj} does not define attribute '{attr}.\n"
-                                 f"Please add '{attr}' to {self.obj}.users_vars or define an appropriate sub-class.")
+            raise AttributeError(f"Particle type {self.obj.name} does not define attribute '{attr}. "
+                                 f"Please add '{attr}' as a Variable in {self.obj.name}.")
 
 
 class IntrinsicTransformer(ast.NodeTransformer):
@@ -314,14 +324,6 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def visit_Assign(self, node):
         node.targets = [self.visit(t) for t in node.targets]
-        if (isinstance(node.targets[0], ParticleAttributeNode) and hasattr(node.value, 'value')
-                and hasattr(node.value.value, 'attr') and node.value.value.attr in ['xi', 'yi', 'zi']):
-            node.value = node.value.value
-            ngridstr = []
-            if self.fieldset.gridset.size > 1:
-                ngridstr = "Also be careful that particle.xi is not well-defined in JIT mode when using multiple grids."
-            logger.warning_once(f"Be careful when sampling particle.{node.value.attr}, as this is updated in the kernel loop. "
-                                f"Best to place the sampling statement before advection. {ngridstr}")
         node.value = self.visit(node.value)
         stmts = [node]
 
@@ -603,6 +605,9 @@ class KernelGenerator(ABC, ast.NodeVisitor):
                 tmp_node = tmp_node.elts[0]
             node.ccode = c.Initializer(decl, node.value.ccode)
             self.array_vars += [node.targets[0].id]
+        elif isinstance(node.value, ParticleXiYiZiTiAttributeNode):
+            raise RuntimeError(f"Add index of the grid when using particle.{node.value.attr} "
+                               f"(e.g. particle.{node.value.attr}[0]).")
         else:
             node.ccode = c.Assign(node.targets[0].ccode, node.value.ccode)
 
@@ -654,6 +659,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.slice)
         if isinstance(node.value, FieldNode) or isinstance(node.value, VectorFieldNode):
             node.ccode = node.value.__getitem__(node.slice.ccode).ccode
+        elif isinstance(node.value, ParticleXiYiZiTiAttributeNode):
+            node.ccode = f"{node.value.obj}->{node.value.attr}[pnum, {node.slice.ccode}]"
         elif isinstance(node.value, IntrinsicNode):
             raise NotImplementedError(f"Subscript not implemented for object type {type(node.value).__name__}")
         else:
