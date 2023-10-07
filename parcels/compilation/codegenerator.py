@@ -208,11 +208,11 @@ class IntrinsicTransformer(ast.NodeTransformer):
         # Counter and variable names for temporaries
         self._tmp_counter = 0
         self.tmp_vars = []
-        # A stack of additonal staements to be inserted
+        # A stack of additional statements to be inserted
         self.stmt_stack = []
 
     def get_tmp(self):
-        """Create a new temporary veriable name."""
+        """Create a new temporary variable name."""
         tmp = "parcels_tmpvar%d" % self._tmp_counter
         self._tmp_counter += 1
         self.tmp_vars += [tmp]
@@ -375,7 +375,7 @@ class TupleSplitter(ast.NodeTransformer):
             t_elts = node.targets[0].elts
             v_elts = node.value.elts
             if len(t_elts) != len(v_elts):
-                raise AttributeError("Tuple lenghts in assignment do not agree")
+                raise AttributeError("Tuple lengths in assignment do not agree")
             node = [ast.Assign() for _ in t_elts]
             for n, t, v in zip(node, t_elts, v_elts):
                 n.targets = [t]
@@ -401,7 +401,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.const_args = collections.OrderedDict()
 
     def generate(self, py_ast, funcvars):
-        # Replace occurences of intrinsic objects in Python AST
+        # Replace occurrences of intrinsic objects in Python AST
         transformer = IntrinsicTransformer(self.fieldset, self.ptype)
         py_ast = transformer.visit(py_ast)
 
@@ -412,7 +412,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(py_ast)
         self.ccode = py_ast.ccode
 
-        # Insert variable declarations for non-instrinsics
+        # Insert variable declarations for non-intrinsic variables
         # Make sure that repeated variables are not declared more than
         # once. If variables occur in multiple Kernels, give a warning
         used_vars = []

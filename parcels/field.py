@@ -150,7 +150,7 @@ class Field:
         else:
             self.grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
-        # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
+        # self.lon, self.lat, self.depth and self.time are not used any more in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
         self.lon = self.grid.lon
@@ -1217,7 +1217,7 @@ class Field:
         else:
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
-            # excat value in the time array.
+            # exact value in the time array.
             value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
 
         if applyConversion:
@@ -1226,7 +1226,7 @@ class Field:
             return value
 
     def ccode_eval(self, var, t, z, y, x):
-        # Casting interp_methd to int as easier to pass on in C-code
+        # Casting interp_method to int as easier to pass on in C-code
         self._check_velocitysampling()
         ccode_str = f"temporal_interpolation({x}, {y}, {z}, {t}, {self.ccode_name}, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
         return ccode_str
@@ -1873,7 +1873,7 @@ class VectorField:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
 
     def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
-        # Casting interp_methd to int as easier to pass on in C-code
+        # Casting interp_method to int as easier to pass on in C-code
         ccode_str = ""
         if self.vector_type == '3D':
             ccode_str = f"temporal_interpolationUVW({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, {W.ccode_name}, " + \

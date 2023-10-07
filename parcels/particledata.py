@@ -72,7 +72,7 @@ class ParticleData(ABC):
 
         # If a partitioning function for MPI runs has been passed into the
         # particle creation with the "partition_function" kwarg, retrieve it here.
-        # If it has not, assign the default function, partitionParticlesMPI_defualt()
+        # If it has not, assign the default function, partitionParticlesMPI_default()
         partition_function = kwargs.pop('partition_function', partitionParticlesMPI_default)
 
         for kwvar in kwargs:
@@ -211,7 +211,7 @@ class ParticleData(ABC):
 
     @property
     def data(self):
-        """'data' is a reference to the actual barebone-storage of the particle data."""
+        """'data' is a reference to the actual 'bare bone'-storage of the particle data."""
         return self._data
 
     def __len__(self):

@@ -341,7 +341,7 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None) (Default value = None)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tuturial <../examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -566,7 +566,7 @@ class FieldSet:
             +-----------------------------+-----------------------------+-----------------------------+
 
         For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
-        Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
+        Note that vertical velocity (W) is assumed positive in the positive z direction (which is upward in MITgcm)
         """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mitgcm'
@@ -807,7 +807,7 @@ class FieldSet:
 
             In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
             T node is at the cell centre and interpolated constant per cell as a C-grid.
-            In 3D: U and V nodes are at the midlle of the cell vertical edges,
+            In 3D: U and V nodes are at the middle of the cell vertical edges,
             They are interpolated bilinearly (independently of z) in the cell.
             W nodes are at the centre of the horizontal interfaces, but below the U and V.
             They are interpolated linearly (as a function of z) in the cell.

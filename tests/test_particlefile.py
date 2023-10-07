@@ -45,7 +45,7 @@ def test_metadata(fieldset, mode, tmpdir):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_write_zarr_memorystore(fieldset, mode, npart=10):
-    """Checkt that writing to a Zarr MemoryStore works."""
+    """Check that writing to a Zarr MemoryStore works."""
     zarr_store = MemoryStore()
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart),
