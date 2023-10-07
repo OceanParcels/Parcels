@@ -529,7 +529,6 @@ class Kernel(BaseKernel):
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python."""
-
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
                 if isinstance(f, (VectorField, NestedField)):
