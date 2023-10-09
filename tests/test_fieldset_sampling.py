@@ -188,7 +188,7 @@ def test_pset_from_field(mode, xdim=10, ydim=20, npart=10000):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_nearest_neighbour_interpolation2D(mode, k_sample_p, npart=81):
+def test_nearest_neighbor_interpolation2D(mode, k_sample_p, npart=81):
     dims = (2, 2)
     dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
                   'lat': np.linspace(0., 1., dims[1], dtype=np.float32)}
@@ -206,7 +206,7 @@ def test_nearest_neighbour_interpolation2D(mode, k_sample_p, npart=81):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_nearest_neighbour_interpolation3D(mode, k_sample_p, npart=81):
+def test_nearest_neighbor_interpolation3D(mode, k_sample_p, npart=81):
     dims = (2, 2, 2)
     dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
                   'lat': np.linspace(0., 1., dims[1], dtype=np.float32),

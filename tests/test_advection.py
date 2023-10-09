@@ -306,7 +306,7 @@ def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npa
 
     pclass = RK45Particles if method == 'RK45' else ptype[mode]
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
-    pset.execute(pset.Kernel(kernel[method], delete_cfiles=False), dt=dt, endtime=endtime)
+    pset.execute(kernel[method], dt=dt, endtime=endtime)
 
     exp_lon = [truth_stationary(x, y, pset[0].time)[0] for x, y, in zip(lon, lat)]
     exp_lat = [truth_stationary(x, y, pset[0].time)[1] for x, y, in zip(lon, lat)]

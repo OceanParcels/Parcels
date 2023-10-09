@@ -6,7 +6,6 @@ from abc import ABC
 from copy import copy
 
 import cgen as c
-import numpy as np
 
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import Grid
@@ -190,21 +189,17 @@ class ParticleXiYiZiTiAttributeNode(IntrinsicNode):
 
 
 class ParticleNode(IntrinsicNode):
-    attr_node_class = None
 
     def __init__(self, obj):
-        attr_node_class = None
-        attr_node_class = ParticleAttributeNode
         super().__init__(obj, ccode='particles')
-        self.attr_node_class = attr_node_class
 
     def __getattr__(self, attr):
         if attr in ['xi', 'yi', 'zi', 'ti']:
             return ParticleXiYiZiTiAttributeNode(self, attr)
         if attr in [v.name for v in self.obj.variables]:
-            return self.attr_node_class(self, attr)
+            return ParticleAttributeNode(self, attr)
         elif attr in ['delete']:
-            return self.attr_node_class(self, 'state')
+            return ParticleAttributeNode(self, 'state')
         else:
             raise AttributeError(f"Particle type {self.obj.name} does not define attribute '{attr}. "
                                  f"Please add '{attr}' as a Variable in {self.obj.name}.")
@@ -223,11 +218,11 @@ class IntrinsicTransformer(ast.NodeTransformer):
         # Counter and variable names for temporaries
         self._tmp_counter = 0
         self.tmp_vars = []
-        # A stack of additonal staements to be inserted
+        # A stack of additional statements to be inserted
         self.stmt_stack = []
 
     def get_tmp(self):
-        """Create a new temporary veriable name."""
+        """Create a new temporary variable name."""
         tmp = "parcels_tmpvar%d" % self._tmp_counter
         self._tmp_counter += 1
         self.tmp_vars += [tmp]
@@ -261,11 +256,11 @@ class IntrinsicTransformer(ast.NodeTransformer):
             if node.value.id in ['np', 'numpy']:
                 raise NotImplementedError("Cannot convert numpy functions in kernels to C-code.\n"
                                           "Either use functions from the math library or run Parcels in Scipy mode.\n"
-                                          "For more information, see http://oceanparcels.org/faq.html#kernelwriting")
+                                          "For more information, see https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernels")
             elif node.value.id in ['random']:
                 raise NotImplementedError("Cannot convert random functions in kernels to C-code.\n"
                                           "Use `import parcels.rng as ParcelsRandom` and then ParcelsRandom.random(), ParcelsRandom.uniform() etc.\n"
-                                          "For more information, see http://oceanparcels.org/faq.html#kernelwriting")
+                                          "For more information, see https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernels")
             else:
                 raise NotImplementedError(f"Cannot convert '{node.value.id}' used in kernel to C-code")
 
@@ -390,7 +385,7 @@ class TupleSplitter(ast.NodeTransformer):
             t_elts = node.targets[0].elts
             v_elts = node.value.elts
             if len(t_elts) != len(v_elts):
-                raise AttributeError("Tuple lenghts in assignment do not agree")
+                raise AttributeError("Tuple lengths in assignment do not agree")
             node = [ast.Assign() for _ in t_elts]
             for n, t, v in zip(node, t_elts, v_elts):
                 n.targets = [t]
@@ -416,7 +411,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.const_args = collections.OrderedDict()
 
     def generate(self, py_ast, funcvars):
-        # Replace occurences of intrinsic objects in Python AST
+        # Replace occurrences of intrinsic objects in Python AST
         transformer = IntrinsicTransformer(self.fieldset, self.ptype)
         py_ast = transformer.visit(py_ast)
 
@@ -427,7 +422,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(py_ast)
         self.ccode = py_ast.ccode
 
-        # Insert variable declarations for non-instrinsics
+        # Insert variable declarations for non-intrinsic variables
         # Make sure that repeated variables are not declared more than
         # once. If variables occur in multiple Kernels, give a warning
         used_vars = []
@@ -789,7 +784,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval_array(node.var, *args)
+        ccode_eval = node.field.obj.ccode_eval(node.var, *args)
         stmts = [c.Assign("particles->state[pnum]", ccode_eval)]
 
         if node.convert:
@@ -803,8 +798,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval_array(node.var, node.var2, node.var3,
-                                                     node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
+        ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
+                                               node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
         if node.convert and node.field.obj.U.interp_method != 'cgrid_velocity':
             ccode_conv1 = node.field.obj.U.ccode_convert(*args)
             ccode_conv2 = node.field.obj.V.ccode_convert(*args)
@@ -825,7 +820,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval_array(node.var, *args)
+            ccode_eval = fld.ccode_eval(node.var, *args)
             ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             cstat += [c.Assign("particles->state[pnum]", ccode_eval),
@@ -840,8 +835,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval_array(node.var, node.var2, node.var3,
-                                              fld.U, fld.V, fld.W, *args)
+            ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *args)
             if fld.U.interp_method != 'cgrid_velocity':
                 ccode_conv1 = fld.U.ccode_convert(*args)
                 ccode_conv2 = fld.V.ccode_convert(*args)
@@ -911,9 +905,6 @@ class LoopGenerator:
         # ==== Generate type definition for particle type ==== #
         vdeclp = [c.Pointer(c.POD(v.dtype, v.name)) for v in self.ptype.variables]
         ccode += [str(c.Typedef(c.GenerableStruct("", vdeclp, declname=pname)))]
-        # ==== Generate type definition for single particle type ==== #
-        vdecl = [c.POD(v.dtype, v.name) for v in self.ptype.variables if v.dtype != np.uint64]
-        ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
         if c_include:
             ccode += [c_include]

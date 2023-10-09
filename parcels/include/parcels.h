@@ -194,7 +194,7 @@ static inline StatusCode spatial_interpolation_trilinear_invdist_land(double xsi
   return SUCCESS;
 }
 
-/* Nearest neighbour interpolation routine for 2D grid */
+/* Nearest neighbor interpolation routine for 2D grid */
 static inline StatusCode spatial_interpolation_nearest2D(double xsi, double eta,
                                                         float data[2][2], float *value)
 {
@@ -229,7 +229,7 @@ static inline StatusCode spatial_interpolation_tracer_bc_grid_bottom(double _xsi
   return SUCCESS;
 }
 
-/* Nearest neighbour interpolation routine for 3D grid */
+/* Nearest neighbor interpolation routine for 3D grid */
 static inline StatusCode spatial_interpolation_nearest3D(double xsi, double eta, double zeta,
                                                         float data[2][2][2], float *value)
 {

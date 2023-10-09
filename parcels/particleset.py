@@ -55,7 +55,7 @@ class ParticleSet(ABC):
 
     Please note that this currently only supports fixed size particle sets, meaning that the particle set only
     holds the particles defined on construction. Individual particles can neither be added nor deleted individually,
-    and individual particles can only be deleted as a set procedually (i.e. by 'particle.delete()'-call during
+    and individual particles can only be deleted as a set procedurally (i.e. by 'particle.delete()'-call during
     kernel execution).
 
     Parameters
@@ -740,18 +740,6 @@ class ParticleSet(ABC):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
         return ParticleFile(*args, particleset=self, **kwargs)
 
-    def _set_particle_vector(self, name, value):
-        """Set attributes of all particles to new values.
-
-        Parameters
-        ----------
-        name : str
-            Name of the attribute (str).
-        value : any
-            New value to set the attribute of the particles to.
-        """
-        self.particledata._data[name][:] = value
-
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.
 
@@ -842,7 +830,7 @@ class ParticleSet(ABC):
         postIterationCallbacks :
             Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
         callbackdt :
-            Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks' (Default value = None)
+            Optional, in conjecture with 'postIterationCallbacks', timestep interval to (latest) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks' (Default value = None)
         pyfunc_inter :
              (Default value = None)
         """
@@ -921,7 +909,7 @@ class ParticleSet(ABC):
             raise RuntimeError("dt and runtime are zero, or endtime is equal to Particle.time. "
                                "ParticleSet.execute() will not do anything.")
 
-        self._set_particle_vector('dt', dt)
+        self.particledata._data['dt'][:] = dt
 
         if callbackdt is None:
             interupt_dts = [np.infty, outputdt]

@@ -159,7 +159,7 @@ class ParticleFile(ABC):
         Parameters
         ----------
         name : str
-            Name of the metadata variabale
+            Name of the metadata variable
         message : str
             message to be written
         """

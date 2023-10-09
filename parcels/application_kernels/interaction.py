@@ -21,7 +21,7 @@ def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
         # z-direction respectively.
         dist = np.sqrt(n.horiz_dist**2 + n.vert_dist**2)
         # Note that in case of a tie, the particle with the lowest ID
-        # wins. In certain adverserial cases, this might lead to
+        # wins. In certain adversarial cases, this might lead to
         # undesirable results.
         if dist < min_dist or min_dist < 0:
             min_dist = dist
