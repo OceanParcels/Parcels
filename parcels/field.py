@@ -18,6 +18,7 @@ from parcels.tools.converters import (
 )
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
+    AllParcelsErrorCodes,
     FieldOutOfBoundError,
     FieldOutOfBoundSurfaceError,
     FieldSamplingError,
@@ -32,14 +33,30 @@ from .fieldfilebuffer import (
 )
 from .grid import CGrid, Grid, GridCode
 
-__all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
+__all__ = ['Field', 'VectorField', 'NestedField']
 
 
 def _isParticle(key):
-    if hasattr(key, '_next_dt'):
+    if hasattr(key, 'obs_written'):
         return True
     else:
         return False
+
+
+def _deal_with_errors(error, key, vector_type):
+    if _isParticle(key):
+        key.state = AllParcelsErrorCodes[type(error)]
+    elif _isParticle(key[-1]):
+        key[-1].state = AllParcelsErrorCodes[type(error)]
+    else:
+        raise RuntimeError(f"{error}. Error could not be handled because particle was not part of the Field Sampling.")
+
+    if vector_type == '3D':
+        return (0, 0, 0)
+    elif vector_type == '2D':
+        return (0, 0)
+    else:
+        return 0
 
 
 class Field:
@@ -79,8 +96,7 @@ class Field:
         :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
         mesh and time_origin information. Can be constructed from any of the Grid objects
     fieldtype : str
-        Type of Field to be used for UnitConverter when using SummedFields
-        (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+        Type of Field to be used for UnitConverter (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
     transpose : bool
         Transpose data to required (lon, lat) layout
     vmin : float
@@ -114,8 +130,6 @@ class Field:
     For usage examples see the following tutorials:
 
     * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
-
-    * `Summed Fields <../examples/tutorial_SummedFields.ipynb>`__
     """
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
@@ -136,7 +150,7 @@ class Field:
         else:
             self.grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
-        # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
+        # self.lon, self.lat, self.depth and self.time are not used any more in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
         self.lon = self.grid.lon
@@ -1177,10 +1191,13 @@ class Field:
 
     def __getitem__(self, key):
         self._check_velocitysampling()
-        if _isParticle(key):
-            return self.eval(key.time, key.depth, key.lat, key.lon, key)
-        else:
-            return self.eval(*key)
+        try:
+            if _isParticle(key):
+                return self.eval(key.time, key.depth, key.lat, key.lon, key)
+            else:
+                return self.eval(*key)
+        except tuple(AllParcelsErrorCodes.keys()) as error:
+            return _deal_with_errors(error, key, vector_type=None)
 
     def eval(self, time, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.
@@ -1200,7 +1217,7 @@ class Field:
         else:
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
-            # excat value in the time array.
+            # exact value in the time array.
             value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
 
         if applyConversion:
@@ -1208,16 +1225,10 @@ class Field:
         else:
             return value
 
-    def ccode_eval_array(self, var, t, z, y, x):
-        # Casting interp_methd to int as easier to pass on in C-code
+    def ccode_eval(self, var, t, z, y, x):
+        # Casting interp_method to int as easier to pass on in C-code
         self._check_velocitysampling()
         ccode_str = f"temporal_interpolation({x}, {y}, {z}, {t}, {self.ccode_name}, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
-        return ccode_str
-
-    def ccode_eval_object(self, var, t, z, y, x):
-        self._check_velocitysampling()
-        # Casting interp_methd to int as easier to pass on in C-code
-        ccode_str = f"temporal_interpolation_pstruct({x}, {y}, {z}, {t}, {self.ccode_name}, particle->cxi, particle->cyi, particle->czi, particle->cti, &{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
         return ccode_str
 
     def ccode_convert(self, _, z, y, x):
@@ -1470,14 +1481,6 @@ class Field:
         data = self.data_concatenate(data, buffer_data, tindex)
         self.filebuffers[tindex] = filebuffer
         return data
-
-    def __add__(self, field):
-        if isinstance(self, Field) and isinstance(field, Field):
-            return SummedField('_SummedField', [self, field])
-        elif isinstance(field, SummedField):
-            assert isinstance(self, type(field[0])), 'Fields in a SummedField should be either all scalars or all vectors'
-            field.insert(0, self)
-            return field
 
 
 class VectorField:
@@ -1861,13 +1864,16 @@ class VectorField:
                     return interp[self.U.interp_method]['2D'](ti, z, y, x, grid.time[ti], particle=particle, applyConversion=applyConversion)
 
     def __getitem__(self, key):
-        if _isParticle(key):
-            return self.eval(key.time, key.depth, key.lat, key.lon, key)
-        else:
-            return self.eval(*key)
+        try:
+            if _isParticle(key):
+                return self.eval(key.time, key.depth, key.lat, key.lon, key)
+            else:
+                return self.eval(*key)
+        except tuple(AllParcelsErrorCodes.keys()) as error:
+            return _deal_with_errors(error, key, vector_type=self.vector_type)
 
-    def ccode_eval_array(self, varU, varV, varW, U, V, W, t, z, y, x):
-        # Casting interp_methd to int as easier to pass on in C-code
+    def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
+        # Casting interp_method to int as easier to pass on in C-code
         ccode_str = ""
         if self.vector_type == '3D':
             ccode_str = f"temporal_interpolationUVW({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, {W.ccode_name}, " + \
@@ -1877,17 +1883,6 @@ class VectorField:
             ccode_str = f"temporal_interpolationUV({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, " + \
                         "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," + \
                         f" &{varU}, &{varV}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
-        return ccode_str
-
-    def ccode_eval_object(self, varU, varV, varW, U, V, W, t, z, y, x):
-        # Casting interp_methd to int as easier to pass on in C-code
-        ccode_str = ""
-        if self.vector_type == '3D':
-            ccode_str = f"temporal_interpolationUVW_pstruct({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, {W.ccode_name}, " + \
-                        f"particle->cxi, particle->cyi, particle->czi, particle->cti, &{varU}, &{varV}, &{varW}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
-        else:
-            ccode_str = f"temporal_interpolationUV_pstruct({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, " + \
-                        f"particle->cxi, particle->cyi, particle->czi, particle->cti, &{varU}, &{varV}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
         return ccode_str
 
 
@@ -1913,88 +1908,6 @@ class DeferredArray():
 
     def __getitem__(self, key):
         raise RuntimeError("Field is in deferred_load mode, so can't be accessed. Use .computeTimeChunk() method to force loading of data")
-
-
-class SummedField(list):
-    """Class SummedField is a list of Fields over which Field interpolation is summed.
-
-    This can e.g. be used when combining multiple flow fields,
-    where the total flow is the sum of all the individual flows.
-    Note that the individual Fields can be on different Grids.
-    Also note that, since SummedFields are lists, the individual Fields can
-    still be queried through their list index (e.g. SummedField[1]).
-    SummedField is composed of either Fields or VectorFields.
-
-
-    Parameters
-    ----------
-    name : str
-        Name of the SummedField
-    F : list of Field
-        List of fields. F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
-    V : list of Field
-        List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
-    W : list of Field
-        List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
-
-
-    Examples
-    --------
-    See `here <../examples/tutorial_SummedFields.ipynb>`__
-    for a detailed tutorial
-
-    """
-
-    def __init__(self, name, F, V=None, W=None):
-        if V is None:
-            if isinstance(F[0], VectorField):
-                vector_type = F[0].vector_type
-            for Fi in F:
-                assert isinstance(Fi, Field) or (isinstance(Fi, VectorField) and Fi.vector_type == vector_type), 'Components of a SummedField must be Field or VectorField'
-                self.append(Fi)
-        elif W is None:
-            for (i, Fi, Vi) in zip(range(len(F)), F, V):
-                assert isinstance(Fi, Field) and isinstance(Vi, Field), \
-                    'F, and V components of a SummedField must be Field'
-                self.append(VectorField(name+'_%d' % i, Fi, Vi))
-        else:
-            for (i, Fi, Vi, Wi) in zip(range(len(F)), F, V, W):
-                assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
-                    'F, V and W components of a SummedField must be Field'
-                self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
-        self.name = name
-
-    def eval(self, time, z, y, x, particle=None, applyConversion=True):
-        vals = []
-        val = None
-        for iField in range(len(self)):
-            val = list.__getitem__(self, iField).eval(time, z, y, x, applyConversion=applyConversion)
-            vals.append(val)
-        return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list.__getitem__(self, key)
-        else:
-            vals = []
-            val = None
-            for iField in range(len(self)):
-                if _isParticle(key):
-                    val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
-                else:
-                    val = list.__getitem__(self, iField).eval(*key)
-                vals.append(val)
-            return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
-
-    def __add__(self, field):
-        if isinstance(field, Field):
-            assert isinstance(self[0], type(field)), 'Fields in a SummedField should be either all scalars or all vectors'
-            self.append(field)
-        elif isinstance(field, SummedField):
-            assert isinstance(self[0], type(field[0])), 'Fields in a SummedField should be either all scalars or all vectors'
-            for fld in field:
-                self.append(fld)
-        return self
 
 
 class NestedField(list):
@@ -2056,9 +1969,10 @@ class NestedField(list):
                     else:
                         val = list.__getitem__(self, iField).eval(*key)
                     break
-                except (FieldOutOfBoundError, FieldSamplingError):
+                except tuple(AllParcelsErrorCodes.keys()) as error:
                     if iField == len(self)-1:
-                        raise
+                        vector_type = self[iField].vector_type if isinstance(self[iField], VectorField) else None
+                        return _deal_with_errors(error, key, vector_type=vector_type)
                     else:
                         pass
             return val

@@ -7,20 +7,18 @@ import pytest
 import xarray as xr
 
 
-@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="skipping macOS test as problem with file in pytest")
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows as mpi4py not available for windows")
-@pytest.mark.parametrize('pset_mode', ['soa'])
-@pytest.mark.parametrize('repeatdt, maxage', [(20*86400, 600*86400), (10*86400, 10*86400)])
-@pytest.mark.parametrize('nump', [4, 8])
-def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage, nump):
+@pytest.mark.parametrize('repeatdt, maxage', [(200*86400, 600*86400), (100*86400, 100*86400)])
+@pytest.mark.parametrize('nump', [8])
+def test_mpi_run(tmpdir, repeatdt, maxage, nump):
     stommel_file = path.join(path.dirname(__file__), '..', 'docs', 'examples', 'example_stommel.py')
     outputMPI = tmpdir.join('StommelMPI')
     outputMPI_partition_function = tmpdir.join('StommelMPI_partition_function')
     outputNoMPI = tmpdir.join('StommelNoMPI.zarr')
 
-    system('mpirun -np 2 python %s -p %d -o %s -r %d -a %d -psm %s -wf False -cpf True' % (stommel_file, nump, outputMPI_partition_function, repeatdt, maxage, pset_mode))
-    system('mpirun -np 2 python %s -p %d -o %s -r %d -a %d -psm %s -wf False' % (stommel_file, nump, outputMPI, repeatdt, maxage, pset_mode))
-    system('python %s -p %d -o %s -r %d -a %d -psm %s -wf False' % (stommel_file, nump, outputNoMPI, repeatdt, maxage, pset_mode))
+    system('mpirun -np 2 python %s -p %d -o %s -r %d -a %d -wf False -cpf True' % (stommel_file, nump, outputMPI_partition_function, repeatdt, maxage))
+    system('mpirun -np 2 python %s -p %d -o %s -r %d -a %d -wf False' % (stommel_file, nump, outputMPI, repeatdt, maxage))
+    system('python %s -p %d -o %s -r %d -a %d -wf False' % (stommel_file, nump, outputNoMPI, repeatdt, maxage))
 
     ds2 = xr.open_zarr(outputNoMPI)
 

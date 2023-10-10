@@ -34,8 +34,8 @@ def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     chunksize = {'lat': ('y', 256), 'lon': ('x', 512)}
-    field_set = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chunksize)
-    assert field_set.U.chunksize == chunksize
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chunksize)
+    assert fieldset.U.chunksize == chunksize
 
     # Now run particles as normal
     npart = 20
@@ -49,9 +49,9 @@ def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
 
     def periodicBC(particle, fieldSet, time):
         if particle.lon > 180:
-            particle.lon -= 360
+            particle_dlon -= 360  # noqa
 
-    pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
+    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile(outfile, pset, outputdt=delta(days=1))
     kernels = pset.Kernel(advection[advtype]) + periodicBC
     pset.execute(kernels, runtime=runtime, dt=delta(hours=6),

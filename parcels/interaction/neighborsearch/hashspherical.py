@@ -70,10 +70,10 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
         lat = values[1, active_idx]
         lon = values[2, active_idx]
 
-        # Southern or Nothern hemisphere.
+        # Southern or Northern hemisphere.
         lat_sign = (lat > 0).astype(int)
 
-        # Find the lattitude part of the cell id.
+        # Find the latitude part of the cell id.
         i_depth = np.floor(depth/self.inter_dist_vert).astype(int)
         i_lat = np.floor(np.abs(lat)/self.inter_degree_dist).astype(int)
 
@@ -137,7 +137,7 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
 
 
 def i_3d_to_hash(i_depth, i_lat, i_lon, lat_sign, bits):
-    """Convert longitude and lattitude id's to hash"""
+    """Convert longitude and latitude id's to hash"""
     point_hash = lat_sign
     point_hash = np.bitwise_or(point_hash, np.left_shift(i_depth, 1))
     point_hash = np.bitwise_or(point_hash, np.left_shift(i_lat, 1+bits[0]))
@@ -179,7 +179,7 @@ def geo_hash_to_neighbors(hash_id, coor, bits, inter_arc_dist):
                 neighbors.extend(
                     all_neigh_depth(new_i_lat, new_i_lon, new_lat_sign))
         else:
-            start_i_lon = int(np.floor(coor[2]/d_lon))
+            start_i_lon = int(np.floor(coor[2][0]/d_lon))
             for delta_lon in [-1, 0, 1]:
                 new_i_lon = (start_i_lon+delta_lon+n_new_lon) % n_new_lon
                 neighbors.extend(

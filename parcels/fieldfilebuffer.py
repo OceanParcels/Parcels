@@ -48,7 +48,7 @@ class NetcdfFileBuffer(_FileBuffer):
             self.dataset['decoded'] = True
         except:
             if self.netcdf_decodewarning:
-                logger.warning_once(f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}).\n         "
+                logger.warning_once(f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
                                     "It will be opened with no decoding. Filling values might be wrongly parsed.")
 
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
@@ -419,7 +419,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
     def _is_dimension_available(self, dimension_name):
         """
-        This function returns a boolean value indicating if a certain variable (name) is avaialble in the
+        This function returns a boolean value indicating if a certain variable (name) is available in the
         requested dimensions as well as in the actual dataset of the file. If any of the two conditions is not met,
         if returns 'False'.
         """
@@ -494,7 +494,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         """
         [File needs to be open via the '__enter__'-method for this to work - otherwise generating an error]
         This functions translates the array-index-to-chunksize chunk map into a proper fieldsize dictionary that
-        can later be used for re-qunking, if a previously-opened file is re-opened again.
+        can later be used for re-chunking, if a previously-opened file is re-opened again.
         """
         if self.chunksize in [False, None]:
             return
@@ -535,7 +535,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         Maps and correlates the requested dictionary-style chunksize with the requested parcels dimensions, variables
         and the NetCDF-available dimensions. Thus, it takes care to remove chunksize arguments that are not in the
         Parcels- or NetCDF dimensions, or whose chunking would be omitted due to an empty chunk dimension.
-        The function retuns a pair of two tings: corrected_chunk_dict, chunk_map
+        The function returns a pair of two things: corrected_chunk_dict, chunk_map
         The corrected chunk_dict is the corrected version of the requested chunksize. The chunk map maps the array index
         dimension to the requested chunksize.
         """
@@ -629,7 +629,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         Super-function that maps and correlates the requested chunksize with the requested parcels dimensions, variables
         and the NetCDF-available dimensions. Thus, it takes care to remove chunksize arguments that are not in the
         Parcels- or NetCDF dimensions, or whose chunking would be omitted due to an empty chunk dimension.
-        The function retuns the corrected chunksize dictionary. The function also initializes the chunk_map.
+        The function returns the corrected chunksize dictionary. The function also initializes the chunk_map.
         The chunk map maps the array index dimension to the requested chunksize.
         Apart from resolving the different requested version of the chunksize, the function also test-executes the
         chunk request. If this initial test fails, as a last resort, we execute a heuristic to map the requested
@@ -655,7 +655,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 if predefined_cap is not None:
                     chunk_cap = da_utils.parse_bytes(predefined_cap)
                 else:
-                    logger.info_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see http://oceanparcels.org/faq.html#field_chunking_config and https://docs.dask.org).")
+                    logger.info_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically."
+                                     "Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.oceanparcels.org/en/latest/examples/documentation_MPI.html#Chunking-the-FieldSet-with-dask and https://docs.dask.org).")
             loni, lonname, lonvalue = self._is_dimension_in_dataset('lon')
             lati, latname, latvalue = self._is_dimension_in_dataset('lat')
             if lati is not None and loni is not None and lati >= 0 and loni >= 0:

@@ -98,6 +98,8 @@ def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
 
 
 def UpdateP(particle, fieldset, time):
+    if time == 0:
+        particle.p_start = fieldset.P[time, particle.depth, particle.lat, particle.lon]
     particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
@@ -132,7 +134,7 @@ def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
         # JIT compilation requires a-priori knowledge of the particle
         # data structure, so we define additional variables here.
         p = Variable('p', dtype=np.float32, initial=0.)
-        p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
+        p_start = Variable('p_start', dtype=np.float32, initial=0)
 
     # Initialise particles
     if fieldset.U.grid.mesh == 'flat':

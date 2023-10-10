@@ -71,6 +71,7 @@ linkcheck_ignore = [
     r"https://aip\.scitation\.org/doi/10\.1063/1\.4982720",  # Site doesn't allow crawling
     r"https://www\.sciencedirect\.com/.*",  # Site doesn't allow crawling
     r"https://lxml\.de/",  # Crawler occasionally fails to establish connection
+    r"https://linux\.die\.net/",  # Site doesn't allow crawling
 
     # To monitor
     r"http://marine.copernicus.eu/",  # 2023-06-07 Site non-responsive
@@ -361,7 +362,8 @@ nbsphinx_thumbnails = {
     'examples/tutorial_interaction': '_static/pulled_particles_twoatractors_line.gif',
     'examples/documentation_LargeRunsOutput': '_static/harddrive.png',
     'examples/tutorial_unitconverters': '_static/globe-icon.jpg',
-    'examples/documentation_geospatial': '_images/tutorial_geospatial_google_earth.png'
+    'examples/documentation_geospatial': '_images/tutorial_geospatial_google_earth.png',
+    'examples/tutorial_kernelloop': '_static/loop-icon.jpeg',
 }
 # -- Options for LaTeX output ---------------------------------------------
 

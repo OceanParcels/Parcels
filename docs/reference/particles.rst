@@ -11,20 +11,6 @@ parcels.particle module
 parcels.particleset module
 --------------------------
 
-.. automodule:: parcels.particleset.particlesetsoa
-    :members:
-    :show-inheritance:
-
-parcels.particleset.baseparticleset module
--------------------------------------------
-
-.. automodule:: parcels.particleset.baseparticleset
-    :members:
-    :show-inheritance:
-
-parcels.particleset.particlesetaos module
------------------------------------------
-
-.. automodule:: parcels.particleset.particlesetaos
+.. automodule:: parcels.particleset
     :members:
     :show-inheritance:

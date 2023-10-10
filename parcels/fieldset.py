@@ -1,4 +1,3 @@
-import warnings
 from copy import deepcopy
 from glob import glob
 from os import path
@@ -6,7 +5,7 @@ from os import path
 import dask.array as da
 import numpy as np
 
-from parcels.field import DeferredArray, Field, NestedField, SummedField, VectorField
+from parcels.field import DeferredArray, Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
@@ -39,6 +38,7 @@ class FieldSet:
     def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
         self.completed = False
+        self.particlefile = None
         if U:
             self.add_field(U, 'U')
             self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
@@ -167,19 +167,11 @@ class FieldSet:
         name = field.name if name is None else name
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
             raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
-        if isinstance(field, SummedField):
-            setattr(self, name, field)
-            field.name = name
-            for fld in field:
-                self.gridset.add_grid(fld)
-                fld.fieldset = self
-        elif isinstance(field, NestedField):
+        if isinstance(field, NestedField):
             setattr(self, name, field)
             for fld in field:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
-        elif isinstance(field, list):
-            raise NotImplementedError('FieldLists have been replaced by SummedFields. Use the + operator instead of []')
         else:
             setattr(self, name, field)
             self.gridset.add_grid(field)
@@ -224,16 +216,12 @@ class FieldSet:
 
     def add_UVfield(self):
         if not hasattr(self, 'UV') and hasattr(self, 'U') and hasattr(self, 'V'):
-            if isinstance(self.U, SummedField):
-                self.add_vector_field(SummedField('UV', self.U, self.V))
-            elif isinstance(self.U, NestedField):
+            if isinstance(self.U, NestedField):
                 self.add_vector_field(NestedField('UV', self.U, self.V))
             else:
                 self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
-            if isinstance(self.U, SummedField):
-                self.add_vector_field(SummedField('UVW', self.U, self.V, self.W))
-            elif isinstance(self.U, NestedField):
+            if isinstance(self.U, NestedField):
                 self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
             else:
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
@@ -266,17 +254,13 @@ class FieldSet:
             if U.cast_data_dtype != V.cast_data_dtype or (W and W.cast_data_dtype != U.cast_data_dtype):
                 raise ValueError('Not all velocity Fields have the same dtype')
 
-        if isinstance(self.U, (SummedField, NestedField)):
+        if isinstance(self.U, NestedField):
             w = self.W if hasattr(self, 'W') else [None]*len(self.U)
             for U, V, W in zip(self.U, self.V, w):
                 check_velocityfields(U, V, W)
         else:
             W = self.W if hasattr(self, 'W') else None
             check_velocityfields(self.U, self.V, W)
-
-        for fld in [self.U, self.V]:
-            if isinstance(fld, SummedField) and fld[0].interp_method in ['partialslip', 'freeslip'] and np.any([fld[0].grid is not f.grid for f in fld]):
-                warnings.warn('Slip boundary conditions may not work well with SummedFields. Be careful', UserWarning)
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()
@@ -300,7 +284,7 @@ class FieldSet:
             ccode_fieldnames.append(fld.ccode_name)
 
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or f.dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
                 if f.grid.depth_field == 'not_yet_set':
@@ -357,7 +341,7 @@ class FieldSet:
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None) (Default value = None)
         mesh : str
             String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tuturial <../examples/tutorial_unitconverters.ipynb>`__:
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
 
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
@@ -582,7 +566,7 @@ class FieldSet:
             +-----------------------------+-----------------------------+-----------------------------+
 
         For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
-        Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
+        Note that vertical velocity (W) is assumed positive in the positive z direction (which is upward in MITgcm)
         """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mitgcm'
@@ -823,7 +807,7 @@ class FieldSet:
 
             In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
             T node is at the cell centre and interpolated constant per cell as a C-grid.
-            In 3D: U and V nodes are at the midlle of the cell vertical edges,
+            In 3D: U and V nodes are at the middle of the cell vertical edges,
             They are interpolated bilinearly (independently of z) in the cell.
             W nodes are at the centre of the horizontal interfaces, but below the U and V.
             They are interpolated linearly (as a function of z) in the cell.
@@ -1087,7 +1071,7 @@ class FieldSet:
             if type(v) in [Field, VectorField]:
                 if v not in fields:
                     fields.append(v)
-            elif type(v) in [NestedField, SummedField]:
+            elif isinstance(v, NestedField):
                 if v not in fields:
                     fields.append(v)
                 for v2 in v:
@@ -1176,7 +1160,7 @@ class FieldSet:
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load:
+            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
@@ -1185,7 +1169,7 @@ class FieldSet:
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
@@ -1299,7 +1283,7 @@ class FieldSet:
 
         # update time varying grid depth
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f.dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
                 depth_data = f.grid.depth_field.data

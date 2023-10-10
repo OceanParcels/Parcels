@@ -175,7 +175,7 @@ def normalvariate(loc, scale):
 
 
 def expovariate(lamb):
-    """Returns a randome float of an exponential distribution with parameter lamb."""
+    """Returns a random float of an exponential distribution with parameter lamb."""
     _assign_parcels_random_ccodeconverter()
     rnd = _parcels_random_ccodeconverter.lib.pcls_expovariate
     rnd.argtype = c_float
@@ -184,7 +184,7 @@ def expovariate(lamb):
 
 
 def vonmisesvariate(mu, kappa):
-    """Returns a randome float of a Von Mises distribution
+    """Returns a random float of a Von Mises distribution
     with mean angle mu and concentration parameter kappa.
     """
     _assign_parcels_random_ccodeconverter()

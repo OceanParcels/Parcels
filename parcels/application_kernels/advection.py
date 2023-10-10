@@ -1,7 +1,7 @@
 """Collection of pre-built advection kernels."""
 import math
 
-from parcels.tools.statuscodes import OperationCode
+from parcels.tools.statuscodes import StatusCode
 
 __all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D',
            'AdvectionAnalytical']
@@ -19,8 +19,8 @@ def AdvectionRK4(particle, fieldset, time):
     (u3, v3) = fieldset.UV[time + .5 * particle.dt, particle.depth, lat2, lon2, particle]
     lon3, lat3 = (particle.lon + u3*particle.dt, particle.lat + v3*particle.dt)
     (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3, particle]
-    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
-    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
+    particle_dlon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt  # noqa
+    particle_dlat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt  # noqa
 
 
 def AdvectionRK4_3D(particle, fieldset, time):
@@ -41,9 +41,9 @@ def AdvectionRK4_3D(particle, fieldset, time):
     lat3 = particle.lat + v3*particle.dt
     dep3 = particle.depth + w3*particle.dt
     (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3, particle]
-    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
-    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
-    particle.depth += (w1 + 2*w2 + 2*w3 + w4) / 6. * particle.dt
+    particle_dlon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt  # noqa
+    particle_dlat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt  # noqa
+    particle_ddepth += (w1 + 2*w2 + 2*w3 + w4) / 6. * particle.dt  # noqa
 
 
 def AdvectionEE(particle, fieldset, time):
@@ -52,18 +52,22 @@ def AdvectionEE(particle, fieldset, time):
     Function needs to be converted to Kernel object before execution.
     """
     (u1, v1) = fieldset.UV[particle]
-    particle.lon += u1 * particle.dt
-    particle.lat += v1 * particle.dt
+    particle_dlon += u1 * particle.dt  # noqa
+    particle_dlat += v1 * particle.dt  # noqa
 
 
 def AdvectionRK45(particle, fieldset, time):
-    """Advection of particles using adadptive Runge-Kutta 4/5 integration.
+    """Advection of particles using adaptive Runge-Kutta 4/5 integration.
 
     Times-step dt is halved if error is larger than tolerance, and doubled
     if error is smaller than 1/10th of tolerance, with tolerance set to
     1e-5 * dt by default.
+
+    Note that this kernel requires a Particle Class that has an extra Variable 'next_dt'
     """
+    particle.dt = particle.next_dt
     rk45tol = 1e-5
+    min_dt = 1e-3
     c = [1./4., 3./8., 12./13., 1., 1./2.]
     A = [[1./4., 0., 0., 0., 0.],
          [3./32., 9./32., 0., 0., 0.],
@@ -90,20 +94,20 @@ def AdvectionRK45(particle, fieldset, time):
                   particle.lat + (v1 * A[4][0] + v2 * A[4][1] + v3 * A[4][2] + v4 * A[4][3] + v5 * A[4][4]) * particle.dt)
     (u6, v6) = fieldset.UV[time + c[4] * particle.dt, particle.depth, lat5, lon5, particle]
 
-    lon_4th = particle.lon + (u1 * b4[0] + u2 * b4[1] + u3 * b4[2] + u4 * b4[3] + u5 * b4[4]) * particle.dt
-    lat_4th = particle.lat + (v1 * b4[0] + v2 * b4[1] + v3 * b4[2] + v4 * b4[3] + v5 * b4[4]) * particle.dt
-    lon_5th = particle.lon + (u1 * b5[0] + u2 * b5[1] + u3 * b5[2] + u4 * b5[3] + u5 * b5[4] + u6 * b5[5]) * particle.dt
-    lat_5th = particle.lat + (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * particle.dt
+    lon_4th = (u1 * b4[0] + u2 * b4[1] + u3 * b4[2] + u4 * b4[3] + u5 * b4[4]) * particle.dt
+    lat_4th = (v1 * b4[0] + v2 * b4[1] + v3 * b4[2] + v4 * b4[3] + v5 * b4[4]) * particle.dt
+    lon_5th = (u1 * b5[0] + u2 * b5[1] + u3 * b5[2] + u4 * b5[3] + u5 * b5[4] + u6 * b5[5]) * particle.dt
+    lat_5th = (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * particle.dt
 
     kappa2 = math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2)
-    if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol), 2):
-        particle.lon = lon_4th
-        particle.lat = lat_4th
+    if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol), 2) or particle.dt < min_dt:
+        particle_dlon += lon_4th  # noqa
+        particle_dlat += lat_4th  # noqa
         if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol / 10), 2):
-            particle.update_next_dt(particle.dt * 2)
+            particle.next_dt *= 2
     else:
-        particle.dt /= 2
-        return OperationCode.Repeat
+        particle.next_dt /= 2
+        return StatusCode.Repeat
 
 
 def AdvectionAnalytical(particle, fieldset, time):
@@ -256,12 +260,14 @@ def AdvectionAnalytical(particle, fieldset, time):
     rs_x = compute_rs(ds_x, xsi, B_x, delta_x, s_min)
     rs_y = compute_rs(ds_y, eta, B_y, delta_y, s_min)
 
-    particle.lon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3]
-    particle.lat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3]
+    particle_dlon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3] - particle.lon  # noqa
+    particle_dlat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3] - particle.lat  # noqa
 
     if withW:
         rs_z = compute_rs(ds_z, zeta, B_z, delta_z, s_min)
         particle.depth = (1.-rs_z) * pz[0] + rs_z * pz[1]
 
-    # update the passed time for the main loop
-    particle.dt = direction * s_min * (dxdy * dz)
+    if particle.dt > 0:
+        particle.dt = max(direction * s_min * (dxdy * dz), 1e-7)
+    else:
+        particle.dt = min(direction * s_min * (dxdy * dz), -1e-7)

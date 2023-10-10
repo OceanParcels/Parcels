@@ -125,7 +125,7 @@ def hash_to_neighbors(hash_id, bits):
     hash_id :
         hash value of the current cell.
     bits :
-        key to compute the hashesh.
+        key to compute the hashes.
 
     Returns
     -------

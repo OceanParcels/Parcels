@@ -166,9 +166,12 @@ def test_moving_eddies_fwdbwd(mode, mesh, tmpdir, npart=2):
     pset.execute(method, endtime=0, dt=-dt,
                  output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
+    # Also include last timestep
+    for var in ['lon', 'lat', 'depth', 'time']:
+        pset.particledata.setallvardata(f"{var}", pset.particledata.getvardata(f"{var}_nextloop"))
+
     assert np.allclose(pset.lon, lons)
     assert np.allclose(pset.lat, lats)
-    return pset
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -177,6 +180,9 @@ def test_moving_eddies_fieldset(mode, mesh, tmpdir):
     fieldset = moving_eddies_fieldset(mesh=mesh)
     outfile = tmpdir.join("EddyParticle")
     pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
+    # Also include last timestep
+    for var in ['lon', 'lat', 'depth', 'time']:
+        pset.particledata.setallvardata(f"{var}", pset.particledata.getvardata(f"{var}_nextloop"))
     if mesh == 'flat':
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
@@ -200,6 +206,9 @@ def test_moving_eddies_file(mode, mesh, tmpdir):
     fieldset = FieldSet.from_parcels(fieldsetfile(mesh, tmpdir), extra_fields={'P': 'P'})
     outfile = tmpdir.join("EddyParticle")
     pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
+    # Also include last timestep
+    for var in ['lon', 'lat', 'depth', 'time']:
+        pset.particledata.setallvardata(f"{var}", pset.particledata.getvardata(f"{var}_nextloop"))
     if mesh == 'flat':
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
@@ -226,17 +235,17 @@ def test_periodic_and_computeTimeChunk_eddies(mode):
 
     def periodicBC(particle, fieldset, time):
         if particle.lon < fieldset.halo_west:
-            particle.lon += fieldset.halo_east - fieldset.halo_west
+            particle_dlon += fieldset.halo_east - fieldset.halo_west  # noqa
         elif particle.lon > fieldset.halo_east:
-            particle.lon -= fieldset.halo_east - fieldset.halo_west
+            particle_dlon -= fieldset.halo_east - fieldset.halo_west  # noqa
         if particle.lat < fieldset.halo_south:
-            particle.lat += fieldset.halo_north - fieldset.halo_south
+            particle_dlat += fieldset.halo_north - fieldset.halo_south  # noqa
         elif particle.lat > fieldset.halo_north:
-            particle.lat -= fieldset.halo_north - fieldset.halo_south
+            particle_dlat -= fieldset.halo_north - fieldset.halo_south  # noqa
 
     def slowlySouthWestward(particle, fieldset, time):
-        particle.lon = particle.lon - 5 * particle.dt / 1e5
-        particle.lat -= 3 * particle.dt / 1e5
+        particle_dlon -= 5 * particle.dt / 1e5  # noqa
+        particle_dlat -= 3 * particle.dt / 1e5  # noqa
 
     kernels = pset.Kernel(AdvectionRK4)+slowlySouthWestward+periodicBC
     pset.execute(kernels, runtime=delta(days=6), dt=delta(hours=1))
