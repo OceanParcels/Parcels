@@ -138,6 +138,30 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
     assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
 
 
+def test_field_from_netcdf_variables():
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+    filename = data_path + 'perlinfieldsU.nc'
+    dims = {'lon': 'x', 'lat': 'y'}
+
+    variable = 'vozocrtx'
+    f1 = Field.from_netcdf(filename, variable, dims)
+    variable = ('U', 'vozocrtx')
+    f2 = Field.from_netcdf(filename, variable, dims)
+    variable = {'U': 'vozocrtx'}
+    f3 = Field.from_netcdf(filename, variable, dims)
+
+    assert np.allclose(f1.data, f2.data, atol=1e-12)
+    assert np.allclose(f1.data, f3.data, atol=1e-12)
+
+    failed = False
+    try:
+        variable = {'U': 'vozocrtx', 'nav_lat': 'nav_lat'}  # multiple variables will fail
+        f3 = Field.from_netcdf(filename, variable, dims)
+    except AssertionError:
+        failed = True
+    assert failed
+
+
 @pytest.mark.parametrize('calendar, cftime_datetime',
                          zip(_get_cftime_calendars(),
                              _get_cftime_datetimes()))
