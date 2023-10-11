@@ -314,8 +314,8 @@ class Field:
             list of filenames to read for the field. filenames can be a list ``[files]`` or
             a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data)
             In the latter case, time values are in filenames[data]
-        variable : tuple of str or str
-            Tuple mapping field name to variable name in the NetCDF file.
+        variable : dict, tuple of str or str
+            Dict or tuple mapping field name to variable name in the NetCDF file.
         dimensions : dict
             Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         indices :
@@ -385,6 +385,9 @@ class Field:
 
         if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
             variable = (variable, variable)
+        elif isinstance(variable, dict):
+            assert len(variable) == 1, 'Field.from_netcdf() supports only one variable at a time. Use FieldSet.from_netcdf() for multiple variables.'
+            variable = tuple(variable.items())[0]
         assert len(variable) == 2, 'The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables'
 
         data_filenames = cls.get_dim_filenames(filenames, 'data')
