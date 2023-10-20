@@ -142,12 +142,16 @@ class Field:
         else:
             self.name, self.filebuffername = name
         self.data = data
-        time_origin = TimeConverter(0) if time_origin is None else time_origin
         if grid:
             if grid.defer_load and isinstance(data, np.ndarray):
                 raise ValueError('Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately')
             self.grid = grid
         else:
+            if (time is not None) and isinstance(time[0], np.datetime64):
+                time_origin = TimeConverter(time[0])
+                time = np.array([time_origin.reltime(t) for t in time])
+            else:
+                time_origin = TimeConverter(0)
             self.grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
         # self.lon, self.lat, self.depth and self.time are not used any more in parcels.
