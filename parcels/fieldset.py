@@ -131,7 +131,7 @@ class FieldSet:
                 time_origin = TimeConverter(time[0])
                 time = np.array([time_origin.reltime(t) for t in time])
             else:
-                time_origin = TimeConverter(0)
+                time_origin = kwargs.pop('time_origin', TimeConverter(0))
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             if 'creation_log' not in kwargs.keys():
                 kwargs['creation_log'] = 'from_data'
