@@ -147,7 +147,7 @@ class Field:
                 raise ValueError('Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately')
             self.grid = grid
         else:
-            if time and isinstance(time[0], np.datetime64):
+            if (time is not None) and isinstance(time[0], np.datetime64):
                 time_origin = TimeConverter(time[0])
                 time = np.array([time_origin.reltime(t) for t in time])
             else:
