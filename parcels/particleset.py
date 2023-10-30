@@ -505,9 +505,9 @@ class ParticleSet(ABC):
         pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
             Particle class. May be a particle class as defined in parcels, or a subclass defining a custom particle.
         start :
-            Starting point for initialisation of particles on a straight line.
+            Start point (longitude, latitude) for initialisation of particles on a straight line.
         finish :
-            End point for initialisation of particles on a straight line.
+            End point (longitude, latitude) for initialisation of particles on a straight line.
         size :
             Initial size of particle set
         depth :
