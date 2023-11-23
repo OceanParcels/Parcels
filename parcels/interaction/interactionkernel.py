@@ -6,7 +6,7 @@ import numpy as np
 
 try:
     from mpi4py import MPI
-except:
+except ModuleNotFoundError:
     MPI = None
 
 from parcels.field import NestedField, VectorField

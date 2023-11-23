@@ -19,7 +19,7 @@ from numpy import ndarray
 
 try:
     from mpi4py import MPI
-except:
+except ModuleNotFoundError:
     MPI = None
 
 import parcels.rng as ParcelsRandom  # noqa

@@ -9,7 +9,7 @@ from parcels.tools.statuscodes import StatusCode
 
 try:
     from mpi4py import MPI
-except:
+except ModuleNotFoundError:
     MPI = None
 if MPI:
     try:

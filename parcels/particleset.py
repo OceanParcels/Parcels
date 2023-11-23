@@ -12,12 +12,12 @@ from tqdm import tqdm
 
 try:
     from mpi4py import MPI
-except:
+except ModuleNotFoundError:
     MPI = None
 
 try:
     from pykdtree.kdtree import KDTree
-except:
+except ModuleNotFoundError:
     KDTree = None
 
 from parcels.application_kernels.advection import AdvectionRK4
