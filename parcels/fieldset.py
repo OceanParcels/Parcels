@@ -14,7 +14,7 @@ from parcels.tools.statuscodes import TimeExtrapolationError
 
 try:
     from mpi4py import MPI
-except:
+except ModuleNotFoundError:
     MPI = None
 
 

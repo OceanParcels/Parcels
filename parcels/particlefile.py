@@ -11,11 +11,11 @@ from parcels.tools.loggers import logger
 
 try:
     from mpi4py import MPI
-except:
+except ModuleNotFoundError:
     MPI = None
 try:
     from parcels._version import version as parcels_version
-except:
+except ModuleNotFoundError:
     raise OSError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
 
 
