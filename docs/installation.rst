@@ -64,7 +64,7 @@ Installation for developers
 
 If you would prefer to have a development installation of Parcels (i.e., where the code can be actively edited), you can do so by cloning the Parcels repo, installing dependencies using the environment file, and then installing Parcels in an editable mode such that changes to the cloned code can be tested during development.
 
-**Step 1:** Install `micromamba <https://mamba.readthedocs.io/en/latest/index.html>`_, a lightweight version of conda, following the instructions `here <https://mamba.readthedocs.io/en/latest/micromamba-installation.html#umamba-install>`_.
+**Step 1:** Install `micromamba <https://mamba.readthedocs.io/en/latest/index.html>`_, a lightweight version of conda, following the instructions `here <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`_.
 
 .. note::
 
