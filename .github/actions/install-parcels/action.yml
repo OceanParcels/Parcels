@@ -27,7 +27,7 @@ runs:
         auto-activate-base: false
         auto-update-conda: true
     - run: conda info
-        shell: bash -el {0}
+      shell: bash -el {0}
     - name: Install parcels
       run: pip install .
       shell: bash -el {0}
