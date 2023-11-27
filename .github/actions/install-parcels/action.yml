@@ -19,7 +19,7 @@ runs:
       with:
         minimum-size: 8GB
     - name: Install miniconda
-       uses: conda-incubator/setup-miniconda@v2.3.0
+       uses: conda-incubator/setup-miniconda@v2
        with:
          miniconda-version: "latest"
          activate-environment: ${{ inputs.environment-name }}
