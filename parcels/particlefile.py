@@ -142,7 +142,7 @@ class ParticleFile(ABC):
 
         if self.time_origin.calendar is not None:
             attrs['time']['units'] = "seconds since " + str(self.time_origin)
-            attrs['time']['calendar'] = 'standard' if self.time_origin.calendar == 'np_datetime64' else self.time_origin.calendar
+            attrs['time']['calendar'] = _set_calendar(self.time_origin.calendar)
 
         for vname in self.vars_to_write:
             if vname not in ['time', 'lat', 'lon', 'depth', 'id']:
