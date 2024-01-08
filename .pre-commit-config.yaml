@@ -10,7 +10,7 @@ repos:
         types: [text]
         files: \.(json|ipynb)$
   - repo: https://github.com/pycqa/flake8
-    rev: "6.1.0"
+    rev: "7.0.0"
     hooks:
       - id: flake8
   - repo: https://github.com/pycqa/pydocstyle
@@ -29,6 +29,6 @@ repos:
       - id: isort
         name: isort (python)
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.1.0"
+    rev: "v4.0.0-alpha.8"
     hooks:
       - id: prettier
