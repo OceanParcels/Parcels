@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos, ubuntu, windows]
-        include:  # TODO check if these can go?
+        include: # TODO check if these can go?
           - os: macos
             os-short: osx
           - os: ubuntu

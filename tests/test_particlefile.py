@@ -245,6 +245,25 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('repeatdt', [1, 2])
+@pytest.mark.parametrize('nump', [1, 10])
+def test_pfile_chunks_repeatedrelease(fieldset, mode, repeatdt, nump, tmpdir):
+    runtime = 8
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.zeros((nump, 1)),
+                       lat=np.zeros((nump, 1)), repeatdt=repeatdt)
+    outfilepath = tmpdir.join("pfile_chunks_repeatedrelease.zarr")
+    chunks = (20, 10)
+    pfile = pset.ParticleFile(outfilepath, outputdt=1, chunks=chunks)
+
+    def DoNothing(particle, fieldset, time):
+        pass
+
+    pset.execute(DoNothing, dt=1, runtime=runtime, output_file=pfile)
+    ds = xr.open_zarr(outfilepath)
+    assert ds['time'].shape == (int(nump*runtime/repeatdt), chunks[1])
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_write_timebackward(fieldset, mode, tmpdir):
     outfilepath = tmpdir.join("pfile_write_timebackward.zarr")
 
