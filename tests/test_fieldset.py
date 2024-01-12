@@ -193,8 +193,7 @@ def test_field_from_netcdf(with_timestamps):
     variable = 'U'
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     if with_timestamps:
-        timestamp_types = [ [[2]],
-                            [[np.datetime64('2000-01-01')]] ]
+        timestamp_types = [[[2]], [[np.datetime64('2000-01-01')]]]
         for timestamps in timestamp_types:
             Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity', timestamps=timestamps)
     else:
