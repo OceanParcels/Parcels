@@ -450,11 +450,14 @@ class ParticleSet(ABC):
                     continue
 
                 tree_data = np.stack((grid.lon.flat, grid.lat.flat), axis=-1)
-                tree = KDTree(tree_data)
+                IN = np.all(~np.isnan(tree_data), axis=1)
+                tree = KDTree(tree_data[IN, :])
                 # stack all the particle positions for a single query
                 pts = np.stack((self.particledata.data['lon'], self.particledata.data['lat']), axis=-1)
                 # query datatype needs to match tree datatype
-                _, idx = tree.query(pts.astype(tree_data.dtype))
+                _, idx_nan = tree.query(pts.astype(tree_data.dtype))
+
+                idx = np.where(IN)[0][idx_nan]
                 yi, xi = np.unravel_index(idx, grid.lon.shape)
 
                 self.particledata.data['xi'][:, i] = xi
