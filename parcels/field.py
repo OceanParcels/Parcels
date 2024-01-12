@@ -283,10 +283,7 @@ class Field:
                 stamps_in_file = 1 if isinstance(timestamps[findex], (int, np.datetime64)) else len(timestamps[findex])
                 for f in [data_filenames[findex], ] * stamps_in_file:
                     dataFiles.append(f)
-            if stamps_in_file == 1:
-                timeslices = timestamps
-            else:
-                timeslices = np.array([stamp for file in timestamps for stamp in file])
+            timeslices = np.array([stamp for file in timestamps for stamp in file])
             time = timeslices
         else:
             timeslices = []
