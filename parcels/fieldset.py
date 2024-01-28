@@ -838,7 +838,7 @@ class FieldSet:
             This flag overrides the allow_time_extrapolation and sets it to False
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-            Note that in the case of from_mom5() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
+            Note that in the case of from_mom5() and from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
         chunksize :
             size of the chunks in dask loading (Default value = None)
         **kwargs :
@@ -918,7 +918,7 @@ class FieldSet:
             This flag overrides the allow_time_extrapolation and sets it to False
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-            Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
+            Note that in the case of from_pop() and from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
         chunksize :
             size of the chunks in dask loading (Default value = None)
         **kwargs :
