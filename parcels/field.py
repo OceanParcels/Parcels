@@ -1596,7 +1596,11 @@ class VectorField:
         V = (1-eta) * V0 + eta * V1
         rad = np.pi/180.
         deg2m = 1852 * 60.
-        meshJac = (deg2m * deg2m * math.cos(rad * y)) if grid.mesh == 'spherical' else 1
+        if applyConversion:
+            meshJac = (deg2m * deg2m * math.cos(rad * y)) if grid.mesh == 'spherical' else 1
+        else:
+            meshJac = deg2m if grid.mesh == 'spherical' else 1
+
         jac = self.jacobian(xsi, eta, px, py) * meshJac
 
         u = ((-(1-eta) * U - (1-xsi) * V) * px[0]
