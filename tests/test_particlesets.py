@@ -58,7 +58,9 @@ def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
     lat = np.linspace(1, 0, npart, dtype=np.float32)
 
     class MyParticle(ptype[mode]):
-        v = Variable('v')
+        pass
+
+    MyParticle.add_variable(Variable("v"))
 
     v_vals = np.arange(npart)
     pset = ParticleSet.from_list(fieldset, lon=lon, lat=lat, v=v_vals, pclass=MyParticle)
@@ -75,9 +77,11 @@ def test_pset_create_fromparticlefile(fieldset, mode, restart, tmpdir):
     lat = np.linspace(1, 0, 10, dtype=np.float32)
 
     class TestParticle(ptype[mode]):
-        p = Variable('p', np.float32, initial=0.33)
-        p2 = Variable('p2', np.float32, initial=1, to_write=False)
-        p3 = Variable('p3', np.float32, to_write='once')
+        pass
+
+    TestParticle.add_variable('p', np.float32, initial=0.33)
+    TestParticle.add_variable('p2', np.float32, initial=1, to_write=False)
+    TestParticle.add_variable('p3', np.float32, to_write='once')
 
     pset = ParticleSet(fieldset, lon=lon, lat=lat, depth=[4]*len(lon), pclass=TestParticle, p3=np.arange(len(lon)))
     pfile = pset.ParticleFile(filename, outputdt=1)
@@ -237,8 +241,10 @@ def test_pset_access(fieldset, mode, npart=100):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_custom_ptype(fieldset, mode, npart=100):
     class TestParticle(ptype[mode]):
-        p = Variable('p', np.float32, initial=0.33)
-        n = Variable('n', np.int32, initial=2)
+        pass
+
+    TestParticle.add_variable('p', np.float32, initial=0.33)
+    TestParticle.add_variable('n', np.int32, initial=2)
 
     pset = ParticleSet(fieldset, pclass=TestParticle,
                        lon=np.linspace(0, 1, npart),
@@ -422,7 +428,9 @@ def test_from_field_exact_val(staggered_grid):
         fieldset.add_field(FMask)
 
     class SampleParticle(ptype['scipy']):
-        mask = Variable('mask', initial=0)
+        pass
+
+    SampleParticle.add_variable('mask', initial=0)
 
     def SampleMask(particle, fieldset, time):
         particle.mask = fieldset.mask[particle]

@@ -230,6 +230,16 @@ class ScipyParticle(_Particle):
         return str + f"time={time_string})"
 
     @classmethod
+    def add_variable(cls, var, *args, **kwargs):
+        """Add a new variable to the Particle class"""
+        if not isinstance(var, Variable):
+            dtype = kwargs.pop('dtype', np.float32)
+            initial = kwargs.pop('initial', 0)
+            to_write = kwargs.pop('to_write', True)
+            var = Variable(var, dtype=dtype, initial=initial, to_write=to_write)
+        setattr(cls, var.name, var)
+
+    @classmethod
     def set_lonlatdepth_dtype(cls, dtype):
         cls.lon.dtype = dtype
         cls.lat.dtype = dtype
