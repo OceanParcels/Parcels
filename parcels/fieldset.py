@@ -1141,7 +1141,7 @@ class FieldSet:
                 if isinstance(v, Field) and (v.name != 'U') and (v.name != 'V'):
                     v.write(filename)
 
-    def computeTimeChunk(self, time, dt):
+    def computeTimeChunk(self, time=0., dt=1):
         """Load a chunk of three data time steps into the FieldSet.
         This is used when FieldSet uses data imported from netcdf,
         with default option deferred_load. The loaded time steps are at or immediatly before time
@@ -1150,9 +1150,12 @@ class FieldSet:
         Parameters
         ----------
         time :
-            Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
+            Time around which the FieldSet chunks are to be loaded.
+            Time is provided as a double, relatively to Fieldset.time_origin.
+            Default is 0.
         dt :
-            time step of the integration scheme
+            time step of the integration scheme, needed to set the direction of time chunk loading.
+            Default is 1.
         """
         signdt = np.sign(dt)
         nextTime = np.infty if dt > 0 else -np.infty
