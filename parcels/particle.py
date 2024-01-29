@@ -243,6 +243,12 @@ class ScipyParticle(_Particle):
         if isinstance(var, list):
             return cls.add_variables(var)
         if not isinstance(var, Variable):
+            if len(args) > 0:
+                kwargs['dtype'] = args[0]
+            if len(args) > 1:
+                kwargs['initial'] = args[1]
+            if len(args) > 2:
+                kwargs['to_write'] = args[2]
             dtype = kwargs.pop('dtype', np.float32)
             initial = kwargs.pop('initial', 0)
             to_write = kwargs.pop('to_write', True)

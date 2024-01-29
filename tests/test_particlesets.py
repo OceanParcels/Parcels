@@ -75,7 +75,7 @@ def test_pset_create_fromparticlefile(fieldset, mode, restart, tmpdir):
 
     TestParticle = ptype[mode].add_variable('p', np.float32, initial=0.33)
     TestParticle = TestParticle.add_variable('p2', np.float32, initial=1, to_write=False)
-    TestParticle = TestParticle.add_variable('p3', np.float32, to_write='once')
+    TestParticle = TestParticle.add_variable('p3', np.float64, to_write='once')
 
     pset = ParticleSet(fieldset, lon=lon, lat=lat, depth=[4]*len(lon), pclass=TestParticle, p3=np.arange(len(lon)))
     pfile = pset.ParticleFile(filename, outputdt=1)
@@ -97,6 +97,7 @@ def test_pset_create_fromparticlefile(fieldset, mode, restart, tmpdir):
         assert np.allclose([p.id for p in pset], [p.id for p in pset_new])
     pset_new.execute(Kernel, runtime=2, dt=1)
     assert len(pset_new) == 3*len(pset)
+    assert pset[0].p3.dtype == np.float64
 
 
 @pytest.mark.parametrize('mode', ['scipy'])
