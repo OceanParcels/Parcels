@@ -30,8 +30,7 @@ def fieldset_fixture(xdim=100, ydim=100):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_print(fieldset, mode):
-    class TestParticle(ptype[mode]):
-        p = Variable('p', to_write=True)
+    TestParticle = ptype[mode].add_variable('p', to_write=True)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0, 1], lat=[0, 1])
     print(pset)
 
@@ -39,11 +38,10 @@ def test_print(fieldset, mode):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_init(fieldset, mode, npart=10):
     """Test that checks correct initialisation of custom variables."""
-    class TestParticle(ptype[mode]):
-        p_float = Variable('p_float', dtype=np.float32, initial=10.)
-        p_double = Variable('p_double', dtype=np.float64, initial=11.)
-        p_int = Variable('p_int', dtype=np.int32, initial=12.)
-
+    extra_vars = [Variable('p_float', dtype=np.float32, initial=10.),
+                  Variable('p_double', dtype=np.float64, initial=11.)]
+    TestParticle = ptype[mode].add_variables(extra_vars)
+    TestParticle = TestParticle.add_variable('p_int', np.int32, initial=12.)
     pset = ParticleSet(fieldset, pclass=TestParticle,
                        lon=np.linspace(0, 1, npart),
                        lat=np.linspace(1, 0, npart))

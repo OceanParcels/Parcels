@@ -158,14 +158,12 @@ def test_variable_write_double(fieldset, mode, tmpdir):
 def test_write_dtypes_pfile(fieldset, mode, tmpdir):
     filepath = tmpdir.join("pfile_dtypes.zarr")
 
-    dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64', 'uint64']
+    dtypes = [np.float32, np.float64, np.int32, np.uint32, np.int64, np.uint64]
     if mode == 'scipy':
-        dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16'])
+        dtypes.extend([np.bool_, np.int8, np.uint8, np.int16, np.uint16])
 
-    class MyParticle(ptype[mode]):
-        for d in dtypes:
-            # need an exec() here because we need to dynamically set the variable name
-            exec(f'v_{d} = Variable("v_{d}", dtype=np.{d}, initial=0.)')
+    extra_vars = [Variable(f'v_{d.__name__}', dtype=d, initial=0.) for d in dtypes]
+    MyParticle = ptype[mode].add_variables(extra_vars)
 
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=0, time=0)
     pfile = pset.ParticleFile(name=filepath, outputdt=1)
@@ -173,7 +171,7 @@ def test_write_dtypes_pfile(fieldset, mode, tmpdir):
 
     ds = xr.open_zarr(filepath, mask_and_scale=False)  # Note masking issue at https://stackoverflow.com/questions/68460507/xarray-loading-int-data-as-float
     for d in dtypes:
-        assert ds[f'v_{d}'].dtype == d
+        assert ds[f'v_{d.__name__}'].dtype == d
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
