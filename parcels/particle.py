@@ -231,13 +231,43 @@ class ScipyParticle(_Particle):
 
     @classmethod
     def add_variable(cls, var, *args, **kwargs):
-        """Add a new variable to the Particle class"""
+        """Add a new variable to the Particle class
+
+        Parameters
+        ----------
+        var : str, Variable or list of Variables
+            Variable object to be added. Can be the name of the Variable,
+            a Variable object, or a list of Variable objects
+        """
+
+        if isinstance(var, list):
+            return cls.add_variables(var)
         if not isinstance(var, Variable):
             dtype = kwargs.pop('dtype', np.float32)
             initial = kwargs.pop('initial', 0)
             to_write = kwargs.pop('to_write', True)
             var = Variable(var, dtype=dtype, initial=initial, to_write=to_write)
-        setattr(cls, var.name, var)
+
+        class NewParticle(cls):
+            pass
+
+        setattr(NewParticle, var.name, var)
+        return NewParticle
+
+    @classmethod
+    def add_variables(cls, variables):
+        """Add multiple new variables to the Particle class
+
+        Parameters
+        ----------
+        variables : list of Variable
+            Variable objects to be added. Has to be a list of Variable objects
+        """
+
+        NewParticle = cls
+        for var in variables:
+            NewParticle = NewParticle.add_variable(var)
+        return NewParticle
 
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):
