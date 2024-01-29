@@ -239,7 +239,6 @@ class ScipyParticle(_Particle):
             Variable object to be added. Can be the name of the Variable,
             a Variable object, or a list of Variable objects
         """
-
         if isinstance(var, list):
             return cls.add_variables(var)
         if not isinstance(var, Variable):
@@ -269,7 +268,6 @@ class ScipyParticle(_Particle):
         variables : list of Variable
             Variable objects to be added. Has to be a list of Variable objects
         """
-
         NewParticle = cls
         for var in variables:
             NewParticle = NewParticle.add_variable(var)
