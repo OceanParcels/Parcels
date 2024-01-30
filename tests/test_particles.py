@@ -60,8 +60,7 @@ def test_variable_init(fieldset, mode, npart=10):
 @pytest.mark.parametrize('type', ['np.int8', 'mp.float', 'np.int16'])
 def test_variable_unsupported_dtypes(fieldset, mode, type):
     """Test that checks errors thrown for unsupported dtypes in JIT mode."""
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=type, initial=10.)
+    TestParticle = ptype[mode].add_variable('p', dtype=type, initial=10.)
     error_thrown = False
     try:
         ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
@@ -74,8 +73,7 @@ def test_variable_unsupported_dtypes(fieldset, mode, type):
 def test_variable_special_names(fieldset, mode):
     """Test that checks errors thrown for special names."""
     for vars in ['z', 'lon']:
-        class TestParticle(ptype[mode]):
-            tmp = Variable(vars, dtype=np.float32, initial=10.)
+        TestParticle = ptype[mode].add_variable(vars, dtype=np.float32, initial=10.)
         error_thrown = False
         try:
             ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
@@ -90,14 +88,11 @@ def test_variable_init_relative(fieldset, mode, coord_type, npart=10):
     """Test that checks relative initialisation of custom variables."""
     lonlat_type = np.float64 if coord_type == 'double' else np.float32
 
-    class TestParticle(ptype[mode]):
-        p_base = Variable('p_base', dtype=lonlat_type, initial=10.)
-        p_relative = Variable('p_relative', dtype=lonlat_type,
-                              initial=attrgetter('p_base'))
-        p_lon = Variable('p_lon', dtype=lonlat_type,
-                         initial=attrgetter('lon'))
-        p_lat = Variable('p_lat', dtype=lonlat_type,
-                         initial=attrgetter('lat'))
+    TestParticle = ptype[mode].add_variables([
+        Variable('p_base', dtype=lonlat_type, initial=10.),
+        Variable('p_relative', dtype=lonlat_type, initial=attrgetter('p_base')),
+        Variable('p_lon', dtype=lonlat_type, initial=attrgetter('lon')),
+        Variable('p_lat', dtype=lonlat_type, initial=attrgetter('lat'))])
 
     lon = np.linspace(0, 1, npart, dtype=lonlat_type)
     lat = np.linspace(1, 0, npart, dtype=lonlat_type)

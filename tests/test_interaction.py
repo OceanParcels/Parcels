@@ -52,11 +52,6 @@ def fieldset(xdim=20, ydim=20, mesh='spherical'):
     return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
-class MergeParticle(ScipyInteractionParticle):
-    nearest_neighbor = Variable('nearest_neighbor', dtype=np.int64, to_write=False)
-    mass = Variable('mass', initial=1, dtype=np.float32)
-
-
 @pytest.fixture(name="fieldset")
 def fieldset_fixture(xdim=20, ydim=20):
     return fieldset(xdim=xdim, ydim=ydim)
@@ -133,6 +128,9 @@ def test_neighbor_merge(fieldset):
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000*5.5*np.pi/180
+    MergeParticle = ScipyInteractionParticle.add_variables([
+        Variable('nearest_neighbor', dtype=np.int64, to_write=False),
+        Variable('mass', initial=1, dtype=np.float32)])
     pset = ParticleSet(fieldset, pclass=MergeParticle, lon=lons, lat=lats,
                        interaction_distance=interaction_distance)
     pyfunc_inter = (pset.InteractionKernel(NearestNeighborWithinRange)
@@ -144,16 +142,13 @@ def test_neighbor_merge(fieldset):
     assert len(pset) == 1
 
 
-class AttractingParticle(ScipyInteractionParticle):
-    attractor = Variable('attractor', dtype=np.bool_, to_write='once')
-
-
 @pytest.mark.parametrize('mode', ['scipy'])
 def test_asymmetric_attraction(fieldset, mode):
     lons = [0.0, 0.1, 0.2]
     lats = [0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000*5.5*np.pi/180
+    AttractingParticle = ScipyInteractionParticle.add_variable('attractor', dtype=np.bool_, to_write='once')
     pset = ParticleSet(fieldset, pclass=AttractingParticle, lon=lons, lat=lats,
                        interaction_distance=interaction_distance,
                        attractor=[True, False, False])

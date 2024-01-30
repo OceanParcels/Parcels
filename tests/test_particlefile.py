@@ -183,9 +183,9 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
         particle.v_once += 1.
         particle.age += particle.dt
 
-    class MyParticle(ptype[mode]):
-        v_once = Variable('v_once', dtype=np.float64, initial=0., to_write='once')
-        age = Variable('age', dtype=np.float32, initial=0.)
+    MyParticle = ptype[mode].add_variables([
+        Variable('v_once', dtype=np.float64, initial=0., to_write='once'),
+        Variable('age', dtype=np.float32, initial=0.)])
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
     time = np.arange(0, npart/10., 0.1, dtype=np.float64)
@@ -209,9 +209,9 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     fieldset.maxvar = maxvar
     pset = None
 
-    class MyParticle(ptype[mode]):
-        sample_var = Variable('sample_var', initial=0.)
-        v_once = Variable('v_once', dtype=np.float64, initial=0., to_write='once')
+    MyParticle = ptype[mode].add_variables([
+        Variable('sample_var', initial=0.),
+        Variable('v_once', dtype=np.float64, initial=0., to_write='once')])
 
     if type == 'repeatdt':
         pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
@@ -287,10 +287,10 @@ def test_write_xiyi(fieldset, mode, tmpdir):
     fieldset.add_field(Field(name='P', data=np.zeros((2, 20)), lon=np.linspace(0, 1, 20), lat=[0, 2]))
     dt = 3600
 
-    class XiYiParticle(ptype[mode]):
-        pxi0 = Variable('pxi0', dtype=np.int32, initial=0.)
-        pxi1 = Variable('pxi1', dtype=np.int32, initial=0.)
-        pyi = Variable('pyi', dtype=np.int32, initial=0.)
+    XiYiParticle = ptype[mode].add_variables([
+        Variable('pxi0', dtype=np.int32, initial=0.),
+        Variable('pxi1', dtype=np.int32, initial=0.),
+        Variable('pyi', dtype=np.int32, initial=0.)])
 
     def Get_XiYi(particle, fieldset, time):
         """Kernel to sample the grid indices of the particle.

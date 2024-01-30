@@ -57,7 +57,7 @@ def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
 
-    MyParticle = ptype[mode].add_variable(Variable("v"))
+    MyParticle = ptype[mode].add_variable("v")
 
     v_vals = np.arange(npart)
     pset = ParticleSet.from_list(fieldset, lon=lon, lat=lat, v=v_vals, pclass=MyParticle)
@@ -199,8 +199,7 @@ def test_pset_repeatdt_check_dt(fieldset):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_repeatdt_custominit(fieldset, mode):
-    class MyParticle(ptype[mode]):
-        sample_var = Variable('sample_var')
+    MyParticle = ptype[mode].add_variable('sample_var')
 
     pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5)
 

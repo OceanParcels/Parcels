@@ -19,7 +19,6 @@ from parcels import (
     ParticleSet,
     ScipyParticle,
     StatusCode,
-    Variable,
 )
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -301,8 +300,7 @@ def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npa
     dt = delta(minutes=3).total_seconds()
     endtime = delta(hours=6).total_seconds()
 
-    class RK45Particles(ptype[mode]):
-        next_dt = Variable('next_dt', dtype=np.float32, initial=dt)
+    RK45Particles = ptype[mode]('next_dt', dtype=np.float32, initial=dt)
 
     pclass = RK45Particles if method == 'RK45' else ptype[mode]
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
@@ -395,8 +393,7 @@ def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField, npart=1):
     dt = delta(minutes=3).total_seconds()
     endtime = delta(hours=6).total_seconds()
 
-    class RK45Particles(ptype[mode]):
-        next_dt = Variable('next_dt', dtype=np.float32, initial=dt)
+    RK45Particles = ptype[mode]('next_dt', dtype=np.float32, initial=dt)
 
     pclass = RK45Particles if method == 'RK45' else ptype[mode]
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
@@ -461,8 +458,7 @@ def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1
     dt = delta(minutes=3).total_seconds()
     endtime = delta(hours=6).total_seconds()
 
-    class RK45Particles(ptype[mode]):
-        next_dt = Variable('next_dt', dtype=np.float32, initial=dt)
+    RK45Particles = ptype[mode]('next_dt', dtype=np.float32, initial=dt)
 
     pclass = RK45Particles if method == 'RK45' else ptype[mode]
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)

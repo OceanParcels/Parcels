@@ -283,9 +283,9 @@ class ScipyParticle(_Particle):
         cls.depth_nextloop.dtype = dtype
 
 
-class ScipyInteractionParticle(ScipyParticle):
-    vert_dist = Variable("vert_dist", dtype=np.float32)
-    horiz_dist = Variable("horiz_dist", dtype=np.float32)
+ScipyInteractionParticle = ScipyParticle.add_variables([
+    Variable("vert_dist", dtype=np.float32),
+    Variable("horiz_dist", dtype=np.float32)])
 
 
 class JITParticle(ScipyParticle):
