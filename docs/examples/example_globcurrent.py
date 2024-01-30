@@ -13,7 +13,6 @@ from parcels import (
     ParticleSet,
     ScipyParticle,
     TimeExtrapolationError,
-    Variable,
     download_example_dataset,
 )
 
@@ -99,8 +98,7 @@ def test_globcurrent_time_periodic(mode, rundays):
     for deferred_load in [True, False]:
         fieldset = set_globcurrent_fieldset(time_periodic=delta(days=365), deferred_load=deferred_load)
 
-        class MyParticle(ptype[mode]):
-            sample_var = Variable('sample_var', initial=0.)
+        MyParticle = ptype[mode].add_variable('sample_var', initial=0.)
 
         pset = ParticleSet(fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0])
 
@@ -194,8 +192,7 @@ def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime
     fieldset.add_field(Field.from_netcdf(fnamesFeb, ('P', 'eastward_eulerian_current_velocity'),
                                          {'lat': 'lat', 'lon': 'lon', 'time': 'time'}))
 
-    class MyParticle(ptype[mode]):
-        sample_var = Variable('sample_var', initial=0.)
+    MyParticle = ptype[mode].add_variable('sample_var', initial=0.)
 
     def SampleP(particle, fieldset, time):
         particle.sample_var += fieldset.P[time, particle.depth, particle.lat, particle.lon]

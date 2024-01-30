@@ -55,8 +55,7 @@ def fieldset_fixture(xdim=20, ydim=20):
 ])
 def test_expression_int(mode, name, expr, result, npart=10):
     """Test basic arithmetic expressions."""
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32)
+    TestParticle = ptype[mode].add_variable('p', dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset(), pclass=TestParticle,
                        lon=np.linspace(0., 1., npart),
                        lat=np.zeros(npart) + 0.5)
@@ -74,8 +73,7 @@ def test_expression_int(mode, name, expr, result, npart=10):
 ])
 def test_expression_float(mode, name, expr, result, npart=10):
     """Test basic arithmetic expressions."""
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32)
+    TestParticle = ptype[mode].add_variable('p', dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset(), pclass=TestParticle,
                        lon=np.linspace(0., 1., npart),
                        lat=np.zeros(npart) + 0.5)
@@ -99,8 +97,7 @@ def test_expression_float(mode, name, expr, result, npart=10):
 ])
 def test_expression_bool(mode, name, expr, result, npart=10):
     """Test basic arithmetic expressions."""
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32)
+    TestParticle = ptype[mode].add_variable('p', dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset(), pclass=TestParticle,
                        lon=np.linspace(0., 1., npart),
                        lat=np.zeros(npart) + 0.5)
@@ -114,8 +111,7 @@ def test_expression_bool(mode, name, expr, result, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_while_if_break(mode):
     """Test while, if and break commands."""
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32, initial=0.)
+    TestParticle = ptype[mode].add_variable('p', dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset(), pclass=TestParticle, lon=[0], lat=[0])
 
     def kernel(particle, fieldset, time):
@@ -132,9 +128,9 @@ def test_while_if_break(mode):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nested_if(mode):
     """Test nested if commands."""
-    class TestParticle(ptype[mode]):
-        p0 = Variable('p0', dtype=np.int32, initial=0)
-        p1 = Variable('p1', dtype=np.int32, initial=1)
+    TestParticle = ptype[mode].add_variables([
+        Variable('p0', dtype=np.int32, initial=0),
+        Variable('p1', dtype=np.int32, initial=1)])
     pset = ParticleSet(fieldset(), pclass=TestParticle, lon=0, lat=0)
 
     def kernel(particle, fieldset, time):
@@ -150,8 +146,7 @@ def test_nested_if(mode):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pass(mode):
     """Test pass commands."""
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.int32, initial=0)
+    TestParticle = ptype[mode].add_variable('p', dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset(), pclass=TestParticle, lon=0, lat=0)
 
     def kernel(particle, fieldset, time):
@@ -209,8 +204,7 @@ def test_abs():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_if_withfield(fieldset, mode):
     """Test combination of if and Field sampling commands."""
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32, initial=0.)
+    TestParticle = ptype[mode].add_variable('p', dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
 
     def kernel(particle, fieldset, time):
@@ -242,8 +236,7 @@ def test_if_withfield(fieldset, mode):
 @pytest.mark.parametrize('mode', ['scipy'])
 def test_print(fieldset, mode, capfd):
     """Test print statements."""
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32, initial=0.)
+    TestParticle = ptype[mode].add_variable('p', dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0.5], lat=[0.5])
 
     def kernel(particle, fieldset, time):
@@ -301,8 +294,7 @@ def random_series(npart, rngfunc, rngargs, mode):
 ])
 def test_random_float(mode, rngfunc, rngargs, npart=10):
     """Test basic random number generation."""
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32 if rngfunc == 'randint' else np.float32)
+    TestParticle = ptype[mode].add_variable('p', dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset(), pclass=TestParticle,
                        lon=np.linspace(0., 1., npart),
                        lat=np.zeros(npart) + 0.5)
@@ -317,9 +309,7 @@ def test_random_float(mode, rngfunc, rngargs, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('concat', [False, True])
 def test_random_kernel_concat(fieldset, mode, concat):
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32)
-
+    TestParticle = ptype[mode].add_variable('p', dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=0, lat=0)
 
     def RandomKernel(particle, fieldset, time):
@@ -374,8 +364,7 @@ def test_c_kernel(fieldset, mode, c_inc):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_dt_modif_by_kernel(mode):
-    class TestParticle(ptype[mode]):
-        age = Variable('age', dtype=np.float32)
+    TestParticle = ptype[mode].add_variable('age', dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset(), pclass=TestParticle, lon=[0.5], lat=[0])
 
     def modif_dt(particle, fieldset, time):
@@ -428,8 +417,7 @@ def test_TEOSdensity_kernels(mode):
     data, dimensions = generate_fieldset()
     fieldset = FieldSet.from_data(data, dimensions)
 
-    class DensParticle(ptype[mode]):
-        density = Variable('density', dtype=np.float32)
+    DensParticle = ptype[mode].add_variable('density', dtype=np.float32)
 
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 
@@ -446,22 +434,20 @@ def test_EOSseawaterproperties_kernels(mode):
                                   dimensions={'lat': 0, 'lon': 0, 'depth': 0})
     fieldset.add_constant('refpressure', float(0))
 
-    class PoTempParticle(ptype[mode]):
-        potemp = Variable('potemp', dtype=np.float32)
-        pressure = Variable('pressure', dtype=np.float32, initial=10000)
+    PoTempParticle = ptype[mode].add_variables([
+        Variable('potemp', dtype=np.float32),
+        Variable('pressure', dtype=np.float32, initial=10000)])
     pset = ParticleSet(fieldset, pclass=PoTempParticle, lon=5, lat=5, depth=1000)
     pset.execute(PtempFromTemp, runtime=1)
     assert np.allclose(pset[0].potemp, 36.89073)
 
-    class TempParticle(ptype[mode]):
-        temp = Variable('temp', dtype=np.float32)
-        pressure = Variable('pressure', dtype=np.float32, initial=10000)
+    TempParticle = ptype[mode].add_variables([
+        Variable('temp', dtype=np.float32),
+        Variable('pressure', dtype=np.float32, initial=10000)])
     pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=5, depth=1000)
     pset.execute(TempFromPtemp, runtime=1)
     assert np.allclose(pset[0].temp, 40)
 
-    class TPressureParticle(ptype[mode]):
-        pressure = Variable('pressure', dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=30, depth=7321.45)
     pset.execute(PressureFromLatDepth, runtime=1)
     assert np.allclose(pset[0].pressure, 7500, atol=1e-2)
@@ -491,8 +477,7 @@ def test_UNESCOdensity_kernel(mode, pressure):
     data, dimensions = generate_fieldset(pressure)
     fieldset = FieldSet.from_data(data, dimensions)
 
-    class DensParticle(ptype[mode]):
-        density = Variable('density', dtype=np.float32)
+    DensParticle = ptype[mode].add_variable('density', dtype=np.float32)
 
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 

@@ -12,7 +12,6 @@ from parcels import (
     ParticleSet,
     ScipyParticle,
     StatusCode,
-    Variable,
 )
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -51,8 +50,7 @@ def test_execution_order(mode, kernel_type):
     def SampleP(particle, fieldset, time):
         particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon]
 
-    class SampleParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32, initial=0.)
+    SampleParticle = ptype[mode].add_variable('p', dtype=np.float32, initial=0.)
 
     MoveLon = MoveLon_Update_dlon if kernel_type == 'update_dlon' else MoveLon_Update_Lon
 

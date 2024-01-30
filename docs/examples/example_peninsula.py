@@ -130,11 +130,8 @@ def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p.
     # We determine the particle base class according to mode.
-    class MyParticle(ptype[mode]):
-        # JIT compilation requires a-priori knowledge of the particle
-        # data structure, so we define additional variables here.
-        p = Variable('p', dtype=np.float32, initial=0.)
-        p_start = Variable('p_start', dtype=np.float32, initial=0)
+    MyParticle = ptype[mode].add_variable([Variable('p', dtype=np.float32, initial=0.),
+                                           Variable('p_start', dtype=np.float32, initial=0)])
 
     # Initialise particles
     if fieldset.U.grid.mesh == 'flat':
