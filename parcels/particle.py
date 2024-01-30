@@ -127,43 +127,7 @@ class ParticleType:
         return [np.int32, np.uint32, np.int64, np.uint64, np.float32, np.double, np.float64, c_void_p]
 
 
-class _Particle:
-    """Private base class for all particle types."""
-
-    lastID = 0  # class-level variable keeping track of last Particle ID used
-
-    def __init__(self):
-        ptype = self.getPType()
-        # Explicit initialisation of all particle variables
-        for v in ptype.variables:
-            if isinstance(v.initial, attrgetter):
-                initial = v.initial(self)
-            else:
-                initial = v.initial
-            # Enforce type of initial value
-            if v.dtype != c_void_p:
-                setattr(self, v.name, v.dtype(initial))
-
-        # Placeholder for explicit error handling
-        self.exception = None
-
-    def __del__(self):
-        pass  # superclass is 'object', and object itself has no destructor, hence 'pass'
-
-    @classmethod
-    def getPType(cls):
-        return ParticleType(cls)
-
-    @classmethod
-    def getInitialValue(cls, ptype, name):
-        return next((v.initial for v in ptype.variables if v.name is name), None)
-
-    @classmethod
-    def setLastID(cls, offset):
-        _Particle.lastID = offset
-
-
-class ScipyParticle(_Particle):
+class ScipyParticle:
     """Class encapsulating the basic attributes of a particle, to be executed in SciPy mode.
 
     Parameters
@@ -198,6 +162,8 @@ class ScipyParticle(_Particle):
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=StatusCode.Evaluate, to_write=False)
 
+    lastID = 0  # class-level variable keeping track of last Particle ID used
+
     def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0., time=0., cptr=None):
 
         # Enforce default values through Variable descriptor
@@ -210,14 +176,23 @@ class ScipyParticle(_Particle):
         type(self).time.initial = time
         type(self).time_nextloop.initial = time
         type(self).id.initial = pid
-        _Particle.lastID = max(_Particle.lastID, pid)
+        type(self).lastID = max(type(self).lastID, pid)
         type(self).obs_written.initial = 0
         type(self).dt.initial = None
 
-        super().__init__()
+        ptype = self.getPType()
+        # Explicit initialisation of all particle variables
+        for v in ptype.variables:
+            if isinstance(v.initial, attrgetter):
+                initial = v.initial(self)
+            else:
+                initial = v.initial
+            # Enforce type of initial value
+            if v.dtype != c_void_p:
+                setattr(self, v.name, v.dtype(initial))
 
     def __del__(self):
-        super().__del__()
+        pass  # superclass is 'object', and object itself has no destructor, hence 'pass'
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
@@ -242,11 +217,11 @@ class ScipyParticle(_Particle):
         if isinstance(var, list):
             return cls.add_variables(var)
         if not isinstance(var, Variable):
-            if len(args) > 0:
+            if len(args) > 0 and 'dtype' not in kwargs:
                 kwargs['dtype'] = args[0]
-            if len(args) > 1:
+            if len(args) > 1 and 'initial' not in kwargs:
                 kwargs['initial'] = args[1]
-            if len(args) > 2:
+            if len(args) > 2 and 'to_write' not in kwargs:
                 kwargs['to_write'] = args[2]
             dtype = kwargs.pop('dtype', np.float32)
             initial = kwargs.pop('initial', 0)
@@ -274,6 +249,10 @@ class ScipyParticle(_Particle):
         return NewParticle
 
     @classmethod
+    def getPType(cls):
+        return ParticleType(cls)
+
+    @classmethod
     def set_lonlatdepth_dtype(cls, dtype):
         cls.lon.dtype = dtype
         cls.lat.dtype = dtype
@@ -281,6 +260,10 @@ class ScipyParticle(_Particle):
         cls.lon_nextloop.dtype = dtype
         cls.lat_nextloop.dtype = dtype
         cls.depth_nextloop.dtype = dtype
+
+    @classmethod
+    def setLastID(cls, offset):
+        ScipyParticle.lastID = offset
 
 
 ScipyInteractionParticle = ScipyParticle.add_variables([
