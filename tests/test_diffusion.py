@@ -15,7 +15,6 @@ from parcels import (
     ParticleSet,
     RectilinearZGrid,
     ScipyParticle,
-    Variable,
 )
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -132,8 +131,7 @@ def test_randomvonmises(mode, mu, kappa, npart=10000):
     # Set random seed
     ParcelsRandom.seed(1234)
 
-    class AngleParticle(ptype[mode]):
-        angle = Variable('angle')
+    AngleParticle = ptype[mode].add_variable('angle')
     pset = ParticleSet(fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
 
     def vonmises(particle, fieldset, time):

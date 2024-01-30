@@ -142,7 +142,7 @@ class ParticleFile(ABC):
 
         if self.time_origin.calendar is not None:
             attrs['time']['units'] = "seconds since " + str(self.time_origin)
-            attrs['time']['calendar'] = 'standard' if self.time_origin.calendar == 'np_datetime64' else self.time_origin.calendar
+            attrs['time']['calendar'] = _set_calendar(self.time_origin.calendar)
 
         for vname in self.vars_to_write:
             if vname not in ['time', 'lat', 'lon', 'depth', 'id']:
@@ -183,7 +183,7 @@ class ParticleFile(ABC):
             if len(obs) == Z.shape[1]:
                 obs.append(np.arange(self.chunks[1])+obs[-1]+1)
         else:
-            extra_trajs = max(self.maxids - Z.shape[0], self.chunks[0])
+            extra_trajs = self.maxids - Z.shape[0]
             if len(Z.shape) == 2:
                 a = np.full((extra_trajs, Z.shape[1]), self.fill_value_map[dtype], dtype=dtype)
             else:
@@ -233,7 +233,7 @@ class ParticleFile(ABC):
                 if (self.maxids > len(ids)) or (self.maxids > self.chunks[0]):
                     arrsize = (self.maxids, self.chunks[1])
                 else:
-                    arrsize = (len(ids), 1)
+                    arrsize = (len(ids), self.chunks[1])
                 ds = xr.Dataset(attrs=self.metadata, coords={"trajectory": ("trajectory", pids),
                                                              "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))})
                 attrs = self._create_variables_attribute_dict()

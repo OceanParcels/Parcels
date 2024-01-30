@@ -193,8 +193,9 @@ def test_field_from_netcdf(with_timestamps):
     variable = 'U'
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     if with_timestamps:
-        timestamps = [[2]]
-        Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity', timestamps=timestamps)
+        timestamp_types = [[[2]], [[np.datetime64('2000-01-01')]]]
+        for timestamps in timestamp_types:
+            Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity', timestamps=timestamps)
     else:
         Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity')
 
@@ -833,13 +834,14 @@ def test_periodic(mode, use_xarray, time_periodic, dt_sign):
         # test if we can sample a non-timevarying field too
         particle.d = fieldset.D[0, 0, particle.lat, particle.lon]
 
-    class MyParticle(ptype[mode]):
-        temp = Variable('temp', dtype=np.float32, initial=20.)
-        u1 = Variable('u1', dtype=np.float32, initial=0.)
-        u2 = Variable('u2', dtype=np.float32, initial=0.)
-        v1 = Variable('v1', dtype=np.float32, initial=0.)
-        v2 = Variable('v2', dtype=np.float32, initial=0.)
-        d = Variable('d', dtype=np.float32, initial=0.)
+    MyParticle = ptype[mode].add_variables([
+        Variable('temp', dtype=np.float32, initial=20.),
+        Variable('u1', dtype=np.float32, initial=0.),
+        Variable('u2', dtype=np.float32, initial=0.),
+        Variable('v1', dtype=np.float32, initial=0.),
+        Variable('v2', dtype=np.float32, initial=0.),
+        Variable('d', dtype=np.float32, initial=0.),
+    ])
 
     pset = ParticleSet.from_list(fieldset, pclass=MyParticle, lon=[0.5], lat=[0.5], depth=[0.5])
     pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp), runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
@@ -943,10 +945,10 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     def SampleField(particle, fieldset, time):
         particle.u_kernel, particle.v_kernel = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
-    class SampleParticle(JITParticle):
-        u_kernel = Variable('u_kernel', dtype=np.float32, initial=0.)
-        v_kernel = Variable('v_kernel', dtype=np.float32, initial=0.)
-        u_scipy = Variable('u_scipy', dtype=np.float32, initial=0.)
+    SampleParticle = JITParticle.add_variables([
+        Variable('u_kernel', dtype=np.float32, initial=0.),
+        Variable('v_kernel', dtype=np.float32, initial=0.),
+        Variable('u_scipy', dtype=np.float32, initial=0.)])
 
     pset = ParticleSet(fieldset, pclass=SampleParticle, time=[0, time2], lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
 
@@ -1083,8 +1085,7 @@ def test_deferredload_simplefield(mode, direction, time_extrapolation, tmpdir, t
     fieldset = FieldSet.from_netcdf(filename, {'U': 'U', 'V': 'V'}, {'lon': 'x', 'lat': 'y', 'time': 't'},
                                     deferred_load=True, mesh='flat', allow_time_extrapolation=time_extrapolation)
 
-    class SamplingParticle(ptype[mode]):
-        p = Variable('p')
+    SamplingParticle = ptype[mode].add_variable("p")
     pset = ParticleSet(fieldset, SamplingParticle, lon=0.5, lat=0.5)
 
     def SampleU(particle, fieldset, time):

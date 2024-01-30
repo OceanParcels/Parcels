@@ -158,14 +158,12 @@ def test_variable_write_double(fieldset, mode, tmpdir):
 def test_write_dtypes_pfile(fieldset, mode, tmpdir):
     filepath = tmpdir.join("pfile_dtypes.zarr")
 
-    dtypes = ['float32', 'float64', 'int32', 'uint32', 'int64', 'uint64']
+    dtypes = [np.float32, np.float64, np.int32, np.uint32, np.int64, np.uint64]
     if mode == 'scipy':
-        dtypes.extend(['bool_', 'int8', 'uint8', 'int16', 'uint16'])
+        dtypes.extend([np.bool_, np.int8, np.uint8, np.int16, np.uint16])
 
-    class MyParticle(ptype[mode]):
-        for d in dtypes:
-            # need an exec() here because we need to dynamically set the variable name
-            exec(f'v_{d} = Variable("v_{d}", dtype=np.{d}, initial=0.)')
+    extra_vars = [Variable(f'v_{d.__name__}', dtype=d, initial=0.) for d in dtypes]
+    MyParticle = ptype[mode].add_variables(extra_vars)
 
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=0, time=0)
     pfile = pset.ParticleFile(name=filepath, outputdt=1)
@@ -173,7 +171,7 @@ def test_write_dtypes_pfile(fieldset, mode, tmpdir):
 
     ds = xr.open_zarr(filepath, mask_and_scale=False)  # Note masking issue at https://stackoverflow.com/questions/68460507/xarray-loading-int-data-as-float
     for d in dtypes:
-        assert ds[f'v_{d}'].dtype == d
+        assert ds[f'v_{d.__name__}'].dtype == d
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -185,9 +183,9 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
         particle.v_once += 1.
         particle.age += particle.dt
 
-    class MyParticle(ptype[mode]):
-        v_once = Variable('v_once', dtype=np.float64, initial=0., to_write='once')
-        age = Variable('age', dtype=np.float32, initial=0.)
+    MyParticle = ptype[mode].add_variables([
+        Variable('v_once', dtype=np.float64, initial=0., to_write='once'),
+        Variable('age', dtype=np.float32, initial=0.)])
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
     time = np.arange(0, npart/10., 0.1, dtype=np.float64)
@@ -211,9 +209,9 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     fieldset.maxvar = maxvar
     pset = None
 
-    class MyParticle(ptype[mode]):
-        sample_var = Variable('sample_var', initial=0.)
-        v_once = Variable('v_once', dtype=np.float64, initial=0., to_write='once')
+    MyParticle = ptype[mode].add_variables([
+        Variable('sample_var', initial=0.),
+        Variable('v_once', dtype=np.float64, initial=0., to_write='once')])
 
     if type == 'repeatdt':
         pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
@@ -245,6 +243,25 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('repeatdt', [1, 2])
+@pytest.mark.parametrize('nump', [1, 10])
+def test_pfile_chunks_repeatedrelease(fieldset, mode, repeatdt, nump, tmpdir):
+    runtime = 8
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.zeros((nump, 1)),
+                       lat=np.zeros((nump, 1)), repeatdt=repeatdt)
+    outfilepath = tmpdir.join("pfile_chunks_repeatedrelease.zarr")
+    chunks = (20, 10)
+    pfile = pset.ParticleFile(outfilepath, outputdt=1, chunks=chunks)
+
+    def DoNothing(particle, fieldset, time):
+        pass
+
+    pset.execute(DoNothing, dt=1, runtime=runtime, output_file=pfile)
+    ds = xr.open_zarr(outfilepath)
+    assert ds['time'].shape == (int(nump*runtime/repeatdt), chunks[1])
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_write_timebackward(fieldset, mode, tmpdir):
     outfilepath = tmpdir.join("pfile_write_timebackward.zarr")
 
@@ -270,10 +287,10 @@ def test_write_xiyi(fieldset, mode, tmpdir):
     fieldset.add_field(Field(name='P', data=np.zeros((2, 20)), lon=np.linspace(0, 1, 20), lat=[0, 2]))
     dt = 3600
 
-    class XiYiParticle(ptype[mode]):
-        pxi0 = Variable('pxi0', dtype=np.int32, initial=0.)
-        pxi1 = Variable('pxi1', dtype=np.int32, initial=0.)
-        pyi = Variable('pyi', dtype=np.int32, initial=0.)
+    XiYiParticle = ptype[mode].add_variables([
+        Variable('pxi0', dtype=np.int32, initial=0.),
+        Variable('pxi1', dtype=np.int32, initial=0.),
+        Variable('pyi', dtype=np.int32, initial=0.)])
 
     def Get_XiYi(particle, fieldset, time):
         """Kernel to sample the grid indices of the particle.

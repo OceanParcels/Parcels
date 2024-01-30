@@ -105,11 +105,11 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     dt = delta(hours=1)
     outputdt = delta(days=5)
 
-    class MyParticle(ParticleClass):
-        p = Variable('p', dtype=np.float32, initial=0.)
-        p_start = Variable('p_start', dtype=np.float32, initial=0.)
-        next_dt = Variable('next_dt', dtype=np.float64, initial=dt.total_seconds())
-        age = Variable('age', dtype=np.float32, initial=0.)
+    extra_vars = [Variable('p', dtype=np.float32, initial=0.),
+                  Variable('p_start', dtype=np.float32, initial=0.),
+                  Variable('next_dt', dtype=np.float64, initial=dt.total_seconds()),
+                  Variable('age', dtype=np.float32, initial=0.)]
+    MyParticle = ParticleClass.add_variables(extra_vars)
 
     if custom_partition_function:
         pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,

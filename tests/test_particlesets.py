@@ -57,8 +57,7 @@ def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
 
-    class MyParticle(ptype[mode]):
-        v = Variable('v')
+    MyParticle = ptype[mode].add_variable("v")
 
     v_vals = np.arange(npart)
     pset = ParticleSet.from_list(fieldset, lon=lon, lat=lat, v=v_vals, pclass=MyParticle)
@@ -74,10 +73,9 @@ def test_pset_create_fromparticlefile(fieldset, mode, restart, tmpdir):
     lon = np.linspace(0, 1, 10, dtype=np.float32)
     lat = np.linspace(1, 0, 10, dtype=np.float32)
 
-    class TestParticle(ptype[mode]):
-        p = Variable('p', np.float32, initial=0.33)
-        p2 = Variable('p2', np.float32, initial=1, to_write=False)
-        p3 = Variable('p3', np.float32, to_write='once')
+    TestParticle = ptype[mode].add_variable('p', np.float32, initial=0.33)
+    TestParticle = TestParticle.add_variable('p2', np.float32, initial=1, to_write=False)
+    TestParticle = TestParticle.add_variable('p3', np.float64, to_write='once')
 
     pset = ParticleSet(fieldset, lon=lon, lat=lat, depth=[4]*len(lon), pclass=TestParticle, p3=np.arange(len(lon)))
     pfile = pset.ParticleFile(filename, outputdt=1)
@@ -99,6 +97,7 @@ def test_pset_create_fromparticlefile(fieldset, mode, restart, tmpdir):
         assert np.allclose([p.id for p in pset], [p.id for p in pset_new])
     pset_new.execute(Kernel, runtime=2, dt=1)
     assert len(pset_new) == 3*len(pset)
+    assert pset[0].p3.dtype == np.float64
 
 
 @pytest.mark.parametrize('mode', ['scipy'])
@@ -200,8 +199,7 @@ def test_pset_repeatdt_check_dt(fieldset):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_repeatdt_custominit(fieldset, mode):
-    class MyParticle(ptype[mode]):
-        sample_var = Variable('sample_var')
+    MyParticle = ptype[mode].add_variable('sample_var')
 
     pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5)
 
@@ -236,9 +234,9 @@ def test_pset_access(fieldset, mode, npart=100):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_custom_ptype(fieldset, mode, npart=100):
-    class TestParticle(ptype[mode]):
-        p = Variable('p', np.float32, initial=0.33)
-        n = Variable('n', np.int32, initial=2)
+
+    TestParticle = ptype[mode].add_variable([Variable('p', np.float32, initial=0.33),
+                                             Variable('n', np.int32, initial=2)])
 
     pset = ParticleSet(fieldset, pclass=TestParticle,
                        lon=np.linspace(0, 1, npart),
@@ -421,8 +419,7 @@ def test_from_field_exact_val(staggered_grid):
         FMask = Field('mask', mask, lon, lat, interp_method='cgrid_tracer')
         fieldset.add_field(FMask)
 
-    class SampleParticle(ptype['scipy']):
-        mask = Variable('mask', initial=0)
+    SampleParticle = ptype['scipy'].add_variable('mask', initial=0)
 
     def SampleMask(particle, fieldset, time):
         particle.mask = fieldset.mask[particle]

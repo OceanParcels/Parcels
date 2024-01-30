@@ -23,11 +23,10 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def pclass(mode):
-    class SampleParticle(ptype[mode]):
-        u = Variable('u', dtype=np.float32)
-        v = Variable('v', dtype=np.float32)
-        p = Variable('p', dtype=np.float32)
-    return SampleParticle
+    return ptype[mode].add_variables([
+        Variable('u', dtype=np.float32),
+        Variable('v', dtype=np.float32),
+        Variable('p', dtype=np.float32)])
 
 
 def k_sample_uv():
@@ -628,8 +627,7 @@ def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs,
         assert fieldset.U.grid is fieldset.V.grid
     assert fieldset.U.grid is not fieldset.B.grid
 
-    class TestParticle(ptype[mode]):
-        sample_var = Variable('sample_var', initial=0.)
+    TestParticle = ptype[mode].add_variable('sample_var', initial=0.)
 
     pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
 
@@ -672,8 +670,7 @@ def test_sampling_multigrids_non_vectorfield(mode, npart):
     assert fieldset.U.grid is fieldset.V.grid
     assert fieldset.U.grid is not fieldset.B.grid
 
-    class TestParticle(ptype[mode]):
-        sample_var = Variable('sample_var', initial=0.)
+    TestParticle = ptype[mode].add_variable('sample_var', initial=0.)
 
     pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
 
