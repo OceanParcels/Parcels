@@ -510,8 +510,9 @@ class Field:
                     filebuffer.name = filebuffer.parse_name(variable[1])
                     buffer_data = filebuffer.data
                     if len(buffer_data.shape) == 4:
-                        errormessage = (f'Field {filebuffer.name} expecting a data shape of [tdim, zdim, ydim, xdim]. '
-                                        'Flag transpose=True could help to reorder the data.')
+                        errormessage = (f'Field {filebuffer.name} expecting a data shape of [tdim={grid.tdim}, zdim={grid.zdim}, '
+                                        f'ydim={grid.ydim - 2 * grid.meridional_halo}, xdim={grid.xdim - 2 * grid.zonal_halo}] '
+                                        f'but got shape {buffer_data.shape}. Flag transpose=True could help to reorder the data.')
                         assert buffer_data.shape[0] == grid.tdim, errormessage
                         assert buffer_data.shape[2] == grid.ydim - 2 * grid.meridional_halo, errormessage
                         assert buffer_data.shape[3] == grid.xdim - 2 * grid.zonal_halo, errormessage
