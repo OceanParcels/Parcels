@@ -551,8 +551,8 @@ class FieldSet:
 
     @classmethod
     def from_croco(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                  allow_time_extrapolation=None, time_periodic=False,
-                  tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
+                   allow_time_extrapolation=None, time_periodic=False,
+                   tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
         # TODO add docstring
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_croco'

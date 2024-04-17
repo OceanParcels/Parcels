@@ -720,15 +720,13 @@ class Field:
             if z < grid.depth[0]:
                 if z > 2*grid.depth[0] - grid.depth[1]:
                     print("NOW HERE 5", z, grid.depth[0], self.gridindexingtype)
-                    # return (0, z / grid.depth[0])  # TODO: or should second argument be z / grid.depth[0]?
                     return (-1, 0.5)  # TODO: or should second argument be z / grid.depth[0]?
                 else:
                     raise FieldOutOfBoundError(0, 0, z, field=self)
             if z > grid.depth[-1]:
                 if z < 2*grid.depth[-1] - grid.depth[-2]:
                     print("NOW HERE 4", z, grid.depth[-1], self.gridindexingtype, grid.zdim-2)
-                    return (grid.zdim-2, 0.5) #z / grid.depth[0])  # TODO: or should second argument be 0?
-                    # return (grid.zdim-2, 1) #z / grid.depth[0])  # TODO: or should second argument be 0?
+                    return (grid.zdim-2, 0.5)  # TODO: or should second argument be 0 or 1?
                 else:
                     raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
             depth_indices = grid.depth <= z
