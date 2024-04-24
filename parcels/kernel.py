@@ -23,7 +23,11 @@ except ModuleNotFoundError:
     MPI = None
 
 import parcels.rng as ParcelsRandom  # noqa
-from parcels.application_kernels.advection import AdvectionAnalytical, AdvectionRK4_3D
+from parcels.application_kernels.advection import (
+    AdvectionAnalytical,
+    AdvectionRK4_3D,
+    AdvectionRK45,
+)
 from parcels.compilation.codegenerator import KernelGenerator, LoopGenerator
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import GridCode
@@ -321,6 +325,16 @@ class Kernel(BaseKernel):
                     raise NotImplementedError('Analytical Advection only works with C-grids')
                 if self._fieldset.U.grid.gtype not in [GridCode.CurvilinearZGrid, GridCode.RectilinearZGrid]:
                     raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
+            elif pyfunc is AdvectionRK45:
+                if not hasattr(self.fieldset, 'RK45_tol'):
+                    logger.info("Setting RK45 tolerance to 10 m. Use fieldset.add_constant('RK45_tol', [distance]) to change.")
+                    self.fieldset.add_constant('RK45_tol', 10)
+                if not hasattr(self.fieldset, 'RK45_min_dt'):
+                    logger.info("Setting RK45 minimum timestep to 1 s. Use fieldset.add_constant('RK45_min_dt', [timestep]) to change.")
+                    self.fieldset.add_constant('RK45_min_dt', 1)
+                if not hasattr(self.fieldset, 'RK45_max_dt'):
+                    logger.info("Setting RK45 maximum timestep to 1000 s. Use fieldset.add_constant('RK45_max_dt', [timestep]) to change.")
+                    self.fieldset.add_constant('RK45_max_dt', 1000)
 
     def check_kernel_signature_on_version(self):
         numkernelargs = 0
