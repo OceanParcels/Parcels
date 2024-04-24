@@ -99,10 +99,10 @@ def AdvectionRK45(particle, fieldset, time):
     lat_5th = (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * particle.dt
 
     kappa = math.sqrt(math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2))
-    if kappa <= fieldset.RK45_tol or particle.dt < fieldset.RK45_min_dt:
+    if (kappa <= fieldset.RK45_tol) or (math.fabs(particle.dt) < math.fabs(fieldset.RK45_min_dt)):
         particle_dlon += lon_4th  # noqa
         particle_dlat += lat_4th  # noqa
-        if kappa <= fieldset.RK45_tol / 10 and particle.dt*2 <= fieldset.RK45_max_dt:
+        if (kappa <= fieldset.RK45_tol) / 10 and (math.fabs(particle.dt*2) <= math.fabs(fieldset.RK45_max_dt)):
             particle.next_dt *= 2
     else:
         particle.next_dt /= 2
