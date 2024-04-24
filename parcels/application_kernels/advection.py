@@ -66,8 +66,7 @@ def AdvectionRK45(particle, fieldset, time):
     Note that this kernel requires a Particle Class that has an extra Variable 'next_dt'
     and a FieldSet with 'RK45_tol', 'RK45_min_dt' and 'RK45_max_dt' constants.
     """
-    particle.next_dt = min(particle.next_dt, fieldset.RK45_max_dt)
-    particle.dt = particle.next_dt
+    particle.dt = min(particle.next_dt, fieldset.RK45_max_dt)
     c = [1./4., 3./8., 12./13., 1., 1./2.]
     A = [[1./4., 0., 0., 0., 0.],
          [3./32., 9./32., 0., 0., 0.],

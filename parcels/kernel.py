@@ -637,7 +637,9 @@ class Kernel(BaseKernel):
             if sign_dt*p.time_nextloop >= sign_dt*endtime:
                 return p
 
-            if abs(endtime - p.time_nextloop) < abs(p.dt)-1e-6:
+            if hasattr(p, 'next_dt') and abs(endtime - p.time_nextloop) < abs(p.next_dt)-1e-6:
+                p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
+            elif abs(endtime - p.time_nextloop) < abs(p.dt)-1e-6:
                 p.dt = abs(endtime - p.time_nextloop) * sign_dt
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
