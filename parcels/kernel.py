@@ -329,6 +329,8 @@ class Kernel(BaseKernel):
                 if not hasattr(self.fieldset, 'RK45_tol'):
                     logger.info("Setting RK45 tolerance to 10 m. Use fieldset.add_constant('RK45_tol', [distance]) to change.")
                     self.fieldset.add_constant('RK45_tol', 10)
+                if self.fieldset.U.grid.mesh == 'spherical':
+                    self.fieldset.RK45_tol /= (1852 * 60)  # TODO does not account for zonal variation in meter -> degree conversion
                 if not hasattr(self.fieldset, 'RK45_min_dt'):
                     logger.info("Setting RK45 minimum timestep to 1 s. Use fieldset.add_constant('RK45_min_dt', [timestep]) to change.")
                     self.fieldset.add_constant('RK45_min_dt', 1)
