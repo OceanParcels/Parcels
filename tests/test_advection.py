@@ -299,7 +299,12 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
                   'time': time}
     data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time),
             'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)}
-    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
+    # setting some constants for AdvectionRK45 kernel
+    fieldset.RK45_min_dt = 1e-3
+    fieldset.RK45_max_dt = 1e2
+    fieldset.RK45_tol = 1e-5
+    return fieldset
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
