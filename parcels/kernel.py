@@ -335,8 +335,8 @@ class Kernel(BaseKernel):
                     logger.info("Setting RK45 minimum timestep to 1 s. Use fieldset.add_constant('RK45_min_dt', [timestep]) to change.")
                     self.fieldset.add_constant('RK45_min_dt', 1)
                 if not hasattr(self.fieldset, 'RK45_max_dt'):
-                    logger.info("Setting RK45 maximum timestep to 1000 s. Use fieldset.add_constant('RK45_max_dt', [timestep]) to change.")
-                    self.fieldset.add_constant('RK45_max_dt', 1000)
+                    logger.info("Setting RK45 maximum timestep to 1 day. Use fieldset.add_constant('RK45_max_dt', [timestep]) to change.")
+                    self.fieldset.add_constant('RK45_max_dt', 60*60*24)
 
     def check_kernel_signature_on_version(self):
         numkernelargs = 0

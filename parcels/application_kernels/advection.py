@@ -64,7 +64,8 @@ def AdvectionRK45(particle, fieldset, time):
     1e-5 * dt by default.
 
     Note that this kernel requires a Particle Class that has an extra Variable 'next_dt'
-    and a FieldSet with 'RK45_tol', 'RK45_min_dt' and 'RK45_max_dt' constants.
+    and a FieldSet with constants 'RK45_tol' (in meters), 'RK45_min_dt' (in seconds)
+    and 'RK45_max_dt' (in seconds).
     """
     particle.dt = min(particle.next_dt, fieldset.RK45_max_dt)
     c = [1./4., 3./8., 12./13., 1., 1./2.]
