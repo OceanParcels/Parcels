@@ -204,7 +204,7 @@ def test_varname_as_fieldname():
     def kernel_varname(particle, fieldset, time):
         vertical_speed = fieldset.vertical_speed  # noqa
 
-    with pytest.raises(Exception):
+    with pytest.raises(NotImplementedError):
         pset.execute(kernel_varname, endtime=1, dt=1.)
 
 
