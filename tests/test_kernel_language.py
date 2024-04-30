@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from parcels import (
+    Field,
     FieldSet,
     JITParticle,
     Kernel,
@@ -184,6 +185,31 @@ def test_parcels_tmpvar_in_kernel():
         except NotImplementedError:
             error_thrown = True
         assert error_thrown
+
+
+def test_varname_as_fieldname():
+    """Tests for error thrown if variable has same name as Field."""
+    fset = fieldset()
+    fset.add_field(Field('speed', 10, lon=0, lat=0))
+    fset.add_constant('vertical_speed', 0.1)
+    Particle = JITParticle.add_variable('speed')
+    pset = ParticleSet(fset, pclass=Particle, lon=0, lat=0)
+
+    def kernel_particlename(particle, fieldset, time):
+        particle.speed = fieldset.speed[particle]  # noqa
+
+    pset.execute(kernel_particlename, endtime=1, dt=1., delete_cfiles=True)
+    assert pset[0].speed == 10
+
+    def kernel_varname(particle, fieldset, time):
+        vertical_speed = fieldset.vertical_speed  # noqa
+
+    error_thrown = False
+    try:
+        pset.execute(kernel_varname, endtime=1, dt=1., delete_cfiles=True)
+    except NotImplementedError:
+        error_thrown = True
+    assert error_thrown
 
 
 def test_abs():
