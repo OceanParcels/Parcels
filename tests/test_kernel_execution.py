@@ -338,7 +338,7 @@ def test_update_kernel_in_script(fieldset, mode):
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows compiler generates warning")
 def test_execution_keep_cfiles_and_nocompilation_warnings(fieldset, delete_cfiles):
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.], lat=[0.])
-    pset.execute(pset.Kernel(AdvectionRK4, delete_cfiles=delete_cfiles), endtime=1., dt=1.)
+    pset.execute(AdvectionRK4, delete_cfiles=delete_cfiles, endtime=1., dt=1.)
     cfile = pset.kernel.src_file
     logfile = pset.kernel.log_file
     del pset.kernel
