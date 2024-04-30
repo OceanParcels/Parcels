@@ -77,6 +77,7 @@ linkcheck_ignore = [
     r"http://marine.copernicus.eu/",  # 2023-06-07 Site non-responsive
     r"https://www\.nodc\.noaa\.gov/",  # 2023-06-23 Site non-responsive
     r"https://mybinder\.org/",  # 2023-09-02 Site non-responsive
+    r"https://ariane-code.cnrs.fr/",  # 2024-04-30 Site non-responsive
 ]
 
 # The version info for the project you're documenting, acts as replacement for
