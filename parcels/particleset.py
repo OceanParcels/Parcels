@@ -443,6 +443,7 @@ class ParticleSet(ABC):
             return
 
         if KDTree is None:
+            logger.warning("KDTree is not installed, pre-populated guesses are not indexed")
             return
         else:
             for i, grid in enumerate(self.fieldset.gridset.grids):
