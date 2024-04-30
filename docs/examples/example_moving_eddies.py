@@ -97,7 +97,14 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat, 'time': time}
-    return FieldSet.from_data(data, dimensions, transpose=True, mesh=mesh)
+
+    fieldset = FieldSet.from_data(data, dimensions, transpose=True, mesh=mesh)
+
+    # setting some constants for AdvectionRK45 kernel
+    fieldset.RK45_min_dt = 1e-3
+    fieldset.RK45_max_dt = 1e2
+    fieldset.RK45_tol = 1e-5
+    return fieldset
 
 
 def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,

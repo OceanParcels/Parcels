@@ -166,6 +166,26 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
         assert len(pset) == 0
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('rk45_tol', [10, 100])
+def test_advection_RK45(lon, lat, mode, rk45_tol, npart=10):
+    data2D = {'U': np.ones((lon.size, lat.size), dtype=np.float32),
+              'V': np.zeros((lon.size, lat.size), dtype=np.float32)}
+    dimensions = {'lon': lon, 'lat': lat}
+    fieldset = FieldSet.from_data(data2D, dimensions, mesh='spherical', transpose=True)
+    fieldset.add_constant('RK45_tol', rk45_tol)
+
+    dt = delta(seconds=30).total_seconds()
+    RK45Particles = ptype[mode].add_variable('next_dt', dtype=np.float32, initial=dt)
+    pset = ParticleSet(fieldset, pclass=RK45Particles,
+                       lon=np.zeros(npart) + 20.,
+                       lat=np.linspace(0, 80, npart))
+    pset.execute(AdvectionRK45, runtime=delta(hours=2), dt=dt)
+    assert (np.diff(pset.lon) > 1.e-4).all()
+    assert np.isclose(fieldset.RK45_tol, rk45_tol/(1852*60))
+    print(fieldset.RK45_tol)
+
+
 def periodicfields(xdim, ydim, uvel, vvel):
     dimensions = {'lon': np.linspace(0., 1., xdim+1, dtype=np.float32)[1:],  # don't include both 0 and 1, for periodic b.c.
                   'lat': np.linspace(0., 1., ydim+1, dtype=np.float32)[1:]}
@@ -279,7 +299,12 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
                   'time': time}
     data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time),
             'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)}
-    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
+    # setting some constants for AdvectionRK45 kernel
+    fieldset.RK45_min_dt = 1e-3
+    fieldset.RK45_max_dt = 1e2
+    fieldset.RK45_tol = 1e-5
+    return fieldset
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
