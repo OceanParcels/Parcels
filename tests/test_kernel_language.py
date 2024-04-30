@@ -198,7 +198,7 @@ def test_varname_as_fieldname():
     def kernel_particlename(particle, fieldset, time):
         particle.speed = fieldset.speed[particle]  # noqa
 
-    pset.execute(kernel_particlename, endtime=1, dt=1., delete_cfiles=True)
+    pset.execute(kernel_particlename, endtime=1, dt=1.)
     assert pset[0].speed == 10
 
     def kernel_varname(particle, fieldset, time):
@@ -206,7 +206,7 @@ def test_varname_as_fieldname():
 
     error_thrown = False
     try:
-        pset.execute(kernel_varname, endtime=1, dt=1., delete_cfiles=True)
+        pset.execute(kernel_varname, endtime=1, dt=1.)
     except NotImplementedError:
         error_thrown = True
     assert error_thrown
