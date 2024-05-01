@@ -320,6 +320,9 @@ class IntrinsicTransformer(ast.NodeTransformer):
     def visit_Assign(self, node):
         node.targets = [self.visit(t) for t in node.targets]
         node.value = self.visit(node.value)
+        if isinstance(node.value, ConstNode) and len(node.targets) > 0 and isinstance(node.targets[0], ast.Name):
+            if node.targets[0].id == node.value.ccode:
+                raise NotImplementedError(f"Assignment of fieldset.{node.value.ccode} to a local variable {node.targets[0].id} with same name in kernel. This is not allowed.")
         stmts = [node]
 
         # Inject statements from the stack
