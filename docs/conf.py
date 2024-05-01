@@ -72,16 +72,13 @@ linkcheck_ignore = [
     r"https://www\.sciencedirect\.com/.*",  # Site doesn't allow crawling
     r"https://lxml\.de/",  # Crawler occasionally fails to establish connection
     r"https://linux\.die\.net/",  # Site doesn't allow crawling
+    r"https://github\.com/github.com/OceanParcels/parcels/blob/*py#L*",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
 
     # To monitor
     r"http://marine.copernicus.eu/",  # 2023-06-07 Site non-responsive
     r"https://www\.nodc\.noaa\.gov/",  # 2023-06-23 Site non-responsive
     r"https://mybinder\.org/",  # 2023-09-02 Site non-responsive
     r"https://ariane-code.cnrs.fr/",  # 2024-04-30 Site non-responsive
-]
-
-linkcheck_anchors_ignore_for_url = [
-    r"https://github\.com/",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
 ]
 
 # The version info for the project you're documenting, acts as replacement for
