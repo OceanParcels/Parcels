@@ -61,12 +61,8 @@ def test_variable_init(fieldset, mode, npart=10):
 def test_variable_unsupported_dtypes(fieldset, mode, type):
     """Test that checks errors thrown for unsupported dtypes in JIT mode."""
     TestParticle = ptype[mode].add_variable('p', dtype=type, initial=10.)
-    error_thrown = False
-    try:
+    with pytest.raises((RuntimeError, TypeError)):
         ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
-    except (RuntimeError, TypeError):
-        error_thrown = True
-    assert error_thrown
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -74,12 +70,8 @@ def test_variable_special_names(fieldset, mode):
     """Test that checks errors thrown for special names."""
     for vars in ['z', 'lon']:
         TestParticle = ptype[mode].add_variable(vars, dtype=np.float32, initial=10.)
-        error_thrown = False
-        try:
+        with pytest.raises(AttributeError):
             ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
-        except AttributeError:
-            error_thrown = True
-        assert error_thrown
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

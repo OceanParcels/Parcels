@@ -320,6 +320,9 @@ class IntrinsicTransformer(ast.NodeTransformer):
     def visit_Assign(self, node):
         node.targets = [self.visit(t) for t in node.targets]
         node.value = self.visit(node.value)
+        if isinstance(node.value, ConstNode) and len(node.targets) > 0 and isinstance(node.targets[0], ast.Name):
+            if node.targets[0].id == node.value.ccode:
+                raise NotImplementedError(f"Assignment of fieldset.{node.value.ccode} to a local variable {node.targets[0].id} with same name in kernel. This is not allowed.")
         stmts = [node]
 
         # Inject statements from the stack
@@ -925,13 +928,16 @@ class LoopGenerator:
         # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
 
+        # ==== check if next_dt is in the particle type ==== #
+        dtname = "next_dt" if "next_dt" in [v.name for v in self.ptype.variables] else "dt"
+
         # ==== main computation body ==== #
         body = []
         body += [c.Value("double", "pre_dt")]
         body += [c.Statement("pre_dt = particles->dt[pnum]")]
         body += [c.If("sign_dt*particles->time_nextloop[pnum] >= sign_dt*(endtime)", c.Statement("break"))]
-        body += [c.If("fabs(endtime - particles->time_nextloop[pnum]) < fabs(particles->dt[pnum])-1e-6",
-                      c.Statement("particles->dt[pnum] = fabs(endtime - particles->time_nextloop[pnum]) * sign_dt"))]
+        body += [c.If(f"fabs(endtime - particles->time_nextloop[pnum]) < fabs(particles->{dtname}[pnum])-1e-6",
+                      c.Statement(f"particles->{dtname}[pnum] = fabs(endtime - particles->time_nextloop[pnum]) * sign_dt"))]
         body += [c.Assign("particles->state[pnum]", f"{funcname}(particles, pnum, {fargs_str})")]
         body += [c.If("particles->state[pnum] == SUCCESS",
                       c.Block([c.If("sign_dt*particles->time[pnum] < sign_dt*endtime",
