@@ -81,7 +81,7 @@ linkcheck_ignore = [
 ]
 
 linkcheck_anchors_ignore_for_url = [
-    r"https://github\.com/OceanParcels/parcels/blob/*#L*",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
+    r"https://github\.com/",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
 ]
 
 # The version info for the project you're documenting, acts as replacement for
