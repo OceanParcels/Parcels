@@ -64,10 +64,10 @@ def AdvectionRK45(particle, fieldset, time):
     1e-5 * dt by default.
 
     Note that this kernel requires a Particle Class that has an extra Variable 'next_dt'
+    and a FieldSet with constants 'RK45_tol' (in meters), 'RK45_min_dt' (in seconds)
+    and 'RK45_max_dt' (in seconds).
     """
-    particle.dt = particle.next_dt
-    rk45tol = 1e-5
-    min_dt = 1e-3
+    particle.dt = min(particle.next_dt, fieldset.RK45_max_dt)
     c = [1./4., 3./8., 12./13., 1., 1./2.]
     A = [[1./4., 0., 0., 0., 0.],
          [3./32., 9./32., 0., 0., 0.],
@@ -99,11 +99,11 @@ def AdvectionRK45(particle, fieldset, time):
     lon_5th = (u1 * b5[0] + u2 * b5[1] + u3 * b5[2] + u4 * b5[3] + u5 * b5[4] + u6 * b5[5]) * particle.dt
     lat_5th = (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * particle.dt
 
-    kappa2 = math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2)
-    if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol), 2) or particle.dt < min_dt:
+    kappa = math.sqrt(math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2))
+    if (kappa <= fieldset.RK45_tol) or (math.fabs(particle.dt) < math.fabs(fieldset.RK45_min_dt)):
         particle_dlon += lon_4th  # noqa
         particle_dlat += lat_4th  # noqa
-        if kappa2 <= math.pow(math.fabs(particle.dt * rk45tol / 10), 2):
+        if (kappa <= fieldset.RK45_tol) / 10 and (math.fabs(particle.dt*2) <= math.fabs(fieldset.RK45_max_dt)):
             particle.next_dt *= 2
     else:
         particle.next_dt /= 2

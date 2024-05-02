@@ -1,10 +1,12 @@
 import random as py_random
+from contextlib import nullcontext as does_not_raise
 from os import path
 
 import numpy as np
 import pytest
 
 from parcels import (
+    Field,
     FieldSet,
     JITParticle,
     Kernel,
@@ -169,7 +171,6 @@ def test_dt_as_variable_in_kernel(mode):
 
 def test_parcels_tmpvar_in_kernel():
     """Tests for error thrown if variable with 'tmp' defined in custom kernel."""
-    error_thrown = False
     pset = ParticleSet(fieldset(), pclass=JITParticle, lon=0, lat=0)
 
     def kernel_tmpvar(particle, fieldset, time):
@@ -179,26 +180,40 @@ def test_parcels_tmpvar_in_kernel():
         pnum = 0  # noqa
 
     for kernel in [kernel_tmpvar, kernel_pnum]:
-        try:
+        with pytest.raises(NotImplementedError):
             pset.execute(kernel, endtime=1, dt=1.)
-        except NotImplementedError:
-            error_thrown = True
-        assert error_thrown
+
+
+def test_varname_as_fieldname():
+    """Tests for error thrown if variable has same name as Field."""
+    fset = fieldset()
+    fset.add_field(Field('speed', 10, lon=0, lat=0))
+    fset.add_constant('vertical_speed', 0.1)
+    Particle = JITParticle.add_variable('speed')
+    pset = ParticleSet(fset, pclass=Particle, lon=0, lat=0)
+
+    def kernel_particlename(particle, fieldset, time):
+        particle.speed = fieldset.speed[particle]  # noqa
+
+    pset.execute(kernel_particlename, endtime=1, dt=1.)
+    assert pset[0].speed == 10
+
+    def kernel_varname(particle, fieldset, time):
+        vertical_speed = fieldset.vertical_speed  # noqa
+
+    with pytest.raises(NotImplementedError):
+        pset.execute(kernel_varname, endtime=1, dt=1.)
 
 
 def test_abs():
     """Tests for error thrown if using abs in kernel."""
-    error_thrown = False
     pset = ParticleSet(fieldset(), pclass=JITParticle, lon=0, lat=0)
 
     def kernel_abs(particle, fieldset, time):
         particle.lon = abs(3.1)  # noqa
 
-    try:
+    with pytest.raises(NotImplementedError):
         pset.execute(kernel_abs, endtime=1, dt=1.)
-    except NotImplementedError:
-        error_thrown = True
-    assert error_thrown
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -258,21 +273,16 @@ def test_print(fieldset, mode, capfd):
     assert abs(float(lst[0]) - 3) < tol
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_fieldset_access(fieldset, mode):
+@pytest.mark.parametrize(('mode', 'expectation'), [('scipy', does_not_raise()),
+                                                   ('jit', pytest.raises(NotImplementedError))])
+def test_fieldset_access(fieldset, expectation, mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
 
     def kernel(particle, fieldset, time):
         particle.lon = fieldset.U.grid.lon[2]
 
-    error_thrown = False
-    try:
+    with expectation:
         pset.execute(kernel, endtime=1, dt=1.)
-    except NotImplementedError:
-        error_thrown = True
-    if mode == 'jit':
-        assert error_thrown
-    else:
         assert pset.lon[0] == fieldset.U.grid.lon[2]
 
 
@@ -377,22 +387,18 @@ def test_dt_modif_by_kernel(mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('dt', [1e-2, 1e-5, 1e-6])
-def test_small_dt(mode, dt, npart=10):
+@pytest.mark.parametrize(('dt', 'expectation'), [(1e-2, does_not_raise()),
+                                                 (1e-5, does_not_raise()),
+                                                 (1e-6, pytest.raises(ValueError))])
+def test_small_dt(mode, dt, expectation, npart=10):
     pset = ParticleSet(fieldset(), pclass=ptype[mode], lon=np.zeros(npart),
                        lat=np.zeros(npart), time=np.arange(0, npart)*dt*10)
 
     def DoNothing(particle, fieldset, time):
         pass
 
-    raisederror = False
-    try:
+    with expectation:
         pset.execute(DoNothing, dt=dt, runtime=dt*101)
-    except ValueError:
-        raisederror = True
-    if dt < 1e-5:
-        assert raisederror
-    else:
         assert np.allclose([p.time for p in pset], dt*100)
 
 

@@ -23,7 +23,11 @@ except ModuleNotFoundError:
     MPI = None
 
 import parcels.rng as ParcelsRandom  # noqa
-from parcels.application_kernels.advection import AdvectionAnalytical, AdvectionRK4_3D
+from parcels.application_kernels.advection import (
+    AdvectionAnalytical,
+    AdvectionRK4_3D,
+    AdvectionRK45,
+)
 from parcels.compilation.codegenerator import KernelGenerator, LoopGenerator
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import GridCode
@@ -321,6 +325,18 @@ class Kernel(BaseKernel):
                     raise NotImplementedError('Analytical Advection only works with C-grids')
                 if self._fieldset.U.grid.gtype not in [GridCode.CurvilinearZGrid, GridCode.RectilinearZGrid]:
                     raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
+            elif pyfunc is AdvectionRK45:
+                if not hasattr(self.fieldset, 'RK45_tol'):
+                    logger.info("Setting RK45 tolerance to 10 m. Use fieldset.add_constant('RK45_tol', [distance]) to change.")
+                    self.fieldset.add_constant('RK45_tol', 10)
+                if self.fieldset.U.grid.mesh == 'spherical':
+                    self.fieldset.RK45_tol /= (1852 * 60)  # TODO does not account for zonal variation in meter -> degree conversion
+                if not hasattr(self.fieldset, 'RK45_min_dt'):
+                    logger.info("Setting RK45 minimum timestep to 1 s. Use fieldset.add_constant('RK45_min_dt', [timestep]) to change.")
+                    self.fieldset.add_constant('RK45_min_dt', 1)
+                if not hasattr(self.fieldset, 'RK45_max_dt'):
+                    logger.info("Setting RK45 maximum timestep to 1 day. Use fieldset.add_constant('RK45_max_dt', [timestep]) to change.")
+                    self.fieldset.add_constant('RK45_max_dt', 60*60*24)
 
     def check_kernel_signature_on_version(self):
         numkernelargs = 0
@@ -623,8 +639,12 @@ class Kernel(BaseKernel):
             if sign_dt*p.time_nextloop >= sign_dt*endtime:
                 return p
 
-            if abs(endtime - p.time_nextloop) < abs(p.dt)-1e-6:
-                p.dt = abs(endtime - p.time_nextloop) * sign_dt
+            try:  # Use next_dt from AdvectionRK45 if it is set
+                if abs(endtime - p.time_nextloop) < abs(p.next_dt)-1e-6:
+                    p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
+            except KeyError:
+                if abs(endtime - p.time_nextloop) < abs(p.dt)-1e-6:
+                    p.dt = abs(endtime - p.time_nextloop) * sign_dt
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:

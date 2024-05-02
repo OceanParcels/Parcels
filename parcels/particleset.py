@@ -443,6 +443,7 @@ class ParticleSet(ABC):
             return
 
         if KDTree is None:
+            logger.warning("KDTree is not installed, pre-populated guesses are not indexed")
             return
         else:
             for i, grid in enumerate(self.fieldset.gridset.grids):
@@ -734,10 +735,10 @@ class ParticleSet(ABC):
             delete_cfiles=delete_cfiles,
         )
 
-    def InteractionKernel(self, pyfunc_inter):
+    def InteractionKernel(self, pyfunc_inter, delete_cfiles=True):
         if pyfunc_inter is None:
             return None
-        return InteractionKernel(self.fieldset, self.particledata.ptype, pyfunc=pyfunc_inter)
+        return InteractionKernel(self.fieldset, self.particledata.ptype, pyfunc=pyfunc_inter, delete_cfiles=delete_cfiles)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
@@ -804,7 +805,7 @@ class ParticleSet(ABC):
         self.particledata.set_variable_write_status(var, write_status)
 
     def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
-                output_file=None, verbose_progress=True, postIterationCallbacks=None, callbackdt=None):
+                output_file=None, verbose_progress=True, postIterationCallbacks=None, callbackdt=None, delete_cfiles=True):
         """Execute a given kernel function over the particle set for multiple timesteps.
 
         Optionally also provide sub-timestepping
@@ -835,7 +836,9 @@ class ParticleSet(ABC):
         callbackdt :
             Optional, in conjecture with 'postIterationCallbacks', timestep interval to (latest) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks' (Default value = None)
         pyfunc_inter :
-             (Default value = None)
+            (Default value = None)
+        delete_cfiles : bool
+            Whether to delete the C-files after compilation in JIT mode (default is True)
         """
         # check if pyfunc has changed since last compile. If so, recompile
         if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
@@ -843,7 +846,7 @@ class ParticleSet(ABC):
             if isinstance(pyfunc, Kernel):
                 self.kernel = pyfunc
             else:
-                self.kernel = self.Kernel(pyfunc)
+                self.kernel = self.Kernel(pyfunc, delete_cfiles=delete_cfiles)
             # Prepare JIT kernel execution
             if self.particledata.ptype.uses_jit:
                 self.kernel.remove_lib()
@@ -858,7 +861,7 @@ class ParticleSet(ABC):
             if isinstance(pyfunc_inter, InteractionKernel):
                 self.interaction_kernel = pyfunc_inter
             else:
-                self.interaction_kernel = self.InteractionKernel(pyfunc_inter)
+                self.interaction_kernel = self.InteractionKernel(pyfunc_inter, delete_cfiles=delete_cfiles)
 
         # Convert all time variables to seconds
         if isinstance(endtime, delta):
