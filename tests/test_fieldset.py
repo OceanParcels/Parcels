@@ -299,18 +299,13 @@ def test_empty_indices(tmpdir, filename='test_subsets'):
     data, dimensions = generate_fieldset(100, 100)
     filepath = tmpdir.join(filename)
     FieldSet.from_data(data, dimensions).write(filepath)
-    error_thrown = False
-    try:
+    with pytest.raises(RuntimeError):
         FieldSet.from_parcels(filepath, indices={'lon': []})
-    except RuntimeError:
-        error_thrown = True
-    assert error_thrown
 
 
 @pytest.mark.parametrize('calltype', ['from_data', 'from_nemo'])
 def test_illegal_dimensionsdict(calltype):
-    error_thrown = False
-    try:
+    with pytest.raises(NameError):
         if calltype == 'from_data':
             data, dimensions = generate_fieldset(10, 10)
             dimensions['test'] = None
@@ -320,11 +315,7 @@ def test_illegal_dimensionsdict(calltype):
             filenames = {'dx': fname, 'mesh_mask': fname}
             variables = {'dx': 'e1u'}
             dimensions = {'lon': 'glamu', 'lat': 'gphiu', 'test': 'test'}
-            error_thrown = False
             FieldSet.from_nemo(filenames, variables, dimensions)
-    except NameError:
-        error_thrown = True
-    assert error_thrown
 
 
 @pytest.mark.parametrize('xdim', [100, 200])
@@ -345,17 +336,12 @@ def test_add_duplicate_field(dupobject):
     fieldset = FieldSet.from_data(data, dimensions)
     field = Field('newfld', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     fieldset.add_field(field)
-    error_thrown = False
-    try:
+    with pytest.raises(RuntimeError):
         if dupobject == 'same':
             fieldset.add_field(field)
         elif dupobject == 'new':
             field2 = Field('newfld', np.ones((2, 2)), lon=np.array([0, 1]), lat=np.array([0, 2]))
             fieldset.add_field(field2)
-    except RuntimeError:
-        error_thrown = True
-
-    assert error_thrown
 
 
 @pytest.mark.parametrize('fieldtype', ['normal', 'vector'])
@@ -366,16 +352,11 @@ def test_add_field_after_pset(fieldtype):
     field1 = Field('field1', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     field2 = Field('field2', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     vfield = VectorField('vfield', field1, field2)
-    error_thrown = False
-    try:
+    with pytest.raises(RuntimeError):
         if fieldtype == 'normal':
             fieldset.add_field(field1)
         elif fieldtype == 'vector':
             fieldset.add_vector_field(vfield)
-    except RuntimeError:
-        error_thrown = True
-
-    assert error_thrown
 
 
 @pytest.mark.parametrize('chunksize', ['auto', None])

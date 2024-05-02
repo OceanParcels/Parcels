@@ -119,12 +119,8 @@ def test_execution_fail_python_exception(fieldset, mode, npart=10):
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart),
                        lat=np.linspace(1, 0, npart))
-    error_thrown = False
-    try:
+    with pytest.raises(RuntimeError):
         pset.execute(PythonFail, endtime=20., dt=2.)
-    except RuntimeError:
-        error_thrown = True
-    assert error_thrown
     assert len(pset) == npart
     assert np.isclose(pset.time[0], 10)
     assert np.allclose(pset.time[1:], 0.)
@@ -139,12 +135,8 @@ def test_execution_fail_out_of_bounds(fieldset, mode, npart=10):
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart),
                        lat=np.linspace(1, 0, npart))
-    error_thrown = False
-    try:
+    with pytest.raises(FieldOutOfBoundError):
         pset.execute(MoveRight, endtime=10., dt=1.)
-    except FieldOutOfBoundError:
-        error_thrown = True
-    assert error_thrown
     assert len(pset) == npart
     assert (pset.lon - 1. > -1.e12).all()
 
@@ -338,7 +330,7 @@ def test_update_kernel_in_script(fieldset, mode):
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows compiler generates warning")
 def test_execution_keep_cfiles_and_nocompilation_warnings(fieldset, delete_cfiles):
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.], lat=[0.])
-    pset.execute(pset.Kernel(AdvectionRK4, delete_cfiles=delete_cfiles), endtime=1., dt=1.)
+    pset.execute(AdvectionRK4, delete_cfiles=delete_cfiles, endtime=1., dt=1.)
     cfile = pset.kernel.src_file
     logfile = pset.kernel.log_file
     del pset.kernel
