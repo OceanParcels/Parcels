@@ -80,6 +80,8 @@ linkcheck_ignore = [
     r"https://ariane-code.cnrs.fr/",  # 2024-04-30 Site non-responsive
 ]
 
+linkcheck_anchors = False
+
 linkcheck_anchors_ignore_for_url = [
     r"https://github\.com/",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
 ]
