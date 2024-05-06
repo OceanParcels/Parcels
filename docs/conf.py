@@ -78,12 +78,7 @@ linkcheck_ignore = [
     r"https://www\.nodc\.noaa\.gov/",  # 2023-06-23 Site non-responsive
     r"https://mybinder\.org/",  # 2023-09-02 Site non-responsive
     r"https://ariane-code.cnrs.fr/",  # 2024-04-30 Site non-responsive
-]
-
-linkcheck_anchors = False
-
-linkcheck_anchors_ignore_for_url = [
-    r"https://github\.com/",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
+    r"https://github.com/OceanParcels/parcels/blob/daa4b062ed8ae0b2be3d87367d6b45599d6f95db/parcels/.*",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
 ]
 
 # The version info for the project you're documenting, acts as replacement for
