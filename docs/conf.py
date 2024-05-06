@@ -72,7 +72,7 @@ linkcheck_ignore = [
     r"https://www\.sciencedirect\.com/.*",  # Site doesn't allow crawling
     r"https://lxml\.de/",  # Crawler occasionally fails to establish connection
     r"https://linux\.die\.net/",  # Site doesn't allow crawling
-    r"https://github\.com/github.com/OceanParcels/parcels/blob/*py#L*",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
+    r"https://github\.com/github\.com/OceanParcels/parcels/blob/*py#L*",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
 
     # To monitor
     r"http://marine.copernicus.eu/",  # 2023-06-07 Site non-responsive
