@@ -169,7 +169,7 @@ def ConstantMoveInteraction(particle, fieldset, time, neighbors, mutator):
 
 @pytest.mark.parametrize('runtime, dt',
                          [(1, 1e-2),
-                          (1, -2.1234e-3),
+                          (1, -2.123e-3),
                           (1, -3.12452-3)])
 def test_pseudo_interaction(runtime, dt):
     # A linear field where advected particles are moving at
