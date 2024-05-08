@@ -880,7 +880,7 @@ class ParticleSet(ABC):
             dt = dt.total_seconds()
         if abs(dt) <= 1e-6:
             raise ValueError('Time step dt is too small')
-        if dt*1e6 % 1 != 0:
+        if (dt * 1e6) % 1 != 0:
             raise ValueError('Output interval should not have finer precision than 1e-6 s')
         outputdt = output_file.outputdt if output_file else np.infty
         if isinstance(outputdt, delta):
