@@ -1064,7 +1064,7 @@ class FieldSet:
         return cls(u, v, fields=fields)
 
     @classmethod
-    def from_directory(cls, filename):
+    def from_directory(cls, filename, **kwargs):
         """Initialises FieldSet data from python file in directory
 
         Parameters
@@ -1078,7 +1078,7 @@ class FieldSet:
         fieldset_module = import_module(filename)
         if not hasattr(fieldset_module, 'create_fieldset'):
             raise IOError(f"FieldSet module {filename} does not contain a `create_fieldset` function")
-        return fieldset_module.create_fieldset()
+        return fieldset_module.create_fieldset(**kwargs)
 
     def get_fields(self):
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`

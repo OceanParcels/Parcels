@@ -204,6 +204,11 @@ def test_fieldset_from_directory():
     fieldset = FieldSet.from_directory('test_data/fieldset_nemo')
     assert fieldset.U.creation_log == 'from_nemo'
 
+    indices = {'lon': range(6, 10)}
+    fieldset = FieldSet.from_directory('test_data/fieldset_nemo', indices=indices)
+    print(fieldset.U.grid.lon.shape)
+    assert fieldset.U.grid.lon.shape[1] == 4
+
 
 def test_fieldset_from_directory_error():
     with pytest.raises(IOError):
