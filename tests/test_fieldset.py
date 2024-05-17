@@ -201,9 +201,13 @@ def test_field_from_netcdf(with_timestamps):
 
 
 def test_fieldset_from_directory():
-    from test_data import fieldset_nemo
-    fieldset = fieldset_nemo.create_fieldset()
+    fieldset = FieldSet.from_directory('test_data/fieldset_nemo')
     assert fieldset.U.creation_log == 'from_nemo'
+
+
+def test_fieldset_from_directory_error():
+    with pytest.raises(IOError):
+        FieldSet.from_directory('test_data/fieldset_nemo_error')
 
 
 def test_field_from_netcdf_fieldtypes():

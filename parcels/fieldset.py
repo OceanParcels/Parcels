@@ -1,6 +1,7 @@
 from copy import deepcopy
 from glob import glob
-from os import path
+from os import path, sep
+from importlib import import_module
 
 import dask.array as da
 import numpy as np
@@ -1061,6 +1062,23 @@ class FieldSet:
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
+
+    @classmethod
+    def from_directory(cls, filename):
+        """Initialises FieldSet data from python file in directory
+
+        Parameters
+        ----------
+        filename: path to a python file containing at least a create_fieldset() function,
+            which returns a FieldSet object.
+        """
+        # change the filename to a module name
+        filename = filename.rstrip('.py').replace(sep, '.')
+
+        fieldset_module = import_module(filename)
+        if not hasattr(fieldset_module, 'create_fieldset'):
+            raise IOError(f"FieldSet module {filename} does not contain a `create_fieldset` function")
+        return fieldset_module.create_fieldset()
 
     def get_fields(self):
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
