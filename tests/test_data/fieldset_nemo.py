@@ -1,5 +1,6 @@
-import parcels
 from os import path
+
+import parcels
 
 
 def create_fieldset():

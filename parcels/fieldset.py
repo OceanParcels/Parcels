@@ -1,7 +1,7 @@
 from copy import deepcopy
 from glob import glob
-from os import path, sep
 from importlib import import_module
+from os import path, sep
 
 import dask.array as da
 import numpy as np
