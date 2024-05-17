@@ -200,6 +200,12 @@ def test_field_from_netcdf(with_timestamps):
         Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity')
 
 
+def test_fieldset_from_directory():
+    from test_data import fieldset_nemo
+    fieldset = fieldset_nemo.create_fieldset()
+    assert fieldset.U.creation_log == 'from_nemo'
+
+
 def test_field_from_netcdf_fieldtypes():
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
