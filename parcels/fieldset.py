@@ -1,7 +1,8 @@
+import importlib.util
+import sys
 from copy import deepcopy
 from glob import glob
-from importlib import import_module
-from os import path, sep
+from os import path
 
 import dask.array as da
 import numpy as np
@@ -1072,10 +1073,16 @@ class FieldSet:
         filename: path to a python file containing at least a create_fieldset() function,
             which returns a FieldSet object.
         """
-        # change the filename to a module name
-        filename = filename.rstrip('.py').replace(sep, '.')
+        # check if filename exists
+        if not path.exists(filename):
+            raise IOError(f"FieldSet module file {filename} does not exist")
 
-        fieldset_module = import_module(filename)
+        # Importing the source file directly (following https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly)
+        spec = importlib.util.spec_from_file_location("create_fieldset", filename)
+        fieldset_module = importlib.util.module_from_spec(spec)
+        sys.modules['create_fieldset'] = fieldset_module
+        spec.loader.exec_module(fieldset_module)
+
         if not hasattr(fieldset_module, 'create_fieldset'):
             raise IOError(f"FieldSet module {filename} does not contain a `create_fieldset` function")
         return fieldset_module.create_fieldset(**kwargs)
