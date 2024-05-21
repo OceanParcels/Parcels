@@ -209,11 +209,13 @@ def test_fieldset_from_modulefile():
     fieldset = FieldSet.from_modulefile(data_path + 'fieldset_nemo.py', indices=indices)
     assert fieldset.U.grid.lon.shape[1] == 4
 
-
-def test_fieldset_from_modulefile_error():
-    data_path = path.join(path.dirname(__file__), 'test_data/')
     with pytest.raises(IOError):
         FieldSet.from_modulefile(data_path + 'fieldset_nemo_error.py')
+
+    FieldSet.from_modulefile(data_path + 'fieldset_nemo_error.py', modulename='random_function_name')
+
+    with pytest.raises(IOError):
+        FieldSet.from_modulefile(data_path + 'fieldset_nemo_error.py', modulename='none_returning_function')
 
 
 def test_field_from_netcdf_fieldtypes():

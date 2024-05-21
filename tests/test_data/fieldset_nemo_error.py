@@ -15,3 +15,7 @@ def random_function_name():
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'}
     return parcels.FieldSet.from_nemo(filenames, variables, dimensions)
+
+
+def none_returning_function():
+    return None
