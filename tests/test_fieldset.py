@@ -200,19 +200,20 @@ def test_field_from_netcdf(with_timestamps):
         Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity')
 
 
-def test_fieldset_from_directory():
-    fieldset = FieldSet.from_directory('test_data/fieldset_nemo')
+def test_fieldset_from_modulefile():
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+    fieldset = FieldSet.from_modulefile(data_path + 'fieldset_nemo.py')
     assert fieldset.U.creation_log == 'from_nemo'
 
     indices = {'lon': range(6, 10)}
-    fieldset = FieldSet.from_directory('test_data/fieldset_nemo', indices=indices)
-    print(fieldset.U.grid.lon.shape)
+    fieldset = FieldSet.from_modulefile(data_path + 'fieldset_nemo.py', indices=indices)
     assert fieldset.U.grid.lon.shape[1] == 4
 
 
-def test_fieldset_from_directory_error():
+def test_fieldset_from_modulefile_error():
+    data_path = path.join(path.dirname(__file__), 'test_data/')
     with pytest.raises(IOError):
-        FieldSet.from_directory('test_data/fieldset_nemo_error')
+        FieldSet.from_modulefile(data_path + 'fieldset_nemo_error.py')
 
 
 def test_field_from_netcdf_fieldtypes():

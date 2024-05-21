@@ -1064,8 +1064,8 @@ class FieldSet:
         return cls(u, v, fields=fields)
 
     @classmethod
-    def from_directory(cls, filename, **kwargs):
-        """Initialises FieldSet data from python file in directory
+    def from_modulefile(cls, filename, **kwargs):
+        """Initialises FieldSet data from a file containing a python module file with a create_fieldset() function.
 
         Parameters
         ----------
