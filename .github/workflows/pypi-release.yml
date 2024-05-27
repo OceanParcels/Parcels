@@ -99,7 +99,7 @@ jobs:
           verbose: true
 
   test-pypi-release:
-    # needs: upload-to-pypi
+    needs: upload-to-pypi
     runs-on: ubuntu-latest
     steps:
       - uses: conda-incubator/setup-miniconda@v3
