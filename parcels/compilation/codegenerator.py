@@ -346,7 +346,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
             convert = True
             if "applyConversion" in node.keywords:
                 k = node.keywords["applyConversion"]
-                if isinstance(k, ast.NameConstant):
+                if isinstance(k, ast.Constant):
                     convert = k.value
 
             # convert args to Index(Tuple(*args))
@@ -364,7 +364,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
             convert = True
             if "applyConversion" in node.keywords:
                 k = node.keywords["applyConversion"]
-                if isinstance(k, ast.NameConstant):
+                if isinstance(k, ast.Constant):
                     convert = k.value
 
             # convert args to Index(Tuple(*args))
@@ -463,8 +463,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         # Generate "ccode" attribute by traversing the Python AST
         for stmt in node.body:
-            if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str):  # ignore docstrings
-                self.visit(stmt)
+            self.visit(stmt)
 
         # Create function declaration and argument list
         decl = c.Static(c.DeclSpecifier(c.Value("StatusCode", node.name), spec='inline'))
@@ -492,7 +491,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             body += [c.Statement(f"particles->{coord}[pnum] = particles->{coord}_nextloop[pnum]")]
         body += [c.Statement("particles->time[pnum] = particles->time_nextloop[pnum]")]
 
-        body += [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
+        body += [stmt.ccode for stmt in node.body]
 
         for coord in ['lon', 'lat', 'depth']:
             body += [c.Statement(f"particles->{coord}_nextloop[pnum] = particles->{coord}[pnum] + particle_d{coord}")]
@@ -878,14 +877,14 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         node.ccode = c.Statement(f'printf("{stat}\\n", {vars})')
 
     def visit_Constant(self, node):
-        if node.s == 'parcels_customed_Cfunc_pointer_args':
-            node.ccode = node.s
-        elif isinstance(node.s, str):
+        if node.value == 'parcels_customed_Cfunc_pointer_args':
+            node.ccode = node.value
+        elif isinstance(node.value, str):
             node.ccode = ''  # skip strings from docstrings or comments
-        elif isinstance(node.s, bool):
-            node.ccode = "1" if node.s is True else "0"
+        elif isinstance(node.value, bool):
+            node.ccode = "1" if node.value is True else "0"
         else:
-            node.ccode = str(node.n)
+            node.ccode = str(node.value)
 
 
 class LoopGenerator:
