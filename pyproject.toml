@@ -19,6 +19,21 @@ classifiers = [
   "Topic :: Scientific/Engineering",
   "Intended Audience :: Science/Research",
 ]
+dependencies = [
+  "cgen",
+  "cftime",
+  "numpy",
+  "dask",
+  "cftime",
+  "psutil",
+  "netCDF4",
+  "zarr",
+  "tqdm",
+  "pymbolic",
+  "pytest",
+  "scipy",
+  "xarray",
+]
 
 [project.urls]
 homepage = "https://oceanparcels.org/"

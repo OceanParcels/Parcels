@@ -1,3 +1,5 @@
+import importlib.util
+import sys
 from copy import deepcopy
 from glob import glob
 from os import path
@@ -1061,6 +1063,32 @@ class FieldSet:
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
+
+    @classmethod
+    def from_modulefile(cls, filename, modulename="create_fieldset", **kwargs):
+        """Initialises FieldSet data from a file containing a python module file with a create_fieldset() function.
+
+        Parameters
+        ----------
+        filename: path to a python file containing at least a function which returns a FieldSet object.
+        modulename: name of the function in the python file that returns a FieldSet object. Default is "create_fieldset".
+        """
+        # check if filename exists
+        if not path.exists(filename):
+            raise IOError(f"FieldSet module file {filename} does not exist")
+
+        # Importing the source file directly (following https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly)
+        spec = importlib.util.spec_from_file_location(modulename, filename)
+        fieldset_module = importlib.util.module_from_spec(spec)
+        sys.modules[modulename] = fieldset_module
+        spec.loader.exec_module(fieldset_module)
+
+        if not hasattr(fieldset_module, modulename):
+            raise IOError(f"{filename} does not contain a {modulename} function")
+        fieldset = getattr(fieldset_module, modulename)(**kwargs)
+        if not isinstance(fieldset, FieldSet):
+            raise IOError(f"Module {filename}.{modulename} does not return a FieldSet object")
+        return fieldset
 
     def get_fields(self):
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`

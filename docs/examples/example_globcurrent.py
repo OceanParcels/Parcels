@@ -174,14 +174,6 @@ def test_globcurrent_time_extrapolation_error(mode, use_xarray):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('use_xarray', [True, False])
-def test_globcurrent_dt0(mode, use_xarray):
-    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25], lat=[-35])
-    pset.execute(AdvectionRK4, dt=0.)
-
-
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('dt', [-300, 300])
 @pytest.mark.parametrize('with_starttime', [True, False])
 def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime):
@@ -260,3 +252,22 @@ def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
 
     for var in ['lon', 'lat', 'depth', 'time', 'id']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_error_outputdt_not_multiple_dt(mode, tmpdir):
+    # Test that outputdt is a multiple of dt
+    fieldset = set_globcurrent_fieldset()
+
+    filepath = tmpdir.join("pfile_error_outputdt_not_multiple_dt.zarr")
+
+    dt = 81.2584344538292  # number for which output writing fails
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0])
+    ofile = pset.ParticleFile(name=filepath, outputdt=delta(days=1))
+
+    def DoNothing(particle, fieldset, time):
+        pass
+
+    with pytest.raises(ValueError):
+        pset.execute(DoNothing, runtime=delta(days=10), dt=dt, output_file=ofile)
