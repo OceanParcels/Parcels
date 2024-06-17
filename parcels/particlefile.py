@@ -59,7 +59,7 @@ class ParticleFile(ABC):
     time_origin = None
     lonlatdepth_dtype = None
 
-    def __init__(self, name, particleset, outputdt=np.infty, chunks=None, create_new_zarrfile=True):
+    def __init__(self, name, particleset, outputdt=np.inf, chunks=None, create_new_zarrfile=True):
 
         self.outputdt = outputdt.total_seconds() if isinstance(outputdt, delta) else outputdt
         self.chunks = chunks
