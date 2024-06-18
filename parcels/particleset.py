@@ -882,7 +882,7 @@ class ParticleSet(ABC):
             raise ValueError('Time step dt is too small')
         if (dt * 1e6) % 1 != 0:
             raise ValueError('Output interval should not have finer precision than 1e-6 s')
-        outputdt = output_file.outputdt if output_file else np.infty
+        outputdt = output_file.outputdt if output_file else np.inf
         if isinstance(outputdt, delta):
             outputdt = outputdt.total_seconds()
         if isinstance(callbackdt, delta):
@@ -920,7 +920,7 @@ class ParticleSet(ABC):
         self.particledata._data['dt'][:] = dt
 
         if callbackdt is None:
-            interupt_dts = [np.infty, outputdt]
+            interupt_dts = [np.inf, outputdt]
             if self.repeatdt is not None:
                 interupt_dts.append(self.repeatdt)
             callbackdt = np.min(np.array(interupt_dts))
@@ -928,11 +928,11 @@ class ParticleSet(ABC):
         if self.repeatdt:
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
-            next_prelease = np.infty if dt > 0 else - np.infty
+            next_prelease = np.inf if dt > 0 else - np.inf
         if output_file:
             next_output = time + dt
         else:
-            next_output = time + np.infty if dt > 0 else - np.infty
+            next_output = time + np.inf if dt > 0 else - np.inf
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
