@@ -412,9 +412,9 @@ class DaskFileBuffer(NetcdfFileBuffer):
         result = {}
         for pcls_dimname in ['time', 'depth', 'lat', 'lon']:
             for nc_dimname in self._static_name_maps[pcls_dimname]:
-                if nc_dimname not in self.dataset.dims.keys():
+                if nc_dimname not in self.dataset.sizes.keys():
                     continue
-                result[pcls_dimname] = list(self.dataset.dims.keys()).index(nc_dimname)
+                result[pcls_dimname] = list(self.dataset.sizes.keys()).index(nc_dimname)
         return result
 
     def _is_dimension_available(self, dimension_name):
@@ -454,15 +454,15 @@ class DaskFileBuffer(NetcdfFileBuffer):
         dimension_name = parcels_dimension_name.lower()
         dim_indices = self._get_available_dims_indices_by_request()
         i = dim_indices[dimension_name]
-        if netcdf_dimension_name is not None and netcdf_dimension_name in self.dataset.dims.keys():
-            value = self.dataset.dims[netcdf_dimension_name]
+        if netcdf_dimension_name is not None and netcdf_dimension_name in self.dataset.sizes.keys():
+            value = self.dataset.sizes[netcdf_dimension_name]
             k, dname, dvalue = i, netcdf_dimension_name, value
         elif self.dimensions is None or self.dataset is None:
             return k, dname, dvalue
         else:
             for name in self._static_name_maps[dimension_name]:
-                if name in self.dataset.dims:
-                    value = self.dataset.dims[name]
+                if name in self.dataset.sizes:
+                    value = self.dataset.sizes[name]
                     k, dname, dvalue = i, name, value
                     break
         return k, dname, dvalue
