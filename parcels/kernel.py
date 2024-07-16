@@ -319,8 +319,6 @@ class Kernel(BaseKernel):
             elif pyfunc is AdvectionAnalytical:
                 if self.fieldset.particlefile is not None:
                     self.fieldset.particlefile.analytical = True
-                if self._ptype.uses_jit:
-                    raise NotImplementedError('Analytical Advection only works in Scipy mode')
                 if self._fieldset.U.interp_method != 'cgrid_velocity':
                     raise NotImplementedError('Analytical Advection only works with C-grids')
                 if self._fieldset.U.grid.gtype not in [GridCode.CurvilinearZGrid, GridCode.RectilinearZGrid]:
