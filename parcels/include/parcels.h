@@ -1188,17 +1188,6 @@ static inline StatusCode temporal_interpolation(type_coord x, type_coord y, type
   }
 }
 
-static inline StatusCode temporal_interpolation_pstruct(type_coord x, type_coord y, type_coord z, double time, CField *f,
-                                                        void *vxi, void *vyi, void *vzi, void *vti,
-                                                        float *value, int interp_method, int gridindexingtype)
-{
-  int *xi = (int *) vxi;
-  int *yi = (int *) vyi;
-  int *zi = (int *) vzi;
-  int *ti = (int *) vti;
-  return temporal_interpolation(x, y, z, time, f, xi, yi, zi, ti, value, interp_method, gridindexingtype);
-}
-
 static inline StatusCode temporal_interpolationUV(type_coord x, type_coord y, type_coord z, double time,
                                                  CField *U, CField *V,
                                                  int *xi, int *yi, int *zi, int *ti,
@@ -1222,18 +1211,6 @@ static inline StatusCode temporal_interpolationUV(type_coord x, type_coord y, ty
     status = temporal_interpolation(x, y, z, time, V, xi, yi, zi, ti, valueV, interp_method, gridindexingtype); CHECKSTATUS(status);
     return SUCCESS;
   }
-}
-
-static inline StatusCode temporal_interpolationUV_pstruct(type_coord x, type_coord y, type_coord z, double time,
-                                                          CField *U, CField *V,
-                                                          void *vxi, void *vyi, void *vzi, void *vti,
-                                                          float *valueU, float *valueV, int interp_method, int gridindexingtype)
-{
-  int *xi = (int *) vxi;
-  int *yi = (int *) vyi;
-  int *zi = (int *) vzi;
-  int *ti = (int *) vti;
-  return temporal_interpolationUV(x, y, z, time, U, V, xi, yi, zi, ti, valueU, valueV, interp_method, gridindexingtype);
 }
 
 static inline StatusCode temporal_interpolationUVW(type_coord x, type_coord y, type_coord z, double time,
@@ -1262,20 +1239,6 @@ static inline StatusCode temporal_interpolationUVW(type_coord x, type_coord y, t
   status = temporal_interpolation(x, y, z, time, W, xi, yi, zi, ti, valueW, interp_method, gridindexingtype); CHECKSTATUS(status);
   return SUCCESS;
 }
-
-static inline StatusCode temporal_interpolationUVW_pstruct(type_coord x, type_coord y, type_coord z, double time,
-                                                  CField *U, CField *V, CField *W,
-                                                  void *vxi, void *vyi, void *vzi, void *vti,
-                                                  float *valueU, float *valueV, float *valueW, int interp_method, int gridindexingtype)
-{
-  int *xi = (int *) vxi;
-  int *yi = (int *) vyi;
-  int *zi = (int *) vzi;
-  int *ti = (int *) vti;
-  return temporal_interpolationUVW(x, y, z, time, U, V, W, xi, yi, zi, ti, valueU, valueV, valueW, interp_method, gridindexingtype);
-}
-
-
 
 #ifdef __cplusplus
 }
