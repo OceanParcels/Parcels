@@ -62,13 +62,9 @@ The steps below are the installation instructions for Linux, macOS and Windows.
 Installation for developers
 ===========================
 
-If you would prefer to have a development installation of Parcels (i.e., where the code can be actively edited), you can do so by cloning the Parcels repo, installing dependencies using the environment file, and then installing Parcels in an editable mode such that changes to the cloned code can be tested during development.
+If you would prefer to have a development installation of Parcels (i.e., where the code can be actively edited), you can do so by setting up Miniconda (as detailed in step 1 above), cloning the Parcels repo, installing dependencies using the environment file, and then installing Parcels in an editable mode such that changes to the cloned code can be tested during development.
 
-**Step 1:** Install `micromamba <https://mamba.readthedocs.io/en/latest/index.html>`_, a lightweight version of conda, following the instructions `here <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`_.
-
-.. note::
-
-  If you prefer to work with Anaconda or Miniconda instead of Micromamba, you will have to remove the ``sel(unix):`` commands in the ``environment.yml`` file (or remove these lines altogether if you're on Windows), since conda does not (yet) support these `selectors`. After that, just replace ``micromamba`` with ``conda`` in the commands below.
+**Step 1:** *Same as step 1 above*
 
 **Step 2:** Clone the Parcels repo and create a new environment with the dependencies:
 
@@ -76,11 +72,11 @@ If you would prefer to have a development installation of Parcels (i.e., where t
 
   git clone https://github.com/OceanParcels/parcels.git
   cd parcels
-  micromamba env create -f environment.yml
+  conda env create -f environment.yml
 
 **Step 3:** Activate the environment and install Parcels in editable mode:
 
 .. code-block:: bash
 
-  micromamba activate parcels
+  conda activate parcels
   pip install --no-build-isolation --no-deps -e .
