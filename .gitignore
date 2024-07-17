@@ -19,6 +19,7 @@ out-*
 .DS_store
 
 .idea/*
+.vscode/settings.json
 .env
 Profile.prof
 **/.ipynb_checkpoints/*
