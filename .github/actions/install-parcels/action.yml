@@ -23,7 +23,7 @@ runs:
         cache-environment: true
         cache-downloads: true
     - name: MPI support
-      if: ${{ ! runner.os == 'Windows' }}
+      if: ${{ ! (runner.os == 'Windows') }}
       run: conda install -c conda-forge mpich mpi4py
       shell: bash -el {0}
     - name: Install parcels
