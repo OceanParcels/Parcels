@@ -64,17 +64,17 @@ If you would prefer to have a development installation of Parcels (i.e., where t
 
   If you prefer to work with Anaconda or Miniconda instead of Micromamba, you will have to remove the ``sel(unix):`` commands in the ``environment.yml`` file (or remove these lines altogether if you're on Windows), since conda does not (yet) support these `selectors`. After that, just replace ``micromamba`` with ``conda`` in the commands below.
 
-**Step 2:** Clone the Parcels repo and create a new environment with the dependencies:
+**Step 2:** Clone the Parcels repo and create a new environment with the development dependencies:
 
 .. code-block:: bash
 
   git clone https://github.com/OceanParcels/parcels.git
   cd parcels
-  micromamba env create -f environment.yml
+  micromamba env create -n parcels-dev -f environment.yml
 
 **Step 3:** Activate the environment and install Parcels in editable mode:
 
 .. code-block:: bash
 
-  micromamba activate parcels
+  micromamba activate parcels-dev
   pip install --no-build-isolation --no-deps -e .
