@@ -540,7 +540,10 @@ def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
     outfile = pset.ParticleFile(name=outfile_path, outputdt=1, chunks=(1, 1))
     if mode == 'jit':
         def ckernel(particle, fieldset, time):
-            func('parcels_customed_Cfunc_pointer_args', fieldset.U, particle.lon, particle.dt)  # noqa
+            func('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V,  # noqa
+                 particle.xi[0], particle.yi[0], particle.zi[0],
+                 particle.lon, particle.lat, particle.depth, time, particle.dt,
+                 particle_dlon, particle_dlat)  # noqa
 
         kernel = pset.Kernel(ckernel, c_include="parcels/application_kernels/advectionanalytical.h")
     else:
