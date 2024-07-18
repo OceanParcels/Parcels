@@ -12,6 +12,7 @@ The steps below are the installation instructions for Linux, macOS and Windows.
 **Step 2:** Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the ``base`` environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, and the nice-to-have cartopy and jupyter packages:
 
 .. code-block:: bash
+
     conda activate base
     conda create -n parcels -c conda-forge parcels cartopy jupyter
 
