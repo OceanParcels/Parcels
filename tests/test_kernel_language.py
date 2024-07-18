@@ -346,12 +346,12 @@ def test_c_kernel(fieldset, mode, c_inc):
 
     if c_inc == 'str':
         c_include = """
-                 static inline StatusCode func(CField *f, float *lon, double *dt)
+                 static inline StatusCode func(CField *f, double *particle_dlon, double *dt)
                  {
                    float data2D[2][2][2];
                    StatusCode status = getCell2D(f, 1, 2, 0, data2D, 1); CHECKSTATUS(status);
                    float u = data2D[0][0][0];
-                   *lon += u * *dt;
+                   *particle_dlon = +u * *dt;
                    return SUCCESS;
                  }
                  """
@@ -359,16 +359,10 @@ def test_c_kernel(fieldset, mode, c_inc):
         c_include = path.join(path.dirname(__file__), 'customed_header.h')
 
     def ckernel(particle, fieldset, time):
-        func('parcels_customed_Cfunc_pointer_args', fieldset.U, particle.lon, particle.dt)
+        func('parcels_customed_Cfunc_pointer_args', fieldset.U, particle_dlon, particle.dt)  # noqa
 
-    def pykernel(particle, fieldset, time):
-        particle_dlon = func(fieldset.U, particle.lon, particle.dt)  # noqa
-
-    if mode == 'scipy':
-        kernel = pset.Kernel(pykernel)
-    else:
-        kernel = pset.Kernel(ckernel, c_include=c_include)
-    pset.execute(kernel, endtime=3., dt=3.)
+    kernel = pset.Kernel(ckernel, c_include=c_include)
+    pset.execute(kernel, endtime=4., dt=1.)
     assert np.allclose(pset.lon[0], 0.81578948)
 
 
