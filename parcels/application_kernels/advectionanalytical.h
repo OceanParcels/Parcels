@@ -2,6 +2,47 @@
 #include <stdlib.h>
 #include <math.h>
 
+double compute_rs(double r, double B, double delta, double s_min, double tol){
+  if (fabs(B) < tol){
+    return -delta *s_min + r;
+  } else {
+    return (r + delta / B) * exp(-B * s_min) - delta / B;
+  }
+}
+
+void compute_ds(double F0, double F1, double r, double direction, double tol,
+                double *ds, double *B, double *delta){
+  double up = F0 * (1-r) + F1 * r;
+  double r_target = 0;
+  if (direction * up >=0.){
+    r_target = 1.;
+  }
+  *delta = -F0;
+  *B = F0 - F1;
+  double F_r1 = r_target + *delta / *B;
+  double F_r0 = r + *delta / *B;
+  if (fabs(*B) < tol){
+    *B = 0;
+    F_r1 = 0.0/0.0; // SET TO NAN
+    F_r0 = 0.0/0.0; // SET TO NAN
+  }
+
+  if (fabs(*B) < tol && fabs(*delta) < tol){
+      *ds = 1.0 /0.0;  // SET TO INFINITY
+  } else if (*B == 0){
+      *ds = -(r_target - r) / *delta;
+  } else if (F_r1 * F_r0 < tol){
+      *ds = 1.0 /0.0;  // SET TO INFINITY
+  } else {
+      *ds = - 1. / *B * log(F_r1 / F_r0);
+  }
+
+  if (fabs(*ds) < tol){
+      *ds = 1.0 /0.0;  // SET TO INFINITY
+  }
+}
+
+
 static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
                               double *lon, double *lat, double *depth, double *time, double *dt,
                               double *particle_dlon, double *particle_dlat)
@@ -14,7 +55,7 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
   int xdim = grid->xdim;
   int igrid = fu->igrid;
 
-  float tol = 1e-10;
+  double tol = 1e-10;
   int I_s = 10;  // number of intermediate time steps
   int direction = 1;
   // if (*dt < 0)
@@ -37,15 +78,14 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
   double tsrch = 0 ;// TODO fix //(tii == 2) ? time : t0;
   double ds_t = *dt; // TODO also support withTime
 
-  double xsi, eta, zeta;
+  double xsi, rs_x, ds_x, B_x, delta_x;
+  double eta, rs_y, ds_y, B_y, delta_y;
+  double zeta;
 
   status = search_indices(*lon, *lat, *depth, grid, xi, yi, zi,
 			  &xsi, &eta, &zeta, gcode, ti[igrid],
 			  tsrch, t0, t1, CGRID_VELOCITY, gridindexingtype);
   CHECKSTATUS(status);
-
-  printf("Before %f %d %f\n", *lon, *xi, xsi);
-  printf("Before %f %d %f\n", *lat, *yi, eta);
 
   float dataU[2][2][2];
   float dataV[2][2][2];
@@ -72,9 +112,6 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
     status = getCell2D(fu, *xi, *yi, ti[igrid], dataU, 1); CHECKSTATUS(status);
     status = getCell2D(fv, *xi, *yi, ti[igrid], dataV, 1); CHECKSTATUS(status);
   }
-
-  // double px = {grid->lon[*xi], grid->lon[*xi+1], grid->lon[*xi+1], grid->lon[*xi]};
-  // double py = {grid->lat[*yi], grid->lat[*yi], grid->lat[*yi+1], grid->lat[*yi+1]};
 
   double xgrid_loc[4];
   double ygrid_loc[4];
@@ -133,82 +170,14 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
   }
   double dxdy = (dxdxsi*dydeta - dxdeta * dydxsi) * meshJac;
 
-  // First compute U
-  double up = U0 * (1-xsi) + U1 * xsi;
-  double xsi_target = 0;
-  if (direction * up >=0.){
-    xsi_target = 1.;
-  }
-  double delta_x = -U0;
-  double B_x = U0 - U1;
-  double U_r1 = xsi_target + delta_x / B_x;
-  double U_r0 = xsi + delta_x / B_x;
-  if (fabs(B_x) < tol){
-    B_x = 0;
-    U_r1 = 0.0/0.0; // SET TO NAN
-    U_r0 = 0.0/0.0; // SET TO NAN
-  }
-
-  double ds_x;
-  if (fabs(B_x) < tol && fabs(delta_x) < tol){
-      ds_x = 1.0 /0.0;  // SET TO INFINITY
-  } else if (B_x == 0){
-      ds_x = -(xsi_target - xsi) / delta_x;
-  } else if (U_r1 * U_r0 < tol){
-      ds_x = 1.0 /0.0;  // SET TO INFINITY
-  } else {
-      ds_x = - 1. / B_x * log(U_r1 / U_r0);
-  }
-
-  if (fabs(ds_x) < tol){
-      ds_x = 1.0 /0.0;  // SET TO INFINITY
-  }
-
-  // Now compute V
-  double vp = V0 * (1-eta) + V1 * eta;
-  double eta_target = 0;
-  if (direction * vp >=0.){
-    eta_target = 1.;
-  }
-  double delta_y = -V0;
-  double B_y = V0 - V1;
-  double V_r1 = eta_target + delta_y / B_y;
-  double V_r0 = eta + delta_y / B_y;
-  if (fabs(B_y) < tol){
-    B_y = 0;
-    V_r1 = 0.0/0.0; // SET TO NAN
-    V_r0 = 0.0/0.0; // SET TO NAN
-  }
-
-  double ds_y;
-  if (fabs(B_y) < tol && fabs(delta_y) < tol){
-      ds_y = 1.0 /0.0;  // SET TO INFINITY
-  } else if (B_x == 0){
-      ds_y = -(eta_target - eta) / delta_y;
-  } else if (V_r1 * V_r0 < tol){
-      ds_y = 1.0 /0.0;  // SET TO INFINITY
-  } else {
-      ds_y = - 1. / B_y * log(V_r1 / V_r0);
-  }
-
-  if (fabs(ds_y) < tol){
-      ds_y = 1.0 /0.0;  // SET TO INFINITY
-  }
+  compute_ds(U0, U1, xsi, direction, tol, &ds_x, &B_x, &delta_x);
+  compute_ds(V0, V1, eta, direction, tol, &ds_y, &B_y, &delta_y);
 
   double s_min = min(min(fabs(ds_x), fabs(ds_y)), fabs(ds_t / (dxdy * dz)));
 
-  double rs_x, rs_y;
-  if (fabs(B_x) < tol){
-    rs_x = -delta_x * s_min + xsi;
-  } else {
-    rs_x = (xsi + delta_x / B_x) * exp(-B_x * s_min) - delta_x / B_x;
-  }
+  rs_x = compute_rs(xsi, B_x, delta_x, s_min, tol);
+  rs_y = compute_rs(eta, B_y, delta_y, s_min, tol);
 
-  if (fabs(B_y) < tol){
-    rs_y = -delta_y * s_min + eta;
-  } else {
-    rs_y = (eta + delta_y / B_y) * exp(-B_y * s_min) - delta_y / B_y;
-  }
 
   *particle_dlon = (1.-rs_x)*(1.-rs_y) * xgrid_loc[0] + rs_x * (1.-rs_y) * xgrid_loc[1] + rs_x * rs_y * xgrid_loc[2] + (1.-rs_x)*rs_y * xgrid_loc[3] - *lon;
   *particle_dlat = (1.-rs_x)*(1.-rs_y) * ygrid_loc[0] + rs_x * (1.-rs_y) * ygrid_loc[1] + rs_x * rs_y * ygrid_loc[2] + (1.-rs_x)*rs_y * ygrid_loc[3] - *lat;
