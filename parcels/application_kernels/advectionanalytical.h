@@ -199,13 +199,13 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
 
   double rs_x, rs_y;
   if (fabs(B_x) < tol){
-    rs_x = -delta_x * s_min * xsi;
+    rs_x = -delta_x * s_min + xsi;
   } else {
     rs_x = (xsi + delta_x / B_x) * exp(-B_x * s_min) - delta_x / B_x;
   }
 
   if (fabs(B_y) < tol){
-    rs_y = -delta_y * s_min * eta;
+    rs_y = -delta_y * s_min + eta;
   } else {
     rs_y = (eta + delta_y / B_y) * exp(-B_y * s_min) - delta_y / B_y;
   }
