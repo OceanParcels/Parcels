@@ -25,7 +25,8 @@ except ModuleNotFoundError:
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
-    AdvectionAnalytical_JIT,
+    AdvectionAnalytical_2D_JIT,
+    AdvectionAnalytical_3D_JIT,
     AdvectionRK4_3D,
     AdvectionRK45,
 )
@@ -173,8 +174,12 @@ class Kernel(BaseKernel):
         self.check_fieldsets_in_kernels(pyfunc)
 
         if (pyfunc is AdvectionAnalytical) and self.ptype.uses_jit:
-            pyfunc = AdvectionAnalytical_JIT
-            self.funcname = "AdvectionAnalytical_JIT"
+            if fieldset.U.grid.zdim > 1:
+                pyfunc = AdvectionAnalytical_3D_JIT
+                self.funcname = "AdvectionAnalytical_3D_JIT"
+            else:
+                pyfunc = AdvectionAnalytical_2D_JIT
+                self.funcname = "AdvectionAnalytical_2D_JIT"
             self._c_include = "parcels/application_kernels/advectionanalytical.h"
 
         if funcvars is not None:
