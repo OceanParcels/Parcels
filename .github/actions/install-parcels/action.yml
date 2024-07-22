@@ -2,14 +2,11 @@ name: Setup Conda and install parcels
 description: >
   In-repo composite action to setup Conda and install parcels. Installation of parcels relies on
   `setup.py` file being available in the root. For general setup of Anaconda environments, just use
-  the `mamba-org/setup-micromamba@v1` action (setting C variables as required), or the `conda-incubator/setup-miniconda` action.
+  the `conda-incubator/setup-miniconda` action (setting C variables as required).
 inputs:
   environment-file:
     description: Conda environment file to use.
     default: environment.yml
-  environment-name:
-    description: Name to use for the Conda environment
-    default: test
 runs:
   using: "composite"
   steps:
@@ -18,14 +15,17 @@ runs:
       uses: al-cheb/configure-pagefile-action@v1.3
       with:
         minimum-size: 8GB
-    - name: Install micromamba (${{ inputs.environment-file }})
-      uses: mamba-org/setup-micromamba@v1
+    - name: Install miniconda (${{ inputs.environment-file }})
+      uses: conda-incubator/setup-miniconda@v3
       with:
         environment-file: ${{ inputs.environment-file }}
-        environment-name: ${{ inputs.environment-name }}
         channels: conda-forge
         cache-environment: true
         cache-downloads: true
+    - name: MPI support
+      if: ${{ ! (runner.os == 'Windows') }}
+      run: conda install -c conda-forge mpich mpi4py
+      shell: bash -el {0}
     - name: Install parcels
       run: pip install .
       shell: bash -el {0}

@@ -126,8 +126,8 @@ def test_fieldset_sample(fieldset, xdim=120, ydim=80):
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([fieldset.UV[0, 0., 70., x][1] for x in lon])
     u_s = np.array([fieldset.UV[0, 0., y, -45.][0] for y in lat])
-    assert np.allclose(v_s, lon, rtol=1e-7)
-    assert np.allclose(u_s, lat, rtol=1e-7)
+    assert np.allclose(v_s, lon, rtol=1e-5)  # Tolerances were rtol=1e-7, increased due to numpy v2 float32 changes (see #1603)
+    assert np.allclose(u_s, lat, rtol=1e-5)
 
 
 def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
@@ -136,8 +136,8 @@ def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([fieldset.UV.eval(0, 0., 70., x)[1] for x in lon])
     u_s = np.array([fieldset.UV.eval(0, 0., y, 0.)[0] for y in lat])
-    assert np.allclose(v_s, lon, rtol=1e-7)
-    assert np.allclose(u_s, lat, rtol=1e-7)
+    assert np.allclose(v_s, lon, rtol=1e-5)  # Tolerances were rtol=1e-7, increased due to numpy v2 float32 changes (see #1603)
+    assert np.allclose(u_s, lat, rtol=1e-5)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
