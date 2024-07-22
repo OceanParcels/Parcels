@@ -124,42 +124,42 @@ static inline StatusCode func3D(CField *fu, CField *fv, CField *fw,
     status = getCell3D(fw, *xi, *yi, *zi, ti[igrid], dataW, 1); CHECKSTATUS(status);
   }
 
-  double xgrid_loc[4];
-  double ygrid_loc[4];
+  double px[4];
+  double py[4];
   int iN;
   if( (gcode == RECTILINEAR_Z_GRID) || (gcode == RECTILINEAR_S_GRID) ){
     float *xgrid = grid->lon;
     float *ygrid = grid->lat;
     for (iN=0; iN < 4; ++iN){
-      xgrid_loc[iN] = xgrid[*xi+min(1, (iN%3))];
-      ygrid_loc[iN] = ygrid[*yi+iN/2];
+      px[iN] = xgrid[*xi+min(1, (iN%3))];
+      py[iN] = ygrid[*yi+iN/2];
     }
   }
   else{
     float (* xgrid)[xdim] = (float (*)[xdim]) grid->lon;
     float (* ygrid)[xdim] = (float (*)[xdim]) grid->lat;
     for (iN=0; iN < 4; ++iN){
-      xgrid_loc[iN] = xgrid[*yi+iN/2][*xi+min(1, (iN%3))];
-      ygrid_loc[iN] = ygrid[*yi+iN/2][*xi+min(1, (iN%3))];
+      px[iN] = xgrid[*yi+iN/2][*xi+min(1, (iN%3))];
+      py[iN] = ygrid[*yi+iN/2][*xi+min(1, (iN%3))];
     }
   }
   int i4;
   for (i4 = 1; i4 < 4; ++i4){
-    if (xgrid_loc[i4] < xgrid_loc[0] - 180) xgrid_loc[i4] += 360;
-    if (xgrid_loc[i4] > xgrid_loc[0] + 180) xgrid_loc[i4] -= 360;
+    if (px[i4] < px[0] - 180) px[i4] += 360;
+    if (px[i4] > px[0] + 180) px[i4] -= 360;
   }
   double pz[2] = {grid->depth[*zi], grid->depth[*zi+1]};
   double dz = pz[1] - pz[0];
 
   double phi[4];
   phi2D_lin(0., eta, phi);
-  double U0 = direction * dataU[0][1][1][0] * dz * dist(xgrid_loc[3], xgrid_loc[0], ygrid_loc[3], ygrid_loc[0], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double U0 = direction * dataU[0][1][1][0] * dz * dist(px[3], px[0], py[3], py[0], grid->sphere_mesh, dot_prod(phi, py, 4));
   phi2D_lin(1., eta, phi);
-  double U1 = direction * dataU[0][1][1][1] * dz * dist(xgrid_loc[1], xgrid_loc[2], ygrid_loc[1], ygrid_loc[2], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double U1 = direction * dataU[0][1][1][1] * dz * dist(px[1], px[2], py[1], py[2], grid->sphere_mesh, dot_prod(phi, py, 4));
   phi2D_lin(xsi, 0., phi);
-  double V0 = direction * dataV[0][1][0][1] * dz * dist(xgrid_loc[0], xgrid_loc[1], ygrid_loc[0], ygrid_loc[1], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double V0 = direction * dataV[0][1][0][1] * dz * dist(px[0], px[1], py[0], py[1], grid->sphere_mesh, dot_prod(phi, py, 4));
   phi2D_lin(xsi, 1., phi);
-  double V1 = direction * dataV[0][1][1][1] * dz * dist(xgrid_loc[2], xgrid_loc[3], ygrid_loc[2], ygrid_loc[3], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double V1 = direction * dataV[0][1][1][1] * dz * dist(px[2], px[3], py[2], py[3], grid->sphere_mesh, dot_prod(phi, py, 4));
 
   double dphidxsi[4] = {eta-1, 1-eta, eta, -eta};
   double dphideta[4] = {xsi-1, -xsi, xsi, 1-xsi};
@@ -167,17 +167,17 @@ static inline StatusCode func3D(CField *fu, CField *fv, CField *fw,
   double dydxsi = 0; double dydeta = 0;
   int i;
   for(i=0; i<4; ++i){
-    dxdxsi += xgrid_loc[i] *dphidxsi[i];
-    dxdeta += xgrid_loc[i] *dphideta[i];
-    dydxsi += ygrid_loc[i] *dphidxsi[i];
-    dydeta += ygrid_loc[i] *dphideta[i];
+    dxdxsi += px[i] *dphidxsi[i];
+    dxdeta += px[i] *dphideta[i];
+    dydxsi += py[i] *dphidxsi[i];
+    dydeta += py[i] *dphideta[i];
   }
   double meshJac = 1;
   if (grid->sphere_mesh == 1){
     double deg2m = 1852 * 60.;
     double rad = M_PI / 180.;
     phi2D_lin(xsi, eta, phi);
-    double lat = dot_prod(phi, ygrid_loc, 4);
+    double lat = dot_prod(phi, py, 4);
     meshJac = deg2m * deg2m * cos(rad * lat);
   }
   double dxdy = (dxdxsi*dydeta - dxdeta * dydxsi) * meshJac;
@@ -195,8 +195,8 @@ static inline StatusCode func3D(CField *fu, CField *fv, CField *fw,
   rs_y = compute_rs(eta, B_y, delta_y, s_min, tol);
   rs_z = compute_rs(zeta, B_z, delta_z, s_min, tol);
 
-  *particle_dlon = (1.-rs_x)*(1.-rs_y) * xgrid_loc[0] + rs_x * (1.-rs_y) * xgrid_loc[1] + rs_x * rs_y * xgrid_loc[2] + (1.-rs_x)*rs_y * xgrid_loc[3] - *lon;
-  *particle_dlat = (1.-rs_x)*(1.-rs_y) * ygrid_loc[0] + rs_x * (1.-rs_y) * ygrid_loc[1] + rs_x * rs_y * ygrid_loc[2] + (1.-rs_x)*rs_y * ygrid_loc[3] - *lat;
+  *particle_dlon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3] - *lon;
+  *particle_dlat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3] - *lat;
   *particle_ddepth = (1.-rs_z) * pz[0] + rs_z * pz[1] - *depth;
 
   if (*dt > 0){
