@@ -16,6 +16,7 @@ out-*
 *.pyc
 *.dSYM/*
 **/*.zarr/*
+.DS_store
 
 .idea/*
 .env

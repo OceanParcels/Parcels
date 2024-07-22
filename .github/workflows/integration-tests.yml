@@ -16,7 +16,6 @@ defaults:
 
 jobs:
   integration-test:
-    if: github.event.pull_request.draft == false
     name: ${{ matrix.os }} integration tests
     runs-on: ${{ matrix.os }}-latest
     strategy:
