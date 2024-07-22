@@ -7,6 +7,8 @@ If you want to install the latest development version of Parcels and work with f
 
 The steps below are the installation instructions for Linux, macOS and Windows.
 
+.. _step 1 above:
+
 **Step 1:** Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/, making sure to select the Python-3 version. If you're on Linux /macOS, the following assumes that you installed Miniconda to your home directory.
 
 **Step 2:** Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the ``base`` environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, and the nice-to-have cartopy and jupyter packages:
@@ -56,13 +58,9 @@ The steps below are the installation instructions for Linux, macOS and Windows.
 Installation for developers
 ===========================
 
-If you would prefer to have a development installation of Parcels (i.e., where the code can be actively edited), you can do so by cloning the Parcels repo, installing dependencies using the environment file, and then installing Parcels in an editable mode such that changes to the cloned code can be tested during development.
+If you would prefer to have a development installation of Parcels (i.e., where the code can be actively edited), you can do so by setting up Miniconda (as detailed in step 1 above), cloning the Parcels repo, installing dependencies using the environment file, and then installing Parcels in an editable mode such that changes to the cloned code can be tested during development.
 
-**Step 1:** Install `micromamba <https://mamba.readthedocs.io/en/latest/index.html>`_, a lightweight version of conda, following the instructions `here <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`_.
-
-.. note::
-
-  If you prefer to work with Anaconda or Miniconda instead of Micromamba, you will have to remove the ``sel(unix):`` commands in the ``environment.yml`` file (or remove these lines altogether if you're on Windows), since conda does not (yet) support these `selectors`. After that, just replace ``micromamba`` with ``conda`` in the commands below.
+**Step 1:** Same as `step 1 above`_.
 
 **Step 2:** Clone the Parcels repo and create a new environment with the development dependencies:
 
@@ -70,11 +68,11 @@ If you would prefer to have a development installation of Parcels (i.e., where t
 
   git clone https://github.com/OceanParcels/parcels.git
   cd parcels
-  micromamba env create -n parcels-dev -f environment.yml
+  conda env create -n parcels-dev -f environment.yml
 
 **Step 3:** Activate the environment and install Parcels in editable mode:
 
 .. code-block:: bash
 
-  micromamba activate parcels-dev
+  conda activate parcels-dev
   pip install --no-build-isolation --no-deps -e .
