@@ -292,7 +292,7 @@ def AdvectionAnalytical(particle, fieldset, time):
 
     if withW:
         rs_z = compute_rs(ds_z, zeta, B_z, delta_z, s_min)
-        particle.depth = (1.-rs_z) * pz[0] + rs_z * pz[1]
+        particle_ddepth = (1.-rs_z) * pz[0] + rs_z * pz[1] - particle.depth  # noqa
 
     if particle.dt > 0:
         particle.dt = max(direction * s_min * (dxdy * dz), 1e-7)
