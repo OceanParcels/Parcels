@@ -36,7 +36,6 @@ jobs:
         uses: ./.github/actions/install-parcels
         with:
           environment-file: environment.yml
-          environment-name: py3_parcels
       - name: Unit test
         run: |
           coverage run -m pytest -v -s --html=${{ matrix.os }}_unit_test_report.html --self-contained-html tests

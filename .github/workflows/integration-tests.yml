@@ -37,7 +37,6 @@ jobs:
         uses: ./.github/actions/install-parcels
         with:
           environment-file: environment.yml
-          environment-name: py3_parcels
       - name: Integration test
         run: |
           coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html docs/examples
