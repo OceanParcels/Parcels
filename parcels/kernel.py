@@ -25,6 +25,7 @@ except ModuleNotFoundError:
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
+    AdvectionAnalytical_JIT,
     AdvectionRK4_3D,
     AdvectionRK45,
 )
@@ -170,6 +171,11 @@ class Kernel(BaseKernel):
 
         # Derive meta information from pyfunc, if not given
         self.check_fieldsets_in_kernels(pyfunc)
+
+        if (pyfunc is AdvectionAnalytical) and self.ptype.uses_jit:
+            pyfunc = AdvectionAnalytical_JIT
+            self.funcname = "AdvectionAnalytical_JIT"
+            self._c_include = "parcels/application_kernels/advectionanalytical.h"
 
         if funcvars is not None:
             self.funcvars = funcvars

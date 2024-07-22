@@ -111,7 +111,8 @@ def AdvectionRK45(particle, fieldset, time):
 
 
 def AdvectionAnalytical(particle, fieldset, time):
-    """Advection of particles using 'analytical advection' integration.
+    """Advection of particles using 'analytical advection' integration. This code only works in SciPy mode.
+    The JIT version of this code is hardcoded in C in advectionanalytical.h, and is called by the JIT version of this kernel.
 
     Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017).
     Note that the time-dependent scheme is currently implemented with 'intermediate timesteps'
@@ -271,3 +272,15 @@ def AdvectionAnalytical(particle, fieldset, time):
         particle.dt = max(direction * s_min * (dxdy * dz), 1e-7)
     else:
         particle.dt = min(direction * s_min * (dxdy * dz), -1e-7)
+
+
+def AdvectionAnalytical_JIT(particle, fieldset, time):
+    """JIT version of AdvectionAnalytical kernel.
+
+    The code itself is in advectionanalytical.h and is automatically included
+    when using AdvectionAnalytical in JIT mode.
+    """
+    AdvectionAnalytical3D_JIT('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V, fieldset.W, # noqa
+                              particle.xi[0], particle.yi[0], particle.zi[0],  # TODO call with particle.xi without subscript
+                              particle.lon, particle.lat, particle.depth, time, particle.dt,
+                              particle_dlon, particle_dlat, particle_ddepth)  # noqa

@@ -511,7 +511,7 @@ def test_analyticalAgrid(mode):
     assert failed
 
 
-@pytest.mark.parametrize('mode', ['scipy'])  # JIT not implemented
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('u', [1, -0.2, -0.3, 0])
 @pytest.mark.parametrize('v', [1, -0.3, 0, -1])
 @pytest.mark.parametrize('w', [None, 1, -0.3, 0, -1])
@@ -538,21 +538,12 @@ def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
 
     outfile_path = tmpdir.join("uniformanalytical.zarr")
     outfile = pset.ParticleFile(name=outfile_path, outputdt=1, chunks=(1, 1))
-    if mode == 'jit':
-        def ckernel(particle, fieldset, time):
-            func('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V,  # noqa
-                 particle.xi[0], particle.yi[0], particle.zi[0],
-                 particle.lon, particle.lat, particle.depth, time, particle.dt,
-                 particle_dlon, particle_dlat)  # noqa
 
-        kernel = pset.Kernel(ckernel, c_include="parcels/application_kernels/advectionanalytical.h")
-    else:
-        kernel = AdvectionAnalytical
-    pset.execute(kernel, runtime=4, dt=direction,
+    pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
                  output_file=outfile)
     assert np.abs(pset.lon - x0 - pset.time * u) < 1e-6
     assert np.abs(pset.lat - y0 - pset.time * v) < 1e-6
-    if w:
+    if w is not None:
         assert np.abs(pset.depth - z0 - pset.time * w) < 1e-4
 
     ds = xr.open_zarr(outfile_path)

@@ -43,7 +43,7 @@ void compute_ds(double F0, double F1, double r, double direction, double tol,
 }
 
 
-static inline StatusCode func3D(CField *fu, CField *fv, CField *fw,
+static inline StatusCode AdvectionAnalytical3D_JIT(CField *fu, CField *fv, CField *fw,
                               int *xi, int *yi, int *zi,
                               double *lon, double *lat, double *depth,
                               double *time, double *dt,
