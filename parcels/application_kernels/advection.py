@@ -274,13 +274,25 @@ def AdvectionAnalytical(particle, fieldset, time):
         particle.dt = min(direction * s_min * (dxdy * dz), -1e-7)
 
 
-def AdvectionAnalytical_JIT(particle, fieldset, time):
-    """JIT version of AdvectionAnalytical kernel.
+def AdvectionAnalytical_2D_JIT(particle, fieldset, time):
+    """JIT version of 2D AdvectionAnalytical kernel.
 
     The code itself is in advectionanalytical.h and is automatically included
     when using AdvectionAnalytical in JIT mode.
     """
-    AdvectionAnalytical3D_JIT('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V, fieldset.W, # noqa
-                              particle.xi[0], particle.yi[0], particle.zi[0],  # TODO call with particle.xi without subscript
-                              particle.lon, particle.lat, particle.depth, time, particle.dt,
-                              particle_dlon, particle_dlat, particle_ddepth)  # noqa
+    calcAdvectionAnalytical_2D_JIT('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V, # noqa
+                                   particle.xi[0], particle.yi[0], particle.zi[0],  # TODO call with particle.xi without subscript
+                                   particle.lon, particle.lat, particle.depth, time, particle.dt,
+                                   particle_dlon, particle_dlat)  # noqa
+
+
+def AdvectionAnalytical_3D_JIT(particle, fieldset, time):
+    """JIT version of 3D AdvectionAnalytical kernel.
+
+    The code itself is in advectionanalytical.h and is automatically included
+    when using AdvectionAnalytical in JIT mode.
+    """
+    calcAdvectionAnalytical_3D_JIT('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V, fieldset.W, # noqa
+                                   particle.xi[0], particle.yi[0], particle.zi[0],  # TODO call with particle.xi without subscript
+                                   particle.lon, particle.lat, particle.depth, time, particle.dt,
+                                   particle_dlon, particle_dlat, particle_ddepth)  # noqa
