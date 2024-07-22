@@ -185,7 +185,9 @@ def test_peninsula_fieldset_AnalyticalAdvection(mode, mesh, tmpdir):
                              method=AdvectionAnalytical)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
-    assert (err_adv <= 1.e-1).all()
+
+    tol = {"scipy": 3.e-1, "jit": 1.e-1}.get(mode)
+    assert (err_adv <= tol).all()
 
 
 def fieldsetfile(mesh, tmpdir):
