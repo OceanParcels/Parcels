@@ -58,9 +58,9 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
   double tol = 1e-10;
   int I_s = 10;  // number of intermediate time steps
   int direction = 1;
-  // if (*dt < 0)
-  //   direction = -1;
   bool withW = 0; // TODO also withW
+  if (*dt < 0)
+    direction = -1;
   double dz = 1; // TODO also for varying dz
   bool withTime = 0; // TODO also withTime
 
