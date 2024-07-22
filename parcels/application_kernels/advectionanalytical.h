@@ -43,9 +43,11 @@ void compute_ds(double F0, double F1, double r, double direction, double tol,
 }
 
 
-static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
-                              double *lon, double *lat, double *depth, double *time, double *dt,
-                              double *particle_dlon, double *particle_dlat)
+static inline StatusCode func3D(CField *fu, CField *fv, CField *fw,
+                              int *xi, int *yi, int *zi,
+                              double *lon, double *lat, double *depth,
+                              double *time, double *dt,
+                              double *particle_dlon, double *particle_dlat, double *particle_ddepth)
 {
 
   StatusCode status;
@@ -57,11 +59,9 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
 
   double tol = 1e-10;
   int I_s = 10;  // number of intermediate time steps
-  int direction = 1;
-  bool withW = 0; // TODO also withW
+  double direction = 1;
   if (*dt < 0)
     direction = -1;
-  double dz = 1; // TODO also for varying dz
   bool withTime = 0; // TODO also withTime
 
   int ti[1] = {0}; // TODO also input ti
@@ -80,21 +80,23 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
 
   double xsi, rs_x, ds_x, B_x, delta_x;
   double eta, rs_y, ds_y, B_y, delta_y;
-  double zeta;
+  double zeta, rs_z, ds_z, B_z, delta_z;
 
   status = search_indices(*lon, *lat, *depth, grid, xi, yi, zi,
 			  &xsi, &eta, &zeta, gcode, ti[igrid],
 			  tsrch, t0, t1, CGRID_VELOCITY, gridindexingtype);
   CHECKSTATUS(status);
 
-  float dataU[2][2][2];
-  float dataV[2][2][2];
-  status = getCell2D(fu, *xi, *yi, ti[igrid], dataU, 1); CHECKSTATUS(status);
-  status = getCell2D(fv, *xi, *yi, ti[igrid], dataV, 1); CHECKSTATUS(status);
+  float dataU[2][2][2][2];
+  float dataV[2][2][2][2];
+  float dataW[2][2][2][2];
+  status = getCell3D(fu, *xi, *yi, *zi, ti[igrid], dataU, 1); CHECKSTATUS(status);
+  status = getCell3D(fv, *xi, *yi, *zi, ti[igrid], dataV, 1); CHECKSTATUS(status);
+  status = getCell3D(fw, *xi, *yi, *zi, ti[igrid], dataW, 1); CHECKSTATUS(status);
 
   bool updateCells = 0;
   if (fabs(xsi - 1) < tol){
-    if (dataU[0][1][1] > 0){
+    if (dataU[0][1][1][1] > 0){
       *xi += 1;
       xsi = 0;
       updateCells = 1;
@@ -102,15 +104,24 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
   }
 
   if (fabs(eta - 1) < tol){
-    if (dataV[0][1][1] > 0){
+    if (dataV[0][1][1][1] > 0){
       *yi += 1;
       eta = 0;
       updateCells = 1;
     }
   }
+
+  if (fabs(zeta - 1) < tol){
+    if (dataW[0][1][1][1] > 0){
+      *zi += 1;
+      zeta = 0;
+      updateCells = 1;
+    }
+  }
   if (updateCells == 1){
-    status = getCell2D(fu, *xi, *yi, ti[igrid], dataU, 1); CHECKSTATUS(status);
-    status = getCell2D(fv, *xi, *yi, ti[igrid], dataV, 1); CHECKSTATUS(status);
+    status = getCell3D(fu, *xi, *yi, *zi, ti[igrid], dataU, 1); CHECKSTATUS(status);
+    status = getCell3D(fv, *xi, *yi, *zi, ti[igrid], dataV, 1); CHECKSTATUS(status);
+    status = getCell3D(fw, *xi, *yi, *zi, ti[igrid], dataW, 1); CHECKSTATUS(status);
   }
 
   double xgrid_loc[4];
@@ -137,17 +148,18 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
     if (xgrid_loc[i4] < xgrid_loc[0] - 180) xgrid_loc[i4] += 360;
     if (xgrid_loc[i4] > xgrid_loc[0] + 180) xgrid_loc[i4] -= 360;
   }
-
+  double pz[2] = {grid->depth[*zi], grid->depth[*zi+1]};
+  double dz = pz[1] - pz[0];
 
   double phi[4];
   phi2D_lin(0., eta, phi);
-  double U0 = direction * dataU[0][1][0] * dist(xgrid_loc[3], xgrid_loc[0], ygrid_loc[3], ygrid_loc[0], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double U0 = direction * dataU[0][1][1][0] * dz * dist(xgrid_loc[3], xgrid_loc[0], ygrid_loc[3], ygrid_loc[0], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
   phi2D_lin(1., eta, phi);
-  double U1 = direction * dataU[0][1][1] * dist(xgrid_loc[1], xgrid_loc[2], ygrid_loc[1], ygrid_loc[2], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double U1 = direction * dataU[0][1][1][1] * dz * dist(xgrid_loc[1], xgrid_loc[2], ygrid_loc[1], ygrid_loc[2], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
   phi2D_lin(xsi, 0., phi);
-  double V0 = direction * dataV[0][0][1] * dist(xgrid_loc[0], xgrid_loc[1], ygrid_loc[0], ygrid_loc[1], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double V0 = direction * dataV[0][1][0][1] * dz * dist(xgrid_loc[0], xgrid_loc[1], ygrid_loc[0], ygrid_loc[1], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
   phi2D_lin(xsi, 1., phi);
-  double V1 = direction * dataV[0][1][1] * dist(xgrid_loc[2], xgrid_loc[3], ygrid_loc[2], ygrid_loc[3], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double V1 = direction * dataV[0][1][1][1] * dz * dist(xgrid_loc[2], xgrid_loc[3], ygrid_loc[2], ygrid_loc[3], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
 
   double dphidxsi[4] = {eta-1, 1-eta, eta, -eta};
   double dphideta[4] = {xsi-1, -xsi, xsi, 1-xsi};
@@ -170,25 +182,28 @@ static inline StatusCode func(CField *fu, CField *fv, int *xi, int *yi, int *zi,
   }
   double dxdy = (dxdxsi*dydeta - dxdeta * dydxsi) * meshJac;
 
+  double W0 = direction * dataW[0][0][1][1] * dxdy;
+  double W1 = direction * dataW[0][1][1][1] * dxdy;
+
   compute_ds(U0, U1, xsi, direction, tol, &ds_x, &B_x, &delta_x);
   compute_ds(V0, V1, eta, direction, tol, &ds_y, &B_y, &delta_y);
+  compute_ds(W0, W1, zeta, direction, tol, &ds_z, &B_z, &delta_z);
 
-  double s_min = min(min(fabs(ds_x), fabs(ds_y)), fabs(ds_t / (dxdy * dz)));
+  double s_min = min(min(min(fabs(ds_x), fabs(ds_y)), fabs(ds_z)), fabs(ds_t / (dxdy * dz)));
 
   rs_x = compute_rs(xsi, B_x, delta_x, s_min, tol);
   rs_y = compute_rs(eta, B_y, delta_y, s_min, tol);
-
+  rs_z = compute_rs(zeta, B_z, delta_z, s_min, tol);
 
   *particle_dlon = (1.-rs_x)*(1.-rs_y) * xgrid_loc[0] + rs_x * (1.-rs_y) * xgrid_loc[1] + rs_x * rs_y * xgrid_loc[2] + (1.-rs_x)*rs_y * xgrid_loc[3] - *lon;
   *particle_dlat = (1.-rs_x)*(1.-rs_y) * ygrid_loc[0] + rs_x * (1.-rs_y) * ygrid_loc[1] + rs_x * rs_y * ygrid_loc[2] + (1.-rs_x)*rs_y * ygrid_loc[3] - *lat;
+  *particle_ddepth = (1.-rs_z) * pz[0] + rs_z * pz[1] - *depth;
 
   if (*dt > 0){
     *dt = max(direction * s_min * (dxdy * dz), 1e-7);
   } else {
     *dt = min(direction * s_min * (dxdy * dz), 1e-7);
   }
-  printf("After %f %d %f\n", *lon, *xi, xsi);
-  printf("After %f %d %f\n", *lat, *yi, eta);
 
   return SUCCESS;
 }
