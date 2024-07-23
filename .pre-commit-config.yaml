@@ -13,6 +13,11 @@ repos:
     rev: "7.1.0"
     hooks:
       - id: flake8
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 24.4.2
+    hooks:
+      - id: black
+        files: docs/examples
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.8.5
     hooks:
