@@ -1,75 +1,75 @@
-Brownian Motion
------------------------
+example_brownian.py
+-------------------
 
 .. literalinclude:: ../examples/example_brownian.py
    :language: python
    :linenos:
 
-Dask Chunk OCMs
------------------------
+example_dask_chunk_OCMs.py
+--------------------------
 
 .. literalinclude:: ../examples/example_dask_chunk_OCMs.py
    :language: python
    :linenos:
 
-Decaying Moving Eddy
-----------------------------
+example_decaying_moving_eddy.py
+-------------------------------
 
 .. literalinclude:: ../examples/example_decaying_moving_eddy.py
    :language: python
    :linenos:
 
-Globcurrent
--------------------
+example_globcurrent.py
+----------------------
 
 .. literalinclude:: ../examples/example_globcurrent.py
    :language: python
    :linenos:
 
-MITgcm
---------------
+example_mitgcm.py
+-----------------
 
 .. literalinclude:: ../examples/example_mitgcm.py
    :language: python
    :linenos:
 
-Moving Eddies
----------------------
+example_moving_eddies.py
+------------------------
 
 .. literalinclude:: ../examples/example_moving_eddies.py
    :language: python
    :linenos:
 
-NEMO Curvilinear
-------------------------
+example_nemo_curvilinear.py
+---------------------------
 
 .. literalinclude:: ../examples/example_nemo_curvilinear.py
    :language: python
    :linenos:
 
-OFAM
-------------
+example_ofam.py
+---------------
 
 .. literalinclude:: ../examples/example_ofam.py
    :language: python
    :linenos:
 
-Peninsula
------------------
+example_peninsula.py
+--------------------
 
 .. literalinclude:: ../examples/example_peninsula.py
    :language: python
    :linenos:
 
-Radial Rotation
------------------------
+example_radial_rotation.py
+--------------------------
 
 .. literalinclude:: ../examples/example_radial_rotation.py
    :language: python
    :linenos:
 
-Stommel
----------------
+example_stommel.py
+------------------
 
 .. literalinclude:: ../examples/example_stommel.py
    :language: python
