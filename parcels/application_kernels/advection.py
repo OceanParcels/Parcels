@@ -251,7 +251,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     s_min = min(abs(ds_x), abs(ds_y), abs(ds_z), abs(ds_t / (dxdy * dz)))
 
     # calculate end position in time s_min
-    def compute_rs(ds, r, B, delta, s_min):
+    def compute_rs(r, B, delta, s_min):
         if abs(B) < tol:
             return -delta * s_min + r
         else:
