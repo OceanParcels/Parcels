@@ -6,24 +6,15 @@ from glob import glob
 import numpy as np
 import pytest
 
-from parcels import (
-    AdvectionAnalytical,
-    AdvectionRK4,
-    FieldSet,
-    JITParticle,
-    ParticleFile,
-    ParticleSet,
-    ScipyParticle,
-    download_example_dataset,
-)
+import parcels
 
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-advection = {'RK4': AdvectionRK4, 'AA': AdvectionAnalytical}
+ptype = {'scipy': parcels.ScipyParticle, 'jit': parcels.JITParticle}
+advection = {'RK4': parcels.AdvectionRK4, 'AA': parcels.AdvectionAnalytical}
 
 
 def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
     """Run parcels on the NEMO curvilinear grid."""
-    data_folder = download_example_dataset('NemoCurvilinear_data')
+    data_folder = parcels.download_example_dataset('NemoCurvilinear_data')
 
     filenames = {'U': {'lon': f'{data_folder}/mesh_mask.nc4',
                        'lat': f'{data_folder}/mesh_mask.nc4',
@@ -34,7 +25,7 @@ def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     chunksize = {'lat': ('y', 256), 'lon': ('x', 512)}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chunksize)
+    fieldset = parcels.FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chunksize)
     assert fieldset.U.chunksize == chunksize
 
     # Now run particles as normal
@@ -51,8 +42,8 @@ def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
         if particle.lon > 180:
             particle_dlon -= 360  # noqa
 
-    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
-    pfile = ParticleFile(outfile, pset, outputdt=delta(days=1))
+    pset = parcels.ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
+    pfile = parcels.ParticleFile(outfile, pset, outputdt=delta(days=1))
     kernels = pset.Kernel(advection[advtype]) + periodicBC
     pset.execute(kernels, runtime=runtime, dt=delta(hours=6),
                  output_file=pfile)
@@ -74,7 +65,7 @@ def test_nemo_curvilinear_AA(tmpdir):
 
 def test_nemo_3D_samegrid():
     """Test that the same grid is used for U and V in 3D NEMO fields."""
-    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    data_folder = parcels.download_example_dataset('NemoNorthSeaORCA025-N006_data')
     ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
     vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
     wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
@@ -91,7 +82,7 @@ def test_nemo_3D_samegrid():
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
 
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
+    fieldset = parcels.FieldSet.from_nemo(filenames, variables, dimensions)
 
     assert fieldset.U.dataFiles is not fieldset.W.dataFiles
 

@@ -6,20 +6,10 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 
-from parcels import (
-    AdvectionAnalytical,
-    AdvectionEE,
-    AdvectionRK4,
-    AdvectionRK45,
-    FieldSet,
-    JITParticle,
-    ParticleSet,
-    ScipyParticle,
-    Variable,
-)
+import parcels
 
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
+ptype = {'scipy': parcels.ScipyParticle, 'jit': parcels.JITParticle}
+method = {'RK4': parcels.AdvectionRK4, 'EE': parcels.AdvectionEE, 'RK45': parcels.AdvectionRK45}
 
 
 def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
@@ -90,7 +80,7 @@ def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat}
 
-    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
+    fieldset = parcels.FieldSet.from_data(data, dimensions, mesh=mesh)
     if grid_type == 'C':
         fieldset.U.interp_method = 'cgrid_velocity'
         fieldset.V.interp_method = 'cgrid_velocity'
@@ -104,7 +94,7 @@ def UpdateP(particle, fieldset, time):
 
 
 def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
-                      verbose=False, output=True, method=AdvectionRK4):
+                      verbose=False, output=True, method=parcels.AdvectionRK4):
     """Example configuration of particle flow around an idealised Peninsula
 
     Parameters
@@ -130,8 +120,8 @@ def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p.
     # We determine the particle base class according to mode.
-    MyParticle = ptype[mode].add_variable([Variable('p', dtype=np.float32, initial=0.),
-                                           Variable('p_start', dtype=np.float32, initial=0)])
+    MyParticle = ptype[mode].add_variable([parcels.Variable('p', dtype=np.float32, initial=0.),
+                                           parcels.Variable('p_start', dtype=np.float32, initial=0)])
 
     # Initialise particles
     if fieldset.U.grid.mesh == 'flat':
@@ -139,7 +129,7 @@ def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
     else:
         x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)  # latitude range, including offsets
-    pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle,
+    pset = parcels.ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle,
                                  start=(x, y[0]), finish=(x, y[1]), time=0)
 
     if verbose:
@@ -182,7 +172,7 @@ def test_peninsula_fieldset_AnalyticalAdvection(mode, mesh, tmpdir):
     fieldset = peninsula_fieldset(101, 51, 'flat', grid_type='C')
     outfile = tmpdir.join("PeninsulaAA")
     pset = peninsula_example(fieldset, outfile, npart=10, mode=mode,
-                             method=AdvectionAnalytical)
+                             method=parcels.AdvectionAnalytical)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
 
@@ -203,7 +193,7 @@ def fieldsetfile(mesh, tmpdir):
 def test_peninsula_file(mode, mesh, tmpdir):
     """Open fieldset files and execute."""
     gc.collect()
-    fieldset = FieldSet.from_parcels(fieldsetfile(mesh, tmpdir), extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    fieldset = parcels.FieldSet.from_parcels(fieldsetfile(mesh, tmpdir), extra_fields={'P': 'P'}, allow_time_extrapolation=True)
     outfile = tmpdir.join("Peninsula")
     pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
@@ -243,7 +233,7 @@ Example of particle advection around an idealised peninsula""")
     fieldset.write(filename)
 
     # Open fieldset file set
-    fieldset = FieldSet.from_parcels('peninsula', extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    fieldset = parcels.FieldSet.from_parcels('peninsula', extra_fields={'P': 'P'}, allow_time_extrapolation=True)
     outfile = "Peninsula"
 
     if args.profiling:

@@ -3,9 +3,9 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 
-from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, ScipyParticle
+import parcels
 
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+ptype = {'scipy': parcels.ScipyParticle, 'jit': parcels.JITParticle}
 
 # Define some constants.
 u_g = .04  # Geostrophic current
@@ -41,7 +41,7 @@ def decaying_moving_eddy_fieldset(xdim=2, ydim=2):  # Define 2D flat, square fie
 
     data = {'U': U, 'V': V}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
-    return FieldSet.from_data(data, dimensions, mesh='flat')
+    return parcels.FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 def true_values(t, x_0, y_0):  # Calculate the expected values for particles at the endtime, given their start location.
@@ -51,8 +51,8 @@ def true_values(t, x_0, y_0):  # Calculate the expected values for particles at 
     return np.array([x, y])
 
 
-def decaying_moving_example(fieldset, outfile, mode='scipy', method=AdvectionRK4):
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=start_lon, lat=start_lat)
+def decaying_moving_example(fieldset, outfile, mode='scipy', method=parcels.AdvectionRK4):
+    pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=start_lon, lat=start_lat)
 
     dt = delta(minutes=5)
     runtime = delta(days=2)

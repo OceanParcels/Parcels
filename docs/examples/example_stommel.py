@@ -5,20 +5,10 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 
-from parcels import (
-    AdvectionEE,
-    AdvectionRK4,
-    AdvectionRK45,
-    FieldSet,
-    JITParticle,
-    ParticleSet,
-    ScipyParticle,
-    Variable,
-    timer,
-)
+import parcels
 
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
+ptype = {'scipy': parcels.ScipyParticle, 'jit': parcels.JITParticle}
+method = {'RK4': parcels.AdvectionRK4, 'EE': parcels.AdvectionEE, 'RK45': parcels.AdvectionRK45}
 
 
 def stommel_fieldset(xdim=200, ydim=200, grid_type='A'):
@@ -61,7 +51,7 @@ def stommel_fieldset(xdim=200, ydim=200, grid_type='A'):
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset = parcels.FieldSet.from_data(data, dimensions, mesh='flat')
     if grid_type == 'C':
         fieldset.U.interp_method = 'cgrid_velocity'
         fieldset.V.interp_method = 'cgrid_velocity'
@@ -85,38 +75,38 @@ def simple_partition_function(coords, mpi_size=1):
     return np.linspace(0, mpi_size, coords.shape[0], endpoint=False, dtype=np.int32)
 
 
-def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
+def stommel_example(npart=1, mode='jit', verbose=False, method=parcels.AdvectionRK4, grid_type='A',
                     outfile="StommelParticle.zarr", repeatdt=None, maxage=None, write_fields=True,
                     custom_partition_function=False):
-    timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
+    parcels.timer.fieldset = parcels.timer.Timer('FieldSet', parent=parcels.timer.stommel)
     fieldset = stommel_fieldset(grid_type=grid_type)
     if write_fields:
         filename = 'stommel'
         fieldset.write(filename)
-    timer.fieldset.stop()
+    parcels.timer.fieldset.stop()
 
     # Determine particle class according to mode
-    timer.pset = timer.Timer('Pset', parent=timer.stommel)
-    timer.psetinit = timer.Timer('Pset_init', parent=timer.pset)
-    ParticleClass = JITParticle if mode == 'jit' else ScipyParticle
+    parcels.timer.pset = parcels.timer.Timer('Pset', parent=parcels.timer.stommel)
+    parcels.timer.psetinit = parcels.timer.Timer('Pset_init', parent=parcels.timer.pset)
+    ParticleClass = parcels.JITParticle if mode == 'jit' else parcels.ScipyParticle
 
     # Execute for 600 days, with 1-hour timesteps and 5-day output
     runtime = delta(days=600)
     dt = delta(hours=1)
     outputdt = delta(days=5)
 
-    extra_vars = [Variable('p', dtype=np.float32, initial=0.),
-                  Variable('p_start', dtype=np.float32, initial=0.),
-                  Variable('next_dt', dtype=np.float64, initial=dt.total_seconds()),
-                  Variable('age', dtype=np.float32, initial=0.)]
+    extra_vars = [parcels.Variable('p', dtype=np.float32, initial=0.),
+                  parcels.Variable('p_start', dtype=np.float32, initial=0.),
+                  parcels.Variable('next_dt', dtype=np.float64, initial=dt.total_seconds()),
+                  parcels.Variable('age', dtype=np.float32, initial=0.)]
     MyParticle = ParticleClass.add_variables(extra_vars)
 
     if custom_partition_function:
-        pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
+        pset = parcels.ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
                                      start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0,
                                      partition_function=simple_partition_function)
     else:
-        pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
+        pset = parcels.ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
                                      start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
 
     if verbose:
@@ -125,15 +115,15 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     maxage = runtime.total_seconds() if maxage is None else maxage
     fieldset.add_constant('maxage', maxage)
     print("Stommel: Advecting %d particles for %s" % (npart, runtime))
-    timer.psetinit.stop()
-    timer.psetrun = timer.Timer('Pset_run', parent=timer.pset)
+    parcels.timer.psetinit.stop()
+    parcels.timer.psetrun = parcels.timer.Timer('Pset_run', parent=parcels.timer.pset)
     pset.execute(method + pset.Kernel(UpdateP) + pset.Kernel(AgeP), runtime=runtime, dt=dt,
                  output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     if verbose:
         print(f"Final particle positions:\n{pset}")
-    timer.psetrun.stop()
-    timer.pset.stop()
+    parcels.timer.psetrun.stop()
+    parcels.timer.pset.stop()
 
     return pset
 
@@ -141,8 +131,8 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
 @pytest.mark.parametrize('grid_type', ['A', 'C'])
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_stommel_fieldset(mode, grid_type, tmpdir):
-    timer.root = timer.Timer('Main')
-    timer.stommel = timer.Timer('Stommel', parent=timer.root)
+    parcels.timer.root = parcels.timer.Timer('Main')
+    parcels.timer.stommel = parcels.timer.Timer('Stommel', parent=parcels.timer.root)
     outfile = tmpdir.join("StommelParticle")
     psetRK4 = stommel_example(1, mode=mode, method=method['RK4'], grid_type=grid_type, outfile=outfile, write_fields=False)
     psetRK45 = stommel_example(1, mode=mode, method=method['RK45'], grid_type=grid_type, outfile=outfile, write_fields=False)
@@ -152,14 +142,14 @@ def test_stommel_fieldset(mode, grid_type, tmpdir):
     assert (err_adv <= 1.e-1).all()
     err_smpl = np.array([abs(psetRK4.p[i] - psetRK4.fieldset.P[0., psetRK4.lon[i], psetRK4.lat[i], psetRK4.depth[i]]) for i in range(psetRK4.size)])
     assert (err_smpl <= 1.e-1).all()
-    timer.stommel.stop()
-    timer.root.stop()
-    timer.root.print_tree()
+    parcels.timer.stommel.stop()
+    parcels.timer.root.stop()
+    parcels.timer.root.print_tree()
 
 
 def main(args=None):
-    timer.root = timer.Timer('Main')
-    timer.args = timer.Timer('Args', parent=timer.root)
+    parcels.timer.root = parcels.timer.Timer('Main')
+    parcels.timer.args = parcels.timer.Timer('Args', parent=parcels.timer.root)
     p = ArgumentParser(description="""
 Example of particle advection in the steady-state solution of the Stommel equation""")
     p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
@@ -182,14 +172,14 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='Use a custom partition_function (for MPI testing purposes)')
     args = p.parse_args(args)
 
-    timer.args.stop()
-    timer.stommel = timer.Timer('Stommel', parent=timer.root)
+    parcels.timer.args.stop()
+    parcels.timer.stommel = parcels.timer.Timer('Stommel', parent=parcels.timer.root)
     stommel_example(args.particles, mode=args.mode, verbose=args.verbose, method=method[args.method],
                     outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage, write_fields=args.write_fields,
                     custom_partition_function=args.custom_partition_function)
-    timer.stommel.stop()
-    timer.root.stop()
-    timer.root.print_tree()
+    parcels.timer.stommel.stop()
+    parcels.timer.root.stop()
+    parcels.timer.root.print_tree()
 
 
 if __name__ == "__main__":

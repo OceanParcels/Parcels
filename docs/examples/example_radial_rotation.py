@@ -4,9 +4,9 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 
-from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, ScipyParticle
+import parcels
 
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+ptype = {'scipy': parcels.ScipyParticle, 'jit': parcels.JITParticle}
 
 
 def radial_rotation_fieldset(xdim=200, ydim=200):  # Define 2D flat, square fieldset for testing purposes.
@@ -38,7 +38,7 @@ def radial_rotation_fieldset(xdim=200, ydim=200):  # Define 2D flat, square fiel
 
     data = {'U': U, 'V': V}
     dimensions = {'lon': lon, 'lat': lat}
-    return FieldSet.from_data(data, dimensions, mesh='flat')
+    return parcels.FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 def true_values(age):  # Calculate the expected values for particle 2 at the endtime.
@@ -49,10 +49,10 @@ def true_values(age):  # Calculate the expected values for particle 2 at the end
     return [x, y]
 
 
-def rotation_example(fieldset, outfile, mode='jit', method=AdvectionRK4):
+def rotation_example(fieldset, outfile, mode='jit', method=parcels.AdvectionRK4):
 
     npart = 2          # Test two particles on the rotating fieldset.
-    pset = ParticleSet.from_line(fieldset, size=npart, pclass=ptype[mode],
+    pset = parcels.ParticleSet.from_line(fieldset, size=npart, pclass=ptype[mode],
                                  start=(30., 30.),
                                  finish=(30., 50.))  # One particle in centre, one on periphery of Field.
 

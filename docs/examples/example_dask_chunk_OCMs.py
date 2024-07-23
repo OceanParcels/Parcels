@@ -6,19 +6,10 @@ import dask
 import numpy as np
 import pytest
 
-from parcels import (
-    AdvectionRK4,
-    Field,
-    FieldSet,
-    JITParticle,
-    ParticleSet,
-    ScipyParticle,
-    Variable,
-    download_example_dataset,
-)
+import parcels
 from parcels.tools.statuscodes import DaskChunkingError
 
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+ptype = {'scipy': parcels.ScipyParticle, 'jit': parcels.JITParticle}
 
 
 def compute_nemo_particle_advection(fieldset, mode):
@@ -36,8 +27,8 @@ def compute_nemo_particle_advection(fieldset, mode):
         if particle.lat < 49.0:
             particle_dlat += 11.0  # noqa
 
-    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
-    kernels = pset.Kernel(AdvectionRK4) + periodicBC
+    pset = parcels.ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
+    kernels = pset.Kernel(parcels.AdvectionRK4) + periodicBC
     pset.execute(kernels, runtime=delta(days=4), dt=delta(hours=6))
     return pset
 
@@ -49,7 +40,7 @@ def test_nemo_3D(mode, chunk_mode):
         dask.config.set({'array.chunk-size': '256KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
-    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    data_folder = parcels.download_example_dataset('NemoNorthSeaORCA025-N006_data')
     ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
     vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
     wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
@@ -81,7 +72,7 @@ def test_nemo_3D(mode, chunk_mode):
         chs = {'U': {'time': ('time_counter', 1), 'depth': ('depthu', 25), 'lat': ('y', -1), 'lon': ('x', -1)},
                'V': {'time': ('time_counter', 1), 'depth': ('depthv', 75), 'lat': ('y', -1), 'lon': ('x', -1)}}
 
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
+    fieldset = parcels.FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
 
     compute_nemo_particle_advection(fieldset, mode)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
@@ -109,7 +100,7 @@ def test_globcurrent_2D(mode, chunk_mode):
         dask.config.set({'array.chunk-size': '16KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
-    data_folder = download_example_dataset("GlobCurrent_example_data")
+    data_folder = parcels.download_example_dataset("GlobCurrent_example_data")
     filenames = str(data_folder / '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
@@ -123,10 +114,10 @@ def test_globcurrent_2D(mode, chunk_mode):
         chs = {'U': {'time': ('time', 1), 'lat': ('lat', 10), 'lon': ('lon', -1)},
                'V': {'time': ('time', 1), 'lat': ('lat', -1), 'lon': ('lon', -1)}}
 
-    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, chunksize=chs)
+    fieldset = parcels.FieldSet.from_netcdf(filenames, variables, dimensions, chunksize=chs)
     try:
-        pset = ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
-        pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+        pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
+        pset.execute(parcels.AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
     except DaskChunkingError:
         # we removed the failsafe, so now if all chunksize dimensions are incorrect, there is nothing left to chunk,
         # which raises an error saying so. This is the expected behaviour
@@ -155,7 +146,7 @@ def test_pop(mode, chunk_mode):
         dask.config.set({'array.chunk-size': '256KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
-    data_folder = download_example_dataset('POPSouthernOcean_data')
+    data_folder = parcels.download_example_dataset('POPSouthernOcean_data')
     filenames = str(data_folder / 't.x1_SAMOC_flux.1690*.nc')
     variables = {'U': 'UVEL', 'V': 'VVEL', 'W': 'WVEL'}
     timestamps = np.expand_dims(np.array([np.datetime64('2000-%.2d-01' % m) for m in range(1, 7)]), axis=1)
@@ -168,13 +159,13 @@ def test_pop(mode, chunk_mode):
     elif chunk_mode == 'failsafe':  # here: bad depth entry
         chs = {'depth': ('wz', 3), 'lat': ('j', 8), 'lon': ('i', 8)}
 
-    fieldset = FieldSet.from_pop(filenames, variables, dimensions, chunksize=chs, timestamps=timestamps)
+    fieldset = parcels.FieldSet.from_pop(filenames, variables, dimensions, chunksize=chs, timestamps=timestamps)
 
     npart = 20
     lonp = 70.0 * np.ones(npart)
     latp = [i for i in -45.0+(-0.25+np.random.rand(npart)*2.0*0.25)]
-    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
-    pset.execute(AdvectionRK4, runtime=delta(days=90), dt=delta(days=2))
+    pset = parcels.ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
+    pset.execute(parcels.AdvectionRK4, runtime=delta(days=90), dt=delta(days=2))
     # POP sample file dimensions: k=21, j=60, i=60
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
@@ -206,7 +197,7 @@ def test_swash(mode, chunk_mode):
         dask.config.set({'array.chunk-size': '32KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
-    data_folder = download_example_dataset('SWASH_data')
+    data_folder = parcels.download_example_dataset('SWASH_data')
     filenames = str(data_folder / 'field_*.nc')
     variables = {'U': 'cross-shore velocity',
                  'V': 'along-shore velocity',
@@ -235,7 +226,7 @@ def test_swash(mode, chunk_mode):
                'depth_w': {'depth': ('z', 7), 'lat': ('y', 4), 'lon': ('x', 4)},
                'depth_u': {'depth': ('z_u', 6), 'lat': ('y', 4), 'lon': ('x', 4)}
                }
-    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, chunksize=chs)
+    fieldset = parcels.FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, chunksize=chs)
     fieldset.U.set_depth_from_field(fieldset.depth_u)
     fieldset.V.set_depth_from_field(fieldset.depth_u)
     fieldset.W.set_depth_from_field(fieldset.depth_w)
@@ -244,8 +235,8 @@ def test_swash(mode, chunk_mode):
     lonp = [i for i in 9.5 + (-0.2 + np.random.rand(npart) * 2.0 * 0.2)]
     latp = [i for i in np.arange(start=12.3, stop=13.1, step=0.04)[0:20]]
     depthp = [-0.1, ] * npart
-    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp, depth=depthp)
-    pset.execute(AdvectionRK4, runtime=delta(seconds=0.2), dt=delta(seconds=0.005))
+    pset = parcels.ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp, depth=depthp)
+    pset.execute(parcels.AdvectionRK4, runtime=delta(seconds=0.2), dt=delta(seconds=0.005))
     # SWASH sample file dimensions: t=1, z=7, z_u=6, y=21, x=51
     if chunk_mode not in ['failsafe', ]:
         assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)), f"U {fieldset.U.grid.chunk_info} vs V {fieldset.V.grid.chunk_info}"
@@ -271,7 +262,7 @@ def test_ofam_3D(mode, chunk_mode):
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
 
-    data_folder = download_example_dataset("OFAM_example_data")
+    data_folder = parcels.download_example_dataset("OFAM_example_data")
     filenames = {'U': f"{data_folder}/OFAM_simple_U.nc",
                  'V': f"{data_folder}/OFAM_simple_V.nc"}
     variables = {'U': 'u', 'V': 'v'}
@@ -283,10 +274,10 @@ def test_ofam_3D(mode, chunk_mode):
         chs = 'auto'
     elif chunk_mode == 'specific':
         chs = {'lon': ('xu_ocean', 100), 'lat': ('yu_ocean', 50), 'depth': ('st_edges_ocean', 60), 'time': ('Time', 1)}
-    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=chs)
+    fieldset = parcels.FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=chs)
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=180, lat=10, depth=2.5)
-    pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5))
+    pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=180, lat=10, depth=2.5)
+    pset.execute(parcels.AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5))
     # OFAM sample file dimensions: time=UNLIMITED, st_ocean=1, st_edges_ocean=52, lat=601, lon=2001
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
     if chunk_mode is False:
@@ -318,7 +309,7 @@ def test_mitgcm(mode, chunk_mode, using_add_field):
         dask.config.set({'array.chunk-size': '512KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
-    data_folder = download_example_dataset("MITgcm_example_data")
+    data_folder = parcels.download_example_dataset("MITgcm_example_data")
     filenames = {"U": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc",
                  "V": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc"}
     variables = {"U": "UVEL", "V": "VVEL"}
@@ -337,16 +328,16 @@ def test_mitgcm(mode, chunk_mode, using_add_field):
     if using_add_field:
         if chs in [False, 'auto']:
             chs = {'U': chs, 'V': chs}
-        fieldset = FieldSet.from_mitgcm(filenames['U'], {'U': variables['U']}, dimensions['U'],
+        fieldset = parcels.FieldSet.from_mitgcm(filenames['U'], {'U': variables['U']}, dimensions['U'],
                                         mesh='flat', chunksize=chs['U'])
-        fieldset2 = FieldSet.from_mitgcm(filenames['V'], {'V': variables['V']}, dimensions['V'],
+        fieldset2 = parcels.FieldSet.from_mitgcm(filenames['V'], {'V': variables['V']}, dimensions['V'],
                                          mesh='flat', chunksize=chs['V'])
         fieldset.add_field(fieldset2.V)
     else:
-        fieldset = FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', chunksize=chs)
+        fieldset = parcels.FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', chunksize=chs)
 
-    pset = ParticleSet.from_list(fieldset=fieldset, pclass=ptype[mode], lon=5e5, lat=5e5)
-    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+    pset = parcels.ParticleSet.from_list(fieldset=fieldset, pclass=ptype[mode], lon=5e5, lat=5e5)
+    pset.execute(parcels.AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
     # MITgcm sample file dimensions: time=10, XG=400, YG=200
     if chunk_mode != 'specific_different':
         assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
@@ -365,7 +356,7 @@ def test_mitgcm(mode, chunk_mode, using_add_field):
 
 @pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_dimensions_chunks(mode):
-    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    data_folder = parcels.download_example_dataset('NemoNorthSeaORCA025-N006_data')
     ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
     vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
     mesh_mask = f'{data_folder}/coordinates.nc'
@@ -378,7 +369,7 @@ def test_diff_entry_dimensions_chunks(mode):
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'}}
     chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
            'V': {'depth': ('depthv', 75), 'lat': ('y', 16), 'lon': ('x', 16)}}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
+    fieldset = parcels.FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
     compute_nemo_particle_advection(fieldset, mode)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
@@ -386,7 +377,7 @@ def test_diff_entry_dimensions_chunks(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_3d_2dfield_sampling(mode):
-    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    data_folder = parcels.download_example_dataset('NemoNorthSeaORCA025-N006_data')
     ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
     vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
     mesh_mask = f'{data_folder}/coordinates.nc'
@@ -400,22 +391,22 @@ def test_3d_2dfield_sampling(mode):
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'nav_lon': {'lon': 'glamf', 'lat': 'gphif'}}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=False)
+    fieldset = parcels.FieldSet.from_nemo(filenames, variables, dimensions, chunksize=False)
     fieldset.nav_lon.data = np.ones(fieldset.nav_lon.data.shape, dtype=np.float32)
-    fieldset.add_field(Field('rectilinear_2D', np.ones((2, 2)),
+    fieldset.add_field(parcels.Field('rectilinear_2D', np.ones((2, 2)),
                              lon=np.array([-10, 20]), lat=np.array([40, 80]), chunksize=False))
 
     class MyParticle(ptype[mode]):
-        sample_var_curvilinear = Variable('sample_var_curvilinear')
-        sample_var_rectilinear = Variable('sample_var_rectilinear')
-    pset = ParticleSet(fieldset, pclass=MyParticle, lon=2.5, lat=52)
+        sample_var_curvilinear = parcels.Variable('sample_var_curvilinear')
+        sample_var_rectilinear = parcels.Variable('sample_var_rectilinear')
+    pset = parcels.ParticleSet(fieldset, pclass=MyParticle, lon=2.5, lat=52)
 
     def Sample2D(particle, fieldset, time):
         particle.sample_var_curvilinear += fieldset.nav_lon[time, particle.depth, particle.lat, particle.lon]
         particle.sample_var_rectilinear += fieldset.rectilinear_2D[time, particle.depth, particle.lat, particle.lon]
 
     runtime, dt = 86400*4, 6*3600
-    pset.execute(pset.Kernel(AdvectionRK4) + Sample2D, runtime=runtime, dt=dt)
+    pset.execute(pset.Kernel(parcels.AdvectionRK4) + Sample2D, runtime=runtime, dt=dt)
 
     assert pset.sample_var_rectilinear == runtime/dt
     assert pset.sample_var_curvilinear == runtime/dt
@@ -425,7 +416,7 @@ def test_3d_2dfield_sampling(mode):
 def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     # ==== this test is expected to fall-back to a pre-defined minimal chunk as ==== #
     # ==== the requested chunks don't match, or throw a value error.            ==== #
-    data_folder = download_example_dataset('NemoNorthSeaORCA025-N006_data')
+    data_folder = parcels.download_example_dataset('NemoNorthSeaORCA025-N006_data')
     ufiles = sorted(glob(f'{data_folder}/ORCA*U.nc'))
     vfiles = sorted(glob(f'{data_folder}/ORCA*V.nc'))
     wfiles = sorted(glob(f'{data_folder}/ORCA*W.nc'))
@@ -443,7 +434,7 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
            'V': {'depth': ('depthv', 75), 'lat': ('y', 4), 'lon': ('x', 16)},
            'W': {'depth': ('depthw', 75), 'lat': ('y', 16), 'lon': ('x', 4)}}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
+    fieldset = parcels.FieldSet.from_nemo(filenames, variables, dimensions, chunksize=chs)
     compute_nemo_particle_advection(fieldset, mode)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     npart_U = 1
@@ -474,15 +465,15 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
 
 @pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_chunksize_correction_globcurrent(mode):
-    data_folder = download_example_dataset("GlobCurrent_example_data")
+    data_folder = parcels.download_example_dataset("GlobCurrent_example_data")
     filenames = str(data_folder / '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
     chs = {'U': {'lat': ('lat', 16), 'lon': ('lon', 16)},
            'V': {'lat': ('lat', 16), 'lon': ('lon', 4)}}
-    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, chunksize=chs)
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
-    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+    fieldset = parcels.FieldSet.from_netcdf(filenames, variables, dimensions, chunksize=chs)
+    pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
+    pset.execute(parcels.AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
     # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]

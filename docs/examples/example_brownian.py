@@ -3,17 +3,9 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 
-from parcels import (
-    DiffusionUniformKh,
-    Field,
-    FieldSet,
-    JITParticle,
-    ParcelsRandom,
-    ParticleSet,
-    ScipyParticle,
-)
+import parcels
 
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+ptype = {'scipy': parcels.ScipyParticle, 'jit': parcels.JITParticle}
 
 
 def mesh_conversion(mesh):
@@ -23,25 +15,25 @@ def mesh_conversion(mesh):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_brownian_example(mode, mesh, npart=3000):
-    fieldset = FieldSet.from_data({'U': 0, 'V': 0}, {'lon': 0, 'lat': 0}, mesh=mesh)
+    fieldset = parcels.FieldSet.from_data({'U': 0, 'V': 0}, {'lon': 0, 'lat': 0}, mesh=mesh)
 
     # Set diffusion constants.
     kh_zonal = 100  # in m^2/s
     kh_meridional = 100  # in m^2/s
 
     # Create field of constant Kh_zonal and Kh_meridional
-    fieldset.add_field(Field('Kh_zonal', kh_zonal, lon=0, lat=0, mesh=mesh))
-    fieldset.add_field(Field('Kh_meridional', kh_meridional, lon=0, lat=0, mesh=mesh))
+    fieldset.add_field(parcels.Field('Kh_zonal', kh_zonal, lon=0, lat=0, mesh=mesh))
+    fieldset.add_field(parcels.Field('Kh_meridional', kh_meridional, lon=0, lat=0, mesh=mesh))
 
     # Set random seed
-    ParcelsRandom.seed(123456)
+    parcels.ParcelsRandom.seed(123456)
 
     runtime = delta(days=1)
 
-    ParcelsRandom.seed(1234)
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode],
+    parcels.ParcelsRandom.seed(1234)
+    pset = parcels.ParticleSet(fieldset=fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart), lat=np.zeros(npart))
-    pset.execute(pset.Kernel(DiffusionUniformKh),
+    pset.execute(pset.Kernel(parcels.DiffusionUniformKh),
                  runtime=runtime, dt=delta(hours=1))
 
     expected_std_x = np.sqrt(2*kh_zonal*runtime.total_seconds())

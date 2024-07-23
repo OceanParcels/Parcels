@@ -6,19 +6,10 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 
-from parcels import (
-    AdvectionEE,
-    AdvectionRK4,
-    AdvectionRK45,
-    FieldSet,
-    JITParticle,
-    ParticleSet,
-    ScipyParticle,
-    download_example_dataset,
-)
+import parcels
 
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
+ptype = {'scipy': parcels.ScipyParticle, 'jit': parcels.JITParticle}
+method = {'RK4': parcels.AdvectionRK4, 'EE': parcels.AdvectionEE, 'RK45': parcels.AdvectionRK45}
 
 
 def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
@@ -98,7 +89,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat, 'time': time}
 
-    fieldset = FieldSet.from_data(data, dimensions, transpose=True, mesh=mesh)
+    fieldset = parcels.FieldSet.from_data(data, dimensions, transpose=True, mesh=mesh)
 
     # setting some constants for AdvectionRK45 kernel
     fieldset.RK45_min_dt = 1e-3
@@ -108,7 +99,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
 
 
 def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,
-                          method=AdvectionRK4):
+                          method=parcels.AdvectionRK4):
     """Configuration of a particle set that follows two moving eddies.
 
 
@@ -130,7 +121,7 @@ def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,
     # Determine particle class according to mode
     start = (3.3, 46.) if fieldset.U.grid.mesh == 'spherical' else (3.3e5, 1e5)
     finish = (3.3, 47.8) if fieldset.U.grid.mesh == 'spherical' else (3.3e5, 2.8e5)
-    pset = ParticleSet.from_line(fieldset=fieldset, size=npart, pclass=ptype[mode],
+    pset = parcels.ParticleSet.from_line(fieldset=fieldset, size=npart, pclass=ptype[mode],
                                  start=start, finish=finish)
 
     if verbose:
@@ -151,13 +142,13 @@ def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_moving_eddies_fwdbwd(mode, mesh, tmpdir, npart=2):
-    method = AdvectionRK4
+    method = parcels.AdvectionRK4
     fieldset = moving_eddies_fieldset(mesh=mesh)
 
     # Determine particle class according to mode
     lons = [3.3, 3.3] if fieldset.U.grid.mesh == 'spherical' else [3.3e5, 3.3e5]
     lats = [46., 47.8] if fieldset.U.grid.mesh == 'spherical' else [1e5, 2.8e5]
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=lons, lat=lats)
+    pset = parcels.ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=lons, lat=lats)
 
     # Execte for 14 days, with 30sec timesteps and hourly output
     runtime = delta(days=1)
@@ -210,7 +201,7 @@ def fieldsetfile(mesh, tmpdir):
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_moving_eddies_file(mode, mesh, tmpdir):
     gc.collect()
-    fieldset = FieldSet.from_parcels(fieldsetfile(mesh, tmpdir), extra_fields={'P': 'P'})
+    fieldset = parcels.FieldSet.from_parcels(fieldsetfile(mesh, tmpdir), extra_fields={'P': 'P'})
     outfile = tmpdir.join("EddyParticle")
     pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
     # Also include last timestep
@@ -226,16 +217,16 @@ def test_moving_eddies_file(mode, mesh, tmpdir):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_periodic_and_computeTimeChunk_eddies(mode):
-    data_folder = download_example_dataset("MovingEddies_data")
+    data_folder = parcels.download_example_dataset("MovingEddies_data")
     filename = str(data_folder / "moving_eddies")
 
-    fieldset = FieldSet.from_parcels(filename)
+    fieldset = parcels.FieldSet.from_parcels(filename)
     fieldset.add_constant('halo_west', fieldset.U.grid.lon[0])
     fieldset.add_constant('halo_east', fieldset.U.grid.lon[-1])
     fieldset.add_constant('halo_south', fieldset.U.grid.lat[0])
     fieldset.add_constant('halo_north', fieldset.U.grid.lat[-1])
     fieldset.add_periodic_halo(zonal=True, meridional=True)
-    pset = ParticleSet.from_list(fieldset=fieldset,
+    pset = parcels.ParticleSet.from_list(fieldset=fieldset,
                                  pclass=ptype[mode],
                                  lon=[3.3, 3.3],
                                  lat=[46.0, 47.8])
@@ -254,7 +245,7 @@ def test_periodic_and_computeTimeChunk_eddies(mode):
         particle_dlon -= 5 * particle.dt / 1e5  # noqa
         particle_dlat -= 3 * particle.dt / 1e5  # noqa
 
-    kernels = pset.Kernel(AdvectionRK4)+slowlySouthWestward+periodicBC
+    kernels = pset.Kernel(parcels.AdvectionRK4)+slowlySouthWestward+periodicBC
     pset.execute(kernels, runtime=delta(days=6), dt=delta(hours=1))
 
 
@@ -274,7 +265,7 @@ Example of particle advection around an idealised peninsula""")
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args(args)
-    data_folder = download_example_dataset("MovingEddies_data")
+    data_folder = parcels.download_example_dataset("MovingEddies_data")
     filename = str(data_folder / "moving_eddies")
 
     # Generate fieldset files according to given dimensions
