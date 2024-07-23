@@ -467,12 +467,9 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
 def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_decaying
     if method == 'AA':
-        if mode == 'jit':
-            return  # AnalyticalAdvection not implemented in JIT
-        else:
-            # needed for AnalyticalAdvection to work, but comes at expense of accuracy
-            fieldset.U.interp_method = 'cgrid_velocity'
-            fieldset.V.interp_method = 'cgrid_velocity'
+        # needed for AnalyticalAdvection to work, but comes at expense of accuracy
+        fieldset.U.interp_method = 'cgrid_velocity'
+        fieldset.V.interp_method = 'cgrid_velocity'
 
     if diffField:
         fieldset.add_field(Field('Kh_zonal', np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))

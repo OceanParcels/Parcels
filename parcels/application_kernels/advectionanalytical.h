@@ -44,7 +44,7 @@ void compute_ds(double F0, double F1, double r, double direction, double tol,
 
 
 static inline StatusCode calcAdvectionAnalytical_2D_JIT(CField *fu, CField *fv,
-                              int *xi, int *yi, int *zi,
+                              int *xi, int *yi, int *zi, int *ti,
                               double *lon, double *lat, double *depth,
                               double *time, double *dt,
                               double *particle_dlon, double *particle_dlat)
@@ -58,28 +58,21 @@ static inline StatusCode calcAdvectionAnalytical_2D_JIT(CField *fu, CField *fv,
   int igrid = fu->igrid;
 
   double tol = 1e-10;
-  int I_s = 10;  // number of intermediate time steps
+  double I_s = 10;  // number of intermediate time steps
   double direction = 1;
   if (*dt < 0)
     direction = -1;
-  bool withTime = 1;
-  if (grid->tdim == 1){
-    withTime = 0;
+
+  status = search_time_index(time, grid->tdim, grid->time, &ti[igrid], fu->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
+
+  double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
+  double tau = (*time - t0) / (t1 - t0);
+  double ds_t = *dt;
+  for (double i=I_s; i>0; i--){
+    if (*time - t0 < i / I_s * (t1 - t0)){
+      ds_t = min(ds_t, i / I_s);
+    }
   }
-
-  int ti[1] = {0}; // TODO also input ti
-
-  // if we're in between time indices, and not at the end of the timeseries,
-  // we'll make sure to interpolate data between the two time values
-  // otherwise, we'll only use the data at the current time index
-  int tii = 1; // TODO fix //(ti[igrid] < grid->tdim-1 && time > grid->time[ti[igrid]]) ? 2 : 1;
-
-  double t0 = 0; // TODO fix //grid->time[ti[igrid]];
-  // we set our second time bound and search time depending on the
-  // index critereon above
-  double t1 = 1; // TODO fix //(tii == 2) ? grid->time[ti[igrid]+1] : t0+1;
-  double tsrch = 0 ;// TODO fix //(tii == 2) ? time : t0;
-  double ds_t = *dt; // TODO also support withTime
 
   double xsi, rs_x, ds_x, B_x, delta_x;
   double eta, rs_y, ds_y, B_y, delta_y;
@@ -87,13 +80,13 @@ static inline StatusCode calcAdvectionAnalytical_2D_JIT(CField *fu, CField *fv,
 
   status = search_indices(*lon, *lat, *depth, grid, &xi[igrid], &yi[igrid], &zi[igrid],
 			  &xsi, &eta, &zeta, gcode, ti[igrid],
-			  tsrch, t0, t1, CGRID_VELOCITY, gridindexingtype);
+			  *time, t0, t1, CGRID_VELOCITY, gridindexingtype);
   CHECKSTATUS(status);
 
   float dataU[2][2][2];
   float dataV[2][2][2];
-  status = getCell2D(fu, *xi, *yi, ti[igrid], dataU, 1); CHECKSTATUS(status);
-  status = getCell2D(fv, *xi, *yi, ti[igrid], dataV, 1); CHECKSTATUS(status);
+  status = getCell2D(fu, *xi, *yi, ti[igrid], dataU, 0); CHECKSTATUS(status);
+  status = getCell2D(fv, *xi, *yi, ti[igrid], dataV, 0); CHECKSTATUS(status);
 
   bool updateCells = 0;
   if (fabs(xsi - 1) < tol){
@@ -113,8 +106,8 @@ static inline StatusCode calcAdvectionAnalytical_2D_JIT(CField *fu, CField *fv,
   }
 
   if (updateCells == 1){
-    status = getCell2D(fu, *xi, *yi, ti[igrid], dataU, 1); CHECKSTATUS(status);
-    status = getCell2D(fv, *xi, *yi, ti[igrid], dataV, 1); CHECKSTATUS(status);
+    status = getCell2D(fu, *xi, *yi, ti[igrid], dataU, 0); CHECKSTATUS(status);
+    status = getCell2D(fv, *xi, *yi, ti[igrid], dataV, 0); CHECKSTATUS(status);
   }
 
   double px[4];
@@ -136,21 +129,25 @@ static inline StatusCode calcAdvectionAnalytical_2D_JIT(CField *fu, CField *fv,
       py[iN] = ygrid[*yi+iN/2][*xi+min(1, (iN%3))];
     }
   }
-  int i4;
-  for (i4 = 1; i4 < 4; ++i4){
-    if (px[i4] < px[0] - 180) px[i4] += 360;
-    if (px[i4] > px[0] + 180) px[i4] -= 360;
-  }
+  // int i4; // TODO check how to make this code work
+  // for (i4 = 1; i4 < 4; ++i4){
+  //   if (px[i4] < px[0] - 180) px[i4] += 360;
+  //   if (px[i4] > px[0] + 180) px[i4] -= 360;
+  // }
 
   double phi[4];
   phi2D_lin(0., eta, phi);
-  double U0 = direction * dataU[0][1][0] * dist(px[3], px[0], py[3], py[0], grid->sphere_mesh, dot_prod(phi, py, 4));
+  double c4 = dist(px[3], px[0], py[3], py[0], grid->sphere_mesh, dot_prod(phi, py, 4));
+  double U0 = ((1-tau)*dataU[0][1][0] + tau*dataU[1][1][0]) * c4 * direction;
   phi2D_lin(1., eta, phi);
-  double U1 = direction * dataU[0][1][1] * dist(px[1], px[2], py[1], py[2], grid->sphere_mesh, dot_prod(phi, py, 4));
+  double c2 = dist(px[1], px[2], py[1], py[2], grid->sphere_mesh, dot_prod(phi, py, 4));
+  double U1 = ((1-tau)*dataU[0][1][1] + tau*dataU[1][1][1]) * c2 * direction;
   phi2D_lin(xsi, 0., phi);
-  double V0 = direction * dataV[0][0][1] * dist(px[0], px[1], py[0], py[1], grid->sphere_mesh, dot_prod(phi, py, 4));
+  double c1 = dist(px[0], px[1], py[0], py[1], grid->sphere_mesh, dot_prod(phi, py, 4));
+  double V0 = ((1-tau)*dataV[0][1][0] + tau*dataV[1][1][0]) * c1 * direction;
   phi2D_lin(xsi, 1., phi);
-  double V1 = direction * dataV[0][1][1] * dist(px[2], px[3], py[2], py[3], grid->sphere_mesh, dot_prod(phi, py, 4));
+  double c3 = dist(px[2], px[3], py[2], py[3], grid->sphere_mesh, dot_prod(phi, py, 4));
+  double V1 = ((1-tau)*dataV[0][1][1] + tau*dataV[1][1][1]) * c3 * direction;
 
   double dphidxsi[4] = {eta-1, 1-eta, eta, -eta};
   double dphideta[4] = {xsi-1, -xsi, xsi, 1-xsi};
