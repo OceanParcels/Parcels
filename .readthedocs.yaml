@@ -9,6 +9,7 @@ build:
 
 sphinx:
   configuration: docs/conf.py
+  builder: dirhtml
 
 conda:
   environment: environment.yml
