@@ -16,13 +16,7 @@ The steps below are the installation instructions for Linux, macOS and Windows.
 .. code-block:: bash
 
     conda activate base
-    conda install -n base conda-libmamba-solver
-    conda config --set solver libmamba
     conda create -n parcels -c conda-forge parcels cartopy jupyter
-
-.. note::
-
-  The second and third line are temporarily needed to select the latest version 3.0 of Parcels. This will be fixed in the next release of conda. See `here <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`_ for more background information.
 
 .. note::
 
@@ -68,17 +62,17 @@ If you would prefer to have a development installation of Parcels (i.e., where t
 
 **Step 1:** Same as `step 1 above`_.
 
-**Step 2:** Clone the Parcels repo and create a new environment with the dependencies:
+**Step 2:** Clone the Parcels repo and create a new environment with the development dependencies:
 
 .. code-block:: bash
 
   git clone https://github.com/OceanParcels/parcels.git
   cd parcels
-  conda env create -f environment.yml
+  conda env create -n parcels-dev -f environment.yml
 
 **Step 3:** Activate the environment and install Parcels in editable mode:
 
 .. code-block:: bash
 
-  conda activate parcels
+  conda activate parcels-dev
   pip install --no-build-isolation --no-deps -e .
