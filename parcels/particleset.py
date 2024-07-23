@@ -851,7 +851,10 @@ class ParticleSet(ABC):
             if self.particledata.ptype.uses_jit:
                 self.kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.particledata.lonlatdepth_dtype else None
-                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs,
+                                                         incdirs=[path.join(get_package_dir(), 'include'),
+                                                                  path.join(get_package_dir(), 'application_kernels'),
+                                                                  "."]))
                 self.kernel.load_lib()
         if output_file:
             output_file.add_metadata('parcels_kernels', self.kernel.name)

@@ -180,7 +180,7 @@ class Kernel(BaseKernel):
             else:
                 pyfunc = AdvectionAnalytical_2D_JIT
                 self.funcname = "AdvectionAnalytical_2D_JIT"
-            self._c_include = "parcels/application_kernels/advectionanalytical.h"
+            self._c_include = "advectionanalytical.h"
 
         if funcvars is not None:
             self.funcvars = funcvars

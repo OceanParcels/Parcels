@@ -909,7 +909,7 @@ class LoopGenerator:
         ccode += [str(c.Typedef(c.GenerableStruct("", vdeclp, declname=pname)))]
 
         if c_include:
-            ccode += [c_include]
+            ccode += [str(c.Include(f"{c_include}", system=False))]
 
         # ==== Insert kernel code ==== #
         ccode += [str(kernel_ast)]
