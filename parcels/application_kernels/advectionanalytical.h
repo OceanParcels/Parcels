@@ -63,30 +63,43 @@ static inline StatusCode calcAdvectionAnalytical_2D_JIT(CField *fu, CField *fv,
   if (*dt < 0)
     direction = -1;
 
-  status = search_time_index(time, grid->tdim, grid->time, &ti[igrid], fu->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
-
-  double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
-  double tau = (*time - t0) / (t1 - t0);
-  double ds_t = *dt;
-  for (double i=I_s; i>0; i--){
-    if (*time - t0 < i / I_s * (t1 - t0)){
-      ds_t = min(ds_t, i / I_s);
-    }
-  }
-
   double xsi, rs_x, ds_x, B_x, delta_x;
   double eta, rs_y, ds_y, B_y, delta_y;
   double zeta;
 
-  status = search_indices(*lon, *lat, *depth, grid, &xi[igrid], &yi[igrid], &zi[igrid],
-			  &xsi, &eta, &zeta, gcode, ti[igrid],
-			  *time, t0, t1, CGRID_VELOCITY, gridindexingtype);
+  double tau;
+  double ds_t = *dt;
+  int tii, first_tstep_only;
+
+  if (grid->tdim == 1){
+    tii = 0;
+    tau = 0;
+    status = search_indices(*lon, *lat, *depth, grid, &xi[igrid], &yi[igrid], &zi[igrid],
+                            &xsi, &eta, &zeta, gcode, tii, 0, 0, 1, CGRID_VELOCITY, gridindexingtype);
+    first_tstep_only = 1;
+  } else {
+    status = search_time_index(time, grid->tdim, grid->time, &ti[igrid], fu->time_periodic,
+                               grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
+
+    double t0 = grid->time[ti[igrid]];
+    double t1 = grid->time[ti[igrid]+1];
+    tau = (*time - t0) / (t1 - t0);
+    for (double i=I_s; i>0; i--){
+      if (*time - t0 < i / I_s * (t1 - t0)){
+        ds_t = min(ds_t, i / I_s);
+      }
+    }
+    tii = ti[igrid];
+    status = search_indices(*lon, *lat, *depth, grid, &xi[igrid], &yi[igrid], &zi[igrid],
+                            &xsi, &eta, &zeta, gcode, tii, *time, t0, t1, CGRID_VELOCITY, gridindexingtype);
+    first_tstep_only = 0;
+  }
   CHECKSTATUS(status);
 
   float dataU[2][2][2];
   float dataV[2][2][2];
-  status = getCell2D(fu, *xi, *yi, ti[igrid], dataU, 0); CHECKSTATUS(status);
-  status = getCell2D(fv, *xi, *yi, ti[igrid], dataV, 0); CHECKSTATUS(status);
+  status = getCell2D(fu, *xi, *yi, tii, dataU, first_tstep_only); CHECKSTATUS(status);
+  status = getCell2D(fv, *xi, *yi, tii, dataV, first_tstep_only); CHECKSTATUS(status);
 
   bool updateCells = 0;
   if (fabs(xsi - 1) < tol){
@@ -106,8 +119,8 @@ static inline StatusCode calcAdvectionAnalytical_2D_JIT(CField *fu, CField *fv,
   }
 
   if (updateCells == 1){
-    status = getCell2D(fu, *xi, *yi, ti[igrid], dataU, 0); CHECKSTATUS(status);
-    status = getCell2D(fv, *xi, *yi, ti[igrid], dataV, 0); CHECKSTATUS(status);
+    status = getCell2D(fu, *xi, *yi, tii, dataU, first_tstep_only); CHECKSTATUS(status);
+    status = getCell2D(fv, *xi, *yi, tii, dataV, first_tstep_only); CHECKSTATUS(status);
   }
 
   double px[4];
