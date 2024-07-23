@@ -5,25 +5,29 @@ import pytest
 
 import parcels
 
-ptype = {'scipy': parcels.ScipyParticle, 'jit': parcels.JITParticle}
+ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 
 
 def mesh_conversion(mesh):
-    return (1852. * 60) if mesh == 'spherical' else 1.
+    return (1852.0 * 60) if mesh == "spherical" else 1.0
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+@pytest.mark.parametrize("mode", ["scipy", "jit"])
+@pytest.mark.parametrize("mesh", ["flat", "spherical"])
 def test_brownian_example(mode, mesh, npart=3000):
-    fieldset = parcels.FieldSet.from_data({'U': 0, 'V': 0}, {'lon': 0, 'lat': 0}, mesh=mesh)
+    fieldset = parcels.FieldSet.from_data(
+        {"U": 0, "V": 0}, {"lon": 0, "lat": 0}, mesh=mesh
+    )
 
     # Set diffusion constants.
     kh_zonal = 100  # in m^2/s
     kh_meridional = 100  # in m^2/s
 
     # Create field of constant Kh_zonal and Kh_meridional
-    fieldset.add_field(parcels.Field('Kh_zonal', kh_zonal, lon=0, lat=0, mesh=mesh))
-    fieldset.add_field(parcels.Field('Kh_meridional', kh_meridional, lon=0, lat=0, mesh=mesh))
+    fieldset.add_field(parcels.Field("Kh_zonal", kh_zonal, lon=0, lat=0, mesh=mesh))
+    fieldset.add_field(
+        parcels.Field("Kh_meridional", kh_meridional, lon=0, lat=0, mesh=mesh)
+    )
 
     # Set random seed
     parcels.ParcelsRandom.seed(123456)
@@ -31,16 +35,20 @@ def test_brownian_example(mode, mesh, npart=3000):
     runtime = delta(days=1)
 
     parcels.ParcelsRandom.seed(1234)
-    pset = parcels.ParticleSet(fieldset=fieldset, pclass=ptype[mode],
-                       lon=np.zeros(npart), lat=np.zeros(npart))
-    pset.execute(pset.Kernel(parcels.DiffusionUniformKh),
-                 runtime=runtime, dt=delta(hours=1))
+    pset = parcels.ParticleSet(
+        fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart)
+    )
+    pset.execute(
+        pset.Kernel(parcels.DiffusionUniformKh), runtime=runtime, dt=delta(hours=1)
+    )
 
-    expected_std_x = np.sqrt(2*kh_zonal*runtime.total_seconds())
-    expected_std_y = np.sqrt(2*kh_meridional*runtime.total_seconds())
+    expected_std_x = np.sqrt(2 * kh_zonal * runtime.total_seconds())
+    expected_std_y = np.sqrt(2 * kh_meridional * runtime.total_seconds())
 
     ys = pset.lat * mesh_conversion(mesh)
-    xs = pset.lon * mesh_conversion(mesh)  # since near equator, we do not need to care about curvature effect
+    xs = pset.lon * mesh_conversion(
+        mesh
+    )  # since near equator, we do not need to care about curvature effect
 
     tol = 250  # 250m tolerance
     assert np.allclose(np.std(xs), expected_std_x, atol=tol)
@@ -50,4 +58,4 @@ def test_brownian_example(mode, mesh, npart=3000):
 
 
 if __name__ == "__main__":
-    test_brownian_example('jit', 'spherical', npart=2000)
+    test_brownian_example("jit", "spherical", npart=2000)

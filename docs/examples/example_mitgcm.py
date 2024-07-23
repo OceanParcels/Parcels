@@ -20,10 +20,12 @@ def run_mitgcm_zonally_reentrant(mode):
         "U": {"lon": "XG", "lat": "YG", "time": "time"},
         "V": {"lon": "XG", "lat": "YG", "time": "time"},
     }
-    fieldset = parcels.FieldSet.from_mitgcm(filenames, variables, dimensions, mesh="flat")
+    fieldset = parcels.FieldSet.from_mitgcm(
+        filenames, variables, dimensions, mesh="flat"
+    )
 
     fieldset.add_periodic_halo(zonal=True)
-    fieldset.add_constant('domain_width', 1000000)
+    fieldset.add_constant("domain_width", 1000000)
 
     def periodicBC(particle, fieldset, time):
         if particle.lon < 0:
@@ -40,7 +42,10 @@ def run_mitgcm_zonally_reentrant(mode):
         size=10,
     )
     pfile = parcels.ParticleFile(
-        "MIT_particles_" + str(mode) + ".zarr", pset, outputdt=delta(days=1), chunks=(len(pset), 1)
+        "MIT_particles_" + str(mode) + ".zarr",
+        pset,
+        outputdt=delta(days=1),
+        chunks=(len(pset), 1),
     )
     kernels = parcels.AdvectionRK4 + pset.Kernel(periodicBC)
     pset.execute(
