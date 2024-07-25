@@ -1,5 +1,13 @@
 ## Parcels
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels/master?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
+[![unit-tests](https://github.com/OceanParcels/parcels/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/OceanParcels/parcels/actions/workflows/unit-tests.yml)
+[![codecov](https://codecov.io/gh/OceanParcels/parcels/branch/master/graph/badge.svg)](https://codecov.io/gh/OceanParcels/parcels)
+[![Anaconda-release](https://anaconda.org/conda-forge/parcels/badges/version.svg)](https://anaconda.org/conda-forge/parcels/)
+[![Anaconda-date](https://anaconda.org/conda-forge/parcels/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/parcels/)
+[![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.823561.svg)](https://doi.org/10.5281/zenodo.823561)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5353/badge)](https://bestpractices.coreinfrastructure.org/projects/5353)
+
 **Parcels** (**P**robably **A** **R**eally **C**omputationally **E**fficient **L**agrangian **S**imulator) is a set of Python classes and methods to create customisable particle tracking simulations using output from Ocean Circulation models. Parcels can be used to track passive and active particulates such as water, plankton, [plastic](http://www.topios.org/) and [fish](https://github.com/Jacketless/IKAMOANA).
 
 ![Arctic-SO-medusaParticles](https://github.com/OceanParcels/oceanparcels_website/blob/master/images/homepage.gif)
@@ -24,15 +32,6 @@ _Kehl, C, PD Nooteboom, MLA Kaandorp and E van Sebille (2023) Efficiently simula
 
 See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](https://docs.oceanparcels.org/en/latest/installation.html) and [running](https://docs.oceanparcels.org/en/latest/documentation.html) the Parcels code, as well as extended [documentation](https://docs.oceanparcels.org/en/latest/reference.html) of the methods and classes.
 
-### Launch Parcels Tutorials on [mybinder.org](https://mybinder.org/v2/gh/OceanParcels/parcels/master?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
-
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels/master?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
-[![unit-tests](https://github.com/OceanParcels/parcels/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/OceanParcels/parcels/actions/workflows/unit-tests.yml)
-[![codecov](https://codecov.io/gh/OceanParcels/parcels/branch/master/graph/badge.svg)](https://codecov.io/gh/OceanParcels/parcels)
-[![Anaconda-release](https://anaconda.org/conda-forge/parcels/badges/version.svg)](https://anaconda.org/conda-forge/parcels/)
-[![Anaconda-date](https://anaconda.org/conda-forge/parcels/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/parcels/)
-[![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.823561.svg)](https://doi.org/10.5281/zenodo.823561)
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5353/badge)](https://bestpractices.coreinfrastructure.org/projects/5353)
 
 ### Contributors
 
@@ -40,4 +39,6 @@ See [oceanparcels.org](http://oceanparcels.org/) for further information about [
   <img src="https://contrib.rocks/image?repo=oceanparcels/parcels" />
 </a>
 
-Made with [contrib.rocks](https://contrib.rocks). All contributions are welcome!
+
+**All contributions are welcome! See the [contributing page](https://docs.oceanparcels.org/en/latest/contributing.html) in our documentation to see how to get involved.**
+Image made with [contrib.rocks](https://contrib.rocks).
