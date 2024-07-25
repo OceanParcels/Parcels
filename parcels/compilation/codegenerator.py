@@ -657,7 +657,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         if isinstance(node.value, FieldNode) or isinstance(node.value, VectorFieldNode):
             node.ccode = node.value.__getitem__(node.slice.ccode).ccode
         elif isinstance(node.value, ParticleXiYiZiTiAttributeNode):
-            node.ccode = f"{node.value.obj}->{node.value.attr}[pnum, {node.slice.ccode}]"
+            ngrid = str(self.fieldset.gridset.size if self.fieldset is not None else 1)
+            node.ccode = f"{node.value.obj}->{node.value.attr}[pnum*{ngrid}+{node.slice.ccode}]"
         elif isinstance(node.value, IntrinsicNode):
             raise NotImplementedError(f"Subscript not implemented for object type {type(node.value).__name__}")
         else:
