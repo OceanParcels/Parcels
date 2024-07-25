@@ -157,7 +157,7 @@ static inline StatusCode calcAdvectionAnalytical_2D_JIT(CField *fu, CField *fv,
   double U1 = ((1-tau)*dataU[0][1][1] + tau*dataU[1][1][1]) * c2 * direction;
   phi2D_lin(xsi, 0., phi);
   double c1 = dist(px[0], px[1], py[0], py[1], grid->sphere_mesh, dot_prod(phi, py, 4));
-  double V0 = ((1-tau)*dataV[0][1][0] + tau*dataV[1][1][0]) * c1 * direction;
+  double V0 = ((1-tau)*dataV[0][0][1] + tau*dataV[1][0][1]) * c1 * direction;
   phi2D_lin(xsi, 1., phi);
   double c3 = dist(px[2], px[3], py[2], py[3], grid->sphere_mesh, dot_prod(phi, py, 4));
   double V1 = ((1-tau)*dataV[0][1][1] + tau*dataV[1][1][1]) * c3 * direction;
