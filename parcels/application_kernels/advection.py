@@ -281,7 +281,7 @@ def AdvectionAnalytical_2D_JIT(particle, fieldset, time):
     when using AdvectionAnalytical in JIT mode.
     """
     calcAdvectionAnalytical_2D_JIT('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V, # noqa
-                                   particle.xi[0], particle.yi[0], particle.zi[0], particle.ti[0],  # TODO call with particle.xi without subscript
+                                   particle.xi, particle.yi, particle.zi, particle.ti,
                                    particle.lon, particle.lat, particle.depth, time, particle.dt,
                                    particle_dlon, particle_dlat)  # noqa
 
@@ -293,6 +293,6 @@ def AdvectionAnalytical_3D_JIT(particle, fieldset, time):
     when using AdvectionAnalytical in JIT mode.
     """
     calcAdvectionAnalytical_3D_JIT('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V, fieldset.W, # noqa
-                                   particle.xi[0], particle.yi[0], particle.zi[0],  # TODO call with particle.xi without subscript
+                                   particle.xi, particle.yi, particle.zi,
                                    particle.lon, particle.lat, particle.depth, time, particle.dt,
                                    particle_dlon, particle_dlat, particle_ddepth)  # noqa
