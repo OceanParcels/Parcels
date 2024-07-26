@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 
-from parcels import FieldSet, GridCode
+from parcels import FieldSet, GridType
 
 try:
     from pympler import asizeof
@@ -87,12 +87,12 @@ def write_simple_2Dt(field, filename, varname=None):
         varname = field.name
 
     # Create DataArray objects for file I/O
-    if field.grid.gtype == GridCode.RectilinearZGrid:
+    if field.grid.gtype == GridType.RectilinearZGrid:
         nav_lon = xr.DataArray(field.grid.lon + np.zeros((field.grid.ydim, field.grid.xdim), dtype=np.float32),
                                coords=[('y', field.grid.lat), ('x', field.grid.lon)])
         nav_lat = xr.DataArray(field.grid.lat.reshape(field.grid.ydim, 1) + np.zeros(field.grid.xdim, dtype=np.float32),
                                coords=[('y', field.grid.lat), ('x', field.grid.lon)])
-    elif field.grid.gtype == GridCode.CurvilinearZGrid:
+    elif field.grid.gtype == GridType.CurvilinearZGrid:
         nav_lon = xr.DataArray(field.grid.lon, coords=[('y', range(field.grid.ydim)), ('x', range(field.grid.xdim))])
         nav_lat = xr.DataArray(field.grid.lat, coords=[('y', range(field.grid.ydim)), ('x', range(field.grid.xdim))])
     else:

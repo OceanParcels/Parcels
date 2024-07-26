@@ -23,7 +23,7 @@ except ModuleNotFoundError:
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
-from parcels.grid import CurvilinearGrid, GridCode
+from parcels.grid import CurvilinearGrid, GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.interaction.neighborsearch import (
     BruteFlatNeighborSearch,
@@ -569,7 +569,7 @@ class ParticleSet(ABC):
             j, i = np.unravel_index(inds, p_interior.shape)
             grid = start_field.grid
             lon, lat = ([], [])
-            if grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+            if grid.gtype in [GridType.RectilinearZGrid, GridType.RectilinearSGrid]:
                 lon = grid.lon[i] + xsi * (grid.lon[i + 1] - grid.lon[i])
                 lat = grid.lat[j] + eta * (grid.lat[j + 1] - grid.lat[j])
             else:

@@ -7,14 +7,19 @@ import numpy as np
 from parcels.tools.converters import TimeConverter
 from parcels.tools.loggers import logger
 
-__all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid', 'Grid']
+__all__ = ['GridType', 'GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid', 'Grid']
 
 
-class GridCode(IntEnum):
+class GridType(IntEnum):
     RectilinearZGrid = 0
     RectilinearSGrid = 1
     CurvilinearZGrid = 2
     CurvilinearSGrid = 3
+
+
+# GridCode has been renamed to GridType for consistency.
+# TODO: Remove alias in Parcels v4
+GridCode = GridType
 
 
 class CGrid(Structure):
@@ -326,7 +331,7 @@ class RectilinearZGrid(RectilinearGrid):
         if isinstance(depth, np.ndarray):
             assert (len(depth.shape) <= 1), 'depth is not a vector'
 
-        self.gtype = GridCode.RectilinearZGrid
+        self.gtype = GridType.RectilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         if not self.depth.flags['C_CONTIGUOUS']:
             self.depth = np.array(self.depth, order='C')
@@ -371,7 +376,7 @@ class RectilinearSGrid(RectilinearGrid):
         super().__init__(lon, lat, time, time_origin, mesh)
         assert (isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
 
-        self.gtype = GridCode.RectilinearSGrid
+        self.gtype = GridType.RectilinearSGrid
         self.depth = depth
         if not self.depth.flags['C_CONTIGUOUS']:
             self.depth = np.array(self.depth, order='C')
@@ -481,7 +486,7 @@ class CurvilinearZGrid(CurvilinearGrid):
         if isinstance(depth, np.ndarray):
             assert (len(depth.shape) == 1), 'depth is not a vector'
 
-        self.gtype = GridCode.CurvilinearZGrid
+        self.gtype = GridType.CurvilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         if not self.depth.flags['C_CONTIGUOUS']:
             self.depth = np.array(self.depth, order='C')
@@ -525,7 +530,7 @@ class CurvilinearSGrid(CurvilinearGrid):
         super().__init__(lon, lat, time, time_origin, mesh)
         assert (isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
-        self.gtype = GridCode.CurvilinearSGrid
+        self.gtype = GridType.CurvilinearSGrid
         self.depth = depth  # should be a C-contiguous array of floats
         if not self.depth.flags['C_CONTIGUOUS']:
             self.depth = np.array(self.depth, order='C')
