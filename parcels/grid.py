@@ -17,6 +17,11 @@ class GridType(IntEnum):
     CurvilinearSGrid = 3
 
 
+# GridCode has been renamed to GridType for consistency.
+# TODO: Remove alias in Parcels v4
+GridCode = GridType
+
+
 class CGrid(Structure):
     _fields_ = [('gtype', c_int),
                 ('grid', c_void_p)]
