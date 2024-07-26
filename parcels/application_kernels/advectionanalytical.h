@@ -51,8 +51,8 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 {
   StatusCode status;
   CStructuredGrid *grid = fu->grid->grid;
-  GridCode gcode = fu->grid->gtype;
   int gridindexingtype = NEMO; // TODO generalize
+  GridType gcode = fu->grid->gtype;
   int xdim = grid->xdim;
   int igrid = fu->igrid;
 
