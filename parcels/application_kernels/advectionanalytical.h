@@ -51,7 +51,7 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 {
   StatusCode status;
   CStructuredGrid *grid = fu->grid->grid;
-  GridCode gcode = RECTILINEAR_Z_GRID; // TODO generalize
+  GridCode gcode = fu->grid->gtype;
   int gridindexingtype = NEMO; // TODO generalize
   int xdim = grid->xdim;
   int igrid = fu->igrid;
@@ -95,7 +95,7 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   }
   CHECKSTATUS(status);
 
-  float dataU_2D[2][2][2]; // TODO check if double also works
+  float dataU_2D[2][2][2];
   float dataV_2D[2][2][2];
   float dataU_3D[2][2][2][2];
   float dataV_3D[2][2][2][2];
@@ -207,12 +207,11 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
       px[iN] = xgrid[*yi+iN/2][*xi+min(1, (iN%3))];
       py[iN] = ygrid[*yi+iN/2][*xi+min(1, (iN%3))];
     }
+    for (int i4 = 1; i4 < 4; ++i4){
+      if (px[i4] < px[0] - 180) px[i4] += 360;
+      if (px[i4] > px[0] + 180) px[i4] -= 360;
+    }
   }
-  // int i4; // TODO check how to make this code work
-  // for (i4 = 1; i4 < 4; ++i4){
-  //   if (px[i4] < px[0] - 180) px[i4] += 360;
-  //   if (px[i4] > px[0] + 180) px[i4] -= 360;
-  // }
 
   double dphidxsi[4] = {eta-1, 1-eta, eta, -eta};
   double dphideta[4] = {xsi-1, -xsi, xsi, 1-xsi};
