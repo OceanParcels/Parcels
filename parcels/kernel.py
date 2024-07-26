@@ -23,6 +23,7 @@ except ModuleNotFoundError:
     MPI = None
 
 import parcels.rng as ParcelsRandom  # noqa
+from parcels import rng  # noqa
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
     AdvectionRK4_3D,
@@ -178,6 +179,7 @@ class Kernel(BaseKernel):
         else:
             self.funcvars = None
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
+        self.funccode = self.funccode.replace('parcels.', '')  # Remove parcels. prefix (see #1608)
         # Parse AST if it is not provided explicitly
         self.py_ast = py_ast or parse(BaseKernel.fix_indentation(self.funccode)).body[0]
         if pyfunc is None:
@@ -187,6 +189,7 @@ class Kernel(BaseKernel):
                 user_ctx = stack[-1][0].f_globals
                 user_ctx['math'] = globals()['math']
                 user_ctx['ParcelsRandom'] = globals()['ParcelsRandom']
+                user_ctx['rng'] = globals()['rng']
                 user_ctx['random'] = globals()['random']
                 user_ctx['StatusCode'] = globals()['StatusCode']
             except:
