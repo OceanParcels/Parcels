@@ -108,12 +108,24 @@ static inline StatusCode calcAdvectionAnalytical_2D_JIT(CField *fu, CField *fv,
       xsi = 0;
       updateCells = 1;
     }
+  } else if (fabs(xsi) < tol){
+    if (dataU[0][0][0] < 0){
+      *xi -= 1;
+      xsi = 1;
+      updateCells = 1;
+    }
   }
 
   if (fabs(eta - 1) < tol){
     if (dataV[0][1][1] > 0){
       *yi += 1;
       eta = 0;
+      updateCells = 1;
+    }
+  } else if (fabs(eta) < tol){
+    if (dataV[0][0][0] < 0){
+      *yi -= 1;
+      eta = 1;
       updateCells = 1;
     }
   }

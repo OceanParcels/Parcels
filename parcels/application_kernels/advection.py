@@ -136,27 +136,53 @@ def AdvectionAnalytical(particle, fieldset, time):
 
     xsi, eta, zeta, xi, yi, zi = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, particle=particle)
     if withW:
+        updatexi = 0
+        updateyi = 0
         if abs(xsi - 1) < tol:
             if fieldset.U.data[0, zi+1, yi+1, xi+1] > 0:
-                xi += 1
+                updatexi = 1
                 xsi = 0
+        elif abs(xsi) < tol:
+            if fieldset.U.data[0, zi, yi, xi] < 0:
+                updatexi = -1
+                xsi = 1
         if abs(eta - 1) < tol:
             if fieldset.V.data[0, zi+1, yi+1, xi+1] > 0:
-                yi += 1
+                updateyi = 1
                 eta = 0
+        elif abs(eta) < tol:
+            if fieldset.V.data[0, zi, yi, xi] < 0:
+                yi -= 1
+                eta = 1
         if abs(zeta - 1) < tol:
             if fieldset.W.data[0, zi+1, yi+1, xi+1] > 0:
                 zi += 1
                 zeta = 0
+        if abs(zeta) < tol:
+            if fieldset.W.data[0, zi, yi, xi] < 0:
+                zi -= 1
+                zeta = 1
+        xi += updatexi
+        yi += updateyi
     else:
+        updatexi = 0
         if abs(xsi - 1) < tol:
             if fieldset.U.data[0, yi+1, xi+1] > 0:
-                xi += 1
+                updatexi = 1
                 xsi = 0
+        elif abs(xsi) < tol:
+            if fieldset.U.data[0, yi, xi] < 0:
+                updatexi = -1
+                xsi = 1
         if abs(eta - 1) < tol:
             if fieldset.V.data[0, yi+1, xi+1] > 0:
                 yi += 1
                 eta = 0
+        elif abs(eta) < tol:
+            if fieldset.V.data[0, yi, xi] < 0:
+                yi -= 1
+                eta = 1
+        xi += updatexi
 
     particle.xi[:] = xi
     particle.yi[:] = yi
