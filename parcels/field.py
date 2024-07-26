@@ -31,7 +31,7 @@ from .fieldfilebuffer import (
     DeferredNetcdfFileBuffer,
     NetcdfFileBuffer,
 )
-from .grid import CGrid, Grid, GridCode
+from .grid import CGrid, Grid, GridType
 
 __all__ = ['Field', 'VectorField', 'NestedField']
 
@@ -178,7 +178,7 @@ class Field:
             self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
         if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'] and \
-           self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
+           self.grid.gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
             logger.warning_once('General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal.')
 
         self.fieldset = None
@@ -687,7 +687,7 @@ class Field:
         Currently only works for Rectilinear Grids
         """
         if not self.grid.cell_edge_sizes:
-            if self.grid.gtype in (GridCode.RectilinearZGrid, GridCode.RectilinearSGrid):
+            if self.grid.gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):
                 self.grid.cell_edge_sizes['x'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
                 self.grid.cell_edge_sizes['y'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
 
@@ -877,7 +877,7 @@ class Field:
             yi, eta = -1, 0
 
         if grid.zdim > 1 and not search2D:
-            if grid.gtype == GridCode.RectilinearZGrid:
+            if grid.gtype == GridType.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
                 try:
                     (zi, zeta) = self.search_indices_vertical_z(z)
@@ -885,7 +885,7 @@ class Field:
                     raise FieldOutOfBoundError(x, y, z, field=self)
                 except FieldOutOfBoundSurfaceError:
                     raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
-            elif grid.gtype == GridCode.RectilinearSGrid:
+            elif grid.gtype == GridType.RectilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi, zeta = -1, 0
@@ -973,12 +973,12 @@ class Field:
         eta = min(1., eta)
 
         if grid.zdim > 1 and not search2D:
-            if grid.gtype == GridCode.CurvilinearZGrid:
+            if grid.gtype == GridType.CurvilinearZGrid:
                 try:
                     (zi, zeta) = self.search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
-            elif grid.gtype == GridCode.CurvilinearSGrid:
+            elif grid.gtype == GridType.CurvilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi = -1
@@ -995,7 +995,7 @@ class Field:
         return (xsi, eta, zeta, xi, yi, zi)
 
     def search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
-        if self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
+        if self.grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             return self.search_indices_rectilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
         else:
             return self.search_indices_curvilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
@@ -1399,12 +1399,12 @@ class Field:
         vname_depth = 'depth%s' % self.name.lower()
 
         # Create DataArray objects for file I/O
-        if self.grid.gtype == GridCode.RectilinearZGrid:
+        if self.grid.gtype == GridType.RectilinearZGrid:
             nav_lon = xr.DataArray(self.grid.lon + np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32),
                                    coords=[('y', self.grid.lat), ('x', self.grid.lon)])
             nav_lat = xr.DataArray(self.grid.lat.reshape(self.grid.ydim, 1) + np.zeros(self.grid.xdim, dtype=np.float32),
                                    coords=[('y', self.grid.lat), ('x', self.grid.lon)])
-        elif self.grid.gtype == GridCode.CurvilinearZGrid:
+        elif self.grid.gtype == GridType.CurvilinearZGrid:
             nav_lon = xr.DataArray(self.grid.lon, coords=[('y', range(self.grid.ydim)),
                                                           ('x', range(self.grid.xdim))])
             nav_lat = xr.DataArray(self.grid.lat, coords=[('y', range(self.grid.ydim)),
@@ -1553,7 +1553,7 @@ class VectorField:
         grid = self.U.grid
         (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
 
-        if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
+        if grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
             py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi+1], grid.lat[yi+1]])
         else:
@@ -1621,7 +1621,7 @@ class VectorField:
         grid = self.U.grid
         (xsi, eta, zet, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
 
-        if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
+        if grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
             py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi+1], grid.lat[yi+1]])
         else:
@@ -1737,7 +1737,7 @@ class VectorField:
         interpolating linearly V depending on the latitude coordinate.
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
-        if self.U.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
+        if self.U.grid.gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
             (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
         else:
             (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)

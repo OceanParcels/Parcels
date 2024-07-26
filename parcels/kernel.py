@@ -30,7 +30,7 @@ from parcels.application_kernels.advection import (
 )
 from parcels.compilation.codegenerator import KernelGenerator, LoopGenerator
 from parcels.field import Field, NestedField, VectorField
-from parcels.grid import GridCode
+from parcels.grid import GridType
 from parcels.tools.global_statics import get_cache_dir
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
@@ -323,7 +323,7 @@ class Kernel(BaseKernel):
                     raise NotImplementedError('Analytical Advection only works in Scipy mode')
                 if self._fieldset.U.interp_method != 'cgrid_velocity':
                     raise NotImplementedError('Analytical Advection only works with C-grids')
-                if self._fieldset.U.grid.gtype not in [GridCode.CurvilinearZGrid, GridCode.RectilinearZGrid]:
+                if self._fieldset.U.grid.gtype not in [GridType.CurvilinearZGrid, GridType.RectilinearZGrid]:
                     raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
             elif pyfunc is AdvectionRK45:
                 if not hasattr(self.fieldset, 'RK45_tol'):
