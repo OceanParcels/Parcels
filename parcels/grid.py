@@ -7,7 +7,7 @@ import numpy as np
 from parcels.tools.converters import TimeConverter
 from parcels.tools.loggers import logger
 
-__all__ = ['GridType', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid', 'Grid']
+__all__ = ['GridType', 'GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid', 'Grid']
 
 
 class GridType(IntEnum):
