@@ -306,10 +306,11 @@ def AdvectionAnalytical_2D_JIT(particle, fieldset, time):
     The code itself is in advectionanalytical.h and is automatically included
     when using AdvectionAnalytical in JIT mode.
     """
-    calcAdvectionAnalytical_2D_JIT('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V, # noqa
-                                   particle.xi, particle.yi, particle.zi, particle.ti,
-                                   particle.lon, particle.lat, particle.depth, time, particle.dt,
-                                   particle_dlon, particle_dlat)  # noqa
+    flow3D = 0
+    calcAdvectionAnalytical_JIT('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V, fieldset.V, flow3D,  # noqa
+                                particle.xi, particle.yi, particle.zi, particle.ti,
+                                particle.lon, particle.lat, particle.depth, time, particle.dt,
+                                particle_dlon, particle_dlat, particle_ddepth)  # noqa
 
 
 def AdvectionAnalytical_3D_JIT(particle, fieldset, time):
@@ -318,7 +319,8 @@ def AdvectionAnalytical_3D_JIT(particle, fieldset, time):
     The code itself is in advectionanalytical.h and is automatically included
     when using AdvectionAnalytical in JIT mode.
     """
-    calcAdvectionAnalytical_3D_JIT('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V, fieldset.W, # noqa
-                                   particle.xi, particle.yi, particle.zi,
-                                   particle.lon, particle.lat, particle.depth, time, particle.dt,
-                                   particle_dlon, particle_dlat, particle_ddepth)  # noqa
+    flow3D = 1
+    calcAdvectionAnalytical_JIT('parcels_customed_Cfunc_pointer_args', fieldset.U, fieldset.V, fieldset.W, flow3D,  # noqa
+                                particle.xi, particle.yi, particle.zi, particle.ti,
+                                particle.lon, particle.lat, particle.depth, time, particle.dt,
+                                particle_dlon, particle_dlat, particle_ddepth)  # noqa
