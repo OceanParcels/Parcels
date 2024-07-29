@@ -55,8 +55,6 @@ class BaseKernel:
         self._ptype = ptype
         self._lib = None
         self.delete_cfiles = delete_cfiles
-        self._cleanup_files = None
-        self._cleanup_lib = None
         self._c_include = c_include
 
         # Derive meta information from pyfunc, if not given
