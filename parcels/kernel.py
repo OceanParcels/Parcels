@@ -2,7 +2,7 @@ import functools
 import inspect
 import math  # noqa
 import random  # noqa
-import re
+import textwrap
 import types
 from ast import FunctionDef, parse
 from copy import deepcopy
@@ -121,15 +121,6 @@ class BaseKernel:
         key = self.name + self.ptype._cache_key + field_keys + ('TIME:%f' % ostime())
         return md5(key.encode('utf-8')).hexdigest()
 
-    @staticmethod
-    def fix_indentation(string):
-        """Fix indentation to allow in-lined kernel definitions."""
-        lines = string.split('\n')
-        indent = re.compile(r"^(\s+)").match(lines[0])
-        if indent:
-            lines = [line.replace(indent.groups()[0], '', 1) for line in lines]
-        return "\n".join(lines)
-
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""
         bool_indices = pset.particledata.state == StatusCode.Delete
@@ -179,7 +170,7 @@ class Kernel(BaseKernel):
             self.funcvars = None
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
         # Parse AST if it is not provided explicitly
-        self.py_ast = py_ast or parse(BaseKernel.fix_indentation(self.funccode)).body[0]
+        self.py_ast = py_ast or parse(textwrap.dedent(self.funccode)).body[0]  # Dedent allows for in-lined kernel definitions
         if pyfunc is None:
             # Extract user context by inspecting the call stack
             stack = inspect.stack()
