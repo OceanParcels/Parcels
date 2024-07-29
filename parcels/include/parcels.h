@@ -435,7 +435,7 @@ static inline StatusCode getCell3D(CField *f, int xi, int yi, int zi, int ti, fl
 
 /* Linear interpolation along the time axis */
 static inline StatusCode temporal_interpolation_structured_grid(type_coord x, type_coord y, type_coord z, double time, CField *f,
-                                                               GridCode gcode, int *xi, int *yi, int *zi, int *ti,
+                                                               GridType gtype, int *xi, int *yi, int *zi, int *ti,
                                                                float *value, int interp_method, int gridindexingtype)
 {
   StatusCode status;
@@ -466,7 +466,7 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
   double tsrch = (tii == 2) ? time : t0;
 
   status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid],
-			  &xsi, &eta, &zeta, gcode, ti[igrid],
+			  &xsi, &eta, &zeta, gtype, ti[igrid],
 			  tsrch, t0, t1, interp_method, gridindexingtype);
   CHECKSTATUS(status);
 
@@ -564,7 +564,7 @@ static double dist(double lon1, double lon2, double lat1, double lat2, int spher
 
 /* Linear interpolation routine for 2D C grid */
 static inline StatusCode spatial_interpolation_UV_c_grid(double xsi, double eta, int xi, int yi, CStructuredGrid *grid,
-                                                        GridCode gcode, float dataU[2][2], float dataV[2][2], float *u, float *v)
+                                                        GridType gtype, float dataU[2][2], float dataV[2][2], float *u, float *v)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
   int xdim = grid->xdim;
@@ -572,7 +572,7 @@ static inline StatusCode spatial_interpolation_UV_c_grid(double xsi, double eta,
   double xgrid_loc[4];
   double ygrid_loc[4];
   int iN;
-  if( (gcode == RECTILINEAR_Z_GRID) || (gcode == RECTILINEAR_S_GRID) ){
+  if( (gtype == RECTILINEAR_Z_GRID) || (gtype == RECTILINEAR_S_GRID) ){
     float *xgrid = grid->lon;
     float *ygrid = grid->lat;
     for (iN=0; iN < 4; ++iN){
@@ -643,7 +643,7 @@ static inline StatusCode spatial_interpolation_UV_c_grid(double xsi, double eta,
 
 
 static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coord y, type_coord z, double time, CField *U, CField *V,
-                                                         GridCode gcode, int *xi, int *yi, int *zi, int *ti,
+                                                         GridType gtype, int *xi, int *yi, int *zi, int *ti,
                                                          float *u, float *v, int gridindexingtype)
 {
   StatusCode status;
@@ -663,7 +663,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
     float u0, u1, v0, v1;
     double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
     /* Identify grid cell to sample through local linear search */
-    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1, CGRID_VELOCITY, gridindexingtype); CHECKSTATUS(status);
+    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gtype, ti[igrid], time, t0, t1, CGRID_VELOCITY, gridindexingtype); CHECKSTATUS(status);
     if (grid->zdim==1){
       float data2D_U[2][2][2], data2D_V[2][2][2];
       if (gridindexingtype == NEMO) {
@@ -674,8 +674,8 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
         status = getCell2D(U, xi[igrid], yi[igrid]-1, ti[igrid], data2D_U, 0); CHECKSTATUS(status);
         status = getCell2D(V, xi[igrid]-1, yi[igrid], ti[igrid], data2D_V, 0); CHECKSTATUS(status);
       }
-      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data2D_U[0], data2D_V[0], &u0, &v0); CHECKSTATUS(status);
-      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data2D_U[1], data2D_V[1], &u1, &v1); CHECKSTATUS(status);
+      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gtype, data2D_U[0], data2D_V[0], &u0, &v0); CHECKSTATUS(status);
+      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gtype, data2D_U[1], data2D_V[1], &u1, &v1); CHECKSTATUS(status);
 
     } else {
       float data3D_U[2][2][2][2], data3D_V[2][2][2][2];
@@ -687,15 +687,15 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
         status = getCell3D(U, xi[igrid], yi[igrid]-1, zi[igrid], ti[igrid], data3D_U, 0); CHECKSTATUS(status);
         status = getCell3D(V, xi[igrid]-1, yi[igrid], zi[igrid], ti[igrid], data3D_V, 0); CHECKSTATUS(status);
       }
-      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data3D_U[0][0], data3D_V[0][0], &u0, &v0); CHECKSTATUS(status);
-      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data3D_U[1][0], data3D_V[1][0], &u1, &v1); CHECKSTATUS(status);
+      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gtype, data3D_U[0][0], data3D_V[0][0], &u0, &v0); CHECKSTATUS(status);
+      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gtype, data3D_U[1][0], data3D_V[1][0], &u1, &v1); CHECKSTATUS(status);
     }
     *u = u0 + (u1 - u0) * (float)((time - t0) / (t1 - t0));
     *v = v0 + (v1 - v0) * (float)((time - t0) / (t1 - t0));
     return SUCCESS;
   } else {
     double t0 = grid->time[ti[igrid]];
-    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1, CGRID_VELOCITY, gridindexingtype); CHECKSTATUS(status);
+    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gtype, ti[igrid], t0, t0, t0+1, CGRID_VELOCITY, gridindexingtype); CHECKSTATUS(status);
     if (grid->zdim==1){
       float data2D_U[2][2][2], data2D_V[2][2][2];
       if (gridindexingtype == NEMO) {
@@ -706,7 +706,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
         status = getCell2D(U, xi[igrid], yi[igrid]-1, ti[igrid], data2D_U, 1); CHECKSTATUS(status);
         status = getCell2D(V, xi[igrid]-1, yi[igrid], ti[igrid], data2D_V, 1); CHECKSTATUS(status);
       }
-      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data2D_U[0], data2D_V[0], u, v); CHECKSTATUS(status);
+      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gtype, data2D_U[0], data2D_V[0], u, v); CHECKSTATUS(status);
     }
     else{
       float data3D_U[2][2][2][2], data3D_V[2][2][2][2];
@@ -718,7 +718,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
         status = getCell3D(U, xi[igrid], yi[igrid]-1, zi[igrid], ti[igrid], data3D_U, 1); CHECKSTATUS(status);
         status = getCell3D(V, xi[igrid]-1, yi[igrid], zi[igrid], ti[igrid], data3D_V, 1); CHECKSTATUS(status);
       }
-      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data3D_U[0][0], data3D_V[0][0], u, v); CHECKSTATUS(status);
+      status = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gtype, data3D_U[0][0], data3D_V[0][0], u, v); CHECKSTATUS(status);
     }
     return SUCCESS;
   }
@@ -726,7 +726,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
 
 /* Quadratic interpolation routine for 3D C grid */
 static inline StatusCode spatial_interpolation_UVW_c_grid(double xsi, double eta, double zet, int xi, int yi, int zi, int ti, CStructuredGrid *grid,
-                                                        GridCode gcode, float dataU[2][2][2], float dataV[2][2][2], float dataW[2][2][2], float *u, float *v, float *w, int gridindexingtype)
+                                                        GridType gtype, float dataU[2][2][2], float dataV[2][2][2], float dataW[2][2][2], float *u, float *v, float *w, int gridindexingtype)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
   int xdim = grid->xdim;
@@ -736,7 +736,7 @@ static inline StatusCode spatial_interpolation_UVW_c_grid(double xsi, double eta
   float xgrid_loc[4];
   float ygrid_loc[4];
   int iN;
-  if( gcode == RECTILINEAR_S_GRID ){
+  if( gtype == RECTILINEAR_S_GRID ){
     float *xgrid = grid->lon;
     float *ygrid = grid->lat;
     for (iN=0; iN < 4; ++iN){
@@ -861,7 +861,7 @@ static inline StatusCode spatial_interpolation_UVW_c_grid(double xsi, double eta
 }
 
 static inline StatusCode temporal_interpolationUVW_c_grid(type_coord x, type_coord y, type_coord z, double time, CField *U, CField *V, CField *W,
-                                                         GridCode gcode, int *xi, int *yi, int *zi, int *ti,
+                                                         GridType gtype, int *xi, int *yi, int *zi, int *ti,
                                                          float *u, float *v, float *w, int gridindexingtype)
 {
   StatusCode status;
@@ -884,15 +884,15 @@ static inline StatusCode temporal_interpolationUVW_c_grid(type_coord x, type_coo
     float u0, u1, v0, v1, w0, w1;
     double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
     /* Identify grid cell to sample through local linear search */
-    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zet, gcode, ti[igrid], time, t0, t1, CGRID_VELOCITY, gridindexingtype); CHECKSTATUS(status);
+    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zet, gtype, ti[igrid], time, t0, t1, CGRID_VELOCITY, gridindexingtype); CHECKSTATUS(status);
     status = getCell3D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_U, 0); CHECKSTATUS(status);
     status = getCell3D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_V, 0); CHECKSTATUS(status);
     status = getCell3D(W, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_W, 0); CHECKSTATUS(status);
     if (grid->zdim==1){
       return ERROR;
     } else {
-      status = spatial_interpolation_UVW_c_grid(xsi, eta, zet, xi[igrid], yi[igrid], zi[igrid], ti[igrid],   grid, gcode, data3D_U[0], data3D_V[0], data3D_W[0], &u0, &v0, &w0, gridindexingtype); CHECKSTATUS(status);
-      status = spatial_interpolation_UVW_c_grid(xsi, eta, zet, xi[igrid], yi[igrid], zi[igrid], ti[igrid]+1, grid, gcode, data3D_U[1], data3D_V[1], data3D_W[1], &u1, &v1, &w1, gridindexingtype); CHECKSTATUS(status);
+      status = spatial_interpolation_UVW_c_grid(xsi, eta, zet, xi[igrid], yi[igrid], zi[igrid], ti[igrid],   grid, gtype, data3D_U[0], data3D_V[0], data3D_W[0], &u0, &v0, &w0, gridindexingtype); CHECKSTATUS(status);
+      status = spatial_interpolation_UVW_c_grid(xsi, eta, zet, xi[igrid], yi[igrid], zi[igrid], ti[igrid]+1, grid, gtype, data3D_U[1], data3D_V[1], data3D_W[1], &u1, &v1, &w1, gridindexingtype); CHECKSTATUS(status);
     }
     *u = u0 + (u1 - u0) * (float)((time - t0) / (t1 - t0));
     *v = v0 + (v1 - v0) * (float)((time - t0) / (t1 - t0));
@@ -900,7 +900,7 @@ static inline StatusCode temporal_interpolationUVW_c_grid(type_coord x, type_coo
     return SUCCESS;
   } else {
     double t0 = grid->time[ti[igrid]];
-    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zet, gcode, ti[igrid], t0, t0, t0+1, CGRID_VELOCITY, gridindexingtype); CHECKSTATUS(status);
+    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zet, gtype, ti[igrid], t0, t0, t0+1, CGRID_VELOCITY, gridindexingtype); CHECKSTATUS(status);
     status = getCell3D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_U, 1); CHECKSTATUS(status);
     status = getCell3D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_V, 1); CHECKSTATUS(status);
     status = getCell3D(W, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_W, 1); CHECKSTATUS(status);
@@ -908,7 +908,7 @@ static inline StatusCode temporal_interpolationUVW_c_grid(type_coord x, type_coo
       return ERROR;
     }
     else{
-      status = spatial_interpolation_UVW_c_grid(xsi, eta, zet, xi[igrid], yi[igrid], zi[igrid], ti[igrid], grid, gcode, data3D_U[0], data3D_V[0], data3D_W[0], u, v, w, gridindexingtype); CHECKSTATUS(status);
+      status = spatial_interpolation_UVW_c_grid(xsi, eta, zet, xi[igrid], yi[igrid], zi[igrid], ti[igrid], grid, gtype, data3D_U[0], data3D_V[0], data3D_W[0], u, v, w, gridindexingtype); CHECKSTATUS(status);
     }
     return SUCCESS;
   }
@@ -1081,7 +1081,7 @@ static inline StatusCode calculate_slip_conditions_3D(double xsi, double eta, do
 }
 
 static inline StatusCode temporal_interpolation_slip(type_coord x, type_coord y, type_coord z, double time, CField *U, CField *V, CField *W,
-                                                         GridCode gcode, int *xi, int *yi, int *zi, int *ti,
+                                                         GridType gtype, int *xi, int *yi, int *zi, int *ti,
                                                          float *u, float *v, float *w, int interp_method, int gridindexingtype, int withW)
 {
   StatusCode status;
@@ -1100,7 +1100,7 @@ static inline StatusCode temporal_interpolation_slip(type_coord x, type_coord y,
     float u0, u1, v0, v1, w0, w1;
     double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
     /* Identify grid cell to sample through local linear search */
-    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1, interp_method, gridindexingtype); CHECKSTATUS(status);
+    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gtype, ti[igrid], time, t0, t1, interp_method, gridindexingtype); CHECKSTATUS(status);
     if (grid->zdim==1){
       float data2D_U[2][2][2], data2D_V[2][2][2], data2D_W[2][2][2];
       status = getCell2D(U, xi[igrid], yi[igrid], ti[igrid], data2D_U, 0); CHECKSTATUS(status);
@@ -1143,7 +1143,7 @@ static inline StatusCode temporal_interpolation_slip(type_coord x, type_coord y,
 
   } else {
     double t0 = grid->time[ti[igrid]];
-    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1, interp_method, gridindexingtype); CHECKSTATUS(status);
+    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gtype, ti[igrid], t0, t0, t0+1, interp_method, gridindexingtype); CHECKSTATUS(status);
     if (grid->zdim==1){
       float data2D_U[2][2][2], data2D_V[2][2][2], data2D_W[2][2][2];
       status = getCell2D(U, xi[igrid], yi[igrid], ti[igrid], data2D_U, 1); CHECKSTATUS(status);
@@ -1178,10 +1178,10 @@ static inline StatusCode temporal_interpolation(type_coord x, type_coord y, type
                                                float *value, int interp_method, int gridindexingtype)
 {
   CGrid *_grid = f->grid;
-  GridCode gcode = _grid->gtype;
+  GridType gtype = _grid->gtype;
 
-  if (gcode == RECTILINEAR_Z_GRID || gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_Z_GRID || gcode == CURVILINEAR_S_GRID)
-    return temporal_interpolation_structured_grid(x, y, z, time, f, gcode, xi, yi, zi, ti, value, interp_method, gridindexingtype);
+  if (gtype == RECTILINEAR_Z_GRID || gtype == RECTILINEAR_S_GRID || gtype == CURVILINEAR_Z_GRID || gtype == CURVILINEAR_S_GRID)
+    return temporal_interpolation_structured_grid(x, y, z, time, f, gtype, xi, yi, zi, ti, value, interp_method, gridindexingtype);
   else{
     printf("Only RECTILINEAR_Z_GRID, RECTILINEAR_S_GRID, CURVILINEAR_Z_GRID and CURVILINEAR_S_GRID grids are currently implemented\n");
     return ERROR;
@@ -1196,15 +1196,15 @@ static inline StatusCode temporal_interpolationUV(type_coord x, type_coord y, ty
   StatusCode status;
   if (interp_method == CGRID_VELOCITY){
     CGrid *_grid = U->grid;
-    GridCode gcode = _grid->gtype;
-    status = temporal_interpolationUV_c_grid(x, y, z, time, U, V, gcode, xi, yi, zi, ti, valueU, valueV, gridindexingtype); CHECKSTATUS(status);
+    GridType gtype = _grid->gtype;
+    status = temporal_interpolationUV_c_grid(x, y, z, time, U, V, gtype, xi, yi, zi, ti, valueU, valueV, gridindexingtype); CHECKSTATUS(status);
     return SUCCESS;
   } else if ((interp_method == PARTIALSLIP) || (interp_method == FREESLIP)){
     CGrid *_grid = U->grid;
     CField *W = U;
-    GridCode gcode = _grid->gtype;
+    GridType gtype = _grid->gtype;
     int withW = 0;
-    status = temporal_interpolation_slip(x, y, z, time, U, V, W, gcode, xi, yi, zi, ti, valueU, valueV, 0, interp_method, gridindexingtype, withW); CHECKSTATUS(status);
+    status = temporal_interpolation_slip(x, y, z, time, U, V, W, gtype, xi, yi, zi, ti, valueU, valueV, 0, interp_method, gridindexingtype, withW); CHECKSTATUS(status);
     return SUCCESS;
   } else {
     status = temporal_interpolation(x, y, z, time, U, xi, yi, zi, ti, valueU, interp_method, gridindexingtype); CHECKSTATUS(status);
@@ -1221,16 +1221,16 @@ static inline StatusCode temporal_interpolationUVW(type_coord x, type_coord y, t
   StatusCode status;
   if (interp_method == CGRID_VELOCITY){
     CGrid *_grid = U->grid;
-    GridCode gcode = _grid->gtype;
-    if (gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_S_GRID){
-      status = temporal_interpolationUVW_c_grid(x, y, z, time, U, V, W, gcode, xi, yi, zi, ti, valueU, valueV, valueW, gridindexingtype); CHECKSTATUS(status);
+    GridType gtype = _grid->gtype;
+    if (gtype == RECTILINEAR_S_GRID || gtype == CURVILINEAR_S_GRID){
+      status = temporal_interpolationUVW_c_grid(x, y, z, time, U, V, W, gtype, xi, yi, zi, ti, valueU, valueV, valueW, gridindexingtype); CHECKSTATUS(status);
       return SUCCESS;
     }
   } else if ((interp_method == PARTIALSLIP) || (interp_method == FREESLIP)){
     CGrid *_grid = U->grid;
-    GridCode gcode = _grid->gtype;
+    GridType gtype = _grid->gtype;
     int withW = 1;
-    status = temporal_interpolation_slip(x, y, z, time, U, V, W, gcode, xi, yi, zi, ti, valueU, valueV, valueW, interp_method, gridindexingtype, withW); CHECKSTATUS(status);
+    status = temporal_interpolation_slip(x, y, z, time, U, V, W, gtype, xi, yi, zi, ti, valueU, valueV, valueW, interp_method, gridindexingtype, withW); CHECKSTATUS(status);
     return SUCCESS;
   }
   status = temporal_interpolationUV(x, y, z, time, U, V, xi, yi, zi, ti, valueU, valueV, interp_method, gridindexingtype); CHECKSTATUS(status);
