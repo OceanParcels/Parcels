@@ -51,7 +51,7 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 {
   StatusCode status;
   CStructuredGrid *grid = fu->grid->grid;
-  GridType gcode = fu->grid->gtype;
+  GridType gtype = fu->grid->gtype;
   GridIndexingType gridindexingtype = fu->gridindexingtype;
   int xdim = grid->xdim;
   int igrid = fu->igrid;
@@ -74,7 +74,7 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     tii = 0;
     tau = 0;
     status = search_indices(*lon, *lat, *depth, grid, &xi[igrid], &yi[igrid], &zi[igrid],
-                            &xsi, &eta, &zeta, gcode, tii, 0, 0, 1, CGRID_VELOCITY, gridindexingtype);
+                            &xsi, &eta, &zeta, gtype, tii, 0, 0, 1, CGRID_VELOCITY, gridindexingtype);
     first_tstep_only = 1;
   } else {
     status = search_time_index(time, grid->tdim, grid->time, &ti[igrid], fu->time_periodic,
@@ -90,7 +90,7 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     }
     tii = ti[igrid];
     status = search_indices(*lon, *lat, *depth, grid, &xi[igrid], &yi[igrid], &zi[igrid],
-                            &xsi, &eta, &zeta, gcode, tii, *time, t0, t1, CGRID_VELOCITY, gridindexingtype);
+                            &xsi, &eta, &zeta, gtype, tii, *time, t0, t1, CGRID_VELOCITY, gridindexingtype);
     first_tstep_only = 0;
   }
   CHECKSTATUS(status);
@@ -192,7 +192,7 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   double px[4];
   double py[4];
   int iN;
-  if( (gcode == RECTILINEAR_Z_GRID) || (gcode == RECTILINEAR_S_GRID) ){
+  if( (gtype == RECTILINEAR_Z_GRID) || (gtype == RECTILINEAR_S_GRID) ){
     float *xgrid = grid->lon;
     float *ygrid = grid->lat;
     for (iN=0; iN < 4; ++iN){
