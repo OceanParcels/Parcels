@@ -946,6 +946,8 @@ class ParticleSet(ABC):
             pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
 
         tol = 1e-12
+        if output_file and output_file.analytical:  # output analytical solution at start time  # TODO check if possible to make this cleaner
+            output_file.write(self, time)
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             time_at_startofloop = time
 

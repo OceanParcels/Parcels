@@ -545,7 +545,7 @@ def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
 
     ds = xr.open_zarr(outfile_path)
     times = (direction*ds['time'][:]).values.astype('timedelta64[s]')[0]
-    timeref = np.arange(1, 5).astype('timedelta64[s]')
+    timeref = np.arange(5).astype('timedelta64[s]')
     assert np.allclose(times, timeref, atol=np.timedelta64(1, 'ms'))
     lons = ds['lon'][:].values
-    assert np.allclose(lons, x0+direction*u*np.arange(1, 5))
+    assert np.allclose(lons, x0+direction*u*np.arange(5))
