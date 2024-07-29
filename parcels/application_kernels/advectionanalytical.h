@@ -243,33 +243,25 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     dz = pz[1] - pz[0];
   }
 
+  phi2D_lin(xsi, 0., phi);
+  double c1 = dist(px[0], px[1], py[0], py[1], grid->sphere_mesh, dot_prod(phi, py, 4));
+  phi2D_lin(1., eta, phi);
+  double c2 = dist(px[1], px[2], py[1], py[2], grid->sphere_mesh, dot_prod(phi, py, 4));
+  phi2D_lin(xsi, 1., phi);
+  double c3 = dist(px[2], px[3], py[2], py[3], grid->sphere_mesh, dot_prod(phi, py, 4));
+  phi2D_lin(0., eta, phi);
+  double c4 = dist(px[3], px[0], py[3], py[0], grid->sphere_mesh, dot_prod(phi, py, 4));
+
   double U0, U1, V0, V1, W0, W1;
-  double c1, c2, c3, c4;
   if (flow3D == 0){
-    phi2D_lin(0., eta, phi);
-    c4 = dist(px[3], px[0], py[3], py[0], grid->sphere_mesh, dot_prod(phi, py, 4));  // TODO check if can be taken out of if-statement
     U0 = ((1-tau)*dataU_2D[0][1][0] + tau*dataU_2D[1][1][0]) * c4 * direction;
-    phi2D_lin(1., eta, phi);
-    c2 = dist(px[1], px[2], py[1], py[2], grid->sphere_mesh, dot_prod(phi, py, 4));
     U1 = ((1-tau)*dataU_2D[0][1][1] + tau*dataU_2D[1][1][1]) * c2 * direction;
-    phi2D_lin(xsi, 0., phi);
-    c1 = dist(px[0], px[1], py[0], py[1], grid->sphere_mesh, dot_prod(phi, py, 4));
     V0 = ((1-tau)*dataV_2D[0][0][1] + tau*dataV_2D[1][0][1]) * c1 * direction;
-    phi2D_lin(xsi, 1., phi);
-    c3 = dist(px[2], px[3], py[2], py[3], grid->sphere_mesh, dot_prod(phi, py, 4));
     V1 = ((1-tau)*dataV_2D[0][1][1] + tau*dataV_2D[1][1][1]) * c3 * direction;
   } else if (flow3D == 1){
-    phi2D_lin(0., eta, phi);
-    c4 = dist(px[3], px[0], py[3], py[0], grid->sphere_mesh, dot_prod(phi, py, 4));
     U0 = ((1-tau)*dataU_3D[0][1][1][0] + tau*dataU_3D[1][1][1][0]) * c4 * dz * direction;
-    phi2D_lin(1., eta, phi);
-    c2 = dist(px[1], px[2], py[1], py[2], grid->sphere_mesh, dot_prod(phi, py, 4));
     U1 = ((1-tau)*dataU_3D[0][1][1][1] + tau*dataU_3D[1][1][1][1]) * c2 * dz * direction;
-    phi2D_lin(xsi, 0., phi);
-    c1 = dist(px[0], px[1], py[0], py[1], grid->sphere_mesh, dot_prod(phi, py, 4));
     V0 = ((1-tau)*dataV_3D[0][1][0][1] + tau*dataV_3D[1][1][0][1]) * c1 * dz * direction;
-    phi2D_lin(xsi, 1., phi);
-    c3 = dist(px[2], px[3], py[2], py[3], grid->sphere_mesh, dot_prod(phi, py, 4));
     V1 = ((1-tau)*dataV_3D[0][1][1][1] + tau*dataV_3D[1][1][1][1]) * c3 * dz * direction;
     W0 = ((1-tau)*dataW_3D[0][0][1][1] + tau*dataW_3D[1][0][1][1]) * dxdy * direction;
     W1 = ((1-tau)*dataW_3D[0][1][1][1] + tau*dataW_3D[1][1][1][1]) * dxdy * direction;
