@@ -304,7 +304,7 @@ def test_write_xiyi(fieldset, mode, tmpdir):
 
     def SampleP(particle, fieldset, time):
         if time > 5*3600:
-            tmp = fieldset.P[particle]  # noqa
+            _ = fieldset.P[particle]  # To trigger sampling of the P field
 
     pset = ParticleSet(fieldset, pclass=XiYiParticle, lon=[0, 0.2], lat=[0.2, 1], lonlatdepth_dtype=np.float64)
     pfile = pset.ParticleFile(name=outfilepath, outputdt=dt)
