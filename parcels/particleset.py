@@ -973,6 +973,10 @@ class ParticleSet(ABC):
             # End of interaction specific code
             time = next_time
 
+            # Check for empty ParticleSet
+            if np.isinf(next_prelease) and len(self) == 0:
+                return StatusCode.StopAllExecution
+
             if abs(time - next_output) < tol or dt == 0:
                 for fld in self.fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:
