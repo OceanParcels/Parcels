@@ -57,7 +57,7 @@ typedef enum
 typedef enum
   {
     RECTILINEAR_Z_GRID=0, RECTILINEAR_S_GRID=1, CURVILINEAR_Z_GRID=2, CURVILINEAR_S_GRID=3
-  } GridCode;
+  } GridType;
 
 // equal/closeness comparison that is equal to numpy (double)
 static inline bool is_close_dbl(double a, double b) {
@@ -206,7 +206,7 @@ static inline void reconnect_bnd_indices(int *xi, int *yi, int xdim, int ydim, i
 }
 
 
-static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid, GridCode gcode,
+static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid, GridType gtype,
                                                    int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
                                                    int ti, double time, double t0, double t1, int interp_method,
                                                    int gridindexingtype)
@@ -284,7 +284,7 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
 
   StatusCode status;
   if (zdim > 1){
-    switch(gcode){
+    switch(gtype){
       case RECTILINEAR_Z_GRID:
         status = search_indices_vertical_z(z, zdim, zvals, zi, zeta, gridindexingtype);
         break;
@@ -316,7 +316,7 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
 }
 
 
-static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid, GridCode gcode,
+static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid, GridType gtype,
                                                    int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
                                                    int ti, double time, double t0, double t1, int interp_method,
                                                    int gridindexingtype)
@@ -428,7 +428,7 @@ static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, 
 
   StatusCode status;
   if (zdim > 1){
-    switch(gcode){
+    switch(gtype){
       case CURVILINEAR_Z_GRID:
         status = search_indices_vertical_z(z, zdim, zvals, zi, zeta, gridindexingtype);
         break;
@@ -457,18 +457,18 @@ static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, 
  * */
 static inline StatusCode search_indices(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid,
                                        int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
-                                       GridCode gcode, int ti, double time, double t0, double t1, int interp_method,
+                                       GridType gtype, int ti, double time, double t0, double t1, int interp_method,
                                        int gridindexingtype)
 {
-  switch(gcode){
+  switch(gtype){
     case RECTILINEAR_Z_GRID:
     case RECTILINEAR_S_GRID:
-      return search_indices_rectilinear(x, y, z, grid, gcode, xi, yi, zi, xsi, eta, zeta,
+      return search_indices_rectilinear(x, y, z, grid, gtype, xi, yi, zi, xsi, eta, zeta,
                                    ti, time, t0, t1, interp_method, gridindexingtype);
       break;
     case CURVILINEAR_Z_GRID:
     case CURVILINEAR_S_GRID:
-      return search_indices_curvilinear(x, y, z, grid, gcode, xi, yi, zi, xsi, eta, zeta,
+      return search_indices_curvilinear(x, y, z, grid, gtype, xi, yi, zi, xsi, eta, zeta,
                                    ti, time, t0, t1, interp_method, gridindexingtype);
       break;
     default:

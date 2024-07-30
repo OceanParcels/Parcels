@@ -251,21 +251,21 @@ def AdvectionAnalytical(particle, fieldset, time):
     s_min = min(abs(ds_x), abs(ds_y), abs(ds_z), abs(ds_t / (dxdy * dz)))
 
     # calculate end position in time s_min
-    def compute_rs(ds, r, B, delta, s_min):
+    def compute_rs(r, B, delta, s_min):
         if abs(B) < tol:
             return -delta * s_min + r
         else:
             return (r + delta / B) * math.exp(-B * s_min) - delta / B
 
-    rs_x = compute_rs(ds_x, xsi, B_x, delta_x, s_min)
-    rs_y = compute_rs(ds_y, eta, B_y, delta_y, s_min)
+    rs_x = compute_rs(xsi, B_x, delta_x, s_min)
+    rs_y = compute_rs(eta, B_y, delta_y, s_min)
 
-    particle_dlon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3] - particle.lon  # noqa
-    particle_dlat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3] - particle.lat  # noqa
+    particle_dlon += (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3] - particle.lon  # noqa
+    particle_dlat += (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3] - particle.lat  # noqa
 
     if withW:
-        rs_z = compute_rs(ds_z, zeta, B_z, delta_z, s_min)
-        particle.depth = (1.-rs_z) * pz[0] + rs_z * pz[1]
+        rs_z = compute_rs(zeta, B_z, delta_z, s_min)
+        particle_ddepth += (1.-rs_z) * pz[0] + rs_z * pz[1] - particle.depth  # noqa
 
     if particle.dt > 0:
         particle.dt = max(direction * s_min * (dxdy * dz), 1e-7)

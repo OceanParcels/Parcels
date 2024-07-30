@@ -284,7 +284,7 @@ def test_write_timebackward(fieldset, mode, tmpdir):
 def test_write_xiyi(fieldset, mode, tmpdir):
     outfilepath = tmpdir.join("pfile_xiyi.zarr")
     fieldset.U.data[:] = 1  # set a non-zero zonal velocity
-    fieldset.add_field(Field(name='P', data=np.zeros((2, 20)), lon=np.linspace(0, 1, 20), lat=[0, 2]))
+    fieldset.add_field(Field(name='P', data=np.zeros((3, 20)), lon=np.linspace(0, 1, 20), lat=[-2, 0, 2]))
     dt = 3600
 
     XiYiParticle = ptype[mode].add_variables([
@@ -304,26 +304,29 @@ def test_write_xiyi(fieldset, mode, tmpdir):
 
     def SampleP(particle, fieldset, time):
         if time > 5*3600:
-            tmp = fieldset.P[particle]  # noqa
+            _ = fieldset.P[particle]  # To trigger sampling of the P field
 
-    pset = ParticleSet(fieldset, pclass=XiYiParticle, lon=[0], lat=[0.2], lonlatdepth_dtype=np.float64)
+    pset = ParticleSet(fieldset, pclass=XiYiParticle, lon=[0, 0.2], lat=[0.2, 1], lonlatdepth_dtype=np.float64)
     pfile = pset.ParticleFile(name=outfilepath, outputdt=dt)
-    pset.execute([Get_XiYi, SampleP, AdvectionRK4], endtime=10*dt, dt=dt, output_file=pfile)
+    pset.execute([SampleP, Get_XiYi, AdvectionRK4], endtime=10*dt, dt=dt, output_file=pfile)
 
     ds = xr.open_zarr(outfilepath)
-    pxi0 = ds['pxi0'][:].values[0].astype(np.int32)
-    pxi1 = ds['pxi1'][:].values[0].astype(np.int32)
-    lons = ds['lon'][:].values[0]
-    pyi = ds['pyi'][:].values[0].astype(np.int32)
-    lats = ds['lat'][:].values[0]
+    pxi0 = ds['pxi0'][:].values.astype(np.int32)
+    pxi1 = ds['pxi1'][:].values.astype(np.int32)
+    lons = ds['lon'][:].values
+    pyi = ds['pyi'][:].values.astype(np.int32)
+    lats = ds['lat'][:].values
 
-    assert (pxi0[0] == 0) and (pxi0[-1] == 11)  # check that particle has moved
-    assert np.all(pxi1[:7] == 0)  # check that particle has not been sampled on grid 1 until time 6
-    assert np.all(pxi1[7:] > 0)  # check that particle has not been sampled on grid 1 after time 6
-    for xi, lon in zip(pxi0[1:], lons[1:]):
-        assert fieldset.U.grid.lon[xi] <= lon < fieldset.U.grid.lon[xi+1]
-    for yi, lat in zip(pyi[1:], lats[1:]):
-        assert fieldset.U.grid.lat[yi] <= lat < fieldset.U.grid.lat[yi+1]
+    for p in range(pyi.shape[0]):
+        assert (pxi0[p, 0] == 0) and (pxi0[p, -1] == pset[p].pxi0)  # check that particle has moved
+        assert np.all(pxi1[p, :6] == 0)  # check that particle has not been sampled on grid 1 until time 6
+        assert np.all(pxi1[p, 6:] > 0)  # check that particle has not been sampled on grid 1 after time 6
+        for xi, lon in zip(pxi0[p, 1:], lons[p, 1:]):
+            assert fieldset.U.grid.lon[xi] <= lon < fieldset.U.grid.lon[xi+1]
+        for xi, lon in zip(pxi1[p, 6:], lons[p, 6:]):
+            assert fieldset.P.grid.lon[xi] <= lon < fieldset.P.grid.lon[xi+1]
+        for yi, lat in zip(pyi[p, 1:], lats[p, 1:]):
+            assert fieldset.U.grid.lat[yi] <= lat < fieldset.U.grid.lat[yi+1]
     ds.close()
 
 
