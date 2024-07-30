@@ -318,7 +318,7 @@ html_extra_path = ["robots.txt"]
 # Custom sidebar templates, maps document names to template names.
 
 html_sidebars = {
-    "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
+    "**": ["sidebar-nav-bs"],
     "documentation/additional_examples": []
 }
 
