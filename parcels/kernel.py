@@ -170,8 +170,13 @@ class Kernel(BaseKernel):
         else:
             self.funcvars = None
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
-        self.funccode = self.funccode.replace('parcels.rng', 'rng')  # Remove parcels. prefix (see #1608)
-        self.funccode = self.funccode.replace('parcels.ParcelsRandom', 'ParcelsRandom')  # Remove parcels. prefix (see #1608)
+        self.funccode = (  # Remove parcels. prefix (see #1608)
+            self.funccode
+            .replace('parcels.rng', 'rng')
+            .replace('parcels.ParcelsRandom', 'ParcelsRandom')
+            .replace('parcels.StatusCode', 'StatusCode')
+        )
+
         # Parse AST if it is not provided explicitly
         self.py_ast = py_ast or parse(textwrap.dedent(self.funccode)).body[0]  # Dedent allows for in-lined kernel definitions
         if pyfunc is None:
