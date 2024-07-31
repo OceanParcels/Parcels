@@ -1,15 +1,15 @@
+import ast
 import functools
+import hashlib
 import inspect
 import math  # noqa
+import os
 import random  # noqa
 import re
+import sys
 import types
-from ast import FunctionDef, parse
 from copy import deepcopy
 from ctypes import byref, c_double, c_int
-from hashlib import md5
-from os import path, remove
-from sys import platform, version_info
 from time import time as ostime
 
 import _ctypes
@@ -117,7 +117,7 @@ class BaseKernel:
             field_keys = "-".join(
                 [f"{name}:{field.units.__class__.__name__}" for name, field in self.field_args.items()])
         key = self.name + self.ptype._cache_key + field_keys + ('TIME:%f' % ostime())
-        return md5(key.encode('utf-8')).hexdigest()
+        return hashlib.md5(key.encode('utf-8')).hexdigest()
 
     @staticmethod
     def fix_indentation(string):
@@ -177,7 +177,7 @@ class Kernel(BaseKernel):
             self.funcvars = None
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
         # Parse AST if it is not provided explicitly
-        self.py_ast = py_ast or parse(BaseKernel.fix_indentation(self.funccode)).body[0]
+        self.py_ast = py_ast or ast.parse(BaseKernel.fix_indentation(self.funccode)).body[0]
         if pyfunc is None:
             # Extract user context by inspecting the call stack
             stack = inspect.stack()
@@ -193,7 +193,7 @@ class Kernel(BaseKernel):
             finally:
                 del stack  # Remove cyclic references
             # Compile and generate Python function from AST
-            py_mod = parse("")
+            py_mod = ast.parse("")
             py_mod.body = [self.py_ast]
             exec(compile(py_mod, "<ast>", "exec"), user_ctx)
             self._pyfunc = user_ctx[self.funcname]
@@ -223,7 +223,7 @@ class Kernel(BaseKernel):
                             self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
-            if path.isfile(self._c_include):
+            if os.path.isfile(self._c_include):
                 with open(self._c_include) as f:
                     c_include_str = f.read()
             else:
@@ -274,7 +274,7 @@ class Kernel(BaseKernel):
             field_keys = "-".join(
                 [f"{name}:{field.units.__class__.__name__}" for name, field in self.field_args.items()])
         key = self.name + self.ptype._cache_key + field_keys + ('TIME:%f' % ostime())
-        return md5(key.encode('utf-8')).hexdigest()
+        return hashlib.md5(key.encode('utf-8')).hexdigest()
 
     def add_scipy_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
@@ -339,7 +339,7 @@ class Kernel(BaseKernel):
     def check_kernel_signature_on_version(self):
         numkernelargs = 0
         if self._pyfunc is not None:
-            if version_info[0] < 3:
+            if sys.version_info[0] < 3:
                 numkernelargs = len(inspect.getargspec(self._pyfunc).args)
             else:
                 numkernelargs = len(inspect.getfullargspec(self._pyfunc).args)
@@ -392,11 +392,11 @@ class Kernel(BaseKernel):
         if type(basename) in (list, dict, tuple, ndarray):
             src_file_or_files = ["", ] * len(basename)
             for i, src_file in enumerate(basename):
-                src_file_or_files[i] = f"{path.join(dyn_dir, src_file)}.c"
+                src_file_or_files[i] = f"{os.path.join(dyn_dir, src_file)}.c"
         else:
-            src_file_or_files = f"{path.join(dyn_dir, basename)}.c"
-        lib_file = f"{path.join(dyn_dir, lib_path)}.{'dll' if platform == 'win32' else 'so'}"
-        log_file = f"{path.join(dyn_dir, basename)}.log"
+            src_file_or_files = f"{os.path.join(dyn_dir, basename)}.c"
+        lib_file = f"{os.path.join(dyn_dir, lib_path)}.{'dll' if sys.platform == 'win32' else 'so'}"
+        log_file = f"{os.path.join(dyn_dir, basename)}.log"
         return src_file_or_files, lib_file, log_file
 
     def compile(self, compiler):
@@ -430,8 +430,8 @@ class Kernel(BaseKernel):
         funcname = self.funcname + kernel.funcname
         func_ast = None
         if self.py_ast is not None:
-            func_ast = FunctionDef(name=funcname, args=self.py_ast.args, body=self.py_ast.body + kernel.py_ast.body,
-                                   decorator_list=[], lineno=1, col_offset=0)
+            func_ast = ast.FunctionDef(name=funcname, args=self.py_ast.args, body=self.py_ast.body + kernel.py_ast.body,
+                                       decorator_list=[], lineno=1, col_offset=0)
         delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
         return kclass(self.fieldset, self.ptype, pyfunc=None,
                       funcname=funcname, funccode=self.funccode + kernel.funccode,
@@ -483,10 +483,10 @@ class Kernel(BaseKernel):
     @staticmethod
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
         if lib_file is not None:
-            if path.isfile(lib_file):  # and delete_cfiles
-                [remove(s) for s in [lib_file, ] if path is not None and path.exists(s)]
+            if os.path.isfile(lib_file):  # and delete_cfiles
+                [os.remove(s) for s in [lib_file, ] if os.path is not None and os.path.exists(s)]
             if delete_cfiles and len(all_files_array) > 0:
-                [remove(s) for s in all_files_array if path is not None and path.exists(s)]
+                [os.remove(s) for s in all_files_array if os.path is not None and os.path.exists(s)]
 
     @staticmethod
     def cleanup_unload_lib(lib):
@@ -495,7 +495,7 @@ class Kernel(BaseKernel):
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
         if lib is not None:
             try:
-                _ctypes.FreeLibrary(lib._handle) if platform == 'win32' else _ctypes.dlclose(lib._handle)
+                _ctypes.FreeLibrary(lib._handle) if sys.platform == 'win32' else _ctypes.dlclose(lib._handle)
             except:
                 pass
 

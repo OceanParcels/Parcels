@@ -1,9 +1,9 @@
+import os
 import sys
 from abc import ABC
 from copy import copy
 from datetime import date, datetime
 from datetime import timedelta as delta
-from os import path
 
 import cftime
 import numpy as np
@@ -855,7 +855,7 @@ class ParticleSet(ABC):
             if self.particledata.ptype.uses_jit:
                 self.kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.particledata.lonlatdepth_dtype else None
-                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
         if output_file:
             output_file.add_metadata('parcels_kernels', self.kernel.name)

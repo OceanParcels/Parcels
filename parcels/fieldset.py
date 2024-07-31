@@ -1,8 +1,8 @@
 import importlib.util
+import os
 import sys
 from copy import deepcopy
 from glob import glob
-from os import path
 
 import dask.array as da
 import numpy as np
@@ -304,7 +304,7 @@ class FieldSet:
             notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
             raise OSError(f"FieldSet files not found for variable {var}: {str(notfound_paths)}")
         for fp in paths:
-            if not path.exists(fp):
+            if not os.path.exists(fp):
                 raise OSError(f"FieldSet file not found: {fp}")
         return paths
 
@@ -1074,7 +1074,7 @@ class FieldSet:
         modulename: name of the function in the python file that returns a FieldSet object. Default is "create_fieldset".
         """
         # check if filename exists
-        if not path.exists(filename):
+        if not os.path.exists(filename):
             raise IOError(f"FieldSet module file {filename} does not exist")
 
         # Importing the source file directly (following https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly)

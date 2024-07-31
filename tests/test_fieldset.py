@@ -3,7 +3,6 @@ import gc
 import os
 import sys
 from datetime import timedelta as delta
-from os import path
 
 import cftime
 import dask
@@ -139,7 +138,7 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
 
 
 def test_field_from_netcdf_variables():
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
     filename = data_path + 'perlinfieldsU.nc'
     dims = {'lon': 'x', 'lat': 'y'}
 
@@ -185,7 +184,7 @@ def test_fieldset_nonstandardtime(calendar, cftime_datetime, tmpdir, filename='t
 
 @pytest.mark.parametrize('with_timestamps', [True, False])
 def test_field_from_netcdf(with_timestamps):
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
 
     filenames = {'lon': data_path + 'mask_nemo_cross_180lon.nc',
                  'lat': data_path + 'mask_nemo_cross_180lon.nc',
@@ -201,7 +200,7 @@ def test_field_from_netcdf(with_timestamps):
 
 
 def test_fieldset_from_modulefile():
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
     fieldset = FieldSet.from_modulefile(data_path + 'fieldset_nemo.py')
     assert fieldset.U.creation_log == 'from_nemo'
 
@@ -219,7 +218,7 @@ def test_fieldset_from_modulefile():
 
 
 def test_field_from_netcdf_fieldtypes():
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
 
     filenames = {'varU': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
                           'lat': data_path + 'mask_nemo_cross_180lon.nc',
@@ -240,7 +239,7 @@ def test_field_from_netcdf_fieldtypes():
 
 
 def test_fieldset_from_cgrid_interpmethod():
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
 
     filenames = {'lon': data_path + 'mask_nemo_cross_180lon.nc',
                  'lat': data_path + 'mask_nemo_cross_180lon.nc',
@@ -329,7 +328,7 @@ def test_illegal_dimensionsdict(calltype):
             dimensions['test'] = None
             FieldSet.from_data(data, dimensions)
         elif calltype == 'from_nemo':
-            fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+            fname = os.path.join(os.path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
             filenames = {'dx': fname, 'mesh_mask': fname}
             variables = {'dx': 'e1u'}
             dimensions = {'lon': 'glamu', 'lat': 'gphiu', 'test': 'test'}
@@ -500,7 +499,7 @@ def test_fieldset_celledgesizes(mesh):
 
 @pytest.mark.parametrize('dx, dy', [('e1u', 'e2u'), ('e1v', 'e2v')])
 def test_fieldset_celledgesizes_curvilinear(dx, dy):
-    fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+    fname = os.path.join(os.path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
     filenames = {'dx': fname, 'dy': fname, 'mesh_mask': fname}
     variables = {'dx': dx, 'dy': dy}
     dimensions = {'dx': {'lon': 'glamu', 'lat': 'gphiu'},
@@ -516,7 +515,7 @@ def test_fieldset_celledgesizes_curvilinear(dx, dy):
 
 
 def test_fieldset_write_curvilinear(tmpdir):
-    fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+    fname = os.path.join(os.path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
     filenames = {'dx': fname, 'mesh_mask': fname}
     variables = {'dx': 'e1u'}
     dimensions = {'lon': 'glamu', 'lat': 'gphiu'}
@@ -536,7 +535,7 @@ def test_fieldset_write_curvilinear(tmpdir):
 
 
 def test_curv_fieldset_add_periodic_halo():
-    fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+    fname = os.path.join(os.path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
     filenames = {'dx': fname, 'dy': fname, 'mesh_mask': fname}
     variables = {'dx': 'e1u', 'dy': 'e1v'}
     dimensions = {'dx': {'lon': 'glamu', 'lat': 'gphiu'},
@@ -702,8 +701,8 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
 
     process = psutil.Process(os.getpid())
     mem_0 = process.memory_info().rss
-    fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
-    fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
+    fnameU = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
+    fnameV = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
     vfiles = [fnameV, ] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
@@ -737,8 +736,8 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
 @pytest.mark.parametrize('chunksize', [False, 'auto', {'lat': ('y', 32), 'lon': ('x', 32)}, {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
 @pytest.mark.parametrize('deferLoad', [True, False])
 def test_from_netcdf_chunking(mode, time_periodic, chunksize, deferLoad):
-    fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
-    fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
+    fnameU = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
+    fnameV = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
     vfiles = [fnameV, ] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
@@ -1008,7 +1007,7 @@ def test_fieldset_from_xarray(tdim):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_frompop(mode):
-    filenames = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
+    filenames = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
     variables = {'U': 'U', 'V': 'V', 'W': 'W', 'T': 'T'}
     dimensions = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
 
@@ -1097,7 +1096,7 @@ def test_deferredload_simplefield(mode, direction, time_extrapolation, tmpdir, t
 
 def test_daskfieldfilebuffer_dimnames():
     DaskFileBuffer.add_to_dimension_name_map_global({'lat': 'nydim', 'lon': 'nxdim'})
-    fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
+    fnameU = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
     fb = DaskFileBuffer(fnameU, dimensions, indices={})
     assert ('nxdim' in fb._static_name_maps['lon']) and ('ntdim' not in fb._static_name_maps['time'])
