@@ -217,8 +217,7 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   double dphideta[4] = {xsi-1, -xsi, xsi, 1-xsi};
   double dxdxsi = 0; double dxdeta = 0;
   double dydxsi = 0; double dydeta = 0;
-  int i;
-  for(i=0; i<4; ++i){
+  for(int i=0; i<4; ++i){
     dxdxsi += px[i] *dphidxsi[i];
     dxdeta += px[i] *dphideta[i];
     dydxsi += py[i] *dphidxsi[i];
