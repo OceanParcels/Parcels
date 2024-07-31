@@ -18,7 +18,7 @@ There are two primary groups that contribute to Parcels; oceanographers who brin
 
 .. note::
 
-    The first component of this documentation is geared to those new to open source. Already familiar with GitHub and open source? Skip ahead to `"Editing parcels code" <https://www.notion.so/Parcels-Contributing-md-c8bc5a057b7f47e885f3eee82ea6fdf6?pvs=21>`_. See the panel on the right hand side for the table of contents.
+    The first component of this documentation is geared to those new to open source. Already familiar with GitHub and open source? Skip ahead to `"Editing Parcels code" <https://www.notion.so/Parcels-Contributing-md-c8bc5a057b7f47e885f3eee82ea6fdf6?pvs=21>`_. See the panel on the right hand side for the table of contents.
 
 What is open source?
 --------------------
@@ -49,23 +49,23 @@ All of these require you to make an account on GitHub, so that should be your fi
 
 If you want to suggest quick edits to the documentation, it's as easy as going to the page and clicking "Edit on GitHub" in the righthand panel. For other changes, it's a matter of looking through the `issue tracker <https://github.com/OceanParcels/parcels/issues>`_ which documents tasks that are being considered. Pay particular attention to `issues tagged with "good first issue" <https://github.com/OceanParcels/parcels/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22>`_, as these are tasks that don't require deep familiarity with the codebase. Once you've chosen an issue you would like to contribute towards, comment on it to flag your interest in working on it. This allows the community to know who's interested, and provide any guidance in its implementation (maybe the scope has changed since the issue was last updated).
 
-If you're having trouble using Parcels, feel free to create a discussion in our Discussions tab and we'll be happy to support. Want to suggest a feature, or have encountered a problem that is a result of a bug in parcels, then search for an issue in the tracker or `create a new one <https://github.com/OceanParcels/parcels/issues/new/choose>`_ with the relevant details.
+If you're having trouble using Parcels, feel free to create a discussion in our Discussions tab and we'll be happy to support. Want to suggest a feature, or have encountered a problem that is a result of a bug in Parcels, then search for an issue in the tracker or `create a new one <https://github.com/OceanParcels/parcels/issues/new/choose>`_ with the relevant details.
 
 In the `Projects panel <https://github.com/OceanParcels/parcels/projects?query=is%3Aopen>`_, you'll see the "Parcels development" project. This is used by the core development team for project management, as well as drafting up new ideas for the codebase that aren't mature enough to be issues themselves. Everything in "backlog" is not being actively worked on and is fair game for open source contributions.
 
-Editing parcels code
+Editing Parcels code
 ---------------------
 
 Development environment setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To get started contributing to parcels:
+To get started contributing to Parcels:
 
 - `fork the repo <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo#forking-a-repository>`_
 - install the developer version of Parcels following `our developer installation instructions <installation.rst#installation-for-developers>`_
     - but instead of cloning the Parcels repo, you should clone your fork
 
-Now you have a cloned repo that you have full control over, and a conda environment where Parcels is installed in an editable mode (i.e., any changes that you make to the parcels code will take effect when you use that conda environment to run Python code).
+Now you have a cloned repo that you have full control over, and a conda environment where Parcels is installed in an editable mode (i.e., any changes that you make to the Parcels code will take effect when you use that conda environment to run Python code).
 
 From there:
 
