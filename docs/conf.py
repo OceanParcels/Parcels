@@ -72,7 +72,8 @@ linkcheck_ignore = [
     r"https://www\.sciencedirect\.com/.*",  # Site doesn't allow crawling
     r"https://lxml\.de/",  # Crawler occasionally fails to establish connection
     r"https://linux\.die\.net/",  # Site doesn't allow crawling
-
+    r"https://doi\.org/10\.1029/.*",  # Site doesn't allow crawling
+    r"https://doi\.org/10\.1111/cobi\.14295",  # Site doesn't allow crawling
     # To monitor
     r"http://marine.copernicus.eu/",  # 2023-06-07 Site non-responsive
     r"https://www\.nodc\.noaa\.gov/",  # 2023-06-23 Site non-responsive
