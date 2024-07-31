@@ -32,13 +32,11 @@ _Kehl, C, PD Nooteboom, MLA Kaandorp and E van Sebille (2023) Efficiently simula
 
 See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](https://docs.oceanparcels.org/en/latest/installation.html) and [running](https://docs.oceanparcels.org/en/latest/documentation.html) the Parcels code, as well as extended [documentation](https://docs.oceanparcels.org/en/latest/reference.html) of the methods and classes.
 
-
 ### Contributors
 
 <a href="https://github.com/oceanparcels/parcels/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=oceanparcels/parcels" />
 </a>
-
 
 **All contributions are welcome! See the [contributing page](https://docs.oceanparcels.org/en/latest/contributing.html) in our documentation to see how to get involved.**
 Image made with [contrib.rocks](https://contrib.rocks).
