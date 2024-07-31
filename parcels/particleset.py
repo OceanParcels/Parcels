@@ -840,6 +840,10 @@ class ParticleSet(ABC):
         delete_cfiles : bool
             Whether to delete the C-files after compilation in JIT mode (default is True)
         """
+        # check if particleset is empty. If so, return immediately
+        if len(self) == 0:
+            return
+
         # check if pyfunc has changed since last compile. If so, recompile
         if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
             # Generate and store Kernel
