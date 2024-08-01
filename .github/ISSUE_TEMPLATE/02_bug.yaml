@@ -1,0 +1,31 @@
+name: "🐛 Bug Report"
+description: Describe a bug in the parcels codebase. For support related to your specific use case, please post in Q&A in our Discussions tab.
+labels: ["bug"]
+body:
+  - type: "input"
+    attributes:
+      label: "Parcels version"
+      description: "What version of parcels are you running? Do `print(parcels.__version__)` if you don't know."
+    validations:
+      required: true
+  - type: "textarea"
+    attributes:
+      label: "Description"
+      description: "Please describe the bug."
+    validations:
+      required: true
+  - type: "textarea"
+    attributes:
+      label: "Code sample"
+      description: "If relevant, please provide a code example where this bug is shown as well as any error message. A [minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example) is preffered as it makes it much easier for developers to identify the cause of the bug. This also allows them quickly determine whether the problem is with your code or with Parcels itself."
+      value: |
+        ```python
+        # Paste your code within this block
+        ```
+
+
+        ```text
+        # Paste your error message within this block
+        ```
+    validations:
+      required: false

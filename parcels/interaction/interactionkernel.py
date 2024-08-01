@@ -1,6 +1,6 @@
 import inspect
+import sys
 from collections import defaultdict
-from sys import version_info
 
 import numpy as np
 
@@ -93,7 +93,7 @@ class InteractionKernel(BaseKernel):
         numkernelargs = []
         if self._pyfunc is not None and isinstance(self._pyfunc, list):
             for func in self._pyfunc:
-                if version_info[0] < 3:
+                if sys.version_info[0] < 3:
                     numkernelargs.append(
                         len(inspect.getargspec(func).args)
                     )

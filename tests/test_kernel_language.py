@@ -1,6 +1,6 @@
+import os
 import random as py_random
 from contextlib import nullcontext as does_not_raise
-from os import path
 
 import numpy as np
 import pytest
@@ -356,7 +356,7 @@ def test_c_kernel(fieldset, mode, c_inc):
                  }
                  """
     else:
-        c_include = path.join(path.dirname(__file__), 'customed_header.h')
+        c_include = os.path.join(os.path.dirname(__file__), 'customed_header.h')
 
     def ckernel(particle, fieldset, time):
         func('parcels_customed_Cfunc_pointer_args', fieldset.U, particle_dlon, particle.dt)  # noqa
