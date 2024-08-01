@@ -1,5 +1,5 @@
+import os
 import sys
-from os import path
 
 import numpy as np
 import pytest
@@ -335,9 +335,9 @@ def test_execution_keep_cfiles_and_nocompilation_warnings(fieldset, delete_cfile
     logfile = pset.kernel.log_file
     del pset.kernel
     if delete_cfiles:
-        assert not path.exists(cfile)
+        assert not os.path.exists(cfile)
     else:
-        assert path.exists(cfile)
+        assert os.path.exists(cfile)
         with open(logfile) as f:
             assert 'warning' not in f.read(), 'Compilation WARNING in log file'
 

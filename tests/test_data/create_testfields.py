@@ -9,7 +9,7 @@ try:
 except:
     asizeof = None
 
-from os import path
+import os
 
 import xarray as xr
 
@@ -66,8 +66,8 @@ def generate_perlin_testfield():
         print(f"Perlin V-field requires {V.size * V.itemsize} bytes of memory.")
     fieldset = FieldSet.from_data(data, dimensions, mesh='spherical', transpose=False)
     # fieldset.write("perlinfields")  # can also be used, but then has a ghost depth dimension
-    write_simple_2Dt(fieldset.U, path.join(path.dirname(__file__), 'perlinfields'), varname='vozocrtx')
-    write_simple_2Dt(fieldset.V, path.join(path.dirname(__file__), 'perlinfields'), varname='vomecrty')
+    write_simple_2Dt(fieldset.U, os.path.join(os.path.dirname(__file__), 'perlinfields'), varname='vozocrtx')
+    write_simple_2Dt(fieldset.V, os.path.join(os.path.dirname(__file__), 'perlinfields'), varname='vomecrty')
 
 
 def write_simple_2Dt(field, filename, varname=None):

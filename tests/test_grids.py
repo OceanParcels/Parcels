@@ -1,6 +1,6 @@
 import math
+import os
 from datetime import timedelta as delta
-from os import path
 
 import numpy as np
 import pytest
@@ -359,7 +359,7 @@ def test_curvilinear_grids(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nemo_grid(mode):
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
 
     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
@@ -393,7 +393,7 @@ def test_nemo_grid(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advect_nemo(mode):
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
 
     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
@@ -510,7 +510,7 @@ def test_cgrid_uniform_3dvel(mode, vert_mode, time):
 @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1'])
 @pytest.mark.parametrize('time', [True, False])
 def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
     dim_file = xr.open_dataset(data_path + 'mask_nemo_cross_180lon.nc')
     u_file = xr.open_dataset(data_path + 'Uu_eastward_nemo_cross_180lon.nc')
     v_file = xr.open_dataset(data_path + 'Vv_eastward_nemo_cross_180lon.nc')
@@ -571,7 +571,7 @@ def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
 @pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
 @pytest.mark.parametrize('deferred_load', [True, False])
 def test_popgrid(mode, vert_discretisation, deferred_load):
-    mesh = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
+    mesh = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
     if vert_discretisation == 'zlevel':
         w_dep = 'w_dep'
     elif vert_discretisation == 'slevel':
@@ -874,9 +874,9 @@ def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
     else:
         zi = 2
     if gridindexingtype == 'mom5':
-        ufile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_u.nc')
-        vfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_v.nc')
-        wfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_wt.nc')
+        ufile = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'access-om2-01_u.nc')
+        vfile = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'access-om2-01_v.nc')
+        wfile = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'access-om2-01_wt.nc')
 
         filenames = {"U": {"lon": ufile, "lat": ufile, "depth": wfile, "data": ufile},
                      "V": {"lon": ufile, "lat": ufile, "depth": wfile, "data": vfile},
@@ -897,8 +897,8 @@ def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
         w = ds_w.wt.isel(time=0, sw_ocean=zi, yt_ocean=yi, xt_ocean=xi)
 
     elif gridindexingtype == 'pop':
-        datafname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popdata.nc')
-        coordfname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popcoordinates.nc')
+        datafname = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'popdata.nc')
+        coordfname = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'popcoordinates.nc')
         filenames = {"U": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
                      "V": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
                      "W": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname}}
