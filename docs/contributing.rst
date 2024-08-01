@@ -41,7 +41,7 @@ Your first contribution
 There are many ways that you can contribute to Parcels. You can:
 
 - Participate in discussion about Parcels, either through the `issues <https://github.com/OceanParcels/parcels/issues>`_ or `discussions <https://github.com/OceanParcels/parcels/discussions>`_ tab
-- Suggest improvements to `tutorials <documentation.rst>`_
+- Suggest improvements to `tutorials <documentation/index.rst>`_
 - Suggest improvements to `documentation <index.rst>`_
 - Write code (fix bugs, implement features, codebase improvements, etc)
 
