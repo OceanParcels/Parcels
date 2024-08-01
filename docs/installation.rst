@@ -9,7 +9,7 @@ The steps below are the installation instructions for Linux, macOS and Windows.
 
 .. _step 1 above:
 
-**Step 1:** Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/, making sure to select the Python-3 version. If you're on Linux /macOS, the following assumes that you installed Miniconda to your home directory.
+**Step 1:** Install Anaconda's Miniconda following the steps at https://docs.anaconda.com/miniconda/. If you're on Linux /macOS, the following assumes that you installed Miniconda to your home directory.
 
 **Step 2:** Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the ``base`` environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, and the nice-to-have cartopy and jupyter packages:
 
