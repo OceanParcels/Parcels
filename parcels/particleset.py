@@ -823,15 +823,15 @@ class ParticleSet(ABC):
             Length of the timestepping loop. Use instead of endtime.
             It is either a timedelta object or a positive double. (Default value = None)
         dt :
-            Timestep interval to be passed to the kernel.
+            Timestep interval (in seconds) to be passed to the kernel.
             It is either a timedelta object or a double.
-            Use a negative value for a backward-in-time simulation. (Default value = 1.)
+            Use a negative value for a backward-in-time simulation. (Default value = 1 second)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
         verbose_progress : bool
             Boolean for providing a progress bar for the kernel execution loop. (Default value = True)
         postIterationCallbacks :
-            Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
+            Optional, array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
         callbackdt :
             Optional, in conjecture with 'postIterationCallbacks', timestep interval to (latest) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks' (Default value = None)
         pyfunc_inter :
@@ -868,7 +868,7 @@ class ParticleSet(ABC):
 
         # Convert all time variables to seconds
         if isinstance(endtime, timedelta):
-            raise RuntimeError('endtime must be either a datetime or a double')
+            raise TypeError('endtime must be either a datetime or a double')
         if isinstance(endtime, datetime):
             endtime = np.datetime64(endtime)
         elif isinstance(endtime, cftime.datetime):
@@ -937,7 +937,6 @@ class ParticleSet(ABC):
         else:
             next_output = time + np.inf if dt > 0 else - np.inf
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
-        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
         if output_file:
             logger.info(f'Output files are stored in {output_file.fname}.')
@@ -946,9 +945,10 @@ class ParticleSet(ABC):
             pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
 
         tol = 1e-12
-        while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
+        while (time < endtime and dt > 0) or (time > endtime and dt < 0):
             time_at_startofloop = time
 
+            next_input = self.fieldset.computeTimeChunk(time, dt) if self.fieldset is not None else np.inf
             if dt > 0:
                 next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
             else:
@@ -963,7 +963,7 @@ class ParticleSet(ABC):
             # E.g. Normal -> Inter -> Normal -> Inter if endtime-time == 2*dt
             else:
                 cur_time = time
-                while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
+                while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0):
                     if dt > 0:
                         cur_end_time = min(cur_time+dt, next_time)
                     else:
@@ -971,12 +971,10 @@ class ParticleSet(ABC):
                     self.kernel.execute(self, endtime=cur_end_time, dt=dt)
                     self.interaction_kernel.execute(self, endtime=cur_end_time, dt=dt)
                     cur_time += dt
-                    if dt == 0:
-                        break
             # End of interaction specific code
             time = next_time
 
-            if abs(time - next_output) < tol or dt == 0:
+            if abs(time - next_output) < tol:
                 for fld in self.fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
@@ -1015,8 +1013,6 @@ class ParticleSet(ABC):
 
             if time != endtime:
                 next_input = self.fieldset.computeTimeChunk(time, dt)
-            if dt == 0:
-                break
             if verbose_progress:
                 pbar.update(abs(time - time_at_startofloop))
 
