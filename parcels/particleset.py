@@ -927,17 +927,19 @@ class ParticleSet(ABC):
             if self.repeatdt is not None:
                 interupt_dts.append(self.repeatdt)
             callbackdt = np.min(np.array(interupt_dts))
-        time = starttime
+
+        # Set up variables for first iteration
         if self.repeatdt:
-            next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
+            next_prelease = self.repeat_starttime + (abs(starttime - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
             next_prelease = np.inf if dt > 0 else - np.inf
         if output_file:
-            next_output = time + dt
+            next_output = starttime + dt
         else:
-            next_output = time + np.inf if dt > 0 else - np.inf
-        next_callback = time + callbackdt if dt > 0 else time - callbackdt
+            next_output = np.inf if dt > 0 else - np.inf
+        next_callback = starttime + callbackdt if dt > 0 else starttime - callbackdt
 
+        # Set up pbar
         if output_file:
             logger.info(f'Output files are stored in {output_file.fname}.')
 
@@ -945,6 +947,8 @@ class ParticleSet(ABC):
             pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
 
         tol = 1e-12
+        time = starttime
+
         while (time < endtime and dt > 0) or (time > endtime and dt < 0):
             time_at_startofloop = time
 
