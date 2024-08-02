@@ -14,7 +14,7 @@ void compute_ds(double F0, double F1, double r, double direction, double tol,
                 double *ds, double *B, double *delta){
   double up = F0 * (1-r) + F1 * r;
   double r_target = 0;
-  if (direction * up >=0.){
+  if (up >=0.){
     r_target = 1.;
   }
   *delta = -F0;
@@ -109,26 +109,26 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 
     bool updateCells = 0;
     if (fabs(xsi - 1) < tol){
-      if (dataU_2D[0][1][1] > 0){
+      if (dataU_2D[0][1][1]*direction > 0){
         *xi += 1;
         xsi = 0;
         updateCells = 1;
       }
     } else if (fabs(xsi) < tol){
-      if (dataU_2D[0][0][0] < 0){
+      if (dataU_2D[0][0][0]*direction < 0){
         *xi -= 1;
         xsi = 1;
         updateCells = 1;
       }
     }
     if (fabs(eta - 1) < tol){
-      if (dataV_2D[0][1][1] > 0){
+      if (dataV_2D[0][1][1]*direction > 0){
         *yi += 1;
         eta = 0;
         updateCells = 1;
       }
     } else if (fabs(eta) < tol){
-      if (dataV_2D[0][0][0] < 0){
+      if (dataV_2D[0][0][0]*direction < 0){
         *yi -= 1;
         eta = 1;
         updateCells = 1;
@@ -144,39 +144,39 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     status = getCell3D(fw, *xi, *yi, *zi, tii, dataW_3D, first_tstep_only); CHECKSTATUS(status);
     bool updateCells = 0;
     if (fabs(xsi - 1) < tol){
-      if (dataU_3D[0][1][1][1] > 0){
+      if (dataU_3D[0][1][1][1]*direction > 0){
         *xi += 1;
         xsi = 0;
         updateCells = 1;
       }
     } else if (fabs(xsi) < tol){
-      if (dataU_3D[0][0][0][0] < 0){
+      if (dataU_3D[0][0][0][0]*direction < 0){
         *xi -= 1;
         xsi = 1;
         updateCells = 1;
       }
     }
     if (fabs(eta - 1) < tol){
-      if (dataV_3D[0][1][1][1] > 0){
+      if (dataV_3D[0][1][1][1]*direction > 0){
         *yi += 1;
         eta = 0;
         updateCells = 1;
       }
     } else if (fabs(eta) < tol){
-      if (dataV_3D[0][0][0][0] < 0){
+      if (dataV_3D[0][0][0][0]*direction < 0){
         *yi -= 1;
         eta = 1;
         updateCells = 1;
       }
     }
     if (fabs(zeta - 1) < tol){
-      if (dataW_3D[0][1][1][1] > 0){
+      if (dataW_3D[0][1][1][1]*direction > 0){
         *zi += 1;
         zeta = 0;
         updateCells = 1;
       }
     } else if (fabs(zeta) < tol){
-      if (dataW_3D[0][0][0][0] < 0){
+      if (dataW_3D[0][0][0][0]*direction < 0){
         *zi -= 1;
         zeta = 1;
         updateCells = 1;

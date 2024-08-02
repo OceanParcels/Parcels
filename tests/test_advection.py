@@ -531,12 +531,11 @@ def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
     fieldset.V.interp_method = 'cgrid_velocity'
 
     x0, y0, z0 = 6.1, 6.2, 20
+    runtime = 4
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
-
     outfile_path = tmpdir.join("uniformanalytical.zarr")
     outfile = pset.ParticleFile(name=outfile_path, outputdt=1, chunks=(1, 1))
-
-    pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
+    pset.execute(AdvectionAnalytical, runtime=runtime, dt=direction,
                  output_file=outfile)
     assert np.abs(pset.lon - x0 - pset.time * u) < 1e-6
     assert np.abs(pset.lat - y0 - pset.time * v) < 1e-6
@@ -545,7 +544,7 @@ def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
 
     ds = xr.open_zarr(outfile_path)
     times = (direction*ds['time'][:]).values.astype('timedelta64[s]')[0]
-    timeref = np.arange(5).astype('timedelta64[s]')
+    timeref = np.arange(runtime+1).astype('timedelta64[s]')
     assert np.allclose(times, timeref, atol=np.timedelta64(1, 'ms'))
     lons = ds['lon'][:].values
-    assert np.allclose(lons, x0+direction*u*np.arange(5))
+    assert np.allclose(lons, x0+direction*u*np.arange(runtime+1))
