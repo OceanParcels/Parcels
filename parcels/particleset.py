@@ -838,6 +838,10 @@ class ParticleSet(ABC):
             (Default value = None)
         delete_cfiles : bool
             Whether to delete the C-files after compilation in JIT mode (default is True)
+
+        Notes
+        -----
+        Parcels interoperates between Python and (in the case of JIT mode) compiled C code. ParticleSet.execute() acts as the main entrypoint for simulations, and provides the simulation time-loop. This method encapsulates logic deciding when control flow is handled to C (for kernel execution), and Python (for writing output files, reading in fields for new timesteps, for adding new particles to the simulation domain, for stopping the simulation, and for executing custom functions `postIterationCallbacks` provided by the user).
         """
         # check if particleset is empty. If so, return immediately
         if len(self) == 0:
@@ -928,6 +932,13 @@ class ParticleSet(ABC):
                 interupt_dts.append(self.repeatdt)
             callbackdt = np.min(np.array(interupt_dts))
 
+        # Set up pbar
+        if output_file:
+            logger.info(f'Output files are stored in {output_file.fname}.')
+
+        if verbose_progress:
+            pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
+
         # Set up variables for first iteration
         if self.repeatdt:
             next_prelease = self.repeat_starttime + (abs(starttime - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
@@ -936,15 +947,8 @@ class ParticleSet(ABC):
         if output_file:
             next_output = starttime + dt
         else:
-            next_output = np.inf if dt > 0 else - np.inf
-        next_callback = starttime + callbackdt if dt > 0 else starttime - callbackdt
-
-        # Set up pbar
-        if output_file:
-            logger.info(f'Output files are stored in {output_file.fname}.')
-
-        if verbose_progress:
-            pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
+            next_output = np.inf * np.sign(dt)
+        next_callback = starttime * np.sign(dt)
 
         tol = 1e-12
         time = starttime
@@ -953,6 +957,8 @@ class ParticleSet(ABC):
             time_at_startofloop = time
 
             next_input = self.fieldset.computeTimeChunk(time, dt) if self.fieldset is not None else np.inf
+
+            # Define next_time (the timestamp when the execution needs to be handed back to python)
             if dt > 0:
                 next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
             else:
