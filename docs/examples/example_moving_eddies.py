@@ -1,7 +1,7 @@
 import gc
 import math
 from argparse import ArgumentParser
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -145,13 +145,13 @@ def moving_eddies_example(
         print(f"Initial particle positions:\n{pset}")
 
     # Execute for 1 week, with 1 hour timesteps and hourly output
-    runtime = delta(days=7)
+    runtime = timedelta(days=7)
     print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
     pset.execute(
         method,
         runtime=runtime,
-        dt=delta(hours=1),
-        output_file=pset.ParticleFile(name=outfile, outputdt=delta(hours=1)),
+        dt=timedelta(hours=1),
+        output_file=pset.ParticleFile(name=outfile, outputdt=timedelta(hours=1)),
     )
 
     if verbose:
@@ -174,9 +174,9 @@ def test_moving_eddies_fwdbwd(mode, mesh, tmpdir, npart=2):
     )
 
     # Execte for 14 days, with 30sec timesteps and hourly output
-    runtime = delta(days=1)
-    dt = delta(minutes=5)
-    outputdt = delta(hours=1)
+    runtime = timedelta(days=1)
+    dt = timedelta(minutes=5)
+    outputdt = timedelta(hours=1)
     print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
     outfile = tmpdir.join("EddyParticlefwd")
     pset.execute(
@@ -284,7 +284,7 @@ def test_periodic_and_computeTimeChunk_eddies(mode):
         particle_dlat -= 3 * particle.dt / 1e5  # noqa
 
     kernels = pset.Kernel(parcels.AdvectionRK4) + slowlySouthWestward + periodicBC
-    pset.execute(kernels, runtime=delta(days=6), dt=delta(hours=1))
+    pset.execute(kernels, runtime=timedelta(days=6), dt=timedelta(hours=1))
 
 
 def main(args=None):

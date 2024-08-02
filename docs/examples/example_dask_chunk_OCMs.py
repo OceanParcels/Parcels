@@ -1,5 +1,5 @@
 import math
-from datetime import timedelta as delta
+from datetime import timedelta
 from glob import glob
 
 import dask
@@ -29,7 +29,7 @@ def compute_nemo_particle_advection(fieldset, mode):
 
     pset = parcels.ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
     kernels = pset.Kernel(parcels.AdvectionRK4) + periodicBC
-    pset.execute(kernels, runtime=delta(days=4), dt=delta(hours=6))
+    pset.execute(kernels, runtime=timedelta(days=4), dt=timedelta(hours=6))
     return pset
 
 
@@ -205,7 +205,9 @@ def test_globcurrent_2D(mode, chunk_mode):
     )
     try:
         pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
-        pset.execute(parcels.AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+        pset.execute(
+            parcels.AdvectionRK4, runtime=timedelta(days=1), dt=timedelta(minutes=5)
+        )
     except DaskChunkingError:
         # we removed the failsafe, so now if all chunksize dimensions are incorrect, there is nothing left to chunk,
         # which raises an error saying so. This is the expected behaviour
@@ -261,7 +263,7 @@ def test_pop(mode, chunk_mode):
     lonp = 70.0 * np.ones(npart)
     latp = [i for i in -45.0 + (-0.25 + np.random.rand(npart) * 2.0 * 0.25)]
     pset = parcels.ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
-    pset.execute(parcels.AdvectionRK4, runtime=delta(days=90), dt=delta(days=2))
+    pset.execute(parcels.AdvectionRK4, runtime=timedelta(days=90), dt=timedelta(days=2))
     # POP sample file dimensions: k=21, j=60, i=60
     assert len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)
     assert len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk)
@@ -364,7 +366,9 @@ def test_swash(mode, chunk_mode):
         fieldset, ptype[mode], lon=lonp, lat=latp, depth=depthp
     )
     pset.execute(
-        parcels.AdvectionRK4, runtime=delta(seconds=0.2), dt=delta(seconds=0.005)
+        parcels.AdvectionRK4,
+        runtime=timedelta(seconds=0.2),
+        dt=timedelta(seconds=0.005),
     )
     # SWASH sample file dimensions: t=1, z=7, z_u=6, y=21, x=51
     if chunk_mode not in [
@@ -442,7 +446,9 @@ def test_ofam_3D(mode, chunk_mode):
     )
 
     pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=180, lat=10, depth=2.5)
-    pset.execute(parcels.AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5))
+    pset.execute(
+        parcels.AdvectionRK4, runtime=timedelta(days=10), dt=timedelta(minutes=5)
+    )
     # OFAM sample file dimensions: time=UNLIMITED, st_ocean=1, st_edges_ocean=52, lat=601, lon=2001
     assert len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)
     if chunk_mode is False:
@@ -535,7 +541,9 @@ def test_mitgcm(mode, chunk_mode, using_add_field):
     pset = parcels.ParticleSet.from_list(
         fieldset=fieldset, pclass=ptype[mode], lon=5e5, lat=5e5
     )
-    pset.execute(parcels.AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+    pset.execute(
+        parcels.AdvectionRK4, runtime=timedelta(days=1), dt=timedelta(minutes=5)
+    )
     # MITgcm sample file dimensions: time=10, XG=400, YG=200
     if chunk_mode != "specific_different":
         assert len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)
@@ -744,7 +752,9 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
         filenames, variables, dimensions, chunksize=chs
     )
     pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
-    pset.execute(parcels.AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+    pset.execute(
+        parcels.AdvectionRK4, runtime=timedelta(days=1), dt=timedelta(minutes=5)
+    )
     # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]

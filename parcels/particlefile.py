@@ -1,7 +1,7 @@
 """Module controlling the writing of ParticleSets to Zarr file."""
 import os
 from abc import ABC
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import xarray as xr
@@ -61,7 +61,7 @@ class ParticleFile(ABC):
 
     def __init__(self, name, particleset, outputdt=np.inf, chunks=None, create_new_zarrfile=True):
 
-        self.outputdt = outputdt.total_seconds() if isinstance(outputdt, delta) else outputdt
+        self.outputdt = outputdt.total_seconds() if isinstance(outputdt, timedelta) else outputdt
         self.chunks = chunks
         self.particleset = particleset
         self.parcels_mesh = 'spherical'
@@ -202,7 +202,7 @@ class ParticleFile(ABC):
         time :
             Time at which to write ParticleSet
         """
-        time = time.total_seconds() if isinstance(time, delta) else time
+        time = time.total_seconds() if isinstance(time, timedelta) else time
 
         if pset.particledata._ncount == 0:
             logger.warning("ParticleSet is empty on writing as array at time %g" % time)

@@ -1,6 +1,6 @@
 import math
 import os
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -408,7 +408,7 @@ def test_advect_nemo(mode):
     lonp = 175.5
     latp = 81.5
     pset = ParticleSet.from_list(fieldset, ptype[mode], lon=[lonp], lat=[latp])
-    pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
+    pset.execute(AdvectionRK4, runtime=timedelta(days=2), dt=timedelta(hours=6))
     assert abs(pset.lat[0] - latp) < 1e-3
 
 
@@ -633,7 +633,7 @@ def test_cgrid_indexing(mode, gridindexingtype, coordtype):
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
     lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
     dx, dy = lon[2] - lon[1], lat[2] - lat[1]
-    omega = 2 * np.pi / delta(days=1).total_seconds()
+    omega = 2 * np.pi / timedelta(days=1).total_seconds()
 
     index_signs = {'nemo': -1, 'mitgcm': 1}
     isign = index_signs[gridindexingtype]
@@ -703,7 +703,7 @@ def test_cgrid_indexing(mode, gridindexingtype, coordtype):
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=4e3, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4,
-                 runtime=delta(hours=14), dt=delta(minutes=5))
+                 runtime=timedelta(hours=14), dt=timedelta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
@@ -719,7 +719,7 @@ def test_cgrid_indexing_3D(mode, gridindexingtype, withtime):
     lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
     depth = np.linspace(-c / 2, c / 2, zdim, dtype=np.float32)
     dx, dz = lon[1] - lon[0], depth[1] - depth[0]
-    omega = 2 * np.pi / delta(days=1).total_seconds()
+    omega = 2 * np.pi / timedelta(days=1).total_seconds()
     if withtime:
         time = np.linspace(0, 24*60*60, 10)
         dimensions = {"lon": lon, "lat": lat, "depth": depth, "time": time}
@@ -781,7 +781,7 @@ def test_cgrid_indexing_3D(mode, gridindexingtype, withtime):
     pset = ParticleSet(fieldset, pclass=MyParticle, depth=4e3, lon=0, lat=0, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
-                 runtime=delta(hours=14), dt=delta(minutes=5))
+                 runtime=timedelta(hours=14), dt=timedelta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
@@ -797,7 +797,7 @@ def test_bgrid_indexing_3D(mode, gridindexingtype, withtime):
     lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
     depth = np.linspace(-c / 2, c / 2, zdim, dtype=np.float32)
     dx, dz = lon[1] - lon[0], depth[1] - depth[0]
-    omega = 2 * np.pi / delta(days=1).total_seconds()
+    omega = 2 * np.pi / timedelta(days=1).total_seconds()
     if withtime:
         time = np.linspace(0, 24*60*60, 10)
         dimensions = {"lon": lon, "lat": lat, "depth": depth, "time": time}
@@ -860,7 +860,7 @@ def test_bgrid_indexing_3D(mode, gridindexingtype, withtime):
     pset = ParticleSet(fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
-                 runtime=delta(hours=14), dt=delta(minutes=5))
+                 runtime=timedelta(hours=14), dt=timedelta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 

@@ -1,6 +1,6 @@
 import math
 from argparse import ArgumentParser
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -121,9 +121,9 @@ def stommel_example(
     ParticleClass = parcels.JITParticle if mode == "jit" else parcels.ScipyParticle
 
     # Execute for 600 days, with 1-hour timesteps and 5-day output
-    runtime = delta(days=600)
-    dt = delta(hours=1)
-    outputdt = delta(days=5)
+    runtime = timedelta(days=600)
+    dt = timedelta(hours=1)
+    outputdt = timedelta(days=5)
 
     extra_vars = [
         parcels.Variable("p", dtype=np.float32, initial=0.0),

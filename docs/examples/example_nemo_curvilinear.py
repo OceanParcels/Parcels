@@ -1,7 +1,7 @@
 """Example script that runs a set of particles in a NEMO curvilinear grid."""
 
 from argparse import ArgumentParser
-from datetime import timedelta as delta
+from datetime import timedelta
 from glob import glob
 
 import numpy as np
@@ -42,19 +42,19 @@ def run_nemo_curvilinear(mode, outfile, advtype="RK4"):
     lonp = 30 * np.ones(npart)
     if advtype == "RK4":
         latp = np.linspace(-70, 88, npart)
-        runtime = delta(days=160)
+        runtime = timedelta(days=160)
     else:
         latp = np.linspace(-70, 70, npart)
-        runtime = delta(days=15)
+        runtime = timedelta(days=15)
 
     def periodicBC(particle, fieldSet, time):
         if particle.lon > 180:
             particle_dlon -= 360  # noqa
 
     pset = parcels.ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
-    pfile = parcels.ParticleFile(outfile, pset, outputdt=delta(days=1))
+    pfile = parcels.ParticleFile(outfile, pset, outputdt=timedelta(days=1))
     kernels = pset.Kernel(advection[advtype]) + periodicBC
-    pset.execute(kernels, runtime=runtime, dt=delta(hours=6), output_file=pfile)
+    pset.execute(kernels, runtime=runtime, dt=timedelta(hours=6), output_file=pfile)
     assert np.allclose(pset.lat - latp, 0, atol=2e-2)
 
 

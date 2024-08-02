@@ -1,4 +1,4 @@
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -10,8 +10,10 @@ ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 # Define some constants.
 u_g = 0.04  # Geostrophic current
 u_0 = 0.3  # Initial speed in x dirrection. v_0 = 0
-gamma = 1.0 / delta(days=2.89).total_seconds()  # Dissipitave effects due to viscousity.
-gamma_g = 1.0 / delta(days=28.9).total_seconds()
+gamma = (
+    1.0 / timedelta(days=2.89).total_seconds()
+)  # Dissipitave effects due to viscousity.
+gamma_g = 1.0 / timedelta(days=28.9).total_seconds()
 f = 1.0e-4  # Coriolis parameter.
 start_lon = [10000.0]  # Define the start longitude and latitude for the particle.
 start_lat = [10000.0]
@@ -75,9 +77,9 @@ def decaying_moving_example(
         fieldset, pclass=ptype[mode], lon=start_lon, lat=start_lat
     )
 
-    dt = delta(minutes=5)
-    runtime = delta(days=2)
-    outputdt = delta(hours=1)
+    dt = timedelta(minutes=5)
+    runtime = timedelta(days=2)
+    outputdt = timedelta(hours=1)
 
     pset.execute(
         method,

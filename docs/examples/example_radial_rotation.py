@@ -1,5 +1,5 @@
 import math
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -22,7 +22,7 @@ def radial_rotation_fieldset(
     U = np.zeros((ydim, xdim), dtype=np.float32)
     V = np.zeros((ydim, xdim), dtype=np.float32)
 
-    T = delta(days=1)
+    T = timedelta(days=1)
     omega = 2 * np.pi / T.total_seconds()  # Define the rotational period as 1 day.
 
     for i in range(lon.size):
@@ -64,9 +64,9 @@ def rotation_example(fieldset, outfile, mode="jit", method=parcels.AdvectionRK4)
         finish=(30.0, 50.0),
     )  # One particle in centre, one on periphery of Field.
 
-    runtime = delta(hours=17)
-    dt = delta(minutes=5)
-    outputdt = delta(hours=1)
+    runtime = timedelta(hours=17)
+    dt = timedelta(minutes=5)
+    outputdt = timedelta(hours=1)
 
     pset.execute(
         method,

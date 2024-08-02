@@ -1,7 +1,7 @@
 import gc
 import math  # NOQA
 from argparse import ArgumentParser
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -161,11 +161,13 @@ def peninsula_example(
         print(f"Initial particle positions:\n{pset}")
 
     # Advect the particles for 24h
-    time = delta(hours=24)
-    dt = delta(minutes=5)
+    time = timedelta(hours=24)
+    dt = timedelta(minutes=5)
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
-    out = pset.ParticleFile(name=outfile, outputdt=delta(hours=1)) if output else None
+    out = (
+        pset.ParticleFile(name=outfile, outputdt=timedelta(hours=1)) if output else None
+    )
     print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
     pset.execute(k_adv + k_p, runtime=time, dt=dt, output_file=out)
 

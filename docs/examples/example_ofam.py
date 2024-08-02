@@ -1,5 +1,5 @@
 import gc
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -46,11 +46,11 @@ def test_ofam_fieldset_fillvalues(use_xarray):
     assert fieldset.V.data[0, 0, 150] == 0
 
 
-@pytest.mark.parametrize("dt", [delta(minutes=-5), delta(minutes=5)])
+@pytest.mark.parametrize("dt", [timedelta(minutes=-5), timedelta(minutes=5)])
 def test_ofam_xarray_vs_netcdf(dt):
     fieldsetNetcdf = set_ofam_fieldset(use_xarray=False)
     fieldsetxarray = set_ofam_fieldset(use_xarray=True)
-    lonstart, latstart, runtime = (180, 10, delta(days=7))
+    lonstart, latstart, runtime = (180, 10, timedelta(days=7))
 
     psetN = parcels.ParticleSet(
         fieldsetNetcdf, pclass=parcels.JITParticle, lon=lonstart, lat=latstart
@@ -80,7 +80,9 @@ def test_ofam_particles(mode, use_xarray):
         fieldset, pclass=ptype[mode], lon=lonstart, lat=latstart, depth=depstart
     )
 
-    pset.execute(parcels.AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5))
+    pset.execute(
+        parcels.AdvectionRK4, runtime=timedelta(days=10), dt=timedelta(minutes=5)
+    )
 
     assert abs(pset[0].lon - 173) < 1
     assert abs(pset[0].lat - 11) < 1

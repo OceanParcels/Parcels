@@ -1,4 +1,4 @@
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import xarray as xr
@@ -44,12 +44,12 @@ def run_mitgcm_zonally_reentrant(mode):
     pfile = parcels.ParticleFile(
         "MIT_particles_" + str(mode) + ".zarr",
         pset,
-        outputdt=delta(days=1),
+        outputdt=timedelta(days=1),
         chunks=(len(pset), 1),
     )
     kernels = parcels.AdvectionRK4 + pset.Kernel(periodicBC)
     pset.execute(
-        kernels, runtime=delta(days=5), dt=delta(minutes=30), output_file=pfile
+        kernels, runtime=timedelta(days=5), dt=timedelta(minutes=30), output_file=pfile
     )
 
 

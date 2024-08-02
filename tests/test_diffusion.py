@@ -1,4 +1,4 @@
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -41,11 +41,11 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
     fieldset.add_constant_field("Kh_meridional", kh_meridional, mesh=mesh)
 
     npart = 1000
-    runtime = delta(days=1)
+    runtime = timedelta(days=1)
 
     ParcelsRandom.seed(1234)
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart))
-    pset.execute(pset.Kernel(DiffusionUniformKh), runtime=runtime, dt=delta(hours=1))
+    pset.execute(pset.Kernel(DiffusionUniformKh), runtime=runtime, dt=timedelta(hours=1))
 
     expected_std_lon = np.sqrt(2*kh_zonal*mesh_conversion**2*runtime.total_seconds())
     expected_std_lat = np.sqrt(2*kh_meridional*mesh_conversion**2*runtime.total_seconds())
@@ -79,11 +79,11 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=10
     fieldset.add_constant('dres', fieldset.U.lon[1]-fieldset.U.lon[0])
 
     npart = 100
-    runtime = delta(days=1)
+    runtime = timedelta(days=1)
 
     ParcelsRandom.seed(1636)
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart))
-    pset.execute(pset.Kernel(kernel), runtime=runtime, dt=delta(hours=1))
+    pset.execute(pset.Kernel(kernel), runtime=runtime, dt=timedelta(hours=1))
 
     lats = pset.lat
     lons = pset.lon

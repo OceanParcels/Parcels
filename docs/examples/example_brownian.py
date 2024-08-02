@@ -1,4 +1,4 @@
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -32,14 +32,14 @@ def test_brownian_example(mode, mesh, npart=3000):
     # Set random seed
     parcels.ParcelsRandom.seed(123456)
 
-    runtime = delta(days=1)
+    runtime = timedelta(days=1)
 
     parcels.ParcelsRandom.seed(1234)
     pset = parcels.ParticleSet(
         fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart)
     )
     pset.execute(
-        pset.Kernel(parcels.DiffusionUniformKh), runtime=runtime, dt=delta(hours=1)
+        pset.Kernel(parcels.DiffusionUniformKh), runtime=runtime, dt=timedelta(hours=1)
     )
 
     expected_std_x = np.sqrt(2 * kh_zonal * runtime.total_seconds())

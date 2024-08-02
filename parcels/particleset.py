@@ -2,8 +2,7 @@ import os
 import sys
 from abc import ABC
 from copy import copy
-from datetime import date, datetime
-from datetime import timedelta as delta
+from datetime import date, datetime, timedelta
 
 import cftime
 import numpy as np
@@ -187,7 +186,7 @@ class ParticleSet(ABC):
                 assert lon.size == kwargs[kwvar].size, (
                     f"{kwvar} and positions (lon, lat, depth) don't have the same lengths.")
 
-        self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
+        self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, timedelta) else repeatdt
         if self.repeatdt:
             if self.repeatdt <= 0:
                 raise 'Repeatdt should be > 0'
@@ -868,7 +867,7 @@ class ParticleSet(ABC):
                 self.interaction_kernel = self.InteractionKernel(pyfunc_inter, delete_cfiles=delete_cfiles)
 
         # Convert all time variables to seconds
-        if isinstance(endtime, delta):
+        if isinstance(endtime, timedelta):
             raise RuntimeError('endtime must be either a datetime or a double')
         if isinstance(endtime, datetime):
             endtime = np.datetime64(endtime)
@@ -878,18 +877,18 @@ class ParticleSet(ABC):
             if self.time_origin.calendar is None:
                 raise NotImplementedError('If fieldset.time_origin is not a date, execution endtime must be a double')
             endtime = self.time_origin.reltime(endtime)
-        if isinstance(runtime, delta):
+        if isinstance(runtime, timedelta):
             runtime = runtime.total_seconds()
-        if isinstance(dt, delta):
+        if isinstance(dt, timedelta):
             dt = dt.total_seconds()
         if abs(dt) <= 1e-6:
             raise ValueError('Time step dt is too small')
         if (dt * 1e6) % 1 != 0:
             raise ValueError('Output interval should not have finer precision than 1e-6 s')
         outputdt = output_file.outputdt if output_file else np.inf
-        if isinstance(outputdt, delta):
+        if isinstance(outputdt, timedelta):
             outputdt = outputdt.total_seconds()
-        if isinstance(callbackdt, delta):
+        if isinstance(callbackdt, timedelta):
             callbackdt = callbackdt.total_seconds()
 
         assert runtime is None or runtime >= 0, 'runtime must be positive'
