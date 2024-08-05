@@ -359,9 +359,7 @@ def test_compilers():
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_explicit_ParcelsRandom(fieldset, mode):
-    """
-    Testing `from parcels import ParcelsRandom` in kernel code
-    """
+    """Testing `from parcels import ParcelsRandom` in kernel code"""
     from parcels import ParcelsRandom
 
     def nudge_kernel(particle, fieldset, time):
@@ -375,9 +373,7 @@ def test_explicit_ParcelsRandom(fieldset, mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_parcels_dot_ParcelsRandom(fieldset, mode):
-    """
-    Testing `parcels.ParcelsRandom` in kernel code
-    """
+    """Testing `parcels.ParcelsRandom` in kernel code"""
 
     def nudge_kernel(particle, fieldset, time):
         particle_dlat += parcels.ParcelsRandom.uniform(2, 3) # noqa
@@ -389,9 +385,7 @@ def test_parcels_dot_ParcelsRandom(fieldset, mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_parcels_dot_rng(fieldset, mode):
-    """
-    Testing `parcels.rng` in kernel code.
-    """
+    """Testing `parcels.rng` in kernel code."""
 
     def nudge_kernel(particle, fieldset, time):
         dlat = parcels.rng.uniform(2, 3)
@@ -404,9 +398,7 @@ def test_parcels_dot_rng(fieldset, mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_custom_ParcelsRandom_alias(fieldset, mode):
-    """
-    Testing aliasing ParcelsRandom to another name.
-    """
+    """Testing aliasing ParcelsRandom to another name."""
     from parcels import ParcelsRandom as my_custom_name
 
     def nudge_kernel(particle, fieldset, time):

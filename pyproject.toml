@@ -50,20 +50,30 @@ parcels = ["parcels/include/*"]
 write_to = "parcels/_version_setup.py"
 local_scheme = "no-local-version"
 
-[tool.isort]
-profile = "black"
-skip_gitignore = true
-
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
 
-[tool.pydocstyle]
-ignore = [
-    # Numpy docstring format http://www.pydocstyle.org/en/latest/error_codes.html#default-conventions
-    "D107", "D203", "D212", "D213", "D402", "D413", "D415", "D416", "D417",
+[tool.ruff]
+target-version = "py38"
 
-    # TODO: once vvv is fixed, replace `ignore = ` section with `convention = numpy`
-    # IGNORE FOR NOW (requires more work)
+[tool.ruff.lint]
+exclude = ["*.ipynb"]
+
+select = [
+    "D",  # pydocstyle
+    "E",  # Error
+    "F",  # pyflakes
+    "I",  # isort
+    # "UP", # pyupgrade
+]
+
+ignore = [
+    # line too long (82 > 79 characters)
+    "E501",
+    # ‘from module import *’ used; unable to detect undefined names
+    "F403",
+
+    # TODO: ignore for now (requires more work). Remove ignore once fixed
     # Missing docstring in public module
     "D100",
     # Missing docstring in public class
@@ -84,4 +94,84 @@ ignore = [
     "D404",
     # 1 blank line required between summary line and description (requires writing of summaries)
     "D205",
+    # do not use bare except, specify exception instead
+    "E722",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.format]
+# List of files to ignore formatting (ordered by ascending line count)
+exclude = [
+  "parcels/interaction/__init__.py",
+  "parcels/compilation/__init__.py",
+  "parcels/application_kernels/__init__.py",
+  "parcels/tools/__init__.py",
+  "parcels/_version.py",
+  "tests/test_converters.py",
+  "parcels/__init__.py",
+  "parcels/interaction/neighborsearch/bruteforce.py",
+  "parcels/interaction/neighborsearch/kdtreeflat.py",
+  "tests/test_data/fieldset_nemo.py",
+  "tests/test_examples.py",
+  "parcels/interaction/neighborsearch/__init__.py",
+  "tests/test_data/fieldset_nemo_error.py",
+  "parcels/interaction/neighborsearch/distanceutils.py",
+  "parcels/tools/global_statics.py",
+  "tests/test_mpirun.py",
+  "parcels/tools/loggers.py",
+  "tests/test_tools.py",
+  "docs/examples/example_brownian.py",
+  "docs/examples/example_mitgcm.py",
+  "parcels/gridset.py",
+  "parcels/tools/timer.py",
+  "docs/examples/example_ofam.py",
+  "parcels/application_kernels/TEOSseawaterdensity.py",
+  "tests/test_particles.py",
+  "docs/examples/example_radial_rotation.py",
+  "parcels/application_kernels/interaction.py",
+  "parcels/application_kernels/advectiondiffusion.py",
+  "docs/examples/example_decaying_moving_eddy.py",
+  "parcels/tools/statuscodes.py",
+  "tests/test_data/create_testfields.py",
+  "docs/examples/example_nemo_curvilinear.py",
+  "tests/test_diffusion.py",
+  "parcels/tools/exampledata_utils.py",
+  "parcels/tools/interpolation_utils.py",
+  "parcels/interaction/neighborsearch/hashflat.py",
+  "parcels/interaction/neighborsearch/hashspherical.py",
+  "parcels/interaction/neighborsearch/basehash.py",
+  "parcels/rng.py",
+  "parcels/interaction/neighborsearch/base.py",
+  "parcels/interaction/interactionkernel.py",
+  "parcels/tools/converters.py",
+  "parcels/application_kernels/advection.py",
+  "parcels/particlefile.py",
+  "docs/examples/example_stommel.py",
+  "parcels/compilation/codecompiler.py",
+  "parcels/particle.py",
+  "tests/test_interaction.py",
+  "docs/examples/example_peninsula.py",
+  "tests/test_particlefile.py",
+  "docs/examples/example_globcurrent.py",
+  "parcels/application_kernels/EOSseawaterproperties.py",
+  "docs/examples/example_moving_eddies.py",
+  "tests/test_kernel_execution.py",
+  "tests/test_particlesets.py",
+  "parcels/particledata.py",
+  "tests/test_kernel_language.py",
+  "docs/conf.py",
+  "parcels/grid.py",
+  "tests/test_advection.py",
+  "parcels/kernel.py",
+  "parcels/fieldfilebuffer.py",
+  "docs/examples/example_dask_chunk_OCMs.py",
+  "tests/test_fieldset_sampling.py",
+  "parcels/compilation/codegenerator.py",
+  "tests/test_grids.py",
+  "parcels/particleset.py",
+  "tests/test_fieldset.py",
+  "parcels/fieldset.py",
+  "parcels/field.py",
 ]
