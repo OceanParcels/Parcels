@@ -15,7 +15,8 @@ repos:
       - id: ruff
         args: [ --fix ]
       - id: ruff
-        args: [--select, I, --fix] # only lint isort for Jupyter notebooks
+        name: ruff (isort jupyter)
+        args: [--select, I, --fix]
         types_or: [ jupyter ]
       - id: ruff-format
         types_or: [ python, jupyter ]

@@ -22,13 +22,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos, ubuntu, windows]
-        include:
-          - os: macos
-            os-short: osx
-          - os: ubuntu
-            os-short: linux
-          - os: windows
-            os-short: win
     steps:
       - name: Checkout
         uses: actions/checkout@v3
