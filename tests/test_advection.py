@@ -1,5 +1,5 @@
 import math
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -74,7 +74,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
     pset2D = ParticleSet(fieldset2D, pclass=ptype[mode],
                          lon=np.zeros(npart) + 20.,
                          lat=np.linspace(0, 80, npart))
-    pset2D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
+    pset2D.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
     assert (np.diff(pset2D.lon) > 1.e-4).all()
 
     dimensions['depth'] = depth
@@ -83,7 +83,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
                          lon=np.zeros(npart) + 20.,
                          lat=np.linspace(0, 80, npart),
                          depth=np.zeros(npart) + 10.)
-    pset3D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
+    pset3D.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
     assert (np.diff(pset3D.lon) > 1.e-4).all()
 
 
@@ -99,7 +99,7 @@ def test_advection_meridional(lon, lat, mode, npart=10):
                        lon=np.linspace(-60, 60, npart),
                        lat=np.linspace(0, 30, npart))
     delta_lat = np.diff(pset.lat)
-    pset.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
     assert np.allclose(np.diff(pset.lat), delta_lat, rtol=1.e-4)
 
 
@@ -119,8 +119,8 @@ def test_advection_3D(mode, npart=11):
                        lon=np.zeros(npart),
                        lat=np.zeros(npart) + 1e2,
                        depth=np.linspace(0, 1, npart))
-    time = delta(hours=2).total_seconds()
-    pset.execute(AdvectionRK4, runtime=time, dt=delta(seconds=30))
+    time = timedelta(hours=2).total_seconds()
+    pset.execute(AdvectionRK4, runtime=time, dt=timedelta(seconds=30))
     assert np.allclose(pset.depth*pset.time, pset.lon, atol=1.e-1)
 
 
@@ -175,12 +175,12 @@ def test_advection_RK45(lon, lat, mode, rk45_tol, npart=10):
     fieldset = FieldSet.from_data(data2D, dimensions, mesh='spherical', transpose=True)
     fieldset.add_constant('RK45_tol', rk45_tol)
 
-    dt = delta(seconds=30).total_seconds()
+    dt = timedelta(seconds=30).total_seconds()
     RK45Particles = ptype[mode].add_variable('next_dt', dtype=np.float32, initial=dt)
     pset = ParticleSet(fieldset, pclass=RK45Particles,
                        lon=np.zeros(npart) + 20.,
                        lat=np.linspace(0, 80, npart))
-    pset.execute(AdvectionRK45, runtime=delta(hours=2), dt=dt)
+    pset.execute(AdvectionRK45, runtime=timedelta(hours=2), dt=dt)
     assert (np.diff(pset.lon) > 1.e-4).all()
     assert np.isclose(fieldset.RK45_tol, rk45_tol/(1852*60))
     print(fieldset.RK45_tol)
@@ -207,7 +207,7 @@ def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
     assert len(fieldset.U.lon) == xdim + 2 * halosize
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
     assert abs(pset.lon[0] - 0.15) < 0.1
 
 
@@ -218,7 +218,7 @@ def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
     assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
     assert abs(pset.lat[0] - 0.15) < 0.1
 
 
@@ -232,7 +232,7 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
     assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1]-fieldset.U.lon[0], rtol=0.001)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
     assert abs(pset.lon[0] - 0.05) < 0.1
     assert abs(pset.lat[0] - 0.15) < 0.1
 
@@ -287,7 +287,7 @@ def truth_stationary(x_0, y_0, t):
 
 
 @pytest.fixture
-def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
+def fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     """Generate a FieldSet encapsulating the flow field of a stationary eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
@@ -322,8 +322,8 @@ def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npa
         fieldset.add_constant('dres', 0.1)
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(12500, 12500, npart)
-    dt = delta(minutes=3).total_seconds()
-    endtime = delta(hours=6).total_seconds()
+    dt = timedelta(minutes=3).total_seconds()
+    endtime = timedelta(hours=6).total_seconds()
 
     RK45Particles = ptype[mode].add_variable('next_dt', dtype=np.float32, initial=dt)
 
@@ -342,8 +342,8 @@ def test_stationary_eddy_vertical(mode, npart=1):
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(10000, 20000, npart)
     depth = np.linspace(12500, 12500, npart)
-    endtime = delta(hours=6).total_seconds()
-    dt = delta(minutes=3).total_seconds()
+    endtime = timedelta(hours=6).total_seconds()
+    dt = timedelta(minutes=3).total_seconds()
 
     xdim = ydim = 100
     lon_data = np.linspace(0, 25000, xdim, dtype=np.float32)
@@ -385,7 +385,7 @@ def truth_moving(x_0, y_0, t):
 
 
 @pytest.fixture
-def fieldset_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
+def fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     """Generate a FieldSet encapsulating the flow field of a moving eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
@@ -415,8 +415,8 @@ def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField, npart=1):
         fieldset.add_constant('dres', 0.1)
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(12500, 12500, npart)
-    dt = delta(minutes=3).total_seconds()
-    endtime = delta(hours=6).total_seconds()
+    dt = timedelta(minutes=3).total_seconds()
+    endtime = timedelta(hours=6).total_seconds()
 
     RK45Particles = ptype[mode].add_variable('next_dt', dtype=np.float32, initial=dt)
 
@@ -441,7 +441,7 @@ def truth_decaying(x_0, y_0, t):
 
 
 @pytest.fixture
-def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
+def fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     """Generate a FieldSet encapsulating the flow field of a decaying eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
@@ -480,8 +480,8 @@ def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1
         fieldset.add_constant('dres', 0.1)
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(12500, 12500, npart)
-    dt = delta(minutes=3).total_seconds()
-    endtime = delta(hours=6).total_seconds()
+    dt = timedelta(minutes=3).total_seconds()
+    endtime = timedelta(hours=6).total_seconds()
 
     RK45Particles = ptype[mode].add_variable('next_dt', dtype=np.float32, initial=dt)
 

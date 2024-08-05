@@ -2,7 +2,7 @@ import datetime
 import gc
 import os
 import sys
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import cftime
 import dask
@@ -720,7 +720,7 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
     mem_0 = process.memory_info().rss
     mem_exhausted = False
     try:
-        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=dt, runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
+        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=dt, runtime=timedelta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=timedelta(hours=12))
     except MemoryError:
         mem_exhausted = True
     mem_steps_np = np.array(perflog.memory_steps)
@@ -770,9 +770,9 @@ def test_timestamps(datetype, tmpdir):
     fieldset2.U.data[0, :, :] = 0.
     fieldset2.write(tmpdir.join('file2'))
 
-    fieldset3 = FieldSet.from_parcels(tmpdir.join('file*'), time_periodic=delta(days=14))
+    fieldset3 = FieldSet.from_parcels(tmpdir.join('file*'), time_periodic=timedelta(days=14))
     timestamps = [dims1['time'], dims2['time']]
-    fieldset4 = FieldSet.from_parcels(tmpdir.join('file*'), timestamps=timestamps, time_periodic=delta(days=14))
+    fieldset4 = FieldSet.from_parcels(tmpdir.join('file*'), timestamps=timestamps, time_periodic=timedelta(days=14))
     assert np.allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
 
     for d in [0, 8, 10, 13]:
@@ -842,7 +842,7 @@ def test_periodic(mode, use_xarray, time_periodic, dt_sign):
     ])
 
     pset = ParticleSet.from_list(fieldset, pclass=MyParticle, lon=[0.5], lat=[0.5], depth=[0.5])
-    pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp), runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
+    pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp), runtime=timedelta(hours=51), dt=timedelta(hours=dt_sign*1))
 
     if time_periodic is not False:
         t = pset.time[0]
@@ -882,7 +882,7 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='te
     assert fieldset.U.creation_log == 'from_parcels'
     pset = ParticleSet.from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
                                  time=[datetime.datetime(2018, 4, 20, 1)])
-    pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
+    pset.execute(AdvectionRK4_3D, runtime=timedelta(hours=4), dt=timedelta(hours=1))
 
 
 @pytest.mark.parametrize('zdim', [2, 8])

@@ -5,8 +5,8 @@ import inspect
 import math  # noqa
 import os
 import random  # noqa
-import re
 import sys
+import textwrap
 import types
 from copy import deepcopy
 from ctypes import byref, c_double, c_int
@@ -23,6 +23,7 @@ except ModuleNotFoundError:
     MPI = None
 
 import parcels.rng as ParcelsRandom  # noqa
+from parcels import rng  # noqa
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
     AdvectionRK4_3D,
@@ -119,15 +120,6 @@ class BaseKernel:
         key = self.name + self.ptype._cache_key + field_keys + ('TIME:%f' % ostime())
         return hashlib.md5(key.encode('utf-8')).hexdigest()
 
-    @staticmethod
-    def fix_indentation(string):
-        """Fix indentation to allow in-lined kernel definitions."""
-        lines = string.split('\n')
-        indent = re.compile(r"^(\s+)").match(lines[0])
-        if indent:
-            lines = [line.replace(indent.groups()[0], '', 1) for line in lines]
-        return "\n".join(lines)
-
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""
         bool_indices = pset.particledata.state == StatusCode.Delete
@@ -176,8 +168,15 @@ class Kernel(BaseKernel):
         else:
             self.funcvars = None
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
+        self.funccode = (  # Remove parcels. prefix (see #1608)
+            self.funccode
+            .replace('parcels.rng', 'rng')
+            .replace('parcels.ParcelsRandom', 'ParcelsRandom')
+            .replace('parcels.StatusCode', 'StatusCode')
+        )
+
         # Parse AST if it is not provided explicitly
-        self.py_ast = py_ast or ast.parse(BaseKernel.fix_indentation(self.funccode)).body[0]
+        self.py_ast = py_ast or ast.parse(textwrap.dedent(self.funccode)).body[0]  # Dedent allows for in-lined kernel definitions
         if pyfunc is None:
             # Extract user context by inspecting the call stack
             stack = inspect.stack()
@@ -185,6 +184,7 @@ class Kernel(BaseKernel):
                 user_ctx = stack[-1][0].f_globals
                 user_ctx['math'] = globals()['math']
                 user_ctx['ParcelsRandom'] = globals()['ParcelsRandom']
+                user_ctx['rng'] = globals()['rng']
                 user_ctx['random'] = globals()['random']
                 user_ctx['StatusCode'] = globals()['StatusCode']
             except:

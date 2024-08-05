@@ -238,7 +238,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = StatusCodeNode(math, ccode='')
         elif node.id == 'math':
             node = MathNode(math, ccode='')
-        elif node.id == 'ParcelsRandom':
+        elif node.id in ['ParcelsRandom', 'rng']:
             node = RandomNode(math, ccode='')
         elif node.id == 'print':
             node = PrintNode()

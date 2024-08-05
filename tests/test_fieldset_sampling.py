@@ -1,4 +1,4 @@
-from datetime import timedelta as delta
+from datetime import timedelta
 from math import cos, pi
 
 import numpy as np
@@ -484,9 +484,9 @@ def test_meridionalflow_spherical(mode, xdim=100, ydim=200):
 
     lonstart = [0, 45]
     latstart = [0, 45]
-    runtime = delta(hours=24)
+    runtime = timedelta(hours=24)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lonstart, lat=latstart)
-    pset.execute(pset.Kernel(AdvectionRK4), runtime=runtime, dt=delta(hours=1))
+    pset.execute(pset.Kernel(AdvectionRK4), runtime=runtime, dt=timedelta(hours=1))
 
     assert pset.lat[0] - (latstart[0] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4
     assert pset.lon[0] - lonstart[0] < 1e-4
@@ -513,10 +513,10 @@ def test_zonalflow_spherical(mode, k_sample_p, xdim=100, ydim=200):
 
     lonstart = [0, 45]
     latstart = [0, 45]
-    runtime = delta(hours=24)
+    runtime = timedelta(hours=24)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p,
-                 runtime=runtime, dt=delta(hours=1))
+                 runtime=runtime, dt=timedelta(hours=1))
 
     assert pset.lat[0] - latstart[0] < 1e-4
     assert pset.lon[0] - (lonstart[0] + runtime.total_seconds() * maxvel / 1852 / 60

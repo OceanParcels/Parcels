@@ -10,3 +10,5 @@ ignore =
     E501,
     # ‘from module import *’ used; unable to detect undefined names
     F403,
+    # incompatability with Black
+    E203

@@ -317,7 +317,11 @@ html_extra_path = ["robots.txt"]
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-# html_sidebars = {}
+
+html_sidebars = {
+    "**": ["sidebar-nav-bs"],
+    "documentation/additional_examples": []
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
