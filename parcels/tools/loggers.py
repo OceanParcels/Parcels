@@ -1,8 +1,9 @@
 """Script to create a `logger` for Parcels."""
+
 import logging
 import sys
 
-__all__ = ['logger', 'XarrayDecodedFilter']
+__all__ = ["logger", "XarrayDecodedFilter"]
 
 warning_once_level = 25
 info_once_level = 26
@@ -53,4 +54,4 @@ class XarrayDecodedFilter(logging.Filter):
     """Filters the warning_once from fieldfilebuffer when cf_decoding fails."""
 
     def filter(self, record):
-        return 'Filling values might be wrongly parsed' not in record.getMessage()
+        return "Filling values might be wrongly parsed" not in record.getMessage()
