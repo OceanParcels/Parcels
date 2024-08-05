@@ -10,7 +10,7 @@ repos:
         types: [text]
         files: \.(json|ipynb)$
   - repo: https://github.com/pycqa/flake8
-    rev: "7.1.0"
+    rev: "7.1.1"
     hooks:
       - id: flake8
   - repo: https://github.com/psf/black-pre-commit-mirror
@@ -19,7 +19,7 @@ repos:
       - id: black
         files: docs/examples
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.8.5
+    rev: 1.8.7
     hooks:
       - id: nbqa-black
       - id: nbqa-check-ast
