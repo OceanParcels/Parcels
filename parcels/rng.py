@@ -1,9 +1,9 @@
+import _ctypes
 import os
 import sys
 import uuid
 from ctypes import c_float, c_int
 
-import _ctypes
 import numpy.ctypeslib as npct
 
 from parcels.compilation.codecompiler import GNUCompiler

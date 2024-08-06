@@ -12,7 +12,6 @@ ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 def radial_rotation_fieldset(
     xdim=200, ydim=200
 ):  # Define 2D flat, square fieldset for testing purposes.
-
     lon = np.linspace(0, 60, xdim, dtype=np.float32)
     lat = np.linspace(0, 60, ydim, dtype=np.float32)
 
@@ -27,7 +26,6 @@ def radial_rotation_fieldset(
 
     for i in range(lon.size):
         for j in range(lat.size):
-
             r = np.sqrt(
                 (lon[i] - x0) ** 2 + (lat[j] - y0) ** 2
             )  # Define radial displacement.
@@ -46,7 +44,6 @@ def radial_rotation_fieldset(
 
 
 def true_values(age):  # Calculate the expected values for particle 2 at the endtime.
-
     x = 20 * math.sin(2 * np.pi * age / (24.0 * 60.0**2)) + 30.0
     y = 20 * math.cos(2 * np.pi * age / (24.0 * 60.0**2)) + 30.0
 
@@ -54,7 +51,6 @@ def true_values(age):  # Calculate the expected values for particle 2 at the end
 
 
 def rotation_example(fieldset, outfile, mode="jit", method=parcels.AdvectionRK4):
-
     npart = 2  # Test two particles on the rotating fieldset.
     pset = parcels.ParticleSet.from_line(
         fieldset,
