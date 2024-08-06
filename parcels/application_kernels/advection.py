@@ -46,6 +46,46 @@ def AdvectionRK4_3D(particle, fieldset, time):
     particle_ddepth += (w1 + 2*w2 + 2*w3 + w4) / 6. * particle.dt  # noqa
 
 
+def AdvectionRK4_3DCroco(particle, fieldset, time):
+    """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
+    This kernel assumes the vertical velocity is the 'w' field from CROCO output and works on sigma-layers.
+    """
+
+    sig_dep = particle.depth / fieldset.h[0, 0, particle.lat, particle.lon]
+
+    (u1, v1) = fieldset.UV[time, sig_dep, particle.lat, particle.lon, particle]
+    lon1 = particle.lon + u1*.5*particle.dt
+    lat1 = particle.lat + v1*.5*particle.dt
+    w1 = fieldset.W[time, sig_dep, particle.lat, particle.lon, particle]*sig_dep
+    sig_dep1 = sig_dep + w1/fieldset.h[0, 0, particle.lat, particle.lon]*.5*particle.dt
+    ddep1 = sig_dep1 * fieldset.h[0, 0, lat1, lon1] - particle.depth
+
+    (u2, v2) = fieldset.UV[time + .5 * particle.dt, sig_dep1, lat1, lon1, particle]
+    lon2 = particle.lon + u2*.5*particle.dt
+    lat2 = particle.lat + v2*.5*particle.dt
+    w2 = fieldset.W[time + .5 * particle.dt, sig_dep1, lat1, lon1, particle]*sig_dep1
+    sig_dep2 = sig_dep + w2/fieldset.h[0, 0, particle.lat, particle.lon]*.5*particle.dt
+    ddep2 = sig_dep2 * fieldset.h[0, 0, lat2, lon2] - particle.depth
+
+    (u3, v3) = fieldset.UV[time + .5 * particle.dt, sig_dep2, lat2, lon2, particle]
+    lon3 = particle.lon + u3*particle.dt
+    lat3 = particle.lat + v3*particle.dt
+    w3 = fieldset.W[time + .5 * particle.dt, sig_dep2, lat2, lon2, particle]*sig_dep2
+    sig_dep3 = sig_dep + w3/fieldset.h[0, 0, particle.lat, particle.lon]*particle.dt
+    ddep3 = sig_dep3 * fieldset.h[0, 0, lat3, lon3] - particle.depth
+
+    (u4, v4) = fieldset.UV[time + particle.dt, sig_dep3, lat3, lon3, particle]
+    lon4 = particle.lon + u4*particle.dt
+    lat4 = particle.lat + v4*particle.dt
+    w4 = fieldset.W[time + particle.dt, sig_dep3, lat3, lon3, particle]*sig_dep3
+    sig_dep4 = sig_dep + w4/fieldset.h[0, 0, particle.lat, particle.lon]*particle.dt
+    ddep4 = sig_dep4 * fieldset.h[0, 0, lat4, lon4] - particle.depth
+
+    particle_dlon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt  # noqa
+    particle_dlat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt  # noqa
+    particle_ddepth += (ddep1*2 + 2*ddep2*2 + 2*ddep3 + ddep4) / 6.  # noqa
+
+
 def AdvectionEE(particle, fieldset, time):
     """Advection of particles using Explicit Euler (aka Euler Forward) integration.
 
