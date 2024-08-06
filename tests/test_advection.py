@@ -1,4 +1,5 @@
 import math
+import os
 from datetime import timedelta
 
 import numpy as np
@@ -184,6 +185,22 @@ def test_advection_RK45(lon, lat, mode, rk45_tol, npart=10):
     assert (np.diff(pset.lon) > 1.e-4).all()
     assert np.isclose(fieldset.RK45_tol, rk45_tol/(1852*60))
     print(fieldset.RK45_tol)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advection_3DCROCO(mode, npart=10):
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
+    fieldset = FieldSet.from_modulefile(data_path + 'fieldset_CROCO3D.py')
+    print(fieldset.U.creation_log)
+    assert fieldset.U.creation_log == 'from_croco'
+
+    # X, Z = np.meshgrid([40e3, 80e3, 120e3], [-10 -250, -400, -850, -1400, -1550])
+    X, Z = np.meshgrid([40e3], [-130])
+    Y = np.ones(X.size) * 100e3
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=X, lat=Y, depth=Z)
+
+    pset.execute([AdvectionRK4_3D], runtime=1e4, dt=100)
+    assert np.allclose(pset.depth, Z.flatten(), atol=5)  # TODO lower this atol
 
 
 def periodicfields(xdim, ydim, uvel, vvel):

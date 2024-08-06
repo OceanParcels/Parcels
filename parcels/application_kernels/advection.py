@@ -4,7 +4,7 @@ import math
 from parcels.tools.statuscodes import StatusCode
 
 __all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D',
-           'AdvectionAnalytical']
+           'AdvectionAnalytical', 'AdvectionRK4_3D_CROCO']
 
 
 def AdvectionRK4(particle, fieldset, time):
@@ -46,7 +46,7 @@ def AdvectionRK4_3D(particle, fieldset, time):
     particle_ddepth += (w1 + 2*w2 + 2*w3 + w4) / 6. * particle.dt  # noqa
 
 
-def AdvectionRK4_3DCroco(particle, fieldset, time):
+def AdvectionRK4_3D_CROCO(particle, fieldset, time):
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
     This kernel assumes the vertical velocity is the 'w' field from CROCO output and works on sigma-layers.
     """

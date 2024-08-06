@@ -505,7 +505,7 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
       (interp_method == BGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)) {
     // adjust the normalised coordinate for flux-based interpolation methods
     if ((interp_method == CGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)) {
-      if ((gridindexingtype == NEMO)   || (gridindexingtype == MOM5) || (gridindexingtype == POP)) {
+      if ((gridindexingtype == NEMO) || (gridindexingtype == MOM5) || (gridindexingtype == POP) || (gridindexingtype == CROCO)) {
         // velocity is on the northeast of a tracer cell
         xsi = 1;
         eta = 1;
@@ -666,7 +666,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
     status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gtype, ti[igrid], time, t0, t1, CGRID_VELOCITY, gridindexingtype); CHECKSTATUS(status);
     if (grid->zdim==1){
       float data2D_U[2][2][2], data2D_V[2][2][2];
-      if (gridindexingtype == NEMO) {
+      if ((gridindexingtype == NEMO)  || (gridindexingtype == CROCO)){
         status = getCell2D(U, xi[igrid], yi[igrid], ti[igrid], data2D_U, 0); CHECKSTATUS(status);
         status = getCell2D(V, xi[igrid], yi[igrid], ti[igrid], data2D_V, 0); CHECKSTATUS(status);
       }
@@ -679,7 +679,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
 
     } else {
       float data3D_U[2][2][2][2], data3D_V[2][2][2][2];
-      if (gridindexingtype == NEMO) {
+      if ((gridindexingtype == NEMO)  || (gridindexingtype == CROCO)){
         status = getCell3D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_U, 0); CHECKSTATUS(status);
         status = getCell3D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_V, 0); CHECKSTATUS(status);
       }
@@ -698,7 +698,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
     status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gtype, ti[igrid], t0, t0, t0+1, CGRID_VELOCITY, gridindexingtype); CHECKSTATUS(status);
     if (grid->zdim==1){
       float data2D_U[2][2][2], data2D_V[2][2][2];
-      if (gridindexingtype == NEMO) {
+      if ((gridindexingtype == NEMO)  || (gridindexingtype == CROCO)){
         status = getCell2D(U, xi[igrid], yi[igrid], ti[igrid], data2D_U, 1); CHECKSTATUS(status);
         status = getCell2D(V, xi[igrid], yi[igrid], ti[igrid], data2D_V, 1); CHECKSTATUS(status);
       }
@@ -710,7 +710,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(type_coord x, type_coor
     }
     else{
       float data3D_U[2][2][2][2], data3D_V[2][2][2][2];
-      if (gridindexingtype == NEMO) {
+      if ((gridindexingtype == NEMO)  || (gridindexingtype == CROCO)){
         status = getCell3D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_U, 1); CHECKSTATUS(status);
         status = getCell3D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D_V, 1); CHECKSTATUS(status);
       }

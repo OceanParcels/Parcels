@@ -26,7 +26,7 @@ typedef enum
 
 typedef enum
   {
-    NEMO = 0, MITGCM = 1, MOM5 = 2, POP = 3
+    NEMO = 0, MITGCM = 1, MOM5 = 2, POP = 3, CROCO = 4
   } GridIndexingType;
 
 typedef struct
