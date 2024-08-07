@@ -50,7 +50,6 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
     This kernel assumes the vertical velocity is the 'w' field from CROCO output and works on sigma-layers.
     """
-
     sig_dep = particle.depth / fieldset.h[0, 0, particle.lat, particle.lon]
 
     (u1, v1) = fieldset.UV[time, sig_dep, particle.lat, particle.lon, particle]
