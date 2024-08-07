@@ -105,9 +105,9 @@ static inline StatusCode search_indices_vertical_z(type_coord z, int zdim, float
       *zeta = z / zvals[0];
       return SUCCESS;
     }
-    if ((z > zvals[-1]) && (gridindexingtype == CROCO)){
-      *zi = -2;
-      *zeta = 0;
+    if ((z > zvals[zdim-1]) && (gridindexingtype == CROCO)){
+      *zi = zdim-2;
+      *zeta = 1;
       return SUCCESS;
     }
     if (z < zvals[0]) {return ERRORTHROUGHSURFACE;}

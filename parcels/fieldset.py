@@ -590,7 +590,9 @@ class FieldSet:
             kwargs['creation_log'] = 'from_croco'
         if kwargs.pop('gridindexingtype', 'croco') != 'croco':
             raise ValueError("gridindexingtype must be 'croco' in FieldSet.from_croco(). Use FieldSet.from_c_grid_dataset otherwise")
-        if 'h' not in variables:
+
+        dimsU = dimensions['U'] if 'U' in dimensions else dimensions
+        if ('depth' in dimsU) and ('h' not in variables):
             raise ValueError("FieldSet.from_croco() requires a field 'h' for the bathymetry")
 
         interp_method = {}

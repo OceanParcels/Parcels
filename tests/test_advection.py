@@ -191,16 +191,33 @@ def test_advection_RK45(lon, lat, mode, rk45_tol, npart=10):
 def test_advection_3DCROCO(mode, npart=10):
     data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
     fieldset = FieldSet.from_modulefile(data_path + 'fieldset_CROCO3D.py')
-    print(fieldset.U.creation_log)
     assert fieldset.U.creation_log == 'from_croco'
 
-    # X, Z = np.meshgrid([40e3, 80e3, 120e3], [-10 -250, -400, -850, -1400, -1550])
-    X, Z = np.meshgrid([40e3], [-130])
+    runtime = 1e4
+    X, Z = np.meshgrid([40e3, 80e3, 120e3], [-10, -130])
     Y = np.ones(X.size) * 100e3
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=X, lat=Y, depth=Z)
 
-    pset.execute([AdvectionRK4_3D], runtime=1e4, dt=100)
+    pset.execute([AdvectionRK4_3D], runtime=runtime, dt=100)
     assert np.allclose(pset.depth, Z.flatten(), atol=5)  # TODO lower this atol
+    assert np.allclose(pset.lon_nextloop, [x+runtime for x in X.flatten()], atol=1e-3)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advection_2DCROCO(mode, npart=10):
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
+    fieldset = FieldSet.from_modulefile(data_path + 'fieldset_CROCO2D.py')
+    assert fieldset.U.creation_log == 'from_croco'
+
+    runtime = 1e4
+    X = np.array([40e3, 80e3, 120e3])
+    Y = np.ones(X.size) * 100e3
+    Z = np.zeros(X.size)
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=X, lat=Y, depth=Z)
+
+    pset.execute([AdvectionRK4], runtime=runtime, dt=100)
+    assert np.allclose(pset.depth, Z.flatten(), atol=1e-3)
+    assert np.allclose(pset.lon_nextloop, [x+runtime for x in X], atol=1e-3)
 
 
 def periodicfields(xdim, ydim, uvel, vvel):
