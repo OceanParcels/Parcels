@@ -724,6 +724,9 @@ class Field:
                 else:
                     raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
             elif z > grid.depth[-1]:
+                # In case of CROCO, allow particles in last (uppermost) layer using depth[-1]
+                if self.gridindexingtype in ["croco"] and z < 0:
+                    return (-2, 1)
                 raise FieldOutOfBoundError(0, 0, z, field=self)
             depth_indices = grid.depth <= z
             if z >= grid.depth[-1]:
