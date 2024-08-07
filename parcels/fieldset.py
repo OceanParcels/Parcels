@@ -369,7 +369,7 @@ class FieldSet:
             Method for interpolation. Options are 'linear' (default), 'nearest',
             'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
         gridindexingtype : str
-            The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
+            The type of gridindexing. Either 'nemo' (default), 'mitgcm', 'mom5', 'pop', or 'croco' are supported.
             See also the Grid indexing documentation on oceanparcels.org
         chunksize :
             size of the chunks in dask loading. Default is None (no chunking). Can be None or False (no chunking),
@@ -675,7 +675,7 @@ class FieldSet:
             Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
             Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
         gridindexingtype : str
-            The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo()
+            The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo(), 'mitgcm' in FieldSet.from_mitgcm() or 'croco' in FieldSet.from_croco().
             See also the Grid indexing documentation on oceanparcels.org (Default value = 'nemo')
         chunksize :
             size of the chunks in dask loading. (Default value = None)

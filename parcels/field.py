@@ -349,7 +349,7 @@ class Field:
             that case Parcels deals with a better memory management during particle set execution.
             deferred_load=False is however sometimes necessary for plotting the fields.
         gridindexingtype : str
-            The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
+            The type of gridindexing. Either 'nemo' (default), 'mitgcm', 'mom5', 'pop', or 'croco' are supported.
             See also the Grid indexing documentation on oceanparcels.org
         chunksize :
             size of the chunks in dask loading
@@ -409,6 +409,7 @@ class Field:
 
         netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         netcdf_decodewarning = kwargs.pop('netcdf_decodewarning', True)
+        gridindexingtype = kwargs.get('gridindexingtype', 'nemo')
 
         indices = {} if indices is None else indices.copy()
         for ind in indices:
@@ -431,7 +432,8 @@ class Field:
         _grid_fb_class = NetcdfFileBuffer
 
         with _grid_fb_class(lonlat_filename, dimensions, indices, netcdf_engine,
-                            netcdf_decodewarning=netcdf_decodewarning) as filebuffer:
+                            netcdf_decodewarning=netcdf_decodewarning,
+                            gridindexingtype=gridindexingtype) as filebuffer:
             lon, lat = filebuffer.lonlat
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
@@ -440,7 +442,8 @@ class Field:
 
         if 'depth' in dimensions:
             with _grid_fb_class(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method,
-                                netcdf_decodewarning=netcdf_decodewarning) as filebuffer:
+                                netcdf_decodewarning=netcdf_decodewarning,
+                                gridindexingtype=gridindexingtype) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 if dimensions['depth'] == 'not_yet_set':
                     depth = filebuffer.depth_dimensions

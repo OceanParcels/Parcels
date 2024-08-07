@@ -13,11 +13,6 @@ def create_fieldset(indices=None):
         "W": {"lon": "x_rho", "lat": "y_rho", "depth": "s_w", "time": "time"},
         "h": {"lon": "x_rho", "lat": "y_rho"},
     }
-    indices = {
-        "lon": range(61),
-        "lat": range(51),
-        "depth": range(10),
-    }  # TODO make this work under-the-hood in Parcels
     fieldset = parcels.FieldSet.from_croco(
         file,
         variables,
