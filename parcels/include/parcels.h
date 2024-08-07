@@ -1236,6 +1236,8 @@ static inline StatusCode temporal_interpolationUVW(type_coord x, type_coord y, t
   status = temporal_interpolationUV(x, y, z, time, U, V, xi, yi, zi, ti, valueU, valueV, interp_method, gridindexingtype); CHECKSTATUS(status);
   if (interp_method == BGRID_VELOCITY)
     interp_method = BGRID_W_VELOCITY;
+  if (gridindexingtype == CROCO)  // Linear vertical interpolation for CROCO
+    interp_method = LINEAR;
   status = temporal_interpolation(x, y, z, time, W, xi, yi, zi, ti, valueW, interp_method, gridindexingtype); CHECKSTATUS(status);
   return SUCCESS;
 }
