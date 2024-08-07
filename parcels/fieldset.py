@@ -599,6 +599,8 @@ class FieldSet:
                 interp_method[v] = 'cgrid_velocity'
             elif v in ['W', 'h']:
                 interp_method[v] = 'linear'
+            else:
+                interp_method[v] = tracer_interp_method
 
         fieldset = cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                    allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
