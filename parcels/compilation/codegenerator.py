@@ -441,6 +441,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
+        self.ccode.body.insert(0, c.Value("int", "parcels_interp_state"))
         if len(funcvars) > 0:
             for f in funcvars:
                 self.ccode.body.insert(0, c.Statement(f"type_coord {f} = 0"))
@@ -559,7 +560,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
                     self.visit(node.func)
                     rhs = f"{node.func.ccode}({ccode_args})"
                     if parcels_customed_Cfunc:
-                        node.ccode = str(c.Block([c.Assign("particles->state[pnum]", rhs),
+                        node.ccode = str(c.Block([c.Assign("parcels_interp_state", rhs),
+                                                  c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
                                                   c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")]))
                     else:
                         node.ccode = rhs
@@ -788,7 +790,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
         ccode_eval = node.field.obj.ccode_eval(node.var, *args)
-        stmts = [c.Assign("particles->state[pnum]", ccode_eval)]
+        stmts = [c.Assign("parcels_interp_state", ccode_eval),
+                 c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)")]
 
         if node.convert:
             ccode_conv = node.field.obj.ccode_convert(*args)
@@ -814,7 +817,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             ccode_conv3 = node.field.obj.W.ccode_convert(*args)
             statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
         conv_stat = c.Block(statements)
-        node.ccode = c.Block([c.Assign("particles->state[pnum]", ccode_eval),
+        node.ccode = c.Block([c.Assign("parcels_interp_state", ccode_eval),
+                              c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
                               conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
 
     def visit_NestedFieldEvalNode(self, node):
@@ -826,9 +830,10 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             ccode_eval = fld.ccode_eval(node.var, *args)
             ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
-            cstat += [c.Assign("particles->state[pnum]", ccode_eval),
+            cstat += [c.Assign("parcels_interp_state", ccode_eval),
+                      c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
                       conv_stat,
-                      c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
+                      c.If("parcels_interp_state != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
         cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
@@ -849,7 +854,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             if fld.vector_type == '3D':
                 ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
-            cstat += [c.Assign("particles->state[pnum]", ccode_eval),
+            cstat += [c.Assign("parcels_interp_state", ccode_eval),
+                      c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
                       c.Block(statements),
                       c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
         cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
