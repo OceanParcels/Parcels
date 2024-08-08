@@ -562,7 +562,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
                     if parcels_customed_Cfunc:
                         node.ccode = str(c.Block([c.Assign("parcels_interp_state", rhs),
                                                   c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
-                                                  c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")]))
+                                                  c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")]))
                     else:
                         node.ccode = rhs
             except:
@@ -798,7 +798,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             stmts += [conv_stat]
 
-        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
+        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")])
 
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
@@ -819,7 +819,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         conv_stat = c.Block(statements)
         node.ccode = c.Block([c.Assign("parcels_interp_state", ccode_eval),
                               c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
-                              conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
+                              conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")])
 
     def visit_NestedFieldEvalNode(self, node):
         self.visit(node.fields)
@@ -833,8 +833,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             cstat += [c.Assign("parcels_interp_state", ccode_eval),
                       c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
                       conv_stat,
-                      c.If("parcels_interp_state != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
+                      c.If("parcels_interp_state != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
     def visit_NestedVectorFieldEvalNode(self, node):
@@ -857,8 +857,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             cstat += [c.Assign("parcels_interp_state", ccode_eval),
                       c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
                       c.Block(statements),
-                      c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
+                      c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
     def visit_Print(self, node):
