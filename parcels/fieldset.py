@@ -217,6 +217,10 @@ class FieldSet:
                 f.fieldset = self
 
     def add_UVfield(self):
+        if self.U.gridindexingtype == 'croco' and hasattr(self, 'H'):
+            H = self.H
+        else:
+            H = None
         if not hasattr(self, 'UV') and hasattr(self, 'U') and hasattr(self, 'V'):
             if isinstance(self.U, NestedField):
                 self.add_vector_field(NestedField('UV', self.U, self.V))
@@ -224,9 +228,9 @@ class FieldSet:
                 self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
             if isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
+                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))  # TODO also support nested CROCO fields?
             else:
-                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
+                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W, H=H))
 
     def check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
@@ -592,14 +596,14 @@ class FieldSet:
             raise ValueError("gridindexingtype must be 'croco' in FieldSet.from_croco(). Use FieldSet.from_c_grid_dataset otherwise")
 
         dimsU = dimensions['U'] if 'U' in dimensions else dimensions
-        if ('depth' in dimsU) and ('h' not in variables):
-            raise ValueError("FieldSet.from_croco() requires a field 'h' for the bathymetry")
+        if ('depth' in dimsU) and ('H' not in variables):
+            raise ValueError("FieldSet.from_croco() requires a field 'H' for the bathymetry")
 
         interp_method = {}
         for v in variables:
             if v in ['U', 'V']:
                 interp_method[v] = 'cgrid_velocity'
-            elif v in ['W', 'h']:
+            elif v in ['W', 'H']:
                 interp_method[v] = 'linear'
             else:
                 interp_method[v] = tracer_interp_method

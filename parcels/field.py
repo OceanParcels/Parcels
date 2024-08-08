@@ -1511,13 +1511,16 @@ class VectorField:
         field defining the meridional component
     W : parcels.field.Field
         field defining the vertical component (default: None)
+    H : parcels.field.Field
+        field defining the depth of the bathymetry for Sigma-layer models like CROCO (default: None)
     """
 
-    def __init__(self, name, U, V, W=None):
+    def __init__(self, name, U, V, W=None, H=None):
         self.name = name
         self.U = U
         self.V = V
         self.W = W
+        self.H = H
         self.vector_type = '3D' if W else '2D'
         self.gridindexingtype = U.gridindexingtype
         if self.U.interp_method == 'cgrid_velocity':
@@ -1746,6 +1749,8 @@ class VectorField:
         if self.U.grid.gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
             (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
         else:
+            if self.gridindexingtype == 'croco':  # TODO also for other fields (but not H!)
+                z = z/self.H.eval(0, 0, y, x, particle=particle, applyConversion=False)
             (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
