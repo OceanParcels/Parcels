@@ -1513,17 +1513,14 @@ class VectorField:
         field defining the meridional component
     W : parcels.field.Field
         field defining the vertical component (default: None)
-    H : parcels.field.Field
-        field defining the depth of the bathymetry for Sigma-layer models like CROCO (default: None)
     """
 
-    def __init__(self, name, U, V, W=None, H=None):
+    def __init__(self, name, U, V, W=None):
         self.name = name
         self.U = U
         self.V = V
         self.W = W
-        self.H = H
-        if self.H and self.W:
+        if self.U.gridindexingtype == 'croco' and self.W:
             self.vector_type = '3DSigma'
         elif self.W:
             self.vector_type = '3D'

@@ -217,17 +217,6 @@ class FieldSet:
                 f.fieldset = self
 
     def add_UVfield(self):
-        if hasattr(self, 'U'):
-            if isinstance(self.U, NestedField):
-                gridindexingtype = self.U[0].gridindexingtype
-            else:
-                gridindexingtype = self.U.gridindexingtype
-        else:
-            gridindexingtype = None
-        if gridindexingtype == 'croco' and hasattr(self, 'H'):
-            H = self.H
-        else:
-            H = None
         if not hasattr(self, 'UV') and hasattr(self, 'U') and hasattr(self, 'V'):
             if isinstance(self.U, NestedField):
                 self.add_vector_field(NestedField('UV', self.U, self.V))
@@ -235,9 +224,9 @@ class FieldSet:
                 self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
             if isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))  # TODO also support nested CROCO fields?
+                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
             else:
-                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W, H=H))
+                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
     def check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
