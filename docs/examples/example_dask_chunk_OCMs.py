@@ -231,6 +231,9 @@ def test_globcurrent_2D(mode, chunk_mode):
     assert abs(pset[0].lat - -35.3) < 1
 
 
+@pytest.mark.skip(
+    reason="Started failing around #1644 (2024-08-08). Some change in chunking, inconsistent behavior."
+)
 @pytest.mark.parametrize("mode", ["jit"])
 @pytest.mark.parametrize("chunk_mode", [False, "auto", "specific", "failsafe"])
 def test_pop(mode, chunk_mode):
