@@ -1521,7 +1521,12 @@ class VectorField:
         self.V = V
         self.W = W
         self.H = H
-        self.vector_type = '3D' if W else '2D'
+        if self.H and self.W:
+            self.vector_type = '3DSigma'
+        elif self.W:
+            self.vector_type = '3D'
+        else:
+            self.vector_type = '2D'
         self.gridindexingtype = U.gridindexingtype
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
@@ -1529,7 +1534,7 @@ class VectorField:
             assert self._check_grid_dimensions(U.grid, V.grid), (
                 'Dimensions of U and V are not the same.')
             if self.vector_type == '3D':
-                assert (self.W.interp_method == 'cgrid_velocity') or (self.gridindexingtype == 'croco'), (
+                assert (self.W.interp_method == 'cgrid_velocity'), (
                     'Interpolation methods of U and W are not the same.')
                 assert self._check_grid_dimensions(U.grid, W.grid), (
                     'Dimensions of U and W are not the same.')
@@ -1847,7 +1852,7 @@ class VectorField:
             if applyConversion:
                 u = self.U.units.to_target(u, x, y, z)
                 v = self.V.units.to_target(v, x, y, z)
-            if self.vector_type == '3D':
+            if '3D' in self.vector_type:
                 w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
                 if applyConversion:
                     w = self.W.units.to_target(w, x, y, z)
@@ -1864,7 +1869,7 @@ class VectorField:
             if ti < grid.tdim-1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
-                if self.vector_type == '3D':
+                if '3D' in self.vector_type:
                     (u0, v0, w0) = interp[self.U.interp_method]['3D'](ti, z, y, x, time, particle=particle, applyConversion=applyConversion)
                     (u1, v1, w1) = interp[self.U.interp_method]['3D'](ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion)
                     w = w0 + (w1 - w0) * ((time - t0) / (t1 - t0))
@@ -1873,7 +1878,7 @@ class VectorField:
                     (u1, v1) = interp[self.U.interp_method]['2D'](ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion)
                 u = u0 + (u1 - u0) * ((time - t0) / (t1 - t0))
                 v = v0 + (v1 - v0) * ((time - t0) / (t1 - t0))
-                if self.vector_type == '3D':
+                if '3D' in self.vector_type:
                     return (u, v, w)
                 else:
                     return (u, v)
@@ -1881,7 +1886,7 @@ class VectorField:
                 # Skip temporal interpolation if time is outside
                 # of the defined time range or if we have hit an
                 # exact value in the time array.
-                if self.vector_type == '3D':
+                if '3D' in self.vector_type:
                     return interp[self.U.interp_method]['3D'](ti, z, y, x, grid.time[ti], particle=particle, applyConversion=applyConversion)
                 else:
                     return interp[self.U.interp_method]['2D'](ti, z, y, x, grid.time[ti], particle=particle, applyConversion=applyConversion)
@@ -1898,7 +1903,7 @@ class VectorField:
     def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_method to int as easier to pass on in C-code
         ccode_str = ""
-        if self.vector_type == '3D':
+        if '3D' in self.vector_type:
             ccode_str = f"temporal_interpolationUVW({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, {W.ccode_name}, " + \
                         "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," + \
                         f"&{varU}, &{varV}, &{varW}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"

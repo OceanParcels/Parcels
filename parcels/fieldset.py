@@ -217,7 +217,14 @@ class FieldSet:
                 f.fieldset = self
 
     def add_UVfield(self):
-        if self.U.gridindexingtype == 'croco' and hasattr(self, 'H'):
+        if hasattr(self, 'U'):
+            if isinstance(self.U, NestedField):
+                gridindexingtype = self.U[0].gridindexingtype
+            else:
+                gridindexingtype = self.U.gridindexingtype
+        else:
+            gridindexingtype = None
+        if gridindexingtype == 'croco' and hasattr(self, 'H'):
             H = self.H
         else:
             H = None
