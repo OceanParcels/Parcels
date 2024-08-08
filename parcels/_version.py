@@ -13,9 +13,9 @@ except ModuleNotFoundError:
             .decode("ascii")
             .strip()
         )
-    except subprocess.CalledProcessError as e:
+    except subprocess.SubprocessError as e:
         e.add_note(
             "Looks like you're trying to do a development install of parcels. "
-            "This needs to be in a git repo so that version information is available."
+            "This needs to be in a git repo so that version information is available. "
         )
         raise e
