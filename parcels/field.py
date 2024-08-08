@@ -51,7 +51,7 @@ def _deal_with_errors(error, key, vector_type):
     else:
         raise RuntimeError(f"{error}. Error could not be handled because particle was not part of the Field Sampling.")
 
-    if '3D' in vector_type:
+    if vector_type and '3D' in vector_type:
         return (0, 0, 0)
     elif vector_type == '2D':
         return (0, 0)
