@@ -8,10 +8,7 @@ __all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D',
 
 
 def AdvectionRK4(particle, fieldset, time):
-    """Advection of particles using fourth-order Runge-Kutta integration.
-
-    Function needs to be converted to Kernel object before execution.
-    """
+    """Advection of particles using fourth-order Runge-Kutta integration."""
     (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1*.5*particle.dt, particle.lat + v1*.5*particle.dt)
     (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth, lat1, lon1, particle]
@@ -24,10 +21,7 @@ def AdvectionRK4(particle, fieldset, time):
 
 
 def AdvectionRK4_3D(particle, fieldset, time):
-    """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
-
-    Function needs to be converted to Kernel object before execution.
-    """
+    """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity."""
     (u1, v1, w1) = fieldset.UVW[particle]
     lon1 = particle.lon + u1*.5*particle.dt
     lat1 = particle.lat + v1*.5*particle.dt
@@ -86,10 +80,7 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):
 
 
 def AdvectionEE(particle, fieldset, time):
-    """Advection of particles using Explicit Euler (aka Euler Forward) integration.
-
-    Function needs to be converted to Kernel object before execution.
-    """
+    """Advection of particles using Explicit Euler (aka Euler Forward) integration."""
     (u1, v1) = fieldset.UV[particle]
     particle_dlon += u1 * particle.dt  # noqa
     particle_dlat += v1 * particle.dt  # noqa
@@ -98,13 +89,12 @@ def AdvectionEE(particle, fieldset, time):
 def AdvectionRK45(particle, fieldset, time):
     """Advection of particles using adaptive Runge-Kutta 4/5 integration.
 
-    Times-step dt is halved if error is larger than tolerance, and doubled
-    if error is smaller than 1/10th of tolerance, with tolerance set to
-    1e-5 * dt by default.
-
     Note that this kernel requires a Particle Class that has an extra Variable 'next_dt'
     and a FieldSet with constants 'RK45_tol' (in meters), 'RK45_min_dt' (in seconds)
     and 'RK45_max_dt' (in seconds).
+
+    Time-step dt is halved if error is larger than fieldset.RK45_tol,
+    and doubled if error is smaller than 1/10th of tolerance.
     """
     particle.dt = min(particle.next_dt, fieldset.RK45_max_dt)
     c = [1./4., 3./8., 12./13., 1., 1./2.]

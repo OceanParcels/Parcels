@@ -1,3 +1,4 @@
+import _ctypes
 import ast
 import functools
 import hashlib
@@ -12,7 +13,6 @@ from copy import deepcopy
 from ctypes import byref, c_double, c_int
 from time import time as ostime
 
-import _ctypes
 import numpy as np
 import numpy.ctypeslib as npct
 from numpy import ndarray

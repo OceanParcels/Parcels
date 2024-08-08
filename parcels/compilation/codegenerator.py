@@ -562,8 +562,9 @@ class KernelGenerator(ABC, ast.NodeVisitor):
                     self.visit(node.func)
                     rhs = f"{node.func.ccode}({ccode_args})"
                     if parcels_customed_Cfunc:
-                        node.ccode = str(c.Block([c.Assign("particles->state[pnum]", rhs),
-                                                  c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")]))
+                        node.ccode = str(c.Block([c.Assign("parcels_interp_state", rhs),
+                                                  c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
+                                                  c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")]))
                     else:
                         node.ccode = rhs
             except:
@@ -799,7 +800,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             stmts += [conv_stat]
 
-        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
+        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")])
 
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
@@ -823,8 +824,9 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             ccode_conv3 = node.field.obj.W.ccode_convert(*args)
             statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
         conv_stat = c.Block(statements)
-        node.ccode = c.Block([c.Block(statements_croco), c.Assign("particles->state[pnum]", ccode_eval),
-                              conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
+        node.ccode = c.Block([c.Block(statements_croco), c.Assign("parcels_interp_state", ccode_eval),
+                              c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
+                              conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")])
 
     def visit_NestedFieldEvalNode(self, node):
         self.visit(node.fields)
