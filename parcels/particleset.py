@@ -61,7 +61,6 @@ class ParticleSet(ABC):
     ----------
     fieldset :
         mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
-        While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
     pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
         Optional :mod:`parcels.particle.JITParticle` or
         :mod:`parcels.particle.ScipyParticle` object that defines custom particle
@@ -90,7 +89,7 @@ class ParticleSet(ABC):
         Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
                  pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
         self.particledata = None
@@ -104,6 +103,10 @@ class ParticleSet(ABC):
         self.interaction_kernel = None
         self.fieldset = None
         self.time_origin = None
+
+        self.fieldset = fieldset
+        self.fieldset.check_complete()
+        self.time_origin = fieldset.time_origin
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -140,12 +143,6 @@ class ParticleSet(ABC):
         # ==== dynamic re-classing completed ==== #
         _pclass = array_class
 
-        self.fieldset = fieldset
-        if self.fieldset is None:
-            logger.warning_once("No FieldSet provided in ParticleSet generation. This breaks most Parcels functionality")
-        else:
-            self.fieldset.check_complete()
-
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
 
@@ -153,7 +150,7 @@ class ParticleSet(ABC):
             pid_orig = np.arange(lon.size)
 
         if depth is None:
-            mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
+            mindepth = self.fieldset.gridset.dimrange('depth')[0]
             depth = np.ones(lon.size) * mindepth
         else:
             depth = convert_to_flat_array(depth)
@@ -165,7 +162,6 @@ class ParticleSet(ABC):
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
-        self.time_origin = fieldset.time_origin if self.fieldset is not None else 0
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
@@ -173,10 +169,7 @@ class ParticleSet(ABC):
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
         if lonlatdepth_dtype is None:
-            if fieldset is not None:
-                lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
-            else:
-                lonlatdepth_dtype = np.float32
+            lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
         assert lonlatdepth_dtype in [np.float32, np.float64], \
             'lon lat depth precision should be set to either np.float32 or np.float64'
 
@@ -196,7 +189,7 @@ class ParticleSet(ABC):
             self.repeatkwargs = kwargs
             self.repeatkwargs.pop('partition_function', None)
 
-        ngrids = fieldset.gridset.size if fieldset is not None else 1
+        ngrids = fieldset.gridset.size
 
         # Variables used for interaction kernels.
         inter_dist_horiz = None
