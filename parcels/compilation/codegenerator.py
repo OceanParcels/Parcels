@@ -830,11 +830,10 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             ccode_eval = fld.ccode_eval(node.var, *args)
             ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
-            cstat += [c.Assign("parcels_interp_state", ccode_eval),
-                      c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
+            cstat += [c.Assign("particles->state[pnum]", ccode_eval),
                       conv_stat,
-                      c.If("parcels_interp_state != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)"), c.Statement("break")]
+                      c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
     def visit_NestedVectorFieldEvalNode(self, node):
@@ -854,11 +853,10 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             if fld.vector_type == '3D':
                 ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
-            cstat += [c.Assign("parcels_interp_state", ccode_eval),
-                      c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
+            cstat += [c.Assign("particles->state[pnum]", ccode_eval),
                       c.Block(statements),
-                      c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)"), c.Statement("break")]
+                      c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
     def visit_Print(self, node):
