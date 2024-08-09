@@ -827,7 +827,7 @@ class ParticleSet(ABC):
 
         Notes
         -----
-        Parcels interoperates between Python and (in the case of JIT mode) compiled C code. ParticleSet.execute() acts as the main entrypoint for simulations, and provides the simulation time-loop. This method encapsulates logic deciding when control flow is handled to C (for kernel execution), and Python (for writing output files, reading in fields for new timesteps, for adding new particles to the simulation domain, for stopping the simulation, and for executing custom functions `postIterationCallbacks` provided by the user).
+        ``ParticleSet.execute()`` acts as the main entrypoint for simulations, and provides the simulation time-loop. This method encapsulates the logic controlling the switching between kernel execution (where control in handed to C in JIT mode), output file writing, reading in fields for new timesteps, adding new particles to the simulation domain, stopping the simulation, and executing custom functions (``postIterationCallbacks`` provided by the user).
         """
         # check if particleset is empty. If so, return immediately
         if len(self) == 0:
