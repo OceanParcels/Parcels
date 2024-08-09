@@ -79,15 +79,15 @@ class GNU_parameters(Compiler_parameters):
 
         Iflags = []
         if isinstance(incdirs, list):
-            for i, dir in enumerate(incdirs):
+            for dir in incdirs:
                 Iflags.append("-I"+dir)
         Lflags = []
         if isinstance(libdirs, list):
-            for i, dir in enumerate(libdirs):
+            for dir in libdirs:
                 Lflags.append("-L"+dir)
         lflags = []
         if isinstance(libs, list):
-            for i, lib in enumerate(libs):
+            for lib in libs:
                 lflags.append("-l" + lib)
 
         cc_env = os.getenv('CC')
