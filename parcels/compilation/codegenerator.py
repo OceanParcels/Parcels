@@ -811,7 +811,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         args = self._check_FieldSamplingArguments(node.args.ccode)
         statements_croco = []
         if '3DSigma' in node.field.obj.vector_type:
-            statements_croco.append(c.Assign("particles->state[pnum]", f"temporal_interpolation({args[3]}, {args[2]}, 0, time, H, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{node.var}, LINEAR, {node.field.obj.U.gridindexingtype.upper()})"))
+            statements_croco.append(c.Assign("parcels_interp_state", f"temporal_interpolation({args[3]}, {args[2]}, 0, time, H, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{node.var}, LINEAR, {node.field.obj.U.gridindexingtype.upper()})"))
             statements_croco.append(c.Statement(f"{node.var4} = {args[1]}/{node.var}"))
             args = (args[0], node.var4, args[2], args[3])
         ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
