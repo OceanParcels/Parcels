@@ -47,31 +47,31 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):
     sig_dep = particle.depth / fieldset.H[time, 0, particle.lat, particle.lon]
 
     (u1, v1, w1) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon, particle]
-    w1 *= sig_dep
+    w1 *= sig_dep/fieldset.H[time, 0, particle.lat, particle.lon]
     lon1 = particle.lon + u1*.5*particle.dt
     lat1 = particle.lat + v1*.5*particle.dt
-    sig_dep1 = sig_dep + w1/fieldset.H[time, 0, particle.lat, particle.lon]*.5*particle.dt
+    sig_dep1 = sig_dep + w1*.5*particle.dt
     dep1 = sig_dep1 * fieldset.H[time, 0, lat1, lon1]
 
     (u2, v2, w2) = fieldset.UVW[time + .5 * particle.dt, dep1, lat1, lon1, particle]
-    w2 *= sig_dep1
+    w2 *= sig_dep1/fieldset.H[time, 0, lat1, lon1]
     lon2 = particle.lon + u2*.5*particle.dt
     lat2 = particle.lat + v2*.5*particle.dt
-    sig_dep2 = sig_dep + w2/fieldset.H[time, 0, particle.lat, particle.lon]*.5*particle.dt
+    sig_dep2 = sig_dep + w2*.5*particle.dt
     dep2 = sig_dep2 * fieldset.H[time, 0, lat2, lon2]
 
     (u3, v3, w3) = fieldset.UVW[time + .5 * particle.dt, dep2, lat2, lon2, particle]
-    w3 *= sig_dep2
+    w3 *= sig_dep2/fieldset.H[time, 0, lat2, lon2]
     lon3 = particle.lon + u3*particle.dt
     lat3 = particle.lat + v3*particle.dt
-    sig_dep3 = sig_dep + w3/fieldset.H[time, 0, particle.lat, particle.lon]*particle.dt
+    sig_dep3 = sig_dep + w3*particle.dt
     dep3 = sig_dep3 * fieldset.H[time, 0, lat3, lon3]
 
     (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3, particle]
-    w4 *= sig_dep3
+    w4 *= sig_dep3/fieldset.H[time, 0, lat3, lon3]
     lon4 = particle.lon + u4*particle.dt
     lat4 = particle.lat + v4*particle.dt
-    sig_dep4 = sig_dep + w4/fieldset.H[time, 0, particle.lat, particle.lon]*particle.dt
+    sig_dep4 = sig_dep + w4*particle.dt
     dep4 = sig_dep4 * fieldset.H[time, 0, lat4, lon4]
 
     particle_dlon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt  # noqa
