@@ -101,8 +101,6 @@ class ParticleSet(ABC):
         self.repeatkwargs = None
         self.kernel = None
         self.interaction_kernel = None
-        self.fieldset = None
-        self.time_origin = None
 
         self.fieldset = fieldset
         self.fieldset.check_complete()
@@ -429,11 +427,6 @@ class ParticleSet(ABC):
         This is only intended for curvilinear grids, where the initial index search
         may be quite expensive.
         """
-        if self.fieldset is None:
-            # we need to be attached to a fieldset to have a valid
-            # gridset to search for indices
-            return
-
         if KDTree is None:
             logger.warning("KDTree is not installed, pre-populated guesses are not indexed")
             return
@@ -894,7 +887,7 @@ class ParticleSet(ABC):
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
 
-        mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
+        mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
 
         default_release_time = mintime if dt >= 0 else maxtime
         if np.any(np.isnan(self.particledata.data['time'])):
@@ -949,7 +942,7 @@ class ParticleSet(ABC):
         while (time < endtime and dt > 0) or (time > endtime and dt < 0):
             time_at_startofloop = time
 
-            next_input = self.fieldset.computeTimeChunk(time, dt) if self.fieldset is not None else np.inf
+            next_input = self.fieldset.computeTimeChunk(time, dt)
 
             # Define next_time (the timestamp when the execution needs to be handed back to python)
             if dt > 0:
