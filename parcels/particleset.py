@@ -61,7 +61,6 @@ class ParticleSet(ABC):
     ----------
     fieldset :
         mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
-        While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
     pclass : parcels.particle.JITParticle or parcels.particle.ScipyParticle
         Optional :mod:`parcels.particle.JITParticle` or
         :mod:`parcels.particle.ScipyParticle` object that defines custom particle
@@ -90,7 +89,7 @@ class ParticleSet(ABC):
         Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None,
                  depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
                  pid_orig=None, interaction_distance=None, periodic_domain_zonal=None, **kwargs):
         self.particledata = None
@@ -102,8 +101,10 @@ class ParticleSet(ABC):
         self.repeatkwargs = None
         self.kernel = None
         self.interaction_kernel = None
-        self.fieldset = None
-        self.time_origin = None
+
+        self.fieldset = fieldset
+        self.fieldset.check_complete()
+        self.time_origin = fieldset.time_origin
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -140,12 +141,6 @@ class ParticleSet(ABC):
         # ==== dynamic re-classing completed ==== #
         _pclass = array_class
 
-        self.fieldset = fieldset
-        if self.fieldset is None:
-            logger.warning_once("No FieldSet provided in ParticleSet generation. This breaks most Parcels functionality")
-        else:
-            self.fieldset.check_complete()
-
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
 
@@ -153,7 +148,7 @@ class ParticleSet(ABC):
             pid_orig = np.arange(lon.size)
 
         if depth is None:
-            mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
+            mindepth = self.fieldset.gridset.dimrange('depth')[0]
             depth = np.ones(lon.size) * mindepth
         else:
             depth = convert_to_flat_array(depth)
@@ -165,7 +160,6 @@ class ParticleSet(ABC):
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
-        self.time_origin = fieldset.time_origin if self.fieldset is not None else 0
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
@@ -173,10 +167,7 @@ class ParticleSet(ABC):
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
         if lonlatdepth_dtype is None:
-            if fieldset is not None:
-                lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
-            else:
-                lonlatdepth_dtype = np.float32
+            lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
         assert lonlatdepth_dtype in [np.float32, np.float64], \
             'lon lat depth precision should be set to either np.float32 or np.float64'
 
@@ -196,7 +187,7 @@ class ParticleSet(ABC):
             self.repeatkwargs = kwargs
             self.repeatkwargs.pop('partition_function', None)
 
-        ngrids = fieldset.gridset.size if fieldset is not None else 1
+        ngrids = fieldset.gridset.size
 
         # Variables used for interaction kernels.
         inter_dist_horiz = None
@@ -436,11 +427,6 @@ class ParticleSet(ABC):
         This is only intended for curvilinear grids, where the initial index search
         may be quite expensive.
         """
-        if self.fieldset is None:
-            # we need to be attached to a fieldset to have a valid
-            # gridset to search for indices
-            return
-
         if KDTree is None:
             logger.warning("KDTree is not installed, pre-populated guesses are not indexed")
             return
@@ -823,21 +809,25 @@ class ParticleSet(ABC):
             Length of the timestepping loop. Use instead of endtime.
             It is either a timedelta object or a positive double. (Default value = None)
         dt :
-            Timestep interval to be passed to the kernel.
+            Timestep interval (in seconds) to be passed to the kernel.
             It is either a timedelta object or a double.
-            Use a negative value for a backward-in-time simulation. (Default value = 1.)
+            Use a negative value for a backward-in-time simulation. (Default value = 1 second)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
         verbose_progress : bool
             Boolean for providing a progress bar for the kernel execution loop. (Default value = True)
         postIterationCallbacks :
-            Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
+            Optional, array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
         callbackdt :
             Optional, in conjecture with 'postIterationCallbacks', timestep interval to (latest) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks' (Default value = None)
         pyfunc_inter :
             (Default value = None)
         delete_cfiles : bool
             Whether to delete the C-files after compilation in JIT mode (default is True)
+
+        Notes
+        -----
+        ``ParticleSet.execute()`` acts as the main entrypoint for simulations, and provides the simulation time-loop. This method encapsulates the logic controlling the switching between kernel execution (where control in handed to C in JIT mode), output file writing, reading in fields for new timesteps, adding new particles to the simulation domain, stopping the simulation, and executing custom functions (``postIterationCallbacks`` provided by the user).
         """
         # check if particleset is empty. If so, return immediately
         if len(self) == 0:
@@ -868,7 +858,7 @@ class ParticleSet(ABC):
 
         # Convert all time variables to seconds
         if isinstance(endtime, timedelta):
-            raise RuntimeError('endtime must be either a datetime or a double')
+            raise TypeError('endtime must be either a datetime or a double')
         if isinstance(endtime, datetime):
             endtime = np.datetime64(endtime)
         elif isinstance(endtime, cftime.datetime):
@@ -897,7 +887,7 @@ class ParticleSet(ABC):
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
 
-        mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
+        mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
 
         default_release_time = mintime if dt >= 0 else maxtime
         if np.any(np.isnan(self.particledata.data['time'])):
@@ -927,28 +917,34 @@ class ParticleSet(ABC):
             if self.repeatdt is not None:
                 interupt_dts.append(self.repeatdt)
             callbackdt = np.min(np.array(interupt_dts))
-        time = starttime
-        if self.repeatdt:
-            next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
-        else:
-            next_prelease = np.inf if dt > 0 else - np.inf
-        if output_file:
-            next_output = time + dt
-        else:
-            next_output = time + np.inf if dt > 0 else - np.inf
-        next_callback = time + callbackdt if dt > 0 else time - callbackdt
-        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
+        # Set up pbar
         if output_file:
             logger.info(f'Output files are stored in {output_file.fname}.')
 
         if verbose_progress:
             pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
 
+        # Set up variables for first iteration
+        if self.repeatdt:
+            next_prelease = self.repeat_starttime + (abs(starttime - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
+        else:
+            next_prelease = np.inf if dt > 0 else - np.inf
+        if output_file:
+            next_output = starttime + dt
+        else:
+            next_output = np.inf * np.sign(dt)
+        next_callback = starttime * np.sign(dt)
+
         tol = 1e-12
-        while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
+        time = starttime
+
+        while (time < endtime and dt > 0) or (time > endtime and dt < 0):
             time_at_startofloop = time
 
+            next_input = self.fieldset.computeTimeChunk(time, dt)
+
+            # Define next_time (the timestamp when the execution needs to be handed back to python)
             if dt > 0:
                 next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
             else:
@@ -963,7 +959,7 @@ class ParticleSet(ABC):
             # E.g. Normal -> Inter -> Normal -> Inter if endtime-time == 2*dt
             else:
                 cur_time = time
-                while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
+                while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0):
                     if dt > 0:
                         cur_end_time = min(cur_time+dt, next_time)
                     else:
@@ -971,12 +967,10 @@ class ParticleSet(ABC):
                     self.kernel.execute(self, endtime=cur_end_time, dt=dt)
                     self.interaction_kernel.execute(self, endtime=cur_end_time, dt=dt)
                     cur_time += dt
-                    if dt == 0:
-                        break
             # End of interaction specific code
             time = next_time
 
-            if abs(time - next_output) < tol or dt == 0:
+            if abs(time - next_output) < tol:
                 for fld in self.fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:
                         if fld.grid.tdim > 1:
@@ -1015,8 +1009,6 @@ class ParticleSet(ABC):
 
             if time != endtime:
                 next_input = self.fieldset.computeTimeChunk(time, dt)
-            if dt == 0:
-                break
             if verbose_progress:
                 pbar.update(abs(time - time_at_startofloop))
 

@@ -7,16 +7,13 @@ import numpy as np
 import xarray as xr
 import zarr
 
+import parcels
 from parcels.tools.loggers import logger
 
 try:
     from mpi4py import MPI
 except ModuleNotFoundError:
     MPI = None
-try:
-    from parcels._version import version as parcels_version
-except ModuleNotFoundError:
-    raise OSError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
 
 
 __all__ = ['ParticleFile']
@@ -85,7 +82,7 @@ class ParticleFile(ABC):
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
                          "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
-                         "parcels_version": parcels_version,
+                         "parcels_version": parcels.__version__,
                          "parcels_mesh": self.parcels_mesh}
 
         # Create dictionary to translate datatypes and fill_values
