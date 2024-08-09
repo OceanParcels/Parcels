@@ -99,7 +99,6 @@ ignore = [
     "E722",
 
     # TODO: These bugbear issues are to be resolved
-    "B008", # Do not perform function call `os.getcwd` in argument defaults;
     "B011", # Do not `assert False`
     "B016", # Cannot raise a literal. Did you intend to return it or raise an Exception?
     "B904", # Within an `except` clause, raise exceptions
