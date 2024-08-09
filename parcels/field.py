@@ -1223,7 +1223,7 @@ class Field:
         (ti, periods) = self.time_index(time)
         time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
         if self.gridindexingtype == 'croco' and self is not self.fieldset.H:
-            z = z/self.fieldset.H.eval(0, 0, y, x, particle=particle, applyConversion=False)
+            z = z/self.fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
         if ti < self.grid.tdim-1 and time > self.grid.time[ti]:
             f0 = self.spatial_interpolation(ti, z, y, x, time, particle=particle)
             f1 = self.spatial_interpolation(ti + 1, z, y, x, time, particle=particle)
@@ -1754,7 +1754,7 @@ class VectorField:
             (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
         else:
             if self.gridindexingtype == 'croco':
-                z = z/self.fieldset.H.eval(0, 0, y, x, particle=particle, applyConversion=False)
+                z = z/self.fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
             (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
