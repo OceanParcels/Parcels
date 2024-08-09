@@ -99,8 +99,6 @@ ignore = [
     "E722",
 
     # TODO: These bugbear issues are to be resolved
-    "B024", # ABC
-    "B027", # `ParticleData.__del__` is an empty method in an abstract base class, but has no abstract decorator
     "B007", # Loop control variable not used within the loop body
     "B008", # Do not perform function call `os.getcwd` in argument defaults;
     "B011", # Do not `assert False`
