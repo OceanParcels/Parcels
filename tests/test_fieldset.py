@@ -237,6 +237,24 @@ def test_field_from_netcdf_fieldtypes():
     fset = FieldSet.from_nemo(filenames, variables, dimensions, fieldtype={'varU': 'U', 'varV': 'V'})
     assert isinstance(fset.varU.units, GeographicPolar)
 
+def test_fieldset_from_agrid_dataset():
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
+
+    filenames = {
+        'lon': data_path + 'mask_nemo_cross_180lon.nc',
+        'lat': data_path + 'mask_nemo_cross_180lon.nc',
+        'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'
+    }
+    variable = 'U'
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+    failed = False
+    try:
+        # should fail because FieldSet.from_a_grid_dataset does not support interp_method
+        FieldSet.from_a_grid_dataset(filenames, variable, dimensions, interp_method='linear')
+    except Exception as e:
+        print(f"Test failed due to: {e}")
+        failed = True
+    assert failed
 
 def test_fieldset_from_cgrid_interpmethod():
     data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
