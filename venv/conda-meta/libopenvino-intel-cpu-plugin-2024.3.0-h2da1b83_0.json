@@ -1,0 +1,46 @@
+{
+  "build": "h2da1b83_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "libgcc-ng >=12",
+    "libopenvino 2024.3.0 h2da1b83_0",
+    "libstdcxx-ng >=12",
+    "pugixml >=1.14,<1.15.0a0",
+    "tbb >=2021.12.0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libopenvino-intel-cpu-plugin-2024.3.0-h2da1b83_0",
+  "files": [
+    "lib/openvino-2024.3.0/libopenvino_intel_cpu_plugin.so"
+  ],
+  "fn": "libopenvino-intel-cpu-plugin-2024.3.0-h2da1b83_0.conda",
+  "license": "",
+  "link": {
+    "source": "/opt/conda/pkgs/libopenvino-intel-cpu-plugin-2024.3.0-h2da1b83_0",
+    "type": 1
+  },
+  "md5": "98d9fdbb32d375ba877166737430afc4",
+  "name": "libopenvino-intel-cpu-plugin",
+  "package_tarball_full_path": "/opt/conda/pkgs/libopenvino-intel-cpu-plugin-2024.3.0-h2da1b83_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/openvino-2024.3.0/libopenvino_intel_cpu_plugin.so",
+        "path_type": "hardlink",
+        "sha256": "11c33c7d67d27a8800ae2cff6f35489c9ebe7b846bc647a9d43cb9e8ee52bcc9",
+        "sha256_in_prefix": "11c33c7d67d27a8800ae2cff6f35489c9ebe7b846bc647a9d43cb9e8ee52bcc9",
+        "size_in_bytes": 58444184
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "d01f012be1263688c5ee412b1fce86702c1e26d53f6bfb692c6c6faffd335318",
+  "size": 11113833,
+  "subdir": "linux-64",
+  "timestamp": 1722425655000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libopenvino-intel-cpu-plugin-2024.3.0-h2da1b83_0.conda",
+  "version": "2024.3.0"
+}

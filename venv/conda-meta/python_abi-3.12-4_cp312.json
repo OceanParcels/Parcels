@@ -1,0 +1,31 @@
+{
+  "build": "4_cp312",
+  "build_number": 4,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [
+    "python 3.12.* *_cpython"
+  ],
+  "depends": [],
+  "extracted_package_dir": "/opt/conda/pkgs/python_abi-3.12-4_cp312",
+  "files": [],
+  "fn": "python_abi-3.12-4_cp312.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/python_abi-3.12-4_cp312",
+    "type": 1
+  },
+  "md5": "dccc2d142812964fcc6abdc97b672dff",
+  "name": "python_abi",
+  "package_tarball_full_path": "/opt/conda/pkgs/python_abi-3.12-4_cp312.conda",
+  "paths_data": {
+    "paths": [],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "182a329de10a4165f6e8a3804caf751f918f6ea6176dd4e5abcdae1ed3095bf6",
+  "size": 6385,
+  "subdir": "linux-64",
+  "timestamp": 1695147396000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/python_abi-3.12-4_cp312.conda",
+  "version": "3.12"
+}

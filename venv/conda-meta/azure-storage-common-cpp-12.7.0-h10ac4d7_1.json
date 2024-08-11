@@ -1,0 +1,238 @@
+{
+  "build": "h10ac4d7_1",
+  "build_number": 1,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "azure-core-cpp >=1.13.0,<1.13.1.0a0",
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12",
+    "libxml2 >=2.12.7,<3.0a0",
+    "openssl >=3.3.1,<4.0a0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/azure-storage-common-cpp-12.7.0-h10ac4d7_1",
+  "files": [
+    "include/azure/storage/common/access_conditions.hpp",
+    "include/azure/storage/common/account_sas_builder.hpp",
+    "include/azure/storage/common/crypt.hpp",
+    "include/azure/storage/common/dll_import_export.hpp",
+    "include/azure/storage/common/internal/concurrent_transfer.hpp",
+    "include/azure/storage/common/internal/constants.hpp",
+    "include/azure/storage/common/internal/file_io.hpp",
+    "include/azure/storage/common/internal/reliable_stream.hpp",
+    "include/azure/storage/common/internal/shared_key_policy.hpp",
+    "include/azure/storage/common/internal/storage_bearer_token_auth.hpp",
+    "include/azure/storage/common/internal/storage_bearer_token_authentication_policy.hpp",
+    "include/azure/storage/common/internal/storage_per_retry_policy.hpp",
+    "include/azure/storage/common/internal/storage_service_version_policy.hpp",
+    "include/azure/storage/common/internal/storage_switch_to_secondary_policy.hpp",
+    "include/azure/storage/common/internal/xml_wrapper.hpp",
+    "include/azure/storage/common/rtti.hpp",
+    "include/azure/storage/common/storage_common.hpp",
+    "include/azure/storage/common/storage_credential.hpp",
+    "include/azure/storage/common/storage_exception.hpp",
+    "lib/libazure-storage-common.so",
+    "share/azure-storage-common-cpp/azure-storage-common-cppConfig.cmake",
+    "share/azure-storage-common-cpp/azure-storage-common-cppConfigVersion.cmake",
+    "share/azure-storage-common-cpp/azure-storage-common-cppTargets-release.cmake",
+    "share/azure-storage-common-cpp/azure-storage-common-cppTargets.cmake",
+    "share/azure-storage-common-cpp/copyright"
+  ],
+  "fn": "azure-storage-common-cpp-12.7.0-h10ac4d7_1.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/azure-storage-common-cpp-12.7.0-h10ac4d7_1",
+    "type": 1
+  },
+  "md5": "ab6d507ad16dbe2157920451d662e4a1",
+  "name": "azure-storage-common-cpp",
+  "package_tarball_full_path": "/opt/conda/pkgs/azure-storage-common-cpp-12.7.0-h10ac4d7_1.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/azure/storage/common/access_conditions.hpp",
+        "path_type": "hardlink",
+        "sha256": "9b3e32089938d08be2c4126750f294ed6ad317909f6c166bd6678c2b46d4bbc9",
+        "sha256_in_prefix": "9b3e32089938d08be2c4126750f294ed6ad317909f6c166bd6678c2b46d4bbc9",
+        "size_in_bytes": 1264
+      },
+      {
+        "_path": "include/azure/storage/common/account_sas_builder.hpp",
+        "path_type": "hardlink",
+        "sha256": "ae6fb98deb92b917c52c15db321d6c88265920b1cebc682d0c6ff3b2e47f7fe0",
+        "sha256_in_prefix": "ae6fb98deb92b917c52c15db321d6c88265920b1cebc682d0c6ff3b2e47f7fe0",
+        "size_in_bytes": 8034
+      },
+      {
+        "_path": "include/azure/storage/common/crypt.hpp",
+        "path_type": "hardlink",
+        "sha256": "6ab57ae704f7fae93b5a9ade9a2dc5d0ddd1f319a298611cd5fb930ef92852c9",
+        "sha256_in_prefix": "6ab57ae704f7fae93b5a9ade9a2dc5d0ddd1f319a298611cd5fb930ef92852c9",
+        "size_in_bytes": 1441
+      },
+      {
+        "_path": "include/azure/storage/common/dll_import_export.hpp",
+        "path_type": "hardlink",
+        "sha256": "813ebd8104a46cb3c626401415134e4009edf2c7cbde490b8a1bceb227bb50fe",
+        "sha256_in_prefix": "813ebd8104a46cb3c626401415134e4009edf2c7cbde490b8a1bceb227bb50fe",
+        "size_in_bytes": 1126
+      },
+      {
+        "_path": "include/azure/storage/common/internal/concurrent_transfer.hpp",
+        "path_type": "hardlink",
+        "sha256": "8bee30b83e24d118cf751735a2c0f7bdd620247febed909e3f4a5267e2753c20",
+        "sha256_in_prefix": "8bee30b83e24d118cf751735a2c0f7bdd620247febed909e3f4a5267e2753c20",
+        "size_in_bytes": 1770
+      },
+      {
+        "_path": "include/azure/storage/common/internal/constants.hpp",
+        "path_type": "hardlink",
+        "sha256": "f3271f6d0aca5a94ef47382ea9cdceff973a16f85330a83bd93a84049ddf5c2e",
+        "sha256_in_prefix": "f3271f6d0aca5a94ef47382ea9cdceff973a16f85330a83bd93a84049ddf5c2e",
+        "size_in_bytes": 1478
+      },
+      {
+        "_path": "include/azure/storage/common/internal/file_io.hpp",
+        "path_type": "hardlink",
+        "sha256": "c6b77174b3a879468a5f214bdaaf3eb0829358a6473d03b94bfdaf14ad5c3af2",
+        "sha256_in_prefix": "c6b77174b3a879468a5f214bdaaf3eb0829358a6473d03b94bfdaf14ad5c3af2",
+        "size_in_bytes": 947
+      },
+      {
+        "_path": "include/azure/storage/common/internal/reliable_stream.hpp",
+        "path_type": "hardlink",
+        "sha256": "86b2302b3a737f856a28dc9bba087af924ff9112a68811bc73f4c8f6611ca047",
+        "sha256_in_prefix": "86b2302b3a737f856a28dc9bba087af924ff9112a68811bc73f4c8f6611ca047",
+        "size_in_bytes": 2610
+      },
+      {
+        "_path": "include/azure/storage/common/internal/shared_key_policy.hpp",
+        "path_type": "hardlink",
+        "sha256": "93fdd330d783e057bb0099e9f27d773ee50ff4c0ed3bff7b53099e7a8c7ac39b",
+        "sha256_in_prefix": "93fdd330d783e057bb0099e9f27d773ee50ff4c0ed3bff7b53099e7a8c7ac39b",
+        "size_in_bytes": 1266
+      },
+      {
+        "_path": "include/azure/storage/common/internal/storage_bearer_token_auth.hpp",
+        "path_type": "hardlink",
+        "sha256": "b9830ce53680e5593775008064214726c64b3fc4e6db864c23a2bff592f2a737",
+        "sha256_in_prefix": "b9830ce53680e5593775008064214726c64b3fc4e6db864c23a2bff592f2a737",
+        "size_in_bytes": 2704
+      },
+      {
+        "_path": "include/azure/storage/common/internal/storage_bearer_token_authentication_policy.hpp",
+        "path_type": "hardlink",
+        "sha256": "1e20be9988bb52419a4bca1a2dbcddd88f1304d0339919d4439433971e7b1795",
+        "sha256_in_prefix": "1e20be9988bb52419a4bca1a2dbcddd88f1304d0339919d4439433971e7b1795",
+        "size_in_bytes": 401
+      },
+      {
+        "_path": "include/azure/storage/common/internal/storage_per_retry_policy.hpp",
+        "path_type": "hardlink",
+        "sha256": "f8f713223bf19720c8e1e3f7439746aa334f9bc19e8bb0271e9603e1bb2a1639",
+        "sha256_in_prefix": "f8f713223bf19720c8e1e3f7439746aa334f9bc19e8bb0271e9603e1bb2a1639",
+        "size_in_bytes": 728
+      },
+      {
+        "_path": "include/azure/storage/common/internal/storage_service_version_policy.hpp",
+        "path_type": "hardlink",
+        "sha256": "94f6be45aa2ea12493de85059f6b41b34f4d8717b9c1d0587fa06858902a7d41",
+        "sha256_in_prefix": "94f6be45aa2ea12493de85059f6b41b34f4d8717b9c1d0587fa06858902a7d41",
+        "size_in_bytes": 1117
+      },
+      {
+        "_path": "include/azure/storage/common/internal/storage_switch_to_secondary_policy.hpp",
+        "path_type": "hardlink",
+        "sha256": "b3ff42fdd8d969e1ce1da8008aafbca3942d3e19c5ca2f49d899c5e915384617",
+        "sha256_in_prefix": "b3ff42fdd8d969e1ce1da8008aafbca3942d3e19c5ca2f49d899c5e915384617",
+        "size_in_bytes": 1403
+      },
+      {
+        "_path": "include/azure/storage/common/internal/xml_wrapper.hpp",
+        "path_type": "hardlink",
+        "sha256": "e1f23dac95aa982984ba34cc8284a7fe8b409a7c9354499e2698db234eebead0",
+        "sha256_in_prefix": "e1f23dac95aa982984ba34cc8284a7fe8b409a7c9354499e2698db234eebead0",
+        "size_in_bytes": 1795
+      },
+      {
+        "_path": "include/azure/storage/common/rtti.hpp",
+        "path_type": "hardlink",
+        "sha256": "9b55b22a781fa7a3972a9fa2502aa53d28458c643bb4444fa521e55abda9de58",
+        "sha256_in_prefix": "9b55b22a781fa7a3972a9fa2502aa53d28458c643bb4444fa521e55abda9de58",
+        "size_in_bytes": 1308
+      },
+      {
+        "_path": "include/azure/storage/common/storage_common.hpp",
+        "path_type": "hardlink",
+        "sha256": "625096ade22867886278c19355009cace8352d45a7ecb237151c76816e2a0a3e",
+        "sha256_in_prefix": "625096ade22867886278c19355009cace8352d45a7ecb237151c76816e2a0a3e",
+        "size_in_bytes": 1149
+      },
+      {
+        "_path": "include/azure/storage/common/storage_credential.hpp",
+        "path_type": "hardlink",
+        "sha256": "20412c9f2a7a2d8755d5683081cfde3a4dee42772973b8e765365043f0a3b14f",
+        "sha256_in_prefix": "20412c9f2a7a2d8755d5683081cfde3a4dee42772973b8e765365043f0a3b14f",
+        "size_in_bytes": 2605
+      },
+      {
+        "_path": "include/azure/storage/common/storage_exception.hpp",
+        "path_type": "hardlink",
+        "sha256": "fc611e62de5c74514133ea4d330b7dcb21c731471724518c9027e921cf1b5639",
+        "sha256_in_prefix": "fc611e62de5c74514133ea4d330b7dcb21c731471724518c9027e921cf1b5639",
+        "size_in_bytes": 1147
+      },
+      {
+        "_path": "lib/libazure-storage-common.so",
+        "path_type": "hardlink",
+        "sha256": "7552e15c0ff00820c2dc1db48846cf804f876a58a521cd18dcd54ec6aed286ff",
+        "sha256_in_prefix": "7552e15c0ff00820c2dc1db48846cf804f876a58a521cd18dcd54ec6aed286ff",
+        "size_in_bytes": 326320
+      },
+      {
+        "_path": "share/azure-storage-common-cpp/azure-storage-common-cppConfig.cmake",
+        "path_type": "hardlink",
+        "sha256": "5b0e2c38cdc79625dc69123b19080816abe24490e75b5c13d277fdbe3a3b3c3f",
+        "sha256_in_prefix": "5b0e2c38cdc79625dc69123b19080816abe24490e75b5c13d277fdbe3a3b3c3f",
+        "size_in_bytes": 1244
+      },
+      {
+        "_path": "share/azure-storage-common-cpp/azure-storage-common-cppConfigVersion.cmake",
+        "path_type": "hardlink",
+        "sha256": "21bdd006a6f4bd1253905f7ba2382f31c9c331da817aae3b8a6cea4facd0404c",
+        "sha256_in_prefix": "21bdd006a6f4bd1253905f7ba2382f31c9c331da817aae3b8a6cea4facd0404c",
+        "size_in_bytes": 2765
+      },
+      {
+        "_path": "share/azure-storage-common-cpp/azure-storage-common-cppTargets-release.cmake",
+        "path_type": "hardlink",
+        "sha256": "80a74d8674463cd3025b7e880e5df721da1295b123dd90fdc3896d95d55a0dc1",
+        "sha256_in_prefix": "80a74d8674463cd3025b7e880e5df721da1295b123dd90fdc3896d95d55a0dc1",
+        "size_in_bytes": 943
+      },
+      {
+        "_path": "share/azure-storage-common-cpp/azure-storage-common-cppTargets.cmake",
+        "path_type": "hardlink",
+        "sha256": "258dba69dc35b524ac773d4456e648b77ff708b6c8139018ea47c3ceb56e34fd",
+        "sha256_in_prefix": "258dba69dc35b524ac773d4456e648b77ff708b6c8139018ea47c3ceb56e34fd",
+        "size_in_bytes": 4240
+      },
+      {
+        "_path": "share/azure-storage-common-cpp/copyright",
+        "path_type": "hardlink",
+        "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+        "sha256_in_prefix": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+        "size_in_bytes": 1162
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "1030fa54497a73eb78c509d451f25701e2e781dc182e7647f55719f1e1f9bee8",
+  "size": 143039,
+  "subdir": "linux-64",
+  "timestamp": 1721832724000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/azure-storage-common-cpp-12.7.0-h10ac4d7_1.conda",
+  "version": "12.7.0"
+}

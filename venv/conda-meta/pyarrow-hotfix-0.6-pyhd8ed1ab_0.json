@@ -1,0 +1,118 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "pyarrow >=0.14",
+    "python >=3.5"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/pyarrow-hotfix-0.6-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/pyarrow_hotfix-0.6.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/pyarrow_hotfix-0.6.dist-info/METADATA",
+    "lib/python3.12/site-packages/pyarrow_hotfix-0.6.dist-info/RECORD",
+    "lib/python3.12/site-packages/pyarrow_hotfix-0.6.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/pyarrow_hotfix-0.6.dist-info/WHEEL",
+    "lib/python3.12/site-packages/pyarrow_hotfix-0.6.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/pyarrow_hotfix-0.6.dist-info/licenses/LICENSE.txt",
+    "lib/python3.12/site-packages/pyarrow_hotfix/__about__.py",
+    "lib/python3.12/site-packages/pyarrow_hotfix/__init__.py",
+    "lib/python3.12/site-packages/pyarrow_hotfix/__pycache__/__about__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyarrow_hotfix/__pycache__/__init__.cpython-312.pyc"
+  ],
+  "fn": "pyarrow-hotfix-0.6-pyhd8ed1ab_0.conda",
+  "license": "Apache-2.0",
+  "link": {
+    "source": "/opt/conda/pkgs/pyarrow-hotfix-0.6-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "ccc06e6ef2064ae129fab3286299abda",
+  "name": "pyarrow-hotfix",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/pyarrow-hotfix-0.6-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/pyarrow_hotfix-0.6.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/pyarrow_hotfix-0.6.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "65f90a600d9a7be4f3b7c78b9a25199b8032888a9881fa8a770f810a4d637daa",
+        "sha256_in_prefix": "65f90a600d9a7be4f3b7c78b9a25199b8032888a9881fa8a770f810a4d637daa",
+        "size_in_bytes": 3553
+      },
+      {
+        "_path": "site-packages/pyarrow_hotfix-0.6.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "8cb3dba0a715424e40913b15966eb8a22dfee4b60ae78ff19e8fef975b83b176",
+        "sha256_in_prefix": "8cb3dba0a715424e40913b15966eb8a22dfee4b60ae78ff19e8fef975b83b176",
+        "size_in_bytes": 898
+      },
+      {
+        "_path": "site-packages/pyarrow_hotfix-0.6.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/pyarrow_hotfix-0.6.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "f5006e1e183a14d5bb969a5ba05daf2956c2193573b05ca48114238e56a3ae10",
+        "sha256_in_prefix": "f5006e1e183a14d5bb969a5ba05daf2956c2193573b05ca48114238e56a3ae10",
+        "size_in_bytes": 87
+      },
+      {
+        "_path": "site-packages/pyarrow_hotfix-0.6.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "0a55354053268dad79081abd675ee579cfb874a60a35e8a7a72439321ca8535b",
+        "sha256_in_prefix": "0a55354053268dad79081abd675ee579cfb874a60a35e8a7a72439321ca8535b",
+        "size_in_bytes": 110
+      },
+      {
+        "_path": "site-packages/pyarrow_hotfix-0.6.dist-info/licenses/LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "sha256_in_prefix": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "size_in_bytes": 11358
+      },
+      {
+        "_path": "site-packages/pyarrow_hotfix/__about__.py",
+        "path_type": "hardlink",
+        "sha256": "bc2cc73aa00cbdec536068f54ed5962caf85685c17bef2cb9af7d50a932a879e",
+        "sha256_in_prefix": "bc2cc73aa00cbdec536068f54ed5962caf85685c17bef2cb9af7d50a932a879e",
+        "size_in_bytes": 136
+      },
+      {
+        "_path": "site-packages/pyarrow_hotfix/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "ee17f5b697db26e162c71fdf31831c45f86c299f58a375d3366972ca86ac042c",
+        "sha256_in_prefix": "ee17f5b697db26e162c71fdf31831c45f86c299f58a375d3366972ca86ac042c",
+        "size_in_bytes": 3527
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyarrow_hotfix/__pycache__/__about__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyarrow_hotfix/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "9b767969d059c106aac6596438a7e7ebd3aa1e2ff6553d4b7e05126dfebf4bd6",
+  "size": 13567,
+  "subdir": "noarch",
+  "timestamp": 1700596511000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/pyarrow-hotfix-0.6-pyhd8ed1ab_0.conda",
+  "version": "0.6"
+}

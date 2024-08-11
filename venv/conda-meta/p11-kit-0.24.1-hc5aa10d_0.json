@@ -1,0 +1,532 @@
+{
+  "build": "hc5aa10d_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libffi >=3.4.2,<3.5.0a0",
+    "libgcc-ng >=12",
+    "libtasn1 >=4.18.0,<5.0a0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/p11-kit-0.24.1-hc5aa10d_0",
+  "files": [
+    "bin/p11-kit",
+    "bin/trust",
+    "etc/pkcs11/pkcs11.conf.example",
+    "include/p11-kit-1/p11-kit/deprecated.h",
+    "include/p11-kit-1/p11-kit/iter.h",
+    "include/p11-kit-1/p11-kit/p11-kit.h",
+    "include/p11-kit-1/p11-kit/pin.h",
+    "include/p11-kit-1/p11-kit/pkcs11.h",
+    "include/p11-kit-1/p11-kit/pkcs11x.h",
+    "include/p11-kit-1/p11-kit/remote.h",
+    "include/p11-kit-1/p11-kit/uri.h",
+    "lib/libp11-kit.so",
+    "lib/libp11-kit.so.0",
+    "lib/libp11-kit.so.0.3.0",
+    "lib/p11-kit-proxy.so",
+    "lib/pkcs11/p11-kit-client.so",
+    "lib/pkcs11/p11-kit-trust.so",
+    "lib/pkgconfig/p11-kit-1.pc",
+    "libexec/p11-kit/p11-kit-remote",
+    "libexec/p11-kit/p11-kit-server",
+    "libexec/p11-kit/trust-extract-compat",
+    "share/gtk-doc/html/p11-kit/config-example.html",
+    "share/gtk-doc/html/p11-kit/config-files.html",
+    "share/gtk-doc/html/p11-kit/config.html",
+    "share/gtk-doc/html/p11-kit/devel-building-style.html",
+    "share/gtk-doc/html/p11-kit/devel-building.html",
+    "share/gtk-doc/html/p11-kit/devel-commands.html",
+    "share/gtk-doc/html/p11-kit/devel-debugging.html",
+    "share/gtk-doc/html/p11-kit/devel-paths.html",
+    "share/gtk-doc/html/p11-kit/devel-testing.html",
+    "share/gtk-doc/html/p11-kit/devel.html",
+    "share/gtk-doc/html/p11-kit/gtk-doc.css",
+    "share/gtk-doc/html/p11-kit/home.png",
+    "share/gtk-doc/html/p11-kit/index.html",
+    "share/gtk-doc/html/p11-kit/left-insensitive.png",
+    "share/gtk-doc/html/p11-kit/left.png",
+    "share/gtk-doc/html/p11-kit/p11-kit-Deprecated.html",
+    "share/gtk-doc/html/p11-kit/p11-kit-Future.html",
+    "share/gtk-doc/html/p11-kit/p11-kit-Modules.html",
+    "share/gtk-doc/html/p11-kit/p11-kit-PIN-Callbacks.html",
+    "share/gtk-doc/html/p11-kit/p11-kit-URIs.html",
+    "share/gtk-doc/html/p11-kit/p11-kit-Utilities.html",
+    "share/gtk-doc/html/p11-kit/p11-kit.devhelp2",
+    "share/gtk-doc/html/p11-kit/p11-kit.html",
+    "share/gtk-doc/html/p11-kit/pkcs11-conf.html",
+    "share/gtk-doc/html/p11-kit/reference.html",
+    "share/gtk-doc/html/p11-kit/remoting.html",
+    "share/gtk-doc/html/p11-kit/right-insensitive.png",
+    "share/gtk-doc/html/p11-kit/right.png",
+    "share/gtk-doc/html/p11-kit/sharing-managed.html",
+    "share/gtk-doc/html/p11-kit/sharing.html",
+    "share/gtk-doc/html/p11-kit/style.css",
+    "share/gtk-doc/html/p11-kit/tools.html",
+    "share/gtk-doc/html/p11-kit/trust-disable.html",
+    "share/gtk-doc/html/p11-kit/trust-glib-networking.html",
+    "share/gtk-doc/html/p11-kit/trust-module.html",
+    "share/gtk-doc/html/p11-kit/trust-nss.html",
+    "share/gtk-doc/html/p11-kit/trust.html",
+    "share/gtk-doc/html/p11-kit/up-insensitive.png",
+    "share/gtk-doc/html/p11-kit/up.png",
+    "share/p11-kit/modules/p11-kit-trust.module"
+  ],
+  "fn": "p11-kit-0.24.1-hc5aa10d_0.tar.bz2",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/p11-kit-0.24.1-hc5aa10d_0",
+    "type": 1
+  },
+  "md5": "56ee94e34b71742bbdfa832c974e47a8",
+  "name": "p11-kit",
+  "package_tarball_full_path": "/opt/conda/pkgs/p11-kit-0.24.1-hc5aa10d_0.tar.bz2",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/p11-kit",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/p11-kit_1654868524030/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "8a6c1b47a23170929ff7489aba71d0e035d4bfe3ddb099546a9ebb7981d3d228",
+        "sha256_in_prefix": "98ff00a129db8ecfbe5f54c36e04907d30907f6926c6c466b3c087f24aaf3396",
+        "size_in_bytes": 147376
+      },
+      {
+        "_path": "bin/trust",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/p11-kit_1654868524030/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "83119d7e69b5a2bd8463aa89167513f10c84f9e8039c59b8f0d304026c7f3dbb",
+        "sha256_in_prefix": "e076333f14071cdbcf92519e11185c13db9579881d47849310b73a5946fe5edb",
+        "size_in_bytes": 775264
+      },
+      {
+        "_path": "etc/pkcs11/pkcs11.conf.example",
+        "path_type": "hardlink",
+        "sha256": "d5a61c73fc5877447556efa6121e6c345ba3d085b4411d8f399e3f175074ec5c",
+        "sha256_in_prefix": "d5a61c73fc5877447556efa6121e6c345ba3d085b4411d8f399e3f175074ec5c",
+        "size_in_bytes": 399
+      },
+      {
+        "_path": "include/p11-kit-1/p11-kit/deprecated.h",
+        "path_type": "hardlink",
+        "sha256": "5335bb02985dedf8300c291a565413b44da7eef1ac2a1aa299f6048bf1eea98f",
+        "sha256_in_prefix": "5335bb02985dedf8300c291a565413b44da7eef1ac2a1aa299f6048bf1eea98f",
+        "size_in_bytes": 3731
+      },
+      {
+        "_path": "include/p11-kit-1/p11-kit/iter.h",
+        "path_type": "hardlink",
+        "sha256": "a6d48d8244c273be4a356b4677eba18fb0e50dcc8346c4984a7b1a7a9e50855f",
+        "sha256_in_prefix": "a6d48d8244c273be4a356b4677eba18fb0e50dcc8346c4984a7b1a7a9e50855f",
+        "size_in_bytes": 5749
+      },
+      {
+        "_path": "include/p11-kit-1/p11-kit/p11-kit.h",
+        "path_type": "hardlink",
+        "sha256": "318a5ef0d5a077af1fef27fbe84ab1a7c75aed63d9488b7ea8c83fa6bcbfcddb",
+        "sha256_in_prefix": "318a5ef0d5a077af1fef27fbe84ab1a7c75aed63d9488b7ea8c83fa6bcbfcddb",
+        "size_in_bytes": 5235
+      },
+      {
+        "_path": "include/p11-kit-1/p11-kit/pin.h",
+        "path_type": "hardlink",
+        "sha256": "1d089df520f4f442b8a8c5e39e0d314775595efb67b5dbee4db04fc347d8c54c",
+        "sha256_in_prefix": "1d089df520f4f442b8a8c5e39e0d314775595efb67b5dbee4db04fc347d8c54c",
+        "size_in_bytes": 4936
+      },
+      {
+        "_path": "include/p11-kit-1/p11-kit/pkcs11.h",
+        "path_type": "hardlink",
+        "sha256": "7de658bf2bf798bdd7abbdc8003a32e19a0b9d994c8924ab82b66ab45b085c21",
+        "sha256_in_prefix": "7de658bf2bf798bdd7abbdc8003a32e19a0b9d994c8924ab82b66ab45b085c21",
+        "size_in_bytes": 56088
+      },
+      {
+        "_path": "include/p11-kit-1/p11-kit/pkcs11x.h",
+        "path_type": "hardlink",
+        "sha256": "6f4d4a1e3e657273d2b50245ff5dd28e6049e219867f036bc0523ffa8ce48557",
+        "sha256_in_prefix": "6f4d4a1e3e657273d2b50245ff5dd28e6049e219867f036bc0523ffa8ce48557",
+        "size_in_bytes": 7815
+      },
+      {
+        "_path": "include/p11-kit-1/p11-kit/remote.h",
+        "path_type": "hardlink",
+        "sha256": "39480beb059df14f9d6d3717552ef8a09506ca777d811b5ecbf0512f814a6e56",
+        "sha256_in_prefix": "39480beb059df14f9d6d3717552ef8a09506ca777d811b5ecbf0512f814a6e56",
+        "size_in_bytes": 2437
+      },
+      {
+        "_path": "include/p11-kit-1/p11-kit/uri.h",
+        "path_type": "hardlink",
+        "sha256": "b93c01d747dd21c9df8f8d9afd8a0c895d4221cb2a14cab2cc8d67c61f6cb1d9",
+        "sha256_in_prefix": "b93c01d747dd21c9df8f8d9afd8a0c895d4221cb2a14cab2cc8d67c61f6cb1d9",
+        "size_in_bytes": 8292
+      },
+      {
+        "_path": "lib/libp11-kit.so",
+        "path_type": "softlink",
+        "sha256": "2ad0b31e27ca3ab3b15a62676e669017994e23a0d00c81450e86af67488a1e0e",
+        "size_in_bytes": 9024376
+      },
+      {
+        "_path": "lib/libp11-kit.so.0",
+        "path_type": "softlink",
+        "sha256": "2ad0b31e27ca3ab3b15a62676e669017994e23a0d00c81450e86af67488a1e0e",
+        "size_in_bytes": 9024376
+      },
+      {
+        "_path": "lib/libp11-kit.so.0.3.0",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/p11-kit_1654868524030/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "2ad0b31e27ca3ab3b15a62676e669017994e23a0d00c81450e86af67488a1e0e",
+        "sha256_in_prefix": "3c924edea4dbf53d15bb195d65dac83d0507bda2adf47a27b9feeb96293b2b3e",
+        "size_in_bytes": 9024376
+      },
+      {
+        "_path": "lib/p11-kit-proxy.so",
+        "path_type": "softlink",
+        "sha256": "2ad0b31e27ca3ab3b15a62676e669017994e23a0d00c81450e86af67488a1e0e",
+        "size_in_bytes": 9024376
+      },
+      {
+        "_path": "lib/pkcs11/p11-kit-client.so",
+        "path_type": "hardlink",
+        "sha256": "7cdc07454c35c11b363312487ba7dcda74a2720e679b1510ff989b8b19853190",
+        "sha256_in_prefix": "7cdc07454c35c11b363312487ba7dcda74a2720e679b1510ff989b8b19853190",
+        "size_in_bytes": 8497816
+      },
+      {
+        "_path": "lib/pkcs11/p11-kit-trust.so",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/p11-kit_1654868524030/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "3bca0e997ea82c21be9dc158169a34991f671b71ce0f8001f40fb5a65f0d10ce",
+        "sha256_in_prefix": "ae830a60c4d1aa416ccfcb8bb68119a8b8c4a7faaca30df759fa935129e186dd",
+        "size_in_bytes": 887880
+      },
+      {
+        "_path": "lib/pkgconfig/p11-kit-1.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/p11-kit_1654868524030/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "c2ca1606121b6bb21e046cefde68ccfa3040acdae8cc5b5a8b2b216d7c267672",
+        "sha256_in_prefix": "97c892b9c0abc6d4d8fcf0817a7a53cf556044fb2e1f396d044bb467492b2014",
+        "size_in_bytes": 1288
+      },
+      {
+        "_path": "libexec/p11-kit/p11-kit-remote",
+        "path_type": "hardlink",
+        "sha256": "fbc92fad8b868cd8615db7dd65804408b66f59d9b5c116d8f2b7a094ed60113b",
+        "sha256_in_prefix": "fbc92fad8b868cd8615db7dd65804408b66f59d9b5c116d8f2b7a094ed60113b",
+        "size_in_bytes": 99488
+      },
+      {
+        "_path": "libexec/p11-kit/p11-kit-server",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/p11-kit_1654868524030/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "c9dd87a286814f82766609bf46994e41de1add5892c90d6050ad42a2d85e4173",
+        "sha256_in_prefix": "91d0be87ac4d26f333481428d6e25bade4b2af141b6e69800b9861743d0cf212",
+        "size_in_bytes": 157400
+      },
+      {
+        "_path": "libexec/p11-kit/trust-extract-compat",
+        "path_type": "hardlink",
+        "sha256": "ff7524d0900fd799f4e2f91c2cc8c889dca16ad28f5fc7f0dd0bad9b856157b2",
+        "sha256_in_prefix": "ff7524d0900fd799f4e2f91c2cc8c889dca16ad28f5fc7f0dd0bad9b856157b2",
+        "size_in_bytes": 1153
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/config-example.html",
+        "path_type": "hardlink",
+        "sha256": "6a0aa1308d536be80fd629645b0e72c8f3e09ab91d44b923018c2119ab22cd2f",
+        "sha256_in_prefix": "6a0aa1308d536be80fd629645b0e72c8f3e09ab91d44b923018c2119ab22cd2f",
+        "size_in_bytes": 3901
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/config-files.html",
+        "path_type": "hardlink",
+        "sha256": "e40b1380128cfa983f6141ce8d44eb78f12132eb75756431ae40bd3059b7ac05",
+        "sha256_in_prefix": "e40b1380128cfa983f6141ce8d44eb78f12132eb75756431ae40bd3059b7ac05",
+        "size_in_bytes": 2217
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/config.html",
+        "path_type": "hardlink",
+        "sha256": "ee37cf4564e949b90e2d45a4bc19a72d37658ae9281d6b5ce674701083a6d25a",
+        "sha256_in_prefix": "ee37cf4564e949b90e2d45a4bc19a72d37658ae9281d6b5ce674701083a6d25a",
+        "size_in_bytes": 2621
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/devel-building-style.html",
+        "path_type": "hardlink",
+        "sha256": "cabb1261316609e6cc133428d2c812f91254318bb2e977579323272ac477355a",
+        "sha256_in_prefix": "cabb1261316609e6cc133428d2c812f91254318bb2e977579323272ac477355a",
+        "size_in_bytes": 3249
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/devel-building.html",
+        "path_type": "hardlink",
+        "sha256": "f1226382d06cc3027e6ec7df1675798617816388890caf5c019a0fb6b620dcec",
+        "sha256_in_prefix": "f1226382d06cc3027e6ec7df1675798617816388890caf5c019a0fb6b620dcec",
+        "size_in_bytes": 10093
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/devel-commands.html",
+        "path_type": "hardlink",
+        "sha256": "22ebb8e599a7b1c7cc6dfa04a26dec8ff3494b8ed1d28d9def010c465d377bb9",
+        "sha256_in_prefix": "22ebb8e599a7b1c7cc6dfa04a26dec8ff3494b8ed1d28d9def010c465d377bb9",
+        "size_in_bytes": 2583
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/devel-debugging.html",
+        "path_type": "hardlink",
+        "sha256": "57739f2647fb69fb1b4178d12535d2e90621dd299f4bacae60ab120faffc12c2",
+        "sha256_in_prefix": "57739f2647fb69fb1b4178d12535d2e90621dd299f4bacae60ab120faffc12c2",
+        "size_in_bytes": 1978
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/devel-paths.html",
+        "path_type": "hardlink",
+        "sha256": "7a0a4947db44402585341f5dfca4833eb8a8883bb1b6ee37b66392a68d421f6c",
+        "sha256_in_prefix": "7a0a4947db44402585341f5dfca4833eb8a8883bb1b6ee37b66392a68d421f6c",
+        "size_in_bytes": 3525
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/devel-testing.html",
+        "path_type": "hardlink",
+        "sha256": "a3893f3ba229d8582d872357761989a9b9acae6d453bbbfd920d373223d27934",
+        "sha256_in_prefix": "a3893f3ba229d8582d872357761989a9b9acae6d453bbbfd920d373223d27934",
+        "size_in_bytes": 2825
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/devel.html",
+        "path_type": "hardlink",
+        "sha256": "43eb89050c915b95be022dee64c48b7ba6e782558db4531316822a70f343e6e4",
+        "sha256_in_prefix": "43eb89050c915b95be022dee64c48b7ba6e782558db4531316822a70f343e6e4",
+        "size_in_bytes": 3770
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/gtk-doc.css",
+        "path_type": "hardlink",
+        "sha256": "091ee6282ff6b5316d54f0367f5e91613c26454cb48df1504700afe0da27d941",
+        "sha256_in_prefix": "091ee6282ff6b5316d54f0367f5e91613c26454cb48df1504700afe0da27d941",
+        "size_in_bytes": 12008
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/home.png",
+        "path_type": "hardlink",
+        "sha256": "7a8d24b00f5fb6bbb0446249b605efdd36598e8a0f65ac3fab2e18438c73b91e",
+        "sha256_in_prefix": "7a8d24b00f5fb6bbb0446249b605efdd36598e8a0f65ac3fab2e18438c73b91e",
+        "size_in_bytes": 256
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/index.html",
+        "path_type": "hardlink",
+        "sha256": "dcad6b481f5dd938a4da6549f45052324530ef2aa5324d2b9f7184636d8845b4",
+        "sha256_in_prefix": "dcad6b481f5dd938a4da6549f45052324530ef2aa5324d2b9f7184636d8845b4",
+        "size_in_bytes": 5672
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/left-insensitive.png",
+        "path_type": "hardlink",
+        "sha256": "303355d93cac53410997dc7a3f9bd60f3ce0d8ebae7908978c8731fe9bb139ff",
+        "sha256_in_prefix": "303355d93cac53410997dc7a3f9bd60f3ce0d8ebae7908978c8731fe9bb139ff",
+        "size_in_bytes": 395
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/left.png",
+        "path_type": "hardlink",
+        "sha256": "0eb96fe775524c2d4d4f167d79041b17c5cc8ae9112478665132c31a1417fb4a",
+        "sha256_in_prefix": "0eb96fe775524c2d4d4f167d79041b17c5cc8ae9112478665132c31a1417fb4a",
+        "size_in_bytes": 262
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/p11-kit-Deprecated.html",
+        "path_type": "hardlink",
+        "sha256": "32e3901cb45a21c969401729c015e4728e5964f047916b1bba8465f51e7151d6",
+        "sha256_in_prefix": "32e3901cb45a21c969401729c015e4728e5964f047916b1bba8465f51e7151d6",
+        "size_in_bytes": 25726
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/p11-kit-Future.html",
+        "path_type": "hardlink",
+        "sha256": "fb04bf12aaf994c8157254d24ae0d2e63499f47c13d4b86a12864f7be97b54f2",
+        "sha256_in_prefix": "fb04bf12aaf994c8157254d24ae0d2e63499f47c13d4b86a12864f7be97b54f2",
+        "size_in_bytes": 62045
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/p11-kit-Modules.html",
+        "path_type": "hardlink",
+        "sha256": "ea3b19358cf3c68d04446187714c3949b69f2e6105c12112e728cda619ce7d37",
+        "sha256_in_prefix": "ea3b19358cf3c68d04446187714c3949b69f2e6105c12112e728cda619ce7d37",
+        "size_in_bytes": 41917
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/p11-kit-PIN-Callbacks.html",
+        "path_type": "hardlink",
+        "sha256": "c0bde0a9617eddd289fd5f925d4d14cf722a25cba4216512dfbf881464fc4ded",
+        "sha256_in_prefix": "c0bde0a9617eddd289fd5f925d4d14cf722a25cba4216512dfbf881464fc4ded",
+        "size_in_bytes": 46169
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/p11-kit-URIs.html",
+        "path_type": "hardlink",
+        "sha256": "c63a40a620ea867528599f5c4d71b5a9a9c7ea2f6303b766010b9451755f4efa",
+        "sha256_in_prefix": "c63a40a620ea867528599f5c4d71b5a9a9c7ea2f6303b766010b9451755f4efa",
+        "size_in_bytes": 72040
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/p11-kit-Utilities.html",
+        "path_type": "hardlink",
+        "sha256": "3a018a6d138db09c518f891ef4703b9b26d93d1afd9da8199eb4503cc01fd857",
+        "sha256_in_prefix": "3a018a6d138db09c518f891ef4703b9b26d93d1afd9da8199eb4503cc01fd857",
+        "size_in_bytes": 12300
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/p11-kit.devhelp2",
+        "path_type": "hardlink",
+        "sha256": "ca337f0bddeb915ad9a135cb05d169a4b5aad0e2fdfe535654d5127a75d2eaa7",
+        "sha256_in_prefix": "ca337f0bddeb915ad9a135cb05d169a4b5aad0e2fdfe535654d5127a75d2eaa7",
+        "size_in_bytes": 21653
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/p11-kit.html",
+        "path_type": "hardlink",
+        "sha256": "b621f0393582c7e179fcc296b6fc6d0531dc6847bb3c44b8f0c2795b7f131748",
+        "sha256_in_prefix": "b621f0393582c7e179fcc296b6fc6d0531dc6847bb3c44b8f0c2795b7f131748",
+        "size_in_bytes": 6127
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/pkcs11-conf.html",
+        "path_type": "hardlink",
+        "sha256": "3be4eeb189a75aa0d27ad106affb44b3f8d6fa05e0c5e45f815f40e1c7650e47",
+        "sha256_in_prefix": "3be4eeb189a75aa0d27ad106affb44b3f8d6fa05e0c5e45f815f40e1c7650e47",
+        "size_in_bytes": 12876
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/reference.html",
+        "path_type": "hardlink",
+        "sha256": "fe1352feb4d5104e90c6649661b7bbfa195b1b3338d4fe4b1b1ca0a18aa95771",
+        "sha256_in_prefix": "fe1352feb4d5104e90c6649661b7bbfa195b1b3338d4fe4b1b1ca0a18aa95771",
+        "size_in_bytes": 32954
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/remoting.html",
+        "path_type": "hardlink",
+        "sha256": "ba9bb2a336efd06eac377f5565ff116af148c078cf875826f305f3d4b2a4e952",
+        "sha256_in_prefix": "ba9bb2a336efd06eac377f5565ff116af148c078cf875826f305f3d4b2a4e952",
+        "size_in_bytes": 11315
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/right-insensitive.png",
+        "path_type": "hardlink",
+        "sha256": "794050c64c498420599162f2b3b6928232dd0be7991d942b1dc0b1670eb8695e",
+        "sha256_in_prefix": "794050c64c498420599162f2b3b6928232dd0be7991d942b1dc0b1670eb8695e",
+        "size_in_bytes": 373
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/right.png",
+        "path_type": "hardlink",
+        "sha256": "0629ad38280184be1b94602f2015707a28170151058f7171aeda501fcf0979d3",
+        "sha256_in_prefix": "0629ad38280184be1b94602f2015707a28170151058f7171aeda501fcf0979d3",
+        "size_in_bytes": 261
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/sharing-managed.html",
+        "path_type": "hardlink",
+        "sha256": "0fdcb79693b213c6e69fa2d063d12b789837ededd5799e9ebcfe7c2254b25de9",
+        "sha256_in_prefix": "0fdcb79693b213c6e69fa2d063d12b789837ededd5799e9ebcfe7c2254b25de9",
+        "size_in_bytes": 4792
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/sharing.html",
+        "path_type": "hardlink",
+        "sha256": "d674442c60ca917c02ac12fe48fec1fef70fcb0eebea37e9aad94fef1ebaa1d3",
+        "sha256_in_prefix": "d674442c60ca917c02ac12fe48fec1fef70fcb0eebea37e9aad94fef1ebaa1d3",
+        "size_in_bytes": 2764
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/style.css",
+        "path_type": "hardlink",
+        "sha256": "355e8f8db079275b03ef50248fd79139f939d5e6ed0d52e8d73e2fd1e1a63bac",
+        "sha256_in_prefix": "355e8f8db079275b03ef50248fd79139f939d5e6ed0d52e8d73e2fd1e1a63bac",
+        "size_in_bytes": 1696
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/tools.html",
+        "path_type": "hardlink",
+        "sha256": "44a22f99bd5d70c3105f6cbf7672bda673074d636af1b4d5f4a59572431de322",
+        "sha256_in_prefix": "44a22f99bd5d70c3105f6cbf7672bda673074d636af1b4d5f4a59572431de322",
+        "size_in_bytes": 2073
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/trust-disable.html",
+        "path_type": "hardlink",
+        "sha256": "d2cc41a19394ee4025676513ac791b786fb71f03a855e09fa9296f995e5a25e7",
+        "sha256_in_prefix": "d2cc41a19394ee4025676513ac791b786fb71f03a855e09fa9296f995e5a25e7",
+        "size_in_bytes": 2710
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/trust-glib-networking.html",
+        "path_type": "hardlink",
+        "sha256": "9509ce3f613dd441b9967290e10ca5a76ef6157bbb10a5c0b6b2b990d572b380",
+        "sha256_in_prefix": "9509ce3f613dd441b9967290e10ca5a76ef6157bbb10a5c0b6b2b990d572b380",
+        "size_in_bytes": 2112
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/trust-module.html",
+        "path_type": "hardlink",
+        "sha256": "01b2f2dedf99589ff32523f8dbbff154d23e7e09fc7ab3f59d09df2964cc0de2",
+        "sha256_in_prefix": "01b2f2dedf99589ff32523f8dbbff154d23e7e09fc7ab3f59d09df2964cc0de2",
+        "size_in_bytes": 4951
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/trust-nss.html",
+        "path_type": "hardlink",
+        "sha256": "45ae78a4d11b08f56d0990c85b7046f9736ce21f22f527849df642df37524a99",
+        "sha256_in_prefix": "45ae78a4d11b08f56d0990c85b7046f9736ce21f22f527849df642df37524a99",
+        "size_in_bytes": 2373
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/trust.html",
+        "path_type": "hardlink",
+        "sha256": "40a0e8ea9b4365d571b40aaaecadf2cb003692595f64af442e4e91987f0a9f12",
+        "sha256_in_prefix": "40a0e8ea9b4365d571b40aaaecadf2cb003692595f64af442e4e91987f0a9f12",
+        "size_in_bytes": 15262
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/up-insensitive.png",
+        "path_type": "hardlink",
+        "sha256": "0420f2040eebf418098a86a3fb2ef5a9659c87d37b81ee85b69316b045a9453a",
+        "sha256_in_prefix": "0420f2040eebf418098a86a3fb2ef5a9659c87d37b81ee85b69316b045a9453a",
+        "size_in_bytes": 374
+      },
+      {
+        "_path": "share/gtk-doc/html/p11-kit/up.png",
+        "path_type": "hardlink",
+        "sha256": "c54b75948f4d26357dd018159078f36f90deeaf29ce3b9d2bd0ea6655ef1bda8",
+        "sha256_in_prefix": "c54b75948f4d26357dd018159078f36f90deeaf29ce3b9d2bd0ea6655ef1bda8",
+        "size_in_bytes": 260
+      },
+      {
+        "_path": "share/p11-kit/modules/p11-kit-trust.module",
+        "path_type": "hardlink",
+        "sha256": "c9bcaa8b0366e2bef1e89fb6af4f084932d53c76da846100824015f89ff75b31",
+        "sha256_in_prefix": "c9bcaa8b0366e2bef1e89fb6af4f084932d53c76da846100824015f89ff75b31",
+        "size_in_bytes": 902
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "aa8d3887b36557ad0c839e4876c0496e0d670afe843bf5bba4a87764b868196d",
+  "size": 4702497,
+  "subdir": "linux-64",
+  "timestamp": 1654868759000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/p11-kit-0.24.1-hc5aa10d_0.tar.bz2",
+  "version": "0.24.1"
+}

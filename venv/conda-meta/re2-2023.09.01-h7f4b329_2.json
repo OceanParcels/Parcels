@@ -1,0 +1,114 @@
+{
+  "build": "h7f4b329_2",
+  "build_number": 2,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libre2-11 2023.09.01 h5a48ba9_2"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/re2-2023.09.01-h7f4b329_2",
+  "files": [
+    "include/re2/filtered_re2.h",
+    "include/re2/re2.h",
+    "include/re2/set.h",
+    "include/re2/stringpiece.h",
+    "lib/cmake/re2/re2Config.cmake",
+    "lib/cmake/re2/re2ConfigVersion.cmake",
+    "lib/cmake/re2/re2Targets-release.cmake",
+    "lib/cmake/re2/re2Targets.cmake",
+    "lib/libre2.so",
+    "lib/pkgconfig/re2.pc"
+  ],
+  "fn": "re2-2023.09.01-h7f4b329_2.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/re2-2023.09.01-h7f4b329_2",
+    "type": 1
+  },
+  "md5": "8f70e36268dea8eb666ef14c29bd3cda",
+  "name": "re2",
+  "package_tarball_full_path": "/opt/conda/pkgs/re2-2023.09.01-h7f4b329_2.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/re2/filtered_re2.h",
+        "path_type": "hardlink",
+        "sha256": "1ea210499ecb637cd0c8ebc5f20d0c3be02697e4aa0f614ebc831812709227f5",
+        "sha256_in_prefix": "1ea210499ecb637cd0c8ebc5f20d0c3be02697e4aa0f614ebc831812709227f5",
+        "size_in_bytes": 4281
+      },
+      {
+        "_path": "include/re2/re2.h",
+        "path_type": "hardlink",
+        "sha256": "2ef21bd411d90946b98affa5f3f9592d11de1c73ec2bc637f79885cbcc687627",
+        "sha256_in_prefix": "2ef21bd411d90946b98affa5f3f9592d11de1c73ec2bc637f79885cbcc687627",
+        "size_in_bytes": 41770
+      },
+      {
+        "_path": "include/re2/set.h",
+        "path_type": "hardlink",
+        "sha256": "1ca569050914c165c5af16f3118c5dbae92925de4e5e172b8fbfa69a7fff5482",
+        "sha256_in_prefix": "1ca569050914c165c5af16f3118c5dbae92925de4e5e172b8fbfa69a7fff5482",
+        "size_in_bytes": 2518
+      },
+      {
+        "_path": "include/re2/stringpiece.h",
+        "path_type": "hardlink",
+        "sha256": "59c1438095decbdab33a6140f6b358634e3dc31c36408ba9ce3b382ab3fb6c5a",
+        "sha256_in_prefix": "59c1438095decbdab33a6140f6b358634e3dc31c36408ba9ce3b382ab3fb6c5a",
+        "size_in_bytes": 504
+      },
+      {
+        "_path": "lib/cmake/re2/re2Config.cmake",
+        "path_type": "hardlink",
+        "sha256": "337dee58f0e0a9de6bb10a3daf40379542b1ebf3d8b0714862e7be81fdb1f679",
+        "sha256_in_prefix": "337dee58f0e0a9de6bb10a3daf40379542b1ebf3d8b0714862e7be81fdb1f679",
+        "size_in_bytes": 1444
+      },
+      {
+        "_path": "lib/cmake/re2/re2ConfigVersion.cmake",
+        "path_type": "hardlink",
+        "sha256": "0646009b5688c6b38b691169fc0ed61fa393a9856fae8dcbc14ba2a4992b3792",
+        "sha256_in_prefix": "0646009b5688c6b38b691169fc0ed61fa393a9856fae8dcbc14ba2a4992b3792",
+        "size_in_bytes": 2765
+      },
+      {
+        "_path": "lib/cmake/re2/re2Targets-release.cmake",
+        "path_type": "hardlink",
+        "sha256": "e44466ec6079460153ec3b825b9e366b9dcf2913b381c8a2f6c3016ce132f8d8",
+        "sha256_in_prefix": "e44466ec6079460153ec3b825b9e366b9dcf2913b381c8a2f6c3016ce132f8d8",
+        "size_in_bytes": 814
+      },
+      {
+        "_path": "lib/cmake/re2/re2Targets.cmake",
+        "path_type": "hardlink",
+        "sha256": "581207d3677a5ad90e3cff7fcdf52a283b67311da2ed18bc879768d8bcfac92e",
+        "sha256_in_prefix": "581207d3677a5ad90e3cff7fcdf52a283b67311da2ed18bc879768d8bcfac92e",
+        "size_in_bytes": 4292
+      },
+      {
+        "_path": "lib/libre2.so",
+        "path_type": "softlink",
+        "sha256": "2f83267d6d4794424e9df52fb9aafaea810f17d01ba83d217f1996bb6c5daed3",
+        "size_in_bytes": 672304
+      },
+      {
+        "_path": "lib/pkgconfig/re2.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/re2-split_1708946529738/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_p",
+        "sha256": "4df34803a134a5c0fbe58679424bb03455f35f3070b6ed366bbc1c1c13151cd6",
+        "sha256_in_prefix": "83695b074772477e8e06684e665c949d3501c4cd914b22e06ccab9f09d11f2fe",
+        "size_in_bytes": 910
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "f0f520f57e6b58313e8c41abc7dfa48742a05f1681f05654558127b667c769a8",
+  "size": 26617,
+  "subdir": "linux-64",
+  "timestamp": 1708946796000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/re2-2023.09.01-h7f4b329_2.conda",
+  "version": "2023.09.01"
+}

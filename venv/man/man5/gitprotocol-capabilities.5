@@ -1,0 +1,230 @@
+'\" t
+.\"     Title: gitprotocol-capabilities
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GITPROTOCOL\-CAPABILITIES" "5" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+gitprotocol-capabilities \- Protocol v0 and v1 capabilities
+.SH "SYNOPSIS"
+.sp
+.nf
+<over\-the\-wire\-protocol>
+.fi
+.sp
+.SH "DESCRIPTION"
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.sp
+this document describes capabilities for versions 0 and 1 of the pack protocol\&. For version 2, please refer to the \fBgitprotocol-v2\fR(5) doc\&.
+.sp .5v
+.RE
+.sp
+Servers SHOULD support all capabilities defined in this document\&.
+.sp
+On the very first line of the initial server response of either receive\-pack and upload\-pack the first reference is followed by a NUL byte and then a list of space delimited server capabilities\&. These allow the server to declare what it can and cannot support to the client\&.
+.sp
+Client will then send a space separated list of capabilities it wants to be in effect\&. The client MUST NOT ask for capabilities the server did not say it supports\&.
+.sp
+Server MUST diagnose and abort if capabilities it does not understand were sent\&. Server MUST NOT ignore capabilities that client requested and server advertised\&. As a consequence of these rules, server MUST NOT advertise capabilities it does not understand\&.
+.sp
+The \fIatomic\fR, \fIreport\-status\fR, \fIreport\-status\-v2\fR, \fIdelete\-refs\fR, \fIquiet\fR, and \fIpush\-cert\fR capabilities are sent and recognized by the receive\-pack (push to server) process\&.
+.sp
+The \fIofs\-delta\fR and \fIside\-band\-64k\fR capabilities are sent and recognized by both upload\-pack and receive\-pack protocols\&. The \fIagent\fR and \fIsession\-id\fR capabilities may optionally be sent in both protocols\&.
+.sp
+All other capabilities are only recognized by the upload\-pack (fetch from server) process\&.
+.SH "MULTI_ACK"
+.sp
+The \fImulti_ack\fR capability allows the server to return "ACK obj\-id continue" as soon as it finds a commit that it can use as a common base, between the client\(cqs wants and the client\(cqs have set\&.
+.sp
+By sending this early, the server can potentially head off the client from walking any further down that particular branch of the client\(cqs repository history\&. The client may still need to walk down other branches, sending have lines for those, until the server has a complete cut across the DAG, or the client has said "done"\&.
+.sp
+Without multi_ack, a client sends have lines in \-\-date\-order until the server has found a common base\&. That means the client will send have lines that are already known by the server to be common, because they overlap in time with another branch on which the server hasn\(cqt found a common base yet\&.
+.sp
+For example suppose the client has commits in caps that the server doesn\(cqt and the server has commits in lower case that the client doesn\(cqt, as in the following diagram:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+   +\-\-\-\- u \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\- x
+  /              +\-\-\-\-\- y
+ /              /
+a \-\- b \-\- c \-\- d \-\- E \-\- F
+   \e
+    +\-\-\- Q \-\- R \-\- S
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If the client wants x,y and starts out by saying have F,S, the server doesn\(cqt know what F,S is\&. Eventually the client says "have d" and the server sends "ACK d continue" to let the client know to stop walking down that line (so don\(cqt send c\-b\-a), but it\(cqs not done yet, it needs a base for x\&. The client keeps going with S\-R\-Q, until a gets reached, at which point the server has a clear base and it all ends\&.
+.sp
+Without multi_ack the client would have sent that c\-b\-a chain anyway, interleaved with S\-R\-Q\&.
+.SH "MULTI_ACK_DETAILED"
+.sp
+This is an extension of multi_ack that permits the client to better understand the server\(cqs in\-memory state\&. See \fBgitprotocol-pack\fR(5), section "Packfile Negotiation" for more information\&.
+.SH "NO\-DONE"
+.sp
+This capability should only be used with the smart HTTP protocol\&. If multi_ack_detailed and no\-done are both present, then the sender is free to immediately send a pack following its first "ACK obj\-id ready" message\&.
+.sp
+Without no\-done in the smart HTTP protocol, the server session would end and the client has to make another trip to send "done" before the server can send the pack\&. no\-done removes the last round and thus slightly reduces latency\&.
+.SH "THIN\-PACK"
+.sp
+A thin pack is one with deltas which reference base objects not contained within the pack (but are known to exist at the receiving end)\&. This can reduce the network traffic significantly, but it requires the receiving end to know how to "thicken" these packs by adding the missing bases to the pack\&.
+.sp
+The upload\-pack server advertises \fIthin\-pack\fR when it can generate and send a thin pack\&. A client requests the \fIthin\-pack\fR capability when it understands how to "thicken" it, notifying the server that it can receive such a pack\&. A client MUST NOT request the \fIthin\-pack\fR capability if it cannot turn a thin pack into a self\-contained pack\&.
+.sp
+Receive\-pack, on the other hand, is assumed by default to be able to handle thin packs, but can ask the client not to use the feature by advertising the \fIno\-thin\fR capability\&. A client MUST NOT send a thin pack if the server advertises the \fIno\-thin\fR capability\&.
+.sp
+The reasons for this asymmetry are historical\&. The receive\-pack program did not exist until after the invention of thin packs, so historically the reference implementation of receive\-pack always understood thin packs\&. Adding \fIno\-thin\fR later allowed receive\-pack to disable the feature in a backwards\-compatible manner\&.
+.SH "SIDE\-BAND, SIDE\-BAND\-64K"
+.sp
+This capability means that the server can send, and the client can understand, multiplexed progress reports and error info interleaved with the packfile itself\&.
+.sp
+These two options are mutually exclusive\&. A modern client always favors \fIside\-band\-64k\fR\&.
+.sp
+Either mode indicates that the packfile data will be streamed broken up into packets of up to either 1000 bytes in the case of \fIside_band\fR, or 65520 bytes in the case of \fIside_band_64k\fR\&. Each packet is made up of a leading 4\-byte pkt\-line length of how much data is in the packet, followed by a 1\-byte stream code, followed by the actual data\&.
+.sp
+The stream code can be one of:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+1 \- pack data
+2 \- progress messages
+3 \- fatal error message just before stream aborts
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The "side\-band\-64k" capability came about as a way for newer clients that can handle much larger packets to request packets that are actually crammed nearly full, while maintaining backward compatibility for the older clients\&.
+.sp
+Further, with side\-band and its up to 1000\-byte messages, it\(cqs actually 999 bytes of payload and 1 byte for the stream code\&. With side\-band\-64k, same deal, you have up to 65519 bytes of data and 1 byte for the stream code\&.
+.sp
+The client MUST send only one of "side\-band" and "side\- band\-64k"\&. The server MUST diagnose it as an error if client requests both\&.
+.SH "OFS\-DELTA"
+.sp
+The server can send, and the client can understand, PACKv2 with delta referring to its base by position in pack rather than by an obj\-id\&. That is, they can send/read OBJ_OFS_DELTA (aka type 6) in a packfile\&.
+.SH "AGENT"
+.sp
+The server may optionally send a capability of the form \fBagent=X\fR to notify the client that the server is running version \fBX\fR\&. The client may optionally return its own agent string by responding with an \fBagent=Y\fR capability (but it MUST NOT do so if the server did not mention the agent capability)\&. The \fBX\fR and \fBY\fR strings may contain any printable ASCII characters except space (i\&.e\&., the byte range 32 < x < 127), and are typically of the form "package/version" (e\&.g\&., "git/1\&.8\&.3\&.1")\&. The agent strings are purely informative for statistics and debugging purposes, and MUST NOT be used to programmatically assume the presence or absence of particular features\&.
+.SH "OBJECT\-FORMAT"
+.sp
+This capability, which takes a hash algorithm as an argument, indicates that the server supports the given hash algorithms\&. It may be sent multiple times; if so, the first one given is the one used in the ref advertisement\&.
+.sp
+When provided by the client, this indicates that it intends to use the given hash algorithm to communicate\&. The algorithm provided must be one that the server supports\&.
+.sp
+If this capability is not provided, it is assumed that the only supported algorithm is SHA\-1\&.
+.SH "SYMREF"
+.sp
+This parameterized capability is used to inform the receiver which symbolic ref points to which ref; for example, "symref=HEAD:refs/heads/master" tells the receiver that HEAD points to master\&. This capability can be repeated to represent multiple symrefs\&.
+.sp
+Servers SHOULD include this capability for the HEAD symref if it is one of the refs being sent\&.
+.sp
+Clients MAY use the parameters from this capability to select the proper initial branch when cloning a repository\&.
+.SH "SHALLOW"
+.sp
+This capability adds "deepen", "shallow" and "unshallow" commands to the fetch\-pack/upload\-pack protocol so clients can request shallow clones\&.
+.SH "DEEPEN\-SINCE"
+.sp
+This capability adds "deepen\-since" command to fetch\-pack/upload\-pack protocol so the client can request shallow clones that are cut at a specific time, instead of depth\&. Internally it\(cqs equivalent of doing "rev\-list \-\-max\-age=<timestamp>" on the server side\&. "deepen\-since" cannot be used with "deepen"\&.
+.SH "DEEPEN\-NOT"
+.sp
+This capability adds "deepen\-not" command to fetch\-pack/upload\-pack protocol so the client can request shallow clones that are cut at a specific revision, instead of depth\&. Internally it\(cqs equivalent of doing "rev\-list \-\-not <rev>" on the server side\&. "deepen\-not" cannot be used with "deepen", but can be used with "deepen\-since"\&.
+.SH "DEEPEN\-RELATIVE"
+.sp
+If this capability is requested by the client, the semantics of "deepen" command is changed\&. The "depth" argument is the depth from the current shallow boundary, instead of the depth from remote refs\&.
+.SH "NO\-PROGRESS"
+.sp
+The client was started with "git clone \-q" or something similar, and doesn\(cqt want that side band 2\&. Basically the client just says "I do not wish to receive stream 2 on sideband, so do not send it to me, and if you did, I will drop it on the floor anyway"\&. However, the sideband channel 3 is still used for error responses\&.
+.SH "INCLUDE\-TAG"
+.sp
+The \fIinclude\-tag\fR capability is about sending annotated tags if we are sending objects they point to\&. If we pack an object to the client, and a tag object points exactly at that object, we pack the tag object too\&. In general this allows a client to get all new annotated tags when it fetches a branch, in a single network connection\&.
+.sp
+Clients MAY always send include\-tag, hardcoding it into a request when the server advertises this capability\&. The decision for a client to request include\-tag only has to do with the client\(cqs desires for tag data, whether or not a server had advertised objects in the refs/tags/* namespace\&.
+.sp
+Servers MUST pack the tags if their referent is packed and the client has requested include\-tags\&.
+.sp
+Clients MUST be prepared for the case where a server has ignored include\-tag and has not actually sent tags in the pack\&. In such cases the client SHOULD issue a subsequent fetch to acquire the tags that include\-tag would have otherwise given the client\&.
+.sp
+The server SHOULD send include\-tag, if it supports it, regardless of whether or not there are tags available\&.
+.SH "REPORT\-STATUS"
+.sp
+The receive\-pack process can receive a \fIreport\-status\fR capability, which tells it that the client wants a report of what happened after a packfile upload and reference update\&. If the pushing client requests this capability, after unpacking and updating references the server will respond with whether the packfile unpacked successfully and if each reference was updated successfully\&. If any of those were not successful, it will send back an error message\&. See \fBgitprotocol-pack\fR(5) for example messages\&.
+.SH "REPORT\-STATUS\-V2"
+.sp
+Capability \fIreport\-status\-v2\fR extends capability \fIreport\-status\fR by adding new "option" directives in order to support reference rewritten by the "proc\-receive" hook\&. The "proc\-receive" hook may handle a command for a pseudo\-reference which may create or update a reference with different name, new\-oid, and old\-oid\&. While the capability \fIreport\-status\fR cannot report for such case\&. See \fBgitprotocol-pack\fR(5) for details\&.
+.SH "DELETE\-REFS"
+.sp
+If the server sends back the \fIdelete\-refs\fR capability, it means that it is capable of accepting a zero\-id value as the target value of a reference update\&. It is not sent back by the client, it simply informs the client that it can be sent zero\-id values to delete references\&.
+.SH "QUIET"
+.sp
+If the receive\-pack server advertises the \fIquiet\fR capability, it is capable of silencing human\-readable progress output which otherwise may be shown when processing the received pack\&. A send\-pack client should respond with the \fIquiet\fR capability to suppress server\-side progress reporting if the local progress reporting is also being suppressed (e\&.g\&., via \fBpush \-q\fR, or if stderr does not go to a tty)\&.
+.SH "ATOMIC"
+.sp
+If the server sends the \fIatomic\fR capability it is capable of accepting atomic pushes\&. If the pushing client requests this capability, the server will update the refs in one atomic transaction\&. Either all refs are updated or none\&.
+.SH "PUSH\-OPTIONS"
+.sp
+If the server sends the \fIpush\-options\fR capability it is able to accept push options after the update commands have been sent, but before the packfile is streamed\&. If the pushing client requests this capability, the server will pass the options to the pre\- and post\- receive hooks that process this push request\&.
+.SH "ALLOW\-TIP\-SHA1\-IN\-WANT"
+.sp
+If the upload\-pack server advertises this capability, fetch\-pack may send "want" lines with object names that exist at the server but are not advertised by upload\-pack\&. For historical reasons, the name of this capability contains "sha1"\&. Object names are always given using the object format negotiated through the \fIobject\-format\fR capability\&.
+.SH "ALLOW\-REACHABLE\-SHA1\-IN\-WANT"
+.sp
+If the upload\-pack server advertises this capability, fetch\-pack may send "want" lines with object names that exist at the server but are not advertised by upload\-pack\&. For historical reasons, the name of this capability contains "sha1"\&. Object names are always given using the object format negotiated through the \fIobject\-format\fR capability\&.
+.SH "PUSH\-CERT=<NONCE>"
+.sp
+The receive\-pack server that advertises this capability is willing to accept a signed push certificate, and asks the <nonce> to be included in the push certificate\&. A send\-pack client MUST NOT send a push\-cert packet unless the receive\-pack server advertises this capability\&.
+.SH "FILTER"
+.sp
+If the upload\-pack server advertises the \fIfilter\fR capability, fetch\-pack may send "filter" commands to request a partial clone or partial fetch and request that the server omit various objects from the packfile\&.
+.SH "SESSION\-ID=<SESSION\-ID>"
+.sp
+The server may advertise a session ID that can be used to identify this process across multiple requests\&. The client may advertise its own session ID back to the server as well\&.
+.sp
+Session IDs should be unique to a given process\&. They must fit within a packet\-line, and must not contain non\-printable or whitespace characters\&. The current implementation uses trace2 session IDs (see \m[blue]\fBapi\-trace2\fR\m[]\&\s-2\u[1]\d\s+2 for details), but this may change and users of the session ID should not rely on this fact\&.
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite
+.SH "NOTES"
+.IP " 1." 4
+api-trace2
+.RS 4
+\%git-htmldocs/technical/api-trace2.html
+.RE

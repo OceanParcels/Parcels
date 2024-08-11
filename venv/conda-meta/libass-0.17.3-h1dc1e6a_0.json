@@ -1,0 +1,89 @@
+{
+  "build": "h1dc1e6a_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "fontconfig >=2.14.2,<3.0a0",
+    "fonts-conda-ecosystem",
+    "freetype >=2.12.1,<3.0a0",
+    "fribidi >=1.0.10,<2.0a0",
+    "harfbuzz >=9.0.0,<10.0a0",
+    "libexpat >=2.6.2,<3.0a0",
+    "libgcc-ng >=12",
+    "libzlib >=1.3.1,<2.0a0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libass-0.17.3-h1dc1e6a_0",
+  "files": [
+    "include/ass/ass.h",
+    "include/ass/ass_types.h",
+    "lib/libass.so",
+    "lib/libass.so.9",
+    "lib/libass.so.9.3.1",
+    "lib/pkgconfig/libass.pc"
+  ],
+  "fn": "libass-0.17.3-h1dc1e6a_0.conda",
+  "license": "ISC",
+  "link": {
+    "source": "/opt/conda/pkgs/libass-0.17.3-h1dc1e6a_0",
+    "type": 1
+  },
+  "md5": "2a66267ba586dadd110cc991063cfff7",
+  "name": "libass",
+  "package_tarball_full_path": "/opt/conda/pkgs/libass-0.17.3-h1dc1e6a_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/ass/ass.h",
+        "path_type": "hardlink",
+        "sha256": "c322bb1f03dfe3a2bdbcd61002ff92684cd6f6ef593bc4a9dbca13f79f9c6ba2",
+        "sha256_in_prefix": "c322bb1f03dfe3a2bdbcd61002ff92684cd6f6ef593bc4a9dbca13f79f9c6ba2",
+        "size_in_bytes": 31561
+      },
+      {
+        "_path": "include/ass/ass_types.h",
+        "path_type": "hardlink",
+        "sha256": "b2f06eaaba5d80b3a23fb08726f1152f12a0f583346ad0086a80ebbdb4c48cf8",
+        "sha256_in_prefix": "b2f06eaaba5d80b3a23fb08726f1152f12a0f583346ad0086a80ebbdb4c48cf8",
+        "size_in_bytes": 13379
+      },
+      {
+        "_path": "lib/libass.so",
+        "path_type": "softlink",
+        "sha256": "ed7f50b5a8c23da9ecf1245b8918140c4eab71b0a471ceb59cab50947f5173a3",
+        "size_in_bytes": 294840
+      },
+      {
+        "_path": "lib/libass.so.9",
+        "path_type": "softlink",
+        "sha256": "ed7f50b5a8c23da9ecf1245b8918140c4eab71b0a471ceb59cab50947f5173a3",
+        "size_in_bytes": 294840
+      },
+      {
+        "_path": "lib/libass.so.9.3.1",
+        "path_type": "hardlink",
+        "sha256": "ed7f50b5a8c23da9ecf1245b8918140c4eab71b0a471ceb59cab50947f5173a3",
+        "sha256_in_prefix": "ed7f50b5a8c23da9ecf1245b8918140c4eab71b0a471ceb59cab50947f5173a3",
+        "size_in_bytes": 294840
+      },
+      {
+        "_path": "lib/pkgconfig/libass.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libass_1719985743675/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac",
+        "sha256": "e184ae91b8f5dd7a2d83583af178c8fd41f061fba8050385a1e874c2fd36b8a0",
+        "sha256_in_prefix": "5b1448c59d462c607c7dae77d201db6079e4ecf0dbe69462766a5b282855aaf1",
+        "size_in_bytes": 618
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "52afd5e79681185ea33da0e7548aa3721be7e9a153a90f004c5adc33d61f7a14",
+  "size": 133110,
+  "subdir": "linux-64",
+  "timestamp": 1719985879000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libass-0.17.3-h1dc1e6a_0.conda",
+  "version": "0.17.3"
+}

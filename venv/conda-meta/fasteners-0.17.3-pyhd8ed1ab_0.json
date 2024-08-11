@@ -1,0 +1,216 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "python >=3.6"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/fasteners-0.17.3-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/fasteners-0.17.3.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/fasteners-0.17.3.dist-info/LICENSE",
+    "lib/python3.12/site-packages/fasteners-0.17.3.dist-info/METADATA",
+    "lib/python3.12/site-packages/fasteners-0.17.3.dist-info/RECORD",
+    "lib/python3.12/site-packages/fasteners-0.17.3.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/fasteners-0.17.3.dist-info/WHEEL",
+    "lib/python3.12/site-packages/fasteners-0.17.3.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/fasteners-0.17.3.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/fasteners/__init__.py",
+    "lib/python3.12/site-packages/fasteners/_utils.py",
+    "lib/python3.12/site-packages/fasteners/lock.py",
+    "lib/python3.12/site-packages/fasteners/process_lock.py",
+    "lib/python3.12/site-packages/fasteners/pywin32/__init__.py",
+    "lib/python3.12/site-packages/fasteners/pywin32/pywintypes.py",
+    "lib/python3.12/site-packages/fasteners/pywin32/win32con.py",
+    "lib/python3.12/site-packages/fasteners/pywin32/win32file.py",
+    "lib/python3.12/site-packages/fasteners/version.py",
+    "lib/python3.12/site-packages/fasteners/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/fasteners/__pycache__/_utils.cpython-312.pyc",
+    "lib/python3.12/site-packages/fasteners/__pycache__/lock.cpython-312.pyc",
+    "lib/python3.12/site-packages/fasteners/__pycache__/process_lock.cpython-312.pyc",
+    "lib/python3.12/site-packages/fasteners/pywin32/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/fasteners/pywin32/__pycache__/pywintypes.cpython-312.pyc",
+    "lib/python3.12/site-packages/fasteners/pywin32/__pycache__/win32con.cpython-312.pyc",
+    "lib/python3.12/site-packages/fasteners/pywin32/__pycache__/win32file.cpython-312.pyc",
+    "lib/python3.12/site-packages/fasteners/__pycache__/version.cpython-312.pyc"
+  ],
+  "fn": "fasteners-0.17.3-pyhd8ed1ab_0.tar.bz2",
+  "license": "Apache-2.0",
+  "link": {
+    "source": "/opt/conda/pkgs/fasteners-0.17.3-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "348e27e78a5e39090031448c72f66d5e",
+  "name": "fasteners",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/fasteners-0.17.3-pyhd8ed1ab_0.tar.bz2",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/fasteners-0.17.3.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/fasteners-0.17.3.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "d2de2f566d2d0e0b509fb0ea1fa3669f49064ab1de21c57453cab3750a234e8f",
+        "sha256_in_prefix": "d2de2f566d2d0e0b509fb0ea1fa3669f49064ab1de21c57453cab3750a234e8f",
+        "size_in_bytes": 10143
+      },
+      {
+        "_path": "site-packages/fasteners-0.17.3.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "2484cb444f7d6f6426a979fb1fd8cefed7a78930b90d4392a3bfc07ec2750342",
+        "sha256_in_prefix": "2484cb444f7d6f6426a979fb1fd8cefed7a78930b90d4392a3bfc07ec2750342",
+        "size_in_bytes": 6469
+      },
+      {
+        "_path": "site-packages/fasteners-0.17.3.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "49674cb8b16107c2523e2814a0cf7a2a35572ff9396d5e6ac6f918ffd82c9e2a",
+        "sha256_in_prefix": "49674cb8b16107c2523e2814a0cf7a2a35572ff9396d5e6ac6f918ffd82c9e2a",
+        "size_in_bytes": 1909
+      },
+      {
+        "_path": "site-packages/fasteners-0.17.3.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/fasteners-0.17.3.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "1b5e87e00dc87a84269cead8578b9e6462928e18a95f1f3373c9eef451a5bcc0",
+        "sha256_in_prefix": "1b5e87e00dc87a84269cead8578b9e6462928e18a95f1f3373c9eef451a5bcc0",
+        "size_in_bytes": 92
+      },
+      {
+        "_path": "site-packages/fasteners-0.17.3.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "7672906012a304bda90124dee87ca2f49275b68b1a628f024d06e108c030974e",
+        "sha256_in_prefix": "7672906012a304bda90124dee87ca2f49275b68b1a628f024d06e108c030974e",
+        "size_in_bytes": 105
+      },
+      {
+        "_path": "site-packages/fasteners-0.17.3.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "333e3672cac8592be57649ded05834db4aca52a1201a2d741094fe0e39c3eac3",
+        "sha256_in_prefix": "333e3672cac8592be57649ded05834db4aca52a1201a2d741094fe0e39c3eac3",
+        "size_in_bytes": 10
+      },
+      {
+        "_path": "site-packages/fasteners/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "85fd001c6581c6bfbb9f1b4e97462d88025a595af6e638426db1d3639fd6cfc5",
+        "sha256_in_prefix": "85fd001c6581c6bfbb9f1b4e97462d88025a595af6e638426db1d3639fd6cfc5",
+        "size_in_bytes": 1582
+      },
+      {
+        "_path": "site-packages/fasteners/_utils.py",
+        "path_type": "hardlink",
+        "sha256": "e7f8e17d215627777556331f872a4eb63429092b95c5801fa6b560c5b70db51e",
+        "sha256_in_prefix": "e7f8e17d215627777556331f872a4eb63429092b95c5801fa6b560c5b70db51e",
+        "size_in_bytes": 4413
+      },
+      {
+        "_path": "site-packages/fasteners/lock.py",
+        "path_type": "hardlink",
+        "sha256": "b8928dbe4a452049a8654919580ea144e134d315ac4306e4e838447845ae66f4",
+        "sha256_in_prefix": "b8928dbe4a452049a8654919580ea144e134d315ac4306e4e838447845ae66f4",
+        "size_in_bytes": 10607
+      },
+      {
+        "_path": "site-packages/fasteners/process_lock.py",
+        "path_type": "hardlink",
+        "sha256": "655d47687644395f1b0259e47af81f33b330042e3711e9b7e87bdfd07da968a2",
+        "sha256_in_prefix": "655d47687644395f1b0259e47af81f33b330042e3711e9b7e87bdfd07da968a2",
+        "size_in_bytes": 19148
+      },
+      {
+        "_path": "site-packages/fasteners/pywin32/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "3429a3b6a212f8620e91e5b292d0d813b8598a93fd13e16205065f17cf23e9de",
+        "sha256_in_prefix": "3429a3b6a212f8620e91e5b292d0d813b8598a93fd13e16205065f17cf23e9de",
+        "size_in_bytes": 163
+      },
+      {
+        "_path": "site-packages/fasteners/pywin32/pywintypes.py",
+        "path_type": "hardlink",
+        "sha256": "46439d1019d8126dfbbe59fadc2d22b646050520142913bf52b448a1fb213822",
+        "sha256_in_prefix": "46439d1019d8126dfbbe59fadc2d22b646050520142913bf52b448a1fb213822",
+        "size_in_bytes": 701
+      },
+      {
+        "_path": "site-packages/fasteners/pywin32/win32con.py",
+        "path_type": "hardlink",
+        "sha256": "3c52cb48ffc271a64b0b1124dc86bf73a0c3174aa4aa8b4c37cfdd59aa57b11d",
+        "sha256_in_prefix": "3c52cb48ffc271a64b0b1124dc86bf73a0c3174aa4aa8b4c37cfdd59aa57b11d",
+        "size_in_bytes": 64
+      },
+      {
+        "_path": "site-packages/fasteners/pywin32/win32file.py",
+        "path_type": "hardlink",
+        "sha256": "337a78edbe8c1f80c0aba1c4f5f9428e2f2346413ea61a2b9b936691ffa673dd",
+        "sha256_in_prefix": "337a78edbe8c1f80c0aba1c4f5f9428e2f2346413ea61a2b9b936691ffa673dd",
+        "size_in_bytes": 890
+      },
+      {
+        "_path": "site-packages/fasteners/version.py",
+        "path_type": "hardlink",
+        "sha256": "1e61a22d7dd04b75cbdc0c17c51c510b4f3dc526d85627dd73eda7b93cd55d0e",
+        "sha256_in_prefix": "1e61a22d7dd04b75cbdc0c17c51c510b4f3dc526d85627dd73eda7b93cd55d0e",
+        "size_in_bytes": 782
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fasteners/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fasteners/__pycache__/_utils.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fasteners/__pycache__/lock.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fasteners/__pycache__/process_lock.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fasteners/pywin32/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fasteners/pywin32/__pycache__/pywintypes.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fasteners/pywin32/__pycache__/win32con.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fasteners/pywin32/__pycache__/win32file.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fasteners/__pycache__/version.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "42be6ac8478051b26751d778490d6a71de12e5c6443e145ff3eddbc577d9bcda",
+  "size": 19975,
+  "subdir": "noarch",
+  "timestamp": 1643971626000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/fasteners-0.17.3-pyhd8ed1ab_0.tar.bz2",
+  "version": "0.17.3"
+}

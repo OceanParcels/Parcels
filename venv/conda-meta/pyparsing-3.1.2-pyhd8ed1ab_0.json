@@ -1,0 +1,242 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "python >=3.6"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/pyparsing-3.1.2-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/pyparsing-3.1.2.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/pyparsing-3.1.2.dist-info/LICENSE",
+    "lib/python3.12/site-packages/pyparsing-3.1.2.dist-info/METADATA",
+    "lib/python3.12/site-packages/pyparsing-3.1.2.dist-info/RECORD",
+    "lib/python3.12/site-packages/pyparsing-3.1.2.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/pyparsing-3.1.2.dist-info/WHEEL",
+    "lib/python3.12/site-packages/pyparsing-3.1.2.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/pyparsing/__init__.py",
+    "lib/python3.12/site-packages/pyparsing/actions.py",
+    "lib/python3.12/site-packages/pyparsing/common.py",
+    "lib/python3.12/site-packages/pyparsing/core.py",
+    "lib/python3.12/site-packages/pyparsing/diagram/__init__.py",
+    "lib/python3.12/site-packages/pyparsing/exceptions.py",
+    "lib/python3.12/site-packages/pyparsing/helpers.py",
+    "lib/python3.12/site-packages/pyparsing/py.typed",
+    "lib/python3.12/site-packages/pyparsing/results.py",
+    "lib/python3.12/site-packages/pyparsing/testing.py",
+    "lib/python3.12/site-packages/pyparsing/unicode.py",
+    "lib/python3.12/site-packages/pyparsing/util.py",
+    "lib/python3.12/site-packages/pyparsing/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyparsing/__pycache__/actions.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyparsing/__pycache__/common.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyparsing/__pycache__/core.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyparsing/diagram/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyparsing/__pycache__/exceptions.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyparsing/__pycache__/helpers.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyparsing/__pycache__/results.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyparsing/__pycache__/testing.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyparsing/__pycache__/unicode.cpython-312.pyc",
+    "lib/python3.12/site-packages/pyparsing/__pycache__/util.cpython-312.pyc"
+  ],
+  "fn": "pyparsing-3.1.2-pyhd8ed1ab_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/pyparsing-3.1.2-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "b9a4dacf97241704529131a0dfc0494f",
+  "name": "pyparsing",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/pyparsing-3.1.2-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/pyparsing-3.1.2.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/pyparsing-3.1.2.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "10d5120a16805804ffda8b688c220bfb4e8f39741b57320604d455a309e01972",
+        "sha256_in_prefix": "10d5120a16805804ffda8b688c220bfb4e8f39741b57320604d455a309e01972",
+        "size_in_bytes": 1023
+      },
+      {
+        "_path": "site-packages/pyparsing-3.1.2.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "7e6300f621162f467974075ef7c4346f22be33e27198680f836b63344df29864",
+        "sha256_in_prefix": "7e6300f621162f467974075ef7c4346f22be33e27198680f836b63344df29864",
+        "size_in_bytes": 5141
+      },
+      {
+        "_path": "site-packages/pyparsing-3.1.2.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "fa5caf27d8ed0aa36bee86151b441b09b28dd08439367f8f237ba1d4a4a4128e",
+        "sha256_in_prefix": "fa5caf27d8ed0aa36bee86151b441b09b28dd08439367f8f237ba1d4a4a4128e",
+        "size_in_bytes": 2074
+      },
+      {
+        "_path": "site-packages/pyparsing-3.1.2.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/pyparsing-3.1.2.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "1196c6921ec87b83e865f450f08d19b8ff5592537f4ef719e83484e546abe33e",
+        "sha256_in_prefix": "1196c6921ec87b83e865f450f08d19b8ff5592537f4ef719e83484e546abe33e",
+        "size_in_bytes": 81
+      },
+      {
+        "_path": "site-packages/pyparsing-3.1.2.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "def7aa8d671ef384602efef71c0dd83f75430a03e574d6b16dab6e2751af9c5c",
+        "sha256_in_prefix": "def7aa8d671ef384602efef71c0dd83f75430a03e574d6b16dab6e2751af9c5c",
+        "size_in_bytes": 105
+      },
+      {
+        "_path": "site-packages/pyparsing/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "946049f0c323d415bf58dbec3b41f308dfaf2fcad4cff1e1db06a77098182877",
+        "sha256_in_prefix": "946049f0c323d415bf58dbec3b41f308dfaf2fcad4cff1e1db06a77098182877",
+        "size_in_bytes": 9148
+      },
+      {
+        "_path": "site-packages/pyparsing/actions.py",
+        "path_type": "hardlink",
+        "sha256": "2444722273f20c84799c3fdf74d5bcda2ce0a82dc25a576441ee6872a884a47e",
+        "sha256_in_prefix": "2444722273f20c84799c3fdf74d5bcda2ce0a82dc25a576441ee6872a884a47e",
+        "size_in_bytes": 6590
+      },
+      {
+        "_path": "site-packages/pyparsing/common.py",
+        "path_type": "hardlink",
+        "sha256": "269d77ef353ef821bcffb5d73061c73c97224e62632c8fd80168a862d05a2a0f",
+        "sha256_in_prefix": "269d77ef353ef821bcffb5d73061c73c97224e62632c8fd80168a862d05a2a0f",
+        "size_in_bytes": 13652
+      },
+      {
+        "_path": "site-packages/pyparsing/core.py",
+        "path_type": "hardlink",
+        "sha256": "e25c281d2f5a90e926d6e4e28a8f03f6b89701b8e8b8bab22472ef700a54cdd7",
+        "sha256_in_prefix": "e25c281d2f5a90e926d6e4e28a8f03f6b89701b8e8b8bab22472ef700a54cdd7",
+        "size_in_bytes": 225025
+      },
+      {
+        "_path": "site-packages/pyparsing/diagram/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "5266a9fb587ee6bf516d580bfc98c1b820edd02d4c56baa98bdd11c87aba10ce",
+        "sha256_in_prefix": "5266a9fb587ee6bf516d580bfc98c1b820edd02d4c56baa98bdd11c87aba10ce",
+        "size_in_bytes": 24194
+      },
+      {
+        "_path": "site-packages/pyparsing/exceptions.py",
+        "path_type": "hardlink",
+        "sha256": "7e215b9f928b83d942d4cf64f5c418d8476d058699bce8cbaaa3c7e816551040",
+        "sha256_in_prefix": "7e215b9f928b83d942d4cf64f5c418d8476d058699bce8cbaaa3c7e816551040",
+        "size_in_bytes": 9503
+      },
+      {
+        "_path": "site-packages/pyparsing/helpers.py",
+        "path_type": "hardlink",
+        "sha256": "a959fa7230562e50dae3fdba1122e5f7365cf7c28690e052825e0d1905f16df9",
+        "sha256_in_prefix": "a959fa7230562e50dae3fdba1122e5f7365cf7c28690e052825e0d1905f16df9",
+        "size_in_bytes": 38746
+      },
+      {
+        "_path": "site-packages/pyparsing/py.typed",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/pyparsing/results.py",
+        "path_type": "hardlink",
+        "sha256": "d1f79b82ba8bd085223cdaad9550dc277f1b90cee42567f3f9a7762259cb3785",
+        "sha256_in_prefix": "d1f79b82ba8bd085223cdaad9550dc277f1b90cee42567f3f9a7762259cb3785",
+        "size_in_bytes": 25667
+      },
+      {
+        "_path": "site-packages/pyparsing/testing.py",
+        "path_type": "hardlink",
+        "sha256": "efa5c0c7c2512c3f252df61bad93784303a9865617d7a47ca323b7fea8321180",
+        "sha256_in_prefix": "efa5c0c7c2512c3f252df61bad93784303a9865617d7a47ca323b7fea8321180",
+        "size_in_bytes": 13802
+      },
+      {
+        "_path": "site-packages/pyparsing/unicode.py",
+        "path_type": "hardlink",
+        "sha256": "da2cfa3fa7832b97d9b920491a234b5a48a3ad5556edeeb686b88ff1ad808eb4",
+        "sha256_in_prefix": "da2cfa3fa7832b97d9b920491a234b5a48a3ad5556edeeb686b88ff1ad808eb4",
+        "size_in_bytes": 10518
+      },
+      {
+        "_path": "site-packages/pyparsing/util.py",
+        "path_type": "hardlink",
+        "sha256": "c15dd995f57b39a3278f13fb51d50778b3cf85c3ea6c0bd7a52898183753118a",
+        "sha256_in_prefix": "c15dd995f57b39a3278f13fb51d50778b3cf85c3ea6c0bd7a52898183753118a",
+        "size_in_bytes": 8437
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/__pycache__/actions.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/__pycache__/common.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/__pycache__/core.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/diagram/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/__pycache__/exceptions.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/__pycache__/helpers.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/__pycache__/results.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/__pycache__/testing.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/__pycache__/unicode.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pyparsing/__pycache__/util.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "06c77cb03e5dde2d939b216c99dd2db52ea93a4c7c599f3882f136005c359c7b",
+  "size": 89455,
+  "subdir": "noarch",
+  "timestamp": 1709721146000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.1.2-pyhd8ed1ab_0.conda",
+  "version": "3.1.2"
+}

@@ -1,0 +1,100 @@
+{
+  "build": "he02047a_5_cpu",
+  "build_number": 5,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "libarrow 17.0.0 h1aed627_5_cpu",
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libarrow-acero-17.0.0-he02047a_5_cpu",
+  "files": [
+    "lib/cmake/ArrowAcero/ArrowAceroConfig.cmake",
+    "lib/cmake/ArrowAcero/ArrowAceroConfigVersion.cmake",
+    "lib/cmake/ArrowAcero/ArrowAceroTargets-release.cmake",
+    "lib/cmake/ArrowAcero/ArrowAceroTargets.cmake",
+    "lib/libarrow_acero.so",
+    "lib/libarrow_acero.so.1700",
+    "lib/libarrow_acero.so.1700.0.0",
+    "lib/pkgconfig/arrow-acero.pc"
+  ],
+  "fn": "libarrow-acero-17.0.0-he02047a_5_cpu.conda",
+  "license": "Apache-2.0",
+  "link": {
+    "source": "/opt/conda/pkgs/libarrow-acero-17.0.0-he02047a_5_cpu",
+    "type": 1
+  },
+  "md5": "d099cfec7c449b132abc6bb551eb68d4",
+  "name": "libarrow-acero",
+  "package_tarball_full_path": "/opt/conda/pkgs/libarrow-acero-17.0.0-he02047a_5_cpu.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/cmake/ArrowAcero/ArrowAceroConfig.cmake",
+        "path_type": "hardlink",
+        "sha256": "9aef90617c1220cb6995689c06165d9a98aaf7357128aa3af1961dbb9ee14715",
+        "sha256_in_prefix": "9aef90617c1220cb6995689c06165d9a98aaf7357128aa3af1961dbb9ee14715",
+        "size_in_bytes": 2333
+      },
+      {
+        "_path": "lib/cmake/ArrowAcero/ArrowAceroConfigVersion.cmake",
+        "path_type": "hardlink",
+        "sha256": "f8dcaf2b242c4ccbcd3f5b3d8ca2b3ce346a9f053d0dcdeb26467cfe34183996",
+        "sha256_in_prefix": "f8dcaf2b242c4ccbcd3f5b3d8ca2b3ce346a9f053d0dcdeb26467cfe34183996",
+        "size_in_bytes": 2765
+      },
+      {
+        "_path": "lib/cmake/ArrowAcero/ArrowAceroTargets-release.cmake",
+        "path_type": "hardlink",
+        "sha256": "a90e46b2fe940e862ec44d69b2c8e150c50c62e8f3db9ab0f9f53121978380ed",
+        "sha256_in_prefix": "a90e46b2fe940e862ec44d69b2c8e150c50c62e8f3db9ab0f9f53121978380ed",
+        "size_in_bytes": 954
+      },
+      {
+        "_path": "lib/cmake/ArrowAcero/ArrowAceroTargets.cmake",
+        "path_type": "hardlink",
+        "sha256": "e0cc121cbdfae3d1c01b4e1957743d3998d656125f2194ff73b628ec49fcd0d1",
+        "sha256_in_prefix": "e0cc121cbdfae3d1c01b4e1957743d3998d656125f2194ff73b628ec49fcd0d1",
+        "size_in_bytes": 4236
+      },
+      {
+        "_path": "lib/libarrow_acero.so",
+        "path_type": "softlink",
+        "sha256": "f71e35e5f24c166f44d0d2e565a2e3577fa90cfc7266eb65814edf28b4abd124",
+        "size_in_bytes": 2139064
+      },
+      {
+        "_path": "lib/libarrow_acero.so.1700",
+        "path_type": "softlink",
+        "sha256": "f71e35e5f24c166f44d0d2e565a2e3577fa90cfc7266eb65814edf28b4abd124",
+        "size_in_bytes": 2139064
+      },
+      {
+        "_path": "lib/libarrow_acero.so.1700.0.0",
+        "path_type": "hardlink",
+        "sha256": "f71e35e5f24c166f44d0d2e565a2e3577fa90cfc7266eb65814edf28b4abd124",
+        "sha256_in_prefix": "f71e35e5f24c166f44d0d2e565a2e3577fa90cfc7266eb65814edf28b4abd124",
+        "size_in_bytes": 2139064
+      },
+      {
+        "_path": "lib/pkgconfig/arrow-acero.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/apache-arrow_1723204191882/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol",
+        "sha256": "261153847ca094c0fd4d654fa8d23159620a723bca58335a70da57faae18273b",
+        "sha256_in_prefix": "0671e5557223955a701e7bbd2aee7611756788cb0250542616d9c9d80214631d",
+        "size_in_bytes": 1275
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "797cb0b3f8a578f303991ef3c4ec5d30bf927661489a1015d8357acb88b7021b",
+  "size": 598059,
+  "subdir": "linux-64",
+  "timestamp": 1723206309000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libarrow-acero-17.0.0-he02047a_5_cpu.conda",
+  "version": "17.0.0"
+}

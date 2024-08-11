@@ -1,0 +1,112 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "python >=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/locket-1.0.0-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/locket-1.0.0.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/locket-1.0.0.dist-info/LICENSE",
+    "lib/python3.12/site-packages/locket-1.0.0.dist-info/METADATA",
+    "lib/python3.12/site-packages/locket-1.0.0.dist-info/RECORD",
+    "lib/python3.12/site-packages/locket-1.0.0.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/locket-1.0.0.dist-info/WHEEL",
+    "lib/python3.12/site-packages/locket-1.0.0.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/locket-1.0.0.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/locket/__init__.py",
+    "lib/python3.12/site-packages/locket/__pycache__/__init__.cpython-312.pyc"
+  ],
+  "fn": "locket-1.0.0-pyhd8ed1ab_0.tar.bz2",
+  "license": "BSD-2-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/locket-1.0.0-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "91e27ef3d05cc772ce627e51cff111c4",
+  "name": "locket",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/locket-1.0.0-pyhd8ed1ab_0.tar.bz2",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/locket-1.0.0.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/locket-1.0.0.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "da61ac9e694fecc54d0c900ed942f0f4b290b290e3a6547ac56852e4955159fa",
+        "sha256_in_prefix": "da61ac9e694fecc54d0c900ed942f0f4b290b290e3a6547ac56852e4955159fa",
+        "size_in_bytes": 1305
+      },
+      {
+        "_path": "site-packages/locket-1.0.0.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "450973de352184030a9fd419e181f00fea3368aa63d718041802f7858b715a65",
+        "sha256_in_prefix": "450973de352184030a9fd419e181f00fea3368aa63d718041802f7858b715a65",
+        "size_in_bytes": 2769
+      },
+      {
+        "_path": "site-packages/locket-1.0.0.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "6a2047afffea60a8147e12dc8b5eee6c9cbb1e1611e617d370473680e88512d7",
+        "sha256_in_prefix": "6a2047afffea60a8147e12dc8b5eee6c9cbb1e1611e617d370473680e88512d7",
+        "size_in_bytes": 778
+      },
+      {
+        "_path": "site-packages/locket-1.0.0.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/locket-1.0.0.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "cfd8f4c406bf26650a3299b3ef62b464600b48cfe7fb04159866e5797c765478",
+        "sha256_in_prefix": "cfd8f4c406bf26650a3299b3ef62b464600b48cfe7fb04159866e5797c765478",
+        "size_in_bytes": 110
+      },
+      {
+        "_path": "site-packages/locket-1.0.0.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "faa57a9e08a6308391753b2d721754e451d533162a2376458c40440097ed204e",
+        "sha256_in_prefix": "faa57a9e08a6308391753b2d721754e451d533162a2376458c40440097ed204e",
+        "size_in_bytes": 102
+      },
+      {
+        "_path": "site-packages/locket-1.0.0.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "b058cfe4454182c4120bb5c90a77dca9f0729f9326e521c926be510eec3ed408",
+        "sha256_in_prefix": "b058cfe4454182c4120bb5c90a77dca9f0729f9326e521c926be510eec3ed408",
+        "size_in_bytes": 7
+      },
+      {
+        "_path": "site-packages/locket/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e421665e59bcb956253551053fee25fb2cd4b2f52b0cefa6e9a8559961cb36fc",
+        "sha256_in_prefix": "e421665e59bcb956253551053fee25fb2cd4b2f52b0cefa6e9a8559961cb36fc",
+        "size_in_bytes": 5580
+      },
+      {
+        "_path": "lib/python3.12/site-packages/locket/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "9afe0b5cfa418e8bdb30d8917c5a6cec10372b037924916f1f85b9f4899a67a6",
+  "size": 8250,
+  "subdir": "noarch",
+  "timestamp": 1650660473000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/locket-1.0.0-pyhd8ed1ab_0.tar.bz2",
+  "version": "1.0.0"
+}

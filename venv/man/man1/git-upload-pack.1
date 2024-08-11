@@ -1,0 +1,132 @@
+'\" t
+.\"     Title: git-upload-pack
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GIT\-UPLOAD\-PACK" "1" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+git-upload-pack \- Send objects packed back to git\-fetch\-pack
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIgit\-upload\-pack\fR [\-\-[no\-]strict] [\-\-timeout=<n>] [\-\-stateless\-rpc]
+                  [\-\-advertise\-refs] <directory>
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+Invoked by \fIgit fetch\-pack\fR, learns what objects the other side is missing, and sends them after packing\&.
+.sp
+This command is usually not invoked directly by the end user\&. The UI for the protocol is on the \fIgit fetch\-pack\fR side, and the program pair is meant to be used to pull updates from a remote repository\&. For push operations, see \fIgit send\-pack\fR\&.
+.SH "OPTIONS"
+.PP
+\-\-[no\-]strict
+.RS 4
+Do not try <directory>/\&.git/ if <directory> is not a Git directory\&.
+.RE
+.PP
+\-\-timeout=<n>
+.RS 4
+Interrupt transfer after <n> seconds of inactivity\&.
+.RE
+.PP
+\-\-stateless\-rpc
+.RS 4
+Perform only a single read\-write cycle with stdin and stdout\&. This fits with the HTTP POST request processing model where a program may read the request, write a response, and must exit\&.
+.RE
+.PP
+\-\-http\-backend\-info\-refs
+.RS 4
+Used by
+\fBgit-http-backend\fR(1)
+to serve up
+\fB$GIT_URL/info/refs?service=git\-upload\-pack\fR
+requests\&. See "Smart Clients" in
+\fBgitprotocol-http\fR(5)
+and "HTTP Transport" in the
+\fBgitprotocol-v2\fR(5)
+documentation\&. Also understood by
+\fBgit-receive-pack\fR(1)\&.
+.RE
+.PP
+<directory>
+.RS 4
+The repository to sync from\&.
+.RE
+.SH "ENVIRONMENT"
+.PP
+\fBGIT_PROTOCOL\fR
+.RS 4
+Internal variable used for handshaking the wire protocol\&. Server admins may need to configure some transports to allow this variable to be passed\&. See the discussion in
+\fBgit\fR(1)\&.
+.RE
+.PP
+\fBGIT_NO_LAZY_FETCH\fR
+.RS 4
+When cloning or fetching from a partial repository (i\&.e\&., one itself cloned with
+\fB\-\-filter\fR), the server\-side
+\fBupload\-pack\fR
+may need to fetch extra objects from its upstream in order to complete the request\&. By default,
+\fBupload\-pack\fR
+will refuse to perform such a lazy fetch, because
+\fBgit fetch\fR
+may run arbitrary commands specified in configuration and hooks of the source repository (and
+\fBupload\-pack\fR
+tries to be safe to run even in untrusted
+\fB\&.git\fR
+directories)\&.
+.sp
+This is implemented by having
+\fBupload\-pack\fR
+internally set the
+\fBGIT_NO_LAZY_FETCH\fR
+variable to
+\fB1\fR\&. If you want to override it (because you are fetching from a partial clone, and you are sure you trust it), you can explicitly set
+\fBGIT_NO_LAZY_FETCH\fR
+to
+\fB0\fR\&.
+.RE
+.SH "SECURITY"
+.sp
+Most Git commands should not be run in an untrusted \fB\&.git\fR directory (see the section \fBSECURITY\fR in \fBgit\fR(1))\&. \fBupload\-pack\fR tries to avoid any dangerous configuration options or hooks from the repository it\(cqs serving, making it safe to clone an untrusted directory and run commands on the resulting clone\&.
+.sp
+For an extra level of safety, you may be able to run \fBupload\-pack\fR as an alternate user\&. The details will be platform dependent, but on many systems you can run:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+git clone \-\-no\-local \-\-upload\-pack=\*(Aqsudo \-u nobody git\-upload\-pack\*(Aq \&.\&.\&.
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.sp
+\fBgitnamespaces\fR(7)
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite

@@ -1,0 +1,556 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "anyio <5,>=3.4.0",
+    "python >=3.8",
+    "typing_extensions >=3.10.0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/starlette-0.38.2-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/starlette-0.38.2.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/starlette-0.38.2.dist-info/METADATA",
+    "lib/python3.12/site-packages/starlette-0.38.2.dist-info/RECORD",
+    "lib/python3.12/site-packages/starlette-0.38.2.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/starlette-0.38.2.dist-info/WHEEL",
+    "lib/python3.12/site-packages/starlette-0.38.2.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/starlette-0.38.2.dist-info/licenses/LICENSE.md",
+    "lib/python3.12/site-packages/starlette/__init__.py",
+    "lib/python3.12/site-packages/starlette/_compat.py",
+    "lib/python3.12/site-packages/starlette/_exception_handler.py",
+    "lib/python3.12/site-packages/starlette/_utils.py",
+    "lib/python3.12/site-packages/starlette/applications.py",
+    "lib/python3.12/site-packages/starlette/authentication.py",
+    "lib/python3.12/site-packages/starlette/background.py",
+    "lib/python3.12/site-packages/starlette/concurrency.py",
+    "lib/python3.12/site-packages/starlette/config.py",
+    "lib/python3.12/site-packages/starlette/convertors.py",
+    "lib/python3.12/site-packages/starlette/datastructures.py",
+    "lib/python3.12/site-packages/starlette/endpoints.py",
+    "lib/python3.12/site-packages/starlette/exceptions.py",
+    "lib/python3.12/site-packages/starlette/formparsers.py",
+    "lib/python3.12/site-packages/starlette/middleware/__init__.py",
+    "lib/python3.12/site-packages/starlette/middleware/authentication.py",
+    "lib/python3.12/site-packages/starlette/middleware/base.py",
+    "lib/python3.12/site-packages/starlette/middleware/cors.py",
+    "lib/python3.12/site-packages/starlette/middleware/errors.py",
+    "lib/python3.12/site-packages/starlette/middleware/exceptions.py",
+    "lib/python3.12/site-packages/starlette/middleware/gzip.py",
+    "lib/python3.12/site-packages/starlette/middleware/httpsredirect.py",
+    "lib/python3.12/site-packages/starlette/middleware/sessions.py",
+    "lib/python3.12/site-packages/starlette/middleware/trustedhost.py",
+    "lib/python3.12/site-packages/starlette/middleware/wsgi.py",
+    "lib/python3.12/site-packages/starlette/py.typed",
+    "lib/python3.12/site-packages/starlette/requests.py",
+    "lib/python3.12/site-packages/starlette/responses.py",
+    "lib/python3.12/site-packages/starlette/routing.py",
+    "lib/python3.12/site-packages/starlette/schemas.py",
+    "lib/python3.12/site-packages/starlette/staticfiles.py",
+    "lib/python3.12/site-packages/starlette/status.py",
+    "lib/python3.12/site-packages/starlette/templating.py",
+    "lib/python3.12/site-packages/starlette/testclient.py",
+    "lib/python3.12/site-packages/starlette/types.py",
+    "lib/python3.12/site-packages/starlette/websockets.py",
+    "lib/python3.12/site-packages/starlette/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/_compat.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/_exception_handler.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/_utils.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/applications.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/authentication.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/background.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/concurrency.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/config.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/convertors.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/datastructures.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/endpoints.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/exceptions.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/formparsers.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/authentication.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/base.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/cors.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/errors.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/exceptions.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/gzip.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/httpsredirect.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/sessions.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/trustedhost.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/middleware/__pycache__/wsgi.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/requests.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/responses.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/routing.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/schemas.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/staticfiles.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/status.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/templating.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/testclient.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/types.cpython-312.pyc",
+    "lib/python3.12/site-packages/starlette/__pycache__/websockets.cpython-312.pyc"
+  ],
+  "fn": "starlette-0.38.2-pyhd8ed1ab_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/starlette-0.38.2-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "4514ed54fc1b95a9d1f4d7cb126601a2",
+  "name": "starlette",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/starlette-0.38.2-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/starlette-0.38.2.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/starlette-0.38.2.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "7978cae7d7299ba4fded9936eae49b6b9b2d0108eae7babd842a828db5bbc2f9",
+        "sha256_in_prefix": "7978cae7d7299ba4fded9936eae49b6b9b2d0108eae7babd842a828db5bbc2f9",
+        "size_in_bytes": 5859
+      },
+      {
+        "_path": "site-packages/starlette-0.38.2.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "1555cb33c847d1a782e0390eb48a5521d8d48dc4aa160d9a643709e9d6d4fac7",
+        "sha256_in_prefix": "1555cb33c847d1a782e0390eb48a5521d8d48dc4aa160d9a643709e9d6d4fac7",
+        "size_in_bytes": 5507
+      },
+      {
+        "_path": "site-packages/starlette-0.38.2.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/starlette-0.38.2.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "d7215d7625cc9af60aed0613aad44db57eba589d0ccfc3d8122114a0e514c516",
+        "sha256_in_prefix": "d7215d7625cc9af60aed0613aad44db57eba589d0ccfc3d8122114a0e514c516",
+        "size_in_bytes": 87
+      },
+      {
+        "_path": "site-packages/starlette-0.38.2.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "63c5604b1819bf8fcabac4b08553a56847c5461b55bc75b8b10c523499156def",
+        "sha256_in_prefix": "63c5604b1819bf8fcabac4b08553a56847c5461b55bc75b8b10c523499156def",
+        "size_in_bytes": 112
+      },
+      {
+        "_path": "site-packages/starlette-0.38.2.dist-info/licenses/LICENSE.md",
+        "path_type": "hardlink",
+        "sha256": "dcb95677a02240243187e964f941847d19b17821cf99e5afae684fab328c19bf",
+        "sha256_in_prefix": "dcb95677a02240243187e964f941847d19b17821cf99e5afae684fab328c19bf",
+        "size_in_bytes": 1518
+      },
+      {
+        "_path": "site-packages/starlette/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "571dd7de111178e64f08a88691aaf69c1893adfddf0a868a28dcf5b7987d81d6",
+        "sha256_in_prefix": "571dd7de111178e64f08a88691aaf69c1893adfddf0a868a28dcf5b7987d81d6",
+        "size_in_bytes": 23
+      },
+      {
+        "_path": "site-packages/starlette/_compat.py",
+        "path_type": "hardlink",
+        "sha256": "a5c6818802abf4e37b3c5560efcd325a5807f3c0185d319f73257a7376b0558e",
+        "sha256_in_prefix": "a5c6818802abf4e37b3c5560efcd325a5807f3c0185d319f73257a7376b0558e",
+        "size_in_bytes": 1148
+      },
+      {
+        "_path": "site-packages/starlette/_exception_handler.py",
+        "path_type": "hardlink",
+        "sha256": "b729483cc7eb7ea0e102fb643d754fba1d5aa16c518d97d0204901bcd82db261",
+        "sha256_in_prefix": "b729483cc7eb7ea0e102fb643d754fba1d5aa16c518d97d0204901bcd82db261",
+        "size_in_bytes": 2854
+      },
+      {
+        "_path": "site-packages/starlette/_utils.py",
+        "path_type": "hardlink",
+        "sha256": "e25e2926d6da8e69ead0bc043792e9f47bf424c2e419b0264cfb3fa2cfede392",
+        "sha256_in_prefix": "e25e2926d6da8e69ead0bc043792e9f47bf424c2e419b0264cfb3fa2cfede392",
+        "size_in_bytes": 2566
+      },
+      {
+        "_path": "site-packages/starlette/applications.py",
+        "path_type": "hardlink",
+        "sha256": "4aaf85ccc9764f0e172da8e81526e8680982c8ae7923649e22beccfd1cceadcf",
+        "sha256_in_prefix": "4aaf85ccc9764f0e172da8e81526e8680982c8ae7923649e22beccfd1cceadcf",
+        "size_in_bytes": 10830
+      },
+      {
+        "_path": "site-packages/starlette/authentication.py",
+        "path_type": "hardlink",
+        "sha256": "0aee3f1a77bb931afe9ef2274b2311870779222d8bbc77a60df8ad0b92223e2a",
+        "sha256_in_prefix": "0aee3f1a77bb931afe9ef2274b2311870779222d8bbc77a60df8ad0b92223e2a",
+        "size_in_bytes": 5036
+      },
+      {
+        "_path": "site-packages/starlette/background.py",
+        "path_type": "hardlink",
+        "sha256": "8236d085427121239ccbecd8fd6c0bee507898f5acff73160c622f51506d6a28",
+        "sha256_in_prefix": "8236d085427121239ccbecd8fd6c0bee507898f5acff73160c622f51506d6a28",
+        "size_in_bytes": 1285
+      },
+      {
+        "_path": "site-packages/starlette/concurrency.py",
+        "path_type": "hardlink",
+        "sha256": "085cece93f633f701cd8280f9c4a2d558899cdf9e9d27c1ee078a6beb7f5d057",
+        "sha256_in_prefix": "085cece93f633f701cd8280f9c4a2d558899cdf9e9d27c1ee078a6beb7f5d057",
+        "size_in_bytes": 1895
+      },
+      {
+        "_path": "site-packages/starlette/config.py",
+        "path_type": "hardlink",
+        "sha256": "441de423e4188ce6e990ad84f09dfa8356cb5b0f0f8279cf76ca7d5e62ddb77b",
+        "sha256_in_prefix": "441de423e4188ce6e990ad84f09dfa8356cb5b0f0f8279cf76ca7d5e62ddb77b",
+        "size_in_bytes": 4625
+      },
+      {
+        "_path": "site-packages/starlette/convertors.py",
+        "path_type": "hardlink",
+        "sha256": "2de2da8391475824e42f97b922d830e5f32a6a25766055759bfd969db84c4f82",
+        "sha256_in_prefix": "2de2da8391475824e42f97b922d830e5f32a6a25766055759bfd969db84c4f82",
+        "size_in_bytes": 2283
+      },
+      {
+        "_path": "site-packages/starlette/datastructures.py",
+        "path_type": "hardlink",
+        "sha256": "ada4003b3f731f640835b12af83ce5fc62e2be8c42e568888bd46820dbfba6b0",
+        "sha256_in_prefix": "ada4003b3f731f640835b12af83ce5fc62e2be8c42e568888bd46820dbfba6b0",
+        "size_in_bytes": 22660
+      },
+      {
+        "_path": "site-packages/starlette/endpoints.py",
+        "path_type": "hardlink",
+        "sha256": "11696467243f80cc51e29256d9565415c56d49fd66d096028d63a533a6f564e0",
+        "sha256_in_prefix": "11696467243f80cc51e29256d9565415c56d49fd66d096028d63a533a6f564e0",
+        "size_in_bytes": 5217
+      },
+      {
+        "_path": "site-packages/starlette/exceptions.py",
+        "path_type": "hardlink",
+        "sha256": "ba1db065382bba05a514eb565342f0acd8adadf4e5fe7061be0d16717c415ff3",
+        "sha256_in_prefix": "ba1db065382bba05a514eb565342f0acd8adadf4e5fe7061be0d16717c415ff3",
+        "size_in_bytes": 1816
+      },
+      {
+        "_path": "site-packages/starlette/formparsers.py",
+        "path_type": "hardlink",
+        "sha256": "fa8fdfdcc4fa874e0253f3716e2bdce51bdcf3c3946e1f81a351348a50b8cd17",
+        "sha256_in_prefix": "fa8fdfdcc4fa874e0253f3716e2bdce51bdcf3c3946e1f81a351348a50b8cd17",
+        "size_in_bytes": 10314
+      },
+      {
+        "_path": "site-packages/starlette/middleware/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "1f3970a4f22d15c05d4616c69460d21f1e17b0667199faa170d00c2d81387caf",
+        "sha256_in_prefix": "1f3970a4f22d15c05d4616c69460d21f1e17b0667199faa170d00c2d81387caf",
+        "size_in_bytes": 1314
+      },
+      {
+        "_path": "site-packages/starlette/middleware/authentication.py",
+        "path_type": "hardlink",
+        "sha256": "9955a015b19eda4a2e686ad8787fb58f12798f4ca1f44ef0128e0d213d0293e2",
+        "sha256_in_prefix": "9955a015b19eda4a2e686ad8787fb58f12798f4ca1f44ef0128e0d213d0293e2",
+        "size_in_bytes": 1797
+      },
+      {
+        "_path": "site-packages/starlette/middleware/base.py",
+        "path_type": "hardlink",
+        "sha256": "f51867a9b657f3c65d5ac99233745d5dab2997c846d7c5683c3fe221da64febd",
+        "sha256_in_prefix": "f51867a9b657f3c65d5ac99233745d5dab2997c846d7c5683c3fe221da64febd",
+        "size_in_bytes": 8757
+      },
+      {
+        "_path": "site-packages/starlette/middleware/cors.py",
+        "path_type": "hardlink",
+        "sha256": "0d4999385a20d6a9b97404375268559a1fc9cfb0cc7c39205b3e631a653cfdfd",
+        "sha256_in_prefix": "0d4999385a20d6a9b97404375268559a1fc9cfb0cc7c39205b3e631a653cfdfd",
+        "size_in_bytes": 7101
+      },
+      {
+        "_path": "site-packages/starlette/middleware/errors.py",
+        "path_type": "hardlink",
+        "sha256": "747e761441a14b354a14b67a46f3859e59b4788aef033d7ee3833b039e7e08d3",
+        "sha256_in_prefix": "747e761441a14b354a14b67a46f3859e59b4788aef033d7ee3833b039e7e08d3",
+        "size_in_bytes": 7942
+      },
+      {
+        "_path": "site-packages/starlette/middleware/exceptions.py",
+        "path_type": "hardlink",
+        "sha256": "9238289d8373a3980f297c12d9150d214baa4207ee22f5272bf9b11e25e94eed",
+        "sha256_in_prefix": "9238289d8373a3980f297c12d9150d214baa4207ee22f5272bf9b11e25e94eed",
+        "size_in_bytes": 2822
+      },
+      {
+        "_path": "site-packages/starlette/middleware/gzip.py",
+        "path_type": "hardlink",
+        "sha256": "e0fc01738d932c6a39d123549fc3cd32776226637a547748048e71d4fcaae20a",
+        "sha256_in_prefix": "e0fc01738d932c6a39d123549fc3cd32776226637a547748048e71d4fcaae20a",
+        "size_in_bytes": 4507
+      },
+      {
+        "_path": "site-packages/starlette/middleware/httpsredirect.py",
+        "path_type": "hardlink",
+        "sha256": "48d4e579a6002c6a084d5ef1c1b89ce2007a55874cf1895e6bfca4722533df58",
+        "sha256_in_prefix": "48d4e579a6002c6a084d5ef1c1b89ce2007a55874cf1895e6bfca4722533df58",
+        "size_in_bytes": 848
+      },
+      {
+        "_path": "site-packages/starlette/middleware/sessions.py",
+        "path_type": "hardlink",
+        "sha256": "9d223b8e77063e1bbd40c9a23f66ada806f29b8de66716dd3144d6ba5ddf896f",
+        "sha256_in_prefix": "9d223b8e77063e1bbd40c9a23f66ada806f29b8de66716dd3144d6ba5ddf896f",
+        "size_in_bytes": 3592
+      },
+      {
+        "_path": "site-packages/starlette/middleware/trustedhost.py",
+        "path_type": "hardlink",
+        "sha256": "23eb0c8a188692d756ada13111cc596e3e9ec9e458a27353334eff2721806fa6",
+        "sha256_in_prefix": "23eb0c8a188692d756ada13111cc596e3e9ec9e458a27353334eff2721806fa6",
+        "size_in_bytes": 2233
+      },
+      {
+        "_path": "site-packages/starlette/middleware/wsgi.py",
+        "path_type": "hardlink",
+        "sha256": "36df4ff924c37803df9c208731c3a9431fdad4247f757db79c7baaca1f5ec2e7",
+        "sha256_in_prefix": "36df4ff924c37803df9c208731c3a9431fdad4247f757db79c7baaca1f5ec2e7",
+        "size_in_bytes": 5409
+      },
+      {
+        "_path": "site-packages/starlette/py.typed",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/starlette/requests.py",
+        "path_type": "hardlink",
+        "sha256": "da721e8551caa6af42944d499b70dd105ed03f6110c0d2d9684eec85336fbc11",
+        "sha256_in_prefix": "da721e8551caa6af42944d499b70dd105ed03f6110c0d2d9684eec85336fbc11",
+        "size_in_bytes": 11034
+      },
+      {
+        "_path": "site-packages/starlette/responses.py",
+        "path_type": "hardlink",
+        "sha256": "172c05766b06ad989026ad06cf1dd72b0627dc7d0cf5e6e8fcaf19cd83dd06b0",
+        "sha256_in_prefix": "172c05766b06ad989026ad06cf1dd72b0627dc7d0cf5e6e8fcaf19cd83dd06b0",
+        "size_in_bytes": 12572
+      },
+      {
+        "_path": "site-packages/starlette/routing.py",
+        "path_type": "hardlink",
+        "sha256": "7d8078dc24a5fd674e93b0cf4deae4db478929b2f08e31d8a80441ead1032324",
+        "sha256_in_prefix": "7d8078dc24a5fd674e93b0cf4deae4db478929b2f08e31d8a80441ead1032324",
+        "size_in_bytes": 35198
+      },
+      {
+        "_path": "site-packages/starlette/schemas.py",
+        "path_type": "hardlink",
+        "sha256": "735051a002ed35766b5868f764a764644ec882923a38f7015d884d076e30437d",
+        "sha256_in_prefix": "735051a002ed35766b5868f764a764644ec882923a38f7015d884d076e30437d",
+        "size_in_bytes": 5198
+      },
+      {
+        "_path": "site-packages/starlette/staticfiles.py",
+        "path_type": "hardlink",
+        "sha256": "1226c15b785d1dc38b911849d5b5afc9886c14f81772dc92d06d8611b85d7529",
+        "sha256_in_prefix": "1226c15b785d1dc38b911849d5b5afc9886c14f81772dc92d06d8611b85d7529",
+        "size_in_bytes": 8782
+      },
+      {
+        "_path": "site-packages/starlette/status.py",
+        "path_type": "hardlink",
+        "sha256": "95adb530bf465054ad75f3b67898ed557ca5bd5441e92b141279d6a0c8636179",
+        "sha256_in_prefix": "95adb530bf465054ad75f3b67898ed557ca5bd5441e92b141279d6a0c8636179",
+        "size_in_bytes": 6099
+      },
+      {
+        "_path": "site-packages/starlette/templating.py",
+        "path_type": "hardlink",
+        "sha256": "e67878ec5433321af72ef1c782e3046a5fe2dc042d69948c8d097cf86f584b57",
+        "sha256_in_prefix": "e67878ec5433321af72ef1c782e3046a5fe2dc042d69948c8d097cf86f584b57",
+        "size_in_bytes": 8600
+      },
+      {
+        "_path": "site-packages/starlette/testclient.py",
+        "path_type": "hardlink",
+        "sha256": "887ce27ac7bdd7b4194a4e339f9a5338698f2ab4501ef09f008203b071b84e23",
+        "sha256_in_prefix": "887ce27ac7bdd7b4194a4e339f9a5338698f2ab4501ef09f008203b071b84e23",
+        "size_in_bytes": 30528
+      },
+      {
+        "_path": "site-packages/starlette/types.py",
+        "path_type": "hardlink",
+        "sha256": "bb56ae00f75608c49544b549b322b392f14df04296e498cbbfcf90b3b7f740dd",
+        "sha256_in_prefix": "bb56ae00f75608c49544b549b322b392f14df04296e498cbbfcf90b3b7f740dd",
+        "size_in_bytes": 1066
+      },
+      {
+        "_path": "site-packages/starlette/websockets.py",
+        "path_type": "hardlink",
+        "sha256": "e9cba71212e0cad87d58d148e48927045a37781b14e2bee26e79af2be56ad156",
+        "sha256_in_prefix": "e9cba71212e0cad87d58d148e48927045a37781b14e2bee26e79af2be56ad156",
+        "size_in_bytes": 8779
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/_compat.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/_exception_handler.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/_utils.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/applications.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/authentication.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/background.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/concurrency.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/config.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/convertors.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/datastructures.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/endpoints.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/exceptions.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/formparsers.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/authentication.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/base.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/cors.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/errors.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/exceptions.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/gzip.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/httpsredirect.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/sessions.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/trustedhost.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/middleware/__pycache__/wsgi.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/requests.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/responses.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/routing.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/schemas.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/staticfiles.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/status.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/templating.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/testclient.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/types.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/starlette/__pycache__/websockets.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "a9f2e202ba06514702590dd864cbcdd87b3d7a08b535e6b680798f39a6432356",
+  "size": 57626,
+  "subdir": "noarch",
+  "timestamp": 1722370674000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/starlette-0.38.2-pyhd8ed1ab_0.conda",
+  "version": "0.38.2"
+}

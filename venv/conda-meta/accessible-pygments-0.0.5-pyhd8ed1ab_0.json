@@ -1,0 +1,1608 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "pygments",
+    "python >=3.9"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/accessible-pygments-0.0.5-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/a11y_pygments/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_dark/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_dark/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_dark/images/a11y-dark.png",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_dark/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_dark/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_dark/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_dark/images/a11y-high-contrast-dark.png",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_dark/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_light/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_light/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_light/images/a11y-high-contrast-light.png",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_light/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_light/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_light/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_light/images/a11y-light.png",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_light/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/assets/000000.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/005b82.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/00622f.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/0072b2.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/00749c.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/008561.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/00e0e0.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/023b95.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/024c1a.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/0550ae.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/080808.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/116329.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/116633.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/141414.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/18c1c4.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/1e1e1e.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/24292f.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/3d73a9.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/437a6b.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/515151.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/5391cf.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/5ca7e4.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/622cbc.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/66707b.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/66ccee.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/66e9ec.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/6730c5.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/6e7781.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/6f98b3.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/702c00.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/72f088.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/737373.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/797979.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/7998f2.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/79c0ff.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/7ee787.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/7f4707.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/8045e5.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/81b19b.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/8250df.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/8786ac.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/8a4600.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/8b949e.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/8c8c8c.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/912583.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/91cbff.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/953800.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/974eb7.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/98661b.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/996b00.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/9e86c8.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/9e8741.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/9f4e55.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/a0111f.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/a12236.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/a25e53.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/a2bffc.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/a5d6ff.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ab6369.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/abe338.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/b19db4.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/b1bac4.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/b35900.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/b89784.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/bbbbbb.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/bf5400.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/c4a2f5.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/c5e478.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/c9d1d9.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/caab6d.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/cc398b.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ccbb44.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/cf222e.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/d166a3.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/d2a8ff.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/d4d0ab.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/d71835.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/d9dee3.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/dbb7ff.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/dcc6e0.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ec8e2c.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ee6677.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/f26196.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/f5a394.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/f5ab35.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/f5f5f5.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/f78c6c.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/f8f8f2.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/fad000.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/fdac54.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/fefeff.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ff7b72.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ff9492.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ffa07a.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ffa657.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ffb757.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ffd700.png",
+    "lib/python3.12/site-packages/a11y_pygments/assets/ffd900.png",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_dark/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_dark/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_dark/images/blinds-dark.png",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_dark/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_light/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_light/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_light/images/blinds-light.png",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_light/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark/images/github-dark.png",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_colorblind/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_colorblind/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_colorblind/images/github-dark-colorblind.png",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_colorblind/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_high_contrast/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_high_contrast/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_high_contrast/images/github-dark-high-contrast.png",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_high_contrast/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_light/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/github_light/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_light/images/github-light.png",
+    "lib/python3.12/site-packages/a11y_pygments/github_light/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_colorblind/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_colorblind/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_colorblind/images/github-light-colorblind.png",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_colorblind/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_high_contrast/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_high_contrast/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_high_contrast/images/github-light-high-contrast.png",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_high_contrast/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_dark/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_dark/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_dark/images/gotthard-dark.png",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_dark/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_light/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_light/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_light/images/gotthard-light.png",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_light/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/greative/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/greative/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/greative/images/greative.png",
+    "lib/python3.12/site-packages/a11y_pygments/greative/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/pitaya_smoothie/README.md",
+    "lib/python3.12/site-packages/a11y_pygments/pitaya_smoothie/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/pitaya_smoothie/images/pitaya-smoothie.png",
+    "lib/python3.12/site-packages/a11y_pygments/pitaya_smoothie/style.py",
+    "lib/python3.12/site-packages/a11y_pygments/utils/__init__.py",
+    "lib/python3.12/site-packages/a11y_pygments/utils/utils.py",
+    "lib/python3.12/site-packages/a11y_pygments/utils/wcag_contrast.py",
+    "lib/python3.12/site-packages/accessible_pygments-0.0.5.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/accessible_pygments-0.0.5.dist-info/METADATA",
+    "lib/python3.12/site-packages/accessible_pygments-0.0.5.dist-info/RECORD",
+    "lib/python3.12/site-packages/accessible_pygments-0.0.5.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/accessible_pygments-0.0.5.dist-info/WHEEL",
+    "lib/python3.12/site-packages/accessible_pygments-0.0.5.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/accessible_pygments-0.0.5.dist-info/entry_points.txt",
+    "lib/python3.12/site-packages/accessible_pygments-0.0.5.dist-info/licenses/LICENSE",
+    "lib/python3.12/site-packages/a11y_pygments/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_dark/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_dark/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_dark/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_dark/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_light/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_light/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_light/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/a11y_light/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_dark/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_dark/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_light/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/blinds_light/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_colorblind/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_colorblind/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_high_contrast/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_dark_high_contrast/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_light/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_light/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_colorblind/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_colorblind/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_high_contrast/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/github_light_high_contrast/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_dark/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_dark/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_light/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/gotthard_light/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/greative/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/greative/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/pitaya_smoothie/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/pitaya_smoothie/__pycache__/style.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/utils/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/utils/__pycache__/utils.cpython-312.pyc",
+    "lib/python3.12/site-packages/a11y_pygments/utils/__pycache__/wcag_contrast.cpython-312.pyc"
+  ],
+  "fn": "accessible-pygments-0.0.5-pyhd8ed1ab_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/accessible-pygments-0.0.5-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "1bb1ef9806a9a20872434f58b3e7fc1a",
+  "name": "accessible-pygments",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/accessible-pygments-0.0.5-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/a11y_pygments/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "b4aae4849c0cbb9611706c3f227723bfd5f27ce655753138663eef0dccaa4690",
+        "sha256_in_prefix": "b4aae4849c0cbb9611706c3f227723bfd5f27ce655753138663eef0dccaa4690",
+        "size_in_bytes": 186
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_dark/README.md",
+        "path_type": "hardlink",
+        "sha256": "6915391f17685086f7e2cbe02b2a47e109b442439265c3810909baf9e0f06c16",
+        "sha256_in_prefix": "6915391f17685086f7e2cbe02b2a47e109b442439265c3810909baf9e0f06c16",
+        "size_in_bytes": 1521
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_dark/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_dark/images/a11y-dark.png",
+        "path_type": "hardlink",
+        "sha256": "116a6e2c073b183db89d44f7b27bbed7bce54e2e75c61ca2c0abe62fe6c35784",
+        "sha256_in_prefix": "116a6e2c073b183db89d44f7b27bbed7bce54e2e75c61ca2c0abe62fe6c35784",
+        "size_in_bytes": 88218
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_dark/style.py",
+        "path_type": "hardlink",
+        "sha256": "75044066305f534b76c4a8795f8b66b31a2c0be33685cf136f70f2a9c31efaa3",
+        "sha256_in_prefix": "75044066305f534b76c4a8795f8b66b31a2c0be33685cf136f70f2a9c31efaa3",
+        "size_in_bytes": 4408
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_high_contrast_dark/README.md",
+        "path_type": "hardlink",
+        "sha256": "92acc9eb017c72e9082df3fec2c141d80b3599765ec33df91238a0b348e59eb5",
+        "sha256_in_prefix": "92acc9eb017c72e9082df3fec2c141d80b3599765ec33df91238a0b348e59eb5",
+        "size_in_bytes": 1262
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_high_contrast_dark/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_high_contrast_dark/images/a11y-high-contrast-dark.png",
+        "path_type": "hardlink",
+        "sha256": "98710bdd58433e2b4707b691923ad041b3ea38a201a17acd9e2d7d6c27c075cf",
+        "sha256_in_prefix": "98710bdd58433e2b4707b691923ad041b3ea38a201a17acd9e2d7d6c27c075cf",
+        "size_in_bytes": 86827
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_high_contrast_dark/style.py",
+        "path_type": "hardlink",
+        "sha256": "c0b172877f2864959f31e893e02c7a5a078b2ea34a1a723dbccddecfc92e9d68",
+        "sha256_in_prefix": "c0b172877f2864959f31e893e02c7a5a078b2ea34a1a723dbccddecfc92e9d68",
+        "size_in_bytes": 4307
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_high_contrast_light/README.md",
+        "path_type": "hardlink",
+        "sha256": "166e70b17fc706dad2c7a1328ddbd40abc03a3fc8df20e44eb0f20c65a02ae34",
+        "sha256_in_prefix": "166e70b17fc706dad2c7a1328ddbd40abc03a3fc8df20e44eb0f20c65a02ae34",
+        "size_in_bytes": 1491
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_high_contrast_light/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_high_contrast_light/images/a11y-high-contrast-light.png",
+        "path_type": "hardlink",
+        "sha256": "b401a1ac7444a1d6190eff788cdeba05e2d8dd246048d11def125b8c25b332a1",
+        "sha256_in_prefix": "b401a1ac7444a1d6190eff788cdeba05e2d8dd246048d11def125b8c25b332a1",
+        "size_in_bytes": 87358
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_high_contrast_light/style.py",
+        "path_type": "hardlink",
+        "sha256": "88b932192ec6ac971961fdd37c10e39bca6308e6dcd391337a71b91755610758",
+        "sha256_in_prefix": "88b932192ec6ac971961fdd37c10e39bca6308e6dcd391337a71b91755610758",
+        "size_in_bytes": 4333
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_light/README.md",
+        "path_type": "hardlink",
+        "sha256": "2dcebb259f4fef29f678500eab568426b2acb58065c6d2878451ac59eb972ecf",
+        "sha256_in_prefix": "2dcebb259f4fef29f678500eab568426b2acb58065c6d2878451ac59eb972ecf",
+        "size_in_bytes": 1325
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_light/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_light/images/a11y-light.png",
+        "path_type": "hardlink",
+        "sha256": "928890ae30671345acf1673783ef4a18cacc623bc618d9e241ac9d7e476d04e1",
+        "sha256_in_prefix": "928890ae30671345acf1673783ef4a18cacc623bc618d9e241ac9d7e476d04e1",
+        "size_in_bytes": 86841
+      },
+      {
+        "_path": "site-packages/a11y_pygments/a11y_light/style.py",
+        "path_type": "hardlink",
+        "sha256": "f35bfaf880b959ee75f974c66cdce5d41e28370e82c7e680611586cf5c614c12",
+        "sha256_in_prefix": "f35bfaf880b959ee75f974c66cdce5d41e28370e82c7e680611586cf5c614c12",
+        "size_in_bytes": 4311
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/000000.png",
+        "path_type": "hardlink",
+        "sha256": "175c6784a8ef65edad8e729a0a96ff736a83fb916a020a4208cfbd8325a34632",
+        "sha256_in_prefix": "175c6784a8ef65edad8e729a0a96ff736a83fb916a020a4208cfbd8325a34632",
+        "size_in_bytes": 75
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/005b82.png",
+        "path_type": "hardlink",
+        "sha256": "fc55bf4a1f4ae34635520b61aa56a221c68f282278ba030aa5209a72e81b36ca",
+        "sha256_in_prefix": "fc55bf4a1f4ae34635520b61aa56a221c68f282278ba030aa5209a72e81b36ca",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/00622f.png",
+        "path_type": "hardlink",
+        "sha256": "190ba31987a6f437f287a97c6bb4d66b69e77e7a4de2db6cb84b636c023dc233",
+        "sha256_in_prefix": "190ba31987a6f437f287a97c6bb4d66b69e77e7a4de2db6cb84b636c023dc233",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/0072b2.png",
+        "path_type": "hardlink",
+        "sha256": "fd8ba3984e3c842090bd4c1576e919c29834c914867db74d1c3c53503493ddf1",
+        "sha256_in_prefix": "fd8ba3984e3c842090bd4c1576e919c29834c914867db74d1c3c53503493ddf1",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/00749c.png",
+        "path_type": "hardlink",
+        "sha256": "c20cd81a2a4ecb0338651aa3e55cb798a5b41b2574d969bfe80eb023f713f991",
+        "sha256_in_prefix": "c20cd81a2a4ecb0338651aa3e55cb798a5b41b2574d969bfe80eb023f713f991",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/008561.png",
+        "path_type": "hardlink",
+        "sha256": "411fe183117531d5f0f354d97519375d4f654b65ed0f2e5ba35a7675b95670b5",
+        "sha256_in_prefix": "411fe183117531d5f0f354d97519375d4f654b65ed0f2e5ba35a7675b95670b5",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/00e0e0.png",
+        "path_type": "hardlink",
+        "sha256": "a1824cf4341372c28022c414e7cf228d640061942c635f50f79a5232d901909a",
+        "sha256_in_prefix": "a1824cf4341372c28022c414e7cf228d640061942c635f50f79a5232d901909a",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/023b95.png",
+        "path_type": "hardlink",
+        "sha256": "2066ffe2c2cc21ec4855fba95634a31e89c399d59d9186b66c10a1d7c4e063c2",
+        "sha256_in_prefix": "2066ffe2c2cc21ec4855fba95634a31e89c399d59d9186b66c10a1d7c4e063c2",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/024c1a.png",
+        "path_type": "hardlink",
+        "sha256": "95a4ac02a196e7aa17c0b6e1c9eebbde98515e69f3676072295e776c1113e4f1",
+        "sha256_in_prefix": "95a4ac02a196e7aa17c0b6e1c9eebbde98515e69f3676072295e776c1113e4f1",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/0550ae.png",
+        "path_type": "hardlink",
+        "sha256": "25968b14015ba7f3d4516b961cb029eb8e9aac9f52a059d0c332b1c8da2254a9",
+        "sha256_in_prefix": "25968b14015ba7f3d4516b961cb029eb8e9aac9f52a059d0c332b1c8da2254a9",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/080808.png",
+        "path_type": "hardlink",
+        "sha256": "75bfe144d3da6d799d63363bda759c75ed75a853932c1f75598eb3f188f79893",
+        "sha256_in_prefix": "75bfe144d3da6d799d63363bda759c75ed75a853932c1f75598eb3f188f79893",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/116329.png",
+        "path_type": "hardlink",
+        "sha256": "5dd2887c58dfc693d38b16d3475f6874cd606ac6e6fad1fdc47cd1411f45dd26",
+        "sha256_in_prefix": "5dd2887c58dfc693d38b16d3475f6874cd606ac6e6fad1fdc47cd1411f45dd26",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/116633.png",
+        "path_type": "hardlink",
+        "sha256": "93d194c631225ac56a8ee16179d960e0d82bb1df441b45b76419b04183481f3a",
+        "sha256_in_prefix": "93d194c631225ac56a8ee16179d960e0d82bb1df441b45b76419b04183481f3a",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/141414.png",
+        "path_type": "hardlink",
+        "sha256": "c9269c0f5d53295000be1453684b9501d6142965fb00b9cb2c7bbef54266f14f",
+        "sha256_in_prefix": "c9269c0f5d53295000be1453684b9501d6142965fb00b9cb2c7bbef54266f14f",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/18c1c4.png",
+        "path_type": "hardlink",
+        "sha256": "5178d5a843e9221987505b516c6654e2f9f20e326b03899a7bb1dec20ae72963",
+        "sha256_in_prefix": "5178d5a843e9221987505b516c6654e2f9f20e326b03899a7bb1dec20ae72963",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/1e1e1e.png",
+        "path_type": "hardlink",
+        "sha256": "a910a0426216ff66e3f62282a363a96e93e1991efef82ea47cd5b846086d3d31",
+        "sha256_in_prefix": "a910a0426216ff66e3f62282a363a96e93e1991efef82ea47cd5b846086d3d31",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/24292f.png",
+        "path_type": "hardlink",
+        "sha256": "e5667d5a4d350fbbc611b8f7c5dd9e9ed4bf2480240ee476c0feb25418b15983",
+        "sha256_in_prefix": "e5667d5a4d350fbbc611b8f7c5dd9e9ed4bf2480240ee476c0feb25418b15983",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/3d73a9.png",
+        "path_type": "hardlink",
+        "sha256": "899403fb49980d330426129de319d196a22f1c1f90aa4d746c73cfaf49a43767",
+        "sha256_in_prefix": "899403fb49980d330426129de319d196a22f1c1f90aa4d746c73cfaf49a43767",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/437a6b.png",
+        "path_type": "hardlink",
+        "sha256": "27504115b0b66322106667bebe0e544e12784128e3d4d46cd1c7846581ddc0d7",
+        "sha256_in_prefix": "27504115b0b66322106667bebe0e544e12784128e3d4d46cd1c7846581ddc0d7",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/515151.png",
+        "path_type": "hardlink",
+        "sha256": "5fa9a256a8ccf546e08600bb4eb3b690989c0629484babb58a35f56d6c6ed25c",
+        "sha256_in_prefix": "5fa9a256a8ccf546e08600bb4eb3b690989c0629484babb58a35f56d6c6ed25c",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/5391cf.png",
+        "path_type": "hardlink",
+        "sha256": "5ac446eb2768ce422dff2eb14168ef77102a276d7a7691515c202adac11e37d8",
+        "sha256_in_prefix": "5ac446eb2768ce422dff2eb14168ef77102a276d7a7691515c202adac11e37d8",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/5ca7e4.png",
+        "path_type": "hardlink",
+        "sha256": "f8fa8066985f6e3e87fbc1ec67b2ea1ce09fa2847c1dd2015bae66c82a9de799",
+        "sha256_in_prefix": "f8fa8066985f6e3e87fbc1ec67b2ea1ce09fa2847c1dd2015bae66c82a9de799",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/622cbc.png",
+        "path_type": "hardlink",
+        "sha256": "3336546f2185c763bbcd7a1175e30e52c0054220950f3f5c7e99c456decc6d98",
+        "sha256_in_prefix": "3336546f2185c763bbcd7a1175e30e52c0054220950f3f5c7e99c456decc6d98",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/66707b.png",
+        "path_type": "hardlink",
+        "sha256": "a4a962e0d89495a454ee06d94eaf08787ad64c48752459af96431f61b3416aa7",
+        "sha256_in_prefix": "a4a962e0d89495a454ee06d94eaf08787ad64c48752459af96431f61b3416aa7",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/66ccee.png",
+        "path_type": "hardlink",
+        "sha256": "3b1fc52800414f8f94904b371f4773d70e2b77e464ba0a5b69e7382994693534",
+        "sha256_in_prefix": "3b1fc52800414f8f94904b371f4773d70e2b77e464ba0a5b69e7382994693534",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/66e9ec.png",
+        "path_type": "hardlink",
+        "sha256": "629e39d851ce9c6203130f9af996760a00aab8c7918a9833b0f7dfb6d8961be7",
+        "sha256_in_prefix": "629e39d851ce9c6203130f9af996760a00aab8c7918a9833b0f7dfb6d8961be7",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/6730c5.png",
+        "path_type": "hardlink",
+        "sha256": "43ca29d34cff1246fc7093535a6d5034619b8a6d70c7b3792d6d08c2ba8d7ea3",
+        "sha256_in_prefix": "43ca29d34cff1246fc7093535a6d5034619b8a6d70c7b3792d6d08c2ba8d7ea3",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/6e7781.png",
+        "path_type": "hardlink",
+        "sha256": "169dea6e52bf45f2c66810d04e9bca6512b1122782d7478b0564726d127afb66",
+        "sha256_in_prefix": "169dea6e52bf45f2c66810d04e9bca6512b1122782d7478b0564726d127afb66",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/6f98b3.png",
+        "path_type": "hardlink",
+        "sha256": "32c7acf28680986cb5a32fadf17ebe82f14eff40315956779b2c57d18c085ef6",
+        "sha256_in_prefix": "32c7acf28680986cb5a32fadf17ebe82f14eff40315956779b2c57d18c085ef6",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/702c00.png",
+        "path_type": "hardlink",
+        "sha256": "c59c7bb27a0868a8a6b795313c040ba2d17fdca74f59046baed672dd1fc1062e",
+        "sha256_in_prefix": "c59c7bb27a0868a8a6b795313c040ba2d17fdca74f59046baed672dd1fc1062e",
+        "size_in_bytes": 85
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/72f088.png",
+        "path_type": "hardlink",
+        "sha256": "5856f30eb7a956b60077e73433b154badbf5125267a02428eef1f03db73e89c0",
+        "sha256_in_prefix": "5856f30eb7a956b60077e73433b154badbf5125267a02428eef1f03db73e89c0",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/737373.png",
+        "path_type": "hardlink",
+        "sha256": "7c3dba763b13dd2be1bcefc4f24b8e48768ce2c83c39ba0eb266669ff4d603c0",
+        "sha256_in_prefix": "7c3dba763b13dd2be1bcefc4f24b8e48768ce2c83c39ba0eb266669ff4d603c0",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/797979.png",
+        "path_type": "hardlink",
+        "sha256": "481fd02b8ced571f9a993b93997b3aa9fa6832c8c0e70aff5704575b82d2438c",
+        "sha256_in_prefix": "481fd02b8ced571f9a993b93997b3aa9fa6832c8c0e70aff5704575b82d2438c",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/7998f2.png",
+        "path_type": "hardlink",
+        "sha256": "e97873b55b01804647186262bcbceba99c7ac1276c68dd504f4a7eae03baa186",
+        "sha256_in_prefix": "e97873b55b01804647186262bcbceba99c7ac1276c68dd504f4a7eae03baa186",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/79c0ff.png",
+        "path_type": "hardlink",
+        "sha256": "9fd12ed2899fe84dd25d104cb63763c65330a692778aff3b935ce87fca7f745c",
+        "sha256_in_prefix": "9fd12ed2899fe84dd25d104cb63763c65330a692778aff3b935ce87fca7f745c",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/7ee787.png",
+        "path_type": "hardlink",
+        "sha256": "e05fac8fad08c013d6bac5244ad49b5c913fe48244bf07d70f4439cf3c058b93",
+        "sha256_in_prefix": "e05fac8fad08c013d6bac5244ad49b5c913fe48244bf07d70f4439cf3c058b93",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/7f4707.png",
+        "path_type": "hardlink",
+        "sha256": "03acfdf815215a1e3939f93afa5abb2be331c7f79169687cbb20f70d04d0b239",
+        "sha256_in_prefix": "03acfdf815215a1e3939f93afa5abb2be331c7f79169687cbb20f70d04d0b239",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/8045e5.png",
+        "path_type": "hardlink",
+        "sha256": "682e772ae5a4de58800decd5ed9e3c97938c671bfd93f4b643b4d3924a742955",
+        "sha256_in_prefix": "682e772ae5a4de58800decd5ed9e3c97938c671bfd93f4b643b4d3924a742955",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/81b19b.png",
+        "path_type": "hardlink",
+        "sha256": "0be6e6799e6ea082fc17d85917c894b7595d4da8263bd8c3293aa35166e9eb17",
+        "sha256_in_prefix": "0be6e6799e6ea082fc17d85917c894b7595d4da8263bd8c3293aa35166e9eb17",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/8250df.png",
+        "path_type": "hardlink",
+        "sha256": "e9e5b3941bd7a144336d7ed43a0549a73779333223a88a2f696995c35c21befa",
+        "sha256_in_prefix": "e9e5b3941bd7a144336d7ed43a0549a73779333223a88a2f696995c35c21befa",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/8786ac.png",
+        "path_type": "hardlink",
+        "sha256": "24bf9bb19c9d14b60143022c1a58977722c2ed48c6894ce1e1f8a9a69befd246",
+        "sha256_in_prefix": "24bf9bb19c9d14b60143022c1a58977722c2ed48c6894ce1e1f8a9a69befd246",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/8a4600.png",
+        "path_type": "hardlink",
+        "sha256": "893adcfc1dd861ac8e5d9560906faf1da5dcaad8845fddb744c87173636637fb",
+        "sha256_in_prefix": "893adcfc1dd861ac8e5d9560906faf1da5dcaad8845fddb744c87173636637fb",
+        "size_in_bytes": 85
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/8b949e.png",
+        "path_type": "hardlink",
+        "sha256": "e2fe80c5772a592ee08b2f1d45fbcb7726d347b3c2a168592c9f4c347d227471",
+        "sha256_in_prefix": "e2fe80c5772a592ee08b2f1d45fbcb7726d347b3c2a168592c9f4c347d227471",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/8c8c8c.png",
+        "path_type": "hardlink",
+        "sha256": "9d638ac5c3f00ea81cd287c18e7419149534e07fa872548dfd2690351301eafe",
+        "sha256_in_prefix": "9d638ac5c3f00ea81cd287c18e7419149534e07fa872548dfd2690351301eafe",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/912583.png",
+        "path_type": "hardlink",
+        "sha256": "5bbff71f0c9a43b17f30b9ec2f7503058abda02eef3efa9e19691f5990fee9dc",
+        "sha256_in_prefix": "5bbff71f0c9a43b17f30b9ec2f7503058abda02eef3efa9e19691f5990fee9dc",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/91cbff.png",
+        "path_type": "hardlink",
+        "sha256": "a381f0567272d156b20d518614705295886bae779cd1658820f93de0673d0011",
+        "sha256_in_prefix": "a381f0567272d156b20d518614705295886bae779cd1658820f93de0673d0011",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/953800.png",
+        "path_type": "hardlink",
+        "sha256": "6931b6b08337187344d53d6309dbd63f483f3b65864a77b5b16a9c6e4269c282",
+        "sha256_in_prefix": "6931b6b08337187344d53d6309dbd63f483f3b65864a77b5b16a9c6e4269c282",
+        "size_in_bytes": 85
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/974eb7.png",
+        "path_type": "hardlink",
+        "sha256": "1cf671151c74fab3c910869aa6891b6e7f2fc3adbfdc28eca6e74d73382b1403",
+        "sha256_in_prefix": "1cf671151c74fab3c910869aa6891b6e7f2fc3adbfdc28eca6e74d73382b1403",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/98661b.png",
+        "path_type": "hardlink",
+        "sha256": "21c9735439cfd2a29f140b829ccdf5305ae508a2d4fb65ee879b657066bbad37",
+        "sha256_in_prefix": "21c9735439cfd2a29f140b829ccdf5305ae508a2d4fb65ee879b657066bbad37",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/996b00.png",
+        "path_type": "hardlink",
+        "sha256": "9b888a5caa280d1f27322d24f1d4cebf0626a3c4bdae4f0e0f82dee27c0238e3",
+        "sha256_in_prefix": "9b888a5caa280d1f27322d24f1d4cebf0626a3c4bdae4f0e0f82dee27c0238e3",
+        "size_in_bytes": 85
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/9e86c8.png",
+        "path_type": "hardlink",
+        "sha256": "cec039ce4b0407a61ef4c60f3d071fc13a389d5079479568cf302021725bf01a",
+        "sha256_in_prefix": "cec039ce4b0407a61ef4c60f3d071fc13a389d5079479568cf302021725bf01a",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/9e8741.png",
+        "path_type": "hardlink",
+        "sha256": "a06592187d5a255db65831e79f6459076b17874d36ce62659a970763e2d856ab",
+        "sha256_in_prefix": "a06592187d5a255db65831e79f6459076b17874d36ce62659a970763e2d856ab",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/9f4e55.png",
+        "path_type": "hardlink",
+        "sha256": "39a5cb6b67b0d1511146d3a0c8f36a38858586e993cf1205e1461ed8b8a96d15",
+        "sha256_in_prefix": "39a5cb6b67b0d1511146d3a0c8f36a38858586e993cf1205e1461ed8b8a96d15",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/a0111f.png",
+        "path_type": "hardlink",
+        "sha256": "eb4a99a98249bac2b1c1365ec115809e21e55a93dc55bf324cb9bec5f290fd29",
+        "sha256_in_prefix": "eb4a99a98249bac2b1c1365ec115809e21e55a93dc55bf324cb9bec5f290fd29",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/a12236.png",
+        "path_type": "hardlink",
+        "sha256": "d7097fec422c10af56a0cb081a183caf1e3118e5dd827262f8260e9357b724d6",
+        "sha256_in_prefix": "d7097fec422c10af56a0cb081a183caf1e3118e5dd827262f8260e9357b724d6",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/a25e53.png",
+        "path_type": "hardlink",
+        "sha256": "4317062db52d8c77f12a88c2d313eb6248d1cdffacda30d653d109d293358ad7",
+        "sha256_in_prefix": "4317062db52d8c77f12a88c2d313eb6248d1cdffacda30d653d109d293358ad7",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/a2bffc.png",
+        "path_type": "hardlink",
+        "sha256": "c6efa75aedd53bc2d1c0ac1f23415242fe149706abd4c064aefeb4ea7f7818ef",
+        "sha256_in_prefix": "c6efa75aedd53bc2d1c0ac1f23415242fe149706abd4c064aefeb4ea7f7818ef",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/a5d6ff.png",
+        "path_type": "hardlink",
+        "sha256": "c34671d79d1df3b1dcecfec39116aac76bac826454a5de041a79d36317303331",
+        "sha256_in_prefix": "c34671d79d1df3b1dcecfec39116aac76bac826454a5de041a79d36317303331",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ab6369.png",
+        "path_type": "hardlink",
+        "sha256": "1e58eded84a6338fed5b22eb28cb2ad15fb8f34739eadb3ee1864ace2698052e",
+        "sha256_in_prefix": "1e58eded84a6338fed5b22eb28cb2ad15fb8f34739eadb3ee1864ace2698052e",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/abe338.png",
+        "path_type": "hardlink",
+        "sha256": "72a3a72748fe70b819a5526a6e62cd35576f2bc0cb2c112207c58fa5e58d378c",
+        "sha256_in_prefix": "72a3a72748fe70b819a5526a6e62cd35576f2bc0cb2c112207c58fa5e58d378c",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/b19db4.png",
+        "path_type": "hardlink",
+        "sha256": "6a383cdf265c28e6558b0fadc51baee4a1ca82e492df221cab4d61a6e0057b37",
+        "sha256_in_prefix": "6a383cdf265c28e6558b0fadc51baee4a1ca82e492df221cab4d61a6e0057b37",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/b1bac4.png",
+        "path_type": "hardlink",
+        "sha256": "897dee47a1e4d316982ed703694ab41e81df380714742c849bec30c90a4890d0",
+        "sha256_in_prefix": "897dee47a1e4d316982ed703694ab41e81df380714742c849bec30c90a4890d0",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/b35900.png",
+        "path_type": "hardlink",
+        "sha256": "8685a6c79e82e9c43eb89a6aa17bdae3dac04d81e8779ec6a5ad4b650f8825dd",
+        "sha256_in_prefix": "8685a6c79e82e9c43eb89a6aa17bdae3dac04d81e8779ec6a5ad4b650f8825dd",
+        "size_in_bytes": 85
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/b89784.png",
+        "path_type": "hardlink",
+        "sha256": "8994924c0c0a14ae72e23c9c2691e3a7d2ff0f8fb6d2467117bba1f8a540f3eb",
+        "sha256_in_prefix": "8994924c0c0a14ae72e23c9c2691e3a7d2ff0f8fb6d2467117bba1f8a540f3eb",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/bbbbbb.png",
+        "path_type": "hardlink",
+        "sha256": "bc9068f18de3a7b2cb2e11375e56a5abd2c102739ee7d5fd172e74bb8213cddd",
+        "sha256_in_prefix": "bc9068f18de3a7b2cb2e11375e56a5abd2c102739ee7d5fd172e74bb8213cddd",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/bf5400.png",
+        "path_type": "hardlink",
+        "sha256": "162227e8579be03d6a88253da3dbd539cd108238fec7cd25a7faee067d24bfe8",
+        "sha256_in_prefix": "162227e8579be03d6a88253da3dbd539cd108238fec7cd25a7faee067d24bfe8",
+        "size_in_bytes": 85
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/c4a2f5.png",
+        "path_type": "hardlink",
+        "sha256": "e9ca3666c0367b990397c4c16646dc26a59287d1d2609697cba4e2cfc8aa0fad",
+        "sha256_in_prefix": "e9ca3666c0367b990397c4c16646dc26a59287d1d2609697cba4e2cfc8aa0fad",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/c5e478.png",
+        "path_type": "hardlink",
+        "sha256": "d62a6302e895882e5be070c58297cfec668f9a463eac0d742ec858c4e709c288",
+        "sha256_in_prefix": "d62a6302e895882e5be070c58297cfec668f9a463eac0d742ec858c4e709c288",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/c9d1d9.png",
+        "path_type": "hardlink",
+        "sha256": "787bebb784ed0e5f26be8ad506e3e52a8001d9f2e5ebb57b6c445f5edbd61671",
+        "sha256_in_prefix": "787bebb784ed0e5f26be8ad506e3e52a8001d9f2e5ebb57b6c445f5edbd61671",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/caab6d.png",
+        "path_type": "hardlink",
+        "sha256": "4e87e98df06c3de6cf9abe15e74f699baa5fa69b0f5eb510eaa1d901ec61fcd4",
+        "sha256_in_prefix": "4e87e98df06c3de6cf9abe15e74f699baa5fa69b0f5eb510eaa1d901ec61fcd4",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/cc398b.png",
+        "path_type": "hardlink",
+        "sha256": "b686c072937fca8ca41ab7ce289544d05265409ab32b26b4467cf75f6af4cba9",
+        "sha256_in_prefix": "b686c072937fca8ca41ab7ce289544d05265409ab32b26b4467cf75f6af4cba9",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ccbb44.png",
+        "path_type": "hardlink",
+        "sha256": "b0099f387ceeeea357aa574cf00f1038412991cec86a74673d114e7481a7aacf",
+        "sha256_in_prefix": "b0099f387ceeeea357aa574cf00f1038412991cec86a74673d114e7481a7aacf",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/cf222e.png",
+        "path_type": "hardlink",
+        "sha256": "3719364bbe3d93492356818b2142a1342ca7a476e2cb2144aa4dd8c1b3550bc5",
+        "sha256_in_prefix": "3719364bbe3d93492356818b2142a1342ca7a476e2cb2144aa4dd8c1b3550bc5",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/d166a3.png",
+        "path_type": "hardlink",
+        "sha256": "9f1211312d478c65e77cf9ee6e1d4ac22966ff0cf0ce555ec78f2c7dd6ae214c",
+        "sha256_in_prefix": "9f1211312d478c65e77cf9ee6e1d4ac22966ff0cf0ce555ec78f2c7dd6ae214c",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/d2a8ff.png",
+        "path_type": "hardlink",
+        "sha256": "5b266ec97270d1dd8216b2619b589e17608d3cda4d196e8c3e83cbc77b34628a",
+        "sha256_in_prefix": "5b266ec97270d1dd8216b2619b589e17608d3cda4d196e8c3e83cbc77b34628a",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/d4d0ab.png",
+        "path_type": "hardlink",
+        "sha256": "32e04f1c3d3929e458ba6c012c3ba0cf2a2ac89fbacb6b8ce3d1f555efc5fc2b",
+        "sha256_in_prefix": "32e04f1c3d3929e458ba6c012c3ba0cf2a2ac89fbacb6b8ce3d1f555efc5fc2b",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/d71835.png",
+        "path_type": "hardlink",
+        "sha256": "164c8455faf4754aeb8e7268e12472476f4813ed2b27ffcfa952d228ca779b15",
+        "sha256_in_prefix": "164c8455faf4754aeb8e7268e12472476f4813ed2b27ffcfa952d228ca779b15",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/d9dee3.png",
+        "path_type": "hardlink",
+        "sha256": "e51c3f3c1b1177dfa68b04aa046a54b00e4e1d3c580a5346d0453f6517f0717c",
+        "sha256_in_prefix": "e51c3f3c1b1177dfa68b04aa046a54b00e4e1d3c580a5346d0453f6517f0717c",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/dbb7ff.png",
+        "path_type": "hardlink",
+        "sha256": "d26db92bc295a587a024ff98a75147b38e6d359e44ab2e6b4425ef2b664f5acb",
+        "sha256_in_prefix": "d26db92bc295a587a024ff98a75147b38e6d359e44ab2e6b4425ef2b664f5acb",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/dcc6e0.png",
+        "path_type": "hardlink",
+        "sha256": "c16a492830a6327431011cc5d43047d9d02f7299aef59f56454474896d311e7a",
+        "sha256_in_prefix": "c16a492830a6327431011cc5d43047d9d02f7299aef59f56454474896d311e7a",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ec8e2c.png",
+        "path_type": "hardlink",
+        "sha256": "60e80135411b30e68c6cbe6cccbb93510bcfffb950af82e66e5aabb0f3df17bb",
+        "sha256_in_prefix": "60e80135411b30e68c6cbe6cccbb93510bcfffb950af82e66e5aabb0f3df17bb",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ee6677.png",
+        "path_type": "hardlink",
+        "sha256": "3149f6851072a15357ef84566b55edcaaf4549dda0978227c68cf2a3387ed32f",
+        "sha256_in_prefix": "3149f6851072a15357ef84566b55edcaaf4549dda0978227c68cf2a3387ed32f",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/f26196.png",
+        "path_type": "hardlink",
+        "sha256": "04662ab6140bdc1a880d06472713a9b3fb13d9b7e824fe231020033dd13e43c9",
+        "sha256_in_prefix": "04662ab6140bdc1a880d06472713a9b3fb13d9b7e824fe231020033dd13e43c9",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/f5a394.png",
+        "path_type": "hardlink",
+        "sha256": "ea40fe7540aec9c769c24231a955e744bee640e9aed4317c97e7e3dc57443d75",
+        "sha256_in_prefix": "ea40fe7540aec9c769c24231a955e744bee640e9aed4317c97e7e3dc57443d75",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/f5ab35.png",
+        "path_type": "hardlink",
+        "sha256": "441c98fab35c176f7fa0686c63c17810b2e644adb19893fdb57c1433d940e879",
+        "sha256_in_prefix": "441c98fab35c176f7fa0686c63c17810b2e644adb19893fdb57c1433d940e879",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/f5f5f5.png",
+        "path_type": "hardlink",
+        "sha256": "04bf2ffbbe71b1066acc64e3f49b6b691d29673a1817258fc59877a1d061dbd2",
+        "sha256_in_prefix": "04bf2ffbbe71b1066acc64e3f49b6b691d29673a1817258fc59877a1d061dbd2",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/f78c6c.png",
+        "path_type": "hardlink",
+        "sha256": "71bf91340d5eb17c9fb5f827e8c515b0767bfb7d5700ec1b2914eddd21ecb389",
+        "sha256_in_prefix": "71bf91340d5eb17c9fb5f827e8c515b0767bfb7d5700ec1b2914eddd21ecb389",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/f8f8f2.png",
+        "path_type": "hardlink",
+        "sha256": "2066eb9aa53c5fa6754dcbb4f6a1d931f9e1122bba3924b5d3578ca6a2399363",
+        "sha256_in_prefix": "2066eb9aa53c5fa6754dcbb4f6a1d931f9e1122bba3924b5d3578ca6a2399363",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/fad000.png",
+        "path_type": "hardlink",
+        "sha256": "03f6c2a48cfc30be651f6ef4a3a8c3c0c496700730b4f763e820eeb248c29bc2",
+        "sha256_in_prefix": "03f6c2a48cfc30be651f6ef4a3a8c3c0c496700730b4f763e820eeb248c29bc2",
+        "size_in_bytes": 85
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/fdac54.png",
+        "path_type": "hardlink",
+        "sha256": "529ca78a6e5a42f7aab23c03a4993558a36be5fca93726bd04c674ffe824981c",
+        "sha256_in_prefix": "529ca78a6e5a42f7aab23c03a4993558a36be5fca93726bd04c674ffe824981c",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/fefeff.png",
+        "path_type": "hardlink",
+        "sha256": "a24cf88de3eec022589962ef0e90b3c1b7301ecb3e96f9839a041389f36261c5",
+        "sha256_in_prefix": "a24cf88de3eec022589962ef0e90b3c1b7301ecb3e96f9839a041389f36261c5",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ff7b72.png",
+        "path_type": "hardlink",
+        "sha256": "42c00de97de6704efef7ab90a7ad77d9147927b3685bf795564735d5c6eb2670",
+        "sha256_in_prefix": "42c00de97de6704efef7ab90a7ad77d9147927b3685bf795564735d5c6eb2670",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ff9492.png",
+        "path_type": "hardlink",
+        "sha256": "3adce1e4556c17381233cccf46472252e8de067df04e57b241bd4eb8ba51e48e",
+        "sha256_in_prefix": "3adce1e4556c17381233cccf46472252e8de067df04e57b241bd4eb8ba51e48e",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ffa07a.png",
+        "path_type": "hardlink",
+        "sha256": "6d9c30627704e3208a08f1b61025121e45ee21b388fa95f8d2182beb71f758cc",
+        "sha256_in_prefix": "6d9c30627704e3208a08f1b61025121e45ee21b388fa95f8d2182beb71f758cc",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ffa657.png",
+        "path_type": "hardlink",
+        "sha256": "c01f5a874c282ec2bef24c818497a1038e8590e9890fbc0d707efe012a0d3c3f",
+        "sha256_in_prefix": "c01f5a874c282ec2bef24c818497a1038e8590e9890fbc0d707efe012a0d3c3f",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ffb757.png",
+        "path_type": "hardlink",
+        "sha256": "8acfded5d3814612a9126f08d7ad4e1db9223d6b74420706e976551d77231854",
+        "sha256_in_prefix": "8acfded5d3814612a9126f08d7ad4e1db9223d6b74420706e976551d77231854",
+        "size_in_bytes": 86
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ffd700.png",
+        "path_type": "hardlink",
+        "sha256": "65b082fb6aa0c100ec52f538b8c1ccd659d01037aeac7af1b96db4f3c3276b48",
+        "sha256_in_prefix": "65b082fb6aa0c100ec52f538b8c1ccd659d01037aeac7af1b96db4f3c3276b48",
+        "size_in_bytes": 85
+      },
+      {
+        "_path": "site-packages/a11y_pygments/assets/ffd900.png",
+        "path_type": "hardlink",
+        "sha256": "7e1ee3c448b47bb8bba198175a11f13ef993aa33eb7035c7cc32d9c92473558d",
+        "sha256_in_prefix": "7e1ee3c448b47bb8bba198175a11f13ef993aa33eb7035c7cc32d9c92473558d",
+        "size_in_bytes": 85
+      },
+      {
+        "_path": "site-packages/a11y_pygments/blinds_dark/README.md",
+        "path_type": "hardlink",
+        "sha256": "510849c97bf95d0779e39444a23aa4632fa9485e5ccf7c8a810f346395e23540",
+        "sha256_in_prefix": "510849c97bf95d0779e39444a23aa4632fa9485e5ccf7c8a810f346395e23540",
+        "size_in_bytes": 1305
+      },
+      {
+        "_path": "site-packages/a11y_pygments/blinds_dark/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/blinds_dark/images/blinds-dark.png",
+        "path_type": "hardlink",
+        "sha256": "177067630a4c3013b466850fc0f8e6276679dc0e5a26cba8620a595a97c31455",
+        "sha256_in_prefix": "177067630a4c3013b466850fc0f8e6276679dc0e5a26cba8620a595a97c31455",
+        "size_in_bytes": 83535
+      },
+      {
+        "_path": "site-packages/a11y_pygments/blinds_dark/style.py",
+        "path_type": "hardlink",
+        "sha256": "57ec2b3fb5a35c127dfa8a4c51eb2f937b0342df492fbd5e622b1890bb5097c4",
+        "sha256_in_prefix": "57ec2b3fb5a35c127dfa8a4c51eb2f937b0342df492fbd5e622b1890bb5097c4",
+        "size_in_bytes": 4297
+      },
+      {
+        "_path": "site-packages/a11y_pygments/blinds_light/README.md",
+        "path_type": "hardlink",
+        "sha256": "47316615c3c3e47bce544f7ea80b116dd4ba75f8a13e8f46363fb73f0bb4e2cb",
+        "sha256_in_prefix": "47316615c3c3e47bce544f7ea80b116dd4ba75f8a13e8f46363fb73f0bb4e2cb",
+        "size_in_bytes": 1310
+      },
+      {
+        "_path": "site-packages/a11y_pygments/blinds_light/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/blinds_light/images/blinds-light.png",
+        "path_type": "hardlink",
+        "sha256": "134f3e28b7644fac862fadfbba1e5141aac288032c401dd5d648b23e9d34dd84",
+        "sha256_in_prefix": "134f3e28b7644fac862fadfbba1e5141aac288032c401dd5d648b23e9d34dd84",
+        "size_in_bytes": 85799
+      },
+      {
+        "_path": "site-packages/a11y_pygments/blinds_light/style.py",
+        "path_type": "hardlink",
+        "sha256": "e0d378df5592d9602c487e8d3b812defb00d935bfacc5a657e426ff603a82393",
+        "sha256_in_prefix": "e0d378df5592d9602c487e8d3b812defb00d935bfacc5a657e426ff603a82393",
+        "size_in_bytes": 4294
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark/README.md",
+        "path_type": "hardlink",
+        "sha256": "cc0a09fb26a86e4089a4a6f1b264a5fc4fb153bdbed6aecc644bc45309e0be26",
+        "sha256_in_prefix": "cc0a09fb26a86e4089a4a6f1b264a5fc4fb153bdbed6aecc644bc45309e0be26",
+        "size_in_bytes": 1315
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark/images/github-dark.png",
+        "path_type": "hardlink",
+        "sha256": "01017e5b92a63d07859037939eb7290cc04c3017ca5d389d6688142977ce646d",
+        "sha256_in_prefix": "01017e5b92a63d07859037939eb7290cc04c3017ca5d389d6688142977ce646d",
+        "size_in_bytes": 90448
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark/style.py",
+        "path_type": "hardlink",
+        "sha256": "ebc03b44a45dac9c1a5bb9a2473a689a9284b9b923410ebf3184cd21ceac18c6",
+        "sha256_in_prefix": "ebc03b44a45dac9c1a5bb9a2473a689a9284b9b923410ebf3184cd21ceac18c6",
+        "size_in_bytes": 4372
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark_colorblind/README.md",
+        "path_type": "hardlink",
+        "sha256": "2222955f1bf4a0da8cecf2d8740625f05a238685a8da8ff07d0d539fa46c50e5",
+        "sha256_in_prefix": "2222955f1bf4a0da8cecf2d8740625f05a238685a8da8ff07d0d539fa46c50e5",
+        "size_in_bytes": 1351
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark_colorblind/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark_colorblind/images/github-dark-colorblind.png",
+        "path_type": "hardlink",
+        "sha256": "9215e211bab6caaa2c4a3e06ef2ae16bc26f080d325313057e1e892ec312a91e",
+        "sha256_in_prefix": "9215e211bab6caaa2c4a3e06ef2ae16bc26f080d325313057e1e892ec312a91e",
+        "size_in_bytes": 89368
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark_colorblind/style.py",
+        "path_type": "hardlink",
+        "sha256": "399bce9b7f43e79e53e4c4745a95e31464d8485ff09ad263ce2d9e7f808afb71",
+        "sha256_in_prefix": "399bce9b7f43e79e53e4c4745a95e31464d8485ff09ad263ce2d9e7f808afb71",
+        "size_in_bytes": 4367
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark_high_contrast/README.md",
+        "path_type": "hardlink",
+        "sha256": "74f8275e09e31229859c4c094aa1d4fe99ece2788b5b333dcfe6648f3ea9d5db",
+        "sha256_in_prefix": "74f8275e09e31229859c4c094aa1d4fe99ece2788b5b333dcfe6648f3ea9d5db",
+        "size_in_bytes": 1371
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark_high_contrast/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark_high_contrast/images/github-dark-high-contrast.png",
+        "path_type": "hardlink",
+        "sha256": "6d513d7f84f82988aa529e54478057d9cc3a454d0ff84da21d89f461924aedbd",
+        "sha256_in_prefix": "6d513d7f84f82988aa529e54478057d9cc3a454d0ff84da21d89f461924aedbd",
+        "size_in_bytes": 89065
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_dark_high_contrast/style.py",
+        "path_type": "hardlink",
+        "sha256": "0220da3fc06273b205f7ed6bc058651eeb33fec206009887276a09850b44d131",
+        "sha256_in_prefix": "0220da3fc06273b205f7ed6bc058651eeb33fec206009887276a09850b44d131",
+        "size_in_bytes": 4378
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light/README.md",
+        "path_type": "hardlink",
+        "sha256": "c75b6930a05f54a8bf84f01362ab3665d204b3fca74440d32651b75982b71c20",
+        "sha256_in_prefix": "c75b6930a05f54a8bf84f01362ab3665d204b3fca74440d32651b75982b71c20",
+        "size_in_bytes": 1318
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light/images/github-light.png",
+        "path_type": "hardlink",
+        "sha256": "02dbfadf00cc4bc04e9c7f3568afe38edec601a2cb8928220a71d722e8c74d0f",
+        "sha256_in_prefix": "02dbfadf00cc4bc04e9c7f3568afe38edec601a2cb8928220a71d722e8c74d0f",
+        "size_in_bytes": 88025
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light/style.py",
+        "path_type": "hardlink",
+        "sha256": "1fc228fb2f963a9cd291230070c4058469bea07ca783d5c4cc464d648d45b714",
+        "sha256_in_prefix": "1fc228fb2f963a9cd291230070c4058469bea07ca783d5c4cc464d648d45b714",
+        "size_in_bytes": 4364
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light_colorblind/README.md",
+        "path_type": "hardlink",
+        "sha256": "db12e03605d9b733fa88cb9c85f8b2b04095bb18d574f4e07475b5ee034ae08a",
+        "sha256_in_prefix": "db12e03605d9b733fa88cb9c85f8b2b04095bb18d574f4e07475b5ee034ae08a",
+        "size_in_bytes": 1258
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light_colorblind/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light_colorblind/images/github-light-colorblind.png",
+        "path_type": "hardlink",
+        "sha256": "ce74a4c87c83bb199dc16baef2effbce795d2531e00ec3a434e22b920a9df7dc",
+        "sha256_in_prefix": "ce74a4c87c83bb199dc16baef2effbce795d2531e00ec3a434e22b920a9df7dc",
+        "size_in_bytes": 88078
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light_colorblind/style.py",
+        "path_type": "hardlink",
+        "sha256": "480b7d64af23b0cb5740e7599f466158dcfbb04b50d38dced18797a8f168a021",
+        "sha256_in_prefix": "480b7d64af23b0cb5740e7599f466158dcfbb04b50d38dced18797a8f168a021",
+        "size_in_bytes": 4375
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light_high_contrast/README.md",
+        "path_type": "hardlink",
+        "sha256": "766aaf25dfef1337bada1d92278ef5c55fe749838f8e29fd6161b65e4eede8ba",
+        "sha256_in_prefix": "766aaf25dfef1337bada1d92278ef5c55fe749838f8e29fd6161b65e4eede8ba",
+        "size_in_bytes": 1374
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light_high_contrast/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light_high_contrast/images/github-light-high-contrast.png",
+        "path_type": "hardlink",
+        "sha256": "8292ad6b54a35a8b2dc0c852a2eb28ea8f9a8923130c2403b8d507f3192d8d0c",
+        "sha256_in_prefix": "8292ad6b54a35a8b2dc0c852a2eb28ea8f9a8923130c2403b8d507f3192d8d0c",
+        "size_in_bytes": 88613
+      },
+      {
+        "_path": "site-packages/a11y_pygments/github_light_high_contrast/style.py",
+        "path_type": "hardlink",
+        "sha256": "53bc881cef75736d0d1eb40c8c2321aaef8765973bb4c5bbe0a5c9a5b4a4700c",
+        "sha256_in_prefix": "53bc881cef75736d0d1eb40c8c2321aaef8765973bb4c5bbe0a5c9a5b4a4700c",
+        "size_in_bytes": 4378
+      },
+      {
+        "_path": "site-packages/a11y_pygments/gotthard_dark/README.md",
+        "path_type": "hardlink",
+        "sha256": "0ef8df83fe116e33c665dd26a6728bd351b9c022bde6c9a568c158cce89f42dc",
+        "sha256_in_prefix": "0ef8df83fe116e33c665dd26a6728bd351b9c022bde6c9a568c158cce89f42dc",
+        "size_in_bytes": 1315
+      },
+      {
+        "_path": "site-packages/a11y_pygments/gotthard_dark/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/gotthard_dark/images/gotthard-dark.png",
+        "path_type": "hardlink",
+        "sha256": "53e2c84d76d86aa8b99e1510a5060cf280ff4d59f0a5d34828fa9d91951bb2b0",
+        "sha256_in_prefix": "53e2c84d76d86aa8b99e1510a5060cf280ff4d59f0a5d34828fa9d91951bb2b0",
+        "size_in_bytes": 88150
+      },
+      {
+        "_path": "site-packages/a11y_pygments/gotthard_dark/style.py",
+        "path_type": "hardlink",
+        "sha256": "ac8709beb0b3676b9f221ee6822cd2610740ef8b4f238b5f632b0ea5b0b2c67b",
+        "sha256_in_prefix": "ac8709beb0b3676b9f221ee6822cd2610740ef8b4f238b5f632b0ea5b0b2c67b",
+        "size_in_bytes": 4288
+      },
+      {
+        "_path": "site-packages/a11y_pygments/gotthard_light/README.md",
+        "path_type": "hardlink",
+        "sha256": "780907d73ac47288472f7dd3178dcfcfa7b258a66a1cfb8acfa816ec02354b15",
+        "sha256_in_prefix": "780907d73ac47288472f7dd3178dcfcfa7b258a66a1cfb8acfa816ec02354b15",
+        "size_in_bytes": 1311
+      },
+      {
+        "_path": "site-packages/a11y_pygments/gotthard_light/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/gotthard_light/images/gotthard-light.png",
+        "path_type": "hardlink",
+        "sha256": "89141d4153386e7dfee882027d1c2e12bafde08619a2f1ef79b2553290de02dd",
+        "sha256_in_prefix": "89141d4153386e7dfee882027d1c2e12bafde08619a2f1ef79b2553290de02dd",
+        "size_in_bytes": 86369
+      },
+      {
+        "_path": "site-packages/a11y_pygments/gotthard_light/style.py",
+        "path_type": "hardlink",
+        "sha256": "f57c12d7be2f720711c45e8b40ce48390cf6d43f7036acfbf7821e2215424306",
+        "sha256_in_prefix": "f57c12d7be2f720711c45e8b40ce48390cf6d43f7036acfbf7821e2215424306",
+        "size_in_bytes": 4287
+      },
+      {
+        "_path": "site-packages/a11y_pygments/greative/README.md",
+        "path_type": "hardlink",
+        "sha256": "060b19db036c46666aae13035b7fdbc00bc033bc7be5eea80e9f83c9c9dc978e",
+        "sha256_in_prefix": "060b19db036c46666aae13035b7fdbc00bc033bc7be5eea80e9f83c9c9dc978e",
+        "size_in_bytes": 1290
+      },
+      {
+        "_path": "site-packages/a11y_pygments/greative/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/greative/images/greative.png",
+        "path_type": "hardlink",
+        "sha256": "c876d81ac6aad86644935855beb60b1391a951e1548eda9685544fbfe031d0d7",
+        "sha256_in_prefix": "c876d81ac6aad86644935855beb60b1391a951e1548eda9685544fbfe031d0d7",
+        "size_in_bytes": 86732
+      },
+      {
+        "_path": "site-packages/a11y_pygments/greative/style.py",
+        "path_type": "hardlink",
+        "sha256": "6974d982774ca2b2f8942e112c118c8853dbeb3d38251d6ba0369a9a555d0337",
+        "sha256_in_prefix": "6974d982774ca2b2f8942e112c118c8853dbeb3d38251d6ba0369a9a555d0337",
+        "size_in_bytes": 4288
+      },
+      {
+        "_path": "site-packages/a11y_pygments/pitaya_smoothie/README.md",
+        "path_type": "hardlink",
+        "sha256": "364ddd57e6802db181180dd227cc574821d49384bc00b000a8e8ebda3d1a6651",
+        "sha256_in_prefix": "364ddd57e6802db181180dd227cc574821d49384bc00b000a8e8ebda3d1a6651",
+        "size_in_bytes": 1542
+      },
+      {
+        "_path": "site-packages/a11y_pygments/pitaya_smoothie/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/pitaya_smoothie/images/pitaya-smoothie.png",
+        "path_type": "hardlink",
+        "sha256": "9764805de4940a00a94d6831ed8c3dd3f92a36054bcd975031619ead7df892c3",
+        "sha256_in_prefix": "9764805de4940a00a94d6831ed8c3dd3f92a36054bcd975031619ead7df892c3",
+        "size_in_bytes": 86264
+      },
+      {
+        "_path": "site-packages/a11y_pygments/pitaya_smoothie/style.py",
+        "path_type": "hardlink",
+        "sha256": "33cecbaeae5475d7418cfce104765ccd0a13f73976e9dd5590b655fc21777bd2",
+        "sha256_in_prefix": "33cecbaeae5475d7418cfce104765ccd0a13f73976e9dd5590b655fc21777bd2",
+        "size_in_bytes": 4300
+      },
+      {
+        "_path": "site-packages/a11y_pygments/utils/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/a11y_pygments/utils/utils.py",
+        "path_type": "hardlink",
+        "sha256": "0df868c427f7e38e9b2f460552746c53e57f322966ec7f8b5022127d7a4e64d5",
+        "sha256_in_prefix": "0df868c427f7e38e9b2f460552746c53e57f322966ec7f8b5022127d7a4e64d5",
+        "size_in_bytes": 2030
+      },
+      {
+        "_path": "site-packages/a11y_pygments/utils/wcag_contrast.py",
+        "path_type": "hardlink",
+        "sha256": "61d34415eb80b9b91ba3b29406cce102b084412f476b320cbfea9d73a5816460",
+        "sha256_in_prefix": "61d34415eb80b9b91ba3b29406cce102b084412f476b320cbfea9d73a5816460",
+        "size_in_bytes": 4307
+      },
+      {
+        "_path": "site-packages/accessible_pygments-0.0.5.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/accessible_pygments-0.0.5.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "4948c514adbd6f27120ab03c9773d8e44e92a6f353a20fcf17ea304f042b08fb",
+        "sha256_in_prefix": "4948c514adbd6f27120ab03c9773d8e44e92a6f353a20fcf17ea304f042b08fb",
+        "size_in_bytes": 10286
+      },
+      {
+        "_path": "site-packages/accessible_pygments-0.0.5.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "1e9256ec9338a5fd8a88c81ade31f714acc15c50885be53b67a35e113012fcf0",
+        "sha256_in_prefix": "1e9256ec9338a5fd8a88c81ade31f714acc15c50885be53b67a35e113012fcf0",
+        "size_in_bytes": 18666
+      },
+      {
+        "_path": "site-packages/accessible_pygments-0.0.5.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/accessible_pygments-0.0.5.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "cc431c46bf4aaf4df1d68cc6c20e6ff4d4012a7de49dda7a2d2a1295583e8e15",
+        "sha256_in_prefix": "cc431c46bf4aaf4df1d68cc6c20e6ff4d4012a7de49dda7a2d2a1295583e8e15",
+        "size_in_bytes": 87
+      },
+      {
+        "_path": "site-packages/accessible_pygments-0.0.5.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "85b7c49ec648b659d24e7d914eed3f44bb9f52bd1a2b790a0880e7e625a31fd1",
+        "sha256_in_prefix": "85b7c49ec648b659d24e7d914eed3f44bb9f52bd1a2b790a0880e7e625a31fd1",
+        "size_in_bytes": 115
+      },
+      {
+        "_path": "site-packages/accessible_pygments-0.0.5.dist-info/entry_points.txt",
+        "path_type": "hardlink",
+        "sha256": "2183ba8f535efdc1bb4ff99946dd4b01d6111d695dce1753bcd745baf17ca3f2",
+        "sha256_in_prefix": "2183ba8f535efdc1bb4ff99946dd4b01d6111d695dce1753bcd745baf17ca3f2",
+        "size_in_bytes": 1014
+      },
+      {
+        "_path": "site-packages/accessible_pygments-0.0.5.dist-info/licenses/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "496d114c1451e5ae8c19ca5d9e07bac8b8ca442f867bc8ebba19ba8f838bce30",
+        "sha256_in_prefix": "496d114c1451e5ae8c19ca5d9e07bac8b8ca442f867bc8ebba19ba8f838bce30",
+        "size_in_bytes": 1522
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/a11y_dark/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/a11y_dark/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_dark/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_dark/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_light/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/a11y_high_contrast_light/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/a11y_light/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/a11y_light/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/blinds_dark/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/blinds_dark/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/blinds_light/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/blinds_light/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_dark/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_dark/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_dark_colorblind/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_dark_colorblind/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_dark_high_contrast/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_dark_high_contrast/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_light/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_light/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_light_colorblind/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_light_colorblind/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_light_high_contrast/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/github_light_high_contrast/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/gotthard_dark/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/gotthard_dark/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/gotthard_light/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/gotthard_light/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/greative/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/greative/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/pitaya_smoothie/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/pitaya_smoothie/__pycache__/style.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/utils/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/utils/__pycache__/utils.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/a11y_pygments/utils/__pycache__/wcag_contrast.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "712c1875bcd32674e8ce2f418f0b2875ecb98e6bcbb21ec7502dae8ff4b0f73c",
+  "size": 1328908,
+  "subdir": "noarch",
+  "timestamp": 1718718120000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/accessible-pygments-0.0.5-pyhd8ed1ab_0.conda",
+  "version": "0.0.5"
+}

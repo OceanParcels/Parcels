@@ -1,0 +1,1212 @@
+{
+  "build": "h2629f0a_3",
+  "build_number": 3,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "bzip2 >=1.0.8,<2.0a0",
+    "libgcc-ng >=12",
+    "libzlib >=1.2.13,<2.0.0a0",
+    "openssl >=3.1.2,<4.0a0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libzip-1.10.1-h2629f0a_3",
+  "files": [
+    "bin/zipcmp",
+    "bin/zipmerge",
+    "bin/ziptool",
+    "include/zip.h",
+    "include/zipconf.h",
+    "lib/cmake/libzip/libzip-config-version.cmake",
+    "lib/cmake/libzip/libzip-config.cmake",
+    "lib/cmake/libzip/libzip-targets-release.cmake",
+    "lib/cmake/libzip/libzip-targets.cmake",
+    "lib/cmake/libzip/modules/FindMbedTLS.cmake",
+    "lib/cmake/libzip/modules/FindNettle.cmake",
+    "lib/cmake/libzip/modules/Findzstd.cmake",
+    "lib/libzip.so",
+    "lib/libzip.so.5",
+    "lib/libzip.so.5.5",
+    "lib/pkgconfig/libzip.pc",
+    "share/doc/libzip/libzip/ZIP_SOURCE_GET_ARGS.html",
+    "share/doc/libzip/libzip/libzip.html",
+    "share/doc/libzip/libzip/zip_add.html",
+    "share/doc/libzip/libzip/zip_add_dir.html",
+    "share/doc/libzip/libzip/zip_close.html",
+    "share/doc/libzip/libzip/zip_compression_method_supported.html",
+    "share/doc/libzip/libzip/zip_delete.html",
+    "share/doc/libzip/libzip/zip_dir_add.html",
+    "share/doc/libzip/libzip/zip_discard.html",
+    "share/doc/libzip/libzip/zip_encryption_method_supported.html",
+    "share/doc/libzip/libzip/zip_error_clear.html",
+    "share/doc/libzip/libzip/zip_error_code_system.html",
+    "share/doc/libzip/libzip/zip_error_code_zip.html",
+    "share/doc/libzip/libzip/zip_error_fini.html",
+    "share/doc/libzip/libzip/zip_error_get.html",
+    "share/doc/libzip/libzip/zip_error_get_sys_type.html",
+    "share/doc/libzip/libzip/zip_error_init.html",
+    "share/doc/libzip/libzip/zip_error_init_with_code.html",
+    "share/doc/libzip/libzip/zip_error_set.html",
+    "share/doc/libzip/libzip/zip_error_strerror.html",
+    "share/doc/libzip/libzip/zip_error_system_type.html",
+    "share/doc/libzip/libzip/zip_error_to_data.html",
+    "share/doc/libzip/libzip/zip_error_to_str.html",
+    "share/doc/libzip/libzip/zip_errors.html",
+    "share/doc/libzip/libzip/zip_fclose.html",
+    "share/doc/libzip/libzip/zip_fdopen.html",
+    "share/doc/libzip/libzip/zip_file_add.html",
+    "share/doc/libzip/libzip/zip_file_attributes_init.html",
+    "share/doc/libzip/libzip/zip_file_error_clear.html",
+    "share/doc/libzip/libzip/zip_file_error_get.html",
+    "share/doc/libzip/libzip/zip_file_extra_field_delete.html",
+    "share/doc/libzip/libzip/zip_file_extra_field_delete_by_id.html",
+    "share/doc/libzip/libzip/zip_file_extra_field_get.html",
+    "share/doc/libzip/libzip/zip_file_extra_field_get_by_id.html",
+    "share/doc/libzip/libzip/zip_file_extra_field_set.html",
+    "share/doc/libzip/libzip/zip_file_extra_fields_count.html",
+    "share/doc/libzip/libzip/zip_file_extra_fields_count_by_id.html",
+    "share/doc/libzip/libzip/zip_file_get_comment.html",
+    "share/doc/libzip/libzip/zip_file_get_error.html",
+    "share/doc/libzip/libzip/zip_file_get_external_attributes.html",
+    "share/doc/libzip/libzip/zip_file_is_seekable.html",
+    "share/doc/libzip/libzip/zip_file_rename.html",
+    "share/doc/libzip/libzip/zip_file_replace.html",
+    "share/doc/libzip/libzip/zip_file_set_comment.html",
+    "share/doc/libzip/libzip/zip_file_set_dostime.html",
+    "share/doc/libzip/libzip/zip_file_set_encryption.html",
+    "share/doc/libzip/libzip/zip_file_set_external_attributes.html",
+    "share/doc/libzip/libzip/zip_file_set_mtime.html",
+    "share/doc/libzip/libzip/zip_file_strerror.html",
+    "share/doc/libzip/libzip/zip_fopen.html",
+    "share/doc/libzip/libzip/zip_fopen_encrypted.html",
+    "share/doc/libzip/libzip/zip_fopen_index.html",
+    "share/doc/libzip/libzip/zip_fopen_index_encrypted.html",
+    "share/doc/libzip/libzip/zip_fread.html",
+    "share/doc/libzip/libzip/zip_fseek.html",
+    "share/doc/libzip/libzip/zip_ftell.html",
+    "share/doc/libzip/libzip/zip_get_archive_comment.html",
+    "share/doc/libzip/libzip/zip_get_archive_flag.html",
+    "share/doc/libzip/libzip/zip_get_error.html",
+    "share/doc/libzip/libzip/zip_get_file_comment.html",
+    "share/doc/libzip/libzip/zip_get_name.html",
+    "share/doc/libzip/libzip/zip_get_num_entries.html",
+    "share/doc/libzip/libzip/zip_get_num_files.html",
+    "share/doc/libzip/libzip/zip_libzip_version.html",
+    "share/doc/libzip/libzip/zip_name_locate.html",
+    "share/doc/libzip/libzip/zip_open.html",
+    "share/doc/libzip/libzip/zip_open_from_source.html",
+    "share/doc/libzip/libzip/zip_register_cancel_callback_with_state.html",
+    "share/doc/libzip/libzip/zip_register_progress_callback.html",
+    "share/doc/libzip/libzip/zip_register_progress_callback_with_state.html",
+    "share/doc/libzip/libzip/zip_rename.html",
+    "share/doc/libzip/libzip/zip_replace.html",
+    "share/doc/libzip/libzip/zip_set_archive_comment.html",
+    "share/doc/libzip/libzip/zip_set_archive_flag.html",
+    "share/doc/libzip/libzip/zip_set_default_password.html",
+    "share/doc/libzip/libzip/zip_set_file_comment.html",
+    "share/doc/libzip/libzip/zip_set_file_compression.html",
+    "share/doc/libzip/libzip/zip_source.html",
+    "share/doc/libzip/libzip/zip_source_begin_write.html",
+    "share/doc/libzip/libzip/zip_source_begin_write_cloning.html",
+    "share/doc/libzip/libzip/zip_source_buffer.html",
+    "share/doc/libzip/libzip/zip_source_buffer_create.html",
+    "share/doc/libzip/libzip/zip_source_buffer_fragment.html",
+    "share/doc/libzip/libzip/zip_source_buffer_fragment_create.html",
+    "share/doc/libzip/libzip/zip_source_close.html",
+    "share/doc/libzip/libzip/zip_source_commit_write.html",
+    "share/doc/libzip/libzip/zip_source_error.html",
+    "share/doc/libzip/libzip/zip_source_file.html",
+    "share/doc/libzip/libzip/zip_source_file_create.html",
+    "share/doc/libzip/libzip/zip_source_filep.html",
+    "share/doc/libzip/libzip/zip_source_filep_create.html",
+    "share/doc/libzip/libzip/zip_source_free.html",
+    "share/doc/libzip/libzip/zip_source_function.html",
+    "share/doc/libzip/libzip/zip_source_function_create.html",
+    "share/doc/libzip/libzip/zip_source_is_deleted.html",
+    "share/doc/libzip/libzip/zip_source_is_seekable.html",
+    "share/doc/libzip/libzip/zip_source_keep.html",
+    "share/doc/libzip/libzip/zip_source_layered.html",
+    "share/doc/libzip/libzip/zip_source_layered_create.html",
+    "share/doc/libzip/libzip/zip_source_make_command_bitmap.html",
+    "share/doc/libzip/libzip/zip_source_open.html",
+    "share/doc/libzip/libzip/zip_source_read.html",
+    "share/doc/libzip/libzip/zip_source_rollback_write.html",
+    "share/doc/libzip/libzip/zip_source_seek.html",
+    "share/doc/libzip/libzip/zip_source_seek_compute_offset.html",
+    "share/doc/libzip/libzip/zip_source_seek_write.html",
+    "share/doc/libzip/libzip/zip_source_stat.html",
+    "share/doc/libzip/libzip/zip_source_tell.html",
+    "share/doc/libzip/libzip/zip_source_tell_write.html",
+    "share/doc/libzip/libzip/zip_source_win32a.html",
+    "share/doc/libzip/libzip/zip_source_win32a_create.html",
+    "share/doc/libzip/libzip/zip_source_win32handle.html",
+    "share/doc/libzip/libzip/zip_source_win32handle_create.html",
+    "share/doc/libzip/libzip/zip_source_win32w.html",
+    "share/doc/libzip/libzip/zip_source_win32w_create.html",
+    "share/doc/libzip/libzip/zip_source_window_create.html",
+    "share/doc/libzip/libzip/zip_source_write.html",
+    "share/doc/libzip/libzip/zip_source_zip.html",
+    "share/doc/libzip/libzip/zip_source_zip_create.html",
+    "share/doc/libzip/libzip/zip_source_zip_file.html",
+    "share/doc/libzip/libzip/zip_source_zip_file_create.html",
+    "share/doc/libzip/libzip/zip_stat.html",
+    "share/doc/libzip/libzip/zip_stat_index.html",
+    "share/doc/libzip/libzip/zip_stat_init.html",
+    "share/doc/libzip/libzip/zip_strerror.html",
+    "share/doc/libzip/libzip/zip_unchange.html",
+    "share/doc/libzip/libzip/zip_unchange_all.html",
+    "share/doc/libzip/libzip/zip_unchange_archive.html",
+    "share/doc/libzip/libzip/zipcmp.html",
+    "share/doc/libzip/libzip/zipmerge.html",
+    "share/doc/libzip/libzip/ziptool.html"
+  ],
+  "fn": "libzip-1.10.1-h2629f0a_3.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/libzip-1.10.1-h2629f0a_3",
+    "type": 1
+  },
+  "md5": "ac79812548e7e8cf61f7b0abdef01d3b",
+  "name": "libzip",
+  "package_tarball_full_path": "/opt/conda/pkgs/libzip-1.10.1-h2629f0a_3.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/zipcmp",
+        "path_type": "hardlink",
+        "sha256": "11552e03429a32dc19ff6e67125a240acd5added19efec9fd2a0b9c3c07dccdf",
+        "sha256_in_prefix": "11552e03429a32dc19ff6e67125a240acd5added19efec9fd2a0b9c3c07dccdf",
+        "size_in_bytes": 36256
+      },
+      {
+        "_path": "bin/zipmerge",
+        "path_type": "hardlink",
+        "sha256": "dcfb93e75d88349892e8cac8fa9aca0c807dea747ac5207c7067726810efd8fd",
+        "sha256_in_prefix": "dcfb93e75d88349892e8cac8fa9aca0c807dea747ac5207c7067726810efd8fd",
+        "size_in_bytes": 22352
+      },
+      {
+        "_path": "bin/ziptool",
+        "path_type": "hardlink",
+        "sha256": "87bf67e405e7009985d0906448e358c61575acfff9ddbcff367c0148a02aca0e",
+        "sha256_in_prefix": "87bf67e405e7009985d0906448e358c61575acfff9ddbcff367c0148a02aca0e",
+        "size_in_bytes": 46688
+      },
+      {
+        "_path": "include/zip.h",
+        "path_type": "hardlink",
+        "sha256": "6054c9d98ddcb3e01e3fea4e8fdef6f5416041e3b43ea83ff57c9069ae25c529",
+        "sha256_in_prefix": "6054c9d98ddcb3e01e3fea4e8fdef6f5416041e3b43ea83ff57c9069ae25c529",
+        "size_in_bytes": 29270
+      },
+      {
+        "_path": "include/zipconf.h",
+        "path_type": "hardlink",
+        "sha256": "44d1bc7d7539e05ca73a4dd3bc7e2d74fc368accb3718622dbf3b0375078ca57",
+        "sha256_in_prefix": "44d1bc7d7539e05ca73a4dd3bc7e2d74fc368accb3718622dbf3b0375078ca57",
+        "size_in_bytes": 1183
+      },
+      {
+        "_path": "lib/cmake/libzip/libzip-config-version.cmake",
+        "path_type": "hardlink",
+        "sha256": "d805ef3cbe77fb59722f036be6bca94866bc7b96dc21548effaa31770127aaa3",
+        "sha256_in_prefix": "d805ef3cbe77fb59722f036be6bca94866bc7b96dc21548effaa31770127aaa3",
+        "size_in_bytes": 1862
+      },
+      {
+        "_path": "lib/cmake/libzip/libzip-config.cmake",
+        "path_type": "hardlink",
+        "sha256": "421d6f95963ef13f6a15db857fb6a96210cab1672a77d2ce7f3a50aee2174234",
+        "sha256_in_prefix": "421d6f95963ef13f6a15db857fb6a96210cab1672a77d2ce7f3a50aee2174234",
+        "size_in_bytes": 1829
+      },
+      {
+        "_path": "lib/cmake/libzip/libzip-targets-release.cmake",
+        "path_type": "hardlink",
+        "sha256": "738c1015bb304c1725dfad703e9f65fb4a033aa0803062b1c3fbadd768d70669",
+        "sha256_in_prefix": "738c1015bb304c1725dfad703e9f65fb4a033aa0803062b1c3fbadd768d70669",
+        "size_in_bytes": 2058
+      },
+      {
+        "_path": "lib/cmake/libzip/libzip-targets.cmake",
+        "path_type": "hardlink",
+        "sha256": "56a84993cb06a778277f6d7fc3faddd88192a5d8b91d0b12cbfe46ce75ee153b",
+        "sha256_in_prefix": "56a84993cb06a778277f6d7fc3faddd88192a5d8b91d0b12cbfe46ce75ee153b",
+        "size_in_bytes": 4210
+      },
+      {
+        "_path": "lib/cmake/libzip/modules/FindMbedTLS.cmake",
+        "path_type": "hardlink",
+        "sha256": "d00a49c4225621d4bfc9f4519e6c9acacb8d833ae1414b5596e55994896345be",
+        "sha256_in_prefix": "d00a49c4225621d4bfc9f4519e6c9acacb8d833ae1414b5596e55994896345be",
+        "size_in_bytes": 4488
+      },
+      {
+        "_path": "lib/cmake/libzip/modules/FindNettle.cmake",
+        "path_type": "hardlink",
+        "sha256": "2e46d783d11af98f9d836dc8170fa7d4e6c39ff2a6bf6cb1917de92fcec619b1",
+        "sha256_in_prefix": "2e46d783d11af98f9d836dc8170fa7d4e6c39ff2a6bf6cb1917de92fcec619b1",
+        "size_in_bytes": 4422
+      },
+      {
+        "_path": "lib/cmake/libzip/modules/Findzstd.cmake",
+        "path_type": "hardlink",
+        "sha256": "47717a4c93d09e926432ce6df08fedb9f79bbdfee2f778724197a3c7c27c7833",
+        "sha256_in_prefix": "47717a4c93d09e926432ce6df08fedb9f79bbdfee2f778724197a3c7c27c7833",
+        "size_in_bytes": 5766
+      },
+      {
+        "_path": "lib/libzip.so",
+        "path_type": "softlink",
+        "sha256": "c0219e3b468fda362cded71c23c6c6f21c4372e3394b20f27fb7032b6b62f75b",
+        "size_in_bytes": 153120
+      },
+      {
+        "_path": "lib/libzip.so.5",
+        "path_type": "softlink",
+        "sha256": "c0219e3b468fda362cded71c23c6c6f21c4372e3394b20f27fb7032b6b62f75b",
+        "size_in_bytes": 153120
+      },
+      {
+        "_path": "lib/libzip.so.5.5",
+        "path_type": "hardlink",
+        "sha256": "c0219e3b468fda362cded71c23c6c6f21c4372e3394b20f27fb7032b6b62f75b",
+        "sha256_in_prefix": "c0219e3b468fda362cded71c23c6c6f21c4372e3394b20f27fb7032b6b62f75b",
+        "size_in_bytes": 153120
+      },
+      {
+        "_path": "lib/pkgconfig/libzip.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libzip_1694416283656/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac",
+        "sha256": "1a08a7d145ebe2eba3b366c66715c665674a4a255012f78fb8611c0d04837b97",
+        "sha256_in_prefix": "bd26dfd680df7161c3d71a80ff426360e767e4c94483956fd72b0f89b2d74ab9",
+        "size_in_bytes": 507
+      },
+      {
+        "_path": "share/doc/libzip/libzip/ZIP_SOURCE_GET_ARGS.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/libzip.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_add.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_add_dir.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_close.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_compression_method_supported.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_delete.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_dir_add.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_discard.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_encryption_method_supported.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_clear.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_code_system.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_code_zip.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_fini.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_get.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_get_sys_type.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_init.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_init_with_code.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_set.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_strerror.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_system_type.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_to_data.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_error_to_str.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_errors.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_fclose.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_fdopen.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_add.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_attributes_init.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_error_clear.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_error_get.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_extra_field_delete.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_extra_field_delete_by_id.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_extra_field_get.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_extra_field_get_by_id.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_extra_field_set.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_extra_fields_count.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_extra_fields_count_by_id.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_get_comment.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_get_error.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_get_external_attributes.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_is_seekable.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_rename.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_replace.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_set_comment.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_set_dostime.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_set_encryption.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_set_external_attributes.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_set_mtime.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_file_strerror.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_fopen.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_fopen_encrypted.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_fopen_index.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_fopen_index_encrypted.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_fread.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_fseek.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_ftell.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_get_archive_comment.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_get_archive_flag.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_get_error.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_get_file_comment.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_get_name.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_get_num_entries.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_get_num_files.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_libzip_version.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_name_locate.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_open.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_open_from_source.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_register_cancel_callback_with_state.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_register_progress_callback.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_register_progress_callback_with_state.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_rename.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_replace.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_set_archive_comment.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_set_archive_flag.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_set_default_password.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_set_file_comment.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_set_file_compression.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_begin_write.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_begin_write_cloning.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_buffer.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_buffer_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_buffer_fragment.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_buffer_fragment_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_close.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_commit_write.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_error.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_file.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_file_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_filep.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_filep_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_free.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_function.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_function_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_is_deleted.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_is_seekable.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_keep.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_layered.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_layered_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_make_command_bitmap.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_open.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_read.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_rollback_write.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_seek.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_seek_compute_offset.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_seek_write.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_stat.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_tell.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_tell_write.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_win32a.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_win32a_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_win32handle.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_win32handle_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_win32w.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_win32w_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_window_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_write.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_zip.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_zip_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_zip_file.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_source_zip_file_create.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_stat.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_stat_index.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_stat_init.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_strerror.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_unchange.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_unchange_all.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zip_unchange_archive.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zipcmp.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/zipmerge.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "share/doc/libzip/libzip/ziptool.html",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "84e93f189072dcfcbe77744f19c7e4171523fbecfaba7352e5a23bbe014574c7",
+  "size": 107198,
+  "subdir": "linux-64",
+  "timestamp": 1694416433000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libzip-1.10.1-h2629f0a_3.conda",
+  "version": "1.10.1"
+}

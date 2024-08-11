@@ -1,0 +1,62 @@
+{
+  "build": "hf3520f5_7",
+  "build_number": 7,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [
+    "binutils_impl_linux-64 2.40"
+  ],
+  "depends": [],
+  "extracted_package_dir": "/opt/conda/pkgs/ld_impl_linux-64-2.40-hf3520f5_7",
+  "files": [
+    "bin/x86_64-conda-linux-gnu-ld",
+    "bin/x86_64-conda_cos6-linux-gnu-ld",
+    "x86_64-conda-linux-gnu/bin/ld",
+    "x86_64-conda_cos6-linux-gnu/bin/ld"
+  ],
+  "fn": "ld_impl_linux-64-2.40-hf3520f5_7.conda",
+  "license": "GPL-3.0-only",
+  "link": {
+    "source": "/opt/conda/pkgs/ld_impl_linux-64-2.40-hf3520f5_7",
+    "type": 1
+  },
+  "md5": "b80f2f396ca2c28b8c14c437a4ed1e74",
+  "name": "ld_impl_linux-64",
+  "package_tarball_full_path": "/opt/conda/pkgs/ld_impl_linux-64-2.40-hf3520f5_7.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/x86_64-conda-linux-gnu-ld",
+        "path_type": "hardlink",
+        "sha256": "e0bea8b8edb7ab25eb08e2a5b146a22d893c72ed61cc369205b95ef367641df2",
+        "sha256_in_prefix": "e0bea8b8edb7ab25eb08e2a5b146a22d893c72ed61cc369205b95ef367641df2",
+        "size_in_bytes": 2438192
+      },
+      {
+        "_path": "bin/x86_64-conda_cos6-linux-gnu-ld",
+        "path_type": "softlink",
+        "sha256": "e0bea8b8edb7ab25eb08e2a5b146a22d893c72ed61cc369205b95ef367641df2",
+        "size_in_bytes": 2438192
+      },
+      {
+        "_path": "x86_64-conda-linux-gnu/bin/ld",
+        "path_type": "softlink",
+        "sha256": "e0bea8b8edb7ab25eb08e2a5b146a22d893c72ed61cc369205b95ef367641df2",
+        "size_in_bytes": 2438192
+      },
+      {
+        "_path": "x86_64-conda_cos6-linux-gnu/bin/ld",
+        "path_type": "softlink",
+        "sha256": "e0bea8b8edb7ab25eb08e2a5b146a22d893c72ed61cc369205b95ef367641df2",
+        "size_in_bytes": 2438192
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "764b6950aceaaad0c67ef925417594dd14cd2e22fff864aeef455ac259263d15",
+  "size": 707602,
+  "subdir": "linux-64",
+  "timestamp": 1718625640000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.40-hf3520f5_7.conda",
+  "version": "2.40"
+}

@@ -1,0 +1,261 @@
+'\" t
+.\"     Title: gitpacking
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GITPACKING" "7" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+gitpacking \- Advanced concepts related to packing in Git
+.SH "SYNOPSIS"
+.sp
+gitpacking
+.SH "DESCRIPTION"
+.sp
+This document aims to describe some advanced concepts related to packing in Git\&.
+.sp
+Many concepts are currently described scattered between manual pages of various Git commands, including \fBgit-pack-objects\fR(1), \fBgit-repack\fR(1), and others, as well as \fBgitformat-pack\fR(5), and parts of the \fBDocumentation/technical\fR tree\&.
+.sp
+There are many aspects of packing in Git that are not covered in this document that instead live in the aforementioned areas\&. Over time, those scattered bits may coalesce into this document\&.
+.SH "PSEUDO\-MERGE BITMAPS"
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.sp
+Pseudo\-merge bitmaps are considered an experimental feature, so the configuration and many of the ideas are subject to change\&.
+.sp .5v
+.RE
+.SS "Background"
+.sp
+Reachability bitmaps are most efficient when we have on\-disk stored bitmaps for one or more of the starting points of a traversal\&. For this reason, Git prefers storing bitmaps for commits at the tips of refs, because traversals tend to start with those points\&.
+.sp
+But if you have a large number of refs, it\(cqs not feasible to store a bitmap for \fIevery\fR ref tip\&. It takes up space, and just OR\-ing all of those bitmaps together is expensive\&.
+.sp
+One way we can deal with that is to create bitmaps that represent \fIgroups\fR of refs\&. When a traversal asks about the entire group, then we can use this single bitmap instead of considering each ref individually\&. Because these bitmaps represent the set of objects which would be reachable in a hypothetical merge of all of the commits, we call them pseudo\-merge bitmaps\&.
+.SS "Overview"
+.sp
+A "pseudo\-merge bitmap" is used to refer to a pair of bitmaps, as follows:
+.PP
+Commit bitmap
+.RS 4
+A bitmap whose set bits describe the set of commits included in the pseudo\-merge\(cqs "merge" bitmap (as below)\&.
+.RE
+.PP
+Merge bitmap
+.RS 4
+A bitmap whose set bits describe the reachability closure over the set of commits in the pseudo\-merge\(cqs "commits" bitmap (as above)\&. An identical bitmap would be generated for an octopus merge with the same set of parents as described in the commits bitmap\&.
+.RE
+.sp
+Pseudo\-merge bitmaps can accelerate bitmap traversals when all commits for a given pseudo\-merge are listed on either side of the traversal, either directly (by explicitly asking for them as part of the \fBHAVES\fR or \fBWANTS\fR) or indirectly (by encountering them during a fill\-in traversal)\&.
+.SS "Use\-cases"
+.sp
+For example, suppose there exists a pseudo\-merge bitmap with a large number of commits, all of which are listed in the \fBWANTS\fR section of some bitmap traversal query\&. When pseudo\-merge bitmaps are enabled, the bitmap machinery can quickly determine there is a pseudo\-merge which satisfies some subset of the wanted objects on either side of the query\&. Then, we can inflate the EWAH\-compressed bitmap, and \fBOR\fR it in to the resulting bitmap\&. By contrast, without pseudo\-merge bitmaps, we would have to repeat the decompression and \fBOR\fR\-ing step over a potentially large number of individual bitmaps, which can take proportionally more time\&.
+.sp
+Another benefit of pseudo\-merges arises when there is some combination of (a) a large number of references, with (b) poor bitmap coverage, and (c) deep, nested trees, making fill\-in traversal relatively expensive\&. For example, suppose that there are a large enough number of tags where bitmapping each of the tags individually is infeasible\&. Without pseudo\-merge bitmaps, computing the result of, say, \fBgit rev\-list \-\-use\-bitmap\-index \-\-count \-\-objects \-\-tags\fR would likely require a large amount of fill\-in traversal\&. But when a large quantity of those tags are stored together in a pseudo\-merge bitmap, the bitmap machinery can take advantage of the fact that we only care about the union of objects reachable from all of those tags, and answer the query much faster\&.
+.SS "Configuration"
+.sp
+Reference tips are grouped into different pseudo\-merge groups according to two criteria\&. A reference name matches one or more of the defined pseudo\-merge patterns, and optionally one or more capture groups within that pattern which further partition the group\&.
+.sp
+Within a group, commits may be considered "stable", or "unstable" depending on their age\&. These are adjusted by setting the \fBbitmapPseudoMerge\&.<name>\&.stableThreshold\fR and \fBbitmapPseudoMerge\&.<name>\&.threshold\fR configuration values, respectively\&.
+.sp
+All stable commits are grouped into pseudo\-merges of equal size (\fBbitmapPseudoMerge\&.<name>\&.stableSize\fR)\&. If the \fBstableSize\fR configuration is set to, say, 100, then the first 100 commits (ordered by committer date) which are older than the \fBstableThreshold\fR value will form one group, the next 100 commits will form another group, and so on\&.
+.sp
+Among unstable commits, the pseudo\-merge machinery will attempt to combine older commits into large groups as opposed to newer commits which will appear in smaller groups\&. This is based on the heuristic that references whose tip commit is older are less likely to be modified to point at a different commit than a reference whose tip commit is newer\&.
+.sp
+The size of groups is determined by a power\-law decay function, and the decay parameter roughly corresponds to "k" in \fBf(n) = C*n^(\-k/100)\fR, where \fBf(n)\fR describes the size of the \fBn\fR\-th pseudo\-merge group\&. The sample rate controls what percentage of eligible commits are considered as candidates\&. The threshold parameter indicates the minimum age (so as to avoid including too\-recent commits in a pseudo\-merge group, making it less likely to be valid)\&. The "maxMerges" parameter sets an upper\-bound on the number of pseudo\-merge commits an individual group
+.sp
+The "stable"\-related parameters control "stable" pseudo\-merge groups, comprised of a fixed number of commits which are older than the configured "stable threshold" value and may be grouped together in chunks of "stableSize" in order of age\&.
+.sp
+The exact configuration for pseudo\-merges is as follows:
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.sp
+The configuration options in \fBbitmapPseudoMerge\&.*\fR are considered EXPERIMENTAL and may be subject to change or be removed entirely in the future\&. For more information about the pseudo\-merge bitmap feature, see the "Pseudo\-merge bitmaps" section of \fBgitpacking\fR(7)\&.
+.sp .5v
+.RE
+.PP
+bitmapPseudoMerge\&.<name>\&.pattern
+.RS 4
+Regular expression used to match reference names\&. Commits pointed to by references matching this pattern (and meeting the below criteria, like
+\fBbitmapPseudoMerge\&.<name>\&.sampleRate\fR
+and
+\fBbitmapPseudoMerge\&.<name>\&.threshold\fR) will be considered for inclusion in a pseudo\-merge bitmap\&.
+.sp
+Commits are grouped into pseudo\-merge groups based on whether or not any reference(s) that point at a given commit match the pattern, which is an extended regular expression\&.
+.sp
+Within a pseudo\-merge group, commits may be further grouped into sub\-groups based on the capture groups in the pattern\&. These sub\-groupings are formed from the regular expressions by concatenating any capture groups from the regular expression, with a
+\fI\-\fR
+dash in between\&.
+.sp
+For example, if the pattern is
+\fBrefs/tags/\fR, then all tags (provided they meet the below criteria) will be considered candidates for the same pseudo\-merge group\&. However, if the pattern is instead
+\fBrefs/remotes/([0\-9])+/tags/\fR, then tags from different remotes will be grouped into separate pseudo\-merge groups, based on the remote number\&.
+.RE
+.PP
+bitmapPseudoMerge\&.<name>\&.decay
+.RS 4
+Determines the rate at which consecutive pseudo\-merge bitmap groups decrease in size\&. Must be non\-negative\&. This parameter can be thought of as
+\fBk\fR
+in the function
+\fBf(n) = C * n^\-k\fR, where
+\fBf(n)\fR
+is the size of the `n`th group\&.
+.sp
+Setting the decay rate equal to
+\fB0\fR
+will cause all groups to be the same size\&. Setting the decay rate equal to
+\fB1\fR
+will cause the
+\fBn`th group to be `1/n\fR
+the size of the initial group\&. Higher values of the decay rate cause consecutive groups to shrink at an increasing rate\&. The default is
+\fB1\fR\&.
+.sp
+If all groups are the same size, it is possible that groups containing newer commits will be able to be used less often than earlier groups, since it is more likely that the references pointing at newer commits will be updated more often than a reference pointing at an old commit\&.
+.RE
+.PP
+bitmapPseudoMerge\&.<name>\&.sampleRate
+.RS 4
+Determines the proportion of non\-bitmapped commits (among reference tips) which are selected for inclusion in an unstable pseudo\-merge bitmap\&. Must be between
+\fB0\fR
+and
+\fB1\fR
+(inclusive)\&. The default is
+\fB1\fR\&.
+.RE
+.PP
+bitmapPseudoMerge\&.<name>\&.threshold
+.RS 4
+Determines the minimum age of non\-bitmapped commits (among reference tips, as above) which are candidates for inclusion in an unstable pseudo\-merge bitmap\&. The default is
+\fB1\&.week\&.ago\fR\&.
+.RE
+.PP
+bitmapPseudoMerge\&.<name>\&.maxMerges
+.RS 4
+Determines the maximum number of pseudo\-merge commits among which commits may be distributed\&.
+.sp
+For pseudo\-merge groups whose pattern does not contain any capture groups, this setting is applied for all commits matching the regular expression\&. For patterns that have one or more capture groups, this setting is applied for each distinct capture group\&.
+.sp
+For example, if your capture group is
+\fBrefs/tags/\fR, then this setting will distribute all tags into a maximum of
+\fBmaxMerges\fR
+pseudo\-merge commits\&. However, if your capture group is, say,
+\fBrefs/remotes/([0\-9]+)/tags/\fR, then this setting will be applied to each remote\(cqs set of tags individually\&.
+.sp
+Must be non\-negative\&. The default value is 64\&.
+.RE
+.PP
+bitmapPseudoMerge\&.<name>\&.stableThreshold
+.RS 4
+Determines the minimum age of commits (among reference tips, as above, however stable commits are still considered candidates even when they have been covered by a bitmap) which are candidates for a stable a pseudo\-merge bitmap\&. The default is
+\fB1\&.month\&.ago\fR\&.
+.sp
+Setting this threshold to a smaller value (e\&.g\&., 1\&.week\&.ago) will cause more stable groups to be generated (which impose a one\-time generation cost) but those groups will likely become stale over time\&. Using a larger value incurs the opposite penalty (fewer stable groups which are more useful)\&.
+.RE
+.PP
+bitmapPseudoMerge\&.<name>\&.stableSize
+.RS 4
+Determines the size (in number of commits) of a stable psuedo\-merge bitmap\&. The default is
+\fB512\fR\&.
+.RE
+.SS "Examples"
+.sp
+Suppose that you have a repository with a large number of references, and you want a bare\-bones configuration of pseudo\-merge bitmaps that will enhance bitmap coverage of the \fBrefs/\fR namespace\&. You may start with a configuration like so:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+[bitmapPseudoMerge "all"]
+        pattern = "refs/"
+        threshold = now
+        stableThreshold = never
+        sampleRate = 100
+        maxMerges = 64
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+This will create pseudo\-merge bitmaps for all references, regardless of their age, and group them into 64 pseudo\-merge commits\&.
+.sp
+If you wanted to separate tags from branches when generating pseudo\-merge commits, you would instead define the pattern with a capture group, like so:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+[bitmapPseudoMerge "all"]
+        pattern = "refs/(heads/tags)/"
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+Suppose instead that you are working in a fork\-network repository, with each fork specified by some numeric ID, and whose refs reside in \fBrefs/virtual/NNN/\fR (where \fBNNN\fR is the numeric ID corresponding to some fork) in the network\&. In this instance, you may instead write something like:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+[bitmapPseudoMerge "all"]
+        pattern = "refs/virtual/([0\-9]+)/(heads|tags)/"
+        threshold = now
+        stableThreshold = never
+        sampleRate = 100
+        maxMerges = 64
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+Which would generate pseudo\-merge group identifiers like "1234\-heads", and "5678\-tags" (for branches in fork "1234", and tags in remote "5678", respectively)\&.
+.SH "SEE ALSO"
+.sp
+\fBgit-pack-objects\fR(1) \fBgit-repack\fR(1)
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite

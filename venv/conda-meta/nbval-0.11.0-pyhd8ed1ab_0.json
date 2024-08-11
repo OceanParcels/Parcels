@@ -1,0 +1,217 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "coverage",
+    "ipykernel",
+    "jupyter_client",
+    "nbformat",
+    "pytest >=7",
+    "python >=3.7",
+    "six"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/nbval-0.11.0-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/nbval-0.11.0.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/nbval-0.11.0.dist-info/LICENSE",
+    "lib/python3.12/site-packages/nbval-0.11.0.dist-info/METADATA",
+    "lib/python3.12/site-packages/nbval-0.11.0.dist-info/RECORD",
+    "lib/python3.12/site-packages/nbval-0.11.0.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/nbval-0.11.0.dist-info/WHEEL",
+    "lib/python3.12/site-packages/nbval-0.11.0.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/nbval-0.11.0.dist-info/entry_points.txt",
+    "lib/python3.12/site-packages/nbval-0.11.0.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/nbval/__init__.py",
+    "lib/python3.12/site-packages/nbval/_cover4.py",
+    "lib/python3.12/site-packages/nbval/_cover5.py",
+    "lib/python3.12/site-packages/nbval/_version.py",
+    "lib/python3.12/site-packages/nbval/cover.py",
+    "lib/python3.12/site-packages/nbval/kernel.py",
+    "lib/python3.12/site-packages/nbval/nbdime_reporter.py",
+    "lib/python3.12/site-packages/nbval/plugin.py",
+    "lib/python3.12/site-packages/nbval/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/nbval/__pycache__/_cover4.cpython-312.pyc",
+    "lib/python3.12/site-packages/nbval/__pycache__/_cover5.cpython-312.pyc",
+    "lib/python3.12/site-packages/nbval/__pycache__/_version.cpython-312.pyc",
+    "lib/python3.12/site-packages/nbval/__pycache__/cover.cpython-312.pyc",
+    "lib/python3.12/site-packages/nbval/__pycache__/kernel.cpython-312.pyc",
+    "lib/python3.12/site-packages/nbval/__pycache__/nbdime_reporter.cpython-312.pyc",
+    "lib/python3.12/site-packages/nbval/__pycache__/plugin.cpython-312.pyc"
+  ],
+  "fn": "nbval-0.11.0-pyhd8ed1ab_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/nbval-0.11.0-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "b33de6f2b924934390fc4673dd3eb0de",
+  "name": "nbval",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/nbval-0.11.0-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/nbval-0.11.0.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/nbval-0.11.0.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "1dbc744b78bb8ccd0dc0e1ffa18519a04a930628fd82ffcae2758ea0344594f9",
+        "sha256_in_prefix": "1dbc744b78bb8ccd0dc0e1ffa18519a04a930628fd82ffcae2758ea0344594f9",
+        "size_in_bytes": 1910
+      },
+      {
+        "_path": "site-packages/nbval-0.11.0.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "e11fdcacb06f5ba573c3ba23925fd5779d477a45da6618a79ed15e492d629247",
+        "sha256_in_prefix": "e11fdcacb06f5ba573c3ba23925fd5779d477a45da6618a79ed15e492d629247",
+        "size_in_bytes": 6681
+      },
+      {
+        "_path": "site-packages/nbval-0.11.0.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "d8b0b5ccd382a8dfa49a9a2345339ddfbdd9819aaaf6741a400c0e5eff6da323",
+        "sha256_in_prefix": "d8b0b5ccd382a8dfa49a9a2345339ddfbdd9819aaaf6741a400c0e5eff6da323",
+        "size_in_bytes": 1712
+      },
+      {
+        "_path": "site-packages/nbval-0.11.0.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/nbval-0.11.0.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "f86fedd281ae13b503d03ad2a55667ab584730157d0c3d97912e6fed7a664e79",
+        "sha256_in_prefix": "f86fedd281ae13b503d03ad2a55667ab584730157d0c3d97912e6fed7a664e79",
+        "size_in_bytes": 110
+      },
+      {
+        "_path": "site-packages/nbval-0.11.0.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "760b36bdd29f43a08bff30fe9a656bf619d861573726567e8732daf013570941",
+        "sha256_in_prefix": "760b36bdd29f43a08bff30fe9a656bf619d861573726567e8732daf013570941",
+        "size_in_bytes": 101
+      },
+      {
+        "_path": "site-packages/nbval-0.11.0.dist-info/entry_points.txt",
+        "path_type": "hardlink",
+        "sha256": "17f397ab676a4a79925953efce56f878597cc6d3eba25f7cae3e46788354e3fc",
+        "sha256_in_prefix": "17f397ab676a4a79925953efce56f878597cc6d3eba25f7cae3e46788354e3fc",
+        "size_in_bytes": 32
+      },
+      {
+        "_path": "site-packages/nbval-0.11.0.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "284a4b250233febab3be1de9dfc430f5d1e645fe8fe084c4d418869c54c4421f",
+        "sha256_in_prefix": "284a4b250233febab3be1de9dfc430f5d1e645fe8fe084c4d418869c54c4421f",
+        "size_in_bytes": 6
+      },
+      {
+        "_path": "site-packages/nbval/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "15dd572b29fe20117fbf07486905f4b1ef601ae9600ae665574efe0573980f28",
+        "sha256_in_prefix": "15dd572b29fe20117fbf07486905f4b1ef601ae9600ae665574efe0573980f28",
+        "size_in_bytes": 104
+      },
+      {
+        "_path": "site-packages/nbval/_cover4.py",
+        "path_type": "hardlink",
+        "sha256": "e6e3113ce62b87089c30fa4f9357a39f8c6ce537c69d2476fee4c8c81fb5f29b",
+        "sha256_in_prefix": "e6e3113ce62b87089c30fa4f9357a39f8c6ce537c69d2476fee4c8c81fb5f29b",
+        "size_in_bytes": 6022
+      },
+      {
+        "_path": "site-packages/nbval/_cover5.py",
+        "path_type": "hardlink",
+        "sha256": "d591b59607cadd9ff3cc40b8841887d5c82a5ac10e4a7a9981cbdafc38c33a15",
+        "sha256_in_prefix": "d591b59607cadd9ff3cc40b8841887d5c82a5ac10e4a7a9981cbdafc38c33a15",
+        "size_in_bytes": 2957
+      },
+      {
+        "_path": "site-packages/nbval/_version.py",
+        "path_type": "hardlink",
+        "sha256": "3054de1c3831370e1f51f62fb31ef3e38a1a21c9cbc5e8fd5cb51ce4c048ba71",
+        "sha256_in_prefix": "3054de1c3831370e1f51f62fb31ef3e38a1a21c9cbc5e8fd5cb51ce4c048ba71",
+        "size_in_bytes": 105
+      },
+      {
+        "_path": "site-packages/nbval/cover.py",
+        "path_type": "hardlink",
+        "sha256": "5b7d80e01799aa3a2cb185d66760bacf78b7072bc7f7837b5a17a2c88e3dbd26",
+        "sha256_in_prefix": "5b7d80e01799aa3a2cb185d66760bacf78b7072bc7f7837b5a17a2c88e3dbd26",
+        "size_in_bytes": 181
+      },
+      {
+        "_path": "site-packages/nbval/kernel.py",
+        "path_type": "hardlink",
+        "sha256": "bfaa4900dbe15ed2dd22abcef1e348d1584ace0f4211e4e2b718dabfd4c9b814",
+        "sha256_in_prefix": "bfaa4900dbe15ed2dd22abcef1e348d1584ace0f4211e4e2b718dabfd4c9b814",
+        "size_in_bytes": 7314
+      },
+      {
+        "_path": "site-packages/nbval/nbdime_reporter.py",
+        "path_type": "hardlink",
+        "sha256": "753180bd348f9a98877fe1f96c164e066408478f5a5bd22145901cb0f32cfe04",
+        "sha256_in_prefix": "753180bd348f9a98877fe1f96c164e066408478f5a5bd22145901cb0f32cfe04",
+        "size_in_bytes": 5053
+      },
+      {
+        "_path": "site-packages/nbval/plugin.py",
+        "path_type": "hardlink",
+        "sha256": "31662abea8cfbd2124afddd75862d52b7b2bc90168f1dbef739d6da01d631bcd",
+        "sha256_in_prefix": "31662abea8cfbd2124afddd75862d52b7b2bc90168f1dbef739d6da01d631bcd",
+        "size_in_bytes": 36025
+      },
+      {
+        "_path": "lib/python3.12/site-packages/nbval/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/nbval/__pycache__/_cover4.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/nbval/__pycache__/_cover5.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/nbval/__pycache__/_version.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/nbval/__pycache__/cover.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/nbval/__pycache__/kernel.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/nbval/__pycache__/nbdime_reporter.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/nbval/__pycache__/plugin.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "nbval",
+  "sha256": "c7ee1bcb24556106d8ddd63dd377f82cb01f294fddc7b7762be5f48c4c23f27d",
+  "size": 26389,
+  "subdir": "noarch",
+  "timestamp": 1709568197000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/nbval-0.11.0-pyhd8ed1ab_0.conda",
+  "version": "0.11.0"
+}

@@ -1,0 +1,501 @@
+{
+  "build": "h935415a_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "libcurl >=8.8.0,<9.0a0",
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12",
+    "openssl >=3.3.1,<4.0a0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/azure-core-cpp-1.13.0-h935415a_0",
+  "files": [
+    "include/azure/core.hpp",
+    "include/azure/core/azure_assert.hpp",
+    "include/azure/core/base64.hpp",
+    "include/azure/core/case_insensitive_containers.hpp",
+    "include/azure/core/context.hpp",
+    "include/azure/core/credentials/credentials.hpp",
+    "include/azure/core/credentials/token_credential_options.hpp",
+    "include/azure/core/cryptography/hash.hpp",
+    "include/azure/core/datetime.hpp",
+    "include/azure/core/diagnostics/logger.hpp",
+    "include/azure/core/dll_import_export.hpp",
+    "include/azure/core/etag.hpp",
+    "include/azure/core/exception.hpp",
+    "include/azure/core/http/curl_transport.hpp",
+    "include/azure/core/http/http.hpp",
+    "include/azure/core/http/http_status_code.hpp",
+    "include/azure/core/http/policies/policy.hpp",
+    "include/azure/core/http/raw_response.hpp",
+    "include/azure/core/http/transport.hpp",
+    "include/azure/core/http/win_http_transport.hpp",
+    "include/azure/core/internal/client_options.hpp",
+    "include/azure/core/internal/contract.hpp",
+    "include/azure/core/internal/credentials/authorization_challenge_parser.hpp",
+    "include/azure/core/internal/cryptography/sha_hash.hpp",
+    "include/azure/core/internal/diagnostics/global_exception.hpp",
+    "include/azure/core/internal/diagnostics/log.hpp",
+    "include/azure/core/internal/environment.hpp",
+    "include/azure/core/internal/extendable_enumeration.hpp",
+    "include/azure/core/internal/http/http_sanitizer.hpp",
+    "include/azure/core/internal/http/pipeline.hpp",
+    "include/azure/core/internal/http/user_agent.hpp",
+    "include/azure/core/internal/io/null_body_stream.hpp",
+    "include/azure/core/internal/json/json.hpp",
+    "include/azure/core/internal/json/json_optional.hpp",
+    "include/azure/core/internal/json/json_serializable.hpp",
+    "include/azure/core/internal/strings.hpp",
+    "include/azure/core/internal/tracing/service_tracing.hpp",
+    "include/azure/core/internal/tracing/tracing_impl.hpp",
+    "include/azure/core/internal/unique_handle.hpp",
+    "include/azure/core/io/body_stream.hpp",
+    "include/azure/core/match_conditions.hpp",
+    "include/azure/core/modified_conditions.hpp",
+    "include/azure/core/nullable.hpp",
+    "include/azure/core/operation.hpp",
+    "include/azure/core/operation_status.hpp",
+    "include/azure/core/paged_response.hpp",
+    "include/azure/core/platform.hpp",
+    "include/azure/core/response.hpp",
+    "include/azure/core/rtti.hpp",
+    "include/azure/core/tracing/tracing.hpp",
+    "include/azure/core/url.hpp",
+    "include/azure/core/uuid.hpp",
+    "lib/libazure-core.so",
+    "share/azure-core-cpp/azure-core-cppConfig.cmake",
+    "share/azure-core-cpp/azure-core-cppConfigVersion.cmake",
+    "share/azure-core-cpp/azure-core-cppTargets-release.cmake",
+    "share/azure-core-cpp/azure-core-cppTargets.cmake",
+    "share/azure-core-cpp/copyright"
+  ],
+  "fn": "azure-core-cpp-1.13.0-h935415a_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/azure-core-cpp-1.13.0-h935415a_0",
+    "type": 1
+  },
+  "md5": "debd1677c2fea41eb2233a260f48a298",
+  "name": "azure-core-cpp",
+  "package_tarball_full_path": "/opt/conda/pkgs/azure-core-cpp-1.13.0-h935415a_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/azure/core.hpp",
+        "path_type": "hardlink",
+        "sha256": "022f3fe81ffd3148be29b13398eb440befa6bd07d5c3a5b44aa92b45531d5c0c",
+        "sha256_in_prefix": "022f3fe81ffd3148be29b13398eb440befa6bd07d5c3a5b44aa92b45531d5c0c",
+        "size_in_bytes": 1622
+      },
+      {
+        "_path": "include/azure/core/azure_assert.hpp",
+        "path_type": "hardlink",
+        "sha256": "1028ed08abdd3ab32297dd4e1e6e65ad06d36ac5aa809cd2579974701f1073db",
+        "sha256_in_prefix": "1028ed08abdd3ab32297dd4e1e6e65ad06d36ac5aa809cd2579974701f1073db",
+        "size_in_bytes": 2855
+      },
+      {
+        "_path": "include/azure/core/base64.hpp",
+        "path_type": "hardlink",
+        "sha256": "7e58cec68e8b7b766855efe0449af2eac32ca44d7c8e5b2ca9158d1359086641",
+        "sha256_in_prefix": "7e58cec68e8b7b766855efe0449af2eac32ca44d7c8e5b2ca9158d1359086641",
+        "size_in_bytes": 3873
+      },
+      {
+        "_path": "include/azure/core/case_insensitive_containers.hpp",
+        "path_type": "hardlink",
+        "sha256": "fc8894f4a2f1d82343a692678772084a8fc0b1d2a4e71f960b598f46c134da9f",
+        "sha256_in_prefix": "fc8894f4a2f1d82343a692678772084a8fc0b1d2a4e71f960b598f46c134da9f",
+        "size_in_bytes": 811
+      },
+      {
+        "_path": "include/azure/core/context.hpp",
+        "path_type": "hardlink",
+        "sha256": "6fe194229b6ad977b4ec7288dd5550a786e49bc33e2db58ba01119f5de6dac0e",
+        "sha256_in_prefix": "6fe194229b6ad977b4ec7288dd5550a786e49bc33e2db58ba01119f5de6dac0e",
+        "size_in_bytes": 7613
+      },
+      {
+        "_path": "include/azure/core/credentials/credentials.hpp",
+        "path_type": "hardlink",
+        "sha256": "1fe9e6d0853039d5c5e21fe4281440ed4d112c6bc351aa2f0faf87c030a5443e",
+        "sha256_in_prefix": "1fe9e6d0853039d5c5e21fe4281440ed4d112c6bc351aa2f0faf87c030a5443e",
+        "size_in_bytes": 3712
+      },
+      {
+        "_path": "include/azure/core/credentials/token_credential_options.hpp",
+        "path_type": "hardlink",
+        "sha256": "8a28889d09188ce177c87849b0957de78763cee479eb8b1208e58df88b858a12",
+        "sha256_in_prefix": "8a28889d09188ce177c87849b0957de78763cee479eb8b1208e58df88b858a12",
+        "size_in_bytes": 513
+      },
+      {
+        "_path": "include/azure/core/cryptography/hash.hpp",
+        "path_type": "hardlink",
+        "sha256": "5153c6933c721eeefc6d87f4d33faf81e84ed7199853f4b102f209879b99e3e6",
+        "sha256_in_prefix": "5153c6933c721eeefc6d87f4d33faf81e84ed7199853f4b102f209879b99e3e6",
+        "size_in_bytes": 5697
+      },
+      {
+        "_path": "include/azure/core/datetime.hpp",
+        "path_type": "hardlink",
+        "sha256": "91fcf040b8f047c1f0ced311d66c8380b51b48742abdcd334d412a3d51bdbc1e",
+        "sha256_in_prefix": "91fcf040b8f047c1f0ced311d66c8380b51b48742abdcd334d412a3d51bdbc1e",
+        "size_in_bytes": 10459
+      },
+      {
+        "_path": "include/azure/core/diagnostics/logger.hpp",
+        "path_type": "hardlink",
+        "sha256": "63b2b0814563ca2e4a1ec486bb68b6383cdb72e5b55b80e6b7bc3283aa4c4cd4",
+        "sha256_in_prefix": "63b2b0814563ca2e4a1ec486bb68b6383cdb72e5b55b80e6b7bc3283aa4c4cd4",
+        "size_in_bytes": 1924
+      },
+      {
+        "_path": "include/azure/core/dll_import_export.hpp",
+        "path_type": "hardlink",
+        "sha256": "a6d8d5709589d32e488891eb47b9f36d783c1f19b86a54e22272af7405de99d8",
+        "sha256_in_prefix": "a6d8d5709589d32e488891eb47b9f36d783c1f19b86a54e22272af7405de99d8",
+        "size_in_bytes": 5683
+      },
+      {
+        "_path": "include/azure/core/etag.hpp",
+        "path_type": "hardlink",
+        "sha256": "685127e9eef18ac5ec241c684fa473219dafdaeb8656b32304eac95a88d9929c",
+        "sha256_in_prefix": "685127e9eef18ac5ec241c684fa473219dafdaeb8656b32304eac95a88d9929c",
+        "size_in_bytes": 5888
+      },
+      {
+        "_path": "include/azure/core/exception.hpp",
+        "path_type": "hardlink",
+        "sha256": "e7004f9a15aa693511d1db0a47eb042149a879819b3d3063963f8c3065fb0e90",
+        "sha256_in_prefix": "e7004f9a15aa693511d1db0a47eb042149a879819b3d3063963f8c3065fb0e90",
+        "size_in_bytes": 7010
+      },
+      {
+        "_path": "include/azure/core/http/curl_transport.hpp",
+        "path_type": "hardlink",
+        "sha256": "c80cf27581e2a4b2c73c1d28ba529efa856bcde938e238c0cdbc24d0f82f48e4",
+        "sha256_in_prefix": "c80cf27581e2a4b2c73c1d28ba529efa856bcde938e238c0cdbc24d0f82f48e4",
+        "size_in_bytes": 8579
+      },
+      {
+        "_path": "include/azure/core/http/http.hpp",
+        "path_type": "hardlink",
+        "sha256": "f04aa3e48be738d0ddb0e316a0a946eeb5b06a1f8596e2a61d3e62f14a07c4cd",
+        "sha256_in_prefix": "f04aa3e48be738d0ddb0e316a0a946eeb5b06a1f8596e2a61d3e62f14a07c4cd",
+        "size_in_bytes": 13520
+      },
+      {
+        "_path": "include/azure/core/http/http_status_code.hpp",
+        "path_type": "hardlink",
+        "sha256": "3417543fd9fde0544f6def472e6b1be3e59df4b5606cbfaec4a27cc0ce221bee",
+        "sha256_in_prefix": "3417543fd9fde0544f6def472e6b1be3e59df4b5606cbfaec4a27cc0ce221bee",
+        "size_in_bytes": 4132
+      },
+      {
+        "_path": "include/azure/core/http/policies/policy.hpp",
+        "path_type": "hardlink",
+        "sha256": "941d412af3b788e60d44997989476403ee922bfc8878855e6c0fbd026f2f3bb3",
+        "sha256_in_prefix": "941d412af3b788e60d44997989476403ee922bfc8878855e6c0fbd026f2f3bb3",
+        "size_in_bytes": 21864
+      },
+      {
+        "_path": "include/azure/core/http/raw_response.hpp",
+        "path_type": "hardlink",
+        "sha256": "118e3ff38da8eb69eb4a563148b8615d68394414c46f007ca51ca04be65b698f",
+        "sha256_in_prefix": "118e3ff38da8eb69eb4a563148b8615d68394414c46f007ca51ca04be65b698f",
+        "size_in_bytes": 5186
+      },
+      {
+        "_path": "include/azure/core/http/transport.hpp",
+        "path_type": "hardlink",
+        "sha256": "069e644be485681127f1e5e447b6cd4969e4f44449a231df9bfbe381132faecc",
+        "sha256_in_prefix": "069e644be485681127f1e5e447b6cd4969e4f44449a231df9bfbe381132faecc",
+        "size_in_bytes": 2206
+      },
+      {
+        "_path": "include/azure/core/http/win_http_transport.hpp",
+        "path_type": "hardlink",
+        "sha256": "fe6e396a8a3dbefa7e6d312f40fb3991e4b76157669f6f0949f8e135a857df47",
+        "sha256_in_prefix": "fe6e396a8a3dbefa7e6d312f40fb3991e4b76157669f6f0949f8e135a857df47",
+        "size_in_bytes": 4853
+      },
+      {
+        "_path": "include/azure/core/internal/client_options.hpp",
+        "path_type": "hardlink",
+        "sha256": "fa4425f5d929333e8ffed4d295038d9c26c81e58d0efbe6eb2316dd33dc4f616",
+        "sha256_in_prefix": "fa4425f5d929333e8ffed4d295038d9c26c81e58d0efbe6eb2316dd33dc4f616",
+        "size_in_bytes": 2896
+      },
+      {
+        "_path": "include/azure/core/internal/contract.hpp",
+        "path_type": "hardlink",
+        "sha256": "21a811db113fc2d5b691b2f2248aeeeefa485eb66ec3cb080561c4cda0e54d99",
+        "sha256_in_prefix": "21a811db113fc2d5b691b2f2248aeeeefa485eb66ec3cb080561c4cda0e54d99",
+        "size_in_bytes": 413
+      },
+      {
+        "_path": "include/azure/core/internal/credentials/authorization_challenge_parser.hpp",
+        "path_type": "hardlink",
+        "sha256": "c293f736a0f0e7acd6db36acee444e7a2faa89652bb88dd3e0060fd8867db587",
+        "sha256_in_prefix": "c293f736a0f0e7acd6db36acee444e7a2faa89652bb88dd3e0060fd8867db587",
+        "size_in_bytes": 1325
+      },
+      {
+        "_path": "include/azure/core/internal/cryptography/sha_hash.hpp",
+        "path_type": "hardlink",
+        "sha256": "ab2f915c8455cb41fee3fac962455bbcd91337c65c8ad9aab8b07c12355e187c",
+        "sha256_in_prefix": "ab2f915c8455cb41fee3fac962455bbcd91337c65c8ad9aab8b07c12355e187c",
+        "size_in_bytes": 7033
+      },
+      {
+        "_path": "include/azure/core/internal/diagnostics/global_exception.hpp",
+        "path_type": "hardlink",
+        "sha256": "e4bafd24280df9ae328bd743f975c59bbe47bf99a69db5baec58feb695a4bf15",
+        "sha256_in_prefix": "e4bafd24280df9ae328bd743f975c59bbe47bf99a69db5baec58feb695a4bf15",
+        "size_in_bytes": 1344
+      },
+      {
+        "_path": "include/azure/core/internal/diagnostics/log.hpp",
+        "path_type": "hardlink",
+        "sha256": "59fdd509c2ae1eac513f29608151139b981221c7b4b1f6ac96c7623249af9e1e",
+        "sha256_in_prefix": "59fdd509c2ae1eac513f29608151139b981221c7b4b1f6ac96c7623249af9e1e",
+        "size_in_bytes": 5962
+      },
+      {
+        "_path": "include/azure/core/internal/environment.hpp",
+        "path_type": "hardlink",
+        "sha256": "f5ad6ad5851f7c2772d8b021f679d5a33934af4baedf201fb958681e0008bbc3",
+        "sha256_in_prefix": "f5ad6ad5851f7c2772d8b021f679d5a33934af4baedf201fb958681e0008bbc3",
+        "size_in_bytes": 438
+      },
+      {
+        "_path": "include/azure/core/internal/extendable_enumeration.hpp",
+        "path_type": "hardlink",
+        "sha256": "9b52db3774698bfeef57462a7dc2e3df1245812421ae97b444bfa2bbfb6fa502",
+        "sha256_in_prefix": "9b52db3774698bfeef57462a7dc2e3df1245812421ae97b444bfa2bbfb6fa502",
+        "size_in_bytes": 2457
+      },
+      {
+        "_path": "include/azure/core/internal/http/http_sanitizer.hpp",
+        "path_type": "hardlink",
+        "sha256": "6fd6cecfdb15bfa3e232a03bcdfe06be63162074aa7fb526d2ecad9659ab6556",
+        "sha256_in_prefix": "6fd6cecfdb15bfa3e232a03bcdfe06be63162074aa7fb526d2ecad9659ab6556",
+        "size_in_bytes": 1583
+      },
+      {
+        "_path": "include/azure/core/internal/http/pipeline.hpp",
+        "path_type": "hardlink",
+        "sha256": "11baea5218f7a598273e8a813afb2ca380095f6926b2dcee4519318046b7a117",
+        "sha256_in_prefix": "11baea5218f7a598273e8a813afb2ca380095f6926b2dcee4519318046b7a117",
+        "size_in_bytes": 8610
+      },
+      {
+        "_path": "include/azure/core/internal/http/user_agent.hpp",
+        "path_type": "hardlink",
+        "sha256": "6461d8d26f9ea47599c8210e704d220e66df980209432da97a36c87f1f7db39d",
+        "sha256_in_prefix": "6461d8d26f9ea47599c8210e704d220e66df980209432da97a36c87f1f7db39d",
+        "size_in_bytes": 514
+      },
+      {
+        "_path": "include/azure/core/internal/io/null_body_stream.hpp",
+        "path_type": "hardlink",
+        "sha256": "c15ae7deec7d5ab25c71e09a67a05335adb12b3ecb09019e784f5ec75d6ed3b5",
+        "sha256_in_prefix": "c15ae7deec7d5ab25c71e09a67a05335adb12b3ecb09019e784f5ec75d6ed3b5",
+        "size_in_bytes": 999
+      },
+      {
+        "_path": "include/azure/core/internal/json/json.hpp",
+        "path_type": "hardlink",
+        "sha256": "05a5cc198b533701fc1695fb5eef7b388b7692fcf3da9319e78f69d0454ffcee",
+        "sha256_in_prefix": "05a5cc198b533701fc1695fb5eef7b388b7692fcf3da9319e78f69d0454ffcee",
+        "size_in_bytes": 927274
+      },
+      {
+        "_path": "include/azure/core/internal/json/json_optional.hpp",
+        "path_type": "hardlink",
+        "sha256": "30d00376535f76f871cf11cc4e9273e87a9b40b609aacb511a530e9a38cf608a",
+        "sha256_in_prefix": "30d00376535f76f871cf11cc4e9273e87a9b40b609aacb511a530e9a38cf608a",
+        "size_in_bytes": 4482
+      },
+      {
+        "_path": "include/azure/core/internal/json/json_serializable.hpp",
+        "path_type": "hardlink",
+        "sha256": "7ec047a3a8a3142afc0cb7c30771ff361bcf1eb09db14f60337f39b6b33cd48e",
+        "sha256_in_prefix": "7ec047a3a8a3142afc0cb7c30771ff361bcf1eb09db14f60337f39b6b33cd48e",
+        "size_in_bytes": 708
+      },
+      {
+        "_path": "include/azure/core/internal/strings.hpp",
+        "path_type": "hardlink",
+        "sha256": "d066b748775bc0ce660b24c67d7bcd60aeb2def3cfbbdef3cbaa2aeffd437c44",
+        "sha256_in_prefix": "d066b748775bc0ce660b24c67d7bcd60aeb2def3cfbbdef3cbaa2aeffd437c44",
+        "size_in_bytes": 3084
+      },
+      {
+        "_path": "include/azure/core/internal/tracing/service_tracing.hpp",
+        "path_type": "hardlink",
+        "sha256": "4bbb18685cb31ad19d64de3730edd55d2b182d5d1770f6087179fb3cf846fee3",
+        "sha256_in_prefix": "4bbb18685cb31ad19d64de3730edd55d2b182d5d1770f6087179fb3cf846fee3",
+        "size_in_bytes": 12331
+      },
+      {
+        "_path": "include/azure/core/internal/tracing/tracing_impl.hpp",
+        "path_type": "hardlink",
+        "sha256": "9f9554859468ff7c140f3cdc561828121754868f29789b03eea29cab4b34e1df",
+        "sha256_in_prefix": "9f9554859468ff7c140f3cdc561828121754868f29789b03eea29cab4b34e1df",
+        "size_in_bytes": 8664
+      },
+      {
+        "_path": "include/azure/core/internal/unique_handle.hpp",
+        "path_type": "hardlink",
+        "sha256": "98b4ac2673f402cef1056020c8c6a2cbe5cebc24ec197883c6481c3e9fd13caa",
+        "sha256_in_prefix": "98b4ac2673f402cef1056020c8c6a2cbe5cebc24ec197883c6481c3e9fd13caa",
+        "size_in_bytes": 3139
+      },
+      {
+        "_path": "include/azure/core/io/body_stream.hpp",
+        "path_type": "hardlink",
+        "sha256": "bbd42fed72d3657eea2853efda3d9c439f0154839564b27adf1b6c628dcc5230",
+        "sha256_in_prefix": "bbd42fed72d3657eea2853efda3d9c439f0154839564b27adf1b6c628dcc5230",
+        "size_in_bytes": 10270
+      },
+      {
+        "_path": "include/azure/core/match_conditions.hpp",
+        "path_type": "hardlink",
+        "sha256": "9f624fae66acd979dad57a3b4ce63b686acf5090df9882c072e235b72a02b0ca",
+        "sha256_in_prefix": "9f624fae66acd979dad57a3b4ce63b686acf5090df9882c072e235b72a02b0ca",
+        "size_in_bytes": 744
+      },
+      {
+        "_path": "include/azure/core/modified_conditions.hpp",
+        "path_type": "hardlink",
+        "sha256": "9d882154717ae970bf65291eb14fc9c852eaa13f6ba0c3d57fb0daad2be9b9ab",
+        "sha256_in_prefix": "9d882154717ae970bf65291eb14fc9c852eaa13f6ba0c3d57fb0daad2be9b9ab",
+        "size_in_bytes": 837
+      },
+      {
+        "_path": "include/azure/core/nullable.hpp",
+        "path_type": "hardlink",
+        "sha256": "73b9dc8c0b28565ecc87722d80a4189c13d8052254aa2c5aacbbc47e27bff409",
+        "sha256_in_prefix": "73b9dc8c0b28565ecc87722d80a4189c13d8052254aa2c5aacbbc47e27bff409",
+        "size_in_bytes": 11550
+      },
+      {
+        "_path": "include/azure/core/operation.hpp",
+        "path_type": "hardlink",
+        "sha256": "1bb4d33f9f27e581e608fd87289da477bb852f7faac5783da9567b64c40aad7f",
+        "sha256_in_prefix": "1bb4d33f9f27e581e608fd87289da477bb852f7faac5783da9567b64c40aad7f",
+        "size_in_bytes": 7195
+      },
+      {
+        "_path": "include/azure/core/operation_status.hpp",
+        "path_type": "hardlink",
+        "sha256": "bc5dba2989253b0986d6254a341970ba25063bb7fca6a416f9c322e31f8c0b07",
+        "sha256_in_prefix": "bc5dba2989253b0986d6254a341970ba25063bb7fca6a416f9c322e31f8c0b07",
+        "size_in_bytes": 2827
+      },
+      {
+        "_path": "include/azure/core/paged_response.hpp",
+        "path_type": "hardlink",
+        "sha256": "8055a61f4c8a9abb1792d57ad77cd0b9db691b15d48ecc821260eee754d79af0",
+        "sha256_in_prefix": "8055a61f4c8a9abb1792d57ad77cd0b9db691b15d48ecc821260eee754d79af0",
+        "size_in_bytes": 3350
+      },
+      {
+        "_path": "include/azure/core/platform.hpp",
+        "path_type": "hardlink",
+        "sha256": "5052d3177ca55db553b9296d0ee93e2415f6da574d5ba02f299653d8cbe7aa7f",
+        "sha256_in_prefix": "5052d3177ca55db553b9296d0ee93e2415f6da574d5ba02f299653d8cbe7aa7f",
+        "size_in_bytes": 3065
+      },
+      {
+        "_path": "include/azure/core/response.hpp",
+        "path_type": "hardlink",
+        "sha256": "7fcb51411e43bc4cb89257c7f8e8d6cca41a7312b3197bfd46243bac6ff4e700",
+        "sha256_in_prefix": "7fcb51411e43bc4cb89257c7f8e8d6cca41a7312b3197bfd46243bac6ff4e700",
+        "size_in_bytes": 1294
+      },
+      {
+        "_path": "include/azure/core/rtti.hpp",
+        "path_type": "hardlink",
+        "sha256": "10958dd8ac750a5247797d2a5f986de099f6896cd3a17245cf760ae5c24bc762",
+        "sha256_in_prefix": "10958dd8ac750a5247797d2a5f986de099f6896cd3a17245cf760ae5c24bc762",
+        "size_in_bytes": 1278
+      },
+      {
+        "_path": "include/azure/core/tracing/tracing.hpp",
+        "path_type": "hardlink",
+        "sha256": "a7c2c79a87e020f3b151b79756ec998b6ff18dbbb0f4ff5778169e711b30e073",
+        "sha256_in_prefix": "a7c2c79a87e020f3b151b79756ec998b6ff18dbbb0f4ff5778169e711b30e073",
+        "size_in_bytes": 1918
+      },
+      {
+        "_path": "include/azure/core/url.hpp",
+        "path_type": "hardlink",
+        "sha256": "014a219dc5afc3e17ef3f732b832f3c5ab56299f182af1e9266b374d909286a5",
+        "sha256_in_prefix": "014a219dc5afc3e17ef3f732b832f3c5ab56299f182af1e9266b374d909286a5",
+        "size_in_bytes": 7079
+      },
+      {
+        "_path": "include/azure/core/uuid.hpp",
+        "path_type": "hardlink",
+        "sha256": "6020d4c246b3c8bab52757882518743fb221f58b27777f55430bb878785fdf3e",
+        "sha256_in_prefix": "6020d4c246b3c8bab52757882518743fb221f58b27777f55430bb878785fdf3e",
+        "size_in_bytes": 1603
+      },
+      {
+        "_path": "lib/libazure-core.so",
+        "path_type": "hardlink",
+        "sha256": "fcfdceedb12320c76cd3b944e541263133c1c134b4883eb05c15e6910075c31c",
+        "sha256_in_prefix": "fcfdceedb12320c76cd3b944e541263133c1c134b4883eb05c15e6910075c31c",
+        "size_in_bytes": 569096
+      },
+      {
+        "_path": "share/azure-core-cpp/azure-core-cppConfig.cmake",
+        "path_type": "hardlink",
+        "sha256": "24a9bc57465553230aa4289d0af2e428da33a91743e86b23011886d2c3c6a4bb",
+        "sha256_in_prefix": "24a9bc57465553230aa4289d0af2e428da33a91743e86b23011886d2c3c6a4bb",
+        "size_in_bytes": 1206
+      },
+      {
+        "_path": "share/azure-core-cpp/azure-core-cppConfigVersion.cmake",
+        "path_type": "hardlink",
+        "sha256": "10f218f8018532438fcaf3f829e5ce8afc7587cac91873661368ad987456470e",
+        "sha256_in_prefix": "10f218f8018532438fcaf3f829e5ce8afc7587cac91873661368ad987456470e",
+        "size_in_bytes": 2765
+      },
+      {
+        "_path": "share/azure-core-cpp/azure-core-cppTargets-release.cmake",
+        "path_type": "hardlink",
+        "sha256": "5714ae8408811bc8a2505d76ce899a545f2b50ec85032e2c80bcfbc9ad8d4a99",
+        "sha256_in_prefix": "5714ae8408811bc8a2505d76ce899a545f2b50ec85032e2c80bcfbc9ad8d4a99",
+        "size_in_bytes": 863
+      },
+      {
+        "_path": "share/azure-core-cpp/azure-core-cppTargets.cmake",
+        "path_type": "hardlink",
+        "sha256": "232ce736dcda10bde64ab2af1b49bd29e5802c1ba2a066cc29834668999c0544",
+        "sha256_in_prefix": "232ce736dcda10bde64ab2af1b49bd29e5802c1ba2a066cc29834668999c0544",
+        "size_in_bytes": 4203
+      },
+      {
+        "_path": "share/azure-core-cpp/copyright",
+        "path_type": "hardlink",
+        "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+        "sha256_in_prefix": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+        "size_in_bytes": 1162
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "b7e0a22295db2e1955f89c69cefc32810309b3af66df986d9fb75d89f98a80f7",
+  "size": 338134,
+  "subdir": "linux-64",
+  "timestamp": 1720853194000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/azure-core-cpp-1.13.0-h935415a_0.conda",
+  "version": "1.13.0"
+}

@@ -1,0 +1,51 @@
+{
+  "build": "he02047a_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "libgcc-ng >=12",
+    "libopenvino 2024.3.0 h2da1b83_0",
+    "libstdcxx-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libopenvino-pytorch-frontend-2024.3.0-he02047a_0",
+  "files": [
+    "lib/libopenvino_pytorch_frontend.so.2024.3.0",
+    "lib/libopenvino_pytorch_frontend.so.2430"
+  ],
+  "fn": "libopenvino-pytorch-frontend-2024.3.0-he02047a_0.conda",
+  "license": "",
+  "link": {
+    "source": "/opt/conda/pkgs/libopenvino-pytorch-frontend-2024.3.0-he02047a_0",
+    "type": 1
+  },
+  "md5": "92654c43075ffd142caae9417bab9c11",
+  "name": "libopenvino-pytorch-frontend",
+  "package_tarball_full_path": "/opt/conda/pkgs/libopenvino-pytorch-frontend-2024.3.0-he02047a_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/libopenvino_pytorch_frontend.so.2024.3.0",
+        "path_type": "hardlink",
+        "sha256": "1c57389e3a2d02d045094ad2f3ad90fe1b284af20e01d96ad8308063e4b2741a",
+        "sha256_in_prefix": "1c57389e3a2d02d045094ad2f3ad90fe1b284af20e01d96ad8308063e4b2741a",
+        "size_in_bytes": 4086736
+      },
+      {
+        "_path": "lib/libopenvino_pytorch_frontend.so.2430",
+        "path_type": "softlink",
+        "sha256": "1c57389e3a2d02d045094ad2f3ad90fe1b284af20e01d96ad8308063e4b2741a",
+        "size_in_bytes": 4086736
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "bd550f304a6b1ef8ee58ee15e13001718dc62bcc26731e2ea051549173a5b4ea",
+  "size": 1110380,
+  "subdir": "linux-64",
+  "timestamp": 1722425778000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libopenvino-pytorch-frontend-2024.3.0-he02047a_0.conda",
+  "version": "2024.3.0"
+}

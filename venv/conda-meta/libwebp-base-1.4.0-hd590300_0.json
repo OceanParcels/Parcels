@@ -1,0 +1,291 @@
+{
+  "build": "hd590300_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [
+    "libwebp 1.4.0"
+  ],
+  "depends": [
+    "libgcc-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libwebp-base-1.4.0-hd590300_0",
+  "files": [
+    "include/webp/decode.h",
+    "include/webp/demux.h",
+    "include/webp/encode.h",
+    "include/webp/mux.h",
+    "include/webp/mux_types.h",
+    "include/webp/sharpyuv/sharpyuv.h",
+    "include/webp/sharpyuv/sharpyuv_csp.h",
+    "include/webp/types.h",
+    "lib/libsharpyuv.so",
+    "lib/libsharpyuv.so.0",
+    "lib/libsharpyuv.so.0.1.0",
+    "lib/libwebp.so",
+    "lib/libwebp.so.7",
+    "lib/libwebp.so.7.1.9",
+    "lib/libwebpdecoder.so",
+    "lib/libwebpdecoder.so.3",
+    "lib/libwebpdecoder.so.3.1.9",
+    "lib/libwebpdemux.so",
+    "lib/libwebpdemux.so.2",
+    "lib/libwebpdemux.so.2.0.15",
+    "lib/libwebpmux.so",
+    "lib/libwebpmux.so.3",
+    "lib/libwebpmux.so.3.1.0",
+    "lib/pkgconfig/libsharpyuv.pc",
+    "lib/pkgconfig/libwebp.pc",
+    "lib/pkgconfig/libwebpdecoder.pc",
+    "lib/pkgconfig/libwebpdemux.pc",
+    "lib/pkgconfig/libwebpmux.pc",
+    "share/WebP/cmake/WebPConfig.cmake",
+    "share/WebP/cmake/WebPConfigVersion.cmake",
+    "share/WebP/cmake/WebPTargets-release.cmake",
+    "share/WebP/cmake/WebPTargets.cmake"
+  ],
+  "fn": "libwebp-base-1.4.0-hd590300_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/libwebp-base-1.4.0-hd590300_0",
+    "type": 1
+  },
+  "md5": "b26e8aa824079e1be0294e7152ca4559",
+  "name": "libwebp-base",
+  "package_tarball_full_path": "/opt/conda/pkgs/libwebp-base-1.4.0-hd590300_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/webp/decode.h",
+        "path_type": "hardlink",
+        "sha256": "300db34c56d965ee8304f0f0e947ba226403362833ce5d956c6d5f9814a5297f",
+        "sha256_in_prefix": "300db34c56d965ee8304f0f0e947ba226403362833ce5d956c6d5f9814a5297f",
+        "size_in_bytes": 23960
+      },
+      {
+        "_path": "include/webp/demux.h",
+        "path_type": "hardlink",
+        "sha256": "984983b09785e2af7e8c5cefd2e2f08d2116870c13108445665b11256aa82fec",
+        "sha256_in_prefix": "984983b09785e2af7e8c5cefd2e2f08d2116870c13108445665b11256aa82fec",
+        "size_in_bytes": 15998
+      },
+      {
+        "_path": "include/webp/encode.h",
+        "path_type": "hardlink",
+        "sha256": "976e56b6a14473204c949baa9cb62d06a7acf3b796198a346be3ef5d168242bb",
+        "sha256_in_prefix": "976e56b6a14473204c949baa9cb62d06a7acf3b796198a346be3ef5d168242bb",
+        "size_in_bytes": 28427
+      },
+      {
+        "_path": "include/webp/mux.h",
+        "path_type": "hardlink",
+        "sha256": "c72cf593f8194c671efcade33f1678294380120d45a337511d612a3acb643f35",
+        "sha256_in_prefix": "c72cf593f8194c671efcade33f1678294380120d45a337511d612a3acb643f35",
+        "size_in_bytes": 25966
+      },
+      {
+        "_path": "include/webp/mux_types.h",
+        "path_type": "hardlink",
+        "sha256": "d3313ad38c26d17abd244ab683e662dedead1489ec0f910bc31eba7ce2f8838c",
+        "sha256_in_prefix": "d3313ad38c26d17abd244ab683e662dedead1489ec0f910bc31eba7ce2f8838c",
+        "size_in_bytes": 3259
+      },
+      {
+        "_path": "include/webp/sharpyuv/sharpyuv.h",
+        "path_type": "hardlink",
+        "sha256": "c801aed0d66a668f47bd90c142e6ff31849d5682ff744884d3651330e91faf67",
+        "sha256_in_prefix": "c801aed0d66a668f47bd90c142e6ff31849d5682ff744884d3651330e91faf67",
+        "size_in_bytes": 7227
+      },
+      {
+        "_path": "include/webp/sharpyuv/sharpyuv_csp.h",
+        "path_type": "hardlink",
+        "sha256": "2af5cd15f60e6777fbfc6fd42a57545f65219a714822c6444f07efec2465c946",
+        "sha256_in_prefix": "2af5cd15f60e6777fbfc6fd42a57545f65219a714822c6444f07efec2465c946",
+        "size_in_bytes": 1812
+      },
+      {
+        "_path": "include/webp/types.h",
+        "path_type": "hardlink",
+        "sha256": "dcf81657e515b2973cebfd256099f0ed45b7627b9e78e5492dc8ca0167ed7c12",
+        "sha256_in_prefix": "dcf81657e515b2973cebfd256099f0ed45b7627b9e78e5492dc8ca0167ed7c12",
+        "size_in_bytes": 3113
+      },
+      {
+        "_path": "lib/libsharpyuv.so",
+        "path_type": "softlink",
+        "sha256": "d6db54ee610e5faef461744e17a38ee1c0bfa3fcf544da2527f73796765229ba",
+        "size_in_bytes": 42112
+      },
+      {
+        "_path": "lib/libsharpyuv.so.0",
+        "path_type": "softlink",
+        "sha256": "d6db54ee610e5faef461744e17a38ee1c0bfa3fcf544da2527f73796765229ba",
+        "size_in_bytes": 42112
+      },
+      {
+        "_path": "lib/libsharpyuv.so.0.1.0",
+        "path_type": "hardlink",
+        "sha256": "d6db54ee610e5faef461744e17a38ee1c0bfa3fcf544da2527f73796765229ba",
+        "sha256_in_prefix": "d6db54ee610e5faef461744e17a38ee1c0bfa3fcf544da2527f73796765229ba",
+        "size_in_bytes": 42112
+      },
+      {
+        "_path": "lib/libwebp.so",
+        "path_type": "softlink",
+        "sha256": "83d038fb9378fc1ce0199526eedd954b145ebc9a5fa08e14be33f7e9f9a6afde",
+        "size_in_bytes": 799832
+      },
+      {
+        "_path": "lib/libwebp.so.7",
+        "path_type": "softlink",
+        "sha256": "83d038fb9378fc1ce0199526eedd954b145ebc9a5fa08e14be33f7e9f9a6afde",
+        "size_in_bytes": 799832
+      },
+      {
+        "_path": "lib/libwebp.so.7.1.9",
+        "path_type": "hardlink",
+        "sha256": "83d038fb9378fc1ce0199526eedd954b145ebc9a5fa08e14be33f7e9f9a6afde",
+        "sha256_in_prefix": "83d038fb9378fc1ce0199526eedd954b145ebc9a5fa08e14be33f7e9f9a6afde",
+        "size_in_bytes": 799832
+      },
+      {
+        "_path": "lib/libwebpdecoder.so",
+        "path_type": "softlink",
+        "sha256": "663a7945f0fa38e6fc7c2a5fea545e63e6b484eeae36913b4c3de55719d7794c",
+        "size_in_bytes": 492824
+      },
+      {
+        "_path": "lib/libwebpdecoder.so.3",
+        "path_type": "softlink",
+        "sha256": "663a7945f0fa38e6fc7c2a5fea545e63e6b484eeae36913b4c3de55719d7794c",
+        "size_in_bytes": 492824
+      },
+      {
+        "_path": "lib/libwebpdecoder.so.3.1.9",
+        "path_type": "hardlink",
+        "sha256": "663a7945f0fa38e6fc7c2a5fea545e63e6b484eeae36913b4c3de55719d7794c",
+        "sha256_in_prefix": "663a7945f0fa38e6fc7c2a5fea545e63e6b484eeae36913b4c3de55719d7794c",
+        "size_in_bytes": 492824
+      },
+      {
+        "_path": "lib/libwebpdemux.so",
+        "path_type": "softlink",
+        "sha256": "55ad8412b803ee2f32ff74718e65832b0a4624edb5d498680d33098f945921a6",
+        "size_in_bytes": 25288
+      },
+      {
+        "_path": "lib/libwebpdemux.so.2",
+        "path_type": "softlink",
+        "sha256": "55ad8412b803ee2f32ff74718e65832b0a4624edb5d498680d33098f945921a6",
+        "size_in_bytes": 25288
+      },
+      {
+        "_path": "lib/libwebpdemux.so.2.0.15",
+        "path_type": "hardlink",
+        "sha256": "55ad8412b803ee2f32ff74718e65832b0a4624edb5d498680d33098f945921a6",
+        "sha256_in_prefix": "55ad8412b803ee2f32ff74718e65832b0a4624edb5d498680d33098f945921a6",
+        "size_in_bytes": 25288
+      },
+      {
+        "_path": "lib/libwebpmux.so",
+        "path_type": "softlink",
+        "sha256": "d59f124c5d2eeaab0b45ccb5fe0bfe877f2c5a95e039e686cea0b47e2b35531b",
+        "size_in_bytes": 52480
+      },
+      {
+        "_path": "lib/libwebpmux.so.3",
+        "path_type": "softlink",
+        "sha256": "d59f124c5d2eeaab0b45ccb5fe0bfe877f2c5a95e039e686cea0b47e2b35531b",
+        "size_in_bytes": 52480
+      },
+      {
+        "_path": "lib/libwebpmux.so.3.1.0",
+        "path_type": "hardlink",
+        "sha256": "d59f124c5d2eeaab0b45ccb5fe0bfe877f2c5a95e039e686cea0b47e2b35531b",
+        "sha256_in_prefix": "d59f124c5d2eeaab0b45ccb5fe0bfe877f2c5a95e039e686cea0b47e2b35531b",
+        "size_in_bytes": 52480
+      },
+      {
+        "_path": "lib/pkgconfig/libsharpyuv.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libwebp-base_1713199734470/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol",
+        "sha256": "dace8a99c4537c3b78cacc066ceda26180b49f8db85b6111e61e55c23ba1d38e",
+        "sha256_in_prefix": "a900fba4eb12182ebcc96bce541cba9589c3cdb583d0d8d765977a46f22636f8",
+        "size_in_bytes": 514
+      },
+      {
+        "_path": "lib/pkgconfig/libwebp.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libwebp-base_1713199734470/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol",
+        "sha256": "f35dc9a231eb33d169cfa117a41f9f0935db8a0c68980fcbd24b8fadb2732152",
+        "sha256_in_prefix": "2dca95e045c0c2803ccccbc51398c07eaac0290c797ce0cb548f2f2aef817f7c",
+        "size_in_bytes": 528
+      },
+      {
+        "_path": "lib/pkgconfig/libwebpdecoder.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libwebp-base_1713199734470/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol",
+        "sha256": "6aa1eacc1baa5a2689dc43e56478f54130e2be41a609b66cde74d18d07fe1536",
+        "sha256_in_prefix": "8090a3df591be033af4a3c7ffc96205e8b4fe761bc8c23e00e2ec6117af2c73b",
+        "size_in_bytes": 526
+      },
+      {
+        "_path": "lib/pkgconfig/libwebpdemux.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libwebp-base_1713199734470/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol",
+        "sha256": "64e2874ffa41c005ffa94de5873d91df36ce5d341f9891181624c4d74def4338",
+        "sha256_in_prefix": "5cf002dba01f96d547dfb744ba34a846a76d04a7b8ba249ded6a93768ad316d3",
+        "size_in_bytes": 532
+      },
+      {
+        "_path": "lib/pkgconfig/libwebpmux.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libwebp-base_1713199734470/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol",
+        "sha256": "bcbe0330312e6963e58a498efce99dfbe6465e65bac0a4d25c0edb3c2511f3b0",
+        "sha256_in_prefix": "2447df278e5312de14a11d5cbcb1d1f745eeb11392757254c318269f768e1259",
+        "size_in_bytes": 551
+      },
+      {
+        "_path": "share/WebP/cmake/WebPConfig.cmake",
+        "path_type": "hardlink",
+        "sha256": "063fdd02d140e0bda76e8d63d65f4d8b3425aa04b87ca5d26d46bc1452c5f157",
+        "sha256_in_prefix": "063fdd02d140e0bda76e8d63d65f4d8b3425aa04b87ca5d26d46bc1452c5f157",
+        "size_in_bytes": 1363
+      },
+      {
+        "_path": "share/WebP/cmake/WebPConfigVersion.cmake",
+        "path_type": "hardlink",
+        "sha256": "8cf717c6a623965f7ed6e1cc4ce763b9277542628e08c054a38fcebf26fee78a",
+        "sha256_in_prefix": "8cf717c6a623965f7ed6e1cc4ce763b9277542628e08c054a38fcebf26fee78a",
+        "size_in_bytes": 1861
+      },
+      {
+        "_path": "share/WebP/cmake/WebPTargets-release.cmake",
+        "path_type": "hardlink",
+        "sha256": "4c2d8cef53a121d1a7adc86cba9922fef67406f3b2b9cfd79e98e6b9a6fb60db",
+        "sha256_in_prefix": "4c2d8cef53a121d1a7adc86cba9922fef67406f3b2b9cfd79e98e6b9a6fb60db",
+        "size_in_bytes": 2777
+      },
+      {
+        "_path": "share/WebP/cmake/WebPTargets.cmake",
+        "path_type": "hardlink",
+        "sha256": "d97c5bb9a3e4c3006879f22ac4afef835e399e6ab4d12ecfdbcfccd550f4f8d5",
+        "sha256_in_prefix": "d97c5bb9a3e4c3006879f22ac4afef835e399e6ab4d12ecfdbcfccd550f4f8d5",
+        "size_in_bytes": 5300
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "49bc5f6b1e11cb2babf2a2a731d1a680a5e08a858280876a779dbda06c78c35f",
+  "size": 438953,
+  "subdir": "linux-64",
+  "timestamp": 1713199854000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libwebp-base-1.4.0-hd590300_0.conda",
+  "version": "1.4.0"
+}

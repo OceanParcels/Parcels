@@ -1,0 +1,1216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 10.2.0" />
+<title>Unit Testing</title>
+<style type="text/css">
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
+
+/* Title font. */
+h1, h2, h3, h4, h5, h6,
+div.title, caption.title,
+thead, p.table.header,
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+h5 {
+  font-size: 1.0em;
+}
+
+div.sectionbody {
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+ul > li     { color: #aaa; }
+ul > li > * { color: black; }
+
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
+  padding: 0;
+  margin: 0;
+}
+pre {
+  white-space: pre-wrap;
+}
+
+#author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+#email {
+}
+#revnumber, #revdate, #revremark {
+}
+
+#footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #888;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; vertical-align: text-bottom; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+div.colist td img {
+  margin-top: 0.3em;
+}
+
+@media print {
+  #footer-badges { display: none; }
+}
+
+#toc {
+  margin-bottom: 2.5em;
+}
+
+#toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overridden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+
+
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
+  var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
+}
+
+}
+asciidoc.install();
+/*]]>*/
+</script>
+</head>
+<body class="article">
+<div id="header">
+<h1>Unit Testing</h1>
+<span id="revdate">2024-07-29</span>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph"><p>In our current testing environment, we spend a significant amount of effort
+crafting end-to-end tests for error conditions that could easily be captured by
+unit tests (or we simply forgo some hard-to-setup and rare error conditions).
+Unit tests additionally provide stability to the codebase and can simplify
+debugging through isolation. Writing unit tests in pure C, rather than with our
+current shell/test-tool helper setup, simplifies test setup, simplifies passing
+data around (no shell-isms required), and reduces testing runtime by not
+spawning a separate process for every test invocation.</p></div>
+<div class="paragraph"><p>We believe that a large body of unit tests, living alongside the existing test
+suite, will improve code quality for the Git project.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_definitions">Definitions</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>For the purposes of this document, we&#8217;ll use <strong>test framework</strong> to refer to
+projects that support writing test cases and running tests within the context
+of a single executable. <strong>Test harness</strong> will refer to projects that manage
+running multiple executables (each of which may contain multiple test cases) and
+aggregating their results.</p></div>
+<div class="paragraph"><p>In reality, these terms are not strictly defined, and many of the projects
+discussed below contain features from both categories.</p></div>
+<div class="paragraph"><p>For now, we will evaluate projects solely on their framework features. Since we
+are relying on having TAP output (see below), we can assume that any framework
+can be made to work with a harness that we can choose later.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_summary">Summary</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>We believe the best way forward is to implement a custom TAP framework for the
+Git project. We use a version of the framework originally proposed in
+<a href="https://lore.kernel.org/git/c902a166-98ce-afba-93f2-ea6027557176@gmail.com/">1</a>.</p></div>
+<div class="paragraph"><p>See the <a href="#framework-selection">Framework Selection</a> section below for the
+rationale behind this decision.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_choosing_a_test_harness">Choosing a test harness</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>During upstream discussion, it was occasionally noted that <code>prove</code> provides many
+convenient features, such as scheduling slower tests first, or re-running
+previously failed tests.</p></div>
+<div class="paragraph"><p>While we already support the use of <code>prove</code> as a test harness for the shell
+tests, it is not strictly required. The t/Makefile allows running shell tests
+directly (though with interleaved output if parallelism is enabled). Git
+developers who wish to use <code>prove</code> as a more advanced harness can do so by
+setting DEFAULT_TEST_TARGET=prove in their config.mak.</p></div>
+<div class="paragraph"><p>We will follow a similar approach for unit tests: by default the test
+executables will be run directly from the t/Makefile, but <code>prove</code> can be
+configured with DEFAULT_UNIT_TEST_TARGET=prove.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="framework-selection">Framework selection</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>There are a variety of features we can use to rank the candidate frameworks, and
+those features have different priorities:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Critical features: we probably won&#8217;t consider a framework without these
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Can we legally / easily use the project?
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<a href="#license">License</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#vendorable-or-ubiquitous">Vendorable or ubiquitous</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#maintainable-extensible">Maintainable / extensible</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#major-platform-support">Major platform support</a>
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Does the project support our bare-minimum needs?
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<a href="#tap-support">TAP support</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#diagnostic-output">Diagnostic output</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#runtime-skippable-tests">Runtime-skippable tests</a>
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Nice-to-have features:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<a href="#parallel-execution">Parallel execution</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#mock-support">Mock support</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#signal-error-handling">Signal &amp; error-handling</a>
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Tie-breaker stats
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<a href="#project-kloc">Project KLOC</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#adoption">Adoption</a>
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="sect2">
+<h3 id="license">License</h3>
+<div class="paragraph"><p>We must be able to legally use the framework in connection with Git. As Git is
+licensed only under GPLv2, we must eliminate any LGPLv3, GPLv3, or Apache 2.0
+projects.</p></div>
+</div>
+<div class="sect2">
+<h3 id="vendorable-or-ubiquitous">Vendorable or ubiquitous</h3>
+<div class="paragraph"><p>We want to avoid forcing Git developers to install new tools just to run unit
+tests. Any prospective frameworks and harnesses must either be vendorable
+(meaning, we can copy their source directly into Git&#8217;s repository), or so
+ubiquitous that it is reasonable to expect that most developers will have the
+tools installed already.</p></div>
+</div>
+<div class="sect2">
+<h3 id="maintainable-extensible">Maintainable / extensible</h3>
+<div class="paragraph"><p>It is unlikely that any pre-existing project perfectly fits our needs, so any
+project we select will need to be actively maintained and open to accepting
+changes. Alternatively, assuming we are vendoring the source into our repo, it
+must be simple enough that Git developers can feel comfortable making changes as
+needed to our version.</p></div>
+<div class="paragraph"><p>In the comparison table below, "True" means that the framework seems to have
+active developers, that it is simple enough that Git developers can make changes
+to it, and that the project seems open to accepting external contributions (or
+that it is vendorable). "Partial" means that at least one of the above
+conditions holds.</p></div>
+</div>
+<div class="sect2">
+<h3 id="major-platform-support">Major platform support</h3>
+<div class="paragraph"><p>At a bare minimum, unit-testing must work on Linux, MacOS, and Windows.</p></div>
+<div class="paragraph"><p>In the comparison table below, "True" means that it works on all three major
+platforms with no issues. "Partial" means that there may be annoyances on one or
+more platforms, but it is still usable in principle.</p></div>
+</div>
+<div class="sect2">
+<h3 id="tap-support">TAP support</h3>
+<div class="paragraph"><p>The <a href="https://testanything.org/">Test Anything Protocol</a> is a text-based interface
+that allows tests to communicate with a test harness. It is already used by
+Git&#8217;s integration test suite. Supporting TAP output is a mandatory feature for
+any prospective test framework.</p></div>
+<div class="paragraph"><p>In the comparison table below, "True" means this is natively supported.
+"Partial" means TAP output must be generated by post-processing the native
+output.</p></div>
+<div class="paragraph"><p>Frameworks that do not have at least Partial support will not be evaluated
+further.</p></div>
+</div>
+<div class="sect2">
+<h3 id="diagnostic-output">Diagnostic output</h3>
+<div class="paragraph"><p>When a test case fails, the framework must generate enough diagnostic output to
+help developers find the appropriate test case in source code in order to debug
+the failure.</p></div>
+</div>
+<div class="sect2">
+<h3 id="runtime-skippable-tests">Runtime-skippable tests</h3>
+<div class="paragraph"><p>Test authors may wish to skip certain test cases based on runtime circumstances,
+so the framework should support this.</p></div>
+</div>
+<div class="sect2">
+<h3 id="parallel-execution">Parallel execution</h3>
+<div class="paragraph"><p>Ideally, we will build up a significant collection of unit test cases, most
+likely split across multiple executables. It will be necessary to run these
+tests in parallel to enable fast develop-test-debug cycles.</p></div>
+<div class="paragraph"><p>In the comparison table below, "True" means that individual test cases within a
+single test executable can be run in parallel. We assume that executable-level
+parallelism can be handled by the test harness.</p></div>
+</div>
+<div class="sect2">
+<h3 id="mock-support">Mock support</h3>
+<div class="paragraph"><p>Unit test authors may wish to test code that interacts with objects that may be
+inconvenient to handle in a test (e.g. interacting with a network service).
+Mocking allows test authors to provide a fake implementation of these objects
+for more convenient tests.</p></div>
+</div>
+<div class="sect2">
+<h3 id="signal-error-handling">Signal &amp; error handling</h3>
+<div class="paragraph"><p>The test framework should fail gracefully when test cases are themselves buggy
+or when they are interrupted by signals during runtime.</p></div>
+</div>
+<div class="sect2">
+<h3 id="project-kloc">Project KLOC</h3>
+<div class="paragraph"><p>The size of the project, in thousands of lines of code as measured by
+<a href="https://dwheeler.com/sloccount/">sloccount</a> (rounded up to the next multiple of
+1,000). As a tie-breaker, we probably prefer a project with fewer LOC.</p></div>
+</div>
+<div class="sect2">
+<h3 id="adoption">Adoption</h3>
+<div class="paragraph"><p>As a tie-breaker, we prefer a more widely-used project. We use the number of
+GitHub / GitLab stars to estimate this.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_comparison">Comparison</h3>
+<div class="tableblock">
+<table rules="all"
+width="33%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<thead>
+<tr>
+<th align="left" valign="top">Framework</th>
+<th align="left" valign="top"><a href="#license">License</a></th>
+<th align="left" valign="top"><a href="#vendorable-or-ubiquitous">Vendorable or ubiquitous</a></th>
+<th align="left" valign="top"><a href="#maintainable-extensible">Maintainable / extensible</a></th>
+<th align="left" valign="top"><a href="#major-platform-support">Major platform support</a></th>
+<th align="left" valign="top"><a href="#tap-support">TAP support</a></th>
+<th align="left" valign="top"><a href="#diagnostic-output">Diagnostic output</a></th>
+<th align="left" valign="top"><a href="#runtime--skippable-tests">Runtime- skippable tests</a></th>
+<th align="left" valign="top"><a href="#parallel-execution">Parallel execution</a></th>
+<th align="left" valign="top"><a href="#mock-support">Mock support</a></th>
+<th align="left" valign="top"><a href="#signal-error-handling">Signal &amp; error handling</a></th>
+<th align="left" valign="top"><a href="#project-kloc">Project KLOC</a></th>
+<th align="left" valign="top"><a href="#adoption">Adoption</a></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><a href="https://lore.kernel.org/git/c902a166-98ce-afba-93f2-ea6027557176@gmail.com/">Custom Git impl.</a></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">GPL v2</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table">1</p></td>
+<td align="left" valign="top"><p class="table">0</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><a href="https://github.com/silentbicycle/greatest">Greatest</a></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">ISC</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="yellow-background">Partial</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="yellow-background">Partial</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table">3</p></td>
+<td align="left" valign="top"><p class="table">1400</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><a href="https://github.com/Snaipe/Criterion">Criterion</a></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">MIT</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="yellow-background">Partial</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table">19</p></td>
+<td align="left" valign="top"><p class="table">1800</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><a href="https://github.com/rra/c-tap-harness/">C TAP</a></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">Expat</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="yellow-background">Partial</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="yellow-background">Partial</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table">4</p></td>
+<td align="left" valign="top"><p class="table">33</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><a href="https://libcheck.github.io/check/">Check</a></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">LGPL v2.1</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="yellow-background">Partial</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="red-background">False</span></p></td>
+<td align="left" valign="top"><p class="table"><span class="lime-background">True</span></p></td>
+<td align="left" valign="top"><p class="table">17</p></td>
+<td align="left" valign="top"><p class="table">973</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_additional_framework_candidates">Additional framework candidates</h3>
+<div class="paragraph"><p>Several suggested frameworks have been eliminated from consideration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Incompatible licenses:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<a href="https://github.com/zorgnax/libtap">libtap</a> (LGPL v3)
+</p>
+</li>
+<li>
+<p>
+<a href="https://cmocka.org/">cmocka</a> (Apache 2.0)
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Missing source: <a href="https://www.kindahl.net/mytap/doc/index.html">MyTap</a>
+</p>
+</li>
+<li>
+<p>
+No TAP support:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<a href="https://nemequ.github.io/munit/">µnit</a>
+</p>
+</li>
+<li>
+<p>
+<a href="https://github.com/google/cmockery">cmockery</a>
+</p>
+</li>
+<li>
+<p>
+<a href="https://github.com/lpabon/cmockery2">cmockery2</a>
+</p>
+</li>
+<li>
+<p>
+<a href="https://github.com/ThrowTheSwitch/Unity">Unity</a>
+</p>
+</li>
+<li>
+<p>
+<a href="https://github.com/siu/minunit">minunit</a>
+</p>
+</li>
+<li>
+<p>
+<a href="https://cunit.sourceforge.net/">CUnit</a>
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_milestones">Milestones</h2>
+<div class="sectionbody">
+<div class="ulist"><ul>
+<li>
+<p>
+Add useful tests of library-like code
+</p>
+</li>
+<li>
+<p>
+Integrate with
+  <a href="https://lore.kernel.org/git/20230502211454.1673000-1-calvinwan@google.com/">stdlib
+  work</a>
+</p>
+</li>
+<li>
+<p>
+Run alongside regular <code>make test</code> target
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Last updated
+ 2024-07-26 07:45:48 PDT
+</div>
+</div>
+</body>
+</html>

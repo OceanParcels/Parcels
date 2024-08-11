@@ -1,0 +1,188 @@
+{
+  "build": "py312h03f37cb_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=12",
+    "lz4-c >=1.9.3,<1.10.0a0",
+    "python >=3.12,<3.13.0a0",
+    "python_abi 3.12.* *_cp312"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/lz4-4.3.3-py312h03f37cb_0",
+  "files": [
+    "lib/python3.12/site-packages/lz4-4.3.3.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/lz4-4.3.3.dist-info/LICENSE",
+    "lib/python3.12/site-packages/lz4-4.3.3.dist-info/METADATA",
+    "lib/python3.12/site-packages/lz4-4.3.3.dist-info/RECORD",
+    "lib/python3.12/site-packages/lz4-4.3.3.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/lz4-4.3.3.dist-info/WHEEL",
+    "lib/python3.12/site-packages/lz4-4.3.3.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/lz4-4.3.3.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/lz4/__init__.py",
+    "lib/python3.12/site-packages/lz4/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/lz4/__pycache__/version.cpython-312.pyc",
+    "lib/python3.12/site-packages/lz4/_version.cpython-312-x86_64-linux-gnu.so",
+    "lib/python3.12/site-packages/lz4/block/__init__.py",
+    "lib/python3.12/site-packages/lz4/block/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/lz4/block/_block.cpython-312-x86_64-linux-gnu.so",
+    "lib/python3.12/site-packages/lz4/frame/__init__.py",
+    "lib/python3.12/site-packages/lz4/frame/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/lz4/frame/_frame.cpython-312-x86_64-linux-gnu.so",
+    "lib/python3.12/site-packages/lz4/version.py"
+  ],
+  "fn": "lz4-4.3.3-py312h03f37cb_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/lz4-4.3.3-py312h03f37cb_0",
+    "type": 1
+  },
+  "md5": "8465027beab0db69006f744be7fb3fb6",
+  "name": "lz4",
+  "package_tarball_full_path": "/opt/conda/pkgs/lz4-4.3.3-py312h03f37cb_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/python3.12/site-packages/lz4-4.3.3.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4-4.3.3.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "e2ac43d6eb80eb4e52141817c812437e0b981b1d7b2dc7cc86c7ef5524044c6f",
+        "sha256_in_prefix": "e2ac43d6eb80eb4e52141817c812437e0b981b1d7b2dc7cc86c7ef5524044c6f",
+        "size_in_bytes": 1495
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4-4.3.3.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "df2ec84163ad5eb1ef20980e6e509c1722eca62512e50386e07e0a344bb4e77c",
+        "sha256_in_prefix": "df2ec84163ad5eb1ef20980e6e509c1722eca62512e50386e07e0a344bb4e77c",
+        "size_in_bytes": 3659
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4-4.3.3.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "20f6e53452a4682d77c3a2d37ed72d9fb4cc924d977b5d10b9e400f070d929b0",
+        "sha256_in_prefix": "20f6e53452a4682d77c3a2d37ed72d9fb4cc924d977b5d10b9e400f070d929b0",
+        "size_in_bytes": 1434
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4-4.3.3.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4-4.3.3.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "534d96963bacec16b1cb7e473924a3d644e7b56f70920f73c1885776cfff3789",
+        "sha256_in_prefix": "534d96963bacec16b1cb7e473924a3d644e7b56f70920f73c1885776cfff3789",
+        "size_in_bytes": 105
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4-4.3.3.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "9239d903e2700dcd1f0db7b8be06039ffbdec5cc5586ab31070e90753feeb5fe",
+        "sha256_in_prefix": "9239d903e2700dcd1f0db7b8be06039ffbdec5cc5586ab31070e90753feeb5fe",
+        "size_in_bytes": 99
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4-4.3.3.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "717ebf83115474d4a8e344dfc6b1a94c282eedea469b7c96de6da4ee2ad30f32",
+        "sha256_in_prefix": "717ebf83115474d4a8e344dfc6b1a94c282eedea469b7c96de6da4ee2ad30f32",
+        "size_in_bytes": 4
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "7adb15f971bdbe00a7f842ab169cd626c188a7e554b47fada4dad098c9831025",
+        "sha256_in_prefix": "7adb15f971bdbe00a7f842ab169cd626c188a7e554b47fada4dad098c9831025",
+        "size_in_bytes": 627
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "8e26aa0e4c3db3e11c5b6b6a3ffb875c9d8ef0de15b914f6d18eb33dc3c11374",
+        "sha256_in_prefix": "8e26aa0e4c3db3e11c5b6b6a3ffb875c9d8ef0de15b914f6d18eb33dc3c11374",
+        "size_in_bytes": 300
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/__pycache__/version.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "c982786d5964197545b1f91a81dbd5a0ef419c49b42f9b4431d14dbee3493298",
+        "sha256_in_prefix": "c982786d5964197545b1f91a81dbd5a0ef419c49b42f9b4431d14dbee3493298",
+        "size_in_bytes": 542
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/_version.cpython-312-x86_64-linux-gnu.so",
+        "path_type": "hardlink",
+        "sha256": "ab7aa5ac1bb4b4b7464fc3a15403ee974897c9b1c78a538021ca744503dc32c1",
+        "sha256_in_prefix": "ab7aa5ac1bb4b4b7464fc3a15403ee974897c9b1c78a538021ca744503dc32c1",
+        "size_in_bytes": 15816
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/block/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "2ac4901a068fa49b553c9e507cc69d54615db8ccb48527ad2475863663afa6ca",
+        "sha256_in_prefix": "2ac4901a068fa49b553c9e507cc69d54615db8ccb48527ad2475863663afa6ca",
+        "size_in_bytes": 70
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/block/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "116a7009fb7a43d0e88bed4f4d3bbe88f5ff426679cb98740fb9028fd4baa0ca",
+        "sha256_in_prefix": "116a7009fb7a43d0e88bed4f4d3bbe88f5ff426679cb98740fb9028fd4baa0ca",
+        "size_in_bytes": 237
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/block/_block.cpython-312-x86_64-linux-gnu.so",
+        "path_type": "hardlink",
+        "sha256": "8a892959a1457b1f5ce5850a868c4be6fb207208e6d363128a20d99a8584cc5a",
+        "sha256_in_prefix": "8a892959a1457b1f5ce5850a868c4be6fb207208e6d363128a20d99a8584cc5a",
+        "size_in_bytes": 25440
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/frame/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "12a7cd9e598f87b3c3d2df83bdf29e8d15a622c47b51fe4e24a59d942dd25370",
+        "sha256_in_prefix": "12a7cd9e598f87b3c3d2df83bdf29e8d15a622c47b51fe4e24a59d942dd25370",
+        "size_in_bytes": 31131
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/frame/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "adaff6afa2af1fb794d26f083bd277aa520d29c4bdd4ad55ff59e70209e14a4d",
+        "sha256_in_prefix": "adaff6afa2af1fb794d26f083bd277aa520d29c4bdd4ad55ff59e70209e14a4d",
+        "size_in_bytes": 32735
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/frame/_frame.cpython-312-x86_64-linux-gnu.so",
+        "path_type": "hardlink",
+        "sha256": "6cb564b3d640a46afa05e1ce599d87030239aa0a64e46bb57faeb2e89ea0c174",
+        "sha256_in_prefix": "6cb564b3d640a46afa05e1ce599d87030239aa0a64e46bb57faeb2e89ea0c174",
+        "size_in_bytes": 39800
+      },
+      {
+        "_path": "lib/python3.12/site-packages/lz4/version.py",
+        "path_type": "hardlink",
+        "sha256": "b98869c083195abbd166003b6ccf436d99f59b02d06b04c02b737a99a925ba55",
+        "sha256_in_prefix": "b98869c083195abbd166003b6ccf436d99f59b02d06b04c02b737a99a925ba55",
+        "size_in_bytes": 411
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "6180f0b0c56fa49064291f76b3e4b1b84f3de58aab1264a94cb200f5f46b0178",
+  "size": 39409,
+  "subdir": "linux-64",
+  "timestamp": 1704831318000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/lz4-4.3.3-py312h03f37cb_0.conda",
+  "version": "4.3.3"
+}

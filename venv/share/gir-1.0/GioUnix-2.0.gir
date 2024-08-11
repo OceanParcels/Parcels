@@ -1,0 +1,3536 @@
+<?xml version="1.0"?>
+<!-- This file was automatically generated from C sources - DO NOT EDIT!
+To affect the contents of this file, edit the original C definitions,
+and/or use gtk-doc annotations.  -->
+<repository version="1.2"
+            xmlns="http://www.gtk.org/introspection/core/1.0"
+            xmlns:c="http://www.gtk.org/introspection/c/1.0"
+            xmlns:glib="http://www.gtk.org/introspection/glib/1.0">
+  <include name="GLib" version="2.0"/>
+  <include name="GModule" version="2.0"/>
+  <include name="GObject" version="2.0"/>
+  <include name="Gio" version="2.0"/>
+  <package name="gio-unix-2.0"/>
+  <c:include name="gio/gdesktopappinfo.h"/>
+  <c:include name="gio/gfiledescriptorbased.h"/>
+  <c:include name="gio/gio.h"/>
+  <c:include name="gio/gunixfdmessage.h"/>
+  <c:include name="gio/gunixinputstream.h"/>
+  <c:include name="gio/gunixmounts.h"/>
+  <c:include name="gio/gunixoutputstream.h"/>
+  <namespace name="GioUnix"
+             version="2.0"
+             shared-library="libgio-2.0.so.0"
+             c:identifier-prefixes="GUnix,G"
+             c:symbol-prefixes="gio,g_unix,g">
+    <function-macro name="DESKTOP_APP_INFO"
+                    c:identifier="G_DESKTOP_APP_INFO"
+                    introspectable="0">
+      <source-position filename="gio/gdesktopappinfo.h" line="31"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="DESKTOP_APP_INFO_CLASS"
+                    c:identifier="G_DESKTOP_APP_INFO_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gdesktopappinfo.h" line="32"/>
+      <parameters>
+        <parameter name="k">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="DESKTOP_APP_INFO_GET_CLASS"
+                    c:identifier="G_DESKTOP_APP_INFO_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gdesktopappinfo.h" line="35"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="DESKTOP_APP_INFO_LOOKUP"
+                    c:identifier="G_DESKTOP_APP_INFO_LOOKUP"
+                    introspectable="0">
+      <source-position filename="gio/gdesktopappinfo.h" line="112"/>
+      <parameters>
+        <parameter name="obj">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <constant name="DESKTOP_APP_INFO_LOOKUP_EXTENSION_POINT_NAME"
+              value="gio-desktop-app-info-lookup"
+              c:type="G_DESKTOP_APP_INFO_LOOKUP_EXTENSION_POINT_NAME"
+              deprecated="1"
+              deprecated-version="2.28">
+      <doc xml:space="preserve"
+           filename="gio/gdesktopappinfo.h"
+           line="116">Extension point for default handler to URI association. See
+[Extending GIO][extending-gio].</doc>
+      <doc-deprecated xml:space="preserve">The #GDesktopAppInfoLookup interface is deprecated and
+   unused by GIO.</doc-deprecated>
+      <source-position filename="gio/gdesktopappinfo.h" line="125"/>
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <function-macro name="DESKTOP_APP_INFO_LOOKUP_GET_IFACE"
+                    c:identifier="G_DESKTOP_APP_INFO_LOOKUP_GET_IFACE"
+                    introspectable="0">
+      <source-position filename="gio/gdesktopappinfo.h" line="114"/>
+      <parameters>
+        <parameter name="obj">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <class name="DesktopAppInfo"
+           c:symbol-prefix="desktop_app_info"
+           c:type="GDesktopAppInfo"
+           parent="GObject.Object"
+           glib:type-name="GDesktopAppInfo"
+           glib:get-type="g_desktop_app_info_get_type"
+           glib:type-struct="DesktopAppInfoClass">
+      <doc xml:space="preserve"
+           filename="gio/gdesktopappinfo.c"
+           line="65">`GDesktopAppInfo` is an implementation of [iface@Gio.AppInfo] based on
+desktop files.
+
+Note that `&lt;gio/gdesktopappinfo.h&gt;` belongs to the UNIX-specific
+GIO interfaces, thus you have to use the `gio-unix-2.0.pc` pkg-config
+file or the `GioUnix-2.0` GIR namespace when using it.</doc>
+      <source-position filename="gio/gdesktopappinfo.h" line="45"/>
+      <implements name="Gio.AppInfo"/>
+      <constructor name="new" c:identifier="g_desktop_app_info_new">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="2116">Creates a new #GDesktopAppInfo based on a desktop file id.
+
+A desktop file id is the basename of the desktop file, including the
+.desktop extension. GIO is looking for a desktop file with this name
+in the `applications` subdirectories of the XDG
+data directories (i.e. the directories specified in the `XDG_DATA_HOME`
+and `XDG_DATA_DIRS` environment variables). GIO also supports the
+prefix-to-subdirectory mapping that is described in the
+[Menu Spec](http://standards.freedesktop.org/menu-spec/latest/)
+(i.e. a desktop id of kde-foo.desktop will match
+`/usr/share/applications/kde/foo.desktop`).</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="74"/>
+        <return-value transfer-ownership="full" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="2132">a new #GDesktopAppInfo, or %NULL if no desktop
+    file with that id exists.</doc>
+          <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+        </return-value>
+        <parameters>
+          <parameter name="desktop_id" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2118">the desktop file id</doc>
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+        </parameters>
+      </constructor>
+      <constructor name="new_from_filename"
+                   c:identifier="g_desktop_app_info_new_from_filename">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="2093">Creates a new #GDesktopAppInfo.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="52"/>
+        <return-value transfer-ownership="full" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="2100">a new #GDesktopAppInfo or %NULL on error.</doc>
+          <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+        </return-value>
+        <parameters>
+          <parameter name="filename" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2095">the path of a desktop file, in the GLib
+     filename encoding</doc>
+            <type name="filename" c:type="const char*"/>
+          </parameter>
+        </parameters>
+      </constructor>
+      <constructor name="new_from_keyfile"
+                   c:identifier="g_desktop_app_info_new_from_keyfile"
+                   version="2.18">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="2065">Creates a new #GDesktopAppInfo.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="54"/>
+        <return-value transfer-ownership="full" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="2071">a new #GDesktopAppInfo or %NULL on error.</doc>
+          <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+        </return-value>
+        <parameters>
+          <parameter name="key_file" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2067">an opened #GKeyFile</doc>
+            <type name="GLib.KeyFile" c:type="GKeyFile*"/>
+          </parameter>
+        </parameters>
+      </constructor>
+      <function name="get_action_name"
+                c:identifier="g_desktop_app_info_get_action_name"
+                version="2.38">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="5182">Gets the user-visible display name of the "additional application
+action" specified by @action_name.
+
+This corresponds to the "Name" key within the keyfile group for the
+action.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="108"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="5194">the locale-specific action name</doc>
+          <type name="utf8" c:type="gchar*"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5184">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+          <parameter name="action_name" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5185">the name of the action as from
+  g_desktop_app_info_list_actions()</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_boolean"
+                c:identifier="g_desktop_app_info_get_boolean"
+                version="2.36">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="5072">Looks up a boolean value in the keyfile backing @info.
+
+The @key is looked up in the "Desktop Entry" group.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="91"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="5081">the boolean value, or %FALSE if the key
+    is not found</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5074">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+          <parameter name="key" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5075">the key to look up</doc>
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_categories"
+                c:identifier="g_desktop_app_info_get_categories">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="2314">Gets the categories from the desktop file.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="62"/>
+        <return-value transfer-ownership="none" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="2320">The unparsed Categories key from the desktop file;
+    i.e. no attempt is made to split it by ';' or validate it.</doc>
+          <type name="utf8" c:type="const char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2316">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_filename"
+                c:identifier="g_desktop_app_info_get_filename"
+                version="2.24">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="2264">When @info was created from a known filename, return it.  In some
+situations such as the #GDesktopAppInfo returned from
+g_desktop_app_info_new_from_keyfile(), this function will return %NULL.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="57"/>
+        <return-value transfer-ownership="none" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="2272">The full path to the file for @info,
+    or %NULL if not known.</doc>
+          <type name="filename" c:type="const char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2266">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_generic_name"
+                c:identifier="g_desktop_app_info_get_generic_name">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="2345">Gets the generic name from the desktop file.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="60"/>
+        <return-value transfer-ownership="none" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="2351">The value of the GenericName key</doc>
+          <type name="utf8" c:type="const char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2347">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_implementations"
+                c:identifier="g_desktop_app_info_get_implementations"
+                version="2.42">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="4746">Gets all applications that implement @interface.
+
+An application implements an interface if that interface is listed in
+the Implements= line of the desktop file of the application.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="196"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="4755">a list of #GDesktopAppInfo
+objects.</doc>
+          <type name="GLib.List" c:type="GList*">
+            <type name="Gio.DesktopAppInfo"/>
+          </type>
+        </return-value>
+        <parameters>
+          <parameter name="interface" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="4748">the name of the interface</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_is_hidden"
+                c:identifier="g_desktop_app_info_get_is_hidden">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="2249">A desktop file is hidden if the Hidden key in it is
+set to True.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="76"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="2256">%TRUE if hidden, %FALSE otherwise.</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2251">a #GDesktopAppInfo.</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_keywords"
+                c:identifier="g_desktop_app_info_get_keywords"
+                version="2.32">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="2329">Gets the keywords from the desktop file.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="64"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="2335">The value of the Keywords key</doc>
+          <array c:type="const char* const*">
+            <type name="utf8"/>
+          </array>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2331">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_locale_string"
+                c:identifier="g_desktop_app_info_get_locale_string"
+                version="2.56">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="5045">Looks up a localized string value in the keyfile backing @info
+translated to the current locale.
+
+The @key is looked up in the "Desktop Entry" group.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="88"/>
+        <return-value transfer-ownership="full" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="5055">a newly allocated string, or %NULL if the key
+    is not found</doc>
+          <type name="utf8" c:type="char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5047">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+          <parameter name="key" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5048">the key to look up</doc>
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_nodisplay"
+                c:identifier="g_desktop_app_info_get_nodisplay"
+                version="2.30">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="2359">Gets the value of the NoDisplay key, which helps determine if the
+application info should be shown in menus. See
+%G_KEY_FILE_DESKTOP_KEY_NO_DISPLAY and g_app_info_should_show().</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="66"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="2367">The value of the NoDisplay key</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2361">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_show_in"
+                c:identifier="g_desktop_app_info_get_show_in"
+                version="2.30">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="2377">Checks if the application info should be shown in menus that list available
+applications for a specific name of the desktop, based on the
+`OnlyShowIn` and `NotShowIn` keys.
+
+@desktop_env should typically be given as %NULL, in which case the
+`XDG_CURRENT_DESKTOP` environment variable is consulted.  If you want
+to override the default mechanism then you may specify @desktop_env,
+but this is not recommended.
+
+Note that g_app_info_should_show() for @info will include this check (with
+%NULL for @desktop_env) as well as additional checks.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="68"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="2394">%TRUE if the @info should be shown in @desktop_env according to the
+`OnlyShowIn` and `NotShowIn` keys, %FALSE
+otherwise.</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2379">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+          <parameter name="desktop_env"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="2380">a string specifying a desktop name</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_startup_wm_class"
+                c:identifier="g_desktop_app_info_get_startup_wm_class"
+                version="2.34">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="5000">Retrieves the StartupWMClass field from @info. This represents the
+WM_CLASS property of the main window of the application, if launched
+through @info.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="71"/>
+        <return-value transfer-ownership="none" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="5008">the startup WM class, or %NULL if none is set
+in the desktop file.</doc>
+          <type name="utf8" c:type="const char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5002">a #GDesktopAppInfo that supports startup notify</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_string"
+                c:identifier="g_desktop_app_info_get_string"
+                version="2.36">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="5021">Looks up a string value in the keyfile backing @info.
+
+The @key is looked up in the "Desktop Entry" group.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="85"/>
+        <return-value transfer-ownership="full" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="5030">a newly allocated string, or %NULL if the key
+    is not found</doc>
+          <type name="utf8" c:type="char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5023">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+          <parameter name="key" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5024">the key to look up</doc>
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_string_list"
+                c:identifier="g_desktop_app_info_get_string_list"
+                version="2.60">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="5096">Looks up a string list value in the keyfile backing @info.
+
+The @key is looked up in the "Desktop Entry" group.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="95"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="5106">
+ a %NULL-terminated string array or %NULL if the specified
+ key cannot be found. The array should be freed with g_strfreev().</doc>
+          <array length="2" zero-terminated="1" c:type="gchar**">
+            <type name="utf8"/>
+          </array>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5098">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+          <parameter name="key" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5099">the key to look up</doc>
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+          <parameter name="length"
+                     direction="out"
+                     caller-allocates="0"
+                     transfer-ownership="full"
+                     optional="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5100">return location for the number of returned strings, or %NULL</doc>
+            <type name="gsize" c:type="gsize*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="has_key"
+                c:identifier="g_desktop_app_info_has_key"
+                version="2.36">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="5123">Returns whether @key exists in the "Desktop Entry" group
+of the keyfile backing @info.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="82"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="5131">%TRUE if the @key exists</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5125">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+          <parameter name="key" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5126">the key to look up</doc>
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="launch_action"
+                c:identifier="g_desktop_app_info_launch_action"
+                version="2.38">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="5224">Activates the named application action.
+
+You may only call this function on action names that were
+returned from g_desktop_app_info_list_actions().
+
+Note that if the main entry of the desktop file indicates that the
+application supports startup notification, and @launch_context is
+non-%NULL, then startup notification will be used when activating the
+action (and as such, invocation of the action on the receiving side
+must signal the end of startup notification when it is completed).
+This is the expected behaviour of applications declaring additional
+actions, as per the desktop file specification.
+
+As with g_app_info_launch() there is no way to detect failures that
+occur while using this function.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="103"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5226">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+          <parameter name="action_name" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5227">the name of the action as from
+  g_desktop_app_info_list_actions()</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+          <parameter name="launch_context"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5229">a #GAppLaunchContext</doc>
+            <type name="Gio.AppLaunchContext" c:type="GAppLaunchContext*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="launch_uris_as_manager"
+                c:identifier="g_desktop_app_info_launch_uris_as_manager"
+                throws="1">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="3600">This function performs the equivalent of g_app_info_launch_uris(),
+but is intended primarily for operating system components that
+launch applications.  Ordinary applications should use
+g_app_info_launch_uris().
+
+If the application is launched via GSpawn, then @spawn_flags, @user_setup
+and @user_setup_data are used for the call to g_spawn_async().
+Additionally, @pid_callback (with @pid_callback_data) will be called to
+inform about the PID of the created process. See g_spawn_async_with_pipes()
+for information on certain parameter conditions that can enable an
+optimized posix_spawn() codepath to be used.
+
+If application launching occurs via some other mechanism (eg: D-Bus
+activation) then @spawn_flags, @user_setup, @user_setup_data,
+@pid_callback and @pid_callback_data are ignored.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="168"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="3629">%TRUE on successful launch, %FALSE otherwise.</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="appinfo" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3602">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+          <parameter name="uris" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3603">List of URIs</doc>
+            <type name="GLib.List" c:type="GList*">
+              <type name="utf8"/>
+            </type>
+          </parameter>
+          <parameter name="launch_context"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3604">a #GAppLaunchContext</doc>
+            <type name="Gio.AppLaunchContext" c:type="GAppLaunchContext*"/>
+          </parameter>
+          <parameter name="spawn_flags" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3605">#GSpawnFlags, used for each process</doc>
+            <type name="GLib.SpawnFlags" c:type="GSpawnFlags"/>
+          </parameter>
+          <parameter name="user_setup"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1"
+                     scope="async"
+                     closure="5">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3606">a #GSpawnChildSetupFunc, used once
+    for each process.</doc>
+            <type name="GLib.SpawnChildSetupFunc"
+                  c:type="GSpawnChildSetupFunc"/>
+          </parameter>
+          <parameter name="user_setup_data"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1"
+                     closure="4">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3608">User data for @user_setup</doc>
+            <type name="gpointer" c:type="gpointer"/>
+          </parameter>
+          <parameter name="pid_callback"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1"
+                     scope="call"
+                     closure="7">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3609">Callback for child processes</doc>
+            <type name="Gio.DesktopAppLaunchCallback"
+                  c:type="GDesktopAppLaunchCallback"/>
+          </parameter>
+          <parameter name="pid_callback_data"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1"
+                     closure="6">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3610">User data for @callback</doc>
+            <type name="gpointer" c:type="gpointer"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="launch_uris_as_manager_with_fds"
+                c:identifier="g_desktop_app_info_launch_uris_as_manager_with_fds"
+                version="2.58"
+                throws="1">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="3545">Equivalent to g_desktop_app_info_launch_uris_as_manager() but allows
+you to pass in file descriptors for the stdin, stdout and stderr streams
+of the launched process.
+
+If application launching occurs via some non-spawn mechanism (e.g. D-Bus
+activation) then @stdin_fd, @stdout_fd and @stderr_fd are ignored.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="179"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="3568">%TRUE on successful launch, %FALSE otherwise.</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="appinfo" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3547">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+          <parameter name="uris" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3548">List of URIs</doc>
+            <type name="GLib.List" c:type="GList*">
+              <type name="utf8"/>
+            </type>
+          </parameter>
+          <parameter name="launch_context"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3549">a #GAppLaunchContext</doc>
+            <type name="Gio.AppLaunchContext" c:type="GAppLaunchContext*"/>
+          </parameter>
+          <parameter name="spawn_flags" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3550">#GSpawnFlags, used for each process</doc>
+            <type name="GLib.SpawnFlags" c:type="GSpawnFlags"/>
+          </parameter>
+          <parameter name="user_setup"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1"
+                     scope="async"
+                     closure="5">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3551">a #GSpawnChildSetupFunc, used once
+    for each process.</doc>
+            <type name="GLib.SpawnChildSetupFunc"
+                  c:type="GSpawnChildSetupFunc"/>
+          </parameter>
+          <parameter name="user_setup_data"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3553">User data for @user_setup</doc>
+            <type name="gpointer" c:type="gpointer"/>
+          </parameter>
+          <parameter name="pid_callback"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1"
+                     scope="call"
+                     closure="7">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3554">Callback for child processes</doc>
+            <type name="Gio.DesktopAppLaunchCallback"
+                  c:type="GDesktopAppLaunchCallback"/>
+          </parameter>
+          <parameter name="pid_callback_data"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3555">User data for @callback</doc>
+            <type name="gpointer" c:type="gpointer"/>
+          </parameter>
+          <parameter name="stdin_fd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3556">file descriptor to use for child's stdin, or -1</doc>
+            <type name="gint" c:type="gint"/>
+          </parameter>
+          <parameter name="stdout_fd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3557">file descriptor to use for child's stdout, or -1</doc>
+            <type name="gint" c:type="gint"/>
+          </parameter>
+          <parameter name="stderr_fd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3558">file descriptor to use for child's stderr, or -1</doc>
+            <type name="gint" c:type="gint"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="list_actions"
+                c:identifier="g_desktop_app_info_list_actions"
+                version="2.38">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="5147">Returns the list of "additional application actions" supported on the
+desktop file, as per the desktop file specification.
+
+As per the specification, this is the list of actions that are
+explicitly listed in the "Actions" key of the [Desktop Entry] group.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="100"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="5157">a list of strings, always non-%NULL</doc>
+          <array c:type="const gchar* const*">
+            <type name="utf8"/>
+          </array>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="5149">a #GDesktopAppInfo</doc>
+            <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="search" c:identifier="g_desktop_app_info_search">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="4795">Searches desktop files for ones that match @search_string.
+
+The return value is an array of strvs.  Each strv contains a list of
+applications that matched @search_string with an equal score.  The
+outer list is sorted by score so that the first strv contains the
+best-matching applications, and so on.
+The algorithm for determining matches is undefined and may change at
+any time.
+
+None of the search results are subjected to the normal validation
+checks performed by g_desktop_app_info_new() (for example, checking that
+the executable referenced by a result exists), and so it is possible for
+g_desktop_app_info_new() to return %NULL when passed an app ID returned by
+this function. It is expected that calling code will do this when
+subsequently creating a #GDesktopAppInfo for each result.</doc>
+        <source-position filename="gio/gdesktopappinfo.h" line="193"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="4815">a
+  list of strvs.  Free each item with g_strfreev() and free the outer
+  list with g_free().</doc>
+          <array c:type="gchar***">
+            <array>
+              <type name="utf8"/>
+            </array>
+          </array>
+        </return-value>
+        <parameters>
+          <parameter name="search_string" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="4797">the search string to use</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="set_desktop_env"
+                c:identifier="g_desktop_app_info_set_desktop_env"
+                deprecated="1"
+                deprecated-version="2.42">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="3656">Sets the name of the desktop that the application is running in.
+This is used by g_app_info_should_show() and
+g_desktop_app_info_get_show_in() to evaluate the
+`OnlyShowIn` and `NotShowIn`
+desktop entry fields.
+
+Should be called only once; subsequent calls are ignored.</doc>
+        <doc-deprecated xml:space="preserve">do not use this API.  Since 2.42 the value of the
+`XDG_CURRENT_DESKTOP` environment variable will be used.</doc-deprecated>
+        <source-position filename="gio/gdesktopappinfo.h" line="79"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="desktop_env" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="3658">a string specifying what desktop this is</doc>
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <property name="filename"
+                writable="1"
+                construct-only="1"
+                transfer-ownership="none"
+                default-value="NULL">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="1777">The origin filename of this #GDesktopAppInfo</doc>
+        <type name="utf8" c:type="gchar*"/>
+      </property>
+    </class>
+    <record name="DesktopAppInfoClass"
+            c:type="GDesktopAppInfoClass"
+            glib:is-gtype-struct-for="DesktopAppInfo">
+      <source-position filename="gio/gdesktopappinfo.h" line="45"/>
+      <field name="parent_class">
+        <type name="GObject.ObjectClass" c:type="GObjectClass"/>
+      </field>
+    </record>
+    <interface name="DesktopAppInfoLookup"
+               c:symbol-prefix="desktop_app_info_lookup"
+               c:type="GDesktopAppInfoLookup"
+               deprecated="1"
+               deprecated-version="2.28"
+               glib:type-name="GDesktopAppInfoLookup"
+               glib:get-type="g_desktop_app_info_lookup_get_type"
+               glib:type-struct="DesktopAppInfoLookupIface">
+      <doc xml:space="preserve"
+           filename="gio/gdesktopappinfo.c"
+           line="4941">#GDesktopAppInfoLookup is an opaque data structure and can only be accessed
+using the following functions.</doc>
+      <doc-deprecated xml:space="preserve">The #GDesktopAppInfoLookup interface is deprecated and
+   unused by GIO.</doc-deprecated>
+      <source-position filename="gio/gdesktopappinfo.h" line="144"/>
+      <function name="get_default_for_uri_scheme"
+                c:identifier="g_desktop_app_info_lookup_get_default_for_uri_scheme"
+                deprecated="1"
+                deprecated-version="2.28">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="4963">Gets the default application for launching applications
+using this URI scheme for a particular #GDesktopAppInfoLookup
+implementation.
+
+The #GDesktopAppInfoLookup interface and this function is used
+to implement g_app_info_get_default_for_uri_scheme() backends
+in a GIO module. There is no reason for applications to use it
+directly. Applications should use g_app_info_get_default_for_uri_scheme().</doc>
+        <doc-deprecated xml:space="preserve">The #GDesktopAppInfoLookup interface is deprecated and
+   unused by GIO.</doc-deprecated>
+        <source-position filename="gio/gdesktopappinfo.h" line="150"/>
+        <return-value transfer-ownership="full" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="4977">#GAppInfo for given @uri_scheme or
+   %NULL on error.</doc>
+          <type name="Gio.AppInfo" c:type="GAppInfo*"/>
+        </return-value>
+        <parameters>
+          <parameter name="lookup" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="4965">a #GDesktopAppInfoLookup</doc>
+            <type name="Gio.DesktopAppInfoLookup"
+                  c:type="GDesktopAppInfoLookup*"/>
+          </parameter>
+          <parameter name="uri_scheme" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gdesktopappinfo.c"
+                 line="4966">a string containing a URI scheme.</doc>
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+        </parameters>
+      </function>
+    </interface>
+    <record name="DesktopAppInfoLookupIface"
+            c:type="GDesktopAppInfoLookupIface"
+            glib:is-gtype-struct-for="DesktopAppInfoLookup">
+      <doc xml:space="preserve"
+           filename="gio/gdesktopappinfo.h"
+           line="127">Interface that is used by backends to associate default
+handlers with URI schemes.</doc>
+      <source-position filename="gio/gdesktopappinfo.h" line="144"/>
+      <field name="g_iface">
+        <type name="GObject.TypeInterface" c:type="GTypeInterface"/>
+      </field>
+      <field name="get_default_for_uri_scheme" introspectable="0">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.h"
+             line="129">Virtual method for
+ g_desktop_app_info_lookup_get_default_for_uri_scheme().</doc>
+        <callback name="get_default_for_uri_scheme" introspectable="0">
+          <source-position filename="gio/gdesktopappinfo.h" line="142"/>
+          <return-value>
+            <type name="Gio.AppInfo" c:type="GAppInfo*"/>
+          </return-value>
+          <parameters>
+            <parameter name="lookup" transfer-ownership="none">
+              <type name="Gio.DesktopAppInfoLookup"
+                    c:type="GDesktopAppInfoLookup*"/>
+            </parameter>
+            <parameter name="uri_scheme" transfer-ownership="none">
+              <type name="utf8" c:type="const char*"/>
+            </parameter>
+          </parameters>
+        </callback>
+      </field>
+    </record>
+    <callback name="DesktopAppLaunchCallback"
+              c:type="GDesktopAppLaunchCallback">
+      <doc xml:space="preserve"
+           filename="gio/gdesktopappinfo.h"
+           line="153">During invocation, g_desktop_app_info_launch_uris_as_manager() may
+create one or more child processes.  This callback is invoked once
+for each, providing the process ID.</doc>
+      <source-position filename="gio/gdesktopappinfo.h" line="163"/>
+      <return-value transfer-ownership="none">
+        <type name="none" c:type="void"/>
+      </return-value>
+      <parameters>
+        <parameter name="appinfo" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.h"
+               line="155">a #GDesktopAppInfo</doc>
+          <type name="Gio.DesktopAppInfo" c:type="GDesktopAppInfo*"/>
+        </parameter>
+        <parameter name="pid" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.h"
+               line="156">Process identifier</doc>
+          <type name="GLib.Pid" c:type="GPid"/>
+        </parameter>
+        <parameter name="user_data"
+                   transfer-ownership="none"
+                   nullable="1"
+                   allow-none="1"
+                   closure="2">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.h"
+               line="157">User data</doc>
+          <type name="gpointer" c:type="gpointer"/>
+        </parameter>
+      </parameters>
+    </callback>
+    <class name="FDMessage"
+           c:symbol-prefix="fd_message"
+           c:type="GUnixFDMessage"
+           parent="Gio.SocketControlMessage"
+           glib:type-name="GUnixFDMessage"
+           glib:get-type="g_unix_fd_message_get_type"
+           glib:type-struct="FDMessageClass">
+      <doc xml:space="preserve"
+           filename="gio/gunixfdmessage.c"
+           line="17">This [class@Gio.SocketControlMessage] contains a [class@Gio.UnixFDList].
+It may be sent using [method@Gio.Socket.send_message] and received using
+[method@Gio.Socket.receive_message] over UNIX sockets (ie: sockets in the
+`G_SOCKET_FAMILY_UNIX` family). The file descriptors are copied
+between processes by the kernel.
+
+For an easier way to send and receive file descriptors over
+stream-oriented UNIX sockets, see [method@Gio.UnixConnection.send_fd] and
+[method@Gio.UnixConnection.receive_fd].
+
+Note that `&lt;gio/gunixfdmessage.h&gt;` belongs to the UNIX-specific GIO
+interfaces, thus you have to use the `gio-unix-2.0.pc` pkg-config
+file or the `GioUnix-2.0` GIR namespace when using it.</doc>
+      <source-position filename="gio/gunixfdmessage.h" line="58"/>
+      <constructor name="new"
+                   c:identifier="g_unix_fd_message_new"
+                   version="2.22">
+        <doc xml:space="preserve"
+             filename="gio/gunixfdmessage.c"
+             line="229">Creates a new #GUnixFDMessage containing an empty file descriptor
+list.</doc>
+        <source-position filename="gio/gunixfdmessage.h" line="71"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixfdmessage.c"
+               line="235">a new #GUnixFDMessage</doc>
+          <type name="Gio.SocketControlMessage"
+                c:type="GSocketControlMessage*"/>
+        </return-value>
+      </constructor>
+      <constructor name="new_with_fd_list"
+                   c:identifier="g_unix_fd_message_new_with_fd_list"
+                   version="2.24">
+        <doc xml:space="preserve"
+             filename="gio/gunixfdmessage.c"
+             line="245">Creates a new #GUnixFDMessage containing @list.</doc>
+        <source-position filename="gio/gunixfdmessage.h" line="69"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixfdmessage.c"
+               line="251">a new #GUnixFDMessage</doc>
+          <type name="Gio.SocketControlMessage"
+                c:type="GSocketControlMessage*"/>
+        </return-value>
+        <parameters>
+          <parameter name="fd_list" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixfdmessage.c"
+                 line="247">a #GUnixFDList</doc>
+            <type name="Gio.UnixFDList" c:type="GUnixFDList*"/>
+          </parameter>
+        </parameters>
+      </constructor>
+      <function name="append_fd"
+                c:identifier="g_unix_fd_message_append_fd"
+                version="2.22"
+                throws="1">
+        <doc xml:space="preserve"
+             filename="gio/gunixfdmessage.c"
+             line="301">Adds a file descriptor to @message.
+
+The file descriptor is duplicated using dup(). You keep your copy
+of the descriptor and the copy contained in @message will be closed
+when @message is finalized.
+
+A possible cause of failure is exceeding the per-process or
+system-wide file descriptor limit.</doc>
+        <source-position filename="gio/gunixfdmessage.h" line="80"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixfdmessage.c"
+               line="316">%TRUE in case of success, else %FALSE (and @error is set)</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="message" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixfdmessage.c"
+                 line="303">a #GUnixFDMessage</doc>
+            <type name="Gio.UnixFDMessage" c:type="GUnixFDMessage*"/>
+          </parameter>
+          <parameter name="fd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixfdmessage.c"
+                 line="304">a valid open file descriptor</doc>
+            <type name="gint" c:type="gint"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_fd_list"
+                c:identifier="g_unix_fd_message_get_fd_list"
+                version="2.24">
+        <doc xml:space="preserve"
+             filename="gio/gunixfdmessage.c"
+             line="155">Gets the #GUnixFDList contained in @message.  This function does not
+return a reference to the caller, but the returned list is valid for
+the lifetime of @message.</doc>
+        <source-position filename="gio/gunixfdmessage.h" line="74"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixfdmessage.c"
+               line="163">the #GUnixFDList from @message</doc>
+          <type name="Gio.UnixFDList" c:type="GUnixFDList*"/>
+        </return-value>
+        <parameters>
+          <parameter name="message" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixfdmessage.c"
+                 line="157">a #GUnixFDMessage</doc>
+            <type name="Gio.UnixFDMessage" c:type="GUnixFDMessage*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="steal_fds"
+                c:identifier="g_unix_fd_message_steal_fds"
+                version="2.22">
+        <doc xml:space="preserve"
+             filename="gio/gunixfdmessage.c"
+             line="263">Returns the array of file descriptors that is contained in this
+object.
+
+After this call, the descriptors are no longer contained in
+@message. Further calls will return an empty list (unless more
+descriptors have been added).
+
+The return result of this function must be freed with g_free().
+The caller is also responsible for closing all of the file
+descriptors.
+
+If @length is non-%NULL then it is set to the number of file
+descriptors in the returned array. The returned array is also
+terminated with -1.
+
+This function never returns %NULL. In case there are no file
+descriptors contained in @message, an empty array is returned.</doc>
+        <source-position filename="gio/gunixfdmessage.h" line="77"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixfdmessage.c"
+               line="287">an array of file
+    descriptors</doc>
+          <array length="1" zero-terminated="0" c:type="gint*">
+            <type name="gint" c:type="gint"/>
+          </array>
+        </return-value>
+        <parameters>
+          <parameter name="message" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixfdmessage.c"
+                 line="265">a #GUnixFDMessage</doc>
+            <type name="Gio.UnixFDMessage" c:type="GUnixFDMessage*"/>
+          </parameter>
+          <parameter name="length"
+                     direction="out"
+                     caller-allocates="0"
+                     transfer-ownership="full"
+                     optional="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="gio/gunixfdmessage.c"
+                 line="266">pointer to the length of the returned
+    array, or %NULL</doc>
+            <type name="gint" c:type="gint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <property name="fd-list"
+                version="2.22"
+                writable="1"
+                construct-only="1"
+                transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixfdmessage.c"
+             line="216">The [class@Gio.UnixFDList] object to send with the message.</doc>
+        <type name="Gio.UnixFDList"/>
+      </property>
+      <field name="parent_instance">
+        <type name="Gio.SocketControlMessage" c:type="GSocketControlMessage"/>
+      </field>
+      <field name="priv">
+        <type name="Gio.UnixFDMessagePrivate" c:type="GUnixFDMessagePrivate*"/>
+      </field>
+    </class>
+    <record name="FDMessageClass"
+            c:type="GUnixFDMessageClass"
+            glib:is-gtype-struct-for="FDMessage">
+      <source-position filename="gio/gunixfdmessage.h" line="58"/>
+      <field name="parent_class">
+        <type name="Gio.SocketControlMessageClass"
+              c:type="GSocketControlMessageClass"/>
+      </field>
+      <field name="_g_reserved1" introspectable="0">
+        <callback name="_g_reserved1">
+          <source-position filename="gio/gunixfdmessage.h" line="56"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+      <field name="_g_reserved2" introspectable="0">
+        <callback name="_g_reserved2">
+          <source-position filename="gio/gunixfdmessage.h" line="57"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+    </record>
+    <record name="FDMessagePrivate"
+            c:type="GUnixFDMessagePrivate"
+            disguised="1"
+            opaque="1">
+      <source-position filename="gio/gunixfdmessage.h" line="43"/>
+    </record>
+    <function-macro name="FD_MESSAGE"
+                    c:identifier="G_UNIX_FD_MESSAGE"
+                    introspectable="0">
+      <source-position filename="gio/gunixfdmessage.h" line="32"/>
+      <parameters>
+        <parameter name="inst">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="FD_MESSAGE_CLASS"
+                    c:identifier="G_UNIX_FD_MESSAGE_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixfdmessage.h" line="34"/>
+      <parameters>
+        <parameter name="class">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="FD_MESSAGE_GET_CLASS"
+                    c:identifier="G_UNIX_FD_MESSAGE_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixfdmessage.h" line="40"/>
+      <parameters>
+        <parameter name="inst">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="FILE_DESCRIPTOR_BASED"
+                    c:identifier="G_FILE_DESCRIPTOR_BASED"
+                    introspectable="0">
+      <source-position filename="gio/gfiledescriptorbased.h" line="34"/>
+      <parameters>
+        <parameter name="obj">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="FILE_DESCRIPTOR_BASED_GET_IFACE"
+                    c:identifier="G_FILE_DESCRIPTOR_BASED_GET_IFACE"
+                    introspectable="0">
+      <source-position filename="gio/gfiledescriptorbased.h" line="36"/>
+      <parameters>
+        <parameter name="obj">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <interface name="FileDescriptorBased"
+               c:symbol-prefix="file_descriptor_based"
+               c:type="GFileDescriptorBased"
+               version="2.24"
+               glib:type-name="GFileDescriptorBased"
+               glib:get-type="g_file_descriptor_based_get_type"
+               glib:type-struct="FileDescriptorBasedIface">
+      <doc xml:space="preserve"
+           filename="gio/gfiledescriptorbased.c"
+           line="28">`GFileDescriptorBased` is an interface for file descriptor based IO.
+
+It is implemented by streams (implementations of [class@Gio.InputStream] or
+[class@Gio.OutputStream]) that are based on file descriptors.
+
+Note that `&lt;gio/gfiledescriptorbased.h&gt;` belongs to the UNIX-specific
+GIO interfaces, thus you have to use the `gio-unix-2.0.pc` pkg-config
+file or the `GioUnix-2.0` GIR namespace when using it.</doc>
+      <source-position filename="gio/gfiledescriptorbased.h" line="52"/>
+      <function name="get_fd"
+                c:identifier="g_file_descriptor_based_get_fd"
+                version="2.24">
+        <doc xml:space="preserve"
+             filename="gio/gfiledescriptorbased.c"
+             line="51">Gets the underlying file descriptor.</doc>
+        <source-position filename="gio/gfiledescriptorbased.h" line="58"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gfiledescriptorbased.c"
+               line="57">The file descriptor</doc>
+          <type name="gint" c:type="int"/>
+        </return-value>
+        <parameters>
+          <parameter name="fd_based" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gfiledescriptorbased.c"
+                 line="53">a #GFileDescriptorBased.</doc>
+            <type name="Gio.FileDescriptorBased"
+                  c:type="GFileDescriptorBased*"/>
+          </parameter>
+        </parameters>
+      </function>
+    </interface>
+    <record name="FileDescriptorBasedIface"
+            c:type="GFileDescriptorBasedIface"
+            glib:is-gtype-struct-for="FileDescriptorBased">
+      <doc xml:space="preserve"
+           filename="gio/gfiledescriptorbased.h"
+           line="39">An interface for file descriptor based io objects.</doc>
+      <source-position filename="gio/gfiledescriptorbased.h" line="52"/>
+      <field name="g_iface">
+        <doc xml:space="preserve"
+             filename="gio/gfiledescriptorbased.h"
+             line="41">The parent interface.</doc>
+        <type name="GObject.TypeInterface" c:type="GTypeInterface"/>
+      </field>
+      <field name="get_fd">
+        <doc xml:space="preserve"
+             filename="gio/gfiledescriptorbased.h"
+             line="42">Gets the underlying file descriptor.</doc>
+        <callback name="get_fd">
+          <source-position filename="gio/gfiledescriptorbased.h" line="51"/>
+          <return-value transfer-ownership="none">
+            <type name="gint" c:type="int"/>
+          </return-value>
+          <parameters>
+            <parameter name="fd_based" transfer-ownership="none">
+              <type name="Gio.FileDescriptorBased"
+                    c:type="GFileDescriptorBased*"/>
+            </parameter>
+          </parameters>
+        </callback>
+      </field>
+    </record>
+    <function-macro name="INPUT_STREAM"
+                    c:identifier="G_UNIX_INPUT_STREAM"
+                    introspectable="0">
+      <source-position filename="gio/gunixinputstream.h" line="31"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="INPUT_STREAM_CLASS"
+                    c:identifier="G_UNIX_INPUT_STREAM_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixinputstream.h" line="32"/>
+      <parameters>
+        <parameter name="k">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="INPUT_STREAM_GET_CLASS"
+                    c:identifier="G_UNIX_INPUT_STREAM_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixinputstream.h" line="35"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_DESKTOP_APP_INFO"
+                    c:identifier="G_IS_DESKTOP_APP_INFO"
+                    introspectable="0">
+      <source-position filename="gio/gdesktopappinfo.h" line="33"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_DESKTOP_APP_INFO_CLASS"
+                    c:identifier="G_IS_DESKTOP_APP_INFO_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gdesktopappinfo.h" line="34"/>
+      <parameters>
+        <parameter name="k">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_DESKTOP_APP_INFO_LOOKUP"
+                    c:identifier="G_IS_DESKTOP_APP_INFO_LOOKUP"
+                    introspectable="0">
+      <source-position filename="gio/gdesktopappinfo.h" line="113"/>
+      <parameters>
+        <parameter name="obj">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_FILE_DESCRIPTOR_BASED"
+                    c:identifier="G_IS_FILE_DESCRIPTOR_BASED"
+                    introspectable="0">
+      <source-position filename="gio/gfiledescriptorbased.h" line="35"/>
+      <parameters>
+        <parameter name="obj">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_UNIX_FD_MESSAGE"
+                    c:identifier="G_IS_UNIX_FD_MESSAGE"
+                    introspectable="0">
+      <source-position filename="gio/gunixfdmessage.h" line="36"/>
+      <parameters>
+        <parameter name="inst">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_UNIX_FD_MESSAGE_CLASS"
+                    c:identifier="G_IS_UNIX_FD_MESSAGE_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixfdmessage.h" line="38"/>
+      <parameters>
+        <parameter name="class">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_UNIX_INPUT_STREAM"
+                    c:identifier="G_IS_UNIX_INPUT_STREAM"
+                    introspectable="0">
+      <source-position filename="gio/gunixinputstream.h" line="33"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_UNIX_INPUT_STREAM_CLASS"
+                    c:identifier="G_IS_UNIX_INPUT_STREAM_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixinputstream.h" line="34"/>
+      <parameters>
+        <parameter name="k">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_UNIX_MOUNT_MONITOR"
+                    c:identifier="G_IS_UNIX_MOUNT_MONITOR"
+                    introspectable="0">
+      <source-position filename="gio/gunixmounts.h" line="65"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_UNIX_MOUNT_MONITOR_CLASS"
+                    c:identifier="G_IS_UNIX_MOUNT_MONITOR_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixmounts.h" line="66"/>
+      <parameters>
+        <parameter name="k">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_UNIX_OUTPUT_STREAM"
+                    c:identifier="G_IS_UNIX_OUTPUT_STREAM"
+                    introspectable="0">
+      <source-position filename="gio/gunixoutputstream.h" line="33"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_UNIX_OUTPUT_STREAM_CLASS"
+                    c:identifier="G_IS_UNIX_OUTPUT_STREAM_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixoutputstream.h" line="34"/>
+      <parameters>
+        <parameter name="k">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <class name="InputStream"
+           c:symbol-prefix="input_stream"
+           c:type="GUnixInputStream"
+           parent="Gio.InputStream"
+           glib:type-name="GUnixInputStream"
+           glib:get-type="g_unix_input_stream_get_type"
+           glib:type-struct="InputStreamClass">
+      <doc xml:space="preserve"
+           filename="gio/gunixinputstream.c"
+           line="41">`GUnixInputStream` implements [class@Gio.InputStream] for reading from a UNIX
+file descriptor, including asynchronous operations. (If the file
+descriptor refers to a socket or pipe, this will use `poll()` to do
+asynchronous I/O. If it refers to a regular file, it will fall back
+to doing asynchronous I/O in another thread.)
+
+Note that `&lt;gio/gunixinputstream.h&gt;` belongs to the UNIX-specific GIO
+interfaces, thus you have to use the `gio-unix-2.0.pc` pkg-config
+file or the `GioUnix-2.0` GIR namespace when using it.</doc>
+      <source-position filename="gio/gunixinputstream.h" line="62"/>
+      <implements name="Gio.PollableInputStream"/>
+      <implements name="FileDescriptorBased"/>
+      <constructor name="new" c:identifier="g_unix_input_stream_new">
+        <doc xml:space="preserve"
+             filename="gio/gunixinputstream.c"
+             line="224">Creates a new #GUnixInputStream for the given @fd.
+
+If @close_fd is %TRUE, the file descriptor will be closed
+when the stream is closed.</doc>
+        <source-position filename="gio/gunixinputstream.h" line="68"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixinputstream.c"
+               line="234">a new #GUnixInputStream</doc>
+          <type name="Gio.InputStream" c:type="GInputStream*"/>
+        </return-value>
+        <parameters>
+          <parameter name="fd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixinputstream.c"
+                 line="226">a UNIX file descriptor</doc>
+            <type name="gint" c:type="gint"/>
+          </parameter>
+          <parameter name="close_fd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixinputstream.c"
+                 line="227">%TRUE to close the file descriptor when done</doc>
+            <type name="gboolean" c:type="gboolean"/>
+          </parameter>
+        </parameters>
+      </constructor>
+      <function name="get_close_fd"
+                c:identifier="g_unix_input_stream_get_close_fd"
+                version="2.20">
+        <doc xml:space="preserve"
+             filename="gio/gunixinputstream.c"
+             line="276">Returns whether the file descriptor of @stream will be
+closed when the stream is closed.</doc>
+        <source-position filename="gio/gunixinputstream.h" line="74"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixinputstream.c"
+               line="283">%TRUE if the file descriptor is closed when done</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="stream" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixinputstream.c"
+                 line="278">a #GUnixInputStream</doc>
+            <type name="Gio.UnixInputStream" c:type="GUnixInputStream*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_fd"
+                c:identifier="g_unix_input_stream_get_fd"
+                version="2.20">
+        <doc xml:space="preserve"
+             filename="gio/gunixinputstream.c"
+             line="295">Return the UNIX file descriptor that the stream reads from.</doc>
+        <source-position filename="gio/gunixinputstream.h" line="76"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixinputstream.c"
+               line="301">The file descriptor of @stream</doc>
+          <type name="gint" c:type="gint"/>
+        </return-value>
+        <parameters>
+          <parameter name="stream" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixinputstream.c"
+                 line="297">a #GUnixInputStream</doc>
+            <type name="Gio.UnixInputStream" c:type="GUnixInputStream*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="set_close_fd"
+                c:identifier="g_unix_input_stream_set_close_fd"
+                version="2.20">
+        <doc xml:space="preserve"
+             filename="gio/gunixinputstream.c"
+             line="252">Sets whether the file descriptor of @stream shall be closed
+when the stream is closed.</doc>
+        <source-position filename="gio/gunixinputstream.h" line="71"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="stream" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixinputstream.c"
+                 line="254">a #GUnixInputStream</doc>
+            <type name="Gio.UnixInputStream" c:type="GUnixInputStream*"/>
+          </parameter>
+          <parameter name="close_fd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixinputstream.c"
+                 line="255">%TRUE to close the file descriptor when done</doc>
+            <type name="gboolean" c:type="gboolean"/>
+          </parameter>
+        </parameters>
+      </function>
+      <property name="close-fd"
+                version="2.20"
+                writable="1"
+                transfer-ownership="none"
+                default-value="TRUE">
+        <doc xml:space="preserve"
+             filename="gio/gunixinputstream.c"
+             line="140">Whether to close the file descriptor when the stream is closed.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </property>
+      <property name="fd"
+                version="2.20"
+                writable="1"
+                construct-only="1"
+                transfer-ownership="none"
+                default-value="-1">
+        <doc xml:space="preserve"
+             filename="gio/gunixinputstream.c"
+             line="127">The file descriptor that the stream reads from.</doc>
+        <type name="gint" c:type="gint"/>
+      </property>
+      <field name="parent_instance">
+        <type name="Gio.InputStream" c:type="GInputStream"/>
+      </field>
+      <field name="priv" readable="0" private="1">
+        <type name="Gio.UnixInputStreamPrivate"
+              c:type="GUnixInputStreamPrivate*"/>
+      </field>
+    </class>
+    <record name="InputStreamClass"
+            c:type="GUnixInputStreamClass"
+            glib:is-gtype-struct-for="InputStream">
+      <source-position filename="gio/gunixinputstream.h" line="62"/>
+      <field name="parent_class">
+        <type name="Gio.InputStreamClass" c:type="GInputStreamClass"/>
+      </field>
+      <field name="_g_reserved1" introspectable="0">
+        <callback name="_g_reserved1">
+          <source-position filename="gio/gunixinputstream.h" line="57"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+      <field name="_g_reserved2" introspectable="0">
+        <callback name="_g_reserved2">
+          <source-position filename="gio/gunixinputstream.h" line="58"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+      <field name="_g_reserved3" introspectable="0">
+        <callback name="_g_reserved3">
+          <source-position filename="gio/gunixinputstream.h" line="59"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+      <field name="_g_reserved4" introspectable="0">
+        <callback name="_g_reserved4">
+          <source-position filename="gio/gunixinputstream.h" line="60"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+      <field name="_g_reserved5" introspectable="0">
+        <callback name="_g_reserved5">
+          <source-position filename="gio/gunixinputstream.h" line="61"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+    </record>
+    <record name="InputStreamPrivate"
+            c:type="GUnixInputStreamPrivate"
+            disguised="1"
+            opaque="1">
+      <source-position filename="gio/gunixinputstream.h" line="39"/>
+    </record>
+    <function-macro name="MOUNT_MONITOR"
+                    c:identifier="G_UNIX_MOUNT_MONITOR"
+                    introspectable="0">
+      <source-position filename="gio/gunixmounts.h" line="63"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="MOUNT_MONITOR_CLASS"
+                    c:identifier="G_UNIX_MOUNT_MONITOR_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixmounts.h" line="64"/>
+      <parameters>
+        <parameter name="k">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <record name="MountEntry"
+            c:type="GUnixMountEntry"
+            opaque="1"
+            glib:type-name="GUnixMountEntry"
+            glib:get-type="g_unix_mount_entry_get_type"
+            c:symbol-prefix="mount_entry">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.h"
+           line="30">Defines a Unix mount entry (e.g. &lt;filename&gt;/media/cdrom&lt;/filename&gt;).
+This corresponds roughly to a mtab entry.</doc>
+      <source-position filename="gio/gunixmounts.h" line="36"/>
+    </record>
+    <class name="MountMonitor"
+           c:symbol-prefix="mount_monitor"
+           c:type="GUnixMountMonitor"
+           parent="GObject.Object"
+           glib:type-name="GUnixMountMonitor"
+           glib:get-type="g_unix_mount_monitor_get_type"
+           glib:type-struct="MountMonitorClass">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.h"
+           line="54">Watches #GUnixMounts for changes.</doc>
+      <source-position filename="gio/gunixmounts.h" line="60"/>
+      <constructor name="new"
+                   c:identifier="g_unix_mount_monitor_new"
+                   deprecated="1"
+                   deprecated-version="2.44">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2242">Deprecated alias for g_unix_mount_monitor_get().
+
+This function was never a true constructor, which is why it was
+renamed.</doc>
+        <doc-deprecated xml:space="preserve">Use g_unix_mount_monitor_get() instead.</doc-deprecated>
+        <source-position filename="gio/gunixmounts.h" line="158"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2250">a #GUnixMountMonitor.</doc>
+          <type name="Gio.UnixMountMonitor" c:type="GUnixMountMonitor*"/>
+        </return-value>
+      </constructor>
+      <function name="get"
+                c:identifier="g_unix_mount_monitor_get"
+                version="2.44">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2216">Gets the #GUnixMountMonitor for the current thread-default main
+context.
+
+The mount monitor can be used to monitor for changes to the list of
+mounted filesystems as well as the list of mount points (ie: fstab
+entries).
+
+You must only call g_object_unref() on the return value from under
+the same main context as you called this function.</doc>
+        <source-position filename="gio/gunixmounts.h" line="156"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2229">the #GUnixMountMonitor.</doc>
+          <type name="Gio.UnixMountMonitor" c:type="GUnixMountMonitor*"/>
+        </return-value>
+      </function>
+      <function name="set_rate_limit"
+                c:identifier="g_unix_mount_monitor_set_rate_limit"
+                version="2.18"
+                deprecated="1"
+                deprecated-version="2.44">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2192">This function does nothing.
+
+Before 2.44, this was a partially-effective way of controlling the
+rate at which events would be reported under some uncommon
+circumstances.  Since @mount_monitor is a singleton, it also meant
+that calling this function would have side effects for other users of
+the monitor.</doc>
+        <doc-deprecated xml:space="preserve">This function does nothing.  Don't call it.</doc-deprecated>
+        <source-position filename="gio/gunixmounts.h" line="160"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_monitor" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2194">a #GUnixMountMonitor</doc>
+            <type name="Gio.UnixMountMonitor" c:type="GUnixMountMonitor*"/>
+          </parameter>
+          <parameter name="limit_msec" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2195">a integer with the limit in milliseconds to
+    poll for changes.</doc>
+            <type name="gint" c:type="int"/>
+          </parameter>
+        </parameters>
+      </function>
+      <glib:signal name="mountpoints-changed" when="last">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2171">Emitted when the unix mount points have changed.</doc>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+      </glib:signal>
+      <glib:signal name="mounts-changed" when="last">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2156">Emitted when the unix mounts have changed.</doc>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+      </glib:signal>
+    </class>
+    <record name="MountMonitorClass"
+            c:type="GUnixMountMonitorClass"
+            disguised="1"
+            opaque="1"
+            glib:is-gtype-struct-for="MountMonitor">
+      <source-position filename="gio/gunixmounts.h" line="60"/>
+    </record>
+    <record name="MountPoint"
+            c:type="GUnixMountPoint"
+            opaque="1"
+            glib:type-name="GUnixMountPoint"
+            glib:get-type="g_unix_mount_point_get_type"
+            c:symbol-prefix="mount_point">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.h"
+           line="42">Defines a Unix mount point (e.g. &lt;filename&gt;/dev&lt;/filename&gt;).
+This corresponds roughly to a fstab entry.</doc>
+      <source-position filename="gio/gunixmounts.h" line="48"/>
+      <function name="at" c:identifier="g_unix_mount_point_at" version="2.66">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="1727">Gets a #GUnixMountPoint for a given mount path. If @time_read is set, it
+will be filled with a unix timestamp for checking if the mount points have
+changed since with g_unix_mount_points_changed_since().
+
+If more mount points have the same mount path, the last matching mount point
+is returned.</doc>
+        <source-position filename="gio/gunixmounts.h" line="138"/>
+        <return-value transfer-ownership="full" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1739">a #GUnixMountPoint, or %NULL if no match
+is found.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_path" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="1729">path for a possible unix mount point.</doc>
+            <type name="filename" c:type="const char*"/>
+          </parameter>
+          <parameter name="time_read"
+                     direction="out"
+                     caller-allocates="0"
+                     transfer-ownership="full"
+                     optional="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="1730">guint64 to contain a timestamp.</doc>
+            <type name="guint64" c:type="guint64*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="compare" c:identifier="g_unix_mount_point_compare">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2533">Compares two unix mount points.</doc>
+        <source-position filename="gio/gunixmounts.h" line="109"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2540">1, 0 or -1 if @mount1 is greater than, equal to,
+or less than @mount2, respectively.</doc>
+          <type name="gint" c:type="gint"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount1" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2535">a #GUnixMount.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+          <parameter name="mount2" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2536">a #GUnixMount.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="copy"
+                c:identifier="g_unix_mount_point_copy"
+                version="2.54">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2327">Makes a copy of @mount_point.</doc>
+        <source-position filename="gio/gunixmounts.h" line="76"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2333">a new #GUnixMountPoint</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2329">a #GUnixMountPoint.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="free" c:identifier="g_unix_mount_point_free">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2309">Frees a unix mount point.</doc>
+        <source-position filename="gio/gunixmounts.h" line="74"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2311">unix mount point to free.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_device_path"
+                c:identifier="g_unix_mount_point_get_device_path">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2598">Gets the device path for a unix mount point.</doc>
+        <source-position filename="gio/gunixmounts.h" line="114"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2604">a string containing the device path.</doc>
+          <type name="filename" c:type="const char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2600">a #GUnixMountPoint.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_fs_type"
+                c:identifier="g_unix_mount_point_get_fs_type">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2614">Gets the file system type for the mount point.</doc>
+        <source-position filename="gio/gunixmounts.h" line="116"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2620">a string containing the file system type.</doc>
+          <type name="utf8" c:type="const char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2616">a #GUnixMountPoint.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_mount_path"
+                c:identifier="g_unix_mount_point_get_mount_path">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2582">Gets the mount path for a unix mount point.</doc>
+        <source-position filename="gio/gunixmounts.h" line="112"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2588">a string containing the mount path.</doc>
+          <type name="filename" c:type="const char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2584">a #GUnixMountPoint.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_options"
+                c:identifier="g_unix_mount_point_get_options"
+                version="2.32">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2630">Gets the options for the mount point.</doc>
+        <source-position filename="gio/gunixmounts.h" line="118"/>
+        <return-value transfer-ownership="none" nullable="1">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2636">a string containing the options.</doc>
+          <type name="utf8" c:type="const char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2632">a #GUnixMountPoint.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="guess_can_eject"
+                c:identifier="g_unix_mount_point_guess_can_eject">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="3095">Guesses whether a Unix mount point can be ejected.</doc>
+        <source-position filename="gio/gunixmounts.h" line="126"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="3101">%TRUE if @mount_point is deemed to be ejectable.</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="3097">a #GUnixMountPoint</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="guess_icon" c:identifier="g_unix_mount_point_guess_icon">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2957">Guesses the icon of a Unix mount point.</doc>
+        <source-position filename="gio/gunixmounts.h" line="130"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2963">a #GIcon</doc>
+          <type name="Gio.Icon" c:type="GIcon*"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2959">a #GUnixMountPoint</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="guess_name" c:identifier="g_unix_mount_point_guess_name">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2934">Guesses the name of a Unix mount point.
+The result is a translated string.</doc>
+        <source-position filename="gio/gunixmounts.h" line="128"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2941">A newly allocated string that must
+    be freed with g_free()</doc>
+          <type name="utf8" c:type="char*"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2936">a #GUnixMountPoint</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="guess_symbolic_icon"
+                c:identifier="g_unix_mount_point_guess_symbolic_icon"
+                version="2.34">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2971">Guesses the symbolic icon of a Unix mount point.</doc>
+        <source-position filename="gio/gunixmounts.h" line="132"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2977">a #GIcon</doc>
+          <type name="Gio.Icon" c:type="GIcon*"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2973">a #GUnixMountPoint</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="is_loopback"
+                c:identifier="g_unix_mount_point_is_loopback">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2680">Checks if a unix mount point is a loopback device.</doc>
+        <source-position filename="gio/gunixmounts.h" line="124"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2686">%TRUE if the mount point is a loopback. %FALSE otherwise.</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2682">a #GUnixMountPoint.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="is_readonly"
+                c:identifier="g_unix_mount_point_is_readonly">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2648">Checks if a unix mount point is read only.</doc>
+        <source-position filename="gio/gunixmounts.h" line="120"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2654">%TRUE if a mount point is read only.</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2650">a #GUnixMountPoint.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="is_user_mountable"
+                c:identifier="g_unix_mount_point_is_user_mountable">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2664">Checks if a unix mount point is mountable by the user.</doc>
+        <source-position filename="gio/gunixmounts.h" line="122"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2670">%TRUE if the mount point is user mountable.</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="mount_point" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixmounts.c"
+                 line="2666">a #GUnixMountPoint.</doc>
+            <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+          </parameter>
+        </parameters>
+      </function>
+    </record>
+    <function-macro name="OUTPUT_STREAM"
+                    c:identifier="G_UNIX_OUTPUT_STREAM"
+                    introspectable="0">
+      <source-position filename="gio/gunixoutputstream.h" line="31"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="OUTPUT_STREAM_CLASS"
+                    c:identifier="G_UNIX_OUTPUT_STREAM_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixoutputstream.h" line="32"/>
+      <parameters>
+        <parameter name="k">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="OUTPUT_STREAM_GET_CLASS"
+                    c:identifier="G_UNIX_OUTPUT_STREAM_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="gio/gunixoutputstream.h" line="35"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <class name="OutputStream"
+           c:symbol-prefix="output_stream"
+           c:type="GUnixOutputStream"
+           parent="Gio.OutputStream"
+           glib:type-name="GUnixOutputStream"
+           glib:get-type="g_unix_output_stream_get_type"
+           glib:type-struct="OutputStreamClass">
+      <doc xml:space="preserve"
+           filename="gio/gunixoutputstream.c"
+           line="43">`GUnixOutputStream` implements [class@Gio.OutputStream] for writing to a UNIX
+file descriptor, including asynchronous operations. (If the file
+descriptor refers to a socket or pipe, this will use `poll()` to do
+asynchronous I/O. If it refers to a regular file, it will fall back
+to doing asynchronous I/O in another thread.)
+
+Note that `&lt;gio/gunixoutputstream.h&gt;` belongs to the UNIX-specific GIO
+interfaces, thus you have to use the `gio-unix-2.0.pc` pkg-config file
+file or the `GioUnix-2.0` GIR namespace when using it.</doc>
+      <source-position filename="gio/gunixoutputstream.h" line="62"/>
+      <implements name="Gio.PollableOutputStream"/>
+      <implements name="FileDescriptorBased"/>
+      <constructor name="new" c:identifier="g_unix_output_stream_new">
+        <doc xml:space="preserve"
+             filename="gio/gunixoutputstream.c"
+             line="224">Creates a new #GUnixOutputStream for the given @fd.
+
+If @close_fd, is %TRUE, the file descriptor will be closed when
+the output stream is destroyed.</doc>
+        <source-position filename="gio/gunixoutputstream.h" line="68"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="gio/gunixoutputstream.c"
+               line="234">a new #GOutputStream</doc>
+          <type name="Gio.OutputStream" c:type="GOutputStream*"/>
+        </return-value>
+        <parameters>
+          <parameter name="fd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixoutputstream.c"
+                 line="226">a UNIX file descriptor</doc>
+            <type name="gint" c:type="gint"/>
+          </parameter>
+          <parameter name="close_fd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixoutputstream.c"
+                 line="227">%TRUE to close the file descriptor when done</doc>
+            <type name="gboolean" c:type="gboolean"/>
+          </parameter>
+        </parameters>
+      </constructor>
+      <function name="get_close_fd"
+                c:identifier="g_unix_output_stream_get_close_fd"
+                version="2.20">
+        <doc xml:space="preserve"
+             filename="gio/gunixoutputstream.c"
+             line="276">Returns whether the file descriptor of @stream will be
+closed when the stream is closed.</doc>
+        <source-position filename="gio/gunixoutputstream.h" line="74"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixoutputstream.c"
+               line="283">%TRUE if the file descriptor is closed when done</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="stream" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixoutputstream.c"
+                 line="278">a #GUnixOutputStream</doc>
+            <type name="Gio.UnixOutputStream" c:type="GUnixOutputStream*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="get_fd"
+                c:identifier="g_unix_output_stream_get_fd"
+                version="2.20">
+        <doc xml:space="preserve"
+             filename="gio/gunixoutputstream.c"
+             line="295">Return the UNIX file descriptor that the stream writes to.</doc>
+        <source-position filename="gio/gunixoutputstream.h" line="76"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixoutputstream.c"
+               line="301">The file descriptor of @stream</doc>
+          <type name="gint" c:type="gint"/>
+        </return-value>
+        <parameters>
+          <parameter name="stream" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixoutputstream.c"
+                 line="297">a #GUnixOutputStream</doc>
+            <type name="Gio.UnixOutputStream" c:type="GUnixOutputStream*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <function name="set_close_fd"
+                c:identifier="g_unix_output_stream_set_close_fd"
+                version="2.20">
+        <doc xml:space="preserve"
+             filename="gio/gunixoutputstream.c"
+             line="252">Sets whether the file descriptor of @stream shall be closed
+when the stream is closed.</doc>
+        <source-position filename="gio/gunixoutputstream.h" line="71"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="stream" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixoutputstream.c"
+                 line="254">a #GUnixOutputStream</doc>
+            <type name="Gio.UnixOutputStream" c:type="GUnixOutputStream*"/>
+          </parameter>
+          <parameter name="close_fd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="gio/gunixoutputstream.c"
+                 line="255">%TRUE to close the file descriptor when done</doc>
+            <type name="gboolean" c:type="gboolean"/>
+          </parameter>
+        </parameters>
+      </function>
+      <property name="close-fd"
+                version="2.20"
+                writable="1"
+                transfer-ownership="none"
+                default-value="TRUE">
+        <doc xml:space="preserve"
+             filename="gio/gunixoutputstream.c"
+             line="139">Whether to close the file descriptor when the stream is closed.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </property>
+      <property name="fd"
+                version="2.20"
+                writable="1"
+                construct-only="1"
+                transfer-ownership="none"
+                default-value="-1">
+        <doc xml:space="preserve"
+             filename="gio/gunixoutputstream.c"
+             line="126">The file descriptor that the stream writes to.</doc>
+        <type name="gint" c:type="gint"/>
+      </property>
+      <field name="parent_instance">
+        <type name="Gio.OutputStream" c:type="GOutputStream"/>
+      </field>
+      <field name="priv" readable="0" private="1">
+        <type name="Gio.UnixOutputStreamPrivate"
+              c:type="GUnixOutputStreamPrivate*"/>
+      </field>
+    </class>
+    <record name="OutputStreamClass"
+            c:type="GUnixOutputStreamClass"
+            glib:is-gtype-struct-for="OutputStream">
+      <source-position filename="gio/gunixoutputstream.h" line="62"/>
+      <field name="parent_class">
+        <type name="Gio.OutputStreamClass" c:type="GOutputStreamClass"/>
+      </field>
+      <field name="_g_reserved1" introspectable="0">
+        <callback name="_g_reserved1">
+          <source-position filename="gio/gunixoutputstream.h" line="57"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+      <field name="_g_reserved2" introspectable="0">
+        <callback name="_g_reserved2">
+          <source-position filename="gio/gunixoutputstream.h" line="58"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+      <field name="_g_reserved3" introspectable="0">
+        <callback name="_g_reserved3">
+          <source-position filename="gio/gunixoutputstream.h" line="59"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+      <field name="_g_reserved4" introspectable="0">
+        <callback name="_g_reserved4">
+          <source-position filename="gio/gunixoutputstream.h" line="60"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+      <field name="_g_reserved5" introspectable="0">
+        <callback name="_g_reserved5">
+          <source-position filename="gio/gunixoutputstream.h" line="61"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+        </callback>
+      </field>
+    </record>
+    <record name="OutputStreamPrivate"
+            c:type="GUnixOutputStreamPrivate"
+            disguised="1"
+            opaque="1">
+      <source-position filename="gio/gunixoutputstream.h" line="39"/>
+    </record>
+    <function name="desktop_app_info_lookup_get_default_for_uri_scheme"
+              c:identifier="g_desktop_app_info_lookup_get_default_for_uri_scheme"
+              moved-to="DesktopAppInfoLookup.get_default_for_uri_scheme"
+              deprecated="1"
+              deprecated-version="2.28">
+      <doc xml:space="preserve"
+           filename="gio/gdesktopappinfo.c"
+           line="4963">Gets the default application for launching applications
+using this URI scheme for a particular #GDesktopAppInfoLookup
+implementation.
+
+The #GDesktopAppInfoLookup interface and this function is used
+to implement g_app_info_get_default_for_uri_scheme() backends
+in a GIO module. There is no reason for applications to use it
+directly. Applications should use g_app_info_get_default_for_uri_scheme().</doc>
+      <doc-deprecated xml:space="preserve">The #GDesktopAppInfoLookup interface is deprecated and
+   unused by GIO.</doc-deprecated>
+      <source-position filename="gio/gdesktopappinfo.h" line="150"/>
+      <return-value transfer-ownership="full" nullable="1">
+        <doc xml:space="preserve"
+             filename="gio/gdesktopappinfo.c"
+             line="4977">#GAppInfo for given @uri_scheme or
+   %NULL on error.</doc>
+        <type name="Gio.AppInfo" c:type="GAppInfo*"/>
+      </return-value>
+      <parameters>
+        <parameter name="lookup" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="4965">a #GDesktopAppInfoLookup</doc>
+          <type name="Gio.DesktopAppInfoLookup"
+                c:type="GDesktopAppInfoLookup*"/>
+        </parameter>
+        <parameter name="uri_scheme" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gdesktopappinfo.c"
+               line="4966">a string containing a URI scheme.</doc>
+          <type name="utf8" c:type="const char*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="file_descriptor_based_get_fd"
+              c:identifier="g_file_descriptor_based_get_fd"
+              moved-to="FileDescriptorBased.get_fd"
+              version="2.24">
+      <doc xml:space="preserve"
+           filename="gio/gfiledescriptorbased.c"
+           line="51">Gets the underlying file descriptor.</doc>
+      <source-position filename="gio/gfiledescriptorbased.h" line="58"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gfiledescriptorbased.c"
+             line="57">The file descriptor</doc>
+        <type name="gint" c:type="int"/>
+      </return-value>
+      <parameters>
+        <parameter name="fd_based" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gfiledescriptorbased.c"
+               line="53">a #GFileDescriptorBased.</doc>
+          <type name="Gio.FileDescriptorBased" c:type="GFileDescriptorBased*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="is_mount_path_system_internal"
+              c:identifier="g_unix_is_mount_path_system_internal">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="221">Determines if @mount_path is considered an implementation of the
+OS. This is primarily used for hiding mountable and mounted volumes
+that only are used in the OS and has little to no relevance to the
+casual user.</doc>
+      <source-position filename="gio/gunixmounts.h" line="164"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="230">%TRUE if @mount_path is considered an implementation detail
+    of the OS.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_path" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="223">a mount path, e.g. `/media/disk` or `/usr`</doc>
+          <type name="filename" c:type="const char*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="is_system_device_path"
+              c:identifier="g_unix_is_system_device_path"
+              version="2.56">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="368">Determines if @device_path is considered a block device path which is only
+used in implementation of the OS. This is primarily used for hiding
+mounted volumes that are intended as APIs for programs to read, and system
+administrators at a shell; rather than something that should, for example,
+appear in a GUI. For example, the Linux `/proc` filesystem.
+
+The list of device paths considered ‘system’ ones may change over time.</doc>
+      <source-position filename="gio/gunixmounts.h" line="168"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="380">%TRUE if @device_path is considered an implementation detail of
+   the OS.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="device_path" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="370">a device path, e.g. `/dev/loop0` or `nfsd`</doc>
+          <type name="utf8" c:type="const char*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="is_system_fs_type"
+              c:identifier="g_unix_is_system_fs_type"
+              version="2.56">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="299">Determines if @fs_type is considered a type of file system which is only
+used in implementation of the OS. This is primarily used for hiding
+mounted volumes that are intended as APIs for programs to read, and system
+administrators at a shell; rather than something that should, for example,
+appear in a GUI. For example, the Linux `/proc` filesystem.
+
+The list of file system types considered ‘system’ ones may change over time.</doc>
+      <source-position filename="gio/gunixmounts.h" line="166"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="311">%TRUE if @fs_type is considered an implementation detail of the OS.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="fs_type" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="301">a file system type, e.g. `procfs` or `tmpfs`</doc>
+          <type name="utf8" c:type="const char*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_at" c:identifier="g_unix_mount_at">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="1591">Gets a #GUnixMountEntry for a given mount path. If @time_read
+is set, it will be filled with a unix timestamp for checking
+if the mounts have changed since with g_unix_mounts_changed_since().
+
+If more mounts have the same mount path, the last matching mount
+is returned.
+
+This will return %NULL if there is no mount point at @mount_path.</doc>
+      <source-position filename="gio/gunixmounts.h" line="143"/>
+      <return-value transfer-ownership="full" nullable="1">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="1605">a #GUnixMountEntry.</doc>
+        <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_path" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1593">path for a possible unix mount.</doc>
+          <type name="filename" c:type="const char*"/>
+        </parameter>
+        <parameter name="time_read"
+                   direction="out"
+                   caller-allocates="0"
+                   transfer-ownership="full"
+                   optional="1"
+                   allow-none="1">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1594">guint64 to contain a timestamp.</doc>
+          <type name="guint64" c:type="guint64*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_compare" c:identifier="g_unix_mount_compare">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2356">Compares two unix mounts.</doc>
+      <source-position filename="gio/gunixmounts.h" line="78"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2363">1, 0 or -1 if @mount1 is greater than, equal to,
+or less than @mount2, respectively.</doc>
+        <type name="gint" c:type="gint"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount1" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2358">first #GUnixMountEntry to compare.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+        <parameter name="mount2" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2359">second #GUnixMountEntry to compare.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_copy"
+              c:identifier="g_unix_mount_copy"
+              version="2.54">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2280">Makes a copy of @mount_entry.</doc>
+      <source-position filename="gio/gunixmounts.h" line="72"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2286">a new #GUnixMountEntry</doc>
+        <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2282">a #GUnixMountEntry.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_for" c:identifier="g_unix_mount_for" version="2.52">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="1636">Gets a #GUnixMountEntry for a given file path. If @time_read
+is set, it will be filled with a unix timestamp for checking
+if the mounts have changed since with g_unix_mounts_changed_since().
+
+If more mounts have the same mount path, the last matching mount
+is returned.
+
+This will return %NULL if looking up the mount entry fails, if
+@file_path doesn’t exist or there is an I/O error.</doc>
+      <source-position filename="gio/gunixmounts.h" line="146"/>
+      <return-value transfer-ownership="full" nullable="1">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="1651">a #GUnixMountEntry.</doc>
+        <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+      </return-value>
+      <parameters>
+        <parameter name="file_path" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1638">file path on some unix mount.</doc>
+          <type name="filename" c:type="const char*"/>
+        </parameter>
+        <parameter name="time_read"
+                   direction="out"
+                   caller-allocates="0"
+                   transfer-ownership="full"
+                   optional="1"
+                   allow-none="1">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1639">guint64 to contain a timestamp.</doc>
+          <type name="guint64" c:type="guint64*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_free" c:identifier="g_unix_mount_free">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2261">Frees a unix mount.</doc>
+      <source-position filename="gio/gunixmounts.h" line="70"/>
+      <return-value transfer-ownership="none">
+        <type name="none" c:type="void"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2263">a #GUnixMountEntry.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_get_device_path"
+              c:identifier="g_unix_mount_get_device_path">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2417">Gets the device path for a unix mount.</doc>
+      <source-position filename="gio/gunixmounts.h" line="83"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2423">a string containing the device path.</doc>
+        <type name="filename" c:type="const char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2419">a #GUnixMount.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_get_fs_type" c:identifier="g_unix_mount_get_fs_type">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2456">Gets the filesystem type for the unix mount.</doc>
+      <source-position filename="gio/gunixmounts.h" line="87"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2462">a string containing the file system type.</doc>
+        <type name="utf8" c:type="const char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2458">a #GUnixMount.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_get_mount_path"
+              c:identifier="g_unix_mount_get_mount_path">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2401">Gets the mount path for a unix mount.</doc>
+      <source-position filename="gio/gunixmounts.h" line="81"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2407">the mount path for @mount_entry.</doc>
+        <type name="filename" c:type="const char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2403">input #GUnixMountEntry to get the mount path for.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_get_options"
+              c:identifier="g_unix_mount_get_options"
+              version="2.58">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2472">Gets a comma-separated list of mount options for the unix mount. For example,
+`rw,relatime,seclabel,data=ordered`.
+
+This is similar to g_unix_mount_point_get_options(), but it takes
+a #GUnixMountEntry as an argument.</doc>
+      <source-position filename="gio/gunixmounts.h" line="89"/>
+      <return-value transfer-ownership="none" nullable="1">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2482">a string containing the options, or %NULL if not
+available.</doc>
+        <type name="utf8" c:type="const char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2474">a #GUnixMountEntry.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_get_root_path"
+              c:identifier="g_unix_mount_get_root_path"
+              version="2.60">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2433">Gets the root of the mount within the filesystem. This is useful e.g. for
+mounts created by bind operation, or btrfs subvolumes.
+
+For example, the root path is equal to "/" for mount created by
+"mount /dev/sda1 /mnt/foo" and "/bar" for
+"mount --bind /mnt/foo/bar /mnt/bar".</doc>
+      <source-position filename="gio/gunixmounts.h" line="85"/>
+      <return-value transfer-ownership="none" nullable="1">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2444">a string containing the root, or %NULL if not supported.</doc>
+        <type name="utf8" c:type="const char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2435">a #GUnixMountEntry.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_guess_can_eject"
+              c:identifier="g_unix_mount_guess_can_eject">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2987">Guesses whether a Unix mount can be ejected.</doc>
+      <source-position filename="gio/gunixmounts.h" line="95"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2993">%TRUE if @mount_entry is deemed to be ejectable.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2989">a #GUnixMountEntry</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_guess_icon" c:identifier="g_unix_mount_guess_icon">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2904">Guesses the icon of a Unix mount.</doc>
+      <source-position filename="gio/gunixmounts.h" line="101"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2910">a #GIcon</doc>
+        <type name="Gio.Icon" c:type="GIcon*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2906">a #GUnixMountEntry</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_guess_name" c:identifier="g_unix_mount_guess_name">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2881">Guesses the name of a Unix mount.
+The result is a translated string.</doc>
+      <source-position filename="gio/gunixmounts.h" line="99"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2888">A newly allocated string that must
+    be freed with g_free()</doc>
+        <type name="utf8" c:type="char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2883">a #GUnixMountEntry</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_guess_should_display"
+              c:identifier="g_unix_mount_guess_should_display">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="3008">Guesses whether a Unix mount should be displayed in the UI.</doc>
+      <source-position filename="gio/gunixmounts.h" line="97"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="3014">%TRUE if @mount_entry is deemed to be displayable.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="3010">a #GUnixMountEntry</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_guess_symbolic_icon"
+              c:identifier="g_unix_mount_guess_symbolic_icon"
+              version="2.34">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2918">Guesses the symbolic icon of a Unix mount.</doc>
+      <source-position filename="gio/gunixmounts.h" line="103"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2924">a #GIcon</doc>
+        <type name="Gio.Icon" c:type="GIcon*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2920">a #GUnixMountEntry</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_is_readonly" c:identifier="g_unix_mount_is_readonly">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2495">Checks if a unix mount is mounted read only.</doc>
+      <source-position filename="gio/gunixmounts.h" line="91"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2501">%TRUE if @mount_entry is read only.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2497">a #GUnixMount.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_is_system_internal"
+              c:identifier="g_unix_mount_is_system_internal">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2511">Checks if a Unix mount is a system mount. This is the Boolean OR of
+g_unix_is_system_fs_type(), g_unix_is_system_device_path() and
+g_unix_is_mount_path_system_internal() on @mount_entry’s properties.
+
+The definition of what a ‘system’ mount entry is may change over time as new
+file system types and device paths are ignored.</doc>
+      <source-position filename="gio/gunixmounts.h" line="93"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2522">%TRUE if the unix mount is for a system path.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_entry" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2513">a #GUnixMount.</doc>
+          <type name="Gio.UnixMountEntry" c:type="GUnixMountEntry*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_at"
+              c:identifier="g_unix_mount_point_at"
+              moved-to="MountPoint.at"
+              version="2.66">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="1727">Gets a #GUnixMountPoint for a given mount path. If @time_read is set, it
+will be filled with a unix timestamp for checking if the mount points have
+changed since with g_unix_mount_points_changed_since().
+
+If more mount points have the same mount path, the last matching mount point
+is returned.</doc>
+      <source-position filename="gio/gunixmounts.h" line="138"/>
+      <return-value transfer-ownership="full" nullable="1">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="1739">a #GUnixMountPoint, or %NULL if no match
+is found.</doc>
+        <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_path" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1729">path for a possible unix mount point.</doc>
+          <type name="filename" c:type="const char*"/>
+        </parameter>
+        <parameter name="time_read"
+                   direction="out"
+                   caller-allocates="0"
+                   transfer-ownership="full"
+                   optional="1"
+                   allow-none="1">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1730">guint64 to contain a timestamp.</doc>
+          <type name="guint64" c:type="guint64*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_compare"
+              c:identifier="g_unix_mount_point_compare"
+              moved-to="MountPoint.compare">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2533">Compares two unix mount points.</doc>
+      <source-position filename="gio/gunixmounts.h" line="109"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2540">1, 0 or -1 if @mount1 is greater than, equal to,
+or less than @mount2, respectively.</doc>
+        <type name="gint" c:type="gint"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount1" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2535">a #GUnixMount.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+        <parameter name="mount2" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2536">a #GUnixMount.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_copy"
+              c:identifier="g_unix_mount_point_copy"
+              moved-to="MountPoint.copy"
+              version="2.54">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2327">Makes a copy of @mount_point.</doc>
+      <source-position filename="gio/gunixmounts.h" line="76"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2333">a new #GUnixMountPoint</doc>
+        <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2329">a #GUnixMountPoint.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_free"
+              c:identifier="g_unix_mount_point_free"
+              moved-to="MountPoint.free">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2309">Frees a unix mount point.</doc>
+      <source-position filename="gio/gunixmounts.h" line="74"/>
+      <return-value transfer-ownership="none">
+        <type name="none" c:type="void"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2311">unix mount point to free.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_get_device_path"
+              c:identifier="g_unix_mount_point_get_device_path"
+              moved-to="MountPoint.get_device_path">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2598">Gets the device path for a unix mount point.</doc>
+      <source-position filename="gio/gunixmounts.h" line="114"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2604">a string containing the device path.</doc>
+        <type name="filename" c:type="const char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2600">a #GUnixMountPoint.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_get_fs_type"
+              c:identifier="g_unix_mount_point_get_fs_type"
+              moved-to="MountPoint.get_fs_type">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2614">Gets the file system type for the mount point.</doc>
+      <source-position filename="gio/gunixmounts.h" line="116"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2620">a string containing the file system type.</doc>
+        <type name="utf8" c:type="const char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2616">a #GUnixMountPoint.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_get_mount_path"
+              c:identifier="g_unix_mount_point_get_mount_path"
+              moved-to="MountPoint.get_mount_path">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2582">Gets the mount path for a unix mount point.</doc>
+      <source-position filename="gio/gunixmounts.h" line="112"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2588">a string containing the mount path.</doc>
+        <type name="filename" c:type="const char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2584">a #GUnixMountPoint.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_get_options"
+              c:identifier="g_unix_mount_point_get_options"
+              moved-to="MountPoint.get_options"
+              version="2.32">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2630">Gets the options for the mount point.</doc>
+      <source-position filename="gio/gunixmounts.h" line="118"/>
+      <return-value transfer-ownership="none" nullable="1">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2636">a string containing the options.</doc>
+        <type name="utf8" c:type="const char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2632">a #GUnixMountPoint.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_guess_can_eject"
+              c:identifier="g_unix_mount_point_guess_can_eject"
+              moved-to="MountPoint.guess_can_eject">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="3095">Guesses whether a Unix mount point can be ejected.</doc>
+      <source-position filename="gio/gunixmounts.h" line="126"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="3101">%TRUE if @mount_point is deemed to be ejectable.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="3097">a #GUnixMountPoint</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_guess_icon"
+              c:identifier="g_unix_mount_point_guess_icon"
+              moved-to="MountPoint.guess_icon">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2957">Guesses the icon of a Unix mount point.</doc>
+      <source-position filename="gio/gunixmounts.h" line="130"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2963">a #GIcon</doc>
+        <type name="Gio.Icon" c:type="GIcon*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2959">a #GUnixMountPoint</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_guess_name"
+              c:identifier="g_unix_mount_point_guess_name"
+              moved-to="MountPoint.guess_name">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2934">Guesses the name of a Unix mount point.
+The result is a translated string.</doc>
+      <source-position filename="gio/gunixmounts.h" line="128"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2941">A newly allocated string that must
+    be freed with g_free()</doc>
+        <type name="utf8" c:type="char*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2936">a #GUnixMountPoint</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_guess_symbolic_icon"
+              c:identifier="g_unix_mount_point_guess_symbolic_icon"
+              moved-to="MountPoint.guess_symbolic_icon"
+              version="2.34">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2971">Guesses the symbolic icon of a Unix mount point.</doc>
+      <source-position filename="gio/gunixmounts.h" line="132"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2977">a #GIcon</doc>
+        <type name="Gio.Icon" c:type="GIcon*"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2973">a #GUnixMountPoint</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_is_loopback"
+              c:identifier="g_unix_mount_point_is_loopback"
+              moved-to="MountPoint.is_loopback">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2680">Checks if a unix mount point is a loopback device.</doc>
+      <source-position filename="gio/gunixmounts.h" line="124"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2686">%TRUE if the mount point is a loopback. %FALSE otherwise.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2682">a #GUnixMountPoint.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_is_readonly"
+              c:identifier="g_unix_mount_point_is_readonly"
+              moved-to="MountPoint.is_readonly">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2648">Checks if a unix mount point is read only.</doc>
+      <source-position filename="gio/gunixmounts.h" line="120"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2654">%TRUE if a mount point is read only.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2650">a #GUnixMountPoint.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_point_is_user_mountable"
+              c:identifier="g_unix_mount_point_is_user_mountable"
+              moved-to="MountPoint.is_user_mountable">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="2664">Checks if a unix mount point is mountable by the user.</doc>
+      <source-position filename="gio/gunixmounts.h" line="122"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="2670">%TRUE if the mount point is user mountable.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="mount_point" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="2666">a #GUnixMountPoint.</doc>
+          <type name="Gio.UnixMountPoint" c:type="GUnixMountPoint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_points_changed_since"
+              c:identifier="g_unix_mount_points_changed_since">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="1787">Checks if the unix mount points have changed since a given unix time.</doc>
+      <source-position filename="gio/gunixmounts.h" line="151"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="1793">%TRUE if the mount points have changed since @time.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="time" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1789">guint64 to contain a timestamp.</doc>
+          <type name="guint64" c:type="guint64"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mount_points_get" c:identifier="g_unix_mount_points_get">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="1687">Gets a #GList of #GUnixMountPoint containing the unix mount points.
+If @time_read is set, it will be filled with the mount timestamp,
+allowing for checking if the mounts have changed with
+g_unix_mount_points_changed_since().</doc>
+      <source-position filename="gio/gunixmounts.h" line="136"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="1696">
+    a #GList of the UNIX mountpoints.</doc>
+        <type name="GLib.List" c:type="GList*">
+          <type name="Gio.UnixMountPoint"/>
+        </type>
+      </return-value>
+      <parameters>
+        <parameter name="time_read"
+                   direction="out"
+                   caller-allocates="0"
+                   transfer-ownership="full"
+                   optional="1"
+                   allow-none="1">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1689">guint64 to contain a timestamp.</doc>
+          <type name="guint64" c:type="guint64*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mounts_changed_since"
+              c:identifier="g_unix_mounts_changed_since">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="1773">Checks if the unix mounts have changed since a given unix time.</doc>
+      <source-position filename="gio/gunixmounts.h" line="149"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="1779">%TRUE if the mounts have changed since @time.</doc>
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="time" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1775">guint64 to contain a timestamp.</doc>
+          <type name="guint64" c:type="guint64"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="mounts_get" c:identifier="g_unix_mounts_get">
+      <doc xml:space="preserve"
+           filename="gio/gunixmounts.c"
+           line="1570">Gets a #GList of #GUnixMountEntry containing the unix mounts.
+If @time_read is set, it will be filled with the mount
+timestamp, allowing for checking if the mounts have changed
+with g_unix_mounts_changed_since().</doc>
+      <source-position filename="gio/gunixmounts.h" line="141"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="gio/gunixmounts.c"
+             line="1579">
+    a #GList of the UNIX mounts.</doc>
+        <type name="GLib.List" c:type="GList*">
+          <type name="Gio.UnixMountEntry"/>
+        </type>
+      </return-value>
+      <parameters>
+        <parameter name="time_read"
+                   direction="out"
+                   caller-allocates="0"
+                   transfer-ownership="full"
+                   optional="1"
+                   allow-none="1">
+          <doc xml:space="preserve"
+               filename="gio/gunixmounts.c"
+               line="1572">guint64 to contain a timestamp, or %NULL</doc>
+          <type name="guint64" c:type="guint64*"/>
+        </parameter>
+      </parameters>
+    </function>
+  </namespace>
+</repository>

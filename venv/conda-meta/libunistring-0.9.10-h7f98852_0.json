@@ -1,0 +1,419 @@
+{
+  "build": "h7f98852_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=9.3.0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libunistring-0.9.10-h7f98852_0",
+  "files": [
+    "include/unicase.h",
+    "include/uniconv.h",
+    "include/unictype.h",
+    "include/unigbrk.h",
+    "include/unilbrk.h",
+    "include/uniname.h",
+    "include/uninorm.h",
+    "include/unistdio.h",
+    "include/unistr.h",
+    "include/unistring/cdefs.h",
+    "include/unistring/iconveh.h",
+    "include/unistring/inline.h",
+    "include/unistring/localcharset.h",
+    "include/unistring/stdbool.h",
+    "include/unistring/stdint.h",
+    "include/unistring/version.h",
+    "include/unistring/woe32dll.h",
+    "include/unitypes.h",
+    "include/uniwbrk.h",
+    "include/uniwidth.h",
+    "lib/libunistring.a",
+    "lib/libunistring.so",
+    "lib/libunistring.so.2",
+    "lib/libunistring.so.2.1.0",
+    "share/doc/libunistring/libunistring_1.html",
+    "share/doc/libunistring/libunistring_10.html",
+    "share/doc/libunistring/libunistring_11.html",
+    "share/doc/libunistring/libunistring_12.html",
+    "share/doc/libunistring/libunistring_13.html",
+    "share/doc/libunistring/libunistring_14.html",
+    "share/doc/libunistring/libunistring_15.html",
+    "share/doc/libunistring/libunistring_16.html",
+    "share/doc/libunistring/libunistring_17.html",
+    "share/doc/libunistring/libunistring_18.html",
+    "share/doc/libunistring/libunistring_19.html",
+    "share/doc/libunistring/libunistring_2.html",
+    "share/doc/libunistring/libunistring_20.html",
+    "share/doc/libunistring/libunistring_21.html",
+    "share/doc/libunistring/libunistring_3.html",
+    "share/doc/libunistring/libunistring_4.html",
+    "share/doc/libunistring/libunistring_5.html",
+    "share/doc/libunistring/libunistring_6.html",
+    "share/doc/libunistring/libunistring_7.html",
+    "share/doc/libunistring/libunistring_8.html",
+    "share/doc/libunistring/libunistring_9.html",
+    "share/doc/libunistring/libunistring_abt.html",
+    "share/doc/libunistring/libunistring_toc.html",
+    "share/info/libunistring.info"
+  ],
+  "fn": "libunistring-0.9.10-h7f98852_0.tar.bz2",
+  "license": "GPL-3.0-only OR LGPL-3.0-only",
+  "link": {
+    "source": "/opt/conda/pkgs/libunistring-0.9.10-h7f98852_0",
+    "type": 1
+  },
+  "md5": "7245a044b4a1980ed83196176b78b73a",
+  "name": "libunistring",
+  "package_tarball_full_path": "/opt/conda/pkgs/libunistring-0.9.10-h7f98852_0.tar.bz2",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/unicase.h",
+        "path_type": "hardlink",
+        "sha256": "5808b5911dc47472bf07919430a22cefe60fdde65bd3b65d5624cd29af8c8db3",
+        "sha256_in_prefix": "5808b5911dc47472bf07919430a22cefe60fdde65bd3b65d5624cd29af8c8db3",
+        "size_in_bytes": 20564
+      },
+      {
+        "_path": "include/uniconv.h",
+        "path_type": "hardlink",
+        "sha256": "4a4ad73549dc501b7aa0e3846587abd2d21b27fb1db6177285a830f8277b1534",
+        "sha256_in_prefix": "4a4ad73549dc501b7aa0e3846587abd2d21b27fb1db6177285a830f8277b1534",
+        "size_in_bytes": 7732
+      },
+      {
+        "_path": "include/unictype.h",
+        "path_type": "hardlink",
+        "sha256": "fdea031fec9942e46635cac6e17dd4b1d57da0adfa723eb83ee225abb222cabc",
+        "sha256_in_prefix": "fdea031fec9942e46635cac6e17dd4b1d57da0adfa723eb83ee225abb222cabc",
+        "size_in_bytes": 45036
+      },
+      {
+        "_path": "include/unigbrk.h",
+        "path_type": "hardlink",
+        "sha256": "542c84d90560e2e8daa9b21e86921d7a4541793e0a70449178d3e0499d52174a",
+        "sha256_in_prefix": "542c84d90560e2e8daa9b21e86921d7a4541793e0a70449178d3e0499d52174a",
+        "size_in_bytes": 4867
+      },
+      {
+        "_path": "include/unilbrk.h",
+        "path_type": "hardlink",
+        "sha256": "df0beda39fc38fbcdad261f4854fd78448939a76497ecba27b12b86afc0b16c8",
+        "sha256_in_prefix": "df0beda39fc38fbcdad261f4854fd78448939a76497ecba27b12b86afc0b16c8",
+        "size_in_bytes": 4338
+      },
+      {
+        "_path": "include/uniname.h",
+        "path_type": "hardlink",
+        "sha256": "0b1f40159d7cd345c8e668b74e7aa9a100c135515c478b68cfb111dd43b05ec2",
+        "sha256_in_prefix": "0b1f40159d7cd345c8e668b74e7aa9a100c135515c478b68cfb111dd43b05ec2",
+        "size_in_bytes": 1834
+      },
+      {
+        "_path": "include/uninorm.h",
+        "path_type": "hardlink",
+        "sha256": "c797082a7cd90f9306831eb1cfa397a148bdf2884208a41f202407c802ffc58d",
+        "sha256_in_prefix": "c797082a7cd90f9306831eb1cfa397a148bdf2884208a41f202407c802ffc58d",
+        "size_in_bytes": 10965
+      },
+      {
+        "_path": "include/unistdio.h",
+        "path_type": "hardlink",
+        "sha256": "862b1880c2ce0ea9e0f89ade877bd133a9dc8fe564cc2470ebad459fb039828c",
+        "sha256_in_prefix": "862b1880c2ce0ea9e0f89ade877bd133a9dc8fe564cc2470ebad459fb039828c",
+        "size_in_bytes": 9732
+      },
+      {
+        "_path": "include/unistr.h",
+        "path_type": "hardlink",
+        "sha256": "d136b1abfd2c64f80c97fcce821f6e263ae65aa47d904c0a99a1c7ae7d5b9bb6",
+        "sha256_in_prefix": "d136b1abfd2c64f80c97fcce821f6e263ae65aa47d904c0a99a1c7ae7d5b9bb6",
+        "size_in_bytes": 23008
+      },
+      {
+        "_path": "include/unistring/cdefs.h",
+        "path_type": "hardlink",
+        "sha256": "30ccbdefae2a6157659e0107cd06705b4b34270d4837d2ffb30b8601dc7e54af",
+        "sha256_in_prefix": "30ccbdefae2a6157659e0107cd06705b4b34270d4837d2ffb30b8601dc7e54af",
+        "size_in_bytes": 2748
+      },
+      {
+        "_path": "include/unistring/iconveh.h",
+        "path_type": "hardlink",
+        "sha256": "563ff9407dfd63511678a4848e984f443aa7c47ba1aae329b245d10c14a67427",
+        "sha256_in_prefix": "563ff9407dfd63511678a4848e984f443aa7c47ba1aae329b245d10c14a67427",
+        "size_in_bytes": 1467
+      },
+      {
+        "_path": "include/unistring/inline.h",
+        "path_type": "hardlink",
+        "sha256": "d3649f94018159d911398adfbf2efcc86ba8b2ad4466b0d9cff1987533561427",
+        "sha256_in_prefix": "d3649f94018159d911398adfbf2efcc86ba8b2ad4466b0d9cff1987533561427",
+        "size_in_bytes": 2421
+      },
+      {
+        "_path": "include/unistring/localcharset.h",
+        "path_type": "hardlink",
+        "sha256": "865e19355d5774d95b852e2446e2384a8a9ffdc7eaa3d690bdae544c7fac9cd6",
+        "sha256_in_prefix": "865e19355d5774d95b852e2446e2384a8a9ffdc7eaa3d690bdae544c7fac9cd6",
+        "size_in_bytes": 1564
+      },
+      {
+        "_path": "include/unistring/stdbool.h",
+        "path_type": "hardlink",
+        "sha256": "5c92e5d1f4037c45d28e8911882d4f2ae024e8ebf728866a5ea0da28ed913ea9",
+        "sha256_in_prefix": "5c92e5d1f4037c45d28e8911882d4f2ae024e8ebf728866a5ea0da28ed913ea9",
+        "size_in_bytes": 4308
+      },
+      {
+        "_path": "include/unistring/stdint.h",
+        "path_type": "hardlink",
+        "sha256": "82934b6fa98035af147342940a2c8f1d20849a93712df730462f6254a374abe7",
+        "sha256_in_prefix": "82934b6fa98035af147342940a2c8f1d20849a93712df730462f6254a374abe7",
+        "size_in_bytes": 4830
+      },
+      {
+        "_path": "include/unistring/version.h",
+        "path_type": "hardlink",
+        "sha256": "1e787901d1923f81a685474cfad203ac856d4fd5b207c3197b8b2a3220e21998",
+        "sha256_in_prefix": "1e787901d1923f81a685474cfad203ac856d4fd5b207c3197b8b2a3220e21998",
+        "size_in_bytes": 1300
+      },
+      {
+        "_path": "include/unistring/woe32dll.h",
+        "path_type": "hardlink",
+        "sha256": "1a4cfc61c61c1ac83aae83ea1b8697748f74a028d07ec73992ec4a97cdd77646",
+        "sha256_in_prefix": "1a4cfc61c61c1ac83aae83ea1b8697748f74a028d07ec73992ec4a97cdd77646",
+        "size_in_bytes": 1148
+      },
+      {
+        "_path": "include/unitypes.h",
+        "path_type": "hardlink",
+        "sha256": "b1b1c9bca963198bb00650ff8d6779bad1c9bfbf7458756ec9f95f7592d0e8f2",
+        "sha256_in_prefix": "b1b1c9bca963198bb00650ff8d6779bad1c9bfbf7458756ec9f95f7592d0e8f2",
+        "size_in_bytes": 1962
+      },
+      {
+        "_path": "include/uniwbrk.h",
+        "path_type": "hardlink",
+        "sha256": "1f08161d32a3e878fb66d3e3469e5cb860c04d25a96352c4eba84b156d251502",
+        "sha256_in_prefix": "1f08161d32a3e878fb66d3e3469e5cb860c04d25a96352c4eba84b156d251502",
+        "size_in_bytes": 3007
+      },
+      {
+        "_path": "include/uniwidth.h",
+        "path_type": "hardlink",
+        "sha256": "3a2a1dd93be24e7bc74100db891928128ad8d30cc63924e22fff1d144a694645",
+        "sha256_in_prefix": "3a2a1dd93be24e7bc74100db891928128ad8d30cc63924e22fff1d144a694645",
+        "size_in_bytes": 2432
+      },
+      {
+        "_path": "lib/libunistring.a",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libunistring_1626954490222/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol",
+        "sha256": "8e69c3ae894c33306485b9119321ea14e0a50708ff0eb21177f7b1d848d490b0",
+        "sha256_in_prefix": "55276e5466bf2a216dd18bfffce73de3f855b9a2886ead3590a84c4e92dc5bc2",
+        "size_in_bytes": 2554202
+      },
+      {
+        "_path": "lib/libunistring.so",
+        "path_type": "softlink",
+        "sha256": "d233478afa7aa38b422f9cd511243d16704145ee40b8dee26f34b228d77cf066",
+        "size_in_bytes": 1660984
+      },
+      {
+        "_path": "lib/libunistring.so.2",
+        "path_type": "softlink",
+        "sha256": "d233478afa7aa38b422f9cd511243d16704145ee40b8dee26f34b228d77cf066",
+        "size_in_bytes": 1660984
+      },
+      {
+        "_path": "lib/libunistring.so.2.1.0",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libunistring_1626954490222/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol",
+        "sha256": "d233478afa7aa38b422f9cd511243d16704145ee40b8dee26f34b228d77cf066",
+        "sha256_in_prefix": "240306c306a9771df210b397ca81199135a3ae22a80b62cc3891f2362856755f",
+        "size_in_bytes": 1660984
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_1.html",
+        "path_type": "hardlink",
+        "sha256": "df04ac202474c72ee1fc2d3a7ea6f696d954c55e56b3ac84f22c9c3f04dd7e1e",
+        "sha256_in_prefix": "df04ac202474c72ee1fc2d3a7ea6f696d954c55e56b3ac84f22c9c3f04dd7e1e",
+        "size_in_bytes": 24366
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_10.html",
+        "path_type": "hardlink",
+        "sha256": "d6a39ba643437dab7e0ee1361456c5eb3b7dd1b7e6a89845e451a82c7c96e021",
+        "sha256_in_prefix": "d6a39ba643437dab7e0ee1361456c5eb3b7dd1b7e6a89845e451a82c7c96e021",
+        "size_in_bytes": 12741
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_11.html",
+        "path_type": "hardlink",
+        "sha256": "516e8ab4df0108fcc26d67f14dd47587b75f6adb761f2741a48d1be7424da233",
+        "sha256_in_prefix": "516e8ab4df0108fcc26d67f14dd47587b75f6adb761f2741a48d1be7424da233",
+        "size_in_bytes": 8501
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_12.html",
+        "path_type": "hardlink",
+        "sha256": "f53fd99fb271528f10989d5ed355a413a44581da7801c21d92b390c238458a2b",
+        "sha256_in_prefix": "f53fd99fb271528f10989d5ed355a413a44581da7801c21d92b390c238458a2b",
+        "size_in_bytes": 9998
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_13.html",
+        "path_type": "hardlink",
+        "sha256": "213cb47a6f88ff550c06899ba0b69c7c1c360e7d32266c76d13bce3ca8f69ba1",
+        "sha256_in_prefix": "213cb47a6f88ff550c06899ba0b69c7c1c360e7d32266c76d13bce3ca8f69ba1",
+        "size_in_bytes": 20324
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_14.html",
+        "path_type": "hardlink",
+        "sha256": "b046e5df5233d90d49c1009d5cb555b48fc768e1e4601a4653449638d2a7688c",
+        "sha256_in_prefix": "b046e5df5233d90d49c1009d5cb555b48fc768e1e4601a4653449638d2a7688c",
+        "size_in_bytes": 34531
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_15.html",
+        "path_type": "hardlink",
+        "sha256": "49eea8a980ee2efac7c4449118bc0b0a50dfcd7eb31640843337ef02346a2b9e",
+        "sha256_in_prefix": "49eea8a980ee2efac7c4449118bc0b0a50dfcd7eb31640843337ef02346a2b9e",
+        "size_in_bytes": 4104
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_16.html",
+        "path_type": "hardlink",
+        "sha256": "41587e51ff200696cd3a691be833e6bab539e4aedf6fbcd291ceafb30c4a505c",
+        "sha256_in_prefix": "41587e51ff200696cd3a691be833e6bab539e4aedf6fbcd291ceafb30c4a505c",
+        "size_in_bytes": 10810
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_17.html",
+        "path_type": "hardlink",
+        "sha256": "b1d6d332904a888a1e570daa7c17a37fea338903228c9b07236bac704cf36cab",
+        "sha256_in_prefix": "b1d6d332904a888a1e570daa7c17a37fea338903228c9b07236bac704cf36cab",
+        "size_in_bytes": 4374
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_18.html",
+        "path_type": "hardlink",
+        "sha256": "2299fe899772355fe3fafca59af412d89f3b33e8369e50710bb2ff31ebee1e45",
+        "sha256_in_prefix": "2299fe899772355fe3fafca59af412d89f3b33e8369e50710bb2ff31ebee1e45",
+        "size_in_bytes": 7028
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_19.html",
+        "path_type": "hardlink",
+        "sha256": "083be899ede16afcd96861324753559286bbe78f4e6b19ab487825cf8024603f",
+        "sha256_in_prefix": "083be899ede16afcd96861324753559286bbe78f4e6b19ab487825cf8024603f",
+        "size_in_bytes": 75720
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_2.html",
+        "path_type": "hardlink",
+        "sha256": "f98ef88e3275d2a9fead4695b11080f7c2878c6b6902e52253da6d310e3e80b0",
+        "sha256_in_prefix": "f98ef88e3275d2a9fead4695b11080f7c2878c6b6902e52253da6d310e3e80b0",
+        "size_in_bytes": 6664
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_20.html",
+        "path_type": "hardlink",
+        "sha256": "66761b03049bc6b0f634137fa2036d6198d7a5bb561a155611eb13d5b7227c70",
+        "sha256_in_prefix": "66761b03049bc6b0f634137fa2036d6198d7a5bb561a155611eb13d5b7227c70",
+        "size_in_bytes": 139082
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_21.html",
+        "path_type": "hardlink",
+        "sha256": "8e5473d67e17690787c5c5198c510c985c027e5b73446219aedfeb55e5c6b22c",
+        "sha256_in_prefix": "8e5473d67e17690787c5c5198c510c985c027e5b73446219aedfeb55e5c6b22c",
+        "size_in_bytes": 10032
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_3.html",
+        "path_type": "hardlink",
+        "sha256": "be56c95f4b16b6845820d65a6a55eefc0a3a0e1135d4a5ed53e23365730b8716",
+        "sha256_in_prefix": "be56c95f4b16b6845820d65a6a55eefc0a3a0e1135d4a5ed53e23365730b8716",
+        "size_in_bytes": 5227
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_4.html",
+        "path_type": "hardlink",
+        "sha256": "7334433a22fd847d41c3d561f97c6725d2c9c8ac3373265738db1656b85e501f",
+        "sha256_in_prefix": "7334433a22fd847d41c3d561f97c6725d2c9c8ac3373265738db1656b85e501f",
+        "size_in_bytes": 44800
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_5.html",
+        "path_type": "hardlink",
+        "sha256": "ca5cff619f5edaa1c43e98db1b8526b049768ced1820af8a524fca4a05b54328",
+        "sha256_in_prefix": "ca5cff619f5edaa1c43e98db1b8526b049768ced1820af8a524fca4a05b54328",
+        "size_in_bytes": 14495
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_6.html",
+        "path_type": "hardlink",
+        "sha256": "944a59af3baba1e4caefb889b284c35728b89c4022829abe397e495cf3253fad",
+        "sha256_in_prefix": "944a59af3baba1e4caefb889b284c35728b89c4022829abe397e495cf3253fad",
+        "size_in_bytes": 17274
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_7.html",
+        "path_type": "hardlink",
+        "sha256": "409d864fc5dbbb6c4252e5215f09bebe78c74bc518c934e700f2bfa690cef73f",
+        "sha256_in_prefix": "409d864fc5dbbb6c4252e5215f09bebe78c74bc518c934e700f2bfa690cef73f",
+        "size_in_bytes": 5678
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_8.html",
+        "path_type": "hardlink",
+        "sha256": "7d58895f153ab44e823618ed2eb6858d97cbde6df5c58ca538853409e8cbd604",
+        "sha256_in_prefix": "7d58895f153ab44e823618ed2eb6858d97cbde6df5c58ca538853409e8cbd604",
+        "size_in_bytes": 81794
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_9.html",
+        "path_type": "hardlink",
+        "sha256": "8ae50fb34f8f153eb286733871249baa4ed0fee54eca347e3dcccac4207f59e2",
+        "sha256_in_prefix": "8ae50fb34f8f153eb286733871249baa4ed0fee54eca347e3dcccac4207f59e2",
+        "size_in_bytes": 6641
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_abt.html",
+        "path_type": "hardlink",
+        "sha256": "9d259f3c4e024ce42ae68ddd5f7bf078f85fad96f304215da9e088a4a5c1e2eb",
+        "sha256_in_prefix": "9d259f3c4e024ce42ae68ddd5f7bf078f85fad96f304215da9e088a4a5c1e2eb",
+        "size_in_bytes": 5304
+      },
+      {
+        "_path": "share/doc/libunistring/libunistring_toc.html",
+        "path_type": "hardlink",
+        "sha256": "69787e4970b4d51908ecabebfd4c4369e82434b08e3d0ae6d51eef32ba06504d",
+        "sha256_in_prefix": "69787e4970b4d51908ecabebfd4c4369e82434b08e3d0ae6d51eef32ba06504d",
+        "size_in_bytes": 12296
+      },
+      {
+        "_path": "share/info/libunistring.info",
+        "path_type": "hardlink",
+        "sha256": "e92e43b8f2665cd49b960d73e22f8c0a62a75c0c2e451620ebbe39bea97bc180",
+        "sha256_in_prefix": "e92e43b8f2665cd49b960d73e22f8c0a62a75c0c2e451620ebbe39bea97bc180",
+        "size_in_bytes": 327509
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "e88c45505921db29c08df3439ddb7f771bbff35f95e7d3103bf365d5d6ce2a6d",
+  "size": 1433436,
+  "subdir": "linux-64",
+  "timestamp": 1626955018000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libunistring-0.9.10-h7f98852_0.tar.bz2",
+  "version": "0.9.10"
+}

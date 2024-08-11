@@ -1,0 +1,1349 @@
+'\" t
+.\"     Title: gitformat-index
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GITFORMAT\-INDEX" "5" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+gitformat-index \- Git index format
+.SH "SYNOPSIS"
+.sp
+.nf
+$GIT_DIR/index
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+Git index format
+.SH "THE GIT INDEX FILE HAS THE FOLLOWING FORMAT"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+All binary numbers are in network byte order\&.
+In a repository using the traditional SHA\-1, checksums and object IDs
+(object names) mentioned below are all computed using SHA\-1\&.  Similarly,
+in SHA\-256 repositories, these values are computed using SHA\-256\&.
+Version 2 is described here unless stated otherwise\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A 12\-byte header consisting of
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+4\-byte signature:
+  The signature is { \*(AqD\*(Aq, \*(AqI\*(Aq, \*(AqR\*(Aq, \*(AqC\*(Aq } (stands for "dircache")
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+4\-byte version number:
+  The current supported versions are 2, 3 and 4\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit number of index entries\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A number of sorted index entries (see below)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Extensions
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Extensions are identified by signature\&. Optional extensions can
+be ignored if Git does not understand them\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+4\-byte extension signature\&. If the first byte is \*(AqA\*(Aq\&.\&.\*(AqZ\*(Aq the
+extension is optional and can be ignored\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit size of the extension
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Extension data
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Hash checksum over the content of the index file before this checksum\&.
+.RE
+.SH "INDEX ENTRY"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Index entries are sorted in ascending order on the name field,
+interpreted as a string of unsigned bytes (i\&.e\&. memcmp() order, no
+localization, no special casing of directory separator \*(Aq/\*(Aq)\&. Entries
+with the same name are sorted by their stage field\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+An index entry typically represents a file\&. However, if sparse\-checkout
+is enabled in cone mode (`core\&.sparseCheckoutCone` is enabled) and the
+`extensions\&.sparseIndex` extension is enabled, then the index may
+contain entries for directories outside of the sparse\-checkout definition\&.
+These entries have mode `040000`, include the `SKIP_WORKTREE` bit, and
+the path ends in a directory separator\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit ctime seconds, the last time a file\*(Aqs metadata changed
+  this is stat(2) data
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit ctime nanosecond fractions
+  this is stat(2) data
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit mtime seconds, the last time a file\*(Aqs data changed
+  this is stat(2) data
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit mtime nanosecond fractions
+  this is stat(2) data
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit dev
+  this is stat(2) data
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit ino
+  this is stat(2) data
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit mode, split into (high to low bits)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+16\-bit unused, must be zero
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+4\-bit object type
+  valid values in binary are 1000 (regular file), 1010 (symbolic link)
+  and 1110 (gitlink)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+3\-bit unused, must be zero
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+9\-bit unix permission\&. Only 0755 and 0644 are valid for regular files\&.
+Symbolic links and gitlinks have value 0 in this field\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit uid
+  this is stat(2) data
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit gid
+  this is stat(2) data
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+32\-bit file size
+  This is the on\-disk size from stat(2), truncated to 32\-bit\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Object name for the represented object
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+A 16\-bit \*(Aqflags\*(Aq field split into (high to low bits)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+1\-bit assume\-valid flag
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+1\-bit extended flag (must be zero in version 2)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+2\-bit stage (during merge)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+12\-bit name length if the length is less than 0xFFF; otherwise 0xFFF
+is stored in this field\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+(Version 3 or later) A 16\-bit field, only applicable if the
+"extended flag" above is 1, split into (high to low bits)\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+1\-bit reserved for future
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+1\-bit skip\-worktree flag (used by sparse checkout)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+1\-bit intent\-to\-add flag (used by "git add \-N")
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+13\-bit unused, must be zero
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Entry path name (variable length) relative to top level directory
+  (without leading slash)\&. \*(Aq/\*(Aq is used as path separator\&. The special
+  path components "\&.", "\&.\&." and "\&.git" (without quotes) are disallowed\&.
+  Trailing slash is also disallowed\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The exact encoding is undefined, but the \*(Aq\&.\*(Aq and \*(Aq/\*(Aq characters
+are encoded in 7\-bit ASCII and the encoding cannot contain a NUL
+byte (iow, this is a UNIX pathname)\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+(Version 4) In version 4, the entry path name is prefix\-compressed
+  relative to the path name for the previous entry (the very first
+  entry is encoded as if the path name for the previous entry is an
+  empty string)\&.  At the beginning of an entry, an integer N in the
+  variable width encoding (the same encoding as the offset is encoded
+  for OFS_DELTA pack entries; see linkgit:gitformat\-pack[5]) is stored, followed
+  by a NUL\-terminated string S\&.  Removing N bytes from the end of the
+  path name for the previous entry, and replacing it with the string S
+  yields the path name for this entry\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+1\-8 nul bytes as necessary to pad the entry to a multiple of eight bytes
+while keeping the name NUL\-terminated\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+(Version 4) In version 4, the padding after the pathname does not
+exist\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Interpretation of index entries in split index mode is completely
+different\&. See below for details\&.
+.fi
+.if n \{\
+.RE
+.\}
+.SH "EXTENSIONS"
+.SS "Cache tree"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Since the index does not record entries for directories, the cache
+entries cannot describe tree objects that already exist in the object
+database for regions of the index that are unchanged from an existing
+commit\&. The cache tree extension stores a recursive tree structure that
+describes the trees that already exist and completely match sections of
+the cache entries\&. This speeds up tree object generation from the index
+for a new commit by only computing the trees that are "new" to that
+commit\&. It also assists when comparing the index to another tree, such
+as `HEAD^{tree}`, since sections of the index can be skipped when a tree
+comparison demonstrates equality\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The recursive tree structure uses nodes that store a number of cache
+entries, a list of subnodes, and an object ID (OID)\&. The OID references
+the existing tree for that node, if it is known to exist\&. The subnodes
+correspond to subdirectories that themselves have cache tree nodes\&. The
+number of cache entries corresponds to the number of cache entries in
+the index that describe paths within that tree\*(Aqs directory\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The extension tracks the full directory structure in the cache tree
+extension, but this is generally smaller than the full cache entry list\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+When a path is updated in index, Git invalidates all nodes of the
+recursive cache tree corresponding to the parent directories of that
+path\&. We store these tree nodes as being "invalid" by using "\-1" as the
+number of cache entries\&. Invalid nodes still store a span of index
+entries, allowing Git to focus its efforts when reconstructing a full
+cache tree\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The signature for this extension is { \*(AqT\*(Aq, \*(AqR\*(Aq, \*(AqE\*(Aq, \*(AqE\*(Aq }\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+A series of entries fill the entire extension; each of which
+consists of:
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+NUL\-terminated path component (relative to its parent directory);
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ASCII decimal number of entries in the index that is covered by the tree this entry represents (entry_count);
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A space (ASCII 32);
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ASCII decimal number that represents the number of subtrees this tree has;
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A newline (ASCII 10); and
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Object name for the object that would result from writing this span of index as a tree\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+An entry can be in an invalidated state and is represented by having
+a negative number in the entry_count field\&. In this case, there is no
+object name and the next entry starts immediately after the newline\&.
+When writing an invalid entry, \-1 should always be used as entry_count\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The entries are written out in the top\-down, depth\-first order\&.  The
+first entry represents the root level of the repository, followed by the
+first subtree\-\-let\*(Aqs call this A\-\-of the root level (with its name
+relative to the root level), followed by the first subtree of A (with
+its name relative to A), and so on\&. The specified number of subtrees
+indicates when the current level of the recursive stack is complete\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SS "Resolve undo"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+A conflict is represented in the index as a set of higher stage entries\&.
+When a conflict is resolved (e\&.g\&. with "git add path"), these higher
+stage entries will be removed and a stage\-0 entry with proper resolution
+is added\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+When these higher stage entries are removed, they are saved in the
+resolve undo extension, so that conflicts can be recreated (e\&.g\&. with
+"git checkout \-m"), in case users want to redo a conflict resolution
+from scratch\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The signature for this extension is { \*(AqR\*(Aq, \*(AqE\*(Aq, \*(AqU\*(Aq, \*(AqC\*(Aq }\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+A series of entries fill the entire extension; each of which
+consists of:
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+NUL\-terminated pathname the entry describes (relative to the root of the repository, i\&.e\&. full pathname);
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Three NUL\-terminated ASCII octal numbers, entry mode of entries in stage 1 to 3 (a missing stage is represented by "0" in this field); and
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+At most three object names of the entry in stages from 1 to 3 (nothing is written for a missing stage)\&.
+.RE
+.SS "Split index"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+In split index mode, the majority of index entries could be stored
+in a separate file\&. This extension records the changes to be made on
+top of that to produce the final index\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The signature for this extension is { \*(Aql\*(Aq, \*(Aqi\*(Aq, \*(Aqn\*(Aq, \*(Aqk\*(Aq }\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The extension consists of:
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Hash of the shared index file\&. The shared index file path is $GIT_DIR/sharedindex\&.<hash>\&. If all bits are zero, the index does not require a shared index file\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+An ewah\-encoded delete bitmap, each bit represents an entry in the shared index\&. If a bit is set, its corresponding entry in the shared index will be removed from the final index\&. Note, because a delete operation changes index entry positions, but we do need original positions in replace phase, it\(cqs best to just mark entries for removal, then do a mass deletion after replacement\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+An ewah\-encoded replace bitmap, each bit represents an entry in the shared index\&. If a bit is set, its corresponding entry in the shared index will be replaced with an entry in this index file\&. All replaced entries are stored in sorted order in this index\&. The first "1" bit in the replace bitmap corresponds to the first index entry, the second "1" bit to the second entry and so on\&. Replaced entries may have empty path names to save space\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The remaining index entries after replaced ones will be added to the
+final index\&. These added entries are also sorted by entry name then
+stage\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "UNTRACKED CACHE"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Untracked cache saves the untracked file list and necessary data to
+verify the cache\&. The signature for this extension is { \*(AqU\*(Aq, \*(AqN\*(Aq,
+\*(AqT\*(Aq, \*(AqR\*(Aq }\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The extension starts with
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A sequence of NUL\-terminated strings, preceded by the size of the sequence in variable width encoding\&. Each string describes the environment where the cache can be used\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Stat data of $GIT_DIR/info/exclude\&. See "Index entry" section from ctime field until "file size"\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Stat data of core\&.excludesFile
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+32\-bit dir_flags (see struct dir_struct)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Hash of $GIT_DIR/info/exclude\&. A null hash means the file does not exist\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Hash of core\&.excludesFile\&. A null hash means the file does not exist\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+NUL\-terminated string of per\-dir exclude file name\&. This usually is "\&.gitignore"\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The number of following directory blocks, variable width encoding\&. If this number is zero, the extension ends here with a following NUL\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A number of directory blocks in depth\-first\-search order, each consists of
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The number of untracked entries, variable width encoding\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The number of sub\-directory blocks, variable width encoding\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The directory name terminated by NUL\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A number of untracked file/dir names terminated by NUL\&.
+.RE
+.sp
+The remaining data of each directory block is grouped by type:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+An ewah bitmap, the n\-th bit marks whether the n\-th directory has valid untracked cache entries\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+An ewah bitmap, the n\-th bit records "check\-only" bit of read_directory_recursive() for the n\-th directory\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+An ewah bitmap, the n\-th bit indicates whether hash and stat data is valid for the n\-th directory and exists in the next data\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+An array of stat data\&. The n\-th data corresponds with the n\-th "one" bit in the previous ewah bitmap\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+An array of hashes\&. The n\-th hash corresponds with the n\-th "one" bit in the previous ewah bitmap\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+One NUL\&.
+.RE
+.SH "FILE SYSTEM MONITOR CACHE"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The file system monitor cache tracks files for which the core\&.fsmonitor
+hook has told us about changes\&.  The signature for this extension is
+{ \*(AqF\*(Aq, \*(AqS\*(Aq, \*(AqM\*(Aq, \*(AqN\*(Aq }\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The extension starts with
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+32\-bit version number: the current supported versions are 1 and 2\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+(Version 1) 64\-bit time: the extension data reflects all changes through the given time which is stored as the nanoseconds elapsed since midnight, January 1, 1970\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+(Version 2) A null terminated string: an opaque token defined by the file system monitor application\&. The extension data reflects all changes relative to that token\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+32\-bit bitmap size: the size of the CE_FSMONITOR_VALID bitmap\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+An ewah bitmap, the n\-th bit indicates whether the n\-th index entry is not CE_FSMONITOR_VALID\&.
+.RE
+.SH "END OF INDEX ENTRY"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The End of Index Entry (EOIE) is used to locate the end of the variable
+length index entries and the beginning of the extensions\&. Code can take
+advantage of this to quickly locate the index extensions without having
+to parse through all of the index entries\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Because it must be able to be loaded before the variable length cache
+entries and other index extensions, this extension must be written last\&.
+The signature for this extension is { \*(AqE\*(Aq, \*(AqO\*(Aq, \*(AqI\*(Aq, \*(AqE\*(Aq }\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The extension consists of:
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+32\-bit offset to the end of the index entries
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Hash over the extension types and their sizes (but not their contents)\&. E\&.g\&. if we have "TREE" extension that is N\-bytes long, "REUC" extension that is M\-bytes long, followed by "EOIE", then the hash would be:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Hash("TREE" + <binary\-representation\-of\-N> +
+        "REUC" + <binary\-representation\-of\-M>)
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "INDEX ENTRY OFFSET TABLE"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The Index Entry Offset Table (IEOT) is used to help address the CPU
+cost of loading the index by enabling multi\-threading the process of
+converting cache entries from the on\-disk format to the in\-memory format\&.
+The signature for this extension is { \*(AqI\*(Aq, \*(AqE\*(Aq, \*(AqO\*(Aq, \*(AqT\*(Aq }\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The extension consists of:
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+32\-bit version (currently 1)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A number of index offset entries each consisting of:
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+32\-bit offset from the beginning of the file to the first cache entry in this block of entries\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+32\-bit count of cache entries in this block
+.RE
+.SH "SPARSE DIRECTORY ENTRIES"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+When using sparse\-checkout in cone mode, some entire directories within
+the index can be summarized by pointing to a tree object instead of the
+entire expanded list of paths within that tree\&. An index containing such
+entries is a "sparse index"\&. Index format versions 4 and less were not
+implemented with such entries in mind\&. Thus, for these versions, an
+index containing sparse directory entries will include this extension
+with signature { \*(Aqs\*(Aq, \*(Aqd\*(Aq, \*(Aqi\*(Aq, \*(Aqr\*(Aq }\&. Like the split\-index extension,
+tools should avoid interacting with a sparse index unless they understand
+this extension\&.
+.fi
+.if n \{\
+.RE
+.\}
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite

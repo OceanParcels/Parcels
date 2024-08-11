@@ -856,6 +856,19 @@ class FieldSet:
         return fieldset
 
     @classmethod
+    def from_a_grid_dataset(cls, filenames, variables, dimensions, **kwargs):
+        """
+        Load a FieldSet from an A-grid dataset, which is the default grid type.
+
+        :param filenames: Path to the input files.
+        :param variables: Dictionary of the variables in the NetCDF file.
+        :param dimensions: Dictionary of the dimensions in the NetCDF file.
+        :param kwargs: Additional keyword arguments for from_netcdf().
+        :return: A FieldSet object.
+        """
+        return cls.from_netcdf(filenames, variables, dimensions, **kwargs)
+
+    @classmethod
     def from_b_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
                             tracer_interp_method='bgrid_tracer', chunksize=None, **kwargs):

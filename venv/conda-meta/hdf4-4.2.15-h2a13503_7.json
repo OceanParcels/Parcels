@@ -1,0 +1,692 @@
+{
+  "build": "h2a13503_7",
+  "build_number": 7,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=12",
+    "libjpeg-turbo >=3.0.0,<4.0a0",
+    "libstdcxx-ng >=12",
+    "libzlib >=1.2.13,<2.0.0a0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/hdf4-4.2.15-h2a13503_7",
+  "files": [
+    "bin/gif2hdf",
+    "bin/h4_ncdump",
+    "bin/h4_ncgen",
+    "bin/h4cc",
+    "bin/h4redeploy",
+    "bin/hdf24to8",
+    "bin/hdf2gif",
+    "bin/hdf2jpeg",
+    "bin/hdf8to24",
+    "bin/hdfcomp",
+    "bin/hdfed",
+    "bin/hdfimport",
+    "bin/hdfls",
+    "bin/hdfpack",
+    "bin/hdftopal",
+    "bin/hdftor8",
+    "bin/hdfunpac",
+    "bin/hdiff",
+    "bin/hdp",
+    "bin/hrepack",
+    "bin/jpeg2hdf",
+    "bin/paltohdf",
+    "bin/r8tohdf",
+    "bin/ristosds",
+    "bin/vmake",
+    "bin/vshow",
+    "include/H4api_adpt.h",
+    "include/atom.h",
+    "include/bitvect.h",
+    "include/cdeflate.h",
+    "include/cnbit.h",
+    "include/cnone.h",
+    "include/crle.h",
+    "include/cskphuff.h",
+    "include/cszip.h",
+    "include/df.h",
+    "include/dfan.h",
+    "include/dfgr.h",
+    "include/dfi.h",
+    "include/dfrig.h",
+    "include/dfsd.h",
+    "include/dfstubs.h",
+    "include/dfufp2i.h",
+    "include/dynarray.h",
+    "include/h4config.h",
+    "include/hbitio.h",
+    "include/hchunks.h",
+    "include/hcomp.h",
+    "include/hcompi.h",
+    "include/hconv.h",
+    "include/hdatainfo.h",
+    "include/hdf.h",
+    "include/hdf2netcdf.h",
+    "include/hdf4_netcdf.h",
+    "include/hdfi.h",
+    "include/herr.h",
+    "include/hfile.h",
+    "include/hkit.h",
+    "include/hlimits.h",
+    "include/hntdefs.h",
+    "include/hproto.h",
+    "include/htags.h",
+    "include/linklist.h",
+    "include/local_nc.h",
+    "include/mfan.h",
+    "include/mfdatainfo.h",
+    "include/mfgr.h",
+    "include/mfhdf.h",
+    "include/mfhdfi.h",
+    "include/mstdio.h",
+    "include/tbbt.h",
+    "include/vattr.h",
+    "include/vg.h",
+    "lib/libdf.a",
+    "lib/libdf.so",
+    "lib/libdf.so.0",
+    "lib/libdf.so.0.0.0",
+    "lib/libhdf4.settings",
+    "lib/libmfhdf.a",
+    "lib/libmfhdf.so",
+    "lib/libmfhdf.so.0",
+    "lib/libmfhdf.so.0.0.0"
+  ],
+  "fn": "hdf4-4.2.15-h2a13503_7.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/hdf4-4.2.15-h2a13503_7",
+    "type": 1
+  },
+  "md5": "bd77f8da987968ec3927990495dc22e4",
+  "name": "hdf4",
+  "package_tarball_full_path": "/opt/conda/pkgs/hdf4-4.2.15-h2a13503_7.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/gif2hdf",
+        "path_type": "hardlink",
+        "sha256": "68626351a3ae8363035a2fb22cb67e52922ea8584f6209414f3c439be4801652",
+        "sha256_in_prefix": "68626351a3ae8363035a2fb22cb67e52922ea8584f6209414f3c439be4801652",
+        "size_in_bytes": 27704
+      },
+      {
+        "_path": "bin/h4_ncdump",
+        "path_type": "hardlink",
+        "sha256": "3e3919cc1b3351a485b53c070b632c623541299a618f56dcbcd714b3db6e19bf",
+        "sha256_in_prefix": "3e3919cc1b3351a485b53c070b632c623541299a618f56dcbcd714b3db6e19bf",
+        "size_in_bytes": 39072
+      },
+      {
+        "_path": "bin/h4_ncgen",
+        "path_type": "hardlink",
+        "sha256": "a292d971efff900ba26114991d51d3f8bcbe12254490ebcaef3e33d9a6c73f52",
+        "sha256_in_prefix": "a292d971efff900ba26114991d51d3f8bcbe12254490ebcaef3e33d9a6c73f52",
+        "size_in_bytes": 71584
+      },
+      {
+        "_path": "bin/h4cc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/hdf4_1695661253961/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeh",
+        "sha256": "9a018bee3a87a6f1b8ee54611f6b96aef74fb6a84d288e06d33f9e881af41872",
+        "sha256_in_prefix": "d13545c83f10921394515f3678dbedc8e4b56e4405600aac4f89a15048c65142",
+        "size_in_bytes": 9970
+      },
+      {
+        "_path": "bin/h4redeploy",
+        "path_type": "hardlink",
+        "sha256": "983dd63cb32b74dcadba0fd4569ee3c9d5e0158ac826bb10bb7382d0366bf8b3",
+        "sha256_in_prefix": "983dd63cb32b74dcadba0fd4569ee3c9d5e0158ac826bb10bb7382d0366bf8b3",
+        "size_in_bytes": 3670
+      },
+      {
+        "_path": "bin/hdf24to8",
+        "path_type": "hardlink",
+        "sha256": "c9667cd3726397264507701c585992e146eae41502c12e3d27fcbb4d8c739122",
+        "sha256_in_prefix": "c9667cd3726397264507701c585992e146eae41502c12e3d27fcbb4d8c739122",
+        "size_in_bytes": 20448
+      },
+      {
+        "_path": "bin/hdf2gif",
+        "path_type": "hardlink",
+        "sha256": "cea742826420e1c633e67b03f5b6d4eaf5f5f91ca9c6acd784df51f358e80209",
+        "sha256_in_prefix": "cea742826420e1c633e67b03f5b6d4eaf5f5f91ca9c6acd784df51f358e80209",
+        "size_in_bytes": 21992
+      },
+      {
+        "_path": "bin/hdf2jpeg",
+        "path_type": "hardlink",
+        "sha256": "158d0fd02700a85b87ae722b3a92f73177ada8f8b05d50ab0e1001a6c029b760",
+        "sha256_in_prefix": "158d0fd02700a85b87ae722b3a92f73177ada8f8b05d50ab0e1001a6c029b760",
+        "size_in_bytes": 16616
+      },
+      {
+        "_path": "bin/hdf8to24",
+        "path_type": "hardlink",
+        "sha256": "d9a1a5ed9c9063db9edb2eab9203844fada23f28531543abb9b7c79684b92ed8",
+        "sha256_in_prefix": "d9a1a5ed9c9063db9edb2eab9203844fada23f28531543abb9b7c79684b92ed8",
+        "size_in_bytes": 16616
+      },
+      {
+        "_path": "bin/hdfcomp",
+        "path_type": "hardlink",
+        "sha256": "4500bdbf1a132b9f09b1cf80e9dcb876b655366d8da4b201f11b6be4669ed66c",
+        "sha256_in_prefix": "4500bdbf1a132b9f09b1cf80e9dcb876b655366d8da4b201f11b6be4669ed66c",
+        "size_in_bytes": 21208
+      },
+      {
+        "_path": "bin/hdfed",
+        "path_type": "hardlink",
+        "sha256": "1583d85fceec2d93fa42c8c68e36fd70873062716abe2d161f2b4c235971b1e2",
+        "sha256_in_prefix": "1583d85fceec2d93fa42c8c68e36fd70873062716abe2d161f2b4c235971b1e2",
+        "size_in_bytes": 69312
+      },
+      {
+        "_path": "bin/hdfimport",
+        "path_type": "hardlink",
+        "sha256": "c73da3672a704e440906b24fc57ac32e2ee0468cff354945fe6ef37728bc3714",
+        "sha256_in_prefix": "c73da3672a704e440906b24fc57ac32e2ee0468cff354945fe6ef37728bc3714",
+        "size_in_bytes": 59080
+      },
+      {
+        "_path": "bin/hdfls",
+        "path_type": "hardlink",
+        "sha256": "ce7dba5388c746f9e0895f6d7a0917b13fe0705cebc7b060d33da2cfb1ec1bef",
+        "sha256_in_prefix": "ce7dba5388c746f9e0895f6d7a0917b13fe0705cebc7b060d33da2cfb1ec1bef",
+        "size_in_bytes": 26072
+      },
+      {
+        "_path": "bin/hdfpack",
+        "path_type": "hardlink",
+        "sha256": "c3f2e6e79e7828e55cc23bf3a4cb2c5fdb6bb77a9e0a8506efba95d968133915",
+        "sha256_in_prefix": "c3f2e6e79e7828e55cc23bf3a4cb2c5fdb6bb77a9e0a8506efba95d968133915",
+        "size_in_bytes": 21752
+      },
+      {
+        "_path": "bin/hdftopal",
+        "path_type": "hardlink",
+        "sha256": "cd95b6a21bfbfa2900d386fb921528bc95cf9b7deb9c8c0350fc84043250562e",
+        "sha256_in_prefix": "cd95b6a21bfbfa2900d386fb921528bc95cf9b7deb9c8c0350fc84043250562e",
+        "size_in_bytes": 16208
+      },
+      {
+        "_path": "bin/hdftor8",
+        "path_type": "hardlink",
+        "sha256": "f60319dfbecba19055c698db7587572e357b9eda4ce8deac62d5fbf8747e7edf",
+        "sha256_in_prefix": "f60319dfbecba19055c698db7587572e357b9eda4ce8deac62d5fbf8747e7edf",
+        "size_in_bytes": 17000
+      },
+      {
+        "_path": "bin/hdfunpac",
+        "path_type": "hardlink",
+        "sha256": "197bd7545ab56c0b84596748447ce1bec0cab609ca5024fc56bcd25bb455f708",
+        "sha256_in_prefix": "197bd7545ab56c0b84596748447ce1bec0cab609ca5024fc56bcd25bb455f708",
+        "size_in_bytes": 16576
+      },
+      {
+        "_path": "bin/hdiff",
+        "path_type": "hardlink",
+        "sha256": "d429555178dea5a8ab8a3ba63a68ae0431bf6b699a033a18b0d1d699cabbb3a5",
+        "sha256_in_prefix": "d429555178dea5a8ab8a3ba63a68ae0431bf6b699a033a18b0d1d699cabbb3a5",
+        "size_in_bytes": 71264
+      },
+      {
+        "_path": "bin/hdp",
+        "path_type": "hardlink",
+        "sha256": "2cb0f23bdaf124a4ce176c0a4c8b61ee7b7d36ba835a8dea20e8be27b9650371",
+        "sha256_in_prefix": "2cb0f23bdaf124a4ce176c0a4c8b61ee7b7d36ba835a8dea20e8be27b9650371",
+        "size_in_bytes": 149224
+      },
+      {
+        "_path": "bin/hrepack",
+        "path_type": "hardlink",
+        "sha256": "c617150bad9865eea1411df80efd66171dd5e19a23c31018847e83d94d1cf7a1",
+        "sha256_in_prefix": "c617150bad9865eea1411df80efd66171dd5e19a23c31018847e83d94d1cf7a1",
+        "size_in_bytes": 80608
+      },
+      {
+        "_path": "bin/jpeg2hdf",
+        "path_type": "hardlink",
+        "sha256": "191db4394f99a79bc34a27aa2582e7f83f4456bdc216640232260a47521d5927",
+        "sha256_in_prefix": "191db4394f99a79bc34a27aa2582e7f83f4456bdc216640232260a47521d5927",
+        "size_in_bytes": 16872
+      },
+      {
+        "_path": "bin/paltohdf",
+        "path_type": "hardlink",
+        "sha256": "9dbc089b448ffe24a52966557c51d109d997d3398de1680b4a8e672cfca59018",
+        "sha256_in_prefix": "9dbc089b448ffe24a52966557c51d109d997d3398de1680b4a8e672cfca59018",
+        "size_in_bytes": 16208
+      },
+      {
+        "_path": "bin/r8tohdf",
+        "path_type": "hardlink",
+        "sha256": "1e8defbb03f7f4a569233872350d2988bab0aa13bf818bd41391ab2bf0d6b699",
+        "sha256_in_prefix": "1e8defbb03f7f4a569233872350d2988bab0aa13bf818bd41391ab2bf0d6b699",
+        "size_in_bytes": 16496
+      },
+      {
+        "_path": "bin/ristosds",
+        "path_type": "hardlink",
+        "sha256": "0495791dd6eb85b6aa8bee7ebb3764be5cc38c71523707dc2ae61681f7475ab8",
+        "sha256_in_prefix": "0495791dd6eb85b6aa8bee7ebb3764be5cc38c71523707dc2ae61681f7475ab8",
+        "size_in_bytes": 16488
+      },
+      {
+        "_path": "bin/vmake",
+        "path_type": "hardlink",
+        "sha256": "debdf40ecbff31bfcdef979fd9bcc9771a1728e94b20f72aba51296e58bd7369",
+        "sha256_in_prefix": "debdf40ecbff31bfcdef979fd9bcc9771a1728e94b20f72aba51296e58bd7369",
+        "size_in_bytes": 26000
+      },
+      {
+        "_path": "bin/vshow",
+        "path_type": "hardlink",
+        "sha256": "05f6dbe93729f0a15bc09fe26b872a5449f0e42695ba83c463c406799a752513",
+        "sha256_in_prefix": "05f6dbe93729f0a15bc09fe26b872a5449f0e42695ba83c463c406799a752513",
+        "size_in_bytes": 26280
+      },
+      {
+        "_path": "include/H4api_adpt.h",
+        "path_type": "hardlink",
+        "sha256": "3bfcaa737c742d85b9fb299b5572c443b00aee767ac4143f2a5d7f64a8e050b7",
+        "sha256_in_prefix": "3bfcaa737c742d85b9fb299b5572c443b00aee767ac4143f2a5d7f64a8e050b7",
+        "size_in_bytes": 7901
+      },
+      {
+        "_path": "include/atom.h",
+        "path_type": "hardlink",
+        "sha256": "c45ace2b5da96d1bfafbf53cce913b3bed0f74be78a26c638befa805abe06d48",
+        "sha256_in_prefix": "c45ace2b5da96d1bfafbf53cce913b3bed0f74be78a26c638befa805abe06d48",
+        "size_in_bytes": 11718
+      },
+      {
+        "_path": "include/bitvect.h",
+        "path_type": "hardlink",
+        "sha256": "b382c6b3b102db726cdfc3b5824b0cb0db262b8b96f4a0a0790578767a03ddf2",
+        "sha256_in_prefix": "b382c6b3b102db726cdfc3b5824b0cb0db262b8b96f4a0a0790578767a03ddf2",
+        "size_in_bytes": 23970
+      },
+      {
+        "_path": "include/cdeflate.h",
+        "path_type": "hardlink",
+        "sha256": "ef25f4e2a26d6c2ae2e400fa9d969d06cb706b695a11cb588cc6d7d422af70b9",
+        "sha256_in_prefix": "ef25f4e2a26d6c2ae2e400fa9d969d06cb706b695a11cb588cc6d7d422af70b9",
+        "size_in_bytes": 3712
+      },
+      {
+        "_path": "include/cnbit.h",
+        "path_type": "hardlink",
+        "sha256": "40e6c9e40fe045d8dee85798785d6c582d79a9d237f69e22be3c14abf4addbab",
+        "sha256_in_prefix": "40e6c9e40fe045d8dee85798785d6c582d79a9d237f69e22be3c14abf4addbab",
+        "size_in_bytes": 4315
+      },
+      {
+        "_path": "include/cnone.h",
+        "path_type": "hardlink",
+        "sha256": "ce5df7cde8f26be18387d6b570dddfe0c3e8fbdcacc4f269c3f46c4965742583",
+        "sha256_in_prefix": "ce5df7cde8f26be18387d6b570dddfe0c3e8fbdcacc4f269c3f46c4965742583",
+        "size_in_bytes": 3093
+      },
+      {
+        "_path": "include/crle.h",
+        "path_type": "hardlink",
+        "sha256": "00c66f20ca7476724d670377aa9928a803ec3b9d842e282409f9d39b75aa9da8",
+        "sha256_in_prefix": "00c66f20ca7476724d670377aa9928a803ec3b9d842e282409f9d39b75aa9da8",
+        "size_in_bytes": 4868
+      },
+      {
+        "_path": "include/cskphuff.h",
+        "path_type": "hardlink",
+        "sha256": "d4a68e65a171fdb207dd70cbaf1e3630f00ee2b324d1d94d3aa7413cfdc79a44",
+        "sha256_in_prefix": "d4a68e65a171fdb207dd70cbaf1e3630f00ee2b324d1d94d3aa7413cfdc79a44",
+        "size_in_bytes": 3736
+      },
+      {
+        "_path": "include/cszip.h",
+        "path_type": "hardlink",
+        "sha256": "7948215325c907b1ac7d713dcdcd062773cc48f02e9d6772e63ebf64c97cdfc3",
+        "sha256_in_prefix": "7948215325c907b1ac7d713dcdcd062773cc48f02e9d6772e63ebf64c97cdfc3",
+        "size_in_bytes": 4155
+      },
+      {
+        "_path": "include/df.h",
+        "path_type": "hardlink",
+        "sha256": "8f2e8ab900d0146c72d0dfad8a95b62c78bb37a2ab821324cd888560b99b4bde",
+        "sha256_in_prefix": "8f2e8ab900d0146c72d0dfad8a95b62c78bb37a2ab821324cd888560b99b4bde",
+        "size_in_bytes": 7627
+      },
+      {
+        "_path": "include/dfan.h",
+        "path_type": "hardlink",
+        "sha256": "ffb059f479ed8a1b6e3b0a92d8d9f6a9a8b3a1e73498dd16c9f5cb33fb052f10",
+        "sha256_in_prefix": "ffb059f479ed8a1b6e3b0a92d8d9f6a9a8b3a1e73498dd16c9f5cb33fb052f10",
+        "size_in_bytes": 2530
+      },
+      {
+        "_path": "include/dfgr.h",
+        "path_type": "hardlink",
+        "sha256": "b82f5f765928cc8f613144cfecc1daaed8e95db943964e6b365deb544edd4075",
+        "sha256_in_prefix": "b82f5f765928cc8f613144cfecc1daaed8e95db943964e6b365deb544edd4075",
+        "size_in_bytes": 3365
+      },
+      {
+        "_path": "include/dfi.h",
+        "path_type": "hardlink",
+        "sha256": "5aaa90ff70db4a197680511c10ea8a882160663ba307355d430a384f8e717fe7",
+        "sha256_in_prefix": "5aaa90ff70db4a197680511c10ea8a882160663ba307355d430a384f8e717fe7",
+        "size_in_bytes": 6257
+      },
+      {
+        "_path": "include/dfrig.h",
+        "path_type": "hardlink",
+        "sha256": "1c1662a41de13a37c57953d8075230701ef8b8f785d0a740e591004f91b4fefd",
+        "sha256_in_prefix": "1c1662a41de13a37c57953d8075230701ef8b8f785d0a740e591004f91b4fefd",
+        "size_in_bytes": 3298
+      },
+      {
+        "_path": "include/dfsd.h",
+        "path_type": "hardlink",
+        "sha256": "2a512f1dd5f48e9ea803b0800beb48f42d0f8336e3d3d12f1165ba98b17f3989",
+        "sha256_in_prefix": "2a512f1dd5f48e9ea803b0800beb48f42d0f8336e3d3d12f1165ba98b17f3989",
+        "size_in_bytes": 5210
+      },
+      {
+        "_path": "include/dfstubs.h",
+        "path_type": "hardlink",
+        "sha256": "b408d57b31e2d537876c6110f6c5039a63798ad3939ba43cc484551ca156952d",
+        "sha256_in_prefix": "b408d57b31e2d537876c6110f6c5039a63798ad3939ba43cc484551ca156952d",
+        "size_in_bytes": 2449
+      },
+      {
+        "_path": "include/dfufp2i.h",
+        "path_type": "hardlink",
+        "sha256": "ed729c9468f42db9086ce59b72333b739122c6c2d2b148d060fad5cf109eb403",
+        "sha256_in_prefix": "ed729c9468f42db9086ce59b72333b739122c6c2d2b148d060fad5cf109eb403",
+        "size_in_bytes": 4116
+      },
+      {
+        "_path": "include/dynarray.h",
+        "path_type": "hardlink",
+        "sha256": "3be9f71360be9b221d0f7d00b572d5a3a93efc88ff5af77a5aa05c213ecbb7a0",
+        "sha256_in_prefix": "3be9f71360be9b221d0f7d00b572d5a3a93efc88ff5af77a5aa05c213ecbb7a0",
+        "size_in_bytes": 5903
+      },
+      {
+        "_path": "include/h4config.h",
+        "path_type": "hardlink",
+        "sha256": "5168ec37be484b82d778445fec4b8617adadaa4a17741ff00d8dbf3866da1eed",
+        "sha256_in_prefix": "5168ec37be484b82d778445fec4b8617adadaa4a17741ff00d8dbf3866da1eed",
+        "size_in_bytes": 6027
+      },
+      {
+        "_path": "include/hbitio.h",
+        "path_type": "hardlink",
+        "sha256": "dce66af8f5387fa34f8c6917ad5846342b2bf82f099ba7916407c10e3b657311",
+        "sha256_in_prefix": "dce66af8f5387fa34f8c6917ad5846342b2bf82f099ba7916407c10e3b657311",
+        "size_in_bytes": 3447
+      },
+      {
+        "_path": "include/hchunks.h",
+        "path_type": "hardlink",
+        "sha256": "323085af26e1f21d339040eefed2d4b8d81534f9a9ddc44877d9f9b02661d14a",
+        "sha256_in_prefix": "323085af26e1f21d339040eefed2d4b8d81534f9a9ddc44877d9f9b02661d14a",
+        "size_in_bytes": 13561
+      },
+      {
+        "_path": "include/hcomp.h",
+        "path_type": "hardlink",
+        "sha256": "c792f85ac8cce88a40e04ec73c71fb0f18117ca7f67893679c545edafd0ca01f",
+        "sha256_in_prefix": "c792f85ac8cce88a40e04ec73c71fb0f18117ca7f67893679c545edafd0ca01f",
+        "size_in_bytes": 6016
+      },
+      {
+        "_path": "include/hcompi.h",
+        "path_type": "hardlink",
+        "sha256": "b9cb847b90cd11afc72f365bfc6651ad1fb718f9df80380339104c5d29ac4ed6",
+        "sha256_in_prefix": "b9cb847b90cd11afc72f365bfc6651ad1fb718f9df80380339104c5d29ac4ed6",
+        "size_in_bytes": 4699
+      },
+      {
+        "_path": "include/hconv.h",
+        "path_type": "hardlink",
+        "sha256": "1d6964dcf979360449342641b803c10c0588129a9357d10e06e3e9782d7921cd",
+        "sha256_in_prefix": "1d6964dcf979360449342641b803c10c0588129a9357d10e06e3e9782d7921cd",
+        "size_in_bytes": 5683
+      },
+      {
+        "_path": "include/hdatainfo.h",
+        "path_type": "hardlink",
+        "sha256": "5cafb28d019a28fd4653bcb4b093f8cb8b371ef9b7626d8343693d24bfd3e1e4",
+        "sha256_in_prefix": "5cafb28d019a28fd4653bcb4b093f8cb8b371ef9b7626d8343693d24bfd3e1e4",
+        "size_in_bytes": 2526
+      },
+      {
+        "_path": "include/hdf.h",
+        "path_type": "hardlink",
+        "sha256": "ac88f81ac48c5cc74e48e2eb3bc55832def8079a436b49e9857c556ce23a26f0",
+        "sha256_in_prefix": "ac88f81ac48c5cc74e48e2eb3bc55832def8079a436b49e9857c556ce23a26f0",
+        "size_in_bytes": 5157
+      },
+      {
+        "_path": "include/hdf2netcdf.h",
+        "path_type": "hardlink",
+        "sha256": "5d6e7a643ae00d83ea6192b85d10e4c6409dd1b68f2397cb7942219b4086d379",
+        "sha256_in_prefix": "5d6e7a643ae00d83ea6192b85d10e4c6409dd1b68f2397cb7942219b4086d379",
+        "size_in_bytes": 3234
+      },
+      {
+        "_path": "include/hdf4_netcdf.h",
+        "path_type": "hardlink",
+        "sha256": "217696ffbe811e12dc4deca619dd3d18be709b8d8403ebd55b433f2c4ab5a3f2",
+        "sha256_in_prefix": "217696ffbe811e12dc4deca619dd3d18be709b8d8403ebd55b433f2c4ab5a3f2",
+        "size_in_bytes": 16724
+      },
+      {
+        "_path": "include/hdfi.h",
+        "path_type": "hardlink",
+        "sha256": "dbbe91b6219778817bfc92b8dacf7ada333b3ebb809156d55fb6b1d5f9b3d380",
+        "sha256_in_prefix": "dbbe91b6219778817bfc92b8dacf7ada333b3ebb809156d55fb6b1d5f9b3d380",
+        "size_in_bytes": 59584
+      },
+      {
+        "_path": "include/herr.h",
+        "path_type": "hardlink",
+        "sha256": "b3269131460a9f1f6a325f3e2c10a9adbc2ea4728952b26805b70c03cd856b75",
+        "sha256_in_prefix": "b3269131460a9f1f6a325f3e2c10a9adbc2ea4728952b26805b70c03cd856b75",
+        "size_in_bytes": 25055
+      },
+      {
+        "_path": "include/hfile.h",
+        "path_type": "hardlink",
+        "sha256": "26652dbb5602c2996862d1a1296cc6d880dec535d19336cbd1cb1c403ccdabb3",
+        "sha256_in_prefix": "26652dbb5602c2996862d1a1296cc6d880dec535d19336cbd1cb1c403ccdabb3",
+        "size_in_bytes": 34929
+      },
+      {
+        "_path": "include/hkit.h",
+        "path_type": "hardlink",
+        "sha256": "65b672bee0de166b51e723426954f465f5eca3855e973350af3207a6192ab5f4",
+        "sha256_in_prefix": "65b672bee0de166b51e723426954f465f5eca3855e973350af3207a6192ab5f4",
+        "size_in_bytes": 7186
+      },
+      {
+        "_path": "include/hlimits.h",
+        "path_type": "hardlink",
+        "sha256": "72e198b2f896a7f1913fb651b4e0f3e3cb77fb6cc600a06883cdbb1b7e5e80b1",
+        "sha256_in_prefix": "72e198b2f896a7f1913fb651b4e0f3e3cb77fb6cc600a06883cdbb1b7e5e80b1",
+        "size_in_bytes": 11688
+      },
+      {
+        "_path": "include/hntdefs.h",
+        "path_type": "hardlink",
+        "sha256": "b7ed45df2256950124201331ba06fd2403aae01fc1fcfa50abdead85ea31f6cc",
+        "sha256_in_prefix": "b7ed45df2256950124201331ba06fd2403aae01fc1fcfa50abdead85ea31f6cc",
+        "size_in_bytes": 9619
+      },
+      {
+        "_path": "include/hproto.h",
+        "path_type": "hardlink",
+        "sha256": "c8b9e04d6f4d0d491c62534216f7f8ba3c1d513bce54bc2112c4245fb7cd3b4a",
+        "sha256_in_prefix": "c8b9e04d6f4d0d491c62534216f7f8ba3c1d513bce54bc2112c4245fb7cd3b4a",
+        "size_in_bytes": 63057
+      },
+      {
+        "_path": "include/htags.h",
+        "path_type": "hardlink",
+        "sha256": "f98e4c22432c616090b38ba3b4311fd9c3162717574d5f70239a1a69bc853a2b",
+        "sha256_in_prefix": "f98e4c22432c616090b38ba3b4311fd9c3162717574d5f70239a1a69bc853a2b",
+        "size_in_bytes": 6442
+      },
+      {
+        "_path": "include/linklist.h",
+        "path_type": "hardlink",
+        "sha256": "bc20c43e769783e322f195fca4c6009012743f847fc1580f2272e9bdb39fde67",
+        "sha256_in_prefix": "bc20c43e769783e322f195fca4c6009012743f847fc1580f2272e9bdb39fde67",
+        "size_in_bytes": 7431
+      },
+      {
+        "_path": "include/local_nc.h",
+        "path_type": "hardlink",
+        "sha256": "943cdfb2c66c05d3c83e957fff619fc286e7496f75117538399fd15dadf8cea0",
+        "sha256_in_prefix": "943cdfb2c66c05d3c83e957fff619fc286e7496f75117538399fd15dadf8cea0",
+        "size_in_bytes": 27717
+      },
+      {
+        "_path": "include/mfan.h",
+        "path_type": "hardlink",
+        "sha256": "120b3b8559aa2de966f9984aa10a9f978449297d535c55400476db482e9f2ad9",
+        "sha256_in_prefix": "120b3b8559aa2de966f9984aa10a9f978449297d535c55400476db482e9f2ad9",
+        "size_in_bytes": 14606
+      },
+      {
+        "_path": "include/mfdatainfo.h",
+        "path_type": "hardlink",
+        "sha256": "b8799bf1df9052b8056b4662a4b0c7203090c595c6450e7bc8fb1ad97cdccbab",
+        "sha256_in_prefix": "b8799bf1df9052b8056b4662a4b0c7203090c595c6450e7bc8fb1ad97cdccbab",
+        "size_in_bytes": 1974
+      },
+      {
+        "_path": "include/mfgr.h",
+        "path_type": "hardlink",
+        "sha256": "b1dcef2899f9f03b8ea454314226d70d0fc017593a4d67f4b1ab0f682e3c3067",
+        "sha256_in_prefix": "b1dcef2899f9f03b8ea454314226d70d0fc017593a4d67f4b1ab0f682e3c3067",
+        "size_in_bytes": 7556
+      },
+      {
+        "_path": "include/mfhdf.h",
+        "path_type": "hardlink",
+        "sha256": "a899828d7b45ac9b03b2a654a10557df597332c451e1a78cedde7342294beaa8",
+        "sha256_in_prefix": "a899828d7b45ac9b03b2a654a10557df597332c451e1a78cedde7342294beaa8",
+        "size_in_bytes": 17493
+      },
+      {
+        "_path": "include/mfhdfi.h",
+        "path_type": "hardlink",
+        "sha256": "b74afbbdef2cafd8246594ef662416597fe4d1f64965c406e630ae762f3aec16",
+        "sha256_in_prefix": "b74afbbdef2cafd8246594ef662416597fe4d1f64965c406e630ae762f3aec16",
+        "size_in_bytes": 1455
+      },
+      {
+        "_path": "include/mstdio.h",
+        "path_type": "hardlink",
+        "sha256": "f9a5cef9603288611b63431b9667930f807fd74054317cc32f173d1bd471104d",
+        "sha256_in_prefix": "f9a5cef9603288611b63431b9667930f807fd74054317cc32f173d1bd471104d",
+        "size_in_bytes": 3073
+      },
+      {
+        "_path": "include/tbbt.h",
+        "path_type": "hardlink",
+        "sha256": "1ad866cbb6d40a1f3120836b800ecafab091e0d0c509deb2b3462208a3726bb5",
+        "sha256_in_prefix": "1ad866cbb6d40a1f3120836b800ecafab091e0d0c509deb2b3462208a3726bb5",
+        "size_in_bytes": 15864
+      },
+      {
+        "_path": "include/vattr.h",
+        "path_type": "hardlink",
+        "sha256": "cfed15aa9d2ddd1973f0042c9196c06c6ba2680201c6b49587c67594f65c1db4",
+        "sha256_in_prefix": "cfed15aa9d2ddd1973f0042c9196c06c6ba2680201c6b49587c67594f65c1db4",
+        "size_in_bytes": 1217
+      },
+      {
+        "_path": "include/vg.h",
+        "path_type": "hardlink",
+        "sha256": "d1a4f66aad2e2af417562abb2437347e5b56a1da9357132723870b860524ed50",
+        "sha256_in_prefix": "d1a4f66aad2e2af417562abb2437347e5b56a1da9357132723870b860524ed50",
+        "size_in_bytes": 3145
+      },
+      {
+        "_path": "lib/libdf.a",
+        "path_type": "hardlink",
+        "sha256": "46d77a79f5d9774c00a9aacefa3886d067aa20751a6fec8d20695eeb86ead329",
+        "sha256_in_prefix": "46d77a79f5d9774c00a9aacefa3886d067aa20751a6fec8d20695eeb86ead329",
+        "size_in_bytes": 1254120
+      },
+      {
+        "_path": "lib/libdf.so",
+        "path_type": "softlink",
+        "sha256": "82e29525ab32346bd64eb3c5a5ee6b9f119ffd95e6547d0a73d58765709a11be",
+        "size_in_bytes": 609344
+      },
+      {
+        "_path": "lib/libdf.so.0",
+        "path_type": "softlink",
+        "sha256": "82e29525ab32346bd64eb3c5a5ee6b9f119ffd95e6547d0a73d58765709a11be",
+        "size_in_bytes": 609344
+      },
+      {
+        "_path": "lib/libdf.so.0.0.0",
+        "path_type": "hardlink",
+        "sha256": "82e29525ab32346bd64eb3c5a5ee6b9f119ffd95e6547d0a73d58765709a11be",
+        "sha256_in_prefix": "82e29525ab32346bd64eb3c5a5ee6b9f119ffd95e6547d0a73d58765709a11be",
+        "size_in_bytes": 609344
+      },
+      {
+        "_path": "lib/libhdf4.settings",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/hdf4_1695661253961/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeh",
+        "sha256": "9240279c537ee753838561772f71b8793237ed62b8dbad4b2b3f6113239976b4",
+        "sha256_in_prefix": "ecad7576d795fd3f278cbdc708b5d0d02acea5566dabc3fcad88cfd85b7e97fe",
+        "size_in_bytes": 3725
+      },
+      {
+        "_path": "lib/libmfhdf.a",
+        "path_type": "hardlink",
+        "sha256": "5c789286fbc45c6ed235fa50b1ba10af5901e46e72b379d568106d0e0e57d944",
+        "sha256_in_prefix": "5c789286fbc45c6ed235fa50b1ba10af5901e46e72b379d568106d0e0e57d944",
+        "size_in_bytes": 353478
+      },
+      {
+        "_path": "lib/libmfhdf.so",
+        "path_type": "softlink",
+        "sha256": "d1b4e13e69d141cf03aff941ce20ad80949bcf4ffb7e77f60d804d2babef32a0",
+        "size_in_bytes": 193968
+      },
+      {
+        "_path": "lib/libmfhdf.so.0",
+        "path_type": "softlink",
+        "sha256": "d1b4e13e69d141cf03aff941ce20ad80949bcf4ffb7e77f60d804d2babef32a0",
+        "size_in_bytes": 193968
+      },
+      {
+        "_path": "lib/libmfhdf.so.0.0.0",
+        "path_type": "hardlink",
+        "sha256": "d1b4e13e69d141cf03aff941ce20ad80949bcf4ffb7e77f60d804d2babef32a0",
+        "sha256_in_prefix": "d1b4e13e69d141cf03aff941ce20ad80949bcf4ffb7e77f60d804d2babef32a0",
+        "size_in_bytes": 193968
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "0d09b6dc1ce5c4005ae1c6a19dc10767932ef9a5e9c755cfdbb5189ac8fb0684",
+  "size": 756742,
+  "subdir": "linux-64",
+  "timestamp": 1695661547000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/hdf4-4.2.15-h2a13503_7.conda",
+  "version": "4.2.15"
+}

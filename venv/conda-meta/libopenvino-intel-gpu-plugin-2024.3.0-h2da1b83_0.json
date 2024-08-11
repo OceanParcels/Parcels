@@ -1,0 +1,55 @@
+{
+  "build": "h2da1b83_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "libgcc-ng >=12",
+    "libopenvino 2024.3.0 h2da1b83_0",
+    "libstdcxx-ng >=12",
+    "ocl-icd >=2.3.2,<3.0a0",
+    "pugixml >=1.14,<1.15.0a0",
+    "tbb >=2021.12.0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libopenvino-intel-gpu-plugin-2024.3.0-h2da1b83_0",
+  "files": [
+    "lib/openvino-2024.3.0/cache.json",
+    "lib/openvino-2024.3.0/libopenvino_intel_gpu_plugin.so"
+  ],
+  "fn": "libopenvino-intel-gpu-plugin-2024.3.0-h2da1b83_0.conda",
+  "license": "",
+  "link": {
+    "source": "/opt/conda/pkgs/libopenvino-intel-gpu-plugin-2024.3.0-h2da1b83_0",
+    "type": 1
+  },
+  "md5": "c0957603b82ec549c119f7103968c62d",
+  "name": "libopenvino-intel-gpu-plugin",
+  "package_tarball_full_path": "/opt/conda/pkgs/libopenvino-intel-gpu-plugin-2024.3.0-h2da1b83_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/openvino-2024.3.0/cache.json",
+        "path_type": "hardlink",
+        "sha256": "0b2ad2a99516a3411ce3fef274e8ae2880b41a6f00c9bac6768cd4a94b87c41c",
+        "sha256_in_prefix": "0b2ad2a99516a3411ce3fef274e8ae2880b41a6f00c9bac6768cd4a94b87c41c",
+        "size_in_bytes": 8840377
+      },
+      {
+        "_path": "lib/openvino-2024.3.0/libopenvino_intel_gpu_plugin.so",
+        "path_type": "hardlink",
+        "sha256": "0205ed40700e04431c180b5debaf06608b2eb1c138907f8de670ab99a3b1f5e0",
+        "sha256_in_prefix": "0205ed40700e04431c180b5debaf06608b2eb1c138907f8de670ab99a3b1f5e0",
+        "size_in_bytes": 29537632
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "1060bfed8fed0234224f2f8ed59a98af76d07b3776fc9076f551d3aaa0bc04a0",
+  "size": 8727772,
+  "subdir": "linux-64",
+  "timestamp": 1722425694000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libopenvino-intel-gpu-plugin-2024.3.0-h2da1b83_0.conda",
+  "version": "2024.3.0"
+}

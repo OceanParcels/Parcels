@@ -1,0 +1,46 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [
+    "openssl !=1.1.1e"
+  ],
+  "depends": [
+    "bokeh >=2.4.2,!=3.0.*",
+    "cytoolz >=0.11.0",
+    "dask-core >=2024.8.0,<2024.8.1.0a0",
+    "dask-expr >=1.1,<1.2",
+    "distributed >=2024.8.0,<2024.8.1.0a0",
+    "jinja2 >=2.10.3",
+    "lz4 >=4.3.2",
+    "numpy >=1.21",
+    "pandas >=2.0",
+    "pyarrow >=7.0",
+    "pyarrow-hotfix",
+    "python >=3.9"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/dask-2024.8.0-pyhd8ed1ab_0",
+  "files": [],
+  "fn": "dask-2024.8.0-pyhd8ed1ab_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/dask-2024.8.0-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "795f3557b117402208fe1e0e20d943ed",
+  "name": "dask",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/dask-2024.8.0-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [],
+    "paths_version": 1
+  },
+  "requested_spec": "dask[version='>=2.0']",
+  "sha256": "00b84f6303b70f1e0902ce01b7a664bd7a04280d186f0c8af02dfff4b07d724e",
+  "size": 7387,
+  "subdir": "noarch",
+  "timestamp": 1722985330000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/dask-2024.8.0-pyhd8ed1ab_0.conda",
+  "version": "2024.8.0"
+}

@@ -1,0 +1,124 @@
+'\" t
+.\"     Title: git-refs
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GIT\-REFS" "1" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+git-refs \- Low\-level access to refs
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIgit refs migrate\fR \-\-ref\-format=<format> [\-\-dry\-run]
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+This command provides low\-level access to refs\&.
+.SH "COMMANDS"
+.PP
+migrate
+.RS 4
+Migrate ref store between different formats\&.
+.RE
+.SH "OPTIONS"
+.sp
+The following options are specific to \fIgit refs migrate\fR:
+.PP
+\-\-ref\-format=<format>
+.RS 4
+The ref format to migrate the ref store to\&. Can be one of:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBfiles\fR
+for loose files with packed\-refs\&. This is the default\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBreftable\fR
+for the reftable format\&. This format is experimental and its internals are subject to change\&.
+.RE
+.RE
+.PP
+\-\-dry\-run
+.RS 4
+Perform the migration, but do not modify the repository\&. The migrated refs will be written into a separate directory that can be inspected separately\&. The name of the directory will be reported on stdout\&. This can be used to double check that the migration works as expected before performing the actual migration\&.
+.RE
+.SH "KNOWN LIMITATIONS"
+.sp
+The ref format migration has several known limitations in its current form:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+It is not possible to migrate repositories that have reflogs\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+It is not possible to migrate repositories that have worktrees\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+There is no way to block concurrent writes to the repository during an ongoing migration\&. Concurrent writes can lead to an inconsistent migrated state\&. Users are expected to block writes on a higher level\&. If your repository is registered for scheduled maintenance, it is recommended to unregister it first with git\-maintenance(1)\&.
+.RE
+.sp
+These limitations may eventually be lifted\&.
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite

@@ -1,0 +1,92 @@
+{
+  "build": "py312h41a817b_1",
+  "build_number": 1,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "libgcc-ng >=12",
+    "python >=3.12,<3.13.0a0",
+    "python_abi 3.12.* *_cp312"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/siphash24-1.6-py312h41a817b_1",
+  "files": [
+    "lib/python3.12/site-packages/siphash24-1.6.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/siphash24-1.6.dist-info/METADATA",
+    "lib/python3.12/site-packages/siphash24-1.6.dist-info/RECORD",
+    "lib/python3.12/site-packages/siphash24-1.6.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/siphash24-1.6.dist-info/WHEEL",
+    "lib/python3.12/site-packages/siphash24-1.6.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/siphash24.cpython-312-x86_64-linux-gnu.so"
+  ],
+  "fn": "siphash24-1.6-py312h41a817b_1.conda",
+  "license": "Apache-2.0 or LGPL-2.1-or-later",
+  "link": {
+    "source": "/opt/conda/pkgs/siphash24-1.6-py312h41a817b_1",
+    "type": 1
+  },
+  "md5": "4628117c02a6fa0c9569eb6229857b9a",
+  "name": "siphash24",
+  "package_tarball_full_path": "/opt/conda/pkgs/siphash24-1.6-py312h41a817b_1.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/python3.12/site-packages/siphash24-1.6.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "lib/python3.12/site-packages/siphash24-1.6.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "2a29045f6fa79e8b10365b1c772325e91e12d27e74f26540d29cb710bc5d743e",
+        "sha256_in_prefix": "2a29045f6fa79e8b10365b1c772325e91e12d27e74f26540d29cb710bc5d743e",
+        "size_in_bytes": 3220
+      },
+      {
+        "_path": "lib/python3.12/site-packages/siphash24-1.6.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "d55fd65deb8d464150d42342d88ad20ed34bb33aa5bf987be504e955286317cf",
+        "sha256_in_prefix": "d55fd65deb8d464150d42342d88ad20ed34bb33aa5bf987be504e955286317cf",
+        "size_in_bytes": 582
+      },
+      {
+        "_path": "lib/python3.12/site-packages/siphash24-1.6.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "lib/python3.12/site-packages/siphash24-1.6.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "634159ee5c5f58a5b2d30fe69e35e1149cf5f2be37f307e1642a9742d342a6f5",
+        "sha256_in_prefix": "634159ee5c5f58a5b2d30fe69e35e1149cf5f2be37f307e1642a9742d342a6f5",
+        "size_in_bytes": 88
+      },
+      {
+        "_path": "lib/python3.12/site-packages/siphash24-1.6.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "ae09a83019cb4eee6f98310ebe8332ec27f9d7ff271c586b1e66e8ddbf8a0fde",
+        "sha256_in_prefix": "ae09a83019cb4eee6f98310ebe8332ec27f9d7ff271c586b1e66e8ddbf8a0fde",
+        "size_in_bytes": 105
+      },
+      {
+        "_path": "lib/python3.12/site-packages/siphash24.cpython-312-x86_64-linux-gnu.so",
+        "path_type": "hardlink",
+        "sha256": "e55b7250629851782f6b121a5c5e951d78e320a417beb71fee7a3c8d8f5f852d",
+        "sha256_in_prefix": "e55b7250629851782f6b121a5c5e951d78e320a417beb71fee7a3c8d8f5f852d",
+        "size_in_bytes": 232824
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "5a25aed698913aa96915fc71999e4928bae490e2d813e56ec674b80422b8c7b5",
+  "size": 100821,
+  "subdir": "linux-64",
+  "timestamp": 1720489271000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/siphash24-1.6-py312h41a817b_1.conda",
+  "version": "1.6"
+}

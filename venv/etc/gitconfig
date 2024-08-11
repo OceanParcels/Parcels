@@ -1,0 +1,4 @@
+[http]
+        sslVerify = true
+        sslCAPath = /workspaces/open_source_contribution/venv/ssl/cacert.pem
+        sslCAInfo = /workspaces/open_source_contribution/venv/ssl/cacert.pem

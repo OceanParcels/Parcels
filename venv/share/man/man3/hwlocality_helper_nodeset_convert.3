@@ -1,0 +1,60 @@
+.TH "hwlocality_helper_nodeset_convert" 3 "Version 2.11.1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_helper_nodeset_convert \- Converting between CPU sets and node sets
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBhwloc_cpuset_to_nodeset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP _cpuset, \fBhwloc_nodeset_t\fP nodeset)"
+.br
+.ti -1c
+.RI "static int \fBhwloc_cpuset_from_nodeset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP _cpuset, \fBhwloc_const_nodeset_t\fP nodeset)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Function Documentation"
+.PP 
+.SS "static int hwloc_cpuset_from_nodeset (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP _cpuset, \fBhwloc_const_nodeset_t\fP nodeset)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Convert a NUMA node set into a CPU set\&. For each NUMA node included in the input \fCnodeset\fP, set the corresponding local PUs in the output \fC_cpuset\fP\&.
+.PP
+If some CPUs have no local NUMA nodes, this function never sets their indexes in the output CPU set, even if a full node set is given in input\&.
+.PP
+Hence the entire topology node set is converted into the set of all CPUs that have some local NUMA nodes\&.
+.PP
+\fBReturns\fP
+.RS 4
+0 on success\&. 
+.PP
+-1 with errno set to \fCENOMEM\fP on internal reallocation failure\&. 
+.RE
+.PP
+
+.SS "static int hwloc_cpuset_to_nodeset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP _cpuset, \fBhwloc_nodeset_t\fP nodeset)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Convert a CPU set into a NUMA node set\&. For each PU included in the input \fC_cpuset\fP, set the corresponding local NUMA node(s) in the output \fCnodeset\fP\&.
+.PP
+If some NUMA nodes have no CPUs at all, this function never sets their indexes in the output node set, even if a full CPU set is given in input\&.
+.PP
+Hence the entire topology CPU set is converted into the set of all nodes that have some local CPUs\&.
+.PP
+\fBReturns\fP
+.RS 4
+0 on success\&. 
+.PP
+-1 with errno set to \fCENOMEM\fP on internal reallocation failure\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

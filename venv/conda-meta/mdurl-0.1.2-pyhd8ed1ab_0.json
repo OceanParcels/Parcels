@@ -1,0 +1,177 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "python >=3.6"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/mdurl-0.1.2-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/mdurl-0.1.2.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/mdurl-0.1.2.dist-info/LICENSE",
+    "lib/python3.12/site-packages/mdurl-0.1.2.dist-info/METADATA",
+    "lib/python3.12/site-packages/mdurl-0.1.2.dist-info/RECORD",
+    "lib/python3.12/site-packages/mdurl-0.1.2.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/mdurl-0.1.2.dist-info/WHEEL",
+    "lib/python3.12/site-packages/mdurl-0.1.2.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/mdurl/__init__.py",
+    "lib/python3.12/site-packages/mdurl/_decode.py",
+    "lib/python3.12/site-packages/mdurl/_encode.py",
+    "lib/python3.12/site-packages/mdurl/_format.py",
+    "lib/python3.12/site-packages/mdurl/_parse.py",
+    "lib/python3.12/site-packages/mdurl/_url.py",
+    "lib/python3.12/site-packages/mdurl/py.typed",
+    "lib/python3.12/site-packages/mdurl/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdurl/__pycache__/_decode.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdurl/__pycache__/_encode.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdurl/__pycache__/_format.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdurl/__pycache__/_parse.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdurl/__pycache__/_url.cpython-312.pyc"
+  ],
+  "fn": "mdurl-0.1.2-pyhd8ed1ab_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/mdurl-0.1.2-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "776a8dd9e824f77abac30e6ef43a8f7a",
+  "name": "mdurl",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/mdurl-0.1.2-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/mdurl-0.1.2.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/mdurl-0.1.2.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955",
+        "sha256_in_prefix": "7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955",
+        "size_in_bytes": 2338
+      },
+      {
+        "_path": "site-packages/mdurl-0.1.2.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "b53b29d48f499367053fda3c81e7ce27d2558380ebbf83e66023b02eb7ddd25d",
+        "sha256_in_prefix": "b53b29d48f499367053fda3c81e7ce27d2558380ebbf83e66023b02eb7ddd25d",
+        "size_in_bytes": 1638
+      },
+      {
+        "_path": "site-packages/mdurl-0.1.2.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "8490906ffc6e103a31467445136fb04064132c1fbec5841e189e97cc47304964",
+        "sha256_in_prefix": "8490906ffc6e103a31467445136fb04064132c1fbec5841e189e97cc47304964",
+        "size_in_bytes": 1332
+      },
+      {
+        "_path": "site-packages/mdurl-0.1.2.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/mdurl-0.1.2.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "1196c6921ec87b83e865f450f08d19b8ff5592537f4ef719e83484e546abe33e",
+        "sha256_in_prefix": "1196c6921ec87b83e865f450f08d19b8ff5592537f4ef719e83484e546abe33e",
+        "size_in_bytes": 81
+      },
+      {
+        "_path": "site-packages/mdurl-0.1.2.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "6f2e7a6bf3256312fd2fb87184b269acb4439fa1fb67fcaf9b156db9cdff407e",
+        "sha256_in_prefix": "6f2e7a6bf3256312fd2fb87184b269acb4439fa1fb67fcaf9b156db9cdff407e",
+        "size_in_bytes": 101
+      },
+      {
+        "_path": "site-packages/mdurl/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "d6fa44f3d3725e7888459342ff87fa04f9b751be1b3e7b637f2ca12d147ba295",
+        "sha256_in_prefix": "d6fa44f3d3725e7888459342ff87fa04f9b751be1b3e7b637f2ca12d147ba295",
+        "size_in_bytes": 547
+      },
+      {
+        "_path": "site-packages/mdurl/_decode.py",
+        "path_type": "hardlink",
+        "sha256": "dd0fe00d0a94fff4ef0dbbbbc7e6fd2e36d5978416cb983fa85c258dcbaf37f6",
+        "sha256_in_prefix": "dd0fe00d0a94fff4ef0dbbbbc7e6fd2e36d5978416cb983fa85c258dcbaf37f6",
+        "size_in_bytes": 3004
+      },
+      {
+        "_path": "site-packages/mdurl/_encode.py",
+        "path_type": "hardlink",
+        "sha256": "82824b505b75878ad564daaa9bdb75e4dc365be6c55d8404cb7691d352265afb",
+        "sha256_in_prefix": "82824b505b75878ad564daaa9bdb75e4dc365be6c55d8404cb7691d352265afb",
+        "size_in_bytes": 2602
+      },
+      {
+        "_path": "site-packages/mdurl/_format.py",
+        "path_type": "hardlink",
+        "sha256": "c5972dd2675e3d70341f7900ab18c6b650793bce86df90c060c1a4038e02981e",
+        "sha256_in_prefix": "c5972dd2675e3d70341f7900ab18c6b650793bce86df90c060c1a4038e02981e",
+        "size_in_bytes": 626
+      },
+      {
+        "_path": "site-packages/mdurl/_parse.py",
+        "path_type": "hardlink",
+        "sha256": "7b365290cdbfe0d436671d38eec11d7091bb3584111478992bb63c20d1c5cf06",
+        "sha256_in_prefix": "7b365290cdbfe0d436671d38eec11d7091bb3584111478992bb63c20d1c5cf06",
+        "size_in_bytes": 11374
+      },
+      {
+        "_path": "site-packages/mdurl/_url.py",
+        "path_type": "hardlink",
+        "sha256": "e6442745037603f1b8b2f2e747365c1b46dfa03f406c1ad80d7a2eb031d9df3d",
+        "sha256_in_prefix": "e6442745037603f1b8b2f2e747365c1b46dfa03f406c1ad80d7a2eb031d9df3d",
+        "size_in_bytes": 284
+      },
+      {
+        "_path": "site-packages/mdurl/py.typed",
+        "path_type": "hardlink",
+        "sha256": "f0f8f2675695a10a5156fb7bd66bafbaae6a13e8d315990af862c792175e6e67",
+        "sha256_in_prefix": "f0f8f2675695a10a5156fb7bd66bafbaae6a13e8d315990af862c792175e6e67",
+        "size_in_bytes": 26
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdurl/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdurl/__pycache__/_decode.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdurl/__pycache__/_encode.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdurl/__pycache__/_format.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdurl/__pycache__/_parse.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdurl/__pycache__/_url.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "64073dfb6bb429d52fff30891877b48c7ec0f89625b1bf844905b66a81cce6e1",
+  "size": 14680,
+  "subdir": "noarch",
+  "timestamp": 1704317789000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/mdurl-0.1.2-pyhd8ed1ab_0.conda",
+  "version": "0.1.2"
+}

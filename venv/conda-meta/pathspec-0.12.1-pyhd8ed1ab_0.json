@@ -1,0 +1,203 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "python >=3.7"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/pathspec-0.12.1-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/pathspec-0.12.1.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/pathspec-0.12.1.dist-info/LICENSE",
+    "lib/python3.12/site-packages/pathspec-0.12.1.dist-info/METADATA",
+    "lib/python3.12/site-packages/pathspec-0.12.1.dist-info/RECORD",
+    "lib/python3.12/site-packages/pathspec-0.12.1.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/pathspec-0.12.1.dist-info/WHEEL",
+    "lib/python3.12/site-packages/pathspec-0.12.1.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/pathspec/__init__.py",
+    "lib/python3.12/site-packages/pathspec/_meta.py",
+    "lib/python3.12/site-packages/pathspec/gitignore.py",
+    "lib/python3.12/site-packages/pathspec/pathspec.py",
+    "lib/python3.12/site-packages/pathspec/pattern.py",
+    "lib/python3.12/site-packages/pathspec/patterns/__init__.py",
+    "lib/python3.12/site-packages/pathspec/patterns/gitwildmatch.py",
+    "lib/python3.12/site-packages/pathspec/py.typed",
+    "lib/python3.12/site-packages/pathspec/util.py",
+    "lib/python3.12/site-packages/pathspec/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pathspec/__pycache__/_meta.cpython-312.pyc",
+    "lib/python3.12/site-packages/pathspec/__pycache__/gitignore.cpython-312.pyc",
+    "lib/python3.12/site-packages/pathspec/__pycache__/pathspec.cpython-312.pyc",
+    "lib/python3.12/site-packages/pathspec/__pycache__/pattern.cpython-312.pyc",
+    "lib/python3.12/site-packages/pathspec/patterns/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pathspec/patterns/__pycache__/gitwildmatch.cpython-312.pyc",
+    "lib/python3.12/site-packages/pathspec/__pycache__/util.cpython-312.pyc"
+  ],
+  "fn": "pathspec-0.12.1-pyhd8ed1ab_0.conda",
+  "license": "MPL-2.0",
+  "link": {
+    "source": "/opt/conda/pkgs/pathspec-0.12.1-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "17064acba08d3686f1135b5ec1b32b12",
+  "name": "pathspec",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/pathspec-0.12.1-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/pathspec-0.12.1.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/pathspec-0.12.1.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85",
+        "sha256_in_prefix": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85",
+        "size_in_bytes": 16726
+      },
+      {
+        "_path": "site-packages/pathspec-0.12.1.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "44dbdb3db89de535a2c6bf3168bc80dc19ba5adf0540ce092d8c47bae712c564",
+        "sha256_in_prefix": "44dbdb3db89de535a2c6bf3168bc80dc19ba5adf0540ce092d8c47bae712c564",
+        "size_in_bytes": 21171
+      },
+      {
+        "_path": "site-packages/pathspec-0.12.1.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "64c25f84f62e540a3131d36b8ba37ef7c54d8ab687ee8a2a6155776b5a7bfea6",
+        "sha256_in_prefix": "64c25f84f62e540a3131d36b8ba37ef7c54d8ab687ee8a2a6155776b5a7bfea6",
+        "size_in_bytes": 1707
+      },
+      {
+        "_path": "site-packages/pathspec-0.12.1.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/pathspec-0.12.1.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "1196c6921ec87b83e865f450f08d19b8ff5592537f4ef719e83484e546abe33e",
+        "sha256_in_prefix": "1196c6921ec87b83e865f450f08d19b8ff5592537f4ef719e83484e546abe33e",
+        "size_in_bytes": 81
+      },
+      {
+        "_path": "site-packages/pathspec-0.12.1.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "700dc05ed8be3702f26f22391fe001572593e06d87188b30931b8add2d7515c0",
+        "sha256_in_prefix": "700dc05ed8be3702f26f22391fe001572593e06d87188b30931b8add2d7515c0",
+        "size_in_bytes": 104
+      },
+      {
+        "_path": "site-packages/pathspec/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "ed25f2b264be15b1a77e89ea5ed6929ba69429d7a94025ddbdde00ad600c25a9",
+        "sha256_in_prefix": "ed25f2b264be15b1a77e89ea5ed6929ba69429d7a94025ddbdde00ad600c25a9",
+        "size_in_bytes": 1630
+      },
+      {
+        "_path": "site-packages/pathspec/_meta.py",
+        "path_type": "hardlink",
+        "sha256": "0da4931c5fb29e4925bc105b2884029cd6125b4c9725a2940d8124bd61c16161",
+        "sha256_in_prefix": "0da4931c5fb29e4925bc105b2884029cd6125b4c9725a2940d8124bd61c16161",
+        "size_in_bytes": 2268
+      },
+      {
+        "_path": "site-packages/pathspec/gitignore.py",
+        "path_type": "hardlink",
+        "sha256": "f3db15e7753d64c1f06a40b27f3e88484e5a43444dbd246415b57db5491621d7",
+        "sha256_in_prefix": "f3db15e7753d64c1f06a40b27f3e88484e5a43444dbd246415b57db5491621d7",
+        "size_in_bytes": 4637
+      },
+      {
+        "_path": "site-packages/pathspec/pathspec.py",
+        "path_type": "hardlink",
+        "sha256": "9832e9603dff64409885eefbe2e8d234a14971accbd501355cf496939afbaefd",
+        "sha256_in_prefix": "9832e9603dff64409885eefbe2e8d234a14971accbd501355cf496939afbaefd",
+        "size_in_bytes": 13273
+      },
+      {
+        "_path": "site-packages/pathspec/pattern.py",
+        "path_type": "hardlink",
+        "sha256": "7dcbdc4e170be5cf8424fd969d8b85578b73a0bee6ce8390316d3d7ad0ab935e",
+        "sha256_in_prefix": "7dcbdc4e170be5cf8424fd969d8b85578b73a0bee6ce8390316d3d7ad0ab935e",
+        "size_in_bytes": 6270
+      },
+      {
+        "_path": "site-packages/pathspec/patterns/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "bc0cc812a05cd8ab2f5ac8accec2c2798430415597207cdb1cd82ae5336b3dd9",
+        "sha256_in_prefix": "bc0cc812a05cd8ab2f5ac8accec2c2798430415597207cdb1cd82ae5336b3dd9",
+        "size_in_bytes": 302
+      },
+      {
+        "_path": "site-packages/pathspec/patterns/gitwildmatch.py",
+        "path_type": "hardlink",
+        "sha256": "ee0a5a2aca0b1fc0186c543832aca3db0c42108df35ce563d467bec7a46db116",
+        "sha256_in_prefix": "ee0a5a2aca0b1fc0186c543832aca3db0c42108df35ce563d467bec7a46db116",
+        "size_in_bytes": 12623
+      },
+      {
+        "_path": "site-packages/pathspec/py.typed",
+        "path_type": "hardlink",
+        "sha256": "c2aef0c037b206e9e02ba0ec895e0ef88ba380acc04701f3f78b90b217697445",
+        "sha256_in_prefix": "c2aef0c037b206e9e02ba0ec895e0ef88ba380acc04701f3f78b90b217697445",
+        "size_in_bytes": 68
+      },
+      {
+        "_path": "site-packages/pathspec/util.py",
+        "path_type": "hardlink",
+        "sha256": "1bedbab59070f29f790fd144ae66f96a5a50e209738c29a96e767570148a2fd9",
+        "sha256_in_prefix": "1bedbab59070f29f790fd144ae66f96a5a50e209738c29a96e767570148a2fd9",
+        "size_in_bytes": 22680
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pathspec/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pathspec/__pycache__/_meta.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pathspec/__pycache__/gitignore.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pathspec/__pycache__/pathspec.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pathspec/__pycache__/pattern.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pathspec/patterns/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pathspec/patterns/__pycache__/gitwildmatch.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pathspec/__pycache__/util.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "4e534e66bfe8b1e035d2169d0e5b185450546b17e36764272863e22e0370be4d",
+  "size": 41173,
+  "subdir": "noarch",
+  "timestamp": 1702250135000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/pathspec-0.12.1-pyhd8ed1ab_0.conda",
+  "version": "0.12.1"
+}

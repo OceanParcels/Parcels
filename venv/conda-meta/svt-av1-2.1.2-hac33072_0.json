@@ -1,0 +1,130 @@
+{
+  "build": "hac33072_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/svt-av1-2.1.2-hac33072_0",
+  "files": [
+    "bin/SvtAv1EncApp",
+    "include/svt-av1/EbDebugMacros.h",
+    "include/svt-av1/EbSvtAv1.h",
+    "include/svt-av1/EbSvtAv1Enc.h",
+    "include/svt-av1/EbSvtAv1ErrorCodes.h",
+    "include/svt-av1/EbSvtAv1ExtFrameBuf.h",
+    "include/svt-av1/EbSvtAv1Formats.h",
+    "include/svt-av1/EbSvtAv1Metadata.h",
+    "lib/libSvtAv1Enc.so",
+    "lib/libSvtAv1Enc.so.2",
+    "lib/libSvtAv1Enc.so.2.1.2",
+    "lib/pkgconfig/SvtAv1Enc.pc"
+  ],
+  "fn": "svt-av1-2.1.2-hac33072_0.conda",
+  "license": "BSD-2-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/svt-av1-2.1.2-hac33072_0",
+    "type": 1
+  },
+  "md5": "06c5dec4ebb47213b648a6c4dc8400d6",
+  "name": "svt-av1",
+  "package_tarball_full_path": "/opt/conda/pkgs/svt-av1-2.1.2-hac33072_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/SvtAv1EncApp",
+        "path_type": "hardlink",
+        "sha256": "0f3950ca89e3cfbb8049951f34b6918a9595167c4fe564bcc5194dde8ae18ead",
+        "sha256_in_prefix": "0f3950ca89e3cfbb8049951f34b6918a9595167c4fe564bcc5194dde8ae18ead",
+        "size_in_bytes": 121448
+      },
+      {
+        "_path": "include/svt-av1/EbDebugMacros.h",
+        "path_type": "hardlink",
+        "sha256": "1eca999bda15d3297b925cca6260f1c72eeb484e6f086c1be9f2b73dcc78fd7d",
+        "sha256_in_prefix": "1eca999bda15d3297b925cca6260f1c72eeb484e6f086c1be9f2b73dcc78fd7d",
+        "size_in_bytes": 3664
+      },
+      {
+        "_path": "include/svt-av1/EbSvtAv1.h",
+        "path_type": "hardlink",
+        "sha256": "29517524b5fc00651324914f78bf7302689ebd57f2b82da979ebfb3193e0dffa",
+        "sha256_in_prefix": "29517524b5fc00651324914f78bf7302689ebd57f2b82da979ebfb3193e0dffa",
+        "size_in_bytes": 15721
+      },
+      {
+        "_path": "include/svt-av1/EbSvtAv1Enc.h",
+        "path_type": "hardlink",
+        "sha256": "9c18c133406440fc75ff0e61a0a29370795296738a53fd8a5d4a0494dfff8e1e",
+        "sha256_in_prefix": "9c18c133406440fc75ff0e61a0a29370795296738a53fd8a5d4a0494dfff8e1e",
+        "size_in_bytes": 34727
+      },
+      {
+        "_path": "include/svt-av1/EbSvtAv1ErrorCodes.h",
+        "path_type": "hardlink",
+        "sha256": "a832d938e431271384fe0d99cabb82b6af9462f40c03c2cee3f6a444fe0a8225",
+        "sha256_in_prefix": "a832d938e431271384fe0d99cabb82b6af9462f40c03c2cee3f6a444fe0a8225",
+        "size_in_bytes": 2795
+      },
+      {
+        "_path": "include/svt-av1/EbSvtAv1ExtFrameBuf.h",
+        "path_type": "hardlink",
+        "sha256": "d2f6221c534b22b259a93b7c03560f56435a808c2846cd96947f2d99f618d83e",
+        "sha256_in_prefix": "d2f6221c534b22b259a93b7c03560f56435a808c2846cd96947f2d99f618d83e",
+        "size_in_bytes": 2121
+      },
+      {
+        "_path": "include/svt-av1/EbSvtAv1Formats.h",
+        "path_type": "hardlink",
+        "sha256": "e483f3ca5d41d0766f2411be996488397b73901017b1f410501751d3852efbdc",
+        "sha256_in_prefix": "e483f3ca5d41d0766f2411be996488397b73901017b1f410501751d3852efbdc",
+        "size_in_bytes": 6247
+      },
+      {
+        "_path": "include/svt-av1/EbSvtAv1Metadata.h",
+        "path_type": "hardlink",
+        "sha256": "0ff032702a8f560886cf280c86f4e9698d9cd10d5a926ed7f5af7509b3a248ba",
+        "sha256_in_prefix": "0ff032702a8f560886cf280c86f4e9698d9cd10d5a926ed7f5af7509b3a248ba",
+        "size_in_bytes": 5630
+      },
+      {
+        "_path": "lib/libSvtAv1Enc.so",
+        "path_type": "softlink",
+        "sha256": "0c37232cb4bc189d24fa8dc583f616c24beaecc73944c899f2686ef55374bda4",
+        "size_in_bytes": 6831560
+      },
+      {
+        "_path": "lib/libSvtAv1Enc.so.2",
+        "path_type": "softlink",
+        "sha256": "0c37232cb4bc189d24fa8dc583f616c24beaecc73944c899f2686ef55374bda4",
+        "size_in_bytes": 6831560
+      },
+      {
+        "_path": "lib/libSvtAv1Enc.so.2.1.2",
+        "path_type": "hardlink",
+        "sha256": "0c37232cb4bc189d24fa8dc583f616c24beaecc73944c899f2686ef55374bda4",
+        "sha256_in_prefix": "0c37232cb4bc189d24fa8dc583f616c24beaecc73944c899f2686ef55374bda4",
+        "size_in_bytes": 6831560
+      },
+      {
+        "_path": "lib/pkgconfig/SvtAv1Enc.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/svt-av1_1719854139012/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "6deff3991096323cb9fafa953e99a85853a546768ecbfc89205ac7a74ca2c9c0",
+        "sha256_in_prefix": "62a0614b9606fabae4857fbcb0f837c28351bd5533df852fbe58b349f9f2d3d0",
+        "size_in_bytes": 565
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "3077a32687c6ccf853c978ad97b77a08fc518c94e73eb449f5a312f1d77d33f0",
+  "size": 2346285,
+  "subdir": "linux-64",
+  "timestamp": 1719854430000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/svt-av1-2.1.2-hac33072_0.conda",
+  "version": "2.1.2"
+}

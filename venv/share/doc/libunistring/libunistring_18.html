@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- Created on May, 25 2018 by texi2html 1.78a -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>GNU libunistring: A. The wchar_t mess</title>
+
+<meta name="description" content="GNU libunistring: A. The wchar_t mess">
+<meta name="keywords" content="GNU libunistring: A. The wchar_t mess">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78a">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libunistring_17.html#SEC80" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libunistring_19.html#SEC82" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libunistring.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libunistring.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libunistring_20.html#SEC91" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libunistring_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+
+<hr size="2">
+<a name="The-wchar_005ft-mess"></a>
+<a name="SEC81"></a>
+<h1 class="appendix"> <a href="libunistring.html#TOC81">A. The <code>wchar_t</code> mess</a> </h1>
+
+<p>The ISO C and POSIX standard creators made an attempt to fix the first
+problem mentioned in the section <a href="libunistring_1.html#SEC6">&lsquo;<samp>char *</samp>&rsquo; strings</a>.  They introduced
+</p><ul>
+<li>
+a type &lsquo;<samp>wchar_t</samp>&rsquo;, designed to encapsulate an entire character,
+</li><li>
+a &ldquo;wide string&rdquo; type &lsquo;<samp>wchar_t *</samp>&rsquo;, and
+</li><li>
+functions declared in <a href="http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/wctype.h.html"><code>&lt;wctype.h&gt;</code></a> that were meant to supplant the
+ones in <a href="http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/ctype.h.html"><code>&lt;ctype.h&gt;</code></a>.
+</li></ul>
+
+<p>Unfortunately, this API and its implementation has numerous problems:
+</p>
+<ul>
+<li>
+On AIX and Windows platforms, <code>wchar_t</code> is a 16-bit type.  This
+means that it can never accommodate an entire Unicode character.  Either
+the <code>wchar_t *</code> strings are limited to characters in UCS-2 (the
+&ldquo;Basic Multilingual Plane&rdquo; of Unicode), or &mdash; if <code>wchar_t *</code>
+strings are encoded in UTF-16 &mdash; a <code>wchar_t</code> represents only half
+of a character in the worst case, making the <a href="http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/wctype.h.html"><code>&lt;wctype.h&gt;</code></a> functions
+pointless.
+
+</li><li>
+On Solaris and FreeBSD, the <code>wchar_t</code> encoding is locale dependent
+and undocumented.  This means, if you want to know any property of a
+<code>wchar_t</code> character, other than the properties defined by
+<a href="http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/wctype.h.html"><code>&lt;wctype.h&gt;</code></a> &mdash; such as whether it's a dash, currency symbol,
+paragraph separator, or similar &mdash;, you have to convert it to
+<code>char *</code> encoding first, by use of the function <a href="http://pubs.opengroup.org/onlinepubs/9699919799/functions/wctomb.html"><code>wctomb</code></a>.
+
+</li><li>
+When you read a stream of wide characters, through the functions
+<a href="http://pubs.opengroup.org/onlinepubs/9699919799/functions/fgetwc.html"><code>fgetwc</code></a> and <a href="http://pubs.opengroup.org/onlinepubs/9699919799/functions/fgetws.html"><code>fgetws</code></a>, and when the input stream/file is
+not in the expected encoding, you have no way to determine the invalid
+byte sequence and do some corrective action.  If you use these
+functions, your program becomes &ldquo;garbage in - more garbage out&rdquo; or
+&ldquo;garbage in - abort&rdquo;.
+</li></ul>
+
+<p>As a consequence, it is better to use multibyte strings, as explained in
+the section <a href="libunistring_1.html#SEC6">&lsquo;<samp>char *</samp>&rsquo; strings</a>.  Such multibyte strings can bypass
+limitations of the <code>wchar_t</code> type, if you use functions defined in gnulib
+and libunistring for text processing.  They can also faithfully transport
+malformed characters that were present in the input, without requiring
+the program to produce garbage or abort.
+</p>
+<hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libunistring_17.html#SEC80" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libunistring_19.html#SEC82" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libunistring.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libunistring.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libunistring_20.html#SEC91" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libunistring_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>Daiki Ueno</em> on <em>May, 25 2018</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78a</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

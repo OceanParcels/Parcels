@@ -1,0 +1,52 @@
+{
+  "build": "h07e8aee_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "libgcc-ng >=12",
+    "libopenvino 2024.3.0 h2da1b83_0",
+    "libprotobuf >=4.25.3,<4.25.4.0a0",
+    "libstdcxx-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libopenvino-onnx-frontend-2024.3.0-h07e8aee_0",
+  "files": [
+    "lib/libopenvino_onnx_frontend.so.2024.3.0",
+    "lib/libopenvino_onnx_frontend.so.2430"
+  ],
+  "fn": "libopenvino-onnx-frontend-2024.3.0-h07e8aee_0.conda",
+  "license": "",
+  "link": {
+    "source": "/opt/conda/pkgs/libopenvino-onnx-frontend-2024.3.0-h07e8aee_0",
+    "type": 1
+  },
+  "md5": "89ab3cfdbf7b9a94643332cf0a8ec0e9",
+  "name": "libopenvino-onnx-frontend",
+  "package_tarball_full_path": "/opt/conda/pkgs/libopenvino-onnx-frontend-2024.3.0-h07e8aee_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/libopenvino_onnx_frontend.so.2024.3.0",
+        "path_type": "hardlink",
+        "sha256": "3360ed0bd2a5d7a623fe39d5c3708266f95a549515a3106aed8768369d62141c",
+        "sha256_in_prefix": "3360ed0bd2a5d7a623fe39d5c3708266f95a549515a3106aed8768369d62141c",
+        "size_in_bytes": 5573608
+      },
+      {
+        "_path": "lib/libopenvino_onnx_frontend.so.2430",
+        "path_type": "softlink",
+        "sha256": "3360ed0bd2a5d7a623fe39d5c3708266f95a549515a3106aed8768369d62141c",
+        "size_in_bytes": 5573608
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "6147718a14b5fd22047b3bafbc3fc28499de1e1b420add8a1f7836388c231fce",
+  "size": 1553172,
+  "subdir": "linux-64",
+  "timestamp": 1722425751000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libopenvino-onnx-frontend-2024.3.0-h07e8aee_0.conda",
+  "version": "2024.3.0"
+}

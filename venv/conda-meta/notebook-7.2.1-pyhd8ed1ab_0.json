@@ -1,0 +1,3553 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "jupyter_server >=2.4.0,<3",
+    "jupyterlab >=4.2.0,<4.3",
+    "jupyterlab_server >=2.27.1,<3",
+    "notebook-shim >=0.2,<0.3",
+    "python >=3.8",
+    "tornado >=6.2.0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/notebook-7.2.1-pyhd8ed1ab_0",
+  "files": [
+    "etc/jupyter/jupyter_server_config.d/notebook.json",
+    "share/applications/jupyter-notebook.desktop",
+    "share/icons/hicolor/scalable/apps/notebook.svg",
+    "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/menus.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/package.json.orig",
+    "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/pages.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/shell.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/title.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/top.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/zen.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/documentsearch-extension/package.json.orig",
+    "share/jupyter/lab/schemas/@jupyter-notebook/help-extension/open.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/help-extension/package.json.orig",
+    "share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/checkpoints.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/edit-notebook-metadata.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/kernel-logo.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/package.json.orig",
+    "share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/scroll-output.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/tree-extension/file-actions.json",
+    "share/jupyter/lab/schemas/@jupyter-notebook/tree-extension/package.json.orig",
+    "share/jupyter/lab/schemas/@jupyter-notebook/tree-extension/widget.json",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/package.json",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/schemas/@jupyter-notebook/lab-extension/interface-switcher.json",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/schemas/@jupyter-notebook/lab-extension/launch-tree.json",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/schemas/@jupyter-notebook/lab-extension/package.json.orig",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/568.9cd06af416befd593828.js",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/678.af323c3ff765541c6aa4.js",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/928.6d26fccf0ddab13bf5bb.js",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/93.eae3497dd223d842d198.js",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/remoteEntry.d04be841d48ffe2a9bdd.js",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/style.js",
+    "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/third-party-licenses.json",
+    "lib/python3.12/site-packages/notebook-7.2.1.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/notebook-7.2.1.dist-info/METADATA",
+    "lib/python3.12/site-packages/notebook-7.2.1.dist-info/RECORD",
+    "lib/python3.12/site-packages/notebook-7.2.1.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/notebook-7.2.1.dist-info/WHEEL",
+    "lib/python3.12/site-packages/notebook-7.2.1.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/notebook-7.2.1.dist-info/entry_points.txt",
+    "lib/python3.12/site-packages/notebook-7.2.1.dist-info/licenses/LICENSE",
+    "lib/python3.12/site-packages/notebook/__init__.py",
+    "lib/python3.12/site-packages/notebook/__main__.py",
+    "lib/python3.12/site-packages/notebook/_version.py",
+    "lib/python3.12/site-packages/notebook/app.py",
+    "lib/python3.12/site-packages/notebook/custom/custom.css",
+    "lib/python3.12/site-packages/notebook/static/1088.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1091.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1122.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/113.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/114.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1169.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1198.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1261.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/131.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1326.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1326.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/134.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1388.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1408.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1418.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1495.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1495.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/1496.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1542.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1542.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/1558.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1584.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1618.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1647.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1650.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1684.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1696.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/170.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1809.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1827.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1828.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1833.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1837.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1846.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1869.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1884.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1941.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1958.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1962.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/1cb1c39ea642f26a4dfe.woff",
+    "lib/python3.12/site-packages/notebook/static/2007.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2065.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2088.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2089.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2122.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/214.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2167.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2184.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2188.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/221.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2241.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2311.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2323.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2324.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2343.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2386.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2401.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2479.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2489.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2520.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2552.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2607.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/261.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2615.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2636.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2666.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/26683bf201fb258a2237.woff",
+    "lib/python3.12/site-packages/notebook/static/2682.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2692.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/270.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2702.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2756.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/28.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2813.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2866.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2871.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2913.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2913.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/2924.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2944.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/2955.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3079.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/30e889b58cbc51adfbb0.woff",
+    "lib/python3.12/site-packages/notebook/static/311.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3111.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3129.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3146.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3154.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3187.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3211.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3213.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3230.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/32792104b5ef69eded90.woff",
+    "lib/python3.12/site-packages/notebook/static/3301.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3322.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3325.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3336.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3340.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3360.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3370.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3420.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3449.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3462.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3466.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3488.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/35.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3501.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3512.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/355254db9ca10a09a3b5.woff",
+    "lib/python3.12/site-packages/notebook/static/3562.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3676.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3680.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/36e0d72d8a7afc696a3e.woff",
+    "lib/python3.12/site-packages/notebook/static/3700.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3733.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/373c04fd2418f5c77eea.eot",
+    "lib/python3.12/site-packages/notebook/static/374.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3752.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3768.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/377.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3797.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3863.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3881.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/3bc6ecaae7ecf6f8d7f8.woff",
+    "lib/python3.12/site-packages/notebook/static/3de784d07b9fa8f104c1.woff",
+    "lib/python3.12/site-packages/notebook/static/3f6d3488cf65374f6f67.woff",
+    "lib/python3.12/site-packages/notebook/static/4002.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/403.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4030.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4035.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4038.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4039.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4042.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4058.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/409.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4105.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4148.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4212.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4271.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4291.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/431.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4382.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4387.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4430.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4498.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4499.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4521.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4526.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4588.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4630.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4630.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/4645.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4670.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4708.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4780.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4810.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4811.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/481e39042508ae313a60.woff",
+    "lib/python3.12/site-packages/notebook/static/4825.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4837.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4843.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4965.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/4971.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5019.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5061.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5099.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5115.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5135.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5166.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5234.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5249.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5254.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5261.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5263.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5297.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5299.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5313.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5325.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5343.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5346.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5425.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5426.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/545.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5451.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5494.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5573.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5601.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5614.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/563.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5649.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5698.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5733.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5765.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5777.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5822.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5828.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5834.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5850.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5912.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5921.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5972.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5996.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/5cda41563a095bd70c78.woff",
+    "lib/python3.12/site-packages/notebook/static/6017.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6061.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6078.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6139.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/62.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6271.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6281.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/632.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6345.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6417.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/647.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6521.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6604.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/661.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6621.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6627.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6640.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6667.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/67.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6731.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6739.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6748.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/677.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6788.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6815.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6853.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6893.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/69.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/690.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6942.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6962.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6972.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/6999.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7005.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7010.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7022.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7054.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7097.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7153.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7154.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7170.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7179.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/721921bab0d001ebff02.woff",
+    "lib/python3.12/site-packages/notebook/static/7226.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7252.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7259.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7264.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/72bc573386dd1d48c5bb.woff",
+    "lib/python3.12/site-packages/notebook/static/7302.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7360.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7369.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7378.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7378.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/7386.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7391.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7427.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/745.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7450.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7471.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7506.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7506.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/7534.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7543.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/755.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7582.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7603.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7639.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7655.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7674.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7679.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7684.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7796.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7796.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/7803.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7811.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7811.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/7812.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7817.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7819.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7821.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7854.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7866.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7884.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7900.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7906.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/792.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7957.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7969.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7995.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/7995.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/7997.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/79d088064beb3826054f.eot",
+    "lib/python3.12/site-packages/notebook/static/8010.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8032.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8060.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8285.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8378.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8381.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8433.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8443.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8446.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8471.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8479.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/85.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8579.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8633.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/870673df72e70f87c91a.woff",
+    "lib/python3.12/site-packages/notebook/static/8768.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8771.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8781.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8801.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/883.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8845.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8845.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/8875.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/88b98cad3688915e50da.woff",
+    "lib/python3.12/site-packages/notebook/static/8907.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8928.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8929.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/893.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8937.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8979.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8983.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/899.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/8ea8791754915a898a31.woff2",
+    "lib/python3.12/site-packages/notebook/static/8ea8dbb1b02e6f730f55.woff",
+    "lib/python3.12/site-packages/notebook/static/901.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9022.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9037.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/906.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9060.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9068.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/911.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9116.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9136.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9151.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9161.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9222.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9233.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9234.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9239.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9250.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9268.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9331.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9335.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9341.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9380.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9425.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9558.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9604.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9605.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9605.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/9638.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9674eb1bd55047179038.svg",
+    "lib/python3.12/site-packages/notebook/static/9676.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9680.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9685.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9752.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9752.bundle.js.LICENSE.txt",
+    "lib/python3.12/site-packages/notebook/static/9799.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9821.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9834b82ad26e2a37583d.woff2",
+    "lib/python3.12/site-packages/notebook/static/9852.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/9866.bundle.js",
+    "lib/python3.12/site-packages/notebook/static/a009bea404f7a500ded4.woff",
+    "lib/python3.12/site-packages/notebook/static/a3b9817780214caf01e8.svg",
+    "lib/python3.12/site-packages/notebook/static/af04542b29eaac04550a.woff",
+    "lib/python3.12/site-packages/notebook/static/af6397503fcefbd61397.ttf",
+    "lib/python3.12/site-packages/notebook/static/af96f67d7accf5fd2a4a.woff",
+    "lib/python3.12/site-packages/notebook/static/b418136e3b384baaadec.woff",
+    "lib/python3.12/site-packages/notebook/static/be0a084962d8066884f7.svg",
+    "lib/python3.12/site-packages/notebook/static/bundle.js",
+    "lib/python3.12/site-packages/notebook/static/c49810b53ecc0d87d802.woff",
+    "lib/python3.12/site-packages/notebook/static/c56da8d69f1a0208b8e0.woff",
+    "lib/python3.12/site-packages/notebook/static/cb9e9e693192413cde2b.woff",
+    "lib/python3.12/site-packages/notebook/static/cda59d6efffa685830fd.ttf",
+    "lib/python3.12/site-packages/notebook/static/e4299464e7b012968eed.eot",
+    "lib/python3.12/site-packages/notebook/static/e42a88444448ac3d6054.woff2",
+    "lib/python3.12/site-packages/notebook/static/e8711bbb871afd8e9dea.ttf",
+    "lib/python3.12/site-packages/notebook/static/f9217f66874b0c01cd8c.woff",
+    "lib/python3.12/site-packages/notebook/static/fc6ddf5df402b263cfb1.woff",
+    "lib/python3.12/site-packages/notebook/static/third-party-licenses.json",
+    "lib/python3.12/site-packages/notebook/templates/consoles.html",
+    "lib/python3.12/site-packages/notebook/templates/edit.html",
+    "lib/python3.12/site-packages/notebook/templates/error.html",
+    "lib/python3.12/site-packages/notebook/templates/notebooks.html",
+    "lib/python3.12/site-packages/notebook/templates/terminals.html",
+    "lib/python3.12/site-packages/notebook/templates/tree.html",
+    "lib/python3.12/site-packages/notebook/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/notebook/__pycache__/__main__.cpython-312.pyc",
+    "lib/python3.12/site-packages/notebook/__pycache__/_version.cpython-312.pyc",
+    "lib/python3.12/site-packages/notebook/__pycache__/app.cpython-312.pyc",
+    "bin/jupyter-notebook"
+  ],
+  "fn": "notebook-7.2.1-pyhd8ed1ab_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/notebook-7.2.1-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "08fa71a038c2cac2e636a5a456df15d5",
+  "name": "notebook",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/notebook-7.2.1-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "etc/jupyter/jupyter_server_config.d/notebook.json",
+        "path_type": "hardlink",
+        "sha256": "a68415689607ded2eafece8b7304ee562fea099ff4190e574a48191792cb5ae1",
+        "sha256_in_prefix": "a68415689607ded2eafece8b7304ee562fea099ff4190e574a48191792cb5ae1",
+        "size_in_bytes": 83
+      },
+      {
+        "_path": "share/applications/jupyter-notebook.desktop",
+        "path_type": "hardlink",
+        "sha256": "d53df63b520447ce421aff9ae88c620dfad033c6f368b59b96d26ef93a05f2b7",
+        "sha256_in_prefix": "d53df63b520447ce421aff9ae88c620dfad033c6f368b59b96d26ef93a05f2b7",
+        "size_in_bytes": 242
+      },
+      {
+        "_path": "share/icons/hicolor/scalable/apps/notebook.svg",
+        "path_type": "hardlink",
+        "sha256": "11341851556c107ffe46121d18e571b454a19e58bfd312acd3afb4af3812e701",
+        "sha256_in_prefix": "11341851556c107ffe46121d18e571b454a19e58bfd312acd3afb4af3812e701",
+        "size_in_bytes": 14487
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/menus.json",
+        "path_type": "hardlink",
+        "sha256": "6b22e3552d598e219f52ad153b55a502f4e047180101adbf71649bd10968e4fe",
+        "sha256_in_prefix": "6b22e3552d598e219f52ad153b55a502f4e047180101adbf71649bd10968e4fe",
+        "size_in_bytes": 1805
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/package.json.orig",
+        "path_type": "hardlink",
+        "sha256": "3979b41c65469a35a6dc46e5874b19af49d825a81035d333e05bbe680f52ce1b",
+        "sha256_in_prefix": "3979b41c65469a35a6dc46e5874b19af49d825a81035d333e05bbe680f52ce1b",
+        "size_in_bytes": 1835
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/pages.json",
+        "path_type": "hardlink",
+        "sha256": "32b1993ed96d83ad9c9f099e37fa4e0e6de12cbac5816f2952c11bbb48962a24",
+        "sha256_in_prefix": "32b1993ed96d83ad9c9f099e37fa4e0e6de12cbac5816f2952c11bbb48962a24",
+        "size_in_bytes": 473
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/shell.json",
+        "path_type": "hardlink",
+        "sha256": "3ac106314e4a80236c7efb7dccd7311c68245cdc53b48df43d7398caa49210d0",
+        "sha256_in_prefix": "3ac106314e4a80236c7efb7dccd7311c68245cdc53b48df43d7398caa49210d0",
+        "size_in_bytes": 864
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/title.json",
+        "path_type": "hardlink",
+        "sha256": "3a17c69f3c806f47c55b47df4bf82dde0daed97f9a7a16ed65eaf5789348ca00",
+        "sha256_in_prefix": "3a17c69f3c806f47c55b47df4bf82dde0daed97f9a7a16ed65eaf5789348ca00",
+        "size_in_bytes": 223
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/top.json",
+        "path_type": "hardlink",
+        "sha256": "d1d7dedc8ab52cf0439167cf40864edc48089dc08714443f11a0eb43f68113dc",
+        "sha256_in_prefix": "d1d7dedc8ab52cf0439167cf40864edc48089dc08714443f11a0eb43f68113dc",
+        "size_in_bytes": 832
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/application-extension/zen.json",
+        "path_type": "hardlink",
+        "sha256": "8afbe38fe2b3e932b54081fe6ad48655b2922be5fb0eee7f998da313e74fbe0c",
+        "sha256_in_prefix": "8afbe38fe2b3e932b54081fe6ad48655b2922be5fb0eee7f998da313e74fbe0c",
+        "size_in_bytes": 386
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/documentsearch-extension/package.json.orig",
+        "path_type": "hardlink",
+        "sha256": "87bbfc374a8272b63df19dc23176f35251c2ae251e3585681293d0bc18f48e31",
+        "sha256_in_prefix": "87bbfc374a8272b63df19dc23176f35251c2ae251e3585681293d0bc18f48e31",
+        "size_in_bytes": 1367
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/help-extension/open.json",
+        "path_type": "hardlink",
+        "sha256": "7152b7a837612ad239f3a4aab5bb0d59772a32a12970ad45a25e3134646df203",
+        "sha256_in_prefix": "7152b7a837612ad239f3a4aab5bb0d59772a32a12970ad45a25e3134646df203",
+        "size_in_bytes": 472
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/help-extension/package.json.orig",
+        "path_type": "hardlink",
+        "sha256": "8b848daa34cebfba5543121bcb8d1b04c820e7cf493e4cfdb1ad385692ecc19f",
+        "sha256_in_prefix": "8b848daa34cebfba5543121bcb8d1b04c820e7cf493e4cfdb1ad385692ecc19f",
+        "size_in_bytes": 1440
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/checkpoints.json",
+        "path_type": "hardlink",
+        "sha256": "cc32afe063c00a929e221c75870f69bbab96e37e059d44ad6e09a550196c7632",
+        "sha256_in_prefix": "cc32afe063c00a929e221c75870f69bbab96e37e059d44ad6e09a550196c7632",
+        "size_in_bytes": 256
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/edit-notebook-metadata.json",
+        "path_type": "hardlink",
+        "sha256": "eed069da45779cf19e3ed041ace58a2c2f3a479ed3c51cd02ed514e0aeb132b2",
+        "sha256_in_prefix": "eed069da45779cf19e3ed041ace58a2c2f3a479ed3c51cd02ed514e0aeb132b2",
+        "size_in_bytes": 560
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/kernel-logo.json",
+        "path_type": "hardlink",
+        "sha256": "dcbb083fca06b10f0d29bbea85bcfc3e64909b4f6c67d4c44109a1b447be8da3",
+        "sha256_in_prefix": "dcbb083fca06b10f0d29bbea85bcfc3e64909b4f6c67d4c44109a1b447be8da3",
+        "size_in_bytes": 237
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/package.json.orig",
+        "path_type": "hardlink",
+        "sha256": "cf60e25896215e58388b70577be1ecf6db4dbba97a023f27abc7b8694f5a83cc",
+        "sha256_in_prefix": "cf60e25896215e58388b70577be1ecf6db4dbba97a023f27abc7b8694f5a83cc",
+        "size_in_bytes": 1632
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/scroll-output.json",
+        "path_type": "hardlink",
+        "sha256": "818d1c2059c260749fc61a0853596850b0e77ef7f5ff07747076134dfc90eca4",
+        "sha256_in_prefix": "818d1c2059c260749fc61a0853596850b0e77ef7f5ff07747076134dfc90eca4",
+        "size_in_bytes": 517
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/tree-extension/file-actions.json",
+        "path_type": "hardlink",
+        "sha256": "82da2806e76ac994d06dbf312012a3a4490ec9bc249efd7db05c221bc8b54221",
+        "sha256_in_prefix": "82da2806e76ac994d06dbf312012a3a4490ec9bc249efd7db05c221bc8b54221",
+        "size_in_bytes": 557
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/tree-extension/package.json.orig",
+        "path_type": "hardlink",
+        "sha256": "be8206a22a35eee598ae63ecad02096aa904566f46f54246bd97b070ffc6620e",
+        "sha256_in_prefix": "be8206a22a35eee598ae63ecad02096aa904566f46f54246bd97b070ffc6620e",
+        "size_in_bytes": 1854
+      },
+      {
+        "_path": "share/jupyter/lab/schemas/@jupyter-notebook/tree-extension/widget.json",
+        "path_type": "hardlink",
+        "sha256": "3d0a80217ccca9d1178a00c9ac314a18e3ab849d0487fc40f0be283b4b2eecb1",
+        "sha256_in_prefix": "3d0a80217ccca9d1178a00c9ac314a18e3ab849d0487fc40f0be283b4b2eecb1",
+        "size_in_bytes": 2244
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/package.json",
+        "path_type": "hardlink",
+        "sha256": "73ec9c0eefb31e571152efc6f68dd4ea1f9a5a22dadedbffd8ff3b9a95f81773",
+        "sha256_in_prefix": "73ec9c0eefb31e571152efc6f68dd4ea1f9a5a22dadedbffd8ff3b9a95f81773",
+        "size_in_bytes": 2892
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/schemas/@jupyter-notebook/lab-extension/interface-switcher.json",
+        "path_type": "hardlink",
+        "sha256": "d5a92abc92b265a0f8e5ca06bff6271a747e353ef6713fe68871d3f09fe7c099",
+        "sha256_in_prefix": "d5a92abc92b265a0f8e5ca06bff6271a747e353ef6713fe68871d3f09fe7c099",
+        "size_in_bytes": 891
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/schemas/@jupyter-notebook/lab-extension/launch-tree.json",
+        "path_type": "hardlink",
+        "sha256": "ce5c101994bc636fbec3e524171e0715043da4e5ffdffaae752d53b528dcc09e",
+        "sha256_in_prefix": "ce5c101994bc636fbec3e524171e0715043da4e5ffdffaae752d53b528dcc09e",
+        "size_in_bytes": 375
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/schemas/@jupyter-notebook/lab-extension/package.json.orig",
+        "path_type": "hardlink",
+        "sha256": "3f24bf59cd3c8ea7dbb9f17e827968ac1edeee6bd9e9c038f87aa6da8a7a2230",
+        "sha256_in_prefix": "3f24bf59cd3c8ea7dbb9f17e827968ac1edeee6bd9e9c038f87aa6da8a7a2230",
+        "size_in_bytes": 2750
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/568.9cd06af416befd593828.js",
+        "path_type": "hardlink",
+        "sha256": "9cd06af416befd593828469899215a26af75fc02479f4cb5da7c515a67adae9d",
+        "sha256_in_prefix": "9cd06af416befd593828469899215a26af75fc02479f4cb5da7c515a67adae9d",
+        "size_in_bytes": 2932
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/678.af323c3ff765541c6aa4.js",
+        "path_type": "hardlink",
+        "sha256": "af323c3ff765541c6aa4e8185c51da70ca574f8cfe9a359e35d5e541a25a3b70",
+        "sha256_in_prefix": "af323c3ff765541c6aa4e8185c51da70ca574f8cfe9a359e35d5e541a25a3b70",
+        "size_in_bytes": 12369
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/928.6d26fccf0ddab13bf5bb.js",
+        "path_type": "hardlink",
+        "sha256": "6d26fccf0ddab13bf5bb326e4f9082cdf9ba19d9744683c1fd9282eb3180db06",
+        "sha256_in_prefix": "6d26fccf0ddab13bf5bb326e4f9082cdf9ba19d9744683c1fd9282eb3180db06",
+        "size_in_bytes": 4506
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/93.eae3497dd223d842d198.js",
+        "path_type": "hardlink",
+        "sha256": "eae3497dd223d842d1980d696386f4e6eb457facc9fbb019bb260e31184f2e1d",
+        "sha256_in_prefix": "eae3497dd223d842d1980d696386f4e6eb457facc9fbb019bb260e31184f2e1d",
+        "size_in_bytes": 4583
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/remoteEntry.d04be841d48ffe2a9bdd.js",
+        "path_type": "hardlink",
+        "sha256": "d04be841d48ffe2a9bdd30a08c0d8a4a7c719a86d391480d52ae9a5ea1159c78",
+        "sha256_in_prefix": "d04be841d48ffe2a9bdd30a08c0d8a4a7c719a86d391480d52ae9a5ea1159c78",
+        "size_in_bytes": 8413
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/style.js",
+        "path_type": "hardlink",
+        "sha256": "f30812f96b4a8302bea0c89a8d7bd7ef0b90725ceaa77a5825a3b3de040247b0",
+        "sha256_in_prefix": "f30812f96b4a8302bea0c89a8d7bd7ef0b90725ceaa77a5825a3b3de040247b0",
+        "size_in_bytes": 174
+      },
+      {
+        "_path": "share/jupyter/labextensions/@jupyter-notebook/lab-extension/static/third-party-licenses.json",
+        "path_type": "hardlink",
+        "sha256": "09ea3075e23c678b009711707821168a69f02145c94531b820c9c25c705d4cf1",
+        "sha256_in_prefix": "09ea3075e23c678b009711707821168a69f02145c94531b820c9c25c705d4cf1",
+        "size_in_bytes": 2748
+      },
+      {
+        "_path": "site-packages/notebook-7.2.1.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/notebook-7.2.1.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "5eceeaaae9be8cff007fb027228e1d5366708eabec46ae5b22f663f6a1689531",
+        "sha256_in_prefix": "5eceeaaae9be8cff007fb027228e1d5366708eabec46ae5b22f663f6a1689531",
+        "size_in_bytes": 10209
+      },
+      {
+        "_path": "site-packages/notebook-7.2.1.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "89ddb6f69589099c4a3103659b3d8af868c6dd064f92db3d1fb9900cae75031b",
+        "sha256_in_prefix": "89ddb6f69589099c4a3103659b3d8af868c6dd064f92db3d1fb9900cae75031b",
+        "size_in_bytes": 41172
+      },
+      {
+        "_path": "site-packages/notebook-7.2.1.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/notebook-7.2.1.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "cc431c46bf4aaf4df1d68cc6c20e6ff4d4012a7de49dda7a2d2a1295583e8e15",
+        "sha256_in_prefix": "cc431c46bf4aaf4df1d68cc6c20e6ff4d4012a7de49dda7a2d2a1295583e8e15",
+        "size_in_bytes": 87
+      },
+      {
+        "_path": "site-packages/notebook-7.2.1.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "f778a2cb4d637e14e497a17896f226f01c56f37f0410e373a6307c93b233d057",
+        "sha256_in_prefix": "f778a2cb4d637e14e497a17896f226f01c56f37f0410e373a6307c93b233d057",
+        "size_in_bytes": 104
+      },
+      {
+        "_path": "site-packages/notebook-7.2.1.dist-info/entry_points.txt",
+        "path_type": "hardlink",
+        "sha256": "4e28422d55a1426bee7b159e90d4515d57454f12c757bb79c0c726c313dbaf59",
+        "sha256_in_prefix": "4e28422d55a1426bee7b159e90d4515d57454f12c757bb79c0c726c313dbaf59",
+        "size_in_bytes": 55
+      },
+      {
+        "_path": "site-packages/notebook-7.2.1.dist-info/licenses/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "5ca74e4d2eeb9330b0d129c25f874d3544a13413bc62ae8d367819100d095072",
+        "sha256_in_prefix": "5ca74e4d2eeb9330b0d129c25f874d3544a13413bc62ae8d367819100d095072",
+        "size_in_bytes": 1588
+      },
+      {
+        "_path": "site-packages/notebook/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "95bc2c8ae75d0a3d973d48d23528a9a6fdb03a2315d76fd6814f63f5a0201aa2",
+        "sha256_in_prefix": "95bc2c8ae75d0a3d973d48d23528a9a6fdb03a2315d76fd6814f63f5a0201aa2",
+        "size_in_bytes": 534
+      },
+      {
+        "_path": "site-packages/notebook/__main__.py",
+        "path_type": "hardlink",
+        "sha256": "9406974523546f450cdbd2d3fe6966bc2485daa301cf23cf63eb8bf44f22a531",
+        "sha256_in_prefix": "9406974523546f450cdbd2d3fe6966bc2485daa301cf23cf63eb8bf44f22a531",
+        "size_in_bytes": 128
+      },
+      {
+        "_path": "site-packages/notebook/_version.py",
+        "path_type": "hardlink",
+        "sha256": "238be816ebf290f20714f4d09941de8ae9bfbc2c80a08d919dafde29cdeffde2",
+        "sha256_in_prefix": "238be816ebf290f20714f4d09941de8ae9bfbc2c80a08d919dafde29cdeffde2",
+        "size_in_bytes": 985
+      },
+      {
+        "_path": "site-packages/notebook/app.py",
+        "path_type": "hardlink",
+        "sha256": "3eb427f949f5f8f8670c595f907fbc4f9a3ab29ee087f267f0c959fcd9b7fed3",
+        "sha256_in_prefix": "3eb427f949f5f8f8670c595f907fbc4f9a3ab29ee087f267f0c959fcd9b7fed3",
+        "size_in_bytes": 13190
+      },
+      {
+        "_path": "site-packages/notebook/custom/custom.css",
+        "path_type": "hardlink",
+        "sha256": "1552fcd2f30c1304be2a7e2d2bbf9216d64c6e8c01ba3b590f899c95b7dec519",
+        "sha256_in_prefix": "1552fcd2f30c1304be2a7e2d2bbf9216d64c6e8c01ba3b590f899c95b7dec519",
+        "size_in_bytes": 134
+      },
+      {
+        "_path": "site-packages/notebook/static/1088.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "faa155a7bf6812236fff52bf1387af372526550c5d77567b5daad4b01538fb69",
+        "sha256_in_prefix": "faa155a7bf6812236fff52bf1387af372526550c5d77567b5daad4b01538fb69",
+        "size_in_bytes": 4104
+      },
+      {
+        "_path": "site-packages/notebook/static/1091.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "67b750890f4b5ed209d8d9ff65b44e78678f35096c7a297d368a1c3d05f01710",
+        "sha256_in_prefix": "67b750890f4b5ed209d8d9ff65b44e78678f35096c7a297d368a1c3d05f01710",
+        "size_in_bytes": 9152
+      },
+      {
+        "_path": "site-packages/notebook/static/1122.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "9ff944d462eac85381161349439f29f8b0b498e4b7443e04c05faaac377df981",
+        "sha256_in_prefix": "9ff944d462eac85381161349439f29f8b0b498e4b7443e04c05faaac377df981",
+        "size_in_bytes": 4980
+      },
+      {
+        "_path": "site-packages/notebook/static/113.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f6e161ef902036698394d56b62f8313e07302e86ebdb17de6e3077426ec2f7c2",
+        "sha256_in_prefix": "f6e161ef902036698394d56b62f8313e07302e86ebdb17de6e3077426ec2f7c2",
+        "size_in_bytes": 25832
+      },
+      {
+        "_path": "site-packages/notebook/static/114.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f8d54e67c6f42645fb5a17b5cb25de27ea1d9f9e7f9a62ba4606364a4d22d4b0",
+        "sha256_in_prefix": "f8d54e67c6f42645fb5a17b5cb25de27ea1d9f9e7f9a62ba4606364a4d22d4b0",
+        "size_in_bytes": 1039
+      },
+      {
+        "_path": "site-packages/notebook/static/1169.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "4cf2d1352f2c5a84b90adc021a65b51b35b76a54896934e1b2bb35a74c2323d8",
+        "sha256_in_prefix": "4cf2d1352f2c5a84b90adc021a65b51b35b76a54896934e1b2bb35a74c2323d8",
+        "size_in_bytes": 4133
+      },
+      {
+        "_path": "site-packages/notebook/static/1198.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "af0689eddc7f7ca09b6e80ebcf8e1307aa80330a197095d3b563282a52b36bf3",
+        "sha256_in_prefix": "af0689eddc7f7ca09b6e80ebcf8e1307aa80330a197095d3b563282a52b36bf3",
+        "size_in_bytes": 3492
+      },
+      {
+        "_path": "site-packages/notebook/static/1261.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "859eeec35f5f3e3633de321a7676d7818caa1fc647d4739fd82f57f2729434c4",
+        "sha256_in_prefix": "859eeec35f5f3e3633de321a7676d7818caa1fc647d4739fd82f57f2729434c4",
+        "size_in_bytes": 45520
+      },
+      {
+        "_path": "site-packages/notebook/static/131.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "279682285fd866746bf31533fdc6221babed007c34f33123cd8d84e8ca5b9d51",
+        "sha256_in_prefix": "279682285fd866746bf31533fdc6221babed007c34f33123cd8d84e8ca5b9d51",
+        "size_in_bytes": 120311
+      },
+      {
+        "_path": "site-packages/notebook/static/1326.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e7a3ac4a4fd1162ba6890d37e4ff086859eeb3f79a543edbcdc267dbe4d92e24",
+        "sha256_in_prefix": "e7a3ac4a4fd1162ba6890d37e4ff086859eeb3f79a543edbcdc267dbe4d92e24",
+        "size_in_bytes": 751525
+      },
+      {
+        "_path": "site-packages/notebook/static/1326.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "305572c027b87c2b5eec7ac7695a4bfa39c35a17bd7a2f7393246f4545d053ee",
+        "sha256_in_prefix": "305572c027b87c2b5eec7ac7695a4bfa39c35a17bd7a2f7393246f4545d053ee",
+        "size_in_bytes": 212
+      },
+      {
+        "_path": "site-packages/notebook/static/134.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e65bf607353105b48ad8cfa296b02de945d0b4379272344a67435b14fba62154",
+        "sha256_in_prefix": "e65bf607353105b48ad8cfa296b02de945d0b4379272344a67435b14fba62154",
+        "size_in_bytes": 2584
+      },
+      {
+        "_path": "site-packages/notebook/static/1388.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "4dc890291db659bc4e2f1dd1666680616b8b0545ef859eba4e6d591aedbac0f7",
+        "sha256_in_prefix": "4dc890291db659bc4e2f1dd1666680616b8b0545ef859eba4e6d591aedbac0f7",
+        "size_in_bytes": 9142
+      },
+      {
+        "_path": "site-packages/notebook/static/1408.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "14ae63b9fa196ef41a82e2c4fc4bcc5d0e285c4ea9dc49a387156e50dd45635e",
+        "sha256_in_prefix": "14ae63b9fa196ef41a82e2c4fc4bcc5d0e285c4ea9dc49a387156e50dd45635e",
+        "size_in_bytes": 2559
+      },
+      {
+        "_path": "site-packages/notebook/static/1418.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "95d073d5e2bf3a31337104e939b9e76e32eea203717443298f298598675fcd95",
+        "sha256_in_prefix": "95d073d5e2bf3a31337104e939b9e76e32eea203717443298f298598675fcd95",
+        "size_in_bytes": 2040
+      },
+      {
+        "_path": "site-packages/notebook/static/1495.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b73c861133cd13fadc0952f89cb5ce9c73d675b955afa00945b0ab760318666a",
+        "sha256_in_prefix": "b73c861133cd13fadc0952f89cb5ce9c73d675b955afa00945b0ab760318666a",
+        "size_in_bytes": 456718
+      },
+      {
+        "_path": "site-packages/notebook/static/1495.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "441367b832a14507dcbd6c6fc2cb91667f25d0d4079236c830f15878a31c9a85",
+        "sha256_in_prefix": "441367b832a14507dcbd6c6fc2cb91667f25d0d4079236c830f15878a31c9a85",
+        "size_in_bytes": 493
+      },
+      {
+        "_path": "site-packages/notebook/static/1496.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f81f7b03542b8c98c2b57248346c74f49c84a5776d7003eadffa2cd1dd474726",
+        "sha256_in_prefix": "f81f7b03542b8c98c2b57248346c74f49c84a5776d7003eadffa2cd1dd474726",
+        "size_in_bytes": 16690
+      },
+      {
+        "_path": "site-packages/notebook/static/1542.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "aaf8a3ed8139a07947e108a41be968618e5a97f303aef445db64729abaaf47a5",
+        "sha256_in_prefix": "aaf8a3ed8139a07947e108a41be968618e5a97f303aef445db64729abaaf47a5",
+        "size_in_bytes": 133211
+      },
+      {
+        "_path": "site-packages/notebook/static/1542.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "2dfa0ccb9d0eea73a682d9b55bc9b83da81d0af09dd193ee037e8dfe82ab2c39",
+        "sha256_in_prefix": "2dfa0ccb9d0eea73a682d9b55bc9b83da81d0af09dd193ee037e8dfe82ab2c39",
+        "size_in_bytes": 483
+      },
+      {
+        "_path": "site-packages/notebook/static/1558.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c0f2dec80674178918cadd20af045b86cf42f9b004041ae6c45b84128b76ff48",
+        "sha256_in_prefix": "c0f2dec80674178918cadd20af045b86cf42f9b004041ae6c45b84128b76ff48",
+        "size_in_bytes": 2012
+      },
+      {
+        "_path": "site-packages/notebook/static/1584.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "54c2d65feb57997a54602fa1bf1d986108072fa63492baf938d211d789689451",
+        "sha256_in_prefix": "54c2d65feb57997a54602fa1bf1d986108072fa63492baf938d211d789689451",
+        "size_in_bytes": 40776
+      },
+      {
+        "_path": "site-packages/notebook/static/1618.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "cce14267c5680c7fb81f3f2996efcbcc14851c910667ef9a9fbf8d51e1d2c028",
+        "sha256_in_prefix": "cce14267c5680c7fb81f3f2996efcbcc14851c910667ef9a9fbf8d51e1d2c028",
+        "size_in_bytes": 4140
+      },
+      {
+        "_path": "site-packages/notebook/static/1647.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "4e082bf451306c8b8bfa670547ac462e8fc9c25eaad0fa974f7b65d32b4772c3",
+        "sha256_in_prefix": "4e082bf451306c8b8bfa670547ac462e8fc9c25eaad0fa974f7b65d32b4772c3",
+        "size_in_bytes": 2696
+      },
+      {
+        "_path": "site-packages/notebook/static/1650.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "68fec3a90cf05ffcbf453c1e4b68830d72b6b5a0d40c417f5862a83d65512746",
+        "sha256_in_prefix": "68fec3a90cf05ffcbf453c1e4b68830d72b6b5a0d40c417f5862a83d65512746",
+        "size_in_bytes": 1423
+      },
+      {
+        "_path": "site-packages/notebook/static/1684.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "91c638cf860465fa69b2c0e8b0004c0c362eb9469d95a842b8ec546b66b61c2e",
+        "sha256_in_prefix": "91c638cf860465fa69b2c0e8b0004c0c362eb9469d95a842b8ec546b66b61c2e",
+        "size_in_bytes": 1198
+      },
+      {
+        "_path": "site-packages/notebook/static/1696.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "d6565210ece29961676835fb73f6290d6753ba9bda2b900353293b46a7a16984",
+        "sha256_in_prefix": "d6565210ece29961676835fb73f6290d6753ba9bda2b900353293b46a7a16984",
+        "size_in_bytes": 3383
+      },
+      {
+        "_path": "site-packages/notebook/static/170.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "d38e81a910b03939badb40d133a56173ed02f804cee00c364b3f59bfa5474129",
+        "sha256_in_prefix": "d38e81a910b03939badb40d133a56173ed02f804cee00c364b3f59bfa5474129",
+        "size_in_bytes": 9007
+      },
+      {
+        "_path": "site-packages/notebook/static/1809.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "194abe802e207dc4bdfbc92edd44dbbb62fe1136747b6509ff6929348cbd002c",
+        "sha256_in_prefix": "194abe802e207dc4bdfbc92edd44dbbb62fe1136747b6509ff6929348cbd002c",
+        "size_in_bytes": 12337
+      },
+      {
+        "_path": "site-packages/notebook/static/1827.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "18128d4483e62638dc48bce323e2f5dbf8dcdb22a6d474d987dbb9fe03ca5f5e",
+        "sha256_in_prefix": "18128d4483e62638dc48bce323e2f5dbf8dcdb22a6d474d987dbb9fe03ca5f5e",
+        "size_in_bytes": 11445
+      },
+      {
+        "_path": "site-packages/notebook/static/1828.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2bae6e70ce658afcccfda5a2ee1004619866ae61b89038f8082625fb3e786626",
+        "sha256_in_prefix": "2bae6e70ce658afcccfda5a2ee1004619866ae61b89038f8082625fb3e786626",
+        "size_in_bytes": 1850
+      },
+      {
+        "_path": "site-packages/notebook/static/1833.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "61326633cd9297572c99a9c106ecb5d4f29163e740ce013aa09e1838a1c94cfa",
+        "sha256_in_prefix": "61326633cd9297572c99a9c106ecb5d4f29163e740ce013aa09e1838a1c94cfa",
+        "size_in_bytes": 12092
+      },
+      {
+        "_path": "site-packages/notebook/static/1837.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "7e4efa5c42bcebe62329753aaa7257f76809ca8b5efe13c3b8c4cfe4f586fe4c",
+        "sha256_in_prefix": "7e4efa5c42bcebe62329753aaa7257f76809ca8b5efe13c3b8c4cfe4f586fe4c",
+        "size_in_bytes": 5468
+      },
+      {
+        "_path": "site-packages/notebook/static/1846.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1a46f7f2c0e035841667fdbe3527eef59ba161735e6ca52b3d7f6b42bdb27364",
+        "sha256_in_prefix": "1a46f7f2c0e035841667fdbe3527eef59ba161735e6ca52b3d7f6b42bdb27364",
+        "size_in_bytes": 4900
+      },
+      {
+        "_path": "site-packages/notebook/static/1869.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "fa975688c38f3bd16ca86ef8eeb57a78d7e0c32ff58bb5540928c3c65343d8e7",
+        "sha256_in_prefix": "fa975688c38f3bd16ca86ef8eeb57a78d7e0c32ff58bb5540928c3c65343d8e7",
+        "size_in_bytes": 571
+      },
+      {
+        "_path": "site-packages/notebook/static/1884.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "5cc25344f7112ed3e407135f775553737b430faddd258e5c690cb020a4943426",
+        "sha256_in_prefix": "5cc25344f7112ed3e407135f775553737b430faddd258e5c690cb020a4943426",
+        "size_in_bytes": 123638
+      },
+      {
+        "_path": "site-packages/notebook/static/1941.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "48b760ba0b7729fcb31781bb1e29ac250f2aa4d621e43f7e0cc0fc6c2dc3300d",
+        "sha256_in_prefix": "48b760ba0b7729fcb31781bb1e29ac250f2aa4d621e43f7e0cc0fc6c2dc3300d",
+        "size_in_bytes": 904
+      },
+      {
+        "_path": "site-packages/notebook/static/1958.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2f7d8967d770e67b2184140c7511eb94336da79363e8c558131c34f1efade96f",
+        "sha256_in_prefix": "2f7d8967d770e67b2184140c7511eb94336da79363e8c558131c34f1efade96f",
+        "size_in_bytes": 4698
+      },
+      {
+        "_path": "site-packages/notebook/static/1962.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "601026cac61ccdf728901d99b8d8a2256ccf07b5e6ffc42842c2353574fae60c",
+        "sha256_in_prefix": "601026cac61ccdf728901d99b8d8a2256ccf07b5e6ffc42842c2353574fae60c",
+        "size_in_bytes": 60684
+      },
+      {
+        "_path": "site-packages/notebook/static/1cb1c39ea642f26a4dfe.woff",
+        "path_type": "hardlink",
+        "sha256": "1cb1c39ea642f26a4dfed230b4aea1c3c218689421f6e9c0a7c1811693c4fa07",
+        "sha256_in_prefix": "1cb1c39ea642f26a4dfed230b4aea1c3c218689421f6e9c0a7c1811693c4fa07",
+        "size_in_bytes": 34160
+      },
+      {
+        "_path": "site-packages/notebook/static/2007.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "8c5c9f6b04025fb8dce7a8173d67ce1442bb4cf8e04dbe952aca837f99ce5609",
+        "sha256_in_prefix": "8c5c9f6b04025fb8dce7a8173d67ce1442bb4cf8e04dbe952aca837f99ce5609",
+        "size_in_bytes": 6181
+      },
+      {
+        "_path": "site-packages/notebook/static/2065.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "523642e53d78f85cb06a92f74c9a5c442621f9d37973e8562406946eb705bfa6",
+        "sha256_in_prefix": "523642e53d78f85cb06a92f74c9a5c442621f9d37973e8562406946eb705bfa6",
+        "size_in_bytes": 119944
+      },
+      {
+        "_path": "site-packages/notebook/static/2088.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e838c1d0d4ebadd091dcaa6bdeec5ed04331671a79dad5506ef97b6e483c9fc7",
+        "sha256_in_prefix": "e838c1d0d4ebadd091dcaa6bdeec5ed04331671a79dad5506ef97b6e483c9fc7",
+        "size_in_bytes": 3788
+      },
+      {
+        "_path": "site-packages/notebook/static/2089.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "3675d21f7f1d2e3a0395a6775d716a3d12b22feaf2617fa9ca209055ea3274b8",
+        "sha256_in_prefix": "3675d21f7f1d2e3a0395a6775d716a3d12b22feaf2617fa9ca209055ea3274b8",
+        "size_in_bytes": 8949
+      },
+      {
+        "_path": "site-packages/notebook/static/2122.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "89d28aaa491082cdd1c56f70031566eca22121b0676f0f9f14753ea62baccf33",
+        "sha256_in_prefix": "89d28aaa491082cdd1c56f70031566eca22121b0676f0f9f14753ea62baccf33",
+        "size_in_bytes": 618
+      },
+      {
+        "_path": "site-packages/notebook/static/214.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "8a26e92b9b9bda8ff4762981b4e49f867d6cb8dc23b0aa1023c0a4b982ec622f",
+        "sha256_in_prefix": "8a26e92b9b9bda8ff4762981b4e49f867d6cb8dc23b0aa1023c0a4b982ec622f",
+        "size_in_bytes": 20897
+      },
+      {
+        "_path": "site-packages/notebook/static/2167.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "bc10302cac44bbad183c7c0b12166eb1a03eeb0edd555917522dbbc8d099554e",
+        "sha256_in_prefix": "bc10302cac44bbad183c7c0b12166eb1a03eeb0edd555917522dbbc8d099554e",
+        "size_in_bytes": 2696
+      },
+      {
+        "_path": "site-packages/notebook/static/2184.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "05c8ca0826365a970881ceb6b5304c6c8c6a8b00a391e1af722b7a69ee65d9b1",
+        "sha256_in_prefix": "05c8ca0826365a970881ceb6b5304c6c8c6a8b00a391e1af722b7a69ee65d9b1",
+        "size_in_bytes": 16589
+      },
+      {
+        "_path": "site-packages/notebook/static/2188.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "18f65f1dd5af117ad0be61f26cf5c605e8af48b83deec3785a537d8a1f54b78c",
+        "sha256_in_prefix": "18f65f1dd5af117ad0be61f26cf5c605e8af48b83deec3785a537d8a1f54b78c",
+        "size_in_bytes": 3031
+      },
+      {
+        "_path": "site-packages/notebook/static/221.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "9cf5b17e4cbfcfbb4abf2a0025dbef8f131fea6926de5632da2cb4b85cd6feb9",
+        "sha256_in_prefix": "9cf5b17e4cbfcfbb4abf2a0025dbef8f131fea6926de5632da2cb4b85cd6feb9",
+        "size_in_bytes": 2145
+      },
+      {
+        "_path": "site-packages/notebook/static/2241.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "4b1de556fab17988e5c011f2e9cab43383ebcfbae98f10d915cc22c1dba7deee",
+        "sha256_in_prefix": "4b1de556fab17988e5c011f2e9cab43383ebcfbae98f10d915cc22c1dba7deee",
+        "size_in_bytes": 82023
+      },
+      {
+        "_path": "site-packages/notebook/static/2311.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f35768abe858016a90bd7e14afdddc0e2e6bad45285361e27bc48d001232b9f3",
+        "sha256_in_prefix": "f35768abe858016a90bd7e14afdddc0e2e6bad45285361e27bc48d001232b9f3",
+        "size_in_bytes": 2834
+      },
+      {
+        "_path": "site-packages/notebook/static/2323.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "9d0ff83bf2a88377ab692137f8affb0ab815f34dc798761ff1409469ca61e84f",
+        "sha256_in_prefix": "9d0ff83bf2a88377ab692137f8affb0ab815f34dc798761ff1409469ca61e84f",
+        "size_in_bytes": 48217
+      },
+      {
+        "_path": "site-packages/notebook/static/2324.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "d91f90af076da961c67ad3ff0059e2def5de08ac1994110f9897d225effb01dc",
+        "sha256_in_prefix": "d91f90af076da961c67ad3ff0059e2def5de08ac1994110f9897d225effb01dc",
+        "size_in_bytes": 1481171
+      },
+      {
+        "_path": "site-packages/notebook/static/2343.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c0d2c61e4438df13cdf19c9cd8cf673bfd976ebf9102f5126b355e5d163344c4",
+        "sha256_in_prefix": "c0d2c61e4438df13cdf19c9cd8cf673bfd976ebf9102f5126b355e5d163344c4",
+        "size_in_bytes": 4290
+      },
+      {
+        "_path": "site-packages/notebook/static/2386.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "4b2d688db6ce3ef34d8f91d4666a5d67955a95cf7a1ef19feed7eda8a671fc7d",
+        "sha256_in_prefix": "4b2d688db6ce3ef34d8f91d4666a5d67955a95cf7a1ef19feed7eda8a671fc7d",
+        "size_in_bytes": 2364
+      },
+      {
+        "_path": "site-packages/notebook/static/2401.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ac0cbdc5f231c3d0c7972ca66bea95932a01493944d832f24de015d5f34e39b0",
+        "sha256_in_prefix": "ac0cbdc5f231c3d0c7972ca66bea95932a01493944d832f24de015d5f34e39b0",
+        "size_in_bytes": 29013
+      },
+      {
+        "_path": "site-packages/notebook/static/2479.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6005f3320c20b828278869dedfbe8dfc28cea6a8acf3aa330742b7ee76f1a0b9",
+        "sha256_in_prefix": "6005f3320c20b828278869dedfbe8dfc28cea6a8acf3aa330742b7ee76f1a0b9",
+        "size_in_bytes": 45222
+      },
+      {
+        "_path": "site-packages/notebook/static/2489.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1f88f33fe70239f20437bfb692788be1c418eadcbae612ccd4f861a7470a9a71",
+        "sha256_in_prefix": "1f88f33fe70239f20437bfb692788be1c418eadcbae612ccd4f861a7470a9a71",
+        "size_in_bytes": 33690
+      },
+      {
+        "_path": "site-packages/notebook/static/2520.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "36f1c5292b3ef9f62271161d6797744f12dca155778a641f198a35b771ca07df",
+        "sha256_in_prefix": "36f1c5292b3ef9f62271161d6797744f12dca155778a641f198a35b771ca07df",
+        "size_in_bytes": 29106
+      },
+      {
+        "_path": "site-packages/notebook/static/2552.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "67cbadb4f633ba56b3d8398d4944ab7b5a9902676dc8f680297cda3d25d9f9ec",
+        "sha256_in_prefix": "67cbadb4f633ba56b3d8398d4944ab7b5a9902676dc8f680297cda3d25d9f9ec",
+        "size_in_bytes": 54893
+      },
+      {
+        "_path": "site-packages/notebook/static/2607.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "06b3469269f40f3d40e51f9266dfbdb091f356309227feaff675c5652f5ce645",
+        "sha256_in_prefix": "06b3469269f40f3d40e51f9266dfbdb091f356309227feaff675c5652f5ce645",
+        "size_in_bytes": 6181
+      },
+      {
+        "_path": "site-packages/notebook/static/261.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "406c77296773cc25686af77ff478caaafe8d26513e16d9f9ec16438ffcf4cd9e",
+        "sha256_in_prefix": "406c77296773cc25686af77ff478caaafe8d26513e16d9f9ec16438ffcf4cd9e",
+        "size_in_bytes": 37924
+      },
+      {
+        "_path": "site-packages/notebook/static/2615.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6ec32e9049d369548a32bcb9f76ca55b34ff2909231518859a511062799a5ed8",
+        "sha256_in_prefix": "6ec32e9049d369548a32bcb9f76ca55b34ff2909231518859a511062799a5ed8",
+        "size_in_bytes": 5578
+      },
+      {
+        "_path": "site-packages/notebook/static/2636.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "a26ba5f634061e7ef12b1498b00e94bfddb311d6e94db429125948b949e8c18f",
+        "sha256_in_prefix": "a26ba5f634061e7ef12b1498b00e94bfddb311d6e94db429125948b949e8c18f",
+        "size_in_bytes": 18311
+      },
+      {
+        "_path": "site-packages/notebook/static/2666.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "4db5d75b8ad71d3e4a62620aaee233f7beb031c3c91bcf19e46b495a519cd47a",
+        "sha256_in_prefix": "4db5d75b8ad71d3e4a62620aaee233f7beb031c3c91bcf19e46b495a519cd47a",
+        "size_in_bytes": 12701
+      },
+      {
+        "_path": "site-packages/notebook/static/26683bf201fb258a2237.woff",
+        "path_type": "hardlink",
+        "sha256": "26683bf201fb258a2237d9754616de9d4ecf4cc1cd39dd1902476df7d75f1d16",
+        "sha256_in_prefix": "26683bf201fb258a2237d9754616de9d4ecf4cc1cd39dd1902476df7d75f1d16",
+        "size_in_bytes": 9600
+      },
+      {
+        "_path": "site-packages/notebook/static/2682.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "70d8680638dddcf07213d7924eef9ac0a05c6cf58358637b6eed1afdf0cdc01e",
+        "sha256_in_prefix": "70d8680638dddcf07213d7924eef9ac0a05c6cf58358637b6eed1afdf0cdc01e",
+        "size_in_bytes": 1175
+      },
+      {
+        "_path": "site-packages/notebook/static/2692.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "7e5344538a18853ab7206cee5ee3611bec5811d2a69c5e8b961dc2a56127158a",
+        "sha256_in_prefix": "7e5344538a18853ab7206cee5ee3611bec5811d2a69c5e8b961dc2a56127158a",
+        "size_in_bytes": 29991
+      },
+      {
+        "_path": "site-packages/notebook/static/270.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "502ff681b4037e6d77de0efafcae137c608a40630ff10040ef4b5a85a2853f32",
+        "sha256_in_prefix": "502ff681b4037e6d77de0efafcae137c608a40630ff10040ef4b5a85a2853f32",
+        "size_in_bytes": 7549
+      },
+      {
+        "_path": "site-packages/notebook/static/2702.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e1007388f91236a5ab906e54f780caa6372caa6ece843542c8a5a0c89ef1f554",
+        "sha256_in_prefix": "e1007388f91236a5ab906e54f780caa6372caa6ece843542c8a5a0c89ef1f554",
+        "size_in_bytes": 704
+      },
+      {
+        "_path": "site-packages/notebook/static/2756.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c2bf28828e05ffdadd292e85aeb17ec25e060870dd75235422e3259bedecf4a8",
+        "sha256_in_prefix": "c2bf28828e05ffdadd292e85aeb17ec25e060870dd75235422e3259bedecf4a8",
+        "size_in_bytes": 2713
+      },
+      {
+        "_path": "site-packages/notebook/static/28.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "417f85ee92ec2849d4fddaf92cfc0e90036ec2088697550ef3c9e65cc9e803ef",
+        "sha256_in_prefix": "417f85ee92ec2849d4fddaf92cfc0e90036ec2088697550ef3c9e65cc9e803ef",
+        "size_in_bytes": 55533
+      },
+      {
+        "_path": "site-packages/notebook/static/2813.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f522db9b68a6585f27e5de78c73dea2cbe6ebd234c144a58ea6f062e1699e2b5",
+        "sha256_in_prefix": "f522db9b68a6585f27e5de78c73dea2cbe6ebd234c144a58ea6f062e1699e2b5",
+        "size_in_bytes": 1029
+      },
+      {
+        "_path": "site-packages/notebook/static/2866.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "851d937df9600f85e10e978e0cd3b8f7bcb7082848a5e947dad15599e62965fb",
+        "sha256_in_prefix": "851d937df9600f85e10e978e0cd3b8f7bcb7082848a5e947dad15599e62965fb",
+        "size_in_bytes": 25782
+      },
+      {
+        "_path": "site-packages/notebook/static/2871.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c141b50e6e5a600e418c05ab45d2d7c2f58f6e0a7a531417ec64d7bb9bc3fd61",
+        "sha256_in_prefix": "c141b50e6e5a600e418c05ab45d2d7c2f58f6e0a7a531417ec64d7bb9bc3fd61",
+        "size_in_bytes": 6665
+      },
+      {
+        "_path": "site-packages/notebook/static/2913.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b0895a89d9b80ff485738f12030a04f0fab0c9f2f326ce9fd0f624b6a5b8962d",
+        "sha256_in_prefix": "b0895a89d9b80ff485738f12030a04f0fab0c9f2f326ce9fd0f624b6a5b8962d",
+        "size_in_bytes": 128623
+      },
+      {
+        "_path": "site-packages/notebook/static/2913.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "b4b20ab4cd4bcc05f35a0574b6453953619c9778a09b11ed58d6ff8a4e7c5ecd",
+        "sha256_in_prefix": "b4b20ab4cd4bcc05f35a0574b6453953619c9778a09b11ed58d6ff8a4e7c5ecd",
+        "size_in_bytes": 559
+      },
+      {
+        "_path": "site-packages/notebook/static/2924.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "76867d33205eb5814a132fb79a88bef55d0bbb366b149b5bc46720413353afea",
+        "sha256_in_prefix": "76867d33205eb5814a132fb79a88bef55d0bbb366b149b5bc46720413353afea",
+        "size_in_bytes": 6417
+      },
+      {
+        "_path": "site-packages/notebook/static/2944.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "fee8ed1e3070604c73e2822a4ad7a8a5f71299d5112937d12d8836f878f4c28e",
+        "sha256_in_prefix": "fee8ed1e3070604c73e2822a4ad7a8a5f71299d5112937d12d8836f878f4c28e",
+        "size_in_bytes": 50042
+      },
+      {
+        "_path": "site-packages/notebook/static/2955.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "50b4f288ea928ce0f7d4635529a77ae57fc4ed55cf6e9d038cb38f83d6ccc69e",
+        "sha256_in_prefix": "50b4f288ea928ce0f7d4635529a77ae57fc4ed55cf6e9d038cb38f83d6ccc69e",
+        "size_in_bytes": 182907
+      },
+      {
+        "_path": "site-packages/notebook/static/3079.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "695aab1b63ffa2550ff0aa08d89ae03e294a10e1f3396fc0140cce55070f8522",
+        "sha256_in_prefix": "695aab1b63ffa2550ff0aa08d89ae03e294a10e1f3396fc0140cce55070f8522",
+        "size_in_bytes": 35771
+      },
+      {
+        "_path": "site-packages/notebook/static/30e889b58cbc51adfbb0.woff",
+        "path_type": "hardlink",
+        "sha256": "30e889b58cbc51adfbb038ab1a96dc4025aa3542a3cff7712fc55ece510675e2",
+        "sha256_in_prefix": "30e889b58cbc51adfbb038ab1a96dc4025aa3542a3cff7712fc55ece510675e2",
+        "size_in_bytes": 5464
+      },
+      {
+        "_path": "site-packages/notebook/static/311.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6e3086e3d227a1f5916bc0faecbe1f0e80e3bcfc06725641f16fcb185979a3b9",
+        "sha256_in_prefix": "6e3086e3d227a1f5916bc0faecbe1f0e80e3bcfc06725641f16fcb185979a3b9",
+        "size_in_bytes": 3254
+      },
+      {
+        "_path": "site-packages/notebook/static/3111.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f34d9b73433c66f258fc9baa2f7d24bce4c3379004f8ead5facccf4fedb787f7",
+        "sha256_in_prefix": "f34d9b73433c66f258fc9baa2f7d24bce4c3379004f8ead5facccf4fedb787f7",
+        "size_in_bytes": 4300
+      },
+      {
+        "_path": "site-packages/notebook/static/3129.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "0f64bb83b7013bf5f8734e50e6f2b57259a28493f1bef65d52bdfec3ff46f079",
+        "sha256_in_prefix": "0f64bb83b7013bf5f8734e50e6f2b57259a28493f1bef65d52bdfec3ff46f079",
+        "size_in_bytes": 2047
+      },
+      {
+        "_path": "site-packages/notebook/static/3146.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e07a30e969381beb782dcd47867eaf7aceb06a88baafb4b89288f47b4987a3ba",
+        "sha256_in_prefix": "e07a30e969381beb782dcd47867eaf7aceb06a88baafb4b89288f47b4987a3ba",
+        "size_in_bytes": 447
+      },
+      {
+        "_path": "site-packages/notebook/static/3154.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e4795412821587f53de04e8149b10f0eb09441fb386450a558cc8f7ff5f4a8ff",
+        "sha256_in_prefix": "e4795412821587f53de04e8149b10f0eb09441fb386450a558cc8f7ff5f4a8ff",
+        "size_in_bytes": 4504
+      },
+      {
+        "_path": "site-packages/notebook/static/3187.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "333c1d5568965ef0e90d00dac3563f8bd38a635018949f592d6e73dcb40cf3e4",
+        "sha256_in_prefix": "333c1d5568965ef0e90d00dac3563f8bd38a635018949f592d6e73dcb40cf3e4",
+        "size_in_bytes": 2112
+      },
+      {
+        "_path": "site-packages/notebook/static/3211.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "36e69a564d2589d464e4e66bd29c0cb0983ec695cfd08ea5a2299433d8654452",
+        "sha256_in_prefix": "36e69a564d2589d464e4e66bd29c0cb0983ec695cfd08ea5a2299433d8654452",
+        "size_in_bytes": 4233
+      },
+      {
+        "_path": "site-packages/notebook/static/3213.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "9439cb4b403dab5ca05b24265bd7317eb99ee196712c6872ac3d153f5de00a86",
+        "sha256_in_prefix": "9439cb4b403dab5ca05b24265bd7317eb99ee196712c6872ac3d153f5de00a86",
+        "size_in_bytes": 7114
+      },
+      {
+        "_path": "site-packages/notebook/static/3230.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "cf0b0689e6f9ebabe737c2d491b36f706f3bd9bb250336a08d813dd9205c15a3",
+        "sha256_in_prefix": "cf0b0689e6f9ebabe737c2d491b36f706f3bd9bb250336a08d813dd9205c15a3",
+        "size_in_bytes": 6786
+      },
+      {
+        "_path": "site-packages/notebook/static/32792104b5ef69eded90.woff",
+        "path_type": "hardlink",
+        "sha256": "32792104b5ef69eded905b6d1598ed05d8087684d38e7a94d52e3c38ba16f47e",
+        "sha256_in_prefix": "32792104b5ef69eded905b6d1598ed05d8087684d38e7a94d52e3c38ba16f47e",
+        "size_in_bytes": 15944
+      },
+      {
+        "_path": "site-packages/notebook/static/3301.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2d177b73be3d78d100c7976b3af35669850b671402948235c6846018c2afce41",
+        "sha256_in_prefix": "2d177b73be3d78d100c7976b3af35669850b671402948235c6846018c2afce41",
+        "size_in_bytes": 9405
+      },
+      {
+        "_path": "site-packages/notebook/static/3322.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "a6036e033146ab365df23254d5ac09891da672a39c07c1cea71bcd675605ce3f",
+        "sha256_in_prefix": "a6036e033146ab365df23254d5ac09891da672a39c07c1cea71bcd675605ce3f",
+        "size_in_bytes": 9662
+      },
+      {
+        "_path": "site-packages/notebook/static/3325.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "a4e40a2019f6f73e383e33ccf4f0c4af0411e2d0d49500f4646150cf1f9dfbcf",
+        "sha256_in_prefix": "a4e40a2019f6f73e383e33ccf4f0c4af0411e2d0d49500f4646150cf1f9dfbcf",
+        "size_in_bytes": 1029
+      },
+      {
+        "_path": "site-packages/notebook/static/3336.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "3e1d7855c0b463c7f86d9b7c1f771b81fa35a26b280a2a90e713ffb8cf63603f",
+        "sha256_in_prefix": "3e1d7855c0b463c7f86d9b7c1f771b81fa35a26b280a2a90e713ffb8cf63603f",
+        "size_in_bytes": 2464
+      },
+      {
+        "_path": "site-packages/notebook/static/3340.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "aa184c1aa4a33b5be6e22d0825dde6770ab96ad5b4777e94d2f48a6ab3423f30",
+        "sha256_in_prefix": "aa184c1aa4a33b5be6e22d0825dde6770ab96ad5b4777e94d2f48a6ab3423f30",
+        "size_in_bytes": 7433
+      },
+      {
+        "_path": "site-packages/notebook/static/3360.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "39adc209a7b456cbde52fcd94667f2231004aec13520c64975ba0b4f2bebb246",
+        "sha256_in_prefix": "39adc209a7b456cbde52fcd94667f2231004aec13520c64975ba0b4f2bebb246",
+        "size_in_bytes": 29123
+      },
+      {
+        "_path": "site-packages/notebook/static/3370.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "cac409e1b9f6eb2f0e7fd75b440fbd770787456257514432fd042128ed218ce5",
+        "sha256_in_prefix": "cac409e1b9f6eb2f0e7fd75b440fbd770787456257514432fd042128ed218ce5",
+        "size_in_bytes": 2461
+      },
+      {
+        "_path": "site-packages/notebook/static/3420.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "03a4ce9a68134a32ef433eb821b44d090e132524a1ac275be7a45c99518ec6e1",
+        "sha256_in_prefix": "03a4ce9a68134a32ef433eb821b44d090e132524a1ac275be7a45c99518ec6e1",
+        "size_in_bytes": 5246
+      },
+      {
+        "_path": "site-packages/notebook/static/3449.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "59839725989d0f7b7910f8485c2016d3b44e108cd53f92f22a093ab07f7ed474",
+        "sha256_in_prefix": "59839725989d0f7b7910f8485c2016d3b44e108cd53f92f22a093ab07f7ed474",
+        "size_in_bytes": 3991
+      },
+      {
+        "_path": "site-packages/notebook/static/3462.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "fc362f81fa18710e810a821ef1083d04d1385f8b5031a8b4345b65cba9d007bb",
+        "sha256_in_prefix": "fc362f81fa18710e810a821ef1083d04d1385f8b5031a8b4345b65cba9d007bb",
+        "size_in_bytes": 96169
+      },
+      {
+        "_path": "site-packages/notebook/static/3466.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "a6c8652d86b04ef5ddcc2e6561f4bbb45f522b6742a014e3d011c49c1c5e2e0c",
+        "sha256_in_prefix": "a6c8652d86b04ef5ddcc2e6561f4bbb45f522b6742a014e3d011c49c1c5e2e0c",
+        "size_in_bytes": 11279
+      },
+      {
+        "_path": "site-packages/notebook/static/3488.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "7359d47c9ba1d72cb8d47dc830ee85cdac68bf473c5a8c006cd56bfd4460a1e1",
+        "sha256_in_prefix": "7359d47c9ba1d72cb8d47dc830ee85cdac68bf473c5a8c006cd56bfd4460a1e1",
+        "size_in_bytes": 39408
+      },
+      {
+        "_path": "site-packages/notebook/static/35.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2d2cfe25f94c97e0151aaaf9627df3a8e2a73aefb208d539a0c82f702c208153",
+        "sha256_in_prefix": "2d2cfe25f94c97e0151aaaf9627df3a8e2a73aefb208d539a0c82f702c208153",
+        "size_in_bytes": 22195
+      },
+      {
+        "_path": "site-packages/notebook/static/3501.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "5ec432928150176b3e3db766c77e5e5387fc7444c187a7123ef3d0bec065116e",
+        "sha256_in_prefix": "5ec432928150176b3e3db766c77e5e5387fc7444c187a7123ef3d0bec065116e",
+        "size_in_bytes": 3838
+      },
+      {
+        "_path": "site-packages/notebook/static/3512.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "37c350feb72bedcf78ddb795980923cbf71b6497a736a31bef92db13650a129a",
+        "sha256_in_prefix": "37c350feb72bedcf78ddb795980923cbf71b6497a736a31bef92db13650a129a",
+        "size_in_bytes": 105136
+      },
+      {
+        "_path": "site-packages/notebook/static/355254db9ca10a09a3b5.woff",
+        "path_type": "hardlink",
+        "sha256": "355254db9ca10a09a3b5f0929d74eb4670f44fbe864c07526a06213e0a0caf6c",
+        "sha256_in_prefix": "355254db9ca10a09a3b5f0929d74eb4670f44fbe864c07526a06213e0a0caf6c",
+        "size_in_bytes": 20832
+      },
+      {
+        "_path": "site-packages/notebook/static/3562.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ff638065113c4a1713895f7e5340efa8d94a8f92fb5eb7a6212ec927361de08f",
+        "sha256_in_prefix": "ff638065113c4a1713895f7e5340efa8d94a8f92fb5eb7a6212ec927361de08f",
+        "size_in_bytes": 4733
+      },
+      {
+        "_path": "site-packages/notebook/static/3676.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "26210f7e05998e9fdc803c455cbdcefda7b580705f5162f43ce1bcc1facf8817",
+        "sha256_in_prefix": "26210f7e05998e9fdc803c455cbdcefda7b580705f5162f43ce1bcc1facf8817",
+        "size_in_bytes": 94265
+      },
+      {
+        "_path": "site-packages/notebook/static/3680.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "81cd026bafaaded1e648430176078dc1d24377c5bbd67ab3fae8d3f6c5566db3",
+        "sha256_in_prefix": "81cd026bafaaded1e648430176078dc1d24377c5bbd67ab3fae8d3f6c5566db3",
+        "size_in_bytes": 6281
+      },
+      {
+        "_path": "site-packages/notebook/static/36e0d72d8a7afc696a3e.woff",
+        "path_type": "hardlink",
+        "sha256": "36e0d72d8a7afc696a3e7a5c7369807634640de9b02257bca447bdf126221a27",
+        "sha256_in_prefix": "36e0d72d8a7afc696a3e7a5c7369807634640de9b02257bca447bdf126221a27",
+        "size_in_bytes": 1116
+      },
+      {
+        "_path": "site-packages/notebook/static/3700.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f99664fee7c0aefa2886c647a8987bfee1e659fdd7e0aea19b452b4762c923f7",
+        "sha256_in_prefix": "f99664fee7c0aefa2886c647a8987bfee1e659fdd7e0aea19b452b4762c923f7",
+        "size_in_bytes": 1796
+      },
+      {
+        "_path": "site-packages/notebook/static/3733.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "61d9c74777613066d88086c6de805da5bc96ead276c3f097a10595bfc0e56070",
+        "sha256_in_prefix": "61d9c74777613066d88086c6de805da5bc96ead276c3f097a10595bfc0e56070",
+        "size_in_bytes": 1328
+      },
+      {
+        "_path": "site-packages/notebook/static/373c04fd2418f5c77eea.eot",
+        "path_type": "hardlink",
+        "sha256": "373c04fd2418f5c77eea49d514731058f1907a94ff3b4e5d7c3e5767e8b53d8b",
+        "sha256_in_prefix": "373c04fd2418f5c77eea49d514731058f1907a94ff3b4e5d7c3e5767e8b53d8b",
+        "size_in_bytes": 203030
+      },
+      {
+        "_path": "site-packages/notebook/static/374.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "eff3238e093f7063f088d32a110bd79a1560130862159a95e67541a8920f377d",
+        "sha256_in_prefix": "eff3238e093f7063f088d32a110bd79a1560130862159a95e67541a8920f377d",
+        "size_in_bytes": 125908
+      },
+      {
+        "_path": "site-packages/notebook/static/3752.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "8735345f4bb662ec6163dd6b70266b6e483ebfe2dd596b38bab81687051792dd",
+        "sha256_in_prefix": "8735345f4bb662ec6163dd6b70266b6e483ebfe2dd596b38bab81687051792dd",
+        "size_in_bytes": 170
+      },
+      {
+        "_path": "site-packages/notebook/static/3768.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "d5f74f327dd29cd732aa175c953c7ef3a54be6bcf6edbafba1bf3c8911be5b48",
+        "sha256_in_prefix": "d5f74f327dd29cd732aa175c953c7ef3a54be6bcf6edbafba1bf3c8911be5b48",
+        "size_in_bytes": 6252
+      },
+      {
+        "_path": "site-packages/notebook/static/377.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2508592df8521a985b46b844ac1a2964a29b180928678a140e4c9a76312babe7",
+        "sha256_in_prefix": "2508592df8521a985b46b844ac1a2964a29b180928678a140e4c9a76312babe7",
+        "size_in_bytes": 4437
+      },
+      {
+        "_path": "site-packages/notebook/static/3797.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "8e6cf453fe80714acc6a002508da6d7c295fc22fc9589a432d6a63e8e69d5e2d",
+        "sha256_in_prefix": "8e6cf453fe80714acc6a002508da6d7c295fc22fc9589a432d6a63e8e69d5e2d",
+        "size_in_bytes": 7010
+      },
+      {
+        "_path": "site-packages/notebook/static/3863.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "bb45a5610b89ee206a79c174ce016d12b89d28a6a919e8c001eda2fa4425af49",
+        "sha256_in_prefix": "bb45a5610b89ee206a79c174ce016d12b89d28a6a919e8c001eda2fa4425af49",
+        "size_in_bytes": 573
+      },
+      {
+        "_path": "site-packages/notebook/static/3881.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "27dfe049c844efcd5a4805b8be9e47b6471561b3f97258925072cd04caba3141",
+        "sha256_in_prefix": "27dfe049c844efcd5a4805b8be9e47b6471561b3f97258925072cd04caba3141",
+        "size_in_bytes": 21301
+      },
+      {
+        "_path": "site-packages/notebook/static/3bc6ecaae7ecf6f8d7f8.woff",
+        "path_type": "hardlink",
+        "sha256": "3bc6ecaae7ecf6f8d7f8ea07bddbaca8601e2cb6e89d6aef58e78d9f6d8a398f",
+        "sha256_in_prefix": "3bc6ecaae7ecf6f8d7f8ea07bddbaca8601e2cb6e89d6aef58e78d9f6d8a398f",
+        "size_in_bytes": 5148
+      },
+      {
+        "_path": "site-packages/notebook/static/3de784d07b9fa8f104c1.woff",
+        "path_type": "hardlink",
+        "sha256": "3de784d07b9fa8f104c10928a878ee879cf3305cae5195cba663c9c2bb0195eb",
+        "sha256_in_prefix": "3de784d07b9fa8f104c10928a878ee879cf3305cae5195cba663c9c2bb0195eb",
+        "size_in_bytes": 40808
+      },
+      {
+        "_path": "site-packages/notebook/static/3f6d3488cf65374f6f67.woff",
+        "path_type": "hardlink",
+        "sha256": "3f6d3488cf65374f6f676c315340b0ac2be832bd55240c809448e36ef9b96326",
+        "sha256_in_prefix": "3f6d3488cf65374f6f676c315340b0ac2be832bd55240c809448e36ef9b96326",
+        "size_in_bytes": 101648
+      },
+      {
+        "_path": "site-packages/notebook/static/4002.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c08b81b58d253c64c97a9cb903e96f910243ba4940fb3f92120735a22dbef112",
+        "sha256_in_prefix": "c08b81b58d253c64c97a9cb903e96f910243ba4940fb3f92120735a22dbef112",
+        "size_in_bytes": 10948
+      },
+      {
+        "_path": "site-packages/notebook/static/403.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "469ad4c4c7bca4c7c1fdcd8a5c79a45c037aa04f21ebc587ced8c4a1534ee628",
+        "sha256_in_prefix": "469ad4c4c7bca4c7c1fdcd8a5c79a45c037aa04f21ebc587ced8c4a1534ee628",
+        "size_in_bytes": 4536
+      },
+      {
+        "_path": "site-packages/notebook/static/4030.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "a89bb0d4326bbef6a836cba550fc2df73c18f7889eae3c738676d03e456e233b",
+        "sha256_in_prefix": "a89bb0d4326bbef6a836cba550fc2df73c18f7889eae3c738676d03e456e233b",
+        "size_in_bytes": 6882
+      },
+      {
+        "_path": "site-packages/notebook/static/4035.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e50a90e731b2196bc62643ed5a889667a2ab5f218e8552cb58fe271f959013a2",
+        "sha256_in_prefix": "e50a90e731b2196bc62643ed5a889667a2ab5f218e8552cb58fe271f959013a2",
+        "size_in_bytes": 22183
+      },
+      {
+        "_path": "site-packages/notebook/static/4038.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "404baf556884ebb7038d64928c052cef7de2785041d6ac4c15f053d7776175cc",
+        "sha256_in_prefix": "404baf556884ebb7038d64928c052cef7de2785041d6ac4c15f053d7776175cc",
+        "size_in_bytes": 2285
+      },
+      {
+        "_path": "site-packages/notebook/static/4039.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ef9616584922e9066101a5b24a3836774c79d5158e636b3b9f31c6b3015db6dd",
+        "sha256_in_prefix": "ef9616584922e9066101a5b24a3836774c79d5158e636b3b9f31c6b3015db6dd",
+        "size_in_bytes": 7871
+      },
+      {
+        "_path": "site-packages/notebook/static/4042.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "0140a8e8f9b71e4ed8d1d6e06be3aa75b06c938d440492a7889053644d70d015",
+        "sha256_in_prefix": "0140a8e8f9b71e4ed8d1d6e06be3aa75b06c938d440492a7889053644d70d015",
+        "size_in_bytes": 2584
+      },
+      {
+        "_path": "site-packages/notebook/static/4058.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ca5be6c88fdbdc21c233afbe4b03f4d3153aeba01d121428249d0db013fc4774",
+        "sha256_in_prefix": "ca5be6c88fdbdc21c233afbe4b03f4d3153aeba01d121428249d0db013fc4774",
+        "size_in_bytes": 2214
+      },
+      {
+        "_path": "site-packages/notebook/static/409.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b9428d3c727a8a20e35a93ba23560333b4298443313c37b4409b2cf65318a975",
+        "sha256_in_prefix": "b9428d3c727a8a20e35a93ba23560333b4298443313c37b4409b2cf65318a975",
+        "size_in_bytes": 2850
+      },
+      {
+        "_path": "site-packages/notebook/static/4105.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f9efaf78e172d5ca3ae9fc383a2f21dc30273f3d7d4f74a56af348625c4161e7",
+        "sha256_in_prefix": "f9efaf78e172d5ca3ae9fc383a2f21dc30273f3d7d4f74a56af348625c4161e7",
+        "size_in_bytes": 12439
+      },
+      {
+        "_path": "site-packages/notebook/static/4148.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ea76f73ffe6ca7b715fddd458b66e0940cc65941c1f7993c3921eac18f75e3d6",
+        "sha256_in_prefix": "ea76f73ffe6ca7b715fddd458b66e0940cc65941c1f7993c3921eac18f75e3d6",
+        "size_in_bytes": 2648
+      },
+      {
+        "_path": "site-packages/notebook/static/4212.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "248bd6442959e834bff32c831f950d5649ae2572ab7e6845312ad8148827ff5f",
+        "sha256_in_prefix": "248bd6442959e834bff32c831f950d5649ae2572ab7e6845312ad8148827ff5f",
+        "size_in_bytes": 5528
+      },
+      {
+        "_path": "site-packages/notebook/static/4271.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e491fbecf570abd07ac58b1307da4b2144efc1fe0bd10490326dbad8446f4a36",
+        "sha256_in_prefix": "e491fbecf570abd07ac58b1307da4b2144efc1fe0bd10490326dbad8446f4a36",
+        "size_in_bytes": 5580
+      },
+      {
+        "_path": "site-packages/notebook/static/4291.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "d2545b2c6e38bc5c6d4f3f9ee83afbcc1e3544118405507b7a43999e568b0151",
+        "sha256_in_prefix": "d2545b2c6e38bc5c6d4f3f9ee83afbcc1e3544118405507b7a43999e568b0151",
+        "size_in_bytes": 9665
+      },
+      {
+        "_path": "site-packages/notebook/static/431.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1b95f9b264748d8870f1bfb2cb2bc1a69328801772d6ca83e7db55225dea447f",
+        "sha256_in_prefix": "1b95f9b264748d8870f1bfb2cb2bc1a69328801772d6ca83e7db55225dea447f",
+        "size_in_bytes": 2801
+      },
+      {
+        "_path": "site-packages/notebook/static/4382.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "0ac76690041ce95f219c0de45ca75ad1c24984abab838d80a945a4e44541387e",
+        "sha256_in_prefix": "0ac76690041ce95f219c0de45ca75ad1c24984abab838d80a945a4e44541387e",
+        "size_in_bytes": 637
+      },
+      {
+        "_path": "site-packages/notebook/static/4387.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "68376aa77ec54992f040d4f12df2b0b82cc2aea7689f7c15d7a694d6dd32020f",
+        "sha256_in_prefix": "68376aa77ec54992f040d4f12df2b0b82cc2aea7689f7c15d7a694d6dd32020f",
+        "size_in_bytes": 3702
+      },
+      {
+        "_path": "site-packages/notebook/static/4430.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "5297591f93f8b3f70470365233475386aca73dee1afbb180846c233f632bc23b",
+        "sha256_in_prefix": "5297591f93f8b3f70470365233475386aca73dee1afbb180846c233f632bc23b",
+        "size_in_bytes": 1386
+      },
+      {
+        "_path": "site-packages/notebook/static/4498.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b0f58d511a5cb074fdf2b6c5c2e0336134ee7e0475b383e986722c6e0efa01f9",
+        "sha256_in_prefix": "b0f58d511a5cb074fdf2b6c5c2e0336134ee7e0475b383e986722c6e0efa01f9",
+        "size_in_bytes": 4405
+      },
+      {
+        "_path": "site-packages/notebook/static/4499.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1da8c22c8dfd656fa9da16eea29fab47b57bd357a5a12d4a40d90f1b7e2a1409",
+        "sha256_in_prefix": "1da8c22c8dfd656fa9da16eea29fab47b57bd357a5a12d4a40d90f1b7e2a1409",
+        "size_in_bytes": 73759
+      },
+      {
+        "_path": "site-packages/notebook/static/4521.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "3412704f19c1e9bb7e5abc59e7cded5b31040e6d0418be6ead4cd47de5f661d0",
+        "sha256_in_prefix": "3412704f19c1e9bb7e5abc59e7cded5b31040e6d0418be6ead4cd47de5f661d0",
+        "size_in_bytes": 2185
+      },
+      {
+        "_path": "site-packages/notebook/static/4526.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "5c73ed0fe4da4c102ad9394cc8ad4c83b511c4e093b595735ffd359234a826a6",
+        "sha256_in_prefix": "5c73ed0fe4da4c102ad9394cc8ad4c83b511c4e093b595735ffd359234a826a6",
+        "size_in_bytes": 6444
+      },
+      {
+        "_path": "site-packages/notebook/static/4588.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "102b2e5bfbea6d273ccfea5019d879fb80d1d646c16984fde1d7e126b9c8416a",
+        "sha256_in_prefix": "102b2e5bfbea6d273ccfea5019d879fb80d1d646c16984fde1d7e126b9c8416a",
+        "size_in_bytes": 13818
+      },
+      {
+        "_path": "site-packages/notebook/static/4630.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "773337310d93e992e70ea1901a734432e06a88ef3b9a0c9d15cfc04a8e396ddc",
+        "sha256_in_prefix": "773337310d93e992e70ea1901a734432e06a88ef3b9a0c9d15cfc04a8e396ddc",
+        "size_in_bytes": 232362
+      },
+      {
+        "_path": "site-packages/notebook/static/4630.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "c0e734a841a8eb9b5a8d3172f8866ec8ef2eaed16c4f6bc9511ee05b9d663615",
+        "sha256_in_prefix": "c0e734a841a8eb9b5a8d3172f8866ec8ef2eaed16c4f6bc9511ee05b9d663615",
+        "size_in_bytes": 366
+      },
+      {
+        "_path": "site-packages/notebook/static/4645.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "5c2237360d2173b1d8ef52678326411af281c4ce56c4214c25d1e2d1d65d966f",
+        "sha256_in_prefix": "5c2237360d2173b1d8ef52678326411af281c4ce56c4214c25d1e2d1d65d966f",
+        "size_in_bytes": 1147
+      },
+      {
+        "_path": "site-packages/notebook/static/4670.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "00a33eb74286b6685e8184287c7af7985b22a6af5aa8a7cf1cfbae2938b1f142",
+        "sha256_in_prefix": "00a33eb74286b6685e8184287c7af7985b22a6af5aa8a7cf1cfbae2938b1f142",
+        "size_in_bytes": 2612
+      },
+      {
+        "_path": "site-packages/notebook/static/4708.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "80e6e5c2f36c594806fb529f6f3b0bc585034478c56cd7ec35ff2a61028502e5",
+        "sha256_in_prefix": "80e6e5c2f36c594806fb529f6f3b0bc585034478c56cd7ec35ff2a61028502e5",
+        "size_in_bytes": 290991
+      },
+      {
+        "_path": "site-packages/notebook/static/4780.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ba695ae48135ec48024c1a3851bf3e0e0ede88d8c4efbb8f2b7237b2a60d305b",
+        "sha256_in_prefix": "ba695ae48135ec48024c1a3851bf3e0e0ede88d8c4efbb8f2b7237b2a60d305b",
+        "size_in_bytes": 58945
+      },
+      {
+        "_path": "site-packages/notebook/static/4810.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "931daf5347ca79b4ba3caefe664607fac344f0acd71c3238e469b7619fc4f424",
+        "sha256_in_prefix": "931daf5347ca79b4ba3caefe664607fac344f0acd71c3238e469b7619fc4f424",
+        "size_in_bytes": 2823
+      },
+      {
+        "_path": "site-packages/notebook/static/4811.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "a86f2c0e39e7ea27669371b72e7b78717a3619b912660df749f5fb6bab95432a",
+        "sha256_in_prefix": "a86f2c0e39e7ea27669371b72e7b78717a3619b912660df749f5fb6bab95432a",
+        "size_in_bytes": 6621
+      },
+      {
+        "_path": "site-packages/notebook/static/481e39042508ae313a60.woff",
+        "path_type": "hardlink",
+        "sha256": "481e39042508ae313a60618af1e37146ab93e9324c98e4c78b8f17fe55d41e0b",
+        "sha256_in_prefix": "481e39042508ae313a60618af1e37146ab93e9324c98e4c78b8f17fe55d41e0b",
+        "size_in_bytes": 1368
+      },
+      {
+        "_path": "site-packages/notebook/static/4825.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b57a2a9956d42473626177e3adeca2f7f19e014f37db9d96a993253e4cec7e54",
+        "sha256_in_prefix": "b57a2a9956d42473626177e3adeca2f7f19e014f37db9d96a993253e4cec7e54",
+        "size_in_bytes": 9468
+      },
+      {
+        "_path": "site-packages/notebook/static/4837.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "9e26b545e050c1e9d99fb5fa481a73bae0967f21c23381366244c524be720c8c",
+        "sha256_in_prefix": "9e26b545e050c1e9d99fb5fa481a73bae0967f21c23381366244c524be720c8c",
+        "size_in_bytes": 447
+      },
+      {
+        "_path": "site-packages/notebook/static/4843.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "cbcdf76cbb29373155e49539a9180b9e05f9d1b72fed35b7e4e9185ade2ff798",
+        "sha256_in_prefix": "cbcdf76cbb29373155e49539a9180b9e05f9d1b72fed35b7e4e9185ade2ff798",
+        "size_in_bytes": 3696
+      },
+      {
+        "_path": "site-packages/notebook/static/4965.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ad02559fd6ed5c2fe66e94a18746e1ce16973eda7c0b19c2717b5fd19b63a74b",
+        "sha256_in_prefix": "ad02559fd6ed5c2fe66e94a18746e1ce16973eda7c0b19c2717b5fd19b63a74b",
+        "size_in_bytes": 1533
+      },
+      {
+        "_path": "site-packages/notebook/static/4971.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "9fb824ebc22603ece87c6e3dd8821de6d2f5f11b4e5876a1f9c7282b396f0e70",
+        "sha256_in_prefix": "9fb824ebc22603ece87c6e3dd8821de6d2f5f11b4e5876a1f9c7282b396f0e70",
+        "size_in_bytes": 3203
+      },
+      {
+        "_path": "site-packages/notebook/static/5019.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "fc823b7c4e60ad3f6add17269ee5e028968128cd94601ffa2b07f30ef4e2baab",
+        "sha256_in_prefix": "fc823b7c4e60ad3f6add17269ee5e028968128cd94601ffa2b07f30ef4e2baab",
+        "size_in_bytes": 27083
+      },
+      {
+        "_path": "site-packages/notebook/static/5061.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "4071eab725e5f89d404b200d917d8c655ac8265d035e641fdff8f51c1382bdb4",
+        "sha256_in_prefix": "4071eab725e5f89d404b200d917d8c655ac8265d035e641fdff8f51c1382bdb4",
+        "size_in_bytes": 5242
+      },
+      {
+        "_path": "site-packages/notebook/static/5099.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1cea91e9c72f80bd209c9b65ff9c0d17094927b9d870e0349ebe3ae8a18d2e69",
+        "sha256_in_prefix": "1cea91e9c72f80bd209c9b65ff9c0d17094927b9d870e0349ebe3ae8a18d2e69",
+        "size_in_bytes": 39908
+      },
+      {
+        "_path": "site-packages/notebook/static/5115.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "7c7c3b431b69a451e9d2c77b9b16bc7522490ca3e51bcccb4bcf074d0ce224c7",
+        "sha256_in_prefix": "7c7c3b431b69a451e9d2c77b9b16bc7522490ca3e51bcccb4bcf074d0ce224c7",
+        "size_in_bytes": 55004
+      },
+      {
+        "_path": "site-packages/notebook/static/5135.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "23eac9f132491cf84778957c38560436b140735e876d8ebe0380118f3f77c03c",
+        "sha256_in_prefix": "23eac9f132491cf84778957c38560436b140735e876d8ebe0380118f3f77c03c",
+        "size_in_bytes": 12384
+      },
+      {
+        "_path": "site-packages/notebook/static/5166.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "073f1a4fdb8878ca000bb3d4b25989913b10a598cdbbab17030316180ad9baa5",
+        "sha256_in_prefix": "073f1a4fdb8878ca000bb3d4b25989913b10a598cdbbab17030316180ad9baa5",
+        "size_in_bytes": 1850
+      },
+      {
+        "_path": "site-packages/notebook/static/5234.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "d5c3f047082fc64d6f1de19a850c23ab238f34daf5e5e3187c08912ce2ad7a72",
+        "sha256_in_prefix": "d5c3f047082fc64d6f1de19a850c23ab238f34daf5e5e3187c08912ce2ad7a72",
+        "size_in_bytes": 7216
+      },
+      {
+        "_path": "site-packages/notebook/static/5249.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "4ee910781200b1a6532f2fbe907502f38bbfeb3a7adc80153d736e606d2d20c9",
+        "sha256_in_prefix": "4ee910781200b1a6532f2fbe907502f38bbfeb3a7adc80153d736e606d2d20c9",
+        "size_in_bytes": 3667
+      },
+      {
+        "_path": "site-packages/notebook/static/5254.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ebd91b1ca4575eccba0b74de5ce124841dbc43e0481de77db61dee0c2e43e2d9",
+        "sha256_in_prefix": "ebd91b1ca4575eccba0b74de5ce124841dbc43e0481de77db61dee0c2e43e2d9",
+        "size_in_bytes": 655
+      },
+      {
+        "_path": "site-packages/notebook/static/5261.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "a33a5283d548c6ef890b9b3d9c946cfa5c1149eb2d0ca7b32a48e1dea0c5568b",
+        "sha256_in_prefix": "a33a5283d548c6ef890b9b3d9c946cfa5c1149eb2d0ca7b32a48e1dea0c5568b",
+        "size_in_bytes": 22266
+      },
+      {
+        "_path": "site-packages/notebook/static/5263.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ec06d03f7d4cf477ddd9c29cadc6ab940d19de0850e1eb4bf5da2dd2d17f4cb0",
+        "sha256_in_prefix": "ec06d03f7d4cf477ddd9c29cadc6ab940d19de0850e1eb4bf5da2dd2d17f4cb0",
+        "size_in_bytes": 142637
+      },
+      {
+        "_path": "site-packages/notebook/static/5297.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "8e6bad9e907da26be1bb8a60a4084622c072dbd69ea3bc64df1f4992cc0a6a18",
+        "sha256_in_prefix": "8e6bad9e907da26be1bb8a60a4084622c072dbd69ea3bc64df1f4992cc0a6a18",
+        "size_in_bytes": 142
+      },
+      {
+        "_path": "site-packages/notebook/static/5299.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "07a7a6c858f722de5a3a94ed07363b1196f96487571a91611cd77b10adcfca30",
+        "sha256_in_prefix": "07a7a6c858f722de5a3a94ed07363b1196f96487571a91611cd77b10adcfca30",
+        "size_in_bytes": 5267
+      },
+      {
+        "_path": "site-packages/notebook/static/5313.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6b31a2064aedbd1fc48418f9646f9ff542a80fc4b07ee14b833558797eaeae5f",
+        "sha256_in_prefix": "6b31a2064aedbd1fc48418f9646f9ff542a80fc4b07ee14b833558797eaeae5f",
+        "size_in_bytes": 6777
+      },
+      {
+        "_path": "site-packages/notebook/static/5325.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f819b48020f0b165de498dcab33a0824230640bd2ed47020580c048fa4013b01",
+        "sha256_in_prefix": "f819b48020f0b165de498dcab33a0824230640bd2ed47020580c048fa4013b01",
+        "size_in_bytes": 4437
+      },
+      {
+        "_path": "site-packages/notebook/static/5343.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c12445be1ac5438626f715226b76b4ed57d627088d6f29a91207b944c38934cf",
+        "sha256_in_prefix": "c12445be1ac5438626f715226b76b4ed57d627088d6f29a91207b944c38934cf",
+        "size_in_bytes": 25694
+      },
+      {
+        "_path": "site-packages/notebook/static/5346.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "94ec78f7241a54529459474a01fffa4160eed83aeae31288dfc334d95b4cf4e6",
+        "sha256_in_prefix": "94ec78f7241a54529459474a01fffa4160eed83aeae31288dfc334d95b4cf4e6",
+        "size_in_bytes": 3335
+      },
+      {
+        "_path": "site-packages/notebook/static/5425.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b3bbb7264cc042e89411d56d8859d5f92b4bd130c3fc3a6d407b7149a35393e1",
+        "sha256_in_prefix": "b3bbb7264cc042e89411d56d8859d5f92b4bd130c3fc3a6d407b7149a35393e1",
+        "size_in_bytes": 3305
+      },
+      {
+        "_path": "site-packages/notebook/static/5426.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "fdf40e56433eaaaae44239a6513601faca39b987386b0800c8b62d4da74b6874",
+        "sha256_in_prefix": "fdf40e56433eaaaae44239a6513601faca39b987386b0800c8b62d4da74b6874",
+        "size_in_bytes": 590
+      },
+      {
+        "_path": "site-packages/notebook/static/545.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b6e4b9456464fc5621c77740233f4b225612af61ee7caebba0f239ff044ed8c7",
+        "sha256_in_prefix": "b6e4b9456464fc5621c77740233f4b225612af61ee7caebba0f239ff044ed8c7",
+        "size_in_bytes": 15288
+      },
+      {
+        "_path": "site-packages/notebook/static/5451.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "d246b482895eecd1d5cd20a87a76c1d76b2b43b01e9e5f25ed617805d53e5e41",
+        "sha256_in_prefix": "d246b482895eecd1d5cd20a87a76c1d76b2b43b01e9e5f25ed617805d53e5e41",
+        "size_in_bytes": 1373
+      },
+      {
+        "_path": "site-packages/notebook/static/5494.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6d2c71818d1f642ae42d470e5b0a4cdb2b8562ecd715ad6e2a027c2158cf8fa4",
+        "sha256_in_prefix": "6d2c71818d1f642ae42d470e5b0a4cdb2b8562ecd715ad6e2a027c2158cf8fa4",
+        "size_in_bytes": 3485
+      },
+      {
+        "_path": "site-packages/notebook/static/5573.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "0eb58d3dd72d1a7ce357ad5b717535572c1cb05841e4ff749a0b1ba8800037e8",
+        "sha256_in_prefix": "0eb58d3dd72d1a7ce357ad5b717535572c1cb05841e4ff749a0b1ba8800037e8",
+        "size_in_bytes": 8081
+      },
+      {
+        "_path": "site-packages/notebook/static/5601.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "493e982848f25809f935f192d2617948cb44e7c345cb368f5280bc6e181ceb36",
+        "sha256_in_prefix": "493e982848f25809f935f192d2617948cb44e7c345cb368f5280bc6e181ceb36",
+        "size_in_bytes": 1198
+      },
+      {
+        "_path": "site-packages/notebook/static/5614.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "50e853e32576c164090a82570c12614a7d2a0fd5f3d71830a9fa2d71df4d75a7",
+        "sha256_in_prefix": "50e853e32576c164090a82570c12614a7d2a0fd5f3d71830a9fa2d71df4d75a7",
+        "size_in_bytes": 7780
+      },
+      {
+        "_path": "site-packages/notebook/static/563.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "8176a23cc33bb492e08e2b0a070fa2b67689fc161344693bab7477f8b43cffd4",
+        "sha256_in_prefix": "8176a23cc33bb492e08e2b0a070fa2b67689fc161344693bab7477f8b43cffd4",
+        "size_in_bytes": 2416
+      },
+      {
+        "_path": "site-packages/notebook/static/5649.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "52bdd9ddbfefe6bde28087b19a8f7f5e2ee754bc71bae9d46e359d9afd1a21b0",
+        "sha256_in_prefix": "52bdd9ddbfefe6bde28087b19a8f7f5e2ee754bc71bae9d46e359d9afd1a21b0",
+        "size_in_bytes": 154121
+      },
+      {
+        "_path": "site-packages/notebook/static/5698.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1ff823884b8eff1ad4f14a584ff273879086d81871e91a75b9e19264d951daf7",
+        "sha256_in_prefix": "1ff823884b8eff1ad4f14a584ff273879086d81871e91a75b9e19264d951daf7",
+        "size_in_bytes": 1886
+      },
+      {
+        "_path": "site-packages/notebook/static/5733.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2730001d5078d206ffeabf190c5cd2bfe8eaa83bdfea53010b1ac5efc87c95b1",
+        "sha256_in_prefix": "2730001d5078d206ffeabf190c5cd2bfe8eaa83bdfea53010b1ac5efc87c95b1",
+        "size_in_bytes": 1961
+      },
+      {
+        "_path": "site-packages/notebook/static/5765.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "95b43aac17cf518e68674ed0dfde9e914d8a86b07fae345edd548a3a01fa7924",
+        "sha256_in_prefix": "95b43aac17cf518e68674ed0dfde9e914d8a86b07fae345edd548a3a01fa7924",
+        "size_in_bytes": 16457
+      },
+      {
+        "_path": "site-packages/notebook/static/5777.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "495f963f1b0e32d28c2cd61782abf5e650cf2a02ea2d61c7d1182d80c286b0c9",
+        "sha256_in_prefix": "495f963f1b0e32d28c2cd61782abf5e650cf2a02ea2d61c7d1182d80c286b0c9",
+        "size_in_bytes": 16457
+      },
+      {
+        "_path": "site-packages/notebook/static/5822.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "27f1c84ade44f76fd62893006f7f6f024c90e64c5bdb3d383bed07afb630f8e8",
+        "sha256_in_prefix": "27f1c84ade44f76fd62893006f7f6f024c90e64c5bdb3d383bed07afb630f8e8",
+        "size_in_bytes": 8338
+      },
+      {
+        "_path": "site-packages/notebook/static/5828.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ffc55fc20822f02125e1d542b44ccf599aeabea8c8d733bddda80c7c3029b388",
+        "sha256_in_prefix": "ffc55fc20822f02125e1d542b44ccf599aeabea8c8d733bddda80c7c3029b388",
+        "size_in_bytes": 26675
+      },
+      {
+        "_path": "site-packages/notebook/static/5834.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "7bc45420aa6549e666fc29237f094df118a042254231b8332e427f7da364fd81",
+        "sha256_in_prefix": "7bc45420aa6549e666fc29237f094df118a042254231b8332e427f7da364fd81",
+        "size_in_bytes": 4016
+      },
+      {
+        "_path": "site-packages/notebook/static/5850.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "0b9f8106abf691f5604e4b261b094c28b5d8866990d2f40769f2c5702cc7d87f",
+        "sha256_in_prefix": "0b9f8106abf691f5604e4b261b094c28b5d8866990d2f40769f2c5702cc7d87f",
+        "size_in_bytes": 79105
+      },
+      {
+        "_path": "site-packages/notebook/static/5912.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "497c55d7e89af8ff582d38ae09bfc4723944ba89debae4574075cec72f04b712",
+        "sha256_in_prefix": "497c55d7e89af8ff582d38ae09bfc4723944ba89debae4574075cec72f04b712",
+        "size_in_bytes": 7099
+      },
+      {
+        "_path": "site-packages/notebook/static/5921.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f2dc7dc775c2017058028d186414ce1066dc02a69830a4d6f70aeccd12ddf360",
+        "sha256_in_prefix": "f2dc7dc775c2017058028d186414ce1066dc02a69830a4d6f70aeccd12ddf360",
+        "size_in_bytes": 10859
+      },
+      {
+        "_path": "site-packages/notebook/static/5972.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ef3122993b020f9f2213d8603160b1ad52c7e45d684c74bf6368fa15f5fc2691",
+        "sha256_in_prefix": "ef3122993b020f9f2213d8603160b1ad52c7e45d684c74bf6368fa15f5fc2691",
+        "size_in_bytes": 4683
+      },
+      {
+        "_path": "site-packages/notebook/static/5996.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "0b963b5ca4b25078dffdd67d241e36afedd6b1b319d9841863873417f4b3d17f",
+        "sha256_in_prefix": "0b963b5ca4b25078dffdd67d241e36afedd6b1b319d9841863873417f4b3d17f",
+        "size_in_bytes": 5911
+      },
+      {
+        "_path": "site-packages/notebook/static/5cda41563a095bd70c78.woff",
+        "path_type": "hardlink",
+        "sha256": "5cda41563a095bd70c78e2dda13d0f8cb922c71c90fffd0a0044c65173a66e83",
+        "sha256_in_prefix": "5cda41563a095bd70c78e2dda13d0f8cb922c71c90fffd0a0044c65173a66e83",
+        "size_in_bytes": 3244
+      },
+      {
+        "_path": "site-packages/notebook/static/6017.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "61549c189f0e99fd7f4f45710521e4d01f49784223fdd18577a36ad982326f49",
+        "sha256_in_prefix": "61549c189f0e99fd7f4f45710521e4d01f49784223fdd18577a36ad982326f49",
+        "size_in_bytes": 947
+      },
+      {
+        "_path": "site-packages/notebook/static/6061.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c36eccdf881b4e155f552b69586701b18a4921a3f2fe66898122627292cdb85f",
+        "sha256_in_prefix": "c36eccdf881b4e155f552b69586701b18a4921a3f2fe66898122627292cdb85f",
+        "size_in_bytes": 2736
+      },
+      {
+        "_path": "site-packages/notebook/static/6078.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "238a4a5abbe094b3db5ec39fbbcf5c123650e1c74d6d3ba446de553208496c15",
+        "sha256_in_prefix": "238a4a5abbe094b3db5ec39fbbcf5c123650e1c74d6d3ba446de553208496c15",
+        "size_in_bytes": 40298
+      },
+      {
+        "_path": "site-packages/notebook/static/6139.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "dafbeae1db6c63d7eee0787bfdfd9c51cf37c83fdefb5e1993aaca30d4ccc3af",
+        "sha256_in_prefix": "dafbeae1db6c63d7eee0787bfdfd9c51cf37c83fdefb5e1993aaca30d4ccc3af",
+        "size_in_bytes": 3918
+      },
+      {
+        "_path": "site-packages/notebook/static/62.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ab7b2d757d65e3c9443b8d2a6a29fa81550db3388c6b4dc4b9714cdeff470c5a",
+        "sha256_in_prefix": "ab7b2d757d65e3c9443b8d2a6a29fa81550db3388c6b4dc4b9714cdeff470c5a",
+        "size_in_bytes": 5238
+      },
+      {
+        "_path": "site-packages/notebook/static/6271.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "cf07bf4e7245e7301d0d63c0b110d31558ced10b10c77dabbd5682bbd95b2bd6",
+        "sha256_in_prefix": "cf07bf4e7245e7301d0d63c0b110d31558ced10b10c77dabbd5682bbd95b2bd6",
+        "size_in_bytes": 43105
+      },
+      {
+        "_path": "site-packages/notebook/static/6281.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f3788d19111676a292dfef7950a54f06d98210efe76d70b353105623d9b7ca12",
+        "sha256_in_prefix": "f3788d19111676a292dfef7950a54f06d98210efe76d70b353105623d9b7ca12",
+        "size_in_bytes": 11828
+      },
+      {
+        "_path": "site-packages/notebook/static/632.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "44c297c752f53e85c38cbece0ec4b9c5d0f3d154b70958b6b6cd87d5c614f48e",
+        "sha256_in_prefix": "44c297c752f53e85c38cbece0ec4b9c5d0f3d154b70958b6b6cd87d5c614f48e",
+        "size_in_bytes": 2990
+      },
+      {
+        "_path": "site-packages/notebook/static/6345.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "843583b62f0329572b2863bd590d4dbc52590f54573d080b724a3ac49eaebb4f",
+        "sha256_in_prefix": "843583b62f0329572b2863bd590d4dbc52590f54573d080b724a3ac49eaebb4f",
+        "size_in_bytes": 1147
+      },
+      {
+        "_path": "site-packages/notebook/static/6417.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "01d026aaec96caeff05e44aa28d00ba297e7ede1e06b2e74ea5bc2b1324f7a65",
+        "sha256_in_prefix": "01d026aaec96caeff05e44aa28d00ba297e7ede1e06b2e74ea5bc2b1324f7a65",
+        "size_in_bytes": 10635
+      },
+      {
+        "_path": "site-packages/notebook/static/647.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "bb90c807a4bf8a9fa427176f56b721aa7fe9737bb59c60a6edf3a99bc4b31655",
+        "sha256_in_prefix": "bb90c807a4bf8a9fa427176f56b721aa7fe9737bb59c60a6edf3a99bc4b31655",
+        "size_in_bytes": 1920
+      },
+      {
+        "_path": "site-packages/notebook/static/6521.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "37ee654293dc5dcca7c85f2e3e215b175cdedb5dd0a53f9b717b1734e5abf5d2",
+        "sha256_in_prefix": "37ee654293dc5dcca7c85f2e3e215b175cdedb5dd0a53f9b717b1734e5abf5d2",
+        "size_in_bytes": 2974
+      },
+      {
+        "_path": "site-packages/notebook/static/6604.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2f5812e9cbb0578f4ad132e22761cd609a2bbc296e13ec74b37005c99a936ee5",
+        "sha256_in_prefix": "2f5812e9cbb0578f4ad132e22761cd609a2bbc296e13ec74b37005c99a936ee5",
+        "size_in_bytes": 3788
+      },
+      {
+        "_path": "site-packages/notebook/static/661.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6eff3bc6915c8639b75837dd41e3765112c3d5c7989d34554dddc43978102a18",
+        "sha256_in_prefix": "6eff3bc6915c8639b75837dd41e3765112c3d5c7989d34554dddc43978102a18",
+        "size_in_bytes": 16707
+      },
+      {
+        "_path": "site-packages/notebook/static/6621.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "38830372aa78191243f1298e76af7cacaa40079b8286101f8524725b55d1e9e6",
+        "sha256_in_prefix": "38830372aa78191243f1298e76af7cacaa40079b8286101f8524725b55d1e9e6",
+        "size_in_bytes": 69447
+      },
+      {
+        "_path": "site-packages/notebook/static/6627.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "af1bb66189d17057f70f4e6883ea6a35fc1d086465a67b3f752a14136515bf6d",
+        "sha256_in_prefix": "af1bb66189d17057f70f4e6883ea6a35fc1d086465a67b3f752a14136515bf6d",
+        "size_in_bytes": 584
+      },
+      {
+        "_path": "site-packages/notebook/static/6640.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "586413809abf2b56ad7615bb6e6a058f990a0b7cea1ebd6134d8d4fd0a5e6b91",
+        "sha256_in_prefix": "586413809abf2b56ad7615bb6e6a058f990a0b7cea1ebd6134d8d4fd0a5e6b91",
+        "size_in_bytes": 10560
+      },
+      {
+        "_path": "site-packages/notebook/static/6667.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1beae32d5a9402336e3ae58946888afef628093f386d9a7f441af27cd7d0856e",
+        "sha256_in_prefix": "1beae32d5a9402336e3ae58946888afef628093f386d9a7f441af27cd7d0856e",
+        "size_in_bytes": 13436
+      },
+      {
+        "_path": "site-packages/notebook/static/67.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "9b78763a8fd59e91605eee51a440aa5b35bd7fb29cb62f7c7148159bb63833df",
+        "sha256_in_prefix": "9b78763a8fd59e91605eee51a440aa5b35bd7fb29cb62f7c7148159bb63833df",
+        "size_in_bytes": 7430
+      },
+      {
+        "_path": "site-packages/notebook/static/6731.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "df3ad72ae428eb71a69e2b2fc7e647efa495920b08e4feaef01443f5f545187e",
+        "sha256_in_prefix": "df3ad72ae428eb71a69e2b2fc7e647efa495920b08e4feaef01443f5f545187e",
+        "size_in_bytes": 11114
+      },
+      {
+        "_path": "site-packages/notebook/static/6739.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "0df91d58bfdcfffba15537aabc261dd8d5a9bcf2f621b4966e7f717d04862985",
+        "sha256_in_prefix": "0df91d58bfdcfffba15537aabc261dd8d5a9bcf2f621b4966e7f717d04862985",
+        "size_in_bytes": 25925
+      },
+      {
+        "_path": "site-packages/notebook/static/6748.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "58ccb373ed65eff47d9a872012ce244515f911fdd03c15471741befbb8b8c3a6",
+        "sha256_in_prefix": "58ccb373ed65eff47d9a872012ce244515f911fdd03c15471741befbb8b8c3a6",
+        "size_in_bytes": 14246
+      },
+      {
+        "_path": "site-packages/notebook/static/677.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "061e52157036c7471eea0d3215f5a834b60fa0d80c621bede2c6a7acdf4f75bf",
+        "sha256_in_prefix": "061e52157036c7471eea0d3215f5a834b60fa0d80c621bede2c6a7acdf4f75bf",
+        "size_in_bytes": 3457
+      },
+      {
+        "_path": "site-packages/notebook/static/6788.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f448720d2c7356ae932407ccfd0977e3d5b2069d0f30ffe650c7040d564921a4",
+        "sha256_in_prefix": "f448720d2c7356ae932407ccfd0977e3d5b2069d0f30ffe650c7040d564921a4",
+        "size_in_bytes": 2926
+      },
+      {
+        "_path": "site-packages/notebook/static/6815.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "209832d5065704d8db5f2f24d6c2f19299043b31906f10a433e3627a9ac262f5",
+        "sha256_in_prefix": "209832d5065704d8db5f2f24d6c2f19299043b31906f10a433e3627a9ac262f5",
+        "size_in_bytes": 2438
+      },
+      {
+        "_path": "site-packages/notebook/static/6853.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c778543601b0b2f4c40a4450cf4ac71ef3d5da2e9f92b45dec0209e9fa96d059",
+        "sha256_in_prefix": "c778543601b0b2f4c40a4450cf4ac71ef3d5da2e9f92b45dec0209e9fa96d059",
+        "size_in_bytes": 38124
+      },
+      {
+        "_path": "site-packages/notebook/static/6893.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "16f2a8c1cf455b1d93be745cdb5cb684c7ef780bf1d34e91452710816ac178c6",
+        "sha256_in_prefix": "16f2a8c1cf455b1d93be745cdb5cb684c7ef780bf1d34e91452710816ac178c6",
+        "size_in_bytes": 2488
+      },
+      {
+        "_path": "site-packages/notebook/static/69.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "38763360689c19228350f42de87daa9bcd318f6dab5e24446e51a6216a75a2fa",
+        "sha256_in_prefix": "38763360689c19228350f42de87daa9bcd318f6dab5e24446e51a6216a75a2fa",
+        "size_in_bytes": 1279
+      },
+      {
+        "_path": "site-packages/notebook/static/690.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "89a6e73e715ebd33ff9d2abec783df284ecde3bb7d754b2e10a39bd46456e2cc",
+        "sha256_in_prefix": "89a6e73e715ebd33ff9d2abec783df284ecde3bb7d754b2e10a39bd46456e2cc",
+        "size_in_bytes": 1921
+      },
+      {
+        "_path": "site-packages/notebook/static/6942.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "04988e1c00012d8aa446053462e8c6d54e145296c4adbe93bf958c212ac32a92",
+        "sha256_in_prefix": "04988e1c00012d8aa446053462e8c6d54e145296c4adbe93bf958c212ac32a92",
+        "size_in_bytes": 4234
+      },
+      {
+        "_path": "site-packages/notebook/static/6962.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "40714645e2ad304adf0bf78a8393b8b5a6fa738faf79549aed5b478e9a31d3ce",
+        "sha256_in_prefix": "40714645e2ad304adf0bf78a8393b8b5a6fa738faf79549aed5b478e9a31d3ce",
+        "size_in_bytes": 2523
+      },
+      {
+        "_path": "site-packages/notebook/static/6972.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "9d02fe6e0ae96ed55f7a05002c46f52f0a19d15135d7277e52ced1f829740bba",
+        "sha256_in_prefix": "9d02fe6e0ae96ed55f7a05002c46f52f0a19d15135d7277e52ced1f829740bba",
+        "size_in_bytes": 71127
+      },
+      {
+        "_path": "site-packages/notebook/static/6999.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "36f8dcf075bf545d229d4d0a18ff3f2909afe36b02a00fb572865cc09d9d86ea",
+        "sha256_in_prefix": "36f8dcf075bf545d229d4d0a18ff3f2909afe36b02a00fb572865cc09d9d86ea",
+        "size_in_bytes": 22909
+      },
+      {
+        "_path": "site-packages/notebook/static/7005.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6beb1a92e3b750684dc6898b8b7b95e98d072c215e4477f3c94ea19fb56d45af",
+        "sha256_in_prefix": "6beb1a92e3b750684dc6898b8b7b95e98d072c215e4477f3c94ea19fb56d45af",
+        "size_in_bytes": 2665
+      },
+      {
+        "_path": "site-packages/notebook/static/7010.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e2fc8738bed4188c32b47916591d87c0cc0c70a681a91bbe5a4e02a99a4a18c3",
+        "sha256_in_prefix": "e2fc8738bed4188c32b47916591d87c0cc0c70a681a91bbe5a4e02a99a4a18c3",
+        "size_in_bytes": 37240
+      },
+      {
+        "_path": "site-packages/notebook/static/7022.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "052936d089574332ae21516a7736d1d3e4fa2ea8d19298a78a2fc9dda7becd67",
+        "sha256_in_prefix": "052936d089574332ae21516a7736d1d3e4fa2ea8d19298a78a2fc9dda7becd67",
+        "size_in_bytes": 4970
+      },
+      {
+        "_path": "site-packages/notebook/static/7054.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b6ba10a00b314932d8231f572d08eb699978a215d9948a1a5a235e2c649013e7",
+        "sha256_in_prefix": "b6ba10a00b314932d8231f572d08eb699978a215d9948a1a5a235e2c649013e7",
+        "size_in_bytes": 2939
+      },
+      {
+        "_path": "site-packages/notebook/static/7097.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "618f233a192969515a19e940e09c31516b980cf9843b3caf841c6133d59f243e",
+        "sha256_in_prefix": "618f233a192969515a19e940e09c31516b980cf9843b3caf841c6133d59f243e",
+        "size_in_bytes": 24130
+      },
+      {
+        "_path": "site-packages/notebook/static/7153.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "20c5e012c79a159f8ff65a054559485eb926fa1c6f8cf95a73ddf8f30027cf2e",
+        "sha256_in_prefix": "20c5e012c79a159f8ff65a054559485eb926fa1c6f8cf95a73ddf8f30027cf2e",
+        "size_in_bytes": 10560
+      },
+      {
+        "_path": "site-packages/notebook/static/7154.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "184e7dae4bc20eab3654591ab29e8e5d8768ec62f8fcf2cfa20e28137c6496d0",
+        "sha256_in_prefix": "184e7dae4bc20eab3654591ab29e8e5d8768ec62f8fcf2cfa20e28137c6496d0",
+        "size_in_bytes": 79037
+      },
+      {
+        "_path": "site-packages/notebook/static/7170.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "a8a5dcd8280f2bb9297ba31bc43b69820b51da92bc70ea1ec46eaf0140b753b2",
+        "sha256_in_prefix": "a8a5dcd8280f2bb9297ba31bc43b69820b51da92bc70ea1ec46eaf0140b753b2",
+        "size_in_bytes": 2684
+      },
+      {
+        "_path": "site-packages/notebook/static/7179.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f7a9659600a9c90ec4853f8a5d42901ee7fd92f1fae7be508abf9cf7022eb431",
+        "sha256_in_prefix": "f7a9659600a9c90ec4853f8a5d42901ee7fd92f1fae7be508abf9cf7022eb431",
+        "size_in_bytes": 9051
+      },
+      {
+        "_path": "site-packages/notebook/static/721921bab0d001ebff02.woff",
+        "path_type": "hardlink",
+        "sha256": "721921bab0d001ebff0206c24cb5de6ca136467bf1843a7aa32030ba061d1e92",
+        "sha256_in_prefix": "721921bab0d001ebff0206c24cb5de6ca136467bf1843a7aa32030ba061d1e92",
+        "size_in_bytes": 22340
+      },
+      {
+        "_path": "site-packages/notebook/static/7226.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e6db85f1e0f3ecf04daf6a4d9499fbfd4c8716e603c89e2b7bb7c643c3656236",
+        "sha256_in_prefix": "e6db85f1e0f3ecf04daf6a4d9499fbfd4c8716e603c89e2b7bb7c643c3656236",
+        "size_in_bytes": 17578
+      },
+      {
+        "_path": "site-packages/notebook/static/7252.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "bb510094cacaf031ce02a3e355058e13275fc286ab26f8708b45283ee265fa6b",
+        "sha256_in_prefix": "bb510094cacaf031ce02a3e355058e13275fc286ab26f8708b45283ee265fa6b",
+        "size_in_bytes": 2248
+      },
+      {
+        "_path": "site-packages/notebook/static/7259.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "37d3635da611ccf964f944a6f9669253cbe7d2b9db52f0b3cbb6f18802d05081",
+        "sha256_in_prefix": "37d3635da611ccf964f944a6f9669253cbe7d2b9db52f0b3cbb6f18802d05081",
+        "size_in_bytes": 50957
+      },
+      {
+        "_path": "site-packages/notebook/static/7264.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f91320d1848a65689fd33b183276b8e95873883c01a5f9b1e015b309a251a118",
+        "sha256_in_prefix": "f91320d1848a65689fd33b183276b8e95873883c01a5f9b1e015b309a251a118",
+        "size_in_bytes": 1930
+      },
+      {
+        "_path": "site-packages/notebook/static/72bc573386dd1d48c5bb.woff",
+        "path_type": "hardlink",
+        "sha256": "72bc573386dd1d48c5bbd286302ca9e3400c5eb0f298e7cfbf945b9d08fc688f",
+        "sha256_in_prefix": "72bc573386dd1d48c5bbd286302ca9e3400c5eb0f298e7cfbf945b9d08fc688f",
+        "size_in_bytes": 1136
+      },
+      {
+        "_path": "site-packages/notebook/static/7302.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b8a634d39ecaee5ffc7c41fe03230a0786643388aa474721dd32bc6a2681f4a4",
+        "sha256_in_prefix": "b8a634d39ecaee5ffc7c41fe03230a0786643388aa474721dd32bc6a2681f4a4",
+        "size_in_bytes": 6252
+      },
+      {
+        "_path": "site-packages/notebook/static/7360.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "9fe4d1721edc939b8aee3b3b0707c5a93bedd2ac113e051da1b76c6b5f110e8a",
+        "sha256_in_prefix": "9fe4d1721edc939b8aee3b3b0707c5a93bedd2ac113e051da1b76c6b5f110e8a",
+        "size_in_bytes": 4228
+      },
+      {
+        "_path": "site-packages/notebook/static/7369.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "cf4799dbb5d91d9fdd991eee02559f8727459fb8af3c68230a7a1e6697e1ebc7",
+        "sha256_in_prefix": "cf4799dbb5d91d9fdd991eee02559f8727459fb8af3c68230a7a1e6697e1ebc7",
+        "size_in_bytes": 210656
+      },
+      {
+        "_path": "site-packages/notebook/static/7378.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "32d72d1649fc20b61749353f2a76041445d9ef55a50ceac608bef43cc898be64",
+        "sha256_in_prefix": "32d72d1649fc20b61749353f2a76041445d9ef55a50ceac608bef43cc898be64",
+        "size_in_bytes": 6621
+      },
+      {
+        "_path": "site-packages/notebook/static/7378.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "cd1b8bde90ea9eea77b30ccfa335dbe4f69ab2dd76f9ff59758c1008ce366269",
+        "sha256_in_prefix": "cd1b8bde90ea9eea77b30ccfa335dbe4f69ab2dd76f9ff59758c1008ce366269",
+        "size_in_bytes": 237
+      },
+      {
+        "_path": "site-packages/notebook/static/7386.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6a6e6e4a6d815edf2fa12840897f730a9c7432f3581d0e5678400ca7d46a3782",
+        "sha256_in_prefix": "6a6e6e4a6d815edf2fa12840897f730a9c7432f3581d0e5678400ca7d46a3782",
+        "size_in_bytes": 6621
+      },
+      {
+        "_path": "site-packages/notebook/static/7391.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "d8dd74acb7f2c44f710fda2d93e1bffae965294bd6bf255c5c7fc02a47dd024d",
+        "sha256_in_prefix": "d8dd74acb7f2c44f710fda2d93e1bffae965294bd6bf255c5c7fc02a47dd024d",
+        "size_in_bytes": 12298
+      },
+      {
+        "_path": "site-packages/notebook/static/7427.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "003c9b8efe1b85ddc99eb5eef64e0e004b61e0238a6e118507e6e0f6e41c3689",
+        "sha256_in_prefix": "003c9b8efe1b85ddc99eb5eef64e0e004b61e0238a6e118507e6e0f6e41c3689",
+        "size_in_bytes": 67961
+      },
+      {
+        "_path": "site-packages/notebook/static/745.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c90750711795478fa0744a6a4bcb82c60fad9881a5cfe1146a55ca73c41ce76d",
+        "sha256_in_prefix": "c90750711795478fa0744a6a4bcb82c60fad9881a5cfe1146a55ca73c41ce76d",
+        "size_in_bytes": 1767
+      },
+      {
+        "_path": "site-packages/notebook/static/7450.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "3b934ac5149f0ff8b661bf35fbdbc0f71e593a67689aac6516dc43c81fcb89ca",
+        "sha256_in_prefix": "3b934ac5149f0ff8b661bf35fbdbc0f71e593a67689aac6516dc43c81fcb89ca",
+        "size_in_bytes": 27539
+      },
+      {
+        "_path": "site-packages/notebook/static/7471.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6bea2eb9d0aa6b91c6f0e48f8487a1e3069deff3250683d9f1c1eeec6a5980bb",
+        "sha256_in_prefix": "6bea2eb9d0aa6b91c6f0e48f8487a1e3069deff3250683d9f1c1eeec6a5980bb",
+        "size_in_bytes": 38950
+      },
+      {
+        "_path": "site-packages/notebook/static/7506.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "34940bd0ce21f7ff7302d5f3dc7c9f6a7b04a144af08bcdb44c595716f4084ff",
+        "sha256_in_prefix": "34940bd0ce21f7ff7302d5f3dc7c9f6a7b04a144af08bcdb44c595716f4084ff",
+        "size_in_bytes": 249964
+      },
+      {
+        "_path": "site-packages/notebook/static/7506.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "873a5896ace1f2fdcd3d316b44607591e6f4d18056300e27a0492a4001603f7a",
+        "sha256_in_prefix": "873a5896ace1f2fdcd3d316b44607591e6f4d18056300e27a0492a4001603f7a",
+        "size_in_bytes": 99
+      },
+      {
+        "_path": "site-packages/notebook/static/7534.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "3b0d87370ba4ac27a9c836bcb6b99215e488d7c84e0a33fc97e1b5bedcb88697",
+        "sha256_in_prefix": "3b0d87370ba4ac27a9c836bcb6b99215e488d7c84e0a33fc97e1b5bedcb88697",
+        "size_in_bytes": 4108
+      },
+      {
+        "_path": "site-packages/notebook/static/7543.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "8bcf58585a99c27f57df9ed7574dfadd0fb09064db7894e85abe80513110a9b5",
+        "sha256_in_prefix": "8bcf58585a99c27f57df9ed7574dfadd0fb09064db7894e85abe80513110a9b5",
+        "size_in_bytes": 23184
+      },
+      {
+        "_path": "site-packages/notebook/static/755.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "35151db2a688bf5bcb06b1f887bda2e5e158e2eb3fcb36f2891c1f9cee4c0fbf",
+        "sha256_in_prefix": "35151db2a688bf5bcb06b1f887bda2e5e158e2eb3fcb36f2891c1f9cee4c0fbf",
+        "size_in_bytes": 12993
+      },
+      {
+        "_path": "site-packages/notebook/static/7582.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "3aabb0ba31632cdcc9cc45ae5021ed405416521160d5f1de69ba9ffb9d607a24",
+        "sha256_in_prefix": "3aabb0ba31632cdcc9cc45ae5021ed405416521160d5f1de69ba9ffb9d607a24",
+        "size_in_bytes": 15252
+      },
+      {
+        "_path": "site-packages/notebook/static/7603.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "def68ae13acb8a99a16720daeef297f126cef66091452c81a39f7c512df41dea",
+        "sha256_in_prefix": "def68ae13acb8a99a16720daeef297f126cef66091452c81a39f7c512df41dea",
+        "size_in_bytes": 27136
+      },
+      {
+        "_path": "site-packages/notebook/static/7639.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "0dbbae7deb63324c4ddf4d3f1684a9117bd0fab9671303ddd69c97a3e0714f1f",
+        "sha256_in_prefix": "0dbbae7deb63324c4ddf4d3f1684a9117bd0fab9671303ddd69c97a3e0714f1f",
+        "size_in_bytes": 6281
+      },
+      {
+        "_path": "site-packages/notebook/static/7655.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f67236cc96122a289a189a49bca5dcc68d0def035b68afde9497a6969d021175",
+        "sha256_in_prefix": "f67236cc96122a289a189a49bca5dcc68d0def035b68afde9497a6969d021175",
+        "size_in_bytes": 6186
+      },
+      {
+        "_path": "site-packages/notebook/static/7674.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "223d2828f20430eead789d5e161f65a7172c208726845593a49b55d312f2c3fe",
+        "sha256_in_prefix": "223d2828f20430eead789d5e161f65a7172c208726845593a49b55d312f2c3fe",
+        "size_in_bytes": 101788
+      },
+      {
+        "_path": "site-packages/notebook/static/7679.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "55959a774361d6140ffb22461bdab4eb40a4b764b7af713b516457d1ccfc7bf1",
+        "sha256_in_prefix": "55959a774361d6140ffb22461bdab4eb40a4b764b7af713b516457d1ccfc7bf1",
+        "size_in_bytes": 2186
+      },
+      {
+        "_path": "site-packages/notebook/static/7684.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "bb4f5be31e45a8166be4df55201d068133836f216a997151fb82f3f4219f1cfa",
+        "sha256_in_prefix": "bb4f5be31e45a8166be4df55201d068133836f216a997151fb82f3f4219f1cfa",
+        "size_in_bytes": 2488
+      },
+      {
+        "_path": "site-packages/notebook/static/7796.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c4d95e3cb84dd0c8e6d81b1922534f72768408bbd962ac7f1f36c1e09334c023",
+        "sha256_in_prefix": "c4d95e3cb84dd0c8e6d81b1922534f72768408bbd962ac7f1f36c1e09334c023",
+        "size_in_bytes": 19835
+      },
+      {
+        "_path": "site-packages/notebook/static/7796.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "7b9ad72a521593d3d19fc7103ebf247c27f3d4f69a92ddaeada7e968cee51468",
+        "sha256_in_prefix": "7b9ad72a521593d3d19fc7103ebf247c27f3d4f69a92ddaeada7e968cee51468",
+        "size_in_bytes": 95
+      },
+      {
+        "_path": "site-packages/notebook/static/7803.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "a1820dfa381835387e9d30fe88d8cc8ebe1edcd4a998f5b44d22fc43712249eb",
+        "sha256_in_prefix": "a1820dfa381835387e9d30fe88d8cc8ebe1edcd4a998f5b44d22fc43712249eb",
+        "size_in_bytes": 808
+      },
+      {
+        "_path": "site-packages/notebook/static/7811.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "23883afbf1f4b25aa4b3de29791a0299739ea784e41172c6d4b7cebcf1dacba1",
+        "sha256_in_prefix": "23883afbf1f4b25aa4b3de29791a0299739ea784e41172c6d4b7cebcf1dacba1",
+        "size_in_bytes": 11271
+      },
+      {
+        "_path": "site-packages/notebook/static/7811.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "78d27c81cf67f4817c9d6d5df6c23d9e2b87b2d6338cdcf9bea5f1f5481648f7",
+        "sha256_in_prefix": "78d27c81cf67f4817c9d6d5df6c23d9e2b87b2d6338cdcf9bea5f1f5481648f7",
+        "size_in_bytes": 249
+      },
+      {
+        "_path": "site-packages/notebook/static/7812.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "35c0b787b60540645e96819569c825b2a75a4b58f82e06f40978f330ef31412c",
+        "sha256_in_prefix": "35c0b787b60540645e96819569c825b2a75a4b58f82e06f40978f330ef31412c",
+        "size_in_bytes": 5479
+      },
+      {
+        "_path": "site-packages/notebook/static/7817.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "5ad8117d64d1a4ae6823faa23352b97c1d91794d487f10814f84da37b09f1e56",
+        "sha256_in_prefix": "5ad8117d64d1a4ae6823faa23352b97c1d91794d487f10814f84da37b09f1e56",
+        "size_in_bytes": 2689
+      },
+      {
+        "_path": "site-packages/notebook/static/7819.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "07c36c0734e82c07968ba837dd01ab8b3ca0ab550adab465d57704ce09487920",
+        "sha256_in_prefix": "07c36c0734e82c07968ba837dd01ab8b3ca0ab550adab465d57704ce09487920",
+        "size_in_bytes": 6838
+      },
+      {
+        "_path": "site-packages/notebook/static/7821.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2f4b9648ea4dbae6f338d1d1cf772df6fcf9dd7c9bcb6328f4bd9f6784ec68c3",
+        "sha256_in_prefix": "2f4b9648ea4dbae6f338d1d1cf772df6fcf9dd7c9bcb6328f4bd9f6784ec68c3",
+        "size_in_bytes": 4696
+      },
+      {
+        "_path": "site-packages/notebook/static/7854.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "0091595bf1d1e9c2ad2d07a4812949fe0b9c249e388818966f64393a370619c1",
+        "sha256_in_prefix": "0091595bf1d1e9c2ad2d07a4812949fe0b9c249e388818966f64393a370619c1",
+        "size_in_bytes": 9707
+      },
+      {
+        "_path": "site-packages/notebook/static/7866.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f7c7b543d38a2d30612f3e565f6c425ae07ce9fc535033131065cd0f61160ca4",
+        "sha256_in_prefix": "f7c7b543d38a2d30612f3e565f6c425ae07ce9fc535033131065cd0f61160ca4",
+        "size_in_bytes": 28770
+      },
+      {
+        "_path": "site-packages/notebook/static/7884.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "923a21fe1271963bc90f3e2b8c3741a28541db015e914edc101fbdf766bbb88b",
+        "sha256_in_prefix": "923a21fe1271963bc90f3e2b8c3741a28541db015e914edc101fbdf766bbb88b",
+        "size_in_bytes": 102421
+      },
+      {
+        "_path": "site-packages/notebook/static/7900.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "0cc9d712058071d9c286f7b7147cb8088f801c4bc1a732daea4badad07b64391",
+        "sha256_in_prefix": "0cc9d712058071d9c286f7b7147cb8088f801c4bc1a732daea4badad07b64391",
+        "size_in_bytes": 3100
+      },
+      {
+        "_path": "site-packages/notebook/static/7906.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "845121698956b114d06a68799acaacc81535bf9f764e2208b78e4865455933b5",
+        "sha256_in_prefix": "845121698956b114d06a68799acaacc81535bf9f764e2208b78e4865455933b5",
+        "size_in_bytes": 637
+      },
+      {
+        "_path": "site-packages/notebook/static/792.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "222634b3be2a219c74c2c4b296f1178e6132eaa81d0cf2c4a52a824e9d1cd00c",
+        "sha256_in_prefix": "222634b3be2a219c74c2c4b296f1178e6132eaa81d0cf2c4a52a824e9d1cd00c",
+        "size_in_bytes": 14397
+      },
+      {
+        "_path": "site-packages/notebook/static/7957.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "11adf917588447b651beb4a6941fc4673e2b1dfb3e36670c43ed2ded3edcf219",
+        "sha256_in_prefix": "11adf917588447b651beb4a6941fc4673e2b1dfb3e36670c43ed2ded3edcf219",
+        "size_in_bytes": 88000
+      },
+      {
+        "_path": "site-packages/notebook/static/7969.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "de239982d3d8088302c937c8b385c4ba77b99ecbbd9908a5f74d3e3d692b4bdf",
+        "sha256_in_prefix": "de239982d3d8088302c937c8b385c4ba77b99ecbbd9908a5f74d3e3d692b4bdf",
+        "size_in_bytes": 60153
+      },
+      {
+        "_path": "site-packages/notebook/static/7995.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "548b751f1123d905ebae9c135c47d79f75a2d556fc3de9b75272699f796bca61",
+        "sha256_in_prefix": "548b751f1123d905ebae9c135c47d79f75a2d556fc3de9b75272699f796bca61",
+        "size_in_bytes": 62217
+      },
+      {
+        "_path": "site-packages/notebook/static/7995.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "65028375ad93e5c9cc11b21b7e0b1ce266ae4bcec482330d31fc6bfa0229c0a7",
+        "sha256_in_prefix": "65028375ad93e5c9cc11b21b7e0b1ce266ae4bcec482330d31fc6bfa0229c0a7",
+        "size_in_bytes": 240
+      },
+      {
+        "_path": "site-packages/notebook/static/7997.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b29f3079164eda351c4f666b1c783998eae349b14d45e5acc16880e972241b61",
+        "sha256_in_prefix": "b29f3079164eda351c4f666b1c783998eae349b14d45e5acc16880e972241b61",
+        "size_in_bytes": 27162
+      },
+      {
+        "_path": "site-packages/notebook/static/79d088064beb3826054f.eot",
+        "path_type": "hardlink",
+        "sha256": "79d088064beb3826054fb88165416235897a856ca952fca1498b1c59b16aaa48",
+        "sha256_in_prefix": "79d088064beb3826054fb88165416235897a856ca952fca1498b1c59b16aaa48",
+        "size_in_bytes": 34034
+      },
+      {
+        "_path": "site-packages/notebook/static/8010.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2221d4c80aed36670e0ef82a5c1cb9cdabfc3a8a5313dd10c3f01b236ddef5af",
+        "sha256_in_prefix": "2221d4c80aed36670e0ef82a5c1cb9cdabfc3a8a5313dd10c3f01b236ddef5af",
+        "size_in_bytes": 95138
+      },
+      {
+        "_path": "site-packages/notebook/static/8032.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2556baee4fd620cd6248f717e3d6ade8ff0866a84fa0a61411d3bb41296541f6",
+        "sha256_in_prefix": "2556baee4fd620cd6248f717e3d6ade8ff0866a84fa0a61411d3bb41296541f6",
+        "size_in_bytes": 9220
+      },
+      {
+        "_path": "site-packages/notebook/static/8060.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "15f8d14f2d7fbf86fe28896e66297d1c1a046bc3ad866761613df1a6dc167959",
+        "sha256_in_prefix": "15f8d14f2d7fbf86fe28896e66297d1c1a046bc3ad866761613df1a6dc167959",
+        "size_in_bytes": 437
+      },
+      {
+        "_path": "site-packages/notebook/static/8285.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "94371cb94148fcf1e669edf32e0831246d274efc940bc29c9b7a08094e77b48d",
+        "sha256_in_prefix": "94371cb94148fcf1e669edf32e0831246d274efc940bc29c9b7a08094e77b48d",
+        "size_in_bytes": 15277
+      },
+      {
+        "_path": "site-packages/notebook/static/8378.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "faf26da5ec6a13e3e078a03980a9e10b3b3744b3c3e00ab49b24b6a8b492e9a4",
+        "sha256_in_prefix": "faf26da5ec6a13e3e078a03980a9e10b3b3744b3c3e00ab49b24b6a8b492e9a4",
+        "size_in_bytes": 7876
+      },
+      {
+        "_path": "site-packages/notebook/static/8381.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "464cbb3f5cfee8730da4d23040e6a9b0e926e56c093bd1ba4b7a92bd3e12dd2e",
+        "sha256_in_prefix": "464cbb3f5cfee8730da4d23040e6a9b0e926e56c093bd1ba4b7a92bd3e12dd2e",
+        "size_in_bytes": 2638
+      },
+      {
+        "_path": "site-packages/notebook/static/8433.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "34c2f0c236c6ba8325cdad109b79075ab577379d5804289f9b1ab9b2bf2236af",
+        "sha256_in_prefix": "34c2f0c236c6ba8325cdad109b79075ab577379d5804289f9b1ab9b2bf2236af",
+        "size_in_bytes": 1109
+      },
+      {
+        "_path": "site-packages/notebook/static/8443.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "701c115f740f7f8f5972c30ff1c4f87507e1f0d16bf6a17464ce23fb6284d87a",
+        "sha256_in_prefix": "701c115f740f7f8f5972c30ff1c4f87507e1f0d16bf6a17464ce23fb6284d87a",
+        "size_in_bytes": 31497
+      },
+      {
+        "_path": "site-packages/notebook/static/8446.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "03a5158b4eb6e22e10f6fb19e769775122b9ed80d2b51db14191194087372f87",
+        "sha256_in_prefix": "03a5158b4eb6e22e10f6fb19e769775122b9ed80d2b51db14191194087372f87",
+        "size_in_bytes": 2479
+      },
+      {
+        "_path": "site-packages/notebook/static/8471.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "52ab30d68919d2b95315cb085818854344b471dded2e5c616b8e0b7a9059f028",
+        "sha256_in_prefix": "52ab30d68919d2b95315cb085818854344b471dded2e5c616b8e0b7a9059f028",
+        "size_in_bytes": 18683
+      },
+      {
+        "_path": "site-packages/notebook/static/8479.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "fcb2d239ca137f3dc5ef58d169517b1158898a51e5ca5097acfd1b09252ea07d",
+        "sha256_in_prefix": "fcb2d239ca137f3dc5ef58d169517b1158898a51e5ca5097acfd1b09252ea07d",
+        "size_in_bytes": 37190
+      },
+      {
+        "_path": "site-packages/notebook/static/85.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c15352e3acb2bda8a33b863f1923b8bf9f1f3909fbe490c414100056aeecd3f5",
+        "sha256_in_prefix": "c15352e3acb2bda8a33b863f1923b8bf9f1f3909fbe490c414100056aeecd3f5",
+        "size_in_bytes": 962
+      },
+      {
+        "_path": "site-packages/notebook/static/8579.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "b7797620e91348ba2ed2da817d097f47154c412af41b3ac3c51211d178b75260",
+        "sha256_in_prefix": "b7797620e91348ba2ed2da817d097f47154c412af41b3ac3c51211d178b75260",
+        "size_in_bytes": 13993
+      },
+      {
+        "_path": "site-packages/notebook/static/8633.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "303bf36f2f4239aa4330b3462acc24d35ce1bf28fb4e190c2e01c3b78f5bebd4",
+        "sha256_in_prefix": "303bf36f2f4239aa4330b3462acc24d35ce1bf28fb4e190c2e01c3b78f5bebd4",
+        "size_in_bytes": 5012
+      },
+      {
+        "_path": "site-packages/notebook/static/870673df72e70f87c91a.woff",
+        "path_type": "hardlink",
+        "sha256": "870673df72e70f87c91a5a317d558c2c3b54392264ad79bbadc6d424ae8765fe",
+        "sha256_in_prefix": "870673df72e70f87c91a5a317d558c2c3b54392264ad79bbadc6d424ae8765fe",
+        "size_in_bytes": 21480
+      },
+      {
+        "_path": "site-packages/notebook/static/8768.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f1522989b85bb0cfdd24f046570e7dec4d10914240fc68987a54b47e41137c09",
+        "sha256_in_prefix": "f1522989b85bb0cfdd24f046570e7dec4d10914240fc68987a54b47e41137c09",
+        "size_in_bytes": 8535
+      },
+      {
+        "_path": "site-packages/notebook/static/8771.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "9bfd6252be826945802ba086f78b327cd5e84daf9097bd6c74107378513e4117",
+        "sha256_in_prefix": "9bfd6252be826945802ba086f78b327cd5e84daf9097bd6c74107378513e4117",
+        "size_in_bytes": 4028
+      },
+      {
+        "_path": "site-packages/notebook/static/8781.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "7555f32300d35d941271ea0d40e902d9d13aa721ae3b2f040910fa1000a0c31b",
+        "sha256_in_prefix": "7555f32300d35d941271ea0d40e902d9d13aa721ae3b2f040910fa1000a0c31b",
+        "size_in_bytes": 32293
+      },
+      {
+        "_path": "site-packages/notebook/static/8801.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1b0eabf660192e04337376e0fa6496dcff099fcdd3fd36c203b056bcb1363587",
+        "sha256_in_prefix": "1b0eabf660192e04337376e0fa6496dcff099fcdd3fd36c203b056bcb1363587",
+        "size_in_bytes": 17597
+      },
+      {
+        "_path": "site-packages/notebook/static/883.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "403017ec2c87e8ff241e707d5bbe0638e3c2094551f70e2f9936b0ccd999dd7c",
+        "sha256_in_prefix": "403017ec2c87e8ff241e707d5bbe0638e3c2094551f70e2f9936b0ccd999dd7c",
+        "size_in_bytes": 8067
+      },
+      {
+        "_path": "site-packages/notebook/static/8845.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "60ed23d9815eb6f6c8fd39739a41e29f064751703f667771ba2241927a7e086d",
+        "sha256_in_prefix": "60ed23d9815eb6f6c8fd39739a41e29f064751703f667771ba2241927a7e086d",
+        "size_in_bytes": 197078
+      },
+      {
+        "_path": "site-packages/notebook/static/8845.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "bf244d3f7b0b74c6c3279459baee3d57f6e3d2823bee119d5f39d111008e992e",
+        "sha256_in_prefix": "bf244d3f7b0b74c6c3279459baee3d57f6e3d2823bee119d5f39d111008e992e",
+        "size_in_bytes": 1144
+      },
+      {
+        "_path": "site-packages/notebook/static/8875.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6da43c69770746ae21a705a400c5b43b5636f2d1d9f9c90b7ac841c582dbbb8a",
+        "sha256_in_prefix": "6da43c69770746ae21a705a400c5b43b5636f2d1d9f9c90b7ac841c582dbbb8a",
+        "size_in_bytes": 1423
+      },
+      {
+        "_path": "site-packages/notebook/static/88b98cad3688915e50da.woff",
+        "path_type": "hardlink",
+        "sha256": "88b98cad3688915e50da55553ff6ad185e0dce134b47f176e91b100f8a9b175c",
+        "sha256_in_prefix": "88b98cad3688915e50da55553ff6ad185e0dce134b47f176e91b100f8a9b175c",
+        "size_in_bytes": 34464
+      },
+      {
+        "_path": "site-packages/notebook/static/8907.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "a087c615b0e6876cdba133007b06d721a7883930098ef7f3c0e6b597b6bbcdc7",
+        "sha256_in_prefix": "a087c615b0e6876cdba133007b06d721a7883930098ef7f3c0e6b597b6bbcdc7",
+        "size_in_bytes": 3492
+      },
+      {
+        "_path": "site-packages/notebook/static/8928.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "390ea347f764f423e7b9b1cb86c0a4b4ca748575e8485ea9c738bfb456631001",
+        "sha256_in_prefix": "390ea347f764f423e7b9b1cb86c0a4b4ca748575e8485ea9c738bfb456631001",
+        "size_in_bytes": 3100
+      },
+      {
+        "_path": "site-packages/notebook/static/8929.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "642d604ee697e327e202127926336af766bed348afe8ae0d94e09e517f2fcda0",
+        "sha256_in_prefix": "642d604ee697e327e202127926336af766bed348afe8ae0d94e09e517f2fcda0",
+        "size_in_bytes": 122744
+      },
+      {
+        "_path": "site-packages/notebook/static/893.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "00bf6468e077d81e663371b46acc13a5569913eff7873c0bcbf9bfe471035cdd",
+        "sha256_in_prefix": "00bf6468e077d81e663371b46acc13a5569913eff7873c0bcbf9bfe471035cdd",
+        "size_in_bytes": 20115
+      },
+      {
+        "_path": "site-packages/notebook/static/8937.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f62f9ae1d52a9ba61f600aaaf5515669d89cf71300c27b6bb9e57c590bb16278",
+        "sha256_in_prefix": "f62f9ae1d52a9ba61f600aaaf5515669d89cf71300c27b6bb9e57c590bb16278",
+        "size_in_bytes": 6062
+      },
+      {
+        "_path": "site-packages/notebook/static/8979.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "e21faf1fae180c781dac386172c9591b42aeca5ed5d7101e5e3a66478dd046a7",
+        "sha256_in_prefix": "e21faf1fae180c781dac386172c9591b42aeca5ed5d7101e5e3a66478dd046a7",
+        "size_in_bytes": 6319
+      },
+      {
+        "_path": "site-packages/notebook/static/8983.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "337d09a44490a6b92705395105e1905a6ac137dd1d8d78dcfdd1a3741ff66628",
+        "sha256_in_prefix": "337d09a44490a6b92705395105e1905a6ac137dd1d8d78dcfdd1a3741ff66628",
+        "size_in_bytes": 908
+      },
+      {
+        "_path": "site-packages/notebook/static/899.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "29e0d6b3295caabbb78398fd473149b4c3a44344b4c3976a37cce79c9f2d8c19",
+        "sha256_in_prefix": "29e0d6b3295caabbb78398fd473149b4c3a44344b4c3976a37cce79c9f2d8c19",
+        "size_in_bytes": 6490
+      },
+      {
+        "_path": "site-packages/notebook/static/8ea8791754915a898a31.woff2",
+        "path_type": "hardlink",
+        "sha256": "8ea8791754915a898a3100e63e32978a6d1763be6df8e73a39d3a90d691cdeef",
+        "sha256_in_prefix": "8ea8791754915a898a3100e63e32978a6d1763be6df8e73a39d3a90d691cdeef",
+        "size_in_bytes": 76736
+      },
+      {
+        "_path": "site-packages/notebook/static/8ea8dbb1b02e6f730f55.woff",
+        "path_type": "hardlink",
+        "sha256": "8ea8dbb1b02e6f730f55b4cb5d413b785b9f5c39807d0a0fa7da206a0824a457",
+        "sha256_in_prefix": "8ea8dbb1b02e6f730f55b4cb5d413b785b9f5c39807d0a0fa7da206a0824a457",
+        "size_in_bytes": 19776
+      },
+      {
+        "_path": "site-packages/notebook/static/901.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2d41d9503b6362d9436741b9a083fda81e32512e3b284e753a780c567949e6a8",
+        "sha256_in_prefix": "2d41d9503b6362d9436741b9a083fda81e32512e3b284e753a780c567949e6a8",
+        "size_in_bytes": 9139
+      },
+      {
+        "_path": "site-packages/notebook/static/9022.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2f503da8d991373eea0e741173beb87f2f20e395ac6e83655483560a8f73f108",
+        "sha256_in_prefix": "2f503da8d991373eea0e741173beb87f2f20e395ac6e83655483560a8f73f108",
+        "size_in_bytes": 2900
+      },
+      {
+        "_path": "site-packages/notebook/static/9037.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "5e60ea187f8cc7261a579ca54f9eb4a91ee01d38bf4f4c21ec467571971e1e1a",
+        "sha256_in_prefix": "5e60ea187f8cc7261a579ca54f9eb4a91ee01d38bf4f4c21ec467571971e1e1a",
+        "size_in_bytes": 4017
+      },
+      {
+        "_path": "site-packages/notebook/static/906.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "5f41e8c925b81d1ec8993b130969d6b66bacbd50441c608df43026a73b1d05cd",
+        "sha256_in_prefix": "5f41e8c925b81d1ec8993b130969d6b66bacbd50441c608df43026a73b1d05cd",
+        "size_in_bytes": 10301
+      },
+      {
+        "_path": "site-packages/notebook/static/9060.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c258009ca4e33749300862f217a5f208429428af7864ae171b7e1bbcbcc110d5",
+        "sha256_in_prefix": "c258009ca4e33749300862f217a5f208429428af7864ae171b7e1bbcbcc110d5",
+        "size_in_bytes": 991
+      },
+      {
+        "_path": "site-packages/notebook/static/9068.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "516cba9a6544344a5fc86ee7cb950a4f236e781bdb5f4b57542066d1977b19c0",
+        "sha256_in_prefix": "516cba9a6544344a5fc86ee7cb950a4f236e781bdb5f4b57542066d1977b19c0",
+        "size_in_bytes": 8492
+      },
+      {
+        "_path": "site-packages/notebook/static/911.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "d19175b40798ddd8957d6b5c746bafa0daba637e6f821ef57fe968e89ec3ffea",
+        "sha256_in_prefix": "d19175b40798ddd8957d6b5c746bafa0daba637e6f821ef57fe968e89ec3ffea",
+        "size_in_bytes": 145674
+      },
+      {
+        "_path": "site-packages/notebook/static/9116.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "32122255ec901d3f445698ef1ea6f618403b6959408ebed8e870c0650f25f420",
+        "sha256_in_prefix": "32122255ec901d3f445698ef1ea6f618403b6959408ebed8e870c0650f25f420",
+        "size_in_bytes": 451
+      },
+      {
+        "_path": "site-packages/notebook/static/9136.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "68d33c5ad2abf143f0e65a0f6167b2edccebbc0b280d152dd29a97fd38173a2c",
+        "sha256_in_prefix": "68d33c5ad2abf143f0e65a0f6167b2edccebbc0b280d152dd29a97fd38173a2c",
+        "size_in_bytes": 512648
+      },
+      {
+        "_path": "site-packages/notebook/static/9151.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "ba17f28fd78ab2735123c4a125c1ac6902034ab8fd56c13d411277e1b43a4c18",
+        "sha256_in_prefix": "ba17f28fd78ab2735123c4a125c1ac6902034ab8fd56c13d411277e1b43a4c18",
+        "size_in_bytes": 63710
+      },
+      {
+        "_path": "site-packages/notebook/static/9161.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "057a09258ab8b480c177afd74870d94dd87f4b4b46651150ef8fb50e39f3987f",
+        "sha256_in_prefix": "057a09258ab8b480c177afd74870d94dd87f4b4b46651150ef8fb50e39f3987f",
+        "size_in_bytes": 1479
+      },
+      {
+        "_path": "site-packages/notebook/static/9222.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1635ebd5fa4b932a4372dc1cf424ac018ac90d07dc266e02dcdc513132bc08fe",
+        "sha256_in_prefix": "1635ebd5fa4b932a4372dc1cf424ac018ac90d07dc266e02dcdc513132bc08fe",
+        "size_in_bytes": 1777
+      },
+      {
+        "_path": "site-packages/notebook/static/9233.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "aa81602a4433494a9eee430e1ab037822756a70294e36c4ec8d64a0334d322f3",
+        "sha256_in_prefix": "aa81602a4433494a9eee430e1ab037822756a70294e36c4ec8d64a0334d322f3",
+        "size_in_bytes": 1690
+      },
+      {
+        "_path": "site-packages/notebook/static/9234.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "828524de9a6d2cab5a507ce552e1dd6247f967e990762b23dc636d1aedea3e7d",
+        "sha256_in_prefix": "828524de9a6d2cab5a507ce552e1dd6247f967e990762b23dc636d1aedea3e7d",
+        "size_in_bytes": 2143
+      },
+      {
+        "_path": "site-packages/notebook/static/9239.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "cf946d56b7993dee06d68cae014db4a1b4c5613333577b50bdaf9bb5b43a87a3",
+        "sha256_in_prefix": "cf946d56b7993dee06d68cae014db4a1b4c5613333577b50bdaf9bb5b43a87a3",
+        "size_in_bytes": 22448
+      },
+      {
+        "_path": "site-packages/notebook/static/9250.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "654157b5ea93e73504aeb1e0b405acac424f9c005003db15c6ae759abb4e7a3b",
+        "sha256_in_prefix": "654157b5ea93e73504aeb1e0b405acac424f9c005003db15c6ae759abb4e7a3b",
+        "size_in_bytes": 11836
+      },
+      {
+        "_path": "site-packages/notebook/static/9268.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "aee6f3f00e6d074007faa05fdbeda41605b6dad9a87b8c4278b0af1405536d7b",
+        "sha256_in_prefix": "aee6f3f00e6d074007faa05fdbeda41605b6dad9a87b8c4278b0af1405536d7b",
+        "size_in_bytes": 2047
+      },
+      {
+        "_path": "site-packages/notebook/static/9331.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1e44bed4e339a4cfd6266d65a7328c2774a6c6cf4d3701ce8c12e190b2c71047",
+        "sha256_in_prefix": "1e44bed4e339a4cfd6266d65a7328c2774a6c6cf4d3701ce8c12e190b2c71047",
+        "size_in_bytes": 4178
+      },
+      {
+        "_path": "site-packages/notebook/static/9335.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6972cebba82b345eab12ab28535d553ebcca0feff796882bc7f6dd5e13ea9362",
+        "sha256_in_prefix": "6972cebba82b345eab12ab28535d553ebcca0feff796882bc7f6dd5e13ea9362",
+        "size_in_bytes": 3179
+      },
+      {
+        "_path": "site-packages/notebook/static/9341.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "220bd6c520f06870910a25ff9577c667ccd53250a4f1ceba62bdc06d5add45de",
+        "sha256_in_prefix": "220bd6c520f06870910a25ff9577c667ccd53250a4f1ceba62bdc06d5add45de",
+        "size_in_bytes": 55528
+      },
+      {
+        "_path": "site-packages/notebook/static/9380.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "8a7afb4a5b88eda0866ac06499505450a84a073e09bad038fc56a4b5e9ed15c9",
+        "sha256_in_prefix": "8a7afb4a5b88eda0866ac06499505450a84a073e09bad038fc56a4b5e9ed15c9",
+        "size_in_bytes": 2337
+      },
+      {
+        "_path": "site-packages/notebook/static/9425.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "d72cf9f01185a590e55d59d619ebab915aae97ccde5ffeb9e8e273945642eee8",
+        "sha256_in_prefix": "d72cf9f01185a590e55d59d619ebab915aae97ccde5ffeb9e8e273945642eee8",
+        "size_in_bytes": 22234
+      },
+      {
+        "_path": "site-packages/notebook/static/9558.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "8cd31f0a2c1d596c2bd94be6a324d07190ade1ceb4a9b01c764f051faa56e688",
+        "sha256_in_prefix": "8cd31f0a2c1d596c2bd94be6a324d07190ade1ceb4a9b01c764f051faa56e688",
+        "size_in_bytes": 2754
+      },
+      {
+        "_path": "site-packages/notebook/static/9604.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "2b94950a3ef349e57cd1b19fc77673087a353a560d30baf784ba6201036b6196",
+        "sha256_in_prefix": "2b94950a3ef349e57cd1b19fc77673087a353a560d30baf784ba6201036b6196",
+        "size_in_bytes": 2082
+      },
+      {
+        "_path": "site-packages/notebook/static/9605.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "3adb6d7761821cd2c417531917d17df69b97bdb456be7dd8d67285afe91e33fb",
+        "sha256_in_prefix": "3adb6d7761821cd2c417531917d17df69b97bdb456be7dd8d67285afe91e33fb",
+        "size_in_bytes": 278959
+      },
+      {
+        "_path": "site-packages/notebook/static/9605.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "d49fb5cb77f2f622f79fbfee49eec4d3dab51570ad119d054242acd0535b98d7",
+        "sha256_in_prefix": "d49fb5cb77f2f622f79fbfee49eec4d3dab51570ad119d054242acd0535b98d7",
+        "size_in_bytes": 160
+      },
+      {
+        "_path": "site-packages/notebook/static/9638.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "3ab4d5ef2e26d796633fa6f691cc745fd1e2a76694757774425364ba31d5f942",
+        "sha256_in_prefix": "3ab4d5ef2e26d796633fa6f691cc745fd1e2a76694757774425364ba31d5f942",
+        "size_in_bytes": 4028
+      },
+      {
+        "_path": "site-packages/notebook/static/9674eb1bd55047179038.svg",
+        "path_type": "hardlink",
+        "sha256": "9674eb1bd5504717903837093a67668ea88f2ed006d91367d0d4b7aa1f9211fc",
+        "sha256_in_prefix": "9674eb1bd5504717903837093a67668ea88f2ed006d91367d0d4b7aa1f9211fc",
+        "size_in_bytes": 918991
+      },
+      {
+        "_path": "site-packages/notebook/static/9676.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c3a97776a942a67f1329a22cb90c4be61f594e51c14782a974e0ceaa992769eb",
+        "sha256_in_prefix": "c3a97776a942a67f1329a22cb90c4be61f594e51c14782a974e0ceaa992769eb",
+        "size_in_bytes": 1521
+      },
+      {
+        "_path": "site-packages/notebook/static/9680.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "34ca36ffdbf82b98ece283af6def8ab1a63888e83f7b188a9b59b80317811c51",
+        "sha256_in_prefix": "34ca36ffdbf82b98ece283af6def8ab1a63888e83f7b188a9b59b80317811c51",
+        "size_in_bytes": 5479
+      },
+      {
+        "_path": "site-packages/notebook/static/9685.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "1cc6344912041c1204b259427d413a0691bd8e62b90046cc828f185c5ace3920",
+        "sha256_in_prefix": "1cc6344912041c1204b259427d413a0691bd8e62b90046cc828f185c5ace3920",
+        "size_in_bytes": 2248
+      },
+      {
+        "_path": "site-packages/notebook/static/9752.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "8c4dac9c14adaa40200b8b6f0aff034ce2d53dd7f8a709911c4d33193c47814c",
+        "sha256_in_prefix": "8c4dac9c14adaa40200b8b6f0aff034ce2d53dd7f8a709911c4d33193c47814c",
+        "size_in_bytes": 87653
+      },
+      {
+        "_path": "site-packages/notebook/static/9752.bundle.js.LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "2dc9f255851809e9cb31685be195fa95daa9582bb4d7aadafdc22c30894c4e5b",
+        "sha256_in_prefix": "2dc9f255851809e9cb31685be195fa95daa9582bb4d7aadafdc22c30894c4e5b",
+        "size_in_bytes": 55
+      },
+      {
+        "_path": "site-packages/notebook/static/9799.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "c77ac39057dbe2a8c718e58bf70971d17f8d4646ab4224dcf4a42d277c2d0aff",
+        "sha256_in_prefix": "c77ac39057dbe2a8c718e58bf70971d17f8d4646ab4224dcf4a42d277c2d0aff",
+        "size_in_bytes": 40964
+      },
+      {
+        "_path": "site-packages/notebook/static/9821.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "6398dee5cf8ee3956e4f2976e9b077743e639cfb0e44ab9256b6f4589102ad64",
+        "sha256_in_prefix": "6398dee5cf8ee3956e4f2976e9b077743e639cfb0e44ab9256b6f4589102ad64",
+        "size_in_bytes": 10072
+      },
+      {
+        "_path": "site-packages/notebook/static/9834b82ad26e2a37583d.woff2",
+        "path_type": "hardlink",
+        "sha256": "9834b82ad26e2a37583d22676a12dd2eb0fe7c80356a2114d0db1aa8b3899537",
+        "sha256_in_prefix": "9834b82ad26e2a37583d22676a12dd2eb0fe7c80356a2114d0db1aa8b3899537",
+        "size_in_bytes": 78268
+      },
+      {
+        "_path": "site-packages/notebook/static/9852.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "f8496b3e6091b7fe555c037f3eb24a21b135f1fc75ba4eb7bf915d59bd62d773",
+        "sha256_in_prefix": "f8496b3e6091b7fe555c037f3eb24a21b135f1fc75ba4eb7bf915d59bd62d773",
+        "size_in_bytes": 6417
+      },
+      {
+        "_path": "site-packages/notebook/static/9866.bundle.js",
+        "path_type": "hardlink",
+        "sha256": "723e869d2cce0e18706dc8a107990635ee9f5f17781fad2278c0798ca3d4a523",
+        "sha256_in_prefix": "723e869d2cce0e18706dc8a107990635ee9f5f17781fad2278c0798ca3d4a523",
+        "size_in_bytes": 35474
+      },
+      {
+        "_path": "site-packages/notebook/static/a009bea404f7a500ded4.woff",
+        "path_type": "hardlink",
+        "sha256": "a009bea404f7a500ded48f8b9ad9cf16e12504b3195dd9e25975289b8256b0f0",
+        "sha256_in_prefix": "a009bea404f7a500ded48f8b9ad9cf16e12504b3195dd9e25975289b8256b0f0",
+        "size_in_bytes": 19360
+      },
+      {
+        "_path": "site-packages/notebook/static/a3b9817780214caf01e8.svg",
+        "path_type": "hardlink",
+        "sha256": "a3b9817780214caf01e8aec20bcdc2305a1ff34a15fae81ecd0923df9cd5cd0a",
+        "sha256_in_prefix": "a3b9817780214caf01e8aec20bcdc2305a1ff34a15fae81ecd0923df9cd5cd0a",
+        "size_in_bytes": 747927
+      },
+      {
+        "_path": "site-packages/notebook/static/af04542b29eaac04550a.woff",
+        "path_type": "hardlink",
+        "sha256": "af04542b29eaac04550a140c5f1760a649783989426f2540855bf4157819367d",
+        "sha256_in_prefix": "af04542b29eaac04550a140c5f1760a649783989426f2540855bf4157819367d",
+        "size_in_bytes": 9908
+      },
+      {
+        "_path": "site-packages/notebook/static/af6397503fcefbd61397.ttf",
+        "path_type": "hardlink",
+        "sha256": "af6397503fcefbd613976c21ad5c1e37298c18bbe07d096db03ccd3af6e05ba8",
+        "sha256_in_prefix": "af6397503fcefbd613976c21ad5c1e37298c18bbe07d096db03ccd3af6e05ba8",
+        "size_in_bytes": 202744
+      },
+      {
+        "_path": "site-packages/notebook/static/af96f67d7accf5fd2a4a.woff",
+        "path_type": "hardlink",
+        "sha256": "af96f67d7accf5fd2a4a682d0b9f8b339f8ea6fe34c310c1694c8ba7f6ddc96f",
+        "sha256_in_prefix": "af96f67d7accf5fd2a4a682d0b9f8b339f8ea6fe34c310c1694c8ba7f6ddc96f",
+        "size_in_bytes": 11852
+      },
+      {
+        "_path": "site-packages/notebook/static/b418136e3b384baaadec.woff",
+        "path_type": "hardlink",
+        "sha256": "b418136e3b384baaadecb70bd3c48a8da9825210130b2897db808c44efc883cb",
+        "sha256_in_prefix": "b418136e3b384baaadecb70bd3c48a8da9825210130b2897db808c44efc883cb",
+        "size_in_bytes": 12660
+      },
+      {
+        "_path": "site-packages/notebook/static/be0a084962d8066884f7.svg",
+        "path_type": "hardlink",
+        "sha256": "be0a084962d8066884f7fe9bd27ec16e51f5a93b72a502c92c5a24dc87eb2ebc",
+        "sha256_in_prefix": "be0a084962d8066884f7fe9bd27ec16e51f5a93b72a502c92c5a24dc87eb2ebc",
+        "size_in_bytes": 144714
+      },
+      {
+        "_path": "site-packages/notebook/static/bundle.js",
+        "path_type": "hardlink",
+        "sha256": "dab1143f68054fed843a690d6e88658288108c03424cff373ef738cc5a71c8a9",
+        "sha256_in_prefix": "dab1143f68054fed843a690d6e88658288108c03424cff373ef738cc5a71c8a9",
+        "size_in_bytes": 53340
+      },
+      {
+        "_path": "site-packages/notebook/static/c49810b53ecc0d87d802.woff",
+        "path_type": "hardlink",
+        "sha256": "c49810b53ecc0d87d8028762c518924197dd9d3f905b08f99ea241301085b9cb",
+        "sha256_in_prefix": "c49810b53ecc0d87d8028762c518924197dd9d3f905b08f99ea241301085b9cb",
+        "size_in_bytes": 5792
+      },
+      {
+        "_path": "site-packages/notebook/static/c56da8d69f1a0208b8e0.woff",
+        "path_type": "hardlink",
+        "sha256": "c56da8d69f1a0208b8e0703656c3264b6dd748bd452524c82b0385b60f6a68c1",
+        "sha256_in_prefix": "c56da8d69f1a0208b8e0703656c3264b6dd748bd452524c82b0385b60f6a68c1",
+        "size_in_bytes": 17604
+      },
+      {
+        "_path": "site-packages/notebook/static/cb9e9e693192413cde2b.woff",
+        "path_type": "hardlink",
+        "sha256": "cb9e9e693192413cde2b1f21c1dc1d44b6fe7b27cc2b458e8b359d18f9ff8f4e",
+        "sha256_in_prefix": "cb9e9e693192413cde2b1f21c1dc1d44b6fe7b27cc2b458e8b359d18f9ff8f4e",
+        "size_in_bytes": 16276
+      },
+      {
+        "_path": "site-packages/notebook/static/cda59d6efffa685830fd.ttf",
+        "path_type": "hardlink",
+        "sha256": "cda59d6efffa685830fd95b55f64ae9cb51279cd34b2410b69f84c7ec30157d9",
+        "sha256_in_prefix": "cda59d6efffa685830fd95b55f64ae9cb51279cd34b2410b69f84c7ec30157d9",
+        "size_in_bytes": 133988
+      },
+      {
+        "_path": "site-packages/notebook/static/e4299464e7b012968eed.eot",
+        "path_type": "hardlink",
+        "sha256": "e4299464e7b012968eed63ac2db1c9509f56bca409ef9f71f2926a8c3c80b2a9",
+        "sha256_in_prefix": "e4299464e7b012968eed63ac2db1c9509f56bca409ef9f71f2926a8c3c80b2a9",
+        "size_in_bytes": 134294
+      },
+      {
+        "_path": "site-packages/notebook/static/e42a88444448ac3d6054.woff2",
+        "path_type": "hardlink",
+        "sha256": "e42a88444448ac3d60549cc7c1ff2c8a9cac721034c073d80a14a44e79730cca",
+        "sha256_in_prefix": "e42a88444448ac3d60549cc7c1ff2c8a9cac721034c073d80a14a44e79730cca",
+        "size_in_bytes": 13224
+      },
+      {
+        "_path": "site-packages/notebook/static/e8711bbb871afd8e9dea.ttf",
+        "path_type": "hardlink",
+        "sha256": "e8711bbb871afd8e9dea60e16d30f00c7e4837bbc9807065017475b849fa2313",
+        "sha256_in_prefix": "e8711bbb871afd8e9dea60e16d30f00c7e4837bbc9807065017475b849fa2313",
+        "size_in_bytes": 33736
+      },
+      {
+        "_path": "site-packages/notebook/static/f9217f66874b0c01cd8c.woff",
+        "path_type": "hardlink",
+        "sha256": "f9217f66874b0c01cd8c10b6a295dbc4f609acb6f5adc41c37da46641b57eb02",
+        "sha256_in_prefix": "f9217f66874b0c01cd8c10b6a295dbc4f609acb6f5adc41c37da46641b57eb02",
+        "size_in_bytes": 89988
+      },
+      {
+        "_path": "site-packages/notebook/static/fc6ddf5df402b263cfb1.woff",
+        "path_type": "hardlink",
+        "sha256": "fc6ddf5df402b263cfb158aed8e89972542c34b719cd87b1db30461985f7bd5b",
+        "sha256_in_prefix": "fc6ddf5df402b263cfb158aed8e89972542c34b719cd87b1db30461985f7bd5b",
+        "size_in_bytes": 14628
+      },
+      {
+        "_path": "site-packages/notebook/static/third-party-licenses.json",
+        "path_type": "hardlink",
+        "sha256": "7962cc1c9cf0f64400d2218feaaf07099489c252cad436e147dce21043cede0c",
+        "sha256_in_prefix": "7962cc1c9cf0f64400d2218feaaf07099489c252cad436e147dce21043cede0c",
+        "size_in_bytes": 407126
+      },
+      {
+        "_path": "site-packages/notebook/templates/consoles.html",
+        "path_type": "hardlink",
+        "sha256": "aafd6721a746845a31232ec24de0f15456d11f910f4f11b5634323d50cf67962",
+        "sha256_in_prefix": "aafd6721a746845a31232ec24de0f15456d11f910f4f11b5634323d50cf67962",
+        "size_in_bytes": 1424
+      },
+      {
+        "_path": "site-packages/notebook/templates/edit.html",
+        "path_type": "hardlink",
+        "sha256": "46019a95b8dc983fee624beae135eaf02c078e79d374bc97e64f3ee5f3fc0288",
+        "sha256_in_prefix": "46019a95b8dc983fee624beae135eaf02c078e79d374bc97e64f3ee5f3fc0288",
+        "size_in_bytes": 1299
+      },
+      {
+        "_path": "site-packages/notebook/templates/error.html",
+        "path_type": "hardlink",
+        "sha256": "3b49974338aa14f9ebfcf9590919b6015120db8e5e451a31fc0bcaaa28dc112c",
+        "sha256_in_prefix": "3b49974338aa14f9ebfcf9590919b6015120db8e5e451a31fc0bcaaa28dc112c",
+        "size_in_bytes": 1189
+      },
+      {
+        "_path": "site-packages/notebook/templates/notebooks.html",
+        "path_type": "hardlink",
+        "sha256": "fc649ff9cf9dad41746ba1c395a6be6a8252bbf73c23894a1ad3cb01c4816298",
+        "sha256_in_prefix": "fc649ff9cf9dad41746ba1c395a6be6a8252bbf73c23894a1ad3cb01c4816298",
+        "size_in_bytes": 1444
+      },
+      {
+        "_path": "site-packages/notebook/templates/terminals.html",
+        "path_type": "hardlink",
+        "sha256": "e7891832f46fbb489e4411b2d177a5a281be513af1e3a2e626cbfb43ee3a315e",
+        "sha256_in_prefix": "e7891832f46fbb489e4411b2d177a5a281be513af1e3a2e626cbfb43ee3a315e",
+        "size_in_bytes": 1418
+      },
+      {
+        "_path": "site-packages/notebook/templates/tree.html",
+        "path_type": "hardlink",
+        "sha256": "b56f0f25a789a6139b59c7a5e150902414f7a72ea4ec9499688ce24a2ca4d0c9",
+        "sha256_in_prefix": "b56f0f25a789a6139b59c7a5e150902414f7a72ea4ec9499688ce24a2ca4d0c9",
+        "size_in_bytes": 1367
+      },
+      {
+        "_path": "lib/python3.12/site-packages/notebook/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/notebook/__pycache__/__main__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/notebook/__pycache__/_version.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/notebook/__pycache__/app.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "bin/jupyter-notebook",
+        "path_type": "unix_python_entry_point"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "6b23256e63225ff15b0d5e91d49111936df05748bb31afa321b29556087f85f4",
+  "size": 3899981,
+  "subdir": "noarch",
+  "timestamp": 1717767864000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/notebook-7.2.1-pyhd8ed1ab_0.conda",
+  "version": "7.2.1"
+}

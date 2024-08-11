@@ -1,0 +1,158 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "docutils",
+    "jinja2",
+    "nbconvert",
+    "nbformat",
+    "python >=3.6",
+    "sphinx",
+    "traitlets"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/nbsphinx-0.9.4-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/nbsphinx-0.9.4.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/nbsphinx-0.9.4.dist-info/LICENSE",
+    "lib/python3.12/site-packages/nbsphinx-0.9.4.dist-info/METADATA",
+    "lib/python3.12/site-packages/nbsphinx-0.9.4.dist-info/RECORD",
+    "lib/python3.12/site-packages/nbsphinx-0.9.4.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/nbsphinx-0.9.4.dist-info/WHEEL",
+    "lib/python3.12/site-packages/nbsphinx-0.9.4.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/nbsphinx-0.9.4.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/nbsphinx/__init__.py",
+    "lib/python3.12/site-packages/nbsphinx/_static/nbsphinx-broken-thumbnail.svg",
+    "lib/python3.12/site-packages/nbsphinx/_static/nbsphinx-code-cells.css_t",
+    "lib/python3.12/site-packages/nbsphinx/_static/nbsphinx-gallery.css",
+    "lib/python3.12/site-packages/nbsphinx/_static/nbsphinx-no-thumbnail.svg",
+    "lib/python3.12/site-packages/nbsphinx/_texinputs/nbsphinx.sty",
+    "lib/python3.12/site-packages/nbsphinx/__pycache__/__init__.cpython-312.pyc"
+  ],
+  "fn": "nbsphinx-0.9.4-pyhd8ed1ab_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/nbsphinx-0.9.4-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "9dc80eaeff56fb67dbf4f871b81bc13a",
+  "name": "nbsphinx",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/nbsphinx-0.9.4-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/nbsphinx-0.9.4.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/nbsphinx-0.9.4.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "e217f072c28beaf7d06879366dc3f230495589825af7c67509043dcbfd7812e5",
+        "sha256_in_prefix": "e217f072c28beaf7d06879366dc3f230495589825af7c67509043dcbfd7812e5",
+        "size_in_bytes": 1063
+      },
+      {
+        "_path": "site-packages/nbsphinx-0.9.4.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "8009eebc5be400dace61d931ed5dd048979f3cb622b74e5d16093dc4750df245",
+        "sha256_in_prefix": "8009eebc5be400dace61d931ed5dd048979f3cb622b74e5d16093dc4750df245",
+        "size_in_bytes": 2102
+      },
+      {
+        "_path": "site-packages/nbsphinx-0.9.4.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "d58da16f0ceb60bed4a48a8076c5f3b4f2fdbf53a4b6b3fa59e850525cc925fc",
+        "sha256_in_prefix": "d58da16f0ceb60bed4a48a8076c5f3b4f2fdbf53a4b6b3fa59e850525cc925fc",
+        "size_in_bytes": 1286
+      },
+      {
+        "_path": "site-packages/nbsphinx-0.9.4.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/nbsphinx-0.9.4.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "189eedfe4581172c1b6a02b97a8f48a14c0b5baa3239e4ca990fbd8871553714",
+        "sha256_in_prefix": "189eedfe4581172c1b6a02b97a8f48a14c0b5baa3239e4ca990fbd8871553714",
+        "size_in_bytes": 92
+      },
+      {
+        "_path": "site-packages/nbsphinx-0.9.4.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "13fe5b740cbbe13a0031458a66c976f1e2acbaf667a4ce26d78f7935b05542a9",
+        "sha256_in_prefix": "13fe5b740cbbe13a0031458a66c976f1e2acbaf667a4ce26d78f7935b05542a9",
+        "size_in_bytes": 104
+      },
+      {
+        "_path": "site-packages/nbsphinx-0.9.4.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "f2923954659df1b26a2d82d3f41e4903069a01e5982847b26be896fa6c3c882e",
+        "sha256_in_prefix": "f2923954659df1b26a2d82d3f41e4903069a01e5982847b26be896fa6c3c882e",
+        "size_in_bytes": 9
+      },
+      {
+        "_path": "site-packages/nbsphinx/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "d9c52983f5f95adc893a69968f09b2bcc48945121c559846209c38a7a15da599",
+        "sha256_in_prefix": "d9c52983f5f95adc893a69968f09b2bcc48945121c559846209c38a7a15da599",
+        "size_in_bytes": 74617
+      },
+      {
+        "_path": "site-packages/nbsphinx/_static/nbsphinx-broken-thumbnail.svg",
+        "path_type": "hardlink",
+        "sha256": "6c664d10a5b2cd71e4d1d36a8cbaa2c773cb98d6a2824396ccedf296f2d67745",
+        "sha256_in_prefix": "6c664d10a5b2cd71e4d1d36a8cbaa2c773cb98d6a2824396ccedf296f2d67745",
+        "size_in_bytes": 4467
+      },
+      {
+        "_path": "site-packages/nbsphinx/_static/nbsphinx-code-cells.css_t",
+        "path_type": "hardlink",
+        "sha256": "5dbe096182b40b4dd21a70b20be7445659a2b6322c7325df76c08851b7c4ec78",
+        "sha256_in_prefix": "5dbe096182b40b4dd21a70b20be7445659a2b6322c7325df76c08851b7c4ec78",
+        "size_in_bytes": 7344
+      },
+      {
+        "_path": "site-packages/nbsphinx/_static/nbsphinx-gallery.css",
+        "path_type": "hardlink",
+        "sha256": "a564b368bf89f5af5746603b95ed55b62c2661b0d254fbcf4ac1ea39f0f1bb44",
+        "sha256_in_prefix": "a564b368bf89f5af5746603b95ed55b62c2661b0d254fbcf4ac1ea39f0f1bb44",
+        "size_in_bytes": 584
+      },
+      {
+        "_path": "site-packages/nbsphinx/_static/nbsphinx-no-thumbnail.svg",
+        "path_type": "hardlink",
+        "sha256": "5390e8b20c4dbea17a15ef82d6237986d25f6422b5fe8d7ff010233f0c6ca054",
+        "sha256_in_prefix": "5390e8b20c4dbea17a15ef82d6237986d25f6422b5fe8d7ff010233f0c6ca054",
+        "size_in_bytes": 2871
+      },
+      {
+        "_path": "site-packages/nbsphinx/_texinputs/nbsphinx.sty",
+        "path_type": "hardlink",
+        "sha256": "4d31ab12525eded2da952b3c8be511af70e341bfe0f0896373deaa60d9aabd55",
+        "sha256_in_prefix": "4d31ab12525eded2da952b3c8be511af70e341bfe0f0896373deaa60d9aabd55",
+        "size_in_bytes": 8202
+      },
+      {
+        "_path": "lib/python3.12/site-packages/nbsphinx/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "nbsphinx",
+  "sha256": "2d5756e2ab94ba73d630b97bc8ce6b0ea6eb60aadc2ad7e47e6e6d48fe3f87e8",
+  "size": 33630,
+  "subdir": "noarch",
+  "timestamp": 1715074950000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/nbsphinx-0.9.4-pyhd8ed1ab_0.conda",
+  "version": "0.9.4"
+}

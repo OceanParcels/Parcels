@@ -1,0 +1,486 @@
+{
+  "build": "hdd22b19_3",
+  "build_number": 3,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "aws-c-auth >=0.7.25,<0.7.26.0a0",
+    "aws-c-cal >=0.7.2,<0.7.3.0a0",
+    "aws-c-common >=0.9.23,<0.9.24.0a0",
+    "aws-c-event-stream >=0.4.2,<0.4.3.0a0",
+    "aws-c-http >=0.8.7,<0.8.8.0a0",
+    "aws-c-io >=0.14.18,<0.14.19.0a0",
+    "aws-c-mqtt >=0.10.4,<0.10.5.0a0",
+    "aws-c-s3 >=0.6.4,<0.6.5.0a0",
+    "aws-c-sdkutils >=0.1.16,<0.1.17.0a0",
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/aws-crt-cpp-0.27.5-hdd22b19_3",
+  "files": [
+    "bin/elasticurl_cpp",
+    "bin/mqtt5_app",
+    "bin/mqtt5_canary",
+    "include/aws/crt/Allocator.h",
+    "include/aws/crt/Api.h",
+    "include/aws/crt/Config.h",
+    "include/aws/crt/DateTime.h",
+    "include/aws/crt/Exports.h",
+    "include/aws/crt/ImdsClient.h",
+    "include/aws/crt/JsonObject.h",
+    "include/aws/crt/Optional.h",
+    "include/aws/crt/RefCounted.h",
+    "include/aws/crt/StlAllocator.h",
+    "include/aws/crt/StringUtils.h",
+    "include/aws/crt/StringView.h",
+    "include/aws/crt/Types.h",
+    "include/aws/crt/UUID.h",
+    "include/aws/crt/Utility.h",
+    "include/aws/crt/Variant.h",
+    "include/aws/crt/auth/Credentials.h",
+    "include/aws/crt/auth/Signing.h",
+    "include/aws/crt/auth/Sigv4Signing.h",
+    "include/aws/crt/cbor/Cbor.h",
+    "include/aws/crt/crypto/HMAC.h",
+    "include/aws/crt/crypto/Hash.h",
+    "include/aws/crt/crypto/SecureRandom.h",
+    "include/aws/crt/crypto/SymmetricCipher.h",
+    "include/aws/crt/endpoints/RuleEngine.h",
+    "include/aws/crt/http/HttpConnection.h",
+    "include/aws/crt/http/HttpConnectionManager.h",
+    "include/aws/crt/http/HttpProxyStrategy.h",
+    "include/aws/crt/http/HttpRequestResponse.h",
+    "include/aws/crt/io/Bootstrap.h",
+    "include/aws/crt/io/ChannelHandler.h",
+    "include/aws/crt/io/EventLoopGroup.h",
+    "include/aws/crt/io/HostResolver.h",
+    "include/aws/crt/io/Pkcs11.h",
+    "include/aws/crt/io/SocketOptions.h",
+    "include/aws/crt/io/Stream.h",
+    "include/aws/crt/io/TlsOptions.h",
+    "include/aws/crt/io/Uri.h",
+    "include/aws/crt/mqtt/Mqtt5Client.h",
+    "include/aws/crt/mqtt/Mqtt5Packets.h",
+    "include/aws/crt/mqtt/Mqtt5Types.h",
+    "include/aws/crt/mqtt/MqttClient.h",
+    "include/aws/crt/mqtt/MqttConnection.h",
+    "include/aws/crt/mqtt/MqttTypes.h",
+    "include/aws/iot/Mqtt5Client.h",
+    "include/aws/iot/MqttClient.h",
+    "include/aws/iot/MqttCommon.h",
+    "lib/aws-crt-cpp/cmake/aws-crt-cpp-config-version.cmake",
+    "lib/aws-crt-cpp/cmake/aws-crt-cpp-config.cmake",
+    "lib/aws-crt-cpp/cmake/shared/aws-crt-cpp-targets-release.cmake",
+    "lib/aws-crt-cpp/cmake/shared/aws-crt-cpp-targets.cmake",
+    "lib/libaws-crt-cpp.so"
+  ],
+  "fn": "aws-crt-cpp-0.27.5-hdd22b19_3.conda",
+  "license": "Apache-2.0",
+  "link": {
+    "source": "/opt/conda/pkgs/aws-crt-cpp-0.27.5-hdd22b19_3",
+    "type": 1
+  },
+  "md5": "6f7122a63de602ee202b059e698c574d",
+  "name": "aws-crt-cpp",
+  "package_tarball_full_path": "/opt/conda/pkgs/aws-crt-cpp-0.27.5-hdd22b19_3.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/elasticurl_cpp",
+        "path_type": "hardlink",
+        "sha256": "87ab02ff14e8418d6c7e20ef7b670e2660b4d127faf15f46696149016ecc7633",
+        "sha256_in_prefix": "87ab02ff14e8418d6c7e20ef7b670e2660b4d127faf15f46696149016ecc7633",
+        "size_in_bytes": 96416
+      },
+      {
+        "_path": "bin/mqtt5_app",
+        "path_type": "hardlink",
+        "sha256": "86714e1d1678de2392190613580c504c94264d1fd8a6af5229e7327c9ce580a2",
+        "sha256_in_prefix": "86714e1d1678de2392190613580c504c94264d1fd8a6af5229e7327c9ce580a2",
+        "size_in_bytes": 111560
+      },
+      {
+        "_path": "bin/mqtt5_canary",
+        "path_type": "hardlink",
+        "sha256": "94d4ce801b8350fd1982f46faf05923c45a83d617e12c695533a5c08fd263a58",
+        "sha256_in_prefix": "94d4ce801b8350fd1982f46faf05923c45a83d617e12c695533a5c08fd263a58",
+        "size_in_bytes": 115536
+      },
+      {
+        "_path": "include/aws/crt/Allocator.h",
+        "path_type": "hardlink",
+        "sha256": "a391bd48f5a7a91c16b0883456baaf7eb3e38ffdb907dac6e248c0cd075050c4",
+        "sha256_in_prefix": "a391bd48f5a7a91c16b0883456baaf7eb3e38ffdb907dac6e248c0cd075050c4",
+        "size_in_bytes": 1529
+      },
+      {
+        "_path": "include/aws/crt/Api.h",
+        "path_type": "hardlink",
+        "sha256": "057552413044330a4eeb5107f280d2b48f656731dc1cf8a58c8bbf1316e69e82",
+        "sha256_in_prefix": "057552413044330a4eeb5107f280d2b48f656731dc1cf8a58c8bbf1316e69e82",
+        "size_in_bytes": 10153
+      },
+      {
+        "_path": "include/aws/crt/Config.h",
+        "path_type": "hardlink",
+        "sha256": "2757fa0c3ec0518e894458360524c2b9b32c05bdd1aaf63be257ef921fe34ac2",
+        "sha256_in_prefix": "2757fa0c3ec0518e894458360524c2b9b32c05bdd1aaf63be257ef921fe34ac2",
+        "size_in_bytes": 363
+      },
+      {
+        "_path": "include/aws/crt/DateTime.h",
+        "path_type": "hardlink",
+        "sha256": "7f94d249ba7af3dcded3a9e24ee4f161df0affceaa5f5d40f8d5f87411b2bb25",
+        "sha256_in_prefix": "7f94d249ba7af3dcded3a9e24ee4f161df0affceaa5f5d40f8d5f87411b2bb25",
+        "size_in_bytes": 7022
+      },
+      {
+        "_path": "include/aws/crt/Exports.h",
+        "path_type": "hardlink",
+        "sha256": "26a2386a91a57c358c5a7a7411579019e241561c6d3139d1b78e235f07fd719a",
+        "sha256_in_prefix": "26a2386a91a57c358c5a7a7411579019e241561c6d3139d1b78e235f07fd719a",
+        "size_in_bytes": 1457
+      },
+      {
+        "_path": "include/aws/crt/ImdsClient.h",
+        "path_type": "hardlink",
+        "sha256": "ffd16f2d0e8241c6bce3ae3c44ad304603a897e41a6743fb019815e416f69608",
+        "sha256_in_prefix": "ffd16f2d0e8241c6bce3ae3c44ad304603a897e41a6743fb019815e416f69608",
+        "size_in_bytes": 18448
+      },
+      {
+        "_path": "include/aws/crt/JsonObject.h",
+        "path_type": "hardlink",
+        "sha256": "72f891d37242516b05cd10d2659b65baa9e9dcaf478715889e4208f7ab1861b3",
+        "sha256_in_prefix": "72f891d37242516b05cd10d2659b65baa9e9dcaf478715889e4208f7ab1861b3",
+        "size_in_bytes": 16250
+      },
+      {
+        "_path": "include/aws/crt/Optional.h",
+        "path_type": "hardlink",
+        "sha256": "9fa1ef110798cda4d54fd470056350672791281e491b18a8c467908a4f870294",
+        "sha256_in_prefix": "9fa1ef110798cda4d54fd470056350672791281e491b18a8c467908a4f870294",
+        "size_in_bytes": 6219
+      },
+      {
+        "_path": "include/aws/crt/RefCounted.h",
+        "path_type": "hardlink",
+        "sha256": "b1ddcea6b95963f4b49566c576690071d3b0010432fe0ead269ebf9c1a8c76e7",
+        "sha256_in_prefix": "b1ddcea6b95963f4b49566c576690071d3b0010432fe0ead269ebf9c1a8c76e7",
+        "size_in_bytes": 2165
+      },
+      {
+        "_path": "include/aws/crt/StlAllocator.h",
+        "path_type": "hardlink",
+        "sha256": "178fc021dece1a9be7a6099926698f07f7517b83e2aa119acf34a85fab7b5d98",
+        "sha256_in_prefix": "178fc021dece1a9be7a6099926698f07f7517b83e2aa119acf34a85fab7b5d98",
+        "size_in_bytes": 1942
+      },
+      {
+        "_path": "include/aws/crt/StringUtils.h",
+        "path_type": "hardlink",
+        "sha256": "0ef2dc740d33ae4a3864dbd3c25cebb6ee357f24af01e46ff2d8c5aad67a2966",
+        "sha256_in_prefix": "0ef2dc740d33ae4a3864dbd3c25cebb6ee357f24af01e46ff2d8c5aad67a2966",
+        "size_in_bytes": 471
+      },
+      {
+        "_path": "include/aws/crt/StringView.h",
+        "path_type": "hardlink",
+        "sha256": "06940f27c5ac8728160ff2a7c66f18333f9545f5eb06dc2283ad9f447a6c3d6a",
+        "sha256_in_prefix": "06940f27c5ac8728160ff2a7c66f18333f9545f5eb06dc2283ad9f447a6c3d6a",
+        "size_in_bytes": 28794
+      },
+      {
+        "_path": "include/aws/crt/Types.h",
+        "path_type": "hardlink",
+        "sha256": "e939b3a2d7924a65fb877af457602595774b70ea4123d88fede85d11fff2c449",
+        "sha256_in_prefix": "e939b3a2d7924a65fb877af457602595774b70ea4123d88fede85d11fff2c449",
+        "size_in_bytes": 6414
+      },
+      {
+        "_path": "include/aws/crt/UUID.h",
+        "path_type": "hardlink",
+        "sha256": "e33e04b4c0874f092e02c785c77d6c5b496a51b9b1c0762759d9b77082114e86",
+        "sha256_in_prefix": "e33e04b4c0874f092e02c785c77d6c5b496a51b9b1c0762759d9b77082114e86",
+        "size_in_bytes": 1048
+      },
+      {
+        "_path": "include/aws/crt/Utility.h",
+        "path_type": "hardlink",
+        "sha256": "3e4b9d36be5df34268f121aa779335fc2df22c767ffbc7e567f8ea695ff6dbd4",
+        "sha256_in_prefix": "3e4b9d36be5df34268f121aa779335fc2df22c767ffbc7e567f8ea695ff6dbd4",
+        "size_in_bytes": 865
+      },
+      {
+        "_path": "include/aws/crt/Variant.h",
+        "path_type": "hardlink",
+        "sha256": "b78aad82a2f1d930f30a6de08b15e033a3cdc8e95d5aa21a2c3799a08e4de2d4",
+        "sha256_in_prefix": "b78aad82a2f1d930f30a6de08b15e033a3cdc8e95d5aa21a2c3799a08e4de2d4",
+        "size_in_bytes": 25048
+      },
+      {
+        "_path": "include/aws/crt/auth/Credentials.h",
+        "path_type": "hardlink",
+        "sha256": "4a2d1ac6581aabba916e27f2f9266d3d8e609c6aa124e24b914e6ee4e1803191",
+        "sha256_in_prefix": "4a2d1ac6581aabba916e27f2f9266d3d8e609c6aa124e24b914e6ee4e1803191",
+        "size_in_bytes": 24006
+      },
+      {
+        "_path": "include/aws/crt/auth/Signing.h",
+        "path_type": "hardlink",
+        "sha256": "2e20e334882a197707ed9aa8726817ca16d6a2051b577efccb2f89d9861fc3b3",
+        "sha256_in_prefix": "2e20e334882a197707ed9aa8726817ca16d6a2051b577efccb2f89d9861fc3b3",
+        "size_in_bytes": 3717
+      },
+      {
+        "_path": "include/aws/crt/auth/Sigv4Signing.h",
+        "path_type": "hardlink",
+        "sha256": "88676ef49b3a0bc58a9ec30e31045995b9110682aa496225555b24ad97c2b80d",
+        "sha256_in_prefix": "88676ef49b3a0bc58a9ec30e31045995b9110682aa496225555b24ad97c2b80d",
+        "size_in_bytes": 14445
+      },
+      {
+        "_path": "include/aws/crt/cbor/Cbor.h",
+        "path_type": "hardlink",
+        "sha256": "7f373ba28922a2ddd451d1ef688db3d4b726c15f8d442de099d785d92526ec49",
+        "sha256_in_prefix": "7f373ba28922a2ddd451d1ef688db3d4b726c15f8d442de099d785d92526ec49",
+        "size_in_bytes": 16752
+      },
+      {
+        "_path": "include/aws/crt/crypto/HMAC.h",
+        "path_type": "hardlink",
+        "sha256": "3dc360c67394b0839050d8bff9cb9354bb5d96946903d021617c20fcc9fc30d7",
+        "sha256_in_prefix": "3dc360c67394b0839050d8bff9cb9354bb5d96946903d021617c20fcc9fc30d7",
+        "size_in_bytes": 7919
+      },
+      {
+        "_path": "include/aws/crt/crypto/Hash.h",
+        "path_type": "hardlink",
+        "sha256": "46b3a45335d6b9e6233f32c7efee586efd7ad641aa2961ff851a9babc48d82a4",
+        "sha256_in_prefix": "46b3a45335d6b9e6233f32c7efee586efd7ad641aa2961ff851a9babc48d82a4",
+        "size_in_bytes": 10404
+      },
+      {
+        "_path": "include/aws/crt/crypto/SecureRandom.h",
+        "path_type": "hardlink",
+        "sha256": "4bd8e529cf8a8d2b1fb9f94cd3d400920793018e38a04f9351fc331903c9c569",
+        "sha256_in_prefix": "4bd8e529cf8a8d2b1fb9f94cd3d400920793018e38a04f9351fc331903c9c569",
+        "size_in_bytes": 411
+      },
+      {
+        "_path": "include/aws/crt/crypto/SymmetricCipher.h",
+        "path_type": "hardlink",
+        "sha256": "97c9d33a0aece50374e27e8ae2081ab7b4ed6c473506c5c266b9680b97ddad64",
+        "sha256_in_prefix": "97c9d33a0aece50374e27e8ae2081ab7b4ed6c473506c5c266b9680b97ddad64",
+        "size_in_bytes": 7870
+      },
+      {
+        "_path": "include/aws/crt/endpoints/RuleEngine.h",
+        "path_type": "hardlink",
+        "sha256": "7e6bc74f5b75cda5f9aeed0801f780de5429786311d34060635b726cc78a24a9",
+        "sha256_in_prefix": "7e6bc74f5b75cda5f9aeed0801f780de5429786311d34060635b726cc78a24a9",
+        "size_in_bytes": 6197
+      },
+      {
+        "_path": "include/aws/crt/http/HttpConnection.h",
+        "path_type": "hardlink",
+        "sha256": "a1e064f6118acc7f5e5b8567839670f2e4bcd9dbccfe76f11cdc69f1a49d20c3",
+        "sha256_in_prefix": "a1e064f6118acc7f5e5b8567839670f2e4bcd9dbccfe76f11cdc69f1a49d20c3",
+        "size_in_bytes": 22202
+      },
+      {
+        "_path": "include/aws/crt/http/HttpConnectionManager.h",
+        "path_type": "hardlink",
+        "sha256": "e89283fd16aac1e3be2d11e6718a48a46f4173911a8815fbef9dccf345ccd048",
+        "sha256_in_prefix": "e89283fd16aac1e3be2d11e6718a48a46f4173911a8815fbef9dccf345ccd048",
+        "size_in_bytes": 5954
+      },
+      {
+        "_path": "include/aws/crt/http/HttpProxyStrategy.h",
+        "path_type": "hardlink",
+        "sha256": "cb828f57e6afe89325a08ea3dd7fef3cb8ea55bc5378cfd692a6be7633a1e8e9",
+        "sha256_in_prefix": "cb828f57e6afe89325a08ea3dd7fef3cb8ea55bc5378cfd692a6be7633a1e8e9",
+        "size_in_bytes": 4565
+      },
+      {
+        "_path": "include/aws/crt/http/HttpRequestResponse.h",
+        "path_type": "hardlink",
+        "sha256": "55f0499f747fa8e8cd03ff276a7f4acee5397677c2a9b068c1f83b990a7b88da",
+        "sha256_in_prefix": "55f0499f747fa8e8cd03ff276a7f4acee5397677c2a9b068c1f83b990a7b88da",
+        "size_in_bytes": 5600
+      },
+      {
+        "_path": "include/aws/crt/io/Bootstrap.h",
+        "path_type": "hardlink",
+        "sha256": "42acec6254c96f495ecddb082f719cd593b013dffe7f939beaf74aa5a542e770",
+        "sha256_in_prefix": "42acec6254c96f495ecddb082f719cd593b013dffe7f939beaf74aa5a542e770",
+        "size_in_bytes": 4170
+      },
+      {
+        "_path": "include/aws/crt/io/ChannelHandler.h",
+        "path_type": "hardlink",
+        "sha256": "cd7778ceed529591f17fdc497eafa609f80c12ead449bbe9ac166c51d848c407",
+        "sha256_in_prefix": "cd7778ceed529591f17fdc497eafa609f80c12ead449bbe9ac166c51d848c407",
+        "size_in_bytes": 10651
+      },
+      {
+        "_path": "include/aws/crt/io/EventLoopGroup.h",
+        "path_type": "hardlink",
+        "sha256": "1755da49322a67641421f9d74e1012ffdc3b53b91bddd66e8256dddc25ba2e57",
+        "sha256_in_prefix": "1755da49322a67641421f9d74e1012ffdc3b53b91bddd66e8256dddc25ba2e57",
+        "size_in_bytes": 3087
+      },
+      {
+        "_path": "include/aws/crt/io/HostResolver.h",
+        "path_type": "hardlink",
+        "sha256": "72aab0d9e7daaf357413ecc4c9ec760898b66b19bb9e59ba60710997767b4e18",
+        "sha256_in_prefix": "72aab0d9e7daaf357413ecc4c9ec760898b66b19bb9e59ba60710997767b4e18",
+        "size_in_bytes": 5071
+      },
+      {
+        "_path": "include/aws/crt/io/Pkcs11.h",
+        "path_type": "hardlink",
+        "sha256": "842982e2dbb09a2a2966258389bd8bbbaa8ad246b6b635680112a221f2609038",
+        "sha256_in_prefix": "842982e2dbb09a2a2966258389bd8bbbaa8ad246b6b635680112a221f2609038",
+        "size_in_bytes": 4964
+      },
+      {
+        "_path": "include/aws/crt/io/SocketOptions.h",
+        "path_type": "hardlink",
+        "sha256": "3bc523febee1277176d2f93c3371eb067d3ee0f0d911ac1014897b1c8be36bd7",
+        "sha256_in_prefix": "3bc523febee1277176d2f93c3371eb067d3ee0f0d911ac1014897b1c8be36bd7",
+        "size_in_bytes": 5928
+      },
+      {
+        "_path": "include/aws/crt/io/Stream.h",
+        "path_type": "hardlink",
+        "sha256": "a36d6ea2d25377c8e5363be976f3dfd01382b2bcf7f9407acba7b905e85cfca3",
+        "sha256_in_prefix": "a36d6ea2d25377c8e5363be976f3dfd01382b2bcf7f9407acba7b905e85cfca3",
+        "size_in_bytes": 6975
+      },
+      {
+        "_path": "include/aws/crt/io/TlsOptions.h",
+        "path_type": "hardlink",
+        "sha256": "90fe07c5ae481fd59f36bacc0985f2281b8a0ce18781c8a75605da45869c391e",
+        "sha256_in_prefix": "90fe07c5ae481fd59f36bacc0985f2281b8a0ce18781c8a75605da45869c391e",
+        "size_in_bytes": 19673
+      },
+      {
+        "_path": "include/aws/crt/io/Uri.h",
+        "path_type": "hardlink",
+        "sha256": "fe92699ab75a967f6fe68c9e1e1584c64b81a33ed3f307ae7e2935b1c784f784",
+        "sha256_in_prefix": "fe92699ab75a967f6fe68c9e1e1584c64b81a33ed3f307ae7e2935b1c784f784",
+        "size_in_bytes": 3811
+      },
+      {
+        "_path": "include/aws/crt/mqtt/Mqtt5Client.h",
+        "path_type": "hardlink",
+        "sha256": "74d03be3fdfc7fe7a3fbe62ad5a9ca7abe168d772cff5d7c2edc1c2adbda04fa",
+        "sha256_in_prefix": "74d03be3fdfc7fe7a3fbe62ad5a9ca7abe168d772cff5d7c2edc1c2adbda04fa",
+        "size_in_bytes": 37452
+      },
+      {
+        "_path": "include/aws/crt/mqtt/Mqtt5Packets.h",
+        "path_type": "hardlink",
+        "sha256": "a9193164074fff4e8e2086de76ef37ef58899ff38036e8a2aa19481cffbea1d3",
+        "sha256_in_prefix": "a9193164074fff4e8e2086de76ef37ef58899ff38036e8a2aa19481cffbea1d3",
+        "size_in_bytes": 123042
+      },
+      {
+        "_path": "include/aws/crt/mqtt/Mqtt5Types.h",
+        "path_type": "hardlink",
+        "sha256": "20791a91921a05e2bd51f231e8faf103b60f8e67744fab8d5c2780d805c53110",
+        "sha256_in_prefix": "20791a91921a05e2bd51f231e8faf103b60f8e67744fab8d5c2780d805c53110",
+        "size_in_bytes": 18076
+      },
+      {
+        "_path": "include/aws/crt/mqtt/MqttClient.h",
+        "path_type": "hardlink",
+        "sha256": "a5736f5b5fc86e29f70bb25db54b6540f6f7bf44bb8af93b021b4539d6926df5",
+        "sha256_in_prefix": "a5736f5b5fc86e29f70bb25db54b6540f6f7bf44bb8af93b021b4539d6926df5",
+        "size_in_bytes": 4555
+      },
+      {
+        "_path": "include/aws/crt/mqtt/MqttConnection.h",
+        "path_type": "hardlink",
+        "sha256": "49083a9a5e28eff9d3f410f136309d0a9087207c4fabebda961fb582e486c4f0",
+        "sha256_in_prefix": "49083a9a5e28eff9d3f410f136309d0a9087207c4fabebda961fb582e486c4f0",
+        "size_in_bytes": 21026
+      },
+      {
+        "_path": "include/aws/crt/mqtt/MqttTypes.h",
+        "path_type": "hardlink",
+        "sha256": "e2de081b0ba709ad1537b05f22a6bf349cf6ab951e7304d7c295cf2feb6d80a6",
+        "sha256_in_prefix": "e2de081b0ba709ad1537b05f22a6bf349cf6ab951e7304d7c295cf2feb6d80a6",
+        "size_in_bytes": 5263
+      },
+      {
+        "_path": "include/aws/iot/Mqtt5Client.h",
+        "path_type": "hardlink",
+        "sha256": "19597384281cfb6337d7460e2090156946eb4158aa64bdcda5aefea355b2d4ef",
+        "sha256_in_prefix": "19597384281cfb6337d7460e2090156946eb4158aa64bdcda5aefea355b2d4ef",
+        "size_in_bytes": 24519
+      },
+      {
+        "_path": "include/aws/iot/MqttClient.h",
+        "path_type": "hardlink",
+        "sha256": "dffd8c062f43ebb2eae47a89351434e52a1244720bce517eb6a592193b0b65eb",
+        "sha256_in_prefix": "dffd8c062f43ebb2eae47a89351434e52a1244720bce517eb6a592193b0b65eb",
+        "size_in_bytes": 23156
+      },
+      {
+        "_path": "include/aws/iot/MqttCommon.h",
+        "path_type": "hardlink",
+        "sha256": "efb1e1cb77f2d5705a868463a23e1887e3b524024487839fd1d780b59276dacf",
+        "sha256_in_prefix": "efb1e1cb77f2d5705a868463a23e1887e3b524024487839fd1d780b59276dacf",
+        "size_in_bytes": 4912
+      },
+      {
+        "_path": "lib/aws-crt-cpp/cmake/aws-crt-cpp-config-version.cmake",
+        "path_type": "hardlink",
+        "sha256": "1c68cbd990540049890d809e16a7cba86781756e3fb6feb466b42f9e275cc0ca",
+        "sha256_in_prefix": "1c68cbd990540049890d809e16a7cba86781756e3fb6feb466b42f9e275cc0ca",
+        "size_in_bytes": 3252
+      },
+      {
+        "_path": "lib/aws-crt-cpp/cmake/aws-crt-cpp-config.cmake",
+        "path_type": "hardlink",
+        "sha256": "fd7bb5e5152c29f77b4ce20c1de37038a95e666b4bf134fee0363ace0f59eabc",
+        "sha256_in_prefix": "fd7bb5e5152c29f77b4ce20c1de37038a95e666b4bf134fee0363ace0f59eabc",
+        "size_in_bytes": 713
+      },
+      {
+        "_path": "lib/aws-crt-cpp/cmake/shared/aws-crt-cpp-targets-release.cmake",
+        "path_type": "hardlink",
+        "sha256": "e5ab4332d08188bc8a91b1c89182ccd38c040be1a3bab01d6db7299bf01e5edc",
+        "sha256_in_prefix": "e5ab4332d08188bc8a91b1c89182ccd38c040be1a3bab01d6db7299bf01e5edc",
+        "size_in_bytes": 861
+      },
+      {
+        "_path": "lib/aws-crt-cpp/cmake/shared/aws-crt-cpp-targets.cmake",
+        "path_type": "hardlink",
+        "sha256": "8070126756a216b2f63cfb97eba06c2be47e6c6a340b09e294610fdb9ec3ca1c",
+        "sha256_in_prefix": "8070126756a216b2f63cfb97eba06c2be47e6c6a340b09e294610fdb9ec3ca1c",
+        "size_in_bytes": 4472
+      },
+      {
+        "_path": "lib/libaws-crt-cpp.so",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/aws-crt-cpp_1723193427497/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold",
+        "sha256": "e2107f833851916995b9f9311cdc25fd4e83d4a05d779228cd7a91d653084b14",
+        "sha256_in_prefix": "1255a0d578e4af3c99bbcf8266bc570689fb8088a689b0ace29e95d4b4ae5396",
+        "size_in_bytes": 916520
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "5fda55226ff0ef897ad943711b4c1835387ab60e8cb291303c9ea80216918941",
+  "size": 345009,
+  "subdir": "linux-64",
+  "timestamp": 1723193658000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/aws-crt-cpp-0.27.5-hdd22b19_3.conda",
+  "version": "0.27.5"
+}

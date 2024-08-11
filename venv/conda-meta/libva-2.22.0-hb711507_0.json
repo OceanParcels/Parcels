@@ -1,0 +1,458 @@
+{
+  "build": "hb711507_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libdrm >=2.4.121,<2.5.0a0",
+    "libgcc-ng >=12",
+    "libxcb >=1.16,<1.17.0a0",
+    "wayland >=1.23.0,<2.0a0",
+    "wayland-protocols",
+    "xorg-libx11 >=1.8.9,<2.0a0",
+    "xorg-libxext >=1.3.4,<2.0a0",
+    "xorg-libxfixes"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libva-2.22.0-hb711507_0",
+  "files": [
+    "include/va/va.h",
+    "include/va/va_backend.h",
+    "include/va/va_backend_prot.h",
+    "include/va/va_backend_vpp.h",
+    "include/va/va_backend_wayland.h",
+    "include/va/va_compat.h",
+    "include/va/va_dec_av1.h",
+    "include/va/va_dec_hevc.h",
+    "include/va/va_dec_jpeg.h",
+    "include/va/va_dec_vp8.h",
+    "include/va/va_dec_vp9.h",
+    "include/va/va_dec_vvc.h",
+    "include/va/va_dri2.h",
+    "include/va/va_dri3.h",
+    "include/va/va_dricommon.h",
+    "include/va/va_drm.h",
+    "include/va/va_drmcommon.h",
+    "include/va/va_egl.h",
+    "include/va/va_enc_av1.h",
+    "include/va/va_enc_h264.h",
+    "include/va/va_enc_hevc.h",
+    "include/va/va_enc_jpeg.h",
+    "include/va/va_enc_mpeg2.h",
+    "include/va/va_enc_vp8.h",
+    "include/va/va_enc_vp9.h",
+    "include/va/va_fei.h",
+    "include/va/va_fei_h264.h",
+    "include/va/va_fei_hevc.h",
+    "include/va/va_prot.h",
+    "include/va/va_str.h",
+    "include/va/va_tpi.h",
+    "include/va/va_trace.h",
+    "include/va/va_version.h",
+    "include/va/va_vpp.h",
+    "include/va/va_wayland.h",
+    "include/va/va_x11.h",
+    "lib/libva-drm.so",
+    "lib/libva-drm.so.2",
+    "lib/libva-drm.so.2.2200.0",
+    "lib/libva-wayland.so",
+    "lib/libva-wayland.so.2",
+    "lib/libva-wayland.so.2.2200.0",
+    "lib/libva-x11.so",
+    "lib/libva-x11.so.2",
+    "lib/libva-x11.so.2.2200.0",
+    "lib/libva.so",
+    "lib/libva.so.2",
+    "lib/libva.so.2.2200.0",
+    "lib/pkgconfig/libva-drm.pc",
+    "lib/pkgconfig/libva-wayland.pc",
+    "lib/pkgconfig/libva-x11.pc",
+    "lib/pkgconfig/libva.pc"
+  ],
+  "fn": "libva-2.22.0-hb711507_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/libva-2.22.0-hb711507_0",
+    "type": 1
+  },
+  "md5": "d12f659072132c9d16e497073fc1f68b",
+  "name": "libva",
+  "package_tarball_full_path": "/opt/conda/pkgs/libva-2.22.0-hb711507_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/va/va.h",
+        "path_type": "hardlink",
+        "sha256": "7a3da5d93255b82af5128d473854a169cf811b08a6bfad2bf6d1eadcfbc93370",
+        "sha256_in_prefix": "7a3da5d93255b82af5128d473854a169cf811b08a6bfad2bf6d1eadcfbc93370",
+        "size_in_bytes": 218045
+      },
+      {
+        "_path": "include/va/va_backend.h",
+        "path_type": "hardlink",
+        "sha256": "dd8a63a5433a5b7021a95df7026435c3731f0ca156b53b0e5050e82ad6949487",
+        "sha256_in_prefix": "dd8a63a5433a5b7021a95df7026435c3731f0ca156b53b0e5050e82ad6949487",
+        "size_in_bytes": 21743
+      },
+      {
+        "_path": "include/va/va_backend_prot.h",
+        "path_type": "hardlink",
+        "sha256": "8d7ae3ced06c471dda1da0659a1e8cc36dbada4a74e91b4ebc30f543d98191bd",
+        "sha256_in_prefix": "8d7ae3ced06c471dda1da0659a1e8cc36dbada4a74e91b4ebc30f543d98191bd",
+        "size_in_bytes": 2355
+      },
+      {
+        "_path": "include/va/va_backend_vpp.h",
+        "path_type": "hardlink",
+        "sha256": "c2abf2b69e82bc5b267a5937b0c9274acb3f0c46a11ef0a935ecd01e78b18f56",
+        "sha256_in_prefix": "c2abf2b69e82bc5b267a5937b0c9274acb3f0c46a11ef0a935ecd01e78b18f56",
+        "size_in_bytes": 2300
+      },
+      {
+        "_path": "include/va/va_backend_wayland.h",
+        "path_type": "hardlink",
+        "sha256": "6f25642892e12f63b64312c7b340f635be3857d0ef0c26ba779a7f9e2cf8aafb",
+        "sha256_in_prefix": "6f25642892e12f63b64312c7b340f635be3857d0ef0c26ba779a7f9e2cf8aafb",
+        "size_in_bytes": 2770
+      },
+      {
+        "_path": "include/va/va_compat.h",
+        "path_type": "hardlink",
+        "sha256": "b3ae37a62e910f32b4ce43ace596e0a280e8aa60c9426e24c17e29c1d8c24197",
+        "sha256_in_prefix": "b3ae37a62e910f32b4ce43ace596e0a280e8aa60c9426e24c17e29c1d8c24197",
+        "size_in_bytes": 4067
+      },
+      {
+        "_path": "include/va/va_dec_av1.h",
+        "path_type": "hardlink",
+        "sha256": "fba81be5acc10046c25e5b5cef9fe97d98ecf7d441b9bdc214e7451d84a1a1e4",
+        "sha256_in_prefix": "fba81be5acc10046c25e5b5cef9fe97d98ecf7d441b9bdc214e7451d84a1a1e4",
+        "size_in_bytes": 27303
+      },
+      {
+        "_path": "include/va/va_dec_hevc.h",
+        "path_type": "hardlink",
+        "sha256": "3d8d3b6d1f4ec9ca055769579164352cded8987dfc7c9c5339af88fced45a6f3",
+        "sha256_in_prefix": "3d8d3b6d1f4ec9ca055769579164352cded8987dfc7c9c5339af88fced45a6f3",
+        "size_in_bytes": 27597
+      },
+      {
+        "_path": "include/va/va_dec_jpeg.h",
+        "path_type": "hardlink",
+        "sha256": "abdf2ec902267cf96b62b98ef6e11482eacfed548d793fdda2ee1dd7542520f9",
+        "sha256_in_prefix": "abdf2ec902267cf96b62b98ef6e11482eacfed548d793fdda2ee1dd7542520f9",
+        "size_in_bytes": 5609
+      },
+      {
+        "_path": "include/va/va_dec_vp8.h",
+        "path_type": "hardlink",
+        "sha256": "8ee23275302a9584901ea6dd9f958b10a3119514c92730df3195764d81d80296",
+        "sha256_in_prefix": "8ee23275302a9584901ea6dd9f958b10a3119514c92730df3195764d81d80296",
+        "size_in_bytes": 8783
+      },
+      {
+        "_path": "include/va/va_dec_vp9.h",
+        "path_type": "hardlink",
+        "sha256": "7e66bb433e6f4a50753fdcb2da937ed20426f87901b2c78ee8b8baf827786f3d",
+        "sha256_in_prefix": "7e66bb433e6f4a50753fdcb2da937ed20426f87901b2c78ee8b8baf827786f3d",
+        "size_in_bytes": 12130
+      },
+      {
+        "_path": "include/va/va_dec_vvc.h",
+        "path_type": "hardlink",
+        "sha256": "f7072a0535b51afddd1af9f2b97a15ced66a0f7d61c9ed19593a81c7cfdd68ac",
+        "sha256_in_prefix": "f7072a0535b51afddd1af9f2b97a15ced66a0f7d61c9ed19593a81c7cfdd68ac",
+        "size_in_bytes": 35773
+      },
+      {
+        "_path": "include/va/va_dri2.h",
+        "path_type": "hardlink",
+        "sha256": "7dcd333f073827883b60a71f2084b4bb77a509de69acf98f3808a1cc90980e19",
+        "sha256_in_prefix": "7dcd333f073827883b60a71f2084b4bb77a509de69acf98f3808a1cc90980e19",
+        "size_in_bytes": 2888
+      },
+      {
+        "_path": "include/va/va_dri3.h",
+        "path_type": "hardlink",
+        "sha256": "454e2c61e006cf43ae6eb49a53f52c70119f48e67e589409e89cfabb7eb854d5",
+        "sha256_in_prefix": "454e2c61e006cf43ae6eb49a53f52c70119f48e67e589409e89cfabb7eb854d5",
+        "size_in_bytes": 1844
+      },
+      {
+        "_path": "include/va/va_dricommon.h",
+        "path_type": "hardlink",
+        "sha256": "aae936d116751be843e80d92421c1750b0ef33ac892e19d5173ae5d85a791427",
+        "sha256_in_prefix": "aae936d116751be843e80d92421c1750b0ef33ac892e19d5173ae5d85a791427",
+        "size_in_bytes": 3166
+      },
+      {
+        "_path": "include/va/va_drm.h",
+        "path_type": "hardlink",
+        "sha256": "73cf45f9fa2c36454378cbf92607d3205dcfa8747ce4578a85ee1b40954c7698",
+        "sha256_in_prefix": "73cf45f9fa2c36454378cbf92607d3205dcfa8747ce4578a85ee1b40954c7698",
+        "size_in_bytes": 1774
+      },
+      {
+        "_path": "include/va/va_drmcommon.h",
+        "path_type": "hardlink",
+        "sha256": "a71b5899f36f33bdccf540cc8663b335057ef5daa123e2b2af11f783d76dfc27",
+        "sha256_in_prefix": "a71b5899f36f33bdccf540cc8663b335057ef5daa123e2b2af11f783d76dfc27",
+        "size_in_bytes": 9237
+      },
+      {
+        "_path": "include/va/va_egl.h",
+        "path_type": "hardlink",
+        "sha256": "9aca64c0c139355da196b58d50fe6ab6d7850286fdf0381cf0b51ab1a994357b",
+        "sha256_in_prefix": "9aca64c0c139355da196b58d50fe6ab6d7850286fdf0381cf0b51ab1a994357b",
+        "size_in_bytes": 1326
+      },
+      {
+        "_path": "include/va/va_enc_av1.h",
+        "path_type": "hardlink",
+        "sha256": "f7b703128774a9fb3646fabfb3a216a9fad7ba439cd56b33d38b80ad94daf426",
+        "sha256_in_prefix": "f7b703128774a9fb3646fabfb3a216a9fad7ba439cd56b33d38b80ad94daf426",
+        "size_in_bytes": 41108
+      },
+      {
+        "_path": "include/va/va_enc_h264.h",
+        "path_type": "hardlink",
+        "sha256": "2474cc028a8e77d17cb46c825c1688f749ce09f4bf18efc15aae7e77045814e5",
+        "sha256_in_prefix": "2474cc028a8e77d17cb46c825c1688f749ce09f4bf18efc15aae7e77045814e5",
+        "size_in_bytes": 26086
+      },
+      {
+        "_path": "include/va/va_enc_hevc.h",
+        "path_type": "hardlink",
+        "sha256": "2264e100efce0246c27eca53fad5298d9f744465e0fb7168b6b62f38a7e345af",
+        "sha256_in_prefix": "2264e100efce0246c27eca53fad5298d9f744465e0fb7168b6b62f38a7e345af",
+        "size_in_bytes": 40014
+      },
+      {
+        "_path": "include/va/va_enc_jpeg.h",
+        "path_type": "hardlink",
+        "sha256": "5e864e285352bffa2a9de26d61064f501af0bdce984ee7fa616a119eeccec7c3",
+        "sha256_in_prefix": "5e864e285352bffa2a9de26d61064f501af0bdce984ee7fa616a119eeccec7c3",
+        "size_in_bytes": 4979
+      },
+      {
+        "_path": "include/va/va_enc_mpeg2.h",
+        "path_type": "hardlink",
+        "sha256": "4aebd65137ef7089560bf82a68a15a7a2530fce1f0eae185a0f219539e5b246f",
+        "sha256_in_prefix": "4aebd65137ef7089560bf82a68a15a7a2530fce1f0eae185a0f219539e5b246f",
+        "size_in_bytes": 11231
+      },
+      {
+        "_path": "include/va/va_enc_vp8.h",
+        "path_type": "hardlink",
+        "sha256": "020fb8f4891875b8226e606537d20ce143e6151bccfc8f827bad8cadba4778cd",
+        "sha256_in_prefix": "020fb8f4891875b8226e606537d20ce143e6151bccfc8f827bad8cadba4778cd",
+        "size_in_bytes": 12689
+      },
+      {
+        "_path": "include/va/va_enc_vp9.h",
+        "path_type": "hardlink",
+        "sha256": "493bda53db163ca8e48391b4f60cd9c1162e6b4f033748de5a0c8f94920eb7ec",
+        "sha256_in_prefix": "493bda53db163ca8e48391b4f60cd9c1162e6b4f033748de5a0c8f94920eb7ec",
+        "size_in_bytes": 23139
+      },
+      {
+        "_path": "include/va/va_fei.h",
+        "path_type": "hardlink",
+        "sha256": "02e3596b0902dcc5d82109e7464ab22be479cde4f5820173d2ba0ed00fdc10cf",
+        "sha256_in_prefix": "02e3596b0902dcc5d82109e7464ab22be479cde4f5820173d2ba0ed00fdc10cf",
+        "size_in_bytes": 6952
+      },
+      {
+        "_path": "include/va/va_fei_h264.h",
+        "path_type": "hardlink",
+        "sha256": "c0503249a26e9bb8971fbbfed15da6baeb559ef19cf38dc80b094abccb7c7238",
+        "sha256_in_prefix": "c0503249a26e9bb8971fbbfed15da6baeb559ef19cf38dc80b094abccb7c7238",
+        "size_in_bytes": 22798
+      },
+      {
+        "_path": "include/va/va_fei_hevc.h",
+        "path_type": "hardlink",
+        "sha256": "28d64fccb741501fa8d20724587a287996477e3289aedec880458a56ce12170d",
+        "sha256_in_prefix": "28d64fccb741501fa8d20724587a287996477e3289aedec880458a56ce12170d",
+        "size_in_bytes": 11433
+      },
+      {
+        "_path": "include/va/va_prot.h",
+        "path_type": "hardlink",
+        "sha256": "bbb40458abc5cad320e49d0458edb0c8eda6f909a7529ad4758ae6d2673d0823",
+        "sha256_in_prefix": "bbb40458abc5cad320e49d0458edb0c8eda6f909a7529ad4758ae6d2673d0823",
+        "size_in_bytes": 22876
+      },
+      {
+        "_path": "include/va/va_str.h",
+        "path_type": "hardlink",
+        "sha256": "9d2f5b9ea4f41da38cbe9575bef1f59deb920d7f6736a0843f7e712d20cbf058",
+        "sha256_in_prefix": "9d2f5b9ea4f41da38cbe9575bef1f59deb920d7f6736a0843f7e712d20cbf058",
+        "size_in_bytes": 1603
+      },
+      {
+        "_path": "include/va/va_tpi.h",
+        "path_type": "hardlink",
+        "sha256": "94d6b6393530277baae52e06323f30a582a5cb068bdfa5f1a0ae6c5c215f9b29",
+        "sha256_in_prefix": "94d6b6393530277baae52e06323f30a582a5cb068bdfa5f1a0ae6c5c215f9b29",
+        "size_in_bytes": 1302
+      },
+      {
+        "_path": "include/va/va_trace.h",
+        "path_type": "hardlink",
+        "sha256": "c3c2eefeb4074b83b2ee6cf28a147a2c7d02780c65043566b9481b930f6b20b2",
+        "sha256_in_prefix": "c3c2eefeb4074b83b2ee6cf28a147a2c7d02780c65043566b9481b930f6b20b2",
+        "size_in_bytes": 16831
+      },
+      {
+        "_path": "include/va/va_version.h",
+        "path_type": "hardlink",
+        "sha256": "df90b9b2d2385ef65912c3d51e08dcf4fa76927fb024c7d14cd93a644e31f3b5",
+        "sha256_in_prefix": "df90b9b2d2385ef65912c3d51e08dcf4fa76927fb024c7d14cd93a644e31f3b5",
+        "size_in_bytes": 2658
+      },
+      {
+        "_path": "include/va/va_vpp.h",
+        "path_type": "hardlink",
+        "sha256": "30f6ed310d6324b4221ad01a58a5e1d36f5ca7f10e3cd97caa58159e904cd9eb",
+        "sha256_in_prefix": "30f6ed310d6324b4221ad01a58a5e1d36f5ca7f10e3cd97caa58159e904cd9eb",
+        "size_in_bytes": 65621
+      },
+      {
+        "_path": "include/va/va_wayland.h",
+        "path_type": "hardlink",
+        "sha256": "a055b197a0803993063d84e4383f5bb8f9593753301c953210212f06ff9383a2",
+        "sha256_in_prefix": "a055b197a0803993063d84e4383f5bb8f9593753301c953210212f06ff9383a2",
+        "size_in_bytes": 4256
+      },
+      {
+        "_path": "include/va/va_x11.h",
+        "path_type": "hardlink",
+        "sha256": "b8a6dac505ef5fa8772308ba51c7956b2813cbaa244c68379f4e880b80379de5",
+        "sha256_in_prefix": "b8a6dac505ef5fa8772308ba51c7956b2813cbaa244c68379f4e880b80379de5",
+        "size_in_bytes": 2189
+      },
+      {
+        "_path": "lib/libva-drm.so",
+        "path_type": "softlink",
+        "sha256": "24f1290a5273a6e94d184050c3892212a6d9f030b32d1dec25f73dbd9ef05bfd",
+        "size_in_bytes": 16808
+      },
+      {
+        "_path": "lib/libva-drm.so.2",
+        "path_type": "softlink",
+        "sha256": "24f1290a5273a6e94d184050c3892212a6d9f030b32d1dec25f73dbd9ef05bfd",
+        "size_in_bytes": 16808
+      },
+      {
+        "_path": "lib/libva-drm.so.2.2200.0",
+        "path_type": "hardlink",
+        "sha256": "24f1290a5273a6e94d184050c3892212a6d9f030b32d1dec25f73dbd9ef05bfd",
+        "sha256_in_prefix": "24f1290a5273a6e94d184050c3892212a6d9f030b32d1dec25f73dbd9ef05bfd",
+        "size_in_bytes": 16808
+      },
+      {
+        "_path": "lib/libva-wayland.so",
+        "path_type": "softlink",
+        "sha256": "a69021b8381172c834d16f58d595258718ec7a416e9c2969c1df15c27f222977",
+        "size_in_bytes": 36472
+      },
+      {
+        "_path": "lib/libva-wayland.so.2",
+        "path_type": "softlink",
+        "sha256": "a69021b8381172c834d16f58d595258718ec7a416e9c2969c1df15c27f222977",
+        "size_in_bytes": 36472
+      },
+      {
+        "_path": "lib/libva-wayland.so.2.2200.0",
+        "path_type": "hardlink",
+        "sha256": "a69021b8381172c834d16f58d595258718ec7a416e9c2969c1df15c27f222977",
+        "sha256_in_prefix": "a69021b8381172c834d16f58d595258718ec7a416e9c2969c1df15c27f222977",
+        "size_in_bytes": 36472
+      },
+      {
+        "_path": "lib/libva-x11.so",
+        "path_type": "softlink",
+        "sha256": "1e02c29d1ac364718e86d7f87f1682fb5a921b2c53c6b2e9bb126a8688bada3a",
+        "size_in_bytes": 28064
+      },
+      {
+        "_path": "lib/libva-x11.so.2",
+        "path_type": "softlink",
+        "sha256": "1e02c29d1ac364718e86d7f87f1682fb5a921b2c53c6b2e9bb126a8688bada3a",
+        "size_in_bytes": 28064
+      },
+      {
+        "_path": "lib/libva-x11.so.2.2200.0",
+        "path_type": "hardlink",
+        "sha256": "1e02c29d1ac364718e86d7f87f1682fb5a921b2c53c6b2e9bb126a8688bada3a",
+        "sha256_in_prefix": "1e02c29d1ac364718e86d7f87f1682fb5a921b2c53c6b2e9bb126a8688bada3a",
+        "size_in_bytes": 28064
+      },
+      {
+        "_path": "lib/libva.so",
+        "path_type": "softlink",
+        "sha256": "04572975579450f7f6a58570f3c87628a00791c262dc5b64c4750d932ba2bef6",
+        "size_in_bytes": 234616
+      },
+      {
+        "_path": "lib/libva.so.2",
+        "path_type": "softlink",
+        "sha256": "04572975579450f7f6a58570f3c87628a00791c262dc5b64c4750d932ba2bef6",
+        "size_in_bytes": 234616
+      },
+      {
+        "_path": "lib/libva.so.2.2200.0",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libva_1718886648560/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_place",
+        "sha256": "04572975579450f7f6a58570f3c87628a00791c262dc5b64c4750d932ba2bef6",
+        "sha256_in_prefix": "df1a7ca13a4cfdef00f242cac2447c3bf9a878c0b69b40cdad8098d7c6d9c26e",
+        "size_in_bytes": 234616
+      },
+      {
+        "_path": "lib/pkgconfig/libva-drm.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libva_1718886648560/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_place",
+        "sha256": "d70ced688a3e7b6b2e1fa95e6e207854e7d2e5ccdd73ad94865cce4382fadd28",
+        "sha256_in_prefix": "142dd72bb920f32c8ce54668bda8ca8fdd34ca312ed5c6210af92746d24436ce",
+        "size_in_bytes": 527
+      },
+      {
+        "_path": "lib/pkgconfig/libva-wayland.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libva_1718886648560/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_place",
+        "sha256": "5b4538f704cd6d1df0af17dd25f3754d92985cb274cea162c1a5a1e1e3560049",
+        "sha256_in_prefix": "526592e58bc67644981323e6f1a27ef0406938ab7df1c267ae5b2c9983c87ff9",
+        "size_in_bytes": 559
+      },
+      {
+        "_path": "lib/pkgconfig/libva-x11.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libva_1718886648560/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_place",
+        "sha256": "7707ae2cd2fe51bb4cee276dcebc80cb40a944e3405ba14df0ab771ea434712d",
+        "sha256_in_prefix": "7b88b5d73cb69a3c892f0c249e4aed558a7805932628f5c437922bcd5401093b",
+        "size_in_bytes": 527
+      },
+      {
+        "_path": "lib/pkgconfig/libva.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libva_1718886648560/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_place",
+        "sha256": "7dd554ef18cb2cc5bc1f2e2f26a9469522b5dddc1ae0f648b8c6ed03d57673c3",
+        "sha256_in_prefix": "0a622d59b6f6fdfdcfaf87d1badfab32f0bb1970417dbc86f04f495717434e36",
+        "size_in_bytes": 766
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "8a67bda4308a939b2b25337cac1bc7950a1ee755d009c020ab739c4e0607fc2d",
+  "size": 209586,
+  "subdir": "linux-64",
+  "timestamp": 1718886769000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libva-2.22.0-hb711507_0.conda",
+  "version": "2.22.0"
+}

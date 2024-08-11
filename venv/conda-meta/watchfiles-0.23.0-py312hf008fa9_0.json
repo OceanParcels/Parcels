@@ -1,0 +1,249 @@
+{
+  "build": "py312hf008fa9_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [
+    "__glibc >=2.17"
+  ],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "anyio >=3.0.0",
+    "libgcc-ng >=12",
+    "python >=3.12,<3.13.0a0",
+    "python_abi 3.12.* *_cp312"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/watchfiles-0.23.0-py312hf008fa9_0",
+  "files": [
+    "bin/watchfiles",
+    "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/METADATA",
+    "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/RECORD",
+    "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/WHEEL",
+    "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/entry_points.txt",
+    "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/license_files/LICENSE",
+    "lib/python3.12/site-packages/watchfiles/__init__.py",
+    "lib/python3.12/site-packages/watchfiles/__main__.py",
+    "lib/python3.12/site-packages/watchfiles/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/watchfiles/__pycache__/__main__.cpython-312.pyc",
+    "lib/python3.12/site-packages/watchfiles/__pycache__/cli.cpython-312.pyc",
+    "lib/python3.12/site-packages/watchfiles/__pycache__/filters.cpython-312.pyc",
+    "lib/python3.12/site-packages/watchfiles/__pycache__/main.cpython-312.pyc",
+    "lib/python3.12/site-packages/watchfiles/__pycache__/run.cpython-312.pyc",
+    "lib/python3.12/site-packages/watchfiles/__pycache__/version.cpython-312.pyc",
+    "lib/python3.12/site-packages/watchfiles/_rust_notify.cpython-312-x86_64-linux-gnu.so",
+    "lib/python3.12/site-packages/watchfiles/_rust_notify.pyi",
+    "lib/python3.12/site-packages/watchfiles/cli.py",
+    "lib/python3.12/site-packages/watchfiles/filters.py",
+    "lib/python3.12/site-packages/watchfiles/main.py",
+    "lib/python3.12/site-packages/watchfiles/py.typed",
+    "lib/python3.12/site-packages/watchfiles/run.py",
+    "lib/python3.12/site-packages/watchfiles/version.py"
+  ],
+  "fn": "watchfiles-0.23.0-py312hf008fa9_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/watchfiles-0.23.0-py312hf008fa9_0",
+    "type": 1
+  },
+  "md5": "01dbea8851491c08ea5d41739bb008c1",
+  "name": "watchfiles",
+  "package_tarball_full_path": "/opt/conda/pkgs/watchfiles-0.23.0-py312hf008fa9_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/watchfiles",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/watchfiles_1723066473045/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_",
+        "sha256": "58eb9d3a9432f2b61e7e6e1d7545e61f4e66843e5b53907dcee192388b172421",
+        "sha256_in_prefix": "0e3dcf2a4b579c26503a935639bb4e4d78827a812f27b1967d7b779518dd9b16",
+        "size_in_bytes": 465
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "f1791689c6896df04ed76fbcc8ed7cc514d2d9eb371928af3696b11036007ad2",
+        "sha256_in_prefix": "f1791689c6896df04ed76fbcc8ed7cc514d2d9eb371928af3696b11036007ad2",
+        "size_in_bytes": 4923
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "1146a9814e369de9a3e20152045d14ca00f4db551a976ca2f80f467b929638b6",
+        "sha256_in_prefix": "1146a9814e369de9a3e20152045d14ca00f4db551a976ca2f80f467b929638b6",
+        "size_in_bytes": 1950
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "ce7bd233a9e7c6f901efba4b84bbf8839e1b507084849cfc2d90a0c9009e96db",
+        "sha256_in_prefix": "ce7bd233a9e7c6f901efba4b84bbf8839e1b507084849cfc2d90a0c9009e96db",
+        "size_in_bytes": 99
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "413ca7e09da6717372b2efa9555db30725ef4e0b74b16b4c676b6c3463703c69",
+        "sha256_in_prefix": "413ca7e09da6717372b2efa9555db30725ef4e0b74b16b4c676b6c3463703c69",
+        "size_in_bytes": 106
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/entry_points.txt",
+        "path_type": "hardlink",
+        "sha256": "b350e96b677f28a072fa32911165bad19dc6a11677269084a3ff62603b7a84e4",
+        "sha256_in_prefix": "b350e96b677f28a072fa32911165bad19dc6a11677269084a3ff62603b7a84e4",
+        "size_in_bytes": 48
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles-0.23.0.dist-info/license_files/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "36b6f98a7a42de39e14f1c6eb59831cdb94cc11b05eead31c81fb8f851d1750b",
+        "sha256_in_prefix": "36b6f98a7a42de39e14f1c6eb59831cdb94cc11b05eead31c81fb8f851d1750b",
+        "size_in_bytes": 1110
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "21194cf4a39279d3331757ef2ebef21073d54be50511135386507eb66588f325",
+        "sha256_in_prefix": "21194cf4a39279d3331757ef2ebef21073d54be50511135386507eb66588f325",
+        "size_in_bytes": 364
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/__main__.py",
+        "path_type": "hardlink",
+        "sha256": "26012b6248ac92287c63aa11c28c002ed47eaf042100076a3985a342b69120f2",
+        "sha256_in_prefix": "26012b6248ac92287c63aa11c28c002ed47eaf042100076a3985a342b69120f2",
+        "size_in_bytes": 59
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "23071cb7e9a750e6f042458fbd56a297315af73be1623a0066f523c11adea1fa",
+        "sha256_in_prefix": "23071cb7e9a750e6f042458fbd56a297315af73be1623a0066f523c11adea1fa",
+        "size_in_bytes": 507
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/__pycache__/__main__.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "9629ebb55455532523bde2bb3f6f48b89897b4814ffcae4569bf8d0b37ec3916",
+        "sha256_in_prefix": "9629ebb55455532523bde2bb3f6f48b89897b4814ffcae4569bf8d0b37ec3916",
+        "size_in_bytes": 241
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/__pycache__/cli.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "5798213eb5b2376254f5a81e562dad29b763fbee05a3ca9e07cfbc56b88f4d8f",
+        "sha256_in_prefix": "5798213eb5b2376254f5a81e562dad29b763fbee05a3ca9e07cfbc56b88f4d8f",
+        "size_in_bytes": 10152
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/__pycache__/filters.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "90fc783c1a250b6c4e77a96fffe588dfd9a9807f4cde8cc9e3802e9be53c009b",
+        "sha256_in_prefix": "90fc783c1a250b6c4e77a96fffe588dfd9a9807f4cde8cc9e3802e9be53c009b",
+        "size_in_bytes": 7174
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/__pycache__/main.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "ee3d312188daa73ad5ca8776922b7552f40faf53c32f81972bbc7ca246d861ff",
+        "sha256_in_prefix": "ee3d312188daa73ad5ca8776922b7552f40faf53c32f81972bbc7ca246d861ff",
+        "size_in_bytes": 15708
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/__pycache__/run.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "7246adcd22024b25cf1fe1592273b4045c15669da9437045a4a318e2caf79039",
+        "sha256_in_prefix": "7246adcd22024b25cf1fe1592273b4045c15669da9437045a4a318e2caf79039",
+        "size_in_bytes": 19443
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/__pycache__/version.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "0452a01ea00ac696757f6816aaaedd765a1ee44f551d42c5944becc8d02b42a6",
+        "sha256_in_prefix": "0452a01ea00ac696757f6816aaaedd765a1ee44f551d42c5944becc8d02b42a6",
+        "size_in_bytes": 241
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/_rust_notify.cpython-312-x86_64-linux-gnu.so",
+        "path_type": "hardlink",
+        "sha256": "a28e805262f0d2ff3d53ec409d99f73866e2dbebc9589a91ddf39af8080a8599",
+        "sha256_in_prefix": "a28e805262f0d2ff3d53ec409d99f73866e2dbebc9589a91ddf39af8080a8599",
+        "size_in_bytes": 1022440
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/_rust_notify.pyi",
+        "path_type": "hardlink",
+        "sha256": "ab915091780124414fb7d4427fb9b2e303f944cd45c12569a9fdb6d5cb3279b8",
+        "sha256_in_prefix": "ab915091780124414fb7d4427fb9b2e303f944cd45c12569a9fdb6d5cb3279b8",
+        "size_in_bytes": 4753
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/cli.py",
+        "path_type": "hardlink",
+        "sha256": "0c7308d0b7d3ee13ab59a8bf63844ffefbd3bd576d7036a2a22c572e2bf6a46e",
+        "sha256_in_prefix": "0c7308d0b7d3ee13ab59a8bf63844ffefbd3bd576d7036a2a22c572e2bf6a46e",
+        "size_in_bytes": 7707
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/filters.py",
+        "path_type": "hardlink",
+        "sha256": "534cd718e7a0f5d307913e75fb9e812a946b588bbde653ead070d1fd9078a031",
+        "sha256_in_prefix": "534cd718e7a0f5d307913e75fb9e812a946b588bbde653ead070d1fd9078a031",
+        "size_in_bytes": 5139
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/main.py",
+        "path_type": "hardlink",
+        "sha256": "aec47089d975d0212797ad3f75b704a0f00bde03250d0f51b70f60e30694ebd4",
+        "sha256_in_prefix": "aec47089d975d0212797ad3f75b704a0f00bde03250d0f51b70f60e30694ebd4",
+        "size_in_bytes": 14029
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/py.typed",
+        "path_type": "hardlink",
+        "sha256": "312e0d6b7b68f554c63f2ffcc0140cffa98d29a5f8a88a62e7ec3bfcb641fbc2",
+        "sha256_in_prefix": "312e0d6b7b68f554c63f2ffcc0140cffa98d29a5f8a88a62e7ec3bfcb641fbc2",
+        "size_in_bytes": 69
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/run.py",
+        "path_type": "hardlink",
+        "sha256": "43402abf1a16c839147e9b7827e05e09bed776e94cd2988f31ee85e01b3df181",
+        "sha256_in_prefix": "43402abf1a16c839147e9b7827e05e09bed776e94cd2988f31ee85e01b3df181",
+        "size_in_bytes": 15332
+      },
+      {
+        "_path": "lib/python3.12/site-packages/watchfiles/version.py",
+        "path_type": "hardlink",
+        "sha256": "3515949e4677d836a6b0d295db411eb5a8081932c330c527a83595185140d964",
+        "sha256_in_prefix": "3515949e4677d836a6b0d295db411eb5a8081932c330c527a83595185140d964",
+        "size_in_bytes": 85
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "0de80822303b8b432c8ef8148bf455339985bc7365124a45e571c6797288b946",
+  "size": 398424,
+  "subdir": "linux-64",
+  "timestamp": 1723066677000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/watchfiles-0.23.0-py312hf008fa9_0.conda",
+  "version": "0.23.0"
+}

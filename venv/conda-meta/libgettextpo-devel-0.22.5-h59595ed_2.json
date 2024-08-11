@@ -1,0 +1,49 @@
+{
+  "build": "h59595ed_2",
+  "build_number": 2,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=12",
+    "libgettextpo 0.22.5 h59595ed_2"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libgettextpo-devel-0.22.5-h59595ed_2",
+  "files": [
+    "include/gettext-po.h",
+    "lib/libgettextpo.so"
+  ],
+  "fn": "libgettextpo-devel-0.22.5-h59595ed_2.conda",
+  "license": "GPL-3.0-or-later",
+  "link": {
+    "source": "/opt/conda/pkgs/libgettextpo-devel-0.22.5-h59595ed_2",
+    "type": 1
+  },
+  "md5": "b63d9b6da3653179a278077f0de20014",
+  "name": "libgettextpo-devel",
+  "package_tarball_full_path": "/opt/conda/pkgs/libgettextpo-devel-0.22.5-h59595ed_2.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/gettext-po.h",
+        "path_type": "hardlink",
+        "sha256": "f02f06ce7179e99b3001151a82fdae5e943ca739d6de31f1383ccefaa9935631",
+        "sha256_in_prefix": "f02f06ce7179e99b3001151a82fdae5e943ca739d6de31f1383ccefaa9935631",
+        "size_in_bytes": 15548
+      },
+      {
+        "_path": "lib/libgettextpo.so",
+        "path_type": "softlink",
+        "sha256": "28f4003b1597aa12298f9db05831c41c6b1ab66e2228927264ba627747441ae3",
+        "size_in_bytes": 395408
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "695eb2439ad4a89e4205dd675cc52fba5cef6b5d41b83f07cdbf4770a336cc15",
+  "size": 36758,
+  "subdir": "linux-64",
+  "timestamp": 1712512303000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libgettextpo-devel-0.22.5-h59595ed_2.conda",
+  "version": "0.22.5"
+}

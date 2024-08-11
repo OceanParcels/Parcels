@@ -1,0 +1,777 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "numpy",
+    "python >=3.6",
+    "pytools"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/pymbolic-2022.2-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/pymbolic-2022.2.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/pymbolic-2022.2.dist-info/LICENSE",
+    "lib/python3.12/site-packages/pymbolic-2022.2.dist-info/METADATA",
+    "lib/python3.12/site-packages/pymbolic-2022.2.dist-info/RECORD",
+    "lib/python3.12/site-packages/pymbolic-2022.2.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/pymbolic-2022.2.dist-info/WHEEL",
+    "lib/python3.12/site-packages/pymbolic-2022.2.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/pymbolic-2022.2.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/pymbolic/__init__.py",
+    "lib/python3.12/site-packages/pymbolic/algorithm.py",
+    "lib/python3.12/site-packages/pymbolic/compiler.py",
+    "lib/python3.12/site-packages/pymbolic/cse.py",
+    "lib/python3.12/site-packages/pymbolic/functions.py",
+    "lib/python3.12/site-packages/pymbolic/geometric_algebra/__init__.py",
+    "lib/python3.12/site-packages/pymbolic/geometric_algebra/mapper.py",
+    "lib/python3.12/site-packages/pymbolic/geometric_algebra/primitives.py",
+    "lib/python3.12/site-packages/pymbolic/imperative/__init__.py",
+    "lib/python3.12/site-packages/pymbolic/imperative/analysis.py",
+    "lib/python3.12/site-packages/pymbolic/imperative/instruction.py",
+    "lib/python3.12/site-packages/pymbolic/imperative/statement.py",
+    "lib/python3.12/site-packages/pymbolic/imperative/transform.py",
+    "lib/python3.12/site-packages/pymbolic/imperative/utils.py",
+    "lib/python3.12/site-packages/pymbolic/interop/__init__.py",
+    "lib/python3.12/site-packages/pymbolic/interop/ast.py",
+    "lib/python3.12/site-packages/pymbolic/interop/common.py",
+    "lib/python3.12/site-packages/pymbolic/interop/matchpy/__init__.py",
+    "lib/python3.12/site-packages/pymbolic/interop/matchpy/mapper.py",
+    "lib/python3.12/site-packages/pymbolic/interop/matchpy/tofrom.py",
+    "lib/python3.12/site-packages/pymbolic/interop/maxima.py",
+    "lib/python3.12/site-packages/pymbolic/interop/symengine.py",
+    "lib/python3.12/site-packages/pymbolic/interop/sympy.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/__init__.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/analysis.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/c_code.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/coefficient.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/collector.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/constant_converter.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/constant_folder.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/cse_tagger.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/dependency.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/differentiator.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/distributor.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/evaluator.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/flattener.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/flop_counter.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/graphviz.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/optimize.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/persistent_hash.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/stringifier.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/substitutor.py",
+    "lib/python3.12/site-packages/pymbolic/mapper/unifier.py",
+    "lib/python3.12/site-packages/pymbolic/maxima.py",
+    "lib/python3.12/site-packages/pymbolic/parser.py",
+    "lib/python3.12/site-packages/pymbolic/polynomial.py",
+    "lib/python3.12/site-packages/pymbolic/primitives.py",
+    "lib/python3.12/site-packages/pymbolic/rational.py",
+    "lib/python3.12/site-packages/pymbolic/sympy_interface.py",
+    "lib/python3.12/site-packages/pymbolic/traits.py",
+    "lib/python3.12/site-packages/pymbolic/typing.py",
+    "lib/python3.12/site-packages/pymbolic/version.py",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/algorithm.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/compiler.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/cse.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/functions.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/geometric_algebra/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/geometric_algebra/__pycache__/mapper.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/geometric_algebra/__pycache__/primitives.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/analysis.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/instruction.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/statement.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/transform.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/utils.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/interop/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/interop/__pycache__/ast.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/interop/__pycache__/common.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/interop/matchpy/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/interop/matchpy/__pycache__/mapper.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/interop/matchpy/__pycache__/tofrom.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/interop/__pycache__/maxima.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/interop/__pycache__/symengine.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/interop/__pycache__/sympy.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/analysis.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/c_code.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/coefficient.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/collector.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/constant_converter.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/constant_folder.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/cse_tagger.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/dependency.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/differentiator.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/distributor.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/evaluator.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/flattener.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/flop_counter.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/graphviz.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/optimize.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/persistent_hash.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/stringifier.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/substitutor.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/unifier.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/maxima.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/parser.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/polynomial.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/primitives.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/rational.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/sympy_interface.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/traits.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/typing.cpython-312.pyc",
+    "lib/python3.12/site-packages/pymbolic/__pycache__/version.cpython-312.pyc"
+  ],
+  "fn": "pymbolic-2022.2-pyhd8ed1ab_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/pymbolic-2022.2-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "b2e55b3de35c94a32a83f79a0733f5b4",
+  "name": "pymbolic",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/pymbolic-2022.2-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/pymbolic-2022.2.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/pymbolic-2022.2.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "41e2de206073dd8cf8cd8e956ae36dcae4f81b218c8cba84dd36e56265f847cc",
+        "sha256_in_prefix": "41e2de206073dd8cf8cd8e956ae36dcae4f81b218c8cba84dd36e56265f847cc",
+        "size_in_bytes": 1147
+      },
+      {
+        "_path": "site-packages/pymbolic-2022.2.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "923d5ca1859f5d67ce04abe28776374c54d51bafa5c359cda77c5ce6af599ca0",
+        "sha256_in_prefix": "923d5ca1859f5d67ce04abe28776374c54d51bafa5c359cda77c5ce6af599ca0",
+        "size_in_bytes": 2795
+      },
+      {
+        "_path": "site-packages/pymbolic-2022.2.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "6992aa16a83746c1a8ca93e6f8335cbf17fc0c443afcd0859cbf314ceb749bac",
+        "sha256_in_prefix": "6992aa16a83746c1a8ca93e6f8335cbf17fc0c443afcd0859cbf314ceb749bac",
+        "size_in_bytes": 8071
+      },
+      {
+        "_path": "site-packages/pymbolic-2022.2.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/pymbolic-2022.2.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "db07a93359e4e034b8785a58ad6d534ea3dca0635f1e184efe2e66e1c3a299ba",
+        "sha256_in_prefix": "db07a93359e4e034b8785a58ad6d534ea3dca0635f1e184efe2e66e1c3a299ba",
+        "size_in_bytes": 92
+      },
+      {
+        "_path": "site-packages/pymbolic-2022.2.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "a1885b69b27422b898ac4c93587580882c0a0884c63d90161494a1e77950559c",
+        "sha256_in_prefix": "a1885b69b27422b898ac4c93587580882c0a0884c63d90161494a1e77950559c",
+        "size_in_bytes": 104
+      },
+      {
+        "_path": "site-packages/pymbolic-2022.2.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "88039da9dd893d2671f4a2168a65163ab851077353f956e7728959570c4acc73",
+        "sha256_in_prefix": "88039da9dd893d2671f4a2168a65163ab851077353f956e7728959570c4acc73",
+        "size_in_bytes": 9
+      },
+      {
+        "_path": "site-packages/pymbolic/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "dab14c670d03e5f63979d61530a1a8fb0797a43677a6a2b29ff3152a991f3c09",
+        "sha256_in_prefix": "dab14c670d03e5f63979d61530a1a8fb0797a43677a6a2b29ff3152a991f3c09",
+        "size_in_bytes": 2489
+      },
+      {
+        "_path": "site-packages/pymbolic/algorithm.py",
+        "path_type": "hardlink",
+        "sha256": "6e74c943aa8a927824c70027e4c521e7191f7cba64b7e666d6f0aef0bd7090bc",
+        "sha256_in_prefix": "6e74c943aa8a927824c70027e4c521e7191f7cba64b7e666d6f0aef0bd7090bc",
+        "size_in_bytes": 12040
+      },
+      {
+        "_path": "site-packages/pymbolic/compiler.py",
+        "path_type": "hardlink",
+        "sha256": "d44df9b648a1d236adff8858c3200405192c4e39968c4603aedf220a3cb58bad",
+        "sha256_in_prefix": "d44df9b648a1d236adff8858c3200405192c4e39968c4603aedf220a3cb58bad",
+        "size_in_bytes": 5092
+      },
+      {
+        "_path": "site-packages/pymbolic/cse.py",
+        "path_type": "hardlink",
+        "sha256": "a4fd53f5deaa0439ea9d22813cef7e08445dc343a4e37c8274990ac51d5d29bb",
+        "sha256_in_prefix": "a4fd53f5deaa0439ea9d22813cef7e08445dc343a4e37c8274990ac51d5d29bb",
+        "size_in_bytes": 4719
+      },
+      {
+        "_path": "site-packages/pymbolic/functions.py",
+        "path_type": "hardlink",
+        "sha256": "cf1ad5d7e4abff452d344acec0b6e24007dd3eaa0169cfe2407d7642421c4f6c",
+        "sha256_in_prefix": "cf1ad5d7e4abff452d344acec0b6e24007dd3eaa0169cfe2407d7642421c4f6c",
+        "size_in_bytes": 1986
+      },
+      {
+        "_path": "site-packages/pymbolic/geometric_algebra/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "6240230c166f4cccb8e5e89e630e3375e2d8e0c6f1f391a0fc54ecbc3b8e2a8f",
+        "sha256_in_prefix": "6240230c166f4cccb8e5e89e630e3375e2d8e0c6f1f391a0fc54ecbc3b8e2a8f",
+        "size_in_bytes": 32020
+      },
+      {
+        "_path": "site-packages/pymbolic/geometric_algebra/mapper.py",
+        "path_type": "hardlink",
+        "sha256": "c176745c3e4d0a7b417b57dd0d0e3d011264a8516374e53df512c9835a9d4848",
+        "sha256_in_prefix": "c176745c3e4d0a7b417b57dd0d0e3d011264a8516374e53df512c9835a9d4848",
+        "size_in_bytes": 12569
+      },
+      {
+        "_path": "site-packages/pymbolic/geometric_algebra/primitives.py",
+        "path_type": "hardlink",
+        "sha256": "612352c34d8cac1ea24f362997dabb52af33dcaa5cf48a8a0afae194841902f7",
+        "sha256_in_prefix": "612352c34d8cac1ea24f362997dabb52af33dcaa5cf48a8a0afae194841902f7",
+        "size_in_bytes": 3877
+      },
+      {
+        "_path": "site-packages/pymbolic/imperative/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "d87b9eda6cb499c0f0c419197c666eb875ed17561c56ccd50e6986414554a4da",
+        "sha256_in_prefix": "d87b9eda6cb499c0f0c419197c666eb875ed17561c56ccd50e6986414554a4da",
+        "size_in_bytes": 1153
+      },
+      {
+        "_path": "site-packages/pymbolic/imperative/analysis.py",
+        "path_type": "hardlink",
+        "sha256": "2da14f9647461e46d7cba4f575032675eaa48b5af3a98014ee2e885920632477",
+        "sha256_in_prefix": "2da14f9647461e46d7cba4f575032675eaa48b5af3a98014ee2e885920632477",
+        "size_in_bytes": 1463
+      },
+      {
+        "_path": "site-packages/pymbolic/imperative/instruction.py",
+        "path_type": "hardlink",
+        "sha256": "fa0e303ef83b726081b9d0f8eedabde0daf8429f47218c1d029ac9ed82e4e477",
+        "sha256_in_prefix": "fa0e303ef83b726081b9d0f8eedabde0daf8429f47218c1d029ac9ed82e4e477",
+        "size_in_bytes": 1472
+      },
+      {
+        "_path": "site-packages/pymbolic/imperative/statement.py",
+        "path_type": "hardlink",
+        "sha256": "e103e6203140dd7dbdcce6d72ea2d61bea8758a2bf5365eba5092141cf9ef2dd",
+        "sha256_in_prefix": "e103e6203140dd7dbdcce6d72ea2d61bea8758a2bf5365eba5092141cf9ef2dd",
+        "size_in_bytes": 5811
+      },
+      {
+        "_path": "site-packages/pymbolic/imperative/transform.py",
+        "path_type": "hardlink",
+        "sha256": "aac8b505e9adc9ad5c8e9af39d93571aa72f6bb37078b0968714bc2f2390f9c5",
+        "sha256_in_prefix": "aac8b505e9adc9ad5c8e9af39d93571aa72f6bb37078b0968714bc2f2390f9c5",
+        "size_in_bytes": 3870
+      },
+      {
+        "_path": "site-packages/pymbolic/imperative/utils.py",
+        "path_type": "hardlink",
+        "sha256": "e6fbcd029ffa384286291e5c928483cff8a04b7c2f8a28fe2194e957e030517b",
+        "sha256_in_prefix": "e6fbcd029ffa384286291e5c928483cff8a04b7c2f8a28fe2194e957e030517b",
+        "size_in_bytes": 7416
+      },
+      {
+        "_path": "site-packages/pymbolic/interop/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/pymbolic/interop/ast.py",
+        "path_type": "hardlink",
+        "sha256": "9218a1aad0b918cb554ef63f54827bbc182e75182b10cf6525c75aff5edbb4ba",
+        "sha256_in_prefix": "9218a1aad0b918cb554ef63f54827bbc182e75182b10cf6525c75aff5edbb4ba",
+        "size_in_bytes": 16367
+      },
+      {
+        "_path": "site-packages/pymbolic/interop/common.py",
+        "path_type": "hardlink",
+        "sha256": "fa907ce899fe426f221d43f62e98c09cee87c5f1dcd185219af7fd0acd54a004",
+        "sha256_in_prefix": "fa907ce899fe426f221d43f62e98c09cee87c5f1dcd185219af7fd0acd54a004",
+        "size_in_bytes": 7420
+      },
+      {
+        "_path": "site-packages/pymbolic/interop/matchpy/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "0f31f453ee724b8bc25f691c03767c2929fb2d8f394a2668b66922b7cd19d473",
+        "sha256_in_prefix": "0f31f453ee724b8bc25f691c03767c2929fb2d8f394a2668b66922b7cd19d473",
+        "size_in_bytes": 12875
+      },
+      {
+        "_path": "site-packages/pymbolic/interop/matchpy/mapper.py",
+        "path_type": "hardlink",
+        "sha256": "c211a1e4ee5a8cfcfd9050b05c99b98cfd3bec637dd8dd4e3be800b7d9cdb809",
+        "sha256_in_prefix": "c211a1e4ee5a8cfcfd9050b05c99b98cfd3bec637dd8dd4e3be800b7d9cdb809",
+        "size_in_bytes": 425
+      },
+      {
+        "_path": "site-packages/pymbolic/interop/matchpy/tofrom.py",
+        "path_type": "hardlink",
+        "sha256": "b24f108b3995c17953560d36d67503c2c2f38ae8d92c94530d0fa361e5442bae",
+        "sha256_in_prefix": "b24f108b3995c17953560d36d67503c2c2f38ae8d92c94530d0fa361e5442bae",
+        "size_in_bytes": 8428
+      },
+      {
+        "_path": "site-packages/pymbolic/interop/maxima.py",
+        "path_type": "hardlink",
+        "sha256": "023234c2839e6e877eaaea8bd601e23ee7d8d38ced3006df1e5aae9797c409fd",
+        "sha256_in_prefix": "023234c2839e6e877eaaea8bd601e23ee7d8d38ced3006df1e5aae9797c409fd",
+        "size_in_bytes": 15365
+      },
+      {
+        "_path": "site-packages/pymbolic/interop/symengine.py",
+        "path_type": "hardlink",
+        "sha256": "afa21290806f365be37991c48122a40ab9ece3469082a77d68eb9c1f5c7e7a34",
+        "sha256_in_prefix": "afa21290806f365be37991c48122a40ab9ece3469082a77d68eb9c1f5c7e7a34",
+        "size_in_bytes": 4412
+      },
+      {
+        "_path": "site-packages/pymbolic/interop/sympy.py",
+        "path_type": "hardlink",
+        "sha256": "dca40041b4e0472e6065477459b00437afbf7156278f595845e5f40229a0bb17",
+        "sha256_in_prefix": "dca40041b4e0472e6065477459b00437afbf7156278f595845e5f40229a0bb17",
+        "size_in_bytes": 3608
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "7cf8b20a878c5660d652b5118b423cbe0ff924a8ba43bec50a17ec17b1dbddb5",
+        "sha256_in_prefix": "7cf8b20a878c5660d652b5118b423cbe0ff924a8ba43bec50a17ec17b1dbddb5",
+        "size_in_bytes": 34384
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/analysis.py",
+        "path_type": "hardlink",
+        "sha256": "2dc0cb9c23e0d0e04302e7aaa49b4a2a0463c02c6b9cd6f24091739ce0669a66",
+        "sha256_in_prefix": "2dc0cb9c23e0d0e04302e7aaa49b4a2a0463c02c6b9cd6f24091739ce0669a66",
+        "size_in_bytes": 2004
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/c_code.py",
+        "path_type": "hardlink",
+        "sha256": "d98ae314b9797de4b1ef85814b0d5e5bde7d89fa4f8bc52a548de54ff4d571f6",
+        "sha256_in_prefix": "d98ae314b9797de4b1ef85814b0d5e5bde7d89fa4f8bc52a548de54ff4d571f6",
+        "size_in_bytes": 8126
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/coefficient.py",
+        "path_type": "hardlink",
+        "sha256": "f8f05233f2b630cb2413b31b51eec498d0cee52d11dc0e092ed2cc94aa289e24",
+        "sha256_in_prefix": "f8f05233f2b630cb2413b31b51eec498d0cee52d11dc0e092ed2cc94aa289e24",
+        "size_in_bytes": 3800
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/collector.py",
+        "path_type": "hardlink",
+        "sha256": "fdf7f47fae5fd44e795b8f4e68939922eed44010bb2478ddb3e2eb525f85b6ac",
+        "sha256_in_prefix": "fdf7f47fae5fd44e795b8f4e68939922eed44010bb2478ddb3e2eb525f85b6ac",
+        "size_in_bytes": 4042
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/constant_converter.py",
+        "path_type": "hardlink",
+        "sha256": "e5853543f1f73e8e6056637d1c46d98efe0f37166aa02685f475ddcde529b23f",
+        "sha256_in_prefix": "e5853543f1f73e8e6056637d1c46d98efe0f37166aa02685f475ddcde529b23f",
+        "size_in_bytes": 2656
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/constant_folder.py",
+        "path_type": "hardlink",
+        "sha256": "258bd902c2b681078b04ba02abe0e1a4cb7d01da26c4179e0e14943da27cc16b",
+        "sha256_in_prefix": "258bd902c2b681078b04ba02abe0e1a4cb7d01da26c4179e0e14943da27cc16b",
+        "size_in_bytes": 3500
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/cse_tagger.py",
+        "path_type": "hardlink",
+        "sha256": "0b93fd8045d0d7a4854d4c43fa7d80155a375ceb90cde80937a26a44973a2d99",
+        "sha256_in_prefix": "0b93fd8045d0d7a4854d4c43fa7d80155a375ceb90cde80937a26a44973a2d99",
+        "size_in_bytes": 2369
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/dependency.py",
+        "path_type": "hardlink",
+        "sha256": "9df1ba034fb682a80bb2a51ecd33162836ab146c5d61a08c32719764df3f0072",
+        "sha256_in_prefix": "9df1ba034fb682a80bb2a51ecd33162836ab146c5d61a08c32719764df3f0072",
+        "size_in_bytes": 4983
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/differentiator.py",
+        "path_type": "hardlink",
+        "sha256": "5e2d083495a8fe7b30bff6e3063b0f94b9c342ac471e599e625635d4e27f0588",
+        "sha256_in_prefix": "5e2d083495a8fe7b30bff6e3063b0f94b9c342ac471e599e625635d4e27f0588",
+        "size_in_bytes": 9123
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/distributor.py",
+        "path_type": "hardlink",
+        "sha256": "6b1d01623782b72753072da7410b0794b6a244abd8432e1651c3a721203eb5df",
+        "sha256_in_prefix": "6b1d01623782b72753072da7410b0794b6a244abd8432e1651c3a721203eb5df",
+        "size_in_bytes": 4794
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/evaluator.py",
+        "path_type": "hardlink",
+        "sha256": "4eadf3e2e0c802960d7ba4211a59b9a901e266a3fb7dbbfe01eed18328915bb8",
+        "sha256_in_prefix": "4eadf3e2e0c802960d7ba4211a59b9a901e266a3fb7dbbfe01eed18328915bb8",
+        "size_in_bytes": 8209
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/flattener.py",
+        "path_type": "hardlink",
+        "sha256": "2f12caefd2bb96e7d89e972124d3d5a22b8a39e6f9c0f16c337ee2fec360b19e",
+        "sha256_in_prefix": "2f12caefd2bb96e7d89e972124d3d5a22b8a39e6f9c0f16c337ee2fec360b19e",
+        "size_in_bytes": 1560
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/flop_counter.py",
+        "path_type": "hardlink",
+        "sha256": "e12de629dbaef431ced3e20d34dec483ccdb6f1b2cab338388dd462b6e419cbe",
+        "sha256_in_prefix": "e12de629dbaef431ced3e20d34dec483ccdb6f1b2cab338388dd462b6e419cbe",
+        "size_in_bytes": 2702
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/graphviz.py",
+        "path_type": "hardlink",
+        "sha256": "d7d10e5aa8c51ea13d6bd460eb7eb0cfcb417c699b3753349baf1c1b2a340984",
+        "sha256_in_prefix": "d7d10e5aa8c51ea13d6bd460eb7eb0cfcb417c699b3753349baf1c1b2a340984",
+        "size_in_bytes": 5901
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/optimize.py",
+        "path_type": "hardlink",
+        "sha256": "8a13aa26f4e320b94e63dd10c8127eb87a5426c42405563fea275b161d5067d1",
+        "sha256_in_prefix": "8a13aa26f4e320b94e63dd10c8127eb87a5426c42405563fea275b161d5067d1",
+        "size_in_bytes": 13207
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/persistent_hash.py",
+        "path_type": "hardlink",
+        "sha256": "6908ff85f39ba741ba3087419adff2d3e79fd701c2c0d9b703e90fca5429fd68",
+        "sha256_in_prefix": "6908ff85f39ba741ba3087419adff2d3e79fd701c2c0d9b703e90fca5429fd68",
+        "size_in_bytes": 1727
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/stringifier.py",
+        "path_type": "hardlink",
+        "sha256": "5e689275ccbbbeb64abafdb6b38e2addf643ef65ab4e685b016397602340a31e",
+        "sha256_in_prefix": "5e689275ccbbbeb64abafdb6b38e2addf643ef65ab4e685b016397602340a31e",
+        "size_in_bytes": 28089
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/substitutor.py",
+        "path_type": "hardlink",
+        "sha256": "f4e6b3eea57593de10261b881df69f8dfb9074c8e112a2c1522c35a46c7c9a81",
+        "sha256_in_prefix": "f4e6b3eea57593de10261b881df69f8dfb9074c8e112a2c1522c35a46c7c9a81",
+        "size_in_bytes": 3204
+      },
+      {
+        "_path": "site-packages/pymbolic/mapper/unifier.py",
+        "path_type": "hardlink",
+        "sha256": "b779d01906cd88636a29ed5f5eb2d7ad3b9bd0ee8e5086f2f48438e175bca143",
+        "sha256_in_prefix": "b779d01906cd88636a29ed5f5eb2d7ad3b9bd0ee8e5086f2f48438e175bca143",
+        "size_in_bytes": 15251
+      },
+      {
+        "_path": "site-packages/pymbolic/maxima.py",
+        "path_type": "hardlink",
+        "sha256": "2316c88e15dd802287b6ff5df54b16ed246a2dc86dad3a43d97c2c109068b3d4",
+        "sha256_in_prefix": "2316c88e15dd802287b6ff5df54b16ed246a2dc86dad3a43d97c2c109068b3d4",
+        "size_in_bytes": 176
+      },
+      {
+        "_path": "site-packages/pymbolic/parser.py",
+        "path_type": "hardlink",
+        "sha256": "0743c691d2977df230220fca02e2164419db65a8cf8e94166f4e3f43515f0a5f",
+        "sha256_in_prefix": "0743c691d2977df230220fca02e2164419db65a8cf8e94166f4e3f43515f0a5f",
+        "size_in_bytes": 20940
+      },
+      {
+        "_path": "site-packages/pymbolic/polynomial.py",
+        "path_type": "hardlink",
+        "sha256": "2f0ea946d655d7b2f28058e6353561f669d99ce60051bf3244f017c03de560e8",
+        "sha256_in_prefix": "2f0ea946d655d7b2f28058e6353561f669d99ce60051bf3244f017c03de560e8",
+        "size_in_bytes": 11036
+      },
+      {
+        "_path": "site-packages/pymbolic/primitives.py",
+        "path_type": "hardlink",
+        "sha256": "f280432a8fe0bf37a6e1d550f93a1932ddbc3dab534ab2f9136672a4ee7ed322",
+        "sha256_in_prefix": "f280432a8fe0bf37a6e1d550f93a1932ddbc3dab534ab2f9136672a4ee7ed322",
+        "size_in_bytes": 46882
+      },
+      {
+        "_path": "site-packages/pymbolic/rational.py",
+        "path_type": "hardlink",
+        "sha256": "49bf5ac93ff43cf5885a2be287b1f0b8ec7fae30b3fde633d9c3dc22b52bf861",
+        "sha256_in_prefix": "49bf5ac93ff43cf5885a2be287b1f0b8ec7fae30b3fde633d9c3dc22b52bf861",
+        "size_in_bytes": 4710
+      },
+      {
+        "_path": "site-packages/pymbolic/sympy_interface.py",
+        "path_type": "hardlink",
+        "sha256": "0ee95298d8bcb5786fbe70bf00e028827b18a8448f5c057b7d6af4af724c081e",
+        "sha256_in_prefix": "0ee95298d8bcb5786fbe70bf00e028827b18a8448f5c057b7d6af4af724c081e",
+        "size_in_bytes": 183
+      },
+      {
+        "_path": "site-packages/pymbolic/traits.py",
+        "path_type": "hardlink",
+        "sha256": "5678faa399e9dae38ff3bd1f9703530539f93d8ddad157e5f11fa39551543946",
+        "sha256_in_prefix": "5678faa399e9dae38ff3bd1f9703530539f93d8ddad157e5f11fa39551543946",
+        "size_in_bytes": 3418
+      },
+      {
+        "_path": "site-packages/pymbolic/typing.py",
+        "path_type": "hardlink",
+        "sha256": "0ad70ff7408a9f5f95d78a75336404bbc78403b49e4098c8c0ad6a6eb8448143",
+        "sha256_in_prefix": "0ad70ff7408a9f5f95d78a75336404bbc78403b49e4098c8c0ad6a6eb8448143",
+        "size_in_bytes": 287
+      },
+      {
+        "_path": "site-packages/pymbolic/version.py",
+        "path_type": "hardlink",
+        "sha256": "85889280f77327b70c7a15c77ca13868fa8e862a33fe32a218d0ddd02b3c0d43",
+        "sha256_in_prefix": "85889280f77327b70c7a15c77ca13868fa8e862a33fe32a218d0ddd02b3c0d43",
+        "size_in_bytes": 106
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/algorithm.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/compiler.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/cse.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/functions.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/geometric_algebra/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/geometric_algebra/__pycache__/mapper.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/geometric_algebra/__pycache__/primitives.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/analysis.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/instruction.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/statement.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/transform.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/imperative/__pycache__/utils.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/interop/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/interop/__pycache__/ast.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/interop/__pycache__/common.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/interop/matchpy/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/interop/matchpy/__pycache__/mapper.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/interop/matchpy/__pycache__/tofrom.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/interop/__pycache__/maxima.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/interop/__pycache__/symengine.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/interop/__pycache__/sympy.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/analysis.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/c_code.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/coefficient.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/collector.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/constant_converter.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/constant_folder.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/cse_tagger.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/dependency.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/differentiator.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/distributor.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/evaluator.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/flattener.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/flop_counter.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/graphviz.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/optimize.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/persistent_hash.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/stringifier.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/substitutor.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/mapper/__pycache__/unifier.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/maxima.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/parser.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/polynomial.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/primitives.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/rational.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/sympy_interface.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/traits.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/typing.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pymbolic/__pycache__/version.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "pymbolic",
+  "sha256": "eac07e515393f891e0d4031d14db4d3609febc30a4e3536172cec412480c249b",
+  "size": 90055,
+  "subdir": "noarch",
+  "timestamp": 1668745841000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/pymbolic-2022.2-pyhd8ed1ab_0.conda",
+  "version": "2022.2"
+}

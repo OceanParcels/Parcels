@@ -1,0 +1,236 @@
+'\" t
+.\"     Title: git-ls-remote
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GIT\-LS\-REMOTE" "1" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+git-ls-remote \- List references in a remote repository
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIgit ls\-remote\fR [\-\-branches] [\-\-tags] [\-\-refs] [\-\-upload\-pack=<exec>]
+              [\-q | \-\-quiet] [\-\-exit\-code] [\-\-get\-url] [\-\-sort=<key>]
+              [\-\-symref] [<repository> [<patterns>\&...]]
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+Displays references available in a remote repository along with the associated commit IDs\&.
+.SH "OPTIONS"
+.PP
+\-b, \-\-branches, \-t, \-\-tags
+.RS 4
+Limit to only local branches and local tags, respectively\&. These options are
+\fInot\fR
+mutually exclusive; when given both, references stored in refs/heads and refs/tags are displayed\&. Note that
+\fB\-\-heads\fR
+and
+\fB\-h\fR
+are deprecated synonyms for
+\fB\-\-branches\fR
+and
+\fB\-b\fR
+and may be removed in the future\&. Also note that
+\fBgit ls\-remote \-h\fR
+used without anything else on the command line gives help, consistent with other git subcommands\&.
+.RE
+.PP
+\-\-refs
+.RS 4
+Do not show peeled tags or pseudorefs like
+\fBHEAD\fR
+in the output\&.
+.RE
+.PP
+\-q, \-\-quiet
+.RS 4
+Do not print remote URL to stderr\&.
+.RE
+.PP
+\-\-upload\-pack=<exec>
+.RS 4
+Specify the full path of
+\fIgit\-upload\-pack\fR
+on the remote host\&. This allows listing references from repositories accessed via SSH and where the SSH daemon does not use the PATH configured by the user\&.
+.RE
+.PP
+\-\-exit\-code
+.RS 4
+Exit with status "2" when no matching refs are found in the remote repository\&. Usually the command exits with status "0" to indicate it successfully talked with the remote repository, whether it found any matching refs\&.
+.RE
+.PP
+\-\-get\-url
+.RS 4
+Expand the URL of the given remote repository taking into account any "url\&.<base>\&.insteadOf" config setting (See
+\fBgit-config\fR(1)) and exit without talking to the remote\&.
+.RE
+.PP
+\-\-symref
+.RS 4
+In addition to the object pointed by it, show the underlying ref pointed by it when showing a symbolic ref\&. Currently, upload\-pack only shows the symref HEAD, so it will be the only one shown by ls\-remote\&.
+.RE
+.PP
+\-\-sort=<key>
+.RS 4
+Sort based on the key given\&. Prefix
+\fB\-\fR
+to sort in descending order of the value\&. Supports "version:refname" or "v:refname" (tag names are treated as versions)\&. The "version:refname" sort order can also be affected by the "versionsort\&.suffix" configuration variable\&. See
+\fBgit-for-each-ref\fR(1)
+for more sort options, but be aware keys like
+\fBcommitterdate\fR
+that require access to the objects themselves will not work for refs whose objects have not yet been fetched from the remote, and will give a
+\fBmissing object\fR
+error\&.
+.RE
+.PP
+\-o <option>, \-\-server\-option=<option>
+.RS 4
+Transmit the given string to the server when communicating using protocol version 2\&. The given string must not contain a NUL or LF character\&. When multiple
+\fB\-\-server\-option=<option>\fR
+are given, they are all sent to the other side in the order listed on the command line\&.
+.RE
+.PP
+<repository>
+.RS 4
+The "remote" repository to query\&. This parameter can be either a URL or the name of a remote (see the GIT URLS and REMOTES sections of
+\fBgit-fetch\fR(1))\&.
+.RE
+.PP
+<patterns>\&...
+.RS 4
+When unspecified, all references, after filtering done with \-\-heads and \-\-tags, are shown\&. When <patterns>\&... are specified, only references matching one or more of the given patterns are displayed\&. Each pattern is interpreted as a glob (see
+\fBglob\fR
+in
+\fBgitglossary\fR(7)) which is matched against the "tail" of a ref, starting either from the start of the ref (so a full name like
+\fBrefs/heads/foo\fR
+matches) or from a slash separator (so
+\fBbar\fR
+matches
+\fBrefs/heads/bar\fR
+but not
+\fBrefs/heads/foobar\fR)\&.
+.RE
+.SH "OUTPUT"
+.sp
+The output is in the format:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+<oid> TAB <ref> LF
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+When showing an annotated tag, unless \fB\-\-refs\fR is given, two such lines are shown: one with the refname for the tag itself as \fB<ref>\fR, and another with \fB<ref>\fR followed by \fB^{}\fR\&. The \fB<oid>\fR on the latter line shows the name of the object the tag points at\&.
+.SH "EXAMPLES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+List all references (including symbolics and pseudorefs), peeling tags:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ git ls\-remote
+27d43aaaf50ef0ae014b88bba294f93658016a2e        HEAD
+950264636c68591989456e3ba0a5442f93152c1a        refs/heads/main
+d9ab777d41f92a8c1684c91cfb02053d7dd1046b        refs/heads/next
+d4ca2e3147b409459955613c152220f4db848ee1        refs/tags/v2\&.40\&.0
+73876f4861cd3d187a4682290ab75c9dccadbc56        refs/tags/v2\&.40\&.0^{}
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+List all references matching given patterns:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ git ls\-remote http://www\&.kernel\&.org/pub/scm/git/git\&.git master seen rc
+5fe978a5381f1fbad26a80e682ddd2a401966740        refs/heads/master
+c781a84b5204fb294c9ccc79f8b3baceeb32c061        refs/heads/seen
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+List only tags matching a given wildcard pattern:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ git ls\-remote \-\-tags http://www\&.kernel\&.org/pub/scm/git/git\&.git v\e*
+485a869c64a68cc5795dd99689797c5900f4716d        refs/tags/v2\&.39\&.2
+cbf04937d5b9fcf0a76c28f69e6294e9e3ecd7e6        refs/tags/v2\&.39\&.2^{}
+d4ca2e3147b409459955613c152220f4db848ee1        refs/tags/v2\&.40\&.0
+73876f4861cd3d187a4682290ab75c9dccadbc56        refs/tags/v2\&.40\&.0^{}
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RE
+.SH "SEE ALSO"
+.sp
+\fBgit-check-ref-format\fR(1)\&.
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite

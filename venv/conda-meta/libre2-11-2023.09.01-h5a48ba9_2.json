@@ -1,0 +1,54 @@
+{
+  "build": "h5a48ba9_2",
+  "build_number": 2,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [
+    "re2 2023.09.01.*"
+  ],
+  "depends": [
+    "libabseil * cxx17*",
+    "libabseil >=20240116.1,<20240117.0a0",
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libre2-11-2023.09.01-h5a48ba9_2",
+  "files": [
+    "lib/libre2.so.11",
+    "lib/libre2.so.11.0.0"
+  ],
+  "fn": "libre2-11-2023.09.01-h5a48ba9_2.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/libre2-11-2023.09.01-h5a48ba9_2",
+    "type": 1
+  },
+  "md5": "41c69fba59d495e8cf5ffda48a607e35",
+  "name": "libre2-11",
+  "package_tarball_full_path": "/opt/conda/pkgs/libre2-11-2023.09.01-h5a48ba9_2.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/libre2.so.11",
+        "path_type": "hardlink",
+        "sha256": "3af0200fc5689b96d006a912a0c0b87fa446245aa867b1701b7a3118f4a2eb11",
+        "sha256_in_prefix": "3af0200fc5689b96d006a912a0c0b87fa446245aa867b1701b7a3118f4a2eb11",
+        "size_in_bytes": 672304
+      },
+      {
+        "_path": "lib/libre2.so.11.0.0",
+        "path_type": "hardlink",
+        "sha256": "3af0200fc5689b96d006a912a0c0b87fa446245aa867b1701b7a3118f4a2eb11",
+        "sha256_in_prefix": "3af0200fc5689b96d006a912a0c0b87fa446245aa867b1701b7a3118f4a2eb11",
+        "size_in_bytes": 672304
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "3f3c65fe0e9e328b4c1ebc2b622727cef3e5b81b18228cfa6cf0955bc1ed8eff",
+  "size": 232603,
+  "subdir": "linux-64",
+  "timestamp": 1708946763000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libre2-11-2023.09.01-h5a48ba9_2.conda",
+  "version": "2023.09.01"
+}

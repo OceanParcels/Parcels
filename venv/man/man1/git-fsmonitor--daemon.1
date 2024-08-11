@@ -1,0 +1,118 @@
+'\" t
+.\"     Title: git-fsmonitor--daemon
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GIT\-FSMONITOR\-\-DAEMON" "1" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+git-fsmonitor--daemon \- A Built\-in Filesystem Monitor
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIgit fsmonitor\-\-daemon\fR start
+\fIgit fsmonitor\-\-daemon\fR run
+\fIgit fsmonitor\-\-daemon\fR stop
+\fIgit fsmonitor\-\-daemon\fR status
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+A daemon to watch the working directory for file and directory changes using platform\-specific filesystem notification facilities\&.
+.sp
+This daemon communicates directly with commands like \fBgit status\fR using the \m[blue]\fBsimple IPC\fR\m[]\&\s-2\u[1]\d\s+2 interface instead of the slower \fBgithooks\fR(5) interface\&.
+.sp
+This daemon is built into Git so that no third\-party tools are required\&.
+.SH "OPTIONS"
+.PP
+start
+.RS 4
+Starts a daemon in the background\&.
+.RE
+.PP
+run
+.RS 4
+Runs a daemon in the foreground\&.
+.RE
+.PP
+stop
+.RS 4
+Stops the daemon running in the current working directory, if present\&.
+.RE
+.PP
+status
+.RS 4
+Exits with zero status if a daemon is watching the current working directory\&.
+.RE
+.SH "REMARKS"
+.sp
+This daemon is a long running process used to watch a single working directory and maintain a list of the recently changed files and directories\&. Performance of commands such as \fBgit status\fR can be increased if they just ask for a summary of changes to the working directory and can avoid scanning the disk\&.
+.sp
+When \fBcore\&.fsmonitor\fR is set to \fBtrue\fR (see \fBgit-config\fR(1)) commands, such as \fBgit status\fR, will ask the daemon for changes and automatically start it (if necessary)\&.
+.sp
+For more information see the "File System Monitor" section in \fBgit-update-index\fR(1)\&.
+.SH "CAVEATS"
+.sp
+The fsmonitor daemon does not currently know about submodules and does not know to filter out filesystem events that happen within a submodule\&. If fsmonitor daemon is watching a super repo and a file is modified within the working directory of a submodule, it will report the change (as happening against the super repo)\&. However, the client will properly ignore these extra events, so performance may be affected but it will not cause an incorrect result\&.
+.sp
+By default, the fsmonitor daemon refuses to work with network\-mounted repositories; this may be overridden by setting \fBfsmonitor\&.allowRemote\fR to \fBtrue\fR\&. Note, however, that the fsmonitor daemon is not guaranteed to work correctly with all network\-mounted repositories, so such use is considered experimental\&.
+.sp
+On Mac OS, the inter\-process communication (IPC) between various Git commands and the fsmonitor daemon is done via a Unix domain socket (UDS) \(em a special type of file \(em which is supported by native Mac OS filesystems, but not on network\-mounted filesystems, NTFS, or FAT32\&. Other filesystems may or may not have the needed support; the fsmonitor daemon is not guaranteed to work with these filesystems and such use is considered experimental\&.
+.sp
+By default, the socket is created in the \fB\&.git\fR directory\&. However, if the \fB\&.git\fR directory is on a network\-mounted filesystem, it will instead be created at \fB$HOME/\&.git\-fsmonitor\-*\fR unless \fB$HOME\fR itself is on a network\-mounted filesystem, in which case you must set the configuration variable \fBfsmonitor\&.socketDir\fR to the path of a directory on a Mac OS native filesystem in which to create the socket file\&.
+.sp
+If none of the above directories (\fB\&.git\fR, \fB$HOME\fR, or \fBfsmonitor\&.socketDir\fR) is on a native Mac OS file filesystem the fsmonitor daemon will report an error that will cause the daemon and the currently running command to exit\&.
+.SH "CONFIGURATION"
+.sp
+Everything below this line in this section is selectively included from the \fBgit-config\fR(1) documentation\&. The content is the same as what\(cqs found there:
+.PP
+fsmonitor\&.allowRemote
+.RS 4
+By default, the fsmonitor daemon refuses to work with network\-mounted repositories\&. Setting
+\fBfsmonitor\&.allowRemote\fR
+to
+\fBtrue\fR
+overrides this behavior\&. Only respected when
+\fBcore\&.fsmonitor\fR
+is set to
+\fBtrue\fR\&.
+.RE
+.PP
+fsmonitor\&.socketDir
+.RS 4
+This Mac OS\-specific option, if set, specifies the directory in which to create the Unix domain socket used for communication between the fsmonitor daemon and various Git commands\&. The directory must reside on a native Mac OS filesystem\&. Only respected when
+\fBcore\&.fsmonitor\fR
+is set to
+\fBtrue\fR\&.
+.RE
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite
+.SH "NOTES"
+.IP " 1." 4
+simple IPC
+.RS 4
+\%git-htmldocs/technical/api-simple-ipc.html
+.RE

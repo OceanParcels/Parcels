@@ -1,0 +1,33 @@
+{
+  "build": "hd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "pre-commit >=3.8.0,<3.8.1.0a0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/pre_commit-3.8.0-hd8ed1ab_0",
+  "files": [],
+  "fn": "pre_commit-3.8.0-hd8ed1ab_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/pre_commit-3.8.0-hd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "4f57f6d767792b541ee111f046d4cc68",
+  "name": "pre_commit",
+  "noarch": "generic",
+  "package_tarball_full_path": "/opt/conda/pkgs/pre_commit-3.8.0-hd8ed1ab_0.conda",
+  "package_type": "noarch_generic",
+  "paths_data": {
+    "paths": [],
+    "paths_version": 1
+  },
+  "requested_spec": "pre_commit",
+  "sha256": "216910e465bb1097d3603edddd5aea28ccffec4e37fbc677e6e4679000d31212",
+  "size": 6290,
+  "subdir": "noarch",
+  "timestamp": 1722604791000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/pre_commit-3.8.0-hd8ed1ab_0.conda",
+  "version": "3.8.0"
+}

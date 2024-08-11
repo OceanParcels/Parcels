@@ -1,0 +1,120 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "python >=3.8"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/cycler-0.12.1-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/cycler-0.12.1.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/cycler-0.12.1.dist-info/LICENSE",
+    "lib/python3.12/site-packages/cycler-0.12.1.dist-info/METADATA",
+    "lib/python3.12/site-packages/cycler-0.12.1.dist-info/RECORD",
+    "lib/python3.12/site-packages/cycler-0.12.1.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/cycler-0.12.1.dist-info/WHEEL",
+    "lib/python3.12/site-packages/cycler-0.12.1.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/cycler-0.12.1.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/cycler/__init__.py",
+    "lib/python3.12/site-packages/cycler/py.typed",
+    "lib/python3.12/site-packages/cycler/__pycache__/__init__.cpython-312.pyc"
+  ],
+  "fn": "cycler-0.12.1-pyhd8ed1ab_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/cycler-0.12.1-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "5cd86562580f274031ede6aa6aa24441",
+  "name": "cycler",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/cycler-0.12.1-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/cycler-0.12.1.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/cycler-0.12.1.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "f1218143d766da3fea66f13396b7f15df46a83303f29bf96ba6e98eb4d42f408",
+        "sha256_in_prefix": "f1218143d766da3fea66f13396b7f15df46a83303f29bf96ba6e98eb4d42f408",
+        "size_in_bytes": 1497
+      },
+      {
+        "_path": "site-packages/cycler-0.12.1.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "23289e19b76f1e01394227696e6af2b6cd1ce79e89731209bf9195148b18ed36",
+        "sha256_in_prefix": "23289e19b76f1e01394227696e6af2b6cd1ce79e89731209bf9195148b18ed36",
+        "size_in_bytes": 3779
+      },
+      {
+        "_path": "site-packages/cycler-0.12.1.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "4aceb5655363d924a55bc534bb0e32e3ad19d563ab4c0e9291dce714b5f00301",
+        "sha256_in_prefix": "4aceb5655363d924a55bc534bb0e32e3ad19d563ab4c0e9291dce714b5f00301",
+        "size_in_bytes": 856
+      },
+      {
+        "_path": "site-packages/cycler-0.12.1.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/cycler-0.12.1.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "c903798389a0e00c9b4639208bef72cb889010589b1909a5cfbf0f8a4e4eafe0",
+        "sha256_in_prefix": "c903798389a0e00c9b4639208bef72cb889010589b1909a5cfbf0f8a4e4eafe0",
+        "size_in_bytes": 92
+      },
+      {
+        "_path": "site-packages/cycler-0.12.1.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "87abbb687e18ba8631e5dfb28c235084f6889b2ea745579668700f792a9b1a37",
+        "sha256_in_prefix": "87abbb687e18ba8631e5dfb28c235084f6889b2ea745579668700f792a9b1a37",
+        "size_in_bytes": 102
+      },
+      {
+        "_path": "site-packages/cycler-0.12.1.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "0fc05554374001e94b6f614e133ee50e973af802f6d7294a3eb321b46eb2cf21",
+        "sha256_in_prefix": "0fc05554374001e94b6f614e133ee50e973af802f6d7294a3eb321b46eb2cf21",
+        "size_in_bytes": 7
+      },
+      {
+        "_path": "site-packages/cycler/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "d4975182fe59cf1a3e5b57afec1fcb5aabb2b163fa2d91fa08793f08eb486971",
+        "sha256_in_prefix": "d4975182fe59cf1a3e5b57afec1fcb5aabb2b163fa2d91fa08793f08eb486971",
+        "size_in_bytes": 16709
+      },
+      {
+        "_path": "site-packages/cycler/py.typed",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "lib/python3.12/site-packages/cycler/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "f221233f21b1d06971792d491445fd548224641af9443739b4b7b6d5d72954a8",
+  "size": 13458,
+  "subdir": "noarch",
+  "timestamp": 1696677888000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhd8ed1ab_0.conda",
+  "version": "0.12.1"
+}

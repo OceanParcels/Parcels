@@ -1,0 +1,190 @@
+{
+  "build": "h325d260_1",
+  "build_number": 1,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "azure-core-cpp >=1.13.0,<1.13.1.0a0",
+    "azure-storage-blobs-cpp >=12.12.0,<12.12.1.0a0",
+    "azure-storage-common-cpp >=12.7.0,<12.7.1.0a0",
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/azure-storage-files-datalake-cpp-12.11.0-h325d260_1",
+  "files": [
+    "include/azure/storage/files/datalake.hpp",
+    "include/azure/storage/files/datalake/datalake_directory_client.hpp",
+    "include/azure/storage/files/datalake/datalake_file_client.hpp",
+    "include/azure/storage/files/datalake/datalake_file_system_client.hpp",
+    "include/azure/storage/files/datalake/datalake_lease_client.hpp",
+    "include/azure/storage/files/datalake/datalake_options.hpp",
+    "include/azure/storage/files/datalake/datalake_path_client.hpp",
+    "include/azure/storage/files/datalake/datalake_responses.hpp",
+    "include/azure/storage/files/datalake/datalake_sas_builder.hpp",
+    "include/azure/storage/files/datalake/datalake_service_client.hpp",
+    "include/azure/storage/files/datalake/dll_import_export.hpp",
+    "include/azure/storage/files/datalake/rest_client.hpp",
+    "include/azure/storage/files/datalake/rtti.hpp",
+    "lib/libazure-storage-files-datalake.so",
+    "share/azure-storage-files-datalake-cpp/azure-storage-files-datalake-cppConfig.cmake",
+    "share/azure-storage-files-datalake-cpp/azure-storage-files-datalake-cppConfigVersion.cmake",
+    "share/azure-storage-files-datalake-cpp/azure-storage-files-datalake-cppTargets-release.cmake",
+    "share/azure-storage-files-datalake-cpp/azure-storage-files-datalake-cppTargets.cmake",
+    "share/azure-storage-files-datalake-cpp/copyright"
+  ],
+  "fn": "azure-storage-files-datalake-cpp-12.11.0-h325d260_1.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/azure-storage-files-datalake-cpp-12.11.0-h325d260_1",
+    "type": 1
+  },
+  "md5": "11d926d1f4a75a1b03d1c053ca20424b",
+  "name": "azure-storage-files-datalake-cpp",
+  "package_tarball_full_path": "/opt/conda/pkgs/azure-storage-files-datalake-cpp-12.11.0-h325d260_1.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/azure/storage/files/datalake.hpp",
+        "path_type": "hardlink",
+        "sha256": "1b73d7eb816b7d56c48576210645177dc2b92ae0667401f2159aeadcd51554f6",
+        "sha256_in_prefix": "1b73d7eb816b7d56c48576210645177dc2b92ae0667401f2159aeadcd51554f6",
+        "size_in_bytes": 1005
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/datalake_directory_client.hpp",
+        "path_type": "hardlink",
+        "sha256": "587b88105053735d9a47799828675bd6cab79d4f402f13de4045703a75416b89",
+        "sha256_in_prefix": "587b88105053735d9a47799828675bd6cab79d4f402f13de4045703a75416b89",
+        "size_in_bytes": 12067
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/datalake_file_client.hpp",
+        "path_type": "hardlink",
+        "sha256": "c4ec0f25f7416c861003395f2b24d35b23a037d1ae4b377c02478e7376de7573",
+        "sha256_in_prefix": "c4ec0f25f7416c861003395f2b24d35b23a037d1ae4b377c02478e7376de7573",
+        "size_in_bytes": 14493
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/datalake_file_system_client.hpp",
+        "path_type": "hardlink",
+        "sha256": "c790f0b1200e658f2832c3c1125cad1b6c9e9e10accca83af9dee2af6ad5b232",
+        "sha256_in_prefix": "c790f0b1200e658f2832c3c1125cad1b6c9e9e10accca83af9dee2af6ad5b232",
+        "size_in_bytes": 14083
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/datalake_lease_client.hpp",
+        "path_type": "hardlink",
+        "sha256": "c7b53b595cece2617067b102c3a18fb80f1b693ada0418690f91f76b05f9ebf9",
+        "sha256_in_prefix": "c7b53b595cece2617067b102c3a18fb80f1b693ada0418690f91f76b05f9ebf9",
+        "size_in_bytes": 5502
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/datalake_options.hpp",
+        "path_type": "hardlink",
+        "sha256": "c65178bed335781b2daf1b245b5bad15f0f1904e7669d91d0642fcf3c906fb71",
+        "sha256_in_prefix": "c65178bed335781b2daf1b245b5bad15f0f1904e7669d91d0642fcf3c906fb71",
+        "size_in_bytes": 34899
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/datalake_path_client.hpp",
+        "path_type": "hardlink",
+        "sha256": "893c23da23bd122215196188e2540c94263a9990fc07321fbec52e0006ccdd9d",
+        "sha256_in_prefix": "893c23da23bd122215196188e2540c94263a9990fc07321fbec52e0006ccdd9d",
+        "size_in_bytes": 16512
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/datalake_responses.hpp",
+        "path_type": "hardlink",
+        "sha256": "21edabfa7e485f262547eb0c9242193da85b3d4551b681b5ab97c0cfb0bfebab",
+        "sha256_in_prefix": "21edabfa7e485f262547eb0c9242193da85b3d4551b681b5ab97c0cfb0bfebab",
+        "size_in_bytes": 24201
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/datalake_sas_builder.hpp",
+        "path_type": "hardlink",
+        "sha256": "c1cc5a7a09d59a309f1afe316850c9bc1e4f2dbe86158124368da5bdb12a71a0",
+        "sha256_in_prefix": "c1cc5a7a09d59a309f1afe316850c9bc1e4f2dbe86158124368da5bdb12a71a0",
+        "size_in_bytes": 10779
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/datalake_service_client.hpp",
+        "path_type": "hardlink",
+        "sha256": "1c7b4ecd0853223fcb8719471c40688083393eb9b3f4c94781f06d822bec2621",
+        "sha256_in_prefix": "1c7b4ecd0853223fcb8719471c40688083393eb9b3f4c94781f06d822bec2621",
+        "size_in_bytes": 6871
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/dll_import_export.hpp",
+        "path_type": "hardlink",
+        "sha256": "9a72e27837681d9feef6cd3bc89d619f0788d2d2196d72f11f033fdf2d05595c",
+        "sha256_in_prefix": "9a72e27837681d9feef6cd3bc89d619f0788d2d2196d72f11f033fdf2d05595c",
+        "size_in_bytes": 1260
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/rest_client.hpp",
+        "path_type": "hardlink",
+        "sha256": "5f2cb1282f723ae6f814dd70ec42377d7f7660d4c92d1a56980087937904ac4c",
+        "sha256_in_prefix": "5f2cb1282f723ae6f814dd70ec42377d7f7660d4c92d1a56980087937904ac4c",
+        "size_in_bytes": 23362
+      },
+      {
+        "_path": "include/azure/storage/files/datalake/rtti.hpp",
+        "path_type": "hardlink",
+        "sha256": "4faaf3ca60d1ded9de16e587ce65710e6aeed6728c4c5dffb917a9dc0f6cbffa",
+        "sha256_in_prefix": "4faaf3ca60d1ded9de16e587ce65710e6aeed6728c4c5dffb917a9dc0f6cbffa",
+        "size_in_bytes": 1349
+      },
+      {
+        "_path": "lib/libazure-storage-files-datalake.so",
+        "path_type": "hardlink",
+        "sha256": "b033af5de1fbb0dcaacba9415be1eb3ae0754c0d9c3215f62e2552bcc15deaf8",
+        "sha256_in_prefix": "b033af5de1fbb0dcaacba9415be1eb3ae0754c0d9c3215f62e2552bcc15deaf8",
+        "size_in_bytes": 833656
+      },
+      {
+        "_path": "share/azure-storage-files-datalake-cpp/azure-storage-files-datalake-cppConfig.cmake",
+        "path_type": "hardlink",
+        "sha256": "e38522cf50e41c15a07fd7961658322f2f14dd60b79d922bf510101418216903",
+        "sha256_in_prefix": "e38522cf50e41c15a07fd7961658322f2f14dd60b79d922bf510101418216903",
+        "size_in_bytes": 1167
+      },
+      {
+        "_path": "share/azure-storage-files-datalake-cpp/azure-storage-files-datalake-cppConfigVersion.cmake",
+        "path_type": "hardlink",
+        "sha256": "5d1bd0a31f0be6a1d51cbcad7ad720ad115a12088b668f03471471e0b19e0411",
+        "sha256_in_prefix": "5d1bd0a31f0be6a1d51cbcad7ad720ad115a12088b668f03471471e0b19e0411",
+        "size_in_bytes": 2768
+      },
+      {
+        "_path": "share/azure-storage-files-datalake-cpp/azure-storage-files-datalake-cppTargets-release.cmake",
+        "path_type": "hardlink",
+        "sha256": "8335fdb4f6ad94028849eed93c4439ba9d54316727469541a9e4a50f8706d766",
+        "sha256_in_prefix": "8335fdb4f6ad94028849eed93c4439ba9d54316727469541a9e4a50f8706d766",
+        "size_in_bytes": 1007
+      },
+      {
+        "_path": "share/azure-storage-files-datalake-cpp/azure-storage-files-datalake-cppTargets.cmake",
+        "path_type": "hardlink",
+        "sha256": "b28819d94f5dcc83b8002b62b211725b225cca2184a2603618c707658d69bdf9",
+        "sha256_in_prefix": "b28819d94f5dcc83b8002b62b211725b225cca2184a2603618c707658d69bdf9",
+        "size_in_bytes": 4289
+      },
+      {
+        "_path": "share/azure-storage-files-datalake-cpp/copyright",
+        "path_type": "hardlink",
+        "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+        "sha256_in_prefix": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+        "size_in_bytes": 1162
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "1726fa324bb402e52d63227d6cb3f849957cd6841f8cb8aed58bb0c81203befb",
+  "size": 274492,
+  "subdir": "linux-64",
+  "timestamp": 1721925100000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/azure-storage-files-datalake-cpp-12.11.0-h325d260_1.conda",
+  "version": "12.11.0"
+}

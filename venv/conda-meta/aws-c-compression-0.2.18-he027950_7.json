@@ -1,0 +1,97 @@
+{
+  "build": "he027950_7",
+  "build_number": 7,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "aws-c-common >=0.9.23,<0.9.24.0a0",
+    "libgcc-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/aws-c-compression-0.2.18-he027950_7",
+  "files": [
+    "include/aws/compression/compression.h",
+    "include/aws/compression/exports.h",
+    "include/aws/compression/huffman.h",
+    "lib/aws-c-compression/cmake/aws-c-compression-config.cmake",
+    "lib/aws-c-compression/cmake/shared/aws-c-compression-targets-release.cmake",
+    "lib/aws-c-compression/cmake/shared/aws-c-compression-targets.cmake",
+    "lib/libaws-c-compression.so",
+    "lib/libaws-c-compression.so.1.0.0"
+  ],
+  "fn": "aws-c-compression-0.2.18-he027950_7.conda",
+  "license": "Apache-2.0",
+  "link": {
+    "source": "/opt/conda/pkgs/aws-c-compression-0.2.18-he027950_7",
+    "type": 1
+  },
+  "md5": "11e5cb0b426772974f6416545baee0ce",
+  "name": "aws-c-compression",
+  "package_tarball_full_path": "/opt/conda/pkgs/aws-c-compression-0.2.18-he027950_7.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/aws/compression/compression.h",
+        "path_type": "hardlink",
+        "sha256": "4a7e0eba0e35676fbacfb6c1d08ada087a21ec4b3a4245a75c95b72ad23e8aa3",
+        "sha256_in_prefix": "4a7e0eba0e35676fbacfb6c1d08ada087a21ec4b3a4245a75c95b72ad23e8aa3",
+        "size_in_bytes": 1128
+      },
+      {
+        "_path": "include/aws/compression/exports.h",
+        "path_type": "hardlink",
+        "sha256": "8851c4f63053a1d90b17eb29ea4bb477cdfcb315090d06933b18e9710b85dba8",
+        "sha256_in_prefix": "8851c4f63053a1d90b17eb29ea4bb477cdfcb315090d06933b18e9710b85dba8",
+        "size_in_bytes": 1120
+      },
+      {
+        "_path": "include/aws/compression/huffman.h",
+        "path_type": "hardlink",
+        "sha256": "a0ae03aa45aa8049d704105d6ccaf52342e94f279c04b5616a9416e5a408c43e",
+        "sha256_in_prefix": "a0ae03aa45aa8049d704105d6ccaf52342e94f279c04b5616a9416e5a408c43e",
+        "size_in_bytes": 4752
+      },
+      {
+        "_path": "lib/aws-c-compression/cmake/aws-c-compression-config.cmake",
+        "path_type": "hardlink",
+        "sha256": "0b355e8406ff62a1379aa02bce03381d4489a1df03ceea0ef4ff5d6aa9e54e59",
+        "sha256_in_prefix": "0b355e8406ff62a1379aa02bce03381d4489a1df03ceea0ef4ff5d6aa9e54e59",
+        "size_in_bytes": 576
+      },
+      {
+        "_path": "lib/aws-c-compression/cmake/shared/aws-c-compression-targets-release.cmake",
+        "path_type": "hardlink",
+        "sha256": "fab21e766b671c48064d483966b3fc554a00edf304d531774b9abfcc1ec29863",
+        "sha256_in_prefix": "fab21e766b671c48064d483966b3fc554a00edf304d531774b9abfcc1ec29863",
+        "size_in_bytes": 927
+      },
+      {
+        "_path": "lib/aws-c-compression/cmake/shared/aws-c-compression-targets.cmake",
+        "path_type": "hardlink",
+        "sha256": "b20e8f2c84f5674954d7e39e41dac4f4881b1eb343acefaf9a2bcf5c067ff775",
+        "sha256_in_prefix": "b20e8f2c84f5674954d7e39e41dac4f4881b1eb343acefaf9a2bcf5c067ff775",
+        "size_in_bytes": 4342
+      },
+      {
+        "_path": "lib/libaws-c-compression.so",
+        "path_type": "softlink",
+        "sha256": "32ff5747ddf9fe322849b1281643e2f39876660269ea5105a85ac7ed686e29a7",
+        "size_in_bytes": 16936
+      },
+      {
+        "_path": "lib/libaws-c-compression.so.1.0.0",
+        "path_type": "hardlink",
+        "sha256": "32ff5747ddf9fe322849b1281643e2f39876660269ea5105a85ac7ed686e29a7",
+        "sha256_in_prefix": "32ff5747ddf9fe322849b1281643e2f39876660269ea5105a85ac7ed686e29a7",
+        "size_in_bytes": 16936
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "d4c70b8716e19fe56a563ab858ab7440f41c2dd927687357a44e69f23001126d",
+  "size": 19271,
+  "subdir": "linux-64",
+  "timestamp": 1718967071000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/aws-c-compression-0.2.18-he027950_7.conda",
+  "version": "0.2.18"
+}

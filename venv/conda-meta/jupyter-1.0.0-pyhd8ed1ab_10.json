@@ -1,0 +1,105 @@
+{
+  "build": "pyhd8ed1ab_10",
+  "build_number": 10,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "ipykernel",
+    "ipywidgets",
+    "jupyter_console",
+    "nbconvert",
+    "notebook",
+    "python >=3.6",
+    "qtconsole-base"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/jupyter-1.0.0-pyhd8ed1ab_10",
+  "files": [
+    "lib/python3.12/site-packages/jupyter-1.0.0.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/jupyter-1.0.0.dist-info/LICENSE",
+    "lib/python3.12/site-packages/jupyter-1.0.0.dist-info/METADATA",
+    "lib/python3.12/site-packages/jupyter-1.0.0.dist-info/RECORD",
+    "lib/python3.12/site-packages/jupyter-1.0.0.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/jupyter-1.0.0.dist-info/WHEEL",
+    "lib/python3.12/site-packages/jupyter-1.0.0.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/jupyter-1.0.0.dist-info/top_level.txt"
+  ],
+  "fn": "jupyter-1.0.0-pyhd8ed1ab_10.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/jupyter-1.0.0-pyhd8ed1ab_10",
+    "type": 1
+  },
+  "md5": "056b8cc3d9b03f54fc49e6d70d7dc359",
+  "name": "jupyter",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/jupyter-1.0.0-pyhd8ed1ab_10.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/jupyter-1.0.0.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/jupyter-1.0.0.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "45a62b620e147140a0d4214467bc16e136983e5a2dba562852e5a6718597000d",
+        "sha256_in_prefix": "45a62b620e147140a0d4214467bc16e136983e5a2dba562852e5a6718597000d",
+        "size_in_bytes": 1481
+      },
+      {
+        "_path": "site-packages/jupyter-1.0.0.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "0c604992c043cc648d478fc3c905cf0a742330569a3881cf5b769ca394c1a79b",
+        "sha256_in_prefix": "0c604992c043cc648d478fc3c905cf0a742330569a3881cf5b769ca394c1a79b",
+        "size_in_bytes": 997
+      },
+      {
+        "_path": "site-packages/jupyter-1.0.0.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "78e2c21beeb80e0aef7880dddd912933fa65c0da6771d04a6bf3c1195b39ec0c",
+        "sha256_in_prefix": "78e2c21beeb80e0aef7880dddd912933fa65c0da6771d04a6bf3c1195b39ec0c",
+        "size_in_bytes": 768
+      },
+      {
+        "_path": "site-packages/jupyter-1.0.0.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/jupyter-1.0.0.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "89896fe5f5f7e7b3d0c914f6a3ab70d5b37e61c2851472aa07f2f01cee703fe8",
+        "sha256_in_prefix": "89896fe5f5f7e7b3d0c914f6a3ab70d5b37e61c2851472aa07f2f01cee703fe8",
+        "size_in_bytes": 110
+      },
+      {
+        "_path": "site-packages/jupyter-1.0.0.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "919fbe1bdbdb9811c152501ef7a3d2121e97a2247ab0e71d267837c9ec4f58c9",
+        "sha256_in_prefix": "919fbe1bdbdb9811c152501ef7a3d2121e97a2247ab0e71d267837c9ec4f58c9",
+        "size_in_bytes": 103
+      },
+      {
+        "_path": "site-packages/jupyter-1.0.0.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "ce72f0b7a376799ffbbb57931dceab5c9e1cea2254ce6855d4d37bdc7ba54e44",
+        "sha256_in_prefix": "ce72f0b7a376799ffbbb57931dceab5c9e1cea2254ce6855d4d37bdc7ba54e44",
+        "size_in_bytes": 8
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "jupyter",
+  "sha256": "308b521b149e7a1739f717538b929bc2d87b9001b94f13ee8baa939632a86150",
+  "size": 8620,
+  "subdir": "noarch",
+  "timestamp": 1696255649000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/jupyter-1.0.0-pyhd8ed1ab_10.conda",
+  "version": "1.0.0"
+}

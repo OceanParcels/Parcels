@@ -1,0 +1,220 @@
+.\" -*- nroff -*-
+.\" Copyright © 2010-2024 Inria.  All rights reserved.
+.\" Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH HWLOC-DISTRIB "1" "Jul 04, 2024" "2.11.1" "hwloc"
+.SH NAME
+hwloc-distrib \- Build a number of cpu masks distributed on the system
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.B hwloc-distrib
+[\fIoptions\fR] \fI<integer>\fR
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.TP
+\fB\-\-single\fR
+Singlify each output to a single CPU.
+.TP
+\fB\-\-cpuset\-output\-format\fR <hwloc|list|taskset> \fB\-\-cof\fR <hwloc|list|taskset>
+Change the format of displayed CPU set strings.
+By default, the hwloc-specific format is used.
+If \fIlist\fR is given, the output is a comma-separated of numbers or ranges,
+e.g. 2,4-5,8 .
+If \fItaskset\fR is given, the output is compatible with the taskset program
+(replaces the former \fB--taskset\fR option).
+.TP
+\fB\-v\fR \fB\-\-verbose\fR
+Verbose messages.
+.TP
+\fB\-i\fR <path>, \fB\-\-input\fR <path>
+Read the topology from <path> instead of discovering the topology of the local machine.
+
+If <path> is a file,
+it may be a XML file exported by a previous hwloc program.
+If <path> is "\-", the standard input may be used as a XML file.
+
+On Linux, <path> may be a directory containing the topology files
+gathered from another machine topology with hwloc-gather-topology.
+
+On x86, <path> may be a directory containing a cpuid dump gathered
+with hwloc-gather-cpuid.
+
+When the archivemount program is available, <path> may also be a tarball
+containing such Linux or x86 topology files.
+.TP
+\fB\-i\fR <specification>, \fB\-\-input\fR <specification>
+Simulate a fake hierarchy (instead of discovering the topology on the
+local machine). If <specification> is "node:2 pu:3", the topology will
+contain two NUMA nodes with 3 processing units in each of them.
+The <specification> string must end with a number of PUs.
+.TP
+\fB\-\-if\fR <format>, \fB\-\-input\-format\fR <format>
+Enforce the input in the given format, among \fBxml\fR, \fBfsroot\fR,
+\fBcpuid\fR and \fBsynthetic\fR.
+.TP
+\fB\-\-ignore\fR <type>
+Ignore all objects of type <type> in the topology.
+.TP
+\fB\-\-from\fR <type>
+Distribute starting from objects of the given type instead of from
+the top of the topology hierarchy, i.e. ignoring the structure given by objects
+above.
+
+<type> cannot be among NUMANode, I/O or Misc types.
+.TP
+\fB\-\-to\fR <type>
+Distribute down to objects of the given type instead of down to the bottom of
+the topology hierarchy, i.e. ignoring the structure given by objects below.
+This may be useful if some latitude is desired for the binding, e.g. just bind
+several processes to each package without specifying a single core for each
+of them.
+
+<type> cannot be among NUMANode, I/O or Misc types.
+.TP
+\fB\-\-at\fR <type>
+Distribute among objects of the given type.  This is equivalent to specifying
+both \fB\-\-from\fR and \fB\-\-to\fR at the same time.
+.TP
+\fB\-\-reverse\fR
+Distribute by starting with the last objects first,
+and singlify CPU sets by keeping the last bit (instead of the first bit).
+.TP
+\fB\-\-restrict\fR <cpuset>
+Restrict the topology to the given cpuset.
+This removes some PUs and their now-child-less parents.
+
+Beware that restricting the PUs in a topology may change the
+logical indexes of many objects, including NUMA nodes.
+.TP
+\fB\-\-restrict\fR nodeset=<nodeset>
+Restrict the topology to the given nodeset
+(unless \fB\-\-restrict\-flags\fR specifies something different).
+This removes some NUMA nodes and their now-child-less parents.
+
+Beware that restricting the NUMA nodes in a topology may change the
+logical indexes of many objects, including PUs.
+.TP
+\fB\-\-restrict\-flags\fR <flags>
+Enforce flags when restricting the topology.
+Flags may be given as numeric values or as a comma-separated list of flag names
+that are passed to \fIhwloc_topology_restrict()\fR.
+Those names may be substrings of actual flag names as long as a single one matches,
+for instance \fBbynodeset,memless\fR.
+The default is \fB0\fR (or \fBnone\fR).
+.TP
+\fB\-\-disallowed\fR
+Include objects disallowed by administrative limitations.
+.TP
+\fB\-\-version\fR
+Report version and exit.
+.TP
+\fB\-h\fR \fB\-\-help\fR
+Display help message and exit.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc-distrib generates a series of CPU masks corresponding to a distribution of
+a given number of elements over the topology of the machine. The distribution
+is done recursively from the top of the hierarchy (or from the level specified
+by option \fB\-\-from\fR) down to the bottom of the hierarchy (or down to the
+level specified by option \fB\-\-to\fR, or until only one element remains),
+splitting the number of elements at each encountered hierarchy level not ignored
+by options \fB\-\-ignore\fR.
+.
+.PP
+This can e.g. be used to distribute a set of processes hierarchically according
+to the topology of a machine. These masks can be used with hwloc-bind(1).
+.
+.PP
+On hybrid CPUs (or asymmetric platforms), distribution may be suboptimal
+since the number of cores or PUs inside packages or below caches may vary
+(the top-down recursive partitioning ignores these numbers until reaching their levels).
+Hence it is recommended to distribute only inside a single homogeneous domain.
+For instance on a CPU with energy-efficient E-cores and high-performance P-cores,
+one should distribute separately N tasks on E-cores and M tasks on P-cores
+instead of trying to distribute directly M+N tasks on the entire CPUs.
+.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.  Most of the concepts described in
+hwloc(7) directly apply to the hwloc-bind utility.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+hwloc-distrib's operation is best described through several examples.
+.
+.PP
+If 4 processes have to be distributed across a machine, their CPU masks
+may be obtained with:
+
+    $ hwloc-distrib 4
+    0x0000000f
+    0x00000f00
+    0x000000f0
+    0x0000f000
+
+To distribute only among the second package, the topology should be restricted:
+
+    $ hwloc-distrib --restrict $(hwloc-calc package:1) 4
+    0x00000010
+    0x00000020
+    0x00000040
+    0x00000080
+
+To get a single processor of each CPU masks (prevent migration in case
+of binding)
+
+    $ hwloc-distrib 4 --single
+    0x00000001
+    0x00000100
+    0x00000010
+    0x00001000
+
+Each output line may be converted independently with hwloc-calc:
+
+    $ hwloc-distrib 4 --single | hwloc-calc --oo -q -I pu
+    PU:0
+    PU:8
+    PU:4
+    PU:12
+
+To convert the output into a list of processors that may be passed to
+dplace -c inside a mpirun command line:
+
+    $ hwloc-distrib 4 --single | xargs hwloc-calc -I pu
+    0,8,4,16
+.
+.
+.\" **************************
+.\"    Return value section
+.\" **************************
+.SH RETURN VALUE
+Upon successful execution, hwloc-distrib displays one or more CPU mask
+strings.  The return value is 0.
+.
+.
+.PP
+hwloc-distrib will return nonzero if any kind of error occurs, such as
+(but not limited to) failure to parse the command line.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7)
+.sp

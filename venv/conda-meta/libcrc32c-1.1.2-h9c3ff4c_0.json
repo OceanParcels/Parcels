@@ -1,0 +1,96 @@
+{
+  "build": "h9c3ff4c_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=9.4.0",
+    "libstdcxx-ng >=9.4.0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libcrc32c-1.1.2-h9c3ff4c_0",
+  "files": [
+    "include/crc32c/crc32c.h",
+    "lib/cmake/Crc32c/Crc32cConfig.cmake",
+    "lib/cmake/Crc32c/Crc32cConfigVersion.cmake",
+    "lib/cmake/Crc32c/Crc32cTargets-release.cmake",
+    "lib/cmake/Crc32c/Crc32cTargets.cmake",
+    "lib/libcrc32c.so",
+    "lib/libcrc32c.so.1",
+    "lib/libcrc32c.so.1.1.0"
+  ],
+  "fn": "libcrc32c-1.1.2-h9c3ff4c_0.tar.bz2",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/libcrc32c-1.1.2-h9c3ff4c_0",
+    "type": 1
+  },
+  "md5": "c965a5aa0d5c1c37ffc62dff36e28400",
+  "name": "libcrc32c",
+  "package_tarball_full_path": "/opt/conda/pkgs/libcrc32c-1.1.2-h9c3ff4c_0.tar.bz2",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/crc32c/crc32c.h",
+        "path_type": "hardlink",
+        "sha256": "2ad42dff3ba9ea9f8059564fa5731111443ba9da52680d04de89611172fb565f",
+        "sha256_in_prefix": "2ad42dff3ba9ea9f8059564fa5731111443ba9da52680d04de89611172fb565f",
+        "size_in_bytes": 2285
+      },
+      {
+        "_path": "lib/cmake/Crc32c/Crc32cConfig.cmake",
+        "path_type": "hardlink",
+        "sha256": "de5126af1a83b699712bdc2d5b9fa42a2cfdbf143cad6b54df7889c6eedef418",
+        "sha256_in_prefix": "de5126af1a83b699712bdc2d5b9fa42a2cfdbf143cad6b54df7889c6eedef418",
+        "size_in_bytes": 1181
+      },
+      {
+        "_path": "lib/cmake/Crc32c/Crc32cConfigVersion.cmake",
+        "path_type": "hardlink",
+        "sha256": "cf6bd88a9f57a05d885b045c803aba54b6339f86503445fb4fe52d50dc94833d",
+        "sha256_in_prefix": "cf6bd88a9f57a05d885b045c803aba54b6339f86503445fb4fe52d50dc94833d",
+        "size_in_bytes": 2878
+      },
+      {
+        "_path": "lib/cmake/Crc32c/Crc32cTargets-release.cmake",
+        "path_type": "hardlink",
+        "sha256": "a13dd6471c29786c077f3cb690840dabcd9a557118623c7c8fc03dfd83a1467b",
+        "sha256_in_prefix": "a13dd6471c29786c077f3cb690840dabcd9a557118623c7c8fc03dfd83a1467b",
+        "size_in_bytes": 838
+      },
+      {
+        "_path": "lib/cmake/Crc32c/Crc32cTargets.cmake",
+        "path_type": "hardlink",
+        "sha256": "1d9257e331a8d74b7df454cafe5791c125dd2ba6212cf021dfc6e934b6919fd3",
+        "sha256_in_prefix": "1d9257e331a8d74b7df454cafe5791c125dd2ba6212cf021dfc6e934b6919fd3",
+        "size_in_bytes": 3258
+      },
+      {
+        "_path": "lib/libcrc32c.so",
+        "path_type": "softlink",
+        "sha256": "ea8ae3493df07598d7ddb74e36a9ae21ddf73e50d38ef149e903e0c742df89d1",
+        "size_in_bytes": 20432
+      },
+      {
+        "_path": "lib/libcrc32c.so.1",
+        "path_type": "softlink",
+        "sha256": "ea8ae3493df07598d7ddb74e36a9ae21ddf73e50d38ef149e903e0c742df89d1",
+        "size_in_bytes": 20432
+      },
+      {
+        "_path": "lib/libcrc32c.so.1.1.0",
+        "path_type": "hardlink",
+        "sha256": "ea8ae3493df07598d7ddb74e36a9ae21ddf73e50d38ef149e903e0c742df89d1",
+        "sha256_in_prefix": "ea8ae3493df07598d7ddb74e36a9ae21ddf73e50d38ef149e903e0c742df89d1",
+        "size_in_bytes": 20432
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "fd1d153962764433fe6233f34a72cdeed5dcf8a883a85769e8295ce940b5b0c5",
+  "size": 20440,
+  "subdir": "linux-64",
+  "timestamp": 1633683576000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libcrc32c-1.1.2-h9c3ff4c_0.tar.bz2",
+  "version": "1.1.2"
+}

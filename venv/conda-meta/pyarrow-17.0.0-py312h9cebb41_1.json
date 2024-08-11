@@ -1,0 +1,38 @@
+{
+  "build": "py312h9cebb41_1",
+  "build_number": 1,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libarrow-acero 17.0.0.*",
+    "libarrow-dataset 17.0.0.*",
+    "libarrow-substrait 17.0.0.*",
+    "libparquet 17.0.0.*",
+    "numpy >=1.19,<3",
+    "pyarrow-core 17.0.0 *_1_*",
+    "python >=3.12,<3.13.0a0",
+    "python_abi 3.12.* *_cp312"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/pyarrow-17.0.0-py312h9cebb41_1",
+  "files": [],
+  "fn": "pyarrow-17.0.0-py312h9cebb41_1.conda",
+  "license": "Apache-2.0",
+  "link": {
+    "source": "/opt/conda/pkgs/pyarrow-17.0.0-py312h9cebb41_1",
+    "type": 1
+  },
+  "md5": "7e8ddbd44fb99ba376b09c4e9e61e509",
+  "name": "pyarrow",
+  "package_tarball_full_path": "/opt/conda/pkgs/pyarrow-17.0.0-py312h9cebb41_1.conda",
+  "paths_data": {
+    "paths": [],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "f08a9ae2c5b57085ef70175928f7bd0954d9ea56ef6cd2cd51a29b6a7c879204",
+  "size": 25693,
+  "subdir": "linux-64",
+  "timestamp": 1722487649000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/pyarrow-17.0.0-py312h9cebb41_1.conda",
+  "version": "17.0.0"
+}

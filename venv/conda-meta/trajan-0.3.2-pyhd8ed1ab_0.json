@@ -1,0 +1,243 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "cartopy >=0.21",
+    "cf_xarray >=0.8",
+    "click >=8",
+    "matplotlib-base >=3.5",
+    "netcdf4 >=1.6",
+    "numpy >=1.23",
+    "pyproj >=2.3",
+    "python >=3.8",
+    "scipy >=1.9",
+    "xarray >=2022.6.0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/trajan-0.3.2-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/trajan-0.3.2.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/trajan-0.3.2.dist-info/LICENSE",
+    "lib/python3.12/site-packages/trajan-0.3.2.dist-info/METADATA",
+    "lib/python3.12/site-packages/trajan-0.3.2.dist-info/RECORD",
+    "lib/python3.12/site-packages/trajan-0.3.2.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/trajan-0.3.2.dist-info/WHEEL",
+    "lib/python3.12/site-packages/trajan-0.3.2.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/trajan-0.3.2.dist-info/entry_points.txt",
+    "lib/python3.12/site-packages/trajan/__init__.py",
+    "lib/python3.12/site-packages/trajan/animation/__init__.py",
+    "lib/python3.12/site-packages/trajan/plot/__init__.py",
+    "lib/python3.12/site-packages/trajan/plot/land.py",
+    "lib/python3.12/site-packages/trajan/scripts/trajanshow.py",
+    "lib/python3.12/site-packages/trajan/skill/__init__.py",
+    "lib/python3.12/site-packages/trajan/traj.py",
+    "lib/python3.12/site-packages/trajan/traj1d.py",
+    "lib/python3.12/site-packages/trajan/traj2d.py",
+    "lib/python3.12/site-packages/trajan/trajectory_accessor.py",
+    "lib/python3.12/site-packages/trajan/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/trajan/animation/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/trajan/plot/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/trajan/plot/__pycache__/land.cpython-312.pyc",
+    "lib/python3.12/site-packages/trajan/scripts/__pycache__/trajanshow.cpython-312.pyc",
+    "lib/python3.12/site-packages/trajan/skill/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/trajan/__pycache__/traj.cpython-312.pyc",
+    "lib/python3.12/site-packages/trajan/__pycache__/traj1d.cpython-312.pyc",
+    "lib/python3.12/site-packages/trajan/__pycache__/traj2d.cpython-312.pyc",
+    "lib/python3.12/site-packages/trajan/__pycache__/trajectory_accessor.cpython-312.pyc",
+    "bin/trajanshow"
+  ],
+  "fn": "trajan-0.3.2-pyhd8ed1ab_0.conda",
+  "license": "GPL-2.0-or-later",
+  "link": {
+    "source": "/opt/conda/pkgs/trajan-0.3.2-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "5b7c5cccf725c998aaad7c4a812bcb25",
+  "name": "trajan",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/trajan-0.3.2-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/trajan-0.3.2.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/trajan-0.3.2.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+        "sha256_in_prefix": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+        "size_in_bytes": 18092
+      },
+      {
+        "_path": "site-packages/trajan-0.3.2.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "88967cef53f9bd0ab5efceb4d25227fd4cbf97ba6cc7c2f4dad86e5d9e43d9d5",
+        "sha256_in_prefix": "88967cef53f9bd0ab5efceb4d25227fd4cbf97ba6cc7c2f4dad86e5d9e43d9d5",
+        "size_in_bytes": 810
+      },
+      {
+        "_path": "site-packages/trajan-0.3.2.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "1369049794d77654db3921778184f3138e82c575c073efaca91741df97a086db",
+        "sha256_in_prefix": "1369049794d77654db3921778184f3138e82c575c073efaca91741df97a086db",
+        "size_in_bytes": 2039
+      },
+      {
+        "_path": "site-packages/trajan-0.3.2.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/trajan-0.3.2.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "ed9f3fdbbb9a1c8fd4640738528c783e906143d639fe6a1d65758cc6d522e0d5",
+        "sha256_in_prefix": "ed9f3fdbbb9a1c8fd4640738528c783e906143d639fe6a1d65758cc6d522e0d5",
+        "size_in_bytes": 88
+      },
+      {
+        "_path": "site-packages/trajan-0.3.2.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "4f5ce4a4233411c65073e403ef048e10a8adfbef0c5dd33600e9ad151ffac7b9",
+        "sha256_in_prefix": "4f5ce4a4233411c65073e403ef048e10a8adfbef0c5dd33600e9ad151ffac7b9",
+        "size_in_bytes": 102
+      },
+      {
+        "_path": "site-packages/trajan-0.3.2.dist-info/entry_points.txt",
+        "path_type": "hardlink",
+        "sha256": "2332e91ea42de6a37e5a864d47597e5b6bf9e697a0ffc00366bde457459c72e2",
+        "sha256_in_prefix": "2332e91ea42de6a37e5a864d47597e5b6bf9e697a0ffc00366bde457459c72e2",
+        "size_in_bytes": 61
+      },
+      {
+        "_path": "site-packages/trajan/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "f77141a1437658bc9f25437f6437d48e21f53bdfad864bedcd65e2bc8f83186c",
+        "sha256_in_prefix": "f77141a1437658bc9f25437f6437d48e21f53bdfad864bedcd65e2bc8f83186c",
+        "size_in_bytes": 5299
+      },
+      {
+        "_path": "site-packages/trajan/animation/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "2a44e8567e41a1dd2f29847032887ef8258530638386cf7a2a09b4f82ea21836",
+        "sha256_in_prefix": "2a44e8567e41a1dd2f29847032887ef8258530638386cf7a2a09b4f82ea21836",
+        "size_in_bytes": 1385
+      },
+      {
+        "_path": "site-packages/trajan/plot/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "d43f32ac105dd3eb1db17e303779fd4db7daa57c069362ace11ea469add02cec",
+        "sha256_in_prefix": "d43f32ac105dd3eb1db17e303779fd4db7daa57c069362ace11ea469add02cec",
+        "size_in_bytes": 6390
+      },
+      {
+        "_path": "site-packages/trajan/plot/land.py",
+        "path_type": "hardlink",
+        "sha256": "1c5a7793cff03fe3e09acb75174921831e1b92814347f219d04ba5a88107ffd2",
+        "sha256_in_prefix": "1c5a7793cff03fe3e09acb75174921831e1b92814347f219d04ba5a88107ffd2",
+        "size_in_bytes": 2204
+      },
+      {
+        "_path": "site-packages/trajan/scripts/trajanshow.py",
+        "path_type": "hardlink",
+        "sha256": "ae2dfa4500e9bb858d430a12a709ca9cf959a7c28db74939fa35ff3f0e622e04",
+        "sha256_in_prefix": "ae2dfa4500e9bb858d430a12a709ca9cf959a7c28db74939fa35ff3f0e622e04",
+        "size_in_bytes": 2016
+      },
+      {
+        "_path": "site-packages/trajan/skill/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "58351a2e36e1aca93c9318162e84b38a67cad8ef4ef53813014d00a27bc07e29",
+        "sha256_in_prefix": "58351a2e36e1aca93c9318162e84b38a67cad8ef4ef53813014d00a27bc07e29",
+        "size_in_bytes": 1317
+      },
+      {
+        "_path": "site-packages/trajan/traj.py",
+        "path_type": "hardlink",
+        "sha256": "180dfc80307a16c4227bdb77ca3df2552dc7164b8ce42b0860b39fa072ac6c3e",
+        "sha256_in_prefix": "180dfc80307a16c4227bdb77ca3df2552dc7164b8ce42b0860b39fa072ac6c3e",
+        "size_in_bytes": 12264
+      },
+      {
+        "_path": "site-packages/trajan/traj1d.py",
+        "path_type": "hardlink",
+        "sha256": "1cc678b60982d4cac6c048965b1b6193df4b6fc5fa625ec1424e003771d3361a",
+        "sha256_in_prefix": "1cc678b60982d4cac6c048965b1b6193df4b6fc5fa625ec1424e003771d3361a",
+        "size_in_bytes": 5981
+      },
+      {
+        "_path": "site-packages/trajan/traj2d.py",
+        "path_type": "hardlink",
+        "sha256": "418afb72729930b420bc99ee0a1d404c1bce19127e1466245844afce3e1cb157",
+        "sha256_in_prefix": "418afb72729930b420bc99ee0a1d404c1bce19127e1466245844afce3e1cb157",
+        "size_in_bytes": 4035
+      },
+      {
+        "_path": "site-packages/trajan/trajectory_accessor.py",
+        "path_type": "hardlink",
+        "sha256": "478b970db4f1955d10510edf70cbd1e0f818e2b108a971cbd0cd0e026f769d59",
+        "sha256_in_prefix": "478b970db4f1955d10510edf70cbd1e0f818e2b108a971cbd0cd0e026f769d59",
+        "size_in_bytes": 2244
+      },
+      {
+        "_path": "lib/python3.12/site-packages/trajan/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/trajan/animation/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/trajan/plot/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/trajan/plot/__pycache__/land.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/trajan/scripts/__pycache__/trajanshow.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/trajan/skill/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/trajan/__pycache__/traj.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/trajan/__pycache__/traj1d.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/trajan/__pycache__/traj2d.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/trajan/__pycache__/trajectory_accessor.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "bin/trajanshow",
+        "path_type": "unix_python_entry_point"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "trajan",
+  "sha256": "3793318534fb8643ebe08b4ad899d0a0669f9c8337a0d6c82389738162f92d1c",
+  "size": 27287,
+  "subdir": "noarch",
+  "timestamp": 1679400375000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/trajan-0.3.2-pyhd8ed1ab_0.conda",
+  "version": "0.3.2"
+}

@@ -1,0 +1,164 @@
+{
+  "build": "py_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "numpy",
+    "python",
+    "pytools",
+    "six"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/cgen-2020.1-py_0",
+  "files": [
+    "lib/python3.12/site-packages/cgen-2020.1.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/cgen-2020.1.dist-info/LICENSE",
+    "lib/python3.12/site-packages/cgen-2020.1.dist-info/METADATA",
+    "lib/python3.12/site-packages/cgen-2020.1.dist-info/RECORD",
+    "lib/python3.12/site-packages/cgen-2020.1.dist-info/WHEEL",
+    "lib/python3.12/site-packages/cgen-2020.1.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/cgen/__init__.py",
+    "lib/python3.12/site-packages/cgen/cuda.py",
+    "lib/python3.12/site-packages/cgen/ispc.py",
+    "lib/python3.12/site-packages/cgen/mapper.py",
+    "lib/python3.12/site-packages/cgen/opencl.py",
+    "lib/python3.12/site-packages/cgen/version.py",
+    "lib/python3.12/site-packages/cgen/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/cgen/__pycache__/cuda.cpython-312.pyc",
+    "lib/python3.12/site-packages/cgen/__pycache__/ispc.cpython-312.pyc",
+    "lib/python3.12/site-packages/cgen/__pycache__/mapper.cpython-312.pyc",
+    "lib/python3.12/site-packages/cgen/__pycache__/opencl.cpython-312.pyc",
+    "lib/python3.12/site-packages/cgen/__pycache__/version.cpython-312.pyc"
+  ],
+  "fn": "cgen-2020.1-py_0.tar.bz2",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/cgen-2020.1-py_0",
+    "type": 1
+  },
+  "md5": "f51cf23f72dcc18e07f44feb5a152d6e",
+  "name": "cgen",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/cgen-2020.1-py_0.tar.bz2",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/cgen-2020.1.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/cgen-2020.1.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "245bf71a6e911abd2dc4d3c8407c97f833a0a07c6224a83ba061cc5c70a6b1b4",
+        "sha256_in_prefix": "245bf71a6e911abd2dc4d3c8407c97f833a0a07c6224a83ba061cc5c70a6b1b4",
+        "size_in_bytes": 1143
+      },
+      {
+        "_path": "site-packages/cgen-2020.1.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "4ea2e0e249bb7e891ac78e3d6471177d0f05a9893d5ad092b364fa3e40588fd8",
+        "sha256_in_prefix": "4ea2e0e249bb7e891ac78e3d6471177d0f05a9893d5ad092b364fa3e40588fd8",
+        "size_in_bytes": 2250
+      },
+      {
+        "_path": "site-packages/cgen-2020.1.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "6c1ec5510eec3785b813997d32862c2ae54ad4bd1538fa341683944a0c50cdb0",
+        "sha256_in_prefix": "6c1ec5510eec3785b813997d32862c2ae54ad4bd1538fa341683944a0c50cdb0",
+        "size_in_bytes": 1010
+      },
+      {
+        "_path": "site-packages/cgen-2020.1.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "09b51d2d3a83dfee3359e99ff37ae047fdbf302e13797c3da97c2b5ed7b9c38c",
+        "sha256_in_prefix": "09b51d2d3a83dfee3359e99ff37ae047fdbf302e13797c3da97c2b5ed7b9c38c",
+        "size_in_bytes": 92
+      },
+      {
+        "_path": "site-packages/cgen-2020.1.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "0e5aff1735a2b1e15bbe9422d307d8814ef20dd9a20f983dec546b72e3cb2846",
+        "sha256_in_prefix": "0e5aff1735a2b1e15bbe9422d307d8814ef20dd9a20f983dec546b72e3cb2846",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/cgen/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "ebdcdc8af11254f9dbbc3fb3474b033ab33388c5e2f5dddca565760db759e070",
+        "sha256_in_prefix": "ebdcdc8af11254f9dbbc3fb3474b033ab33388c5e2f5dddca565760db759e070",
+        "size_in_bytes": 31216
+      },
+      {
+        "_path": "site-packages/cgen/cuda.py",
+        "path_type": "hardlink",
+        "sha256": "2851ea9abaec1ced26a54f8f8f3ce6ef5b1bf30a0d09aebf18189ddbf3a4236a",
+        "sha256_in_prefix": "2851ea9abaec1ced26a54f8f8f3ce6ef5b1bf30a0d09aebf18189ddbf3a4236a",
+        "size_in_bytes": 1679
+      },
+      {
+        "_path": "site-packages/cgen/ispc.py",
+        "path_type": "hardlink",
+        "sha256": "f57e2bdd73c3e354fdbc56162cb82880b0da4a2be8f5f391dc2594c80a67d4c3",
+        "sha256_in_prefix": "f57e2bdd73c3e354fdbc56162cb82880b0da4a2be8f5f391dc2594c80a67d4c3",
+        "size_in_bytes": 2680
+      },
+      {
+        "_path": "site-packages/cgen/mapper.py",
+        "path_type": "hardlink",
+        "sha256": "ac1a7035aee8fc37665d6d382a786c8d99ae66d177f0b571a38fe6a7378c7a85",
+        "sha256_in_prefix": "ac1a7035aee8fc37665d6d382a786c8d99ae66d177f0b571a38fe6a7378c7a85",
+        "size_in_bytes": 9931
+      },
+      {
+        "_path": "site-packages/cgen/opencl.py",
+        "path_type": "hardlink",
+        "sha256": "c5b570915860aa7041cbaaf2184b8ab4b64d6cf4f6cea56f764dfa0f4351bda2",
+        "sha256_in_prefix": "c5b570915860aa7041cbaaf2184b8ab4b64d6cf4f6cea56f764dfa0f4351bda2",
+        "size_in_bytes": 4423
+      },
+      {
+        "_path": "site-packages/cgen/version.py",
+        "path_type": "hardlink",
+        "sha256": "c35e9c9af3518b43ee5efba03a5f421780cb0721e1dc4e37f5194a5ea017dfc1",
+        "sha256_in_prefix": "c35e9c9af3518b43ee5efba03a5f421780cb0721e1dc4e37f5194a5ea017dfc1",
+        "size_in_bytes": 106
+      },
+      {
+        "_path": "lib/python3.12/site-packages/cgen/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/cgen/__pycache__/cuda.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/cgen/__pycache__/ispc.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/cgen/__pycache__/mapper.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/cgen/__pycache__/opencl.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/cgen/__pycache__/version.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "cgen",
+  "sha256": "15ad63ac0b34cf29ca530ab71d48085cb03e2d9629b4585dea00376325bc0c19",
+  "size": 16321,
+  "subdir": "noarch",
+  "timestamp": 1581033877000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/cgen-2020.1-py_0.tar.bz2",
+  "version": "2020.1"
+}

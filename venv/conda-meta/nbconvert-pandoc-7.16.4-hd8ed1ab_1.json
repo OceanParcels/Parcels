@@ -1,0 +1,34 @@
+{
+  "build": "hd8ed1ab_1",
+  "build_number": 1,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "nbconvert-core 7.16.4 pyhd8ed1ab_1",
+    "pandoc"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/nbconvert-pandoc-7.16.4-hd8ed1ab_1",
+  "files": [],
+  "fn": "nbconvert-pandoc-7.16.4-hd8ed1ab_1.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/nbconvert-pandoc-7.16.4-hd8ed1ab_1",
+    "type": 1
+  },
+  "md5": "37cec2cf68f4c09563d8bc833791096b",
+  "name": "nbconvert-pandoc",
+  "noarch": "generic",
+  "package_tarball_full_path": "/opt/conda/pkgs/nbconvert-pandoc-7.16.4-hd8ed1ab_1.conda",
+  "package_type": "noarch_generic",
+  "paths_data": {
+    "paths": [],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "31df882e97b227e7e57a328a36840e65ea3247023ac2ce502fd5d4b621da8dbe",
+  "size": 8371,
+  "subdir": "noarch",
+  "timestamp": 1718135533000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/nbconvert-pandoc-7.16.4-hd8ed1ab_1.conda",
+  "version": "7.16.4"
+}

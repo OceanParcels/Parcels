@@ -1,0 +1,367 @@
+{
+  "build": "hd590300_1",
+  "build_number": 1,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/ocl-icd-2.3.2-hd590300_1",
+  "files": [
+    "bin/cllayerinfo",
+    "etc/OpenCL/vendors/.conda_keep",
+    "include/CL/cl.h",
+    "include/CL/cl_d3d10.h",
+    "include/CL/cl_d3d11.h",
+    "include/CL/cl_dx9_media_sharing.h",
+    "include/CL/cl_dx9_media_sharing_intel.h",
+    "include/CL/cl_egl.h",
+    "include/CL/cl_ext.h",
+    "include/CL/cl_ext_intel.h",
+    "include/CL/cl_gl.h",
+    "include/CL/cl_gl_ext.h",
+    "include/CL/cl_half.h",
+    "include/CL/cl_icd.h",
+    "include/CL/cl_platform.h",
+    "include/CL/cl_va_api_media_sharing_intel.h",
+    "include/CL/cl_version.h",
+    "include/CL/opencl.h",
+    "include/OpenCL/cl.h",
+    "include/OpenCL/cl_d3d10.h",
+    "include/OpenCL/cl_d3d11.h",
+    "include/OpenCL/cl_dx9_media_sharing.h",
+    "include/OpenCL/cl_dx9_media_sharing_intel.h",
+    "include/OpenCL/cl_egl.h",
+    "include/OpenCL/cl_ext.h",
+    "include/OpenCL/cl_ext_intel.h",
+    "include/OpenCL/cl_gl.h",
+    "include/OpenCL/cl_gl_ext.h",
+    "include/OpenCL/cl_half.h",
+    "include/OpenCL/cl_icd.h",
+    "include/OpenCL/cl_platform.h",
+    "include/OpenCL/cl_va_api_media_sharing_intel.h",
+    "include/OpenCL/cl_version.h",
+    "include/OpenCL/opencl.h",
+    "include/ocl_icd.h",
+    "lib/libOpenCL.so",
+    "lib/libOpenCL.so.1",
+    "lib/libOpenCL.so.1.0.0",
+    "lib/pkgconfig/OpenCL.pc",
+    "lib/pkgconfig/ocl-icd.pc",
+    "share/doc/ocl-icd/examples/ocl_icd_bindings.c"
+  ],
+  "fn": "ocl-icd-2.3.2-hd590300_1.conda",
+  "license": "BSD-2-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/ocl-icd-2.3.2-hd590300_1",
+    "type": 1
+  },
+  "md5": "c66f837ac65e4d1cdeb80e2a1d5fcc3d",
+  "name": "ocl-icd",
+  "package_tarball_full_path": "/opt/conda/pkgs/ocl-icd-2.3.2-hd590300_1.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/cllayerinfo",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/ocl-icd_1710946369662/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "d2a152eebfe98fe0d26c1c8009f268fa47ee7250b19f3e2d1829ea69c411197c",
+        "sha256_in_prefix": "84957484cbc8a33408dfa86205e6f1ed5d9bb3a29dc593094a7ec5d9cd468c0e",
+        "size_in_bytes": 226208
+      },
+      {
+        "_path": "etc/OpenCL/vendors/.conda_keep",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "include/CL/cl.h",
+        "path_type": "hardlink",
+        "sha256": "fd7541179349f77f1398799a4c8327b6da6f3edfb2596f7537c9c279d53e453d",
+        "sha256_in_prefix": "fd7541179349f77f1398799a4c8327b6da6f3edfb2596f7537c9c279d53e453d",
+        "size_in_bytes": 81807
+      },
+      {
+        "_path": "include/CL/cl_d3d10.h",
+        "path_type": "hardlink",
+        "sha256": "c36862bf641a9a11842a7f6dc7940027720b7b683016496fa4447d9eaa79e540",
+        "sha256_in_prefix": "c36862bf641a9a11842a7f6dc7940027720b7b683016496fa4447d9eaa79e540",
+        "size_in_bytes": 7539
+      },
+      {
+        "_path": "include/CL/cl_d3d11.h",
+        "path_type": "hardlink",
+        "sha256": "c1cef52dd35e676252e2e750b545013d42162acb98587bb0d1dca975dcc8d3f6",
+        "sha256_in_prefix": "c1cef52dd35e676252e2e750b545013d42162acb98587bb0d1dca975dcc8d3f6",
+        "size_in_bytes": 7577
+      },
+      {
+        "_path": "include/CL/cl_dx9_media_sharing.h",
+        "path_type": "hardlink",
+        "sha256": "a71f212c224e5e42a836e413aa08d9cf0f330704d101fe1b6bcaeb1f87267efc",
+        "sha256_in_prefix": "a71f212c224e5e42a836e413aa08d9cf0f330704d101fe1b6bcaeb1f87267efc",
+        "size_in_bytes": 11526
+      },
+      {
+        "_path": "include/CL/cl_dx9_media_sharing_intel.h",
+        "path_type": "hardlink",
+        "sha256": "0ce4432973392815885d4b6fe968135682502d702ec3dbde6db78e173adfa8da",
+        "sha256_in_prefix": "0ce4432973392815885d4b6fe968135682502d702ec3dbde6db78e173adfa8da",
+        "size_in_bytes": 959
+      },
+      {
+        "_path": "include/CL/cl_egl.h",
+        "path_type": "hardlink",
+        "sha256": "dda68e8169031bfb0604b2ad330975898b39f3ac2ccbe5c2780b223afec60842",
+        "sha256_in_prefix": "dda68e8169031bfb0604b2ad330975898b39f3ac2ccbe5c2780b223afec60842",
+        "size_in_bytes": 5400
+      },
+      {
+        "_path": "include/CL/cl_ext.h",
+        "path_type": "hardlink",
+        "sha256": "7b8c3b4d2a00af670438f23e829aac541528fb53d5fdea1740cb71881a932114",
+        "sha256_in_prefix": "7b8c3b4d2a00af670438f23e829aac541528fb53d5fdea1740cb71881a932114",
+        "size_in_bytes": 119222
+      },
+      {
+        "_path": "include/CL/cl_ext_intel.h",
+        "path_type": "hardlink",
+        "sha256": "20fc359c30ad2339af7c8442da97ebd8e6ea4fb8f57c47b96b0f284d4c281953",
+        "sha256_in_prefix": "20fc359c30ad2339af7c8442da97ebd8e6ea4fb8f57c47b96b0f284d4c281953",
+        "size_in_bytes": 902
+      },
+      {
+        "_path": "include/CL/cl_gl.h",
+        "path_type": "hardlink",
+        "sha256": "59a5dabe912d2badd205c3e0458a4c4ed652e06049f292997087eadcc989cb62",
+        "sha256_in_prefix": "59a5dabe912d2badd205c3e0458a4c4ed652e06049f292997087eadcc989cb62",
+        "size_in_bytes": 11534
+      },
+      {
+        "_path": "include/CL/cl_gl_ext.h",
+        "path_type": "hardlink",
+        "sha256": "7fd0d4ad6072a90b05749fe4d2131b424b71d19ae809ae3d7d4862b0d0aee16a",
+        "sha256_in_prefix": "7fd0d4ad6072a90b05749fe4d2131b424b71d19ae809ae3d7d4862b0d0aee16a",
+        "size_in_bytes": 905
+      },
+      {
+        "_path": "include/CL/cl_half.h",
+        "path_type": "hardlink",
+        "sha256": "c4d64cb15e710e60058d6072f8fbb1ed988eda60d16f6fc1ddb7df8c9e903109",
+        "sha256_in_prefix": "c4d64cb15e710e60058d6072f8fbb1ed988eda60d16f6fc1ddb7df8c9e903109",
+        "size_in_bytes": 10430
+      },
+      {
+        "_path": "include/CL/cl_icd.h",
+        "path_type": "hardlink",
+        "sha256": "bfc6474f40f34b35cb4f0e6801ef5cf3ddc8fc3955ce355cccd932f378ad40f3",
+        "sha256_in_prefix": "bfc6474f40f34b35cb4f0e6801ef5cf3ddc8fc3955ce355cccd932f378ad40f3",
+        "size_in_bytes": 52278
+      },
+      {
+        "_path": "include/CL/cl_platform.h",
+        "path_type": "hardlink",
+        "sha256": "f329455a208ef048b9b58e26415c64357d573dc91d3f780c50b96f4e0a9f1b90",
+        "sha256_in_prefix": "f329455a208ef048b9b58e26415c64357d573dc91d3f780c50b96f4e0a9f1b90",
+        "size_in_bytes": 43430
+      },
+      {
+        "_path": "include/CL/cl_va_api_media_sharing_intel.h",
+        "path_type": "hardlink",
+        "sha256": "7c10944f5a0b45335b974eb9ad773454beb34e155e6e7175bc7b6abedcfece29",
+        "sha256_in_prefix": "7c10944f5a0b45335b974eb9ad773454beb34e155e6e7175bc7b6abedcfece29",
+        "size_in_bytes": 6620
+      },
+      {
+        "_path": "include/CL/cl_version.h",
+        "path_type": "hardlink",
+        "sha256": "1b161f73c0f0b07121314055f75df6c19d6a93e3a0d24202c6f3e2dd1615b2a2",
+        "sha256_in_prefix": "1b161f73c0f0b07121314055f75df6c19d6a93e3a0d24202c6f3e2dd1615b2a2",
+        "size_in_bytes": 3125
+      },
+      {
+        "_path": "include/CL/opencl.h",
+        "path_type": "hardlink",
+        "sha256": "9a76fa63630e8fd5b30b5e6c692dbe7ab22edff708dfe6a06d04a3671a7716e1",
+        "sha256_in_prefix": "9a76fa63630e8fd5b30b5e6c692dbe7ab22edff708dfe6a06d04a3671a7716e1",
+        "size_in_bytes": 970
+      },
+      {
+        "_path": "include/OpenCL/cl.h",
+        "path_type": "hardlink",
+        "sha256": "fd7541179349f77f1398799a4c8327b6da6f3edfb2596f7537c9c279d53e453d",
+        "sha256_in_prefix": "fd7541179349f77f1398799a4c8327b6da6f3edfb2596f7537c9c279d53e453d",
+        "size_in_bytes": 81807
+      },
+      {
+        "_path": "include/OpenCL/cl_d3d10.h",
+        "path_type": "hardlink",
+        "sha256": "c36862bf641a9a11842a7f6dc7940027720b7b683016496fa4447d9eaa79e540",
+        "sha256_in_prefix": "c36862bf641a9a11842a7f6dc7940027720b7b683016496fa4447d9eaa79e540",
+        "size_in_bytes": 7539
+      },
+      {
+        "_path": "include/OpenCL/cl_d3d11.h",
+        "path_type": "hardlink",
+        "sha256": "c1cef52dd35e676252e2e750b545013d42162acb98587bb0d1dca975dcc8d3f6",
+        "sha256_in_prefix": "c1cef52dd35e676252e2e750b545013d42162acb98587bb0d1dca975dcc8d3f6",
+        "size_in_bytes": 7577
+      },
+      {
+        "_path": "include/OpenCL/cl_dx9_media_sharing.h",
+        "path_type": "hardlink",
+        "sha256": "a71f212c224e5e42a836e413aa08d9cf0f330704d101fe1b6bcaeb1f87267efc",
+        "sha256_in_prefix": "a71f212c224e5e42a836e413aa08d9cf0f330704d101fe1b6bcaeb1f87267efc",
+        "size_in_bytes": 11526
+      },
+      {
+        "_path": "include/OpenCL/cl_dx9_media_sharing_intel.h",
+        "path_type": "hardlink",
+        "sha256": "0ce4432973392815885d4b6fe968135682502d702ec3dbde6db78e173adfa8da",
+        "sha256_in_prefix": "0ce4432973392815885d4b6fe968135682502d702ec3dbde6db78e173adfa8da",
+        "size_in_bytes": 959
+      },
+      {
+        "_path": "include/OpenCL/cl_egl.h",
+        "path_type": "hardlink",
+        "sha256": "dda68e8169031bfb0604b2ad330975898b39f3ac2ccbe5c2780b223afec60842",
+        "sha256_in_prefix": "dda68e8169031bfb0604b2ad330975898b39f3ac2ccbe5c2780b223afec60842",
+        "size_in_bytes": 5400
+      },
+      {
+        "_path": "include/OpenCL/cl_ext.h",
+        "path_type": "hardlink",
+        "sha256": "7b8c3b4d2a00af670438f23e829aac541528fb53d5fdea1740cb71881a932114",
+        "sha256_in_prefix": "7b8c3b4d2a00af670438f23e829aac541528fb53d5fdea1740cb71881a932114",
+        "size_in_bytes": 119222
+      },
+      {
+        "_path": "include/OpenCL/cl_ext_intel.h",
+        "path_type": "hardlink",
+        "sha256": "20fc359c30ad2339af7c8442da97ebd8e6ea4fb8f57c47b96b0f284d4c281953",
+        "sha256_in_prefix": "20fc359c30ad2339af7c8442da97ebd8e6ea4fb8f57c47b96b0f284d4c281953",
+        "size_in_bytes": 902
+      },
+      {
+        "_path": "include/OpenCL/cl_gl.h",
+        "path_type": "hardlink",
+        "sha256": "59a5dabe912d2badd205c3e0458a4c4ed652e06049f292997087eadcc989cb62",
+        "sha256_in_prefix": "59a5dabe912d2badd205c3e0458a4c4ed652e06049f292997087eadcc989cb62",
+        "size_in_bytes": 11534
+      },
+      {
+        "_path": "include/OpenCL/cl_gl_ext.h",
+        "path_type": "hardlink",
+        "sha256": "7fd0d4ad6072a90b05749fe4d2131b424b71d19ae809ae3d7d4862b0d0aee16a",
+        "sha256_in_prefix": "7fd0d4ad6072a90b05749fe4d2131b424b71d19ae809ae3d7d4862b0d0aee16a",
+        "size_in_bytes": 905
+      },
+      {
+        "_path": "include/OpenCL/cl_half.h",
+        "path_type": "hardlink",
+        "sha256": "c4d64cb15e710e60058d6072f8fbb1ed988eda60d16f6fc1ddb7df8c9e903109",
+        "sha256_in_prefix": "c4d64cb15e710e60058d6072f8fbb1ed988eda60d16f6fc1ddb7df8c9e903109",
+        "size_in_bytes": 10430
+      },
+      {
+        "_path": "include/OpenCL/cl_icd.h",
+        "path_type": "hardlink",
+        "sha256": "bfc6474f40f34b35cb4f0e6801ef5cf3ddc8fc3955ce355cccd932f378ad40f3",
+        "sha256_in_prefix": "bfc6474f40f34b35cb4f0e6801ef5cf3ddc8fc3955ce355cccd932f378ad40f3",
+        "size_in_bytes": 52278
+      },
+      {
+        "_path": "include/OpenCL/cl_platform.h",
+        "path_type": "hardlink",
+        "sha256": "f329455a208ef048b9b58e26415c64357d573dc91d3f780c50b96f4e0a9f1b90",
+        "sha256_in_prefix": "f329455a208ef048b9b58e26415c64357d573dc91d3f780c50b96f4e0a9f1b90",
+        "size_in_bytes": 43430
+      },
+      {
+        "_path": "include/OpenCL/cl_va_api_media_sharing_intel.h",
+        "path_type": "hardlink",
+        "sha256": "7c10944f5a0b45335b974eb9ad773454beb34e155e6e7175bc7b6abedcfece29",
+        "sha256_in_prefix": "7c10944f5a0b45335b974eb9ad773454beb34e155e6e7175bc7b6abedcfece29",
+        "size_in_bytes": 6620
+      },
+      {
+        "_path": "include/OpenCL/cl_version.h",
+        "path_type": "hardlink",
+        "sha256": "1b161f73c0f0b07121314055f75df6c19d6a93e3a0d24202c6f3e2dd1615b2a2",
+        "sha256_in_prefix": "1b161f73c0f0b07121314055f75df6c19d6a93e3a0d24202c6f3e2dd1615b2a2",
+        "size_in_bytes": 3125
+      },
+      {
+        "_path": "include/OpenCL/opencl.h",
+        "path_type": "hardlink",
+        "sha256": "9a76fa63630e8fd5b30b5e6c692dbe7ab22edff708dfe6a06d04a3671a7716e1",
+        "sha256_in_prefix": "9a76fa63630e8fd5b30b5e6c692dbe7ab22edff708dfe6a06d04a3671a7716e1",
+        "size_in_bytes": 970
+      },
+      {
+        "_path": "include/ocl_icd.h",
+        "path_type": "hardlink",
+        "sha256": "99411df5a6198d52b62e351783744a552cc4595448a31ff8a888d30190e6b50b",
+        "sha256_in_prefix": "99411df5a6198d52b62e351783744a552cc4595448a31ff8a888d30190e6b50b",
+        "size_in_bytes": 57902
+      },
+      {
+        "_path": "lib/libOpenCL.so",
+        "path_type": "softlink",
+        "sha256": "f323dcff6148a789147fc0a5df4e6bf849f109996a7349bb4e451401816c82c9",
+        "size_in_bytes": 233496
+      },
+      {
+        "_path": "lib/libOpenCL.so.1",
+        "path_type": "softlink",
+        "sha256": "f323dcff6148a789147fc0a5df4e6bf849f109996a7349bb4e451401816c82c9",
+        "size_in_bytes": 233496
+      },
+      {
+        "_path": "lib/libOpenCL.so.1.0.0",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/ocl-icd_1710946369662/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "f323dcff6148a789147fc0a5df4e6bf849f109996a7349bb4e451401816c82c9",
+        "sha256_in_prefix": "46ca2667e676d2129feb290e2d93783f17c3d24d64d6ff723d18212231d56f92",
+        "size_in_bytes": 233496
+      },
+      {
+        "_path": "lib/pkgconfig/OpenCL.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/ocl-icd_1710946369662/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "21d72974bac82cc0d925ac30065a69ec73e892fbe888dd33a8ef780d859fb3f4",
+        "sha256_in_prefix": "c41a1ac8d11c2ab2e66a1313a9171379cbd63c07f0254133d8d82b435e6ab8c9",
+        "size_in_bytes": 497
+      },
+      {
+        "_path": "lib/pkgconfig/ocl-icd.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/ocl-icd_1710946369662/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla",
+        "sha256": "0bbc7dc6e581c970219848f06f5d53c1f048f9d77c7ab00e8cfcd7a5d826544d",
+        "sha256_in_prefix": "d5df88a9c96a8140abff6a4da83c4de171c0e464cd3984b94861a78734c72aaf",
+        "size_in_bytes": 516
+      },
+      {
+        "_path": "share/doc/ocl-icd/examples/ocl_icd_bindings.c",
+        "path_type": "hardlink",
+        "sha256": "c5710dc8d196799ef33836dc091e543b99da55340f1d8eccf23f17553dc72fca",
+        "sha256_in_prefix": "c5710dc8d196799ef33836dc091e543b99da55340f1d8eccf23f17553dc72fca",
+        "size_in_bytes": 8813
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "0e01384423e48e5011eb6b224da8dc5e3567c87dbcefbe60cd9d5cead276cdcd",
+  "size": 135681,
+  "subdir": "linux-64",
+  "timestamp": 1710946531000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/ocl-icd-2.3.2-hd590300_1.conda",
+  "version": "2.3.2"
+}

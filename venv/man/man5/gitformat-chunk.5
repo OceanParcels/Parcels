@@ -1,0 +1,156 @@
+'\" t
+.\"     Title: gitformat-chunk
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GITFORMAT\-CHUNK" "5" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+gitformat-chunk \- Chunk\-based file formats
+.SH "SYNOPSIS"
+.sp
+Used by \fBgitformat-commit-graph\fR(5) and the "MIDX" format (see the pack format documentation in \fBgitformat-pack\fR(5))\&.
+.SH "DESCRIPTION"
+.sp
+Some file formats in Git use a common concept of "chunks" to describe sections of the file\&. This allows structured access to a large file by scanning a small "table of contents" for the remaining data\&. This common format is used by the \fBcommit\-graph\fR and \fBmulti\-pack\-index\fR files\&. See the \fBmulti\-pack\-index\fR format in \fBgitformat-pack\fR(5) and the \fBcommit\-graph\fR format in \fBgitformat-commit-graph\fR(5) for how they use the chunks to describe structured data\&.
+.sp
+A chunk\-based file format begins with some header information custom to that format\&. That header should include enough information to identify the file type, format version, and number of chunks in the file\&. From this information, that file can determine the start of the chunk\-based region\&.
+.sp
+The chunk\-based region starts with a table of contents describing where each chunk starts and ends\&. This consists of (C+1) rows of 12 bytes each, where C is the number of chunks\&. Consider the following table:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+| Chunk ID (4 bytes) | Chunk Offset (8 bytes) |
+|\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-|\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-|
+| ID[0]              | OFFSET[0]              |
+| \&.\&.\&.                | \&.\&.\&.                    |
+| ID[C]              | OFFSET[C]              |
+| 0x0000             | OFFSET[C+1]            |
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Each row consists of a 4\-byte chunk identifier (ID) and an 8\-byte offset\&. Each integer is stored in network\-byte order\&.
+.sp
+The chunk identifier \fBID[i]\fR is a label for the data stored within this file from \fBOFFSET[i]\fR (inclusive) to \fBOFFSET[i+1]\fR (exclusive)\&. Thus, the size of the \fBi`th chunk is equal to the difference between `OFFSET[i+1]\fR and \fBOFFSET[i]\fR\&. This requires that the chunk data appears contiguously in the same order as the table of contents\&.
+.sp
+The final entry in the table of contents must be four zero bytes\&. This confirms that the table of contents is ending and provides the offset for the end of the chunk\-based data\&.
+.sp
+Note: The chunk\-based format expects that the file contains \fIat least\fR a trailing hash after \fBOFFSET[C+1]\fR\&.
+.sp
+Functions for working with chunk\-based file formats are declared in \fBchunk\-format\&.h\fR\&. Using these methods provide extra checks that assist developers when creating new file formats\&.
+.SH "WRITING CHUNK\-BASED FILE FORMATS"
+.sp
+To write a chunk\-based file format, create a \fBstruct chunkfile\fR by calling \fBinit_chunkfile()\fR and pass a \fBstruct hashfile\fR pointer\&. The caller is responsible for opening the \fBhashfile\fR and writing header information so the file format is identifiable before the chunk\-based format begins\&.
+.sp
+Then, call \fBadd_chunk()\fR for each chunk that is intended for writing\&. This populates the \fBchunkfile\fR with information about the order and size of each chunk to write\&. Provide a \fBchunk_write_fn\fR function pointer to perform the write of the chunk data upon request\&.
+.sp
+Call \fBwrite_chunkfile()\fR to write the table of contents to the \fBhashfile\fR followed by each of the chunks\&. This will verify that each chunk wrote the expected amount of data so the table of contents is correct\&.
+.sp
+Finally, call \fBfree_chunkfile()\fR to clear the \fBstruct chunkfile\fR data\&. The caller is responsible for finalizing the \fBhashfile\fR by writing the trailing hash and closing the file\&.
+.SH "READING CHUNK\-BASED FILE FORMATS"
+.sp
+To read a chunk\-based file format, the file must be opened as a memory\-mapped region\&. The chunk\-format API expects that the entire file is mapped as a contiguous memory region\&.
+.sp
+Initialize a \fBstruct chunkfile\fR pointer with \fBinit_chunkfile(NULL)\fR\&.
+.sp
+After reading the header information from the beginning of the file, including the chunk count, call \fBread_table_of_contents()\fR to populate the \fBstruct chunkfile\fR with the list of chunks, their offsets, and their sizes\&.
+.sp
+Extract the data information for each chunk using \fBpair_chunk()\fR or \fBread_chunk()\fR:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBpair_chunk()\fR
+assigns a given pointer with the location inside the memory\-mapped file corresponding to that chunk\(cqs offset\&. If the chunk does not exist, then the pointer is not modified\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBread_chunk()\fR
+takes a
+\fBchunk_read_fn\fR
+function pointer and calls it with the appropriate initial pointer and size information\&. The function is not called if the chunk does not exist\&. Use this method to read chunks if you need to perform immediate parsing or if you need to execute logic based on the size of the chunk\&.
+.RE
+.sp
+After calling these methods, call \fBfree_chunkfile()\fR to clear the \fBstruct chunkfile\fR data\&. This will not close the memory\-mapped region\&. Callers are expected to own that data for the timeframe the pointers into the region are needed\&.
+.SH "EXAMPLES"
+.sp
+These file formats use the chunk\-format API, and can be used as examples for future formats:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBcommit\-graph:\fR
+see
+\fBwrite_commit_graph_file()\fR
+and
+\fBparse_commit_graph()\fR
+in
+\fBcommit\-graph\&.c\fR
+for how the chunk\-format API is used to write and parse the commit\-graph file format documented in the commit\-graph file format in
+\fBgitformat-commit-graph\fR(5)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBmulti\-pack\-index:\fR
+see
+\fBwrite_midx_internal()\fR
+and
+\fBload_multi_pack_index()\fR
+in
+\fBmidx\&.c\fR
+for how the chunk\-format API is used to write and parse the multi\-pack\-index file format documented in the multi\-pack\-index file format section of
+\fBgitformat-pack\fR(5)\&.
+.RE
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite

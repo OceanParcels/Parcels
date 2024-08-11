@@ -1,0 +1,754 @@
+{
+  "build": "pyhff2d567_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "python >=3.8"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/fsspec-2024.6.1-pyhff2d567_0",
+  "files": [
+    "lib/python3.12/site-packages/fsspec-2024.6.1.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/fsspec-2024.6.1.dist-info/METADATA",
+    "lib/python3.12/site-packages/fsspec-2024.6.1.dist-info/RECORD",
+    "lib/python3.12/site-packages/fsspec-2024.6.1.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/fsspec-2024.6.1.dist-info/WHEEL",
+    "lib/python3.12/site-packages/fsspec-2024.6.1.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/fsspec-2024.6.1.dist-info/licenses/LICENSE",
+    "lib/python3.12/site-packages/fsspec/__init__.py",
+    "lib/python3.12/site-packages/fsspec/_version.py",
+    "lib/python3.12/site-packages/fsspec/archive.py",
+    "lib/python3.12/site-packages/fsspec/asyn.py",
+    "lib/python3.12/site-packages/fsspec/caching.py",
+    "lib/python3.12/site-packages/fsspec/callbacks.py",
+    "lib/python3.12/site-packages/fsspec/compression.py",
+    "lib/python3.12/site-packages/fsspec/config.py",
+    "lib/python3.12/site-packages/fsspec/conftest.py",
+    "lib/python3.12/site-packages/fsspec/core.py",
+    "lib/python3.12/site-packages/fsspec/dircache.py",
+    "lib/python3.12/site-packages/fsspec/exceptions.py",
+    "lib/python3.12/site-packages/fsspec/fuse.py",
+    "lib/python3.12/site-packages/fsspec/generic.py",
+    "lib/python3.12/site-packages/fsspec/gui.py",
+    "lib/python3.12/site-packages/fsspec/implementations/__init__.py",
+    "lib/python3.12/site-packages/fsspec/implementations/arrow.py",
+    "lib/python3.12/site-packages/fsspec/implementations/cache_mapper.py",
+    "lib/python3.12/site-packages/fsspec/implementations/cache_metadata.py",
+    "lib/python3.12/site-packages/fsspec/implementations/cached.py",
+    "lib/python3.12/site-packages/fsspec/implementations/dask.py",
+    "lib/python3.12/site-packages/fsspec/implementations/data.py",
+    "lib/python3.12/site-packages/fsspec/implementations/dbfs.py",
+    "lib/python3.12/site-packages/fsspec/implementations/dirfs.py",
+    "lib/python3.12/site-packages/fsspec/implementations/ftp.py",
+    "lib/python3.12/site-packages/fsspec/implementations/git.py",
+    "lib/python3.12/site-packages/fsspec/implementations/github.py",
+    "lib/python3.12/site-packages/fsspec/implementations/http.py",
+    "lib/python3.12/site-packages/fsspec/implementations/jupyter.py",
+    "lib/python3.12/site-packages/fsspec/implementations/libarchive.py",
+    "lib/python3.12/site-packages/fsspec/implementations/local.py",
+    "lib/python3.12/site-packages/fsspec/implementations/memory.py",
+    "lib/python3.12/site-packages/fsspec/implementations/reference.py",
+    "lib/python3.12/site-packages/fsspec/implementations/sftp.py",
+    "lib/python3.12/site-packages/fsspec/implementations/smb.py",
+    "lib/python3.12/site-packages/fsspec/implementations/tar.py",
+    "lib/python3.12/site-packages/fsspec/implementations/webhdfs.py",
+    "lib/python3.12/site-packages/fsspec/implementations/zip.py",
+    "lib/python3.12/site-packages/fsspec/json.py",
+    "lib/python3.12/site-packages/fsspec/mapping.py",
+    "lib/python3.12/site-packages/fsspec/parquet.py",
+    "lib/python3.12/site-packages/fsspec/registry.py",
+    "lib/python3.12/site-packages/fsspec/spec.py",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/__init__.py",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/common.py",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/copy.py",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/get.py",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/mv.py",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/put.py",
+    "lib/python3.12/site-packages/fsspec/transaction.py",
+    "lib/python3.12/site-packages/fsspec/utils.py",
+    "lib/python3.12/site-packages/fsspec/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/_version.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/archive.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/asyn.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/caching.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/callbacks.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/compression.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/config.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/conftest.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/core.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/dircache.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/exceptions.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/fuse.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/generic.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/gui.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/arrow.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/cache_mapper.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/cache_metadata.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/cached.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/dask.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/data.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/dbfs.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/dirfs.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/ftp.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/git.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/github.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/http.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/jupyter.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/libarchive.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/local.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/memory.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/reference.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/sftp.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/smb.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/tar.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/webhdfs.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/implementations/__pycache__/zip.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/json.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/mapping.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/parquet.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/registry.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/spec.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/common.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/copy.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/get.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/mv.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/put.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/transaction.cpython-312.pyc",
+    "lib/python3.12/site-packages/fsspec/__pycache__/utils.cpython-312.pyc"
+  ],
+  "fn": "fsspec-2024.6.1-pyhff2d567_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/fsspec-2024.6.1-pyhff2d567_0",
+    "type": 1
+  },
+  "md5": "996bf792cdb8c0ac38ff54b9fde56841",
+  "name": "fsspec",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/fsspec-2024.6.1-pyhff2d567_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/fsspec-2024.6.1.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/fsspec-2024.6.1.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "8a3b75e990333cdf4fd3fd40538cdc29d88cd7ca642327f51a4afe2055eb94bc",
+        "sha256_in_prefix": "8a3b75e990333cdf4fd3fd40538cdc29d88cd7ca642327f51a4afe2055eb94bc",
+        "size_in_bytes": 11749
+      },
+      {
+        "_path": "site-packages/fsspec-2024.6.1.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "dc4ed1f4fe0bb8644ce3629580c119602f6587ba00b22f4b8d1288f5ebc16741",
+        "sha256_in_prefix": "dc4ed1f4fe0bb8644ce3629580c119602f6587ba00b22f4b8d1288f5ebc16741",
+        "size_in_bytes": 7608
+      },
+      {
+        "_path": "site-packages/fsspec-2024.6.1.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/fsspec-2024.6.1.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "d7215d7625cc9af60aed0613aad44db57eba589d0ccfc3d8122114a0e514c516",
+        "sha256_in_prefix": "d7215d7625cc9af60aed0613aad44db57eba589d0ccfc3d8122114a0e514c516",
+        "size_in_bytes": 87
+      },
+      {
+        "_path": "site-packages/fsspec-2024.6.1.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "3d7f934859be6f9956de78c62eb02aa9693766be2e234d6a11d6e6e450fceaf4",
+        "sha256_in_prefix": "3d7f934859be6f9956de78c62eb02aa9693766be2e234d6a11d6e6e450fceaf4",
+        "size_in_bytes": 102
+      },
+      {
+        "_path": "site-packages/fsspec-2024.6.1.dist-info/licenses/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "2dc35496ce53a7307915c008a844aad53e772b49b34cdd00445067691407ec94",
+        "sha256_in_prefix": "2dc35496ce53a7307915c008a844aad53e772b49b34cdd00445067691407ec94",
+        "size_in_bytes": 1513
+      },
+      {
+        "_path": "site-packages/fsspec/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "97d30968d355d9de302a90ad32f5c3af9e67f760e476b01ac86cb717d2028f39",
+        "sha256_in_prefix": "97d30968d355d9de302a90ad32f5c3af9e67f760e476b01ac86cb717d2028f39",
+        "size_in_bytes": 1998
+      },
+      {
+        "_path": "site-packages/fsspec/_version.py",
+        "path_type": "hardlink",
+        "sha256": "6ece6014bf4c97087522f461e6165ac33fd295e0bcf2068383a8e8769ea89ac4",
+        "sha256_in_prefix": "6ece6014bf4c97087522f461e6165ac33fd295e0bcf2068383a8e8769ea89ac4",
+        "size_in_bytes": 417
+      },
+      {
+        "_path": "site-packages/fsspec/archive.py",
+        "path_type": "hardlink",
+        "sha256": "4bffc3cdf663faeac0377b69d96ea327a6038971b57c097b163bd650def7a881",
+        "sha256_in_prefix": "4bffc3cdf663faeac0377b69d96ea327a6038971b57c097b163bd650def7a881",
+        "size_in_bytes": 2386
+      },
+      {
+        "_path": "site-packages/fsspec/asyn.py",
+        "path_type": "hardlink",
+        "sha256": "00e7764971f660f09a40be6303a21e8187af74c164027183ed27a1f430b68121",
+        "sha256_in_prefix": "00e7764971f660f09a40be6303a21e8187af74c164027183ed27a1f430b68121",
+        "size_in_bytes": 36404
+      },
+      {
+        "_path": "site-packages/fsspec/caching.py",
+        "path_type": "hardlink",
+        "sha256": "c7a204771b51ddc3038f2e34b0d1f26b047648bb4d49a855b8fe62fd322676ca",
+        "sha256_in_prefix": "c7a204771b51ddc3038f2e34b0d1f26b047648bb4d49a855b8fe62fd322676ca",
+        "size_in_bytes": 31600
+      },
+      {
+        "_path": "site-packages/fsspec/callbacks.py",
+        "path_type": "hardlink",
+        "sha256": "0432302f32baaebff4579721e79edf4b3b22bc2125a5daa15ebe5d67d4def841",
+        "sha256_in_prefix": "0432302f32baaebff4579721e79edf4b3b22bc2125a5daa15ebe5d67d4def841",
+        "size_in_bytes": 9210
+      },
+      {
+        "_path": "site-packages/fsspec/compression.py",
+        "path_type": "hardlink",
+        "sha256": "8c2494309bbecd2372aeeb271d3d3029780e775b53251eaf335dba8b9491e597",
+        "sha256_in_prefix": "8c2494309bbecd2372aeeb271d3d3029780e775b53251eaf335dba8b9491e597",
+        "size_in_bytes": 4865
+      },
+      {
+        "_path": "site-packages/fsspec/config.py",
+        "path_type": "hardlink",
+        "sha256": "2c5e199aed6f8495bb25ef50f9cc2445cdf13fb461cb2ed79f08f6e99eacbf68",
+        "sha256_in_prefix": "2c5e199aed6f8495bb25ef50f9cc2445cdf13fb461cb2ed79f08f6e99eacbf68",
+        "size_in_bytes": 4279
+      },
+      {
+        "_path": "site-packages/fsspec/conftest.py",
+        "path_type": "hardlink",
+        "sha256": "7d57f1f8d2eb1ff3994b54c8a583683f333b79f11c3282fadab78739d61e1420",
+        "sha256_in_prefix": "7d57f1f8d2eb1ff3994b54c8a583683f333b79f11c3282fadab78739d61e1420",
+        "size_in_bytes": 1245
+      },
+      {
+        "_path": "site-packages/fsspec/core.py",
+        "path_type": "hardlink",
+        "sha256": "2259f7edf359aa38e4e6f683194ff4596bb03b1375895b10eac0e60a6b84bebb",
+        "sha256_in_prefix": "2259f7edf359aa38e4e6f683194ff4596bb03b1375895b10eac0e60a6b84bebb",
+        "size_in_bytes": 23681
+      },
+      {
+        "_path": "site-packages/fsspec/dircache.py",
+        "path_type": "hardlink",
+        "sha256": "633a20589ae111ab2d1d4eef5b3f9c26227bb1db4b5c55e112922718a77811c3",
+        "sha256_in_prefix": "633a20589ae111ab2d1d4eef5b3f9c26227bb1db4b5c55e112922718a77811c3",
+        "size_in_bytes": 2717
+      },
+      {
+        "_path": "site-packages/fsspec/exceptions.py",
+        "path_type": "hardlink",
+        "sha256": "a5ab922c3331cd324c3a3bd7d561142b470cc8592b171a5626cc85cb06afec0f",
+        "sha256_in_prefix": "a5ab922c3331cd324c3a3bd7d561142b470cc8592b171a5626cc85cb06afec0f",
+        "size_in_bytes": 331
+      },
+      {
+        "_path": "site-packages/fsspec/fuse.py",
+        "path_type": "hardlink",
+        "sha256": "eba6a639aeb07486d2d0332185f00f528381dfb1cfa2b7d70f58b3574a6b9936",
+        "sha256_in_prefix": "eba6a639aeb07486d2d0332185f00f528381dfb1cfa2b7d70f58b3574a6b9936",
+        "size_in_bytes": 10145
+      },
+      {
+        "_path": "site-packages/fsspec/generic.py",
+        "path_type": "hardlink",
+        "sha256": "0056e8fa61c1b79409575029960e4226e522889e1b35085c291bb091925d59a7",
+        "sha256_in_prefix": "0056e8fa61c1b79409575029960e4226e522889e1b35085c291bb091925d59a7",
+        "size_in_bytes": 13761
+      },
+      {
+        "_path": "site-packages/fsspec/gui.py",
+        "path_type": "hardlink",
+        "sha256": "938e85d7554604b96b9623e3dd76f11ca955181c96a17ebb39f9aef628da3c14",
+        "sha256_in_prefix": "938e85d7554604b96b9623e3dd76f11ca955181c96a17ebb39f9aef628da3c14",
+        "size_in_bytes": 13929
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/arrow.py",
+        "path_type": "hardlink",
+        "sha256": "63817f230597b892359913bf734fcf239a3e5a9e7c44b9a8887fecfb1f3cc383",
+        "sha256_in_prefix": "63817f230597b892359913bf734fcf239a3e5a9e7c44b9a8887fecfb1f3cc383",
+        "size_in_bytes": 8631
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/cache_mapper.py",
+        "path_type": "hardlink",
+        "sha256": "5b8c25c723f165b4a9f48b49d29611541321e9bc3d785ca980fea4518bae888e",
+        "sha256_in_prefix": "5b8c25c723f165b4a9f48b49d29611541321e9bc3d785ca980fea4518bae888e",
+        "size_in_bytes": 2421
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/cache_metadata.py",
+        "path_type": "hardlink",
+        "sha256": "a5c38961c05063939a0bb621c34177c23834f102d80291a6a08482adbb39f64b",
+        "sha256_in_prefix": "a5c38961c05063939a0bb621c34177c23834f102d80291a6a08482adbb39f64b",
+        "size_in_bytes": 8511
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/cached.py",
+        "path_type": "hardlink",
+        "sha256": "b796ad6004e08ee0019be994c917aa8c6a95cb23f55c14ae44e5fdd9a31e7316",
+        "sha256_in_prefix": "b796ad6004e08ee0019be994c917aa8c6a95cb23f55c14ae44e5fdd9a31e7316",
+        "size_in_bytes": 32826
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/dask.py",
+        "path_type": "hardlink",
+        "sha256": "09765b2732153a1295f082dcc6ecb76d3bdc69c0ae7806f24319af0246cf92b9",
+        "sha256_in_prefix": "09765b2732153a1295f082dcc6ecb76d3bdc69c0ae7806f24319af0246cf92b9",
+        "size_in_bytes": 4466
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/data.py",
+        "path_type": "hardlink",
+        "sha256": "2c32dccf1461f21ef1dfd663addf868337501ebefcc98c4396bbf60bd5316f91",
+        "sha256_in_prefix": "2c32dccf1461f21ef1dfd663addf868337501ebefcc98c4396bbf60bd5316f91",
+        "size_in_bytes": 1658
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/dbfs.py",
+        "path_type": "hardlink",
+        "sha256": "722c7d39852f7ae48ec7950ee6e454c0d52462a8f3c98d1f90a9dc6b5913819d",
+        "sha256_in_prefix": "722c7d39852f7ae48ec7950ee6e454c0d52462a8f3c98d1f90a9dc6b5913819d",
+        "size_in_bytes": 15014
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/dirfs.py",
+        "path_type": "hardlink",
+        "sha256": "d07ea4ebb7b695982add4e0aeb86a8ebcf782f8d77e0239409e91cdcf0b04eaf",
+        "sha256_in_prefix": "d07ea4ebb7b695982add4e0aeb86a8ebcf782f8d77e0239409e91cdcf0b04eaf",
+        "size_in_bytes": 11488
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/ftp.py",
+        "path_type": "hardlink",
+        "sha256": "ae9e9c4e883cc6a8c33e529d48b29cb323fb2b9f77fc1c8c69bc466cd484a53a",
+        "sha256_in_prefix": "ae9e9c4e883cc6a8c33e529d48b29cb323fb2b9f77fc1c8c69bc466cd484a53a",
+        "size_in_bytes": 11655
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/git.py",
+        "path_type": "hardlink",
+        "sha256": "bca188f95779ab81f646bbe179b90f73d37095f919f7cd0e50685e6de0b0f8cd",
+        "sha256_in_prefix": "bca188f95779ab81f646bbe179b90f73d37095f919f7cd0e50685e6de0b0f8cd",
+        "size_in_bytes": 4034
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/github.py",
+        "path_type": "hardlink",
+        "sha256": "7809f5909ed579647a815a1544b05872517fad00d748953ec73317a6f3d05aab",
+        "sha256_in_prefix": "7809f5909ed579647a815a1544b05872517fad00d748953ec73317a6f3d05aab",
+        "size_in_bytes": 8002
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/http.py",
+        "path_type": "hardlink",
+        "sha256": "ca68cc4135d6ebe6a4aaa12810aa637f8d7a240ccff4de158675a23586d19259",
+        "sha256_in_prefix": "ca68cc4135d6ebe6a4aaa12810aa637f8d7a240ccff4de158675a23586d19259",
+        "size_in_bytes": 29665
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/jupyter.py",
+        "path_type": "hardlink",
+        "sha256": "076ba3ece126ef2224faf452b0edfbfcd0f4b74101be7e01f92bb8de26cde0f8",
+        "sha256_in_prefix": "076ba3ece126ef2224faf452b0edfbfcd0f4b74101be7e01f92bb8de26cde0f8",
+        "size_in_bytes": 3811
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/libarchive.py",
+        "path_type": "hardlink",
+        "sha256": "e7f2360e22d7c10d490bcc7e2bb8d7bbeb41c213bd763eed14b9dbd1b4e754c4",
+        "sha256_in_prefix": "e7f2360e22d7c10d490bcc7e2bb8d7bbeb41c213bd763eed14b9dbd1b4e754c4",
+        "size_in_bytes": 7102
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/local.py",
+        "path_type": "hardlink",
+        "sha256": "a9cebcc3af7e23bcea54ef278effecf931d5226c0808eab1cadfbfd842b554b8",
+        "sha256_in_prefix": "a9cebcc3af7e23bcea54ef278effecf931d5226c0808eab1cadfbfd842b554b8",
+        "size_in_bytes": 15042
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/memory.py",
+        "path_type": "hardlink",
+        "sha256": "f81a4e570696c96dab0efc5620872b653345021bee1bae9559e20ceaf2f08647",
+        "sha256_in_prefix": "f81a4e570696c96dab0efc5620872b653345021bee1bae9559e20ceaf2f08647",
+        "size_in_bytes": 10134
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/reference.py",
+        "path_type": "hardlink",
+        "sha256": "8838ac4c867c908586fc535219a0dff3c442972c00c2817cc8c82855cc4ce1c6",
+        "sha256_in_prefix": "8838ac4c867c908586fc535219a0dff3c442972c00c2817cc8c82855cc4ce1c6",
+        "size_in_bytes": 44308
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/sftp.py",
+        "path_type": "hardlink",
+        "sha256": "7cc63d5d9726a63b33436b42a8efd33da25eb1a783fc3bfba6d6338143c6a0ed",
+        "sha256_in_prefix": "7cc63d5d9726a63b33436b42a8efd33da25eb1a783fc3bfba6d6338143c6a0ed",
+        "size_in_bytes": 5631
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/smb.py",
+        "path_type": "hardlink",
+        "sha256": "45ca82bd504f0f753423445cdf59ece87461a8a543ba08cf40c0cf569bd948d8",
+        "sha256_in_prefix": "45ca82bd504f0f753423445cdf59ece87461a8a543ba08cf40c0cf569bd948d8",
+        "size_in_bytes": 11408
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/tar.py",
+        "path_type": "hardlink",
+        "sha256": "75a9bbf13a7f0a8cf26cda82636258806052dd473d16e254013f6807496894eb",
+        "sha256_in_prefix": "75a9bbf13a7f0a8cf26cda82636258806052dd473d16e254013f6807496894eb",
+        "size_in_bytes": 4111
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/webhdfs.py",
+        "path_type": "hardlink",
+        "sha256": "5a6ef3af4897dd2671e4bb567c9228fb9ae421aa04a16abf12ff3b3566d482e8",
+        "sha256_in_prefix": "5a6ef3af4897dd2671e4bb567c9228fb9ae421aa04a16abf12ff3b3566d482e8",
+        "size_in_bytes": 16721
+      },
+      {
+        "_path": "site-packages/fsspec/implementations/zip.py",
+        "path_type": "hardlink",
+        "sha256": "bdcd5f373fb23bcb9643d6d052a0456294dc82c7d942af6f0f0c20e00b9fb3d6",
+        "sha256_in_prefix": "bdcd5f373fb23bcb9643d6d052a0456294dc82c7d942af6f0f0c20e00b9fb3d6",
+        "size_in_bytes": 4417
+      },
+      {
+        "_path": "site-packages/fsspec/json.py",
+        "path_type": "hardlink",
+        "sha256": "eb9b10d18ee64e3df7bbf638208779ba9e1a6d0ddb01e9781384336ca3224128",
+        "sha256_in_prefix": "eb9b10d18ee64e3df7bbf638208779ba9e1a6d0ddb01e9781384336ca3224128",
+        "size_in_bytes": 3826
+      },
+      {
+        "_path": "site-packages/fsspec/mapping.py",
+        "path_type": "hardlink",
+        "sha256": "852b22468f9d8003a3ea81dfebb6c5de2d75538c511209574e81c6517e068516",
+        "sha256_in_prefix": "852b22468f9d8003a3ea81dfebb6c5de2d75538c511209574e81c6517e068516",
+        "size_in_bytes": 8261
+      },
+      {
+        "_path": "site-packages/fsspec/parquet.py",
+        "path_type": "hardlink",
+        "sha256": "38d1b6f449deb29d13a021f66d0ef39298a69d522c6764b8c422e3df9f9f63bf",
+        "sha256_in_prefix": "38d1b6f449deb29d13a021f66d0ef39298a69d522c6764b8c422e3df9f9f63bf",
+        "size_in_bytes": 19455
+      },
+      {
+        "_path": "site-packages/fsspec/registry.py",
+        "path_type": "hardlink",
+        "sha256": "1d50bee0758366703aaf2709c00bbc17c657cce37ff393134152324ba2ce1f1a",
+        "sha256_in_prefix": "1d50bee0758366703aaf2709c00bbc17c657cce37ff393134152324ba2ce1f1a",
+        "size_in_bytes": 11320
+      },
+      {
+        "_path": "site-packages/fsspec/spec.py",
+        "path_type": "hardlink",
+        "sha256": "eab6fe0b785364b2ed306c761c3a77ecdfec64ab3946d61d723f173a51c58bf7",
+        "sha256_in_prefix": "eab6fe0b785364b2ed306c761c3a77ecdfec64ab3946d61d723f173a51c58bf7",
+        "size_in_bytes": 69586
+      },
+      {
+        "_path": "site-packages/fsspec/tests/abstract/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "8b5c1c162c55e9084ec1da01db873ca178f3a1b21236a88a573f649760ef018f",
+        "sha256_in_prefix": "8b5c1c162c55e9084ec1da01db873ca178f3a1b21236a88a573f649760ef018f",
+        "size_in_bytes": 10028
+      },
+      {
+        "_path": "site-packages/fsspec/tests/abstract/common.py",
+        "path_type": "hardlink",
+        "sha256": "d46430368e4038dcc09f3663d1f5a09fc3493cb5c02de85bb2e1b14b71735955",
+        "sha256_in_prefix": "d46430368e4038dcc09f3663d1f5a09fc3493cb5c02de85bb2e1b14b71735955",
+        "size_in_bytes": 4973
+      },
+      {
+        "_path": "site-packages/fsspec/tests/abstract/copy.py",
+        "path_type": "hardlink",
+        "sha256": "814e7e77ded4dd149d7b7e55a784713d8e2b5b02fbe381e24ab27c2013a9f7ef",
+        "sha256_in_prefix": "814e7e77ded4dd149d7b7e55a784713d8e2b5b02fbe381e24ab27c2013a9f7ef",
+        "size_in_bytes": 19967
+      },
+      {
+        "_path": "site-packages/fsspec/tests/abstract/get.py",
+        "path_type": "hardlink",
+        "sha256": "bcd4781f3b6f4d1ec28f9e80328effb71ed3798cf5260affd966fc2eff948816",
+        "sha256_in_prefix": "bcd4781f3b6f4d1ec28f9e80328effb71ed3798cf5260affd966fc2eff948816",
+        "size_in_bytes": 20755
+      },
+      {
+        "_path": "site-packages/fsspec/tests/abstract/mv.py",
+        "path_type": "hardlink",
+        "sha256": "93c79410122b46b18cb0163938e6835dd1a7414286c0321f43276e07a603dcdb",
+        "sha256_in_prefix": "93c79410122b46b18cb0163938e6835dd1a7414286c0321f43276e07a603dcdb",
+        "size_in_bytes": 1982
+      },
+      {
+        "_path": "site-packages/fsspec/tests/abstract/put.py",
+        "path_type": "hardlink",
+        "sha256": "eda8a1d7b38a07f219661d4c92ad5e043223a1b86d310988f31f8fc3e4bf6999",
+        "sha256_in_prefix": "eda8a1d7b38a07f219661d4c92ad5e043223a1b86d310988f31f8fc3e4bf6999",
+        "size_in_bytes": 21201
+      },
+      {
+        "_path": "site-packages/fsspec/transaction.py",
+        "path_type": "hardlink",
+        "sha256": "c658911ba53665fde4846e31730f56881fb2028a894871062bf5631ce76d828d",
+        "sha256_in_prefix": "c658911ba53665fde4846e31730f56881fb2028a894871062bf5631ce76d828d",
+        "size_in_bytes": 2398
+      },
+      {
+        "_path": "site-packages/fsspec/utils.py",
+        "path_type": "hardlink",
+        "sha256": "f1ccc42285f81a9702e3658b1a8cb7b7f10c7998c913c7b9ad3a4e4ff9c43e8d",
+        "sha256_in_prefix": "f1ccc42285f81a9702e3658b1a8cb7b7f10c7998c913c7b9ad3a4e4ff9c43e8d",
+        "size_in_bytes": 22987
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/_version.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/archive.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/asyn.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/caching.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/callbacks.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/compression.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/config.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/conftest.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/core.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/dircache.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/exceptions.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/fuse.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/generic.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/gui.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/arrow.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/cache_mapper.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/cache_metadata.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/cached.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/dask.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/data.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/dbfs.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/dirfs.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/ftp.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/git.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/github.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/http.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/jupyter.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/libarchive.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/local.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/memory.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/reference.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/sftp.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/smb.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/tar.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/webhdfs.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/implementations/__pycache__/zip.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/json.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/mapping.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/parquet.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/registry.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/spec.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/common.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/copy.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/get.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/mv.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/tests/abstract/__pycache__/put.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/transaction.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/fsspec/__pycache__/utils.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "2b8e98294c70d9a33ee0ef27539a8a8752a26efeafa0225e85dc876ef5bb49f4",
+  "size": 133141,
+  "subdir": "noarch",
+  "timestamp": 1719515065000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/fsspec-2024.6.1-pyhff2d567_0.conda",
+  "version": "2024.6.1"
+}

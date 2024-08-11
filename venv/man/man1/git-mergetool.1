@@ -1,0 +1,769 @@
+'\" t
+.\"     Title: git-mergetool
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GIT\-MERGETOOL" "1" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+git-mergetool \- Run merge conflict resolution tools to resolve merge conflicts
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIgit mergetool\fR [\-\-tool=<tool>] [\-y | \-\-[no\-]prompt] [<file>\&...]
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+Use \fBgit mergetool\fR to run one of several merge utilities to resolve merge conflicts\&. It is typically run after \fIgit merge\fR\&.
+.sp
+If one or more <file> parameters are given, the merge tool program will be run to resolve differences in each file (skipping those without conflicts)\&. Specifying a directory will include all unresolved files in that path\&. If no <file> names are specified, \fIgit mergetool\fR will run the merge tool program on every file with merge conflicts\&.
+.SH "OPTIONS"
+.PP
+\-t <tool>, \-\-tool=<tool>
+.RS 4
+Use the merge resolution program specified by <tool>\&. Valid values include emerge, gvimdiff, kdiff3, meld, vimdiff, and tortoisemerge\&. Run
+\fBgit mergetool \-\-tool\-help\fR
+for the list of valid <tool> settings\&.
+.sp
+If a merge resolution program is not specified,
+\fIgit mergetool\fR
+will use the configuration variable
+\fBmerge\&.tool\fR\&. If the configuration variable
+\fBmerge\&.tool\fR
+is not set,
+\fIgit mergetool\fR
+will pick a suitable default\&.
+.sp
+You can explicitly provide a full path to the tool by setting the configuration variable
+\fBmergetool\&.<tool>\&.path\fR\&. For example, you can configure the absolute path to kdiff3 by setting
+\fBmergetool\&.kdiff3\&.path\fR\&. Otherwise,
+\fIgit mergetool\fR
+assumes the tool is available in PATH\&.
+.sp
+Instead of running one of the known merge tool programs,
+\fIgit mergetool\fR
+can be customized to run an alternative program by specifying the command line to invoke in a configuration variable
+\fBmergetool\&.<tool>\&.cmd\fR\&.
+.sp
+When
+\fIgit mergetool\fR
+is invoked with this tool (either through the
+\fB\-t\fR
+or
+\fB\-\-tool\fR
+option or the
+\fBmerge\&.tool\fR
+configuration variable), the configured command line will be invoked with
+\fB$BASE\fR
+set to the name of a temporary file containing the common base for the merge, if available;
+\fB$LOCAL\fR
+set to the name of a temporary file containing the contents of the file on the current branch;
+\fB$REMOTE\fR
+set to the name of a temporary file containing the contents of the file to be merged, and
+\fB$MERGED\fR
+set to the name of the file to which the merge tool should write the result of the merge resolution\&.
+.sp
+If the custom merge tool correctly indicates the success of a merge resolution with its exit code, then the configuration variable
+\fBmergetool\&.<tool>\&.trustExitCode\fR
+can be set to
+\fBtrue\fR\&. Otherwise,
+\fIgit mergetool\fR
+will prompt the user to indicate the success of the resolution after the custom tool has exited\&.
+.RE
+.PP
+\-\-tool\-help
+.RS 4
+Print a list of merge tools that may be used with
+\fB\-\-tool\fR\&.
+.RE
+.PP
+\-y, \-\-no\-prompt
+.RS 4
+Don\(cqt prompt before each invocation of the merge resolution program\&. This is the default if the merge resolution program is explicitly specified with the
+\fB\-\-tool\fR
+option or with the
+\fBmerge\&.tool\fR
+configuration variable\&.
+.RE
+.PP
+\-\-prompt
+.RS 4
+Prompt before each invocation of the merge resolution program to give the user a chance to skip the path\&.
+.RE
+.PP
+\-g, \-\-gui
+.RS 4
+When
+\fIgit\-mergetool\fR
+is invoked with the
+\fB\-g\fR
+or
+\fB\-\-gui\fR
+option, the default merge tool will be read from the configured
+\fBmerge\&.guitool\fR
+variable instead of
+\fBmerge\&.tool\fR\&. If
+\fBmerge\&.guitool\fR
+is not set, we will fallback to the tool configured under
+\fBmerge\&.tool\fR\&. This may be autoselected using the configuration variable
+\fBmergetool\&.guiDefault\fR\&.
+.RE
+.PP
+\-\-no\-gui
+.RS 4
+This overrides a previous
+\fB\-g\fR
+or
+\fB\-\-gui\fR
+setting or
+\fBmergetool\&.guiDefault\fR
+configuration and reads the default merge tool from the configured
+\fBmerge\&.tool\fR
+variable\&.
+.RE
+.PP
+\-O<orderfile>
+.RS 4
+Process files in the order specified in the <orderfile>, which has one shell glob pattern per line\&. This overrides the
+\fBdiff\&.orderFile\fR
+configuration variable (see
+\fBgit-config\fR(1))\&. To cancel
+\fBdiff\&.orderFile\fR, use
+\fB\-O/dev/null\fR\&.
+.RE
+.SH "CONFIGURATION"
+.sp
+Everything below this line in this section is selectively included from the \fBgit-config\fR(1) documentation\&. The content is the same as what\(cqs found there:
+.PP
+mergetool\&.<tool>\&.path
+.RS 4
+Override the path for the given tool\&. This is useful in case your tool is not in the PATH\&.
+.RE
+.PP
+mergetool\&.<tool>\&.cmd
+.RS 4
+Specify the command to invoke the specified merge tool\&. The specified command is evaluated in shell with the following variables available:
+\fIBASE\fR
+is the name of a temporary file containing the common base of the files to be merged, if available;
+\fILOCAL\fR
+is the name of a temporary file containing the contents of the file on the current branch;
+\fIREMOTE\fR
+is the name of a temporary file containing the contents of the file from the branch being merged;
+\fIMERGED\fR
+contains the name of the file to which the merge tool should write the results of a successful merge\&.
+.RE
+.PP
+mergetool\&.<tool>\&.hideResolved
+.RS 4
+Allows the user to override the global
+\fBmergetool\&.hideResolved\fR
+value for a specific tool\&. See
+\fBmergetool\&.hideResolved\fR
+for the full description\&.
+.RE
+.PP
+mergetool\&.<tool>\&.trustExitCode
+.RS 4
+For a custom merge command, specify whether the exit code of the merge command can be used to determine whether the merge was successful\&. If this is not set to true then the merge target file timestamp is checked, and the merge is assumed to have been successful if the file has been updated; otherwise, the user is prompted to indicate the success of the merge\&.
+.RE
+.PP
+mergetool\&.meld\&.hasOutput
+.RS 4
+Older versions of
+\fBmeld\fR
+do not support the
+\fB\-\-output\fR
+option\&. Git will attempt to detect whether
+\fBmeld\fR
+supports
+\fB\-\-output\fR
+by inspecting the output of
+\fBmeld \-\-help\fR\&. Configuring
+\fBmergetool\&.meld\&.hasOutput\fR
+will make Git skip these checks and use the configured value instead\&. Setting
+\fBmergetool\&.meld\&.hasOutput\fR
+to
+\fBtrue\fR
+tells Git to unconditionally use the
+\fB\-\-output\fR
+option, and
+\fBfalse\fR
+avoids using
+\fB\-\-output\fR\&.
+.RE
+.PP
+mergetool\&.meld\&.useAutoMerge
+.RS 4
+When the
+\fB\-\-auto\-merge\fR
+is given, meld will merge all non\-conflicting parts automatically, highlight the conflicting parts, and wait for user decision\&. Setting
+\fBmergetool\&.meld\&.useAutoMerge\fR
+to
+\fBtrue\fR
+tells Git to unconditionally use the
+\fB\-\-auto\-merge\fR
+option with
+\fBmeld\fR\&. Setting this value to
+\fBauto\fR
+makes git detect whether
+\fB\-\-auto\-merge\fR
+is supported and will only use
+\fB\-\-auto\-merge\fR
+when available\&. A value of
+\fBfalse\fR
+avoids using
+\fB\-\-auto\-merge\fR
+altogether, and is the default value\&.
+.RE
+.PP
+mergetool\&.<vimdiff variant>\&.layout
+.RS 4
+Configure the split window layout for vimdiff\(cqs
+\fB<variant>\fR, which is any of
+\fBvimdiff\fR,
+\fBnvimdiff\fR,
+\fBgvimdiff\fR\&. Upon launching
+\fBgit mergetool\fR
+with
+\fB\-\-tool=<variant>\fR
+(or without
+\fB\-\-tool\fR
+if
+\fBmerge\&.tool\fR
+is configured as
+\fB<variant>\fR), Git will consult
+\fBmergetool\&.<variant>\&.layout\fR
+to determine the tool\(cqs layout\&. If the variant\-specific configuration is not available,
+\fBvimdiff\fR\*(Aqs is used as fallback\&. If that too is not available, a default layout with 4 windows will be used\&. To configure the layout, see the
+\fBBACKEND SPECIFIC HINTS\fR
+section\&.
+.RE
+.PP
+mergetool\&.hideResolved
+.RS 4
+During a merge, Git will automatically resolve as many conflicts as possible and write the
+\fIMERGED\fR
+file containing conflict markers around any conflicts that it cannot resolve;
+\fILOCAL\fR
+and
+\fIREMOTE\fR
+normally represent the versions of the file from before Git\(cqs conflict resolution\&. This flag causes
+\fILOCAL\fR
+and
+\fIREMOTE\fR
+to be overwritten so that only the unresolved conflicts are presented to the merge tool\&. Can be configured per\-tool via the
+\fBmergetool\&.<tool>\&.hideResolved\fR
+configuration variable\&. Defaults to
+\fBfalse\fR\&.
+.RE
+.PP
+mergetool\&.keepBackup
+.RS 4
+After performing a merge, the original file with conflict markers can be saved as a file with a
+\fB\&.orig\fR
+extension\&. If this variable is set to
+\fBfalse\fR
+then this file is not preserved\&. Defaults to
+\fBtrue\fR
+(i\&.e\&. keep the backup files)\&.
+.RE
+.PP
+mergetool\&.keepTemporaries
+.RS 4
+When invoking a custom merge tool, Git uses a set of temporary files to pass to the tool\&. If the tool returns an error and this variable is set to
+\fBtrue\fR, then these temporary files will be preserved; otherwise, they will be removed after the tool has exited\&. Defaults to
+\fBfalse\fR\&.
+.RE
+.PP
+mergetool\&.writeToTemp
+.RS 4
+Git writes temporary
+\fIBASE\fR,
+\fILOCAL\fR, and
+\fIREMOTE\fR
+versions of conflicting files in the worktree by default\&. Git will attempt to use a temporary directory for these files when set
+\fBtrue\fR\&. Defaults to
+\fBfalse\fR\&.
+.RE
+.PP
+mergetool\&.prompt
+.RS 4
+Prompt before each invocation of the merge resolution program\&.
+.RE
+.PP
+mergetool\&.guiDefault
+.RS 4
+Set
+\fBtrue\fR
+to use the
+\fBmerge\&.guitool\fR
+by default (equivalent to specifying the
+\fB\-\-gui\fR
+argument), or
+\fBauto\fR
+to select
+\fBmerge\&.guitool\fR
+or
+\fBmerge\&.tool\fR
+depending on the presence of a
+\fBDISPLAY\fR
+environment variable value\&. The default is
+\fBfalse\fR, where the
+\fB\-\-gui\fR
+argument must be provided explicitly for the
+\fBmerge\&.guitool\fR
+to be used\&.
+.RE
+.SH "TEMPORARY FILES"
+.sp
+\fBgit mergetool\fR creates \fB*\&.orig\fR backup files while resolving merges\&. These are safe to remove once a file has been merged and its \fBgit mergetool\fR session has completed\&.
+.sp
+Setting the \fBmergetool\&.keepBackup\fR configuration variable to \fBfalse\fR causes \fBgit mergetool\fR to automatically remove the backup files as files are successfully merged\&.
+.SH "BACKEND SPECIFIC HINTS"
+.SS "vimdiff"
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBDescription\fR
+.RS 4
+.sp
+When specifying \fB\-\-tool=vimdiff\fR in \fBgit mergetool\fR Git will open Vim with a 4 windows layout distributed in the following way:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|             |           |              |
+|   LOCAL     |   BASE    |   REMOTE     |
+|             |           |              |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|                                        |
+|                MERGED                  |
+|                                        |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+\fBLOCAL\fR, \fBBASE\fR and \fBREMOTE\fR are read\-only buffers showing the contents of the conflicting file in specific commits ("commit you are merging into", "common ancestor commit" and "commit you are merging from" respectively)
+.sp
+\fBMERGED\fR is a writable buffer where you have to resolve the conflicts (using the other read\-only buffers as a reference)\&. Once you are done, save and exit Vim as usual (\fB:wq\fR) or, if you want to abort, exit using \fB:cq\fR\&.
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBLayout configuration\fR
+.RS 4
+.sp
+You can change the windows layout used by Vim by setting configuration variable \fBmergetool\&.vimdiff\&.layout\fR which accepts a string where the following separators have special meaning:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fB+\fR
+is used to "open a new tab"
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fB,\fR
+is used to "open a new vertical split"
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fB/\fR
+is used to "open a new horizontal split"
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fB@\fR
+is used to indicate the file containing the final version after solving the conflicts\&. If not present,
+\fBMERGED\fR
+will be used by default\&.
+.RE
+.sp
+The precedence of the operators is as follows (you can use parentheses to change it):
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+`@` > `+` > `/` > `,`
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Let\(cqs see some examples to understand how it works:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBlayout = "(LOCAL,BASE,REMOTE)/MERGED"\fR
+.sp
+This is exactly the same as the default layout we have already seen\&.
+.sp
+Note that
+\fB/\fR
+has precedence over
+\fB,\fR
+and thus the parenthesis are not needed in this case\&. The next layout definition is equivalent:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+layout = "LOCAL,BASE,REMOTE / MERGED"
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBlayout = "LOCAL,MERGED,REMOTE"\fR
+.sp
+If, for some reason, we are not interested in the
+\fBBASE\fR
+buffer\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|             |           |              |
+|             |           |              |
+|   LOCAL     |   MERGED  |   REMOTE     |
+|             |           |              |
+|             |           |              |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBlayout = "MERGED"\fR
+.sp
+Only the
+\fBMERGED\fR
+buffer will be shown\&. Note, however, that all the other ones are still loaded in vim, and you can access them with the "buffers" command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|                                        |
+|                                        |
+|                 MERGED                 |
+|                                        |
+|                                        |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBlayout = "@LOCAL,REMOTE"\fR
+.sp
+When
+\fBMERGED\fR
+is not present in the layout, you must "mark" one of the buffers with an asterisk\&. That will become the buffer you need to edit and save after resolving the conflicts\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|                   |                    |
+|                   |                    |
+|                   |                    |
+|     LOCAL         |    REMOTE          |
+|                   |                    |
+|                   |                    |
+|                   |                    |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBlayout = "LOCAL,BASE,REMOTE / MERGED + BASE,LOCAL + BASE,REMOTE"\fR
+.sp
+Three tabs will open: the first one is a copy of the default layout, while the other two only show the differences between (\fBBASE\fR
+and
+\fBLOCAL\fR) and (\fBBASE\fR
+and
+\fBREMOTE\fR) respectively\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+| <TAB #1> |  TAB #2  |  TAB #3  |       |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|             |           |              |
+|   LOCAL     |   BASE    |   REMOTE     |
+|             |           |              |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|                                        |
+|                MERGED                  |
+|                                        |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|  TAB #1  | <TAB #2> |  TAB #3  |       |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|                   |                    |
+|                   |                    |
+|                   |                    |
+|     BASE          |    LOCAL           |
+|                   |                    |
+|                   |                    |
+|                   |                    |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|  TAB #1  |  TAB #2  | <TAB #3> |       |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|                   |                    |
+|                   |                    |
+|                   |                    |
+|     BASE          |    REMOTE          |
+|                   |                    |
+|                   |                    |
+|                   |                    |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBlayout = "LOCAL,BASE,REMOTE / MERGED + BASE,LOCAL + BASE,REMOTE + (LOCAL/BASE/REMOTE),MERGED"\fR
+.sp
+Same as the previous example, but adds a fourth tab with the same information as the first tab, with a different layout\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|  TAB #1  |  TAB #2  |  TAB #3  | <TAB #4> |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+|       LOCAL         |                     |
+|\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-|                     |
+|       BASE          |        MERGED       |
+|\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-|                     |
+|       REMOTE        |                     |
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Note how in the third tab definition we need to use parentheses to make
+\fB,\fR
+have precedence over
+\fB/\fR\&.
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBVariants\fR
+.RS 4
+.sp
+Instead of \fB\-\-tool=vimdiff\fR, you can also use one of these other variants:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fB\-\-tool=gvimdiff\fR, to open gVim instead of Vim\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fB\-\-tool=nvimdiff\fR, to open Neovim instead of Vim\&.
+.RE
+.sp
+When using these variants, in order to specify a custom layout you will have to set configuration variables \fBmergetool\&.gvimdiff\&.layout\fR and \fBmergetool\&.nvimdiff\&.layout\fR instead of \fBmergetool\&.vimdiff\&.layout\fR (though the latter will be used as fallback if the variant\-specific one is not set)\&.
+.sp
+In addition, for backwards compatibility with previous Git versions, you can also append \fB1\fR, \fB2\fR or \fB3\fR to either \fBvimdiff\fR or any of the variants (ex: \fBvimdiff3\fR, \fBnvimdiff1\fR, etc\&...) to use a predefined layout\&. In other words, using \fB\-\-tool=[g,n,]vimdiffx\fR is the same as using \fB\-\-tool=[g,n,]vimdiff\fR and setting configuration variable \fBmergetool\&.[g,n,]vimdiff\&.layout\fR to\&...
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBx=1\fR:
+\fB"@LOCAL, REMOTE"\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBx=2\fR:
+\fB"LOCAL, MERGED, REMOTE"\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBx=3\fR:
+\fB"MERGED"\fR
+.RE
+.sp
+Example: using \fB\-\-tool=gvimdiff2\fR will open \fBgvim\fR with three columns (LOCAL, MERGED and REMOTE)\&.
+.RE
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite

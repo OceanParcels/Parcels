@@ -1,0 +1,142 @@
+'\" t
+.\"     Title: git-merge-file
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GIT\-MERGE\-FILE" "1" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+git-merge-file \- Run a three\-way file merge
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIgit merge\-file\fR [\-L <current\-name> [\-L <base\-name> [\-L <other\-name>]]]
+        [\-\-ours|\-\-theirs|\-\-union] [\-p|\-\-stdout] [\-q|\-\-quiet] [\-\-marker\-size=<n>]
+        [\-\-[no\-]diff3] [\-\-object\-id] <current> <base> <other>
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+Given three files \fB<current>\fR, \fB<base>\fR and \fB<other>\fR, \fIgit merge\-file\fR incorporates all changes that lead from \fB<base>\fR to \fB<other>\fR into \fB<current>\fR\&. The result ordinarily goes into \fB<current>\fR\&. \fIgit merge\-file\fR is useful for combining separate changes to an original\&. Suppose \fB<base>\fR is the original, and both \fB<current>\fR and \fB<other>\fR are modifications of \fB<base>\fR, then \fIgit merge\-file\fR combines both changes\&.
+.sp
+A conflict occurs if both \fB<current>\fR and \fB<other>\fR have changes in a common segment of lines\&. If a conflict is found, \fIgit merge\-file\fR normally outputs a warning and brackets the conflict with lines containing <<<<<<< and >>>>>>> markers\&. A typical conflict will look like this:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+<<<<<<< A
+lines in file A
+=======
+lines in file B
+>>>>>>> B
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If there are conflicts, the user should edit the result and delete one of the alternatives\&. When \fB\-\-ours\fR, \fB\-\-theirs\fR, or \fB\-\-union\fR option is in effect, however, these conflicts are resolved favouring lines from \fB<current>\fR, lines from \fB<other>\fR, or lines from both respectively\&. The length of the conflict markers can be given with the \fB\-\-marker\-size\fR option\&.
+.sp
+If \fB\-\-object\-id\fR is specified, exactly the same behavior occurs, except that instead of specifying what to merge as files, it is specified as a list of object IDs referring to blobs\&.
+.sp
+The exit value of this program is negative on error, and the number of conflicts otherwise (truncated to 127 if there are more than that many conflicts)\&. If the merge was clean, the exit value is 0\&.
+.sp
+\fIgit merge\-file\fR is designed to be a minimal clone of RCS \fImerge\fR; that is, it implements all of RCS \fImerge\fR\*(Aqs functionality which is needed by \fBgit\fR(1)\&.
+.SH "OPTIONS"
+.PP
+\-\-object\-id
+.RS 4
+Specify the contents to merge as blobs in the current repository instead of files\&. In this case, the operation must take place within a valid repository\&.
+.sp
+If the
+\fB\-p\fR
+option is specified, the merged file (including conflicts, if any) goes to standard output as normal; otherwise, the merged file is written to the object store and the object ID of its blob is written to standard output\&.
+.RE
+.PP
+\-L <label>
+.RS 4
+This option may be given up to three times, and specifies labels to be used in place of the corresponding file names in conflict reports\&. That is,
+\fBgit merge\-file \-L x \-L y \-L z a b c\fR
+generates output that looks like it came from files x, y and z instead of from files a, b and c\&.
+.RE
+.PP
+\-p
+.RS 4
+Send results to standard output instead of overwriting
+\fB<current>\fR\&.
+.RE
+.PP
+\-q
+.RS 4
+Quiet; do not warn about conflicts\&.
+.RE
+.PP
+\-\-diff3
+.RS 4
+Show conflicts in "diff3" style\&.
+.RE
+.PP
+\-\-zdiff3
+.RS 4
+Show conflicts in "zdiff3" style\&.
+.RE
+.PP
+\-\-ours, \-\-theirs, \-\-union
+.RS 4
+Instead of leaving conflicts in the file, resolve conflicts favouring our (or their or both) side of the lines\&.
+.RE
+.PP
+\-\-diff\-algorithm={patience|minimal|histogram|myers}
+.RS 4
+Use a different diff algorithm while merging\&. The current default is "myers", but selecting more recent algorithm such as "histogram" can help avoid mismerges that occur due to unimportant matching lines (such as braces from distinct functions)\&. See also
+\fBgit-diff\fR(1)
+\fB\-\-diff\-algorithm\fR\&.
+.RE
+.SH "EXAMPLES"
+.PP
+\fBgit merge\-file README\&.my README README\&.upstream\fR
+.RS 4
+combines the changes of README\&.my and README\&.upstream since README, tries to merge them and writes the result into README\&.my\&.
+.RE
+.PP
+\fBgit merge\-file \-L a \-L b \-L c tmp/a123 tmp/b234 tmp/c345\fR
+.RS 4
+merges tmp/a123 and tmp/c345 with the base tmp/b234, but uses labels
+\fBa\fR
+and
+\fBc\fR
+instead of
+\fBtmp/a123\fR
+and
+\fBtmp/c345\fR\&.
+.RE
+.PP
+\fBgit merge\-file \-p \-\-object\-id abc1234 def567 890abcd\fR
+.RS 4
+combines the changes of the blob abc1234 and 890abcd since def567, tries to merge them and writes the result to standard output
+.RE
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite

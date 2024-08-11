@@ -1,0 +1,127 @@
+{
+  "build": "py_2",
+  "build_number": 2,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "python"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/asciitree-0.3.3-py_2",
+  "files": [
+    "lib/python3.12/site-packages/asciitree-0.3.3-py2.7.egg-info/PKG-INFO",
+    "lib/python3.12/site-packages/asciitree-0.3.3-py2.7.egg-info/SOURCES.txt",
+    "lib/python3.12/site-packages/asciitree-0.3.3-py2.7.egg-info/dependency_links.txt",
+    "lib/python3.12/site-packages/asciitree-0.3.3-py2.7.egg-info/installed-files.txt",
+    "lib/python3.12/site-packages/asciitree-0.3.3-py2.7.egg-info/top_level.txt",
+    "lib/python3.12/site-packages/asciitree/__init__.py",
+    "lib/python3.12/site-packages/asciitree/drawing.py",
+    "lib/python3.12/site-packages/asciitree/traversal.py",
+    "lib/python3.12/site-packages/asciitree/util.py",
+    "lib/python3.12/site-packages/asciitree/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/asciitree/__pycache__/drawing.cpython-312.pyc",
+    "lib/python3.12/site-packages/asciitree/__pycache__/traversal.cpython-312.pyc",
+    "lib/python3.12/site-packages/asciitree/__pycache__/util.cpython-312.pyc"
+  ],
+  "fn": "asciitree-0.3.3-py_2.tar.bz2",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/asciitree-0.3.3-py_2",
+    "type": 1
+  },
+  "md5": "c0481c9de49f040272556e2cedf42816",
+  "name": "asciitree",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/asciitree-0.3.3-py_2.tar.bz2",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/asciitree-0.3.3-py2.7.egg-info/PKG-INFO",
+        "path_type": "hardlink",
+        "sha256": "d5663120df439d1f992e42fa93a9383e1a20d5e32b5e05998cd3a52e6bc52d82",
+        "sha256_in_prefix": "d5663120df439d1f992e42fa93a9383e1a20d5e32b5e05998cd3a52e6bc52d82",
+        "size_in_bytes": 1374
+      },
+      {
+        "_path": "site-packages/asciitree-0.3.3-py2.7.egg-info/SOURCES.txt",
+        "path_type": "hardlink",
+        "sha256": "d136c3cd8bbbaa1ea83d51ab0060e6d4c2317da10b1d3efa5db94164ad9e07d5",
+        "sha256_in_prefix": "d136c3cd8bbbaa1ea83d51ab0060e6d4c2317da10b1d3efa5db94164ad9e07d5",
+        "size_in_bytes": 265
+      },
+      {
+        "_path": "site-packages/asciitree-0.3.3-py2.7.egg-info/dependency_links.txt",
+        "path_type": "hardlink",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "sha256_in_prefix": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "size_in_bytes": 1
+      },
+      {
+        "_path": "site-packages/asciitree-0.3.3-py2.7.egg-info/installed-files.txt",
+        "path_type": "hardlink",
+        "sha256": "abce0bb7adfe7ea0a9570c48686a9fa5134fc264d0b37810be3d01375b6ace1d",
+        "sha256_in_prefix": "abce0bb7adfe7ea0a9570c48686a9fa5134fc264d0b37810be3d01375b6ace1d",
+        "size_in_bytes": 252
+      },
+      {
+        "_path": "site-packages/asciitree-0.3.3-py2.7.egg-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "feb6864e4b195f751a7da634b0471e4fa5f155c622b681d3b2efcd87dc7eb5da",
+        "sha256_in_prefix": "feb6864e4b195f751a7da634b0471e4fa5f155c622b681d3b2efcd87dc7eb5da",
+        "size_in_bytes": 10
+      },
+      {
+        "_path": "site-packages/asciitree/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "b960dfd052a030ba0dbdd8602f247dd3175d7009e8de5af25434584fad52b6ec",
+        "sha256_in_prefix": "b960dfd052a030ba0dbdd8602f247dd3175d7009e8de5af25434584fad52b6ec",
+        "size_in_bytes": 2499
+      },
+      {
+        "_path": "site-packages/asciitree/drawing.py",
+        "path_type": "hardlink",
+        "sha256": "120f2a9701249d77b508a55a9f3e4c7c70596245710ef8900b5475210106ed2e",
+        "sha256_in_prefix": "120f2a9701249d77b508a55a9f3e4c7c70596245710ef8900b5475210106ed2e",
+        "size_in_bytes": 2909
+      },
+      {
+        "_path": "site-packages/asciitree/traversal.py",
+        "path_type": "hardlink",
+        "sha256": "0a7d92c5fe459bfadd0fcd20e8c22a4cba8de31497e20acedaaee474aafc22f1",
+        "sha256_in_prefix": "0a7d92c5fe459bfadd0fcd20e8c22a4cba8de31497e20acedaaee474aafc22f1",
+        "size_in_bytes": 1142
+      },
+      {
+        "_path": "site-packages/asciitree/util.py",
+        "path_type": "hardlink",
+        "sha256": "60153179c82ef31e377d5158033726c216e7181322caa8f2371b678851b47500",
+        "sha256_in_prefix": "60153179c82ef31e377d5158033726c216e7181322caa8f2371b678851b47500",
+        "size_in_bytes": 136
+      },
+      {
+        "_path": "lib/python3.12/site-packages/asciitree/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/asciitree/__pycache__/drawing.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/asciitree/__pycache__/traversal.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/asciitree/__pycache__/util.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "b3e9369529fe7d721b66f18680ff4b561e20dbf6507e209e1f60eac277c97560",
+  "size": 6164,
+  "subdir": "noarch",
+  "timestamp": 1531050741000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/asciitree-0.3.3-py_2.tar.bz2",
+  "version": "0.3.3"
+}

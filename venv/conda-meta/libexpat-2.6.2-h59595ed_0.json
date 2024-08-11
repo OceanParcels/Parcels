@@ -1,0 +1,50 @@
+{
+  "build": "h59595ed_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [
+    "expat 2.6.2.*"
+  ],
+  "depends": [
+    "libgcc-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libexpat-2.6.2-h59595ed_0",
+  "files": [
+    "lib/libexpat.so.1",
+    "lib/libexpat.so.1.9.2"
+  ],
+  "fn": "libexpat-2.6.2-h59595ed_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/libexpat-2.6.2-h59595ed_0",
+    "type": 1
+  },
+  "md5": "e7ba12deb7020dd080c6c70e7b6f6a3d",
+  "name": "libexpat",
+  "package_tarball_full_path": "/opt/conda/pkgs/libexpat-2.6.2-h59595ed_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/libexpat.so.1",
+        "path_type": "softlink",
+        "sha256": "b739c878768a3d1b64aa61bed089056fb21144c0734f5f6035860d60cd5d73a9",
+        "size_in_bytes": 191080
+      },
+      {
+        "_path": "lib/libexpat.so.1.9.2",
+        "path_type": "hardlink",
+        "sha256": "b739c878768a3d1b64aa61bed089056fb21144c0734f5f6035860d60cd5d73a9",
+        "sha256_in_prefix": "b739c878768a3d1b64aa61bed089056fb21144c0734f5f6035860d60cd5d73a9",
+        "size_in_bytes": 191080
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "331bb7c7c05025343ebd79f86ae612b9e1e74d2687b8f3179faec234f986ce19",
+  "size": 73730,
+  "subdir": "linux-64",
+  "timestamp": 1710362120000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libexpat-2.6.2-h59595ed_0.conda",
+  "version": "2.6.2"
+}

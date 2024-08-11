@@ -1,0 +1,548 @@
+{
+  "build": "h4ab18f5_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=12",
+    "libpciaccess >=0.18,<0.19.0a0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libdrm-2.4.122-h4ab18f5_0",
+  "files": [
+    "include/libdrm/amdgpu.h",
+    "include/libdrm/amdgpu_drm.h",
+    "include/libdrm/drm.h",
+    "include/libdrm/drm_fourcc.h",
+    "include/libdrm/drm_mode.h",
+    "include/libdrm/drm_sarea.h",
+    "include/libdrm/i915_drm.h",
+    "include/libdrm/intel_aub.h",
+    "include/libdrm/intel_bufmgr.h",
+    "include/libdrm/intel_debug.h",
+    "include/libdrm/mach64_drm.h",
+    "include/libdrm/mga_drm.h",
+    "include/libdrm/msm_drm.h",
+    "include/libdrm/nouveau/nouveau.h",
+    "include/libdrm/nouveau/nvif/cl0080.h",
+    "include/libdrm/nouveau/nvif/cl9097.h",
+    "include/libdrm/nouveau/nvif/class.h",
+    "include/libdrm/nouveau/nvif/if0002.h",
+    "include/libdrm/nouveau/nvif/if0003.h",
+    "include/libdrm/nouveau/nvif/ioctl.h",
+    "include/libdrm/nouveau/nvif/unpack.h",
+    "include/libdrm/nouveau_drm.h",
+    "include/libdrm/qxl_drm.h",
+    "include/libdrm/r128_drm.h",
+    "include/libdrm/r600_pci_ids.h",
+    "include/libdrm/radeon_bo.h",
+    "include/libdrm/radeon_bo_gem.h",
+    "include/libdrm/radeon_bo_int.h",
+    "include/libdrm/radeon_cs.h",
+    "include/libdrm/radeon_cs_gem.h",
+    "include/libdrm/radeon_cs_int.h",
+    "include/libdrm/radeon_drm.h",
+    "include/libdrm/radeon_surface.h",
+    "include/libdrm/savage_drm.h",
+    "include/libdrm/sis_drm.h",
+    "include/libdrm/tegra_drm.h",
+    "include/libdrm/vc4_drm.h",
+    "include/libdrm/via_drm.h",
+    "include/libdrm/virtgpu_drm.h",
+    "include/libdrm/vmwgfx_drm.h",
+    "include/libsync.h",
+    "include/xf86drm.h",
+    "include/xf86drmMode.h",
+    "lib/libdrm.so",
+    "lib/libdrm.so.2",
+    "lib/libdrm.so.2.4.0",
+    "lib/libdrm_amdgpu.so",
+    "lib/libdrm_amdgpu.so.1",
+    "lib/libdrm_amdgpu.so.1.0.0",
+    "lib/libdrm_intel.so",
+    "lib/libdrm_intel.so.1",
+    "lib/libdrm_intel.so.1.0.0",
+    "lib/libdrm_nouveau.so",
+    "lib/libdrm_nouveau.so.2",
+    "lib/libdrm_nouveau.so.2.0.0",
+    "lib/libdrm_radeon.so",
+    "lib/libdrm_radeon.so.1",
+    "lib/libdrm_radeon.so.1.0.1",
+    "lib/pkgconfig/libdrm.pc",
+    "lib/pkgconfig/libdrm_amdgpu.pc",
+    "lib/pkgconfig/libdrm_intel.pc",
+    "lib/pkgconfig/libdrm_nouveau.pc",
+    "lib/pkgconfig/libdrm_radeon.pc",
+    "share/libdrm/amdgpu.ids"
+  ],
+  "fn": "libdrm-2.4.122-h4ab18f5_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/libdrm-2.4.122-h4ab18f5_0",
+    "type": 1
+  },
+  "md5": "bbfc4dbe5e97b385ef088f354d65e563",
+  "name": "libdrm",
+  "package_tarball_full_path": "/opt/conda/pkgs/libdrm-2.4.122-h4ab18f5_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/libdrm/amdgpu.h",
+        "path_type": "hardlink",
+        "sha256": "d0df7d7baf33668a5acf7fd208df3c4f4d6e5da85f4eda369c38d48f8026680b",
+        "sha256_in_prefix": "d0df7d7baf33668a5acf7fd208df3c4f4d6e5da85f4eda369c38d48f8026680b",
+        "size_in_bytes": 59223
+      },
+      {
+        "_path": "include/libdrm/amdgpu_drm.h",
+        "path_type": "hardlink",
+        "sha256": "7a98d4ca5ffa31bb9398abcc580ea9479a55e32b08de9536e5bc416dbbad6cc6",
+        "sha256_in_prefix": "7a98d4ca5ffa31bb9398abcc580ea9479a55e32b08de9536e5bc416dbbad6cc6",
+        "size_in_bytes": 40342
+      },
+      {
+        "_path": "include/libdrm/drm.h",
+        "path_type": "hardlink",
+        "sha256": "6b80aff056e2ac2e126e5144a3ce2c750292edb4d080d4689ac487dc17e4dae8",
+        "sha256_in_prefix": "6b80aff056e2ac2e126e5144a3ce2c750292edb4d080d4689ac487dc17e4dae8",
+        "size_in_bytes": 45668
+      },
+      {
+        "_path": "include/libdrm/drm_fourcc.h",
+        "path_type": "hardlink",
+        "sha256": "b9eb43e81c809d1faa517c67fa0ed69bf4f9e8a16c423dac8bd284c52af062fb",
+        "sha256_in_prefix": "b9eb43e81c809d1faa517c67fa0ed69bf4f9e8a16c423dac8bd284c52af062fb",
+        "size_in_bytes": 69530
+      },
+      {
+        "_path": "include/libdrm/drm_mode.h",
+        "path_type": "hardlink",
+        "sha256": "9f448400da792096a0eb253e7b88b410afd571ee94a0d6c6f11cdcec82d768da",
+        "sha256_in_prefix": "9f448400da792096a0eb253e7b88b410afd571ee94a0d6c6f11cdcec82d768da",
+        "size_in_bytes": 41241
+      },
+      {
+        "_path": "include/libdrm/drm_sarea.h",
+        "path_type": "hardlink",
+        "sha256": "fd1a9f523738de090ab5018fc6776b83d18e43ad84f2a0825f6a72d6278c542a",
+        "sha256_in_prefix": "fd1a9f523738de090ab5018fc6776b83d18e43ad84f2a0825f6a72d6278c542a",
+        "size_in_bytes": 2782
+      },
+      {
+        "_path": "include/libdrm/i915_drm.h",
+        "path_type": "hardlink",
+        "sha256": "1eae436196e69c1653004519ec1bc20060959526cf1826f1b60647dc5134cbeb",
+        "sha256_in_prefix": "1eae436196e69c1653004519ec1bc20060959526cf1826f1b60647dc5134cbeb",
+        "size_in_bytes": 124881
+      },
+      {
+        "_path": "include/libdrm/intel_aub.h",
+        "path_type": "hardlink",
+        "sha256": "be42118682ea12590531b867a3235f09d752c441b7bd7307fdec0104813a23e0",
+        "sha256_in_prefix": "be42118682ea12590531b867a3235f09d752c441b7bd7307fdec0104813a23e0",
+        "size_in_bytes": 5933
+      },
+      {
+        "_path": "include/libdrm/intel_bufmgr.h",
+        "path_type": "hardlink",
+        "sha256": "a401fb1fea17600bac38f53de6defbfdda1c40fa05a51adad783cec6613d0a6a",
+        "sha256_in_prefix": "a401fb1fea17600bac38f53de6defbfdda1c40fa05a51adad783cec6613d0a6a",
+        "size_in_bytes": 12892
+      },
+      {
+        "_path": "include/libdrm/intel_debug.h",
+        "path_type": "hardlink",
+        "sha256": "18a4b2cd7f2d2907fe95f9654e6052f0cf23fc9bded99d6357e761a5b594e1e7",
+        "sha256_in_prefix": "18a4b2cd7f2d2907fe95f9654e6052f0cf23fc9bded99d6357e761a5b594e1e7",
+        "size_in_bytes": 1585
+      },
+      {
+        "_path": "include/libdrm/mach64_drm.h",
+        "path_type": "hardlink",
+        "sha256": "26cc4affc11d34748724a2b619fd166f162c6215837d0660271c56f4b50e44e5",
+        "sha256_in_prefix": "26cc4affc11d34748724a2b619fd166f162c6215837d0660271c56f4b50e44e5",
+        "size_in_bytes": 7895
+      },
+      {
+        "_path": "include/libdrm/mga_drm.h",
+        "path_type": "hardlink",
+        "sha256": "20be6c1c32101d66c08a5741dfd7ea834221199a5921ac0e4b4698c432dafc0f",
+        "sha256_in_prefix": "20be6c1c32101d66c08a5741dfd7ea834221199a5921ac0e4b4698c432dafc0f",
+        "size_in_bytes": 13010
+      },
+      {
+        "_path": "include/libdrm/msm_drm.h",
+        "path_type": "hardlink",
+        "sha256": "90305a6fae34d7d5f7f74d043523aaf5d84c94e4691219166060ad36debb53c0",
+        "sha256_in_prefix": "90305a6fae34d7d5f7f74d043523aaf5d84c94e4691219166060ad36debb53c0",
+        "size_in_bytes": 12105
+      },
+      {
+        "_path": "include/libdrm/nouveau/nouveau.h",
+        "path_type": "hardlink",
+        "sha256": "408d8f7339b0670c339b030d0f1b49e517fc44e81cdc0a949956c0e3c1fd1544",
+        "sha256_in_prefix": "408d8f7339b0670c339b030d0f1b49e517fc44e81cdc0a949956c0e3c1fd1544",
+        "size_in_bytes": 7902
+      },
+      {
+        "_path": "include/libdrm/nouveau/nvif/cl0080.h",
+        "path_type": "hardlink",
+        "sha256": "ed9940a3e58c635980e7c7433b18ae24f079d36453e809eeac102b8c359dcaca",
+        "sha256_in_prefix": "ed9940a3e58c635980e7c7433b18ae24f079d36453e809eeac102b8c359dcaca",
+        "size_in_bytes": 1785
+      },
+      {
+        "_path": "include/libdrm/nouveau/nvif/cl9097.h",
+        "path_type": "hardlink",
+        "sha256": "5c6d3f5b547d179e15a7b7c232abcc4b93fd74fd67d3d52b405131b259520610",
+        "sha256_in_prefix": "5c6d3f5b547d179e15a7b7c232abcc4b93fd74fd67d3d52b405131b259520610",
+        "size_in_bytes": 2062
+      },
+      {
+        "_path": "include/libdrm/nouveau/nvif/class.h",
+        "path_type": "hardlink",
+        "sha256": "8486732ad1988054b5f2415970111bc19e4ebc8cf4b059288d462699e39e7a2a",
+        "sha256_in_prefix": "8486732ad1988054b5f2415970111bc19e4ebc8cf4b059288d462699e39e7a2a",
+        "size_in_bytes": 8789
+      },
+      {
+        "_path": "include/libdrm/nouveau/nvif/if0002.h",
+        "path_type": "hardlink",
+        "sha256": "4f24f59677731a71b5de47cd901db5acda2100fed13698f331d36275879d49ee",
+        "sha256_in_prefix": "4f24f59677731a71b5de47cd901db5acda2100fed13698f331d36275879d49ee",
+        "size_in_bytes": 769
+      },
+      {
+        "_path": "include/libdrm/nouveau/nvif/if0003.h",
+        "path_type": "hardlink",
+        "sha256": "d24b3f3792a44d92a6436d51be99e0b947d9d4673928dda561e9a83540b5e77d",
+        "sha256_in_prefix": "d24b3f3792a44d92a6436d51be99e0b947d9d4673928dda561e9a83540b5e77d",
+        "size_in_bytes": 645
+      },
+      {
+        "_path": "include/libdrm/nouveau/nvif/ioctl.h",
+        "path_type": "hardlink",
+        "sha256": "b1037cfadc5940a837eaea35b50c96aeb5367a5464e15b5f978d31638b4586df",
+        "sha256_in_prefix": "b1037cfadc5940a837eaea35b50c96aeb5367a5464e15b5f978d31638b4586df",
+        "size_in_bytes": 3174
+      },
+      {
+        "_path": "include/libdrm/nouveau/nvif/unpack.h",
+        "path_type": "hardlink",
+        "sha256": "0874ec3e02716aa60772acc3d85112bed043b5ecd483464fe39d74cd9dadce3a",
+        "sha256_in_prefix": "0874ec3e02716aa60772acc3d85112bed043b5ecd483464fe39d74cd9dadce3a",
+        "size_in_bytes": 1551
+      },
+      {
+        "_path": "include/libdrm/nouveau_drm.h",
+        "path_type": "hardlink",
+        "sha256": "7757e4a836b1c6e36944c686477dca664aacb9ca44cc6ce7841bcf2ebfd13cf9",
+        "sha256_in_prefix": "7757e4a836b1c6e36944c686477dca664aacb9ca44cc6ce7841bcf2ebfd13cf9",
+        "size_in_bytes": 7000
+      },
+      {
+        "_path": "include/libdrm/qxl_drm.h",
+        "path_type": "hardlink",
+        "sha256": "548e963e52309e741c413a2d1918e6f8e31399a350f98b5fd46c38155546ba6e",
+        "sha256_in_prefix": "548e963e52309e741c413a2d1918e6f8e31399a350f98b5fd46c38155546ba6e",
+        "size_in_bytes": 4131
+      },
+      {
+        "_path": "include/libdrm/r128_drm.h",
+        "path_type": "hardlink",
+        "sha256": "5ee8a4d8dc2f8529bc3082ae99e19b836b9241d3ec8380d6e544165c2468ce2c",
+        "sha256_in_prefix": "5ee8a4d8dc2f8529bc3082ae99e19b836b9241d3ec8380d6e544165c2468ce2c",
+        "size_in_bytes": 10000
+      },
+      {
+        "_path": "include/libdrm/r600_pci_ids.h",
+        "path_type": "hardlink",
+        "sha256": "b40fb4a001e210c3bbd716c518192a2074228a5faec8a1fcc655b112c0c27ee6",
+        "sha256_in_prefix": "b40fb4a001e210c3bbd716c518192a2074228a5faec8a1fcc655b112c0c27ee6",
+        "size_in_bytes": 16388
+      },
+      {
+        "_path": "include/libdrm/radeon_bo.h",
+        "path_type": "hardlink",
+        "sha256": "2f187e74257b23608012e4925b26e3fc7dd9db534a740f2a0a8168b8519d7fb5",
+        "sha256_in_prefix": "2f187e74257b23608012e4925b26e3fc7dd9db534a740f2a0a8168b8519d7fb5",
+        "size_in_bytes": 2813
+      },
+      {
+        "_path": "include/libdrm/radeon_bo_gem.h",
+        "path_type": "hardlink",
+        "sha256": "b2a501afc0b0c78650b11c1bec547dfd7db6f69c2774212468da5eb8902a5fd7",
+        "sha256_in_prefix": "b2a501afc0b0c78650b11c1bec547dfd7db6f69c2774212468da5eb8902a5fd7",
+        "size_in_bytes": 1991
+      },
+      {
+        "_path": "include/libdrm/radeon_bo_int.h",
+        "path_type": "hardlink",
+        "sha256": "3d6f947098974af1c4bccb265585ebb623242015b91b833b5c7f35e37b780ede",
+        "sha256_in_prefix": "3d6f947098974af1c4bccb265585ebb623242015b91b833b5c7f35e37b780ede",
+        "size_in_bytes": 1678
+      },
+      {
+        "_path": "include/libdrm/radeon_cs.h",
+        "path_type": "hardlink",
+        "sha256": "97f44a76aa83dc8a3a2370a29169b1f6b347e60b96e5cd5949c21dbfe382a288",
+        "sha256_in_prefix": "97f44a76aa83dc8a3a2370a29169b1f6b347e60b96e5cd5949c21dbfe382a288",
+        "size_in_bytes": 5121
+      },
+      {
+        "_path": "include/libdrm/radeon_cs_gem.h",
+        "path_type": "hardlink",
+        "sha256": "3f28f2782a8a0150ad02a6cdcf3056654590b3e779a3d6a5c5eb4bdec9665670",
+        "sha256_in_prefix": "3f28f2782a8a0150ad02a6cdcf3056654590b3e779a3d6a5c5eb4bdec9665670",
+        "size_in_bytes": 1601
+      },
+      {
+        "_path": "include/libdrm/radeon_cs_int.h",
+        "path_type": "hardlink",
+        "sha256": "134a9310cc9d3e7219dc40e59a20ec94e0e64959487297fbd2489c5b71f38d3a",
+        "sha256_in_prefix": "134a9310cc9d3e7219dc40e59a20ec94e0e64959487297fbd2489c5b71f38d3a",
+        "size_in_bytes": 2179
+      },
+      {
+        "_path": "include/libdrm/radeon_drm.h",
+        "path_type": "hardlink",
+        "sha256": "1dfa3a4185a75b3963eba9e4ba757cdf7aca503bea7708cf301197366faa5b8d",
+        "sha256_in_prefix": "1dfa3a4185a75b3963eba9e4ba757cdf7aca503bea7708cf301197366faa5b8d",
+        "size_in_bytes": 38317
+      },
+      {
+        "_path": "include/libdrm/radeon_surface.h",
+        "path_type": "hardlink",
+        "sha256": "cd2fb7bdd447164495d01acd7ab68ff70794e8b350bd1508be0ed8bc2ee2459a",
+        "sha256_in_prefix": "cd2fb7bdd447164495d01acd7ab68ff70794e8b350bd1508be0ed8bc2ee2459a",
+        "size_in_bytes": 5968
+      },
+      {
+        "_path": "include/libdrm/savage_drm.h",
+        "path_type": "hardlink",
+        "sha256": "09f5f47769f6365b2e321ece9e83ce1e4d6aef6ae727dacd33d02d2fd64cb26e",
+        "sha256_in_prefix": "09f5f47769f6365b2e321ece9e83ce1e4d6aef6ae727dacd33d02d2fd64cb26e",
+        "size_in_bytes": 7170
+      },
+      {
+        "_path": "include/libdrm/sis_drm.h",
+        "path_type": "hardlink",
+        "sha256": "981da0746aedd980fc2c3bb4357a400ff2b35df2e214a582b58488ffd469fa7c",
+        "sha256_in_prefix": "981da0746aedd980fc2c3bb4357a400ff2b35df2e214a582b58488ffd469fa7c",
+        "size_in_bytes": 2633
+      },
+      {
+        "_path": "include/libdrm/tegra_drm.h",
+        "path_type": "hardlink",
+        "sha256": "84969d7efe2d983090d0b4b0f47f0dcf0f5853b830808677005b1af9d1f954c9",
+        "sha256_in_prefix": "84969d7efe2d983090d0b4b0f47f0dcf0f5853b830808677005b1af9d1f954c9",
+        "size_in_bytes": 21651
+      },
+      {
+        "_path": "include/libdrm/vc4_drm.h",
+        "path_type": "hardlink",
+        "sha256": "f1ffa366621a643e4f81d4b0c15db46a8405a94a45cc08708cc8a702abdb3053",
+        "sha256_in_prefix": "f1ffa366621a643e4f81d4b0c15db46a8405a94a45cc08708cc8a702abdb3053",
+        "size_in_bytes": 14457
+      },
+      {
+        "_path": "include/libdrm/via_drm.h",
+        "path_type": "hardlink",
+        "sha256": "ace3ddd33488b86f8171b8622762be2816598236777b6a88afd053a89a7e22d7",
+        "sha256_in_prefix": "ace3ddd33488b86f8171b8622762be2816598236777b6a88afd053a89a7e22d7",
+        "size_in_bytes": 8372
+      },
+      {
+        "_path": "include/libdrm/virtgpu_drm.h",
+        "path_type": "hardlink",
+        "sha256": "d80818cfe1ee862dfa9fb23d46f37a10ae80a2901037421742c40cff3a889772",
+        "sha256_in_prefix": "d80818cfe1ee862dfa9fb23d46f37a10ae80a2901037421742c40cff3a889772",
+        "size_in_bytes": 5010
+      },
+      {
+        "_path": "include/libdrm/vmwgfx_drm.h",
+        "path_type": "hardlink",
+        "sha256": "b134ec8e4212cda56a57f5eb3de5e43ffa72cd79cf8e5d10a3d33fa8d1eec4ae",
+        "sha256_in_prefix": "b134ec8e4212cda56a57f5eb3de5e43ffa72cd79cf8e5d10a3d33fa8d1eec4ae",
+        "size_in_bytes": 32085
+      },
+      {
+        "_path": "include/libsync.h",
+        "path_type": "hardlink",
+        "sha256": "0c681ebeb5ff98b61261a3240baa9cf855efb105231985c5a717d26383fe02fd",
+        "sha256_in_prefix": "0c681ebeb5ff98b61261a3240baa9cf855efb105231985c5a717d26383fe02fd",
+        "size_in_bytes": 3462
+      },
+      {
+        "_path": "include/xf86drm.h",
+        "path_type": "hardlink",
+        "sha256": "ca8c9d7a8685ae0b3951515b666acd927c2289cbc025a5be541cd19c4206ad46",
+        "sha256_in_prefix": "ca8c9d7a8685ae0b3951515b666acd927c2289cbc025a5be541cd19c4206ad46",
+        "size_in_bytes": 37395
+      },
+      {
+        "_path": "include/xf86drmMode.h",
+        "path_type": "hardlink",
+        "sha256": "96d7da4829bd41f41a3e26011c7cf9a63a597d66407f3348aa9bb2bd3712e2e2",
+        "sha256_in_prefix": "96d7da4829bd41f41a3e26011c7cf9a63a597d66407f3348aa9bb2bd3712e2e2",
+        "size_in_bytes": 16557
+      },
+      {
+        "_path": "lib/libdrm.so",
+        "path_type": "softlink",
+        "sha256": "8bfe7703989f8f21c7c32939ed8bdc23ed848c7b471af05acb2b269490d58594",
+        "size_in_bytes": 110664
+      },
+      {
+        "_path": "lib/libdrm.so.2",
+        "path_type": "softlink",
+        "sha256": "8bfe7703989f8f21c7c32939ed8bdc23ed848c7b471af05acb2b269490d58594",
+        "size_in_bytes": 110664
+      },
+      {
+        "_path": "lib/libdrm.so.2.4.0",
+        "path_type": "hardlink",
+        "sha256": "8bfe7703989f8f21c7c32939ed8bdc23ed848c7b471af05acb2b269490d58594",
+        "sha256_in_prefix": "8bfe7703989f8f21c7c32939ed8bdc23ed848c7b471af05acb2b269490d58594",
+        "size_in_bytes": 110664
+      },
+      {
+        "_path": "lib/libdrm_amdgpu.so",
+        "path_type": "softlink",
+        "sha256": "d079fc3510bfda66319aed9cd1dfa4c5e9db177cf91f58f604da619037185902",
+        "size_in_bytes": 55880
+      },
+      {
+        "_path": "lib/libdrm_amdgpu.so.1",
+        "path_type": "softlink",
+        "sha256": "d079fc3510bfda66319aed9cd1dfa4c5e9db177cf91f58f604da619037185902",
+        "size_in_bytes": 55880
+      },
+      {
+        "_path": "lib/libdrm_amdgpu.so.1.0.0",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libdrm_1719531273141/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac",
+        "sha256": "d079fc3510bfda66319aed9cd1dfa4c5e9db177cf91f58f604da619037185902",
+        "sha256_in_prefix": "bb9cfd84d22243085d4fa5164bee958ec6d31f71d069ce8bc62e32fbcb7bf9aa",
+        "size_in_bytes": 55880
+      },
+      {
+        "_path": "lib/libdrm_intel.so",
+        "path_type": "softlink",
+        "sha256": "17fe7eaea7578dfbee1c71cb8ea9b5d2f56a886f6a8a499acff78143adaca3d7",
+        "size_in_bytes": 161144
+      },
+      {
+        "_path": "lib/libdrm_intel.so.1",
+        "path_type": "softlink",
+        "sha256": "17fe7eaea7578dfbee1c71cb8ea9b5d2f56a886f6a8a499acff78143adaca3d7",
+        "size_in_bytes": 161144
+      },
+      {
+        "_path": "lib/libdrm_intel.so.1.0.0",
+        "path_type": "hardlink",
+        "sha256": "17fe7eaea7578dfbee1c71cb8ea9b5d2f56a886f6a8a499acff78143adaca3d7",
+        "sha256_in_prefix": "17fe7eaea7578dfbee1c71cb8ea9b5d2f56a886f6a8a499acff78143adaca3d7",
+        "size_in_bytes": 161144
+      },
+      {
+        "_path": "lib/libdrm_nouveau.so",
+        "path_type": "softlink",
+        "sha256": "3ab192ab136febee7e6e4ecdc48a9a314afbe5c531c714ffc77cf0a8f323b4ea",
+        "size_in_bytes": 40472
+      },
+      {
+        "_path": "lib/libdrm_nouveau.so.2",
+        "path_type": "softlink",
+        "sha256": "3ab192ab136febee7e6e4ecdc48a9a314afbe5c531c714ffc77cf0a8f323b4ea",
+        "size_in_bytes": 40472
+      },
+      {
+        "_path": "lib/libdrm_nouveau.so.2.0.0",
+        "path_type": "hardlink",
+        "sha256": "3ab192ab136febee7e6e4ecdc48a9a314afbe5c531c714ffc77cf0a8f323b4ea",
+        "sha256_in_prefix": "3ab192ab136febee7e6e4ecdc48a9a314afbe5c531c714ffc77cf0a8f323b4ea",
+        "size_in_bytes": 40472
+      },
+      {
+        "_path": "lib/libdrm_radeon.so",
+        "path_type": "softlink",
+        "sha256": "83e8895ebddaad00efa94588ad0122ad558c9ea438ab0f50b2cd9fad918973f6",
+        "size_in_bytes": 57520
+      },
+      {
+        "_path": "lib/libdrm_radeon.so.1",
+        "path_type": "softlink",
+        "sha256": "83e8895ebddaad00efa94588ad0122ad558c9ea438ab0f50b2cd9fad918973f6",
+        "size_in_bytes": 57520
+      },
+      {
+        "_path": "lib/libdrm_radeon.so.1.0.1",
+        "path_type": "hardlink",
+        "sha256": "83e8895ebddaad00efa94588ad0122ad558c9ea438ab0f50b2cd9fad918973f6",
+        "sha256_in_prefix": "83e8895ebddaad00efa94588ad0122ad558c9ea438ab0f50b2cd9fad918973f6",
+        "size_in_bytes": 57520
+      },
+      {
+        "_path": "lib/pkgconfig/libdrm.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libdrm_1719531273141/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac",
+        "sha256": "b6e3e3d0cbb5dbe95e793e712c7f28cc399afdb0c888d699a697dd0809ef3775",
+        "sha256_in_prefix": "22d4fa4467a10870b5014f68bc8228581b9873961bc41f3be9d049a6d79782e1",
+        "size_in_bytes": 471
+      },
+      {
+        "_path": "lib/pkgconfig/libdrm_amdgpu.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libdrm_1719531273141/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac",
+        "sha256": "a876ee2ff606005769cc4d87377d13221e17e8cf44e52ee8cfd9d05b4a1b8722",
+        "sha256_in_prefix": "23c97cdf44220408dbc6d6c6edf9bfd06b0f4689dcc84e3908306cc0b1223d9d",
+        "size_in_bytes": 544
+      },
+      {
+        "_path": "lib/pkgconfig/libdrm_intel.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libdrm_1719531273141/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac",
+        "sha256": "e28dd38b9fdd6f8a0e3efb9888e8b07be1584bf8a4082528874c61b4b036dfc1",
+        "sha256_in_prefix": "d3ba2928b642f4e9278704be4bf247d30c8cef9e19b88abf1d84cc408a0373f8",
+        "size_in_bytes": 566
+      },
+      {
+        "_path": "lib/pkgconfig/libdrm_nouveau.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libdrm_1719531273141/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac",
+        "sha256": "9dcce2038d782344c9db34feb62a33d42a8821a7f6836b2df60dbe84cb120217",
+        "sha256_in_prefix": "8fa9a7814bf76d24cfd4c034e0c269255f594ce235183da12423da456b03d022",
+        "size_in_bytes": 574
+      },
+      {
+        "_path": "lib/pkgconfig/libdrm_radeon.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libdrm_1719531273141/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac",
+        "sha256": "90cdd8365aa9ffd56447eb35a6d7fe803fe3dab01d99f4886d65f07e0ce6e256",
+        "sha256_in_prefix": "5cb40d891c057b322a406c76529eb47b6070c058d7f08f86ac92cb5c308dd897",
+        "size_in_bytes": 544
+      },
+      {
+        "_path": "share/libdrm/amdgpu.ids",
+        "path_type": "hardlink",
+        "sha256": "f145c18784c102aaadf4be94e3128d41190d48b324600bc58bf4cfe872290fef",
+        "sha256_in_prefix": "f145c18784c102aaadf4be94e3128d41190d48b324600bc58bf4cfe872290fef",
+        "size_in_bytes": 19045
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "74c59a29b76bafbb022389c7cfa9b33b8becd7879b2c6b25a1a99735bf4e9c81",
+  "size": 305483,
+  "subdir": "linux-64",
+  "timestamp": 1719531428000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libdrm-2.4.122-h4ab18f5_0.conda",
+  "version": "2.4.122"
+}

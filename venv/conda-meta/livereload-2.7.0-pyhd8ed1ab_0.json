@@ -1,0 +1,212 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "python >=3.7",
+    "tornado"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/livereload-2.7.0-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/livereload-2.7.0.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/livereload-2.7.0.dist-info/LICENSE",
+    "lib/python3.12/site-packages/livereload-2.7.0.dist-info/METADATA",
+    "lib/python3.12/site-packages/livereload-2.7.0.dist-info/RECORD",
+    "lib/python3.12/site-packages/livereload-2.7.0.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/livereload-2.7.0.dist-info/WHEEL",
+    "lib/python3.12/site-packages/livereload-2.7.0.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/livereload-2.7.0.dist-info/entry_points.txt",
+    "lib/python3.12/site-packages/livereload-2.7.0.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/livereload/__init__.py",
+    "lib/python3.12/site-packages/livereload/cli.py",
+    "lib/python3.12/site-packages/livereload/handlers.py",
+    "lib/python3.12/site-packages/livereload/management/commands/__init__.py",
+    "lib/python3.12/site-packages/livereload/management/commands/livereload.py",
+    "lib/python3.12/site-packages/livereload/server.py",
+    "lib/python3.12/site-packages/livereload/vendors/livereload.js",
+    "lib/python3.12/site-packages/livereload/watcher.py",
+    "lib/python3.12/site-packages/livereload/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/livereload/__pycache__/cli.cpython-312.pyc",
+    "lib/python3.12/site-packages/livereload/__pycache__/handlers.cpython-312.pyc",
+    "lib/python3.12/site-packages/livereload/management/commands/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/livereload/management/commands/__pycache__/livereload.cpython-312.pyc",
+    "lib/python3.12/site-packages/livereload/__pycache__/server.cpython-312.pyc",
+    "lib/python3.12/site-packages/livereload/__pycache__/watcher.cpython-312.pyc",
+    "bin/livereload"
+  ],
+  "fn": "livereload-2.7.0-pyhd8ed1ab_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/livereload-2.7.0-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "c6aa475c46f6bdd203841dd8525f3b91",
+  "name": "livereload",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/livereload-2.7.0-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/livereload-2.7.0.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/livereload-2.7.0.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "23cc6b634afe331221153196222cea9caa126897610a6fb789453671b7b8c2db",
+        "sha256_in_prefix": "23cc6b634afe331221153196222cea9caa126897610a6fb789453671b7b8c2db",
+        "size_in_bytes": 1510
+      },
+      {
+        "_path": "site-packages/livereload-2.7.0.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "598a4b79d991a3d7025caa158a2c90e575d662b7954c030a0a12e3f3f3c91d9d",
+        "sha256_in_prefix": "598a4b79d991a3d7025caa158a2c90e575d662b7954c030a0a12e3f3f3c91d9d",
+        "size_in_bytes": 2067
+      },
+      {
+        "_path": "site-packages/livereload-2.7.0.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "b1dc784879cc2147ce6f58e7fb7439383e1a74fd3df1f502637877e75acb1ec5",
+        "sha256_in_prefix": "b1dc784879cc2147ce6f58e7fb7439383e1a74fd3df1f502637877e75acb1ec5",
+        "size_in_bytes": 1939
+      },
+      {
+        "_path": "site-packages/livereload-2.7.0.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/livereload-2.7.0.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "729413279216bbd09d68f5623210bd63317c819b92e7ebe57e8162853042f3a0",
+        "sha256_in_prefix": "729413279216bbd09d68f5623210bd63317c819b92e7ebe57e8162853042f3a0",
+        "size_in_bytes": 91
+      },
+      {
+        "_path": "site-packages/livereload-2.7.0.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "eb4f7d83b711083a8f6b37cb66ddf2b380cc09ad2a086847a3a6d361f9844e16",
+        "sha256_in_prefix": "eb4f7d83b711083a8f6b37cb66ddf2b380cc09ad2a086847a3a6d361f9844e16",
+        "size_in_bytes": 106
+      },
+      {
+        "_path": "site-packages/livereload-2.7.0.dist-info/entry_points.txt",
+        "path_type": "hardlink",
+        "sha256": "dd883137c0185e18fd3604d72d43c2b636d9212a2c73f5ae8d8ced1f8b1f29df",
+        "sha256_in_prefix": "dd883137c0185e18fd3604d72d43c2b636d9212a2c73f5ae8d8ced1f8b1f29df",
+        "size_in_bytes": 51
+      },
+      {
+        "_path": "site-packages/livereload-2.7.0.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "515df00b59c58d8b053886da08d8d0a53e69d6e79151057699e3f604d5299459",
+        "sha256_in_prefix": "515df00b59c58d8b053886da08d8d0a53e69d6e79151057699e3f604d5299459",
+        "size_in_bytes": 11
+      },
+      {
+        "_path": "site-packages/livereload/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "77fcecfe2e05b5c88e8ec176f69a15fd8e256fe485a5118a8fab582421037130",
+        "sha256_in_prefix": "77fcecfe2e05b5c88e8ec176f69a15fd8e256fe485a5118a8fab582421037130",
+        "size_in_bytes": 366
+      },
+      {
+        "_path": "site-packages/livereload/cli.py",
+        "path_type": "hardlink",
+        "sha256": "2a9abb8b1cf10c8daf33dbd9c622463bbb232afb782bf0492498bc9779307e45",
+        "sha256_in_prefix": "2a9abb8b1cf10c8daf33dbd9c622463bbb232afb782bf0492498bc9779307e45",
+        "size_in_bytes": 1381
+      },
+      {
+        "_path": "site-packages/livereload/handlers.py",
+        "path_type": "hardlink",
+        "sha256": "9f44fd94bf657bb729e9dbcf504b05cb44ddc11e380de52511a1fe27d8d760c4",
+        "sha256_in_prefix": "9f44fd94bf657bb729e9dbcf504b05cb44ddc11e380de52511a1fe27d8d760c4",
+        "size_in_bytes": 6739
+      },
+      {
+        "_path": "site-packages/livereload/management/commands/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/livereload/management/commands/livereload.py",
+        "path_type": "hardlink",
+        "sha256": "e2dfe581a6cc0dd1c7bbc2f80becff4f2fc0a4fdb0f7775e15452b85d4ec8c52",
+        "sha256_in_prefix": "e2dfe581a6cc0dd1c7bbc2f80becff4f2fc0a4fdb0f7775e15452b85d4ec8c52",
+        "size_in_bytes": 1720
+      },
+      {
+        "_path": "site-packages/livereload/server.py",
+        "path_type": "hardlink",
+        "sha256": "f4f16905f0b3594ae8d423979bffd0022c6571f5f34b5a7862f782031f8203d5",
+        "sha256_in_prefix": "f4f16905f0b3594ae8d423979bffd0022c6571f5f34b5a7862f782031f8203d5",
+        "size_in_bytes": 12698
+      },
+      {
+        "_path": "site-packages/livereload/vendors/livereload.js",
+        "path_type": "hardlink",
+        "sha256": "02f2b3dd5f4f9e9c86aa27d2cd145f54d28f4891899a5e83fbc4991fdd21b826",
+        "sha256_in_prefix": "02f2b3dd5f4f9e9c86aa27d2cd145f54d28f4891899a5e83fbc4991fdd21b826",
+        "size_in_bytes": 37411
+      },
+      {
+        "_path": "site-packages/livereload/watcher.py",
+        "path_type": "hardlink",
+        "sha256": "24566b9c545dd1877f77782e21b343215f9a8393bb942279d6ca61cab5c8bdb3",
+        "sha256_in_prefix": "24566b9c545dd1877f77782e21b343215f9a8393bb942279d6ca61cab5c8bdb3",
+        "size_in_bytes": 7308
+      },
+      {
+        "_path": "lib/python3.12/site-packages/livereload/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/livereload/__pycache__/cli.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/livereload/__pycache__/handlers.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/livereload/management/commands/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/livereload/management/commands/__pycache__/livereload.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/livereload/__pycache__/server.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/livereload/__pycache__/watcher.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "bin/livereload",
+        "path_type": "unix_python_entry_point"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "9c2cd37b052996cc3f787f9caae74d9a2b616c48c6e1f27796680cb882c45bfc",
+  "size": 25951,
+  "subdir": "noarch",
+  "timestamp": 1719215280000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/livereload-2.7.0-pyhd8ed1ab_0.conda",
+  "version": "2.7.0"
+}

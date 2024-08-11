@@ -1,0 +1,1290 @@
+'\" t
+.\"     Title: gitprotocol-v2
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GITPROTOCOL\-V2" "5" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+gitprotocol-v2 \- Git Wire Protocol, Version 2
+.SH "SYNOPSIS"
+.sp
+.nf
+<over\-the\-wire\-protocol>
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+This document presents a specification for a version 2 of Git\(cqs wire protocol\&. Protocol v2 will improve upon v1 in the following ways:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Instead of multiple service names, multiple commands will be supported by a single service
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Easily extendable as capabilities are moved into their own section of the protocol, no longer being hidden behind a NUL byte and limited by the size of a pkt\-line
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Separate out other information hidden behind NUL bytes (e\&.g\&. agent string as a capability and symrefs can be requested using
+\fIls\-refs\fR)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Reference advertisement will be omitted unless explicitly requested
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ls\-refs command to explicitly request some refs
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Designed with http and stateless\-rpc in mind\&. With clear flush semantics the http remote helper can simply act as a proxy
+.RE
+.sp
+In protocol v2 communication is command oriented\&. When first contacting a server a list of capabilities will be advertised\&. Some of these capabilities will be commands which a client can request be executed\&. Once a command has completed, a client can reuse the connection and request that other commands be executed\&.
+.SH "PACKET\-LINE FRAMING"
+.sp
+All communication is done using packet\-line framing, just as in v1\&. See \fBgitprotocol-pack\fR(5) and \fBgitprotocol-common\fR(5) for more information\&.
+.sp
+In protocol v2 these special packets will have the following semantics:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fI0000\fR
+Flush Packet (flush\-pkt) \- indicates the end of a message
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fI0001\fR
+Delimiter Packet (delim\-pkt) \- separates sections of a message
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fI0002\fR
+Response End Packet (response\-end\-pkt) \- indicates the end of a response for stateless connections
+.RE
+.SH "INITIAL CLIENT REQUEST"
+.sp
+In general a client can request to speak protocol v2 by sending \fBversion=2\fR through the respective side\-channel for the transport being used which inevitably sets \fBGIT_PROTOCOL\fR\&. More information can be found in \fBgitprotocol-pack\fR(5) and \fBgitprotocol-http\fR(5), as well as the \fBGIT_PROTOCOL\fR definition in \fBgit\&.txt\fR\&. In all cases the response from the server is the capability advertisement\&.
+.SS "Git Transport"
+.sp
+When using the git:// transport, you can request to use protocol v2 by sending "version=2" as an extra parameter:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+003egit\-upload\-pack /project\&.git\e0host=myserver\&.com\e0\e0version=2\e0
+.fi
+.if n \{\
+.RE
+.\}
+.SS "SSH and File Transport"
+.sp
+When using either the ssh:// or file:// transport, the GIT_PROTOCOL environment variable must be set explicitly to include "version=2"\&. The server may need to be configured to allow this environment variable to pass\&.
+.SS "HTTP Transport"
+.sp
+When using the http:// or https:// transport a client makes a "smart" info/refs request as described in \fBgitprotocol-http\fR(5) and requests that v2 be used by supplying "version=2" in the \fBGit\-Protocol\fR header\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+C: GET $GIT_URL/info/refs?service=git\-upload\-pack HTTP/1\&.0
+C: Git\-Protocol: version=2
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+A v2 server would reply:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+S: 200 OK
+S: <Some headers>
+S: \&.\&.\&.
+S:
+S: 000eversion 2\en
+S: <capability\-advertisement>
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Subsequent requests are then made directly to the service \fB$GIT_URL/git\-upload\-pack\fR\&. (This works the same for git\-receive\-pack)\&.
+.sp
+Uses the \fB\-\-http\-backend\-info\-refs\fR option to \fBgit-upload-pack\fR(1)\&.
+.sp
+The server may need to be configured to pass this header\(cqs contents via the \fBGIT_PROTOCOL\fR variable\&. See the discussion in \fBgit\-http\-backend\&.txt\fR\&.
+.SH "CAPABILITY ADVERTISEMENT"
+.sp
+A server which decides to communicate (based on a request from a client) using protocol version 2, notifies the client by sending a version string in its initial response followed by an advertisement of its capabilities\&. Each capability is a key with an optional value\&. Clients must ignore all unknown keys\&. Semantics of unknown values are left to the definition of each key\&. Some capabilities will describe commands which can be requested to be executed by the client\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+capability\-advertisement = protocol\-version
+                           capability\-list
+                           flush\-pkt
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+protocol\-version = PKT\-LINE("version 2" LF)
+capability\-list = *capability
+capability = PKT\-LINE(key[=value] LF)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+key = 1*(ALPHA | DIGIT | "\-_")
+value = 1*(ALPHA | DIGIT | " \-_\&.,?\e/{}[]()<>!@#$%^&*+=:;")
+.fi
+.if n \{\
+.RE
+.\}
+.SH "COMMAND REQUEST"
+.sp
+After receiving the capability advertisement, a client can then issue a request to select the command it wants with any particular capabilities or arguments\&. There is then an optional section where the client can provide any command specific parameters or queries\&. Only a single command can be requested at a time\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+request = empty\-request | command\-request
+empty\-request = flush\-pkt
+command\-request = command
+                  capability\-list
+                  delim\-pkt
+                  command\-args
+                  flush\-pkt
+command = PKT\-LINE("command=" key LF)
+command\-args = *command\-specific\-arg
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+command\-specific\-args are packet line framed arguments defined by
+each individual command\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The server will then check to ensure that the client\(cqs request is comprised of a valid command as well as valid capabilities which were advertised\&. If the request is valid the server will then execute the command\&. A server MUST wait till it has received the client\(cqs entire request before issuing a response\&. The format of the response is determined by the command being executed, but in all cases a flush\-pkt indicates the end of the response\&.
+.sp
+When a command has finished, and the client has received the entire response from the server, a client can either request that another command be executed or can terminate the connection\&. A client may optionally send an empty request consisting of just a flush\-pkt to indicate that no more requests will be made\&.
+.SH "CAPABILITIES"
+.sp
+There are two different types of capabilities: normal capabilities, which can be used to convey information or alter the behavior of a request, and commands, which are the core actions that a client wants to perform (fetch, push, etc)\&.
+.sp
+Protocol version 2 is stateless by default\&. This means that all commands must only last a single round and be stateless from the perspective of the server side, unless the client has requested a capability indicating that state should be maintained by the server\&. Clients MUST NOT require state management on the server side in order to function correctly\&. This permits simple round\-robin load\-balancing on the server side, without needing to worry about state management\&.
+.SS "agent"
+.sp
+The server can advertise the \fBagent\fR capability with a value \fBX\fR (in the form \fBagent=X\fR) to notify the client that the server is running version \fBX\fR\&. The client may optionally send its own agent string by including the \fBagent\fR capability with a value \fBY\fR (in the form \fBagent=Y\fR) in its request to the server (but it MUST NOT do so if the server did not advertise the agent capability)\&. The \fBX\fR and \fBY\fR strings may contain any printable ASCII characters except space (i\&.e\&., the byte range 32 < x < 127), and are typically of the form "package/version" (e\&.g\&., "git/1\&.8\&.3\&.1")\&. The agent strings are purely informative for statistics and debugging purposes, and MUST NOT be used to programmatically assume the presence or absence of particular features\&.
+.SS "ls\-refs"
+.sp
+\fBls\-refs\fR is the command used to request a reference advertisement in v2\&. Unlike the current reference advertisement, ls\-refs takes in arguments which can be used to limit the refs sent from the server\&.
+.sp
+Additional features not supported in the base command will be advertised as the value of the command in the capability advertisement in the form of a space separated list of features: "<command>=<feature\-1> <feature\-2>"
+.sp
+ls\-refs takes in the following arguments:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+symrefs
+    In addition to the object pointed by it, show the underlying ref
+    pointed by it when showing a symbolic ref\&.
+peel
+    Show peeled tags\&.
+ref\-prefix <prefix>
+    When specified, only references having a prefix matching one of
+    the provided prefixes are displayed\&. Multiple instances may be
+    given, in which case references matching any prefix will be
+    shown\&. Note that this is purely for optimization; a server MAY
+    show refs not matching the prefix if it chooses, and clients
+    should filter the result themselves\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If the \fIunborn\fR feature is advertised the following argument can be included in the client\(cqs request\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+unborn
+    The server will send information about HEAD even if it is a symref
+    pointing to an unborn branch in the form "unborn HEAD
+    symref\-target:<target>"\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The output of ls\-refs is as follows:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+output = *ref
+         flush\-pkt
+obj\-id\-or\-unborn = (obj\-id | "unborn")
+ref = PKT\-LINE(obj\-id\-or\-unborn SP refname *(SP ref\-attribute) LF)
+ref\-attribute = (symref | peeled)
+symref = "symref\-target:" symref\-target
+peeled = "peeled:" obj\-id
+.fi
+.if n \{\
+.RE
+.\}
+.SS "fetch"
+.sp
+\fBfetch\fR is the command used to fetch a packfile in v2\&. It can be looked at as a modified version of the v1 fetch where the ref\-advertisement is stripped out (since the \fBls\-refs\fR command fills that role) and the message format is tweaked to eliminate redundancies and permit easy addition of future extensions\&.
+.sp
+Additional features not supported in the base command will be advertised as the value of the command in the capability advertisement in the form of a space separated list of features: "<command>=<feature\-1> <feature\-2>"
+.sp
+A \fBfetch\fR request can take the following arguments:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+want <oid>
+    Indicates to the server an object which the client wants to
+    retrieve\&.  Wants can be anything and are not limited to
+    advertised objects\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+have <oid>
+    Indicates to the server an object which the client has locally\&.
+    This allows the server to make a packfile which only contains
+    the objects that the client needs\&. Multiple \*(Aqhave\*(Aq lines can be
+    supplied\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+done
+    Indicates to the server that negotiation should terminate (or
+    not even begin if performing a clone) and that the server should
+    use the information supplied in the request to construct the
+    packfile\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+thin\-pack
+    Request that a thin pack be sent, which is a pack with deltas
+    which reference base objects not contained within the pack (but
+    are known to exist at the receiving end)\&. This can reduce the
+    network traffic significantly, but it requires the receiving end
+    to know how to "thicken" these packs by adding the missing bases
+    to the pack\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+no\-progress
+    Request that progress information that would normally be sent on
+    side\-band channel 2, during the packfile transfer, should not be
+    sent\&.  However, the side\-band channel 3 is still used for error
+    responses\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+include\-tag
+    Request that annotated tags should be sent if the objects they
+    point to are being sent\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ofs\-delta
+    Indicate that the client understands PACKv2 with delta referring
+    to its base by position in pack rather than by an oid\&.  That is,
+    they can read OBJ_OFS_DELTA (aka type 6) in a packfile\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If the \fIshallow\fR feature is advertised the following arguments can be included in the clients request as well as the potential addition of the \fIshallow\-info\fR section in the server\(cqs response as explained below\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+shallow <oid>
+    A client must notify the server of all commits for which it only
+    has shallow copies (meaning that it doesn\*(Aqt have the parents of
+    a commit) by supplying a \*(Aqshallow <oid>\*(Aq line for each such
+    object so that the server is aware of the limitations of the
+    client\*(Aqs history\&.  This is so that the server is aware that the
+    client may not have all objects reachable from such commits\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+deepen <depth>
+    Requests that the fetch/clone should be shallow having a commit
+    depth of <depth> relative to the remote side\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+deepen\-relative
+    Requests that the semantics of the "deepen" command be changed
+    to indicate that the depth requested is relative to the client\*(Aqs
+    current shallow boundary, instead of relative to the requested
+    commits\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+deepen\-since <timestamp>
+    Requests that the shallow clone/fetch should be cut at a
+    specific time, instead of depth\&.  Internally it\*(Aqs equivalent to
+    doing "git rev\-list \-\-max\-age=<timestamp>"\&. Cannot be used with
+    "deepen"\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+deepen\-not <rev>
+    Requests that the shallow clone/fetch should be cut at a
+    specific revision specified by \*(Aq<rev>\*(Aq, instead of a depth\&.
+    Internally it\*(Aqs equivalent of doing "git rev\-list \-\-not <rev>"\&.
+    Cannot be used with "deepen", but can be used with
+    "deepen\-since"\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If the \fIfilter\fR feature is advertised, the following argument can be included in the client\(cqs request:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+filter <filter\-spec>
+    Request that various objects from the packfile be omitted
+    using one of several filtering techniques\&. These are intended
+    for use with partial clone and partial fetch operations\&. See
+    `rev\-list` for possible "filter\-spec" values\&. When communicating
+    with other processes, senders SHOULD translate scaled integers
+    (e\&.g\&. "1k") into a fully\-expanded form (e\&.g\&. "1024") to aid
+    interoperability with older receivers that may not understand
+    newly\-invented scaling suffixes\&. However, receivers SHOULD
+    accept the following suffixes: \*(Aqk\*(Aq, \*(Aqm\*(Aq, and \*(Aqg\*(Aq for 1024,
+    1048576, and 1073741824, respectively\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If the \fIref\-in\-want\fR feature is advertised, the following argument can be included in the client\(cqs request as well as the potential addition of the \fIwanted\-refs\fR section in the server\(cqs response as explained below\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+want\-ref <ref>
+    Indicates to the server that the client wants to retrieve a
+    particular ref, where <ref> is the full name of a ref on the
+    server\&.  It is a protocol error to send want\-ref for the
+    same ref more than once\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If the \fIsideband\-all\fR feature is advertised, the following argument can be included in the client\(cqs request:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+sideband\-all
+    Instruct the server to send the whole response multiplexed, not just
+    the packfile section\&. All non\-flush and non\-delim PKT\-LINE in the
+    response (not only in the packfile section) will then start with a byte
+    indicating its sideband (1, 2, or 3), and the server may send "0005\e2"
+    (a PKT\-LINE of sideband 2 with no payload) as a keepalive packet\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If the \fIpackfile\-uris\fR feature is advertised, the following argument can be included in the client\(cqs request as well as the potential addition of the \fIpackfile\-uris\fR section in the server\(cqs response as explained below\&. Note that at most one \fBpackfile\-uris\fR line can be sent to the server\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+packfile\-uris <comma\-separated\-list\-of\-protocols>
+    Indicates to the server that the client is willing to receive
+    URIs of any of the given protocols in place of objects in the
+    sent packfile\&. Before performing the connectivity check, the
+    client should download from all given URIs\&. Currently, the
+    protocols supported are "http" and "https"\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If the \fIwait\-for\-done\fR feature is advertised, the following argument can be included in the client\(cqs request\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+wait\-for\-done
+    Indicates to the server that it should never send "ready", but
+    should wait for the client to say "done" before sending the
+    packfile\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The response of \fBfetch\fR is broken into a number of sections separated by delimiter packets (0001), with each section beginning with its section header\&. Most sections are sent only when the packfile is sent\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+output = acknowledgements flush\-pkt |
+         [acknowledgments delim\-pkt] [shallow\-info delim\-pkt]
+         [wanted\-refs delim\-pkt] [packfile\-uris delim\-pkt]
+         packfile flush\-pkt
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+acknowledgments = PKT\-LINE("acknowledgments" LF)
+                  (nak | *ack)
+                  (ready)
+ready = PKT\-LINE("ready" LF)
+nak = PKT\-LINE("NAK" LF)
+ack = PKT\-LINE("ACK" SP obj\-id LF)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+shallow\-info = PKT\-LINE("shallow\-info" LF)
+               *PKT\-LINE((shallow | unshallow) LF)
+shallow = "shallow" SP obj\-id
+unshallow = "unshallow" SP obj\-id
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+wanted\-refs = PKT\-LINE("wanted\-refs" LF)
+              *PKT\-LINE(wanted\-ref LF)
+wanted\-ref = obj\-id SP refname
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+packfile\-uris = PKT\-LINE("packfile\-uris" LF) *packfile\-uri
+packfile\-uri = PKT\-LINE(40*(HEXDIGIT) SP *%x20\-ff LF)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+packfile = PKT\-LINE("packfile" LF)
+           *PKT\-LINE(%x01\-03 *%x00\-ff)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+acknowledgments section
+    * If the client determines that it is finished with negotiations by
+      sending a "done" line (thus requiring the server to send a packfile),
+      the acknowledgments sections MUST be omitted from the server\*(Aqs
+      response\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Always begins with the section header "acknowledgments"
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The server will respond with "NAK" if none of the object ids sent as have lines were common\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The server will respond with "ACK obj\-id" for all of the object ids sent as have lines which are common\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A response cannot have both "ACK" lines as well as a "NAK" line\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The server will respond with a "ready" line indicating that the server has found an acceptable common base and is ready to make and send a packfile (which will be found in the packfile section of the same response)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+If the server has found a suitable cut point and has decided to send a "ready" line, then the server can decide to (as an optimization) omit any "ACK" lines it would have sent during its response\&. This is because the server will have already determined the objects it plans to send to the client and no further negotiation is needed\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+shallow\-info section
+    * If the client has requested a shallow fetch/clone, a shallow
+      client requests a fetch or the server is shallow then the
+      server\*(Aqs response may include a shallow\-info section\&.  The
+      shallow\-info section will be included if (due to one of the
+      above conditions) the server needs to inform the client of any
+      shallow boundaries or adjustments to the clients already
+      existing shallow boundaries\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Always begins with the section header "shallow\-info"
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+If a positive depth is requested, the server will compute the set of commits which are no deeper than the desired depth\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The server sends a "shallow obj\-id" line for each commit whose parents will not be sent in the following packfile\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The server sends an "unshallow obj\-id" line for each commit which the client has indicated is shallow, but is no longer shallow as a result of the fetch (due to its parents being sent in the following packfile)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The server MUST NOT send any "unshallow" lines for anything which the client has not indicated was shallow as a part of its request\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+wanted\-refs section
+    * This section is only included if the client has requested a
+      ref using a \*(Aqwant\-ref\*(Aq line and if a packfile section is also
+      included in the response\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Always begins with the section header "wanted\-refs"\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The server will send a ref listing ("<oid> <refname>") for each reference requested using
+\fIwant\-ref\fR
+lines\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The server MUST NOT send any refs which were not requested using
+\fIwant\-ref\fR
+lines\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+packfile\-uris section
+    * This section is only included if the client sent
+      \*(Aqpackfile\-uris\*(Aq and the server has at least one such URI to
+      send\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Always begins with the section header "packfile\-uris"\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+For each URI the server sends, it sends a hash of the pack\(cqs contents (as output by git index\-pack) followed by the URI\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The hashes are 40 hex characters long\&. When Git upgrades to a new hash algorithm, this might need to be updated\&. (It should match whatever index\-pack outputs after "pack\et" or "keep\et"\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+packfile section
+    * This section is only included if the client has sent \*(Aqwant\*(Aq
+      lines in its request and either requested that no more
+      negotiation be done by sending \*(Aqdone\*(Aq or if the server has
+      decided it has found a sufficient cut point to produce a
+      packfile\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Always begins with the section header "packfile"
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The transmission of the packfile begins immediately after the section header
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The data transfer of the packfile is always multiplexed, using the same semantics of the
+\fIside\-band\-64k\fR
+capability from protocol version 1\&. This means that each packet, during the packfile data stream, is made up of a leading 4\-byte pkt\-line length (typical of the pkt\-line format), followed by a 1\-byte stream code, followed by the actual data\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The stream code can be one of:
+      1 \- pack data
+      2 \- progress messages
+      3 \- fatal error message just before stream aborts
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SS "server\-option"
+.sp
+If advertised, indicates that any number of server specific options can be included in a request\&. This is done by sending each option as a "server\-option=<option>" capability line in the capability\-list section of a request\&.
+.sp
+The provided options must not contain a NUL or LF character\&.
+.SS "object\-format"
+.sp
+The server can advertise the \fBobject\-format\fR capability with a value \fBX\fR (in the form \fBobject\-format=X\fR) to notify the client that the server is able to deal with objects using hash algorithm X\&. If not specified, the server is assumed to only handle SHA\-1\&. If the client would like to use a hash algorithm other than SHA\-1, it should specify its object\-format string\&.
+.SS "session\-id=<session\-id>"
+.sp
+The server may advertise a session ID that can be used to identify this process across multiple requests\&. The client may advertise its own session ID back to the server as well\&.
+.sp
+Session IDs should be unique to a given process\&. They must fit within a packet\-line, and must not contain non\-printable or whitespace characters\&. The current implementation uses trace2 session IDs (see \m[blue]\fBapi\-trace2\fR\m[]\&\s-2\u[1]\d\s+2 for details), but this may change and users of the session ID should not rely on this fact\&.
+.SS "object\-info"
+.sp
+\fBobject\-info\fR is the command to retrieve information about one or more objects\&. Its main purpose is to allow a client to make decisions based on this information without having to fully fetch objects\&. Object size is the only information that is currently supported\&.
+.sp
+An \fBobject\-info\fR request takes the following arguments:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+size
+Requests size information to be returned for each listed object id\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+oid <oid>
+Indicates to the server an object which the client wants to obtain
+information for\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The response of \fBobject\-info\fR is a list of the requested object ids and associated requested information, each separated by a single space\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+output = info flush\-pkt
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+info = PKT\-LINE(attrs) LF)
+        *PKT\-LINE(obj\-info LF)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+attrs = attr | attrs SP attrs
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+attr = "size"
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+obj\-info = obj\-id SP obj\-size
+.fi
+.if n \{\
+.RE
+.\}
+.SS "bundle\-uri"
+.sp
+If the \fIbundle\-uri\fR capability is advertised, the server supports the \(oqbundle\-uri\(cq command\&.
+.sp
+The capability is currently advertised with no value (i\&.e\&. not "bundle\-uri=somevalue"), a value may be added in the future for supporting command\-wide extensions\&. Clients MUST ignore any unknown capability values and proceed with the \*(Aqbundle\-uri` dialog they support\&.
+.sp
+The \fIbundle\-uri\fR command is intended to be issued before \fBfetch\fR to get URIs to bundle files (see \fBgit-bundle\fR(1)) to "seed" and inform the subsequent \fBfetch\fR command\&.
+.sp
+The client CAN issue \fBbundle\-uri\fR before or after any other valid command\&. To be useful to clients it\(cqs expected that it\(cqll be issued after an \fBls\-refs\fR and before \fBfetch\fR, but CAN be issued at any time in the dialog\&.
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBDISCUSSION of bundle-uri\fR
+.RS 4
+.sp
+The intent of the feature is optimize for server resource consumption in the common case by changing the common case of fetching a very large PACK during \fBgit-clone\fR(1) into a smaller incremental fetch\&.
+.sp
+It also allows servers to achieve better caching in combination with an \fBuploadpack\&.packObjectsHook\fR (see \fBgit-config\fR(1))\&.
+.sp
+By having new clones or fetches be a more predictable and common negotiation against the tips of recently produces *\&.bundle file(s)\&. Servers might even pre\-generate the results of such negotiations for the \fBuploadpack\&.packObjectsHook\fR as new pushes come in\&.
+.sp
+One way that servers could take advantage of these bundles is that the server would anticipate that fresh clones will download a known bundle, followed by catching up to the current state of the repository using ref tips found in that bundle (or bundles)\&.
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBPROTOCOL for bundle-uri\fR
+.RS 4
+.sp
+A \fBbundle\-uri\fR request takes no arguments, and as noted above does not currently advertise a capability value\&. Both may be added in the future\&.
+.sp
+When the client issues a \fBcommand=bundle\-uri\fR request, the response is a list of key\-value pairs provided as packet lines with value \fB<key>=<value>\fR\&. Each \fB<key>\fR should be interpreted as a config key from the \fBbundle\&.*\fR namespace to construct a list of bundles\&. These keys are grouped by a \fBbundle\&.<id>\&.\fR subsection, where each key corresponding to a given \fB<id>\fR contributes attributes to the bundle defined by that \fB<id>\fR\&. See \fBgit-config\fR(1) for the specific details of these keys and how the Git client will interpret their values\&.
+.sp
+Clients MUST parse the line according to the above format, lines that do not conform to the format SHOULD be discarded\&. The user MAY be warned in such a case\&.
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBbundle-uri CLIENT AND SERVER EXPECTATIONS\fR
+.RS 4
+.PP
+URI CONTENTS
+.RS 4
+The content at the advertised URIs MUST be one of two types\&.
+.sp
+The advertised URI may contain a bundle file that
+\fBgit bundle verify\fR
+would accept\&. I\&.e\&. they MUST contain one or more reference tips for use by the client, MUST indicate prerequisites (in any) with standard "\-" prefixes, and MUST indicate their "object\-format", if applicable\&.
+.sp
+The advertised URI may alternatively contain a plaintext file that
+\fBgit config \-\-list\fR
+would accept (with the
+\fB\-\-file\fR
+option)\&. The key\-value pairs in this list are in the
+\fBbundle\&.*\fR
+namespace (see
+\fBgit-config\fR(1))\&.
+.RE
+.PP
+bundle\-uri CLIENT ERROR RECOVERY
+.RS 4
+A client MUST above all gracefully degrade on errors, whether that error is because of bad missing/data in the bundle URI(s), because that client is too dumb to e\&.g\&. understand and fully parse out bundle headers and their prerequisite relationships, or something else\&.
+.sp
+Server operators should feel confident in turning on "bundle\-uri" and not worry if e\&.g\&. their CDN goes down that clones or fetches will run into hard failures\&. Even if the server bundle(s) are incomplete, or bad in some way the client should still end up with a functioning repository, just as if it had chosen not to use this protocol extension\&.
+.sp
+All subsequent discussion on client and server interaction MUST keep this in mind\&.
+.RE
+.PP
+bundle\-uri SERVER TO CLIENT
+.RS 4
+The ordering of the returned bundle uris is not significant\&. Clients MUST parse their headers to discover their contained OIDS and prerequisites\&. A client MUST consider the content of the bundle(s) themselves and their header as the ultimate source of truth\&.
+.sp
+A server MAY even return bundle(s) that don\(cqt have any direct relationship to the repository being cloned (either through accident, or intentional "clever" configuration), and expect a client to sort out what data they\(cqd like from the bundle(s), if any\&.
+.RE
+.PP
+bundle\-uri CLIENT TO SERVER
+.RS 4
+The client SHOULD provide reference tips found in the bundle header(s) as
+\fIhave\fR
+lines in any subsequent
+\fBfetch\fR
+request\&. A client MAY also ignore the bundle(s) entirely if doing so is deemed worse for some reason, e\&.g\&. if the bundles can\(cqt be downloaded, it doesn\(cqt like the tips it finds etc\&.
+.RE
+.PP
+WHEN ADVERTISED BUNDLE(S) REQUIRE NO FURTHER NEGOTIATION
+.RS 4
+If after issuing
+\fBbundle\-uri\fR
+and
+\fBls\-refs\fR, and getting the header(s) of the bundle(s) the client finds that the ref tips it wants can be retrieved entirely from advertised bundle(s), the client MAY disconnect from the Git server\&. The results of such a
+\fIclone\fR
+or
+\fIfetch\fR
+should be indistinguishable from the state attained without using bundle\-uri\&.
+.RE
+.PP
+EARLY CLIENT DISCONNECTIONS AND ERROR RECOVERY
+.RS 4
+A client MAY perform an early disconnect while still downloading the bundle(s) (having streamed and parsed their headers)\&. In such a case the client MUST gracefully recover from any errors related to finishing the download and validation of the bundle(s)\&.
+.sp
+I\&.e\&. a client might need to re\-connect and issue a
+\fIfetch\fR
+command, and possibly fall back to not making use of
+\fIbundle\-uri\fR
+at all\&.
+.sp
+This "MAY" behavior is specified as such (and not a "SHOULD") on the assumption that a server advertising bundle uris is more likely than not to be serving up a relatively large repository, and to be pointing to URIs that have a good chance of being in working order\&. A client MAY e\&.g\&. look at the payload size of the bundles as a heuristic to see if an early disconnect is worth it, should falling back on a full "fetch" dialog be necessary\&.
+.RE
+.PP
+WHEN ADVERTISED BUNDLE(S) REQUIRE FURTHER NEGOTIATION
+.RS 4
+A client SHOULD commence a negotiation of a PACK from the server via the "fetch" command using the OID tips found in advertised bundles, even if\(cqs still in the process of downloading those bundle(s)\&.
+.sp
+This allows for aggressive early disconnects from any interactive server dialog\&. The client blindly trusts that the advertised OID tips are relevant, and issues them as
+\fIhave\fR
+lines, it then requests any tips it would like (usually from the "ls\-refs" advertisement) via
+\fIwant\fR
+lines\&. The server will then compute a (hopefully small) PACK with the expected difference between the tips from the bundle(s) and the data requested\&.
+.sp
+The only connection the client then needs to keep active is to the concurrently downloading static bundle(s), when those and the incremental PACK are retrieved they should be inflated and validated\&. Any errors at this point should be gracefully recovered from, see above\&.
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBbundle-uri PROTOCOL FEATURES\fR
+.RS 4
+.sp
+The client constructs a bundle list from the \fB<key>=<value>\fR pairs provided by the server\&. These pairs are part of the \fBbundle\&.*\fR namespace as documented in \fBgit-config\fR(1)\&. In this section, we discuss some of these keys and describe the actions the client will do in response to this information\&.
+.sp
+In particular, the \fBbundle\&.version\fR key specifies an integer value\&. The only accepted value at the moment is \fB1\fR, but if the client sees an unexpected value here then the client MUST ignore the bundle list\&.
+.sp
+As long as \fBbundle\&.version\fR is understood, all other unknown keys MAY be ignored by the client\&. The server will guarantee compatibility with older clients, though newer clients may be better able to use the extra keys to minimize downloads\&.
+.sp
+Any backwards\-incompatible addition of pre\-URI key\-value will be guarded by a new \fBbundle\&.version\fR value or values in \fIbundle\-uri\fR capability advertisement itself, and/or by new future \fBbundle\-uri\fR request arguments\&.
+.sp
+Some example key\-value pairs that are not currently implemented but could be implemented in the future include:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Add a "hash=<val>" or "size=<bytes>" advertise the expected hash or size of the bundle file\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Advertise that one or more bundle files are the same (to e\&.g\&. have clients round\-robin or otherwise choose one of N possible files)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A "oid=<OID>" shortcut and "prerequisite=<OID>" shortcut\&. For expressing the common case of a bundle with one tip and no prerequisites, or one tip and one prerequisite\&.
+.sp
+This would allow for optimizing the common case of servers who\(cqd like to provide one "big bundle" containing only their "main" branch, and/or incremental updates thereof\&.
+.sp
+A client receiving such a a response MAY assume that they can skip retrieving the header from a bundle at the indicated URI, and thus save themselves and the server(s) the request(s) needed to inspect the headers of that bundle or bundles\&.
+.RE
+.RE
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite
+.SH "NOTES"
+.IP " 1." 4
+api-trace2
+.RS 4
+\%git-htmldocs/technical/api-trace2.html
+.RE

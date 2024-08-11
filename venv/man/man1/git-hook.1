@@ -1,0 +1,75 @@
+'\" t
+.\"     Title: git-hook
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "GIT\-HOOK" "1" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+git-hook \- Run git hooks
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIgit hook\fR run [\-\-ignore\-missing] [\-\-to\-stdin=<path>] <hook\-name> [\-\- <hook\-args>]
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+A command interface for running git hooks (see \fBgithooks\fR(5)), for use by other scripted git commands\&.
+.SH "SUBCOMMANDS"
+.PP
+run
+.RS 4
+Run the
+\fB<hook\-name>\fR
+hook\&. See
+\fBgithooks\fR(5)
+for supported hook names\&.
+.sp
+Any positional arguments to the hook should be passed after a mandatory
+\fB\-\-\fR
+(or
+\fB\-\-end\-of\-options\fR, see
+\fBgitcli\fR(7))\&. See
+\fBgithooks\fR(5)
+for arguments hooks might expect (if any)\&.
+.RE
+.SH "OPTIONS"
+.PP
+\-\-to\-stdin
+.RS 4
+For "run"; specify a file which will be streamed into the hook\(cqs stdin\&. The hook will receive the entire file from beginning to EOF\&.
+.RE
+.PP
+\-\-ignore\-missing
+.RS 4
+Ignore any missing hook by quietly returning zero\&. Used for tools that want to do a blind one\-shot run of a hook that may or may not be present\&.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBgithooks\fR(5)
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite

@@ -1,0 +1,269 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "jinja2 >=3.0.0",
+    "pytest >=7.0.0",
+    "pytest-metadata >=2.0.0",
+    "python >=3.8"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/pytest-html-4.1.1-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/pytest_html-4.1.1.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/pytest_html-4.1.1.dist-info/METADATA",
+    "lib/python3.12/site-packages/pytest_html-4.1.1.dist-info/RECORD",
+    "lib/python3.12/site-packages/pytest_html-4.1.1.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/pytest_html-4.1.1.dist-info/WHEEL",
+    "lib/python3.12/site-packages/pytest_html-4.1.1.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/pytest_html-4.1.1.dist-info/entry_points.txt",
+    "lib/python3.12/site-packages/pytest_html-4.1.1.dist-info/licenses/LICENSE",
+    "lib/python3.12/site-packages/pytest_html/__init__.py",
+    "lib/python3.12/site-packages/pytest_html/__version.py",
+    "lib/python3.12/site-packages/pytest_html/basereport.py",
+    "lib/python3.12/site-packages/pytest_html/extras.py",
+    "lib/python3.12/site-packages/pytest_html/fixtures.py",
+    "lib/python3.12/site-packages/pytest_html/hooks.py",
+    "lib/python3.12/site-packages/pytest_html/plugin.py",
+    "lib/python3.12/site-packages/pytest_html/report.py",
+    "lib/python3.12/site-packages/pytest_html/report_data.py",
+    "lib/python3.12/site-packages/pytest_html/resources/app.js",
+    "lib/python3.12/site-packages/pytest_html/resources/index.jinja2",
+    "lib/python3.12/site-packages/pytest_html/resources/style.css",
+    "lib/python3.12/site-packages/pytest_html/selfcontained_report.py",
+    "lib/python3.12/site-packages/pytest_html/util.py",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/__version.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/basereport.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/extras.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/fixtures.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/hooks.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/plugin.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/report.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/report_data.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/selfcontained_report.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytest_html/__pycache__/util.cpython-312.pyc"
+  ],
+  "fn": "pytest-html-4.1.1-pyhd8ed1ab_0.conda",
+  "license": "MPL-2.0",
+  "link": {
+    "source": "/opt/conda/pkgs/pytest-html-4.1.1-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "4d2040212307d18392a2687772b3a96d",
+  "name": "pytest-html",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/pytest-html-4.1.1-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/pytest_html-4.1.1.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/pytest_html-4.1.1.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "040c14ba43c4df6481b70b7cec91edab70b3eb110ad24a7d14f04a1de68b0d46",
+        "sha256_in_prefix": "040c14ba43c4df6481b70b7cec91edab70b3eb110ad24a7d14f04a1de68b0d46",
+        "size_in_bytes": 3877
+      },
+      {
+        "_path": "site-packages/pytest_html-4.1.1.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "bd7f88bf843d5a207331b7239b84fbb38da272f95e21e7787d51dadf288cbaa8",
+        "sha256_in_prefix": "bd7f88bf843d5a207331b7239b84fbb38da272f95e21e7787d51dadf288cbaa8",
+        "size_in_bytes": 2445
+      },
+      {
+        "_path": "site-packages/pytest_html-4.1.1.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/pytest_html-4.1.1.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "f5006e1e183a14d5bb969a5ba05daf2956c2193573b05ca48114238e56a3ae10",
+        "sha256_in_prefix": "f5006e1e183a14d5bb969a5ba05daf2956c2193573b05ca48114238e56a3ae10",
+        "size_in_bytes": 87
+      },
+      {
+        "_path": "site-packages/pytest_html-4.1.1.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "e252e4bdc8c868317ffcfd35fb770c208ed047daeade69cec343ab08333603f7",
+        "sha256_in_prefix": "e252e4bdc8c868317ffcfd35fb770c208ed047daeade69cec343ab08333603f7",
+        "size_in_bytes": 107
+      },
+      {
+        "_path": "site-packages/pytest_html-4.1.1.dist-info/entry_points.txt",
+        "path_type": "hardlink",
+        "sha256": "007f81be8dd884169b0f865b145bda14ba6d2193d85b963734c8ff8b6a89dbf4",
+        "sha256_in_prefix": "007f81be8dd884169b0f865b145bda14ba6d2193d85b963734c8ff8b6a89dbf4",
+        "size_in_bytes": 74
+      },
+      {
+        "_path": "site-packages/pytest_html-4.1.1.dist-info/licenses/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "2bfdca60adf803108d4c7f009000bea76ad00e621e163197881b0eaae91b530e",
+        "sha256_in_prefix": "2bfdca60adf803108d4c7f009000bea76ad00e621e163197881b0eaae91b530e",
+        "size_in_bytes": 193
+      },
+      {
+        "_path": "site-packages/pytest_html/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "8143047e96770f6044bd83edcdf0c1e3ce077ce680fcd0a255288b7934541ccb",
+        "sha256_in_prefix": "8143047e96770f6044bd83edcdf0c1e3ce077ce680fcd0a255288b7934541ccb",
+        "size_in_bytes": 224
+      },
+      {
+        "_path": "site-packages/pytest_html/__version.py",
+        "path_type": "hardlink",
+        "sha256": "57aff981f20c0d67d0ddbf47cf17a44433d1c87f391a0ed6bbe659c27919e53f",
+        "sha256_in_prefix": "57aff981f20c0d67d0ddbf47cf17a44433d1c87f391a0ed6bbe659c27919e53f",
+        "size_in_bytes": 411
+      },
+      {
+        "_path": "site-packages/pytest_html/basereport.py",
+        "path_type": "hardlink",
+        "sha256": "b760e822757fc982e7e6428b45ca21a291f98751158b2c603659510a78ac6c16",
+        "sha256_in_prefix": "b760e822757fc982e7e6428b45ca21a291f98751158b2c603659510a78ac6c16",
+        "size_in_bytes": 12836
+      },
+      {
+        "_path": "site-packages/pytest_html/extras.py",
+        "path_type": "hardlink",
+        "sha256": "2d888ed20b555d7d24e2615c8e84bdd5091e21e95c054b9033b4b5ac81ca9169",
+        "sha256_in_prefix": "2d888ed20b555d7d24e2615c8e84bdd5091e21e95c054b9033b4b5ac81ca9169",
+        "size_in_bytes": 1595
+      },
+      {
+        "_path": "site-packages/pytest_html/fixtures.py",
+        "path_type": "hardlink",
+        "sha256": "332fad6132acb5d58cf9144f9a9b01d7f7b0ae7f494177a0d65a9ce76742eda0",
+        "sha256_in_prefix": "332fad6132acb5d58cf9144f9a9b01d7f7b0ae7f494177a0d65a9ce76742eda0",
+        "size_in_bytes": 1253
+      },
+      {
+        "_path": "site-packages/pytest_html/hooks.py",
+        "path_type": "hardlink",
+        "sha256": "2551815ee6142913be8654dd010a7a400a96b51daae193de66abc00a97dee338",
+        "sha256_in_prefix": "2551815ee6142913be8654dd010a7a400a96b51daae193de66abc00a97dee338",
+        "size_in_bytes": 856
+      },
+      {
+        "_path": "site-packages/pytest_html/plugin.py",
+        "path_type": "hardlink",
+        "sha256": "a9a956f82598ef64142fd4a33d08f013e4a27d159214d602fe0ce2b161834e94",
+        "sha256_in_prefix": "a9a956f82598ef64142fd4a33d08f013e4a27d159214d602fe0ce2b161834e94",
+        "size_in_bytes": 4693
+      },
+      {
+        "_path": "site-packages/pytest_html/report.py",
+        "path_type": "hardlink",
+        "sha256": "75ff6c652b8f6d00dc05e1149db469d27b4a2b0422733b60055536a0317e2718",
+        "sha256_in_prefix": "75ff6c652b8f6d00dc05e1149db469d27b4a2b0422733b60055536a0317e2718",
+        "size_in_bytes": 1628
+      },
+      {
+        "_path": "site-packages/pytest_html/report_data.py",
+        "path_type": "hardlink",
+        "sha256": "b7f0f47390c01e68f3a10186e5df6a7eabe456fd7329347d914763a25fd7d561",
+        "sha256_in_prefix": "b7f0f47390c01e68f3a10186e5df6a7eabe456fd7329347d914763a25fd7d561",
+        "size_in_bytes": 4649
+      },
+      {
+        "_path": "site-packages/pytest_html/resources/app.js",
+        "path_type": "hardlink",
+        "sha256": "5e6316a5719cb24e32755d9846eacf085e9087af217d78aceea1fa9ba4dae7b8",
+        "sha256_in_prefix": "5e6316a5719cb24e32755d9846eacf085e9087af217d78aceea1fa9ba4dae7b8",
+        "size_in_bytes": 20868
+      },
+      {
+        "_path": "site-packages/pytest_html/resources/index.jinja2",
+        "path_type": "hardlink",
+        "sha256": "c447ebd4a31cb14a94b39b4ad8e6b541953e672d32fdea472b8f78c745f8823c",
+        "sha256_in_prefix": "c447ebd4a31cb14a94b39b4ad8e6b541953e672d32fdea472b8f78c745f8823c",
+        "size_in_bytes": 4173
+      },
+      {
+        "_path": "site-packages/pytest_html/resources/style.css",
+        "path_type": "hardlink",
+        "sha256": "7b2fb477d4754d3c4b29316b7334a4805e06ec0951681fac8f82af4e7d1a0418",
+        "sha256_in_prefix": "7b2fb477d4754d3c4b29316b7334a4805e06ec0951681fac8f82af4e7d1a0418",
+        "size_in_bytes": 5317
+      },
+      {
+        "_path": "site-packages/pytest_html/selfcontained_report.py",
+        "path_type": "hardlink",
+        "sha256": "c8207f708fdda37cde970c06f684f03f911751d38175f33aceb0b8d74e3dcef1",
+        "sha256_in_prefix": "c8207f708fdda37cde970c06f684f03f911751d38175f33aceb0b8d74e3dcef1",
+        "size_in_bytes": 1433
+      },
+      {
+        "_path": "site-packages/pytest_html/util.py",
+        "path_type": "hardlink",
+        "sha256": "edc55723d12ba25774f03ac5563ca62ba985e52e611d22fd90f821eaf018044b",
+        "sha256_in_prefix": "edc55723d12ba25774f03ac5563ca62ba985e52e611d22fd90f821eaf018044b",
+        "size_in_bytes": 1718
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/__version.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/basereport.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/extras.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/fixtures.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/hooks.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/plugin.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/report.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/report_data.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/selfcontained_report.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytest_html/__pycache__/util.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "pytest-html",
+  "sha256": "8db1f48e51e97efd37254f45c389ec60a935c08c0c746333bfa2371cef7ec2e5",
+  "size": 25381,
+  "subdir": "noarch",
+  "timestamp": 1700764716000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/pytest-html-4.1.1-pyhd8ed1ab_0.conda",
+  "version": "4.1.1"
+}

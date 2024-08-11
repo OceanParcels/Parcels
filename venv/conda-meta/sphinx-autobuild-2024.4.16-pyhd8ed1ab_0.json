@@ -1,0 +1,202 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "colorama",
+    "livereload",
+    "python >=3.9",
+    "sphinx",
+    "starlette >=0.35",
+    "uvicorn >=0.25",
+    "watchfiles >=0.20",
+    "websockets >=11"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/sphinx-autobuild-2024.4.16-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/sphinx_autobuild-2024.4.16.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/sphinx_autobuild-2024.4.16.dist-info/LICENSE.rst",
+    "lib/python3.12/site-packages/sphinx_autobuild-2024.4.16.dist-info/METADATA",
+    "lib/python3.12/site-packages/sphinx_autobuild-2024.4.16.dist-info/RECORD",
+    "lib/python3.12/site-packages/sphinx_autobuild-2024.4.16.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/sphinx_autobuild-2024.4.16.dist-info/WHEEL",
+    "lib/python3.12/site-packages/sphinx_autobuild-2024.4.16.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/sphinx_autobuild-2024.4.16.dist-info/entry_points.txt",
+    "lib/python3.12/site-packages/sphinx_autobuild/__init__.py",
+    "lib/python3.12/site-packages/sphinx_autobuild/__main__.py",
+    "lib/python3.12/site-packages/sphinx_autobuild/build.py",
+    "lib/python3.12/site-packages/sphinx_autobuild/filter.py",
+    "lib/python3.12/site-packages/sphinx_autobuild/middleware.py",
+    "lib/python3.12/site-packages/sphinx_autobuild/server.py",
+    "lib/python3.12/site-packages/sphinx_autobuild/utils.py",
+    "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/__main__.cpython-312.pyc",
+    "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/build.cpython-312.pyc",
+    "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/filter.cpython-312.pyc",
+    "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/middleware.cpython-312.pyc",
+    "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/server.cpython-312.pyc",
+    "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/utils.cpython-312.pyc",
+    "bin/sphinx-autobuild"
+  ],
+  "fn": "sphinx-autobuild-2024.4.16-pyhd8ed1ab_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/sphinx-autobuild-2024.4.16-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "108af3d0ad050d1efd1c48be5852c42b",
+  "name": "sphinx-autobuild",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/sphinx-autobuild-2024.4.16-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/sphinx_autobuild-2024.4.16.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild-2024.4.16.dist-info/LICENSE.rst",
+        "path_type": "hardlink",
+        "sha256": "f89aecad73d7bbc767ca4511daaeac3ccc424f279f4bf5557b6216545eaa063e",
+        "sha256_in_prefix": "f89aecad73d7bbc767ca4511daaeac3ccc424f279f4bf5557b6216545eaa063e",
+        "size_in_bytes": 1129
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild-2024.4.16.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "cf4352c334354970c097660a6c21c605de71b6d94d334ef3a86a0c926ba98b14",
+        "sha256_in_prefix": "cf4352c334354970c097660a6c21c605de71b6d94d334ef3a86a0c926ba98b14",
+        "size_in_bytes": 7659
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild-2024.4.16.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "e7b9aaa8d2797f9c2a87f042e692b9ae4d16af59840029e62fe293e23dcda1a0",
+        "sha256_in_prefix": "e7b9aaa8d2797f9c2a87f042e692b9ae4d16af59840029e62fe293e23dcda1a0",
+        "size_in_bytes": 1844
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild-2024.4.16.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild-2024.4.16.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "1196c6921ec87b83e865f450f08d19b8ff5592537f4ef719e83484e546abe33e",
+        "sha256_in_prefix": "1196c6921ec87b83e865f450f08d19b8ff5592537f4ef719e83484e546abe33e",
+        "size_in_bytes": 81
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild-2024.4.16.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "013fcc3dd03fb4b8e4740542e6fc826b1e777ca550c1a5f1b6058038af71b0cc",
+        "sha256_in_prefix": "013fcc3dd03fb4b8e4740542e6fc826b1e777ca550c1a5f1b6058038af71b0cc",
+        "size_in_bytes": 112
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild-2024.4.16.dist-info/entry_points.txt",
+        "path_type": "hardlink",
+        "sha256": "91b03e31acd3677aa4478512ebb90e7673549d54d68476adbfe58c450fc918d9",
+        "sha256_in_prefix": "91b03e31acd3677aa4478512ebb90e7673549d54d68476adbfe58c450fc918d9",
+        "size_in_bytes": 67
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "06c81c1dc81f7c22bbe1c75518032eb0c58b5b5cabd9f76afe8d3eb800a7bfe9",
+        "sha256_in_prefix": "06c81c1dc81f7c22bbe1c75518032eb0c58b5b5cabd9f76afe8d3eb800a7bfe9",
+        "size_in_bytes": 110
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild/__main__.py",
+        "path_type": "hardlink",
+        "sha256": "bcf9946f4e3d70554302cf96fab6eec72e87fc525c0ba0fedaf99c374427b8db",
+        "sha256_in_prefix": "bcf9946f4e3d70554302cf96fab6eec72e87fc525c0ba0fedaf99c374427b8db",
+        "size_in_bytes": 5965
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild/build.py",
+        "path_type": "hardlink",
+        "sha256": "758c384d7e7223200b4948fb54240b0d12dc57051a7bca988d05771b3bb9533d",
+        "sha256_in_prefix": "758c384d7e7223200b4948fb54240b0d12dc57051a7bca988d05771b3bb9533d",
+        "size_in_bytes": 1863
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild/filter.py",
+        "path_type": "hardlink",
+        "sha256": "4a11d0e73227d43f55a0daa26693661efb4e4f98347e1db259b30131a5838587",
+        "sha256_in_prefix": "4a11d0e73227d43f55a0daa26693661efb4e4f98347e1db259b30131a5838587",
+        "size_in_bytes": 1067
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild/middleware.py",
+        "path_type": "hardlink",
+        "sha256": "3dbd2d674f19ead87467c3424c2fd05d89bce0eb2c15c9b78437816dfd659a86",
+        "sha256_in_prefix": "3dbd2d674f19ead87467c3424c2fd05d89bce0eb2c15c9b78437816dfd659a86",
+        "size_in_bytes": 1671
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild/server.py",
+        "path_type": "hardlink",
+        "sha256": "6e8fd003d50a1139c592948cbaf3fd49bddcf8f6b6636ef662d2ac871afd1399",
+        "sha256_in_prefix": "6e8fd003d50a1139c592948cbaf3fd49bddcf8f6b6636ef662d2ac871afd1399",
+        "size_in_bytes": 2651
+      },
+      {
+        "_path": "site-packages/sphinx_autobuild/utils.py",
+        "path_type": "hardlink",
+        "sha256": "3c9768261620f73c00410ac1ffcab97561cec5bca10864b41bd2c7e658d9577b",
+        "sha256_in_prefix": "3c9768261620f73c00410ac1ffcab97561cec5bca10864b41bd2c7e658d9577b",
+        "size_in_bytes": 1134
+      },
+      {
+        "_path": "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/__main__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/build.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/filter.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/middleware.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/server.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/sphinx_autobuild/__pycache__/utils.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "bin/sphinx-autobuild",
+        "path_type": "unix_python_entry_point"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "sphinx-autobuild",
+  "sha256": "fb23e3da5fd4e637588bd7954696715a4348b14c5aab50aacd63f886508ca38d",
+  "size": 16466,
+  "subdir": "noarch",
+  "timestamp": 1713319509000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/sphinx-autobuild-2024.4.16-pyhd8ed1ab_0.conda",
+  "version": "2024.4.16"
+}

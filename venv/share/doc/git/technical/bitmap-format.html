@@ -1,0 +1,1415 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 10.2.0" />
+<title>GIT bitmap v1 format</title>
+<style type="text/css">
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
+
+/* Title font. */
+h1, h2, h3, h4, h5, h6,
+div.title, caption.title,
+thead, p.table.header,
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+h5 {
+  font-size: 1.0em;
+}
+
+div.sectionbody {
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+ul > li     { color: #aaa; }
+ul > li > * { color: black; }
+
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
+  padding: 0;
+  margin: 0;
+}
+pre {
+  white-space: pre-wrap;
+}
+
+#author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+#email {
+}
+#revnumber, #revdate, #revremark {
+}
+
+#footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #888;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; vertical-align: text-bottom; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+div.colist td img {
+  margin-top: 0.3em;
+}
+
+@media print {
+  #footer-badges { display: none; }
+}
+
+#toc {
+  margin-bottom: 2.5em;
+}
+
+#toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overridden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+
+
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
+  var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
+}
+
+}
+asciidoc.install();
+/*]]>*/
+</script>
+</head>
+<body class="article">
+<div id="header">
+<h1>GIT bitmap v1 format</h1>
+<span id="revdate">2024-07-29</span>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_pack_and_multi_pack_bitmaps">Pack and multi-pack bitmaps</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Bitmaps store reachability information about the set of objects in a packfile,
+or a multi-pack index (MIDX). The former is defined obviously, and the latter is
+defined as the union of objects in packs contained in the MIDX.</p></div>
+<div class="paragraph"><p>A bitmap may belong to either one pack, or the repository&#8217;s multi-pack index (if
+it exists). A repository may have at most one bitmap.</p></div>
+<div class="paragraph"><p>An object is uniquely described by its bit position within a bitmap:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+If the bitmap belongs to a packfile, the <em>n</em>th bit corresponds to
+        the <em>n</em>th object in pack order. For a function <code>offset</code> which maps
+        objects to their byte offset within a pack, pack order is defined as
+        follows:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>o1 &lt;= o2 &lt;==&gt; offset(o1) &lt;= offset(o2)</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+If the bitmap belongs to a MIDX, the <em>n</em>th bit corresponds to the
+        <em>n</em>th object in MIDX order. With an additional function <code>pack</code> which
+        maps objects to the pack they were selected from by the MIDX, MIDX order
+        is defined as follows:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>o1 &lt;= o2 &lt;==&gt; pack(o1) &lt;= pack(o2) /\ offset(o1) &lt;= offset(o2)</code></pre>
+</div></div>
+<div class="paragraph"><p>The ordering between packs is done according to the MIDX&#8217;s .rev file.
+Notably, the preferred pack sorts ahead of all other packs.</p></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>The on-disk representation (described below) of a bitmap is the same regardless
+of whether or not that bitmap belongs to a packfile or a MIDX. The only
+difference is the interpretation of the bits, which is described above.</p></div>
+<div class="paragraph"><p>Certain bitmap extensions are supported (see: Appendix B). No extensions are
+required for bitmaps corresponding to packfiles. For bitmaps that correspond to
+MIDXs, both the bit-cache and rev-cache extensions are required.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_on_disk_format">On-disk format</h2>
+<div class="sectionbody">
+<div class="ulist"><ul>
+<li>
+<p>
+A header appears at the beginning:
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+4-byte signature: 
+</dt>
+<dd>
+<p>
+{<em>B</em>, <em>I</em>, <em>T</em>, <em>M</em>}
+</p>
+</dd>
+<dt class="hdlist1">
+2-byte version number (network byte order): 
+</dt>
+<dd>
+<p>
+            The current implementation only supports version 1
+            of the bitmap index (the same one as JGit).
+</p>
+</dd>
+<dt class="hdlist1">
+2-byte flags (network byte order): 
+</dt>
+<dd>
+<p>
+            The following flags are supported:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+BITMAP_OPT_FULL_DAG (0x1) REQUIRED: 
+</dt>
+<dd>
+<p>
+            This flag must always be present. It implies that the
+            bitmap index has been generated for a packfile or
+            multi-pack index (MIDX) with full closure (i.e. where
+            every single object in the packfile/MIDX can find its
+            parent links inside the same packfile/MIDX). This is a
+            requirement for the bitmap index format, also present in
+            JGit, that greatly reduces the complexity of the
+            implementation.
+</p>
+</dd>
+</dl></div>
+</li>
+<li>
+<p>
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+BITMAP_OPT_HASH_CACHE (0x4): 
+</dt>
+<dd>
+<p>
+            If present, the end of the bitmap file contains
+            <code>N</code> 32-bit name-hash values, one per object in the
+            pack/MIDX. The format and meaning of the name-hash is
+            described below.
+</p>
+</dd>
+</dl></div>
+</li>
+<li>
+<p>
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+BITMAP_OPT_LOOKUP_TABLE (0x10): 
+</dt>
+<dd>
+<p>
+                If present, the end of the bitmap file contains a table
+                containing a list of <code>N</code> &lt;commit_pos, offset, xor_row&gt;
+                triplets. The format and meaning of the table is described
+                below.
+</p>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">Unlike the xor_offset used to compress an individual bitmap,
+<code>xor_row</code> stores an <strong>absolute</strong> index into the lookup table, not a location
+relative to the current entry.</td>
+</tr></table>
+</div>
+</dd>
+</dl></div>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+4-byte entry count (network byte order): 
+</dt>
+<dd>
+<p>
+            The total count of entries (bitmapped commits) in this bitmap index.
+</p>
+</dd>
+<dt class="hdlist1">
+20-byte checksum: 
+</dt>
+<dd>
+<p>
+            The SHA1 checksum of the pack/MIDX this bitmap index
+            belongs to.
+</p>
+</dd>
+</dl></div>
+</li>
+<li>
+<p>
+4 EWAH bitmaps that act as type indexes
+</p>
+<div class="paragraph"><p>Type indexes are serialized after the hash cache in the shape
+of four EWAH bitmaps stored consecutively (see Appendix A for
+the serialization format of an EWAH bitmap).</p></div>
+<div class="paragraph"><p>There is a bitmap for each Git object type, stored in the following
+order:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Commits
+</p>
+</li>
+<li>
+<p>
+Trees
+</p>
+</li>
+<li>
+<p>
+Blobs
+</p>
+</li>
+<li>
+<p>
+Tags
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>In each bitmap, the `n`th bit is set to true if the `n`th object
+in the packfile or multi-pack index is of that type.</p></div>
+<div class="paragraph"><p>The obvious consequence is that the OR of all 4 bitmaps will result
+in a full set (all bits set), and the AND of all 4 bitmaps will
+result in an empty bitmap (no bits set).</p></div>
+</li>
+<li>
+<p>
+N entries with compressed bitmaps, one for each indexed commit
+</p>
+<div class="paragraph"><p>Where <code>N</code> is the total number of entries in this bitmap index.
+Each entry contains the following:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+4-byte object position (network byte order): 
+</dt>
+<dd>
+<p>
+            The position <strong>in the index for the packfile or
+            multi-pack index</strong> where the bitmap for this commit is
+            found.
+</p>
+</dd>
+</dl></div>
+</li>
+<li>
+<p>
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+1-byte XOR-offset: 
+</dt>
+<dd>
+<p>
+            The xor offset used to compress this bitmap. For an entry
+            in position <code>x</code>, an XOR offset of <code>y</code> means that the actual
+            bitmap representing this commit is composed by XORing the
+            bitmap for this entry with the bitmap in entry <code>x-y</code> (i.e.
+            the bitmap <code>y</code> entries before this one).
+</p>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">This compression can be recursive. In order to
+XOR this entry with a previous one, the previous entry needs
+to be decompressed first, and so on.</td>
+</tr></table>
+</div>
+<div class="paragraph"><p>The hard-limit for this offset is 160 (an entry can only be
+xor&#8217;ed against one of the 160 entries preceding it). This
+number is always positive, and hence entries are always xor&#8217;ed
+with <strong>previous</strong> bitmaps, not bitmaps that will come afterwards
+in the index.</p></div>
+</dd>
+</dl></div>
+</li>
+<li>
+<p>
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+1-byte flags for this bitmap: 
+</dt>
+<dd>
+<p>
+            At the moment the only available flag is <code>0x1</code>, which hints
+            that this bitmap can be re-used when rebuilding bitmap indexes
+            for the repository.
+</p>
+</dd>
+</dl></div>
+</li>
+<li>
+<p>
+The compressed bitmap itself, see Appendix A.
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+TRAILER: 
+</dt>
+<dd>
+<p>
+                Trailing checksum of the preceding contents.
+</p>
+</dd>
+</dl></div>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_appendix_a_serialization_format_for_an_ewah_bitmap">Appendix A: Serialization format for an EWAH bitmap</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Ewah bitmaps are serialized in the same protocol as the JAVAEWAH
+library, making them backwards compatible with the JGit
+implementation:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+4-byte number of bits of the resulting UNCOMPRESSED bitmap
+</p>
+</li>
+<li>
+<p>
+4-byte number of words of the COMPRESSED bitmap, when stored
+</p>
+</li>
+<li>
+<p>
+N x 8-byte words, as specified by the previous field
+</p>
+<div class="paragraph"><p>This is the actual content of the compressed bitmap.</p></div>
+</li>
+<li>
+<p>
+4-byte position of the current RLW for the compressed
+                bitmap
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>All words are stored in network byte order for their corresponding
+sizes.</p></div>
+<div class="paragraph"><p>The compressed bitmap is stored in a form of run-length encoding, as
+follows.  It consists of a concatenation of an arbitrary number of
+chunks.  Each chunk consists of one or more 64-bit words</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>H  L_1  L_2  L_3 .... L_M</code></pre>
+</div></div>
+<div class="paragraph"><p>H is called RLW (run length word).  It consists of (from lower to higher
+order bits):</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+1 bit: the repeated bit B
+</p>
+</li>
+<li>
+<p>
+32 bits: repetition count K (unsigned)
+</p>
+</li>
+<li>
+<p>
+31 bits: literal word count M (unsigned)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>The bitstream represented by the above chunk is then:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+K repetitions of B
+</p>
+</li>
+<li>
+<p>
+The bits stored in <code>L_1</code> through <code>L_M</code>.  Within a word, bits at
+       lower order come earlier in the stream than those at higher
+       order.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>The next word after <code>L_M</code> (if any) must again be a RLW, for the next
+chunk.  For efficient appending to the bitstream, the EWAH stores a
+pointer to the last RLW in the stream.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_appendix_b_optional_bitmap_sections">Appendix B: Optional Bitmap Sections</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>These sections may or may not be present in the <code>.bitmap</code> file; their
+presence is indicated by the header flags section described above.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_name_hash_cache">Name-hash cache</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>If the BITMAP_OPT_HASH_CACHE flag is set, the end of the bitmap contains
+a cache of 32-bit values, one per object in the pack/MIDX. The value at
+position <code>i</code> is the hash of the pathname at which the `i`th object
+(counting in index or multi-pack index order) in the pack/MIDX can be found.
+This can be fed into the delta heuristics to compare objects with similar
+pathnames.</p></div>
+<div class="paragraph"><p>The hash algorithm used is:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>hash = 0;
+while ((c = *name++))
+        if (!isspace(c))
+                hash = (hash &gt;&gt; 2) + (c &lt;&lt; 24);</code></pre>
+</div></div>
+<div class="paragraph"><p>Note that this hashing scheme is tied to the BITMAP_OPT_HASH_CACHE flag.
+If implementations want to choose a different hashing scheme, they are
+free to do so, but MUST allocate a new header flag (because comparing
+hashes made under two different schemes would be pointless).</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_commit_lookup_table">Commit lookup table</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>If the BITMAP_OPT_LOOKUP_TABLE flag is set, the last <code>N * (4 + 8 + 4)</code>
+bytes (preceding the name-hash cache and trailing hash) of the <code>.bitmap</code>
+file contains a lookup table specifying the information needed to get
+the desired bitmap from the entries without parsing previous unnecessary
+bitmaps.</p></div>
+<div class="paragraph"><p>For a <code>.bitmap</code> containing <code>nr_entries</code> reachability bitmaps, the table
+contains a list of <code>nr_entries</code> &lt;commit_pos, offset, xor_row&gt; triplets
+(sorted in the ascending order of <code>commit_pos</code>). The content of the i&#8217;th
+triplet is -</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+commit_pos (4 byte integer, network byte order): 
+</dt>
+<dd>
+<p>
+        It stores the object position of a commit (in the midx or pack
+        index).
+</p>
+</dd>
+</dl></div>
+</li>
+<li>
+<p>
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+offset (8 byte integer, network byte order): 
+</dt>
+<dd>
+<p>
+        The offset from which that commit&#8217;s bitmap can be read.
+</p>
+</dd>
+</dl></div>
+</li>
+<li>
+<p>
+</p>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+xor_row (4 byte integer, network byte order): 
+</dt>
+<dd>
+<p>
+        The position of the triplet whose bitmap is used to compress
+        this one, or <code>0xffffffff</code> if no such bitmap exists.
+</p>
+</dd>
+</dl></div>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_pseudo_merge_bitmaps">Pseudo-merge bitmaps</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>If the <code>BITMAP_OPT_PSEUDO_MERGES</code> flag is set, a variable number of
+bytes (preceding the name-hash cache, commit lookup table, and trailing
+checksum) of the <code>.bitmap</code> file is used to store pseudo-merge bitmaps.</p></div>
+<div class="paragraph"><p>For more information on what pseudo-merges are, why they are useful, and
+how to configure them, see the information in <a href="../gitpacking.html">gitpacking(7)</a>.</p></div>
+<div class="sect2">
+<h3 id="_file_format">File format</h3>
+<div class="paragraph"><p>If enabled, pseudo-merge bitmaps are stored in an optional section at
+the end of a <code>.bitmap</code> file. The format is as follows:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>+-------------------------------------------+
+|               .bitmap File                |
++-------------------------------------------+
+|                                           |
+|  Pseudo-merge bitmaps (Variable Length)   |
+|  +---------------------------+            |
+|  | commits_bitmap (EWAH)     |            |
+|  +---------------------------+            |
+|  | merge_bitmap (EWAH)       |            |
+|  +---------------------------+            |
+|                                           |
++-------------------------------------------+
+|                                           |
+|  Lookup Table                             |
+|  +---------------------------+            |
+|  | commit_pos (4 bytes)      |            |
+|  +---------------------------+            |
+|  | offset (8 bytes)          |            |
+|  +------------+--------------+            |
+|                                           |
+|  Offset Cases:                            |
+|  -------------                            |
+|                                           |
+|  1. MSB Unset: single pseudo-merge bitmap |
+|     + offset to pseudo-merge bitmap       |
+|                                           |
+|  2. MSB Set: multiple pseudo-merges       |
+|     + offset to extended lookup table     |
+|                                           |
++-------------------------------------------+
+|                                           |
+|  Extended Lookup Table (Optional)         |
+|  +----+----------+----------+----------+  |
+|  | N  | Offset 1 |   ....   | Offset N |  |
+|  +----+----------+----------+----------+  |
+|  |    |  8 bytes |   ....   |  8 bytes |  |
+|  +----+----------+----------+----------+  |
+|                                           |
++-------------------------------------------+
+|                                           |
+|  Pseudo-merge position table              |
+|  +----+----------+----------+----------+  |
+|  | N  | Offset 1 |   ....   | Offset N |  |
+|  +----+----------+----------+----------+  |
+|  |    |  8 bytes |   ....   |  8 bytes |  |
+|  +----+----------+----------+----------+  |
+|                                           |
++-------------------------------------------+
+|                                           |
+|  Pseudo-merge Metadata                    |
+|  +-----------------------------------+    |
+|  | # pseudo-merges (4 bytes)         |    |
+|  +-----------------------------------+    |
+|  | # commits (4 bytes)               |    |
+|  +-----------------------------------+    |
+|  | Lookup offset (8 bytes)           |    |
+|  +-----------------------------------+    |
+|  | Extension size (8 bytes)          |    |
+|  +-----------------------------------+    |
+|                                           |
++-------------------------------------------+</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+One or more pseudo-merge bitmaps, each containing:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>commits_bitmap</code>, an EWAH-compressed bitmap describing the set of
+     commits included in the this psuedo-merge.
+</p>
+</li>
+<li>
+<p>
+<code>merge_bitmap</code>, an EWAH-compressed bitmap describing the union of
+     the set of objects reachable from all commits listed in the
+     <code>commits_bitmap</code>.
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+A lookup table, mapping pseudo-merged commits to the pseudo-merges
+  they belong to. Entries appear in increasing order of each commit&#8217;s
+  bit position. Each entry is 12 bytes wide, and is comprised of the
+  following:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>commit_pos</code>, a 4-byte unsigned value (in network byte-order)
+     containing the bit position for this commit.
+</p>
+</li>
+<li>
+<p>
+<code>offset</code>, an 8-byte unsigned value (also in network byte-order)
+  containing either one of two possible offsets, depending on whether or
+  not the most-significant bit is set.
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+If unset (i.e. <code>offset &amp; ((uint64_t)1&lt;&lt;63) == 0</code>), the offset
+        (relative to the beginning of the <code>.bitmap</code> file) at which the
+        pseudo-merge bitmap for this commit can be read. This indicates
+        only a single pseudo-merge bitmap contains this commit.
+</p>
+</li>
+<li>
+<p>
+If set (i.e. <code>offset &amp; ((uint64_t)1&lt;&lt;63) != 0</code>), the offset
+        (again relative to the beginning of the <code>.bitmap</code> file) at which
+        the extended offset table can be located describing the set of
+        pseudo-merge bitmaps which contain this commit. This indicates
+        that multiple pseudo-merge bitmaps contain this commit.
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+An (optional) extended lookup table (written if and only if there is
+  at least one commit which appears in more than one pseudo-merge).
+  There are as many entries as commits which appear in multiple
+  pseudo-merges. Each entry contains the following:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>N</code>, a 4-byte unsigned value equal to the number of pseudo-merges
+     which contain a given commit.
+</p>
+</li>
+<li>
+<p>
+An array of <code>N</code> 8-byte unsigned values, each of which is
+     interpreted as an offset (relative to the beginning of the
+     <code>.bitmap</code> file) at which a pseudo-merge bitmap for this commit can
+     be read. These values occur in no particular order.
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Positions for all pseudo-merges, each stored as an 8-byte unsigned
+  value (in network byte-order) containing the offset (relative to the
+  beginning of the <code>.bitmap</code> file) of each consecutive pseudo-merge.
+</p>
+</li>
+<li>
+<p>
+A 4-byte unsigned value (in network byte-order) equal to the number of
+  pseudo-merges.
+</p>
+</li>
+<li>
+<p>
+A 4-byte unsigned value (in network byte-order) equal to the number of
+  unique commits which appear in any pseudo-merge.
+</p>
+</li>
+<li>
+<p>
+An 8-byte unsigned value (in network byte-order) equal to the number
+  of bytes between the start of the pseudo-merge section and the
+  beginning of the lookup table.
+</p>
+</li>
+<li>
+<p>
+An 8-byte unsigned value (in network byte-order) equal to the number
+  of bytes in the pseudo-merge section (including this field).
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Last updated
+ 2024-07-26 08:00:08 PDT
+</div>
+</div>
+</body>
+</html>

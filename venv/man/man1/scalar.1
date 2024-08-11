@@ -1,0 +1,207 @@
+'\" t
+.\"     Title: scalar
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 2024-07-29
+.\"    Manual: Git Manual
+.\"    Source: Git 2.46.0
+.\"  Language: English
+.\"
+.TH "SCALAR" "1" "2024\-07\-29" "Git 2\&.46\&.0" "Git Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+scalar \- A tool for managing large Git repositories
+.SH "SYNOPSIS"
+.sp
+.nf
+scalar clone [\-\-single\-branch] [\-\-branch <main\-branch>] [\-\-full\-clone]
+        [\-\-[no\-]src] <url> [<enlistment>]
+scalar list
+scalar register [<enlistment>]
+scalar unregister [<enlistment>]
+scalar run ( all | config | commit\-graph | fetch | loose\-objects | pack\-files ) [<enlistment>]
+scalar reconfigure [ \-\-all | <enlistment> ]
+scalar diagnose [<enlistment>]
+scalar delete <enlistment>
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+Scalar is a repository management tool that optimizes Git for use in large repositories\&. Scalar improves performance by configuring advanced Git settings, maintaining repositories in the background, and helping to reduce data sent across the network\&.
+.sp
+An important Scalar concept is the enlistment: this is the top\-level directory of the project\&. It usually contains the subdirectory \fBsrc/\fR which is a Git worktree\&. This encourages the separation between tracked files (inside \fBsrc/\fR) and untracked files, such as build artifacts (outside \fBsrc/\fR)\&. When registering an existing Git worktree with Scalar whose name is not \fBsrc\fR, the enlistment will be identical to the worktree\&.
+.sp
+The \fBscalar\fR command implements various subcommands, and different options depending on the subcommand\&. With the exception of \fBclone\fR, \fBlist\fR and \fBreconfigure \-\-all\fR, all subcommands expect to be run in an enlistment\&.
+.sp
+The following options can be specified \fIbefore\fR the subcommand:
+.PP
+\-C <directory>
+.RS 4
+Before running the subcommand, change the working directory\&. This option imitates the same option of
+\fBgit\fR(1)\&.
+.RE
+.PP
+\-c <key>=<value>
+.RS 4
+For the duration of running the specified subcommand, configure this setting\&. This option imitates the same option of
+\fBgit\fR(1)\&.
+.RE
+.SH "COMMANDS"
+.SS "Clone"
+.PP
+clone [<options>] <url> [<enlistment>]
+.RS 4
+Clones the specified repository, similar to
+\fBgit-clone\fR(1)\&. By default, only commit and tree objects are cloned\&. Once finished, the worktree is located at
+\fB<enlistment>/src\fR\&.
+.sp
+The sparse\-checkout feature is enabled (except when run with
+\fB\-\-full\-clone\fR) and the only files present are those in the top\-level directory\&. Use
+\fBgit sparse\-checkout set\fR
+to expand the set of directories you want to see, or
+\fBgit sparse\-checkout disable\fR
+to expand to all files (see
+\fBgit-sparse-checkout\fR(1)
+for more details)\&. You can explore the subdirectories outside your sparse\-checkout by using
+\fBgit ls\-tree HEAD[:<directory>]\fR\&.
+.RE
+.PP
+\-b <name>, \-\-branch <name>
+.RS 4
+Instead of checking out the branch pointed to by the cloned repository\(cqs HEAD, check out the
+\fB<name>\fR
+branch instead\&.
+.RE
+.PP
+\-\-[no\-]single\-branch
+.RS 4
+Clone only the history leading to the tip of a single branch, either specified by the
+\fB\-\-branch\fR
+option or the primary branch remote\(cqs
+\fBHEAD\fR
+points at\&.
+.sp
+Further fetches into the resulting repository will only update the remote\-tracking branch for the branch this option was used for the initial cloning\&. If the HEAD at the remote did not point at any branch when
+\fB\-\-single\-branch\fR
+clone was made, no remote\-tracking branch is created\&.
+.RE
+.PP
+\-\-[no\-]src
+.RS 4
+By default,
+\fBscalar clone\fR
+places the cloned repository within a
+\fB<entlistment>/src\fR
+directory\&. Use
+\fB\-\-no\-src\fR
+to place the cloned repository directly in the
+\fB<enlistment>\fR
+directory\&.
+.RE
+.PP
+\-\-[no\-]full\-clone
+.RS 4
+A sparse\-checkout is initialized by default\&. This behavior can be turned off via
+\fB\-\-full\-clone\fR\&.
+.RE
+.SS "List"
+.PP
+list
+.RS 4
+List enlistments that are currently registered by Scalar\&. This subcommand does not need to be run inside an enlistment\&.
+.RE
+.SS "Register"
+.PP
+register [<enlistment>]
+.RS 4
+Adds the enlistment\(cqs repository to the list of registered repositories and starts background maintenance\&. If
+\fB<enlistment>\fR
+is not provided, then the enlistment associated with the current working directory is registered\&.
+.sp
+Note: when this subcommand is called in a worktree that is called
+\fBsrc/\fR, its parent directory is considered to be the Scalar enlistment\&. If the worktree is
+\fInot\fR
+called
+\fBsrc/\fR, it itself will be considered to be the Scalar enlistment\&.
+.RE
+.SS "Unregister"
+.PP
+unregister [<enlistment>]
+.RS 4
+Remove the specified repository from the list of repositories registered with Scalar and stop the scheduled background maintenance\&.
+.RE
+.SS "Run"
+.PP
+scalar run ( all | config | commit\-graph | fetch | loose\-objects | pack\-files ) [<enlistment>]
+.RS 4
+Run the given maintenance task (or all tasks, if
+\fBall\fR
+was specified)\&. Except for
+\fBall\fR
+and
+\fBconfig\fR, this subcommand simply hands off to
+\fBgit-maintenance\fR(1)
+(mapping
+\fBfetch\fR
+to
+\fBprefetch\fR
+and
+\fBpack\-files\fR
+to
+\fBincremental\-repack\fR)\&.
+.sp
+These tasks are run automatically as part of the scheduled maintenance, as soon as the repository is registered with Scalar\&. It should therefore not be necessary to run this subcommand manually\&.
+.sp
+The
+\fBconfig\fR
+task is specific to Scalar and configures all those opinionated default settings that make Git work more efficiently with large repositories\&. As this task is run as part of
+\fBscalar clone\fR
+automatically, explicit invocations of this task are rarely needed\&.
+.RE
+.SS "Reconfigure"
+.sp
+After a Scalar upgrade, or when the configuration of a Scalar enlistment was somehow corrupted or changed by mistake, this subcommand allows to reconfigure the enlistment\&.
+.sp
+With the \fB\-\-all\fR option, all enlistments currently registered with Scalar will be reconfigured\&. Use this option after each Scalar upgrade\&.
+.SS "Diagnose"
+.PP
+diagnose [<enlistment>]
+.RS 4
+When reporting issues with Scalar, it is often helpful to provide the information gathered by this command, including logs and certain statistics describing the data shape of the current enlistment\&.
+.sp
+The output of this command is a
+\fB\&.zip\fR
+file that is written into a directory adjacent to the worktree in the
+\fBsrc\fR
+directory\&.
+.RE
+.SS "Delete"
+.PP
+delete <enlistment>
+.RS 4
+This subcommand lets you delete an existing Scalar enlistment from your local file system, unregistering the repository\&.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBgit-clone\fR(1), \fBgit-maintenance\fR(1)\&.
+.SH "GIT"
+.sp
+Part of the \fBgit\fR(1) suite

@@ -1,0 +1,75 @@
+{
+  "build": "h7f98852_1004",
+  "build_number": 1004,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=9.3.0",
+    "xorg-fixesproto",
+    "xorg-libx11 >=1.7.0,<2.0a0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/xorg-libxfixes-5.0.3-h7f98852_1004",
+  "files": [
+    "include/X11/extensions/Xfixes.h",
+    "lib/libXfixes.so",
+    "lib/libXfixes.so.3",
+    "lib/libXfixes.so.3.1.0",
+    "lib/pkgconfig/xfixes.pc"
+  ],
+  "fn": "xorg-libxfixes-5.0.3-h7f98852_1004.tar.bz2",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/xorg-libxfixes-5.0.3-h7f98852_1004",
+    "type": 1
+  },
+  "md5": "e9a21aa4d5e3e5f1aed71e8cefd46b6a",
+  "name": "xorg-libxfixes",
+  "package_tarball_full_path": "/opt/conda/pkgs/xorg-libxfixes-5.0.3-h7f98852_1004.tar.bz2",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "include/X11/extensions/Xfixes.h",
+        "path_type": "hardlink",
+        "sha256": "6f6f1059e06cdc72a909eeab831f4b6c70fd1b76ced02fb1836069734018c157",
+        "sha256_in_prefix": "6f6f1059e06cdc72a909eeab831f4b6c70fd1b76ced02fb1836069734018c157",
+        "size_in_bytes": 7588
+      },
+      {
+        "_path": "lib/libXfixes.so",
+        "path_type": "softlink",
+        "sha256": "d523f4c6cf22152fc3e30a73f7aa0c13467df2c2077bb902d6be04ef1f194bec",
+        "size_in_bytes": 35464
+      },
+      {
+        "_path": "lib/libXfixes.so.3",
+        "path_type": "softlink",
+        "sha256": "d523f4c6cf22152fc3e30a73f7aa0c13467df2c2077bb902d6be04ef1f194bec",
+        "size_in_bytes": 35464
+      },
+      {
+        "_path": "lib/libXfixes.so.3.1.0",
+        "path_type": "hardlink",
+        "sha256": "d523f4c6cf22152fc3e30a73f7aa0c13467df2c2077bb902d6be04ef1f194bec",
+        "sha256_in_prefix": "d523f4c6cf22152fc3e30a73f7aa0c13467df2c2077bb902d6be04ef1f194bec",
+        "size_in_bytes": 35464
+      },
+      {
+        "_path": "lib/pkgconfig/xfixes.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/xorg-libxfixes_1617717657308/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeh",
+        "sha256": "2180d5a32e179c92b0679a5b9a7f037fa678f578b81f4aac93bedbe2413b6658",
+        "sha256_in_prefix": "b6495d5461001403ec524cb17f60200079bb0f78233fc948066eb4a73491ab7e",
+        "size_in_bytes": 507
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "1e426a1abb774ef1dcf741945ed5c42ad12ea2dc7aeed7682d293879c3e1e4c3",
+  "size": 18145,
+  "subdir": "linux-64",
+  "timestamp": 1617717802000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/xorg-libxfixes-5.0.3-h7f98852_1004.tar.bz2",
+  "version": "5.0.3"
+}

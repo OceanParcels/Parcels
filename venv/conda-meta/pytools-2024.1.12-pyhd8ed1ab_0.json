@@ -1,0 +1,462 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "platformdirs >=2.2",
+    "python >=3.8",
+    "siphash24 >=1.6",
+    "typing-extensions >=4",
+    "typing_extensions >=4.0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/pytools-2024.1.12-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/pytools-2024.1.12.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/pytools-2024.1.12.dist-info/LICENSE",
+    "lib/python3.12/site-packages/pytools-2024.1.12.dist-info/METADATA",
+    "lib/python3.12/site-packages/pytools-2024.1.12.dist-info/RECORD",
+    "lib/python3.12/site-packages/pytools-2024.1.12.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/pytools-2024.1.12.dist-info/WHEEL",
+    "lib/python3.12/site-packages/pytools-2024.1.12.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/pytools-2024.1.12.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/pytools/__init__.py",
+    "lib/python3.12/site-packages/pytools/batchjob.py",
+    "lib/python3.12/site-packages/pytools/codegen.py",
+    "lib/python3.12/site-packages/pytools/convergence.py",
+    "lib/python3.12/site-packages/pytools/datatable.py",
+    "lib/python3.12/site-packages/pytools/debug.py",
+    "lib/python3.12/site-packages/pytools/graph.py",
+    "lib/python3.12/site-packages/pytools/graphviz.py",
+    "lib/python3.12/site-packages/pytools/lex.py",
+    "lib/python3.12/site-packages/pytools/mpi.py",
+    "lib/python3.12/site-packages/pytools/mpiwrap.py",
+    "lib/python3.12/site-packages/pytools/obj_array.py",
+    "lib/python3.12/site-packages/pytools/persistent_dict.py",
+    "lib/python3.12/site-packages/pytools/prefork.py",
+    "lib/python3.12/site-packages/pytools/py.typed",
+    "lib/python3.12/site-packages/pytools/py_codegen.py",
+    "lib/python3.12/site-packages/pytools/spatial_btree.py",
+    "lib/python3.12/site-packages/pytools/stopwatch.py",
+    "lib/python3.12/site-packages/pytools/tag.py",
+    "lib/python3.12/site-packages/pytools/test/__init__.py",
+    "lib/python3.12/site-packages/pytools/test/test_data_table.py",
+    "lib/python3.12/site-packages/pytools/test/test_graph_tools.py",
+    "lib/python3.12/site-packages/pytools/test/test_math_stuff.py",
+    "lib/python3.12/site-packages/pytools/test/test_mpi.py",
+    "lib/python3.12/site-packages/pytools/test/test_persistent_dict.py",
+    "lib/python3.12/site-packages/pytools/test/test_py_codegen.py",
+    "lib/python3.12/site-packages/pytools/test/test_pytools.py",
+    "lib/python3.12/site-packages/pytools/version.py",
+    "lib/python3.12/site-packages/pytools/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/batchjob.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/codegen.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/convergence.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/datatable.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/debug.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/graph.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/graphviz.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/lex.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/mpi.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/mpiwrap.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/obj_array.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/persistent_dict.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/prefork.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/py_codegen.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/spatial_btree.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/stopwatch.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/tag.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/test/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/test/__pycache__/test_data_table.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/test/__pycache__/test_graph_tools.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/test/__pycache__/test_math_stuff.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/test/__pycache__/test_mpi.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/test/__pycache__/test_persistent_dict.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/test/__pycache__/test_py_codegen.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/test/__pycache__/test_pytools.cpython-312.pyc",
+    "lib/python3.12/site-packages/pytools/__pycache__/version.cpython-312.pyc"
+  ],
+  "fn": "pytools-2024.1.12-pyhd8ed1ab_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/pytools-2024.1.12-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "097b49663ec67a498d39ddfc5fd70622",
+  "name": "pytools",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/pytools-2024.1.12-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/pytools-2024.1.12.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/pytools-2024.1.12.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "b7c8ebebf1571fa7e25762e8604fbda1b63ab0ecc8b928ae569d35289d6910db",
+        "sha256_in_prefix": "b7c8ebebf1571fa7e25762e8604fbda1b63ab0ecc8b928ae569d35289d6910db",
+        "size_in_bytes": 1146
+      },
+      {
+        "_path": "site-packages/pytools-2024.1.12.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "1318bbe86741ea4759a37592c052e0fb8bb3cd17d68cacd116b0b7890c8d4334",
+        "sha256_in_prefix": "1318bbe86741ea4759a37592c052e0fb8bb3cd17d68cacd116b0b7890c8d4334",
+        "size_in_bytes": 3015
+      },
+      {
+        "_path": "site-packages/pytools-2024.1.12.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "012d357ca0d39a0df6a41b0742aa317e994a0aa3bd6e1ba21ace0c743da22cd1",
+        "sha256_in_prefix": "012d357ca0d39a0df6a41b0742aa317e994a0aa3bd6e1ba21ace0c743da22cd1",
+        "size_in_bytes": 4301
+      },
+      {
+        "_path": "site-packages/pytools-2024.1.12.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/pytools-2024.1.12.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "4749dceaa4f1ba82e4ed2840dbf63e51690df1975f0c11b607a12aa73d965dbb",
+        "sha256_in_prefix": "4749dceaa4f1ba82e4ed2840dbf63e51690df1975f0c11b607a12aa73d965dbb",
+        "size_in_bytes": 91
+      },
+      {
+        "_path": "site-packages/pytools-2024.1.12.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "49bb02ae31aa3005392c97cc0b7697375cbb85761e601eafd8fd12dd940736f9",
+        "sha256_in_prefix": "49bb02ae31aa3005392c97cc0b7697375cbb85761e601eafd8fd12dd940736f9",
+        "size_in_bytes": 103
+      },
+      {
+        "_path": "site-packages/pytools-2024.1.12.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "844a7f139188d535719dcb184a2d4c6c06d2ee8b0b54d8b3379c188cda3a8012",
+        "sha256_in_prefix": "844a7f139188d535719dcb184a2d4c6c06d2ee8b0b54d8b3379c188cda3a8012",
+        "size_in_bytes": 8
+      },
+      {
+        "_path": "site-packages/pytools/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "9ad5c1bcc26fd9238f791a51c76cf8eb6f38c30e7f14b74b5ca5d8c642d6d490",
+        "sha256_in_prefix": "9ad5c1bcc26fd9238f791a51c76cf8eb6f38c30e7f14b74b5ca5d8c642d6d490",
+        "size_in_bytes": 84948
+      },
+      {
+        "_path": "site-packages/pytools/batchjob.py",
+        "path_type": "hardlink",
+        "sha256": "62191259a757fa34f7ec785f420aadef1b1e0de5854a76824872c6a8d4e2f581",
+        "sha256_in_prefix": "62191259a757fa34f7ec785f420aadef1b1e0de5854a76824872c6a8d4e2f581",
+        "size_in_bytes": 4115
+      },
+      {
+        "_path": "site-packages/pytools/codegen.py",
+        "path_type": "hardlink",
+        "sha256": "6367c9e7d3b8e102971df74878f6c2e8fb3ffd2f230a983349f7b010ed93833c",
+        "sha256_in_prefix": "6367c9e7d3b8e102971df74878f6c2e8fb3ffd2f230a983349f7b010ed93833c",
+        "size_in_bytes": 4374
+      },
+      {
+        "_path": "site-packages/pytools/convergence.py",
+        "path_type": "hardlink",
+        "sha256": "6e28c04337a8094b00e0ecfbb8176f485415c072894a5875295eba95533b88c2",
+        "sha256_in_prefix": "6e28c04337a8094b00e0ecfbb8176f485415c072894a5875295eba95533b88c2",
+        "size_in_bytes": 7524
+      },
+      {
+        "_path": "site-packages/pytools/datatable.py",
+        "path_type": "hardlink",
+        "sha256": "97a671ee3171f130da3d4b9b18a1ec25d55d5b15f7da4b88b25c847368938a4a",
+        "sha256_in_prefix": "97a671ee3171f130da3d4b9b18a1ec25d55d5b15f7da4b88b25c847368938a4a",
+        "size_in_bytes": 9665
+      },
+      {
+        "_path": "site-packages/pytools/debug.py",
+        "path_type": "hardlink",
+        "sha256": "7c2a01d319c90a6b241c3defcbf8d1d1dd15fea82041752cb351bfb1c8d4995e",
+        "sha256_in_prefix": "7c2a01d319c90a6b241c3defcbf8d1d1dd15fea82041752cb351bfb1c8d4995e",
+        "size_in_bytes": 6142
+      },
+      {
+        "_path": "site-packages/pytools/graph.py",
+        "path_type": "hardlink",
+        "sha256": "8bd15497a202e8bcc409ab9e745e0dd82888f86dcdd3cf18396671064fc248b2",
+        "sha256_in_prefix": "8bd15497a202e8bcc409ab9e745e0dd82888f86dcdd3cf18396671064fc248b2",
+        "size_in_bytes": 16173
+      },
+      {
+        "_path": "site-packages/pytools/graphviz.py",
+        "path_type": "hardlink",
+        "sha256": "eb14b54f9c9dafba222fbda797d7211d3f553204f66c5466286170802c80f917",
+        "sha256_in_prefix": "eb14b54f9c9dafba222fbda797d7211d3f553204f66c5466286170802c80f917",
+        "size_in_bytes": 4563
+      },
+      {
+        "_path": "site-packages/pytools/lex.py",
+        "path_type": "hardlink",
+        "sha256": "dc7397b8aae2879f8280ef720484a5c46d6b214a374fbacce0cbda94491ca0c3",
+        "sha256_in_prefix": "dc7397b8aae2879f8280ef720484a5c46d6b214a374fbacce0cbda94491ca0c3",
+        "size_in_bytes": 4673
+      },
+      {
+        "_path": "site-packages/pytools/mpi.py",
+        "path_type": "hardlink",
+        "sha256": "670d9065441ad55c110f67823ee04346ab97c6805cec311c4e835c9bf2674f69",
+        "sha256_in_prefix": "670d9065441ad55c110f67823ee04346ab97c6805cec311c4e835c9bf2674f69",
+        "size_in_bytes": 2766
+      },
+      {
+        "_path": "site-packages/pytools/mpiwrap.py",
+        "path_type": "hardlink",
+        "sha256": "fc84698cb2a0e0451ddf7600971c9e5688737edf053d330ab5e724b1d4f5e914",
+        "sha256_in_prefix": "fc84698cb2a0e0451ddf7600971c9e5688737edf053d330ab5e724b1d4f5e914",
+        "size_in_bytes": 760
+      },
+      {
+        "_path": "site-packages/pytools/obj_array.py",
+        "path_type": "hardlink",
+        "sha256": "d508972ac67b4966bc984b83d20bca80c08b5a330aeaca9a0427e4d9c7e46fce",
+        "sha256_in_prefix": "d508972ac67b4966bc984b83d20bca80c08b5a330aeaca9a0427e4d9c7e46fce",
+        "size_in_bytes": 13309
+      },
+      {
+        "_path": "site-packages/pytools/persistent_dict.py",
+        "path_type": "hardlink",
+        "sha256": "cc5adf0cf177a0b851016637aadd4ac9e13e0de3740502b4eda870d621af5ee5",
+        "sha256_in_prefix": "cc5adf0cf177a0b851016637aadd4ac9e13e0de3740502b4eda870d621af5ee5",
+        "size_in_bytes": 31379
+      },
+      {
+        "_path": "site-packages/pytools/prefork.py",
+        "path_type": "hardlink",
+        "sha256": "2e2e6a4d830c924c94fcd8d12beec6f5747e47dcaa203eaa59e051197d37cd06",
+        "sha256_in_prefix": "2e2e6a4d830c924c94fcd8d12beec6f5747e47dcaa203eaa59e051197d37cd06",
+        "size_in_bytes": 5933
+      },
+      {
+        "_path": "site-packages/pytools/py.typed",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/pytools/py_codegen.py",
+        "path_type": "hardlink",
+        "sha256": "1b8bdfb19dfb53eb1ba74f20c78cb3c806c9241b80ff6ca64fb62cb29bf0dd3c",
+        "sha256_in_prefix": "1b8bdfb19dfb53eb1ba74f20c78cb3c806c9241b80ff6ca64fb62cb29bf0dd3c",
+        "size_in_bytes": 5097
+      },
+      {
+        "_path": "site-packages/pytools/spatial_btree.py",
+        "path_type": "hardlink",
+        "sha256": "1f7ceb18ad8f38654d605c6b0a92d364a11f56be5f8e9c56d07204e58e3b24a8",
+        "sha256_in_prefix": "1f7ceb18ad8f38654d605c6b0a92d364a11f56be5f8e9c56d07204e58e3b24a8",
+        "size_in_bytes": 6365
+      },
+      {
+        "_path": "site-packages/pytools/stopwatch.py",
+        "path_type": "hardlink",
+        "sha256": "d7539d84b4cc263672e0de6ba7ed4e311e6a4c2c61ad13ab67a29e1df9f00714",
+        "sha256_in_prefix": "d7539d84b4cc263672e0de6ba7ed4e311e6a4c2c61ad13ab67a29e1df9f00714",
+        "size_in_bytes": 2007
+      },
+      {
+        "_path": "site-packages/pytools/tag.py",
+        "path_type": "hardlink",
+        "sha256": "2a11321443ef9156bb8cc60be743d4e9c3079c24080a73cbe8adc2f2f10df1f2",
+        "sha256_in_prefix": "2a11321443ef9156bb8cc60be743d4e9c3079c24080a73cbe8adc2f2f10df1f2",
+        "size_in_bytes": 11435
+      },
+      {
+        "_path": "site-packages/pytools/test/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/pytools/test/test_data_table.py",
+        "path_type": "hardlink",
+        "sha256": "bd2fe95e398d5cd7bff65ada1f38bc91199cff4f49e09ad801b9184b574d53ce",
+        "sha256_in_prefix": "bd2fe95e398d5cd7bff65ada1f38bc91199cff4f49e09ad801b9184b574d53ce",
+        "size_in_bytes": 2556
+      },
+      {
+        "_path": "site-packages/pytools/test/test_graph_tools.py",
+        "path_type": "hardlink",
+        "sha256": "b16cbe96704de5ff0996a3d1662750717d4c96541cad4477afbd97531e6440d1",
+        "sha256_in_prefix": "b16cbe96704de5ff0996a3d1662750717d4c96541cad4477afbd97531e6440d1",
+        "size_in_bytes": 10062
+      },
+      {
+        "_path": "site-packages/pytools/test/test_math_stuff.py",
+        "path_type": "hardlink",
+        "sha256": "dd37b038aaef811356b716e7c33a28d63ea5fd3348ba6d95ac65b68a78016c7f",
+        "sha256_in_prefix": "dd37b038aaef811356b716e7c33a28d63ea5fd3348ba6d95ac65b68a78016c7f",
+        "size_in_bytes": 455
+      },
+      {
+        "_path": "site-packages/pytools/test/test_mpi.py",
+        "path_type": "hardlink",
+        "sha256": "d778bb6e53dce3b5edda12a32581e3d3cc6e1a3091b1357a99fe9e13ff0cf50b",
+        "sha256_in_prefix": "d778bb6e53dce3b5edda12a32581e3d3cc6e1a3091b1357a99fe9e13ff0cf50b",
+        "size_in_bytes": 1742
+      },
+      {
+        "_path": "site-packages/pytools/test/test_persistent_dict.py",
+        "path_type": "hardlink",
+        "sha256": "284966e1114cb1b653050a258ad2bdbda3402e3e212d8bb38a3be7691bb31d22",
+        "sha256_in_prefix": "284966e1114cb1b653050a258ad2bdbda3402e3e212d8bb38a3be7691bb31d22",
+        "size_in_bytes": 27406
+      },
+      {
+        "_path": "site-packages/pytools/test/test_py_codegen.py",
+        "path_type": "hardlink",
+        "sha256": "e17e4135fff2d2b7dab421de357c3ceec557865962306cdf848d1c6a546c144a",
+        "sha256_in_prefix": "e17e4135fff2d2b7dab421de357c3ceec557865962306cdf848d1c6a546c144a",
+        "size_in_bytes": 746
+      },
+      {
+        "_path": "site-packages/pytools/test/test_pytools.py",
+        "path_type": "hardlink",
+        "sha256": "44b126fb7e3b403aab66ea42de173cb24fcbfa8c177d4d929ff473bc8556776a",
+        "sha256_in_prefix": "44b126fb7e3b403aab66ea42de173cb24fcbfa8c177d4d929ff473bc8556776a",
+        "size_in_bytes": 23126
+      },
+      {
+        "_path": "site-packages/pytools/version.py",
+        "path_type": "hardlink",
+        "sha256": "36103d1cb546ef5a2d8435666e10ddb89eaa47a73148c0ddd37afb27b0d2a4cb",
+        "sha256_in_prefix": "36103d1cb546ef5a2d8435666e10ddb89eaa47a73148c0ddd37afb27b0d2a4cb",
+        "size_in_bytes": 266
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/batchjob.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/codegen.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/convergence.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/datatable.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/debug.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/graph.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/graphviz.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/lex.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/mpi.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/mpiwrap.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/obj_array.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/persistent_dict.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/prefork.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/py_codegen.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/spatial_btree.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/stopwatch.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/tag.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/test/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/test/__pycache__/test_data_table.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/test/__pycache__/test_graph_tools.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/test/__pycache__/test_math_stuff.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/test/__pycache__/test_mpi.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/test/__pycache__/test_persistent_dict.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/test/__pycache__/test_py_codegen.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/test/__pycache__/test_pytools.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/pytools/__pycache__/version.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "5e634d909b478d6d04045a340b6fa02057b925ee3b0d93c0b88ebe826bd9fa4a",
+  "size": 73401,
+  "subdir": "noarch",
+  "timestamp": 1722976854000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/pytools-2024.1.12-pyhd8ed1ab_0.conda",
+  "version": "2024.1.12"
+}

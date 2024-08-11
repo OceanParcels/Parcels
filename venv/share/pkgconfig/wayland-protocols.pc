@@ -1,0 +1,7 @@
+prefix=/workspaces/open_source_contribution/venv
+datarootdir=${prefix}/share
+pkgdatadir=${pc_sysrootdir}${datarootdir}/wayland-protocols
+
+Name: Wayland Protocols
+Description: Wayland protocol files
+Version: 1.36

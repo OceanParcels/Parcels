@@ -1,0 +1,1083 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 10.2.0" />
+<title>Parallel Checkout Design Notes</title>
+<style type="text/css">
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
+
+/* Title font. */
+h1, h2, h3, h4, h5, h6,
+div.title, caption.title,
+thead, p.table.header,
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+h5 {
+  font-size: 1.0em;
+}
+
+div.sectionbody {
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+ul > li     { color: #aaa; }
+ul > li > * { color: black; }
+
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
+  padding: 0;
+  margin: 0;
+}
+pre {
+  white-space: pre-wrap;
+}
+
+#author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+#email {
+}
+#revnumber, #revdate, #revremark {
+}
+
+#footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #888;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; vertical-align: text-bottom; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+div.colist td img {
+  margin-top: 0.3em;
+}
+
+@media print {
+  #footer-badges { display: none; }
+}
+
+#toc {
+  margin-bottom: 2.5em;
+}
+
+#toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overridden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+
+
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
+  var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
+}
+
+}
+asciidoc.install();
+/*]]>*/
+</script>
+</head>
+<body class="article">
+<div id="header">
+<h1>Parallel Checkout Design Notes</h1>
+<span id="revdate">2024-07-29</span>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph"><p>The "Parallel Checkout" feature attempts to use multiple processes to
+parallelize the work of uncompressing the blobs, applying in-core
+filters, and writing the resulting contents to the working tree during a
+checkout operation. It can be used by all checkout-related commands,
+such as <code>clone</code>, <code>checkout</code>, <code>reset</code>, <code>sparse-checkout</code>, and others.</p></div>
+<div class="paragraph"><p>These commands share the following basic structure:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Step 1: Read the current index file into memory.
+</p>
+</li>
+<li>
+<p>
+Step 2: Modify the in-memory index based upon the command, and
+  temporarily mark all cache entries that need to be updated.
+</p>
+</li>
+<li>
+<p>
+Step 3: Populate the working tree to match the new candidate index.
+  This includes iterating over all of the to-be-updated cache entries
+  and delete, create, or overwrite the associated files in the working
+  tree.
+</p>
+</li>
+<li>
+<p>
+Step 4: Write the new index to disk.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Step 3 is the focus of the "parallel checkout" effort described here.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sequential_implementation">Sequential Implementation</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>For the purposes of discussion here, the current sequential
+implementation of Step 3 is divided in 3 parts, each one implemented in
+its own function:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Step 3a: <code>unpack-trees.c:check_updates()</code> contains a series of
+  sequential loops iterating over the <code>cache_entry</code>'s array. The main
+  loop in this function calls the Step 3b function for each of the
+  to-be-updated entries.
+</p>
+</li>
+<li>
+<p>
+Step 3b: <code>entry.c:checkout_entry()</code> examines the existing working tree
+  for file conflicts, collisions, and unsaved changes. It removes files
+  and creates leading directories as necessary. It calls the Step 3c
+  function for each entry to be written.
+</p>
+</li>
+<li>
+<p>
+Step 3c: <code>entry.c:write_entry()</code> loads the blob into memory, smudges
+  it if necessary, creates the file in the working tree, writes the
+  smudged contents, calls <code>fstat()</code> or <code>lstat()</code>, and updates the
+  associated <code>cache_entry</code> struct with the stat information gathered.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>It wouldn&#8217;t be safe to perform Step 3b in parallel, as there could be
+race conditions between file creations and removals. Instead, the
+parallel checkout framework lets the sequential code handle Step 3b,
+and uses parallel workers to replace the sequential
+<code>entry.c:write_entry()</code> calls from Step 3c.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_rejected_multi_threaded_solution">Rejected Multi-Threaded Solution</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The most "straightforward" implementation would be to spread the set of
+to-be-updated cache entries across multiple threads. But due to the
+thread-unsafe functions in the object database code, we would have to use locks to
+coordinate the parallel operation. An early prototype of this solution
+showed that the multi-threaded checkout would bring performance
+improvements over the sequential code, but there was still too much lock
+contention. A <code>perf</code> profiling indicated that around 20% of the runtime
+during a local Linux clone (on an SSD) was spent in locking functions.
+For this reason this approach was rejected in favor of using multiple
+child processes, which led to better performance.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_multi_process_solution">Multi-Process Solution</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Parallel checkout alters the aforementioned Step 3 to use multiple
+<code>checkout--worker</code> background processes to distribute the work. The
+long-running worker processes are controlled by the foreground Git
+command using the existing run-command API.</p></div>
+<div class="sect2">
+<h3 id="_overview">Overview</h3>
+<div class="paragraph"><p>Step 3b is only slightly altered; for each entry to be checked out, the
+main process performs the following steps:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+M1: Check whether there is any untracked or unclean file in the
+  working tree which would be overwritten by this entry, and decide
+  whether to proceed (removing the file(s)) or not.
+</p>
+</li>
+<li>
+<p>
+M2: Create the leading directories.
+</p>
+</li>
+<li>
+<p>
+M3: Load the conversion attributes for the entry&#8217;s path.
+</p>
+</li>
+<li>
+<p>
+M4: Check, based on the entry&#8217;s type and conversion attributes,
+  whether the entry is eligible for parallel checkout (more on this
+  later). If it is eligible, enqueue the entry and the loaded
+  attributes to later write the entry in parallel. If not, write the
+  entry right away, using the default sequential code.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Note: we save the conversion attributes associated with each entry
+because the workers don&#8217;t have access to the main process' index state,
+so they can&#8217;t load the attributes by themselves (and the attributes are
+needed to properly smudge the entry). Additionally, this has a positive
+impact on performance as (1) we don&#8217;t need to load the attributes twice
+and (2) the attributes machinery is optimized to handle paths in
+sequential order.</p></div>
+<div class="paragraph"><p>After all entries have passed through the above steps, the main process
+checks if the number of enqueued entries is sufficient to spread among
+the workers. If not, it just writes them sequentially. Otherwise, it
+spawns the workers and distributes the queued entries uniformly in
+continuous chunks. This aims to minimize the chances of two workers
+writing to the same directory simultaneously, which could increase lock
+contention in the kernel.</p></div>
+<div class="paragraph"><p>Then, for each assigned item, each worker:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+W1: Checks if there is any non-directory file in the leading part of
+  the entry&#8217;s path or if there already exists a file at the entry' path.
+  If so, mark the entry with <code>PC_ITEM_COLLIDED</code> and skip it (more on
+  this later).
+</p>
+</li>
+<li>
+<p>
+W2: Creates the file (with O_CREAT and O_EXCL).
+</p>
+</li>
+<li>
+<p>
+W3: Loads the blob into memory (inflating and delta reconstructing
+  it).
+</p>
+</li>
+<li>
+<p>
+W4: Applies any required in-process filter, like end-of-line
+  conversion and re-encoding.
+</p>
+</li>
+<li>
+<p>
+W5: Writes the result to the file descriptor opened at W2.
+</p>
+</li>
+<li>
+<p>
+W6: Calls <code>fstat()</code> or <code>lstat()</code> on the just-written path, and sends
+  the result back to the main process, together with the end status of
+  the operation and the item&#8217;s identification number.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Note that, when possible, steps W3 to W5 are delegated to the streaming
+machinery, removing the need to keep the entire blob in memory.</p></div>
+<div class="paragraph"><p>If the worker fails to read the blob or to write it to the working tree,
+it removes the created file to avoid leaving empty files behind. This is
+the <strong>only</strong> time a worker is allowed to remove a file.</p></div>
+<div class="paragraph"><p>As mentioned earlier, it is the responsibility of the main process to
+remove any file that blocks the checkout operation (or abort if the
+removal(s) would cause data loss and the user didn&#8217;t ask to <code>--force</code>).
+This is crucial to avoid race conditions and also to properly detect
+path collisions at Step W1.</p></div>
+<div class="paragraph"><p>After the workers finish writing the items and sending back the required
+information, the main process handles the results in two steps:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+First, it updates the in-memory index with the <code>lstat()</code> information
+  sent by the workers. (This must be done first as this information
+  might be required in the following step.)
+</p>
+</li>
+<li>
+<p>
+Then it writes the items which collided on disk (i.e. items marked
+  with <code>PC_ITEM_COLLIDED</code>). More on this below.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_path_collisions">Path Collisions</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Path collisions happen when two different paths correspond to the same
+entry in the file system. E.g. the paths <em>a</em> and <em>A</em> would collide in a
+case-insensitive file system.</p></div>
+<div class="paragraph"><p>The sequential checkout deals with collisions in the same way that it
+deals with files that were already present in the working tree before
+checkout. Basically, it checks if the path that it wants to write
+already exists on disk, makes sure the existing file doesn&#8217;t have
+unsaved data, and then overwrites it. (To be more pedantic: it deletes
+the existing file and creates the new one.) So, if there are multiple
+colliding files to be checked out, the sequential code will write each
+one of them but only the last will actually survive on disk.</p></div>
+<div class="paragraph"><p>Parallel checkout aims to reproduce the same behavior. However, we
+cannot let the workers racily write to the same file on disk. Instead,
+the workers detect when the entry that they want to check out would
+collide with an existing file, and mark it with <code>PC_ITEM_COLLIDED</code>.
+Later, the main process can sequentially feed these entries back to
+<code>checkout_entry()</code> without the risk of race conditions. On clone, this
+also has the effect of marking the colliding entries to later emit a
+warning for the user, like the classic sequential checkout does.</p></div>
+<div class="paragraph"><p>The workers are able to detect both collisions among the entries being
+concurrently written and collisions between a parallel-eligible entry
+and an ineligible entry. The general idea for collision detection is
+quite straightforward: for each parallel-eligible entry, the main
+process must remove all files that prevent this entry from being written
+(before enqueueing it). This includes any non-directory file in the
+leading path of the entry. Later, when a worker gets assigned the entry,
+it looks again for the non-directory files and for an already existing
+file at the entry&#8217;s path. If any of these checks finds something, the
+worker knows that there was a path collision.</p></div>
+<div class="paragraph"><p>Because parallel checkout can distinguish path collisions from the case
+where the file was already present in the working tree before checkout,
+we could alternatively choose to skip the checkout of colliding entries.
+However, each entry that doesn&#8217;t get written would have NULL <code>lstat()</code>
+fields on the index. This could cause performance penalties for
+subsequent commands that need to refresh the index, as they would have
+to go to the file system to see if the entry is dirty. Thus, if we have
+N entries in a colliding group and we decide to write and <code>lstat()</code> only
+one of them, every subsequent <code>git-status</code> will have to read, convert,
+and hash the written file N - 1 times. By checking out all colliding
+entries (like the sequential code does), we only pay the overhead once,
+during checkout.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_eligible_entries_for_parallel_checkout">Eligible Entries for Parallel Checkout</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>As previously mentioned, not all entries passed to <code>checkout_entry()</code>
+will be considered eligible for parallel checkout. More specifically, we
+exclude:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Symbolic links; to avoid race conditions that, in combination with
+  path collisions, could cause workers to write files at the wrong
+  place. For example, if we were to concurrently check out a symlink
+  <em>a</em> &#8594; <em>b</em> and a regular file <em>A/f</em> in a case-insensitive file system,
+  we could potentially end up writing the file <em>A/f</em> at <em>a/f</em>, due to a
+  race condition.
+</p>
+</li>
+<li>
+<p>
+Regular files that require external filters (either "one shot" filters
+  or long-running process filters). These filters are black-boxes to Git
+  and may have their own internal locking or non-concurrent assumptions.
+  So it might not be safe to run multiple instances in parallel.
+</p>
+<div class="paragraph"><p>Besides, long-running filters may use the delayed checkout feature to
+postpone the return of some filtered blobs. The delayed checkout queue
+and the parallel checkout queue are not compatible and should remain
+separate.</p></div>
+<div class="paragraph"><p>Note: regular files that only require internal filters, like end-of-line
+conversion and re-encoding, are eligible for parallel checkout.</p></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>Ineligible entries are checked out by the classic sequential codepath
+<strong>before</strong> spawning workers.</p></div>
+<div class="paragraph"><p>Note: submodules' files are also eligible for parallel checkout (as
+long as they don&#8217;t fall into any of the excluding categories mentioned
+above). But since each submodule is checked out in its own child
+process, we don&#8217;t mix the superproject&#8217;s and the submodules' files in
+the same parallel checkout process or queue.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_api">The API</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The parallel checkout API was designed with the goal of minimizing
+changes to the current users of the checkout machinery. This means that
+they don&#8217;t have to call a different function for sequential or parallel
+checkout. As already mentioned, <code>checkout_entry()</code> will automatically
+insert the given entry in the parallel checkout queue when this feature
+is enabled and the entry is eligible; otherwise, it will just write the
+entry right away, using the sequential code. In general, callers of the
+parallel checkout API should look similar to this:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>int pc_workers, pc_threshold, err = 0;
+struct checkout state;
+
+get_parallel_checkout_configs(&amp;pc_workers, &amp;pc_threshold);
+
+/*
+ * This check is not strictly required, but it
+ * should save some time in sequential mode.
+ */
+if (pc_workers &gt; 1)
+        init_parallel_checkout();
+
+for (each cache_entry ce to-be-updated)
+        err |= checkout_entry(ce, &amp;state, NULL, NULL);
+
+err |= run_parallel_checkout(&amp;state, pc_workers, pc_threshold, NULL, NULL);</code></pre>
+</div></div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Last updated
+ 2024-07-26 07:44:59 PDT
+</div>
+</div>
+</body>
+</html>

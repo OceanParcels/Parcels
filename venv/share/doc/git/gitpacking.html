@@ -1,0 +1,1080 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 10.2.0" />
+<title>gitpacking(7)</title>
+<style type="text/css">
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
+
+/* Title font. */
+h1, h2, h3, h4, h5, h6,
+div.title, caption.title,
+thead, p.table.header,
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+h5 {
+  font-size: 1.0em;
+}
+
+div.sectionbody {
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+ul > li     { color: #aaa; }
+ul > li > * { color: black; }
+
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
+  padding: 0;
+  margin: 0;
+}
+pre {
+  white-space: pre-wrap;
+}
+
+#author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+#email {
+}
+#revnumber, #revdate, #revremark {
+}
+
+#footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #888;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; vertical-align: text-bottom; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+div.colist td img {
+  margin-top: 0.3em;
+}
+
+@media print {
+  #footer-badges { display: none; }
+}
+
+#toc {
+  margin-bottom: 2.5em;
+}
+
+#toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overridden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+
+
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
+  var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
+}
+
+}
+asciidoc.install();
+/*]]>*/
+</script>
+</head>
+<body class="manpage">
+<div id="header">
+<h1>
+gitpacking(7) Manual Page
+</h1>
+<h2>NAME</h2>
+<div class="sectionbody">
+<p>gitpacking -
+   Advanced concepts related to packing in Git
+</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis">SYNOPSIS</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>gitpacking</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description">DESCRIPTION</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>This document aims to describe some advanced concepts related to packing
+in Git.</p></div>
+<div class="paragraph"><p>Many concepts are currently described scattered between manual pages of
+various Git commands, including <a href="git-pack-objects.html">git-pack-objects(1)</a>,
+<a href="git-repack.html">git-repack(1)</a>, and others, as well as <a href="gitformat-pack.html">gitformat-pack(5)</a>,
+and parts of the <code>Documentation/technical</code> tree.</p></div>
+<div class="paragraph"><p>There are many aspects of packing in Git that are not covered in this
+document that instead live in the aforementioned areas. Over time, those
+scattered bits may coalesce into this document.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_pseudo_merge_bitmaps">Pseudo-merge bitmaps</h2>
+<div class="sectionbody">
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">Pseudo-merge bitmaps are considered an experimental feature, so
+the configuration and many of the ideas are subject to change.</td>
+</tr></table>
+</div>
+<div class="sect2">
+<h3 id="_background">Background</h3>
+<div class="paragraph"><p>Reachability bitmaps are most efficient when we have on-disk stored
+bitmaps for one or more of the starting points of a traversal. For this
+reason, Git prefers storing bitmaps for commits at the tips of refs,
+because traversals tend to start with those points.</p></div>
+<div class="paragraph"><p>But if you have a large number of refs, it&#8217;s not feasible to store a
+bitmap for <em>every</em> ref tip. It takes up space, and just OR-ing all of
+those bitmaps together is expensive.</p></div>
+<div class="paragraph"><p>One way we can deal with that is to create bitmaps that represent
+<em>groups</em> of refs. When a traversal asks about the entire group, then we
+can use this single bitmap instead of considering each ref individually.
+Because these bitmaps represent the set of objects which would be
+reachable in a hypothetical merge of all of the commits, we call them
+pseudo-merge bitmaps.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_overview">Overview</h3>
+<div class="paragraph"><p>A "pseudo-merge bitmap" is used to refer to a pair of bitmaps, as
+follows:</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Commit bitmap
+</dt>
+<dd>
+<p>
+  A bitmap whose set bits describe the set of commits included in the
+  pseudo-merge&#8217;s "merge" bitmap (as below).
+</p>
+</dd>
+<dt class="hdlist1">
+Merge bitmap
+</dt>
+<dd>
+<p>
+  A bitmap whose set bits describe the reachability closure over the set
+  of commits in the pseudo-merge&#8217;s "commits" bitmap (as above). An
+  identical bitmap would be generated for an octopus merge with the same
+  set of parents as described in the commits bitmap.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p>Pseudo-merge bitmaps can accelerate bitmap traversals when all commits
+for a given pseudo-merge are listed on either side of the traversal,
+either directly (by explicitly asking for them as part of the <code>HAVES</code>
+or <code>WANTS</code>) or indirectly (by encountering them during a fill-in
+traversal).</p></div>
+</div>
+<div class="sect2">
+<h3 id="_use_cases">Use-cases</h3>
+<div class="paragraph"><p>For example, suppose there exists a pseudo-merge bitmap with a large
+number of commits, all of which are listed in the <code>WANTS</code> section of
+some bitmap traversal query. When pseudo-merge bitmaps are enabled, the
+bitmap machinery can quickly determine there is a pseudo-merge which
+satisfies some subset of the wanted objects on either side of the query.
+Then, we can inflate the EWAH-compressed bitmap, and <code>OR</code> it in to the
+resulting bitmap. By contrast, without pseudo-merge bitmaps, we would
+have to repeat the decompression and <code>OR</code>-ing step over a potentially
+large number of individual bitmaps, which can take proportionally more
+time.</p></div>
+<div class="paragraph"><p>Another benefit of pseudo-merges arises when there is some combination
+of (a) a large number of references, with (b) poor bitmap coverage, and
+(c) deep, nested trees, making fill-in traversal relatively expensive.
+For example, suppose that there are a large enough number of tags where
+bitmapping each of the tags individually is infeasible. Without
+pseudo-merge bitmaps, computing the result of, say, <code>git rev-list
+--use-bitmap-index --count --objects --tags</code> would likely require a
+large amount of fill-in traversal. But when a large quantity of those
+tags are stored together in a pseudo-merge bitmap, the bitmap machinery
+can take advantage of the fact that we only care about the union of
+objects reachable from all of those tags, and answer the query much
+faster.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_configuration">Configuration</h3>
+<div class="paragraph"><p>Reference tips are grouped into different pseudo-merge groups according
+to two criteria. A reference name matches one or more of the defined
+pseudo-merge patterns, and optionally one or more capture groups within
+that pattern which further partition the group.</p></div>
+<div class="paragraph"><p>Within a group, commits may be considered "stable", or "unstable"
+depending on their age. These are adjusted by setting the
+<code>bitmapPseudoMerge.&lt;name&gt;.stableThreshold</code> and
+<code>bitmapPseudoMerge.&lt;name&gt;.threshold</code> configuration values, respectively.</p></div>
+<div class="paragraph"><p>All stable commits are grouped into pseudo-merges of equal size
+(<code>bitmapPseudoMerge.&lt;name&gt;.stableSize</code>). If the <code>stableSize</code>
+configuration is set to, say, 100, then the first 100 commits (ordered
+by committer date) which are older than the <code>stableThreshold</code> value will
+form one group, the next 100 commits will form another group, and so on.</p></div>
+<div class="paragraph"><p>Among unstable commits, the pseudo-merge machinery will attempt to
+combine older commits into large groups as opposed to newer commits
+which will appear in smaller groups. This is based on the heuristic that
+references whose tip commit is older are less likely to be modified to
+point at a different commit than a reference whose tip commit is newer.</p></div>
+<div class="paragraph"><p>The size of groups is determined by a power-law decay function, and the
+decay parameter roughly corresponds to "k" in <code>f(n) = C*n^(-k/100)</code>,
+where <code>f(n)</code> describes the size of the <code>n</code>-th pseudo-merge group. The
+sample rate controls what percentage of eligible commits are considered
+as candidates. The threshold parameter indicates the minimum age (so as
+to avoid including too-recent commits in a pseudo-merge group, making it
+less likely to be valid). The "maxMerges" parameter sets an upper-bound
+on the number of pseudo-merge commits an individual group</p></div>
+<div class="paragraph"><p>The "stable"-related parameters control "stable" pseudo-merge groups,
+comprised of a fixed number of commits which are older than the
+configured "stable threshold" value and may be grouped together in
+chunks of "stableSize" in order of age.</p></div>
+<div class="paragraph"><p>The exact configuration for pseudo-merges is as follows:</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">The configuration options in <code>bitmapPseudoMerge.*</code> are considered
+EXPERIMENTAL and may be subject to change or be removed entirely in the
+future. For more information about the pseudo-merge bitmap feature, see
+the "Pseudo-merge bitmaps" section of <a href="gitpacking.html">gitpacking(7)</a>.</td>
+</tr></table>
+</div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+bitmapPseudoMerge.&lt;name&gt;.pattern
+</dt>
+<dd>
+<p>
+        Regular expression used to match reference names. Commits
+        pointed to by references matching this pattern (and meeting
+        the below criteria, like <code>bitmapPseudoMerge.&lt;name&gt;.sampleRate</code>
+        and <code>bitmapPseudoMerge.&lt;name&gt;.threshold</code>) will be considered
+        for inclusion in a pseudo-merge bitmap.
+</p>
+<div class="paragraph"><p>Commits are grouped into pseudo-merge groups based on whether or not
+any reference(s) that point at a given commit match the pattern, which
+is an extended regular expression.</p></div>
+<div class="paragraph"><p>Within a pseudo-merge group, commits may be further grouped into
+sub-groups based on the capture groups in the pattern. These
+sub-groupings are formed from the regular expressions by concatenating
+any capture groups from the regular expression, with a <em>-</em> dash in
+between.</p></div>
+<div class="paragraph"><p>For example, if the pattern is <code>refs/tags/</code>, then all tags (provided
+they meet the below criteria) will be considered candidates for the
+same pseudo-merge group. However, if the pattern is instead
+<code>refs/remotes/([0-9])+/tags/</code>, then tags from different remotes will
+be grouped into separate pseudo-merge groups, based on the remote
+number.</p></div>
+</dd>
+<dt class="hdlist1">
+bitmapPseudoMerge.&lt;name&gt;.decay
+</dt>
+<dd>
+<p>
+        Determines the rate at which consecutive pseudo-merge bitmap
+        groups decrease in size. Must be non-negative. This parameter
+        can be thought of as <code>k</code> in the function <code>f(n) = C * n^-k</code>,
+        where <code>f(n)</code> is the size of the `n`th group.
+</p>
+<div class="paragraph"><p>Setting the decay rate equal to <code>0</code> will cause all groups to be the
+same size. Setting the decay rate equal to <code>1</code> will cause the <code>n`th
+group to be `1/n</code> the size of the initial group.  Higher values of the
+decay rate cause consecutive groups to shrink at an increasing rate.
+The default is <code>1</code>.</p></div>
+<div class="paragraph"><p>If all groups are the same size, it is possible that groups containing
+newer commits will be able to be used less often than earlier groups,
+since it is more likely that the references pointing at newer commits
+will be updated more often than a reference pointing at an old commit.</p></div>
+</dd>
+<dt class="hdlist1">
+bitmapPseudoMerge.&lt;name&gt;.sampleRate
+</dt>
+<dd>
+<p>
+        Determines the proportion of non-bitmapped commits (among
+        reference tips) which are selected for inclusion in an
+        unstable pseudo-merge bitmap. Must be between <code>0</code> and <code>1</code>
+        (inclusive). The default is <code>1</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+bitmapPseudoMerge.&lt;name&gt;.threshold
+</dt>
+<dd>
+<p>
+        Determines the minimum age of non-bitmapped commits (among
+        reference tips, as above) which are candidates for inclusion
+        in an unstable pseudo-merge bitmap. The default is
+        <code>1.week.ago</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+bitmapPseudoMerge.&lt;name&gt;.maxMerges
+</dt>
+<dd>
+<p>
+        Determines the maximum number of pseudo-merge commits among
+        which commits may be distributed.
+</p>
+<div class="paragraph"><p>For pseudo-merge groups whose pattern does not contain any capture
+groups, this setting is applied for all commits matching the regular
+expression. For patterns that have one or more capture groups, this
+setting is applied for each distinct capture group.</p></div>
+<div class="paragraph"><p>For example, if your capture group is <code>refs/tags/</code>, then this setting
+will distribute all tags into a maximum of <code>maxMerges</code> pseudo-merge
+commits. However, if your capture group is, say,
+<code>refs/remotes/([0-9]+)/tags/</code>, then this setting will be applied to
+each remote&#8217;s set of tags individually.</p></div>
+<div class="paragraph"><p>Must be non-negative. The default value is 64.</p></div>
+</dd>
+<dt class="hdlist1">
+bitmapPseudoMerge.&lt;name&gt;.stableThreshold
+</dt>
+<dd>
+<p>
+        Determines the minimum age of commits (among reference tips,
+        as above, however stable commits are still considered
+        candidates even when they have been covered by a bitmap) which
+        are candidates for a stable a pseudo-merge bitmap. The default
+        is <code>1.month.ago</code>.
+</p>
+<div class="paragraph"><p>Setting this threshold to a smaller value (e.g., 1.week.ago) will cause
+more stable groups to be generated (which impose a one-time generation
+cost) but those groups will likely become stale over time. Using a
+larger value incurs the opposite penalty (fewer stable groups which are
+more useful).</p></div>
+</dd>
+<dt class="hdlist1">
+bitmapPseudoMerge.&lt;name&gt;.stableSize
+</dt>
+<dd>
+<p>
+        Determines the size (in number of commits) of a stable
+        psuedo-merge bitmap. The default is <code>512</code>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect2">
+<h3 id="_examples">Examples</h3>
+<div class="paragraph"><p>Suppose that you have a repository with a large number of references,
+and you want a bare-bones configuration of pseudo-merge bitmaps that
+will enhance bitmap coverage of the <code>refs/</code> namespace. You may start
+with a configuration like so:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>[bitmapPseudoMerge "all"]
+        pattern = "refs/"
+        threshold = now
+        stableThreshold = never
+        sampleRate = 100
+        maxMerges = 64</code></pre>
+</div></div>
+<div class="paragraph"><p>This will create pseudo-merge bitmaps for all references, regardless of
+their age, and group them into 64 pseudo-merge commits.</p></div>
+<div class="paragraph"><p>If you wanted to separate tags from branches when generating
+pseudo-merge commits, you would instead define the pattern with a
+capture group, like so:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>[bitmapPseudoMerge "all"]
+        pattern = "refs/(heads/tags)/"</code></pre>
+</div></div>
+<div class="paragraph"><p>Suppose instead that you are working in a fork-network repository, with
+each fork specified by some numeric ID, and whose refs reside in
+<code>refs/virtual/NNN/</code> (where <code>NNN</code> is the numeric ID corresponding to some
+fork) in the network. In this instance, you may instead write something
+like:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>[bitmapPseudoMerge "all"]
+        pattern = "refs/virtual/([0-9]+)/(heads|tags)/"
+        threshold = now
+        stableThreshold = never
+        sampleRate = 100
+        maxMerges = 64</code></pre>
+</div></div>
+<div class="paragraph"><p>Which would generate pseudo-merge group identifiers like "1234-heads",
+and "5678-tags" (for branches in fork "1234", and tags in remote "5678",
+respectively).</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_see_also">SEE ALSO</h2>
+<div class="sectionbody">
+<div class="paragraph"><p><a href="git-pack-objects.html">git-pack-objects(1)</a>
+<a href="git-repack.html">git-repack(1)</a></p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_git">GIT</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Part of the <a href="git.html">git(1)</a> suite</p></div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Last updated
+ 2024-07-26 11:36:38 PDT
+</div>
+</div>
+</body>
+</html>

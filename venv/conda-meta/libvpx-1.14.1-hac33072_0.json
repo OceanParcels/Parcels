@@ -1,0 +1,179 @@
+{
+  "build": "hac33072_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libvpx-1.14.1-hac33072_0",
+  "files": [
+    "bin/vpxdec",
+    "bin/vpxenc",
+    "include/vpx/vp8.h",
+    "include/vpx/vp8cx.h",
+    "include/vpx/vp8dx.h",
+    "include/vpx/vpx_codec.h",
+    "include/vpx/vpx_decoder.h",
+    "include/vpx/vpx_encoder.h",
+    "include/vpx/vpx_ext_ratectrl.h",
+    "include/vpx/vpx_frame_buffer.h",
+    "include/vpx/vpx_image.h",
+    "include/vpx/vpx_integer.h",
+    "include/vpx/vpx_tpl.h",
+    "lib/libvpx.so",
+    "lib/libvpx.so.9",
+    "lib/libvpx.so.9.0",
+    "lib/libvpx.so.9.0.1",
+    "lib/pkgconfig/vpx.pc"
+  ],
+  "fn": "libvpx-1.14.1-hac33072_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/libvpx-1.14.1-hac33072_0",
+    "type": 1
+  },
+  "md5": "cde393f461e0c169d9ffb2fc70f81c33",
+  "name": "libvpx",
+  "package_tarball_full_path": "/opt/conda/pkgs/libvpx-1.14.1-hac33072_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/vpxdec",
+        "path_type": "hardlink",
+        "sha256": "781331410e3bf655be8d5b1a179426c5bb9cdd967db0849af7911ea2a44b115d",
+        "sha256_in_prefix": "781331410e3bf655be8d5b1a179426c5bb9cdd967db0849af7911ea2a44b115d",
+        "size_in_bytes": 237128
+      },
+      {
+        "_path": "bin/vpxenc",
+        "path_type": "hardlink",
+        "sha256": "43186fb41ad28ae0873d125f0d8250fc49c3d5104374a56a98eb03c8653fd1d9",
+        "sha256_in_prefix": "43186fb41ad28ae0873d125f0d8250fc49c3d5104374a56a98eb03c8653fd1d9",
+        "size_in_bytes": 291640
+      },
+      {
+        "_path": "include/vpx/vp8.h",
+        "path_type": "hardlink",
+        "sha256": "8bd4f03ef5771d7f08b103733f09bd5fdb665c0b1a0f039a5ca1b9c4fbd0bdb8",
+        "sha256_in_prefix": "8bd4f03ef5771d7f08b103733f09bd5fdb665c0b1a0f039a5ca1b9c4fbd0bdb8",
+        "size_in_bytes": 4248
+      },
+      {
+        "_path": "include/vpx/vp8cx.h",
+        "path_type": "hardlink",
+        "sha256": "8375e3e00661b2e027d5ffd72f91faecd78b9c027903cfb59dbf098a4c006442",
+        "sha256_in_prefix": "8375e3e00661b2e027d5ffd72f91faecd78b9c027903cfb59dbf098a4c006442",
+        "size_in_bytes": 37345
+      },
+      {
+        "_path": "include/vpx/vp8dx.h",
+        "path_type": "hardlink",
+        "sha256": "f3d98bda5d043879b8e37f01ee2fcfe9419461367a277c34eaef7811680f4021",
+        "sha256_in_prefix": "f3d98bda5d043879b8e37f01ee2fcfe9419461367a277c34eaef7811680f4021",
+        "size_in_bytes": 7398
+      },
+      {
+        "_path": "include/vpx/vpx_codec.h",
+        "path_type": "hardlink",
+        "sha256": "d7097c4da159024bb28bbbb522c9152d29423d78ac4c76a528e5fddb474ef1b1",
+        "sha256_in_prefix": "d7097c4da159024bb28bbbb522c9152d29423d78ac4c76a528e5fddb474ef1b1",
+        "size_in_bytes": 16128
+      },
+      {
+        "_path": "include/vpx/vpx_decoder.h",
+        "path_type": "hardlink",
+        "sha256": "e025fbf80a78a54e8649ded21a8680b35b01856592ebafd628bdd4c0575c4be6",
+        "sha256_in_prefix": "e025fbf80a78a54e8649ded21a8680b35b01856592ebafd628bdd4c0575c4be6",
+        "size_in_bytes": 15029
+      },
+      {
+        "_path": "include/vpx/vpx_encoder.h",
+        "path_type": "hardlink",
+        "sha256": "f62ea8ed153f020ebace4af7335d3a1a54bfaf493df25ddf2a627bdb0309df62",
+        "sha256_in_prefix": "f62ea8ed153f020ebace4af7335d3a1a54bfaf493df25ddf2a627bdb0309df62",
+        "size_in_bytes": 43914
+      },
+      {
+        "_path": "include/vpx/vpx_ext_ratectrl.h",
+        "path_type": "hardlink",
+        "sha256": "87f3efb667298ae5c10fdd0eff68cac49d3136619e643821dd42fcab174631c8",
+        "sha256_in_prefix": "87f3efb667298ae5c10fdd0eff68cac49d3136619e643821dd42fcab174631c8",
+        "size_in_bytes": 17857
+      },
+      {
+        "_path": "include/vpx/vpx_frame_buffer.h",
+        "path_type": "hardlink",
+        "sha256": "edc0bc4626e4c93e668a9d1ed6c58316df905c2187384480d58f47c44acfcb22",
+        "sha256_in_prefix": "edc0bc4626e4c93e668a9d1ed6c58316df905c2187384480d58f47c44acfcb22",
+        "size_in_bytes": 3206
+      },
+      {
+        "_path": "include/vpx/vpx_image.h",
+        "path_type": "hardlink",
+        "sha256": "99fc156fb81ff9d48ef6f8582ecf499e8fff40dde86d3f63ea19356634169813",
+        "sha256_in_prefix": "99fc156fb81ff9d48ef6f8582ecf499e8fff40dde86d3f63ea19356634169813",
+        "size_in_bytes": 8586
+      },
+      {
+        "_path": "include/vpx/vpx_integer.h",
+        "path_type": "hardlink",
+        "sha256": "84df10e90143c130ac8087105af0f5704e894c8506d99af4e71993962670bc12",
+        "sha256_in_prefix": "84df10e90143c130ac8087105af0f5704e894c8506d99af4e71993962670bc12",
+        "size_in_bytes": 1129
+      },
+      {
+        "_path": "include/vpx/vpx_tpl.h",
+        "path_type": "hardlink",
+        "sha256": "4fac75be8304caa99360a4f007b5bf8f24f73138ac7f5fc15c23e6e48363d66e",
+        "sha256_in_prefix": "4fac75be8304caa99360a4f007b5bf8f24f73138ac7f5fc15c23e6e48363d66e",
+        "size_in_bytes": 3708
+      },
+      {
+        "_path": "lib/libvpx.so",
+        "path_type": "softlink",
+        "sha256": "5422444e320cc3e1063f8cab4cd2e88ac76dc86b21820ac4af88f3f21fe25127",
+        "size_in_bytes": 2213864
+      },
+      {
+        "_path": "lib/libvpx.so.9",
+        "path_type": "softlink",
+        "sha256": "5422444e320cc3e1063f8cab4cd2e88ac76dc86b21820ac4af88f3f21fe25127",
+        "size_in_bytes": 2213864
+      },
+      {
+        "_path": "lib/libvpx.so.9.0",
+        "path_type": "softlink",
+        "sha256": "5422444e320cc3e1063f8cab4cd2e88ac76dc86b21820ac4af88f3f21fe25127",
+        "size_in_bytes": 2213864
+      },
+      {
+        "_path": "lib/libvpx.so.9.0.1",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libvpx_1717859773553/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac",
+        "sha256": "5422444e320cc3e1063f8cab4cd2e88ac76dc86b21820ac4af88f3f21fe25127",
+        "sha256_in_prefix": "719e47b3bef2f350acfc65c43847da98b2f1b2b25d88c5af91a12e680b8aca3f",
+        "size_in_bytes": 2213864
+      },
+      {
+        "_path": "lib/pkgconfig/vpx.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libvpx_1717859773553/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac",
+        "sha256": "0ab2e93a0cdb036375364a899edf617e43f16667552d1307baf1d33d7b2f637f",
+        "sha256_in_prefix": "ca715b414fd730735b48674ab990367bd118c9cb717cf9e8bb8e1116709ea320",
+        "size_in_bytes": 552
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "e7d2daf409c807be48310fcc8924e481b62988143f582eb3a58c5523a6763b13",
+  "size": 1022466,
+  "subdir": "linux-64",
+  "timestamp": 1717859935000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libvpx-1.14.1-hac33072_0.conda",
+  "version": "1.14.1"
+}

@@ -1,0 +1,56 @@
+{
+  "build": "ha262f82_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "libabseil",
+    "libcrc32c >=1.1.2,<1.2.0a0",
+    "libcurl",
+    "libgcc-ng >=12",
+    "libgoogle-cloud 2.26.0 h26d7fe4_0",
+    "libstdcxx-ng >=12",
+    "libzlib >=1.3.1,<2.0a0",
+    "openssl"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libgoogle-cloud-storage-2.26.0-ha262f82_0",
+  "files": [
+    "lib/libgoogle_cloud_cpp_storage.so.2",
+    "lib/libgoogle_cloud_cpp_storage.so.2.26.0"
+  ],
+  "fn": "libgoogle-cloud-storage-2.26.0-ha262f82_0.conda",
+  "license": "Apache-2.0",
+  "link": {
+    "source": "/opt/conda/pkgs/libgoogle-cloud-storage-2.26.0-ha262f82_0",
+    "type": 1
+  },
+  "md5": "89b53708fd67762b26c38c8ecc5d323d",
+  "name": "libgoogle-cloud-storage",
+  "package_tarball_full_path": "/opt/conda/pkgs/libgoogle-cloud-storage-2.26.0-ha262f82_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/libgoogle_cloud_cpp_storage.so.2",
+        "path_type": "softlink",
+        "sha256": "51423189a12a316ab89a5f76d4e7b1451572ac467f767e792b1e8fd7cb83e05b",
+        "size_in_bytes": 3288648
+      },
+      {
+        "_path": "lib/libgoogle_cloud_cpp_storage.so.2.26.0",
+        "path_type": "hardlink",
+        "sha256": "51423189a12a316ab89a5f76d4e7b1451572ac467f767e792b1e8fd7cb83e05b",
+        "sha256_in_prefix": "51423189a12a316ab89a5f76d4e7b1451572ac467f767e792b1e8fd7cb83e05b",
+        "size_in_bytes": 3288648
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "7c16bf2e5aa6b5e42450c218fdfa7d5ff1da952c5a5c821c001ab3fd940c2aed",
+  "size": 764005,
+  "subdir": "linux-64",
+  "timestamp": 1719889827000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libgoogle-cloud-storage-2.26.0-ha262f82_0.conda",
+  "version": "2.26.0"
+}

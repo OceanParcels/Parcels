@@ -1,0 +1,125 @@
+{
+  "build": "py312h8572e83_4",
+  "build_number": 4,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "cffi",
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12",
+    "python >=3.12.0rc3,<3.13.0a0",
+    "python_abi 3.12.* *_cp312"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/ukkonen-1.0.1-py312h8572e83_4",
+  "files": [
+    "lib/python3.12/site-packages/__pycache__/ukkonen.cpython-312.pyc",
+    "lib/python3.12/site-packages/_ukkonen.abi3.so",
+    "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/LICENSE",
+    "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/METADATA",
+    "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/RECORD",
+    "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/WHEEL",
+    "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/ukkonen.py"
+  ],
+  "fn": "ukkonen-1.0.1-py312h8572e83_4.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/ukkonen-1.0.1-py312h8572e83_4",
+    "type": 1
+  },
+  "md5": "52c9e25ee0a32485a102eeecdb7eef52",
+  "name": "ukkonen",
+  "package_tarball_full_path": "/opt/conda/pkgs/ukkonen-1.0.1-py312h8572e83_4.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/python3.12/site-packages/__pycache__/ukkonen.cpython-312.pyc",
+        "path_type": "hardlink",
+        "sha256": "9bd54816ffe2f2b9f0e827f5cf80fac8ac4d4e50dc9dea9d90194c783aa7a8f6",
+        "sha256_in_prefix": "9bd54816ffe2f2b9f0e827f5cf80fac8ac4d4e50dc9dea9d90194c783aa7a8f6",
+        "size_in_bytes": 534
+      },
+      {
+        "_path": "lib/python3.12/site-packages/_ukkonen.abi3.so",
+        "path_type": "hardlink",
+        "sha256": "031910408f987343cc40d10a4fdae85bd0a463a5101d15694b4768e673169ac4",
+        "sha256_in_prefix": "031910408f987343cc40d10a4fdae85bd0a463a5101d15694b4768e673169ac4",
+        "size_in_bytes": 16832
+      },
+      {
+        "_path": "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "44c5cc93af92f5512c439f5865c4fad2831e352d0475ec45c28264fb9326a57d",
+        "sha256_in_prefix": "44c5cc93af92f5512c439f5865c4fad2831e352d0475ec45c28264fb9326a57d",
+        "size_in_bytes": 1059
+      },
+      {
+        "_path": "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "2107a170c941243ac335216979c287239ba6011a2205ba2a9448d7415cf84262",
+        "sha256_in_prefix": "2107a170c941243ac335216979c287239ba6011a2205ba2a9448d7415cf84262",
+        "size_in_bytes": 2025
+      },
+      {
+        "_path": "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "9488f02264e539257a0e198e0f9ebc2dc21af04cd39aefc44aedb579132dbc6b",
+        "sha256_in_prefix": "9488f02264e539257a0e198e0f9ebc2dc21af04cd39aefc44aedb579132dbc6b",
+        "size_in_bytes": 845
+      },
+      {
+        "_path": "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "e372a56f757995d7abb823e628c8ab44f798459a71ee2e32e21db7954f94720d",
+        "sha256_in_prefix": "e372a56f757995d7abb823e628c8ab44f798459a71ee2e32e21db7954f94720d",
+        "size_in_bytes": 104
+      },
+      {
+        "_path": "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "58acf520cbc5fe392441fd8ff2d48b35246708938fc0bc4c6667f3b0c86c4aa9",
+        "sha256_in_prefix": "58acf520cbc5fe392441fd8ff2d48b35246708938fc0bc4c6667f3b0c86c4aa9",
+        "size_in_bytes": 103
+      },
+      {
+        "_path": "lib/python3.12/site-packages/ukkonen-1.0.1.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "35617a56c6d49c0588e7ce643fe531afdee7ea00dc02ac70038d286ee60a71a4",
+        "sha256_in_prefix": "35617a56c6d49c0588e7ce643fe531afdee7ea00dc02ac70038d286ee60a71a4",
+        "size_in_bytes": 17
+      },
+      {
+        "_path": "lib/python3.12/site-packages/ukkonen.py",
+        "path_type": "hardlink",
+        "sha256": "c7b6d9ac07ffbd9025189bc2313b363ced970890fd854f6f6df7c869cfff06f8",
+        "sha256_in_prefix": "c7b6d9ac07ffbd9025189bc2313b363ced970890fd854f6f6df7c869cfff06f8",
+        "size_in_bytes": 147
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "f9a4384d466f4d8b5b497d951329dd4407ebe02f8f93456434e9ab789d6e23ce",
+  "size": 14050,
+  "subdir": "linux-64",
+  "timestamp": 1695549556000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/ukkonen-1.0.1-py312h8572e83_4.conda",
+  "version": "1.0.1"
+}

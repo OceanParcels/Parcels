@@ -1,0 +1,67 @@
+{
+  "build": "h2da1b83_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12",
+    "pugixml >=1.14,<1.15.0a0",
+    "tbb >=2021.12.0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/libopenvino-2024.3.0-h2da1b83_0",
+  "files": [
+    "lib/libopenvino.so.2024.3.0",
+    "lib/libopenvino.so.2430",
+    "lib/libopenvino_c.so.2024.3.0",
+    "lib/libopenvino_c.so.2430"
+  ],
+  "fn": "libopenvino-2024.3.0-h2da1b83_0.conda",
+  "license": "",
+  "link": {
+    "source": "/opt/conda/pkgs/libopenvino-2024.3.0-h2da1b83_0",
+    "type": 1
+  },
+  "md5": "bb7a2589859c7475e38c1af677e16698",
+  "name": "libopenvino",
+  "package_tarball_full_path": "/opt/conda/pkgs/libopenvino-2024.3.0-h2da1b83_0.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "lib/libopenvino.so.2024.3.0",
+        "path_type": "hardlink",
+        "sha256": "83359ec72810cb69c8af76d38a25ae25c8b683aaf22a9b3e0ddb38cfab849987",
+        "sha256_in_prefix": "83359ec72810cb69c8af76d38a25ae25c8b683aaf22a9b3e0ddb38cfab849987",
+        "size_in_bytes": 20307136
+      },
+      {
+        "_path": "lib/libopenvino.so.2430",
+        "path_type": "softlink",
+        "sha256": "83359ec72810cb69c8af76d38a25ae25c8b683aaf22a9b3e0ddb38cfab849987",
+        "size_in_bytes": 20307136
+      },
+      {
+        "_path": "lib/libopenvino_c.so.2024.3.0",
+        "path_type": "hardlink",
+        "sha256": "a1905841cddedea2c03e4841bdd271d6d5a1a892d5e5b0e33f9b09dcc999846b",
+        "sha256_in_prefix": "a1905841cddedea2c03e4841bdd271d6d5a1a892d5e5b0e33f9b09dcc999846b",
+        "size_in_bytes": 309728
+      },
+      {
+        "_path": "lib/libopenvino_c.so.2430",
+        "path_type": "softlink",
+        "sha256": "a1905841cddedea2c03e4841bdd271d6d5a1a892d5e5b0e33f9b09dcc999846b",
+        "size_in_bytes": 309728
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "cb36e07337df16731b6aeb52422e4f37748d785d2d0ff425c0a06300ce2aeb64",
+  "size": 5329666,
+  "subdir": "linux-64",
+  "timestamp": 1722425597000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/libopenvino-2024.3.0-h2da1b83_0.conda",
+  "version": "2024.3.0"
+}

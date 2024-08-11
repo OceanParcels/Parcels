@@ -1,0 +1,631 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "markdown-it-py >=1.0.0,<4.0.0",
+    "python >=3.8"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/mdit-py-plugins-0.4.1-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/mdit_py_plugins-0.4.1.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/mdit_py_plugins-0.4.1.dist-info/LICENSE",
+    "lib/python3.12/site-packages/mdit_py_plugins-0.4.1.dist-info/METADATA",
+    "lib/python3.12/site-packages/mdit_py_plugins-0.4.1.dist-info/RECORD",
+    "lib/python3.12/site-packages/mdit_py_plugins-0.4.1.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/mdit_py_plugins-0.4.1.dist-info/WHEEL",
+    "lib/python3.12/site-packages/mdit_py_plugins-0.4.1.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/mdit_py_plugins/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/admon/LICENSE",
+    "lib/python3.12/site-packages/mdit_py_plugins/admon/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/admon/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/admon/port.yaml",
+    "lib/python3.12/site-packages/mdit_py_plugins/amsmath/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/anchors/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/anchors/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/attrs/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/attrs/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/attrs/parse.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/colon_fence.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/container/LICENSE",
+    "lib/python3.12/site-packages/mdit_py_plugins/container/README.md",
+    "lib/python3.12/site-packages/mdit_py_plugins/container/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/container/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/container/port.yaml",
+    "lib/python3.12/site-packages/mdit_py_plugins/deflist/LICENSE",
+    "lib/python3.12/site-packages/mdit_py_plugins/deflist/README.md",
+    "lib/python3.12/site-packages/mdit_py_plugins/deflist/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/deflist/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/deflist/port.yaml",
+    "lib/python3.12/site-packages/mdit_py_plugins/dollarmath/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/dollarmath/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/field_list/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/footnote/LICENSE",
+    "lib/python3.12/site-packages/mdit_py_plugins/footnote/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/footnote/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/footnote/port.yaml",
+    "lib/python3.12/site-packages/mdit_py_plugins/front_matter/LICENSE",
+    "lib/python3.12/site-packages/mdit_py_plugins/front_matter/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/front_matter/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/front_matter/port.yaml",
+    "lib/python3.12/site-packages/mdit_py_plugins/myst_blocks/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/myst_blocks/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/myst_role/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/myst_role/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/py.typed",
+    "lib/python3.12/site-packages/mdit_py_plugins/substitution.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/tasklists/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/tasklists/port.yaml",
+    "lib/python3.12/site-packages/mdit_py_plugins/texmath/LICENSE",
+    "lib/python3.12/site-packages/mdit_py_plugins/texmath/README.md",
+    "lib/python3.12/site-packages/mdit_py_plugins/texmath/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/texmath/index.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/texmath/port.yaml",
+    "lib/python3.12/site-packages/mdit_py_plugins/utils.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/wordcount/__init__.py",
+    "lib/python3.12/site-packages/mdit_py_plugins/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/admon/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/admon/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/amsmath/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/anchors/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/anchors/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/attrs/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/attrs/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/attrs/__pycache__/parse.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/__pycache__/colon_fence.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/container/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/container/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/deflist/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/deflist/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/dollarmath/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/dollarmath/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/field_list/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/footnote/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/footnote/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/front_matter/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/front_matter/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/myst_blocks/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/myst_blocks/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/myst_role/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/myst_role/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/__pycache__/substitution.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/tasklists/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/texmath/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/texmath/__pycache__/index.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/__pycache__/utils.cpython-312.pyc",
+    "lib/python3.12/site-packages/mdit_py_plugins/wordcount/__pycache__/__init__.cpython-312.pyc"
+  ],
+  "fn": "mdit-py-plugins-0.4.1-pyhd8ed1ab_0.conda",
+  "license": "MIT",
+  "link": {
+    "source": "/opt/conda/pkgs/mdit-py-plugins-0.4.1-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "eb90dd178bcdd0260dfaa6e1cbccf042",
+  "name": "mdit-py-plugins",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/mdit-py-plugins-0.4.1-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/mdit_py_plugins-0.4.1.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins-0.4.1.dist-info/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484",
+        "sha256_in_prefix": "4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484",
+        "size_in_bytes": 1078
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins-0.4.1.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "26762aa69b1658e2f49f57c5e81f68de5cca3c3be5b205b3c207f4d34df0152a",
+        "sha256_in_prefix": "26762aa69b1658e2f49f57c5e81f68de5cca3c3be5b205b3c207f4d34df0152a",
+        "size_in_bytes": 2790
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins-0.4.1.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "f7318cd23643b74beb95f5d917f0ded47edb0c7c4f72cc2d49021461b25bfd75",
+        "sha256_in_prefix": "f7318cd23643b74beb95f5d917f0ded47edb0c7c4f72cc2d49021461b25bfd75",
+        "size_in_bytes": 6939
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins-0.4.1.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins-0.4.1.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "1196c6921ec87b83e865f450f08d19b8ff5592537f4ef719e83484e546abe33e",
+        "sha256_in_prefix": "1196c6921ec87b83e865f450f08d19b8ff5592537f4ef719e83484e546abe33e",
+        "size_in_bytes": 81
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins-0.4.1.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "965d55e954fb150c41b3b9fbf421886a854a6d3c3890c536b9f55a6248531da3",
+        "sha256_in_prefix": "965d55e954fb150c41b3b9fbf421886a854a6d3c3890c536b9f55a6248531da3",
+        "size_in_bytes": 111
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "a4cb53992521b7e5ed6d1ffb0e8cfa6ec42aa2924977cad9f08f33cb61f0c280",
+        "sha256_in_prefix": "a4cb53992521b7e5ed6d1ffb0e8cfa6ec42aa2924977cad9f08f33cb61f0c280",
+        "size_in_bytes": 22
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/admon/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "699355a44cb248631a4cde542029b593b7e6663823b0518338e85fd65360bac3",
+        "sha256_in_prefix": "699355a44cb248631a4cde542029b593b7e6663823b0518338e85fd65360bac3",
+        "size_in_bytes": 1129
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/admon/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "86cf37a9863845dfc9dc0522035eaf00c83e77d3ab0c4143dff520636b1a7a49",
+        "sha256_in_prefix": "86cf37a9863845dfc9dc0522035eaf00c83e77d3ab0c4143dff520636b1a7a49",
+        "size_in_bytes": 61
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/admon/index.py",
+        "path_type": "hardlink",
+        "sha256": "ee3337655ec1b8c1526bab9875a894edb5272c4d11cadd21938034c9d475892a",
+        "sha256_in_prefix": "ee3337655ec1b8c1526bab9875a894edb5272c4d11cadd21938034c9d475892a",
+        "size_in_bytes": 6838
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/admon/port.yaml",
+        "path_type": "hardlink",
+        "sha256": "cb3e32219ce4109b8195a9248380d1d47f9443c46ea62dac15f52012845dec7b",
+        "sha256_in_prefix": "cb3e32219ce4109b8195a9248380d1d47f9443c46ea62dac15f52012845dec7b",
+        "size_in_bytes": 117
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/amsmath/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e737f2918f5625cfaff76787b5b7a21d65c0749802af67d1edd314eda7a02382",
+        "sha256_in_prefix": "e737f2918f5625cfaff76787b5b7a21d65c0749802af67d1edd314eda7a02382",
+        "size_in_bytes": 4576
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/anchors/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "2718752285c154f0aad6c272e58d87554ef9489617d673c72d075f7e0cbbb67e",
+        "sha256_in_prefix": "2718752285c154f0aad6c272e58d87554ef9489617d673c72d075f7e0cbbb67e",
+        "size_in_bytes": 65
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/anchors/index.py",
+        "path_type": "hardlink",
+        "sha256": "9a43ac63eaedbc3aac3fb437804eaf3edeb634bc5b2307efcf59c88d2494e4a1",
+        "sha256_in_prefix": "9a43ac63eaedbc3aac3fb437804eaf3edeb634bc5b2307efcf59c88d2494e4a1",
+        "size_in_bytes": 4114
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/attrs/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "ce51b071b4976cff63ddef4c43193b1fb13a4c251a1f8356a30a80dc096da0f0",
+        "sha256_in_prefix": "ce51b071b4976cff63ddef4c43193b1fb13a4c251a1f8356a30a80dc096da0f0",
+        "size_in_bytes": 102
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/attrs/index.py",
+        "path_type": "hardlink",
+        "sha256": "a47b009a4cf3e0ca2303d0856e6ce37a496e0f0a62b940ae151c3ea43afeef40",
+        "sha256_in_prefix": "a47b009a4cf3e0ca2303d0856e6ce37a496e0f0a62b940ae151c3ea43afeef40",
+        "size_in_bytes": 7651
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/attrs/parse.py",
+        "path_type": "hardlink",
+        "sha256": "b6e6373b60aa170d0a7b77513c929b661cf3fd3663a6ab0820b9d48ac92a5d75",
+        "sha256_in_prefix": "b6e6373b60aa170d0a7b77513c929b661cf3fd3663a6ab0820b9d48ac92a5d75",
+        "size_in_bytes": 7755
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/colon_fence.py",
+        "path_type": "hardlink",
+        "sha256": "d54511f9a373fa07fb6d065b0a33eededf34a786b2797c027a63b6f6d0ae6327",
+        "sha256_in_prefix": "d54511f9a373fa07fb6d065b0a33eededf34a786b2797c027a63b6f6d0ae6327",
+        "size_in_bytes": 3955
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/container/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "c91339910d300f163edcaddbfb3909f1cffae19a496b7fe3935a9a4073dc305a",
+        "sha256_in_prefix": "c91339910d300f163edcaddbfb3909f1cffae19a496b7fe3935a9a4073dc305a",
+        "size_in_bytes": 1073
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/container/README.md",
+        "path_type": "hardlink",
+        "sha256": "a7744ba99d43dbd71ddd840795027d2fec01a94f25604df80f123ad72d61278b",
+        "sha256_in_prefix": "a7744ba99d43dbd71ddd840795027d2fec01a94f25604df80f123ad72d61278b",
+        "size_in_bytes": 2533
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/container/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "f7bdb90497883a6844e74e56cd461585160e364c40f3a19e683a160920241245",
+        "sha256_in_prefix": "f7bdb90497883a6844e74e56cd461585160e364c40f3a19e683a160920241245",
+        "size_in_bytes": 69
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/container/index.py",
+        "path_type": "hardlink",
+        "sha256": "a2c05d1564ec30e6e91254830aef77f992bbb9d162eb15629b48c9a9780d3ef2",
+        "sha256_in_prefix": "a2c05d1564ec30e6e91254830aef77f992bbb9d162eb15629b48c9a9780d3ef2",
+        "size_in_bytes": 5770
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/container/port.yaml",
+        "path_type": "hardlink",
+        "sha256": "547e35e8ede4a52dc41325c25dd6cf981e5e91fb4b7efb7cfd666bcc032db5a7",
+        "sha256_in_prefix": "547e35e8ede4a52dc41325c25dd6cf981e5e91fb4b7efb7cfd666bcc032db5a7",
+        "size_in_bytes": 132
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/deflist/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "81d61236a5f25294b2dad0c866d4ad6a40b865148b28df9a71f49ba771a6c54b",
+        "sha256_in_prefix": "81d61236a5f25294b2dad0c866d4ad6a40b865148b28df9a71f49ba771a6c54b",
+        "size_in_bytes": 1078
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/deflist/README.md",
+        "path_type": "hardlink",
+        "sha256": "18626b788958dae421a7ba6eecfe8d053adeecea0e6c9ce9596afccb22fc85d9",
+        "sha256_in_prefix": "18626b788958dae421a7ba6eecfe8d053adeecea0e6c9ce9596afccb22fc85d9",
+        "size_in_bytes": 1273
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/deflist/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "bbe43f5dd85daf428e968fd274c09966ef7198d7ada38118e6269ae448356676",
+        "sha256_in_prefix": "bbe43f5dd85daf428e968fd274c09966ef7198d7ada38118e6269ae448356676",
+        "size_in_bytes": 65
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/deflist/index.py",
+        "path_type": "hardlink",
+        "sha256": "a46ff832686b435f3173dc760078bc4193f0204018a1cd545174eec1202525f7",
+        "sha256_in_prefix": "a46ff832686b435f3173dc760078bc4193f0204018a1cd545174eec1202525f7",
+        "size_in_bytes": 7439
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/deflist/port.yaml",
+        "path_type": "hardlink",
+        "sha256": "bd46ddf35c801c61d65799ade0396c28417bb6961e6c206687b29735bed3f51f",
+        "sha256_in_prefix": "bd46ddf35c801c61d65799ade0396c28417bb6961e6c206687b29735bed3f51f",
+        "size_in_bytes": 132
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/dollarmath/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "fb6f13e1d5db254a7ded61aaeba7c225edbc57cbadfc2b8d75d437ecc93443ed",
+        "sha256_in_prefix": "fb6f13e1d5db254a7ded61aaeba7c225edbc57cbadfc2b8d75d437ecc93443ed",
+        "size_in_bytes": 71
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/dollarmath/index.py",
+        "path_type": "hardlink",
+        "sha256": "5419c31d6f7d31f99d08fa9f6804ac08bf11566301d596d6d73eaca5f4a1f690",
+        "sha256_in_prefix": "5419c31d6f7d31f99d08fa9f6804ac08bf11566301d596d6d73eaca5f4a1f690",
+        "size_in_bytes": 12483
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/field_list/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "bef86442481c88bce2ee1edccb1ebbacb628e273f87257b0dbe831c498f824ec",
+        "sha256_in_prefix": "bef86442481c88bce2ee1edccb1ebbacb628e273f87257b0dbe831c498f824ec",
+        "size_in_bytes": 8283
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/footnote/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "81d61236a5f25294b2dad0c866d4ad6a40b865148b28df9a71f49ba771a6c54b",
+        "sha256_in_prefix": "81d61236a5f25294b2dad0c866d4ad6a40b865148b28df9a71f49ba771a6c54b",
+        "size_in_bytes": 1078
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/footnote/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "920e90579b3be45d10162f868363db0f76efa67a56a470fe2e69cc198698013c",
+        "sha256_in_prefix": "920e90579b3be45d10162f868363db0f76efa67a56a470fe2e69cc198698013c",
+        "size_in_bytes": 67
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/footnote/index.py",
+        "path_type": "hardlink",
+        "sha256": "11a1de644c2ff59cfdb7ffb4580f809788ec1293ef4627960a398e93789e4c87",
+        "sha256_in_prefix": "11a1de644c2ff59cfdb7ffb4580f809788ec1293ef4627960a398e93789e4c87",
+        "size_in_bytes": 14582
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/footnote/port.yaml",
+        "path_type": "hardlink",
+        "sha256": "5d7b632f05bc93d28e03a36db41dd4e5c177ef8435b0a0cbdf1c4ffdee66dd58",
+        "sha256_in_prefix": "5d7b632f05bc93d28e03a36db41dd4e5c177ef8435b0a0cbdf1c4ffdee66dd58",
+        "size_in_bytes": 120
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/front_matter/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "9e1bc1fafae020b5c33cc9cb745c707a5addf109cd814f0dac2d41424b83554a",
+        "sha256_in_prefix": "9e1bc1fafae020b5c33cc9cb745c707a5addf109cd814f0dac2d41424b83554a",
+        "size_in_bytes": 1056
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/front_matter/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "7c1bd9dedd9c61e02d2994d5b0ed5cc3222c94b3f9e18510c77a274de6fa5c7f",
+        "sha256_in_prefix": "7c1bd9dedd9c61e02d2994d5b0ed5cc3222c94b3f9e18510c77a274de6fa5c7f",
+        "size_in_bytes": 75
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/front_matter/index.py",
+        "path_type": "hardlink",
+        "sha256": "2125cdd070293128fddca5b9b9984fac7bbb59d867f5ff63aa51e16db6e7f47e",
+        "sha256_in_prefix": "2125cdd070293128fddca5b9b9984fac7bbb59d867f5ff63aa51e16db6e7f47e",
+        "size_in_bytes": 3360
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/front_matter/port.yaml",
+        "path_type": "hardlink",
+        "sha256": "ec071db3b4a4eed4e8d4dec2ba5b3e033c3e9a1478919225cf7913afe05b251c",
+        "sha256_in_prefix": "ec071db3b4a4eed4e8d4dec2ba5b3e033c3e9a1478919225cf7913afe05b251c",
+        "size_in_bytes": 124
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/myst_blocks/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "451e261058774adb31a98f48171240ebef6c8fe36c87321c3d968ba0f394ee66",
+        "sha256_in_prefix": "451e261058774adb31a98f48171240ebef6c8fe36c87321c3d968ba0f394ee66",
+        "size_in_bytes": 71
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/myst_blocks/index.py",
+        "path_type": "hardlink",
+        "sha256": "e82ba867d1d1eeeb906aab22adbad7068540a61b0c2626ab3da0b7ea30ec41b8",
+        "sha256_in_prefix": "e82ba867d1d1eeeb906aab22adbad7068540a61b0c2626ab3da0b7ea30ec41b8",
+        "size_in_bytes": 4568
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/myst_role/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "5c4aab3980dd0c240668c9d9fc26e3aab8269c015ec36eed64c4312c70e614c5",
+        "sha256_in_prefix": "5c4aab3980dd0c240668c9d9fc26e3aab8269c015ec36eed64c4312c70e614c5",
+        "size_in_bytes": 69
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/myst_role/index.py",
+        "path_type": "hardlink",
+        "sha256": "dbdde926995ecd05b6b783faf4e824e4fe0260a0eda151ac200daff5972a532a",
+        "sha256_in_prefix": "dbdde926995ecd05b6b783faf4e824e4fe0260a0eda151ac200daff5972a532a",
+        "size_in_bytes": 2035
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/py.typed",
+        "path_type": "hardlink",
+        "sha256": "f0f8f2675695a10a5156fb7bd66bafbaae6a13e8d315990af862c792175e6e67",
+        "sha256_in_prefix": "f0f8f2675695a10a5156fb7bd66bafbaae6a13e8d315990af862c792175e6e67",
+        "size_in_bytes": 26
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/substitution.py",
+        "path_type": "hardlink",
+        "sha256": "3dd80be1a9b77b18ae3502e60c76af2c506b9d28afbd38a9af4a71c143a91701",
+        "sha256_in_prefix": "3dd80be1a9b77b18ae3502e60c76af2c506b9d28afbd38a9af4a71c143a91701",
+        "size_in_bytes": 3122
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/tasklists/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "ad64b85220873f84d7e0a6ceee6c908751a7733476219a42d2f223d667aea4ad",
+        "sha256_in_prefix": "ad64b85220873f84d7e0a6ceee6c908751a7733476219a42d2f223d667aea4ad",
+        "size_in_bytes": 5766
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/tasklists/port.yaml",
+        "path_type": "hardlink",
+        "sha256": "054922ae6c15044ee8342e0bec20dafe87aaaef2797d9a9c635ce7dcecbaa2a9",
+        "sha256_in_prefix": "054922ae6c15044ee8342e0bec20dafe87aaaef2797d9a9c635ce7dcecbaa2a9",
+        "size_in_bytes": 195
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/texmath/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "012a56cf9e23a2917336178cca417ab4c88fc64ad7086d621d6a8b956593629f",
+        "sha256_in_prefix": "012a56cf9e23a2917336178cca417ab4c88fc64ad7086d621d6a8b956593629f",
+        "size_in_bytes": 1075
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/texmath/README.md",
+        "path_type": "hardlink",
+        "sha256": "82de8b49d756843182950bc4096e4bc1c76d81af0df1c24912be270b3d7d1326",
+        "sha256_in_prefix": "82de8b49d756843182950bc4096e4bc1c76d81af0df1c24912be270b3d7d1326",
+        "size_in_bytes": 5191
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/texmath/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "92ddf4bd682117c31f17f5de0f4f2c76b619a8e7540fa41dd58b72ae6ae1cdb5",
+        "sha256_in_prefix": "92ddf4bd682117c31f17f5de0f4f2c76b619a8e7540fa41dd58b72ae6ae1cdb5",
+        "size_in_bytes": 65
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/texmath/index.py",
+        "path_type": "hardlink",
+        "sha256": "bdcd0258a1d3da27531e9aac687addc60de57a3b95ac37ba7042d7cd9ee36a00",
+        "sha256_in_prefix": "bdcd0258a1d3da27531e9aac687addc60de57a3b95ac37ba7042d7cd9ee36a00",
+        "size_in_bytes": 10820
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/texmath/port.yaml",
+        "path_type": "hardlink",
+        "sha256": "43f58a2d8e6aa362248144df36bd1b79c4908019867ff00d403d56e3519154f0",
+        "sha256_in_prefix": "43f58a2d8e6aa362248144df36bd1b79c4908019867ff00d403d56e3519154f0",
+        "size_in_bytes": 245
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/utils.py",
+        "path_type": "hardlink",
+        "sha256": "70e011709add1917e297258fe2588ea11587ce544d7f3a136b865865aa6dbbc8",
+        "sha256_in_prefix": "70e011709add1917e297258fe2588ea11587ce544d7f3a136b865865aa6dbbc8",
+        "size_in_bytes": 364
+      },
+      {
+        "_path": "site-packages/mdit_py_plugins/wordcount/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "340450d0f2e6b026da2ddbcc569e2c5f8c651f39f80b1be53ac2f1703bee0f80",
+        "sha256_in_prefix": "340450d0f2e6b026da2ddbcc569e2c5f8c651f39f80b1be53ac2f1703bee0f80",
+        "size_in_bytes": 1791
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/admon/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/admon/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/amsmath/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/anchors/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/anchors/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/attrs/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/attrs/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/attrs/__pycache__/parse.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/__pycache__/colon_fence.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/container/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/container/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/deflist/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/deflist/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/dollarmath/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/dollarmath/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/field_list/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/footnote/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/footnote/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/front_matter/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/front_matter/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/myst_blocks/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/myst_blocks/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/myst_role/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/myst_role/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/__pycache__/substitution.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/tasklists/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/texmath/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/texmath/__pycache__/index.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/__pycache__/utils.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/mdit_py_plugins/wordcount/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "3525b8e4598ccaab913a2bcb8a63998c6e5cc1870d0c5a5b4e867aa69c720aa1",
+  "size": 41972,
+  "subdir": "noarch",
+  "timestamp": 1715570303000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/mdit-py-plugins-0.4.1-pyhd8ed1ab_0.conda",
+  "version": "0.4.1"
+}

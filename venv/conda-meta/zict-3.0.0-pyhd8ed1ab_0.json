@@ -1,0 +1,445 @@
+{
+  "build": "pyhd8ed1ab_0",
+  "build_number": 0,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "constrains": [],
+  "depends": [
+    "python >=3.8"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/zict-3.0.0-pyhd8ed1ab_0",
+  "files": [
+    "lib/python3.12/site-packages/zict-3.0.0.dist-info/INSTALLER",
+    "lib/python3.12/site-packages/zict-3.0.0.dist-info/LICENSE.txt",
+    "lib/python3.12/site-packages/zict-3.0.0.dist-info/METADATA",
+    "lib/python3.12/site-packages/zict-3.0.0.dist-info/RECORD",
+    "lib/python3.12/site-packages/zict-3.0.0.dist-info/REQUESTED",
+    "lib/python3.12/site-packages/zict-3.0.0.dist-info/WHEEL",
+    "lib/python3.12/site-packages/zict-3.0.0.dist-info/direct_url.json",
+    "lib/python3.12/site-packages/zict-3.0.0.dist-info/top_level.txt",
+    "lib/python3.12/site-packages/zict/__init__.py",
+    "lib/python3.12/site-packages/zict/async_buffer.py",
+    "lib/python3.12/site-packages/zict/buffer.py",
+    "lib/python3.12/site-packages/zict/cache.py",
+    "lib/python3.12/site-packages/zict/common.py",
+    "lib/python3.12/site-packages/zict/file.py",
+    "lib/python3.12/site-packages/zict/func.py",
+    "lib/python3.12/site-packages/zict/lmdb.py",
+    "lib/python3.12/site-packages/zict/lru.py",
+    "lib/python3.12/site-packages/zict/py.typed",
+    "lib/python3.12/site-packages/zict/sieve.py",
+    "lib/python3.12/site-packages/zict/tests/__init__.py",
+    "lib/python3.12/site-packages/zict/tests/conftest.py",
+    "lib/python3.12/site-packages/zict/tests/test_async_buffer.py",
+    "lib/python3.12/site-packages/zict/tests/test_buffer.py",
+    "lib/python3.12/site-packages/zict/tests/test_cache.py",
+    "lib/python3.12/site-packages/zict/tests/test_common.py",
+    "lib/python3.12/site-packages/zict/tests/test_file.py",
+    "lib/python3.12/site-packages/zict/tests/test_func.py",
+    "lib/python3.12/site-packages/zict/tests/test_lmdb.py",
+    "lib/python3.12/site-packages/zict/tests/test_lru.py",
+    "lib/python3.12/site-packages/zict/tests/test_sieve.py",
+    "lib/python3.12/site-packages/zict/tests/test_utils.py",
+    "lib/python3.12/site-packages/zict/tests/test_zip.py",
+    "lib/python3.12/site-packages/zict/tests/utils_test.py",
+    "lib/python3.12/site-packages/zict/utils.py",
+    "lib/python3.12/site-packages/zict/zip.py",
+    "lib/python3.12/site-packages/zict/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/async_buffer.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/buffer.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/cache.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/common.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/file.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/func.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/lmdb.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/lru.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/sieve.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/__init__.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/conftest.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_async_buffer.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_buffer.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_cache.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_common.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_file.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_func.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_lmdb.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_lru.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_sieve.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_utils.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/test_zip.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/tests/__pycache__/utils_test.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/utils.cpython-312.pyc",
+    "lib/python3.12/site-packages/zict/__pycache__/zip.cpython-312.pyc"
+  ],
+  "fn": "zict-3.0.0-pyhd8ed1ab_0.conda",
+  "license": "BSD-3-Clause",
+  "link": {
+    "source": "/opt/conda/pkgs/zict-3.0.0-pyhd8ed1ab_0",
+    "type": 1
+  },
+  "md5": "cf30c2c15b82aacb07f9c09e28ff2275",
+  "name": "zict",
+  "noarch": "python",
+  "package_tarball_full_path": "/opt/conda/pkgs/zict-3.0.0-pyhd8ed1ab_0.conda",
+  "package_type": "noarch_python",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "site-packages/zict-3.0.0.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/zict-3.0.0.dist-info/LICENSE.txt",
+        "path_type": "hardlink",
+        "sha256": "5e839f9d5dd174ae6815085f534b52f6914201357dfac1d03ae1d3d7a3fbf614",
+        "sha256_in_prefix": "5e839f9d5dd174ae6815085f534b52f6914201357dfac1d03ae1d3d7a3fbf614",
+        "size_in_bytes": 1507
+      },
+      {
+        "_path": "site-packages/zict-3.0.0.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "65bdd57ba9888b49d6177f20bc4469e7cfbf709c0012c1c21d85fd3d7b8b4be5",
+        "sha256_in_prefix": "65bdd57ba9888b49d6177f20bc4469e7cfbf709c0012c1c21d85fd3d7b8b4be5",
+        "size_in_bytes": 880
+      },
+      {
+        "_path": "site-packages/zict-3.0.0.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "54b2a916e814d375b20bac6b40ead4d85c7aca9fa7843d9a497c2bd1e639c9d3",
+        "sha256_in_prefix": "54b2a916e814d375b20bac6b40ead4d85c7aca9fa7843d9a497c2bd1e639c9d3",
+        "size_in_bytes": 3962
+      },
+      {
+        "_path": "site-packages/zict-3.0.0.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/zict-3.0.0.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "6bece9151209cceab941fba10736e1880d5e1d3ccd0899fc39d46f85d357d119",
+        "sha256_in_prefix": "6bece9151209cceab941fba10736e1880d5e1d3ccd0899fc39d46f85d357d119",
+        "size_in_bytes": 110
+      },
+      {
+        "_path": "site-packages/zict-3.0.0.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "33f1f238db9a2e9e71e70c8e3810ea7e6209dd44c4a6c23dd20e1f2c8f9f6a16",
+        "sha256_in_prefix": "33f1f238db9a2e9e71e70c8e3810ea7e6209dd44c4a6c23dd20e1f2c8f9f6a16",
+        "size_in_bytes": 100
+      },
+      {
+        "_path": "site-packages/zict-3.0.0.dist-info/top_level.txt",
+        "path_type": "hardlink",
+        "sha256": "aeee32aaf6831a66c50d778489fe2f2413c9bdef3a5a081e712b99d3b6dd6088",
+        "sha256_in_prefix": "aeee32aaf6831a66c50d778489fe2f2413c9bdef3a5a081e712b99d3b6dd6088",
+        "size_in_bytes": 5
+      },
+      {
+        "_path": "site-packages/zict/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "c37ab131ce21ae72ae17a3de2f402d1f77e04a50286fda023850a3ff45c662a7",
+        "sha256_in_prefix": "c37ab131ce21ae72ae17a3de2f402d1f77e04a50286fda023850a3ff45c662a7",
+        "size_in_bytes": 528
+      },
+      {
+        "_path": "site-packages/zict/async_buffer.py",
+        "path_type": "hardlink",
+        "sha256": "5e38a8cc20588f8e0577e1460bc85272e6f508fb75e6c2238338c9de4fdab19c",
+        "sha256_in_prefix": "5e38a8cc20588f8e0577e1460bc85272e6f508fb75e6c2238338c9de4fdab19c",
+        "size_in_bytes": 6565
+      },
+      {
+        "_path": "site-packages/zict/buffer.py",
+        "path_type": "hardlink",
+        "sha256": "c2be3bbd566f85a2ecf98455aa5b3f5b3c79a9a208339657937b1e2f0f00c100",
+        "sha256_in_prefix": "c2be3bbd566f85a2ecf98455aa5b3f5b3c79a9a208339657937b1e2f0f00c100",
+        "size_in_bytes": 9624
+      },
+      {
+        "_path": "site-packages/zict/cache.py",
+        "path_type": "hardlink",
+        "sha256": "8ee7900bd34e780aa9766dadeb21994c885570835bf6a4ed353d05d21e47ccef",
+        "sha256_in_prefix": "8ee7900bd34e780aa9766dadeb21994c885570835bf6a4ed353d05d21e47ccef",
+        "size_in_bytes": 4857
+      },
+      {
+        "_path": "site-packages/zict/common.py",
+        "path_type": "hardlink",
+        "sha256": "a14889cdc058646c8705a6e19044fdb1843e659029f186f826829e029e030907",
+        "sha256_in_prefix": "a14889cdc058646c8705a6e19044fdb1843e659029f186f826829e029e030907",
+        "size_in_bytes": 3335
+      },
+      {
+        "_path": "site-packages/zict/file.py",
+        "path_type": "hardlink",
+        "sha256": "3d7db74e4480d575f7891b6789ddf5273278a8029649ac9f26be9a3f2db4a4ed",
+        "sha256_in_prefix": "3d7db74e4480d575f7891b6789ddf5273278a8029649ac9f26be9a3f2db4a4ed",
+        "size_in_bytes": 5244
+      },
+      {
+        "_path": "site-packages/zict/func.py",
+        "path_type": "hardlink",
+        "sha256": "09683008a2903d0e42e0db24a78a84f22cefa29a69c5c97a3ff5c54208a36714",
+        "sha256_in_prefix": "09683008a2903d0e42e0db24a78a84f22cefa29a69c5c97a3ff5c54208a36714",
+        "size_in_bytes": 2196
+      },
+      {
+        "_path": "site-packages/zict/lmdb.py",
+        "path_type": "hardlink",
+        "sha256": "c504815bc58be77a7c8a74d744df3fab45396645e089e46d163009685db7a257",
+        "sha256_in_prefix": "c504815bc58be77a7c8a74d744df3fab45396645e089e46d163009685db7a257",
+        "size_in_bytes": 4707
+      },
+      {
+        "_path": "site-packages/zict/lru.py",
+        "path_type": "hardlink",
+        "sha256": "3b42939e50f3879130c771d579799acfca46895e4ef17daad3c25548d8c0ff3d",
+        "sha256_in_prefix": "3b42939e50f3879130c771d579799acfca46895e4ef17daad3c25548d8c0ff3d",
+        "size_in_bytes": 10032
+      },
+      {
+        "_path": "site-packages/zict/py.typed",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/zict/sieve.py",
+        "path_type": "hardlink",
+        "sha256": "cc8b7d8232660c77c3c4db68fc81060cba778a6c64b15adf1c28d79bcddd917b",
+        "sha256_in_prefix": "cc8b7d8232660c77c3c4db68fc81060cba778a6c64b15adf1c28d79bcddd917b",
+        "size_in_bytes": 4310
+      },
+      {
+        "_path": "site-packages/zict/tests/__init__.py",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0
+      },
+      {
+        "_path": "site-packages/zict/tests/conftest.py",
+        "path_type": "hardlink",
+        "sha256": "5ee5e93c9d5ca5ee9c9fff55555c6199367d5dadba6f97a52fbddf4a1b5c2794",
+        "sha256_in_prefix": "5ee5e93c9d5ca5ee9c9fff55555c6199367d5dadba6f97a52fbddf4a1b5c2794",
+        "size_in_bytes": 1201
+      },
+      {
+        "_path": "site-packages/zict/tests/test_async_buffer.py",
+        "path_type": "hardlink",
+        "sha256": "eb17739e994e599df481afb5fab985e6cb1f768a58cb0902c82030b4312498c5",
+        "sha256_in_prefix": "eb17739e994e599df481afb5fab985e6cb1f768a58cb0902c82030b4312498c5",
+        "size_in_bytes": 8626
+      },
+      {
+        "_path": "site-packages/zict/tests/test_buffer.py",
+        "path_type": "hardlink",
+        "sha256": "4a8ae8c96dc2c153d6bf1dae2bd1a5ebdf30e5f1adb5830beb1db72cb1dcc74b",
+        "sha256_in_prefix": "4a8ae8c96dc2c153d6bf1dae2bd1a5ebdf30e5f1adb5830beb1db72cb1dcc74b",
+        "size_in_bytes": 10214
+      },
+      {
+        "_path": "site-packages/zict/tests/test_cache.py",
+        "path_type": "hardlink",
+        "sha256": "d87d543bdac4606c43e70c483b1a43f992c424bddf65f2c408c092eb821de4c2",
+        "sha256_in_prefix": "d87d543bdac4606c43e70c483b1a43f992c424bddf65f2c408c092eb821de4c2",
+        "size_in_bytes": 11922
+      },
+      {
+        "_path": "site-packages/zict/tests/test_common.py",
+        "path_type": "hardlink",
+        "sha256": "b3ae66b266534534306baf13bcec79059b146b0c0170329785f7148110ce65ca",
+        "sha256_in_prefix": "b3ae66b266534534306baf13bcec79059b146b0c0170329785f7148110ce65ca",
+        "size_in_bytes": 2239
+      },
+      {
+        "_path": "site-packages/zict/tests/test_file.py",
+        "path_type": "hardlink",
+        "sha256": "238930504a67a62f80d610a5342c81ed14ee4f303725df5d6d97c1219c399da5",
+        "sha256_in_prefix": "238930504a67a62f80d610a5342c81ed14ee4f303725df5d6d97c1219c399da5",
+        "size_in_bytes": 3708
+      },
+      {
+        "_path": "site-packages/zict/tests/test_func.py",
+        "path_type": "hardlink",
+        "sha256": "ab7a101e5dea12f259e9b8200a84d1745ae41b43550eb06a94582ca298e52f28",
+        "sha256_in_prefix": "ab7a101e5dea12f259e9b8200a84d1745ae41b43550eb06a94582ca298e52f28",
+        "size_in_bytes": 1851
+      },
+      {
+        "_path": "site-packages/zict/tests/test_lmdb.py",
+        "path_type": "hardlink",
+        "sha256": "44e0ac10b0a59361254fe3f1635a78ae6d34f0cb777ea20e87bf6bac4355af5e",
+        "sha256_in_prefix": "44e0ac10b0a59361254fe3f1635a78ae6d34f0cb777ea20e87bf6bac4355af5e",
+        "size_in_bytes": 1432
+      },
+      {
+        "_path": "site-packages/zict/tests/test_lru.py",
+        "path_type": "hardlink",
+        "sha256": "f0df59994afb74d4401113933452e8349c56edca351e59e4ffef36c7794d9963",
+        "sha256_in_prefix": "f0df59994afb74d4401113933452e8349c56edca351e59e4ffef36c7794d9963",
+        "size_in_bytes": 10582
+      },
+      {
+        "_path": "site-packages/zict/tests/test_sieve.py",
+        "path_type": "hardlink",
+        "sha256": "8bad35eaab45a80a3c413484ea1b42e180875f9a825667bc651550e5779387bc",
+        "sha256_in_prefix": "8bad35eaab45a80a3c413484ea1b42e180875f9a825667bc651550e5779387bc",
+        "size_in_bytes": 6674
+      },
+      {
+        "_path": "site-packages/zict/tests/test_utils.py",
+        "path_type": "hardlink",
+        "sha256": "fb966afb88afa5b783d3968c76a95843833bc25c20cb60cec1a45e09410852f6",
+        "sha256_in_prefix": "fb966afb88afa5b783d3968c76a95843833bc25c20cb60cec1a45e09410852f6",
+        "size_in_bytes": 2912
+      },
+      {
+        "_path": "site-packages/zict/tests/test_zip.py",
+        "path_type": "hardlink",
+        "sha256": "1689759e22b9b90e5731e2b294db08fc5779f39a1ce640d242a2447ee4645c72",
+        "sha256_in_prefix": "1689759e22b9b90e5731e2b294db08fc5779f39a1ce640d242a2447ee4645c72",
+        "size_in_bytes": 2704
+      },
+      {
+        "_path": "site-packages/zict/tests/utils_test.py",
+        "path_type": "hardlink",
+        "sha256": "55e40398866fb5076aaa561baa6e64ca3b3f3d2f2450e45506a10d1b8eed8ab4",
+        "sha256_in_prefix": "55e40398866fb5076aaa561baa6e64ca3b3f3d2f2450e45506a10d1b8eed8ab4",
+        "size_in_bytes": 8098
+      },
+      {
+        "_path": "site-packages/zict/utils.py",
+        "path_type": "hardlink",
+        "sha256": "4d272e34095a6e7f2c925856d28442ee1caf988afa1d50d0cae61afd28b16fd0",
+        "sha256_in_prefix": "4d272e34095a6e7f2c925856d28442ee1caf988afa1d50d0cae61afd28b16fd0",
+        "size_in_bytes": 1927
+      },
+      {
+        "_path": "site-packages/zict/zip.py",
+        "path_type": "hardlink",
+        "sha256": "e2e9e6b48171ff8521a8fd942a0bec56545975641cf13c2172ea35954bfcffc0",
+        "sha256_in_prefix": "e2e9e6b48171ff8521a8fd942a0bec56545975641cf13c2172ea35954bfcffc0",
+        "size_in_bytes": 3012
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/async_buffer.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/buffer.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/cache.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/common.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/file.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/func.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/lmdb.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/lru.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/sieve.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/__init__.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/conftest.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_async_buffer.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_buffer.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_cache.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_common.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_file.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_func.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_lmdb.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_lru.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_sieve.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_utils.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/test_zip.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/tests/__pycache__/utils_test.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/utils.cpython-312.pyc",
+        "path_type": "pyc_file"
+      },
+      {
+        "_path": "lib/python3.12/site-packages/zict/__pycache__/zip.cpython-312.pyc",
+        "path_type": "pyc_file"
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "None",
+  "sha256": "3d65c081514569ab3642ba7e6c2a6b4615778b596db6b1c82ee30a2d912539e5",
+  "size": 36325,
+  "subdir": "noarch",
+  "timestamp": 1681770298000,
+  "url": "https://conda.anaconda.org/conda-forge/noarch/zict-3.0.0-pyhd8ed1ab_0.conda",
+  "version": "3.0.0"
+}

@@ -1,0 +1,41 @@
+{
+  "build": "h32600fe_2",
+  "build_number": 2,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "libzlib >=1.2.13,<2.0.0a0"
+  ],
+  "extracted_package_dir": "/opt/conda/pkgs/pandoc-2.19.2-h32600fe_2",
+  "files": [
+    "bin/pandoc"
+  ],
+  "fn": "pandoc-2.19.2-h32600fe_2.conda",
+  "license": "GPL-2.0-or-later",
+  "link": {
+    "source": "/opt/conda/pkgs/pandoc-2.19.2-h32600fe_2",
+    "type": 1
+  },
+  "md5": "326f46f36d15c44cff5f81d505cb717f",
+  "name": "pandoc",
+  "package_tarball_full_path": "/opt/conda/pkgs/pandoc-2.19.2-h32600fe_2.conda",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/pandoc",
+        "path_type": "hardlink",
+        "sha256": "98925370b79ee32baa87782aea56de965b44a5ce050df1a611cadae206381152",
+        "sha256_in_prefix": "98925370b79ee32baa87782aea56de965b44a5ce050df1a611cadae206381152",
+        "size_in_bytes": 187670600
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "pandoc[version='>1.12.1,<3']",
+  "sha256": "f9452f407a1c298d091279c8255e1db301c1d5b772ccf2e7e60d370b45d21fc7",
+  "size": 27120405,
+  "subdir": "linux-64",
+  "timestamp": 1678227075000,
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/pandoc-2.19.2-h32600fe_2.conda",
+  "version": "2.19.2"
+}
