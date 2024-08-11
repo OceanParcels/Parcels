@@ -262,4 +262,3 @@ struct ast_state {
 }
 #endif
 #endif /* !Py_INTERNAL_AST_STATE_H */
-

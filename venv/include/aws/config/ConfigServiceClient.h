@@ -959,7 +959,7 @@ namespace ConfigService
         }
 
         /**
-         * <p>Returns compliance details for each rule in that conformance pack.</p> 
+         * <p>Returns compliance details for each rule in that conformance pack.</p>
          * <p>You must provide exact rule names.</p> <p><h3>See Also:</h3>   <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/DescribeConformancePackCompliance">AWS
          * API Reference</a></p>
@@ -1012,7 +1012,7 @@ namespace ConfigService
         }
 
         /**
-         * <p>Returns a list of one or more conformance packs.</p><p><h3>See Also:</h3>  
+         * <p>Returns a list of one or more conformance packs.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/DescribeConformancePacks">AWS
          * API Reference</a></p>
@@ -1070,7 +1070,7 @@ namespace ConfigService
          * <p>Returns details about the specified delivery channel. If a delivery channel
          * is not specified, this action returns the details of all delivery channels
          * associated with the account.</p>  <p>Currently, you can specify only one
-         * delivery channel per region in your account.</p> <p><h3>See Also:</h3>  
+         * delivery channel per region in your account.</p> <p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/DescribeDeliveryChannels">AWS
          * API Reference</a></p>
@@ -1239,7 +1239,7 @@ namespace ConfigService
         }
 
         /**
-         * <p>Returns a list of all pending aggregation requests.</p><p><h3>See Also:</h3> 
+         * <p>Returns a list of all pending aggregation requests.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/DescribePendingAggregationRequests">AWS
          * API Reference</a></p>
@@ -1294,13 +1294,13 @@ namespace ConfigService
          * <p>Returns the details of one or more remediation exceptions. A detailed view of
          * a remediation exception for a set of resources that includes an explanation of
          * an exception and the time when the exception will be deleted. When you specify
-         * the limit and the next token, you receive a paginated response. </p> 
+         * the limit and the next token, you receive a paginated response. </p>
          * <p>Config generates a remediation exception when a problem occurs executing a
          * remediation action to a specific resource. Remediation exceptions blocks
          * auto-remediation until the exception is cleared.</p> <p>When you specify the
          * limit and the next token, you receive a paginated response. </p> <p>Limit and
          * next token are not applicable if you request resources in batch. It is only
-         * applicable, when you request all resources.</p> <p><h3>See Also:</h3>  
+         * applicable, when you request all resources.</p> <p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/DescribeRemediationExceptions">AWS
          * API Reference</a></p>
@@ -1329,7 +1329,7 @@ namespace ConfigService
          * <p>Provides a detailed view of a Remediation Execution for a set of resources
          * including state, timestamps for when steps for the remediation execution occur,
          * and any error messages for steps that have failed. When you specify the limit
-         * and the next token, you receive a paginated response.</p><p><h3>See Also:</h3>  
+         * and the next token, you receive a paginated response.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/DescribeRemediationExecutionStatus">AWS
          * API Reference</a></p>
@@ -1738,7 +1738,7 @@ namespace ConfigService
          * Config customer.</p> </li> <li> <p>You just enabled resource recording.</p>
          * </li> </ul> <p>It might take a few minutes for Config to record and count your
          * resources. Wait a few minutes and then retry the
-         * <a>GetDiscoveredResourceCounts</a> action. </p> <p><h3>See Also:</h3>  
+         * <a>GetDiscoveredResourceCounts</a> action. </p> <p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/GetDiscoveredResourceCounts">AWS
          * API Reference</a></p>
@@ -2018,7 +2018,7 @@ namespace ConfigService
          * that Config has discovered, including those that Config is not currently
          * recording. You can narrow the results to include only resources that have
          * specific resource IDs or a resource name.</p>  <p>You can specify either
-         * resource IDs or a resource name, but not both, in the same request.</p> 
+         * resource IDs or a resource name, but not both, in the same request.</p>
          * <p>The response is paginated. By default, Config lists 100 resource identifiers
          * on each page. You can customize this number with the <code>limit</code>
          * parameter. The response includes a <code>nextToken</code> string. To get the
@@ -2048,7 +2048,7 @@ namespace ConfigService
         }
 
         /**
-         * <p>Returns a list of proactive resource evaluations.</p><p><h3>See Also:</h3>  
+         * <p>Returns a list of proactive resource evaluations.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/ListResourceEvaluations">AWS
          * API Reference</a></p>
@@ -2193,7 +2193,7 @@ namespace ConfigService
          * in this request.</p> <p>For more information about developing and using Config
          * rules, see <a
          * href="https://docs.aws.amazon.com/config/latest/developerguide/evaluate-config.html">Evaluating
-         * Resources with Config Rules</a> in the <i>Config Developer Guide</i>.</p> 
+         * Resources with Config Rules</a> in the <i>Config Developer Guide</i>.</p>
          * <p> <code>PutConfigRule</code> is an idempotent API. Subsequent requests won’t
          * create a duplicate resource if one was already created. If a following request
          * has different <code>tags</code> values, Config will ignore these differences and
@@ -2240,7 +2240,7 @@ namespace ConfigService
          * is a valid delegated administrator.</p> <p>To register a delegated
          * administrator, see <a
          * href="https://docs.aws.amazon.com/config/latest/developerguide/set-up-aggregator-cli.html#register-a-delegated-administrator-cli">Register
-         * a Delegated Administrator</a> in the <i>Config developer guide</i>. </p> 
+         * a Delegated Administrator</a> in the <i>Config developer guide</i>. </p>
          *  <p> <code>PutConfigurationAggregator</code> is an idempotent API.
          * Subsequent requests won’t create a duplicate resource if one was already
          * created. If a following request has different <code>tags</code> values, Config
@@ -2556,7 +2556,7 @@ namespace ConfigService
          * with the selected target or action. The API creates the
          * <code>RemediationConfiguration</code> object for the Config rule. The Config
          * rule must already exist for you to add a remediation configuration. The target
-         * (SSM document) must exist and have permissions to use the target. </p> 
+         * (SSM document) must exist and have permissions to use the target. </p>
          * <p> <b>Be aware of backward incompatible changes</b> </p> <p>If you make
          * backward incompatible changes to the SSM document, you must call this again to
          * ensure the remediations can run.</p> <p>This API does not support adding
@@ -2569,7 +2569,7 @@ namespace ConfigService
          * document can use either as long as it maps to a valid parameter.</p> <p>However,
          * for automatic remediation configuration, the only valid <code>assumeRole</code>
          * field value is <code>AutomationAssumeRole</code> and you need to provide a value
-         * for <code>AutomationAssumeRole</code> to remediate your resources.</p> 
+         * for <code>AutomationAssumeRole</code> to remediate your resources.</p>
          *  <p> <b>Auto remediation can be initiated even for compliant resources</b>
          * </p> <p>If you enable auto remediation for a specific Config rule using the <a
          * href="https://docs.aws.amazon.com/config/latest/APIReference/emAPI_PutRemediationConfigurations.html">PutRemediationConfigurations</a>
@@ -2620,7 +2620,7 @@ namespace ConfigService
          * <code>NON_COMPLIANT</code>, you can add remediation exceptions and change the
          * remediation type back from Manual to Auto if you want to use auto-remediation.
          * Otherwise, using auto-remediation before a <code>NON_COMPLIANT</code> evaluation
-         * result can delete resources before the exception is applied.</p>  
+         * result can delete resources before the exception is applied.</p>
          * <p> <b>Exceptions can only be performed on non-compliant resources</b> </p>
          * <p>Placing an exception can only be performed on resources that are
          * <code>NON_COMPLIANT</code>. If you use this API for <code>COMPLIANT</code>
@@ -2704,7 +2704,7 @@ namespace ConfigService
          * period (number of days) that Config stores your historical information. The API
          * creates the <code>RetentionConfiguration</code> object and names the object as
          * <b>default</b>. When you have a <code>RetentionConfiguration</code> object named
-         * <b>default</b>, calling the API modifies the default object. </p> 
+         * <b>default</b>, calling the API modifies the default object. </p>
          * <p>Currently, Config supports only one retention configuration per region in
          * your account.</p> <p><h3>See Also:</h3>   <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/PutRetentionConfiguration">AWS

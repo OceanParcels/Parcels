@@ -1147,4 +1147,3 @@ Version 1.0.4 (2009-08-27)
             manual, and may some day not contain the note which is in
             1.21. For the exact version of the manual, download GNU
             tar 1.21: ftp://ftp.gnu.org/pub/gnu/tar/tar-1.21.tar.gz
-

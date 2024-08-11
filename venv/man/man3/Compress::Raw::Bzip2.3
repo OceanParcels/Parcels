@@ -147,14 +147,14 @@ Compress::Raw::Bzip2 \- Low\-Level Interface to bzip2 compression library
 \&
 \&    my ($bz, $status) = new Compress::Raw::Bzip2 [OPTS]
 \&        or die "Cannot create bzip2 object: $bzerno\en";
-\&    
+\&
 \&    $status = $bz\->bzdeflate($input, $output);
 \&    $status = $bz\->bzflush($output);
 \&    $status = $bz\->bzclose($output);
 \&
 \&    my ($bz, $status) = new Compress::Raw::Bunzip2 [OPTS]
 \&        or die "Cannot create bunzip2 object: $bzerno\en";
-\&    
+\&
 \&    $status = $bz\->bzinflate($input, $output);
 \&
 \&    my $version = Compress::Raw::Bzip2::bzlibversion();
@@ -364,7 +364,7 @@ The following bzip2 constants are exported by this module
 .Ve
 .SH "SUPPORT"
 .IX Header "SUPPORT"
-General feedback/questions/bug reports should be sent to 
+General feedback/questions/bug reports should be sent to
 <https://github.com/pmqs/Compress\-Raw\-Bzip2/issues> (preferred) or
 <https://rt.cpan.org/Public/Dist/Display.html?Name=Compress\-Raw\-Bzip2>.
 .SH "SEE ALSO"

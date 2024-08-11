@@ -84,4 +84,3 @@ private:
 } // namespace geos::index::quadtree
 } // namespace geos::index
 } // namespace geos
-

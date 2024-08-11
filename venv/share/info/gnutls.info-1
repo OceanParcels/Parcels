@@ -404,14 +404,14 @@ AES-256-GCM            TLS 1.3     authenticated encryption GCM mode.
                                    authentication and encryption and can
                                    be extremely fast on CPUs that support
                                    hardware acceleration.
-                                   
+
 AES-128-CCM,   AEAD    TLS 1.2,    This is the AES algorithm in the
 AES-256-CCM            TLS 1.3     authenticated encryption CCM mode.
                                    This mode combines message
                                    authentication and encryption and is
                                    often used by systems without AES or
                                    GCM acceleration support.
-                                   
+
 CHACHA20-POLY1305AEAD  TLS 1.2,    CHACHA20-POLY1305 is an authenticated
                        TLS 1.3     encryption algorithm based on CHACHA20
                                    cipher and POLY1305 MAC. CHACHA20 is a
@@ -423,32 +423,32 @@ CHACHA20-POLY1305AEAD  TLS 1.2,    CHACHA20-POLY1305 is an authenticated
                                    cipher suitable for systems where a
                                    hardware AES accelerator is not
                                    available.
-                                   
+
 AES-128-CCM-8, AEAD    TLS 1.2,    This is the AES algorithm in the
 AES-256-CCM-8          TLS 1.3     authenticated encryption CCM mode with
                                    a truncated to 64-bit authentication
                                    tag.  This mode is for communication
                                    with restricted systems.
-                                   
+
 CAMELLIA-128-GCM,AEAD  TLS 1.2     This is the CAMELLIA algorithm in the
 CAMELLIA-256-GCM                   authenticated encryption GCM mode.
-                                   
+
 AES-128-CBC,   Legacy  TLS 1.0,    AES or RIJNDAEL is the block cipher
 AES-256-CBC    (block) TLS 1.1,    algorithm that replaces the old DES
                        TLS 1.2     algorithm.  It has 128 bits block size
                                    and is used in CBC mode.
-                                   
+
 CAMELLIA-128-CBC,LegacyTLS 1.0,    This is an 128-bit block cipher
 CAMELLIA-256-CBC(block)TLS 1.1,    developed by Mitsubishi and NTT. It is
                        TLS 1.2     one of the approved ciphers of the
                                    European NESSIE and Japanese CRYPTREC
                                    projects.
-                                   
+
 3DES-CBC       Legacy  TLS 1.0,    This is the DES block cipher algorithm
                (block) TLS 1.1,    used with triple encryption (EDE). Has
                        TLS 1.2     64 bits block size and is used in CBC
                                    mode.
-                                   
+
 ARCFOUR-128    Legacy  TLS 1.0,    ARCFOUR-128 is a compatible algorithm
                (stream)TLS 1.1,    with RSA's RC4 algorithm, which is
                        TLS 1.2     considered to be a trade secret.  It
@@ -456,13 +456,13 @@ ARCFOUR-128    Legacy  TLS 1.0,    ARCFOUR-128 is a compatible algorithm
                                    only used for compatibility purposed.
                                    For this reason it is not enabled by
                                    default.
-                                   
+
 GOST28147-TC26Z-CNTLegacyTLS 1.2   This is a 64-bit block cipher GOST
                (stream)            28147-89 with TC26Z S-Box working in
                                    CNT mode.  It is one of the approved
                                    ciphers in Russia.  It is not enabled
                                    by default.
-                                   
+
 NULL           Legacy  TLS 1.0,    NULL is the empty/identity cipher
                (stream)TLS 1.1,    which doesn't encrypt any data.  It
                        TLS 1.2     can be combined with data
@@ -475,7 +475,7 @@ NULL           Legacy  TLS 1.0,    NULL is the empty/identity cipher
                                    negotiated at all under TLS 1.3.  When
                                    enabled, TLS 1.3 (or later) support
                                    will be implicitly disabled.
-                                   
+
 
 
 Table 3.1: Supported ciphers in TLS.
@@ -485,26 +485,26 @@ Algorithm      Description
 MAC-MD5        This is an HMAC based on MD5 a cryptographic
                hash algorithm designed by Ron Rivest.  Outputs
                128 bits of data.
-               
+
 MAC-SHA1       An HMAC based on the SHA1 cryptographic hash
                algorithm designed by NSA. Outputs 160 bits of
                data.
-               
+
 MAC-SHA256     An HMAC based on SHA2-256.  Outputs 256 bits of
                data.
-               
+
 MAC-SHA384     An HMAC based on SHA2-384.  Outputs 384 bits of
                data.
-               
+
 GOST28147-TC26Z-IMITThis is a 64-bit block cipher GOST 28147-89 with
                TC26Z S-Box working in special MAC mode called
                Imitovstavks.  It is one of the approved MAC
                algorithms in Russia.  Outputs 32 bits of data.
                It is not enabled by default.
-               
+
 MAC-AEAD       This indicates that an authenticated encryption
                algorithm, such as GCM, is in use.
-               
+
 
 
 Table 3.2: Supported MAC algorithms in TLS.
@@ -1354,12 +1354,12 @@ The key exchange algorithms supported by certificate authentication are
 shown in *note Table 4.1: tab:key-exchange.
 
 Key exchange   Description
-               
+
 ------------------------------------------------------------------
 RSA            The RSA algorithm is used to encrypt a key and
                send it to the peer.  The certificate must allow
                the key to be used for encryption.
-               
+
 DHE_RSA        The RSA algorithm is used to sign ephemeral
                Diffie-Hellman parameters which are sent to the
                peer.  The key in the certificate must allow the
@@ -1369,7 +1369,7 @@ DHE_RSA        The RSA algorithm is used to sign ephemeral
                secrecy.  That means that even if the private
                key used for signing is compromised, it cannot
                be used to reveal past session data.
-               
+
 ECDHE_RSA      The RSA algorithm is used to sign ephemeral
                elliptic curve Diffie-Hellman parameters which
                are sent to the peer.  The key in the
@@ -1378,21 +1378,21 @@ ECDHE_RSA      The RSA algorithm is used to sign ephemeral
                secrecy.  That means that even if the private
                key used for signing is compromised, it cannot
                be used to reveal past session data.
-               
+
 DHE_DSS        The DSA algorithm is used to sign ephemeral
                Diffie-Hellman parameters which are sent to the
                peer.  The certificate must contain DSA
                parameters to use this key exchange algorithm.
                DSA is the algorithm of the Digital Signature
                Standard (DSS).
-               
+
 ECDHE_ECDSA    The Elliptic curve DSA algorithm is used to sign
                ephemeral elliptic curve Diffie-Hellman
                parameters which are sent to the peer.  The
                certificate must contain ECDSA parameters (i.e.,
                EC and marked for signing) to use this key
                exchange algorithm.
-               
+
 
 
 Table 4.1: Supported key exchange algorithms.
@@ -1450,26 +1450,26 @@ holder, the signer, a unique serial number, expiration dates and some
 other fields [*note PKIX::] as shown in *note Table 4.2: tab:x509.
 
 Field          Description
-               
+
 ------------------------------------------------------------------
 version        The field that indicates the version of the
                certificate.
-               
+
 serialNumber   This field holds a unique serial number per
                certificate.
-               
+
 signature      The issuing authority's signature.
-               
+
 issuer         Holds the issuer's distinguished name.
-               
+
 validity       The activation and expiration dates.
-               
+
 subject        The subject's distinguished name of the
                certificate.
-               
+
 extensions     The extensions are fields only present in
                version 3 certificates.
-               
+
 
 
 Table 4.2: X.509 certificate fields.
@@ -1682,69 +1682,69 @@ Similar functions exist for all of the other supported extensions,
 listed in *note Table 4.3: tab:x509-ext.
 
 Extension              OID            Description
-                                      
+
 --------------------------------------------------------------------
 Subject key id         2.5.29.14      An identifier of the key of
                                       the subject.
-                                      
+
 Key usage              2.5.29.15      Constraints the key's usage
                                       of the certificate.
-                                      
+
 Private key usage      2.5.29.16      Constraints the validity
 period                                time of the private key.
-                                      
+
 Subject alternative    2.5.29.17      Alternative names to
 name                                  subject's distinguished
                                       name.
-                                      
+
 Issuer alternative     2.5.29.18      Alternative names to the
 name                                  issuer's distinguished
                                       name.
-                                      
+
 Basic constraints      2.5.29.19      Indicates whether this is a
                                       CA certificate or not, and
                                       specify the maximum path
                                       lengths of certificate
                                       chains.
-                                      
+
 Name constraints       2.5.29.30      A field in CA certificates
                                       that restricts the scope of
                                       the name of issued
                                       certificates.
-                                      
+
 CRL distribution       2.5.29.31      This extension is set by
 points                                the CA, in order to inform
                                       about the location of
                                       issued Certificate
                                       Revocation Lists.
-                                      
+
 Certificate policy     2.5.29.32      This extension is set to
                                       indicate the certificate
                                       policy as object identifier
                                       and may contain a
                                       descriptive string or URL.
-                                      
+
 Extended key usage     2.5.29.54      Inhibit any policy
                                       extension.  Constraints the
                                       any policy OID
                                       ('GNUTLS_X509_OID_POLICY_ANY')
                                       use in the policy
                                       extension.
-                                      
+
 Authority key          2.5.29.35      An identifier of the key of
 identifier                            the issuer of the
                                       certificate.  That is used
                                       to distinguish between
                                       different keys of the same
                                       issuer.
-                                      
+
 Extended key usage     2.5.29.37      Constraints the purpose of
                                       the certificate.
-                                      
+
 Authority              1.3.6.1.5.5.7.1.1Information on services by
 information access                    the issuer of the
                                       certificate.
-                                      
+
 Proxy Certification    1.3.6.1.5.5.7.1.14Proxy Certificates includes
 Information                           this extension that
                                       contains the OID of the
@@ -1754,7 +1754,7 @@ Information                           this extension that
                                       proxy chains.  Proxy
                                       Certificates are specified
                                       in [*note RFC3820::].
-                                      
+
 
 
 Table 4.3: Supported X.509 certificate extensions.
@@ -2314,41 +2314,41 @@ apply to end certificates.  Their application to CA certificates is an
 extension used by the trust modules.
 
 Purpose        OID            Description
-                              
+
 --------------------------------------------------------------------------
 GNUTLS_KP_TLS_WWW_SERVER1.3.6.1.5.5.7.3.1The certificate is to be used for TLS WWW
                               authentication.  When in a CA
                               certificate, it indicates that the CA is
                               allowed to sign certificates for TLS WWW
                               authentication.
-                              
+
 GNUTLS_KP_TLS_WWW_CLIENT1.3.6.1.5.5.7.3.2The certificate is to be used for TLS WWW
                               client authentication.  When in a CA
                               certificate, it indicates that the CA is
                               allowed to sign certificates for TLS WWW
                               client authentication.
-                              
+
 GNUTLS_KP_CODE_SIGNING1.3.6.1.5.5.7.3.3The certificate is to be used for code
                               signing.  When in a CA certificate, it
                               indicates that the CA is allowed to sign
                               certificates for code signing.
-                              
+
 GNUTLS_KP_EMAIL_PROTECTION1.3.6.1.5.5.7.3.4The certificate is to be used for email
                               protection.  When in a CA certificate, it
                               indicates that the CA is allowed to sign
                               certificates for email users.
-                              
+
 GNUTLS_KP_OCSP_SIGNING1.3.6.1.5.5.7.3.9The certificate is to be used for signing
                               OCSP responses.  When in a CA
                               certificate, it indicates that the CA is
                               allowed to sign certificates which sign
                               OCSP responses.
-                              
+
 GNUTLS_KP_ANY  2.5.29.37.0    The certificate is to be used for any
                               purpose.  When in a CA certificate, it
                               indicates that the CA is allowed to sign
                               any kind of certificates.
-                              
+
 
 
 Table 4.4: Key purpose object identifiers.
@@ -2815,24 +2815,24 @@ except for the current issuing time, also the issuing time of the next
 update.
 
 Field          Description
-               
+
 ------------------------------------------------------------------
 version        The field that indicates the version of the CRL
                structure.
-               
+
 signature      A signature by the issuing authority.
-               
+
 issuer         Holds the issuer's distinguished name.
-               
+
 thisUpdate     The issuing time of the revocation list.
-               
+
 nextUpdate     The issuing time of the revocation list that
                will update that one.
-               
+
 revokedCertificatesList of revoked certificates serial numbers.
-               
+
 extensions     Optional CRL structure extensions.
-               
+
 
 
 Table 4.5: Certificate revocation list fields.
@@ -3086,30 +3086,30 @@ overview of it is in *note Table 4.6: tab:ocsp-response.  Note that a
 response may contain information on multiple certificates.
 
 Field          Description
-               
+
 ------------------------------------------------------------------
 version        The OCSP response version number (typically 1).
-               
+
 responder ID   An identifier of the responder (DN name or a
                hash of its key).
-               
+
 issue time     The time the response was generated.
-               
+
 thisUpdate     The issuing time of the revocation information.
-               
+
 nextUpdate     The issuing time of the revocation information
                that will update that one.
-               
+
                Revoked certificates
-               
+
 certificate    The status of the certificate.
-status         
+status
 certificate    The certificate's serial number.
-serial         
+serial
 revocationTime The time the certificate was revoked.
-               
+
 revocationReasonThe reason the certificate was revoked.
-               
+
 
 
 Table 4.6: The most important OCSP response fields.
@@ -7767,4 +7767,3 @@ is the corresponding public key.  This key can be used to general a
 certificate request with certtool.
      certtool --generate-request --load-privkey "pkcs11:KEY-URL" \
         --load-pubkey MyNewKey.pub --outfile request.pem
-

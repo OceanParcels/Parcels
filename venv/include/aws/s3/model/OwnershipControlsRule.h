@@ -39,7 +39,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const ObjectOwnership& GetObjectOwnership() const{ return m_objectOwnership; }
     inline bool ObjectOwnershipHasBeenSet() const { return m_objectOwnershipHasBeenSet; }
     inline void SetObjectOwnership(const ObjectOwnership& value) { m_objectOwnershipHasBeenSet = true; m_objectOwnership = value; }

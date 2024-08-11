@@ -28,6 +28,3 @@ int     qh_strtol(const char *s, char **endp);
 double  qh_strtod(const char *s, char **endp);
 
 #endif /* qhDEFrandom */
-
-
-

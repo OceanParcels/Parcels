@@ -40,7 +40,7 @@ namespace Model
      * <p>The type of the resource. The custom resource type must be registered with
      * CloudFormation. </p>  <p>You cannot use the organization names “amzn”,
      * “amazon”, “alexa”, “custom” with custom resource types. It is the first part of
-     * the ResourceType up to the first ::.</p> 
+     * the ResourceType up to the first ::.</p>
      */
     inline const Aws::String& GetResourceType() const{ return m_resourceType; }
     inline bool ResourceTypeHasBeenSet() const { return m_resourceTypeHasBeenSet; }
@@ -98,7 +98,7 @@ namespace Model
     /**
      * <p>The configuration object of the resource in valid JSON format. It must match
      * the schema registered with CloudFormation.</p>  <p>The configuration JSON
-     * must not exceed 64 KB.</p> 
+     * must not exceed 64 KB.</p>
      */
     inline const Aws::String& GetConfiguration() const{ return m_configuration; }
     inline bool ConfigurationHasBeenSet() const { return m_configurationHasBeenSet; }
@@ -115,7 +115,7 @@ namespace Model
      * <p>Tags associated with the resource.</p>  <p>This field is not to be
      * confused with the Amazon Web Services-wide tag feature for Amazon Web Services
      * resources. Tags for <code>PutResourceConfig</code> are tags that you supply for
-     * the configuration items of your custom resources.</p> 
+     * the configuration items of your custom resources.</p>
      */
     inline const Aws::Map<Aws::String, Aws::String>& GetTags() const{ return m_tags; }
     inline bool TagsHasBeenSet() const { return m_tagsHasBeenSet; }

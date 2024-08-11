@@ -392,7 +392,7 @@ overriding the lexical declaration with \f(CW\*(C`our $_\*(C'\fR. (Rafael Garcia
 .IX Subsection "The _ prototype"
 A new prototype character has been added. \f(CW\*(C`_\*(C'\fR is equivalent to \f(CW\*(C`$\*(C'\fR but
 defaults to \f(CW$_\fR if the corresponding argument isn't supplied (both \f(CW\*(C`$\*(C'\fR
-and \f(CW\*(C`_\*(C'\fR denote a scalar). Due to the optional nature of the argument, 
+and \f(CW\*(C`_\*(C'\fR denote a scalar). Due to the optional nature of the argument,
 you can only use it at the end of a prototype, or before a semicolon.
 .PP
 This has a small incompatible consequence: the \fBprototype()\fR function has
@@ -769,7 +769,7 @@ Assume the following code:
 \&  main calls Foo::Bar::baz()
 \&  Foo::Bar inherits from Foo::Base
 \&  Foo::Bar::baz() calls Foo::Base::_bazbaz()
-\&  Foo::Base::_bazbaz() calls: warnings::warnif(\*(Aqsubstr\*(Aq, \*(Aqsome warning 
+\&  Foo::Base::_bazbaz() calls: warnings::warnif(\*(Aqsubstr\*(Aq, \*(Aqsome warning
 \&message\*(Aq);
 .Ve
 .PP
@@ -1193,7 +1193,7 @@ A new configuration variable, available as \f(CW$Config{d_pseudofork}\fR in
 the Config module, has been added, to distinguish real \fBfork()\fR support
 from fake pseudofork used on Windows platforms.
 .Sp
-A new configuration variable, \f(CW\*(C`d_printf_format_null\*(C'\fR, has been added, 
+A new configuration variable, \f(CW\*(C`d_printf_format_null\*(C'\fR, has been added,
 to see if printf-like formats are allowed to be \s-1NULL.\s0
 .IP "Configure help" 4
 .IX Item "Configure help"

@@ -146,7 +146,7 @@ Config \- access Perl configuration information
 \&    use Config;
 \&    if ($Config{usethreads}) {
 \&        print "has thread support\en"
-\&    } 
+\&    }
 \&
 \&    use Config qw(myconfig config_sh config_vars config_re);
 \&
@@ -235,11 +235,11 @@ Here's a more sophisticated example of using \f(CW%Config:\fR
 \&        @sig_num{@names} = split \*(Aq \*(Aq, $Config{sig_num};
 \&        foreach (@names) {
 \&            $sig_name[$sig_num{$_}] ||= $_;
-\&        }   
+\&        }
 \&    }
 \&
 \&    print "signal #17 = $sig_name[17]\en";
-\&    if ($sig_num{ALRM}) { 
+\&    if ($sig_num{ALRM}) {
 \&        print "SIGALRM is $sig_num{ALRM}\en";
 \&    }
 .Ve

@@ -83,7 +83,7 @@ namespace Model
      * special characters (such as carriage returns) when using XML requests. For more
      * information, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-xml-related-constraints">
-     * XML related object key constraints</a>.</p> 
+     * XML related object key constraints</a>.</p>
      */
     inline const Aws::String& GetPrefix() const{ return m_prefix; }
     inline bool PrefixHasBeenSet() const { return m_prefixHasBeenSet; }
@@ -124,7 +124,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const NoncurrentVersionTransition& GetNoncurrentVersionTransition() const{ return m_noncurrentVersionTransition; }
     inline bool NoncurrentVersionTransitionHasBeenSet() const { return m_noncurrentVersionTransitionHasBeenSet; }
     inline void SetNoncurrentVersionTransition(const NoncurrentVersionTransition& value) { m_noncurrentVersionTransitionHasBeenSet = true; m_noncurrentVersionTransition = value; }
@@ -134,7 +134,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const NoncurrentVersionExpiration& GetNoncurrentVersionExpiration() const{ return m_noncurrentVersionExpiration; }
     inline bool NoncurrentVersionExpirationHasBeenSet() const { return m_noncurrentVersionExpirationHasBeenSet; }
     inline void SetNoncurrentVersionExpiration(const NoncurrentVersionExpiration& value) { m_noncurrentVersionExpirationHasBeenSet = true; m_noncurrentVersionExpiration = value; }
@@ -144,7 +144,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const AbortIncompleteMultipartUpload& GetAbortIncompleteMultipartUpload() const{ return m_abortIncompleteMultipartUpload; }
     inline bool AbortIncompleteMultipartUploadHasBeenSet() const { return m_abortIncompleteMultipartUploadHasBeenSet; }
     inline void SetAbortIncompleteMultipartUpload(const AbortIncompleteMultipartUpload& value) { m_abortIncompleteMultipartUploadHasBeenSet = true; m_abortIncompleteMultipartUpload = value; }

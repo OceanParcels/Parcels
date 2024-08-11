@@ -49,4 +49,3 @@ from The Open Group.
 #define XagNappGroupLeader		6
 
 #endif /* _AG_H_ */
-

@@ -162,4 +162,3 @@ private:
 } // namespace geos::operation::overlay
 } // namespace geos::operation
 } // namespace geos
-

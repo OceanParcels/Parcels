@@ -26,7 +26,7 @@
 #include <gnutls/gnutls.h>
 
  /* Self checking functions */
- 
+
 #define GNUTLS_SELF_TEST_FLAG_ALL 1
 #define GNUTLS_SELF_TEST_FLAG_NO_COMPAT (1<<1)
 

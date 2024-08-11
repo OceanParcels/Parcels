@@ -160,7 +160,7 @@ namespace Model
      * href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/http/nio/netty/NettyNioAsyncHttpClient.html">
      * NettyNioAsyncHttpClient</a> for asynchronous clients, or the <a
      * href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/http/apache/ApacheHttpClient.html">
-     * ApacheHttpClient</a> for synchronous clients. </p> 
+     * ApacheHttpClient</a> for synchronous clients. </p>
      */
     inline int GetWaitTimeSeconds() const{ return m_waitTimeSeconds; }
     inline bool WaitTimeSecondsHasBeenSet() const { return m_waitTimeSecondsHasBeenSet; }

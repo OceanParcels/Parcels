@@ -193,7 +193,7 @@ Include a single javascript source:
 \&  $p\->html_javascript(\*(Aqhttp://abc.com/a.js\*(Aq);
 .Ve
 .PP
-Or insert multiple javascript source in the header 
+Or insert multiple javascript source in the header
 (or for that matter include anything, thought this is not recommended)
 .PP
 .Vb 3
@@ -238,7 +238,7 @@ The following variables need to be set \fBbefore\fR the call to the \->new const
 Set the string that is included before the opening <html> tag:
 .PP
 .Vb 2
-\&  $Pod::Simple::HTML::Doctype_decl = qq{<!DOCTYPE HTML PUBLIC "\-//W3C//DTD HTML 4.01 Transitional//EN" 
+\&  $Pod::Simple::HTML::Doctype_decl = qq{<!DOCTYPE HTML PUBLIC "\-//W3C//DTD HTML 4.01 Transitional//EN"
 \&         "http://www.w3.org/TR/html4/loose.dtd">\en};
 .Ve
 .PP
@@ -334,7 +334,7 @@ one needs to override some of the methods:
 \&    my ($self, $link) = @_;
 \&
 \&    say $link\->tagname;          # will be L for links
-\&    say $link\->attr(\*(Aqto\*(Aq);       # 
+\&    say $link\->attr(\*(Aqto\*(Aq);       #
 \&    say $link\->attr(\*(Aqtype\*(Aq);     # will be \*(Aqpod\*(Aq always
 \&    say $link\->attr(\*(Aqsection\*(Aq);
 \&

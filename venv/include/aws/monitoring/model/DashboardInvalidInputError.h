@@ -42,7 +42,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const Aws::String& GetMessage() const{ return m_message; }
     inline bool MessageHasBeenSet() const { return m_messageHasBeenSet; }
     inline void SetMessage(const Aws::String& value) { m_messageHasBeenSet = true; m_message = value; }
@@ -54,7 +54,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Vector<DashboardValidationMessage>& GetDashboardValidationMessages() const{ return m_dashboardValidationMessages; }
     inline bool DashboardValidationMessagesHasBeenSet() const { return m_dashboardValidationMessagesHasBeenSet; }
     inline void SetDashboardValidationMessages(const Aws::Vector<DashboardValidationMessage>& value) { m_dashboardValidationMessagesHasBeenSet = true; m_dashboardValidationMessages = value; }

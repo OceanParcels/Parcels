@@ -88,6 +88,3 @@ PROGRAM H5_RDWT
   CALL h5close_f(error)
 
 END PROGRAM H5_RDWT
-
-
-

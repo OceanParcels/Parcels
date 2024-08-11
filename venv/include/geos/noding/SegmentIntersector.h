@@ -86,4 +86,3 @@ typedef SegmentIntersector nodingSegmentIntersector;
 
 } // namespace geos.noding
 } // namespace geos
-

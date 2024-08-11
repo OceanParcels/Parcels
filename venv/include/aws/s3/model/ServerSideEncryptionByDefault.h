@@ -78,7 +78,7 @@ namespace Model
      * supports symmetric encryption KMS keys. For more information, see <a
      * href="https://docs.aws.amazon.com/kms/latest/developerguide/symmetric-asymmetric.html">Asymmetric
      * keys in Amazon Web Services KMS</a> in the <i>Amazon Web Services Key Management
-     * Service Developer Guide</i>.</p> 
+     * Service Developer Guide</i>.</p>
      */
     inline const Aws::String& GetKMSMasterKeyID() const{ return m_kMSMasterKeyID; }
     inline bool KMSMasterKeyIDHasBeenSet() const { return m_kMSMasterKeyIDHasBeenSet; }

@@ -182,7 +182,7 @@ Text::Wrap \- line wrapping to form simple paragraphs
 \&\f(CW\*(C`Text::Wrap::wrap()\*(C'\fR is a very simple paragraph formatter.  It formats a
 single paragraph at a time by breaking lines at word boundaries.
 Indentation is controlled for the first line (\f(CW$initial_tab\fR) and
-all subsequent lines (\f(CW$subsequent_tab\fR) independently.  Please note: 
+all subsequent lines (\f(CW$subsequent_tab\fR) independently.  Please note:
 \&\f(CW$initial_tab\fR and \f(CW$subsequent_tab\fR are the literal strings that will
 be used: it is unlikely you would want to pass in a number.
 .PP
@@ -206,7 +206,7 @@ you have the appropriate Unicode settings enabled.
 .IX Header "OVERRIDES"
 \&\f(CW\*(C`Text::Wrap::wrap()\*(C'\fR has a number of variables that control its behavior.
 Because other modules might be using \f(CW\*(C`Text::Wrap::wrap()\*(C'\fR it is suggested
-that you leave these variables alone!  If you can't do that, then 
+that you leave these variables alone!  If you can't do that, then
 use \f(CW\*(C`local($Text::Wrap::VARIABLE) = YOURVALUE\*(C'\fR when you change the
 values so that the original value is restored.  This \f(CW\*(C`local()\*(C'\fR trick
 will not work if you import the variable into your own namespace.
@@ -233,14 +233,14 @@ the local namespace, and set locally.  In example 3,
 .PP
 \&\f(CW\*(C`Text::Wrap::wrap()\*(C'\fR starts its work by expanding all the tabs in its
 input into spaces.  The last thing it does it to turn spaces back
-into tabs.  If you do not want tabs in your results, set 
+into tabs.  If you do not want tabs in your results, set
 \&\f(CW$Text::Wrap::unexpand\fR to a false value.  Likewise if you do not
 want to use 8\-character tabstops, set \f(CW$Text::Wrap::tabstop\fR to
 the number of characters you do want for your tabstops.
 .PP
 If you want to separate your lines with something other than \f(CW\*(C`\en\*(C'\fR
 then set \f(CW$Text::Wrap::separator\fR to your preference.  This replaces
-all newlines with \f(CW$Text::Wrap::separator\fR.  If you just want to 
+all newlines with \f(CW$Text::Wrap::separator\fR.  If you just want to
 preserve existing newlines but add new breaks with something else, set
 \&\f(CW$Text::Wrap::separator2\fR instead.
 .PP
@@ -259,7 +259,7 @@ Code:
 .PP
 .Vb 4
 \&  print wrap("\et","",<<END);
-\&  This is a bit of text that forms 
+\&  This is a bit of text that forms
 \&  a normal book\-style indented paragraph
 \&  END
 .Ve
@@ -268,7 +268,7 @@ Result:
 .PP
 .Vb 3
 \&  "     This is a bit of text that forms
-\&  a normal book\-style indented paragraph   
+\&  a normal book\-style indented paragraph
 \&  "
 .Ve
 .PP
@@ -297,7 +297,7 @@ This man page is for the version for modern perls and so that's probably
 what you've got.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-For correct handling of East Asian half\- and full-width characters, 
+For correct handling of East Asian half\- and full-width characters,
 see Text::WrapI18N.  For more detailed controls: Text::Format.
 .SH "AUTHOR"
 .IX Header "AUTHOR"
@@ -305,7 +305,7 @@ David Muir Sharnoff <cpan@dave.sharnoff.org> with help from Tim Pierce and
 many many others.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyright (C) 1996\-2009 David Muir Sharnoff.  
+Copyright (C) 1996\-2009 David Muir Sharnoff.
 Copyright (C) 2012\-2013 Google, Inc.
 This module may be modified, used, copied, and redistributed at your own risk.
 Although allowed by the preceding license, please do not publicly

@@ -39,7 +39,7 @@ namespace Model
     /**
      * <p>The name of the log group.</p>  <p> You must include either
      * <code>logGroupIdentifier</code> or <code>logGroupName</code>, but not both. </p>
-     * 
+     *
      */
     inline const Aws::String& GetLogGroupName() const{ return m_logGroupName; }
     inline bool LogGroupNameHasBeenSet() const { return m_logGroupNameHasBeenSet; }
@@ -57,7 +57,7 @@ namespace Model
      * in a source account and you are using a monitoring account, you must use the log
      * group ARN.</p>  <p> You must include either
      * <code>logGroupIdentifier</code> or <code>logGroupName</code>, but not both. </p>
-     * 
+     *
      */
     inline const Aws::String& GetLogGroupIdentifier() const{ return m_logGroupIdentifier; }
     inline bool LogGroupIdentifierHasBeenSet() const { return m_logGroupIdentifierHasBeenSet; }

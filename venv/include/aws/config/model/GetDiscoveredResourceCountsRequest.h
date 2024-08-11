@@ -45,7 +45,7 @@ namespace Model
      * turned off, Config returns an empty list of <a>ResourceCount</a> objects. If the
      * configuration recorder is not recording a specific resource type (for example,
      * S3 buckets), that resource type is not returned in the list of
-     * <a>ResourceCount</a> objects.</p> 
+     * <a>ResourceCount</a> objects.</p>
      */
     inline const Aws::Vector<Aws::String>& GetResourceTypes() const{ return m_resourceTypes; }
     inline bool ResourceTypesHasBeenSet() const { return m_resourceTypesHasBeenSet; }

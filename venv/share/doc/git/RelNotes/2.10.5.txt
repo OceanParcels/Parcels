@@ -14,4 +14,3 @@ Fixes since v2.10.4
 Credits go to joernchen <joernchen@phenoelit.de> for finding the
 unsafe constructs in "git cvsserver", and to Jeff King at GitHub for
 finding and fixing instances of the same issue in other scripts.
-

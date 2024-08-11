@@ -32,10 +32,10 @@ hwlocality_helper_find_misc \- Finding objects, miscellaneous helpers
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
-Be sure to see the figure in \fBTerms and Definitions\fP that shows a complete topology tree, including depths, child/sibling/cousin relationships, and an example of an asymmetric topology where one package has fewer caches than its peers\&. 
+.PP
+Be sure to see the figure in \fBTerms and Definitions\fP that shows a complete topology tree, including depths, child/sibling/cousin relationships, and an example of an asymmetric topology where one package has fewer caches than its peers\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_bitmap_singlify_per_core (\fBhwloc_topology_t\fP topology, \fBhwloc_bitmap_t\fP cpuset, unsigned which)"
 
 .PP
@@ -52,7 +52,7 @@ If \fCwhich\fP is larger than the number of PUs in a core there were originally 
 .PP
 \fBNote\fP
 .RS 4
-PUs that are not below a Core object are ignored (for instance if the topology does not contain any Core object)\&. None of them is removed from \fCcpuset\fP\&. 
+PUs that are not below a Core object are ignored (for instance if the topology does not contain any Core object)\&. None of them is removed from \fCcpuset\fP\&.
 .RE
 .PP
 
@@ -70,7 +70,7 @@ the number of objects returned in \fCobjs\fP\&.
 .PP
 \fBNote\fP
 .RS 4
-This function requires the \fCsrc\fP object to have a CPU set\&. 
+This function requires the \fCsrc\fP object to have a CPU set\&.
 .RE
 .PP
 
@@ -81,7 +81,7 @@ Returns the object of type \fBHWLOC_OBJ_NUMANODE\fP with \fCos_index\fP\&. This 
 .PP
 \fBReturns\fP
 .RS 4
-the NUMA node object, or \fCNULL\fP if none matches\&. 
+the NUMA node object, or \fCNULL\fP if none matches\&.
 .RE
 .PP
 
@@ -103,7 +103,7 @@ a matching object if any, \fCNULL\fP otherwise\&.
 .PP
 \fBNote\fP
 .RS 4
-This function requires all these objects and the root object to have a CPU set\&. 
+This function requires all these objects and the root object to have a CPU set\&.
 .RE
 .PP
 
@@ -121,7 +121,7 @@ a matching object if any, \fCNULL\fP otherwise\&.
 .PP
 \fBNote\fP
 .RS 4
-This function requires these objects to have a CPU set\&. 
+This function requires these objects to have a CPU set\&.
 .RE
 .PP
 
@@ -146,7 +146,7 @@ This function will not walk the hierarchy across bridges since the PCI locality 
 .RS 4
 An object with identical locality, matching \fCsubtype\fP and \fCnameprefix\fP if any\&.
 .PP
-\fCNULL\fP if no matching object could be found, or if the source object and target type are incompatible, for instance if converting between CPU and I/O objects\&. 
+\fCNULL\fP if no matching object could be found, or if the source object and target type are incompatible, for instance if converting between CPU and I/O objects\&.
 .RE
 .PP
 
@@ -157,10 +157,10 @@ Returns the object of type \fBHWLOC_OBJ_PU\fP with \fCos_index\fP\&. This functi
 .PP
 \fBReturns\fP
 .RS 4
-the PU object, or \fCNULL\fP if none matches\&. 
+the PU object, or \fCNULL\fP if none matches\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

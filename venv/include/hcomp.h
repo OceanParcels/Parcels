@@ -144,4 +144,3 @@ typedef union tag_comp_info
 comp_info;
 
 #endif /* __HCOMP_H */
-

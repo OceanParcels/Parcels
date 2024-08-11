@@ -152,5 +152,3 @@
      CALL h5close_f(error)
 
      END PROGRAM OBJ_REFERENCES
-
-

@@ -267,7 +267,7 @@ typedef struct TkWmInfo {
 #define WM_TRANSPARENT			0x8000
 
 #endif /* _TKMACWM */
-
+
 /*
  * Local Variables:
  * mode: objc

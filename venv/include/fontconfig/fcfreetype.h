@@ -38,7 +38,7 @@ FcFreeTypeCharIndex (FT_Face face, FcChar32 ucs4);
 
 FcPublic FcCharSet *
 FcFreeTypeCharSetAndSpacing (FT_Face face, FcBlanks *blanks, int *spacing);
-    
+
 FcPublic FcCharSet *
 FcFreeTypeCharSet (FT_Face face, FcBlanks *blanks);
 

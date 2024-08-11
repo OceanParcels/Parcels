@@ -309,4 +309,3 @@ operator<(const Vertex& v1, const Vertex& v2)
 } //namespace geos.triangulate.quadedge
 } //namespace geos.triangulate
 } //namespace geos
-

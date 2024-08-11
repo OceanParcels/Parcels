@@ -67,7 +67,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetFilterPattern() const{ return m_filterPattern; }
     inline bool FilterPatternHasBeenSet() const { return m_filterPatternHasBeenSet; }
     inline void SetFilterPattern(const Aws::String& value) { m_filterPatternHasBeenSet = true; m_filterPattern = value; }
@@ -107,7 +107,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Distribution& GetDistribution() const{ return m_distribution; }
     inline bool DistributionHasBeenSet() const { return m_distributionHasBeenSet; }
     inline void SetDistribution(const Distribution& value) { m_distributionHasBeenSet = true; m_distribution = value; }

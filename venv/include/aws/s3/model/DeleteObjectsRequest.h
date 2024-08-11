@@ -121,7 +121,7 @@ namespace Model
      * request will fail. For information about MFA Delete, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html#MultiFactorAuthenticationDelete">
      * MFA Delete</a> in the <i>Amazon S3 User Guide</i>.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetMFA() const{ return m_mFA; }
     inline bool MFAHasBeenSet() const { return m_mFAHasBeenSet; }
@@ -134,7 +134,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
     inline void SetRequestPayer(const RequestPayer& value) { m_requestPayerHasBeenSet = true; m_requestPayer = value; }
@@ -148,7 +148,7 @@ namespace Model
      * <p>Specifies whether you want to delete this object even if it has a
      * Governance-type Object Lock in place. To use this header, you must have the
      * <code>s3:BypassGovernanceRetention</code> permission.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline bool GetBypassGovernanceRetention() const{ return m_bypassGovernanceRetention; }
     inline bool BypassGovernanceRetentionHasBeenSet() const { return m_bypassGovernanceRetentionHasBeenSet; }
@@ -204,7 +204,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

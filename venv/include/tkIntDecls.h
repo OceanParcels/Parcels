@@ -1232,4 +1232,3 @@ extern const TkIntStubs *tkIntStubsPtr;
 #undef TkUnusedStubEntry
 
 #endif /* _TKINTDECLS */
-

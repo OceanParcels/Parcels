@@ -92,7 +92,7 @@ salsa20_set_key(struct salsa20_ctx *ctx,
 
 void
 salsa20_set_nonce(struct salsa20_ctx *ctx, const uint8_t *nonce);
-  
+
 void
 salsa20_crypt(struct salsa20_ctx *ctx,
 	      size_t length, uint8_t *dst,

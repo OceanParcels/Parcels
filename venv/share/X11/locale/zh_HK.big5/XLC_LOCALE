@@ -1,11 +1,11 @@
-# 
+#
 #  (c) 1996, X11R6 L10N for Taiwan and Big5 Encoding Project
-# 
+#
 #  modified for X11R6.3 by Hung-Chi Chu <hcchu@r350.ee.ntu.edu.tw> 1998/01/10
-# 
+#
 # 	XLC_FONTSET category
 #
-# 
+#
 XLC_FONTSET
 #        fs0 class (7 bit ASCII)
 fs0     {
@@ -28,9 +28,9 @@ fs1     {
 	}
 }
 END XLC_FONTSET
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name		zh_HK.Big5
 mb_cur_max		2

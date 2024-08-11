@@ -57,7 +57,7 @@ namespace Model
      * to read Amazon S3 bucket. In addition, in order to ensure a successful
      * deployment, the template object must not be in an <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html">archived
-     * storage class</a> if this parameter is passed.</p> 
+     * storage class</a> if this parameter is passed.</p>
      */
     inline const Aws::String& GetTemplateS3Uri() const{ return m_templateS3Uri; }
     inline bool TemplateS3UriHasBeenSet() const { return m_templateS3UriHasBeenSet; }
@@ -89,7 +89,7 @@ namespace Model
     /**
      * <p>The name of the Amazon S3 bucket where Config stores conformance pack
      * templates.</p>  <p>This field is optional. If used, it must be prefixed
-     * with <code>awsconfigconforms</code>.</p> 
+     * with <code>awsconfigconforms</code>.</p>
      */
     inline const Aws::String& GetDeliveryS3Bucket() const{ return m_deliveryS3Bucket; }
     inline bool DeliveryS3BucketHasBeenSet() const { return m_deliveryS3BucketHasBeenSet; }
@@ -104,7 +104,7 @@ namespace Model
     ///@{
     /**
      * <p>The prefix for the Amazon S3 bucket.</p>  <p>This field is
-     * optional.</p> 
+     * optional.</p>
      */
     inline const Aws::String& GetDeliveryS3KeyPrefix() const{ return m_deliveryS3KeyPrefix; }
     inline bool DeliveryS3KeyPrefixHasBeenSet() const { return m_deliveryS3KeyPrefixHasBeenSet; }

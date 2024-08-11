@@ -151,7 +151,7 @@ It may be common (for example at your main lexicon) that
 the hash keys and values coincide. Like that
 .PP
 .Vb 2
-\&    q{Hello, tell me your name} 
+\&    q{Hello, tell me your name}
 \&      => q{Hello, tell me your name}
 .Ve
 .PP
@@ -163,10 +163,10 @@ It would be nice to just write:
 .PP
 and have this magically inflated to the first form.
 Among the advantages of such representation, that would
-lead to  
-smaller files, less prone to mistyping or mispasting, 
-and handy to someone translating it which can simply 
-copy the main lexicon and enter the translation 
+lead to
+smaller files, less prone to mistyping or mispasting,
+and handy to someone translating it which can simply
+copy the main lexicon and enter the translation
 instead of having to remove the value first.
 .PP
 That can be achieved by overriding \f(CW\*(C`init\*(C'\fR
@@ -207,7 +207,7 @@ should be more time expensive as an option.
 .IX Header "DECIMAL PLACES IN NUMBER FORMATTING"
 \&\fIAfter \s-1CPAN RT\s0 #36136 (<https://rt.cpan.org/Ticket/Display.html?id=36136>)\fR
 .PP
-The documentation of Locale::Maketext advises that 
+The documentation of Locale::Maketext advises that
 the standard bracket method \f(CW\*(C`numf\*(C'\fR is limited and that
 you must override that for better results. It even
 suggests the use of Number::Format.
@@ -226,7 +226,7 @@ outputs
 \&    pi is 3.14159292035398
 .Ve
 .PP
-Since pi X 355/116 is only accurate 
+Since pi X 355/116 is only accurate
 to 6 decimal places, you would want to say:
 .PP
 .Vb 1
@@ -286,7 +286,7 @@ and then
 .PP
 would return \*(L"A 1.550,222 km de dista\*^ncia\*(R".
 .PP
-Notice that the standard utility methods of 
+Notice that the standard utility methods of
 \&\f(CW\*(C`Locale::Maketext\*(C'\fR are irremediably limited
 because they could not aim to do everything
 that could be expected from them in different languages,

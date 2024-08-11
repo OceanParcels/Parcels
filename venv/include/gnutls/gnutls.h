@@ -687,12 +687,12 @@ const char
 /**
  * gnutls_certificate_status_t:
  * @GNUTLS_CERT_INVALID: The certificate is not signed by one of the
- *   known authorities or the signature is invalid (deprecated by the flags 
+ *   known authorities or the signature is invalid (deprecated by the flags
  *   %GNUTLS_CERT_SIGNATURE_FAILURE and %GNUTLS_CERT_SIGNER_NOT_FOUND).
  * @GNUTLS_CERT_SIGNATURE_FAILURE: The signature verification failed.
  * @GNUTLS_CERT_REVOKED: Certificate is revoked by its authority.  In X.509 this will be
  *   set only if CRLs are checked.
- * @GNUTLS_CERT_SIGNER_NOT_FOUND: The certificate's issuer is not known. 
+ * @GNUTLS_CERT_SIGNER_NOT_FOUND: The certificate's issuer is not known.
  *   This is the case if the issuer is not included in the trusted certificate list.
  * @GNUTLS_CERT_SIGNER_NOT_CA: The certificate's signer was not a CA. This
  *   may happen if this was a version 1 certificate, which is common with
@@ -1860,7 +1860,7 @@ void gnutls_session_set_verify_function(gnutls_session_t session, gnutls_certifi
 /**
  * gnutls_vdata_types_t:
  * @GNUTLS_DT_UNKNOWN: Unknown data type.
- * @GNUTLS_DT_DNS_HOSTNAME: The data contain a null-terminated DNS hostname; the hostname will be 
+ * @GNUTLS_DT_DNS_HOSTNAME: The data contain a null-terminated DNS hostname; the hostname will be
  *   matched using the RFC6125 rules. If the data contain a textual IP (v4 or v6) address it will
  *   be marched against the IPAddress Alternative name, unless the verification flag %GNUTLS_VERIFY_DO_NOT_ALLOW_IP_MATCHES
  *   is specified.
@@ -3187,12 +3187,12 @@ typedef enum {
 /* Register a custom tls extension
  */
 int gnutls_ext_register(const char *name, int type, gnutls_ext_parse_type_t parse_point,
-				gnutls_ext_recv_func recv_func, gnutls_ext_send_func send_func, 
+				gnutls_ext_recv_func recv_func, gnutls_ext_send_func send_func,
 				gnutls_ext_deinit_data_func deinit_func, gnutls_ext_pack_func pack_func,
 				gnutls_ext_unpack_func unpack_func);
 
 int gnutls_session_ext_register(gnutls_session_t, const char *name, int type, gnutls_ext_parse_type_t parse_point,
-				gnutls_ext_recv_func recv_func, gnutls_ext_send_func send_func, 
+				gnutls_ext_recv_func recv_func, gnutls_ext_send_func send_func,
 				gnutls_ext_deinit_data_func deinit_func, gnutls_ext_pack_func pack_func,
 				gnutls_ext_unpack_func unpack_func, unsigned flags);
 

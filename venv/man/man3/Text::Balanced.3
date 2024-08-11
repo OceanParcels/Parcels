@@ -574,12 +574,12 @@ A string specifying a pattern to be matched as the opening tag.
 If the pattern string is omitted (or \f(CW\*(C`undef\*(C'\fR) then a pattern
 that matches any standard \s-1XML\s0 tag is used.
 .IP "3." 4
-A string specifying a pattern to be matched at the closing tag. 
+A string specifying a pattern to be matched at the closing tag.
 If the pattern string is omitted (or \f(CW\*(C`undef\*(C'\fR) then the closing
 tag is constructed by inserting a \f(CW\*(C`/\*(C'\fR after any leading bracket
 characters in the actual opening tag that was matched (\fInot\fR the pattern
 that matched the tag). For example, if the opening tag pattern
-is specified as \f(CW\*(Aq{{\ew+}}\*(Aq\fR and actually matched the opening tag 
+is specified as \f(CW\*(Aq{{\ew+}}\*(Aq\fR and actually matched the opening tag
 \&\f(CW"{{DATA}}"\fR, then the constructed closing tag would be \f(CW"{{/DATA}}"\fR.
 .IP "4." 4
 A string specifying a pattern to be matched as a prefix (which is to be
@@ -703,7 +703,7 @@ they are called (whereas \f(CW\*(C`extract_tagged\*(C'\fR has to effectively reb
 its tag parser on every call);
 .IP "\(bu" 4
 make use of the new qr// construct to pre-compile the regexes they use
-(whereas \f(CW\*(C`extract_tagged\*(C'\fR uses standard string variable interpolation 
+(whereas \f(CW\*(C`extract_tagged\*(C'\fR uses standard string variable interpolation
 to create tag-matching patterns).
 .PP
 The subroutine takes up to four optional arguments (the same set as
@@ -726,7 +726,7 @@ equivalent to:
 (although \f(CW\*(C`extract_tagged\*(C'\fR is not currently implemented that way, in order
 to preserve pre\-5.005 compatibility).
 .PP
-Using \f(CW\*(C`gen_extract_tagged\*(C'\fR to create extraction functions for specific tags 
+Using \f(CW\*(C`gen_extract_tagged\*(C'\fR to create extraction functions for specific tags
 is a good idea if those functions are going to be called more than once, since
 their performance is typically twice as good as the more general-purpose
 \&\f(CW\*(C`extract_tagged\*(C'\fR.
@@ -741,7 +741,7 @@ all caught. For example, in:
 .PP
 .Vb 1
 \&        extract_quotelike \*(Aqq # an octothorpe: \e# (not the end of the q!) #\*(Aq
-\&        
+\&
 \&        extract_quotelike \*(Aq  "You said, \e"Use sed\e"."  \*(Aq
 \&
 \&        extract_quotelike \*(Aq s{([A\-Z]{1,8}\e.[A\-Z]{3})} /\eL$1\eE/; \*(Aq
@@ -774,7 +774,7 @@ will be extracted as if it were:
 This behaviour is identical to that of the actual compiler.
 .PP
 \&\f(CW\*(C`extract_quotelike\*(C'\fR takes two arguments: the text to be processed and
-a prefix to be matched at the very beginning of the text. If no prefix 
+a prefix to be matched at the very beginning of the text. If no prefix
 is specified, optional whitespace is the default. If no text is given,
 \&\f(CW$_\fR is used.
 .PP
@@ -809,7 +809,7 @@ the left delimiter of the second block of the operation
 (that is, if it is a \f(CW\*(C`s\*(C'\fR, \f(CW\*(C`tr\*(C'\fR, or \f(CW\*(C`y\*(C'\fR),
 .IP "[8]" 4
 .IX Item "[8]"
-the text of the second block of the operation 
+the text of the second block of the operation
 (that is, the replacement of a substitution or the translation list
 of a translation),
 .IP "[9]" 4
@@ -1021,7 +1021,7 @@ level of the code block, so the directive is parsed correctly.
 .ie n .SS """extract_multiple"""
 .el .SS "\f(CWextract_multiple\fP"
 .IX Subsection "extract_multiple"
-The \f(CW\*(C`extract_multiple\*(C'\fR subroutine takes a string to be processed and a 
+The \f(CW\*(C`extract_multiple\*(C'\fR subroutine takes a string to be processed and a
 list of extractors (subroutines or regular expressions) to apply to that string.
 .PP
 In an array context \f(CW\*(C`extract_multiple\*(C'\fR returns an array of substrings
@@ -1062,11 +1062,11 @@ An number specifying the maximum number of fields to return. If this
 argument is omitted (or \f(CW\*(C`undef\*(C'\fR), split continues as long as possible.
 .Sp
 If the third argument is \fIN\fR, then extraction continues until \fIN\fR fields
-have been successfully extracted, or until the string has been completely 
+have been successfully extracted, or until the string has been completely
 processed.
 .Sp
-Note that in scalar and void contexts the value of this argument is 
-automatically reset to 1 (under \f(CW\*(C`\-w\*(C'\fR, a warning is issued if the argument 
+Note that in scalar and void contexts the value of this argument is
+automatically reset to 1 (under \f(CW\*(C`\-w\*(C'\fR, a warning is issued if the argument
 has to be reset).
 .IP "4." 4
 A value indicating whether unmatched substrings (see below) within the
@@ -1260,7 +1260,7 @@ a closing bracket where none was expected.
 .ie n .IP """Unmatched opening bracket(s): ""%s""""" 4
 .el .IP "\f(CWUnmatched opening bracket(s): ``%s''\fR" 4
 .IX Item "Unmatched opening bracket(s): ""%s"""
-\&\f(CW\*(C`extract_bracketed\*(C'\fR, \f(CW\*(C`extract_quotelike\*(C'\fR or \f(CW\*(C`extract_codeblock\*(C'\fR ran 
+\&\f(CW\*(C`extract_bracketed\*(C'\fR, \f(CW\*(C`extract_quotelike\*(C'\fR or \f(CW\*(C`extract_codeblock\*(C'\fR ran
 out of characters in the text before closing one or more levels of nested
 brackets.
 .ie n .IP """Unmatched embedded quote (%s)""" 4

@@ -70,4 +70,3 @@ public:
 } // namespace geos::operation::distance
 } // namespace geos::operation
 } // namespace geos
-

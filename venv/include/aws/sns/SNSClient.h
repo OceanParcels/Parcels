@@ -103,7 +103,7 @@ namespace SNS
 
         /**
          * <p>Adds a statement to a topic's access control policy, granting access for the
-         * specified Amazon Web Services accounts to the specified actions.</p> 
+         * specified Amazon Web Services accounts to the specified actions.</p>
          * <p>To remove the ability to change topic permissions, you must deny permissions
          * to the <code>AddPermission</code>, <code>RemovePermission</code>, and
          * <code>SetTopicAttributes</code> actions in your IAM policy.</p>
@@ -222,7 +222,7 @@ namespace SNS
          * <code>PlatformPrincipal</code> is <code>Package Security Identifier</code> and
          * <code>PlatformCredential</code> is <code>secret key</code>.</p> </li> </ul>
          * <p>You can use the returned <code>PlatformApplicationArn</code> as an attribute
-         * for the <code>CreatePlatformEndpoint</code> action.</p><p><h3>See Also:</h3>  
+         * for the <code>CreatePlatformEndpoint</code> action.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformApplication">AWS
          * API Reference</a></p>
@@ -300,7 +300,7 @@ namespace SNS
          * messages only to verified destination phone numbers. For more information,
          * including how to move out of the sandbox to send messages without restrictions,
          * see <a href="https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html">SMS
-         * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>  
+         * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateSMSSandboxPhoneNumber">AWS
          * API Reference</a></p>
@@ -427,7 +427,7 @@ namespace SNS
          * information, including how to move out of the sandbox to send messages without
          * restrictions, see <a
          * href="https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html">SMS
-         * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>  
+         * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteSMSSandboxPhoneNumber">AWS
          * API Reference</a></p>
@@ -602,7 +602,7 @@ namespace SNS
          * phone numbers. For more information, including how to move out of the sandbox to
          * send messages without restrictions, see <a
          * href="https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html">SMS
-         * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>  
+         * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSMSSandboxAccountStatus">AWS
          * API Reference</a></p>
@@ -628,7 +628,7 @@ namespace SNS
         }
 
         /**
-         * <p>Returns all of the properties of a subscription.</p><p><h3>See Also:</h3>  
+         * <p>Returns all of the properties of a subscription.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSubscriptionAttributes">AWS
          * API Reference</a></p>
@@ -719,7 +719,7 @@ namespace SNS
          * <p>Lists the calling Amazon Web Services account's dedicated origination numbers
          * and their metadata. For more information about origination numbers, see <a
          * href="https://docs.aws.amazon.com/sns/latest/dg/channels-sms-originating-identities-origination-numbers.html">Origination
-         * numbers</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>  
+         * numbers</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListOriginationNumbers">AWS
          * API Reference</a></p>
@@ -823,7 +823,7 @@ namespace SNS
          * phone numbers. For more information, including how to move out of the sandbox to
          * send messages without restrictions, see <a
          * href="https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html">SMS
-         * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>  
+         * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSMSSandboxPhoneNumbers">AWS
          * API Reference</a></p>
@@ -1423,7 +1423,7 @@ namespace SNS
          * phone numbers. For more information, including how to move out of the sandbox to
          * send messages without restrictions, see <a
          * href="https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html">SMS
-         * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>  
+         * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/VerifySMSSandboxPhoneNumber">AWS
          * API Reference</a></p>

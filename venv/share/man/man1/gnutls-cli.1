@@ -28,7 +28,7 @@ Operands and options may be intermixed.  They will be reordered.
 .sp \n(Ppu
 .ne 2
 .SH "DESCRIPTION"
-Simple client program to set up a TLS connection to some other computer. 
+Simple client program to set up a TLS connection to some other computer.
 It sets up a TLS connection and forwards data from the standard input to the secured socket and vice versa.
 .sp
 .SH "OPTIONS"
@@ -57,7 +57,7 @@ Enable trust on first use authentication.
 The \fIno\-tofu\fP form will disable the option.
 .sp
 This option will, in addition to certificate authentication, perform authentication
-based on previously seen public keys, a model similar to SSH authentication. Note that when tofu 
+based on previously seen public keys, a model similar to SSH authentication. Note that when tofu
 is specified (PKI) and DANE authentication will become advisory to assist the public key acceptance
 process.
 .TP
@@ -71,7 +71,7 @@ This option will perform authentication as with option \-\-tofu; however, no que
 Enable DANE certificate verification (DNSSEC).
 The \fIno\-dane\fP form will disable the option.
 .sp
-This option will, in addition to certificate authentication using 
+This option will, in addition to certificate authentication using
 the trusted CAs, verify the server certificates using on the DANE information
 available via DNSSEC.
 .TP
@@ -437,7 +437,7 @@ Pass the extended usage information through a pager.
 .br
 \fBConnecting using PSK authentication\fP
 .br
-To connect to a server using PSK authentication, you need to enable the choice of PSK by using a cipher priority parameter such as in the example below. 
+To connect to a server using PSK authentication, you need to enable the choice of PSK by using a cipher priority parameter such as in the example below.
 .br
 .in +4
 .nf
@@ -453,7 +453,7 @@ Connecting to '127.0.0.1:5556'...
 \- MAC: SHA1
 \- Compression: NULL
 \- Handshake was completed
-    
+
 \- Simple Client Mode:
 .in -4
 .fi
@@ -462,7 +462,7 @@ By keeping the \-\-pskusername parameter and removing the \-\-pskkey parameter, 
 .br
 \fBConnecting using raw public\-key authentication\fP
 .br
-To connect to a server using raw public\-key authentication, you need to enable the option to negotiate raw public\-keys via the priority strings such as in the example below. 
+To connect to a server using raw public\-key authentication, you need to enable the option to negotiate raw public\-keys via the priority strings such as in the example below.
 .br
 .in +4
 .nf
@@ -481,7 +481,7 @@ Connecting to '127.0.0.1:5556'...
 \- Description: (TLS1.3\-Raw Public Key\-X.509)\-(ECDHE\-SECP256R1)\-(RSA\-PSS\-RSAE\-SHA256)\-(AES\-256\-GCM)
 \- Options:
 \- Handshake was completed
-    
+
 \- Simple Client Mode:
 .in -4
 .fi
@@ -525,7 +525,7 @@ PK\-signatures: SIGN\-RSA\-SHA384, SIGN\-ECDSA\-SHA384, SIGN\-RSA\-SHA512, SIGN\
 .br
 \fBConnecting using a PKCS #11 token\fP
 .br
-To connect to a server using a certificate and a private key present in a PKCS #11 token you 
+To connect to a server using a certificate and a private key present in a PKCS #11 token you
 need to substitute the PKCS 11 URLs in the x509certfile and x509keyfile parameters.
 .sp
 Those can be found using "p11tool \-\-list\-tokens" and then listing all the objects in the

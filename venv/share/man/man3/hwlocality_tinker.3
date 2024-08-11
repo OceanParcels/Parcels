@@ -45,52 +45,52 @@ hwlocality_tinker \- Modifying a loaded Topology
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Enumeration Type Documentation"
-.PP 
+.PP
 .SS "enum \fBhwloc_allow_flags_e\fP"
 
 .PP
-Flags to be given to \fBhwloc_topology_allow()\fP\&. 
+Flags to be given to \fBhwloc_topology_allow()\fP\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_ALLOW_FLAG_ALL \fP\fP
-Mark all objects as allowed in the topology\&. \fCcpuset\fP and \fCnođeset\fP given to \fBhwloc_topology_allow()\fP must be \fCNULL\fP\&. 
+Mark all objects as allowed in the topology\&. \fCcpuset\fP and \fCnođeset\fP given to \fBhwloc_topology_allow()\fP must be \fCNULL\fP\&.
 .TP
 \fB\fIHWLOC_ALLOW_FLAG_LOCAL_RESTRICTIONS \fP\fP
 Only allow objects that are available to the current process\&. The topology must have \fBHWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM\fP so that the set of available resources can actually be retrieved from the operating system\&.
 .PP
-\fCcpuset\fP and \fCnođeset\fP given to \fBhwloc_topology_allow()\fP must be \fCNULL\fP\&. 
+\fCcpuset\fP and \fCnođeset\fP given to \fBhwloc_topology_allow()\fP must be \fCNULL\fP\&.
 .TP
 \fB\fIHWLOC_ALLOW_FLAG_CUSTOM \fP\fP
-Allow a custom set of objects, given to \fBhwloc_topology_allow()\fP as \fCcpuset\fP and/or \fCnodeset\fP parameters\&. 
+Allow a custom set of objects, given to \fBhwloc_topology_allow()\fP as \fCcpuset\fP and/or \fCnodeset\fP parameters\&.
 .SS "enum \fBhwloc_restrict_flags_e\fP"
 
 .PP
-Flags to be given to \fBhwloc_topology_restrict()\fP\&. 
+Flags to be given to \fBhwloc_topology_restrict()\fP\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_RESTRICT_FLAG_REMOVE_CPULESS \fP\fP
-Remove all objects that became CPU-less\&. By default, only objects that contain no PU and no memory are removed\&. This flag may not be used with \fBHWLOC_RESTRICT_FLAG_BYNODESET\fP\&. 
+Remove all objects that became CPU-less\&. By default, only objects that contain no PU and no memory are removed\&. This flag may not be used with \fBHWLOC_RESTRICT_FLAG_BYNODESET\fP\&.
 .TP
 \fB\fIHWLOC_RESTRICT_FLAG_BYNODESET \fP\fP
-Restrict by nodeset instead of CPU set\&. Only keep objects whose nodeset is included or partially included in the given set\&. This flag may not be used with \fBHWLOC_RESTRICT_FLAG_REMOVE_CPULESS\fP\&. 
+Restrict by nodeset instead of CPU set\&. Only keep objects whose nodeset is included or partially included in the given set\&. This flag may not be used with \fBHWLOC_RESTRICT_FLAG_REMOVE_CPULESS\fP\&.
 .TP
 \fB\fIHWLOC_RESTRICT_FLAG_REMOVE_MEMLESS \fP\fP
-Remove all objects that became Memory-less\&. By default, only objects that contain no PU and no memory are removed\&. This flag may only be used with \fBHWLOC_RESTRICT_FLAG_BYNODESET\fP\&. 
+Remove all objects that became Memory-less\&. By default, only objects that contain no PU and no memory are removed\&. This flag may only be used with \fBHWLOC_RESTRICT_FLAG_BYNODESET\fP\&.
 .TP
 \fB\fIHWLOC_RESTRICT_FLAG_ADAPT_MISC \fP\fP
-Move Misc objects to ancestors if their parents are removed during restriction\&. If this flag is not set, Misc objects are removed when their parents are removed\&. 
+Move Misc objects to ancestors if their parents are removed during restriction\&. If this flag is not set, Misc objects are removed when their parents are removed\&.
 .TP
 \fB\fIHWLOC_RESTRICT_FLAG_ADAPT_IO \fP\fP
-Move I/O objects to ancestors if their parents are removed during restriction\&. If this flag is not set, I/O devices and bridges are removed when their parents are removed\&. 
+Move I/O objects to ancestors if their parents are removed during restriction\&. If this flag is not set, I/O devices and bridges are removed when their parents are removed\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_obj_add_other_obj_sets (\fBhwloc_obj_t\fP dst, \fBhwloc_obj_t\fP src)"
 
 .PP
@@ -100,9 +100,9 @@ This function is convenient between \fBhwloc_topology_alloc_group_object()\fP an
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCENOMEM\fP if some internal reallocation failed\&. 
+-1 with errno set to \fCENOMEM\fP if some internal reallocation failed\&.
 .RE
 .PP
 
@@ -115,14 +115,14 @@ The caller should (at least) initialize its sets before inserting the object in 
 .PP
 \fBReturns\fP
 .RS 4
-The allocated object on success\&. 
+The allocated object on success\&.
 .PP
 \fCNULL\fP on error\&.
 .RE
 .PP
 \fBNote\fP
 .RS 4
-If successfully inserted by \fBhwloc_topology_insert_group_object()\fP, the object will be freed when the entire topology is freed\&. If insertion failed (e\&.g\&. \fCNULL\fP or empty CPU and node-sets), it is freed before returning the error\&. 
+If successfully inserted by \fBhwloc_topology_insert_group_object()\fP, the object will be freed when the entire topology is freed\&. If insertion failed (e\&.g\&. \fCNULL\fP or empty CPU and node-sets), it is freed before returning the error\&.
 .RE
 .PP
 
@@ -142,7 +142,7 @@ It is notably useful when importing a topology from another process running in a
 .PP
 \fBNote\fP
 .RS 4
-Removing objects from a topology should rather be performed with \fBhwloc_topology_restrict()\fP\&. 
+Removing objects from a topology should rather be performed with \fBhwloc_topology_restrict()\fP\&.
 .RE
 .PP
 
@@ -158,9 +158,9 @@ Free a group object allocated with \fBhwloc_topology_alloc_group_object()\fP\&. 
 .PP
 \fBReturns\fP
 .RS 4
-\fC0\fP on success\&. 
+\fC0\fP on success\&.
 .PP
-\fC-1\fP on error, for instance if an invalid topology is given\&. 
+\fC-1\fP on error, for instance if an invalid topology is given\&.
 .RE
 .PP
 
@@ -202,7 +202,7 @@ An existing object if the Group was merged or discarded because the topology alr
 .PP
 \fCNULL\fP if Group objects are filtered-out of the topology (\fBHWLOC_TYPE_FILTER_KEEP_NONE\fP)\&.
 .PP
-\fCNULL\fP if the object was discarded because no set was initialized in the Group before insert, or all of them were empty\&. 
+\fCNULL\fP if the object was discarded because no set was initialized in the Group before insert, or all of them were empty\&.
 .RE
 .PP
 
@@ -228,7 +228,7 @@ the newly-created object
 .PP
 \fBNote\fP
 .RS 4
-If \fCname\fP contains some non-printable characters, they will be dropped when exporting to XML, see \fBhwloc_topology_export_xml()\fP in \fBhwloc/export\&.h\fP\&. 
+If \fCname\fP contains some non-printable characters, they will be dropped when exporting to XML, see \fBhwloc_topology_export_xml()\fP in \fBhwloc/export\&.h\fP\&.
 .RE
 .PP
 
@@ -243,9 +243,9 @@ See also \fBThread Safety\fP
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 on error, for instance if some internal reallocation failed\&. 
+-1 on error, for instance if some internal reallocation failed\&.
 .RE
 .PP
 
@@ -273,10 +273,10 @@ This call may not be reverted by restricting back to a larger set\&. Once droppe
 .PP
 -1 with errno set to \fCEINVAL\fP if the input set is invalid\&. The topology is not modified in this case\&.
 .PP
--1 with errno set to \fCENOMEM\fP on failure to allocate internal data\&. The topology is reinitialized in this case\&. It should be either destroyed with \fBhwloc_topology_destroy()\fP or configured and loaded again\&. 
+-1 with errno set to \fCENOMEM\fP on failure to allocate internal data\&. The topology is reinitialized in this case\&. It should be either destroyed with \fBhwloc_topology_destroy()\fP or configured and loaded again\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

@@ -482,7 +482,7 @@ internally.  If you passed it a filehandle as above, you \*(L"own\*(R" the
 filehandle, and are responsible for closing it after you have untied
 the \f(CW@array\fR.
 .PP
-Tie::File calls \f(CW\*(C`binmode\*(C'\fR on filehandles that it opens internally, 
+Tie::File calls \f(CW\*(C`binmode\*(C'\fR on filehandles that it opens internally,
 but not on filehandles passed in by the user. For consistency,
 especially if using the tied files cross-platform, you may wish to
 call \f(CW\*(C`binmode\*(C'\fR on the filehandle prior to tying the file.
@@ -595,7 +595,7 @@ or
 \&        tie @array, \*(AqTie::File\*(Aq, $file, autodefer => 0;
 .Ve
 .PP
-Similarly, \f(CW\*(C`\->autodefer(1)\*(C'\fR re-enables autodeferment, and 
+Similarly, \f(CW\*(C`\->autodefer(1)\*(C'\fR re-enables autodeferment, and
 \&\f(CW\*(C`\->autodefer()\*(C'\fR recovers the current value of the autodefer setting.
 .SH "CONCURRENT ACCESS TO FILES"
 .IX Header "CONCURRENT ACCESS TO FILES"

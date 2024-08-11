@@ -22,4 +22,3 @@ Fixes since v1.5.3.7
 
  * After amending the patch title in "git-am -i", the command did not
    report the patch it applied with the updated title.
-

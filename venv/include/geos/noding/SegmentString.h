@@ -160,4 +160,3 @@ std::ostream& operator<< (std::ostream& os, const SegmentString& ss);
 
 } // namespace geos.noding
 } // namespace geos
-

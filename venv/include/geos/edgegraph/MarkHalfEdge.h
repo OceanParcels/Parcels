@@ -105,6 +105,3 @@ public:
 
 } // namespace geos.edgegraph
 } // namespace geos
-
-
-

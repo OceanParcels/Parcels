@@ -39,22 +39,22 @@ hwlocality_xmlexport \- Exporting Topologies to XML
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Enumeration Type Documentation"
-.PP 
+.PP
 .SS "enum \fBhwloc_topology_export_xml_flags_e\fP"
 
 .PP
-Flags for exporting XML topologies\&. Flags to be given as a OR'ed set to \fBhwloc_topology_export_xml()\fP\&. 
+Flags for exporting XML topologies\&. Flags to be given as a OR'ed set to \fBhwloc_topology_export_xml()\fP\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_TOPOLOGY_EXPORT_XML_FLAG_V1 \fP\fP
-Export XML that is loadable by hwloc v1\&.x\&. However, the export may miss some details about the topology\&. 
+Export XML that is loadable by hwloc v1\&.x\&. However, the export may miss some details about the topology\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_export_obj_userdata (void * reserved, \fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj, const char * name, const void * buffer, size_t length)"
 
 .PP
@@ -70,9 +70,9 @@ If exporting binary data, the application should first encode into printable cha
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCEINVAL\fP if a non-printable character is passed in \fCname\fP or \fBbuffer\fP\&. 
+-1 with errno set to \fCEINVAL\fP if a non-printable character is passed in \fCname\fP or \fBbuffer\fP\&.
 .RE
 .PP
 
@@ -89,16 +89,16 @@ The function does not take care of portability issues if the export may be reimp
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCEINVAL\fP if a non-printable character is passed in \fCname\fP\&. 
+-1 with errno set to \fCEINVAL\fP if a non-printable character is passed in \fCname\fP\&.
 .RE
 .PP
 
 .SS "void hwloc_free_xmlbuffer (\fBhwloc_topology_t\fP topology, char * xmlbuffer)"
 
 .PP
-Free a buffer allocated by \fBhwloc_topology_export_xmlbuffer()\fP 
+Free a buffer allocated by \fBhwloc_topology_export_xmlbuffer()\fP
 .SS "int hwloc_topology_export_xml (\fBhwloc_topology_t\fP topology, const char * xmlpath, unsigned long flags)"
 
 .PP
@@ -121,7 +121,7 @@ The topology-specific userdata pointer is ignored when exporting to XML\&.
 .PP
 Only printable characters may be exported to XML string attributes\&. Any other character, especially any non-ASCII character, will be silently dropped\&.
 .PP
-If \fCname\fP is '-', the XML output is sent to the standard output\&. 
+If \fCname\fP is '-', the XML output is sent to the standard output\&.
 .RE
 .PP
 
@@ -149,7 +149,7 @@ See also \fBhwloc_topology_set_userdata_export_callback()\fP for exporting appli
 .PP
 The topology-specific userdata pointer is ignored when exporting to XML\&.
 .PP
-Only printable characters may be exported to XML string attributes\&. Any other character, especially any non-ASCII character, will be silently dropped\&. 
+Only printable characters may be exported to XML string attributes\&. Any other character, especially any non-ASCII character, will be silently dropped\&.
 .RE
 .PP
 
@@ -166,7 +166,7 @@ This function lets applications set \fCexport_cb\fP to a callback function that 
 .PP
 \fBNote\fP
 .RS 4
-The topology-specific userdata pointer is ignored when exporting to XML\&. 
+The topology-specific userdata pointer is ignored when exporting to XML\&.
 .RE
 .PP
 
@@ -187,10 +187,10 @@ This function lets applications set \fCimport_cb\fP to a callback function that 
 .PP
 This function should be called before \fBhwloc_topology_load()\fP\&.
 .PP
-The topology-specific userdata pointer is ignored when importing from XML\&. 
+The topology-specific userdata pointer is ignored when importing from XML\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

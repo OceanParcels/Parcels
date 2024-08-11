@@ -18,7 +18,7 @@
  */
 
 #ifndef _THRIFT_ENUM_H_
-#define _THRIFT_ENUM_H_ 
+#define _THRIFT_ENUM_H_
 
 namespace apache {
 namespace thrift {
@@ -63,4 +63,4 @@ enum TMessageType {
 
 }}} // apache::thrift::protocol
 
-#endif // #define _THRIFT_ENUM_H_ 
+#endif // #define _THRIFT_ENUM_H_

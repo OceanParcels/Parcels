@@ -265,7 +265,7 @@ unless the value is numeric so return 0 for false.
 Predefined As:
 .Sp
 .Vb 3
-\&  sub perlio_ok { 
+\&  sub perlio_ok {
 \&    return eval { require PerlIO::encoding } ? 1 : 0;
 \&  }
 .Ve

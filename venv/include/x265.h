@@ -335,9 +335,9 @@ typedef enum
 }AnalysisRefineType;
 
 /* Arbitrary User SEI
- * Payload size is in bytes and the payload pointer must be non-NULL. 
+ * Payload size is in bytes and the payload pointer must be non-NULL.
  * Payload types and syntax can be found in Annex D of the H.265 Specification.
- * SEI Payload Alignment bits as described in Annex D must be included at the 
+ * SEI Payload Alignment bits as described in Annex D must be included at the
  * end of the payload if needed. The payload should not be NAL-encapsulated.
  * Payloads are written in the order of input */
 
@@ -465,7 +465,7 @@ typedef struct x265_picture
     x265_sei         userSEI;
 
     /* Ratecontrol statistics for collecting the ratecontrol information.
-     * It is not used for collecting the last pass ratecontrol data in 
+     * It is not used for collecting the last pass ratecontrol data in
      * multi pass ratecontrol mode. */
     void*  rcData;
 
@@ -702,13 +702,13 @@ typedef struct x265_zone
     struct x265_param* zoneParam;
     double* relativeComplexity;
 } x265_zone;
-    
+
 /* data to calculate aggregate VMAF score */
 typedef struct x265_vmaf_data
 {
     int width;
     int height;
-    size_t offset; 
+    size_t offset;
     int internalBitDepth;
     FILE *reference_file; /* FILE pointer for input file */
     FILE *distorted_file; /* FILE pointer for recon file generated*/
@@ -719,8 +719,8 @@ typedef struct x265_vmaf_framedata
 {
     int width;
     int height;
-    int frame_set; 
-    int internalBitDepth; 
+    int frame_set;
+    int internalBitDepth;
     void *reference_frame; /* points to fenc of particular frame */
     void *distorted_frame; /* points to recon of particular frame */
 }x265_vmaf_framedata;
@@ -920,7 +920,7 @@ typedef struct x265_param
     int       bHighTier;
 
     /* Enable UHD Blu-ray compatibility support. If specified, the encoder will
-     * attempt to modify/set the encode specifications. If the encoder is unable 
+     * attempt to modify/set the encode specifications. If the encoder is unable
      * to do so, this option will be turned OFF. */
     int       uhdBluray;
 
@@ -1040,7 +1040,7 @@ typedef struct x265_param
     int       lookaheadSlices;
 
     /* An arbitrary threshold which determines how aggressively the lookahead
-     * should detect scene cuts for cost based scenecut detection. 
+     * should detect scene cuts for cost based scenecut detection.
      * The default (40) is recommended. */
     int       scenecutThreshold;
 
@@ -1259,9 +1259,9 @@ typedef struct x265_param
 
     /*== Analysis tools ==*/
 
-    /* A value between 1 and 6 (both inclusive) which determines the level of 
+    /* A value between 1 and 6 (both inclusive) which determines the level of
      * rate distortion optimizations to perform during mode and depth decisions.
-     * The more RDO the better the compression efficiency at a major cost of 
+     * The more RDO the better the compression efficiency at a major cost of
      * performance. Default is 3 */
     int       rdLevel;
 
@@ -1307,7 +1307,7 @@ typedef struct x265_param
     double    psyRd;
 
     /* Strength of psycho-visual optimizations in quantization. Only has an
-     * effect when RDOQ is enabled (presets slow, slower and veryslow). The 
+     * effect when RDOQ is enabled (presets slow, slower and veryslow). The
      * value must be between 0 and 50, 1.0 is typical. Default 0 */
     double    psyRdoq;
 
@@ -1348,12 +1348,12 @@ typedef struct x265_param
 	 * JCTVC-W1005 http://phenix.it-sudparis.eu/jct/doc_end_user/documents/23_San%20Diego/wg11/JCTVC-W1005-v4.zip
 	 * */
 	int       preferredTransferCharacteristics;
-	
+
 	/*
 	 * Specifies the value for the pic_struc syntax element of the picture timing SEI message (See D2.3 and D3.3)
 	 * of the HEVC spec. for a detailed explanation
 	 * */
-	int       pictureStructure;	
+	int       pictureStructure;
 
     struct
     {
@@ -1654,7 +1654,7 @@ typedef struct x265_param
     /* Adaptive Quantization based on relative motion */
     int       bAQMotion;
     /* SSIM based RDO, based on residual divisive normalization scheme. Used for mode
-    * selection during analysis of CTUs, can achieve significant gain in terms of 
+    * selection during analysis of CTUs, can achieve significant gain in terms of
     * objective quality metrics SSIM and PSNR */
     int       bSsimRd;
 
@@ -1683,7 +1683,7 @@ typedef struct x265_param
     /* File containing the tone mapping information */
     const char*     toneMapFile;
 
-    /* Insert tone mapping information only for IDR frames and when the 
+    /* Insert tone mapping information only for IDR frames and when the
      * tone mapping information changes. */
     int       bDhdr10opt;
 
@@ -1732,7 +1732,7 @@ typedef struct x265_param
     /* Disable lookahead */
     int       bDisableLookahead;
 
-    /* Use low-pass subband dct approximation 
+    /* Use low-pass subband dct approximation
     *  This DCT approximation is less computational intensive and gives results close to standard DCT */
     int       bLowPassDct;
 
@@ -1741,7 +1741,7 @@ typedef struct x265_param
     * than 1, then the final buffer available is vbv-end * vbvBufferSize.  Otherwise,
     * it is interpreted as the final buffer available in kbits. Default 0 (disabled) */
     double    vbvBufferEnd;
-    
+
     /* Frame from which qp has to be adjusted to hit final decode buffer emptiness.
     * Specified as a fraction of the total frames. Default 0 */
     double    vbvEndFrameAdjust;
@@ -1807,7 +1807,7 @@ typedef struct x265_param
 
 
     /* Store/normalize ctu distortion in analysis-save/load. Ranges from 0 - 1.
-    *  0 - Disabled. 1 - Save/Load ctu distortion to/from the file specified 
+    *  0 - Disabled. 1 - Save/Load ctu distortion to/from the file specified
     * analysis-save/load. Default 0. */
     int       ctuDistortionRefine;
 
@@ -1904,7 +1904,7 @@ typedef struct x265_param
     * The decoded picture will be cropped based on conformance window right offset
     * signaled in the SPS before output. Default is 0.
     * Recommended to set this during non-file based analysis-load.
-    * This is to inform the encoder about the conformace window right offset 
+    * This is to inform the encoder about the conformace window right offset
     * to be added to match the number of CUs across the width for which analysis
     * info is available from the corresponding analysis-save. */
 
@@ -1913,7 +1913,7 @@ typedef struct x265_param
     /* Conformance window bottom offset specifies the padding offset to the
     * bottom side of the internal copy of the input pictures in the library.
     * The decoded picture will be cropped based on conformance window bottom offset
-    * signaled in the SPS before output. Default is 0. 
+    * signaled in the SPS before output. Default is 0.
     * Recommended to set this during non-file based analysis-load.
     * This is to inform the encoder about the conformace window bottom offset
     * to be added to match the number of CUs across the height for which analysis

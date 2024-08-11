@@ -97,7 +97,7 @@ int main(void)
         /* for backwards compatibility with gnutls < 3.3.0 */
         gnutls_global_init();
 
-        /* SRP_PASSWD a password file (created with the included srptool utility) 
+        /* SRP_PASSWD a password file (created with the included srptool utility)
          */
         gnutls_srp_allocate_server_credentials(&srp_cred);
         gnutls_srp_set_server_credentials_file(srp_cred, SRP_PASSWD,
@@ -555,7 +555,7 @@ _verify_response(gnutls_datum_t * data, gnutls_x509_crt_t cert,
    be checked, argv[2] holding the issuer for this certificate,
    and argv[3] holding a trusted certificate to verify OCSP's response.
    argv[4] is optional and should hold the server host name.
-   
+
    For simplicity the libcurl library is used.
  */
 
@@ -891,7 +891,7 @@ void check_alert(gnutls_session_t session, int ret)
             || ret == GNUTLS_E_FATAL_ALERT_RECEIVED) {
                 last_alert = gnutls_alert_get(session);
 
-                /* The check for renegotiation is only useful if we are 
+                /* The check for renegotiation is only useful if we are
                  * a server, and we had requested a rehandshake.
                  */
                 if (last_alert == GNUTLS_A_NO_RENEGOTIATION &&
@@ -1185,7 +1185,7 @@ write_pkcs12(const gnutls_datum_t * cert,
          */
         gnutls_pkcs12_bag_set_key_id(bag, bag_index, &key_id);
 
-        /* use weak encryption for the certificate. 
+        /* use weak encryption for the certificate.
          */
         gnutls_pkcs12_bag_encrypt(bag, password,
                                   GNUTLS_PKCS_USE_PKCS12_RC2_40);
@@ -4432,49 +4432,49 @@ GnuTLS 3.0.x is source compatible with previous versions except for the
 functions listed below.
 
 Old function           Replacement
-                       
+
 -------------------------------------------------------------------
 'gnutls_transport_set_lowat'To replace its functionality the function
                        *note gnutls_record_check_pending:: has
                        to be used, as described in
                        *note Asynchronous operation::
-                       
+
 'gnutls_session_get_server_random',They are replaced by the safer function
 'gnutls_session_get_client_random'*note gnutls_session_get_random::
-                       
+
 'gnutls_session_get_master_secret'Replaced by the keying material exporters
                        discussed in
                        *note Deriving keys for other applications/protocols::
-                       
+
 'gnutls_transport_set_global_errno'Replaced by using the system's errno
                        facility or
                        *note gnutls_transport_set_errno::.
-                       
+
 'gnutls_x509_privkey_verify_data'Replaced by
                        *note gnutls_pubkey_verify_data2::.
-                       
+
 'gnutls_certificate_verify_peers'Replaced by
                        *note gnutls_certificate_verify_peers2::.
-                       
+
 'gnutls_psk_netconf_derive_key'Removed.  The key derivation function was
                        never standardized.
-                       
+
 'gnutls_session_set_finished_function'Removed.
-                       
+
 'gnutls_ext_register'  Removed.  Extension registration API is
                        now internal to allow easier changes in
                        the API.
-                       
+
 'gnutls_certificate_get_x509_crls',Removed to allow updating the internal
 'gnutls_certificate_get_x509_cas'structures.  Replaced by
                        *note gnutls_certificate_get_issuer::.
-                       
+
 'gnutls_certificate_get_openpgp_keyring'Removed.
-                       
+
 'gnutls_ia_'           Removed.  The inner application
                        extensions were completely removed (they
                        failed to be standardized).
-                       
+
 
 Upgrading to 3.1.x from 3.0.x
 =============================
@@ -4483,18 +4483,18 @@ GnuTLS 3.1.x is source and binary compatible with GnuTLS 3.0.x releases.
 Few functions have been deprecated and are listed below.
 
 Old function           Replacement
-                       
+
 -------------------------------------------------------------------
 'gnutls_pubkey_verify_hash'The function
                        *note gnutls_pubkey_verify_hash2:: is
                        provided and is functionally equivalent
                        and safer to use.
-                       
+
 'gnutls_pubkey_verify_data'The function
                        *note gnutls_pubkey_verify_data2:: is
                        provided and is functionally equivalent
                        and safer to use.
-                       
+
 
 Upgrading to 3.2.x from 3.1.x
 =============================
@@ -4503,14 +4503,14 @@ GnuTLS 3.2.x is source and binary compatible with GnuTLS 3.1.x releases.
 Few functions have been deprecated and are listed below.
 
 Old function           Replacement
-                       
+
 -------------------------------------------------------------------
 'gnutls_privkey_sign_raw_data'The function
                        *note gnutls_privkey_sign_hash:: is
                        equivalent when the flag
                        'GNUTLS_PRIVKEY_SIGN_FLAG_TLS1_RSA' is
                        specified.
-                       
+
 
 Upgrading to 3.3.x from 3.2.x
 =============================
@@ -4519,14 +4519,14 @@ GnuTLS 3.3.x is source and binary compatible with GnuTLS 3.2.x releases;
 however there few changes in semantics which are listed below.
 
 Old function           Replacement
-                       
+
 -------------------------------------------------------------------
 'gnutls_global_init'   No longer required.  The library is
                        initialized using a constructor.
-                       
+
 'gnutls_global_deinit' No longer required.  The library is
                        deinitialized using a destructor.
-                       
+
 
 Upgrading to 3.4.x from 3.3.x
 =============================
@@ -4535,12 +4535,12 @@ GnuTLS 3.4.x is source compatible with GnuTLS 3.3.x releases; however,
 several deprecated functions were removed, and are listed below.
 
 Old function           Replacement
-                       
+
 -------------------------------------------------------------------
 Priority string        The following string emulates the 3.3.x
 "NORMAL" has been      behavior
 modified               "NORMAL:+VERS-SSL3.0:+ARCFOUR-128:+DHE-DSS:+SIGN-DSA-SHA512:+SIGN-DSA-SHA256:+SIGN-DSA-SHA1"
-                       
+
 'gnutls_certificate_client_set_retrieve_function',*note gnutls_certificate_set_retrieve_function::
 'gnutls_certificate_server_set_retrieve_function'
 'gnutls_certificate_set_rsa_export_params',No replacement; the library does not
@@ -4555,15 +4555,15 @@ modified               "NORMAL:+VERS-SSL3.0:+ARCFOUR-128:+DHE-DSS:+SIGN-DSA-SHA5
 'gnutls_rsa_params_import_raw',
 'gnutls_rsa_params_init'
 'gnutls_pubkey_verify_hash',*note gnutls_pubkey_verify_hash2::.
-                       
+
 'gnutls_pubkey_verify_data',*note gnutls_pubkey_verify_data2::.
-                       
+
 'gnutls_x509_crt_get_verify_algorithm',No replacement; a similar function is
                        *note gnutls_x509_crt_get_signature_algorithm::.
-                       
+
 'gnutls_pubkey_get_verify_algorithm',No replacement; a similar function is
                        *note gnutls_pubkey_get_preferred_hash_algorithm::.
-                       
+
 'gnutls_certificate_type_set_priority',*note gnutls_priority_set_direct::.
 'gnutls_cipher_set_priority',
 'gnutls_compression_set_priority',
@@ -4573,12 +4573,12 @@ modified               "NORMAL:+VERS-SSL3.0:+ARCFOUR-128:+DHE-DSS:+SIGN-DSA-SHA5
 'gnutls_sign_callback_get',*note gnutls_privkey_import_ext3::
 'gnutls_sign_callback_set'
 'gnutls_x509_crt_verify_hash'*note gnutls_pubkey_verify_hash2::
-                       
+
 'gnutls_x509_crt_verify_data'*note gnutls_pubkey_verify_data2::
-                       
+
 'gnutls_privkey_sign_raw_data'*note gnutls_privkey_sign_hash:: with the
                        flag GNUTLS_PRIVKEY_SIGN_FLAG_TLS1_RSA
-                       
+
 
 Upgrading to 3.6.x from 3.5.x
 =============================
@@ -4587,35 +4587,35 @@ GnuTLS 3.6.x is source and binary compatible with GnuTLS 3.5.x releases;
 however, there are minor differences, listed below.
 
 Old functionality      Replacement
-                       
+
 -------------------------------------------------------------------
 The priority strings   TLS compression is no longer available.
-"+COMP" are a no-op    
+"+COMP" are a no-op
 The SSL 3.0 protocol   SSL 3.0 is no longer compiled in by
 is a no-op             default.  It is a legacy protocol which
                        is completely eliminated from public
                        internet.  As such it was removed to
                        reduce the attack vector for applications
                        using the library.
-                       
+
 The hash function      TLS 1.3 no longer uses SHA2-224, and it
 SHA2-224 is a no-op    was never a widespread hash algorithm.
 for TLS1.2             As such it was removed for simplicity.
-                       
+
 The SRP key exchange   The SRP key exchange is restricted to
 accepted parameters    [*note TLSSRP::] spec parameters to
 outside the            protect clients from MitM attacks.
-[*note TLSSRP::]       
+[*note TLSSRP::]
 spec
 The                    No longer use 'gnutls_compression_get',
 compression-related    'gnutls_compression_get_name',
 functions are          'gnutls_compression_list', and
 deprecated             'gnutls_compression_get_id'.
-                       
+
 *note gnutls_x509_crt_sign::,These signing functions will no longer
 *note gnutls_x509_crl_sign::,sign using SHA1, but with a secure hash
 *note gnutls_x509_crq_sign::algorithm.
-                       
+
 *note gnutls_certificate_set_ocsp_status_request_file::This function will return an error if the
                        loaded response doesn't match any of the
                        present certificates.  To revert to
@@ -4623,10 +4623,10 @@ deprecated             'gnutls_compression_get_id'.
                        'GNUTLS_CERTIFICATE_SKIP_OCSP_RESPONSE_CHECK'
                        flag using
                        *note gnutls_certificate_set_flags::.
-                       
+
 The callback           It is replaced with
 *note gnutls_privkey_import_ext3::*note gnutls_privkey_import_ext4::
-is not flexible        
+is not flexible
 enough for new
 signature algorithms
 such as RSA-PSS
@@ -4635,23 +4635,23 @@ functionality is not   re-authentication functionality which can
 applicable under TLS   be accessed directly via
 1.3.                   *note gnutls_session_key_update:: and
                        *note gnutls_reauth::.
-                       
+
 TLS session            The TLS session identifiers are
 identifiers are not    persistent across resumption only on
 shared with the        server side and can be obtained as before
 server under TLS       via *note gnutls_session_get_id2::.
-1.3.                   
+1.3.
 *note gnutls_pkcs11_privkey_generate3::,These functions no longer create an
 *note gnutls_pkcs11_copy_secret_key::,exportable key by default; they require
 *note gnutls_pkcs11_copy_x509_privkey2::the flag
                        'GNUTLS_PKCS11_OBJ_FLAG_MARK_NOT_SENSITIVE'
                        to do so.
-                       
+
 *note gnutls_db_set_retrieve_function::,These functions are no longer relevant
 *note gnutls_db_set_store_function::,under TLS 1.3; resumption under TLS 1.3
 *note gnutls_db_set_remove_function::is done via session tickets, c.f.
                        *note gnutls_session_ticket_enable_server::.
-                       
+
 *note gnutls_session_get_data2::,These functions may introduce a slight
 *note gnutls_session_get_data::delay under TLS 1.3 for few milliseconds.
                        Check output of
@@ -4661,19 +4661,19 @@ server under TLS       via *note gnutls_session_get_id2::.
                        To work efficiently under TLS 1.3 this
                        function requires the application setting
                        *note gnutls_transport_set_pull_timeout_function::.
-                       
+
 SRP and RSA-PSK key    SRP and RSA-PSK key exchanges are not
 exchanges are not      supported in TLS 1.3, so when these key
 supported under TLS    exchanges are present in a priority
 1.3                    string, TLS 1.3 is disabled.
-                       
+
 Anonymous key          There is no anonymous key exchange
 exchange is not        supported under TLS 1.3, so if an
 supported under TLS    anonymous key exchange method is set in a
 1.3                    priority string, and no certificate
                        credentials are set in the client or
                        server, TLS 1.3 will not be negotiated.
-                       
+
 ECDHE-PSK and          In the priority strings, both 'ECDHEPSK'
 DHE-PSK keywords       and 'DHEPSK' indicate the intent to
 have the same          support an ephemeral key exchange with
@@ -4681,26 +4681,26 @@ meaning under TLS      the pre-shared key.  The parameters of
 1.3                    the key exchange are negotiated with the
                        supported groups specified in the
                        priority string.
-                       
+
 Authentication-only    Ciphersuites with the 'NULL' cipher
 ciphersuites are not   (i.e., authentication-only) are not
 supported under TLS    supported in TLS 1.3, so when they are
 1.3                    specified in a priority string, TLS 1.3
                        is disabled.
-                       
+
 Supplemental data is   The TLS supplemental data handshake
 not supported under    message (RFC 4680) is not supported under
 TLS 1.3                TLS 1.3, so if the application calls
                        *note gnutls_supplemental_register:: or
                        *note gnutls_session_supplemental_register::,
                        TLS 1.3 is disabled.
-                       
+
 The                    The macro was non-functional and because
 GNUTLS_X509_NO_WELL_DEFINED_EXPIRATIONof the nature of the definition of the
 macro is a no-op       no-well-defined date for certificates (a
                        real date), it will not be fixed or
                        re-introduced.
-                       
+
 
 
 File: gnutls.info,  Node: Support,  Next: Error codes,  Prev: Upgrading from previous versions,  Up: Top
@@ -14923,4 +14923,3 @@ gnutls_verify_stored_pubkey
      negative error value on other errors.
 
      *Since:* 3.0.13
-

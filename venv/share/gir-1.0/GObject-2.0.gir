@@ -11536,7 +11536,7 @@ my_singleton_constructor (GType                  type,
                           GObjectConstructParam *construct_params)
 {
   GObject *object;
-  
+
   if (!the_singleton)
     {
       object = G_OBJECT_CLASS (parent_class)-&gt;constructor (type,

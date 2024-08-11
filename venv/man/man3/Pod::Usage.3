@@ -155,13 +155,13 @@ Pod::Usage \- print a usage message from embedded pod documentation
 \&  pod2usage($exit_status);
 \&
 \&  pod2usage( { \-message => $message_text ,
-\&               \-exitval => $exit_status  ,  
-\&               \-verbose => $verbose_level,  
+\&               \-exitval => $exit_status  ,
+\&               \-verbose => $verbose_level,
 \&               \-output  => $filehandle } );
 \&
 \&  pod2usage(   \-msg     => $message_text ,
-\&               \-exitval => $exit_status  ,  
-\&               \-verbose => $verbose_level,  
+\&               \-exitval => $exit_status  ,
+\&               \-verbose => $verbose_level,
 \&               \-output  => $filehandle );
 \&
 \&  pod2usage(   \-verbose => 2,
@@ -223,7 +223,7 @@ parameter; then these sections are extracted and printed.
 .ie n .IP """\-sections"" \fIspec\fR" 4
 .el .IP "\f(CW\-sections\fR \fIspec\fR" 4
 .IX Item "-sections spec"
-There are two ways to specify the selection. Either a string (scalar) 
+There are two ways to specify the selection. Either a string (scalar)
 representing a selection regexp for sections to be printed when \-verbose
 is set to 99, e.g.
 .Sp
@@ -232,7 +232,7 @@ is set to 99, e.g.
 .Ve
 .Sp
 With the above regexp all content following (and including) any of the
-given \f(CW\*(C`=head1\*(C'\fR headings will be shown. It is possible to restrict the 
+given \f(CW\*(C`=head1\*(C'\fR headings will be shown. It is possible to restrict the
 output to particular subsections only, e.g.:
 .Sp
 .Vb 1
@@ -257,7 +257,7 @@ Alternatively, an array reference of section specifications can be used:
 \&    qw(DESCRIPTION DESCRIPTION/Introduction) ] );
 .Ve
 .Sp
-This will print only the content of \f(CW\*(C`=head1 DESCRIPTION\*(C'\fR and the 
+This will print only the content of \f(CW\*(C`=head1 DESCRIPTION\*(C'\fR and the
 \&\f(CW\*(C`=head2 Introduction\*(C'\fR sections, but no other \f(CW\*(C`=head2\*(C'\fR, and no other
 \&\f(CW\*(C`=head1\*(C'\fR either.
 .ie n .IP """\-output"" \fIhandle\fR" 4
@@ -296,7 +296,7 @@ MSWin32 and \s-1DOS\s0).
 By default, Pod::Usage will call perldoc when \-verbose >= 2 is
 specified. This does not work well e.g. if the script was packed
 with \s-1PAR\s0. The \-noperldoc option suppresses the external call to
-perldoc and uses the simple text formatter (Pod::Text) to 
+perldoc and uses the simple text formatter (Pod::Text) to
 output the \s-1POD.\s0
 .ie n .IP """\-perlcmd""" 4
 .el .IP "\f(CW\-perlcmd\fR" 4

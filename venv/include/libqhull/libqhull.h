@@ -861,9 +861,9 @@ struct qhT {
   realT last_newhigh;
   realT lastcpu;          /* for qh_buildtracing */
   int   lastfacets;       /*   last qh.num_facets */
-  int   lastmerges;       /*   last zzval_(Ztotmerge) */ 
-  int   lastplanes;       /*   last zzval_(Zsetplane) */ 
-  int   lastdist;         /*   last zzval_(Zdistplane) */ 
+  int   lastmerges;       /*   last zzval_(Ztotmerge) */
+  int   lastplanes;       /*   last zzval_(Zsetplane) */
+  int   lastdist;         /*   last zzval_(Zdistplane) */
   unsigned int lastreport; /*  last qh.facet_id */
   int mergereport;        /* for qh_tracemerging */
   qhstatT *old_qhstat;    /* for saving qh_qhstat in save_qhull() and UsingLibQhull.  Free with qh_free() */

@@ -102,4 +102,3 @@ public:
 } // geos::index::intervalrtree
 } // geos::index
 } // geos
-

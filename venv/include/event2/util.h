@@ -457,7 +457,7 @@ int evutil_closesocket(evutil_socket_t sock);
 
 /** Do platform-specific operations, if possible, to make a tcp listener
  *  socket defer accept()s until there is data to read.
- *  
+ *
  *  Not all platforms support this.  You don't want to do this for every
  *  listener socket: only the ones that implement a protocol where the
  *  client transmits before the server needs to respond.
@@ -465,7 +465,7 @@ int evutil_closesocket(evutil_socket_t sock);
  *  @param sock The listening socket to to make deferred
  *  @return 0 on success (whether the operation is supported or not),
  *       -1 on failure
-*/ 
+*/
 EVENT2_EXPORT_SYMBOL
 int evutil_make_tcp_listen_socket_deferred(evutil_socket_t sock);
 

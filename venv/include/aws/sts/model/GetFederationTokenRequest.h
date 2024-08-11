@@ -84,13 +84,13 @@ namespace Model
      * managed session policies can't exceed 2,048 characters. The JSON policy
      * characters can be any ASCII character from the space character to the end of the
      * valid character list (\u0020 through \u00FF). It can also include the tab
-     * (\u0009), linefeed (\u000A), and carriage return (\u000D) characters.</p> 
+     * (\u0009), linefeed (\u000A), and carriage return (\u000D) characters.</p>
      * <p>An Amazon Web Services conversion compresses the passed inline session
      * policy, managed policy ARNs, and session tags into a packed binary format that
      * has a separate limit. Your request can fail for this limit even if your
      * plaintext meets the other requirements. The <code>PackedPolicySize</code>
      * response element indicates by percentage how close the policies and tags for
-     * your request are to the upper size limit.</p> 
+     * your request are to the upper size limit.</p>
      */
     inline const Aws::String& GetPolicy() const{ return m_policy; }
     inline bool PolicyHasBeenSet() const { return m_policyHasBeenSet; }
@@ -136,7 +136,7 @@ namespace Model
      * packed binary format that has a separate limit. Your request can fail for this
      * limit even if your plaintext meets the other requirements. The
      * <code>PackedPolicySize</code> response element indicates by percentage how close
-     * the policies and tags for your request are to the upper size limit.</p> 
+     * the policies and tags for your request are to the upper size limit.</p>
      */
     inline const Aws::Vector<PolicyDescriptorType>& GetPolicyArns() const{ return m_policyArns; }
     inline bool PolicyArnsHasBeenSet() const { return m_policyArnsHasBeenSet; }

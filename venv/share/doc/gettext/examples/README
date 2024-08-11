@@ -85,4 +85,3 @@ Makefile types:
     hello-tcl-tk               .msg                    Makefile.am
     hello-c++-qt               .qm                     Makefile.am
     hello-objc-gnustep         .strings                GNUmakefile
-

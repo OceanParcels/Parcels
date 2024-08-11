@@ -1,5 +1,5 @@
 /* base16.h
-   
+
    Hex encoding and decoding, following spki conventions (i.e.
    allowing whitespace between digits).
 
@@ -31,7 +31,7 @@
    the GNU Lesser General Public License along with this program.  If
    not, see http://www.gnu.org/licenses/.
 */
- 
+
 #ifndef NETTLE_BASE16_H_INCLUDED
 #define NETTLE_BASE16_H_INCLUDED
 

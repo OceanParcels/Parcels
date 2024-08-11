@@ -242,7 +242,7 @@ namespace Aws
              */
             Aws::String caPath;
             /**
-             * Same as caPath, but used when verifying an HTTPS proxy. 
+             * Same as caPath, but used when verifying an HTTPS proxy.
              * Used to set CURLOPT_PROXY_CAPATH in libcurl and proxy tls
              * settings in crt HTTP client.
              * Does nothing on windows.
@@ -255,7 +255,7 @@ namespace Aws
              */
              Aws::String caFile;
             /**
-             * Same as caFile, but used when verifying an HTTPS proxy. 
+             * Same as caFile, but used when verifying an HTTPS proxy.
              * Used to set CURLOPT_PROXY_CAINFO in libcurl and proxy tls
              * settings in crt HTTP client.
              * Does nothing on windows.

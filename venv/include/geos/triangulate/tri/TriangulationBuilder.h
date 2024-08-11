@@ -83,4 +83,3 @@ public:
 } // namespace geos.triangulate.tri
 } // namespace geos.triangulate
 } // namespace geos
-

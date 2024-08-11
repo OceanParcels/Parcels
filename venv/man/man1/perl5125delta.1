@@ -158,7 +158,7 @@ This problem has been corrected.  Bug reported by Robert Zacek.
 .ie n .SS """File::Glob::bsd_glob()"" memory error with \s-1GLOB_ALTDIRFUNC\s0 (\s-1CVE\-2011\-2728\s0)."
 .el .SS "\f(CWFile::Glob::bsd_glob()\fP memory error with \s-1GLOB_ALTDIRFUNC\s0 (\s-1CVE\-2011\-2728\s0)."
 .IX Subsection "File::Glob::bsd_glob() memory error with GLOB_ALTDIRFUNC (CVE-2011-2728)."
-Calling \f(CW\*(C`File::Glob::bsd_glob\*(C'\fR with the unsupported flag \s-1GLOB_ALTDIRFUNC\s0 would 
+Calling \f(CW\*(C`File::Glob::bsd_glob\*(C'\fR with the unsupported flag \s-1GLOB_ALTDIRFUNC\s0 would
 cause an access violation / segfault.  A Perl program that accepts a flags value from
 an external source could expose itself to denial of service or arbitrary code
 execution attacks.  There are no known exploits in the wild.  The problem has been

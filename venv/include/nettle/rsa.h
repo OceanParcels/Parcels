@@ -30,7 +30,7 @@
    the GNU Lesser General Public License along with this program.  If
    not, see http://www.gnu.org/licenses/.
 */
- 
+
 #ifndef NETTLE_RSA_H_INCLUDED
 #define NETTLE_RSA_H_INCLUDED
 
@@ -116,7 +116,7 @@ struct rsa_public_key
   /* Size of the modulo, in octets. This is also the size of all
    * signatures that are created or verified with this key. */
   size_t size;
-  
+
   /* Modulo */
   mpz_t n;
 
@@ -131,7 +131,7 @@ struct rsa_private_key
   /* d is filled in by the key generation function; otherwise it's
    * completely unused. */
   mpz_t d;
-  
+
   /* The two factors */
   mpz_t p; mpz_t q;
 
@@ -167,7 +167,7 @@ struct rsa_private_key
  * When done with the key and signature, don't forget to call
  * mpz_clear.
  */
- 
+
 /* Calls mpz_init to initialize bignum storage. */
 void
 rsa_public_key_init(struct rsa_public_key *key);
@@ -415,7 +415,7 @@ rsa_decrypt(const struct rsa_private_key *key,
 int
 rsa_decrypt_tr(const struct rsa_public_key *pub,
 	       const struct rsa_private_key *key,
-	       void *random_ctx, nettle_random_func *random,	       
+	       void *random_ctx, nettle_random_func *random,
 	       size_t *length, uint8_t *message,
 	       const mpz_t gibberish);
 
@@ -454,7 +454,7 @@ rsa_generate_keypair(struct rsa_public_key *pub,
 
 		     /* Desired size of modulo, in bits */
 		     unsigned n_size,
-		     
+
 		     /* Desired size of public exponent, in bits. If
 		      * zero, the passed in value pub->e is used. */
 		     unsigned e_size);
@@ -470,7 +470,7 @@ rsa_generate_keypair(struct rsa_public_key *pub,
   rsa_##algorithm##_verify(key, ctx, signature) \
 )
 
-
+
 /* Keys in sexp form. */
 
 struct nettle_buffer;
@@ -515,11 +515,11 @@ rsa_private_key_from_der_iterator(struct rsa_public_key *pub,
 				  unsigned limit,
 				  struct asn1_der_iterator *i);
 
-/* For public keys, use PRIV == NULL */ 
+/* For public keys, use PRIV == NULL */
 int
 rsa_keypair_from_der(struct rsa_public_key *pub,
 		     struct rsa_private_key *priv,
-		     unsigned limit, 
+		     unsigned limit,
 		     size_t length, const uint8_t *data);
 
 /* OpenPGP format. Experimental interface, subject to change. */

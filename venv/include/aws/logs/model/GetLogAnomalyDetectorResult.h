@@ -79,7 +79,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetFilterPattern() const{ return m_filterPattern; }
     inline void SetFilterPattern(const Aws::String& value) { m_filterPattern = value; }
     inline void SetFilterPattern(Aws::String&& value) { m_filterPattern = std::move(value); }
@@ -146,7 +146,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

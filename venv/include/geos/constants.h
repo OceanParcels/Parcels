@@ -44,4 +44,3 @@ constexpr double DoubleEpsilon = std::numeric_limits<double>::epsilon();
 constexpr std::size_t NO_COORD_INDEX = std::numeric_limits<std::size_t>::max();
 
 } // namespace geos
-

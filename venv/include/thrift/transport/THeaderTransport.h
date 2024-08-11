@@ -72,7 +72,7 @@ public:
   static const int THRIFT_MAX_VARINT32_BYTES = 5;
 
   /// Use default buffer sizes.
-  explicit THeaderTransport(const std::shared_ptr<TTransport>& transport, 
+  explicit THeaderTransport(const std::shared_ptr<TTransport>& transport,
                             std::shared_ptr<TConfiguration> config = nullptr)
     : TVirtualTransport(transport, config),
       outTransport_(transport),

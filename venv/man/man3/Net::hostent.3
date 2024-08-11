@@ -188,29 +188,29 @@ via the \f(CW\*(C`CORE::\*(C'\fR pseudo-package.
 \&        next;
 \&    }
 \&
-\&    printf "\en%s is %s%s\en", 
-\&            $host, 
+\&    printf "\en%s is %s%s\en",
+\&            $host,
 \&            lc($h\->name) eq lc($host) ? "" : "*really* ",
 \&            $h\->name;
 \&
 \&    print "\etaliases are ", join(", ", @{$h\->aliases}), "\en"
-\&                if @{$h\->aliases};     
+\&                if @{$h\->aliases};
 \&
-\&    if ( @{$h\->addr_list} > 1 ) { 
+\&    if ( @{$h\->addr_list} > 1 ) {
 \&        my $i;
 \&        for $addr ( @{$h\->addr_list} ) {
 \&            printf "\etaddr #%d is [%s]\en", $i++, inet_ntoa($addr);
-\&        } 
+\&        }
 \&    } else {
 \&        printf "\etaddress is [%s]\en", inet_ntoa($h\->addr);
-\&    } 
+\&    }
 \&
 \&    if ($h = gethostbyaddr($h\->addr)) {
 \&        if (lc($h\->name) ne lc($host)) {
 \&            printf "\etThat addr reverses to host %s!\en", $h\->name;
 \&            $host = $h\->name;
 \&            redo;
-\&        } 
+\&        }
 \&    }
 \& }
 .Ve

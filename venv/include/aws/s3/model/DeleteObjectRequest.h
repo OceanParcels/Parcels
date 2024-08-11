@@ -111,7 +111,7 @@ namespace Model
      * the value that is displayed on your authentication device. Required to
      * permanently delete a versioned object if versioning is configured with MFA
      * delete enabled.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetMFA() const{ return m_mFA; }
     inline bool MFAHasBeenSet() const { return m_mFAHasBeenSet; }
@@ -125,9 +125,9 @@ namespace Model
 
     ///@{
     /**
-     * <p>Version ID used to reference a specific version of the object.</p> 
+     * <p>Version ID used to reference a specific version of the object.</p>
      * <p>For directory buckets in this API operation, only the <code>null</code> value
-     * of the version ID is supported.</p> 
+     * of the version ID is supported.</p>
      */
     inline const Aws::String& GetVersionId() const{ return m_versionId; }
     inline bool VersionIdHasBeenSet() const { return m_versionIdHasBeenSet; }
@@ -140,7 +140,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
     inline void SetRequestPayer(const RequestPayer& value) { m_requestPayerHasBeenSet = true; m_requestPayer = value; }
@@ -154,7 +154,7 @@ namespace Model
      * <p>Indicates whether S3 Object Lock should bypass Governance-mode restrictions
      * to process this operation. To use this header, you must have the
      * <code>s3:BypassGovernanceRetention</code> permission.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline bool GetBypassGovernanceRetention() const{ return m_bypassGovernanceRetention; }
     inline bool BypassGovernanceRetentionHasBeenSet() const { return m_bypassGovernanceRetentionHasBeenSet; }
@@ -179,7 +179,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

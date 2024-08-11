@@ -6,17 +6,17 @@
  *
  * Copyright (C) 2004 Sharif FarsiWeb, Inc.
  * Copyright (C) 2001,2002 Behdad Esfahbod
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library, in a file named COPYING; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -33,7 +33,7 @@
 
 #include "fribidi-begindecls.h"
 
-/* 
+/*
  * Define bit masks that joining types are based on, each mask has
  * only one bit set.
  */
@@ -161,7 +161,7 @@ typedef uint8_t FriBidiArabicProp;
 
 
 /*
- * Defining macros for needed queries, It is fully dependent on the 
+ * Defining macros for needed queries, It is fully dependent on the
  * implementation of FriBidiJoiningType.
  */
 
@@ -206,7 +206,7 @@ typedef uint8_t FriBidiArabicProp;
  * provided in file ArabicShaping.txt and UnicodeData.txt of the Unicode
  * Character Database available at
  * http://www.unicode.org/Public/UNIDATA/ArabicShaping.txt and
- * http://www.unicode.org/Public/UNIDATA/UnicodeData.txt. 
+ * http://www.unicode.org/Public/UNIDATA/UnicodeData.txt.
  *
  * There are a few macros defined in fribidi-joining-types.h for querying a
  * joining type.

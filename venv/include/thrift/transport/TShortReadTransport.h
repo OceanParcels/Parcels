@@ -65,16 +65,16 @@ public:
 
   void write(const uint8_t* buf, uint32_t len) { transport_->write(buf, len); }
 
-  void flush() override { 
+  void flush() override {
     resetConsumedMessageSize();
-    transport_->flush(); 
+    transport_->flush();
   }
 
   const uint8_t* borrow(uint8_t* buf, uint32_t* len) { return transport_->borrow(buf, len); }
 
-  void consume(uint32_t len) { 
+  void consume(uint32_t len) {
     countConsumedMessageBytes(len);
-    return transport_->consume(len); 
+    return transport_->consume(len);
   }
 
   std::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }

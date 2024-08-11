@@ -39,7 +39,7 @@ namespace Aws
                 {}
 
                 virtual ~EventStreamHandler() = default;
-            
+
                 /**
                  * Whether or not flow handler is in a good state. Return false if handler encounters errors.
                  */
@@ -113,7 +113,7 @@ namespace Aws
                     m_message.WriteEventPayload(data, dataLength);
                     m_payloadBytesReceived += dataLength;
                 }
-                
+
                 /**
                  * Get underlying byte array of the message just received.
                  */
@@ -152,7 +152,7 @@ namespace Aws
                 /**
                  * Entry point of all callback functions.
                  * Will trigger associated functions based on m_message.
-                 */ 
+                 */
                 virtual void OnEvent() = 0;
 
             private:

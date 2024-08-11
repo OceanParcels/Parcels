@@ -180,7 +180,7 @@ deprecation warning message unless such warnings are turned off.  The
 new name for U+0007 in Perl is \f(CW\*(C`ALERT\*(C'\fR, which corresponds nicely
 with the existing shorthand sequence for it, \f(CW"\ea"\fR.  \f(CW\*(C`\eN{BEL}\*(C'\fR
 means U+0007, with no warning given.  The character at U+1F514 has no
-name in 5.14, but can be referred to by \f(CW\*(C`\eN{U+1F514}\*(C'\fR. 
+name in 5.14, but can be referred to by \f(CW\*(C`\eN{U+1F514}\*(C'\fR.
 In Perl 5.16, \f(CW\*(C`\eN{BELL}\*(C'\fR will refer to U+1F514; all code
 that uses \f(CW\*(C`\eN{BELL}\*(C'\fR should be converted to use \f(CW\*(C`\eN{ALERT}\*(C'\fR,
 \&\f(CW\*(C`\eN{BEL}\*(C'\fR, or \f(CW"\ea"\fR before upgrading.
@@ -261,7 +261,7 @@ inconsistent and in places, incorrect.
 .PP
 Unicode non-characters, some of which previously were erroneously
 considered illegal in places by Perl, contrary to the Unicode Standard,
-are now always legal internally.  Inputting or outputting them 
+are now always legal internally.  Inputting or outputting them
 works the same as with the non-legal Unicode code points, because the Unicode
 Standard says they are (only) illegal for \*(L"open interchange\*(R".
 .PP
@@ -282,7 +282,7 @@ expression now means that the subexpression does not inherit surrounding
 modifiers such as \f(CW\*(C`/i\*(C'\fR, but reverts to the Perl defaults.  Any modifiers
 following the caret override the defaults.
 .PP
-Stringification of regular expressions now uses this notation.  
+Stringification of regular expressions now uses this notation.
 For example, \f(CW\*(C`qr/hlagh/i\*(C'\fR would previously be stringified as
 \&\f(CW\*(C`(?i\-xsm:hlagh)\*(C'\fR, but now it's stringified as \f(CW\*(C`(?^i:hlagh)\*(C'\fR.
 .PP
@@ -438,7 +438,7 @@ or on the return value of subroutines without needing to wrap them in
 \&  push @{$obj\->tags}, $new_tag;  # old way
 \&  push $obj\->tags,    $new_tag;  # new way
 \&
-\&  for ( keys %{$hoh\->{genres}{artists}} ) {...} # old way 
+\&  for ( keys %{$hoh\->{genres}{artists}} ) {...} # old way
 \&  for ( keys $hoh\->{genres}{artists}    ) {...} # new way
 .Ve
 .PP
@@ -455,7 +455,7 @@ force scalar context on the argument.  See \*(L"Prototypes\*(R" in perlsub.
 A package declaration can now contain a code block, in which case the
 declaration is in scope inside that block only.  So \f(CW\*(C`package Foo { ... }\*(C'\fR
 is precisely equivalent to \f(CW\*(C`{ package Foo; ... }\*(C'\fR.  It also works with
-a version number in the declaration, as in \f(CW\*(C`package Foo 1.2 { ... }\*(C'\fR, 
+a version number in the declaration, as in \f(CW\*(C`package Foo 1.2 { ... }\*(C'\fR,
 which is its most attractive feature.  See perlfunc.
 .PP
 \fIStatement labels can appear in more places\fR
@@ -551,7 +551,7 @@ log the seed used for that run so this can later be used to produce the same res
 Perl's printf and sprintf operators, and Perl's internal printf replacement
 function, now understand the C90 size modifiers \*(L"hh\*(R" (\f(CW\*(C`char\*(C'\fR), \*(L"z\*(R"
 (\f(CW\*(C`size_t\*(C'\fR), and \*(L"t\*(R" (\f(CW\*(C`ptrdiff_t\*(C'\fR).  Also, when compiled with a C99
-compiler, Perl now understands the size modifier \*(L"j\*(R" (\f(CW\*(C`intmax_t\*(C'\fR) 
+compiler, Perl now understands the size modifier \*(L"j\*(R" (\f(CW\*(C`intmax_t\*(C'\fR)
 (but this is not portable).
 .PP
 So, for example, on any modern machine, \f(CW\*(C`sprintf("%hhd", 257)\*(C'\fR returns \*(L"1\*(R".
@@ -764,9 +764,9 @@ has come to rely on the incorrect behaviour.
 .IX Subsection "Stringification of regexes has changed"
 .PP
 Default regular expression modifiers are now notated using
-\&\f(CW\*(C`(?^...)\*(C'\fR.  Code relying on the old stringification will fail.  
+\&\f(CW\*(C`(?^...)\*(C'\fR.  Code relying on the old stringification will fail.
 This is so that when new modifiers are added, such code won't
-have to keep changing each time this happens, because the stringification 
+have to keep changing each time this happens, because the stringification
 will automatically incorporate the new modifiers.
 .PP
 Code that needs to work properly with both old\- and new-style regexes
@@ -843,7 +843,7 @@ of an empty \f(CW%hash\fR always returning false in scalar context.
 \fIClearing stashes\fR
 .IX Subsection "Clearing stashes"
 .PP
-Stash list assignment \f(CW\*(C`%foo:: = ()\*(C'\fR used to make the stash temporarily 
+Stash list assignment \f(CW\*(C`%foo:: = ()\*(C'\fR used to make the stash temporarily
 anonymous while it was being emptied.  Consequently, any of its
 subroutines referenced elsewhere would become anonymous,  showing up as
 \&\*(L"(unknown)\*(R" in \f(CW\*(C`caller\*(C'\fR.  They now retain their package names such that
@@ -924,8 +924,8 @@ it as well.
 \fIParsing of package and variable names\fR
 .IX Subsection "Parsing of package and variable names"
 .PP
-Parsing the names of packages and package variables has changed: 
-multiple adjacent pairs of colons, as in \f(CW\*(C`foo::::bar\*(C'\fR, are now all 
+Parsing the names of packages and package variables has changed:
+multiple adjacent pairs of colons, as in \f(CW\*(C`foo::::bar\*(C'\fR, are now all
 treated as package separators.
 .PP
 Regardless of this change, the exact parsing of package separators has
@@ -1143,7 +1143,7 @@ course, do not generate the warning.
 .el .SS "List assignment to \f(CW$[\fP"
 .IX Subsection "List assignment to $["
 Assignment to \f(CW$[\fR was deprecated and started to give warnings in
-Perl version 5.12.0.  This version of Perl (5.14) now also emits a warning 
+Perl version 5.12.0.  This version of Perl (5.14) now also emits a warning
 when assigning to \f(CW$[\fR in list context.  This fixes an oversight in 5.12.0.
 .SS "Use of qw(...) as parentheses"
 .IX Subsection "Use of qw(...) as parentheses"
@@ -1342,7 +1342,7 @@ programs that do not use \f(CW\*(C`%+\*(C'\fR or \f(CW\*(C`%\-\*(C'\fR.
 .IX Subsection "Multiple small improvements to threads"
 The internal structures of threading now make fewer \s-1API\s0 calls and fewer
 allocations, resulting in noticeably smaller object code.  Additionally,
-many thread context checks have been deferred so they're done only 
+many thread context checks have been deferred so they're done only
 as needed (although this is only possible for non-debugging builds).
 .SS "Adjacent pairs of nextstate opcodes are now optimized away"
 .IX Subsection "Adjacent pairs of nextstate opcodes are now optimized away"
@@ -1406,7 +1406,7 @@ with standardized names (like \*(L"Unix\*(R" or \*(L"Windows\*(R").  It has been
 out of Module::Build and ExtUtils::CBuilder and consolidates such mappings into
 a single location for easier maintenance.
 .IP "\(bu" 4
-The following modules were added by the Unicode::Collate 
+The following modules were added by the Unicode::Collate
 upgrade.  See below for details.
 .Sp
 Unicode::Collate::CJK::Big5
@@ -1454,7 +1454,7 @@ The \fBptar\fR\|(1) utility has a new option to allow safe creation of
 tarballs without world-writable files on Windows, allowing those
 archives to be uploaded to \s-1CPAN.\s0
 .IP "\(bu" 4
-A new \fBptargrep\fR\|(1) utility for using regular expressions against 
+A new \fBptargrep\fR\|(1) utility for using regular expressions against
 the contents of files in a tar archive.
 .IP "\(bu" 4
 pax extended headers are now skipped.
@@ -1530,8 +1530,8 @@ errors\*(R" error that ensue if there has been a syntax error
 .IP "\(bu" 4
 \&\s-1CGI\s0 has been upgraded from version 3.48 to 3.52.
 .Sp
-This provides the following security fixes: the \s-1MIME\s0 boundary in 
-\&\fBmultipart_init()\fR is now random and the handling of 
+This provides the following security fixes: the \s-1MIME\s0 boundary in
+\&\fBmultipart_init()\fR is now random and the handling of
 newlines embedded in header values has been improved.
 .IP "\(bu" 4
 Compress::Raw::Bzip2 has been upgraded from version 2.024 to 2.033.
@@ -1985,21 +1985,21 @@ Unicode::Collate has been upgraded from version 0.52_01 to 0.73.
 Unicode::Collate has been updated to use Unicode 6.0.0.
 .Sp
 Unicode::Collate::Locale now supports a plethora of new locales: \fIar, be,
-bg, de_\|_phonebook, hu, hy, kk, mk, nso, om, tn, vi, hr, ig, ja, ko, ru, sq, 
+bg, de_\|_phonebook, hu, hy, kk, mk, nso, om, tn, vi, hr, ig, ja, ko, ru, sq,
 se, sr, to, uk, zh, zh_\|_big5han, zh_\|_gb2312han, zh_\|_pinyin\fR, and \fIzh_\|_stroke\fR.
 .Sp
 The following modules have been added:
 .Sp
-Unicode::Collate::CJK::Big5 for \f(CW\*(C`zh_\|_big5han\*(C'\fR which makes 
+Unicode::Collate::CJK::Big5 for \f(CW\*(C`zh_\|_big5han\*(C'\fR which makes
 tailoring of \s-1CJK\s0 Unified Ideographs in the order of \s-1CLDR\s0's big5han ordering.
 .Sp
 Unicode::Collate::CJK::GB2312 for \f(CW\*(C`zh_\|_gb2312han\*(C'\fR which makes
 tailoring of \s-1CJK\s0 Unified Ideographs in the order of \s-1CLDR\s0's gb2312han ordering.
 .Sp
-Unicode::Collate::CJK::JISX0208 which makes tailoring of 6355 kanji 
+Unicode::Collate::CJK::JISX0208 which makes tailoring of 6355 kanji
 (\s-1CJK\s0 Unified Ideographs) in the \s-1JIS X 0208\s0 order.
 .Sp
-Unicode::Collate::CJK::Korean which makes tailoring of \s-1CJK\s0 Unified Ideographs 
+Unicode::Collate::CJK::Korean which makes tailoring of \s-1CJK\s0 Unified Ideographs
 in the order of \s-1CLDR\s0's Korean ordering.
 .Sp
 Unicode::Collate::CJK::Pinyin for \f(CW\*(C`zh_\|_pinyin\*(C'\fR which makes
@@ -2028,7 +2028,7 @@ This upgrade also includes several bug fixes:
 .PD 0
 .IP "\(bu" 4
 .PD
-It is now updated to Unicode Version 6.0.0 with \fICorrigendum #8\fR, 
+It is now updated to Unicode Version 6.0.0 with \fICorrigendum #8\fR,
 excepting that, just as with Perl 5.14, the code point at U+1F514 has no name.
 .IP "\(bu" 4
 Hangul syllable code points have the correct names, and their
@@ -2238,7 +2238,7 @@ Several \s-1API\s0 functions that process optrees have been newly documented.
 .IX Subsection "perlvar revamp"
 .PP
 perlvar reorders the variables and groups them by topic.  Each variable
-introduced after Perl 5.000 notes the first version in which it is 
+introduced after Perl 5.000 notes the first version in which it is
 available.  perlvar also has a new section for deprecated variables to
 note when they were removed.
 .PP
@@ -2265,7 +2265,7 @@ is now much more straightforward and clear.
 The perlhack document is now much shorter, and focuses on the Perl 5
 development process and submitting patches to Perl.  The technical content
 has been moved to several new documents, perlsource, perlinterp,
-perlhacktut, and perlhacktips.  This technical content has 
+perlhacktut, and perlhacktips.  This technical content has
 been only lightly edited.
 .PP
 The perlrepository document has been renamed to perlgit.  This new
@@ -2504,7 +2504,7 @@ Improved rebase behaviour
 .Sp
 If a \s-1DLL\s0 is updated on cygwin the old imagebase address is reused.
 This solves most rebase errors, especially when updating on core \s-1DLL\s0's.
-See <http://www.tishler.net/jason/software/rebase/rebase\-2.4.2.README> 
+See <http://www.tishler.net/jason/software/rebase/rebase\-2.4.2.README>
 for more information.
 .IP "\(bu" 4
 Support for the standard cygwin dll prefix (needed for FFIs)
@@ -3580,7 +3580,7 @@ arranged in memory [perl #71806].
 A possible memory leak when using \fBcaller()\fR to set
 \&\f(CW@DB::args\fR has been fixed (5.12.2).
 .IP "\(bu" 4
-Perl no longer stomps on \f(CW$DB::single\fR, \f(CW$DB::trace\fR, and \f(CW$DB::signal\fR 
+Perl no longer stomps on \f(CW$DB::single\fR, \f(CW$DB::trace\fR, and \f(CW$DB::signal\fR
 if these variables already have values when \f(CW$^P\fR is assigned to [perl #72422].
 .IP "\(bu" 4
 \&\f(CW\*(C`#line\*(C'\fR directives in string evals were not properly updating the arrays
@@ -3756,7 +3756,7 @@ resulting in loss of precision on 64\-bit platforms [perl #77456].
 [perl #78632].
 .IP "\(bu" 4
 Combining the vector (\f(CW%v\fR) flag and dynamic precision would
-cause \f(CW\*(C`sprintf\*(C'\fR to confuse the order of its arguments, making it 
+cause \f(CW\*(C`sprintf\*(C'\fR to confuse the order of its arguments, making it
 treat the string as the precision and vice-versa [perl #83194].
 .SS "Bugs Relating to the C \s-1API\s0"
 .IX Subsection "Bugs Relating to the C API"

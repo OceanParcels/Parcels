@@ -1,4 +1,4 @@
-# SCCSID @(#)nad27	4.1 92/12/20 GIE 
+# SCCSID @(#)nad27	4.1 92/12/20 GIE
 # proj +init files for:
 #
 #     State Plane Coordinate Systems,
@@ -807,4 +807,3 @@ no_defs <>
 <5400> proj=poly  datum=NAD27
 x_0=50000 y_0=50000 lon_0=144d44'55.50254 lat_0=13d28'20.87887
 no_defs <>
-

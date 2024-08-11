@@ -175,4 +175,3 @@ typedef struct _XagDestroyAssoc {
 #undef VisualID
 
 #endif /* } _AGPROTO_H_ */
-

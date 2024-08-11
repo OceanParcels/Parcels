@@ -64,7 +64,7 @@ public:
      * the triangulation boundary to be convex may cause the overall frame
      * triangulation to be non-Delaunay. This can cause a problem for Voronoi
      * generation, so the logic can be disabled via this method.
-     * 
+     *
      * @param isForceConvex true if the triangulation boundary is forced to be convex
      */
     void forceConvex(bool isForceConvex);
@@ -103,4 +103,3 @@ private:
 
 } //namespace geos.triangulate
 } //namespace goes
-

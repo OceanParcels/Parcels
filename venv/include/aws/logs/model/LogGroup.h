@@ -67,7 +67,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline int GetRetentionInDays() const{ return m_retentionInDays; }
     inline bool RetentionInDaysHasBeenSet() const { return m_retentionInDaysHasBeenSet; }
     inline void SetRetentionInDays(int value) { m_retentionInDaysHasBeenSet = true; m_retentionInDays = value; }

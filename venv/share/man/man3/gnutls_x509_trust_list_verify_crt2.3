@@ -50,7 +50,7 @@ will consider certificates provided with \fBgnutls_x509_trust_list_add_named_crt
 
 If a key purpose OID is provided and the end\-certificate contains the extended key
 usage PKIX extension, it will be required to match the provided OID
-or be marked for any purpose, otherwise verification will fail with 
+or be marked for any purpose, otherwise verification will fail with
 \fBGNUTLS_CERT_PURPOSE_MISMATCH\fP status.
 .SH "RETURNS"
 On success, \fBGNUTLS_E_SUCCESS\fP (0) is returned, otherwise a

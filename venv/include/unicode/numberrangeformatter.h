@@ -643,7 +643,7 @@ class U_I18N_API FormattedNumberRange : public UMemory, public FormattedValue {
      * Extracts the formatted range as a pair of decimal numbers. This endpoint
      * is useful for obtaining the exact number being printed after scaling
      * and rounding have been applied by the number range formatting pipeline.
-     * 
+     *
      * The syntax of the unformatted numbers is a "numeric string"
      * as defined in the Decimal Arithmetic Specification, available at
      * http://speleotrove.com/decimal
@@ -791,4 +791,3 @@ U_NAMESPACE_END
 #endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif // __NUMBERRANGEFORMATTER_H__
-

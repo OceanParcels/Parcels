@@ -112,7 +112,7 @@ namespace Model
      * sent to push notification services.</p> <p>For example, For more information,
      * see <a
      * href="https://docs.aws.amazon.com/sns/latest/dg/sns-msg-status.html">Using
-     * Amazon SNS Application Attributes for Message Delivery Status</a>. </p> 
+     * Amazon SNS Application Attributes for Message Delivery Status</a>. </p>
      * </li> <li> <p>Amazon SQS</p> <ul> <li> <p>
      * <code>SQSSuccessFeedbackRoleArn</code> – Indicates successful message delivery
      * status for an Amazon SNS topic that is subscribed to an Amazon SQS endpoint.

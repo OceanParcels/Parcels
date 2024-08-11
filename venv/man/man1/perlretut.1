@@ -859,39 +859,39 @@ of what Perl does when it tries to match the regexp
 .ie n .IP "0. Start with the first letter in the string \*(Aqa\*(Aq." 4
 .el .IP "0. Start with the first letter in the string \f(CW\*(Aqa\*(Aq\fR." 4
 .IX Item "0. Start with the first letter in the string a."
-\&\ 
+\&\
 .ie n .IP "1. Try the first alternative in the first group \*(Aqabd\*(Aq." 4
 .el .IP "1. Try the first alternative in the first group \f(CW\*(Aqabd\*(Aq\fR." 4
 .IX Item "1. Try the first alternative in the first group abd."
-\&\ 
+\&\
 .ie n .IP "2.  Match \*(Aqa\*(Aq followed by \*(Aqb\*(Aq. So far so good." 4
 .el .IP "2.  Match \f(CW\*(Aqa\*(Aq\fR followed by \f(CW\*(Aqb\*(Aq\fR. So far so good." 4
 .IX Item "2. Match a followed by b. So far so good."
-\&\ 
+\&\
 .ie n .IP "3.  \*(Aqd\*(Aq in the regexp doesn't match \*(Aqc\*(Aq in the string \- a dead end.  So backtrack two characters and pick the second alternative in the first group \*(Aqabc\*(Aq." 4
 .el .IP "3.  \f(CW\*(Aqd\*(Aq\fR in the regexp doesn't match \f(CW\*(Aqc\*(Aq\fR in the string \- a dead end.  So backtrack two characters and pick the second alternative in the first group \f(CW\*(Aqabc\*(Aq\fR." 4
 .IX Item "3. d in the regexp doesn't match c in the string - a dead end. So backtrack two characters and pick the second alternative in the first group abc."
-\&\ 
+\&\
 .ie n .IP "4.  Match \*(Aqa\*(Aq followed by \*(Aqb\*(Aq followed by \*(Aqc\*(Aq.  We are on a roll and have satisfied the first group. Set $1 to \*(Aqabc\*(Aq." 4
 .el .IP "4.  Match \f(CW\*(Aqa\*(Aq\fR followed by \f(CW\*(Aqb\*(Aq\fR followed by \f(CW\*(Aqc\*(Aq\fR.  We are on a roll and have satisfied the first group. Set \f(CW$1\fR to \f(CW\*(Aqabc\*(Aq\fR." 4
 .IX Item "4. Match a followed by b followed by c. We are on a roll and have satisfied the first group. Set $1 to abc."
-\&\ 
+\&\
 .ie n .IP "5 Move on to the second group and pick the first alternative \*(Aqdf\*(Aq." 4
 .el .IP "5 Move on to the second group and pick the first alternative \f(CW\*(Aqdf\*(Aq\fR." 4
 .IX Item "5 Move on to the second group and pick the first alternative df."
-\&\ 
+\&\
 .ie n .IP "6 Match the \*(Aqd\*(Aq." 4
 .el .IP "6 Match the \f(CW\*(Aqd\*(Aq\fR." 4
 .IX Item "6 Match the d."
-\&\ 
+\&\
 .ie n .IP "7.  \*(Aqf\*(Aq in the regexp doesn't match \*(Aqe\*(Aq in the string, so a dead end.  Backtrack one character and pick the second alternative in the second group \*(Aqd\*(Aq." 4
 .el .IP "7.  \f(CW\*(Aqf\*(Aq\fR in the regexp doesn't match \f(CW\*(Aqe\*(Aq\fR in the string, so a dead end.  Backtrack one character and pick the second alternative in the second group \f(CW\*(Aqd\*(Aq\fR." 4
 .IX Item "7. f in the regexp doesn't match e in the string, so a dead end. Backtrack one character and pick the second alternative in the second group d."
-\&\ 
+\&\
 .ie n .IP "8.  \*(Aqd\*(Aq matches. The second grouping is satisfied, so set $2 to \*(Aqd\*(Aq." 4
 .el .IP "8.  \f(CW\*(Aqd\*(Aq\fR matches. The second grouping is satisfied, so set \f(CW$2\fR to \f(CW\*(Aqd\*(Aq\fR." 4
 .IX Item "8. d matches. The second grouping is satisfied, so set $2 to d."
-\&\ 
+\&\
 .ie n .IP "9.  We are at the end of the regexp, so we are done! We have matched \*(Aqabcd\*(Aq out of the string ""abcde""." 4
 .el .IP "9.  We are at the end of the regexp, so we are done! We have matched \f(CW\*(Aqabcd\*(Aq\fR out of the string \f(CW``abcde''\fR." 4
 .IX Item "9. We are at the end of the regexp, so we are done! We have matched abcd out of the string ""abcde""."
@@ -1465,27 +1465,27 @@ backtracking.  Here is a step-by-step analysis of the example
 .ie n .IP "0.  Start with the first letter in the string \*(Aqt\*(Aq." 4
 .el .IP "0.  Start with the first letter in the string \f(CW\*(Aqt\*(Aq\fR." 4
 .IX Item "0. Start with the first letter in the string t."
-\&\ 
+\&\
 .ie n .IP "1.  The first quantifier \*(Aq.*\*(Aq starts out by matching the whole string """"the cat in the hat""""." 4
 .el .IP "1.  The first quantifier \f(CW\*(Aq.*\*(Aq\fR starts out by matching the whole string ``\f(CWthe cat in the hat\fR''." 4
 .IX Item "1. The first quantifier .* starts out by matching the whole string ""the cat in the hat""."
-\&\ 
+\&\
 .ie n .IP "2.  \*(Aqa\*(Aq in the regexp element \*(Aqat\*(Aq doesn't match the end of the string.  Backtrack one character." 4
 .el .IP "2.  \f(CW\*(Aqa\*(Aq\fR in the regexp element \f(CW\*(Aqat\*(Aq\fR doesn't match the end of the string.  Backtrack one character." 4
 .IX Item "2. a in the regexp element at doesn't match the end of the string. Backtrack one character."
-\&\ 
+\&\
 .ie n .IP "3.  \*(Aqa\*(Aq in the regexp element \*(Aqat\*(Aq still doesn't match the last letter of the string \*(Aqt\*(Aq, so backtrack one more character." 4
 .el .IP "3.  \f(CW\*(Aqa\*(Aq\fR in the regexp element \f(CW\*(Aqat\*(Aq\fR still doesn't match the last letter of the string \f(CW\*(Aqt\*(Aq\fR, so backtrack one more character." 4
 .IX Item "3. a in the regexp element at still doesn't match the last letter of the string t, so backtrack one more character."
-\&\ 
+\&\
 .ie n .IP "4.  Now we can match the \*(Aqa\*(Aq and the \*(Aqt\*(Aq." 4
 .el .IP "4.  Now we can match the \f(CW\*(Aqa\*(Aq\fR and the \f(CW\*(Aqt\*(Aq\fR." 4
 .IX Item "4. Now we can match the a and the t."
-\&\ 
+\&\
 .ie n .IP "5.  Move on to the third element \*(Aq.*\*(Aq.  Since we are at the end of the string and \*(Aq.*\*(Aq can match 0 times, assign it the empty string." 4
 .el .IP "5.  Move on to the third element \f(CW\*(Aq.*\*(Aq\fR.  Since we are at the end of the string and \f(CW\*(Aq.*\*(Aq\fR can match 0 times, assign it the empty string." 4
 .IX Item "5. Move on to the third element .*. Since we are at the end of the string and .* can match 0 times, assign it the empty string."
-\&\ 
+\&\
 .IP "6.  We are done!" 4
 .IX Item "6. We are done!"
 .PP

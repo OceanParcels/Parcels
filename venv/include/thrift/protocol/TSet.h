@@ -39,14 +39,14 @@ public:
 
   TSet(TType t, int s)
     : elemType_(t),
-      size_(s) { 
-        
+      size_(s) {
+
   }
 
   TSet(TList list)
     : elemType_(list.elemType_),
-      size_(list.size_) { 
-        
+      size_(list.size_) {
+
   }
 
   TType elemType_;

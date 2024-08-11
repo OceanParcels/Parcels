@@ -42,7 +42,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const Aws::String& GetId() const{ return m_id; }
     inline bool IdHasBeenSet() const { return m_idHasBeenSet; }
     inline void SetId(const Aws::String& value) { m_idHasBeenSet = true; m_id = value; }
@@ -86,7 +86,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const NotificationConfigurationFilter& GetFilter() const{ return m_filter; }
     inline bool FilterHasBeenSet() const { return m_filterHasBeenSet; }
     inline void SetFilter(const NotificationConfigurationFilter& value) { m_filterHasBeenSet = true; m_filter = value; }

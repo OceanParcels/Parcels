@@ -32,7 +32,7 @@ namespace Model
    * configuration changes continuously whenever a change occurs.</p> </li> <li>
    * <p>Daily recording allows you to receive a configuration item (CI) representing
    * the most recent state of your resources over the last 24-hour period, only if
-   * it’s different from the previous CI recorded. </p> </li> </ul> 
+   * it’s different from the previous CI recorded. </p> </li> </ul>
    * <p>Firewall Manager depends on continuous recording to monitor your resources.
    * If you are using Firewall Manager, it is recommended that you set the recording
    * frequency to Continuous.</p>  <p>You can also override the recording
@@ -58,7 +58,7 @@ namespace Model
      * </li> <li> <p> <code>AWS::Config::ConfigurationRecorder</code> </p> </li> </ul>
      * <p>For the <b>allSupported</b> (<code>ALL_SUPPORTED_RESOURCE_TYPES</code>)
      * recording strategy, these resource types will be set to Continuous
-     * recording.</p> 
+     * recording.</p>
      */
     inline const RecordingFrequency& GetRecordingFrequency() const{ return m_recordingFrequency; }
     inline bool RecordingFrequencyHasBeenSet() const { return m_recordingFrequencyHasBeenSet; }

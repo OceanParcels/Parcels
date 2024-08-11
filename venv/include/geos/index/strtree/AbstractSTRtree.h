@@ -321,4 +321,3 @@ public:
 } // namespace geos::index::strtree
 } // namespace geos::index
 } // namespace geos
-

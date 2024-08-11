@@ -62,4 +62,3 @@ public:
 
 } // namespace geos.precision
 } // namespace geos
-

@@ -177,4 +177,3 @@ private:
 } // namespace geos.operation.buffer
 } // namespace geos.operation
 } // namespace geos
-

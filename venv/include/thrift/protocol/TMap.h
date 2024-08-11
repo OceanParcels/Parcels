@@ -31,7 +31,7 @@ namespace protocol {
  *
  */
 class TMap {
-public: 
+public:
   TMap()
     : keyType_(T_STOP),
       valueType_(T_STOP),

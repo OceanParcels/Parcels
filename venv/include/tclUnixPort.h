@@ -21,7 +21,7 @@
 
 #ifndef _TCLUNIXPORT
 #define _TCLUNIXPORT
-
+
 /*
  *---------------------------------------------------------------------------
  * The following sets of #includes and #ifdefs are required to get Tcl to
@@ -49,7 +49,7 @@
 #   include <dirent.h>
 #endif
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Parameterize for 64-bit filesystem support.
@@ -130,7 +130,7 @@ extern "C" {
 #   define TclOSstat(name, buf) stat(name, (struct stat *)buf)
 #   define TclOSlstat(name, buf) lstat(name, (struct stat *)buf)
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Miscellaneous includes that might be missing.
@@ -171,7 +171,7 @@ extern "C" {
 extern int TclUnixSetBlockingMode(int fd, int mode);
 
 #include <utime.h>
-
+
 /*
  *---------------------------------------------------------------------------
  * Socket support stuff: This likely needs more work to parameterize for each
@@ -189,7 +189,7 @@ extern int TclUnixSetBlockingMode(int fd, int mode);
 #ifdef NEED_FAKE_RFC2553
 # include "../compat/fake-rfc2553.h"
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Some platforms (e.g. SunOS) don't define FLT_MAX and FLT_MIN, so we look
@@ -220,7 +220,7 @@ extern int TclUnixSetBlockingMode(int fd, int mode);
 #	define FLT_MIN	1.175494351E-38F
 #   endif
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * NeXT doesn't define O_NONBLOCK, so #define it here if necessary.
@@ -230,7 +230,7 @@ extern int TclUnixSetBlockingMode(int fd, int mode);
 #ifndef O_NONBLOCK
 #   define O_NONBLOCK 0x80
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * The type of the status returned by wait varies from UNIX system to UNIX
@@ -247,7 +247,7 @@ extern int TclUnixSetBlockingMode(int fd, int mode);
 #   define WAIT_STATUS_TYPE	int
 #endif
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Supply definitions for macros to query wait status, if not already defined
@@ -280,7 +280,7 @@ extern int TclUnixSetBlockingMode(int fd, int mode);
 #ifndef WSTOPSIG
 #   define WSTOPSIG(stat)	(((*((int *) &(stat))) >> 8) & 0xFF)
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Define constants for waitpid() system call if they aren't defined by a
@@ -294,7 +294,7 @@ extern int TclUnixSetBlockingMode(int fd, int mode);
 #ifndef WUNTRACED
 #   define WUNTRACED 2
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Supply macros for seek offsets, if they're not already provided by an
@@ -311,7 +311,7 @@ extern int TclUnixSetBlockingMode(int fd, int mode);
 #ifndef SEEK_END
 #   define SEEK_END 2
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * The stuff below is needed by the "time" command. If this system has no
@@ -331,7 +331,7 @@ extern int TclUnixSetBlockingMode(int fd, int mode);
 extern int	gettimeofday(struct timeval *tp,
 			    struct timezone *tzp);
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Define access mode constants if they aren't already defined.
@@ -350,7 +350,7 @@ extern int	gettimeofday(struct timeval *tp,
 #ifndef R_OK
 #   define R_OK		04
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Define FD_CLOEEXEC (the close-on-exec flag bit) if it isn't already
@@ -361,7 +361,7 @@ extern int	gettimeofday(struct timeval *tp,
 #ifndef FD_CLOEXEC
 #   define FD_CLOEXEC	1
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * On systems without symbolic links (i.e. S_IFLNK isn't defined) define
@@ -375,7 +375,7 @@ extern int	gettimeofday(struct timeval *tp,
 #   define lstat64	stat64
 #   define TclOSlstat	TclOSstat
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Define macros to query file type bits, if they're not already defined.
@@ -435,7 +435,7 @@ extern int	gettimeofday(struct timeval *tp,
 #	define S_ISSOCK(m)	0
 #   endif
 #endif /* !S_ISSOCK */
-
+
 /*
  *---------------------------------------------------------------------------
  * Make sure that MAXPATHLEN and MAXNAMLEN are defined.
@@ -457,7 +457,7 @@ extern int	gettimeofday(struct timeval *tp,
 #	define MAXNAMLEN	255
 #   endif
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * The following macro defines the type of the mask arguments to select:
@@ -476,7 +476,7 @@ extern int	gettimeofday(struct timeval *tp,
 #	define SELECT_MASK	int
 #   endif /* defined(_IBMR2) */
 #endif /* !NO_FD_SET */
-
+
 /*
  *---------------------------------------------------------------------------
  * Define "NBBY" (number of bits per byte) if it's not already defined.
@@ -486,7 +486,7 @@ extern int	gettimeofday(struct timeval *tp,
 #ifndef NBBY
 #   define NBBY		8
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * The following macro defines the number of fd_masks in an fd_set:
@@ -510,7 +510,7 @@ extern int	gettimeofday(struct timeval *tp,
 #endif /* NFDBITS */
 
 #define MASK_SIZE	howmany(FD_SETSIZE, NFDBITS)
-
+
 /*
  *---------------------------------------------------------------------------
  * Not all systems declare the errno variable in errno.h. so this file does it
@@ -522,7 +522,7 @@ extern int	gettimeofday(struct timeval *tp,
 #ifdef NO_ERRNO
 extern int errno;
 #endif /* NO_ERRNO */
-
+
 /*
  *---------------------------------------------------------------------------
  * Not all systems declare all the errors that Tcl uses! Provide some
@@ -537,7 +537,7 @@ extern int errno;
 #	define EOVERFLOW	EINVAL
 #   endif /* EFBIG */
 #endif /* EOVERFLOW */
-
+
 /*
  *---------------------------------------------------------------------------
  * Variables provided by the C library:
@@ -554,7 +554,7 @@ extern int errno;
 #   endif
 extern char **		environ;
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Darwin specifc configure overrides.
@@ -654,7 +654,7 @@ extern char **		environ;
 #	undef USE_VFORK
 #   endif /* __llvm__ */
 #endif /* __APPLE__ */
-
+
 /*
  *---------------------------------------------------------------------------
  * The following macros and declarations represent the interface between
@@ -673,7 +673,7 @@ typedef int socklen_t;
 #else
 #define	TCL_PLATFORM_TRANSLATION	TCL_TRANSLATE_LF
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * The following macros have trivial definitions, allowing generic code to
@@ -682,7 +682,7 @@ typedef int socklen_t;
  */
 
 #define TclpReleaseFile(file)	/* Nothing. */
-
+
 /*
  *---------------------------------------------------------------------------
  * The following defines wrap the system memory allocation routines.
@@ -692,7 +692,7 @@ typedef int socklen_t;
 #define TclpSysAlloc(size, isBin)	malloc((size_t)(size))
 #define TclpSysFree(ptr)		free((char *)(ptr))
 #define TclpSysRealloc(ptr, size)	realloc((char *)(ptr), (size_t)(size))
-
+
 /*
  *---------------------------------------------------------------------------
  * The following macros and declaration wrap the C runtime library functions.
@@ -709,7 +709,7 @@ typedef int socklen_t;
 #ifndef AF_INET6
 #   define AF_INET6	10
 #endif
-
+
 /*
  *---------------------------------------------------------------------------
  * Set of MT-safe implementations of some known-to-be-MT-unsafe library calls.
@@ -732,7 +732,7 @@ extern void *TclpMakeTcpClientChannelMode(
 				    void *tcpSocket, int mode);
 
 #endif /* _TCLUNIXPORT */
-
+
 /*
  * Local Variables:
  * mode: c

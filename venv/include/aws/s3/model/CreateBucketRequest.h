@@ -52,7 +52,7 @@ namespace Model
     ///@{
     /**
      * <p>The canned ACL to apply to the bucket.</p>  <p>This functionality is
-     * not supported for directory buckets.</p> 
+     * not supported for directory buckets.</p>
      */
     inline const BucketCannedACL& GetACL() const{ return m_aCL; }
     inline bool ACLHasBeenSet() const { return m_aCLHasBeenSet; }
@@ -105,7 +105,7 @@ namespace Model
     /**
      * <p>Allows grantee the read, write, read ACP, and write ACP permissions on the
      * bucket.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetGrantFullControl() const{ return m_grantFullControl; }
     inline bool GrantFullControlHasBeenSet() const { return m_grantFullControlHasBeenSet; }
@@ -120,7 +120,7 @@ namespace Model
     ///@{
     /**
      * <p>Allows grantee to list the objects in the bucket.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetGrantRead() const{ return m_grantRead; }
     inline bool GrantReadHasBeenSet() const { return m_grantReadHasBeenSet; }
@@ -135,7 +135,7 @@ namespace Model
     ///@{
     /**
      * <p>Allows grantee to read the bucket ACL.</p>  <p>This functionality is
-     * not supported for directory buckets.</p> 
+     * not supported for directory buckets.</p>
      */
     inline const Aws::String& GetGrantReadACP() const{ return m_grantReadACP; }
     inline bool GrantReadACPHasBeenSet() const { return m_grantReadACPHasBeenSet; }
@@ -152,7 +152,7 @@ namespace Model
      * <p>Allows grantee to create new objects in the bucket.</p> <p>For the bucket and
      * object owners of existing objects, also allows deletions and overwrites of those
      * objects.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetGrantWrite() const{ return m_grantWrite; }
     inline bool GrantWriteHasBeenSet() const { return m_grantWriteHasBeenSet; }
@@ -167,7 +167,7 @@ namespace Model
     ///@{
     /**
      * <p>Allows grantee to write the ACL for the applicable bucket.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetGrantWriteACP() const{ return m_grantWriteACP; }
     inline bool GrantWriteACPHasBeenSet() const { return m_grantWriteACPHasBeenSet; }
@@ -183,7 +183,7 @@ namespace Model
     /**
      * <p>Specifies whether you want S3 Object Lock to be enabled for the new
      * bucket.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline bool GetObjectLockEnabledForBucket() const{ return m_objectLockEnabledForBucket; }
     inline bool ObjectLockEnabledForBucketHasBeenSet() const { return m_objectLockEnabledForBucketHasBeenSet; }
@@ -192,7 +192,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const ObjectOwnership& GetObjectOwnership() const{ return m_objectOwnership; }
     inline bool ObjectOwnershipHasBeenSet() const { return m_objectOwnershipHasBeenSet; }
     inline void SetObjectOwnership(const ObjectOwnership& value) { m_objectOwnershipHasBeenSet = true; m_objectOwnership = value; }
@@ -202,7 +202,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

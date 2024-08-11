@@ -17,17 +17,17 @@ hwlocality_glibc_sched \- Interoperability with glibc sched affinity
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 This interface offers ways to convert between hwloc cpusets and glibc cpusets such as those manipulated by sched_getaffinity() or pthread_attr_setaffinity_np()\&.
 .PP
 \fBNote\fP
 .RS 4
-Topology \fCtopology\fP must match the current machine\&. 
+Topology \fCtopology\fP must match the current machine\&.
 .RE
 .PP
 
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static int hwloc_cpuset_from_glibc_sched_affinity (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP hwlocset, const cpu_set_t * schedset, size_t schedsetsize)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
@@ -37,9 +37,9 @@ Convert glibc sched affinity CPU set \fCschedset\fP into hwloc CPU set\&. This f
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCENOMEM\fP if some internal reallocation failed\&. 
+-1 with errno set to \fCENOMEM\fP if some internal reallocation failed\&.
 .RE
 .PP
 
@@ -52,10 +52,10 @@ Convert hwloc CPU set \fCtoposet\fP into glibc sched affinity CPU set \fCschedse
 .PP
 \fBReturns\fP
 .RS 4
-0\&. 
+0\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

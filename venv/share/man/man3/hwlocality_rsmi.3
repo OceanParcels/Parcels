@@ -20,10 +20,10 @@ hwlocality_rsmi \- Interoperability with the ROCm SMI Management Library
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
-This interface offers ways to retrieve topology information about devices managed by the ROCm SMI Management Library\&. 
+.PP
+This interface offers ways to retrieve topology information about devices managed by the ROCm SMI Management Library\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static int hwloc_rsmi_get_device_cpuset (\fBhwloc_topology_t\fP topology, uint32_t dv_ind, \fBhwloc_cpuset_t\fP set)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
@@ -37,20 +37,20 @@ This function is currently only implemented in a meaningful way for Linux; other
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 on error, for instance if device information could not be found\&. 
+-1 on error, for instance if device information could not be found\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_rsmi_get_device_osdev (\fBhwloc_topology_t\fP topology, uint32_t dv_ind)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the hwloc OS device object corresponding to AMD GPU device, whose index is \fCdv_ind\fP\&. 
+Get the hwloc OS device object corresponding to AMD GPU device, whose index is \fCdv_ind\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The hwloc OS device object that describes the given AMD GPU, whose index is \fCdv_ind\fP\&. 
+The hwloc OS device object that describes the given AMD GPU, whose index is \fCdv_ind\fP\&.
 .PP
 \fCNULL\fP if none could be found\&.
 .RE
@@ -59,18 +59,18 @@ Topology \fCtopology\fP and device \fCdv_ind\fP must match the local machine\&. 
 .PP
 \fBNote\fP
 .RS 4
-The corresponding hwloc PCI device may be found by looking at the result parent pointer (unless PCI devices are filtered out)\&. 
+The corresponding hwloc PCI device may be found by looking at the result parent pointer (unless PCI devices are filtered out)\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_rsmi_get_device_osdev_by_index (\fBhwloc_topology_t\fP topology, uint32_t dv_ind)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the hwloc OS device object corresponding to the AMD GPU device whose index is \fCdv_ind\fP\&. 
+Get the hwloc OS device object corresponding to the AMD GPU device whose index is \fCdv_ind\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The hwloc OS device object describing the AMD GPU device whose index is \fCdv_ind\fP\&. 
+The hwloc OS device object describing the AMD GPU device whose index is \fCdv_ind\fP\&.
 .PP
 \fCNULL\fP if none could be found\&.
 .RE
@@ -79,10 +79,10 @@ The topology \fCtopology\fP does not necessarily have to match the current machi
 .PP
 \fBNote\fP
 .RS 4
-The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&. 
+The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

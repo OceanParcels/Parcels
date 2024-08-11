@@ -143,14 +143,14 @@ ExtUtils::Embed \- Utilities for embedding Perl in C/C++ applications
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 .Vb 3
-\& perl \-MExtUtils::Embed \-e xsinit 
-\& perl \-MExtUtils::Embed \-e ccopts 
+\& perl \-MExtUtils::Embed \-e xsinit
+\& perl \-MExtUtils::Embed \-e ccopts
 \& perl \-MExtUtils::Embed \-e ldopts
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 \&\f(CW\*(C`ExtUtils::Embed\*(C'\fR provides utility functions for embedding a Perl interpreter
-and extensions in your C/\*(C+ applications.  
+and extensions in your C/\*(C+ applications.
 Typically, an application \fIMakefile\fR will invoke \f(CW\*(C`ExtUtils::Embed\*(C'\fR
 functions while building your application.
 .ie n .SH "@EXPORT"
@@ -158,7 +158,7 @@ functions while building your application.
 .IX Header "@EXPORT"
 \&\f(CW\*(C`ExtUtils::Embed\*(C'\fR exports the following functions:
 .PP
-\&\fBxsinit()\fR, \fBldopts()\fR, \fBccopts()\fR, \fBperl_inc()\fR, \fBccflags()\fR, 
+\&\fBxsinit()\fR, \fBldopts()\fR, \fBccopts()\fR, \fBperl_inc()\fR, \fBccflags()\fR,
 \&\fBccdlflags()\fR, \fBxsi_header()\fR, \fBxsi_protos()\fR, \fBxsi_body()\fR
 .SH "FUNCTIONS"
 .IX Header "FUNCTIONS"
@@ -195,7 +195,7 @@ Where,
 \& perl \-MExtUtils::Embed \-e xsinit \-\- \-o xsinit.c Socket
 .Ve
 .Sp
-This will generate code with an \f(CW\*(C`xs_init\*(C'\fR function that glues the perl \f(CW\*(C`Socket::bootstrap\*(C'\fR function 
+This will generate code with an \f(CW\*(C`xs_init\*(C'\fR function that glues the perl \f(CW\*(C`Socket::bootstrap\*(C'\fR function
 to the C \f(CW\*(C`boot_Socket\*(C'\fR function and writes it to a file named \fIxsinit.c\fR.
 .Sp
 Note that DynaLoader is a special case where it must call \f(CW\*(C`boot_DynaLoader\*(C'\fR directly.
@@ -216,7 +216,7 @@ The code is written to the default file name \fIperlxsi.c\fR.
 Here, code is written for all the currently linked extensions along with code
 for \f(CW\*(C`DBI\*(C'\fR and \f(CW\*(C`DBD::Oracle\*(C'\fR.
 .Sp
-If you have a working \f(CW\*(C`DynaLoader\*(C'\fR then there is rarely any need to statically link in any 
+If you have a working \f(CW\*(C`DynaLoader\*(C'\fR then there is rarely any need to statically link in any
 other extensions.
 .IP "\fBldopts()\fR" 4
 .IX Item "ldopts()"
@@ -233,9 +233,9 @@ with the current Perl.
 .Sp
 \&\fB\-I\fR <path1:path2>
 .Sp
-Search path for ModuleName.a archives.  
+Search path for ModuleName.a archives.
 Default path is \f(CW@INC\fR.
-Library archives are expected to be found as 
+Library archives are expected to be found as
 \&\fI/some/path/auto/ModuleName/ModuleName.a\fR
 For example, when looking for \fISocket.a\fR relative to a search path,
 we should find \fIauto/Socket/Socket.a\fR
@@ -250,7 +250,7 @@ as an additional linker argument.
 .Sp
 Additional linker arguments to be considered.
 .Sp
-Any additional arguments found before the \fB\-\-\fR token 
+Any additional arguments found before the \fB\-\-\fR token
 are expected to be names of modules to generate code for.
 .Sp
 When invoked with parameters the following are accepted and optional:

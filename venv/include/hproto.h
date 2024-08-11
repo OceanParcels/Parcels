@@ -1965,4 +1965,3 @@ Vdeletetagref(int32 vkey, /* IN: vgroup key */
 #endif                          /* c_plusplus || __cplusplus */
 
 #endif                          /* _H_PROTO */
-

@@ -14,7 +14,7 @@ a callback function
 .SH "DESCRIPTION"
 This is the function where you set a function for gnutls to know
 whether data are ready to be received. It should wait for data a
-given time frame in milliseconds. The callback should return 0 on 
+given time frame in milliseconds. The callback should return 0 on
 timeout, a positive number if data can be received, and \-1 on error.
 You'll need to override this function if \fBselect()\fP is not suitable
 for the provided transport calls.
@@ -27,7 +27,7 @@ for data.
  \fIgnutls_pull_timeout_func\fP is of the form,
 int (*gnutls_pull_timeout_func)(gnutls_transport_ptr_t, unsigned int ms);
 
-This callback is necessary when \fBgnutls_handshake_set_timeout()\fP or 
+This callback is necessary when \fBgnutls_handshake_set_timeout()\fP or
 \fBgnutls_record_set_timeout()\fP are set, under TLS1.3 and for enforcing the DTLS
 mode timeouts when in blocking mode.
 
@@ -37,7 +37,7 @@ session is in TLS mode with non\-blocking sockets. That is, when \fBGNUTLS_NONBL
 is specified for a TLS session in \fBgnutls_init()\fP.
 
 The helper function \fBgnutls_system_recv_timeout()\fP is provided to
-simplify writing callbacks. 
+simplify writing callbacks.
 .SH "SINCE"
 3.0
 .SH "REPORTING BUGS"

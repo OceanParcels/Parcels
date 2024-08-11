@@ -185,7 +185,7 @@ This document describes version 1.01 of Attribute::Handlers.
 \&    }
 \&
 \&    sub Ugly : ATTR(CODE) {
-\&        # Invoked for any subroutine declared in MyClass (or a 
+\&        # Invoked for any subroutine declared in MyClass (or a
 \&        # derived class) with an :Ugly attribute.
 \&        ...
 \&    }
@@ -216,7 +216,7 @@ block). (\f(CW\*(C`UNITCHECK\*(C'\fR blocks don't correspond to a global compila
 phase, so they can't be specified here.)
 .PP
 To create a handler, define it as a subroutine with the same name as
-the desired attribute, and declare the subroutine itself with the  
+the desired attribute, and declare the subroutine itself with the
 attribute \f(CW\*(C`:ATTR\*(C'\fR. For example:
 .PP
 .Vb 2
@@ -291,7 +291,7 @@ The package name argument will typically be the name of the class into
 which the subroutine was declared, but it may also be the name of a derived
 class (since handlers are inherited).
 .PP
-If a lexical variable is given an attribute, there is no symbol table to 
+If a lexical variable is given an attribute, there is no symbol table to
 which it belongs, so the symbol table argument (\f(CW$_[1]\fR) is set to the
 string \f(CW\*(AqLEXICAL\*(Aq\fR in that case. Likewise, ascribing an attribute to
 an anonymous subroutine results in a symbol table argument of \f(CW\*(AqANON\*(Aq\fR.
@@ -557,7 +557,7 @@ current package. Otherwise it is installed in the qualifier's package:
 \&    };
 .Ve
 .PP
-Autoties are most commonly used in the module to which they actually tie, 
+Autoties are most commonly used in the module to which they actually tie,
 and need to export their attributes to any module that calls them. To
 facilitate this, Attribute::Handlers recognizes a special \*(L"pseudo-class\*(R" \*(--
 \&\f(CW\*(C`_\|_CALLER_\|_\*(C'\fR, which may be specified as the qualifier of an attribute:
@@ -691,7 +691,7 @@ would cause the following handlers to be invoked:
 \&                               \*(AqLEXICAL\*(Aq,           # no typeglob
 \&                               \e@arr,               # referent
 \&                               \*(AqOmni\*(Aq,              # attr name
-\&                               ""                   # eval\*(Aqd attr data 
+\&                               ""                   # eval\*(Aqd attr data
 \&                               \*(AqCHECK\*(Aq,             # compiler phase
 \&                             );
 \&

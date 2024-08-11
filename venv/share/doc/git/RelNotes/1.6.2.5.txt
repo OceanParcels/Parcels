@@ -17,5 +17,3 @@ Fixes since v1.6.2.4
   the connection are capable of producing one; this cannot be read by
   ancient git and the user should be able to disable this by setting
   repack.usedeltabaseoffset configuration to false.
-
-

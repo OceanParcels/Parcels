@@ -208,7 +208,7 @@ int gnutls_rnd(gnutls_rnd_level_t level, void *data, size_t len);
 void gnutls_rnd_refresh(void);
 
 
-/* API to override ciphers and MAC algorithms 
+/* API to override ciphers and MAC algorithms
  */
 
 typedef int (*gnutls_cipher_init_func) (gnutls_cipher_algorithm_t, void **ctx, int enc);

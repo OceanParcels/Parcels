@@ -579,7 +579,7 @@ class StringFlagDestructor {
   void *current_storage_;
   void *defvalue_storage_;
 
-public: 
+public:
 
   StringFlagDestructor(void *current, void *defvalue)
   : current_storage_(current), defvalue_storage_(defvalue) {}

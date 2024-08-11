@@ -34,5 +34,3 @@ MODULE_SCOPE int Itcl_InitRewriteEnsemble(Tcl_Interp *interp, size_t numRemoved,
 	size_t numInserted, size_t objc, Tcl_Obj *const *objv);
 MODULE_SCOPE void Itcl_ResetRewriteEnsemble(Tcl_Interp *interp,
         int isRootEnsemble);
-
-

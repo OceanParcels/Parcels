@@ -18,7 +18,7 @@ is the output of the verification
 .SH "DESCRIPTION"
 This function will verify the peer's certificate and store the
 the status in the  \fIstatus\fP variable as a bitwise OR of gnutls_certificate_status_t
-values or zero if the certificate is trusted. Note that value in  \fIstatus\fP is set only when the return value of this function is success (i.e, failure 
+values or zero if the certificate is trusted. Note that value in  \fIstatus\fP is set only when the return value of this function is success (i.e, failure
 to trust a certificate does not imply a negative return value).
 The default verification flags used by this function can be overridden
 using \fBgnutls_certificate_set_verify_flags()\fP. See the documentation
@@ -33,10 +33,10 @@ The former two accept as data a null\-terminated hostname or email address, and 
 object identifier (e.g., \fBGNUTLS_KP_TLS_WWW_SERVER\fP).
 
 If a DNS hostname is provided then this function will compare
-the hostname in the certificate against the given. If names do not match the 
+the hostname in the certificate against the given. If names do not match the
 \fBGNUTLS_CERT_UNEXPECTED_OWNER\fP status flag will be set.
 If a key purpose OID is provided and the end\-certificate contains the extended key
-usage PKIX extension, it will be required to be have the provided key purpose 
+usage PKIX extension, it will be required to be have the provided key purpose
 or be marked for any purpose, otherwise verification status will have the
 \fBGNUTLS_CERT_SIGNER_CONSTRAINTS_FAILURE\fP flag set.
 

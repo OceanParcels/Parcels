@@ -387,7 +387,7 @@ XMLPUBFUN void xmlCheckVersion(int version);
  *
  * the string suffix used by dynamic modules (usually shared libraries)
  */
-#define LIBXML_MODULE_EXTENSION ".so" 
+#define LIBXML_MODULE_EXTENSION ".so"
 #endif
 
 /**
@@ -507,5 +507,3 @@ XMLPUBFUN void xmlCheckVersion(int version);
 }
 #endif /* __cplusplus */
 #endif
-
-

@@ -54,7 +54,7 @@ namespace Model
     ///@{
     /**
      * <p>The version ID of the error.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::String& GetVersionId() const{ return m_versionId; }
     inline bool VersionIdHasBeenSet() const { return m_versionIdHasBeenSet; }

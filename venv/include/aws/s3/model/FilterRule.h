@@ -32,7 +32,7 @@ namespace Model
    * with a prefix, such as <code>2023-</code> or <code>engineering/</code>. Then,
    * you can use <code>FilterRule</code> to find objects in a bucket with key names
    * that have the same prefix. A suffix is similar to a prefix, but it is at the end
-   * of the object key name instead of at the beginning.</p><p><h3>See Also:</h3>  
+   * of the object key name instead of at the beginning.</p><p><h3>See Also:</h3>
    * <a href="http://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/FilterRule">AWS
    * API Reference</a></p>
    */

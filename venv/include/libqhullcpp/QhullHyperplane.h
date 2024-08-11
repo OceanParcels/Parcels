@@ -24,7 +24,7 @@ namespace orgQhull {
 
 #//!\name Defined here
     class QhullHyperplane;          //!< QhullHyperplane is a pointer to the normal vector, an offset from the origin, and dimension
-    class QhullHyperplaneIterator;  //!< Java-style iterator for QhullHyperplane coordinates    
+    class QhullHyperplaneIterator;  //!< Java-style iterator for QhullHyperplane coordinates
 
 class QhullHyperplane { // Similar to QhullPoint
 public:
@@ -119,4 +119,3 @@ std::ostream &operator<<(std::ostream &os, const orgQhull::QhullHyperplane::Prin
 std::ostream &operator<<(std::ostream &os, const orgQhull::QhullHyperplane &p);
 
 #endif // QHHYPERPLANE_H
-

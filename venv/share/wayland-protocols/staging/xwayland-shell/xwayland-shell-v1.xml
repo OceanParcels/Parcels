@@ -27,7 +27,7 @@
   <description summary="Protocol for associating X11 windows to wl_surfaces">
     This protocol adds a xwayland_surface role which allows an Xwayland
     server to associate an X11 window to a wl_surface.
-    
+
     Before this protocol, this would be done via the Xwayland server
     providing the wl_surface's resource id via the a client message with
     the WL_SURFACE_ID atom on the X window.
@@ -35,11 +35,11 @@
     associated with a WL_SURFACE_ID for a window was destroyed before the
     client message was processed by the compositor and another surface
     (or other object) had taken its id due to recycling.
-    
+
     This protocol solves the problem by moving the X11 window to wl_surface
     association step to the Wayland side, which means that the association
     cannot happen out-of-sync with the resource lifetime of the wl_surface.
-    
+
     This protocol avoids duplicating the race on the other side by adding a
     non-zero monotonic serial number which is entirely unique that is set on
     both the wl_surface (via. xwayland_surface_v1's set_serial method) and
@@ -91,7 +91,7 @@
       <description summary="assign the xwayland_surface surface role">
         Create an xwayland_surface_v1 interface for a given wl_surface
         object and gives it the xwayland_surface role.
-        
+
         It is illegal to create an xwayland_surface_v1 for a wl_surface
         which already has an assigned role and this will result in the
         `role` protocol error.
@@ -143,7 +143,7 @@
 
         An X11 window may be associated with multiple surfaces throughout its
         lifespan. (eg. unmapping and remapping a window).
-        
+
         For each wl_surface, this state must not be committed more than once,
         otherwise the `already_associated` protocol error will be raised.
       </description>

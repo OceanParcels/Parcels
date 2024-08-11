@@ -347,12 +347,12 @@ The same checksum can also be calculated in \s-1OO\s0 style:
 .PP
 .Vb 1
 \&    use Digest::MD5;
-\&    
+\&
 \&    $md5 = Digest::MD5\->new;
 \&    $md5\->add(\*(Aqfoo\*(Aq, \*(Aqbar\*(Aq);
 \&    $md5\->add(\*(Aqbaz\*(Aq);
 \&    $digest = $md5\->hexdigest;
-\&    
+\&
 \&    print "Digest is $digest\en";
 .Ve
 .PP

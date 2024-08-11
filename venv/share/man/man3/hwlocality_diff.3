@@ -68,71 +68,71 @@ hwlocality_diff \- Topology differences
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 Applications that manipulate many similar topologies, for instance one for each node of a homogeneous cluster, may want to compress topologies to reduce the memory footprint\&.
 .PP
 This file offers a way to manipulate the difference between topologies and export/import it to/from XML\&. Compression may therefore be achieved by storing one topology entirely while the others are only described by their differences with the former\&. The actual topology can be reconstructed when actually needed by applying the precomputed difference to the reference topology\&.
 .PP
 This interface targets very similar nodes\&. Only very simple differences between topologies are actually supported, for instance a change in the memory size, the name of the object, or some info attribute\&. More complex differences such as adding or removing objects cannot be represented in the difference structures and therefore return errors\&. Differences between object sets or topology-wide allowed sets, cannot be represented either\&.
 .PP
-It means that there is no need to apply the difference when looking at the tree organization (how many levels, how many objects per level, what kind of objects, CPU and node sets, etc) and when binding to objects\&. However the difference must be applied when looking at object attributes such as the name, the memory size or info attributes\&. 
+It means that there is no need to apply the difference when looking at the tree organization (how many levels, how many objects per level, what kind of objects, CPU and node sets, etc) and when binding to objects\&. However the difference must be applied when looking at object attributes such as the name, the memory size or info attributes\&.
 .SH "Typedef Documentation"
-.PP 
+.PP
 .SS "typedef enum \fBhwloc_topology_diff_obj_attr_type_e\fP \fBhwloc_topology_diff_obj_attr_type_t\fP"
 
 .PP
-Type of one object attribute difference\&. 
+Type of one object attribute difference\&.
 .SS "typedef union \fBhwloc_topology_diff_u\fP * \fBhwloc_topology_diff_t\fP"
 
 .PP
-One element of a difference list between two topologies\&. 
+One element of a difference list between two topologies\&.
 .SS "typedef enum \fBhwloc_topology_diff_type_e\fP \fBhwloc_topology_diff_type_t\fP"
 
 .PP
-Type of one element of a difference list\&. 
+Type of one element of a difference list\&.
 .SH "Enumeration Type Documentation"
-.PP 
+.PP
 .SS "enum \fBhwloc_topology_diff_apply_flags_e\fP"
 
 .PP
-Flags to be given to \fBhwloc_topology_diff_apply()\fP\&. 
+Flags to be given to \fBhwloc_topology_diff_apply()\fP\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_TOPOLOGY_DIFF_APPLY_REVERSE \fP\fP
-Apply topology diff in reverse direction\&. 
+Apply topology diff in reverse direction\&.
 .SS "enum \fBhwloc_topology_diff_obj_attr_type_e\fP"
 
 .PP
-Type of one object attribute difference\&. 
+Type of one object attribute difference\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_TOPOLOGY_DIFF_OBJ_ATTR_SIZE \fP\fP
-The object local memory is modified\&. The union is a \fBhwloc_topology_diff_obj_attr_u::hwloc_topology_diff_obj_attr_uint64_s\fP (and the index field is ignored)\&. 
+The object local memory is modified\&. The union is a \fBhwloc_topology_diff_obj_attr_u::hwloc_topology_diff_obj_attr_uint64_s\fP (and the index field is ignored)\&.
 .TP
 \fB\fIHWLOC_TOPOLOGY_DIFF_OBJ_ATTR_NAME \fP\fP
-The object name is modified\&. The union is a \fBhwloc_topology_diff_obj_attr_u::hwloc_topology_diff_obj_attr_string_s\fP (and the name field is ignored)\&. 
+The object name is modified\&. The union is a \fBhwloc_topology_diff_obj_attr_u::hwloc_topology_diff_obj_attr_string_s\fP (and the name field is ignored)\&.
 .TP
 \fB\fIHWLOC_TOPOLOGY_DIFF_OBJ_ATTR_INFO \fP\fP
-the value of an info attribute is modified\&. The union is a \fBhwloc_topology_diff_obj_attr_u::hwloc_topology_diff_obj_attr_string_s\fP\&. 
+the value of an info attribute is modified\&. The union is a \fBhwloc_topology_diff_obj_attr_u::hwloc_topology_diff_obj_attr_string_s\fP\&.
 .SS "enum \fBhwloc_topology_diff_type_e\fP"
 
 .PP
-Type of one element of a difference list\&. 
+Type of one element of a difference list\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_TOPOLOGY_DIFF_OBJ_ATTR \fP\fP
-An object attribute was changed\&. The union is a \fBhwloc_topology_diff_u::hwloc_topology_diff_obj_attr_s\fP\&. 
+An object attribute was changed\&. The union is a \fBhwloc_topology_diff_u::hwloc_topology_diff_obj_attr_s\fP\&.
 .TP
 \fB\fIHWLOC_TOPOLOGY_DIFF_TOO_COMPLEX \fP\fP
-The difference is too complex, it cannot be represented\&. The difference below this object has not been checked\&. \fBhwloc_topology_diff_build()\fP will return 1\&. The union is a \fBhwloc_topology_diff_u::hwloc_topology_diff_too_complex_s\fP\&. 
+The difference is too complex, it cannot be represented\&. The difference below this object has not been checked\&. \fBhwloc_topology_diff_build()\fP will return 1\&. The union is a \fBhwloc_topology_diff_u::hwloc_topology_diff_too_complex_s\fP\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_topology_diff_apply (\fBhwloc_topology_t\fP topology, \fBhwloc_topology_diff_t\fP diff, unsigned long flags)"
 
 .PP
@@ -146,7 +146,7 @@ If the difference cannot be applied entirely, all previous applied elements are 
 .RS 4
 0 on success\&.
 .PP
--N if applying the difference failed while trying to apply the N-th part of the difference\&. For instance -1 is returned if the very first difference element could not be applied\&. 
+-N if applying the difference failed while trying to apply the N-th part of the difference\&. For instance -1 is returned if the very first difference element could not be applied\&.
 .RE
 .PP
 
@@ -176,18 +176,18 @@ The output diff has to be freed with \fBhwloc_topology_diff_destroy()\fP\&.
 .PP
 The output diff can only be exported to XML or passed to \fBhwloc_topology_diff_apply()\fP if 0 was returned, i\&.e\&. if no entry of type \fBHWLOC_TOPOLOGY_DIFF_TOO_COMPLEX\fP is listed\&.
 .PP
-The output diff may be modified by removing some entries from the list\&. The removed entries should be freed by passing them to to \fBhwloc_topology_diff_destroy()\fP (possible as another list)\&. 
+The output diff may be modified by removing some entries from the list\&. The removed entries should be freed by passing them to to \fBhwloc_topology_diff_destroy()\fP (possible as another list)\&.
 .RE
 .PP
 
 .SS "int hwloc_topology_diff_destroy (\fBhwloc_topology_diff_t\fP diff)"
 
 .PP
-Destroy a list of topology differences\&. 
+Destroy a list of topology differences\&.
 .PP
 \fBReturns\fP
 .RS 4
-0\&. 
+0\&.
 .RE
 .PP
 
@@ -198,7 +198,7 @@ Export a list of topology differences to a XML file\&. If not \fCNULL\fP, \fCref
 .PP
 \fBReturns\fP
 .RS 4
-0 on success, -1 on error\&. 
+0 on success, -1 on error\&.
 .RE
 .PP
 
@@ -216,7 +216,7 @@ The returned buffer ends with a \\0 that is included in the returned length\&.
 .PP
 \fBNote\fP
 .RS 4
-The XML buffer should later be freed with \fBhwloc_free_xmlbuffer()\fP\&. 
+The XML buffer should later be freed with \fBhwloc_free_xmlbuffer()\fP\&.
 .RE
 .PP
 
@@ -232,7 +232,7 @@ Load a list of topology differences from a XML file\&. If not \fCNULL\fP, \fCref
 .PP
 \fBNote\fP
 .RS 4
-the pointer returned in refname should later be freed by the caller\&. 
+the pointer returned in refname should later be freed by the caller\&.
 .RE
 .PP
 
@@ -250,10 +250,10 @@ If not \fCNULL\fP, \fCrefname\fP will be filled with the identifier string of th
 .PP
 \fBNote\fP
 .RS 4
-the pointer returned in refname should later be freed by the caller\&. 
+the pointer returned in refname should later be freed by the caller\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

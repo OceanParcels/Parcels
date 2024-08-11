@@ -1217,7 +1217,7 @@ be in the “ANSI” or in the UTF-8 encoding.
    Here are examples of the “ANSI” and “OEM” code pages:
 
 Territories                            ANSI encoding      OEM encoding
-                                      
+
 ---------------------------------------------------------------------------
 Western Europe                         CP1252             CP850
 Slavic countries (Latin 2)             CP1250             CP852

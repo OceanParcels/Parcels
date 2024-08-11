@@ -80,7 +80,7 @@ namespace Model
      *  <p> <b>Region availability</b> </p> <p>Check <a
      * href="https://docs.aws.amazon.com/config/latest/developerguide/what-is-resource-config-coverage.html">Resource
      * Coverage by Region Availability</a> to see if a resource type is supported in
-     * the Amazon Web Services Region where you set up Config.</p> 
+     * the Amazon Web Services Region where you set up Config.</p>
      */
     inline bool GetAllSupported() const{ return m_allSupported; }
     inline bool AllSupportedHasBeenSet() const { return m_allSupportedHasBeenSet; }
@@ -147,7 +147,7 @@ namespace Model
      * want to record configuration changes to the global IAM resource types (IAM
      * users, groups, roles, and customer managed policies), make sure to not list them
      * in the <code>resourceTypes</code> field in addition to setting the
-     * <code>includeGlobalResourceTypes</code> field to false.</p> 
+     * <code>includeGlobalResourceTypes</code> field to false.</p>
      */
     inline bool GetIncludeGlobalResourceTypes() const{ return m_includeGlobalResourceTypes; }
     inline bool IncludeGlobalResourceTypesHasBeenSet() const { return m_includeGlobalResourceTypesHasBeenSet; }
@@ -172,7 +172,7 @@ namespace Model
      * types in this field. If you set the <code>allSupported</code> field to
      * <code>false</code> and specify values for <code>resourceTypes</code>, when
      * Config adds support for a new type of resource, it will not record resources of
-     * that type unless you manually add that type to your recording group.</p> 
+     * that type unless you manually add that type to your recording group.</p>
      *  <p> <b>Region availability</b> </p> <p>Before specifying a resource type
      * for Config to track, check <a
      * href="https://docs.aws.amazon.com/config/latest/developerguide/what-is-resource-config-coverage.html">Resource
@@ -181,7 +181,7 @@ namespace Model
      * supported by Config in at least one Region, you can enable the recording of that
      * resource type in all Regions supported by Config, even if the specified resource
      * type is not supported in the Amazon Web Services Region where you set up
-     * Config.</p> 
+     * Config.</p>
      */
     inline const Aws::Vector<ResourceType>& GetResourceTypes() const{ return m_resourceTypes; }
     inline bool ResourceTypesHasBeenSet() const { return m_resourceTypesHasBeenSet; }
@@ -199,7 +199,7 @@ namespace Model
      * recorded by the configuration recorder.</p>  <p> <b>Required fields</b>
      * </p> <p>To use this option, you must set the <code>useOnly</code> field of <a
      * href="https://docs.aws.amazon.com/config/latest/APIReference/API_RecordingStrategy.html">RecordingStrategy</a>
-     * to <code>EXCLUSION_BY_RESOURCE_TYPES</code>.</p> 
+     * to <code>EXCLUSION_BY_RESOURCE_TYPES</code>.</p>
      */
     inline const ExclusionByResourceTypes& GetExclusionByResourceTypes() const{ return m_exclusionByResourceTypes; }
     inline bool ExclusionByResourceTypesHasBeenSet() const { return m_exclusionByResourceTypesHasBeenSet; }
@@ -268,7 +268,7 @@ namespace Model
      * (Hyderabad)</p> </li> <li> <p>Asia Pacific (Melbourne)</p> </li> <li> <p>Canada
      * West (Calgary)</p> </li> <li> <p>Europe (Spain)</p> </li> <li> <p>Europe
      * (Zurich)</p> </li> <li> <p>Israel (Tel Aviv)</p> </li> <li> <p>Middle East
-     * (UAE)</p> </li> </ul> 
+     * (UAE)</p> </li> </ul>
      */
     inline const RecordingStrategy& GetRecordingStrategy() const{ return m_recordingStrategy; }
     inline bool RecordingStrategyHasBeenSet() const { return m_recordingStrategyHasBeenSet; }

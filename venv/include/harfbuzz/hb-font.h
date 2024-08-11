@@ -48,7 +48,7 @@ HB_BEGIN_DECLS
  * Data type containing a set of virtual methods used for
  * working on #hb_font_t font objects.
  *
- * HarfBuzz provides a lightweight default function for each of 
+ * HarfBuzz provides a lightweight default function for each of
  * the methods in #hb_font_funcs_t. Client programs can implement
  * their own replacements for the individual font functions, as
  * needed, and replace the default by calling the setter for a
@@ -142,7 +142,7 @@ typedef hb_bool_t (*hb_font_get_font_extents_func_t) (hb_font_t *font, void *fon
  * This method should retrieve the extents for a font, for horizontal-direction
  * text segments. Extents must be returned in an #hb_glyph_extents output
  * parameter.
- * 
+ *
  **/
 typedef hb_font_get_font_extents_func_t hb_font_get_font_h_extents_func_t;
 
@@ -154,7 +154,7 @@ typedef hb_font_get_font_extents_func_t hb_font_get_font_h_extents_func_t;
  * This method should retrieve the extents for a font, for vertical-direction
  * text segments. Extents must be returned in an #hb_glyph_extents output
  * parameter.
- * 
+ *
  **/
 typedef hb_font_get_font_extents_func_t hb_font_get_font_v_extents_func_t;
 
@@ -171,7 +171,7 @@ typedef hb_font_get_font_extents_func_t hb_font_get_font_v_extents_func_t;
  *
  * This method should retrieve the nominal glyph ID for a specified Unicode code
  * point. Glyph IDs must be returned in a #hb_codepoint_t output parameter.
- * 
+ *
  * Return value: `true` if data found, `false` otherwise
  *
  **/
@@ -194,7 +194,7 @@ typedef hb_bool_t (*hb_font_get_nominal_glyph_func_t) (hb_font_t *font, void *fo
  * This method should retrieve the glyph ID for a specified Unicode code point
  * followed by a specified Variation Selector code point. Glyph IDs must be
  * returned in a #hb_codepoint_t output parameter.
- * 
+ *
  * Return value: `true` if data found, `false` otherwise
  *
  **/
@@ -222,7 +222,7 @@ typedef hb_bool_t (*hb_font_get_variation_glyph_func_t) (hb_font_t *font, void *
  * output parameter.
  *
  * Return value: the number of code points processed
- * 
+ *
  **/
 typedef unsigned int (*hb_font_get_nominal_glyphs_func_t) (hb_font_t *font, void *font_data,
 							   unsigned int count,
@@ -243,7 +243,7 @@ typedef unsigned int (*hb_font_get_nominal_glyphs_func_t) (hb_font_t *font, void
  *
  * This method should retrieve the advance for a specified glyph. The
  * method must return an #hb_position_t.
- * 
+ *
  * Return value: The advance of @glyph within @font
  *
  **/
@@ -259,7 +259,7 @@ typedef hb_position_t (*hb_font_get_glyph_advance_func_t) (hb_font_t *font, void
  * This method should retrieve the advance for a specified glyph, in
  * horizontal-direction text segments. Advances must be returned in
  * an #hb_position_t output parameter.
- * 
+ *
  **/
 typedef hb_font_get_glyph_advance_func_t hb_font_get_glyph_h_advance_func_t;
 
@@ -271,7 +271,7 @@ typedef hb_font_get_glyph_advance_func_t hb_font_get_glyph_h_advance_func_t;
  * This method should retrieve the advance for a specified glyph, in
  * vertical-direction text segments. Advances must be returned in
  * an #hb_position_t output parameter.
- * 
+ *
  **/
 typedef hb_font_get_glyph_advance_func_t hb_font_get_glyph_v_advance_func_t;
 
@@ -289,7 +289,7 @@ typedef hb_font_get_glyph_advance_func_t hb_font_get_glyph_v_advance_func_t;
  * A virtual method for the #hb_font_funcs_t of an #hb_font_t object.
  *
  * This method should retrieve the advances for a sequence of glyphs.
- * 
+ *
  **/
 typedef void (*hb_font_get_glyph_advances_func_t) (hb_font_t* font, void* font_data,
 						   unsigned int count,
@@ -306,7 +306,7 @@ typedef void (*hb_font_get_glyph_advances_func_t) (hb_font_t* font, void* font_d
  *
  * This method should retrieve the advances for a sequence of glyphs, in
  * horizontal-direction text segments.
- * 
+ *
  **/
 typedef hb_font_get_glyph_advances_func_t hb_font_get_glyph_h_advances_func_t;
 
@@ -317,7 +317,7 @@ typedef hb_font_get_glyph_advances_func_t hb_font_get_glyph_h_advances_func_t;
  *
  * This method should retrieve the advances for a sequence of glyphs, in
  * vertical-direction text segments.
- * 
+ *
  **/
 typedef hb_font_get_glyph_advances_func_t hb_font_get_glyph_v_advances_func_t;
 
@@ -337,7 +337,7 @@ typedef hb_font_get_glyph_advances_func_t hb_font_get_glyph_v_advances_func_t;
  * output parameter.
  *
  * Return value: `true` if data found, `false` otherwise
- * 
+ *
  **/
 typedef hb_bool_t (*hb_font_get_glyph_origin_func_t) (hb_font_t *font, void *font_data,
 						      hb_codepoint_t glyph,
@@ -352,7 +352,7 @@ typedef hb_bool_t (*hb_font_get_glyph_origin_func_t) (hb_font_t *font, void *fon
  * This method should retrieve the (X,Y) coordinates (in font units) of the
  * origin for a glyph, for horizontal-direction text segments. Each
  * coordinate must be returned in an #hb_position_t output parameter.
- * 
+ *
  **/
 typedef hb_font_get_glyph_origin_func_t hb_font_get_glyph_h_origin_func_t;
 
@@ -364,7 +364,7 @@ typedef hb_font_get_glyph_origin_func_t hb_font_get_glyph_h_origin_func_t;
  * This method should retrieve the (X,Y) coordinates (in font units) of the
  * origin for a glyph, for vertical-direction text segments. Each coordinate
  * must be returned in an #hb_position_t output parameter.
- * 
+ *
  **/
 typedef hb_font_get_glyph_origin_func_t hb_font_get_glyph_v_origin_func_t;
 
@@ -405,11 +405,11 @@ typedef hb_font_get_glyph_kerning_func_t hb_font_get_glyph_h_kerning_func_t;
  *
  * A virtual method for the #hb_font_funcs_t of an #hb_font_t object.
  *
- * This method should retrieve the extents for a specified glyph. Extents must be 
+ * This method should retrieve the extents for a specified glyph. Extents must be
  * returned in an #hb_glyph_extents output parameter.
  *
  * Return value: `true` if data found, `false` otherwise
- * 
+ *
  **/
 typedef hb_bool_t (*hb_font_get_glyph_extents_func_t) (hb_font_t *font, void *font_data,
 						       hb_codepoint_t glyph,
@@ -431,7 +431,7 @@ typedef hb_bool_t (*hb_font_get_glyph_extents_func_t) (hb_font_t *font, void *fo
  * This method should retrieve the (X,Y) coordinates (in font units) for a
  * specified contour point in a glyph. Each coordinate must be returned as
  * an #hb_position_t output parameter.
- * 
+ *
  * Return value: `true` if data found, `false` otherwise
  *
  **/
@@ -454,7 +454,7 @@ typedef hb_bool_t (*hb_font_get_glyph_contour_point_func_t) (hb_font_t *font, vo
  *
  * This method should retrieve the glyph name that corresponds to a
  * glyph ID. The name should be returned in a string output parameter.
- * 
+ *
  * Return value: `true` if data found, `false` otherwise
  *
  **/
@@ -475,8 +475,8 @@ typedef hb_bool_t (*hb_font_get_glyph_name_func_t) (hb_font_t *font, void *font_
  * A virtual method for the #hb_font_funcs_t of an #hb_font_t object.
  *
  * This method should retrieve the glyph ID that corresponds to a glyph-name
- * string. 
- * 
+ * string.
+ *
  * Return value: `true` if data found, `false` otherwise
  *
  **/

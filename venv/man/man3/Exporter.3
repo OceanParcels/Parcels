@@ -339,9 +339,9 @@ import function:
 \&    }
 .Ve
 .PP
-and you want to Export symbol \f(CW$A::b\fR back to the module that called 
-package A.  Since Exporter relies on the import method to work, via 
-inheritance, as it stands \fBExporter::import()\fR will never get called. 
+and you want to Export symbol \f(CW$A::b\fR back to the module that called
+package A.  Since Exporter relies on the import method to work, via
+inheritance, as it stands \fBExporter::import()\fR will never get called.
 Instead, say the following:
 .PP
 .Vb 3
@@ -356,7 +356,7 @@ Instead, say the following:
 \&    }
 .Ve
 .PP
-This will export the symbols one level 'above' the current package \- ie: to 
+This will export the symbols one level 'above' the current package \- ie: to
 the program or module that used package A.
 .PP
 Note: Be careful not to modify \f(CW@_\fR at all before you call export_to_level

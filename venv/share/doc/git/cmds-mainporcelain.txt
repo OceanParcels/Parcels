@@ -129,4 +129,3 @@ linkgit:gitk[1]::
 
 linkgit:scalar[1]::
 	A tool for managing large Git repositories.
-

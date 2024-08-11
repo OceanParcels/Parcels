@@ -244,7 +244,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
     inline void SetRequestPayer(const RequestPayer& value) { m_requestPayerHasBeenSet = true; m_requestPayer = value; }
@@ -255,8 +255,8 @@ namespace Model
 
     ///@{
     /**
-     * <p>Version ID used to reference a specific version of the object.</p> 
-     * <p>This functionality is not supported for directory buckets.</p> 
+     * <p>Version ID used to reference a specific version of the object.</p>
+     * <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetVersionId() const{ return m_versionId; }
     inline bool VersionIdHasBeenSet() const { return m_versionIdHasBeenSet; }
@@ -285,7 +285,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

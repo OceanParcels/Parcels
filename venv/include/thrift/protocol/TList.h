@@ -32,15 +32,15 @@ namespace protocol {
  */
 class TList {
 public:
-  TList() : elemType_(T_STOP), 
+  TList() : elemType_(T_STOP),
   size_(0) {
 
   }
 
   TList(TType t = T_STOP, int s = 0)
     : elemType_(t),
-      size_(s) { 
-        
+      size_(s) {
+
   }
 
   TType elemType_;

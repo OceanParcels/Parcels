@@ -121,4 +121,3 @@ std::ostream& operator<< (std::ostream& os, const EdgeList& el);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-

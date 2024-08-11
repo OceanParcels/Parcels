@@ -1,6 +1,6 @@
 <!-- This is the Document Type Definition for font configuration files -->
 <!ELEMENT fontconfig (alias |
-		      cache | 
+		      cache |
 		      cachedir |
 		      config |
 		      description |
@@ -11,7 +11,7 @@
 		      reset-dirs |
 		      selectfont)* >
 
-<!-- 
+<!--
     Add a directory that provides fonts
 -->
 <!ELEMENT dir (#PCDATA)>
@@ -193,7 +193,7 @@
     what the fontconfig database contains.
 -->
 <!ELEMENT test (%expr;)*>
-<!ATTLIST test 
+<!ATTLIST test
 	  qual (any|all|first|not_first)    "any"
 	  name CDATA	    #REQUIRED
 	  target (pattern|font|default)		"default"

@@ -15,4 +15,3 @@ linkgit:git-upload-archive[1]::
 
 linkgit:git-upload-pack[1]::
 	Send objects packed back to git-fetch-pack.
-

@@ -20,4 +20,3 @@ namespace Aws
         AWS_CORE_API extern const char SIGNATURE[];
     } // namespace Client
 } // namespace Aws
-

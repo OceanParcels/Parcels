@@ -855,7 +855,7 @@ The \f(CW$SIG{_\|_DIE_\|_}\fR hook is called even inside an \f(CW\*(C`eval()\*(C
 never intended to happen this way, but an implementation glitch made
 this possible. This used to be deprecated, as it allowed strange action
 at a distance like rewriting a pending exception in \f(CW$@\fR. Plans to
-rectify this have been scrapped, as users found that rewriting a 
+rectify this have been scrapped, as users found that rewriting a
 pending exception is actually a useful feature, and not a bug.
 .Sp
 The \f(CW$SIG{_\|_DIE_\|_}\fR doesn't support \f(CW\*(AqIGNORE\*(Aq\fR; it has the same
@@ -1794,7 +1794,7 @@ Suppose we wrote the following string to a file:
 \&    $string .= "epsilon zeta eta\en\en";
 \&    $string .= "theta\en";
 \&
-\&    my $file = \*(Aqsimple_file.txt\*(Aq; 
+\&    my $file = \*(Aqsimple_file.txt\*(Aq;
 \&    open my $OUT, \*(Aq>\*(Aq, $file or die;
 \&    print $OUT $string;
 \&    close $OUT or die;

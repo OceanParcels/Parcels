@@ -176,7 +176,7 @@ s. Fixed a bug with vi-mode digit arguments that caused the last command to be
    set incorrectly. This prevents yank-last-arg from working as intended, for
    example.
 
-t. Make sure that all undo groups are closed when leaving vi insertion mode.  
+t. Make sure that all undo groups are closed when leaving vi insertion mode.
 
 u. Make sure that the vi-mode `C' and `c' commands enter insert mode even if
    the motion command doesn't have any effect.
@@ -187,7 +187,7 @@ w. If readline is handling a SIGTTOU, make sure SIGTTOU is blocked while
    executing the terminal cleanup code, since it's no longer run in a signal
    handling context.
 
-x. Fixed a bug that could cause an application with an application-specific 
+x. Fixed a bug that could cause an application with an application-specific
    redisplay function to crash if the line data structures had not been
    initialized.
 
@@ -232,7 +232,7 @@ i. Readline tries to take advantage of the more regular structure of UTF-8
 j. The bindable operate-and-get-next command (and its default bindings) are
    now part of readline instead of a bash-specific addition.
 
-k. The signal cleanup code now blocks SIGINT while processing after a SIGINT.  
+k. The signal cleanup code now blocks SIGINT while processing after a SIGINT.
 
 -------------------------------------------------------------------------------
 This document details the changes between this version, readline-8.0, and the
@@ -245,7 +245,7 @@ a. Added a guard to prevent nested macros from causing an infinite expansion
 
 b. Instead of allocating enough history list entries to hold the maximum list
    size, cap the number allocated initially.
-   
+
 c. Added a strategy to avoid allocating huge amounts of memory if a block of
    history entries without timestamps occurs after a block with timestamps.
 
@@ -428,9 +428,9 @@ o.  Fixed a bug that caused history expansion to disregard characters that are
 p.  Fixed a bug that could cause reading past the end of a string when reading
     the value when binding the set of isearch terminators.
 
-q.  Fixed a bug that caused readline commands that depend on knowing which  
+q.  Fixed a bug that caused readline commands that depend on knowing which
     key invoked them to misbehave when dispatching key sequences that are
-    prefixes of other key bindings. 
+    prefixes of other key bindings.
 
 r.  Paren matching now works in vi insert mode.
 
@@ -554,7 +554,7 @@ r.  The :p history modifier now applies to the entire line, so any expansion
 
 s.  New application-callable function: rl_pending_signal(): returns the signal
     number of any signal readline has caught but not yet handled.
-    
+
 t.  New application-settable variable: rl_persistent_signal_handlers: if set
     to a non-zero value, readline will enable the readline-6.2 signal handler
     behavior in callback mode: handlers are installed when
@@ -578,7 +578,7 @@ c.  Fixed a bug that caused readline to try and run code to modify its idea
 
 d.  Fixed a bug that caused the `meta' key to be enabled beyond the duration
     of an individual call top readline().
-    
+
 e.  Added a workaround for a wcwidth bug in Mac OS X that caused readline's
     redisplay to mishandle zero-width combining characters.
 
@@ -642,7 +642,7 @@ x. Fixed a bug that could cause readline to crash and seg fault attempting to
 
 y. Fixed a bug that caused display problems with multi-line prompts containing
    invisible characters on multiple lines.
-   
+
 z. Fixed a bug that caused effects made by undoing changes to a history line to
    be discarded.
 
@@ -690,10 +690,10 @@ k.  New application-settable variable: rl_input_available_hook; function to be
     input source.  The default hook checks rl_instream.
 
 l.  Readline calls an application-set event hook (rl_signal_event_hook) after
-    it gets a signal while reading input (read returns -1/EINTR but readline    
+    it gets a signal while reading input (read returns -1/EINTR but readline
     does not handle the signal immediately) to allow the application to handle
     or otherwise note it.  Not currently called for SIGHUP or SIGTERM.
-    
+
 m.  If the user-settable variable `history-size' is set to a value less than
     0, the history list size is unlimited.
 
@@ -846,7 +846,7 @@ and the previous version, readline-5.2.
 
 1.  Changes to Readline
 
-a.  Fixed a number of redisplay errors in environments supporting multibyte 
+a.  Fixed a number of redisplay errors in environments supporting multibyte
     characters.
 
 b.  Fixed bugs in vi command mode that caused motion commands to inappropriately
@@ -1061,7 +1061,7 @@ l.  Fixed a memory leak caused by not freeing the timestamp in a history entry.
 m.  Fixed a bug that caused "\M-x" style key bindings to not obey the setting
     of the `convert-meta' variable.
 
-n.  Fixed saving and restoring primary prompt when prompting for incremental   
+n.  Fixed saving and restoring primary prompt when prompting for incremental
     and non-incremental searches; search prompts now display multibyte
     characters correctly.
 
@@ -1099,8 +1099,8 @@ x.  Fixed the non-incremental search code in vi mode to dispose of any current
     buffer.
 
 y.  Fixed a bug that caused reversing the incremental search direction to
-    not work correctly.  
-    
+    not work correctly.
+
 z.  Fixed the vi-mode `U' command to only undo up to the first time insert mode
     was entered, as Posix specifies.
 
@@ -1115,7 +1115,7 @@ cc. Fixed a bug that could cause the terminal special chars to be bound in the
 
 2.  New Features in Readline
 
-a.  The key sequence sent by the keypad `delete' key is now automatically   
+a.  The key sequence sent by the keypad `delete' key is now automatically
     bound to delete-char.
 
 b.  A negative argument to menu-complete now cycles backward through the
@@ -1125,7 +1125,7 @@ c.  A new bindable readline variable:  bind-tty-special-chars.  If non-zero,
     readline will bind the terminal special characters to their readline
     equivalents when it's called (on by default).
 
-d.  New bindable command: vi-rubout.  Saves deleted text for possible  
+d.  New bindable command: vi-rubout.  Saves deleted text for possible
     reinsertion, as with any vi-mode `text modification' command; `X' is bound
     to this in vi command mode.
 
@@ -1135,14 +1135,14 @@ e.  If the rl_completion_query_items is set to a value < 0, readline never
 f.  The `C-w' binding in incremental search now understands multibyte
     characters.
 
-g.  New application-callable auxiliary function, rl_variable_value, returns 
+g.  New application-callable auxiliary function, rl_variable_value, returns
     a string corresponding to a readline variable's value.
 
 h.  When parsing inputrc files and variable binding commands, the parser
     strips trailing whitespace from values assigned to boolean variables
     before checking them.
 
-i.  A new external application-controllable variable that allows the LINES   
+i.  A new external application-controllable variable that allows the LINES
     and COLUMNS environment variables to set the window size regardless of
     what the kernel returns.
 
@@ -1220,7 +1220,7 @@ v.  The completer now takes multibyte characters into account when looking for
 w.  The history search functions now perform better bounds checking on the
     history list.
 
-x.  Change to history expansion functions to treat `^' as equivalent to word 
+x.  Change to history expansion functions to treat `^' as equivalent to word
     one, as the documentation states.
 
 y.  Some changes to the display code to improve display and redisplay of
@@ -1256,7 +1256,7 @@ hh. Improvements to the code that expands and displays prompt strings
 ii. Fixed a problem with vi-mode not correctly remembering the numeric argument
     to the last `c'hange command for later use with `.'.
 
-jj. Fixed a bug in vi-mode that caused multi-digit count arguments to work   
+jj. Fixed a bug in vi-mode that caused multi-digit count arguments to work
     incorrectly.
 
 kk. Fixed a problem in vi-mode that caused the last text modification command
@@ -1308,10 +1308,10 @@ i.  New application variable, rl_completion_quote_character, set to any
     quote character readline finds before it calls the application completion
     function.
 
-j.  New application variable, rl_completion_suppress_quote, settable by an   
+j.  New application variable, rl_completion_suppress_quote, settable by an
     application completion function.  If set to non-zero, readline does not
     attempt to append a closing quote to a completed word.
-    
+
 k.  New application variable, rl_completion_found_quote, set to a non-zero
     value if readline determines that the word to be completed is quoted.
     Set before readline calls any application completion function.
@@ -1443,14 +1443,14 @@ j.  The key binding code now processes only two hex digits after a `\x'
     than strict ASCII.
 
 k.  Fixed a few places where negative array subscripts could have occurred.
-    
+
 l.  Fixed the vi-mode code to use a better method to determine the bounds of
     the array used to hold the marks, and to avoid out-of-bounds references.
-    
+
 m.  Fixed the defines in chardefs.h to work better when chars are signed.
-    
+
 n.  Fixed configure.in to use the new names for bash autoconf macros.
-    
+
 o.  Readline no longer attempts to define its own versions of some ctype
     macros if they are implemented as functions in libc but not as macros in
     <ctype.h>.
@@ -1583,7 +1583,7 @@ dd. Fixed a bug that could cause applications to dereference a NULL pointer
     if a NULL second argument was passed to history_expand().
 
 ee. If a hook function assigned to rl_event_hook sets rl_done to a non-zero
-    value, rl_read_key() now immediately returns '\n' (which is assumed to   
+    value, rl_read_key() now immediately returns '\n' (which is assumed to
     be bound to accept-line).
 
 2.  New Features in Readline
@@ -1699,8 +1699,8 @@ t.  Fixed a bug in the redisplay code for lines with more than 256 line
 
 u.  A bug was fixed which caused invisible character markers to not be
     stripped from the prompt string if the terminal was in no-echo mode.
-    
-v.  Readline no longer tries to get the variables it needs for redisplay 
+
+v.  Readline no longer tries to get the variables it needs for redisplay
     from the termcap entry if the calling application has specified its
     own redisplay function.  Readline treats the terminal as `dumb' in
     this case.
@@ -1824,7 +1824,7 @@ d.  rlstdc.h is now an installed header file.
 
 e.  Many changes to the signal handling:
         o Readline now catches SIGQUIT and cleans up the tty before returning;
-        o A new variable, rl_catch_signals, is available to application writers 
+        o A new variable, rl_catch_signals, is available to application writers
           to indicate to readline whether or not it should install its own
           signal handlers for SIGINT, SIGTERM, SIGQUIT, SIGALRM, SIGTSTP,
           SIGTTIN, and SIGTTOU;

@@ -202,4 +202,3 @@ private:
 } // namespace geos::index::chain
 } // namespace geos::index
 } // namespace geos
-

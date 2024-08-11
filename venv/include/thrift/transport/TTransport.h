@@ -56,13 +56,13 @@ uint32_t readAll(Transport_& trans, uint8_t* buf, uint32_t len) {
  */
 class TTransport {
 public:
-  TTransport(std::shared_ptr<TConfiguration> config = nullptr) { 
+  TTransport(std::shared_ptr<TConfiguration> config = nullptr) {
     if(config == nullptr) {
       configuration_ = std::shared_ptr<TConfiguration> (new TConfiguration());
     } else {
       configuration_ = config;
     }
-    resetConsumedMessageSize(); 
+    resetConsumedMessageSize();
   }
 
   /**
@@ -250,8 +250,8 @@ public:
 
   std::shared_ptr<TConfiguration> getConfiguration() { return configuration_; }
 
-  void setConfiguration(std::shared_ptr<TConfiguration> config) { 
-    if (config != nullptr) configuration_ = config; 
+  void setConfiguration(std::shared_ptr<TConfiguration> config) {
+    if (config != nullptr) configuration_ = config;
   }
 
   /**
@@ -289,14 +289,14 @@ protected:
   inline long int getKnownMessageSize() { return knownMessageSize_; }
   void setKnownMessageSize(long int knownMessageSize) { knownMessageSize_ = knownMessageSize; }
 
-  /**  
+  /**
    * Resets RemainingMessageSize to the configured maximum
-   * 
+   *
    *  @param newSize  configured size
    */
   void resetConsumedMessageSize(long newSize = -1)
   {
-    // full reset 
+    // full reset
     if (newSize < 0)
     {
         knownMessageSize_ = getMaxMessageSize();
@@ -314,7 +314,7 @@ protected:
 
   /**
    * Consumes numBytes from the RemainingMessageSize.
-   * 
+   *
    *  @param numBytes  Consumes numBytes
    */
   void countConsumedMessageBytes(long int numBytes)

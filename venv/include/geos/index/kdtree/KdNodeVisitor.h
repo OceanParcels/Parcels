@@ -42,4 +42,3 @@ public:
 } // namespace geos::index::kdtree
 } // namespace geos::index
 } // namespace geos
-

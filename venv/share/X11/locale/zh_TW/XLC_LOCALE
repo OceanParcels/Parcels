@@ -1,5 +1,5 @@
 #  XLocale Database Sample for zh_TW
-# 
+#
 # Note: In lib/X11/lcCT.c, charset names for CNS11643 coded character
 # sets are defined as CNS11643.1986-1 and -2.  In the ECMA Registry,
 # CNS coded character sets 1-7 are registered as CNS 11643-1992.
@@ -9,9 +9,9 @@
 # X11R6 organization of fsN/csN as it is and only changed "CNS11643-*"
 # to "CNS11643.1986-*".
 #	1995-10-24	T. Numata (numa@rp.open.cs.fujitsu.co.jp)
-# 
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
 # 	fs0 class (7 bit ASCII)
 fs0	{
@@ -41,7 +41,7 @@ fs2	{
 		primary	CNS11643.1986-2:GL
 	}
 }
-# 	fs3 class 
+# 	fs3 class
 fs3	{
 	charset	{
 		name	CNS11643.1986-14:GL
@@ -50,7 +50,7 @@ fs3	{
 		primary	CNS11643.1986-14:GL
 	}
 }
-# 	fs4 class 
+# 	fs4 class
 fs4	{
 	charset	{
 		name	CNS11643.1986-15:GL
@@ -59,7 +59,7 @@ fs4	{
 		primary	CNS11643.1986-15:GL
 	}
 }
-# 	fs5 class 
+# 	fs5 class
 fs5	{
 	charset	{
 		name	CNS11643.1986-16:GL
@@ -69,9 +69,9 @@ fs5	{
 	}
 }
 END XLC_FONTSET
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name		zh_TW.euc
 mb_cur_max		4

@@ -67,10 +67,10 @@ namespace Model
      * access control list (ACL) on the new object. For more information, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3_ACLs_UsingACLs.html">Using
      * ACLs</a>. One way to grant the permissions using the request headers is to
-     * specify a canned ACL with the <code>x-amz-acl</code> request header.</p> 
+     * specify a canned ACL with the <code>x-amz-acl</code> request header.</p>
      * <ul> <li> <p>This functionality is not supported for directory buckets.</p>
      * </li> <li> <p>This functionality is not supported for Amazon S3 on Outposts.</p>
-     * </li> </ul> 
+     * </li> </ul>
      */
     inline const ObjectCannedACL& GetACL() const{ return m_aCL; }
     inline bool ACLHasBeenSet() const { return m_aCLHasBeenSet; }
@@ -158,7 +158,7 @@ namespace Model
      * <p>Specifies what content encodings have been applied to the object and thus
      * what decoding mechanisms must be applied to obtain the media-type referenced by
      * the Content-Type header field.</p>  <p>For directory buckets, only the
-     * <code>aws-chunked</code> value is supported in this header field.</p> 
+     * <code>aws-chunked</code> value is supported in this header field.</p>
      */
     inline const Aws::String& GetContentEncoding() const{ return m_contentEncoding; }
     inline bool ContentEncodingHasBeenSet() const { return m_contentEncodingHasBeenSet; }
@@ -234,14 +234,14 @@ namespace Model
      * America (São Paulo)</p> </li> </ul> <p>For a list of all the Amazon S3 supported
      * Regions and endpoints, see <a
      * href="https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">Regions
-     * and Endpoints</a> in the Amazon Web Services General Reference.</p> 
+     * and Endpoints</a> in the Amazon Web Services General Reference.</p>
      * </li> </ul> <p>For example, the following <code>x-amz-grant-read</code> header
      * grants the Amazon Web Services accounts identified by account IDs permissions to
      * read object data and its metadata:</p> <p> <code>x-amz-grant-read:
      * id="11112222333", id="444455556666" </code> </p>  <ul> <li> <p>This
      * functionality is not supported for directory buckets.</p> </li> <li> <p>This
      * functionality is not supported for Amazon S3 on Outposts.</p> </li> </ul>
-     * 
+     *
      */
     inline const Aws::String& GetGrantFullControl() const{ return m_grantFullControl; }
     inline bool GrantFullControlHasBeenSet() const { return m_grantFullControlHasBeenSet; }
@@ -277,14 +277,14 @@ namespace Model
      * America (São Paulo)</p> </li> </ul> <p>For a list of all the Amazon S3 supported
      * Regions and endpoints, see <a
      * href="https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">Regions
-     * and Endpoints</a> in the Amazon Web Services General Reference.</p> 
+     * and Endpoints</a> in the Amazon Web Services General Reference.</p>
      * </li> </ul> <p>For example, the following <code>x-amz-grant-read</code> header
      * grants the Amazon Web Services accounts identified by account IDs permissions to
      * read object data and its metadata:</p> <p> <code>x-amz-grant-read:
      * id="11112222333", id="444455556666" </code> </p>  <ul> <li> <p>This
      * functionality is not supported for directory buckets.</p> </li> <li> <p>This
      * functionality is not supported for Amazon S3 on Outposts.</p> </li> </ul>
-     * 
+     *
      */
     inline const Aws::String& GetGrantRead() const{ return m_grantRead; }
     inline bool GrantReadHasBeenSet() const { return m_grantReadHasBeenSet; }
@@ -320,14 +320,14 @@ namespace Model
      * America (São Paulo)</p> </li> </ul> <p>For a list of all the Amazon S3 supported
      * Regions and endpoints, see <a
      * href="https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">Regions
-     * and Endpoints</a> in the Amazon Web Services General Reference.</p> 
+     * and Endpoints</a> in the Amazon Web Services General Reference.</p>
      * </li> </ul> <p>For example, the following <code>x-amz-grant-read</code> header
      * grants the Amazon Web Services accounts identified by account IDs permissions to
      * read object data and its metadata:</p> <p> <code>x-amz-grant-read:
      * id="11112222333", id="444455556666" </code> </p>  <ul> <li> <p>This
      * functionality is not supported for directory buckets.</p> </li> <li> <p>This
      * functionality is not supported for Amazon S3 on Outposts.</p> </li> </ul>
-     * 
+     *
      */
     inline const Aws::String& GetGrantReadACP() const{ return m_grantReadACP; }
     inline bool GrantReadACPHasBeenSet() const { return m_grantReadACPHasBeenSet; }
@@ -363,14 +363,14 @@ namespace Model
      * America (São Paulo)</p> </li> </ul> <p>For a list of all the Amazon S3 supported
      * Regions and endpoints, see <a
      * href="https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">Regions
-     * and Endpoints</a> in the Amazon Web Services General Reference.</p> 
+     * and Endpoints</a> in the Amazon Web Services General Reference.</p>
      * </li> </ul> <p>For example, the following <code>x-amz-grant-read</code> header
      * grants the Amazon Web Services accounts identified by account IDs permissions to
      * read object data and its metadata:</p> <p> <code>x-amz-grant-read:
      * id="11112222333", id="444455556666" </code> </p>  <ul> <li> <p>This
      * functionality is not supported for directory buckets.</p> </li> <li> <p>This
      * functionality is not supported for Amazon S3 on Outposts.</p> </li> </ul>
-     * 
+     *
      */
     inline const Aws::String& GetGrantWriteACP() const{ return m_grantWriteACP; }
     inline bool GrantWriteACPHasBeenSet() const { return m_grantWriteACPHasBeenSet; }
@@ -418,9 +418,9 @@ namespace Model
     ///@{
     /**
      * <p>The server-side encryption algorithm used when you store this object in
-     * Amazon S3 (for example, <code>AES256</code>, <code>aws:kms</code>).</p> 
+     * Amazon S3 (for example, <code>AES256</code>, <code>aws:kms</code>).</p>
      * <p>For directory buckets, only server-side encryption with Amazon S3 managed
-     * keys (SSE-S3) (<code>AES256</code>) is supported.</p> 
+     * keys (SSE-S3) (<code>AES256</code>) is supported.</p>
      */
     inline const ServerSideEncryption& GetServerSideEncryption() const{ return m_serverSideEncryption; }
     inline bool ServerSideEncryptionHasBeenSet() const { return m_serverSideEncryptionHasBeenSet; }
@@ -440,7 +440,7 @@ namespace Model
      * Classes</a> in the <i>Amazon S3 User Guide</i>.</p>  <ul> <li> <p>For
      * directory buckets, only the S3 Express One Zone storage class is supported to
      * store newly created objects.</p> </li> <li> <p>Amazon S3 on Outposts only uses
-     * the OUTPOSTS Storage Class.</p> </li> </ul> 
+     * the OUTPOSTS Storage Class.</p> </li> </ul>
      */
     inline const StorageClass& GetStorageClass() const{ return m_storageClass; }
     inline bool StorageClassHasBeenSet() const { return m_storageClassHasBeenSet; }
@@ -455,7 +455,7 @@ namespace Model
      * <p>If the bucket is configured as a website, redirects requests for this object
      * to another object in the same bucket or to an external URL. Amazon S3 stores the
      * value of this header in the object metadata.</p>  <p>This functionality is
-     * not supported for directory buckets.</p> 
+     * not supported for directory buckets.</p>
      */
     inline const Aws::String& GetWebsiteRedirectLocation() const{ return m_websiteRedirectLocation; }
     inline bool WebsiteRedirectLocationHasBeenSet() const { return m_websiteRedirectLocationHasBeenSet; }
@@ -471,7 +471,7 @@ namespace Model
     /**
      * <p>Specifies the algorithm to use when encrypting the object (for example,
      * AES256).</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetSSECustomerAlgorithm() const{ return m_sSECustomerAlgorithm; }
     inline bool SSECustomerAlgorithmHasBeenSet() const { return m_sSECustomerAlgorithmHasBeenSet; }
@@ -489,8 +489,8 @@ namespace Model
      * encrypting data. This value is used to store the object and then it is
      * discarded; Amazon S3 does not store the encryption key. The key must be
      * appropriate for use with the algorithm specified in the
-     * <code>x-amz-server-side-encryption-customer-algorithm</code> header.</p> 
-     * <p>This functionality is not supported for directory buckets.</p> 
+     * <code>x-amz-server-side-encryption-customer-algorithm</code> header.</p>
+     * <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerKey() const{ return m_sSECustomerKey; }
     inline bool SSECustomerKeyHasBeenSet() const { return m_sSECustomerKeyHasBeenSet; }
@@ -506,8 +506,8 @@ namespace Model
     /**
      * <p>Specifies the 128-bit MD5 digest of the customer-provided encryption key
      * according to RFC 1321. Amazon S3 uses this header for a message integrity check
-     * to ensure that the encryption key was transmitted without error.</p> 
-     * <p>This functionality is not supported for directory buckets.</p> 
+     * to ensure that the encryption key was transmitted without error.</p>
+     * <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerKeyMD5() const{ return m_sSECustomerKeyMD5; }
     inline bool SSECustomerKeyMD5HasBeenSet() const { return m_sSECustomerKeyMD5HasBeenSet; }
@@ -523,7 +523,7 @@ namespace Model
     /**
      * <p>Specifies the ID (Key ID, Key ARN, or Key Alias) of the symmetric encryption
      * customer managed key to use for object encryption.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSEKMSKeyId() const{ return m_sSEKMSKeyId; }
     inline bool SSEKMSKeyIdHasBeenSet() const { return m_sSEKMSKeyIdHasBeenSet; }
@@ -540,7 +540,7 @@ namespace Model
      * <p>Specifies the Amazon Web Services KMS Encryption Context to use for object
      * encryption. The value of this header is a base64-encoded UTF-8 string holding
      * JSON with the encryption context key-value pairs.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSEKMSEncryptionContext() const{ return m_sSEKMSEncryptionContext; }
     inline bool SSEKMSEncryptionContextHasBeenSet() const { return m_sSEKMSEncryptionContextHasBeenSet; }
@@ -558,8 +558,8 @@ namespace Model
      * with server-side encryption using Key Management Service (KMS) keys (SSE-KMS).
      * Setting this header to <code>true</code> causes Amazon S3 to use an S3 Bucket
      * Key for object encryption with SSE-KMS.</p> <p>Specifying this header with an
-     * object action doesn’t affect bucket-level settings for S3 Bucket Key.</p> 
-     * <p>This functionality is not supported for directory buckets.</p> 
+     * object action doesn’t affect bucket-level settings for S3 Bucket Key.</p>
+     * <p>This functionality is not supported for directory buckets.</p>
      */
     inline bool GetBucketKeyEnabled() const{ return m_bucketKeyEnabled; }
     inline bool BucketKeyEnabledHasBeenSet() const { return m_bucketKeyEnabledHasBeenSet; }
@@ -568,7 +568,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
     inline void SetRequestPayer(const RequestPayer& value) { m_requestPayerHasBeenSet = true; m_requestPayer = value; }
@@ -581,7 +581,7 @@ namespace Model
     /**
      * <p>The tag-set for the object. The tag-set must be encoded as URL Query
      * parameters.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetTagging() const{ return m_tagging; }
     inline bool TaggingHasBeenSet() const { return m_taggingHasBeenSet; }
@@ -597,7 +597,7 @@ namespace Model
     /**
      * <p>Specifies the Object Lock mode that you want to apply to the uploaded
      * object.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const ObjectLockMode& GetObjectLockMode() const{ return m_objectLockMode; }
     inline bool ObjectLockModeHasBeenSet() const { return m_objectLockModeHasBeenSet; }
@@ -610,7 +610,7 @@ namespace Model
     ///@{
     /**
      * <p>Specifies the date and time when you want the Object Lock to expire.</p>
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::Utils::DateTime& GetObjectLockRetainUntilDate() const{ return m_objectLockRetainUntilDate; }
     inline bool ObjectLockRetainUntilDateHasBeenSet() const { return m_objectLockRetainUntilDateHasBeenSet; }
@@ -623,7 +623,7 @@ namespace Model
     ///@{
     /**
      * <p>Specifies whether you want to apply a legal hold to the uploaded object.</p>
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline const ObjectLockLegalHoldStatus& GetObjectLockLegalHoldStatus() const{ return m_objectLockLegalHoldStatus; }
     inline bool ObjectLockLegalHoldStatusHasBeenSet() const { return m_objectLockLegalHoldStatusHasBeenSet; }
@@ -665,7 +665,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

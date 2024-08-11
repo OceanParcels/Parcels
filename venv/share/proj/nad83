@@ -1,4 +1,4 @@
-# SCCSID @(#)nad83	4.1 92/12/20 GIE 
+# SCCSID @(#)nad83	4.1 92/12/20 GIE
 # proj +init files for:
 #
 #     State Plane Coordinate Systems,
@@ -742,4 +742,3 @@ no_defs <>
 lon_0=-66d26 lat_1=18d26 lat_2=18d2 lat_0=17d50
 x_0=200000 y_0=200000
 no_defs <>
-

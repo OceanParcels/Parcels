@@ -45,7 +45,7 @@ namespace Model
      * <p>The account ID that owns the destination S3 bucket. If no account ID is
      * provided, the owner is not validated before exporting data. </p>  <p>
      * Although this value is optional, we strongly recommend that you set it to help
-     * prevent problems if the destination bucket ownership changes. </p> 
+     * prevent problems if the destination bucket ownership changes. </p>
      */
     inline const Aws::String& GetAccountId() const{ return m_accountId; }
     inline bool AccountIdHasBeenSet() const { return m_accountIdHasBeenSet; }

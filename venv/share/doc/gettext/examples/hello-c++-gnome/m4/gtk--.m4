@@ -8,7 +8,7 @@ dnl   to be used as follows:
 dnl AM_PATH_GTKMM([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl
 AC_DEFUN([AM_PATH_GTKMM],
-[dnl 
+[dnl
 dnl Get the cflags and libraries from the gtkmm-config script
 dnl
 AC_ARG_WITH(gtkmm-prefix,[  --with-gtkmm-prefix=PREFIX
@@ -67,7 +67,7 @@ dnl
 #include <stdio.h>
 #include <stdlib.h>
 
-int 
+int
 main ()
 {
   int major, minor, micro;
@@ -86,7 +86,7 @@ main ()
       (gtkmm_minor_version != $gtkmm_config_minor_version) ||
       (gtkmm_micro_version != $gtkmm_config_micro_version))
     {
-      printf("\n*** 'gtkmm-config --version' returned %d.%d.%d, but GTK-- (%d.%d.%d)\n", 
+      printf("\n*** 'gtkmm-config --version' returned %d.%d.%d, but GTK-- (%d.%d.%d)\n",
              $gtkmm_config_major_version, $gtkmm_config_minor_version, $gtkmm_config_micro_version,
              gtkmm_major_version, gtkmm_minor_version, gtkmm_micro_version);
       printf ("*** was found! If gtkmm-config was correct, then it is best\n");
@@ -97,9 +97,9 @@ main ()
       printf("*** If gtkmm-config was wrong, set the environment variable GTKMM_CONFIG\n");
       printf("*** to point to the correct copy of gtkmm-config, and remove the file config.cache\n");
       printf("*** before re-running configure\n");
-    } 
+    }
 /* GTK-- does not have the GTKMM_*_VERSION constants */
-/* 
+/*
   else if ((gtkmm_major_version != GTKMM_MAJOR_VERSION) ||
 	   (gtkmm_minor_version != GTKMM_MINOR_VERSION) ||
            (gtkmm_micro_version != GTKMM_MICRO_VERSION))
@@ -144,7 +144,7 @@ main ()
   fi
   if test "x$no_gtkmm" = x ; then
      AC_MSG_RESULT(yes)
-     ifelse([$2], , :, [$2])     
+     ifelse([$2], , :, [$2])
   else
      AC_MSG_RESULT(no)
      if test "$GTKMM_CONFIG" = "no" ; then
@@ -192,4 +192,3 @@ main ()
   AC_SUBST(GTKMM_LIBS)
   rm -f conf.gtkmmtest
 ])
-

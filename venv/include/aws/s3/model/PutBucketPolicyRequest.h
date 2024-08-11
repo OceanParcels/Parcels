@@ -78,7 +78,7 @@ namespace Model
      * <p>The MD5 hash of the request body.</p> <p>For requests made using the Amazon
      * Web Services Command Line Interface (CLI) or Amazon Web Services SDKs, this
      * field is calculated automatically.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::String& GetContentMD5() const{ return m_contentMD5; }
     inline bool ContentMD5HasBeenSet() const { return m_contentMD5HasBeenSet; }
@@ -111,7 +111,7 @@ namespace Model
      * checksum algorithm that matches the provided value in
      * <code>x-amz-checksum-<i>algorithm</i> </code>.</p>  <p>For directory
      * buckets, when you use Amazon Web Services SDKs, <code>CRC32</code> is the
-     * default checksum algorithm that's used for performance.</p> 
+     * default checksum algorithm that's used for performance.</p>
      */
     inline const ChecksumAlgorithm& GetChecksumAlgorithm() const{ return m_checksumAlgorithm; }
     inline bool ChecksumAlgorithmHasBeenSet() const { return m_checksumAlgorithmHasBeenSet; }
@@ -125,7 +125,7 @@ namespace Model
     /**
      * <p>Set this parameter to true to confirm that you want to remove your
      * permissions to change this bucket policy in the future.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline bool GetConfirmRemoveSelfBucketAccess() const{ return m_confirmRemoveSelfBucketAccess; }
     inline bool ConfirmRemoveSelfBucketAccessHasBeenSet() const { return m_confirmRemoveSelfBucketAccessHasBeenSet; }
@@ -137,10 +137,10 @@ namespace Model
     /**
      * <p>The account ID of the expected bucket owner. If the account ID that you
      * provide does not match the actual owner of the bucket, the request fails with
-     * the HTTP status code <code>403 Forbidden</code> (access denied).</p> 
+     * the HTTP status code <code>403 Forbidden</code> (access denied).</p>
      * <p>For directory buckets, this header is not supported in this API operation. If
      * you specify this header, the request fails with the HTTP status code <code>501
-     * Not Implemented</code>.</p> 
+     * Not Implemented</code>.</p>
      */
     inline const Aws::String& GetExpectedBucketOwner() const{ return m_expectedBucketOwner; }
     inline bool ExpectedBucketOwnerHasBeenSet() const { return m_expectedBucketOwnerHasBeenSet; }
@@ -153,7 +153,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

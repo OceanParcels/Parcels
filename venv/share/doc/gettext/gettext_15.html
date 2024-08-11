@@ -713,7 +713,7 @@ that language, and to combine the resulting files using <code>msgcat</code>.
 </dl>
 
 <p>The following examples are available in the &lsquo;<tt>examples</tt>&rsquo; directory:
-<code>hello-c</code>, <code>hello-c-gnome</code>, <code>hello-c++</code>, <code>hello-c++-qt</code>, 
+<code>hello-c</code>, <code>hello-c-gnome</code>, <code>hello-c++</code>, <code>hello-c++-qt</code>,
 <code>hello-c++-kde</code>, <code>hello-c++-gnome</code>, <code>hello-c++-wxwidgets</code>,
 <code>hello-objc</code>, <code>hello-objc-gnustep</code>, <code>hello-objc-gnome</code>.
 </p>
@@ -2945,7 +2945,7 @@ https://www.cpan.org/).
 </p>
 </dd>
 <dt> Extractor</dt>
-<dd><p><code>xgettext -k__ -k\$__ -k%__ -k__x -k__n:1,2 -k__nx:1,2 -k__xn:1,2 
+<dd><p><code>xgettext -k__ -k\$__ -k%__ -k__x -k__n:1,2 -k__nx:1,2 -k__xn:1,2
 -kN__ -kN__n:1,2 -k__p:1c,2 -k__np:1c,2,3 -kN__p:1c,2 -kN__np:1c,2,3</code>
 </p>
 </dd>
@@ -2958,7 +2958,7 @@ https://www.cpan.org/).
 <dt> Portability</dt>
 <dd><p>The <code>libintl-perl</code> package is platform independent but is not
 part of the Perl core.  The programmer is responsible for
-providing a dummy implementation of the required functions if the 
+providing a dummy implementation of the required functions if the
 package is not installed on the target system.
 </p>
 </dd>
@@ -3224,9 +3224,9 @@ print $__{&quot;Hello world!&quot;};
 print $__-&gt;{&quot;Hello world!&quot;};
 print $$__{&quot;Hello world!&quot;};
 </pre></td></tr></table>
- 
 
-<p>The above four lines all do the same thing.  The Perl module 
+
+<p>The above four lines all do the same thing.  The Perl module
 <code>Locale::TextDomain</code> exports by default a hash <code>%__</code> that
 is tied to the function <code>__()</code>.  It also exports a reference
 <code>$__</code> to <code>%__</code>.
@@ -3256,7 +3256,7 @@ are <em>not</em> allowed, regardless of the <code>use utf8</code> pragma.
 
 <p>Perl offers a plethora of different string constructs.  Those that can
 be used either as arguments to functions or inside braces for hash
-lookups are generally supported by <code>xgettext</code>.  
+lookups are generally supported by <code>xgettext</code>.
 </p>
 <ul>
 <li> <strong>double-quoted strings</strong>
@@ -3384,7 +3384,7 @@ error) are:
 
 </li><li> octal chars, like <code>\033</code>
 <br>
-Note that octal escapes in the range of 400-777 are translated into a 
+Note that octal escapes in the range of 400-777 are translated into a
 UTF-8 representation, regardless of the presence of the <code>use utf8</code> pragma.
 
 </li><li> hex chars, like <code>\x1b</code>
@@ -3421,7 +3421,7 @@ regardless of the presence of the <code>use utf8</code> pragma.
 
 <p>These escapes are only considered safe if the string consists of
 ASCII characters only.  Translation of characters outside the range
-defined by ASCII is locale-dependent and can actually only be performed 
+defined by ASCII is locale-dependent and can actually only be performed
 at runtime; <code>xgettext</code> doesn't do these locale-dependent translations
 at extraction time.
 </p>
@@ -3455,9 +3455,9 @@ EOF
 
 <p>The parser will extract the entire here document, and it will appear
 entirely in the resulting PO file, including the JavaScript snippet
-embedded in the HTML code.  If you exaggerate with constructs like 
-the above, you will run the risk that the translators of your package 
-will look out for a less challenging project.  You should consider an 
+embedded in the HTML code.  If you exaggerate with constructs like
+the above, you will run the risk that the translators of your package
+will look out for a less challenging project.  You should consider an
 alternative expression here:
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">print &lt;&lt;EOF;
@@ -3483,7 +3483,7 @@ print gettext qq{Welcome to $gettext-&gt;{&quot;the earth&quot;}};
 
 <p>The <code>qq</code>-quoted string is recognized as an argument to <code>xgettext</code> in
 the first place, and checked for invalid variable interpolation.  The
-dollar sign of hash-dereferencing will therefore terminate the parser 
+dollar sign of hash-dereferencing will therefore terminate the parser
 with an &ldquo;invalid interpolation&rdquo; error.
 </p>
 <p>It is valid to interpolate hash lookups in regular expressions:
@@ -3558,7 +3558,7 @@ into one long string at compile time, and so is
 POT file.
 </p>
 <p>Note that the future Perl 6 will probably use the underscore
-(&lsquo;<samp>_</samp>&rsquo;) as the string concatenation operator, and the dot 
+(&lsquo;<samp>_</samp>&rsquo;) as the string concatenation operator, and the dot
 (&lsquo;<samp>.</samp>&rsquo;) for dereferencing.  This new syntax is not yet supported by
 <code>xgettext</code>.
 </p>
@@ -3596,7 +3596,7 @@ the resulting POT file.
 <p>The foregoing sections should have proven that
 <code>xgettext</code> is quite smart in extracting translatable strings from
 Perl sources.  Yet, some more or less exotic constructs that could be
-expected to work, actually do not work.  
+expected to work, actually do not work.
 </p>
 <p>One of the more relevant limitations can be found in the
 implementation of variable interpolation inside quoted strings.  Only

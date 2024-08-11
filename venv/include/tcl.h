@@ -55,7 +55,7 @@ extern "C" {
 
 #define TCL_VERSION	    "8.6"
 #define TCL_PATCH_LEVEL	    "8.6.13"
-
+
 /*
  *----------------------------------------------------------------------------
  * The following definitions set up the proper options for Windows compilers.
@@ -484,7 +484,7 @@ typedef unsigned TCL_WIDE_INT_TYPE	Tcl_WideUInt;
 #else
     typedef struct stat Tcl_StatBuf;
 #endif
-
+
 /*
  *----------------------------------------------------------------------------
  * Data structures defined opaquely in this module. The definitions below just
@@ -784,7 +784,7 @@ typedef void (Tcl_ServiceModeHookProc) (int mode);
 typedef ClientData (Tcl_InitNotifierProc) (void);
 typedef void (Tcl_FinalizeNotifierProc) (ClientData clientData);
 typedef void (Tcl_MainLoopProc) (void);
-
+
 /*
  *----------------------------------------------------------------------------
  * The following structure represents a type of object, which is a particular
@@ -868,7 +868,7 @@ typedef struct Tcl_Obj {
 void		Tcl_IncrRefCount(Tcl_Obj *objPtr);
 void		Tcl_DecrRefCount(Tcl_Obj *objPtr);
 int		Tcl_IsShared(Tcl_Obj *objPtr);
-
+
 /*
  *----------------------------------------------------------------------------
  * The following structure contains the state needed by Tcl_SaveResult. No-one
@@ -1158,7 +1158,7 @@ typedef struct Tcl_DString {
 #define TCL_LINK_FLOAT		13
 #define TCL_LINK_WIDE_UINT	14
 #define TCL_LINK_READ_ONLY	0x80
-
+
 /*
  *----------------------------------------------------------------------------
  * Forward declarations of Tcl_HashTable and related types.
@@ -1367,7 +1367,7 @@ typedef struct {
 				 * or -1 if search has terminated. */
     Tcl_Dict dictionaryPtr;	/* Reference to dictionary being searched. */
 } Tcl_DictSearch;
-
+
 /*
  *----------------------------------------------------------------------------
  * Flag values to pass to Tcl_DoOneEvent to disable searches for some kinds of
@@ -1888,7 +1888,7 @@ typedef struct Tcl_NotifierProcs {
     Tcl_AlertNotifierProc *alertNotifierProc;
     Tcl_ServiceModeHookProc *serviceModeHookProc;
 } Tcl_NotifierProcs;
-
+
 /*
  *----------------------------------------------------------------------------
  * The following data structures and declarations are for the new Tcl parser.
@@ -2068,7 +2068,7 @@ typedef struct Tcl_Parse {
 				 * for very large commands that don't fit
 				 * here. */
 } Tcl_Parse;
-
+
 /*
  *----------------------------------------------------------------------------
  * The following structure represents a user-defined encoding. It collects
@@ -2211,7 +2211,7 @@ typedef unsigned int Tcl_UniChar;
 #else
 typedef unsigned short Tcl_UniChar;
 #endif
-
+
 /*
  *----------------------------------------------------------------------------
  * TIP #59: The following structure is used in calls 'Tcl_RegisterConfig' to
@@ -2408,7 +2408,7 @@ EXTERN void		Tcl_MainEx(int argc, char **argv,
 EXTERN const char *	Tcl_PkgInitStubsCheck(Tcl_Interp *interp,
 			    const char *version, int exact);
 EXTERN void		Tcl_GetMemoryInfo(Tcl_DString *dsPtr);
-
+
 /*
  *----------------------------------------------------------------------------
  * Include the public function declarations that are accessible via the stubs
@@ -2629,7 +2629,7 @@ extern Tcl_AppInitProc Tcl_AppInit;
 #endif
 
 #endif /* _TCL */
-
+
 /*
  * Local Variables:
  * mode: c

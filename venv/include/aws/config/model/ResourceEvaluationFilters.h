@@ -44,7 +44,7 @@ namespace Model
     /**
      * <p>Filters all resource evaluations results based on an evaluation mode.</p>
      *  <p>Currently, <code>DECTECTIVE</code> is not supported as a valid
-     * value. Ignore other documentation stating otherwise.</p> 
+     * value. Ignore other documentation stating otherwise.</p>
      */
     inline const EvaluationMode& GetEvaluationMode() const{ return m_evaluationMode; }
     inline bool EvaluationModeHasBeenSet() const { return m_evaluationModeHasBeenSet; }

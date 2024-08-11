@@ -168,12 +168,12 @@ Tie::Hash, Tie::StdHash, Tie::ExtraHash \- base class definitions for tied hashe
 \&
 \&    @ISA = qw(Tie::ExtraHash);
 \&
-\&    # All methods provided by default, define 
+\&    # All methods provided by default, define
 \&    # only those needing overrides
 \&    # Accessors access the storage in %{$_[0][0]};
 \&    # TIEHASH should return an array reference with the first element
-\&    # being the reference to the actual storage 
-\&    sub DELETE { 
+\&    # being the reference to the actual storage
+\&    sub DELETE {
 \&      $_[0][1]\->(\*(Aqdel\*(Aq, $_[0][0], $_[1]); # Call the report writer
 \&      delete $_[0][0]\->{$_[1]};           #  $_[0]\->SUPER::DELETE($_[1])
 \&    }

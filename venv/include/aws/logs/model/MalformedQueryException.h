@@ -43,7 +43,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const QueryCompileError& GetQueryCompileError() const{ return m_queryCompileError; }
     inline bool QueryCompileErrorHasBeenSet() const { return m_queryCompileErrorHasBeenSet; }
     inline void SetQueryCompileError(const QueryCompileError& value) { m_queryCompileErrorHasBeenSet = true; m_queryCompileError = value; }

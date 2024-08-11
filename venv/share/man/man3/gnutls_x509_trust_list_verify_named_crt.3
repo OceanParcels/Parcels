@@ -24,8 +24,8 @@ If non\-null will be called on each chain element verification with the output.
 .SH "DESCRIPTION"
 This function will try to find a certificate that is associated with the provided
 name \-\-see \fBgnutls_x509_trust_list_add_named_crt()\fP. If a match is found the
-certificate is considered valid. In addition to that this function will also 
-check CRLs. The  \fIvoutput\fP parameter will hold an OR'ed sequence of 
+certificate is considered valid. In addition to that this function will also
+check CRLs. The  \fIvoutput\fP parameter will hold an OR'ed sequence of
 \fBgnutls_certificate_status_t\fP flags.
 
 Additionally a certificate verification profile can be specified

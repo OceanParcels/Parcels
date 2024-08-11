@@ -518,7 +518,7 @@ Open \*(L"membername\*(R" from the zip file for reading.
 .ie n .IP """Efs => 0| 1""" 5
 .el .IP "\f(CWEfs => 0| 1\fR" 5
 .IX Item "Efs => 0| 1"
-When this option is set to true \s-1AND\s0 the zip archive being read has 
+When this option is set to true \s-1AND\s0 the zip archive being read has
 the \*(L"Language Encoding Flag\*(R" (\s-1EFS\s0) set, the member name is assumed to be encoded in \s-1UTF\-8.\s0
 .Sp
 If the member name in the zip archive is not valid \s-1UTF\-8\s0 when this optionn is true,
@@ -909,7 +909,7 @@ stream at a time.
 \&    my $status;
 \&    for ($status = 1; $status > 0; $status = $u\->nextStream())
 \&    {
-\& 
+\&
 \&        my $name = $u\->getHeaderInfo()\->{Name};
 \&        warn "Processing member $name\en" ;
 \&
@@ -940,7 +940,7 @@ to read a zip file and unzip its contents to disk.
 The script is available from <https://gist.github.com/eqhmcow/5389877>
 .SH "SUPPORT"
 .IX Header "SUPPORT"
-General feedback/questions/bug reports should be sent to 
+General feedback/questions/bug reports should be sent to
 <https://github.com/pmqs/IO\-Compress/issues> (preferred) or
 <https://rt.cpan.org/Public/Dist/Display.html?Name=IO\-Compress>.
 .SH "SEE ALSO"

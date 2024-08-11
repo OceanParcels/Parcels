@@ -185,4 +185,3 @@ rm -rf red blue u2w
 echo
 
 exit $EXIT_VALUE
-

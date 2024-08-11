@@ -348,12 +348,12 @@ Note that only the major bug fixes are listed here.  See \fIChanges\fR for other
 \&        Backtracking might not restore start of $3.
 \&        No feedback if max count for * or + on "complex" subexpression
 \&            was reached, similarly (but at compile time) for {3,34567}
-\&        Primitive restrictions on max count introduced to decrease a 
+\&        Primitive restrictions on max count introduced to decrease a
 \&            possibility of a segfault;
 \&        (ZERO\-LENGTH)* could segfault;
 \&        (ZERO\-LENGTH)* was prohibited;
 \&        Long REs were not allowed;
-\&        /RE/g could skip matches at the same position after a 
+\&        /RE/g could skip matches at the same position after a
 \&          zero\-length match;
 .Ve
 .IP "New regular expression constructs" 4
@@ -600,14 +600,14 @@ the command-line arguments used in \fIconfig.sh\fR.
 .IX Subsection "New Platforms"
 BeOS is now supported.  See \fI\s-1README\s0.beos\fR.
 .PP
-\&\s-1DOS\s0 is now supported under the \s-1DJGPP\s0 tools.  See \fI\s-1README\s0.dos\fR (installed 
+\&\s-1DOS\s0 is now supported under the \s-1DJGPP\s0 tools.  See \fI\s-1README\s0.dos\fR (installed
 as perldos on some systems).
 .PP
 MiNT is now supported.  See \fI\s-1README\s0.mint\fR.
 .PP
 MPE/iX is now supported.  See \s-1README\s0.mpeix.
 .PP
-\&\s-1MVS\s0 (aka \s-1OS390,\s0 aka Open Edition) is now supported.  See \fI\s-1README\s0.os390\fR 
+\&\s-1MVS\s0 (aka \s-1OS390,\s0 aka Open Edition) is now supported.  See \fI\s-1README\s0.os390\fR
 (installed as perlos390 on some systems).
 .PP
 Stratus \s-1VOS\s0 is now supported.  See \fI\s-1README\s0.vos\fR.
@@ -617,7 +617,7 @@ Win32 support has been vastly enhanced.  Support for Perl Object, a \*(C+
 encapsulation of Perl.  \s-1GCC\s0 and \s-1EGCS\s0 are now supported on Win32.
 See \fI\s-1README\s0.win32\fR, aka perlwin32.
 .PP
-\&\s-1VMS\s0 configuration system has been rewritten.  See \fI\s-1README\s0.vms\fR (installed 
+\&\s-1VMS\s0 configuration system has been rewritten.  See \fI\s-1README\s0.vms\fR (installed
 as \fIREADME_vms\fR on some systems).
 .PP
 The hints files for most Unix platforms have seen incremental improvements.
@@ -915,7 +915,7 @@ method.  Probably indicates an unintended loop in your inheritance hierarchy.
 .IX Item "Reference found where even-sized list expected"
 (W) You gave a single reference where Perl was expecting a list with
 an even number of elements (for assignment to a hash). This
-usually means that you used the anon hash constructor when you meant 
+usually means that you used the anon hash constructor when you meant
 to use parens. In any case, a hash requires key/value \fBpairs\fR.
 .Sp
 .Vb 4

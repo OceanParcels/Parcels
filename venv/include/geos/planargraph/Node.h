@@ -155,4 +155,3 @@ std::ostream& operator<<(std::ostream& os, const Node& n);
 
 } // namespace geos::planargraph
 } // namespace geos
-

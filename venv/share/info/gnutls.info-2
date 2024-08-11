@@ -643,16 +643,16 @@ error.  Other available environment variables are shown in *note Table
 6.1: tab:environment.
 
 Variable               Purpose
-                       
+
 --------------------------------------------------------------------------
 'GNUTLS_DEBUG_LEVEL'   When set to a numeric value, it sets the default
                        debugging level for GnuTLS applications.
-                       
+
 'SSLKEYLOGFILE'        When set to a filename, GnuTLS will append to it
                        the session keys in the NSS Key Log format.
                        That format can be read by wireshark and will
                        allow decryption of the session for debugging.
-                       
+
 'GNUTLS_CPUID_OVERRIDE'That environment variable can be used to
                        explicitly enable/disable the use of certain CPU
                        capabilities.  Note that CPU detection cannot be
@@ -669,12 +669,12 @@ Variable               Purpose
                           * 0x100000: Enable VIA padlock
                           * 0x200000: Enable VIA PHE
                           * 0x400000: Enable VIA PHE SHA512
-                       
+
 'GNUTLS_FORCE_FIPS_MODE'In setups where GnuTLS is compiled with support
                        for FIPS140-2 (see *note FIPS140-2 mode::) if
                        set to one it will force the FIPS mode
                        enablement.
-                       
+
 
 
 Table 6.1: Environment variables used by the library.
@@ -1161,22 +1161,22 @@ the credential types is shown in *note Table 6.2: tab:key-exchange-cred.
 
 Authentication     Key exchange       Client         Server
 method                                credentials    credentials
-                                                     
+
 --------------------------------------------------------------------
 Certificate and    'KX_RSA',          'CRD_CERTIFICATE''CRD_CERTIFICATE'
-Raw public-key     'KX_DHE_RSA',                     
+Raw public-key     'KX_DHE_RSA',
                    'KX_DHE_DSS',
                    'KX_ECDHE_RSA',
                    'KX_ECDHE_ECDSA'
 Password and       'KX_SRP_RSA',      'CRD_SRP'      'CRD_CERTIFICATE',
 certificate        'KX_SRP_DSS'                      'CRD_SRP'
-                                                     
+
 Password           'KX_SRP'           'CRD_SRP'      'CRD_SRP'
-                                                     
+
 Anonymous          'KX_ANON_DH',      'CRD_ANON'     'CRD_ANON'
-                   'KX_ANON_ECDH'                    
+                   'KX_ANON_ECDH'
 Pre-shared key     'KX_PSK',          'CRD_PSK'      'CRD_PSK'
-                   'KX_DHE_PSK',                     
+                   'KX_DHE_PSK',
                    'KX_ECDHE_PSK'
 
 
@@ -2770,18 +2770,18 @@ Keyword        Description
                "@SYSTEM:+SRP"). The system file should have the
                format 'KEYWORD=VALUE', e.g.,
                'SYSTEM=NORMAL:+ARCFOUR-128'.
-               
+
                Since version 3.5.1 it is allowed to specify
                fallback keywords such as @KEYWORD1,@KEYWORD2,
                and the first valid keyword will be used.
-               
+
 PERFORMANCE    All the known to be secure ciphersuites are
                enabled, limited to 128 bit ciphers and sorted
                by terms of speed performance.  The message
                authenticity security level is of 64 bits or
                more, and the certificate verification profile
                is set to GNUTLS_PROFILE_LOW (80-bits).
-               
+
 NORMAL         Means all the known to be secure ciphersuites.
                The ciphers are sorted by security margin,
                although the 256-bit ciphers are included as a
@@ -2789,20 +2789,20 @@ NORMAL         Means all the known to be secure ciphersuites.
                security level is of 64 bits or more, and the
                certificate verification profile is set to
                GNUTLS_PROFILE_LOW (80-bits).
-               
+
                This priority string implicitly enables ECDHE
                and DHE. The ECDHE ciphersuites are placed first
                in the priority order, but due to compatibility
                issues with the DHE ciphersuites they are placed
                last in the priority order, after the plain RSA
                ciphersuites.
-               
+
 LEGACY         This sets the NORMAL settings that were used for
                GnuTLS 3.2.x or earlier.  There is no
                verification profile set, and the allowed DH
                primes are considered weak today (but are often
                used by misconfigured servers).
-               
+
 PFS            Means all the known to be secure ciphersuites
                that support perfect forward secrecy (ECDHE and
                DHE). The ciphers are sorted by security margin,
@@ -2812,37 +2812,37 @@ PFS            Means all the known to be secure ciphersuites
                certificate verification profile is set to
                GNUTLS_PROFILE_LOW (80-bits).  This option is
                available since 3.2.4 or later.
-               
+
 SECURE128      Means all known to be secure ciphersuites that
                offer a security level 128-bit or more.  The
                message authenticity security level is of 80
                bits or more, and the certificate verification
                profile is set to GNUTLS_PROFILE_LOW (80-bits).
-               
+
 SECURE192      Means all the known to be secure ciphersuites
                that offer a security level 192-bit or more.
                The message authenticity security level is of
                128 bits or more, and the certificate
                verification profile is set to
                GNUTLS_PROFILE_HIGH (128-bits).
-               
+
 SECURE256      Currently alias for SECURE192.  This option,
                will enable ciphers which use a 256-bit key but,
                due to limitations of the TLS protocol, the
                overall security level will be 192-bits (the
                security level depends on more factors than
                cipher key size).
-               
+
 SUITEB128      Means all the NSA Suite B cryptography (RFC5430)
                ciphersuites with an 128 bit security level, as
                well as the enabling of the corresponding
                verification profile.
-               
+
 SUITEB192      Means all the NSA Suite B cryptography (RFC5430)
                ciphersuites with an 192 bit security level, as
                well as the enabling of the corresponding
                verification profile.
-               
+
 NONE           Means nothing is enabled.  This disables even
                protocol versions.  It should be followed by the
                algorithms to be enabled.  Note that using this
@@ -2857,7 +2857,7 @@ NONE           Means nothing is enabled.  This disables even
                using the defaults (see above) or adjusting the
                defaults via
                *note gnutls_set_default_priority_append::.
-               
+
 
 
 Table 6.3: Supported initial keywords.
@@ -2909,7 +2909,7 @@ Ciphers        Examples are AES-128-GCM, AES-256-GCM,
                the algorithms from NORMAL priority.  The
                shortcut for secure GOST algorithms is
                CIPHER-GOST-ALL.
-               
+
 Key exchange   RSA, RSA-PSK, RSA-EXPORT, DHE-RSA, DHE-DSS, SRP,
                SRP-RSA, SRP-DSS, PSK, DHE-PSK, ECDHE-PSK,
                ECDHE-RSA, ECDHE-ECDSA, VKO-GOST-12, ANON-ECDH,
@@ -2919,22 +2919,22 @@ Key exchange   RSA, RSA-PSK, RSA-EXPORT, DHE-RSA, DHE-DSS, SRP,
                equivalent and instruct for a Diffie-Hellman key
                exchange using the enabled groups.  The shortcut
                for secure GOST algorithms is KX-GOST-ALL.
-               
+
 MAC            MD5, SHA1, SHA256, SHA384, GOST28147-TC26Z-IMIT,
                AEAD (used with GCM ciphers only).  All
                algorithms from NORMAL priority can be accessed
                with MAC-ALL. The shortcut for secure GOST
                algorithms is MAC-GOST-ALL.
-               
+
 Compression    COMP-NULL, COMP-DEFLATE. Catch all is COMP-ALL.
-algorithms     
+algorithms
 TLS versions   VERS-TLS1.0, VERS-TLS1.1, VERS-TLS1.2,
                VERS-TLS1.3, VERS-DTLS0.9, VERS-DTLS1.0,
                VERS-DTLS1.2.  Catch all are VERS-ALL, and will
                enable all protocols from NORMAL priority.  To
                distinguish between TLS and DTLS versions you
                can use VERS-TLS-ALL and VERS-DTLS-ALL.
-               
+
 Signature      SIGN-RSA-SHA1, SIGN-RSA-SHA224, SIGN-RSA-SHA256,
 algorithms     SIGN-RSA-SHA384, SIGN-RSA-SHA512, SIGN-DSA-SHA1,
                SIGN-DSA-SHA224, SIGN-DSA-SHA256, SIGN-RSA-MD5,
@@ -2949,7 +2949,7 @@ algorithms     SIGN-RSA-SHA384, SIGN-RSA-SHA512, SIGN-DSA-SHA1,
                Shortcut which enables secure GOST algorithms is
                SIGN-GOST-ALL. This option is only considered
                for TLS 1.2 and later.
-               
+
 Groups         GROUP-SECP192R1, GROUP-SECP224R1,
                GROUP-SECP256R1, GROUP-SECP384R1,
                GROUP-SECP521R1, GROUP-X25519, GROUP-X448,
@@ -2964,7 +2964,7 @@ Groups         GROUP-SECP192R1, GROUP-SECP224R1,
                GROUP-EC-ALL are also available, restricting the
                groups to finite fields (DH), GOST curves and
                generic elliptic curves.
-               
+
 Elliptic       CURVE-SECP192R1, CURVE-SECP224R1,
 curves         CURVE-SECP256R1, CURVE-SECP384R1,
 (legacy)       CURVE-SECP521R1, CURVE-X25519, and CURVE-X448.
@@ -2973,7 +2973,7 @@ curves         CURVE-SECP256R1, CURVE-SECP384R1,
                keyword is kept for backwards compatibility
                only, for new applications see the GROUP keyword
                above.
-               
+
 Certificate    Certificate types can be given in a symmetric
 types          fashion (i.e.  the same for both client and
                server) or, as of GnuTLS 3.6.4, in an asymmetric
@@ -2981,7 +2981,7 @@ types          fashion (i.e.  the same for both client and
                the server).  Alternative certificate types must
                be explicitly enabled via flags in
                *note gnutls_init::.
-               
+
                The currently supported types are CTYPE-X509,
                CTYPE-RAWPK which apply both to client and
                server; catch all is CTYPE-ALL. The types
@@ -2990,13 +2990,13 @@ types          fashion (i.e.  the same for both client and
                client or server; catch all is CTYPE-CLI-ALL and
                CTYPE-SRV-ALL. The type 'X509' is aliased to
                'X.509' for legacy reasons.
-               
+
 Generic        The keyword GOST is a shortcut for secure GOST
                algorithms (MACs, ciphers, KXes, groups and
                signatures).  For example the following string
                will enable all TLS 1.2 GOST ciphersuites:
                'NONE:+VERS-TLS1.2:+GOST'.
-               
+
 
 
 Table 6.4: The supported algorithm keywords in priority strings.
@@ -3009,7 +3009,7 @@ The available special keywords are shown in *note Table 6.5:
 tab:prio-special1. and *note Table 6.6: tab:prio-special2.
 
 Keyword                          Description
-                                 
+
 ------------------------------------------------------------------
 %COMPAT                          will enable compatibility
                                  mode.  It might mean that
@@ -3027,7 +3027,7 @@ Keyword                          Description
                                  known to be causing issues
                                  with a commonly used firewall
                                  (see the %DUMBFW option).
-                                 
+
 %DUMBFW                          will add a private extension
                                  with bogus data that make the
                                  client hello exceed 512 bytes.
@@ -3037,7 +3037,7 @@ Keyword                          Description
                                  client hello padding
                                  extension, also enabled with
                                  %COMPAT.
-                                 
+
 %NO_EXTENSIONS                   will prevent the sending of
                                  any TLS extensions in client
                                  side.  Note that TLS 1.2
@@ -3048,25 +3048,25 @@ Keyword                          Description
                                  this option is set no versions
                                  later than TLS1.2 can be
                                  negotiated.
-                                 
+
 %NO_TICKETS                      will prevent the advertizing
                                  of the TLS session ticket
                                  extension.
-                                 
+
 %NO_TICKETS_TLS12                will prevent the advertizing
                                  of the TLS session ticket
                                  extension in TLS 1.2.  This is
                                  implied by the PFS keyword.
-                                 
+
 %NO_SESSION_HASH                 will prevent the advertizing
                                  the TLS extended master secret
                                  (session hash) extension.
-                                 
+
 %SERVER_PRECEDENCE               The ciphersuite will be
                                  selected according to server
                                  priorities and not the
                                  client's.
-                                 
+
 %SSL3_RECORD_VERSION             will use SSL3.0 record version
                                  in client hello.  By default
                                  GnuTLS will set the minimum
@@ -3075,40 +3075,40 @@ Keyword                          Description
                                  (do not confuse that version
                                  with the proposed handshake
                                  version at the client hello).
-                                 
+
 %LATEST_RECORD_VERSION           will use the latest TLS
                                  version record version in
                                  client hello.
-                                 
+
 
 
 Table 6.5: Special priority string keywords.
 
 Keyword                          Description
-                                 
+
 ------------------------------------------------------------------
 %STATELESS_COMPRESSION           ignored; no longer used.
-                                 
+
 %DISABLE_WILDCARDS               will disable matching
                                  wildcards when comparing
                                  hostnames in certificates.
-                                 
+
 %NO_ETM                          will disable the
                                  encrypt-then-mac TLS extension
                                  (RFC7366).  This is implied by
                                  the %COMPAT keyword.
-                                 
+
 %FORCE_ETM                       negotiate CBC ciphersuites
                                  only when both sides of the
                                  connection support
                                  encrypt-then-mac TLS extension
                                  (RFC7366).
-                                 
+
 %DISABLE_SAFE_RENEGOTIATION      will completely disable safe
                                  renegotiation completely.  Do
                                  not use unless you know what
                                  you are doing.
-                                 
+
 %UNSAFE_RENEGOTIATION            will allow handshakes and
                                  re-handshakes without the safe
                                  renegotiation extension.  Note
@@ -3121,7 +3121,7 @@ Keyword                          Description
                                  unless you know what you are
                                  doing and want maximum
                                  compatibility.
-                                 
+
 %PARTIAL_RENEGOTIATION           will allow initial handshakes
                                  to proceed, but not
                                  re-handshakes.  This leaves
@@ -3133,7 +3133,7 @@ Keyword                          Description
                                  the default for clients and
                                  servers, for compatibility
                                  reasons.
-                                 
+
 %SAFE_RENEGOTIATION              will enforce safe
                                  renegotiation.  Clients and
                                  servers will refuse to talk to
@@ -3141,7 +3141,7 @@ Keyword                          Description
                                  this causes interoperability
                                  problems, but is required for
                                  full protection.
-                                 
+
 %FALLBACK_SCSV                   will enable the use of the
                                  fallback signaling cipher
                                  suite value in the client
@@ -3150,44 +3150,44 @@ Keyword                          Description
                                  that try to reconnect with a
                                  downgraded protocol version.
                                  See RFC7507 for details.
-                                 
+
 %DISABLE_TLS13_COMPAT_MODE       will disable TLS 1.3 middlebox
                                  compatibility mode (RFC8446,
                                  Appendix D.4) for
                                  non-compliant middleboxes.
-                                 
+
 %VERIFY_ALLOW_BROKEN             will allow signatures with
                                  known to be broken algorithms
                                  (such as MD5 or SHA1) in
                                  certificate chains.
-                                 
+
 %VERIFY_ALLOW_SIGN_RSA_MD5       will allow RSA-MD5 signatures
                                  in certificate chains.
-                                 
+
 %VERIFY_ALLOW_SIGN_WITH_SHA1     will allow signatures with
                                  SHA1 hash algorithm in
                                  certificate chains.
-                                 
+
 %VERIFY_DISABLE_CRL_CHECKS       will disable CRL or OCSP
                                  checks in the verification of
                                  the certificate chain.
-                                 
+
 %VERIFY_ALLOW_X509_V1_CA_CRT     will allow V1 CAs in chains.
-                                 
+
 %PROFILE_(LOW|LEGACY|MEDIUM|HIGH|ULTRA|FUTURE)require a certificate
                                  verification profile the
                                  corresponds to the specified
                                  security level, see
                                  *note Table 6.7: tab:key-sizes.
                                  for the mappings to values.
-                                 
+
 %PROFILE_(SUITEB128|SUITEB192)   require a certificate
                                  verification profile the
                                  corresponds to SUITEB. Note
                                  that an initial keyword that
                                  enables SUITEB automatically
                                  sets the profile.
-                                 
+
 
 
 Table 6.6: More priority string keywords.
@@ -3239,40 +3239,40 @@ key sizes as well as select parameters for Diffie-Hellman and SRP
 authentication.
 
 SecurityRSA, DH   ECC     Security       Description
-bits    and SRP   key     parameter      
+bits    and SRP   key     parameter
         parameter size    (profile)
         size
 -----------------------------------------------------------------
 <64     <768      <128    'INSECURE'     Considered to be
                                          insecure
-                                         
+
 64      768       128     'VERY WEAK'    Short term protection
                                          against individuals
-                                         
+
 72      1008      160     'WEAK'         Short term protection
                                          against small
                                          organizations
-                                         
+
 80      1024      160     'LOW'          Very short term
                                          protection against
                                          agencies (corresponds
                                          to ENISA legacy
                                          level)
-                                         
+
 96      1776      192     'LEGACY'       Legacy standard level
-                                         
+
 112     2048      224     'MEDIUM'       Medium-term
                                          protection
-                                         
+
 128     3072      256     'HIGH'         Long term protection
                                          (corresponds to ENISA
                                          future level)
-                                         
+
 192     8192      384     'ULTRA'        Even longer term
                                          protection
-                                         
+
 256     15424     512     'FUTURE'       Foreseeable future
-                                         
+
 
 
 Table 6.7: Key sizes and security parameters.
@@ -4360,8 +4360,8 @@ int main(void)
 
         /* If client holds a certificate it can be set using the following:
          *
-         gnutls_certificate_set_x509_key_file (xcred, "cert.pem", "key.pem", 
-         GNUTLS_X509_FMT_PEM); 
+         gnutls_certificate_set_x509_key_file (xcred, "cert.pem", "key.pem",
+         GNUTLS_X509_FMT_PEM);
          */
 
         /* Initialize TLS session */
@@ -4830,7 +4830,7 @@ int main(void)
         char buffer[MAX_BUF + 1];
         gnutls_certificate_credentials_t xcred;
 
-        /* variables used in session resuming 
+        /* variables used in session resuming
          */
         int t;
         gnutls_datum_t sdata;
@@ -5141,7 +5141,7 @@ int main(void)
         CHECK(gnutls_certificate_set_x509_crl_file(x509_cred, CRLFILE,
                                                    GNUTLS_X509_FMT_PEM));
 
-        /* The following code sets the certificate key pair as well as, 
+        /* The following code sets the certificate key pair as well as,
          * an OCSP response which corresponds to it. It is possible
          * to set multiple key-pairs and multiple OCSP status responses
          * (the latter since 3.5.6). See the manual pages of the individual
@@ -5596,7 +5596,7 @@ static int pull_timeout_func(gnutls_transport_ptr_t ptr, unsigned int ms)
                 return ret;
 
         /* only report ok if the next message is from the peer we expect
-         * from 
+         * from
          */
         cli_addr_size = sizeof(cli_addr);
         ret =
@@ -5781,7 +5781,7 @@ int main(void)
 
         gnutls_anon_allocate_client_credentials(&anoncred);
 
-        /* Initialize TLS session 
+        /* Initialize TLS session
          */
         gnutls_init(&session, GNUTLS_CLIENT);
 
@@ -5943,7 +5943,7 @@ int main(void)
         gnutls_session_t session;
         char buffer[MAX_BUF + 1];
         gnutls_certificate_credentials_t xcred;
-        
+
         if (gnutls_check_version("3.1.4") == NULL) {
                 fprintf(stderr, "GnuTLS 3.1.4 or later is required for this example\n");
                 exit(1);
@@ -5964,7 +5964,7 @@ int main(void)
 
         gnutls_certificate_set_retrieve_function2(xcred, cert_callback);
 
-        /* Initialize TLS session 
+        /* Initialize TLS session
          */
         CHECK(gnutls_init(&session, GNUTLS_CLIENT));
 
@@ -6290,7 +6290,7 @@ verify_certificate_chain(const char *hostname,
                                                 &output,
                                                 print_details_func));
 
-        /* if this certificate is not explicitly trusted verify against CAs 
+        /* if this certificate is not explicitly trusted verify against CAs
          */
         if (output != 0) {
                 CHECK(gnutls_x509_trust_list_verify_crt(tlist, cert,
@@ -6687,7 +6687,7 @@ in GnuTLS 3.1.4.
 #include "examples.h"
 
 /* A very basic TLS client, with X.509 authentication and server certificate
- * verification utilizing the GnuTLS 3.1.x API. 
+ * verification utilizing the GnuTLS 3.1.x API.
  * Note that error recovery is minimal for simplicity.
  */
 
@@ -6732,12 +6732,12 @@ int main(void)
 
         /* If client holds a certificate it can be set using the following:
          *
-         gnutls_certificate_set_x509_key_file (xcred, 
-         "cert.pem", "key.pem", 
-         GNUTLS_X509_FMT_PEM); 
+         gnutls_certificate_set_x509_key_file (xcred,
+         "cert.pem", "key.pem",
+         GNUTLS_X509_FMT_PEM);
          */
 
-        /* Initialize TLS session 
+        /* Initialize TLS session
          */
         CHECK(gnutls_init(&session, GNUTLS_CLIENT));
 
@@ -6750,7 +6750,7 @@ int main(void)
         CHECK(gnutls_set_default_priority(session));
 #if 0
 	/* if more fine-graned control is required */
-        ret = gnutls_priority_set_direct(session, 
+        ret = gnutls_priority_set_direct(session,
                                          "NORMAL", &err);
         if (ret < 0) {
                 if (ret == GNUTLS_E_INVALID_REQUEST) {
@@ -7181,4 +7181,3 @@ int main(void)
         return 0;
 
 }
-

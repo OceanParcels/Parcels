@@ -207,7 +207,7 @@ When the execution of your program reaches a point that can hold a
 breakpoint, the \f(CW\*(C`DB::DB()\*(C'\fR subroutine is called if any of the variables
 \&\f(CW$DB::trace\fR, \f(CW$DB::single\fR, or \f(CW$DB::signal\fR is true.  These variables
 are not \f(CW\*(C`local\*(C'\fRizable.  This feature is disabled when executing
-inside \f(CW\*(C`DB::DB()\*(C'\fR, including functions called from it 
+inside \f(CW\*(C`DB::DB()\*(C'\fR, including functions called from it
 unless \f(CW\*(C`$^D & (1<<30)\*(C'\fR is true.
 .IP "\(bu" 4
 When execution of the program reaches a subroutine call, a call to
@@ -338,11 +338,11 @@ formatted info about caller frames.  The last two functions may be
 convenient as arguments to \f(CW\*(C`<\*(C'\fR, \f(CW\*(C`<<\*(C'\fR commands.
 .PP
 Note that any variables and functions that are not documented in
-this manpages (or in perldebug) are considered for internal   
+this manpages (or in perldebug) are considered for internal
 use only, and as such are subject to change without notice.
 .SH "Frame Listing Output Examples"
 .IX Header "Frame Listing Output Examples"
-The \f(CW\*(C`frame\*(C'\fR option can be used to control the output of frame 
+The \f(CW\*(C`frame\*(C'\fR option can be used to control the output of frame
 information.  For example, contrast this expression trace:
 .PP
 .Vb 2
@@ -559,13 +559,13 @@ The debugging output at compile time looks like this:
 \&    42: EXACT <k>(44)
 \&    44: EOL(45)
 \&    45: END(0)
-\&  anchored \*(Aqde\*(Aq at 1 floating \*(Aqgh\*(Aq at 3..2147483647 (checking floating) 
-\&        stclass \*(AqANYOF[bc]\*(Aq minlen 7 
+\&  anchored \*(Aqde\*(Aq at 1 floating \*(Aqgh\*(Aq at 3..2147483647 (checking floating)
+\&        stclass \*(AqANYOF[bc]\*(Aq minlen 7
 \&  Offsets: [45]
 \&        1[4] 0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 5[1]
 \&        0[0] 12[1] 0[0] 6[1] 0[0] 7[1] 0[0] 9[1] 8[1] 0[0] 10[1] 0[0]
 \&        11[1] 0[0] 12[0] 12[0] 13[1] 0[0] 14[4] 0[0] 0[0] 0[0] 0[0]
-\&        0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 18[1] 0[0] 19[1] 20[0]  
+\&        0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 18[1] 0[0] 19[1] 20[0]
 \&  Omitting $\` $& $\*(Aq support.
 .Ve
 .PP
@@ -578,18 +578,18 @@ label \fIid\fR of the first node that does a match.
 The
 .PP
 .Vb 2
-\&  anchored \*(Aqde\*(Aq at 1 floating \*(Aqgh\*(Aq at 3..2147483647 (checking floating) 
+\&  anchored \*(Aqde\*(Aq at 1 floating \*(Aqgh\*(Aq at 3..2147483647 (checking floating)
 \&        stclass \*(AqANYOF[bc]\*(Aq minlen 7
 .Ve
 .PP
 line (split into two lines above) contains optimizer
-information.  In the example shown, the optimizer found that the match 
+information.  In the example shown, the optimizer found that the match
 should contain a substring \f(CW\*(C`de\*(C'\fR at offset 1, plus substring \f(CW\*(C`gh\*(C'\fR
 at some offset between 3 and infinity.  Moreover, when checking for
 these substrings (to abandon impossible matches quickly), Perl will check
 for the substring \f(CW\*(C`gh\*(C'\fR before checking for the substring \f(CW\*(C`de\*(C'\fR.  The
 optimizer may also use the knowledge that the match starts (at the
-\&\f(CW\*(C`first\*(C'\fR \fIid\fR) with a character class, and no string 
+\&\f(CW\*(C`first\*(C'\fR \fIid\fR) with a character class, and no string
 shorter than 7 characters can possibly match.
 .PP
 The fields of interest which may appear in this line are
@@ -981,11 +981,11 @@ Entries are numbered starting with 1, so entry #1 here is \f(CW\*(C`1[4]\*(C'\fR
 entry #12 is \f(CW\*(C`5[1]\*(C'\fR.  \f(CW\*(C`1[4]\*(C'\fR indicates that the node labeled \f(CW\*(C`1:\*(C'\fR
 (the \f(CW\*(C`1: ANYOF[bc]\*(C'\fR) begins at character position 1 in the
 pre-compiled form of the regex, and has a length of 4 characters.
-\&\f(CW\*(C`5[1]\*(C'\fR in position 12 
+\&\f(CW\*(C`5[1]\*(C'\fR in position 12
 indicates that the node labeled \f(CW\*(C`12:\*(C'\fR
 (the \f(CW\*(C`12: EXACT <d>\*(C'\fR) begins at character position 5 in the
 pre-compiled form of the regex, and has a length of 1 character.
-\&\f(CW\*(C`12[1]\*(C'\fR in position 14 
+\&\f(CW\*(C`12[1]\*(C'\fR in position 14
 indicates that the node labeled \f(CW\*(C`14:\*(C'\fR
 (the \f(CW\*(C`14: CURLYX[0] {1,32767}\*(C'\fR) begins at character position 12 in the
 pre-compiled form of the regex, and has a length of 1 character\-\-\-that

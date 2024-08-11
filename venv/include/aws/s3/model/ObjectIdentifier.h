@@ -44,7 +44,7 @@ namespace Model
      * object keys containing special characters (such as carriage returns) when using
      * XML requests. For more information, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-xml-related-constraints">
-     * XML related object key constraints</a>.</p> 
+     * XML related object key constraints</a>.</p>
      */
     inline const Aws::String& GetKey() const{ return m_key; }
     inline bool KeyHasBeenSet() const { return m_keyHasBeenSet; }
@@ -58,8 +58,8 @@ namespace Model
 
     ///@{
     /**
-     * <p>Version ID for the specific version of the object to delete.</p> 
-     * <p>This functionality is not supported for directory buckets.</p> 
+     * <p>Version ID for the specific version of the object to delete.</p>
+     * <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetVersionId() const{ return m_versionId; }
     inline bool VersionIdHasBeenSet() const { return m_versionIdHasBeenSet; }

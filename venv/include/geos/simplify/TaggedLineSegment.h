@@ -80,4 +80,3 @@ private:
 
 } // namespace geos::simplify
 } // namespace geos
-

@@ -49,7 +49,7 @@ namespace Model
      * of "default" when creating the configuration recorder.</p>  <p>You cannot
      * change the name of the configuration recorder after it has been created. To
      * change the configuration recorder name, you must delete it and create a new
-     * configuration recorder with a new name. </p> 
+     * configuration recorder with a new name. </p>
      */
     inline const Aws::String& GetName() const{ return m_name; }
     inline bool NameHasBeenSet() const { return m_nameHasBeenSet; }
@@ -79,7 +79,7 @@ namespace Model
      * information about IAM roles for Config, see <a
      * href="https://docs.aws.amazon.com/config/latest/developerguide/security-iam.html">
      * <b>Identity and Access Management for Config</b> </a> in the <i>Config Developer
-     * Guide</i>. </p> 
+     * Guide</i>. </p>
      */
     inline const Aws::String& GetRoleARN() const{ return m_roleARN; }
     inline bool RoleARNHasBeenSet() const { return m_roleARNHasBeenSet; }
@@ -106,7 +106,7 @@ namespace Model
      * Compute Cloud (Amazon EC2) Spot Instances, Amazon EMR jobs, and Auto Scaling. If
      * you want to avoid the increased activity from running ephemeral workloads, you
      * can run these types of workloads in a separate account with Config turned off to
-     * avoid increased configuration recording and rule evaluations.</p> 
+     * avoid increased configuration recording and rule evaluations.</p>
      */
     inline const RecordingGroup& GetRecordingGroup() const{ return m_recordingGroup; }
     inline bool RecordingGroupHasBeenSet() const { return m_recordingGroupHasBeenSet; }
@@ -124,7 +124,7 @@ namespace Model
      * configuration changes continuously whenever a change occurs.</p> </li> <li>
      * <p>Daily recording allows you to receive a configuration item (CI) representing
      * the most recent state of your resources over the last 24-hour period, only if
-     * it’s different from the previous CI recorded. </p> </li> </ul> 
+     * it’s different from the previous CI recorded. </p> </li> </ul>
      * <p>Firewall Manager depends on continuous recording to monitor your resources.
      * If you are using Firewall Manager, it is recommended that you set the recording
      * frequency to Continuous.</p>  <p>You can also override the recording

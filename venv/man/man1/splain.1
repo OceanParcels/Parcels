@@ -170,7 +170,7 @@ Using diagnostics to get stack traces from a misbehaving script:
 .el .SS "The \f(CWdiagnostics\fP Pragma"
 .IX Subsection "The diagnostics Pragma"
 This module extends the terse diagnostics normally emitted by both the
-perl compiler and the perl interpreter (from running perl with a \-w 
+perl compiler and the perl interpreter (from running perl with a \-w
 switch or \f(CW\*(C`use warnings\*(C'\fR), augmenting them with the more
 explicative and endearing descriptions found in perldiag.  Like the
 other pragmata, it affects the compilation phase of your program rather
@@ -182,7 +182,7 @@ To use in your program as a pragma, merely invoke
 \&    use diagnostics;
 .Ve
 .PP
-at the start (or near the start) of your program.  (Note 
+at the start (or near the start) of your program.  (Note
 that this \fIdoes\fR enable perl's \fB\-w\fR flag.)  Your whole
 compilation will then be subject(ed :\-) to the enhanced diagnostics.
 These still go out \fB\s-1STDERR\s0\fR.
@@ -190,7 +190,7 @@ These still go out \fB\s-1STDERR\s0\fR.
 Due to the interaction between runtime and compiletime issues,
 and because it's probably not a very good idea anyway,
 you may not use \f(CW\*(C`no diagnostics\*(C'\fR to turn them off at compiletime.
-However, you may control their behaviour at runtime using the 
+However, you may control their behaviour at runtime using the
 \&\fBdisable()\fR and \fBenable()\fR methods to turn them off and on respectively.
 .PP
 The \fB\-verbose\fR flag first prints out the perldiag introduction before
@@ -222,7 +222,7 @@ more than a link to the (executable) \fIdiagnostics.pm\fR module, as well as
 a link to the \fIdiagnostics.pod\fR documentation.  The \fB\-v\fR flag is like
 the \f(CW\*(C`use diagnostics \-verbose\*(C'\fR directive.
 The \fB\-p\fR flag is like the
-\&\f(CW$diagnostics::PRETTY\fR variable.  Since you're post-processing with 
+\&\f(CW$diagnostics::PRETTY\fR variable.  Since you're post-processing with
 \&\fIsplain\fR, there's no sense in being able to \fBenable()\fR or \fBdisable()\fR processing.
 .PP
 Output from \fIsplain\fR is directed to \fB\s-1STDOUT\s0\fR, unlike the pragma.
@@ -250,7 +250,7 @@ afterwards, do this:
 \&    ./splain < test.out
 .Ve
 .PP
-Note that this is not in general possible in shells of more dubious heritage, 
+Note that this is not in general possible in shells of more dubious heritage,
 as the theoretical
 .PP
 .Vb 2
@@ -274,7 +274,7 @@ Make sure you do the \f(CW\*(C`use\*(C'\fR first, or you won't be able to get
 at the \fBenable()\fR or \fBdisable()\fR methods.
 .PP
 .Vb 4
-\&    use diagnostics; # checks entire compilation phase 
+\&    use diagnostics; # checks entire compilation phase
 \&        print "\entime for 1st bogus diags: SQUAWKINGS\en";
 \&        print BOGUS1 \*(Aqnada\*(Aq;
 \&        print "done with 1st bogus\en";
@@ -301,7 +301,7 @@ runtime.  Otherwise, they may be embedded in the file itself when the
 splain package is built.   See the \fIMakefile\fR for details.
 .PP
 If an extant \f(CW$SIG\fR{_\|_WARN_\|_} handler is discovered, it will continue
-to be honored, but only after the \fBdiagnostics::splainthis()\fR function 
+to be honored, but only after the \fBdiagnostics::splainthis()\fR function
 (the module's \f(CW$SIG\fR{_\|_WARN_\|_} interceptor) has had its way with your
 warnings.
 .PP

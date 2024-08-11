@@ -16,11 +16,11 @@
 /*-----------------------------------------------------------------------------
  * File:    bitvect.h
  * Purpose: header file for bit-vector API
- * Dependencies: 
+ * Dependencies:
  * Invokes:
  * Contents:
- * Structure definitions: 
- * Constant definitions: 
+ * Structure definitions:
+ * Constant definitions:
  *---------------------------------------------------------------------------*/
 
 /* avoid re-inclusion */
@@ -385,4 +385,3 @@ HDFLIBAPI int32 bv_find(bv_ptr b, int32 last_find, bv_bool value);
 #endif                          /* c_plusplus || __cplusplus */
 
 #endif /* __BITVECT_H */
-

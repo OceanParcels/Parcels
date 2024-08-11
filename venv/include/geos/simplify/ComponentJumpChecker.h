@@ -113,8 +113,3 @@ public:
 
 } // namespace geos::simplify
 } // namespace geos
-
-
-
-
-

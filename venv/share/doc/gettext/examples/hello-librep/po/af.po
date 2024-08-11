@@ -1,4 +1,4 @@
-# Afrikaans translation for Silky 
+# Afrikaans translation for Silky
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # This file is distributed under the same license as the silky package.
 # Hanlie Pretorius <hpretorius@pnp.co.za>, 2004.

@@ -385,4 +385,3 @@ operator<<(std::ostream &os, const orgQhull::QhullLinkedList<T> &qs)
 }//operator<<
 
 #endif // QHULLLINKEDLIST_H
-

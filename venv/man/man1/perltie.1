@@ -504,7 +504,7 @@ be larger than is visible to a perl programmer inspecting the size of the
 array. Many tied array implementations will have no reason to implement it.
 .Sp
 .Vb 5
-\&    sub EXTEND {   
+\&    sub EXTEND {
 \&      my $self  = shift;
 \&      my $count = shift;
 \&      # nothing to see here, move along.
@@ -565,7 +565,7 @@ object \fIthis\fR.  For example:
 Append elements of \fI\s-1LIST\s0\fR to the array.  For example:
 .Sp
 .Vb 7
-\&    sub PUSH {  
+\&    sub PUSH {
 \&      my $self = shift;
 \&      my @list = @_;
 \&      my $last = $self\->FETCHSIZE();
@@ -618,7 +618,7 @@ up to make room.  For example:
 .IX Item "SPLICE this, offset, length, LIST"
 Perform the equivalent of \f(CW\*(C`splice\*(C'\fR on the array.
 .Sp
-\&\fIoffset\fR is optional and defaults to zero, negative values count back 
+\&\fIoffset\fR is optional and defaults to zero, negative values count back
 from the end of the array.
 .Sp
 \&\fIlength\fR is optional and defaults to rest of the array.
@@ -634,7 +634,7 @@ In our example, we'll use a little shortcut if there is a \fI\s-1LIST\s0\fR:
 \&      my $self   = shift;
 \&      my $offset = shift || 0;
 \&      my $length = shift || $self\->FETCHSIZE() \- $offset;
-\&      my @list   = (); 
+\&      my @list   = ();
 \&      if ( @_ ) {
 \&        tie @list, _\|_PACKAGE_\|_, $self\->{ELEMSIZE};
 \&        @list   = @_;
@@ -662,7 +662,7 @@ the constructor.  \s-1FETCH\s0 and \s-1STORE\s0 access the key and value pairs. 
 reports whether a key is present in the hash, and \s-1DELETE\s0 deletes one.
 \&\s-1CLEAR\s0 empties the hash by deleting all the key and value pairs.  \s-1FIRSTKEY\s0
 and \s-1NEXTKEY\s0 implement the \fBkeys()\fR and \fBeach()\fR functions to iterate over all
-the keys. \s-1SCALAR\s0 is triggered when the tied hash is evaluated in scalar 
+the keys. \s-1SCALAR\s0 is triggered when the tied hash is evaluated in scalar
 context, and in 5.28 onwards, by \f(CW\*(C`keys\*(C'\fR in boolean context. \s-1UNTIE\s0 is
 called when \f(CW\*(C`untie\*(C'\fR happens, and \s-1DESTROY\s0 is called when the tied variable
 is garbage collected.
@@ -983,10 +983,10 @@ the hash is inside an iteration. If this isn't the case, \s-1FIRSTKEY\s0 is
 called, and the result will be a false value if \s-1FIRSTKEY\s0 returns the empty
 list, true otherwise.
 .Sp
-However, you should \fBnot\fR blindly rely on perl always doing the right 
-thing. Particularly, perl will mistakenly return true when you clear the 
-hash by repeatedly calling \s-1DELETE\s0 until it is empty. You are therefore 
-advised to supply your own \s-1SCALAR\s0 method when you want to be absolutely 
+However, you should \fBnot\fR blindly rely on perl always doing the right
+thing. Particularly, perl will mistakenly return true when you clear the
+hash by repeatedly calling \s-1DELETE\s0 until it is empty. You are therefore
+advised to supply your own \s-1SCALAR\s0 method when you want to be absolutely
 sure that your hash behaves nicely in scalar context.
 .Sp
 In our example we can just call \f(CW\*(C`scalar\*(C'\fR on the underlying hash
@@ -1046,14 +1046,14 @@ OPEN, EOF, FILENO, SEEK, TELL\s0 \- if the corresponding perl operators are
 used on the handle.
 .PP
 When \s-1STDERR\s0 is tied, its \s-1PRINT\s0 method will be called to issue warnings
-and error messages.  This feature is temporarily disabled during the call, 
+and error messages.  This feature is temporarily disabled during the call,
 which means you can use \f(CW\*(C`warn()\*(C'\fR inside \s-1PRINT\s0 without starting a recursive
 loop.  And just like \f(CW\*(C`_\|_WARN_\|_\*(C'\fR and \f(CW\*(C`_\|_DIE_\|_\*(C'\fR handlers, \s-1STDERR\s0's \s-1PRINT\s0
-method may be called to report parser errors, so the caveats mentioned under 
+method may be called to report parser errors, so the caveats mentioned under
 \&\*(L"%SIG\*(R" in perlvar apply.
 .PP
-All of this is especially useful when perl is embedded in some other 
-program, where output to \s-1STDOUT\s0 and \s-1STDERR\s0 may have to be redirected 
+All of this is especially useful when perl is embedded in some other
+program, where output to \s-1STDOUT\s0 and \s-1STDERR\s0 may have to be redirected
 in some special way.  See nvi and the Apache module for examples.
 .PP
 When tying a handle, the first argument to \f(CW\*(C`tie\*(C'\fR should begin with an

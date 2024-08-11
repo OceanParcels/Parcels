@@ -1359,4 +1359,3 @@ XML_DEPRECATED XMLPUBFUN int
 #endif /* __XML_TREE_H__ */
 
 #endif /* XML_TREE_INTERNALS */
-

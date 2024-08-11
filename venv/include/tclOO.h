@@ -53,7 +53,7 @@ typedef struct Tcl_Class_ *Tcl_Class;
 typedef struct Tcl_Method_ *Tcl_Method;
 typedef struct Tcl_Object_ *Tcl_Object;
 typedef struct Tcl_ObjectContext_ *Tcl_ObjectContext;
-
+
 /*
  * Public datatypes for callbacks and structures used in the TIP#257 (OO)
  * implementation. These are used to implement custom types of method calls
@@ -68,7 +68,7 @@ typedef int (Tcl_CloneProc)(Tcl_Interp *interp, void *oldClientData,
 typedef void (Tcl_ObjectMetadataDeleteProc)(void *clientData);
 typedef int (Tcl_ObjectMapMethodNameProc)(Tcl_Interp *interp,
 	Tcl_Object object, Tcl_Class *startClsPtr, Tcl_Obj *methodNameObj);
-
+
 /*
  * The type of a method implementation. This describes how to call the method
  * implementation, how to delete it (when the object or class is deleted) and
@@ -99,7 +99,7 @@ typedef struct {
  */
 
 #define TCL_OO_METHOD_VERSION_CURRENT 1
-
+
 /*
  * The type of some object (or class) metadata. This describes how to delete
  * the metadata (when the object or class is deleted) and how to create a
@@ -126,7 +126,7 @@ typedef struct {
  */
 
 #define TCL_OO_METADATA_VERSION_CURRENT 1
-
+
 /*
  * Include all the public API, generated from tclOO.decls.
  */
@@ -137,7 +137,7 @@ typedef struct {
 }
 #endif
 #endif
-
+
 /*
  * Local Variables:
  * mode: c

@@ -47,7 +47,7 @@ public:
    * @brief Constructor that will create a new socket transport using the host
    * and port.
    */
-  THttpClient(std::string host, int port, 
+  THttpClient(std::string host, int port,
               std::string path = "",
               std::shared_ptr<TConfiguration> config = nullptr);
 

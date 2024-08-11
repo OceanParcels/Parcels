@@ -269,7 +269,7 @@ namespace Model
      * omitted since the delivery time is instantaneous as the CI is available right
      * away. For more information on daily recording and continuous recording, see <a
      * href="https://docs.aws.amazon.com/config/latest/developerguide/select-resources.html#select-resources-recording-frequency">Recording
-     * Frequency</a> in the <i>Config Developer Guide</i>.</p> 
+     * Frequency</a> in the <i>Config Developer Guide</i>.</p>
      */
     inline const Aws::Utils::DateTime& GetConfigurationItemDeliveryTime() const{ return m_configurationItemDeliveryTime; }
     inline bool ConfigurationItemDeliveryTimeHasBeenSet() const { return m_configurationItemDeliveryTimeHasBeenSet; }

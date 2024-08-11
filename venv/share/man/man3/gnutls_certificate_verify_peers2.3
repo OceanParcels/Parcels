@@ -14,7 +14,7 @@ is the output of the verification
 .SH "DESCRIPTION"
 This function will verify the peer's certificate and store
 the status in the  \fIstatus\fP variable as a bitwise OR of gnutls_certificate_status_t
-values or zero if the certificate is trusted. Note that value in  \fIstatus\fP is set only when the return value of this function is success (i.e, failure 
+values or zero if the certificate is trusted. Note that value in  \fIstatus\fP is set only when the return value of this function is success (i.e, failure
 to trust a certificate does not imply a negative return value).
 The default verification flags used by this function can be overridden
 using \fBgnutls_certificate_set_verify_flags()\fP.

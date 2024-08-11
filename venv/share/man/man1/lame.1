@@ -26,7 +26,7 @@ LAME will perform several
 .I fseek()'s
 on the input file looking for WAV and AIFF headers.
 .br
-Might not be available on your release. 
+Might not be available on your release.
 .TP
 .B \-x
 Swap bytes in the input file (or output file when using
@@ -87,14 +87,14 @@ Assume the input file is a MPEG Layer I (ie MP1) file.
 .br
 If the filename ends in ".mp1" LAME will assume it is a MPEG Layer I file.
 For stdin or Layer I files which do not end in .mp1 you need to use
-this switch. 
+this switch.
 .TP
 .B \-\-mp2input
 Assume the input file is a MPEG Layer II (ie MP2) file.
 .br
 If the filename ends in ".mp2" LAME will assume it is a MPEG Layer II file.
 For stdin or Layer II files which do not end in .mp2 you need to use
-this switch. 
+this switch.
 .TP
 .B \-\-mp3input
 Assume the input file is a MP3 file.
@@ -104,7 +104,7 @@ As an example,
 it can be useful for streaming through an IceCast server.
 .br
 If the filename ends in ".mp3" LAME will assume it is an MP3.
-For stdin or MP3 files which do not end in .mp3 you need to use this switch. 
+For stdin or MP3 files which do not end in .mp3 you need to use this switch.
 .TP
 .BI \-\-nogap " file1 file2 ..."
 gapless encoding for a set of contiguous files
@@ -123,7 +123,7 @@ Operational options:
 .I mode
 = s, j, f, d, m, l, r
 
-Joint-stereo is the default mode for stereo files. 
+Joint-stereo is the default mode for stereo files.
 
 .B (s)imple stereo (Forced LR)
 .br
@@ -138,7 +138,7 @@ less bits because of a lower complexity.
 
 .B (j)oint stereo
 .br
-In this mode, 
+In this mode,
 the encoder can use (on a frame by frame basis) either L/R stereo or mid/side stereo.
 In mid/side stereo,
 the mid (L+R) and side (L-R) channels are encoded,
@@ -151,7 +151,7 @@ Too much switching between mid/side and regular stereo can also sound bad.
 To determine when to switch to mid/side stereo,
 LAME uses a much more sophisticated algorithm than the one described in the ISO documentation.
 
-.B (f)orced MS stereo 
+.B (f)orced MS stereo
 .br
 Forces all frames to be encoded with mid/side stereo. It should be used only if you are sure that every frame of the input file has very little stereo separation.
 
@@ -191,7 +191,7 @@ the right channel will be encoded only.
 Mix the stereo input file to mono and encode as mono.
 .br
 The downmix is calculated as the sum of the left and right channel,
-attenuated by 6 dB. 
+attenuated by 6 dB.
 
 This option is only needed in the case of raw PCM stereo input
 (because LAME cannot determine the number of channels in the input file).
@@ -202,7 +202,7 @@ use
 For WAV and AIFF input files,
 using
 .B \-m m
-will always produce a mono .mp3 file from both mono and stereo input. 
+will always produce a mono .mp3 file from both mono and stereo input.
 .TP
 .B \-\-freeformat
 Produces a free format bitstream.
@@ -281,7 +281,7 @@ Scales input (every channel, only left channel or only right channel) by
 .I n.
 This just multiplies the PCM data (after it has been converted to floating
 point) by
-.I n. 
+.I n.
 
 .I n
 > 1: increase volume
@@ -327,8 +327,8 @@ See also:
 Compute ReplayGain more accurately and find the peak sample.
 
 This computes "Radio" ReplayGain on the decoded data stream,
-finds the peak sample by decoding on the fly the encoded data stream and stores it in the file. 
- 
+finds the peak sample by decoding on the fly the encoded data stream and stores it in the file.
+
 The ReplayGain analysis does
 .I not
 affect the content of a compressed data stream itself,
@@ -337,7 +337,7 @@ Information on the purpose of ReplayGain and the algorithms used is
 available from
 .B http://www.replaygain.org/.
 
- 
+
 By default, LAME performs ReplayGain analysis on the input data
 (after the user\(hyspecified volume scaling).
 This behavior might give slightly inaccurate results
@@ -372,21 +372,21 @@ to prevent a negative effect called 'clipping' that introduces distortion
 into the sound.
 .RE
 .RS 7
- 
+
 Only the "RadioGain" ReplayGain value is computed,
 it is stored in the LAME tag.
 The analysis is performed with the reference
 volume equal to 89dB.
 Note: the reference volume has been changed from 83dB on transition from
 version 3.95 to 3.95.1.
- 
+
 This option is not usable if the MP3 decoder was
 .B explicitly
 disabled in the build of LAME.
 (Note: if LAME is compiled without the MP3 decoder,
 ReplayGain analysis is performed on the input data after user-specified
 volume scaling).
- 
+
 See also:
 .B \-\-replaygain-fast, \-\-noreplaygain \-\-clipdetect
 .RE
@@ -406,7 +406,7 @@ Enable
 .B \-\-replaygain-accurate
 and print a message whether clipping occurs and how far in dB the waveform
 is from full scale.
-  
+
 This option is not usable if the MP3 decoder was
 .B explicitly
 disabled in the build of LAME.
@@ -438,14 +438,14 @@ disabling mmx optimizations might solve your problem.
 Verbosity:
 .TP
 .BI \-\-disptime " n"
-Set the delay in seconds between two display updates. 
+Set the delay in seconds between two display updates.
 .TP
 .B \-\-nohist
 By default,
 LAME will display a bitrate histogram while producing VBR mp3 files.
 This will disable that feature.
 .br
-Histogram display might not be available on your release. 
+Histogram display might not be available on your release.
 .TP
 .B -S
 .PD 0
@@ -512,7 +512,7 @@ This level uses a psymodel but does not calculate quantisation noise when encodi
 
 .TP
 .B -h
-Alias of 
+Alias of
 .B -q 2
 .TP
 .B -f
@@ -540,7 +540,7 @@ For MPEG-2.5 (sampling frequencies of 8, 11.025 and 12 kHz)
 = 8, 16, 24, 32, 40, 48, 56, 64
 
 Default is 128 for MPEG1 and 64 for MPEG2 and 32 for MPEG2.5
- (64, 32 and 16 respectively in case of mono). 
+ (64, 32 and 16 respectively in case of mono).
 .TP
 .BI \-\-cbr
 enforce use of constant bitrate. Used to disable VBR or ABR encoding even if their settings
@@ -578,7 +578,7 @@ because of the bit reservoir,
 can actually have frames which use as many bits as a 320 kbps frame.
 VBR modes minimize the use of the bit reservoir,
 and thus need to allow 320 kbps frames to get the same flexibility
-as CBR streams. 
+as CBR streams.
 
 .PP
 VBR (variable bitrate) options:
@@ -601,7 +601,7 @@ Invokes the newest VBR algorithm.
 During the development of version 3.90,
 considerable tuning was done on this algorithm,
 and it is now considered to be on par with the original
-.B \-\-vbr-old. 
+.B \-\-vbr-old.
 It has the added advantage of being very fast (over twice as fast as
 .B \-\-vbr-old
 ). This is the default since 3.98.
@@ -638,7 +638,7 @@ For MPEG-2.5 (sampling frequencies of 8, 11.025 and 12 kHz)
 Specifies the minimum bitrate to be used.
 However,
 in order to avoid wasted space,
-the smallest frame size available will be used during silences. 
+the smallest frame size available will be used during silences.
 .TP
 .BI -B " bitrate"
 For MPEG-1 (sampling frequencies of 32, 44.1 and 48 kHz)
@@ -659,7 +659,7 @@ For MPEG-2.5 (sampling frequencies of 8, 11.025 and 12 kHz)
 Specifies the maximum allowed bitrate.
 
 Note: If you own an mp3 hardware player build upon a MAS 3503 chip,
-you must set maximum bitrate to no more than 224 kpbs. 
+you must set maximum bitrate to no more than 224 kpbs.
 .TP
 .B -F
 Strictly enforce the
@@ -672,7 +672,7 @@ bitrate mp3.
 Without this option,
 the minimum bitrate will be ignored for passages of analog silence,
 i.e. when the music level is below the absolute threshold of
-human hearing (ATH). 
+human hearing (ATH).
 
 .PP
 Experimental options:
@@ -683,7 +683,7 @@ Experimental options:
 <= 7
 
 When LAME searches for a "good" quantization,
-it has to compare the actual one with the best one found so far. 
+it has to compare the actual one with the best one found so far.
 The comparison says which one is better,
 the best so far or the actual.
 The
@@ -692,7 +692,7 @@ parameter selects between different approaches to make this decision,
 .B -X0
 being the default mode:
 
-.B -X0 
+.B -X0
 .br
 The criteria are (in order of importance):
 .br
@@ -726,11 +726,11 @@ Not yet documented.
 .br
 The criteria are (in order of importance):
 .br
-* the sum of noise over the thresholds is lower 
+* the sum of noise over the thresholds is lower
 .br
 * the total sum of noise is lower
 
-.B -X6 
+.B -X6
 .br
 The criteria are (in order of importance):
 .br
@@ -740,7 +740,7 @@ The criteria are (in order of importance):
 .br
 * the total sum of noise is lower
 
-.B -X7 
+.B -X7
 .br
 The criteria are:
 .br
@@ -748,7 +748,7 @@ The criteria are:
 .br
 or
 .br
-* the sum of noise over the thresholds is lower 
+* the sum of noise over the thresholds is lower
 .TP
 .B -Y
 lets LAME ignore noise in sfb21, like in CBR
@@ -776,13 +776,13 @@ although most decoders ignore this flag.
 A better solution would be to apply the de-emphasis with a standalone
 utility before encoding,
 and then encode without
-.B -e. 
+.B -e.
 .TP
 .B -c
 Mark the encoded file as being copyrighted.
 .TP
 .B -o
-Mark the encoded file as being a copy. 
+Mark the encoded file as being a copy.
 .TP
 .B -p
 Turn on CRC error protection.
@@ -792,12 +792,12 @@ allowing to detect transmission errors that could occur on the
 MP3 stream.
 However,
 it takes 16 bits per frame that would otherwise be used for encoding,
-and then will slightly reduce the sound quality. 
+and then will slightly reduce the sound quality.
 .TP
 .B \-\-nores
 Disable the bit reservoir.
 Each frame will then become independent from previous ones,
-but the quality will be lower. 
+but the quality will be lower.
 .TP
 .B \-\-strictly-enforce-ISO
 With this option,
@@ -812,15 +812,15 @@ Filter options:
 .TP
 .BI \-\-lowpass " freq"
 Set a lowpass filtering frequency in kHz.
-Frequencies above the specified one will be cutoff. 
+Frequencies above the specified one will be cutoff.
 .TP
 .BI \-\-lowpass-width " freq"
 Set the width of the lowpass filter.
-The default value is 15% of the lowpass frequency. 
+The default value is 15% of the lowpass frequency.
 .TP
 .BI \-\-highpass " freq"
 Set an highpass filtering frequency in kHz.
-Frequencies below the specified one will be cutoff. 
+Frequencies below the specified one will be cutoff.
 .TP
 .BI \-\-highpass-width " freq"
 Set the width of the highpass filter in kHz.

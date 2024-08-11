@@ -57,10 +57,10 @@ hwlocality_levels \- Object levels, depths and types
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
-Be sure to see the figure in \fBTerms and Definitions\fP that shows a complete topology tree, including depths, child/sibling/cousin relationships, and an example of an asymmetric topology where one package has fewer caches than its peers\&. 
+.PP
+Be sure to see the figure in \fBTerms and Definitions\fP that shows a complete topology tree, including depths, child/sibling/cousin relationships, and an example of an asymmetric topology where one package has fewer caches than its peers\&.
 .SH "Enumeration Type Documentation"
-.PP 
+.PP
 .SS "enum \fBhwloc_get_type_depth_e\fP"
 
 .PP
@@ -68,30 +68,30 @@ Be sure to see the figure in \fBTerms and Definitions\fP that shows a complete t
 .in +1c
 .TP
 \fB\fIHWLOC_TYPE_DEPTH_UNKNOWN \fP\fP
-No object of given type exists in the topology\&. 
+No object of given type exists in the topology\&.
 .TP
 \fB\fIHWLOC_TYPE_DEPTH_MULTIPLE \fP\fP
-Objects of given type exist at different depth in the topology (only for Groups)\&. 
+Objects of given type exist at different depth in the topology (only for Groups)\&.
 .TP
 \fB\fIHWLOC_TYPE_DEPTH_NUMANODE \fP\fP
-Virtual depth for NUMA nodes\&. 
+Virtual depth for NUMA nodes\&.
 .TP
 \fB\fIHWLOC_TYPE_DEPTH_BRIDGE \fP\fP
-Virtual depth for bridge object level\&. 
+Virtual depth for bridge object level\&.
 .TP
 \fB\fIHWLOC_TYPE_DEPTH_PCI_DEVICE \fP\fP
-Virtual depth for PCI device object level\&. 
+Virtual depth for PCI device object level\&.
 .TP
 \fB\fIHWLOC_TYPE_DEPTH_OS_DEVICE \fP\fP
-Virtual depth for software device object level\&. 
+Virtual depth for software device object level\&.
 .TP
 \fB\fIHWLOC_TYPE_DEPTH_MISC \fP\fP
-Virtual depth for Misc object\&. 
+Virtual depth for Misc object\&.
 .TP
 \fB\fIHWLOC_TYPE_DEPTH_MEMCACHE \fP\fP
-Virtual depth for MemCache object\&. 
+Virtual depth for MemCache object\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "\fBhwloc_obj_type_t\fP hwloc_get_depth_type (\fBhwloc_topology_t\fP topology, int depth)"
 
 .PP
@@ -99,9 +99,9 @@ Returns the type of objects at depth \fCdepth\fP\&. \fCdepth\fP should between 0
 .PP
 \fBReturns\fP
 .RS 4
-The type of objects at depth \fCdepth\fP\&. 
+The type of objects at depth \fCdepth\fP\&.
 .PP
-(hwloc_obj_type_t)-1 if depth \fCdepth\fP does not exist\&. 
+(hwloc_obj_type_t)-1 if depth \fCdepth\fP does not exist\&.
 .RE
 .PP
 
@@ -116,95 +116,95 @@ If all Memory objects are attached to Normal parents at the same depth, this par
 .RS 4
 The depth of Normal parents of all memory children if all these parents have the same depth\&. For instance the depth of the Package level if all NUMA nodes are attached to Package objects\&.
 .PP
-\fBHWLOC_TYPE_DEPTH_MULTIPLE\fP if Normal parents of all memory children do not have the same depth\&. For instance if some NUMA nodes are attached to Packages while others are attached to Groups\&. 
+\fBHWLOC_TYPE_DEPTH_MULTIPLE\fP if Normal parents of all memory children do not have the same depth\&. For instance if some NUMA nodes are attached to Packages while others are attached to Groups\&.
 .RE
 .PP
 
 .SS "unsigned hwloc_get_nbobjs_by_depth (\fBhwloc_topology_t\fP topology, int depth)"
 
 .PP
-Returns the width of level at depth \fCdepth\fP\&. 
+Returns the width of level at depth \fCdepth\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The number of objects at topology depth \fCdepth\fP\&. 
+The number of objects at topology depth \fCdepth\fP\&.
 .PP
-0 if there are no objects at depth \fCdepth\fP\&. 
+0 if there are no objects at depth \fCdepth\fP\&.
 .RE
 .PP
 
 .SS "static int hwloc_get_nbobjs_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Returns the width of level type \fCtype\fP\&. 
+Returns the width of level type \fCtype\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The number of objects of type \fCtype\fP\&. 
+The number of objects of type \fCtype\fP\&.
 .PP
--1 if there are multiple levels with objects of that type, e\&.g\&. \fBHWLOC_OBJ_GROUP\fP\&. 
+-1 if there are multiple levels with objects of that type, e\&.g\&. \fBHWLOC_OBJ_GROUP\fP\&.
 .PP
-0 if there are no objects at depth \fCdepth\fP\&. 
+0 if there are no objects at depth \fCdepth\fP\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_next_obj_by_depth (\fBhwloc_topology_t\fP topology, int depth, \fBhwloc_obj_t\fP prev)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Returns the next object at depth \fCdepth\fP\&. 
+Returns the next object at depth \fCdepth\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The first object at depth \fCdepth\fP if \fCprev\fP is \fCNULL\fP\&. 
+The first object at depth \fCdepth\fP if \fCprev\fP is \fCNULL\fP\&.
 .PP
-The object after \fCprev\fP at depth \fCdepth\fP if \fCprev\fP is not \fCNULL\fP\&. 
+The object after \fCprev\fP at depth \fCdepth\fP if \fCprev\fP is not \fCNULL\fP\&.
 .PP
-\fCNULL\fP if there is no such object\&. 
+\fCNULL\fP if there is no such object\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_next_obj_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Returns the next object of type \fCtype\fP\&. 
+Returns the next object of type \fCtype\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The first object of type \fCtype\fP if \fCprev\fP is \fCNULL\fP\&. 
+The first object of type \fCtype\fP if \fCprev\fP is \fCNULL\fP\&.
 .PP
-The object after \fCprev\fP of type \fCtype\fP if \fCprev\fP is not \fCNULL\fP\&. 
+The object after \fCprev\fP of type \fCtype\fP if \fCprev\fP is not \fCNULL\fP\&.
 .PP
-\fCNULL\fP if there is no such object\&. 
+\fCNULL\fP if there is no such object\&.
 .PP
-\fCNULL\fP if there are multiple levels with objects of that type (e\&.g\&. \fBHWLOC_OBJ_GROUP\fP), the caller may fallback to \fBhwloc_get_obj_by_depth()\fP\&. 
+\fCNULL\fP if there are multiple levels with objects of that type (e\&.g\&. \fBHWLOC_OBJ_GROUP\fP), the caller may fallback to \fBhwloc_get_obj_by_depth()\fP\&.
 .RE
 .PP
 
 .SS "\fBhwloc_obj_t\fP hwloc_get_obj_by_depth (\fBhwloc_topology_t\fP topology, int depth, unsigned idx)"
 
 .PP
-Returns the topology object at logical index \fCidx\fP from depth \fCdepth\fP\&. 
+Returns the topology object at logical index \fCidx\fP from depth \fCdepth\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The object if it exists\&. 
+The object if it exists\&.
 .PP
-\fCNULL\fP if there is no object with this index and depth\&. 
+\fCNULL\fP if there is no object with this index and depth\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_obj_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, unsigned idx)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Returns the topology object at logical index \fCidx\fP with type \fCtype\fP\&. 
+Returns the topology object at logical index \fCidx\fP with type \fCtype\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The object if it exists\&. 
+The object if it exists\&.
 .PP
-\fCNULL\fP if there is no object with this index and type\&. 
+\fCNULL\fP if there is no object with this index and type\&.
 .PP
-\fCNULL\fP if there are multiple levels with objects of that type (e\&.g\&. \fBHWLOC_OBJ_GROUP\fP), the caller may fallback to \fBhwloc_get_obj_by_depth()\fP\&. 
+\fCNULL\fP if there are multiple levels with objects of that type (e\&.g\&. \fBHWLOC_OBJ_GROUP\fP), the caller may fallback to \fBhwloc_get_obj_by_depth()\fP\&.
 .RE
 .PP
 
@@ -213,11 +213,11 @@ The object if it exists\&.
 .PP
 Returns the top-object of the topology-tree\&. Its type is \fBHWLOC_OBJ_MACHINE\fP\&.
 .PP
-This function cannot return \fCNULL\fP\&. 
+This function cannot return \fCNULL\fP\&.
 .SS "int hwloc_get_type_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
 
 .PP
-Returns the depth of objects of type \fCtype\fP\&. 
+Returns the depth of objects of type \fCtype\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
@@ -239,7 +239,7 @@ If the type is absent but a similar type is acceptable, see also \fBhwloc_get_ty
 .RS 4
 \fBhwloc_get_memory_parents_depth()\fP for managing the depth of memory objects\&.
 .PP
-\fBhwloc_type_sscanf_as_depth()\fP for returning the depth of objects whose type is given as a string\&. 
+\fBhwloc_type_sscanf_as_depth()\fP for returning the depth of objects whose type is given as a string\&.
 .RE
 .PP
 
@@ -250,7 +250,7 @@ Returns the depth of objects of type \fCtype\fP or above\&. If no object of this
 .PP
 This function is only meaningful for normal object types\&. If a memory, I/O or Misc object type is given, the corresponding virtual depth is always returned (see \fBhwloc_get_type_depth()\fP)\&.
 .PP
-May return \fBHWLOC_TYPE_DEPTH_MULTIPLE\fP for \fBHWLOC_OBJ_GROUP\fP just like \fBhwloc_get_type_depth()\fP\&. 
+May return \fBHWLOC_TYPE_DEPTH_MULTIPLE\fP for \fBHWLOC_OBJ_GROUP\fP just like \fBhwloc_get_type_depth()\fP\&.
 .SS "static int hwloc_get_type_or_below_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
@@ -258,7 +258,7 @@ Returns the depth of objects of type \fCtype\fP or below\&. If no object of this
 .PP
 This function is only meaningful for normal object types\&. If a memory, I/O or Misc object type is given, the corresponding virtual depth is always returned (see \fBhwloc_get_type_depth()\fP)\&.
 .PP
-May return \fBHWLOC_TYPE_DEPTH_MULTIPLE\fP for \fBHWLOC_OBJ_GROUP\fP just like \fBhwloc_get_type_depth()\fP\&. 
+May return \fBHWLOC_TYPE_DEPTH_MULTIPLE\fP for \fBHWLOC_OBJ_GROUP\fP just like \fBhwloc_get_type_depth()\fP\&.
 .SS "int hwloc_topology_get_depth (\fBhwloc_topology_t\fP restrict topology)"
 
 .PP
@@ -271,10 +271,10 @@ the depth of the object tree\&.
 .PP
 \fBNote\fP
 .RS 4
-NUMA nodes, I/O and Misc objects are ignored when computing the depth of the tree (they are placed on special levels)\&. 
+NUMA nodes, I/O and Misc objects are ignored when computing the depth of the tree (they are placed on special levels)\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

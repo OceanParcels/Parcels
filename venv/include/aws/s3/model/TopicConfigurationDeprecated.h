@@ -44,7 +44,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const Aws::String& GetId() const{ return m_id; }
     inline bool IdHasBeenSet() const { return m_idHasBeenSet; }
     inline void SetId(const Aws::String& value) { m_idHasBeenSet = true; m_id = value; }

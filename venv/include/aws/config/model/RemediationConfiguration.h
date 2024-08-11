@@ -86,10 +86,10 @@ namespace Model
 
     ///@{
     /**
-     * <p>Version of the target. For example, version of the SSM document.</p> 
+     * <p>Version of the target. For example, version of the SSM document.</p>
      * <p>If you make backward incompatible changes to the SSM document, you must call
      * PutRemediationConfiguration API again to ensure the remediations can run.</p>
-     * 
+     *
      */
     inline const Aws::String& GetTargetVersion() const{ return m_targetVersion; }
     inline bool TargetVersionHasBeenSet() const { return m_targetVersionHasBeenSet; }

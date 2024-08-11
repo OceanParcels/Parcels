@@ -1,8 +1,8 @@
 #  XLocale Database Sample for georgian-ps
-# 
-# 
+#
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
 # 	fs0 class (7 bit ASCII)
 fs0	{
@@ -10,11 +10,11 @@ fs0	{
 		name		ISO8859-1:GL
 	}
 	font	{
-		primary		GEORGIAN-PS:GL 
+		primary		GEORGIAN-PS:GL
 		substitute	ISO8859-1:GL
 	}
 }
-# 	fs1 class 
+# 	fs1 class
 fs1	{
 	charset         GEORGIAN-PS:GR
 	font            GEORGIAN-PS:GR
@@ -32,9 +32,9 @@ csd0	{
 	sequence	\x1b%/1
 }
 END XLC_CHARSET_DEFINE
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name           GEORGIAN-PS
 mb_cur_max		1

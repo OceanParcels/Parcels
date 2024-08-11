@@ -24,7 +24,7 @@ namespace Model
 {
 
   /**
-   * <p>Container for the person being granted permissions.</p><p><h3>See Also:</h3> 
+   * <p>Container for the person being granted permissions.</p><p><h3>See Also:</h3>
    * <a href="http://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/Grantee">AWS API
    * Reference</a></p>
    */
@@ -63,7 +63,7 @@ namespace Model
      * </li> </ul> <p>For a list of all the Amazon S3 supported Regions and endpoints,
      * see <a
      * href="https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">Regions
-     * and Endpoints</a> in the Amazon Web Services General Reference.</p> 
+     * and Endpoints</a> in the Amazon Web Services General Reference.</p>
      */
     inline const Aws::String& GetEmailAddress() const{ return m_emailAddress; }
     inline bool EmailAddressHasBeenSet() const { return m_emailAddressHasBeenSet; }

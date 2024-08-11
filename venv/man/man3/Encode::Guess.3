@@ -299,7 +299,7 @@ automagically works unless \f(CW$data\fR is too short to allow for guessing.
 .Sp
 .Vb 6
 \& # This is ok if $data is long enough
-\& my $decoder =  
+\& my $decoder =
 \&  guess_encoding($data, qw/euc\-cn
 \&                           euc\-jp shiftjis 7bit\-jis
 \&                           euc\-kr
@@ -309,7 +309,7 @@ automagically works unless \f(CW$data\fR is too short to allow for guessing.
 \&\s-1DO NOT PUT TOO MANY SUSPECTS\s0!  Don't you try something like this!
 .Sp
 .Vb 2
-\&  my $decoder = guess_encoding($data, 
+\&  my $decoder = guess_encoding($data,
 \&                               Encode\->encodings(":all"));
 .Ve
 .PP

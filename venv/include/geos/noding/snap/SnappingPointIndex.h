@@ -57,6 +57,3 @@ public:
 } // namespace geos::noding::snap
 } // namespace geos::noding
 } // namespace geos
-
-
-

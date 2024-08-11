@@ -32,54 +32,54 @@ hwlocality_advanced_io \- Finding I/O objects
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static int hwloc_bridge_covers_pcibus (\fBhwloc_obj_t\fP bridge, unsigned domain, unsigned bus)\fC [inline]\fP, \fC [static]\fP"
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_next_bridge (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP prev)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the next bridge in the system\&. 
+Get the next bridge in the system\&.
 .PP
 \fBReturns\fP
 .RS 4
-the first bridge if \fCprev\fP is \fCNULL\fP\&. 
+the first bridge if \fCprev\fP is \fCNULL\fP\&.
 .PP
-the next bridge if \fCprev\fP is not \fCNULL\fP\&. 
+the next bridge if \fCprev\fP is not \fCNULL\fP\&.
 .PP
-\fCNULL\fP if there is no next bridge\&. 
+\fCNULL\fP if there is no next bridge\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_next_osdev (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP prev)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the next OS device in the system\&. 
+Get the next OS device in the system\&.
 .PP
 \fBReturns\fP
 .RS 4
-the first OS device if \fCprev\fP is \fCNULL\fP\&. 
+the first OS device if \fCprev\fP is \fCNULL\fP\&.
 .PP
-the next OS device if \fCprev\fP is not \fCNULL\fP\&. 
+the next OS device if \fCprev\fP is not \fCNULL\fP\&.
 .PP
-\fCNULL\fP if there is no next OS device\&. 
+\fCNULL\fP if there is no next OS device\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_next_pcidev (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP prev)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the next PCI device in the system\&. 
+Get the next PCI device in the system\&.
 .PP
 \fBReturns\fP
 .RS 4
-the first PCI device if \fCprev\fP is \fCNULL\fP\&. 
+the first PCI device if \fCprev\fP is \fCNULL\fP\&.
 .PP
-the next PCI device if \fCprev\fP is not \fCNULL\fP\&. 
+the next PCI device if \fCprev\fP is not \fCNULL\fP\&.
 .PP
-\fCNULL\fP if there is no next PCI device\&. 
+\fCNULL\fP if there is no next PCI device\&.
 .RE
 .PP
 
@@ -97,32 +97,32 @@ a non-I/O object\&.
 .RS 4
 This function cannot return \fCNULL\fP\&.
 .PP
-The resulting object is usually a normal object but it could also be a memory object (e\&.g\&. NUMA node) in future platforms if I/O objects ever get attached to memory instead of CPUs\&. 
+The resulting object is usually a normal object but it could also be a memory object (e\&.g\&. NUMA node) in future platforms if I/O objects ever get attached to memory instead of CPUs\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_pcidev_by_busid (\fBhwloc_topology_t\fP topology, unsigned domain, unsigned bus, unsigned dev, unsigned func)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Find the PCI device object matching the PCI bus id given domain, bus device and function PCI bus id\&. 
+Find the PCI device object matching the PCI bus id given domain, bus device and function PCI bus id\&.
 .PP
 \fBReturns\fP
 .RS 4
-a matching PCI device object if any, \fCNULL\fP otherwise\&. 
+a matching PCI device object if any, \fCNULL\fP otherwise\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_pcidev_by_busidstring (\fBhwloc_topology_t\fP topology, const char * busid)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Find the PCI device object matching the PCI bus id given as a string xxxx:yy:zz\&.t or yy:zz\&.t\&. 
+Find the PCI device object matching the PCI bus id given as a string xxxx:yy:zz\&.t or yy:zz\&.t\&.
 .PP
 \fBReturns\fP
 .RS 4
-a matching PCI device object if any, \fCNULL\fP otherwise\&. 
+a matching PCI device object if any, \fCNULL\fP otherwise\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

@@ -42,7 +42,7 @@ namespace Model
      * <p>Specifies whether the object retrieved was (<code>true</code>) or was not
      * (<code>false</code>) a delete marker. If <code>false</code>, this response
      * header does not appear in the response.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline bool GetDeleteMarker() const{ return m_deleteMarker; }
     inline void SetDeleteMarker(bool value) { m_deleteMarker = value; }
@@ -63,7 +63,7 @@ namespace Model
     ///@{
     /**
      * <p>The version ID of the object.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::String& GetVersionId() const{ return m_versionId; }
     inline void SetVersionId(const Aws::String& value) { m_versionId = value; }
@@ -75,7 +75,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestCharged& GetRequestCharged() const{ return m_requestCharged; }
     inline void SetRequestCharged(const RequestCharged& value) { m_requestCharged = value; }
     inline void SetRequestCharged(RequestCharged&& value) { m_requestCharged = std::move(value); }
@@ -127,7 +127,7 @@ namespace Model
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html">Storage
      * Classes</a>.</p>  <p> <b>Directory buckets</b> - Only the S3 Express One
      * Zone storage class is supported by directory buckets to store objects.</p>
-     * 
+     *
      */
     inline const StorageClass& GetStorageClass() const{ return m_storageClass; }
     inline void SetStorageClass(const StorageClass& value) { m_storageClass = value; }
@@ -146,7 +146,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

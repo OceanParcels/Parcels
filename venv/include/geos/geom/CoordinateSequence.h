@@ -778,4 +778,3 @@ GEOS_DLL bool operator!= (const CoordinateSequence& s1, const CoordinateSequence
 
 } // namespace geos::geom
 } // namespace geos
-

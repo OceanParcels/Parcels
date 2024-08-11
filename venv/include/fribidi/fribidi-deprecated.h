@@ -6,22 +6,22 @@
  *
  * Copyright (C) 2004 Sharif FarsiWeb, Inc
  * Copyright (C) 2004, 2005 Behdad Esfahbod
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library, in a file named COPYING; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA
- * 
+ *
  * For licensing issues, contact <fribidi.license@gmail.com>.
  */
 #ifndef _FRIBIDI_DEPRECATED_H
@@ -49,9 +49,9 @@ FRIBIDI_ENTRY fribidi_boolean fribidi_mirroring_status (
  *
  * This function is used to turn character mirroring on or off.
  * Character mirroring is the act of replacing a mirrorable glyph
- * (character), eg. left parenthesis, with the matching glyph, 
+ * (character), eg. left parenthesis, with the matching glyph,
  * eg. right parenthesis, in a right-to-left resolved context.
- * If your rendering engine does mirroring itself, you may want to 
+ * If your rendering engine does mirroring itself, you may want to
  * turn it off here.
  *
  * This flag is on by default.
@@ -140,7 +140,7 @@ fribidi_get_par_embedding_levels (
   FriBidiParType *pbase_dir,	/* requested and resolved paragraph
 				 * base direction */
   FriBidiLevel *embedding_levels	/* output list of embedding levels */
-) 
+)
      FRIBIDI_GNUC_WARN_UNUSED FRIBIDI_GNUC_DEPRECATED;
 
 #define UNI_MAX_BIDI_LEVEL	FRIBIDI_BIDI_MAX_EXPLICIT_LEVEL

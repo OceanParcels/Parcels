@@ -44,8 +44,8 @@ namespace Model
      * Virginia)</p> </li> <li> <p>US West (N. California)</p> </li> <li> <p>US West
      * (Oregon)</p> </li> <li> <p>Asia Pacific (Singapore)</p> </li> <li> <p>Asia
      * Pacific (Sydney)</p> </li> <li> <p>Asia Pacific (Tokyo)</p> </li> <li> <p>Europe
-     * (Ireland)</p> </li> <li> <p>South America (São Paulo)</p> </li> </ul> 
-     * <p>This functionality is not supported for directory buckets.</p> 
+     * (Ireland)</p> </li> <li> <p>South America (São Paulo)</p> </li> </ul>
+     * <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetDisplayName() const{ return m_displayName; }
     inline bool DisplayNameHasBeenSet() const { return m_displayNameHasBeenSet; }

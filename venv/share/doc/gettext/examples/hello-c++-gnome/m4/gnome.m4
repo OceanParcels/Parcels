@@ -2,7 +2,7 @@ dnl
 dnl GNOME_INIT_HOOK (script-if-gnome-enabled, [failflag], [additional-inits])
 dnl
 dnl if failflag is "fail" then GNOME_INIT_HOOK will abort if gnomeConf.sh
-dnl is not found. 
+dnl is not found.
 dnl
 
 AC_DEFUN([GNOME_INIT_HOOK],[
@@ -18,7 +18,7 @@ AC_DEFUN([GNOME_INIT_HOOK],[
 	[  --with-gnome-includes   Specify location of GNOME headers],[
 	CFLAGS="$CFLAGS -I$withval"
 	])
-	
+
 	AC_ARG_WITH(gnome-libs,
 	[  --with-gnome-libs       Specify location of GNOME libs],[
 	LDFLAGS="$LDFLAGS -L$withval"
@@ -77,7 +77,7 @@ AC_DEFUN([GNOME_INIT_HOOK],[
 	    else
 	        gnome_prefix=`eval echo \`echo $libdir\``
 	    fi
-	
+
 	    if test "$no_gnome_config" = "yes"; then
               AC_MSG_CHECKING(for gnomeConf.sh file in $gnome_prefix)
 	      if test -f $gnome_prefix/gnomeConf.sh; then
@@ -99,7 +99,7 @@ AC_DEFUN([GNOME_INIT_HOOK],[
 	  n="$3"
 	  for i in $n; do
 	    AC_MSG_CHECKING(extra library \"$i\")
-	    case $i in 
+	    case $i in
 	      applets)
 		AC_SUBST(GNOME_APPLETS_LIBS)
 		GNOME_APPLETS_LIBS=`$GNOME_CONFIG --libs-only-l applets`

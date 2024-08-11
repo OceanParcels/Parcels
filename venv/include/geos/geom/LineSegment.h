@@ -259,7 +259,7 @@ public:
     {
         return CoordinateXY(
             (pt0.x + pt1.x) / 2,
-            (pt0.y + pt1.y) / 2);        
+            (pt0.y + pt1.y) / 2);
     }
 
     /// Computes the distance between this line segment and another one.

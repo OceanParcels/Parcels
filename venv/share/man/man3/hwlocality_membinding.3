@@ -54,7 +54,7 @@ hwlocality_membinding \- Memory binding
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 Memory binding can be done three ways:
 .PP
 .IP "\(bu" 2
@@ -91,77 +91,77 @@ Some example codes are available under doc/examples/ in the source tree\&.
 .PP
 \fBNote\fP
 .RS 4
-On some operating systems, memory binding affects the CPU binding; see \fBHWLOC_MEMBIND_NOCPUBIND\fP 
+On some operating systems, memory binding affects the CPU binding; see \fBHWLOC_MEMBIND_NOCPUBIND\fP
 .RE
 .PP
 
 .SH "Enumeration Type Documentation"
-.PP 
+.PP
 .SS "enum \fBhwloc_membind_flags_t\fP"
 
 .PP
 Memory binding flags\&. These flags can be used to refine the binding policy\&. All flags can be logically OR'ed together with the exception of \fBHWLOC_MEMBIND_PROCESS\fP and \fBHWLOC_MEMBIND_THREAD\fP; these two flags are mutually exclusive\&.
 .PP
-Not all systems support all kinds of binding\&. \fBhwloc_topology_get_support()\fP may be used to query about the actual memory binding support in the currently used operating system\&. See the 'Detailed Description' section of \fBMemory binding\fP for a description of errors that can occur\&. 
+Not all systems support all kinds of binding\&. \fBhwloc_topology_get_support()\fP may be used to query about the actual memory binding support in the currently used operating system\&. See the 'Detailed Description' section of \fBMemory binding\fP for a description of errors that can occur\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_MEMBIND_PROCESS \fP\fP
-Set policy for all threads of the specified (possibly multithreaded) process\&. This flag is mutually exclusive with \fBHWLOC_MEMBIND_THREAD\fP\&. 
+Set policy for all threads of the specified (possibly multithreaded) process\&. This flag is mutually exclusive with \fBHWLOC_MEMBIND_THREAD\fP\&.
 .TP
 \fB\fIHWLOC_MEMBIND_THREAD \fP\fP
-Set policy for a specific thread of the current process\&. This flag is mutually exclusive with \fBHWLOC_MEMBIND_PROCESS\fP\&. 
+Set policy for a specific thread of the current process\&. This flag is mutually exclusive with \fBHWLOC_MEMBIND_PROCESS\fP\&.
 .TP
 \fB\fIHWLOC_MEMBIND_STRICT \fP\fP
 Request strict binding from the OS\&. The function will fail if the binding can not be guaranteed / completely enforced\&.
 .PP
-This flag has slightly different meanings depending on which function it is used with\&. 
+This flag has slightly different meanings depending on which function it is used with\&.
 .TP
 \fB\fIHWLOC_MEMBIND_MIGRATE \fP\fP
-Migrate existing allocated memory\&. If the memory cannot be migrated and the \fBHWLOC_MEMBIND_STRICT\fP flag is passed, an error will be returned\&. 
+Migrate existing allocated memory\&. If the memory cannot be migrated and the \fBHWLOC_MEMBIND_STRICT\fP flag is passed, an error will be returned\&.
 .TP
 \fB\fIHWLOC_MEMBIND_NOCPUBIND \fP\fP
-Avoid any effect on CPU binding\&. On some operating systems, some underlying memory binding functions also bind the application to the corresponding CPU(s)\&. Using this flag will cause hwloc to avoid using OS functions that could potentially affect CPU bindings\&. Note, however, that using NOCPUBIND may reduce hwloc's overall memory binding support\&. Specifically: some of hwloc's memory binding functions may fail with errno set to \fCENOSYS\fP when used with NOCPUBIND\&. 
+Avoid any effect on CPU binding\&. On some operating systems, some underlying memory binding functions also bind the application to the corresponding CPU(s)\&. Using this flag will cause hwloc to avoid using OS functions that could potentially affect CPU bindings\&. Note, however, that using NOCPUBIND may reduce hwloc's overall memory binding support\&. Specifically: some of hwloc's memory binding functions may fail with errno set to \fCENOSYS\fP when used with NOCPUBIND\&.
 .TP
 \fB\fIHWLOC_MEMBIND_BYNODESET \fP\fP
 Consider the bitmap argument as a nodeset\&. The bitmap argument is considered a nodeset if this flag is given, or a cpuset otherwise by default\&.
 .PP
-Memory binding by CPU set cannot work for CPU-less NUMA memory nodes\&. Binding by nodeset should therefore be preferred whenever possible\&. 
+Memory binding by CPU set cannot work for CPU-less NUMA memory nodes\&. Binding by nodeset should therefore be preferred whenever possible\&.
 .SS "enum \fBhwloc_membind_policy_t\fP"
 
 .PP
 Memory binding policy\&. These constants can be used to choose the binding policy\&. Only one policy can be used at a time (i\&.e\&., the values cannot be OR'ed together)\&.
 .PP
-Not all systems support all kinds of binding\&. \fBhwloc_topology_get_support()\fP may be used to query about the actual memory binding policy support in the currently used operating system\&. See the 'Detailed Description' section of \fBMemory binding\fP for a description of errors that can occur\&. 
+Not all systems support all kinds of binding\&. \fBhwloc_topology_get_support()\fP may be used to query about the actual memory binding policy support in the currently used operating system\&. See the 'Detailed Description' section of \fBMemory binding\fP for a description of errors that can occur\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_MEMBIND_DEFAULT \fP\fP
-Reset the memory allocation policy to the system default\&. Depending on the operating system, this may correspond to \fBHWLOC_MEMBIND_FIRSTTOUCH\fP (Linux, FreeBSD), or \fBHWLOC_MEMBIND_BIND\fP (AIX, HP-UX, Solaris, Windows)\&. This policy is never returned by get membind functions\&. The nodeset argument is ignored\&. 
+Reset the memory allocation policy to the system default\&. Depending on the operating system, this may correspond to \fBHWLOC_MEMBIND_FIRSTTOUCH\fP (Linux, FreeBSD), or \fBHWLOC_MEMBIND_BIND\fP (AIX, HP-UX, Solaris, Windows)\&. This policy is never returned by get membind functions\&. The nodeset argument is ignored\&.
 .TP
 \fB\fIHWLOC_MEMBIND_FIRSTTOUCH \fP\fP
 Allocate each memory page individually on the local NUMA node of the thread that touches it\&. The given nodeset should usually be \fBhwloc_topology_get_topology_nodeset()\fP so that the touching thread may run and allocate on any node in the system\&.
 .PP
-On AIX, if the nodeset is smaller, pages are allocated locally (if the local node is in the nodeset) or from a random non-local node (otherwise)\&. 
+On AIX, if the nodeset is smaller, pages are allocated locally (if the local node is in the nodeset) or from a random non-local node (otherwise)\&.
 .TP
 \fB\fIHWLOC_MEMBIND_BIND \fP\fP
-Allocate memory on the specified nodes\&. The actual behavior may slightly vary between operating systems, especially when (some of) the requested nodes are full\&. On Linux, by default, the MPOL_PREFERRED_MANY (or MPOL_PREFERRED) policy is used\&. However, if the hwloc strict flag is also given, the Linux MPOL_BIND policy is rather used\&. 
+Allocate memory on the specified nodes\&. The actual behavior may slightly vary between operating systems, especially when (some of) the requested nodes are full\&. On Linux, by default, the MPOL_PREFERRED_MANY (or MPOL_PREFERRED) policy is used\&. However, if the hwloc strict flag is also given, the Linux MPOL_BIND policy is rather used\&.
 .TP
 \fB\fIHWLOC_MEMBIND_INTERLEAVE \fP\fP
-Allocate memory on the given nodes in an interleaved / round-robin manner\&. The precise layout of the memory across multiple NUMA nodes is OS/system specific\&. Interleaving can be useful when threads distributed across the specified NUMA nodes will all be accessing the whole memory range concurrently, since the interleave will then balance the memory references\&. 
+Allocate memory on the given nodes in an interleaved / round-robin manner\&. The precise layout of the memory across multiple NUMA nodes is OS/system specific\&. Interleaving can be useful when threads distributed across the specified NUMA nodes will all be accessing the whole memory range concurrently, since the interleave will then balance the memory references\&.
 .TP
 \fB\fIHWLOC_MEMBIND_WEIGHTED_INTERLEAVE \fP\fP
-Allocate memory on the given nodes in an interleaved / weighted manner\&. The precise layout of the memory across multiple NUMA nodes is OS/system specific\&. Weighted interleaving can be useful when threads distributed across the specified NUMA nodes with different bandwidth capabilities will all be accessing the whole memory range concurrently, since the interleave will then balance the memory references\&. 
+Allocate memory on the given nodes in an interleaved / weighted manner\&. The precise layout of the memory across multiple NUMA nodes is OS/system specific\&. Weighted interleaving can be useful when threads distributed across the specified NUMA nodes with different bandwidth capabilities will all be accessing the whole memory range concurrently, since the interleave will then balance the memory references\&.
 .TP
 \fB\fIHWLOC_MEMBIND_NEXTTOUCH \fP\fP
-For each page bound with this policy, by next time it is touched (and next time only), it is moved from its current location to the local NUMA node of the thread where the memory reference occurred (if it needs to be moved at all)\&. 
+For each page bound with this policy, by next time it is touched (and next time only), it is moved from its current location to the local NUMA node of the thread where the memory reference occurred (if it needs to be moved at all)\&.
 .TP
 \fB\fIHWLOC_MEMBIND_MIXED \fP\fP
-Returned by get_membind() functions when multiple threads or parts of a memory area have differing memory binding policies\&. Also returned when binding is unknown because binding hooks are empty when the topology is loaded from XML without HWLOC_THISSYSTEM=1, etc\&. 
+Returned by get_membind() functions when multiple threads or parts of a memory area have differing memory binding policies\&. Also returned when binding is unknown because binding hooks are empty when the topology is loaded from XML without HWLOC_THISSYSTEM=1, etc\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "void * hwloc_alloc (\fBhwloc_topology_t\fP topology, size_t len)"
 
 .PP
@@ -174,22 +174,22 @@ a pointer to the allocated area, or \fCNULL\fP on error\&.
 .PP
 \fBNote\fP
 .RS 4
-The allocated memory should be freed with \fBhwloc_free()\fP\&. 
+The allocated memory should be freed with \fBhwloc_free()\fP\&.
 .RE
 .PP
 
 .SS "void * hwloc_alloc_membind (\fBhwloc_topology_t\fP topology, size_t len, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)"
 
 .PP
-Allocate some memory on NUMA memory nodes specified by \fCset\fP\&. 
+Allocate some memory on NUMA memory nodes specified by \fCset\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-a pointer to the allocated area\&. 
+a pointer to the allocated area\&.
 .PP
-NULL with errno set to \fCENOSYS\fP if the action is not supported and \fBHWLOC_MEMBIND_STRICT\fP is given\&. 
+NULL with errno set to \fCENOSYS\fP if the action is not supported and \fBHWLOC_MEMBIND_STRICT\fP is given\&.
 .PP
-NULL with errno set to \fCEXDEV\fP if the binding cannot be enforced and \fBHWLOC_MEMBIND_STRICT\fP is given\&. 
+NULL with errno set to \fCEXDEV\fP if the binding cannot be enforced and \fBHWLOC_MEMBIND_STRICT\fP is given\&.
 .PP
 NULL with errno set to \fCENOMEM\fP if the memory allocation failed even before trying to bind\&.
 .RE
@@ -198,7 +198,7 @@ If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Ot
 .PP
 \fBNote\fP
 .RS 4
-The allocated memory should be freed with \fBhwloc_free()\fP\&. 
+The allocated memory should be freed with \fBhwloc_free()\fP\&.
 .RE
 .PP
 
@@ -211,18 +211,18 @@ If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Ot
 .PP
 \fBReturns\fP
 .RS 4
-a pointer to the allocated area, or \fCNULL\fP on error\&. 
+a pointer to the allocated area, or \fCNULL\fP on error\&.
 .RE
 .PP
 
 .SS "int hwloc_free (\fBhwloc_topology_t\fP topology, void * addr, size_t len)"
 
 .PP
-Free memory that was previously allocated by \fBhwloc_alloc()\fP or \fBhwloc_alloc_membind()\fP\&. 
+Free memory that was previously allocated by \fBhwloc_alloc()\fP or \fBhwloc_alloc_membind()\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-0 on success, -1 on error\&. 
+0 on success, -1 on error\&.
 .RE
 .PP
 
@@ -243,9 +243,9 @@ If any other flags are specified, -1 is returned and errno is set to \fCEINVAL\f
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCEINVAL\fP if \fClen\fP is 0\&. 
+-1 with errno set to \fCEINVAL\fP if \fClen\fP is 0\&.
 .RE
 .PP
 
@@ -264,7 +264,7 @@ If \fClen\fP is 0, \fCset\fP is emptied\&.
 .PP
 \fBReturns\fP
 .RS 4
-0 on success, -1 on error\&. 
+0 on success, -1 on error\&.
 .RE
 .PP
 
@@ -291,7 +291,7 @@ If any other flags are specified, -1 is returned and errno is set to \fCEINVAL\f
 .PP
 \fBReturns\fP
 .RS 4
-0 on success, -1 on error\&. 
+0 on success, -1 on error\&.
 .RE
 .PP
 
@@ -321,7 +321,7 @@ If any other flags are specified, -1 is returned and errno is set to \fCEINVAL\f
 .PP
 \fBNote\fP
 .RS 4
-\fChwloc_pid_t\fP is \fCpid_t\fP on Unix platforms, and \fCHANDLE\fP on native Windows platforms\&. 
+\fChwloc_pid_t\fP is \fCpid_t\fP on Unix platforms, and \fCHANDLE\fP on native Windows platforms\&.
 .RE
 .PP
 
@@ -332,11 +332,11 @@ Bind the already-allocated memory identified by (addr, len) to the NUMA node(s) 
 .PP
 \fBReturns\fP
 .RS 4
-0 on success or if \fClen\fP is 0\&. 
+0 on success or if \fClen\fP is 0\&.
 .PP
--1 with errno set to \fCENOSYS\fP if the action is not supported\&. 
+-1 with errno set to \fCENOSYS\fP if the action is not supported\&.
 .PP
--1 with errno set to \fCEXDEV\fP if the binding cannot be enforced\&. 
+-1 with errno set to \fCEXDEV\fP if the binding cannot be enforced\&.
 .RE
 .PP
 
@@ -349,11 +349,11 @@ If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Ot
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCENOSYS\fP if the action is not supported\&. 
+-1 with errno set to \fCENOSYS\fP if the action is not supported\&.
 .PP
--1 with errno set to \fCEXDEV\fP if the binding cannot be enforced\&. 
+-1 with errno set to \fCEXDEV\fP if the binding cannot be enforced\&.
 .RE
 .PP
 
@@ -364,19 +364,19 @@ Set the default memory binding policy of the specified process to prefer the NUM
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCENOSYS\fP if the action is not supported\&. 
+-1 with errno set to \fCENOSYS\fP if the action is not supported\&.
 .PP
 -1 with errno set to \fCEXDEV\fP if the binding cannot be enforced\&.
 .RE
 .PP
 \fBNote\fP
 .RS 4
-\fChwloc_pid_t\fP is \fCpid_t\fP on Unix platforms, and \fCHANDLE\fP on native Windows platforms\&. 
+\fChwloc_pid_t\fP is \fCpid_t\fP on Unix platforms, and \fCHANDLE\fP on native Windows platforms\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

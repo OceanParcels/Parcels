@@ -49,7 +49,7 @@ namespace Model
      * a bucket</a> in the <i>Amazon S3 User Guide</i>.</p> <p>If you don't specify a
      * Region, the bucket is created in the US East (N. Virginia) Region (us-east-1) by
      * default.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const BucketLocationConstraint& GetLocationConstraint() const{ return m_locationConstraint; }
     inline bool LocationConstraintHasBeenSet() const { return m_locationConstraintHasBeenSet; }
@@ -63,7 +63,7 @@ namespace Model
     /**
      * <p>Specifies the location where the bucket will be created.</p> <p>For directory
      * buckets, the location type is Availability Zone.</p>  <p>This
-     * functionality is only supported by directory buckets.</p> 
+     * functionality is only supported by directory buckets.</p>
      */
     inline const LocationInfo& GetLocation() const{ return m_location; }
     inline bool LocationHasBeenSet() const { return m_locationHasBeenSet; }
@@ -75,8 +75,8 @@ namespace Model
 
     ///@{
     /**
-     * <p>Specifies the information about the bucket that will be created.</p> 
-     * <p>This functionality is only supported by directory buckets.</p> 
+     * <p>Specifies the information about the bucket that will be created.</p>
+     * <p>This functionality is only supported by directory buckets.</p>
      */
     inline const BucketInfo& GetBucket() const{ return m_bucket; }
     inline bool BucketHasBeenSet() const { return m_bucketHasBeenSet; }

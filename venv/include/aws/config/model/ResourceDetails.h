@@ -95,7 +95,7 @@ namespace Model
      * extensions through the CloudFormation registry</a> and <a
      * href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html">Amazon
      * Web Services resource and property types reference</a> in the CloudFormation
-     * User Guide.</p> 
+     * User Guide.</p>
      */
     inline const ResourceConfigurationSchemaType& GetResourceConfigurationSchemaType() const{ return m_resourceConfigurationSchemaType; }
     inline bool ResourceConfigurationSchemaTypeHasBeenSet() const { return m_resourceConfigurationSchemaTypeHasBeenSet; }

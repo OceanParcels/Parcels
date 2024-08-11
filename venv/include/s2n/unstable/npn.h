@@ -34,11 +34,11 @@
 
 /**
  * Turns on support for the NPN extension.
- * 
+ *
  * This will allow an s2n-tls client to send the NPN extension and an s2n-tls
  * server to respond to receiving the NPN extension. However, if their peer
  * also indicates support for the ALPN extension, s2n-tls will prefer that.
- * 
+ *
  * Use s2n_config_append_protocol_preference() to set up a list of supported protocols.
  * After the negotiation for the connection has completed, the agreed-upon protocol
  * can be retrieved with s2n_get_application_protocol().

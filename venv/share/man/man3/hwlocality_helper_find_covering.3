@@ -23,25 +23,25 @@ hwlocality_helper_find_covering \- Finding Objects covering at least CPU set
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static \fBhwloc_obj_t\fP hwloc_get_child_covering_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_t\fP parent)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the child covering at least CPU set \fCset\fP\&. 
+Get the child covering at least CPU set \fCset\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-the child that covers the set entirely\&. 
+the child that covers the set entirely\&.
 .PP
 \fCNULL\fP if no child matches or if \fCset\fP is empty\&.
 .RE
 .PP
 \fBNote\fP
 .RS 4
-This function cannot work if parent does not have a CPU set (I/O or Misc objects)\&. 
+This function cannot work if parent does not have a CPU set (I/O or Misc objects)\&.
 .RE
 .PP
 
@@ -52,16 +52,16 @@ Iterate through same-depth objects covering at least CPU set \fCset\fP\&. The ne
 .PP
 \fBReturns\fP
 .RS 4
-the first object at depth \fCdepth\fP covering at least part of CPU set \fCset\fP if object \fCprev\fP is \fCNULL\fP\&. 
+the first object at depth \fCdepth\fP covering at least part of CPU set \fCset\fP if object \fCprev\fP is \fCNULL\fP\&.
 .PP
-the next one if \fCprev\fP is not \fCNULL\fP\&. 
+the next one if \fCprev\fP is not \fCNULL\fP\&.
 .PP
 \fCNULL\fP if there is no next object\&.
 .RE
 .PP
 \fBNote\fP
 .RS 4
-This function cannot work if objects at the given depth do not have CPU sets (I/O or Misc objects)\&. 
+This function cannot work if objects at the given depth do not have CPU sets (I/O or Misc objects)\&.
 .RE
 .PP
 
@@ -72,36 +72,36 @@ Iterate through same-type objects covering at least CPU set \fCset\fP\&. The nex
 .PP
 \fBReturns\fP
 .RS 4
-the first object of type \fCtype\fP covering at least part of CPU set \fCset\fP if object \fCprev\fP is \fCNULL\fP\&. 
+the first object of type \fCtype\fP covering at least part of CPU set \fCset\fP if object \fCprev\fP is \fCNULL\fP\&.
 .PP
-the next one if \fCprev\fP is not \fCNULL\fP\&. 
+the next one if \fCprev\fP is not \fCNULL\fP\&.
 .PP
-\fCNULL\fP if there is no next object\&. 
+\fCNULL\fP if there is no next object\&.
 .PP
-\fCNULL\fP if there is no depth for the given type\&. 
+\fCNULL\fP if there is no depth for the given type\&.
 .PP
 \fCNULL\fP if there are multiple depths for the given type, the caller should fallback to \fBhwloc_get_next_obj_covering_cpuset_by_depth()\fP\&.
 .RE
 .PP
 \fBNote\fP
 .RS 4
-This function cannot work if objects of the given type do not have CPU sets (I/O or Misc objects)\&. 
+This function cannot work if objects of the given type do not have CPU sets (I/O or Misc objects)\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_obj_covering_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the lowest object covering at least CPU set \fCset\fP\&. 
+Get the lowest object covering at least CPU set \fCset\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-the lowest object covering the set entirely\&. 
+the lowest object covering the set entirely\&.
 .PP
-\fCNULL\fP if no object matches or if \fCset\fP is empty\&. 
+\fCNULL\fP if no object matches or if \fCset\fP is empty\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

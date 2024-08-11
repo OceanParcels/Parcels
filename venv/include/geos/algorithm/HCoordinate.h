@@ -97,4 +97,3 @@ std::ostream& operator<< (std::ostream& o, const HCoordinate& c);
 
 } // namespace geos::algorithm
 } // namespace geos
-

@@ -134,4 +134,3 @@ hwloc_gl_get_display_by_osdev(hwloc_topology_t topology __hwloc_attribute_unused
 
 
 #endif /* HWLOC_GL_H */
-

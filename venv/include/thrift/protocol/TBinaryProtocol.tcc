@@ -286,7 +286,7 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMapBegin(TType& keyType,
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   }
   size = (uint32_t)sizei;
-  
+
   TMap map(keyType, valType, size);
   checkReadBytesAvailable(map);
 

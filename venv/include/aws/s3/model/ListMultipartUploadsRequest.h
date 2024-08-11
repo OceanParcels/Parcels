@@ -101,7 +101,7 @@ namespace Model
      * substring starts at the beginning of the key. The keys that are grouped under
      * <code>CommonPrefixes</code> result element are not returned elsewhere in the
      * response.</p>  <p> <b>Directory buckets</b> - For directory buckets,
-     * <code>/</code> is the only supported delimiter.</p> 
+     * <code>/</code> is the only supported delimiter.</p>
      */
     inline const Aws::String& GetDelimiter() const{ return m_delimiter; }
     inline bool DelimiterHasBeenSet() const { return m_delimiterHasBeenSet; }
@@ -114,7 +114,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const EncodingType& GetEncodingType() const{ return m_encodingType; }
     inline bool EncodingTypeHasBeenSet() const { return m_encodingTypeHasBeenSet; }
     inline void SetEncodingType(const EncodingType& value) { m_encodingTypeHasBeenSet = true; m_encodingType = value; }
@@ -125,7 +125,7 @@ namespace Model
 
     ///@{
     /**
-     * <p>Specifies the multipart upload after which listing should begin.</p> 
+     * <p>Specifies the multipart upload after which listing should begin.</p>
      * <ul> <li> <p> <b>General purpose buckets</b> - For general purpose buckets,
      * <code>key-marker</code> is an object key. Together with
      * <code>upload-id-marker</code>, this parameter specifies the multipart upload
@@ -142,7 +142,7 @@ namespace Model
      * value of <code>key-marker</code> to the <code>NextKeyMarker</code> value from
      * the previous response. </p> <p>In the <code>ListMultipartUploads</code>
      * response, the multipart uploads aren't sorted lexicographically based on the
-     * object keys. </p> </li> </ul> 
+     * object keys. </p> </li> </ul>
      */
     inline const Aws::String& GetKeyMarker() const{ return m_keyMarker; }
     inline bool KeyMarkerHasBeenSet() const { return m_keyMarkerHasBeenSet; }
@@ -173,7 +173,7 @@ namespace Model
      * keys. (You can think of using <code>prefix</code> to make groups in the same way
      * that you'd use a folder in a file system.)</p>  <p> <b>Directory
      * buckets</b> - For directory buckets, only prefixes that end in a delimiter
-     * (<code>/</code>) are supported.</p> 
+     * (<code>/</code>) are supported.</p>
      */
     inline const Aws::String& GetPrefix() const{ return m_prefix; }
     inline bool PrefixHasBeenSet() const { return m_prefixHasBeenSet; }
@@ -192,7 +192,7 @@ namespace Model
      * ignored. Otherwise, any multipart uploads for a key equal to the key-marker
      * might be included in the list only if they have an upload ID lexicographically
      * greater than the specified <code>upload-id-marker</code>.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetUploadIdMarker() const{ return m_uploadIdMarker; }
     inline bool UploadIdMarkerHasBeenSet() const { return m_uploadIdMarkerHasBeenSet; }
@@ -221,7 +221,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
     inline void SetRequestPayer(const RequestPayer& value) { m_requestPayerHasBeenSet = true; m_requestPayer = value; }
@@ -231,7 +231,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

@@ -165,7 +165,7 @@ IPC::Open2 \- open a process for both reading and writing using open2()
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 The \fBopen2()\fR function runs the given command and connects \f(CW$chld_out\fR for
-reading and \f(CW$chld_in\fR for writing.  It's what you think should work 
+reading and \f(CW$chld_in\fR for writing.  It's what you think should work
 when you try
 .PP
 .Vb 1
@@ -205,7 +205,7 @@ to it and reading from it.  This is presumably safe because you
 output a line at a time.  Programs like \fBsort\fR\|(1) that read their
 entire input stream first, however, are quite apt to cause deadlock.
 .PP
-The big problem with this approach is that if you don't have control 
+The big problem with this approach is that if you don't have control
 over source code being run in the child process, you can't control
 what it does with pipe buffering.  Thus you can't just open a pipe to
 \&\f(CW\*(C`cat \-v\*(C'\fR and continually read and write a line from it.

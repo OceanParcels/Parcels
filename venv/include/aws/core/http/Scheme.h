@@ -35,4 +35,3 @@ namespace Aws
         } // namespace SchemeMapper
     } // namespace Http
 } // namespace Aws
-

@@ -1,8 +1,8 @@
 #  XLocale Database Sample for mulelao-1.
-# 
-# 
+#
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
 # 	fs0 class (7 bit ASCII)
 fs0	{
@@ -10,11 +10,11 @@ fs0	{
 		name		ISO8859-1:GL
 	}
 	font	{
-		primary		NOKHCHI-1:GL 
+		primary		NOKHCHI-1:GL
 		substitute	ISO8859-1:GL
 	}
 }
-# 	fs1 class 
+# 	fs1 class
 fs1	{
 	charset         NOKHCHI-1:GR
 	font            NOKHCHI-1:GR
@@ -32,9 +32,9 @@ csd0	{
 	sequence	\x1b%/1
 }
 END XLC_CHARSET_DEFINE
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name           NOKHCHI-1
 mb_cur_max		1

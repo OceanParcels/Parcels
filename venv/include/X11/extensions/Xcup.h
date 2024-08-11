@@ -55,4 +55,3 @@ Status XcupStoreColors(
 _XFUNCPROTOEND
 
 #endif /* _XCUP_H_ */
-

@@ -23,7 +23,7 @@ parameters from the public key. Note that unlike \fBgnutls_privkey_sign_hash()\f
 this function accepts a signature algorithm instead of a digest algorithm.
 You can use \fBgnutls_pk_to_sign()\fP to get the appropriate value.
 .SH "RETURNS"
-In case of a verification failure \fBGNUTLS_E_PK_SIG_VERIFY_FAILED\fP 
+In case of a verification failure \fBGNUTLS_E_PK_SIG_VERIFY_FAILED\fP
 is returned, and zero or positive code on success. For known to be insecure
 signatures this function will return \fBGNUTLS_E_INSUFFICIENT_SECURITY\fP unless
 the flag \fBGNUTLS_VERIFY_ALLOW_BROKEN\fP is specified.

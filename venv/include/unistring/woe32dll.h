@@ -24,7 +24,7 @@
 # define LIBUNISTRING_DLL_VARIABLE
 #else
 /* References from outside of libunistring.  */
-# define LIBUNISTRING_DLL_VARIABLE 
+# define LIBUNISTRING_DLL_VARIABLE
 #endif
 
 #endif /* _UNISTRING_WOE32DLL_H */

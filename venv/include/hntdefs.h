@@ -223,4 +223,3 @@
     /* maximum size of the atomic data types */
 #       define MAX_NT_SIZE      16
 #endif /* _HNT_H */
-

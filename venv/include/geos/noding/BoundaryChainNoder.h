@@ -167,5 +167,3 @@ private:
 
 } // namespace geos::noding
 } // namespace geos
-
-

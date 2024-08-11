@@ -175,8 +175,8 @@ just like \f(CWsyslog(3)\fR.
 \&    setlogsock
 .Ve
 .IP "\(bu" 4
-\&\f(CW\*(C`:macros\*(C'\fR exports the symbols corresponding to most of your \f(CWsyslog(3)\fR 
-macros and the \f(CW\*(C`LOG_UPTO()\*(C'\fR and \f(CW\*(C`LOG_MASK()\*(C'\fR functions. 
+\&\f(CW\*(C`:macros\*(C'\fR exports the symbols corresponding to most of your \f(CWsyslog(3)\fR
+macros and the \f(CW\*(C`LOG_UPTO()\*(C'\fR and \f(CW\*(C`LOG_MASK()\*(C'\fR functions.
 See \*(L"\s-1CONSTANTS\*(R"\s0 for the supported constants and their meaning.
 .PP
 By default, \f(CW\*(C`Sys::Syslog\*(C'\fR exports the symbols from the \f(CW\*(C`:standard\*(C'\fR tag.
@@ -186,11 +186,11 @@ By default, \f(CW\*(C`Sys::Syslog\*(C'\fR exports the symbols from the \f(CW\*(C
 .IX Item "openlog($ident, $logopt, $facility)"
 Opens the syslog.
 \&\f(CW$ident\fR is prepended to every message.  \f(CW$logopt\fR contains zero or
-more of the options detailed below.  \f(CW$facility\fR specifies the part 
+more of the options detailed below.  \f(CW$facility\fR specifies the part
 of the system to report about, for example \f(CW\*(C`LOG_USER\*(C'\fR or \f(CW\*(C`LOG_LOCAL0\*(C'\fR:
-see \*(L"Facilities\*(R" for a list of well-known facilities, and your 
-\&\f(CWsyslog(3)\fR documentation for the facilities available in your system. 
-Check \*(L"\s-1SEE ALSO\*(R"\s0 for useful links. Facility can be given as a string 
+see \*(L"Facilities\*(R" for a list of well-known facilities, and your
+\&\f(CWsyslog(3)\fR documentation for the facilities available in your system.
+Check \*(L"\s-1SEE ALSO\*(R"\s0 for useful links. Facility can be given as a string
 or a numeric macro.
 .Sp
 This function will croak if it can't connect to the syslog daemon.
@@ -202,7 +202,7 @@ Note that \f(CW\*(C`openlog()\*(C'\fR now takes three arguments, just like \f(CW
 \&\fBOptions\fR
 .RS 4
 .IP "\(bu" 4
-\&\f(CW\*(C`cons\*(C'\fR \- This option is ignored, since the failover mechanism will drop 
+\&\f(CW\*(C`cons\*(C'\fR \- This option is ignored, since the failover mechanism will drop
 down to the console automatically if all other media fail.
 .IP "\(bu" 4
 \&\f(CW\*(C`ndelay\*(C'\fR \- Open the connection immediately (normally, the connection is
@@ -212,15 +212,15 @@ opened when the first message is logged).
 appended to the message. This can be useful for some syslog daemons.
 Added in \f(CW\*(C`Sys::Syslog\*(C'\fR 0.29.
 .IP "\(bu" 4
-\&\f(CW\*(C`nofatal\*(C'\fR \- When set to true, \f(CW\*(C`openlog()\*(C'\fR and \f(CW\*(C`syslog()\*(C'\fR will only 
-emit warnings instead of dying if the connection to the syslog can't 
+\&\f(CW\*(C`nofatal\*(C'\fR \- When set to true, \f(CW\*(C`openlog()\*(C'\fR and \f(CW\*(C`syslog()\*(C'\fR will only
+emit warnings instead of dying if the connection to the syslog can't
 be established. Added in \f(CW\*(C`Sys::Syslog\*(C'\fR 0.15.
 .IP "\(bu" 4
 \&\f(CW\*(C`nonul\*(C'\fR \- When set to true, no \f(CW\*(C`NUL\*(C'\fR character (\f(CW\*(C`\e0\*(C'\fR) will be
 appended to the message. This can be useful for some syslog daemons.
 Added in \f(CW\*(C`Sys::Syslog\*(C'\fR 0.29.
 .IP "\(bu" 4
-\&\f(CW\*(C`nowait\*(C'\fR \- Don't wait for child processes that may have been created 
+\&\f(CW\*(C`nowait\*(C'\fR \- Don't wait for child processes that may have been created
 while logging the message.  (The \s-1GNU C\s0 library does not create a child
 process, so this option has no effect on Linux.)
 .IP "\(bu" 4
@@ -255,14 +255,14 @@ If \f(CW$priority\fR permits, logs \f(CW$message\fR or \f(CW\*(C`sprintf($format
 with the addition that \f(CW%m\fR in \f(CW$message\fR or \f(CW$format\fR is replaced with
 \&\f(CW"$!"\fR (the latest error message).
 .Sp
-\&\f(CW$priority\fR can specify a level, or a level and a facility.  Levels and 
+\&\f(CW$priority\fR can specify a level, or a level and a facility.  Levels and
 facilities can be given as strings or as macros.  When using the \f(CW\*(C`eventlog\*(C'\fR
-mechanism, priorities \f(CW\*(C`DEBUG\*(C'\fR and \f(CW\*(C`INFO\*(C'\fR are mapped to event type 
-\&\f(CW\*(C`informational\*(C'\fR, \f(CW\*(C`NOTICE\*(C'\fR and \f(CW\*(C`WARNING\*(C'\fR to \f(CW\*(C`warning\*(C'\fR and \f(CW\*(C`ERR\*(C'\fR to 
+mechanism, priorities \f(CW\*(C`DEBUG\*(C'\fR and \f(CW\*(C`INFO\*(C'\fR are mapped to event type
+\&\f(CW\*(C`informational\*(C'\fR, \f(CW\*(C`NOTICE\*(C'\fR and \f(CW\*(C`WARNING\*(C'\fR to \f(CW\*(C`warning\*(C'\fR and \f(CW\*(C`ERR\*(C'\fR to
 \&\f(CW\*(C`EMERG\*(C'\fR to \f(CW\*(C`error\*(C'\fR.
 .Sp
-If you didn't use \f(CW\*(C`openlog()\*(C'\fR before using \f(CW\*(C`syslog()\*(C'\fR, \f(CW\*(C`syslog()\*(C'\fR will 
-try to guess the \f(CW$ident\fR by extracting the shortest prefix of 
+If you didn't use \f(CW\*(C`openlog()\*(C'\fR before using \f(CW\*(C`syslog()\*(C'\fR, \f(CW\*(C`syslog()\*(C'\fR will
+try to guess the \f(CW$ident\fR by extracting the shortest prefix of
 \&\f(CW$format\fR that ends in a \f(CW":"\fR.
 .Sp
 \&\fBExamples\fR
@@ -279,9 +279,9 @@ try to guess the \f(CW$ident\fR by extracting the shortest prefix of
 .RS 4
 .IP "\fBNote\fR" 4
 .IX Item "Note"
-\&\f(CW\*(C`Sys::Syslog\*(C'\fR version v0.07 and older passed the \f(CW$message\fR as the 
+\&\f(CW\*(C`Sys::Syslog\*(C'\fR version v0.07 and older passed the \f(CW$message\fR as the
 formatting string to \f(CW\*(C`sprintf()\*(C'\fR even when no formatting arguments
-were provided.  If the code calling \f(CW\*(C`syslog()\*(C'\fR might execute with 
+were provided.  If the code calling \f(CW\*(C`syslog()\*(C'\fR might execute with
 older versions of this module, make sure to call the function as
 \&\f(CW\*(C`syslog($priority, "%s", $message)\*(C'\fR instead of \f(CW\*(C`syslog($priority,
 $message)\*(C'\fR.  This protects against hostile formatting sequences that
@@ -291,10 +291,10 @@ might show up if \f(CW$message\fR contains tainted data.
 .RE
 .IP "\fBsetlogmask($mask_priority)\fR" 4
 .IX Item "setlogmask($mask_priority)"
-Sets the log mask for the current process to \f(CW$mask_priority\fR and 
-returns the old mask.  If the mask argument is 0, the current log mask 
-is not modified.  See \*(L"Levels\*(R" for the list of available levels. 
-You can use the \f(CW\*(C`LOG_UPTO()\*(C'\fR function to allow all levels up to a 
+Sets the log mask for the current process to \f(CW$mask_priority\fR and
+returns the old mask.  If the mask argument is 0, the current log mask
+is not modified.  See \*(L"Levels\*(R" for the list of available levels.
+You can use the \f(CW\*(C`LOG_UPTO()\*(C'\fR function to allow all levels up to a
 given priority (but it only accept the numeric macros as arguments).
 .Sp
 \&\fBExamples\fR
@@ -357,7 +357,7 @@ Defaults to standard Unix location, or \f(CW\*(C`_PATH_LOG\*(C'\fR.
 in seconds.  Defaults to 0 on all systems except Mac\ \s-1OS\s0\ X where it
 is set to 0.25 sec.
 .IP "\(bu" 4
-\&\f(CW\*(C`host\*(C'\fR \- sets the hostname to send the messages to.  Defaults to 
+\&\f(CW\*(C`host\*(C'\fR \- sets the hostname to send the messages to.  Defaults to
 the local host.
 .IP "\(bu" 4
 \&\f(CW\*(C`port\*(C'\fR \- sets the \s-1TCP\s0 or \s-1UDP\s0 port to connect to.  Defaults to the
@@ -370,19 +370,19 @@ The available mechanisms are:
 \&\f(CW"native"\fR \- use the native C functions from your \f(CWsyslog(3)\fR library
 (added in \f(CW\*(C`Sys::Syslog\*(C'\fR 0.15).
 .IP "\(bu" 4
-\&\f(CW"eventlog"\fR \- send messages to the Win32 events logger (Win32 only; 
+\&\f(CW"eventlog"\fR \- send messages to the Win32 events logger (Win32 only;
 added in \f(CW\*(C`Sys::Syslog\*(C'\fR 0.19).
 .IP "\(bu" 4
-\&\f(CW"tcp"\fR \- connect to a \s-1TCP\s0 socket, on the \f(CW\*(C`syslog/tcp\*(C'\fR or \f(CW\*(C`syslogng/tcp\*(C'\fR 
+\&\f(CW"tcp"\fR \- connect to a \s-1TCP\s0 socket, on the \f(CW\*(C`syslog/tcp\*(C'\fR or \f(CW\*(C`syslogng/tcp\*(C'\fR
 service.  See also the \f(CW\*(C`host\*(C'\fR, \f(CW\*(C`port\*(C'\fR and \f(CW\*(C`timeout\*(C'\fR options.
 .IP "\(bu" 4
 \&\f(CW"udp"\fR \- connect to a \s-1UDP\s0 socket, on the \f(CW\*(C`syslog/udp\*(C'\fR service.
 See also the \f(CW\*(C`host\*(C'\fR, \f(CW\*(C`port\*(C'\fR and \f(CW\*(C`timeout\*(C'\fR options.
 .IP "\(bu" 4
-\&\f(CW"inet"\fR \- connect to an \s-1INET\s0 socket, either \s-1TCP\s0 or \s-1UDP,\s0 tried in that 
+\&\f(CW"inet"\fR \- connect to an \s-1INET\s0 socket, either \s-1TCP\s0 or \s-1UDP,\s0 tried in that
 order.  See also the \f(CW\*(C`host\*(C'\fR, \f(CW\*(C`port\*(C'\fR and \f(CW\*(C`timeout\*(C'\fR options.
 .IP "\(bu" 4
-\&\f(CW"unix"\fR \- connect to a \s-1UNIX\s0 domain socket (in some systems a character 
+\&\f(CW"unix"\fR \- connect to a \s-1UNIX\s0 domain socket (in some systems a character
 special device).  The name of that socket is given by the \f(CW\*(C`path\*(C'\fR option
 or, if omitted, the value returned by the \f(CW\*(C`_PATH_LOG\*(C'\fR macro (if your
 system defines it), \fI/dev/log\fR or \fI/dev/conslog\fR, whichever is writable.
@@ -397,14 +397,14 @@ or, if omitted, to the value returned by the \f(CW\*(C`_PATH_LOG\*(C'\fR macro (
 system defines it), or \fI/dev/log\fR (added in \f(CW\*(C`Sys::Syslog\*(C'\fR 0.21).
 HP-UX is a system which uses such a named pipe.
 .IP "\(bu" 4
-\&\f(CW"console"\fR \- send messages directly to the console, as for the \f(CW"cons"\fR 
+\&\f(CW"console"\fR \- send messages directly to the console, as for the \f(CW"cons"\fR
 option of \f(CW\*(C`openlog()\*(C'\fR.
 .RE
 .RS 4
 .Sp
-The default is to try \f(CW\*(C`native\*(C'\fR, \f(CW\*(C`tcp\*(C'\fR, \f(CW\*(C`udp\*(C'\fR, \f(CW\*(C`unix\*(C'\fR, \f(CW\*(C`pipe\*(C'\fR, \f(CW\*(C`stream\*(C'\fR, 
+The default is to try \f(CW\*(C`native\*(C'\fR, \f(CW\*(C`tcp\*(C'\fR, \f(CW\*(C`udp\*(C'\fR, \f(CW\*(C`unix\*(C'\fR, \f(CW\*(C`pipe\*(C'\fR, \f(CW\*(C`stream\*(C'\fR,
 \&\f(CW\*(C`console\*(C'\fR.
-Under systems with the Win32 \s-1API,\s0 \f(CW\*(C`eventlog\*(C'\fR will be added as the first 
+Under systems with the Win32 \s-1API,\s0 \f(CW\*(C`eventlog\*(C'\fR will be added as the first
 mechanism to try if \f(CW\*(C`Win32::EventLog\*(C'\fR is available.
 .Sp
 Giving an invalid value for \f(CW$sock_type\fR will \f(CW\*(C`croak\*(C'\fR.
@@ -436,12 +436,12 @@ Try the native, \s-1UDP\s0 socket then \s-1UNIX\s0 domain socket mechanisms:
 .Ve
 .IP "\fBNote\fR" 4
 .IX Item "Note"
-Now that the \*(L"native\*(R" mechanism is supported by \f(CW\*(C`Sys::Syslog\*(C'\fR and selected 
-by default, the use of the \f(CW\*(C`setlogsock()\*(C'\fR function is discouraged because 
-other mechanisms are less portable across operating systems.  Authors of 
-modules and programs that use this function, especially its cargo-cult form 
-\&\f(CW\*(C`setlogsock("unix")\*(C'\fR, are advised to remove any occurrence of it unless they 
-specifically want to use a given mechanism (like \s-1TCP\s0 or \s-1UDP\s0 to connect to 
+Now that the \*(L"native\*(R" mechanism is supported by \f(CW\*(C`Sys::Syslog\*(C'\fR and selected
+by default, the use of the \f(CW\*(C`setlogsock()\*(C'\fR function is discouraged because
+other mechanisms are less portable across operating systems.  Authors of
+modules and programs that use this function, especially its cargo-cult form
+\&\f(CW\*(C`setlogsock("unix")\*(C'\fR, are advised to remove any occurrence of it unless they
+specifically want to use a given mechanism (like \s-1TCP\s0 or \s-1UDP\s0 to connect to
 a remote host).
 .RE
 .RS 4
@@ -589,7 +589,7 @@ falls back to \f(CW\*(C`LOG_AUTH\*(C'\fR
 .ie n .IP """eventlog passed to setlogsock, but no Win32 API available""" 4
 .el .IP "\f(CWeventlog passed to setlogsock, but no Win32 API available\fR" 4
 .IX Item "eventlog passed to setlogsock, but no Win32 API available"
-\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use the Win32 event logger but the 
+\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use the Win32 event logger but the
 operating system running the program isn't Win32 or does not provides Win32
 compatible facilities.
 .ie n .IP """no connection to syslog available""" 4
@@ -599,17 +599,17 @@ compatible facilities.
 .ie n .IP """stream passed to setlogsock, but %s is not writable""" 4
 .el .IP "\f(CWstream passed to setlogsock, but %s is not writable\fR" 4
 .IX Item "stream passed to setlogsock, but %s is not writable"
-\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use a stream socket, but the given 
+\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use a stream socket, but the given
 path is not writable.
 .ie n .IP """stream passed to setlogsock, but could not find any device""" 4
 .el .IP "\f(CWstream passed to setlogsock, but could not find any device\fR" 4
 .IX Item "stream passed to setlogsock, but could not find any device"
-\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use a stream socket, but didn't 
+\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use a stream socket, but didn't
 provide a path, and \f(CW\*(C`Sys::Syslog\*(C'\fR was unable to find an appropriate one.
 .ie n .IP """tcp passed to setlogsock, but tcp service unavailable""" 4
 .el .IP "\f(CWtcp passed to setlogsock, but tcp service unavailable\fR" 4
 .IX Item "tcp passed to setlogsock, but tcp service unavailable"
-\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use a \s-1TCP\s0 socket, but the service 
+\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use a \s-1TCP\s0 socket, but the service
 is not available on the system.
 .ie n .IP """syslog: expecting argument %s""" 4
 .el .IP "\f(CWsyslog: expecting argument %s\fR" 4
@@ -634,12 +634,12 @@ is not available on the system.
 .ie n .IP """udp passed to setlogsock, but udp service unavailable""" 4
 .el .IP "\f(CWudp passed to setlogsock, but udp service unavailable\fR" 4
 .IX Item "udp passed to setlogsock, but udp service unavailable"
-\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use a \s-1UDP\s0 socket, but the service 
+\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use a \s-1UDP\s0 socket, but the service
 is not available on the system.
 .ie n .IP """unix passed to setlogsock, but path not available""" 4
 .el .IP "\f(CWunix passed to setlogsock, but path not available\fR" 4
 .IX Item "unix passed to setlogsock, but path not available"
-\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use a \s-1UNIX\s0 socket, but \f(CW\*(C`Sys::Syslog\*(C'\fR 
+\&\fB(W)\fR You asked \f(CW\*(C`setlogsock()\*(C'\fR to use a \s-1UNIX\s0 socket, but \f(CW\*(C`Sys::Syslog\*(C'\fR
 was unable to find an appropriate an appropriate device.
 .SH "HISTORY"
 .IX Header "HISTORY"
@@ -713,7 +713,7 @@ Stratus \s-1VOS 15.1,\s0
 .SS "RFCs"
 .IX Subsection "RFCs"
 \&\fI\s-1RFC 3164\s0 \- The \s-1BSD\s0 syslog Protocol\fR, <http://www.faqs.org/rfcs/rfc3164.html>
-\&\*(-- Please note that this is an informational \s-1RFC,\s0 and therefore does not 
+\&\*(-- Please note that this is an informational \s-1RFC,\s0 and therefore does not
 specify a standard of any kind.
 .PP
 \&\fI\s-1RFC 3195\s0 \- Reliable Delivery for syslog\fR, <http://www.faqs.org/rfcs/rfc3195.html>
@@ -730,7 +730,7 @@ Tom Christiansen <\fItchrist (at) perl.com\fR> and Larry Wall
 <\fIlarry (at) wall.org\fR>.
 .PP
 \&\s-1UNIX\s0 domain sockets added by Sean Robinson
-<\fIrobinson_s (at) sc.maricopa.edu\fR> with support from Tim Bunce 
+<\fIrobinson_s (at) sc.maricopa.edu\fR> with support from Tim Bunce
 <\fITim.Bunce (at) ig.co.uk\fR> and the \f(CW\*(C`perl5\-porters\*(C'\fR mailing list.
 .PP
 Dependency on \fIsyslog.ph\fR replaced with \s-1XS\s0 code by Tom Hughes
@@ -741,16 +741,16 @@ Code for \f(CW\*(C`constant()\*(C'\fRs regenerated by Nicholas Clark <\fInick (a
 Failover to different communication modes by Nick Williams
 <\fINick.Williams (at) morganstanley.com\fR>.
 .PP
-Extracted from core distribution for publishing on the \s-1CPAN\s0 by 
+Extracted from core distribution for publishing on the \s-1CPAN\s0 by
 Se\*'bastien Aperghis-Tramoni <sebastien (at) aperghis.net>.
 .PP
-\&\s-1XS\s0 code for using native C functions borrowed from \f(CW\*(C`Unix::Syslog\*(C'\fR, 
+\&\s-1XS\s0 code for using native C functions borrowed from \f(CW\*(C`Unix::Syslog\*(C'\fR,
 written by Marcus Harnisch <\fImarcus.harnisch (at) gmx.net\fR>.
 .PP
-Yves Orton suggested and helped for making \f(CW\*(C`Sys::Syslog\*(C'\fR use the native 
+Yves Orton suggested and helped for making \f(CW\*(C`Sys::Syslog\*(C'\fR use the native
 event logger under Win32 systems.
 .PP
-Jerry D. Hedden and Reini Urban provided greatly appreciated help to 
+Jerry D. Hedden and Reini Urban provided greatly appreciated help to
 debug and polish \f(CW\*(C`Sys::Syslog\*(C'\fR under Cygwin.
 .SH "BUGS"
 .IX Header "BUGS"

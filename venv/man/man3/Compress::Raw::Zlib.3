@@ -437,18 +437,18 @@ input, deflates it and writes it to standard output.
 \&    while (<>)
 \&    {
 \&        $status = $x\->deflate($_, $output) ;
-\&    
+\&
 \&        $status == Z_OK
 \&            or die "deflation failed\en" ;
-\&    
+\&
 \&        print $output ;
 \&    }
-\&    
+\&
 \&    $status = $x\->flush($output) ;
-\&    
+\&
 \&    $status == Z_OK
 \&        or die "deflation failed\en" ;
-\&    
+\&
 \&    print $output ;
 .Ve
 .SH "Compress::Raw::Zlib::Inflate"
@@ -685,26 +685,26 @@ Here is an example of using \f(CW\*(C`inflate\*(C'\fR.
 .Vb 2
 \&    use strict ;
 \&    use warnings ;
-\&    
+\&
 \&    use Compress::Raw::Zlib;
-\&    
+\&
 \&    my $x = new Compress::Raw::Zlib::Inflate()
 \&       or die "Cannot create a inflation stream\en" ;
-\&    
+\&
 \&    my $input = \*(Aq\*(Aq ;
 \&    binmode STDIN;
 \&    binmode STDOUT;
-\&    
+\&
 \&    my ($output, $status) ;
 \&    while (read(STDIN, $input, 4096))
 \&    {
 \&        $status = $x\->inflate($input, $output) ;
-\&    
+\&
 \&        print $output ;
-\&    
+\&
 \&        last if $status != Z_OK ;
 \&    }
-\&    
+\&
 \&    die "inflation failed\en"
 \&        unless $status == Z_STREAM_END ;
 .Ve
@@ -720,16 +720,16 @@ simpler.
 .Vb 2
 \&    use strict ;
 \&    use warnings ;
-\&    
+\&
 \&    use Compress::Raw::Zlib;
-\&    
+\&
 \&    my $x = new Compress::Raw::Zlib::Inflate(LimitOutput => 1)
 \&       or die "Cannot create a inflation stream\en" ;
-\&    
+\&
 \&    my $input = \*(Aq\*(Aq ;
 \&    binmode STDIN;
 \&    binmode STDOUT;
-\&    
+\&
 \&    my ($output, $status) ;
 \&
 \&  OUTER:
@@ -746,7 +746,7 @@ simpler.
 \&        }
 \&        while ($status == Z_OK && length $input);
 \&    }
-\&    
+\&
 \&    die "inflation failed\en"
 \&        unless $status == Z_STREAM_END ;
 .Ve
@@ -805,24 +805,24 @@ source and uncompressing as you go the code will look something like this
 .Vb 2
 \&    use strict ;
 \&    use warnings ;
-\&    
+\&
 \&    use Compress::Raw::Zlib;
-\&    
+\&
 \&    my $x = new Compress::Raw::Zlib::Inflate()
 \&       or die "Cannot create a inflation stream\en" ;
-\&    
+\&
 \&    my $input = \*(Aq\*(Aq ;
-\&    
+\&
 \&    my ($output, $status) ;
 \&    while (read(STDIN, $input, 4096))
 \&    {
 \&        $status = $x\->inflate($input, $output) ;
-\&    
+\&
 \&        print $output ;
-\&    
+\&
 \&        last if $status != Z_OK ;
 \&    }
-\&    
+\&
 \&    die "inflation failed\en"
 \&        unless $status == Z_STREAM_END ;
 .Ve
@@ -864,16 +864,16 @@ Below is typical code that shows how to use \f(CW\*(C`LimitOutput\*(C'\fR.
 .Vb 2
 \&    use strict ;
 \&    use warnings ;
-\&    
+\&
 \&    use Compress::Raw::Zlib;
-\&    
+\&
 \&    my $x = new Compress::Raw::Zlib::Inflate(LimitOutput => 1)
 \&       or die "Cannot create a inflation stream\en" ;
-\&    
+\&
 \&    my $input = \*(Aq\*(Aq ;
 \&    binmode STDIN;
 \&    binmode STDOUT;
-\&    
+\&
 \&    my ($output, $status) ;
 \&
 \&  OUTER:
@@ -890,7 +890,7 @@ Below is typical code that shows how to use \f(CW\*(C`LimitOutput\*(C'\fR.
 \&        }
 \&        while ($status == Z_OK && length $input);
 \&    }
-\&    
+\&
 \&    die "inflation failed\en"
 \&        unless $status == Z_STREAM_END ;
 .Ve
@@ -1023,7 +1023,7 @@ All the \fIzlib\fR constants are automatically imported when you make use
 of \fICompress::Raw::Zlib\fR.
 .SH "SUPPORT"
 .IX Header "SUPPORT"
-General feedback/questions/bug reports should be sent to 
+General feedback/questions/bug reports should be sent to
 <https://github.com/pmqs/Compress\-Raw\-Zlib/issues> (preferred) or
 <https://rt.cpan.org/Public/Dist/Display.html?Name=Compress\-Raw\-Zlib>.
 .SH "SEE ALSO"

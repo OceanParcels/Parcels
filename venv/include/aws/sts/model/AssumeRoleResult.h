@@ -47,7 +47,7 @@ namespace Model
      * <p>The temporary security credentials, which include an access key ID, a secret
      * access key, and a security (or session) token.</p>  <p>The size of the
      * security token that STS API operations return is not fixed. We strongly
-     * recommend that you make no assumptions about the maximum size.</p> 
+     * recommend that you make no assumptions about the maximum size.</p>
      */
     inline const Credentials& GetCredentials() const{ return m_credentials; }
     inline void SetCredentials(const Credentials& value) { m_credentials = value; }
@@ -111,7 +111,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const ResponseMetadata& GetResponseMetadata() const{ return m_responseMetadata; }
     inline void SetResponseMetadata(const ResponseMetadata& value) { m_responseMetadata = value; }
     inline void SetResponseMetadata(ResponseMetadata&& value) { m_responseMetadata = std::move(value); }

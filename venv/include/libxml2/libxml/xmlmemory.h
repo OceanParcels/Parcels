@@ -222,4 +222,3 @@ XMLPUBFUN char *
 #endif /* __cplusplus */
 
 #endif  /* __DEBUG_MEMORY_ALLOC__ */
-

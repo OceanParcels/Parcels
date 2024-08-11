@@ -136,4 +136,3 @@ public:
 } // geos::algorithm::hull
 } // geos::algorithm
 } // geos
-

@@ -93,7 +93,7 @@ namespace Model
      * parameter.</p> <p>Based on the valid value you choose, Config runs evaluations
      * once for each valid value. For example, if you choose <code>Three_Hours</code>,
      * Config runs evaluations once every three hours. In this case,
-     * <code>Three_Hours</code> is the frequency of this rule. </p> 
+     * <code>Three_Hours</code> is the frequency of this rule. </p>
      */
     inline const MaximumExecutionFrequency& GetMaximumExecutionFrequency() const{ return m_maximumExecutionFrequency; }
     inline bool MaximumExecutionFrequencyHasBeenSet() const { return m_maximumExecutionFrequencyHasBeenSet; }

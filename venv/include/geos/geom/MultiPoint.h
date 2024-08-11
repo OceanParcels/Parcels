@@ -142,4 +142,3 @@ protected:
 
 } // namespace geos::geom
 } // namespace geos
-

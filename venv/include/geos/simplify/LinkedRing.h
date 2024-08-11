@@ -66,4 +66,3 @@ class LinkedRing
 
 } // geos::simplify
 } // geos
-

@@ -36,4 +36,3 @@ linkgit:gittutorial-2[7]::
 
 linkgit:gitworkflows[7]::
 	An overview of recommended workflows with Git.
-

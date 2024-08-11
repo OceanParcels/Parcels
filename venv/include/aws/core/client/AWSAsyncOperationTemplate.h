@@ -187,5 +187,3 @@ namespace Client
     }
 } // namespace Client
 } // namespace Aws
-
-

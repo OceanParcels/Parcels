@@ -55,4 +55,3 @@ public:
 } // namespace geos::operation::polygonize
 } // namespace geos::operation
 } // namespace geos
-

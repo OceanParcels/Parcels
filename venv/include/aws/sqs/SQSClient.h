@@ -299,7 +299,7 @@ namespace SQS
          * creating a queue with the same name.</p> </li> </ul> <p>To successfully create a
          * new queue, you must provide a queue name that adheres to the <a
          * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/limits-queues.html">limits
-         * related to queues</a> and is unique within the scope of your queues.</p> 
+         * related to queues</a> and is unique within the scope of your queues.</p>
          * <p>After you create a queue, you must wait at least one second after the queue
          * is created to be able to use the queue.</p>  <p>To get the queue URL, use
          * the <code> <a>GetQueueUrl</a> </code> action. <code> <a>GetQueueUrl</a> </code>
@@ -419,7 +419,7 @@ namespace SQS
          * during the 60 seconds might succeed. For example, a <code> <a>SendMessage</a>
          * </code> request might succeed, but after 60 seconds the queue and the message
          * you sent no longer exist.</p> <p>When you delete a queue, you must wait at least
-         * 60 seconds before creating a queue with the same name.</p> 
+         * 60 seconds before creating a queue with the same name.</p>
          * <p>Cross-account permissions don't apply to this action. For more information,
          * see <a
          * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-customer-managed-policy-examples.html#grant-cross-account-permissions-to-role-and-user-name">Grant
@@ -586,7 +586,7 @@ namespace SQS
          * <p>List all cost allocation tags added to the specified Amazon SQS queue. For an
          * overview, see <a
          * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-tags.html">Tagging
-         * Your Amazon SQS Queues</a> in the <i>Amazon SQS Developer Guide</i>.</p> 
+         * Your Amazon SQS Queues</a> in the <i>Amazon SQS Developer Guide</i>.</p>
          * <p>Cross-account permissions don't apply to this action. For more information,
          * see <a
          * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-customer-managed-policy-examples.html#grant-cross-account-permissions-to-role-and-user-name">Grant
@@ -626,7 +626,7 @@ namespace SQS
          * results. If you set <code>MaxResults</code> and there are additional results to
          * display, the response includes a value for <code>NextToken</code>. Use
          * <code>NextToken</code> as a parameter in your next request to
-         * <code>listQueues</code> to receive the next page of results. </p> 
+         * <code>listQueues</code> to receive the next page of results. </p>
          * <p>Cross-account permissions don't apply to this action. For more information,
          * see <a
          * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-customer-managed-policy-examples.html#grant-cross-account-permissions-to-role-and-user-name">Grant
@@ -954,7 +954,7 @@ namespace SQS
          * with a key identical to that of an existing tag overwrites the existing tag.</p>
          * </li> </ul> <p>For a full list of tag restrictions, see <a
          * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-limits.html#limits-queues">Quotas
-         * related to queues</a> in the <i>Amazon SQS Developer Guide</i>.</p> 
+         * related to queues</a> in the <i>Amazon SQS Developer Guide</i>.</p>
          * <p>Cross-account permissions don't apply to this action. For more information,
          * see <a
          * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-customer-managed-policy-examples.html#grant-cross-account-permissions-to-role-and-user-name">Grant
@@ -987,7 +987,7 @@ namespace SQS
          * <p>Remove cost allocation tags from the specified Amazon SQS queue. For an
          * overview, see <a
          * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-tags.html">Tagging
-         * Your Amazon SQS Queues</a> in the <i>Amazon SQS Developer Guide</i>.</p> 
+         * Your Amazon SQS Queues</a> in the <i>Amazon SQS Developer Guide</i>.</p>
          * <p>Cross-account permissions don't apply to this action. For more information,
          * see <a
          * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-customer-managed-policy-examples.html#grant-cross-account-permissions-to-role-and-user-name">Grant

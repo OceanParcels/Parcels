@@ -124,7 +124,7 @@ namespace Model
      * security implications: an attacker could use a leaked token to access your AWS
      * resources for the token's duration.</p>  <p>Please provide for a small
      * grace period, usually no more than 5 minutes, to account for clock skew.</p>
-     * 
+     *
      */
     inline long long GetTokenDuration() const{ return m_tokenDuration; }
     inline bool TokenDurationHasBeenSet() const { return m_tokenDurationHasBeenSet; }

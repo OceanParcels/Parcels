@@ -49,4 +49,3 @@ namespace WKBConstants {
 
 } // namespace geos::io
 } // namespace geos
-

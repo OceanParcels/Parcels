@@ -188,6 +188,3 @@ protected:
 
 } // namespace geos::algorithm
 } // namespace geos
-
-
-

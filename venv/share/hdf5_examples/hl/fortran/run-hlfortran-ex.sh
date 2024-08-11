@@ -81,4 +81,3 @@ rm *.h5
 echo
 
 exit $EXIT_VALUE
-

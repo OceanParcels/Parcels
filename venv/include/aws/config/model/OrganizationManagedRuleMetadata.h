@@ -92,10 +92,10 @@ namespace Model
     ///@{
     /**
      * <p>The maximum frequency with which Config runs evaluations for a rule. This is
-     * for an Config managed rule that is triggered at a periodic frequency.</p> 
+     * for an Config managed rule that is triggered at a periodic frequency.</p>
      * <p>By default, rules with a periodic trigger are evaluated every 24 hours. To
      * change the frequency, specify a valid value for the
-     * <code>MaximumExecutionFrequency</code> parameter.</p> 
+     * <code>MaximumExecutionFrequency</code> parameter.</p>
      */
     inline const MaximumExecutionFrequency& GetMaximumExecutionFrequency() const{ return m_maximumExecutionFrequency; }
     inline bool MaximumExecutionFrequencyHasBeenSet() const { return m_maximumExecutionFrequencyHasBeenSet; }

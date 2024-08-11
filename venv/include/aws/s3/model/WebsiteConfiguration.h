@@ -70,7 +70,7 @@ namespace Model
     /**
      * <p>The redirect behavior for every request to this bucket's website
      * endpoint.</p>  <p>If you specify this property, you can't specify any
-     * other property.</p> 
+     * other property.</p>
      */
     inline const RedirectAllRequestsTo& GetRedirectAllRequestsTo() const{ return m_redirectAllRequestsTo; }
     inline bool RedirectAllRequestsToHasBeenSet() const { return m_redirectAllRequestsToHasBeenSet; }

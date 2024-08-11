@@ -27,4 +27,3 @@ linkgit:git-send-email[1]::
 
 linkgit:git-svn[1]::
 	Bidirectional operation between a Subversion repository and Git.
-

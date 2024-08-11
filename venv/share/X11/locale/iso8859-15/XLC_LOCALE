@@ -4,13 +4,13 @@
 #  This file is provided as preliminary support for the Latin-9
 #  (a.k.a. Latin-0) character set so that Europeans who want
 #  the Euro currency character can do so.
-# 
-# 
-# 
+#
+#
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
-# 	fs0 class 
+# 	fs0 class
 fs0	{
 	charset	{
 		name		ISO8859-1:GL
@@ -21,7 +21,7 @@ fs0	{
 		vertical_rotate	all
 	}
 }
-# 	fs1 class 
+# 	fs1 class
 fs1	{
 	charset	{
 		name		ISO8859-15:GR
@@ -31,9 +31,9 @@ fs1	{
 	}
 }
 END XLC_FONTSET
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name		ISO8859-15
 mb_cur_max		1

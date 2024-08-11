@@ -135,4 +135,3 @@ std::ostream &operator<<(std::ostream &os, const orgQhull::QhullPoint::PrintPoin
 std::ostream &operator<<(std::ostream &os, const orgQhull::QhullPoint &p);
 
 #endif // QHPOINT_H
-

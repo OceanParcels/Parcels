@@ -99,4 +99,3 @@ toString(const std::string &s)
 }//namespace QTest
 
 #endif //ROADTEST_H
-

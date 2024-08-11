@@ -52,7 +52,7 @@ namespace Model
      * <p>The response will also include the <code>x-amz-abort-rule-id</code> header
      * that will provide the ID of the lifecycle configuration rule that defines this
      * action.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::Utils::DateTime& GetAbortDate() const{ return m_abortDate; }
     inline void SetAbortDate(const Aws::Utils::DateTime& value) { m_abortDate = value; }
@@ -66,7 +66,7 @@ namespace Model
      * <p>This header is returned along with the <code>x-amz-abort-date</code> header.
      * It identifies applicable lifecycle configuration rule that defines the action to
      * abort incomplete multipart uploads.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::String& GetAbortRuleId() const{ return m_abortRuleId; }
     inline void SetAbortRuleId(const Aws::String& value) { m_abortRuleId = value; }
@@ -192,7 +192,7 @@ namespace Model
      * created. If multipart upload is initiated by an IAM user, this element provides
      * the parent account ID and display name.</p>  <p> <b>Directory buckets</b>
      * - The bucket owner is returned as the object owner for all the parts.</p>
-     * 
+     *
      */
     inline const Owner& GetOwner() const{ return m_owner; }
     inline void SetOwner(const Owner& value) { m_owner = value; }
@@ -205,7 +205,7 @@ namespace Model
     /**
      * <p>The class of storage used to store the uploaded object.</p>  <p>
      * <b>Directory buckets</b> - Only the S3 Express One Zone storage class is
-     * supported by directory buckets to store objects.</p> 
+     * supported by directory buckets to store objects.</p>
      */
     inline const StorageClass& GetStorageClass() const{ return m_storageClass; }
     inline void SetStorageClass(const StorageClass& value) { m_storageClass = value; }
@@ -215,7 +215,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestCharged& GetRequestCharged() const{ return m_requestCharged; }
     inline void SetRequestCharged(const RequestCharged& value) { m_requestCharged = value; }
     inline void SetRequestCharged(RequestCharged&& value) { m_requestCharged = std::move(value); }
@@ -235,7 +235,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

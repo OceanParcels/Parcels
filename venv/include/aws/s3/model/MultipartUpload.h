@@ -87,7 +87,7 @@ namespace Model
     /**
      * <p>The class of storage used to store the object.</p>  <p> <b>Directory
      * buckets</b> - Only the S3 Express One Zone storage class is supported by
-     * directory buckets to store objects.</p> 
+     * directory buckets to store objects.</p>
      */
     inline const StorageClass& GetStorageClass() const{ return m_storageClass; }
     inline bool StorageClassHasBeenSet() const { return m_storageClassHasBeenSet; }
@@ -101,7 +101,7 @@ namespace Model
     /**
      * <p>Specifies the owner of the object that is part of the multipart upload. </p>
      *  <p> <b>Directory buckets</b> - The bucket owner is returned as the object
-     * owner for all the objects.</p> 
+     * owner for all the objects.</p>
      */
     inline const Owner& GetOwner() const{ return m_owner; }
     inline bool OwnerHasBeenSet() const { return m_ownerHasBeenSet; }

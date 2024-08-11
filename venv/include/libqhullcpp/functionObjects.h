@@ -64,4 +64,3 @@ public:
 
 
 #endif //QHFUNCTIONOBJECTS_H
-

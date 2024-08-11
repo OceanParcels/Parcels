@@ -24,7 +24,7 @@ namespace Model
 {
 
   /**
-   * <p>Details about the fields such as name of the field.</p><p><h3>See Also:</h3> 
+   * <p>Details about the fields such as name of the field.</p><p><h3>See Also:</h3>
    * <a href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/FieldInfo">AWS
    * API Reference</a></p>
    */

@@ -50,4 +50,3 @@ private:
 
 } // namespace io
 } // namespace geos
-

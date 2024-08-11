@@ -52,4 +52,3 @@ private:
 } // namespace geos:operation:relate
 } // namespace geos:operation
 } // namespace geos
-

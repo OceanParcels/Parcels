@@ -96,7 +96,7 @@ qhull(1)                                                 qhull(1)
         - ACKNOWLEGEMENTS
 
        This man page briefly describes all Qhull options.  Please
-       report  any  mismatches  with  Qhull's  html  manual  
+       report  any  mismatches  with  Qhull's  html  manual
        (html/index.htm).
 
 
@@ -195,8 +195,8 @@ OPTIONS
        Options can be in any order.  Capitalized options take  an
        argument  (except  'PG'  and 'F' options).  Single letters
        are used for output formats and precision constants.   The
-       other options are grouped into menus: output formats ('F'), 
-       Geomview output ('G'), printing  ('P'),  Qhull control ('Q'), 
+       other options are grouped into menus: output formats ('F'),
+       Geomview output ('G'), printing  ('P'),  Qhull control ('Q'),
 
 
 
@@ -312,9 +312,9 @@ qhull(1)                                                 qhull(1)
               trum.  Its index is greater than the indices of the
               input points.  Each base corresponds to  a  simpli-
               cial  ridge  between two facets.  To print the ver-
-              tices without triangulation, use option 'Fv'.  To 
+              tices without triangulation, use option 'Fv'.  To
               print the centrum coordinates, use option 'Ft'. The
-              centrum indices for option 'i' are one more than 
+              centrum indices for option 'i' are one more than
               the centrum indices for option 'Ft'.
 
 
@@ -546,10 +546,10 @@ qhull(1)                                                 qhull(1)
 
 
               last float is the offset.  The hyperplane  is  ori-
-              ented  toward 'QVn' (if defined), or the first input 
-              site of the pair.  Use 'Tv' to verify that the 
-              hyperplanes are perpendicular  bisectors.   Use  
-              'Fo'  for   unbounded regions,  and 'Fv' for the 
+              ented  toward 'QVn' (if defined), or the first input
+              site of the pair.  Use 'Tv' to verify that the
+              hyperplanes are perpendicular  bisectors.   Use
+              'Fo'  for   unbounded regions,  and 'Fv' for the
               corresponding Voronoi vertices.
 
        FI     Print facet identifiers.
@@ -592,10 +592,10 @@ qhull(1)                                                 qhull(1)
               adjacent  input  sites,  the  next d floats are the
               normalized coefficients for the hyperplane, and the
               last  float  is the offset.  The hyperplane is ori-
-              ented  toward 'QVn' (if defined), or the first input 
-              site of the pair.  Use 'Tv' to verify that the 
-              hyperplanes are perpendicular  bisectors.   Use  
-              'Fi'  for bounded regions,  and 'Fv' for the 
+              ented  toward 'QVn' (if defined), or the first input
+              site of the pair.  Use 'Tv' to verify that the
+              hyperplanes are perpendicular  bisectors.   Use
+              'Fi'  for bounded regions,  and 'Fv' for the
               corresponding Voronoi vertices.
 
        FO     List  all  options to stderr, including the default
@@ -815,7 +815,7 @@ qhull(1)                                                 qhull(1)
               visible from a point (the 'QGn' option) or includes
               a point (the 'QVn'  option).   It  also  meets  the
               requirements  of  'Pdk'  and 'PDk' options.  Option
-              'Pg' is automatically set for  options 'd', 'PAn', 
+              'Pg' is automatically set for  options 'd', 'PAn',
               'PFn', and 'PMn'
 
        PG     Print neighbors of good facets.
@@ -839,7 +839,7 @@ qhull(1)                                                 qhull(1)
        Qhull control options
 
        Qa     Allow input with fewer or more points than coordinates
-       
+
        Qbk:0Bk:0
               Drop dimension  k  from  the  input  points.   This
               allows  the user to take convex hulls of sub-dimen-
@@ -960,7 +960,7 @@ qhull(1)                                                 qhull(1)
               the first point added to the  hull.   Option  'QVn'
               may not be used with merging.
 
-       Qw     Allow option warnings. Otherwise Qhull returns an 
+       Qw     Allow option warnings. Otherwise Qhull returns an
               error after most option warnings.
 
        Qx     Perform  exact merges while building the hull.  The
@@ -989,7 +989,7 @@ qhull(1)                                                 qhull(1)
               the  convex  hull.   This  may  lead  to  precision
               errors.  If so, a descriptive warning is generated.
 
-       Q1     With 'Q1', Qhull merges by mergetype/angle instead 
+       Q1     With 'Q1', Qhull merges by mergetype/angle instead
               of mergetype/distance.
 
        Q2     With 'Q2', Qhull merges all facets at once  instead
@@ -1038,11 +1038,11 @@ qhull(1)                                                 qhull(1)
               centrums for tricoplanar facets.
 
        Q12    With 'Q12', Qhull allows wide facets and wide dupridge
-       
+
        Q14    With 'Q14', Qhull merges pinched vertices that create a dupridge.
 
        Q15    With 'Q15', Qhull checks for duplicate ridges with the same vertices.
-       
+
        Trace options
 
        Tn     Trace at level n.  Qhull  includes  full  execution
@@ -1065,9 +1065,9 @@ qhull(1)                                                 qhull(1)
               for point n.  The output for 'f' includes the  cone
               and the old hull.  See also 'TVn'.
 
-       Tf     Flush output after each qh_fprintf.  Use 'Tf' for 
+       Tf     Flush output after each qh_fprintf.  Use 'Tf' for
               debugging segfaults.  See 'Tz' for redirecting stderr.
-       
+
        TFn    Report  progress  whenever  more  than n facets are
               created During post-merging, 'TFn' reports progress
               after more than n/2 merges.
@@ -1245,5 +1245,3 @@ qhull(1)                                                 qhull(1)
        Qhull is available from http://www.qhull.org
 
 Geometry Center              2019/05/03                19
-
-

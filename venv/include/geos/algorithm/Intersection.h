@@ -81,4 +81,3 @@ static geom::CoordinateXY intersectionLineSegment(
 
 } // namespace geos::algorithm
 } // namespace geos
-

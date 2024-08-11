@@ -199,4 +199,3 @@ bool BufferSubgraphGT(BufferSubgraph* first, BufferSubgraph* second);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-

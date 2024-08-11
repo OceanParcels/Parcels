@@ -81,7 +81,7 @@ EXTERNL int
 nc_inq_var_filter(int ncid, int varid, unsigned int* idp, size_t* nparams, unsigned int* params);
 
 /* Support inquiry about all the filters associated with a variable */
-/* As is usual, it is expected that this will be called twice: 
+/* As is usual, it is expected that this will be called twice:
    once to get the number of filters, and then a second time to read the ids */
 EXTERNL int nc_inq_var_filter_ids(int ncid, int varid, size_t* nfilters, unsigned int* filterids);
 

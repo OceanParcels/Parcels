@@ -379,4 +379,3 @@ GEOS_DLL std::ostream& operator<< (std::ostream& os, const IntersectionMatrix& i
 
 } // namespace geos::geom
 } // namespace geos
-

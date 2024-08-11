@@ -4988,7 +4988,7 @@ MODULE_SCOPE size_t TclEnvEpoch; /* Epoch of the tcl environment
                                          * (if changed with tcl-env). */
 
 #endif /* _TCLINT */
-
+
 /*
  * Local Variables:
  * mode: c

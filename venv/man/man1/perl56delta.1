@@ -381,7 +381,7 @@ printed as such
 in basic arithmetics: + \- * / % (\s-1NOTE:\s0 operating close to the limits
 of the integer values may produce surprising results)
 .IP "\(bu" 4
-in bit arithmetics: & | ^ ~ << >> (\s-1NOTE:\s0 these used to be forced 
+in bit arithmetics: & | ^ ~ << >> (\s-1NOTE:\s0 these used to be forced
 to be 32 bits wide but now operate on the full native width.)
 .IP "\(bu" 4
 \&\fBvec()\fR
@@ -482,7 +482,7 @@ Perl subroutines with a prototype of \f(CW\*(C`($$)\*(C'\fR, and XSUBs in genera
 now be used as sort subroutines.  In either case, the two elements to
 be compared are passed as normal parameters in \f(CW@_\fR.  See \*(L"sort\*(R" in perlfunc.
 .PP
-For unprototyped sort subroutines, the historical behavior of passing 
+For unprototyped sort subroutines, the historical behavior of passing
 the elements to be compared as the global variables \f(CW$a\fR and \f(CW$b\fR remains
 unchanged.
 .ie n .SS """sort $coderef @foo"" allowed"
@@ -559,7 +559,7 @@ templates.
 .SS "Weak references"
 .IX Subsection "Weak references"
 In previous versions of Perl, you couldn't cache objects so as
-to allow them to be deleted if the last reference from outside 
+to allow them to be deleted if the last reference from outside
 the cache is deleted.  The reference in the cache would hold a
 reference count on the object and the objects would never be
 destroyed.
@@ -629,7 +629,7 @@ it.  The array element at that position returns to its uninitialized
 state, so that testing for the same element with \fBexists()\fR will return
 false.  If the element happens to be the one at the end, the size of
 the array also shrinks up to the highest element that tests true for
-\&\fBexists()\fR, or 0 if none such is found.  If the array is tied, the \s-1\fBDELETE\s0()\fR 
+\&\fBexists()\fR, or 0 if none such is found.  If the array is tied, the \s-1\fBDELETE\s0()\fR
 method in the corresponding tied package will be invoked.
 .PP
 See \*(L"exists\*(R" in perlfunc and \*(L"delete\*(R" in perlfunc for examples.
@@ -820,7 +820,7 @@ See \*(L"Prototypes\*(R" in perlsub.
 .el .SS "\f(CWrequire\fP and \f(CWdo\fP may be overridden"
 .IX Subsection "require and do may be overridden"
 \&\f(CW\*(C`require\*(C'\fR and \f(CW\*(C`do \*(Aqfile\*(Aq\*(C'\fR operations may be overridden locally
-by importing subroutines of the same name into the current package 
+by importing subroutines of the same name into the current package
 (or globally by importing them into the \s-1CORE::GLOBAL::\s0 namespace).
 Overriding \f(CW\*(C`require\*(C'\fR will also affect \f(CW\*(C`use\*(C'\fR, provided the override
 is visible at compile-time.
@@ -938,7 +938,7 @@ Overall, Benchmark results exhibit lower average error and better timing
 accuracy.
 .Sp
 You can now run tests for \fIn\fR seconds instead of guessing the right
-number of tests to run: e.g., timethese(\-5, ...) will run each 
+number of tests to run: e.g., timethese(\-5, ...) will run each
 code for at least 5 \s-1CPU\s0 seconds.  Zero as the \*(L"number of repetitions\*(R"
 means \*(L"for at least 3 \s-1CPU\s0 seconds\*(R".  The output format has also
 changed.  For example:
@@ -1755,7 +1755,7 @@ the replacement expression in \f(CW\*(C`eval \*(Aqs/.../.../e\*(Aq\*(C'\fR.  Thi
 been fixed.
 .SS "All compilation errors are true errors"
 .IX Subsection "All compilation errors are true errors"
-Some \*(L"errors\*(R" encountered at compile time were by necessity 
+Some \*(L"errors\*(R" encountered at compile time were by necessity
 generated as warnings followed by eventual termination of the
 program.  This enabled more such errors to be reported in a
 single run, rather than causing a hard stop at the first error
@@ -1862,7 +1862,7 @@ run in compile-only mode.  Since this is typically not the expected
 behavior, \s-1END\s0 blocks are not executed anymore when the \f(CW\*(C`\-c\*(C'\fR switch
 is used, or if compilation fails.
 .PP
-See \*(L"Support for \s-1CHECK\s0 blocks\*(R" for how to run things when the compile 
+See \*(L"Support for \s-1CHECK\s0 blocks\*(R" for how to run things when the compile
 phase ends.
 .SS "Potential to leak \s-1DATA\s0 filehandles"
 .IX Subsection "Potential to leak DATA filehandles"
@@ -2336,7 +2336,7 @@ Remember that \*(L"my\*(R", \*(L"our\*(R", and \*(L"local\*(R" bind tighter than
 .IX Item "Possible unintended interpolation of %s in string"
 (W ambiguous) It used to be that Perl would try to guess whether you
 wanted an array interpolated or a literal @.  It no longer does this;
-arrays are now \fIalways\fR interpolated into strings.  This means that 
+arrays are now \fIalways\fR interpolated into strings.  This means that
 if you try something like:
 .Sp
 .Vb 1
@@ -2669,7 +2669,7 @@ See \*(L"More functional bareword prototype (*)\*(R".
 .IP "Semantics of bit operators may have changed on 64\-bit platforms" 4
 .IX Item "Semantics of bit operators may have changed on 64-bit platforms"
 If your platform is either natively 64\-bit or if Perl has been
-configured to used 64\-bit integers, i.e., \f(CW$Config\fR{ivsize} is 8, 
+configured to used 64\-bit integers, i.e., \f(CW$Config\fR{ivsize} is 8,
 there may be a potential incompatibility in the behavior of bitwise
 numeric operators (& | ^ ~ << >>).  These operators used to strictly
 operate on the lower 32 bits of integers in previous versions, but now

@@ -14,15 +14,15 @@ The DER or PEM encoded key.
 .IP "const char * password" 12
 the password to decrypt the key (if it is encrypted).
 .SH "DESCRIPTION"
-This function will convert the given PEM encrypted to 
+This function will convert the given PEM encrypted to
 the native gnutls_x509_privkey_t format. The
-output will be stored in  \fIkey\fP .  
+output will be stored in  \fIkey\fP .
 
 The  \fIpassword\fP should be in ASCII. If the password is not provided
 or wrong then \fBGNUTLS_E_DECRYPTION_FAILED\fP will be returned.
 
 If the Certificate is PEM encoded it should have a header of
-"PRIVATE KEY" and the "DEK\-Info" header. 
+"PRIVATE KEY" and the "DEK\-Info" header.
 .SH "RETURNS"
 On success, \fBGNUTLS_E_SUCCESS\fP (0) is returned, otherwise a
 negative error value.

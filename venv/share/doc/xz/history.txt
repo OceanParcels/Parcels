@@ -147,4 +147,3 @@ Transition to XZ Utils
     format is more or less deprecated. XZ Utils will keep supporting it,
     but new applications should use the .xz format, and migrating old
     applications to .xz is often a good idea too.
-

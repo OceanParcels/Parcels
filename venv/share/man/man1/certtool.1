@@ -32,7 +32,7 @@ It can be used interactively or non interactively by
 specifying the template command line option.
 .sp
 The tool accepts files or supported URIs via the --infile option. In case PIN
-is required for URI access you can provide it using the environment variables GNUTLS_PIN 
+is required for URI access you can provide it using the environment variables GNUTLS_PIN
 and GNUTLS_SO_PIN.
 .sp
 .SH "OPTIONS"
@@ -479,8 +479,8 @@ Typical keys shouldn't set or restrict this option.
 Use DER format for input certificates, private keys, and DH parameters .
 The \fIno\-inder\fP form will disable the option.
 .sp
-The input files will be assumed to be in DER or RAW format. 
-Unlike options that in PEM input would allow multiple input data (e.g. multiple 
+The input files will be assumed to be in DER or RAW format.
+Unlike options that in PEM input would allow multiple input data (e.g. multiple
 certificates), when reading in DER format a single data structure is read.
 .TP
 .NOP \f\*[B-Font]\-\-inraw\f[]
@@ -609,10 +609,10 @@ cn = "Cindy Lauper"
 # An alternative way to set the certificate's distinguished name directly
 # is with the "dn" option. The attribute names allowed are:
 # C (country), street, O (organization), OU (unit), title, CN (common name),
-# L (locality), ST (state), placeOfBirth, gender, countryOfCitizenship, 
-# countryOfResidence, serialNumber, telephoneNumber, surName, initials, 
-# generationQualifier, givenName, pseudonym, dnQualifier, postalCode, name, 
-# businessCategory, DC, UID, jurisdictionOfIncorporationLocalityName, 
+# L (locality), ST (state), placeOfBirth, gender, countryOfCitizenship,
+# countryOfResidence, serialNumber, telephoneNumber, surName, initials,
+# generationQualifier, givenName, pseudonym, dnQualifier, postalCode, name,
+# businessCategory, DC, UID, jurisdictionOfIncorporationLocalityName,
 # jurisdictionOfIncorporationStateOrProvinceName,
 # jurisdictionOfIncorporationCountryName, XmppAddr, and numeric OIDs.
 .sp
@@ -627,7 +627,7 @@ serial = 007
 # Use \-1 if there is no expiration date.
 expiration_days = 700
 .sp
-# Alternatively you may set concrete dates and time. The GNU date string 
+# Alternatively you may set concrete dates and time. The GNU date string
 # formats are accepted. See:
 # https://www.gnu.org/software/tar/manual/html_node/Date\-input\-formats.html
 .sp

@@ -154,13 +154,13 @@ JSON::PP \- JSON::XS compatible pure\-Perl module.
 \& # OO\-interface
 \&
 \& $json = JSON::PP\->new\->ascii\->pretty\->allow_nonref;
-\& 
+\&
 \& $pretty_printed_json_text = $json\->encode( $perl_scalar );
 \& $perl_scalar = $json\->decode( $json_text );
-\& 
+\&
 \& # Note that JSON version 2.0 and above will automatically use
 \& # JSON::XS or JSON::PP, so you should be able to just:
-\& 
+\&
 \& use JSON;
 .Ve
 .SH "VERSION"
@@ -263,7 +263,7 @@ be chained:
 .IX Subsection "ascii"
 .Vb 1
 \&    $json = $json\->ascii([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_ascii
 .Ve
 .PP
@@ -293,7 +293,7 @@ contain any 8 bit characters.
 .IX Subsection "latin1"
 .Vb 1
 \&    $json = $json\->latin1([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_latin1
 .Ve
 .PP
@@ -325,7 +325,7 @@ in files or databases, not when talking to other \s-1JSON\s0 encoders/decoders.
 .IX Subsection "utf8"
 .Vb 1
 \&    $json = $json\->utf8([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_utf8
 .Ve
 .PP
@@ -370,7 +370,7 @@ generate the most readable (or most compact) form possible.
 .IX Subsection "indent"
 .Vb 1
 \&    $json = $json\->indent([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_indent
 .Ve
 .PP
@@ -389,7 +389,7 @@ You can use \f(CW\*(C`indent_length\*(C'\fR to change the length.
 .IX Subsection "space_before"
 .Vb 1
 \&    $json = $json\->space_before([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_space_before
 .Ve
 .PP
@@ -411,7 +411,7 @@ Example, space_before enabled, space_after and indent disabled:
 .IX Subsection "space_after"
 .Vb 1
 \&    $json = $json\->space_after([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_space_after
 .Ve
 .PP
@@ -434,7 +434,7 @@ Example, space_before and indent disabled, space_after enabled:
 .IX Subsection "relaxed"
 .Vb 1
 \&    $json = $json\->relaxed([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_relaxed
 .Ve
 .PP
@@ -522,7 +522,7 @@ Literal \s-1ASCII TAB\s0 characters are now allowed in strings (and treated as
 .IX Subsection "canonical"
 .Vb 1
 \&    $json = $json\->canonical([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_canonical
 .Ve
 .PP
@@ -546,7 +546,7 @@ This setting has currently no effect on tied hashes.
 .IX Subsection "allow_nonref"
 .Vb 1
 \&    $json = $json\->allow_nonref([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_allow_nonref
 .Ve
 .PP
@@ -574,7 +574,7 @@ resulting in an error:
 .IX Subsection "allow_unknown"
 .Vb 1
 \&    $json = $json\->allow_unknown([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_allow_unknown
 .Ve
 .PP
@@ -593,7 +593,7 @@ leave it off unless you know your communications partner.
 .IX Subsection "allow_blessed"
 .Vb 1
 \&    $json = $json\->allow_blessed([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_allow_blessed
 .Ve
 .PP
@@ -612,7 +612,7 @@ This setting has no effect on \f(CW\*(C`decode\*(C'\fR.
 .IX Subsection "convert_blessed"
 .Vb 1
 \&    $json = $json\->convert_blessed([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_convert_blessed
 .Ve
 .PP
@@ -774,7 +774,7 @@ into the corresponding \f(CW$WIDGET{<id>}\fR object:
 .IX Subsection "shrink"
 .Vb 1
 \&    $json = $json\->shrink([$enable])
-\&    
+\&
 \&    $enabled = $json\->get_shrink
 .Ve
 .PP
@@ -789,7 +789,7 @@ If \f(CW$enable\fR is false, then \s-1JSON::PP\s0 does nothing.
 .IX Subsection "max_depth"
 .Vb 1
 \&    $json = $json\->max_depth([$maximum_nesting_depth])
-\&    
+\&
 \&    $max_depth = $json\->get_max_depth
 .Ve
 .PP
@@ -814,7 +814,7 @@ See \*(L"\s-1SECURITY CONSIDERATIONS\*(R"\s0 in \s-1JSON::XS\s0 for more info on
 .IX Subsection "max_size"
 .Vb 1
 \&    $json = $json\->max_size([$maximum_string_size])
-\&    
+\&
 \&    $max_size = $json\->get_max_size
 .Ve
 .PP
@@ -1064,9 +1064,9 @@ The following methods implement this incremental parser.
 .IX Subsection "incr_parse"
 .Vb 1
 \&    $json\->incr_parse( [$string] ) # void context
-\&    
+\&
 \&    $obj_or_undef = $json\->incr_parse( [$string] ) # scalar context
-\&    
+\&
 \&    @obj_or_empty = $json\->incr_parse( [$string] ) # list context
 .Ve
 .PP

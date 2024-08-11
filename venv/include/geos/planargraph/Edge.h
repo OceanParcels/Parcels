@@ -138,4 +138,3 @@ std::ostream& operator<<(std::ostream& os, const Edge& n);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-

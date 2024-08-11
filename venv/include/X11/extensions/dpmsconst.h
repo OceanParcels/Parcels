@@ -40,4 +40,3 @@ Equipment Corporation.
 #define DPMSModeOff	3
 
 #endif /* !_DPMSCONST_H */
-

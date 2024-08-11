@@ -148,7 +148,7 @@ perl programs.
 .PP
 There's an extraordinary number of people out there who don't appear to know
 anything about using the perl debugger, though they use the language every
-day.  
+day.
 This is for them.
 .SH "use strict"
 .IX Header "use strict"
@@ -163,7 +163,7 @@ a problem:
 \&        $var1 = \*(AqHello World\*(Aq; # always wanted to do that :\-)
 \&        $var2 = "$varl\en";
 \&
-\&        print $var2; 
+\&        print $var2;
 \&        exit;
 .Ve
 .PP
@@ -206,7 +206,7 @@ script looks like this:
 \&        my $varl = undef;
 \&        my $var2 = "$varl\en";
 \&
-\&        print $var2; 
+\&        print $var2;
 \&        exit;
 .Ve
 .PP
@@ -226,12 +226,12 @@ Ok, but how about when you want to really see your data, what's in that
 dynamic variable, just before using it?
 .PP
 .Vb 2
-\&        #!/usr/bin/perl 
+\&        #!/usr/bin/perl
 \&        use strict;
 \&
 \&        my $key = \*(Aqwelcome\*(Aq;
 \&        my %data = (
-\&                \*(Aqthis\*(Aq => qw(that), 
+\&                \*(Aqthis\*(Aq => qw(that),
 \&                \*(Aqtom\*(Aq => qw(and jerry),
 \&                \*(Aqwelcome\*(Aq => q(Hello World),
 \&                \*(Aqzip\*(Aq => q(welcome),
@@ -259,7 +259,7 @@ And try again:
 .PP
 .Vb 2
 \&        > perl data
-\&        All OK     
+\&        All OK
 \&
 \&        done: \*(Aq\*(Aq
 .Ve
@@ -270,7 +270,7 @@ is, we bring in the cavalry by giving perl the '\fB\-d\fR' switch on the command
 line:
 .PP
 .Vb 2
-\&        > perl \-d data 
+\&        > perl \-d data
 \&        Default die handler restored.
 \&
 \&        Loading DB routines from perl5db.pl version 1.07
@@ -296,10 +296,10 @@ just the letter '\fBq\fR', not the words 'quit' or 'exit':
 That's it, you're back on home turf again.
 .SH "help"
 .IX Header "help"
-Fire the debugger up again on your script and we'll look at the help menu. 
-There's a couple of ways of calling help: a simple '\fBh\fR' will get the summary 
-help list, '\fB|h\fR' (pipe-h) will pipe the help through your pager (which is 
-(probably 'more' or 'less'), and finally, '\fBh h\fR' (h\-space-h) will give you 
+Fire the debugger up again on your script and we'll look at the help menu.
+There's a couple of ways of calling help: a simple '\fBh\fR' will get the summary
+help list, '\fB|h\fR' (pipe-h) will pipe the help through your pager (which is
+(probably 'more' or 'less'), and finally, '\fBh h\fR' (h\-space-h) will give you
 the entire help screen.  Here is the summary page:
 .PP
 D\fB1\fRh
@@ -351,13 +351,13 @@ it looks and it's very useful to know more about all of it, and fun too!
 .PP
 There's a couple of useful ones to know about straight away.  You wouldn't
 think we're using any libraries at all at the moment, but '\fBM\fR' will show
-which modules are currently loaded, and their version number, while '\fBm\fR' 
-will show the methods, and '\fBS\fR' shows all subroutines (by pattern) as 
-shown below.  '\fBV\fR' and '\fBX\fR' show variables in the program by package 
+which modules are currently loaded, and their version number, while '\fBm\fR'
+will show the methods, and '\fBS\fR' shows all subroutines (by pattern) as
+shown below.  '\fBV\fR' and '\fBX\fR' show variables in the program by package
 scope and can be constrained by pattern.
 .PP
 .Vb 5
-\&        DB<2>S str 
+\&        DB<2>S str
 \&        dumpvar::stringify
 \&        strict::bits
 \&        strict::import
@@ -373,7 +373,7 @@ the 'name':
 .Ve
 .PP
 Remember we're in our tiny program with a problem, we should have a look at
-where we are, and what our data looks like. First of all let's view some code 
+where we are, and what our data looks like. First of all let's view some code
 at our present position (the first line of code in this case), via '\fBv\fR':
 .PP
 .Vb 11
@@ -439,7 +439,7 @@ do is to step through the next executable statement with an '\fBs\fR':
 Now we can have a look at that first ($key) variable:
 .PP
 .Vb 2
-\&        DB<7> p $key 
+\&        DB<7> p $key
 \&        welcome
 .Ve
 .PP
@@ -465,7 +465,7 @@ Not much in there, lets have a look at our hash:
 .PP
 .Vb 2
 \&        DB<10> p %data
-\&        Hello Worldziptomandwelcomejerrywelcomethisthat 
+\&        Hello Worldziptomandwelcomejerrywelcomethisthat
 \&
 \&        DB<11> p keys %data
 \&        Hello Worldtomwelcomejerrythis
@@ -503,7 +503,7 @@ to the data structure:
 \&           \*(Aqwelcome\*(Aq => undef
 .Ve
 .PP
-The reference is truly dumped and we can finally see what we're dealing with. 
+The reference is truly dumped and we can finally see what we're dealing with.
 Our quoting was perfectly valid but wrong for our purposes, with 'and jerry'
 being treated as 2 separate words rather than a phrase, thus throwing the
 evenly paired hash structure out of alignment.
@@ -562,7 +562,7 @@ And let's have a look at it:
 \&                0  \*(Aqthis\*(Aq
 \&                1  \*(Aqthat\*(Aq
 \&                2  \*(Aqetc\*(Aq
-\&                \*(Aqunique_id\*(Aq => 123       
+\&                \*(Aqunique_id\*(Aq => 123
 \&        DB<3>
 .Ve
 .PP
@@ -672,7 +672,7 @@ little messy, to leave in production code.
 .Vb 4
 \&        my ($in, $out) = ($num, $num);
 \&        $DB::single=2; # insert at line 9!
-\&        if ($deg eq \*(Aqc\*(Aq) 
+\&        if ($deg eq \*(Aqc\*(Aq)
 \&                ...
 \&
 \&        > perl \-d temp \-f33.3
@@ -741,14 +741,14 @@ number, we'll use the subroutine name, followed by the now familiar 'v':
 .PP
 .Vb 2
 \&        DB<3> c f2c
-\&        main::f2c(temp:30):             my $f = shift;  
+\&        main::f2c(temp:30):             my $f = shift;
 \&
 \&        DB<4> v
 \&        24:     exit;
 \&        25
 \&        26      sub f2c {
 \&        27==>           my $f = shift;
-\&        28:             my $c = 5 * $f \- 32 / 9; 
+\&        28:             my $c = 5 * $f \- 32 / 9;
 \&        29:             return $c;
 \&        30      }
 \&        31
@@ -762,7 +762,7 @@ over it we would use '\fBn\fR' which would execute the sub, but not descend into
 it for inspection.  In this case though, we simply continue down to line 29:
 .PP
 .Vb 2
-\&        DB<4> c 29  
+\&        DB<4> c 29
 \&        main::f2c(temp:29):             return $c;
 .Ve
 .PP
@@ -781,7 +781,7 @@ possibilities with our sum:
 \&        DB<6> p (5 * $f \- 32 / 9)
 \&        162.944444444444
 \&
-\&        DB<7> p 5 * $f \- (32 / 9) 
+\&        DB<7> p 5 * $f \- (32 / 9)
 \&        162.944444444444
 \&
 \&        DB<8> p (5 * $f) \- 32 / 9
@@ -805,7 +805,7 @@ Looks good, let's just continue off the end of the script:
 .PP
 .Vb 5
 \&        DB<12> c
-\&        0.72 c 
+\&        0.72 c
 \&        Debugged program terminated.  Use q to quit or R to restart,
 \&        use O inhibit_exit to avoid stopping after program termination,
 \&        h q, h R or h O to get additional info.
@@ -818,11 +818,11 @@ actual program and we're finished.
 Actions, watch variables, stack traces etc.: on the \s-1TODO\s0 list.
 .PP
 .Vb 1
-\&        a 
+\&        a
 \&
-\&        w 
+\&        w
 \&
-\&        t 
+\&        t
 \&
 \&        T
 .Ve
@@ -930,8 +930,8 @@ the language, to read the on-line help (perldebug is probably the next
 place to go), and of course, experiment.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-perldebug, 
-perldebguts, 
+perldebug,
+perldebguts,
 perldiag,
 perlrun
 .SH "AUTHOR"

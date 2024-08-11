@@ -40,4 +40,3 @@ Fixes since v1.5.4.5
  * "git archive --prefix=$path/" mishandled gitattributes.
 
 As usual, it also comes with many documentation fixes and clarifications.
-

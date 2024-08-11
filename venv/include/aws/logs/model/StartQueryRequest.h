@@ -40,7 +40,7 @@ namespace Model
      * <p>The log group on which to perform the query.</p>  <p>A
      * <code>StartQuery</code> operation must include exactly one of the following
      * parameters: <code>logGroupName</code>, <code>logGroupNames</code>, or
-     * <code>logGroupIdentifiers</code>. </p> 
+     * <code>logGroupIdentifiers</code>. </p>
      */
     inline const Aws::String& GetLogGroupName() const{ return m_logGroupName; }
     inline bool LogGroupNameHasBeenSet() const { return m_logGroupNameHasBeenSet; }
@@ -57,7 +57,7 @@ namespace Model
      * <p>The list of log groups to be queried. You can include up to 50 log
      * groups.</p>  <p>A <code>StartQuery</code> operation must include exactly
      * one of the following parameters: <code>logGroupName</code>,
-     * <code>logGroupNames</code>, or <code>logGroupIdentifiers</code>. </p> 
+     * <code>logGroupNames</code>, or <code>logGroupIdentifiers</code>. </p>
      */
     inline const Aws::Vector<Aws::String>& GetLogGroupNames() const{ return m_logGroupNames; }
     inline bool LogGroupNamesHasBeenSet() const { return m_logGroupNamesHasBeenSet; }

@@ -64,4 +64,3 @@ public:
 
 } // geos::noding
 } // geos
-

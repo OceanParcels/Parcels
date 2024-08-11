@@ -162,7 +162,7 @@ format variant 2).  NetCDF-4, uses a third variant of the format,
 `netCDF-4 classic model' (format variant 4), is restricted
 to features supported by the netCDF-3 data model but represented using
 the HDF5 format, so that an unmodified netCDF-3 program can read or
-write the file just by relinking with the netCDF-4 library.  
+write the file just by relinking with the netCDF-4 library.
 The string output by using the `\-k' option may be provided as the
 value of the `\-k' option to ncgen(1) to
 specify exactly what kind of netCDF file to generate, when you want to
@@ -172,26 +172,26 @@ Output special virtual attributes that provide performance-related
 information about the file format and variable properties for netCDF-4
 data.  These special virtual attributes are not actually part of the
 data, they are merely a convenient way to display miscellaneous
-properties of the data in CDL (and eventually NcML).  They include 
-`_ChunkSizes', 
-`_DeflateLevel', 
-`_Endianness', 
-`_Fletcher32', 
+properties of the data in CDL (and eventually NcML).  They include
+`_ChunkSizes',
+`_DeflateLevel',
+`_Endianness',
+`_Fletcher32',
 `_Format',
 `_NoFill',
 `_Shuffle', and
-`_Storage'.  
-`_ChunkSizes' is a list of chunk sizes for each dimension of the variable. 
+`_Storage'.
+`_ChunkSizes' is a list of chunk sizes for each dimension of the variable.
 `_DeflateLevel' is an
 integer between 0 and 9 inclusive if compression has been specified
 for the variable.
 `_Endianness' is either `little' or `big', depending on
-how the variable was stored when first written. 
+how the variable was stored when first written.
 `_Fletcher32' is `true' if the checksum property was set for
-the variable. 
+the variable.
 `_Format' is a global attribute specifying the netCDF format
 variant, one of `classic', `64-bit offset', `netCDF-4', or `netCDF-4
-classic model'.  
+classic model'.
 `_NoFill' is `true' if the persistent NoFill property was set for the
 variable when it was defined.
 `_Shuffle' is `true' if use of the shuffle filter was specified for the variable.
@@ -204,7 +204,7 @@ a udunits compliant time representation such as `days since
 identified in a "bounds" attribute of such a time variable, or a numeric
 attribute of a time variable.  If this option is
 specified, time data values are displayed as human-readable date-time
-strings rather than numerical values, interpreted in terms of a 
+strings rather than numerical values, interpreted in terms of a
 `calendar' variable attribute, if specified.  For numeric attributes
 of time variables, the human-readable time value is displayed after the
 actual value, in an associated CDL comment.  Calendar attribute

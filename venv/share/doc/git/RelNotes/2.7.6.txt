@@ -22,4 +22,3 @@ Fixes since v2.7.5
 
 Credits go to Brian Neel at GitLab, Joern Schneeweisz of Recurity
 Labs and Jeff King at GitHub.
-

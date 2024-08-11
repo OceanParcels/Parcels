@@ -43,7 +43,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const ResourceKey& GetResourceKey() const{ return m_resourceKey; }
     inline bool ResourceKeyHasBeenSet() const { return m_resourceKeyHasBeenSet; }
     inline void SetResourceKey(const ResourceKey& value) { m_resourceKeyHasBeenSet = true; m_resourceKey = value; }

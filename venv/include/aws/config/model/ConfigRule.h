@@ -49,7 +49,7 @@ namespace Model
    * created with Guard are called <i>Config Custom Policy Rules</i>.</p> <p>For more
    * information about developing and using Config rules, see <a
    * href="https://docs.aws.amazon.com/config/latest/developerguide/evaluate-config.html">Evaluating
-   * Resource with Config Rules</a> in the <i>Config Developer Guide</i>.</p> 
+   * Resource with Config Rules</a> in the <i>Config Developer Guide</i>.</p>
    * <p>You can use the Amazon Web Services CLI and Amazon Web Services SDKs if you
    * want to create a rule that triggers evaluations for your resources when Config
    * delivers the configuration snapshot. For more information, see
@@ -130,7 +130,7 @@ namespace Model
      * resource ID, or a combination of a tag key and value. Specify a scope to
      * constrain the resources that can trigger an evaluation for the rule. If you do
      * not specify a scope, evaluations are triggered when any resource in the
-     * recording group changes.</p>  <p>The scope can be empty. </p> 
+     * recording group changes.</p>  <p>The scope can be empty. </p>
      */
     inline const Scope& GetScope() const{ return m_scope; }
     inline bool ScopeHasBeenSet() const { return m_scopeHasBeenSet; }
@@ -181,7 +181,7 @@ namespace Model
      * <a>ConfigSnapshotDeliveryProperties</a>.</p> </li> </ul>  <p>By default,
      * rules with a periodic trigger are evaluated every 24 hours. To change the
      * frequency, specify a valid value for the <code>MaximumExecutionFrequency</code>
-     * parameter.</p> 
+     * parameter.</p>
      */
     inline const MaximumExecutionFrequency& GetMaximumExecutionFrequency() const{ return m_maximumExecutionFrequency; }
     inline bool MaximumExecutionFrequencyHasBeenSet() const { return m_maximumExecutionFrequencyHasBeenSet; }
@@ -215,9 +215,9 @@ namespace Model
 
     ///@{
     /**
-     * <p>Service principal name of the service that created the rule.</p> 
+     * <p>Service principal name of the service that created the rule.</p>
      * <p>The field is populated only if the service-linked rule is created by a
-     * service. The field is empty if you create your own rule.</p> 
+     * service. The field is empty if you create your own rule.</p>
      */
     inline const Aws::String& GetCreatedBy() const{ return m_createdBy; }
     inline bool CreatedByHasBeenSet() const { return m_createdByHasBeenSet; }

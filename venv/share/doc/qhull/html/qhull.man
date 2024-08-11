@@ -268,7 +268,7 @@ than the indices of the input points.  Each base
 corresponds to a simplicial ridge between two facets.
 To print the vertices without triangulation, use option 'Fv'.
 To print the centrum coordinates, use option 'Ft'.
-The centrum indices 
+The centrum indices
 for option 'i' are one more than the centrum indices for option 'Ft'.
 .TP
 m
@@ -446,7 +446,7 @@ of ridges.  Then each hyperplane is printed, one per line.  A line starts
 with the number of indices and floats.  The first pair lists
 adjacent input
 sites, the next d floats are the normalized coefficients for the hyperplane,
-and the last float is the offset.  The hyperplane is oriented 
+and the last float is the offset.  The hyperplane is oriented
 toward 'QVn' (if defined), or the first input site of the pair.  Use 'Tv' to
 verify that the hyperplanes are perpendicular bisectors.  Use 'Fo' for
 unbounded regions, and 'Fv' for the corresponding Voronoi vertices.
@@ -497,7 +497,7 @@ of ridges.  Then each hyperplane is printed, one per line.  A line starts
 with the number of indices and floats.  The first pair lists
 adjacent input
 sites, the next d floats are the normalized coefficients for the hyperplane,
-and the last float is the offset.  The hyperplane is oriented 
+and the last float is the offset.  The hyperplane is oriented
 toward 'QVn' (if defined), or the first input site of the pair.  Use 'Tv' to
 verify that the hyperplanes are perpendicular bisectors.  Use 'Fi' for
 bounded regions, and 'Fv' for the corresponding Voronoi vertices.
@@ -782,7 +782,7 @@ Qs
 Search all points for the initial simplex.
 .TP
 Qt
-Triangulated output.  Triangulate all non\[hy]simplicial facets.  
+Triangulated output.  Triangulate all non\[hy]simplicial facets.
 \'Qt' is deprecated for Voronoi diagrams.  See also 'Qt'.
 .TP
 Qv

@@ -98,4 +98,3 @@ public:
 } // namespace geos.triangulate.polygon
 } // namespace geos.triangulate
 } // namespace geos
-

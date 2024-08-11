@@ -250,4 +250,3 @@ std::ostream& operator<< (std::ostream& os, const SegmentNodeList& l);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-

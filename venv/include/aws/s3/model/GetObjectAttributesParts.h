@@ -105,7 +105,7 @@ namespace Model
      * request, the response doesn't return <code>Part</code>.</p> </li> <li> <p>
      * <b>Directory buckets</b> - For <code>GetObjectAttributes</code>, no matter
      * whether a additional checksum is applied to the object specified in the request,
-     * the response returns <code>Part</code>.</p> </li> </ul> 
+     * the response returns <code>Part</code>.</p> </li> </ul>
      */
     inline const Aws::Vector<ObjectPart>& GetParts() const{ return m_parts; }
     inline bool PartsHasBeenSet() const { return m_partsHasBeenSet; }

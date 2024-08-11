@@ -1738,7 +1738,7 @@ typedef struct ck_aes_cbc_encrypt_data_params *CK_AES_CBC_ENCRYPT_DATA_PARAMS_PT
 
 #endif	/* CRYPTOKI_COMPAT */
 
-
+
 /* System dependencies.  */
 #if defined(_WIN32) || defined(CRYPTOKI_FORCE_WIN32)
 #pragma pack(pop, cryptoki)

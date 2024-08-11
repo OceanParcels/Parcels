@@ -93,7 +93,7 @@ namespace Model
      * be made for object keys containing special characters (such as carriage returns)
      * when using XML requests. For more information, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-xml-related-constraints">
-     * XML related object key constraints</a>.</p> 
+     * XML related object key constraints</a>.</p>
      */
     inline const Aws::String& GetReplaceKeyPrefixWith() const{ return m_replaceKeyPrefixWith; }
     inline bool ReplaceKeyPrefixWithHasBeenSet() const { return m_replaceKeyPrefixWithHasBeenSet; }
@@ -114,7 +114,7 @@ namespace Model
      * special characters (such as carriage returns) when using XML requests. For more
      * information, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-xml-related-constraints">
-     * XML related object key constraints</a>.</p> 
+     * XML related object key constraints</a>.</p>
      */
     inline const Aws::String& GetReplaceKeyWith() const{ return m_replaceKeyWith; }
     inline bool ReplaceKeyWithHasBeenSet() const { return m_replaceKeyWithHasBeenSet; }

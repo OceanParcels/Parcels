@@ -49,7 +49,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const StorageClass& GetStorageClass() const{ return m_storageClass; }
     inline bool StorageClassHasBeenSet() const { return m_storageClassHasBeenSet; }
     inline void SetStorageClass(const StorageClass& value) { m_storageClassHasBeenSet = true; m_storageClass = value; }
@@ -59,7 +59,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const IntelligentTieringAccessTier& GetAccessTier() const{ return m_accessTier; }
     inline bool AccessTierHasBeenSet() const { return m_accessTierHasBeenSet; }
     inline void SetAccessTier(const IntelligentTieringAccessTier& value) { m_accessTierHasBeenSet = true; m_accessTier = value; }

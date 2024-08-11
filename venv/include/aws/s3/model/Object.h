@@ -88,7 +88,7 @@ namespace Model
      * is larger than 16 MB, the Amazon Web Services Management Console will upload or
      * copy that object as a Multipart Upload, and therefore the ETag will not be an
      * MD5 digest.</p> </li> </ul>  <p> <b>Directory buckets</b> - MD5 is not
-     * supported by directory buckets.</p> 
+     * supported by directory buckets.</p>
      */
     inline const Aws::String& GetETag() const{ return m_eTag; }
     inline bool ETagHasBeenSet() const { return m_eTagHasBeenSet; }
@@ -128,7 +128,7 @@ namespace Model
     /**
      * <p>The class of storage used to store the object.</p>  <p> <b>Directory
      * buckets</b> - Only the S3 Express One Zone storage class is supported by
-     * directory buckets to store objects.</p> 
+     * directory buckets to store objects.</p>
      */
     inline const ObjectStorageClass& GetStorageClass() const{ return m_storageClass; }
     inline bool StorageClassHasBeenSet() const { return m_storageClassHasBeenSet; }
@@ -141,7 +141,7 @@ namespace Model
     ///@{
     /**
      * <p>The owner of the object</p>  <p> <b>Directory buckets</b> - The bucket
-     * owner is returned as the object owner.</p> 
+     * owner is returned as the object owner.</p>
      */
     inline const Owner& GetOwner() const{ return m_owner; }
     inline bool OwnerHasBeenSet() const { return m_ownerHasBeenSet; }
@@ -157,10 +157,10 @@ namespace Model
      * classes must be restored before they can be retrieved. For more information
      * about these storage classes and how to work with archived objects, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/archived-objects.html">
-     * Working with archived objects</a> in the <i>Amazon S3 User Guide</i>.</p> 
+     * Working with archived objects</a> in the <i>Amazon S3 User Guide</i>.</p>
      * <p>This functionality is not supported for directory buckets. Only the S3
      * Express One Zone storage class is supported by directory buckets to store
-     * objects.</p> 
+     * objects.</p>
      */
     inline const RestoreStatus& GetRestoreStatus() const{ return m_restoreStatus; }
     inline bool RestoreStatusHasBeenSet() const { return m_restoreStatusHasBeenSet; }

@@ -899,4 +899,3 @@ XZ Utils Release Notes
       * The major soname has been bumped to 5.0.0. liblzma API and ABI
         are now stable, so the need to recompile programs linking against
         liblzma shouldn't arise soon.
-

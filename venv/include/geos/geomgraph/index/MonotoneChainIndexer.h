@@ -68,4 +68,3 @@ private:
 } // namespace geos.geomgraph.index
 } // namespace geos.geomgraph
 } // namespace geos
-

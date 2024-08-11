@@ -5696,16 +5696,16 @@ xcb_create_window_sizeof (const void  *_buffer);
  * Creates an unmapped window as child of the specified \a parent window. A
  * CreateNotify event will be generated. The new window is placed on top in the
  * stacking order with respect to siblings.
- * 
+ *
  * The coordinate system has the X axis horizontal and the Y axis vertical with
  * the origin [0, 0] at the upper-left corner. Coordinates are integral, in terms
  * of pixels, and coincide with pixel centers. Each window and pixmap has its own
  * coordinate system. For a window, the origin is inside the border at the inside,
  * upper-left corner.
- * 
+ *
  * The created window is not yet displayed (mapped), call `xcb_map_window` to
  * display it.
- * 
+ *
  * The created window will initially use the same cursor as its parent.
  *
  * This form can be used only if the request will not cause
@@ -5757,16 +5757,16 @@ xcb_create_window_checked (xcb_connection_t *c,
  * Creates an unmapped window as child of the specified \a parent window. A
  * CreateNotify event will be generated. The new window is placed on top in the
  * stacking order with respect to siblings.
- * 
+ *
  * The coordinate system has the X axis horizontal and the Y axis vertical with
  * the origin [0, 0] at the upper-left corner. Coordinates are integral, in terms
  * of pixels, and coincide with pixel centers. Each window and pixmap has its own
  * coordinate system. For a window, the origin is inside the border at the inside,
  * upper-left corner.
- * 
+ *
  * The created window is not yet displayed (mapped), call `xcb_map_window` to
  * display it.
- * 
+ *
  * The created window will initially use the same cursor as its parent.
  *
  */
@@ -5815,16 +5815,16 @@ xcb_create_window (xcb_connection_t *c,
  * Creates an unmapped window as child of the specified \a parent window. A
  * CreateNotify event will be generated. The new window is placed on top in the
  * stacking order with respect to siblings.
- * 
+ *
  * The coordinate system has the X axis horizontal and the Y axis vertical with
  * the origin [0, 0] at the upper-left corner. Coordinates are integral, in terms
  * of pixels, and coincide with pixel centers. Each window and pixmap has its own
  * coordinate system. For a window, the origin is inside the border at the inside,
  * upper-left corner.
- * 
+ *
  * The created window is not yet displayed (mapped), call `xcb_map_window` to
  * display it.
- * 
+ *
  * The created window will initially use the same cursor as its parent.
  *
  * This form can be used only if the request will not cause
@@ -5876,16 +5876,16 @@ xcb_create_window_aux_checked (xcb_connection_t                     *c,
  * Creates an unmapped window as child of the specified \a parent window. A
  * CreateNotify event will be generated. The new window is placed on top in the
  * stacking order with respect to siblings.
- * 
+ *
  * The coordinate system has the X axis horizontal and the Y axis vertical with
  * the origin [0, 0] at the upper-left corner. Coordinates are integral, in terms
  * of pixels, and coincide with pixel centers. Each window and pixmap has its own
  * coordinate system. For a window, the origin is inside the border at the inside,
  * upper-left corner.
- * 
+ *
  * The created window is not yet displayed (mapped), call `xcb_map_window` to
  * display it.
- * 
+ *
  * The created window will initially use the same cursor as its parent.
  *
  */
@@ -6078,7 +6078,7 @@ xcb_get_window_attributes_reply (xcb_connection_t                    *c,
  * is generated for each destroyed window (a DestroyNotify event is first generated
  * for any given window's inferiors). If the window was mapped, it will be
  * automatically unmapped before destroying.
- * 
+ *
  * Calling DestroyWindow on the root window will do nothing.
  *
  * This form can be used only if the request will not cause
@@ -6100,7 +6100,7 @@ xcb_destroy_window_checked (xcb_connection_t *c,
  * is generated for each destroyed window (a DestroyNotify event is first generated
  * for any given window's inferiors). If the window was mapped, it will be
  * automatically unmapped before destroying.
- * 
+ *
  * Calling DestroyWindow on the root window will do nothing.
  *
  */
@@ -6145,7 +6145,7 @@ xcb_destroy_subwindows (xcb_connection_t *c,
  * @return A cookie
  *
  * TODO: explain what the save set is for.
- * 
+ *
  * This function either adds or removes the specified window to the client's (your
  * application's) save set.
  *
@@ -6168,7 +6168,7 @@ xcb_change_save_set_checked (xcb_connection_t *c,
  * @return A cookie
  *
  * TODO: explain what the save set is for.
- * 
+ *
  * This function either adds or removes the specified window to the client's (your
  * application's) save set.
  *
@@ -6192,7 +6192,7 @@ xcb_change_save_set (xcb_connection_t *c,
  * window is mapped, it will automatically be unmapped before reparenting and
  * re-mapped after reparenting. The window is placed in the stacking order on top
  * with respect to sibling windows.
- * 
+ *
  * After reparenting, a ReparentNotify event is generated.
  *
  * This form can be used only if the request will not cause
@@ -6220,7 +6220,7 @@ xcb_reparent_window_checked (xcb_connection_t *c,
  * window is mapped, it will automatically be unmapped before reparenting and
  * re-mapped after reparenting. The window is placed in the stacking order on top
  * with respect to sibling windows.
- * 
+ *
  * After reparenting, a ReparentNotify event is generated.
  *
  */
@@ -6240,20 +6240,20 @@ xcb_reparent_window (xcb_connection_t *c,
  *
  * Maps the specified window. This means making the window visible (as long as its
  * parent is visible).
- * 
+ *
  * This MapWindow request will be translated to a MapRequest request if a window
  * manager is running. The window manager then decides to either map the window or
  * not. Set the override-redirect window attribute to true if you want to bypass
  * this mechanism.
- * 
+ *
  * If the window manager decides to map the window (or if no window manager is
  * running), a MapNotify event is generated.
- * 
+ *
  * If the window becomes viewable and no earlier contents for it are remembered,
  * the X server tiles the window with its background. If the window's background
  * is undefined, the existing screen contents are not altered, and the X server
  * generates zero or more Expose events.
- * 
+ *
  * If the window type is InputOutput, an Expose event will be generated when the
  * window becomes visible. The normal response to an Expose event should be to
  * repaint the window.
@@ -6275,20 +6275,20 @@ xcb_map_window_checked (xcb_connection_t *c,
  *
  * Maps the specified window. This means making the window visible (as long as its
  * parent is visible).
- * 
+ *
  * This MapWindow request will be translated to a MapRequest request if a window
  * manager is running. The window manager then decides to either map the window or
  * not. Set the override-redirect window attribute to true if you want to bypass
  * this mechanism.
- * 
+ *
  * If the window manager decides to map the window (or if no window manager is
  * running), a MapNotify event is generated.
- * 
+ *
  * If the window becomes viewable and no earlier contents for it are remembered,
  * the X server tiles the window with its background. If the window's background
  * is undefined, the existing screen contents are not altered, and the X server
  * generates zero or more Expose events.
- * 
+ *
  * If the window type is InputOutput, an Expose event will be generated when the
  * window becomes visible. The normal response to an Expose event should be to
  * repaint the window.
@@ -6334,7 +6334,7 @@ xcb_map_subwindows (xcb_connection_t *c,
  *
  * Unmaps the specified window. This means making the window invisible (and all
  * its child windows).
- * 
+ *
  * Unmapping a window leads to the `UnmapNotify` event being generated. Also,
  * `Expose` events are generated for formerly obscured windows.
  *
@@ -6355,7 +6355,7 @@ xcb_unmap_window_checked (xcb_connection_t *c,
  *
  * Unmaps the specified window. This means making the window invisible (and all
  * its child windows).
- * 
+ *
  * Unmapping a window leads to the `UnmapNotify` event being generated. Also,
  * `Expose` events are generated for formerly obscured windows.
  *
@@ -6504,7 +6504,7 @@ xcb_configure_window_value_list (const xcb_configure_window_request_t *R);
  *
  * If \a direction is `XCB_CIRCULATE_RAISE_LOWEST`, the lowest mapped child (if
  * any) will be raised to the top of the stack.
- * 
+ *
  * If \a direction is `XCB_CIRCULATE_LOWER_HIGHEST`, the highest mapped child will
  * be lowered to the bottom of the stack.
  *
@@ -6528,7 +6528,7 @@ xcb_circulate_window_checked (xcb_connection_t *c,
  *
  * If \a direction is `XCB_CIRCULATE_RAISE_LOWEST`, the lowest mapped child (if
  * any) will be raised to the top of the stack.
- * 
+ *
  * If \a direction is `XCB_CIRCULATE_LOWER_HIGHEST`, the highest mapped child will
  * be lowered to the bottom of the stack.
  *
@@ -6667,7 +6667,7 @@ xcb_intern_atom_sizeof (const void  *_buffer);
  * Retrieves the identifier (xcb_atom_t TODO) for the atom with the specified
  * name. Atoms are used in protocols like EWMH, for example to store window titles
  * (`_NET_WM_NAME` atom) as property of a window.
- * 
+ *
  * If \a only_if_exists is 0, the atom will be created if it does not already exist.
  * If \a only_if_exists is 1, `XCB_ATOM_NONE` will be returned if the atom does
  * not yet exist.
@@ -6691,7 +6691,7 @@ xcb_intern_atom (xcb_connection_t *c,
  * Retrieves the identifier (xcb_atom_t TODO) for the atom with the specified
  * name. Atoms are used in protocols like EWMH, for example to store window titles
  * (`_NET_WM_NAME` atom) as property of a window.
- * 
+ *
  * If \a only_if_exists is 0, the atom will be created if it does not already exist.
  * If \a only_if_exists is 1, `XCB_ATOM_NONE` will be returned if the atom does
  * not yet exist.
@@ -6913,11 +6913,11 @@ xcb_get_property_sizeof (const void  *_buffer);
  * example the window title (`WM_NAME`) or its minimum size (`WM_NORMAL_HINTS`).
  * Protocols such as EWMH also use properties - for example EWMH defines the
  * window title, encoded as UTF-8 string, in the `_NET_WM_NAME` property.
- * 
+ *
  * TODO: talk about \a type
- * 
+ *
  * TODO: talk about `delete`
- * 
+ *
  * TODO: talk about the offset/length thing. what's a valid use case?
  *
  */
@@ -6949,11 +6949,11 @@ xcb_get_property (xcb_connection_t *c,
  * example the window title (`WM_NAME`) or its minimum size (`WM_NORMAL_HINTS`).
  * Protocols such as EWMH also use properties - for example EWMH defines the
  * window title, encoded as UTF-8 string, in the `_NET_WM_NAME` property.
- * 
+ *
  * TODO: talk about \a type
- * 
+ *
  * TODO: talk about `delete`
- * 
+ *
  * TODO: talk about the offset/length thing. what's a valid use case?
  *
  * This form can be used only if the request will cause
@@ -7075,7 +7075,7 @@ xcb_list_properties_reply (xcb_connection_t              *c,
  *
  * Makes `window` the owner of the selection \a selection and updates the
  * last-change time of the specified selection.
- * 
+ *
  * TODO: briefly explain what a selection is.
  *
  * This form can be used only if the request will not cause
@@ -7108,7 +7108,7 @@ xcb_set_selection_owner_checked (xcb_connection_t *c,
  *
  * Makes `window` the owner of the selection \a selection and updates the
  * last-change time of the specified selection.
- * 
+ *
  * TODO: briefly explain what a selection is.
  *
  */
@@ -7126,7 +7126,7 @@ xcb_set_selection_owner (xcb_connection_t *c,
  * @return A cookie
  *
  * Gets the owner of the specified selection.
- * 
+ *
  * TODO: briefly explain what a selection is.
  *
  */
@@ -7142,7 +7142,7 @@ xcb_get_selection_owner (xcb_connection_t *c,
  * @return A cookie
  *
  * Gets the owner of the specified selection.
- * 
+ *
  * TODO: briefly explain what a selection is.
  *
  * This form can be used only if the request will cause
@@ -7234,7 +7234,7 @@ xcb_convert_selection (xcb_connection_t *c,
  *
  * Identifies the \a destination window, determines which clients should receive
  * the specified event and ignores any active grabs.
- * 
+ *
  * The \a event must be one of the core events or an event defined by an extension,
  * so that the X server can correctly byte-swap the contents as necessary. The
  * contents of \a event are otherwise unaltered and unchecked except for the
@@ -7278,7 +7278,7 @@ xcb_send_event_checked (xcb_connection_t *c,
  *
  * Identifies the \a destination window, determines which clients should receive
  * the specified event and ignores any active grabs.
- * 
+ *
  * The \a event must be one of the core events or an event defined by an extension,
  * so that the X server can correctly byte-swap the contents as necessary. The
  * contents of \a event are otherwise unaltered and unchecked except for the
@@ -7421,7 +7421,7 @@ xcb_grab_pointer_reply (xcb_connection_t           *c,
  * Releases the pointer and any queued events if you actively grabbed the pointer
  * before using `xcb_grab_pointer`, `xcb_grab_button` or within a normal button
  * press.
- * 
+ *
  * EnterNotify and LeaveNotify events are generated.
  *
  * This form can be used only if the request will not cause
@@ -7445,7 +7445,7 @@ xcb_ungrab_pointer_checked (xcb_connection_t *c,
  * Releases the pointer and any queued events if you actively grabbed the pointer
  * before using `xcb_grab_pointer`, `xcb_grab_button` or within a normal button
  * press.
- * 
+ *
  * EnterNotify and LeaveNotify events are generated.
  *
  */
@@ -7485,18 +7485,18 @@ xcb_ungrab_pointer (xcb_connection_t *c,
  * described in GrabPointer, the last-pointer-grab time is set to the time at
  * which the button was pressed (as transmitted in the ButtonPress event), and the
  * ButtonPress event is reported if all of the following conditions are true:
- * 
+ *
  * The pointer is not grabbed and the specified button is logically pressed when
  * the specified modifier keys are logically down, and no other buttons or
  * modifier keys are logically down.
- * 
+ *
  * The grab-window contains the pointer.
- * 
+ *
  * The confine-to window (if any) is viewable.
- * 
+ *
  * A passive grab on the same button/key combination does not exist on any
  * ancestor of grab-window.
- * 
+ *
  * The interpretation of the remaining arguments is the same as for GrabPointer.
  * The active grab is terminated automatically when the logical state of the
  * pointer has all buttons released, independent of the logical state of modifier
@@ -7510,7 +7510,7 @@ xcb_ungrab_pointer (xcb_connection_t *c,
  * equivalent to issuing the request for all possible buttons. Otherwise, it is
  * not required that the button specified currently be assigned to a physical
  * button.
- * 
+ *
  * An Access error is generated if some other client has already issued a
  * GrabButton request with the same button/key combination on the same window.
  * When using AnyModifier or AnyButton, the request fails completely (no grabs are
@@ -7565,18 +7565,18 @@ xcb_grab_button_checked (xcb_connection_t *c,
  * described in GrabPointer, the last-pointer-grab time is set to the time at
  * which the button was pressed (as transmitted in the ButtonPress event), and the
  * ButtonPress event is reported if all of the following conditions are true:
- * 
+ *
  * The pointer is not grabbed and the specified button is logically pressed when
  * the specified modifier keys are logically down, and no other buttons or
  * modifier keys are logically down.
- * 
+ *
  * The grab-window contains the pointer.
- * 
+ *
  * The confine-to window (if any) is viewable.
- * 
+ *
  * A passive grab on the same button/key combination does not exist on any
  * ancestor of grab-window.
- * 
+ *
  * The interpretation of the remaining arguments is the same as for GrabPointer.
  * The active grab is terminated automatically when the logical state of the
  * pointer has all buttons released, independent of the logical state of modifier
@@ -7590,7 +7590,7 @@ xcb_grab_button_checked (xcb_connection_t *c,
  * equivalent to issuing the request for all possible buttons. Otherwise, it is
  * not required that the button specified currently be assigned to a physical
  * button.
- * 
+ *
  * An Access error is generated if some other client has already issued a
  * GrabButton request with the same button/key combination on the same window.
  * When using AnyModifier or AnyButton, the request fails completely (no grabs are
@@ -7691,7 +7691,7 @@ xcb_change_active_pointer_grab (xcb_connection_t *c,
  *
  * Actively grabs control of the keyboard and generates FocusIn and FocusOut
  * events. Further key events are reported only to the grabbing client.
- * 
+ *
  * Any active keyboard grab by this client is overridden. If the keyboard is
  * actively grabbed by some other client, `AlreadyGrabbed` is returned. If
  * \a grab_window is not viewable, `GrabNotViewable` is returned. If the keyboard
@@ -7728,7 +7728,7 @@ xcb_grab_keyboard (xcb_connection_t *c,
  *
  * Actively grabs control of the keyboard and generates FocusIn and FocusOut
  * events. Further key events are reported only to the grabbing client.
- * 
+ *
  * Any active keyboard grab by this client is overridden. If the keyboard is
  * actively grabbed by some other client, `AlreadyGrabbed` is returned. If
  * \a grab_window is not viewable, `GrabNotViewable` is returned. If the keyboard
@@ -7819,29 +7819,29 @@ xcb_ungrab_keyboard (xcb_connection_t *c,
  * actively grabbed (as for `GrabKeyboard`), the last-keyboard-grab time is set to
  * the time at which the key was pressed (as transmitted in the KeyPress event),
  * and the KeyPress event is reported if all of the following conditions are true:
- * 
+ *
  * The keyboard is not grabbed and the specified key (which can itself be a
  * modifier key) is logically pressed when the specified modifier keys are
  * logically down, and no other modifier keys are logically down.
- * 
+ *
  * Either the grab_window is an ancestor of (or is) the focus window, or the
  * grab_window is a descendant of the focus window and contains the pointer.
- * 
+ *
  * A passive grab on the same key combination does not exist on any ancestor of
  * grab_window.
- * 
+ *
  * The interpretation of the remaining arguments is as for XGrabKeyboard.  The active grab is terminated
  * automatically when the logical state of the keyboard has the specified key released (independent of the
  * logical state of the modifier keys), at which point a KeyRelease event is reported to the grabbing window.
- * 
+ *
  * Note that the logical state of a device (as seen by client applications) may lag the physical state if
  * device event processing is frozen.
- * 
+ *
  * A modifiers argument of AnyModifier is equivalent to issuing the request for all possible modifier combinations (including the combination of no modifiers).  It is not required that all modifiers specified
  * have currently assigned KeyCodes.  A keycode argument of AnyKey is equivalent to issuing the request for
  * all possible KeyCodes.  Otherwise, the specified keycode must be in the range specified by min_keycode
  * and max_keycode in the connection setup, or a BadValue error results.
- * 
+ *
  * If some other client has issued a XGrabKey with the same key combination on the same window, a BadAccess
  * error results.  When using AnyModifier or AnyKey, the request fails completely, and a BadAccess error
  * results (no grabs are established) if there is a conflicting grab for any combination.
@@ -7883,29 +7883,29 @@ xcb_grab_key_checked (xcb_connection_t *c,
  * actively grabbed (as for `GrabKeyboard`), the last-keyboard-grab time is set to
  * the time at which the key was pressed (as transmitted in the KeyPress event),
  * and the KeyPress event is reported if all of the following conditions are true:
- * 
+ *
  * The keyboard is not grabbed and the specified key (which can itself be a
  * modifier key) is logically pressed when the specified modifier keys are
  * logically down, and no other modifier keys are logically down.
- * 
+ *
  * Either the grab_window is an ancestor of (or is) the focus window, or the
  * grab_window is a descendant of the focus window and contains the pointer.
- * 
+ *
  * A passive grab on the same key combination does not exist on any ancestor of
  * grab_window.
- * 
+ *
  * The interpretation of the remaining arguments is as for XGrabKeyboard.  The active grab is terminated
  * automatically when the logical state of the keyboard has the specified key released (independent of the
  * logical state of the modifier keys), at which point a KeyRelease event is reported to the grabbing window.
- * 
+ *
  * Note that the logical state of a device (as seen by client applications) may lag the physical state if
  * device event processing is frozen.
- * 
+ *
  * A modifiers argument of AnyModifier is equivalent to issuing the request for all possible modifier combinations (including the combination of no modifiers).  It is not required that all modifiers specified
  * have currently assigned KeyCodes.  A keycode argument of AnyKey is equivalent to issuing the request for
  * all possible KeyCodes.  Otherwise, the specified keycode must be in the range specified by min_keycode
  * and max_keycode in the connection setup, or a BadValue error results.
- * 
+ *
  * If some other client has issued a XGrabKey with the same key combination on the same window, a BadAccess
  * error results.  When using AnyModifier or AnyKey, the request fails completely, and a BadAccess error
  * results (no grabs are established) if there is a conflicting grab for any combination.
@@ -8276,12 +8276,12 @@ xcb_translate_coordinates_reply (xcb_connection_t                    *c,
  * @return A cookie
  *
  * Moves the mouse pointer to the specified position.
- * 
+ *
  * If \a src_window is not `XCB_NONE` (TODO), the move will only take place if the
  * pointer is inside \a src_window and within the rectangle specified by (\a src_x,
  * \a src_y, \a src_width, \a src_height). The rectangle coordinates are relative to
  * \a src_window.
- * 
+ *
  * If \a dst_window is not `XCB_NONE` (TODO), the pointer will be moved to the
  * offsets (\a dst_x, \a dst_y) relative to \a dst_window. If \a dst_window is
  * `XCB_NONE` (TODO), the pointer will be moved by the offsets (\a dst_x, \a dst_y)
@@ -8317,12 +8317,12 @@ xcb_warp_pointer_checked (xcb_connection_t *c,
  * @return A cookie
  *
  * Moves the mouse pointer to the specified position.
- * 
+ *
  * If \a src_window is not `XCB_NONE` (TODO), the move will only take place if the
  * pointer is inside \a src_window and within the rectangle specified by (\a src_x,
  * \a src_y, \a src_width, \a src_height). The rectangle coordinates are relative to
  * \a src_window.
- * 
+ *
  * If \a dst_window is not `XCB_NONE` (TODO), the pointer will be moved to the
  * offsets (\a dst_x, \a dst_y) relative to \a dst_window. If \a dst_window is
  * `XCB_NONE` (TODO), the pointer will be moved by the offsets (\a dst_x, \a dst_y)
@@ -8364,7 +8364,7 @@ xcb_warp_pointer (xcb_connection_t *c,
  * Changes the input focus and the last-focus-change time. If the specified \a time
  * is earlier than the current last-focus-change time, the request is ignored (to
  * avoid race conditions when running X over the network).
- * 
+ *
  * A FocusIn and FocusOut event is generated when focus is changed.
  *
  * This form can be used only if the request will not cause
@@ -8401,7 +8401,7 @@ xcb_set_input_focus_checked (xcb_connection_t *c,
  * Changes the input focus and the last-focus-change time. If the specified \a time
  * is earlier than the current last-focus-change time, the request is ignored (to
  * avoid race conditions when running X over the network).
- * 
+ *
  * A FocusIn and FocusOut event is generated when focus is changed.
  *
  */
@@ -8512,7 +8512,7 @@ xcb_open_font_sizeof (const void  *_buffer);
  * @return A cookie
  *
  * Opens any X core font matching the given \a name (for example "-misc-fixed-*").
- * 
+ *
  * Note that X core fonts are deprecated (but still supported) in favor of
  * client-side rendering using Xft.
  *
@@ -8536,7 +8536,7 @@ xcb_open_font_checked (xcb_connection_t *c,
  * @return A cookie
  *
  * Opens any X core font matching the given \a name (for example "-misc-fixed-*").
- * 
+ *
  * Note that X core fonts are deprecated (but still supported) in favor of
  * client-side rendering using Xft.
  *
@@ -8716,7 +8716,7 @@ xcb_query_text_extents_sizeof (const void  *_buffer,
  * Query text extents from the X11 server. This request returns the bounding box
  * of the specified 16-bit character string in the specified \a font or the font
  * contained in the specified graphics context.
- * 
+ *
  * `font_ascent` is set to the maximum of the ascent metrics of all characters in
  * the string. `font_descent` is set to the maximum of the descent metrics.
  * `overall_width` is set to the sum of the character-width metrics of all
@@ -8726,12 +8726,12 @@ xcb_query_text_extents_sizeof (const void  *_buffer,
  * right-side-bearing metric of the character plus W. The lbearing member is set
  * to the minimum L of all characters in the string. The rbearing member is set to
  * the maximum R.
- * 
+ *
  * For fonts defined with linear indexing rather than 2-byte matrix indexing, each
  * `xcb_char2b_t` structure is interpreted as a 16-bit number with byte1 as the
  * most significant byte. If the font has no defined default character, undefined
  * characters in the string are taken to have all zero metrics.
- * 
+ *
  * Characters with all zero metrics are ignored. If the font has no defined
  * default_char, the undefined characters in the string are also ignored.
  *
@@ -8754,7 +8754,7 @@ xcb_query_text_extents (xcb_connection_t   *c,
  * Query text extents from the X11 server. This request returns the bounding box
  * of the specified 16-bit character string in the specified \a font or the font
  * contained in the specified graphics context.
- * 
+ *
  * `font_ascent` is set to the maximum of the ascent metrics of all characters in
  * the string. `font_descent` is set to the maximum of the descent metrics.
  * `overall_width` is set to the sum of the character-width metrics of all
@@ -8764,12 +8764,12 @@ xcb_query_text_extents (xcb_connection_t   *c,
  * right-side-bearing metric of the character plus W. The lbearing member is set
  * to the minimum L of all characters in the string. The rbearing member is set to
  * the maximum R.
- * 
+ *
  * For fonts defined with linear indexing rather than 2-byte matrix indexing, each
  * `xcb_char2b_t` structure is interpreted as a 16-bit number with byte1 as the
  * most significant byte. If the font has no defined default character, undefined
  * characters in the string are taken to have all zero metrics.
- * 
+ *
  * Characters with all zero metrics are ignored. If the font has no defined
  * default_char, the undefined characters in the string are also ignored.
  *
@@ -9860,9 +9860,9 @@ xcb_poly_segment_sizeof (const void  *_buffer,
  * `xcb_segment_t` structures and does not perform joining at coincident
  * endpoints. For any given line, a pixel is not drawn more than once. If lines
  * intersect, the intersecting pixels are drawn multiple times.
- * 
+ *
  * TODO: include the xcb_segment_t data structure
- * 
+ *
  * TODO: an example
  *
  * This form can be used only if the request will not cause
@@ -9893,9 +9893,9 @@ xcb_poly_segment_checked (xcb_connection_t    *c,
  * `xcb_segment_t` structures and does not perform joining at coincident
  * endpoints. For any given line, a pixel is not drawn more than once. If lines
  * intersect, the intersecting pixels are drawn multiple times.
- * 
+ *
  * TODO: include the xcb_segment_t data structure
- * 
+ *
  * TODO: an example
  *
  */
@@ -10432,7 +10432,7 @@ xcb_image_text_8_sizeof (const void  *_buffer);
  * the filled rectangle is at [x, y - font-ascent]. The width is overall-width,
  * the height is font-ascent + font-descent. The overall-width, font-ascent and
  * font-descent are as returned by `xcb_query_text_extents` (TODO).
- * 
+ *
  * Note that using X core fonts is deprecated (but still supported) in favor of
  * client-side rendering using Xft.
  *
@@ -10471,7 +10471,7 @@ xcb_image_text_8_checked (xcb_connection_t *c,
  * the filled rectangle is at [x, y - font-ascent]. The width is overall-width,
  * the height is font-ascent + font-descent. The overall-width, font-ascent and
  * font-descent are as returned by `xcb_query_text_extents` (TODO).
- * 
+ *
  * Note that using X core fonts is deprecated (but still supported) in favor of
  * client-side rendering using Xft.
  *
@@ -10520,7 +10520,7 @@ xcb_image_text_16_sizeof (const void  *_buffer);
  * the filled rectangle is at [x, y - font-ascent]. The width is overall-width,
  * the height is font-ascent + font-descent. The overall-width, font-ascent and
  * font-descent are as returned by `xcb_query_text_extents` (TODO).
- * 
+ *
  * Note that using X core fonts is deprecated (but still supported) in favor of
  * client-side rendering using Xft.
  *
@@ -10560,7 +10560,7 @@ xcb_image_text_16_checked (xcb_connection_t   *c,
  * the filled rectangle is at [x, y - font-ascent]. The width is overall-width,
  * the height is font-ascent + font-descent. The overall-width, font-ascent and
  * font-descent are as returned by `xcb_query_text_extents` (TODO).
- * 
+ *
  * Note that using X core fonts is deprecated (but still supported) in favor of
  * client-side rendering using Xft.
  *
@@ -11417,7 +11417,7 @@ xcb_create_cursor (xcb_connection_t *c,
  * in a special font named cursor. Applications are encouraged to use this
  * interface for their cursors because the font can be customized for the
  * individual display type.
- * 
+ *
  * All pixels which are set to 1 in the source will use the foreground color (as
  * specified by \a fore_red, \a fore_green and \a fore_blue). All pixels set to 0
  * will use the background color (as specified by \a back_red, \a back_green and
@@ -11464,7 +11464,7 @@ xcb_create_glyph_cursor_checked (xcb_connection_t *c,
  * in a special font named cursor. Applications are encouraged to use this
  * interface for their cursors because the font can be customized for the
  * individual display type.
- * 
+ *
  * All pixels which are set to 1 in the source will use the foreground color (as
  * specified by \a fore_red, \a fore_green and \a fore_blue). All pixels set to 0
  * will use the background color (as specified by \a back_red, \a back_green and
@@ -11622,12 +11622,12 @@ xcb_query_extension_sizeof (const void  *_buffer);
  * @return A cookie
  *
  * Determines if the specified extension is present on this X11 server.
- * 
+ *
  * Every extension has a unique `major_opcode` to identify requests, the minor
  * opcodes and request formats are extension-specific. If the extension provides
  * events and errors, the `first_event` and `first_error` fields in the reply are
  * set accordingly.
- * 
+ *
  * There should rarely be a need to use this request directly, XCB provides the
  * `xcb_get_extension_data` function instead.
  *
@@ -11647,12 +11647,12 @@ xcb_query_extension (xcb_connection_t *c,
  * @return A cookie
  *
  * Determines if the specified extension is present on this X11 server.
- * 
+ *
  * Every extension has a unique `major_opcode` to identify requests, the minor
  * opcodes and request formats are extension-specific. If the extension provides
  * events and errors, the `first_event` and `first_error` fields in the reply are
  * set accordingly.
- * 
+ *
  * There should rarely be a need to use this request directly, XCB provides the
  * `xcb_get_extension_data` function instead.
  *

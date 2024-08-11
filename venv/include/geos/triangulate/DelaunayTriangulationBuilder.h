@@ -163,4 +163,3 @@ public:
 
 } //namespace geos.triangulate
 } //namespace goes
-

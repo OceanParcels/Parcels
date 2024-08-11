@@ -29,14 +29,14 @@ hwlocality_helper_topology_sets \- CPU and node sets of entire topologies
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "\fBhwloc_const_cpuset_t\fP hwloc_topology_get_allowed_cpuset (\fBhwloc_topology_t\fP topology)"
 
 .PP
-Get allowed CPU set\&. 
+Get allowed CPU set\&.
 .PP
 \fBReturns\fP
 .RS 4
@@ -51,14 +51,14 @@ If the topology flag \fBHWLOC_TOPOLOGY_FLAG_INCLUDE_DISALLOWED\fP was not set, t
 .PP
 If \fBHWLOC_TOPOLOGY_FLAG_INCLUDE_DISALLOWED\fP was set, applying \fBhwloc_bitmap_intersects()\fP on the result of this function and on an object cpuset checks whether there are allowed PUs inside that object\&. Applying \fBhwloc_bitmap_and()\fP returns the list of these allowed PUs\&.
 .PP
-The returned cpuset is not newly allocated and should thus not be changed or freed, \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&. 
+The returned cpuset is not newly allocated and should thus not be changed or freed, \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&.
 .RE
 .PP
 
 .SS "\fBhwloc_const_nodeset_t\fP hwloc_topology_get_allowed_nodeset (\fBhwloc_topology_t\fP topology)"
 
 .PP
-Get allowed node set\&. 
+Get allowed node set\&.
 .PP
 \fBReturns\fP
 .RS 4
@@ -73,14 +73,14 @@ If the topology flag \fBHWLOC_TOPOLOGY_FLAG_INCLUDE_DISALLOWED\fP was not set, t
 .PP
 If \fBHWLOC_TOPOLOGY_FLAG_INCLUDE_DISALLOWED\fP was set, applying \fBhwloc_bitmap_intersects()\fP on the result of this function and on an object nodeset checks whether there are allowed NUMA nodes inside that object\&. Applying \fBhwloc_bitmap_and()\fP returns the list of these allowed NUMA nodes\&.
 .PP
-The returned nodeset is not newly allocated and should thus not be changed or freed, \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&. 
+The returned nodeset is not newly allocated and should thus not be changed or freed, \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&.
 .RE
 .PP
 
 .SS "\fBhwloc_const_cpuset_t\fP hwloc_topology_get_complete_cpuset (\fBhwloc_topology_t\fP topology)"
 
 .PP
-Get complete CPU set\&. 
+Get complete CPU set\&.
 .PP
 \fBReturns\fP
 .RS 4
@@ -93,14 +93,14 @@ This function cannot return \fCNULL\fP\&.
 .PP
 The returned cpuset is not newly allocated and should thus not be changed or freed; \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&.
 .PP
-This is equivalent to retrieving the root object complete CPU-set\&. 
+This is equivalent to retrieving the root object complete CPU-set\&.
 .RE
 .PP
 
 .SS "\fBhwloc_const_nodeset_t\fP hwloc_topology_get_complete_nodeset (\fBhwloc_topology_t\fP topology)"
 
 .PP
-Get complete node set\&. 
+Get complete node set\&.
 .PP
 \fBReturns\fP
 .RS 4
@@ -113,14 +113,14 @@ This function cannot return \fCNULL\fP\&.
 .PP
 The returned nodeset is not newly allocated and should thus not be changed or freed; \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&.
 .PP
-This is equivalent to retrieving the root object complete nodeset\&. 
+This is equivalent to retrieving the root object complete nodeset\&.
 .RE
 .PP
 
 .SS "\fBhwloc_const_cpuset_t\fP hwloc_topology_get_topology_cpuset (\fBhwloc_topology_t\fP topology)"
 
 .PP
-Get topology CPU set\&. 
+Get topology CPU set\&.
 .PP
 \fBReturns\fP
 .RS 4
@@ -133,14 +133,14 @@ This function cannot return \fCNULL\fP\&.
 .PP
 The returned cpuset is not newly allocated and should thus not be changed or freed; \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&.
 .PP
-This is equivalent to retrieving the root object CPU-set\&. 
+This is equivalent to retrieving the root object CPU-set\&.
 .RE
 .PP
 
 .SS "\fBhwloc_const_nodeset_t\fP hwloc_topology_get_topology_nodeset (\fBhwloc_topology_t\fP topology)"
 
 .PP
-Get topology node set\&. 
+Get topology node set\&.
 .PP
 \fBReturns\fP
 .RS 4
@@ -153,10 +153,10 @@ This function cannot return \fCNULL\fP\&.
 .PP
 The returned nodeset is not newly allocated and should thus not be changed or freed; \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&.
 .PP
-This is equivalent to retrieving the root object nodeset\&. 
+This is equivalent to retrieving the root object nodeset\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

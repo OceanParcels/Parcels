@@ -77,4 +77,3 @@ public:
 
 } // geos::noding
 } // geos
-

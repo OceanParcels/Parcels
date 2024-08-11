@@ -102,4 +102,3 @@ RightmostEdgeFinder::getCoordinate()
 } // namespace geos::operation::buffer
 } // namespace geos::operation
 } // namespace geos
-

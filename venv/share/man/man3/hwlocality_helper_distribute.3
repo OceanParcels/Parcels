@@ -21,22 +21,22 @@ hwlocality_helper_distribute \- Distributing items over a topology
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Enumeration Type Documentation"
-.PP 
+.PP
 .SS "enum \fBhwloc_distrib_flags_e\fP"
 
 .PP
-Flags to be given to \fBhwloc_distrib()\fP\&. 
+Flags to be given to \fBhwloc_distrib()\fP\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_DISTRIB_FLAG_REVERSE \fP\fP
-Distrib in reverse order, starting from the last objects\&. 
+Distrib in reverse order, starting from the last objects\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static int hwloc_distrib (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP * roots, unsigned n_roots, \fBhwloc_cpuset_t\fP * set, unsigned n, int until, unsigned long flags)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
@@ -59,10 +59,10 @@ The caller may typically want to also call \fBhwloc_bitmap_singlify()\fP before 
 .RS 4
 On hybrid CPUs (or asymmetric platforms), distribution may be suboptimal since the number of cores or PUs inside packages or below caches may vary (the top-down recursive partitioning ignores these numbers until reaching their levels)\&. Hence it is recommended to distribute only inside a single homogeneous domain\&. For instance on a CPU with energy-efficient E-cores and high-performance P-cores, one should distribute separately N tasks on E-cores and M tasks on P-cores instead of trying to distribute directly M+N tasks on the entire CPUs\&.
 .PP
-This function requires the \fCroots\fP objects to have a CPU set\&. 
+This function requires the \fCroots\fP objects to have a CPU set\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

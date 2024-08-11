@@ -48,7 +48,7 @@ namespace Model
      * in the <i>Amazon S3 User Guide</i>.</p> <p>The response also includes the
      * <code>x-amz-abort-rule-id</code> header that provides the ID of the lifecycle
      * configuration rule that defines the abort action.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::Utils::DateTime& GetAbortDate() const{ return m_abortDate; }
     inline void SetAbortDate(const Aws::Utils::DateTime& value) { m_abortDate = value; }
@@ -62,7 +62,7 @@ namespace Model
      * <p>This header is returned along with the <code>x-amz-abort-date</code> header.
      * It identifies the applicable lifecycle configuration rule that defines the
      * action to abort incomplete multipart uploads.</p>  <p>This functionality
-     * is not supported for directory buckets.</p> 
+     * is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetAbortRuleId() const{ return m_abortRuleId; }
     inline void SetAbortRuleId(const Aws::String& value) { m_abortRuleId = value; }
@@ -77,7 +77,7 @@ namespace Model
     /**
      * <p>The name of the bucket to which the multipart upload was initiated. Does not
      * return the access point ARN or access point alias if used.</p>  <p>Access
-     * points are not supported by directory buckets.</p> 
+     * points are not supported by directory buckets.</p>
      */
     inline const Aws::String& GetBucket() const{ return m_bucket; }
     inline void SetBucket(const Aws::String& value) { m_bucket = value; }
@@ -117,9 +117,9 @@ namespace Model
     ///@{
     /**
      * <p>The server-side encryption algorithm used when you store this object in
-     * Amazon S3 (for example, <code>AES256</code>, <code>aws:kms</code>).</p> 
+     * Amazon S3 (for example, <code>AES256</code>, <code>aws:kms</code>).</p>
      * <p>For directory buckets, only server-side encryption with Amazon S3 managed
-     * keys (SSE-S3) (<code>AES256</code>) is supported.</p> 
+     * keys (SSE-S3) (<code>AES256</code>) is supported.</p>
      */
     inline const ServerSideEncryption& GetServerSideEncryption() const{ return m_serverSideEncryption; }
     inline void SetServerSideEncryption(const ServerSideEncryption& value) { m_serverSideEncryption = value; }
@@ -133,7 +133,7 @@ namespace Model
      * <p>If server-side encryption with a customer-provided encryption key was
      * requested, the response will include this header to confirm the encryption
      * algorithm that's used.</p>  <p>This functionality is not supported for
-     * directory buckets.</p> 
+     * directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerAlgorithm() const{ return m_sSECustomerAlgorithm; }
     inline void SetSSECustomerAlgorithm(const Aws::String& value) { m_sSECustomerAlgorithm = value; }
@@ -149,7 +149,7 @@ namespace Model
      * <p>If server-side encryption with a customer-provided encryption key was
      * requested, the response will include this header to provide the round-trip
      * message integrity verification of the customer-provided encryption key.</p>
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerKeyMD5() const{ return m_sSECustomerKeyMD5; }
     inline void SetSSECustomerKeyMD5(const Aws::String& value) { m_sSECustomerKeyMD5 = value; }
@@ -164,7 +164,7 @@ namespace Model
     /**
      * <p>If present, indicates the ID of the Key Management Service (KMS) symmetric
      * encryption customer managed key that was used for the object.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSEKMSKeyId() const{ return m_sSEKMSKeyId; }
     inline void SetSSEKMSKeyId(const Aws::String& value) { m_sSEKMSKeyId = value; }
@@ -180,7 +180,7 @@ namespace Model
      * <p>If present, indicates the Amazon Web Services KMS Encryption Context to use
      * for object encryption. The value of this header is a base64-encoded UTF-8 string
      * holding JSON with the encryption context key-value pairs.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSEKMSEncryptionContext() const{ return m_sSEKMSEncryptionContext; }
     inline void SetSSEKMSEncryptionContext(const Aws::String& value) { m_sSEKMSEncryptionContext = value; }
@@ -195,7 +195,7 @@ namespace Model
     /**
      * <p>Indicates whether the multipart upload uses an S3 Bucket Key for server-side
      * encryption with Key Management Service (KMS) keys (SSE-KMS).</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline bool GetBucketKeyEnabled() const{ return m_bucketKeyEnabled; }
     inline void SetBucketKeyEnabled(bool value) { m_bucketKeyEnabled = value; }
@@ -203,7 +203,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestCharged& GetRequestCharged() const{ return m_requestCharged; }
     inline void SetRequestCharged(const RequestCharged& value) { m_requestCharged = value; }
     inline void SetRequestCharged(RequestCharged&& value) { m_requestCharged = std::move(value); }
@@ -223,7 +223,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

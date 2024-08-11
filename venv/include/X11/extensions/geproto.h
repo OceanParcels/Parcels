@@ -82,4 +82,3 @@ typedef struct {
 #define sz_xGEQueryVersionReply    32
 
 #endif /* _GEPROTO_H_ */
-

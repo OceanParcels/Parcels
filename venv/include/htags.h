@@ -134,4 +134,3 @@
 #define SPECIAL_COMPRAS 7   /* Compressed Raster element */
 
 #endif /* _HTAGS_H */
-

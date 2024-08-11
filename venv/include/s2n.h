@@ -16,7 +16,7 @@
 /**
  * @file s2n.h
  * s2n-tls is a C99 implementation of the TLS/SSL protocols that is designed to
- * be simple, small, fast, and with security as a priority. <br> It is released and 
+ * be simple, small, fast, and with security as a priority. <br> It is released and
  * licensed under the Apache License 2.0.
  */
 
@@ -54,12 +54,12 @@ extern "C" {
 #define S2N_FAILURE -1
 
 /**
- * Callback return code 
+ * Callback return code
  */
 #define S2N_CALLBACK_BLOCKED -2
 
 /**
- * s2n minimum supported TLS record major version 
+ * s2n minimum supported TLS record major version
  */
 #define S2N_MINIMUM_SUPPORTED_TLS_RECORD_MAJOR_VERSION 2
 
@@ -103,12 +103,12 @@ extern "C" {
  */
 #define S2N_UNKNOWN_PROTOCOL_VERSION 0
 
-/** 
+/**
  * s2n-tls functions that return 'int' return 0 to indicate success and -1 to indicate
- * failure. 
+ * failure.
  *
  * s2n-tls functions that return pointer types return NULL in the case of
- * failure. 
+ * failure.
  *
  * When an s2n-tls function returns a failure, s2n_errno will be set to a value
  * corresponding to the error. This error value can be translated into a string
@@ -165,9 +165,9 @@ typedef enum {
 
 /**
  * Gets the category of error from an error.
- * 
+ *
  * s2n-tls organizes errors into different "types" to allow applications to do logic on error values without catching all possibilities.
- * Applications using non-blocking I/O should check error type to determine if the I/O operation failed because 
+ * Applications using non-blocking I/O should check error type to determine if the I/O operation failed because
  * it would block or for some other error.
  *
  * @param error The error from s2n. Usually this is `s2n_errno`.
@@ -219,7 +219,7 @@ S2N_API extern int s2n_disable_atexit(void);
  * Fetches the OpenSSL version s2n-tls was compiled with. This can be used by applications to validate at runtime
  * that the versions of s2n-tls and Openssl that they have loaded are correct.
  *
- * @returns the version number of OpenSSL that s2n-tls was compiled with 
+ * @returns the version number of OpenSSL that s2n-tls was compiled with
  */
 S2N_API extern unsigned long s2n_get_openssl_version(void);
 
@@ -326,21 +326,21 @@ typedef int (*s2n_clock_time_nanoseconds)(void *, uint64_t *);
 
 /**
  * Cache callback function that allows the caller to retrieve SSL session data
- * from a cache. 
+ * from a cache.
  *
  * The callback function takes six arguments:
- * a pointer to the s2n_connection object, 
- * a pointer to arbitrary data for use within the callback, 
- * a pointer to a key which can be used to retrieve the cached entry, 
- * a 64 bit unsigned integer specifying the size of this key, 
- * a pointer to a memory location where the value should be stored, 
- * and a pointer to a 64 bit unsigned integer specifying the size of this value. 
+ * a pointer to the s2n_connection object,
+ * a pointer to arbitrary data for use within the callback,
+ * a pointer to a key which can be used to retrieve the cached entry,
+ * a 64 bit unsigned integer specifying the size of this key,
+ * a pointer to a memory location where the value should be stored,
+ * and a pointer to a 64 bit unsigned integer specifying the size of this value.
  *
  * Initially *value_size will be set to the amount of space allocated for the value,
- * the callback should set *value_size to the actual size of the data returned. 
- * If there is insufficient space, -1 should be returned. 
- * If the cache is not ready to provide data for the request, 
- * S2N_CALLBACK_BLOCKED should be returned. 
+ * the callback should set *value_size to the actual size of the data returned.
+ * If there is insufficient space, -1 should be returned.
+ * If the cache is not ready to provide data for the request,
+ * S2N_CALLBACK_BLOCKED should be returned.
  *
  * This will cause s2n_negotiate() to return S2N_BLOCKED_ON_APPLICATION_INPUT.
  */
@@ -348,32 +348,32 @@ typedef int (*s2n_cache_retrieve_callback)(struct s2n_connection *conn, void *, 
 
 /**
  * Cache callback function that allows the caller to store SSL session data in a
- * cache. 
+ * cache.
  *
  * The callback function takes seven arguments:
- * a pointer to the s2n_connection object, 
- * a pointer to arbitrary data for use within the callback, 
- * a 64-bit unsigned integer specifying the number of seconds the session data may be stored for, 
+ * a pointer to the s2n_connection object,
+ * a pointer to arbitrary data for use within the callback,
+ * a 64-bit unsigned integer specifying the number of seconds the session data may be stored for,
  * a pointer to a key which can be used to retrieve the cached entry,
- * a 64 bit unsigned integer specifying the size of this key, 
- * a pointer to a value which should be stored, 
+ * a 64 bit unsigned integer specifying the size of this key,
+ * a pointer to a value which should be stored,
  * and a 64 bit unsigned integer specified the size of this value.
  */
 typedef int (*s2n_cache_store_callback)(struct s2n_connection *conn, void *, uint64_t ttl_in_seconds, const void *key, uint64_t key_size, const void *value, uint64_t value_size);
 
 /**
-*  Cache callback function that allows the caller to set a callback function 
-*  that will be used to delete SSL session data from a cache. 
+*  Cache callback function that allows the caller to set a callback function
+*  that will be used to delete SSL session data from a cache.
 *
 *  The callback function takes four arguments:
 *  a pointer to s2n_connection object,
-*  a pointer to arbitrary data for use within the callback, 
-*  a pointer to a key which can be used to delete the cached entry, 
+*  a pointer to arbitrary data for use within the callback,
+*  a pointer to a key which can be used to delete the cached entry,
 *  and a 64 bit unsigned integer specifying the size of this key.
 */
 typedef int (*s2n_cache_delete_callback)(struct s2n_connection *conn, void *, const void *key, uint64_t key_size);
 
-/** 
+/**
  * Allows the caller to set a callback function that will be used to get the
  * system time. The time returned should be the number of nanoseconds since the
  * Unix epoch (Midnight, January 1st, 1970).
@@ -387,8 +387,8 @@ typedef int (*s2n_cache_delete_callback)(struct s2n_connection *conn, void *, co
  */
 S2N_API extern int s2n_config_set_wall_clock(struct s2n_config *config, s2n_clock_time_nanoseconds clock_fn, void *ctx);
 
-/** 
- * Allows the caller to set a callback function that will be used to get 
+/**
+ * Allows the caller to set a callback function that will be used to get
  * monotonic time. The monotonic time is the time since an arbitrary, unspecified
  * point. Unlike wall clock time, it MUST never move backwards.
  *
@@ -548,9 +548,9 @@ typedef int (*s2n_mem_free_callback)(void *ptr, uint32_t size);
 
 /**
  * Allows the caller to override s2n-tls's internal memory handling functions.
- * 
+ *
  * @warning This function must be called before s2n_init().
- * 
+ *
  * @param mem_init_callback The s2n_mem_init_callback
  * @param mem_cleanup_callback The s2n_mem_cleanup_callback
  * @param mem_malloc_callback The s2n_mem_malloc_callback
@@ -584,11 +584,11 @@ typedef int (*s2n_rand_mix_callback)(void *data, uint32_t size);
 
 /**
  * Allows the caller to override s2n-tls's entropy functions.
- * 
+ *
  * @warning This function must be called before s2n_init().
  *
  * @note The overriden random callbacks will not be used when s2n-tls is operating in FIPS mode.
- * 
+ *
  * @param rand_init_callback The s2n_rand_init_callback
  * @param rand_cleanup_callback The s2n_rand_cleanup_callback
  * @param rand_seed_callback The s2n_rand_seed_callback
@@ -659,7 +659,7 @@ S2N_API extern struct s2n_cert_chain_and_key *s2n_cert_chain_and_key_new(void);
 
 /**
  * Associates a certificate chain and private key with an `s2n_cert_chain_and_key` object.
- * 
+ *
  * `cert_chain_pem` should be a PEM encoded certificate chain, with the first
  * certificate in the chain being your leaf certificate. `private_key_pem`
  * should be a PEM encoded private key corresponding to the leaf certificate.
@@ -676,7 +676,7 @@ S2N_API extern int s2n_cert_chain_and_key_load_pem(struct s2n_cert_chain_and_key
 
 /**
  * Associates a certificate chain and private key with an `s2n_cert_chain_and_key` object.
- * 
+ *
  * `cert_chain_pem` should be a PEM encoded certificate chain, with the first
  * certificate in the chain being your leaf certificate. `private_key_pem`
  * should be a PEM encoded private key corresponding to the leaf certificate.
@@ -759,13 +759,13 @@ S2N_API extern int s2n_cert_chain_and_key_set_ocsp_data(struct s2n_cert_chain_an
 S2N_API extern int s2n_cert_chain_and_key_set_sct_list(struct s2n_cert_chain_and_key *chain_and_key, const uint8_t *data, uint32_t length);
 
 /**
- * A callback function that is invoked if s2n-tls cannot resolve a conflict between 
+ * A callback function that is invoked if s2n-tls cannot resolve a conflict between
  * two certificates with the same domain name. This function is invoked while certificates
- * are added to an `s2n_config`. 
+ * are added to an `s2n_config`.
  *
- * Currently, the only builtin resolution for domain name conflicts is certificate type(RSA, 
+ * Currently, the only builtin resolution for domain name conflicts is certificate type(RSA,
  * ECDSA, etc). The callback should return a pointer to the `s2n_cert_chain_and_key` that
- * should be used for dns name `name`. 
+ * should be used for dns name `name`.
  *
  * If NULL is returned, the first certificate will be used. Typically an application
  * will use properties like trust and expiry to implement tiebreaking.
@@ -773,7 +773,7 @@ S2N_API extern int s2n_cert_chain_and_key_set_sct_list(struct s2n_cert_chain_and
 typedef struct s2n_cert_chain_and_key *(*s2n_cert_tiebreak_callback)(struct s2n_cert_chain_and_key *cert1, struct s2n_cert_chain_and_key *cert2, uint8_t *name, uint32_t name_len);
 
 /**
- * Sets the `s2n_cert_tiebreak_callback` for resolving domain name conflicts. 
+ * Sets the `s2n_cert_tiebreak_callback` for resolving domain name conflicts.
  * If no callback is set, the first certificate added for a domain name will always be preferred.
  *
  * @param config The configuration object being updated
@@ -786,7 +786,7 @@ S2N_API extern int s2n_config_set_cert_tiebreak_callback(struct s2n_config *conf
 /**
  * Associates a certificate chain and private key with an `s2n_config` object.
  * Using this API, only one cert chain of each type (like ECDSA or RSA) may be associated with a config.
- * `cert_chain_pem` should be a PEM encoded certificate chain, with the first certificate 
+ * `cert_chain_pem` should be a PEM encoded certificate chain, with the first certificate
  * in the chain being your server's certificate. `private_key_pem` should be a
  * PEM encoded private key corresponding to the server certificate.
  *
@@ -808,9 +808,9 @@ S2N_API extern int s2n_config_add_cert_chain_and_key(struct s2n_config *config, 
  * In the case of no certificate matching the client's SNI extension or if no SNI extension was sent by
  * the client, the certificate from the `first` call to `s2n_config_add_cert_chain_and_key_to_store`
  * will be selected.
- * 
+ *
  * @warning It is not recommended to free or modify the `cert_key_pair` as any subsequent changes will be
- * reflected in the config. 
+ * reflected in the config.
  *
  * @param config The configuration object being updated
  * @param cert_key_pair The certificate chain and private key handle
@@ -916,7 +916,7 @@ typedef enum {
  */
 S2N_API extern int s2n_config_set_verify_after_sign(struct s2n_config *config, s2n_verify_after_sign mode);
 
-/** 
+/**
  * Set a custom send buffer size.
  *
  * This buffer is used to stage records for sending. By default,
@@ -997,7 +997,7 @@ S2N_API extern int s2n_config_set_verify_host_callback(struct s2n_config *config
  * 1 means OCSP responses will be validated when they are encountered, while 0 means this step will
  * be skipped.
  *
- * The default value is 1 if the underlying libCrypto implementation supports OCSP. 
+ * The default value is 1 if the underlying libCrypto implementation supports OCSP.
  *
  * @param config The configuration object being updated
  * @param check_ocsp The desired OCSP response check configuration
@@ -1080,12 +1080,12 @@ S2N_API extern int s2n_config_set_cipher_preferences(struct s2n_config *config, 
 S2N_API extern int s2n_config_append_protocol_preference(struct s2n_config *config, const uint8_t *protocol, uint8_t protocol_len);
 
 /**
- * Sets the application protocol preferences on an `s2n_config` object. 
+ * Sets the application protocol preferences on an `s2n_config` object.
  * `protocols` is a list in order of preference, with most preferred protocol first, and of
- * length `protocol_count`. 
+ * length `protocol_count`.
  *
  * When acting as an `S2N_CLIENT` the protocol list is included in the Client Hello message
- * as the ALPN extension. 
+ * as the ALPN extension.
  *
  * As an `S2N_SERVER`, the list is used to negotiate a mutual application protocol with the
  * client. After the negotiation for the connection has completed, the agreed upon protocol
@@ -1113,12 +1113,12 @@ typedef enum {
  * to S2N_STATUS_REQUEST_NONE, no status request is made.
  *
  * @note SHA-1 is the only supported hash algorithm for the `certID` field. This is different
- * from the hash algorithm used for the OCSP signature. See 
+ * from the hash algorithm used for the OCSP signature. See
  * [RFC 6960](https://datatracker.ietf.org/doc/html/rfc6960#section-4.1.1) for more information.
  * While unlikely to be the case, if support for a different hash algorithm is required, the
  * s2n-tls validation can be disabled with `s2n_config_set_check_stapled_ocsp_response()` and the
  * response can be retrieved for manual validation with `s2n_connection_get_ocsp_response()`.
- * 
+ *
  * @param config The configuration object being updated
  * @param type The desired request status type
  * @returns S2N_SUCCESS on success. S2N_FAILURE on failure
@@ -1126,7 +1126,7 @@ typedef enum {
 S2N_API extern int s2n_config_set_status_request_type(struct s2n_config *config, s2n_status_request_type type);
 
 /**
- * Enum to set Certificate Transparency Support level. 
+ * Enum to set Certificate Transparency Support level.
  */
 typedef enum {
     S2N_CT_SUPPORT_NONE = 0,
@@ -1167,7 +1167,7 @@ typedef enum {
 S2N_API extern int s2n_config_set_alert_behavior(struct s2n_config *config, s2n_alert_behavior alert_behavior);
 
 /**
- * Sets the extension data in the `s2n_config` object for the specified extension. 
+ * Sets the extension data in the `s2n_config` object for the specified extension.
  * This method will clear any existing data that is set. If the data and length
  * parameters are set to NULL, no new data is set in the `s2n_config` object,
  * effectively clearing existing data.
@@ -1228,7 +1228,7 @@ S2N_API extern int s2n_config_set_session_tickets_onoff(struct s2n_config *confi
 
 /**
  * Enable or disable session caching.
- * 
+ *
  * @note Session caching will not be turned on unless all three session cache callbacks are set
  * prior to calling this function.
  *
@@ -1271,7 +1271,7 @@ S2N_API extern int s2n_config_set_ticket_decrypt_key_lifetime(struct s2n_config 
  * @param name_len Length of session ticket key name
  * @param key Key used to perform encryption/decryption of session ticket
  * @param key_len Length of the session ticket key
- * @param intro_time_in_seconds_from_epoch Time at which the session ticket key is introduced. If this is 0, then intro_time_in_seconds_from_epoch is set to now. 
+ * @param intro_time_in_seconds_from_epoch Time at which the session ticket key is introduced. If this is 0, then intro_time_in_seconds_from_epoch is set to now.
  * @returns S2N_SUCCESS on success. S2N_FAILURE on failure
  */
 S2N_API extern int s2n_config_add_ticket_crypto_key(struct s2n_config *config, const uint8_t *name, uint32_t name_len,
@@ -1283,7 +1283,7 @@ S2N_API extern int s2n_config_add_ticket_crypto_key(struct s2n_config *config, c
  * Restricts session resumption to TLS1.3, as the tickets used in TLS1.2 resumption are
  * not forward secret. Clients should not expect to receive new session tickets and servers
  * will not send new session tickets when TLS1.2 is negotiated and ticket forward secrecy is required.
- * 
+ *
  * @note The default behavior is that forward secrecy is not required.
  *
  * @param config The config object being updated
@@ -1324,8 +1324,8 @@ typedef enum {
  * one of these objects. These connection objects can be operated on by up
  * to two threads at a time, one sender and one receiver, but neither sending
  * nor receiving are atomic, so if these objects are being called by multiple
- * sender or receiver threads, you must perform your own locking to ensure 
- * that only one sender or receiver is active at a time. 
+ * sender or receiver threads, you must perform your own locking to ensure
+ * that only one sender or receiver is active at a time.
  *
  * The `mode` parameters specifies if the caller is a server, or is a client.
  * Connections objects are re-usable across many connections, and should be
@@ -1387,7 +1387,7 @@ typedef enum {
  *
  * @param config The configuration object being updated
  * @param client_hello_callback The client hello callback function
- * @param ctx A pointer to a user defined context that the Client Hello callback will be invoked with. 
+ * @param ctx A pointer to a user defined context that the Client Hello callback will be invoked with.
  * @returns S2N_SUCCESS on success. S2N_FAILURE on failure
  */
 S2N_API extern int s2n_config_set_client_hello_cb(struct s2n_config *config, s2n_client_hello_fn client_hello_callback, void *ctx);
@@ -1467,9 +1467,9 @@ S2N_API extern struct s2n_client_hello *s2n_client_hello_parse_message(const uin
 S2N_API extern int s2n_client_hello_free(struct s2n_client_hello **ch);
 
 /**
- * Function to determine the size of the raw Client Hello buffer. 
+ * Function to determine the size of the raw Client Hello buffer.
  *
- * Can be used to determine the necessary size of the `out` buffer for 
+ * Can be used to determine the necessary size of the `out` buffer for
  * s2n_client_hello_get_raw_message()
  *
  * @param ch The Client Hello handle
@@ -1554,7 +1554,7 @@ S2N_API extern ssize_t s2n_client_hello_get_extension_length(struct s2n_client_h
 /**
  * Copies into the `out` buffer `max_length` bytes of a given extension type on the ClientHello
  *
- * `ch` is a pointer to the `s2n_client_hello` of the `s2n_connection` which can be obtained using s2n_connection_get_client_hello(). 
+ * `ch` is a pointer to the `s2n_client_hello` of the `s2n_connection` which can be obtained using s2n_connection_get_client_hello().
  *
  * @param ch A pointer to the Client Hello
  * @param extension_type Indicates the desired extension
@@ -1567,7 +1567,7 @@ S2N_API extern ssize_t s2n_client_hello_get_extension_by_id(struct s2n_client_he
 /**
  * Used to check if a particular extension exists in the client hello.
  *
- * `ch` is a pointer to the `s2n_client_hello` of the `s2n_connection` which can be obtained using s2n_connection_get_client_hello(). 
+ * `ch` is a pointer to the `s2n_client_hello` of the `s2n_connection` which can be obtained using s2n_connection_get_client_hello().
  *
  * @param ch A pointer to the client hello object
  * @param extension_iana The iana value of the extension
@@ -1577,8 +1577,8 @@ S2N_API extern int s2n_client_hello_has_extension(struct s2n_client_hello *ch, u
 
 /**
  * Get the the ClientHello session id length in bytes
- * 
- * `ch` is a pointer to the `s2n_client_hello` of the `s2n_connection` which can be obtained using s2n_connection_get_client_hello(). 
+ *
+ * `ch` is a pointer to the `s2n_client_hello` of the `s2n_connection` which can be obtained using s2n_connection_get_client_hello().
  *
  * @param ch A pointer to the Client Hello
  * @param out_length An out pointer. s2n will set it's value to the size of the session_id in bytes.
@@ -1591,9 +1591,9 @@ S2N_API extern int s2n_client_hello_get_session_id_length(struct s2n_client_hell
  *
  * Retrieve the session id as sent by the client in the ClientHello message. The session id on the `s2n_connection` may change later
  * when the server sends the ServerHello; see `s2n_connection_get_session_id` for how to get the final session id used for future session resumption.
- * 
+ *
  * Use s2n_client_hello_get_session_id_length() to get the the ClientHello session id length in bytes. `ch` is a pointer to the `s2n_client_hello`
- * of the `s2n_connection` which can be obtained using s2n_connection_get_client_hello(). 
+ * of the `s2n_connection` which can be obtained using s2n_connection_get_client_hello().
  *
  * @param ch A pointer to the Client Hello
  * @param out A pointer to the buffer that s2n will write the client session id to. This buffer MUST be the size of `max_length`
@@ -1623,7 +1623,7 @@ S2N_API extern int s2n_client_hello_get_compression_methods_length(struct s2n_cl
  *
  * @note s2n-tls has never supported compression methods in any TLS version and therefore a
  * compression method will never be negotiated or used.
- * 
+ *
  * @param ch A pointer to the Client Hello
  * @param list A pointer to some memory that s2n will write the compression methods to. This memory MUST be the size of `list_length`
  * @param list_length The size of `list`.
@@ -1765,7 +1765,7 @@ typedef int s2n_send_fn(void *io_context, const uint8_t *buf, uint32_t len);
 
 /**
  * Set a context containing anything needed in the recv callback function (for example,
- * a file descriptor), the buffer holding data to be sent or received, and the length of the buffer. 
+ * a file descriptor), the buffer holding data to be sent or received, and the length of the buffer.
  *
  * @note The `io_context` passed to the callbacks may be set separately using `s2n_connection_set_recv_ctx` and `s2n_connection_set_send_ctx`.
  *
@@ -1777,7 +1777,7 @@ S2N_API extern int s2n_connection_set_recv_ctx(struct s2n_connection *conn, void
 
 /**
  * Set a context containing anything needed in the send callback function (for example,
- * a file descriptor), the buffer holding data to be sent or received, and the length of the buffer. 
+ * a file descriptor), the buffer holding data to be sent or received, and the length of the buffer.
  *
  * @note The `io_context` passed to the callbacks may be set separately using `s2n_connection_set_recv_ctx` and `s2n_connection_set_send_ctx`.
  *
@@ -1828,7 +1828,7 @@ S2N_API extern int s2n_connection_prefer_throughput(struct s2n_connection *conn)
  * Change the behavior of s2n-tls when sending data to prefer low latency.
  *
  * Connections preferring low latency will be encrypted
- * using small record sizes that can be decrypted sooner by the recipient. 
+ * using small record sizes that can be decrypted sooner by the recipient.
  *
  * @param conn The connection object being updated
  * @returns S2N_SUCCESS on success. S2N_FAILURE on failure
@@ -1946,7 +1946,7 @@ S2N_API extern int s2n_connection_set_dynamic_buffers(struct s2n_connection *con
  */
 S2N_API extern int s2n_connection_set_dynamic_record_threshold(struct s2n_connection *conn, uint32_t resize_threshold, uint16_t timeout_threshold);
 
-/** 
+/**
  * Sets the callback to use for verifying that a hostname from an X.509 certificate is trusted.
  *
  * The default behavior is to require that the hostname match the server name set with s2n_set_server_name(). This will
@@ -1966,7 +1966,7 @@ S2N_API extern int s2n_connection_set_verify_host_callback(struct s2n_connection
  * mitigation against timing side-channels which in some cases can leak information
  * about encrypted data. By default s2n-tls will cause a thread to sleep between 10 and
  * 30 seconds whenever tampering is detected.
- * 
+ *
  * Setting the S2N_SELF_SERVICE_BLINDING option with s2n_connection_set_blinding()
  * turns off this behavior. This is useful for applications that are handling many connections
  * in a single thread. In that case, if s2n_recv() or s2n_negotiate() return an error,
@@ -1980,7 +1980,7 @@ typedef enum {
 } s2n_blinding;
 
 /**
- * Used to configure s2n-tls to either use built-in blinding (set blinding to S2N_BUILT_IN_BLINDING) or 
+ * Used to configure s2n-tls to either use built-in blinding (set blinding to S2N_BUILT_IN_BLINDING) or
  * self-service blinding (set blinding to S2N_SELF_SERVICE_BLINDING).
  *
  * @param conn The connection object being updated
@@ -2002,7 +2002,7 @@ S2N_API extern uint64_t s2n_connection_get_delay(struct s2n_connection *conn);
  * Blinding protects your application from timing side channel attacks like Lucky13. While s2n-tls
  * implements other, more specific mitigations for known timing side channels, blinding is important
  * as a defense against currently unknown or unreported timing attacks.
- * 
+ *
  * Setting a maximum delay lower than the recommended default (30s) will make timing attacks against
  * your application easier. The lower you set the delay, the fewer requests and less total time an
  * attacker will require to execute an attack. If you must lower the delay for reasons such as client
@@ -2035,7 +2035,7 @@ S2N_API extern int s2n_config_set_max_blinding_delay(struct s2n_config *config, 
 S2N_API extern int s2n_connection_set_cipher_preferences(struct s2n_connection *conn, const char *version);
 
 /**
- * Used to indicate the type of key update that is being requested. For further 
+ * Used to indicate the type of key update that is being requested. For further
  * information refer to `s2n_connection_request_key_update`.
 */
 typedef enum {
@@ -2046,13 +2046,13 @@ typedef enum {
 /**
  * Signals the connection to do a key_update at the next possible opportunity. Note that the resulting key update message
  * will not be sent until `s2n_send` is called.
- * 
+ *
  * @param conn The connection object to trigger the key update on.
- * @param peer_request Indicates if a key update should also be requested 
+ * @param peer_request Indicates if a key update should also be requested
  * of the peer. When set to `S2N_KEY_UPDATE_NOT_REQUESTED`, then only the sending
- * key of `conn` will be updated. If set to `S2N_KEY_UPDATE_REQUESTED`, then 
- * the sending key of conn will be updated AND the peer will be requested to 
- * update their sending key. Note that s2n-tls currently only supports 
+ * key of `conn` will be updated. If set to `S2N_KEY_UPDATE_REQUESTED`, then
+ * the sending key of conn will be updated AND the peer will be requested to
+ * update their sending key. Note that s2n-tls currently only supports
  * `peer_request` being set to `S2N_KEY_UPDATE_NOT_REQUESTED` and will return
  *  S2N_FAILURE if any other value is used.
  * @returns S2N_SUCCESS on success. S2N_FAILURE on failure
@@ -2109,7 +2109,7 @@ S2N_API extern int s2n_set_server_name(struct s2n_connection *conn, const char *
  * in the ServerNameList sent by the client. Subsequent entries are not returned.
  *
  * @param conn The connection object being queried
- * @returns The server name associated with a connection, or NULL if none is found. 
+ * @returns The server name associated with a connection, or NULL if none is found.
  */
 S2N_API extern const char *s2n_get_server_name(struct s2n_connection *conn);
 
@@ -2123,7 +2123,7 @@ S2N_API extern const char *s2n_get_application_protocol(struct s2n_connection *c
 
 /**
  * Query the connection for a buffer containing the OCSP response.
- * 
+ *
  * @param conn The connection object being queried
  * @param length A pointer that is set to the certificate transparency response buffer's size
  * @returns A pointer to the OCSP response sent by a server during the handshake.  If no status response is received, NULL is returned.
@@ -2140,8 +2140,8 @@ S2N_API extern const uint8_t *s2n_connection_get_ocsp_response(struct s2n_connec
 S2N_API extern const uint8_t *s2n_connection_get_sct_list(struct s2n_connection *conn, uint32_t *length);
 
 /**
- * Used in non-blocking mode to indicate in which direction s2n-tls became blocked on I/O before it 
- * returned control to the caller. This allows an application to avoid retrying s2n-tls operations 
+ * Used in non-blocking mode to indicate in which direction s2n-tls became blocked on I/O before it
+ * returned control to the caller. This allows an application to avoid retrying s2n-tls operations
  * until I/O is possible in that direction.
  */
 typedef enum {
@@ -2170,11 +2170,11 @@ typedef enum {
 S2N_API extern int s2n_negotiate(struct s2n_connection *conn, s2n_blocked_status *blocked);
 
 /**
- * Writes and encrypts `size` of `buf` data to the associated connection. s2n_send() will return the number of bytes 
- * written, and may indicate a partial write. 
+ * Writes and encrypts `size` of `buf` data to the associated connection. s2n_send() will return the number of bytes
+ * written, and may indicate a partial write.
  *
- * @note Partial writes are possible not just for non-blocking I/O, but also for connections aborted while active. 
- * @note Unlike OpenSSL, repeated calls to s2n_send() should not duplicate the original parameters, but should 
+ * @note Partial writes are possible not just for non-blocking I/O, but also for connections aborted while active.
+ * @note Unlike OpenSSL, repeated calls to s2n_send() should not duplicate the original parameters, but should
  * update `buf` and `size` per the indication of size written.
  *
  * See the following example for guidance on calling `s2n_send()`:
@@ -2202,7 +2202,7 @@ S2N_API extern ssize_t s2n_send(struct s2n_connection *conn, const void *buf, ss
 S2N_API extern ssize_t s2n_sendv(struct s2n_connection *conn, const struct iovec *bufs, ssize_t count, s2n_blocked_status *blocked);
 
 /**
- * Works in the same way as s2n_send() except that it accepts vectorized buffers. Will return the number of bytes written, and may indicate a partial write. Partial writes are possible not just for non-blocking I/O, but also for connections aborted while active. 
+ * Works in the same way as s2n_send() except that it accepts vectorized buffers. Will return the number of bytes written, and may indicate a partial write. Partial writes are possible not just for non-blocking I/O, but also for connections aborted while active.
  *
  * @note Partial writes are possible not just for non-blocking I/O, but also for connections aborted while active.
  *
@@ -2222,8 +2222,8 @@ S2N_API extern ssize_t s2n_sendv_with_offset(struct s2n_connection *conn, const 
 
 /**
  * Decrypts and reads **size* to `buf` data from the associated
- * connection. 
- * 
+ * connection.
+ *
  * @note Unlike OpenSSL, repeated calls to `s2n_recv` should not duplicate the original parameters, but should update `buf` and `size` per the indication of size read.
  *
  * See the following example for guidance on calling `s2n_recv()`:
@@ -2238,11 +2238,11 @@ S2N_API extern ssize_t s2n_sendv_with_offset(struct s2n_connection *conn, const 
 S2N_API extern ssize_t s2n_recv(struct s2n_connection *conn, void *buf, ssize_t size, s2n_blocked_status *blocked);
 
 /**
- * Allows users of s2n-tls to peek inside the data buffer of an s2n-tls connection to see if there more data to be read without actually reading it. 
+ * Allows users of s2n-tls to peek inside the data buffer of an s2n-tls connection to see if there more data to be read without actually reading it.
  *
- * This is useful when using select() on the underlying s2n-tls file descriptor with a message based application layer protocol. As a single call 
- * to s2n_recv may read all data off the underlying file descriptor, select() will be unable to tell you there if there is more application data 
- * ready for processing already loaded into the s2n-tls buffer. 
+ * This is useful when using select() on the underlying s2n-tls file descriptor with a message based application layer protocol. As a single call
+ * to s2n_recv may read all data off the underlying file descriptor, select() will be unable to tell you there if there is more application data
+ * ready for processing already loaded into the s2n-tls buffer.
  *
  * @note can then be used to determine if s2n_recv() needs to be called before more data comes in on the raw fd
  * @param conn A pointer to the s2n_connection object
@@ -2250,7 +2250,7 @@ S2N_API extern ssize_t s2n_recv(struct s2n_connection *conn, void *buf, ssize_t 
  */
 S2N_API extern uint32_t s2n_peek(struct s2n_connection *conn);
 
-/** 
+/**
  * Wipes and releases buffers and memory allocated during the TLS handshake.
  *
  * @note This function should be called after the handshake is successfully negotiated and logging or recording of handshake data is complete.
@@ -2260,7 +2260,7 @@ S2N_API extern uint32_t s2n_peek(struct s2n_connection *conn);
  */
 S2N_API extern int s2n_connection_free_handshake(struct s2n_connection *conn);
 
-/** 
+/**
  * Wipes and free the `in` and `out` buffers associated with a connection.
  *
  * @note This function may be called when a connection is
@@ -2271,9 +2271,9 @@ S2N_API extern int s2n_connection_free_handshake(struct s2n_connection *conn);
  */
 S2N_API extern int s2n_connection_release_buffers(struct s2n_connection *conn);
 
-/** 
+/**
  * Wipes an existing connection and allows it to be reused. Erases all data associated with a connection including
- * pending reads. 
+ * pending reads.
  *
  * @note This function should be called after all I/O is completed and s2n_shutdown has been called.
  * @note Reusing the same connection handle(s) is more performant than repeatedly calling s2n_connection_new() and s2n_connection_free().
@@ -2283,7 +2283,7 @@ S2N_API extern int s2n_connection_release_buffers(struct s2n_connection *conn);
  */
 S2N_API extern int s2n_connection_wipe(struct s2n_connection *conn);
 
-/** 
+/**
  * Frees the memory associated with an s2n_connection
  * handle. The handle is considered invalid after `s2n_connection_free` is used.
  * s2n_connection_wipe() does not need to be called prior to this function. `s2n_connection_free` performs its own wipe
@@ -2375,7 +2375,7 @@ typedef enum {
 S2N_API extern int s2n_config_get_client_auth_type(struct s2n_config *config, s2n_cert_auth_type *client_auth_type);
 
 /**
- * Sets whether or not a Client Certificate should be required to complete the TLS Connection. 
+ * Sets whether or not a Client Certificate should be required to complete the TLS Connection.
  *
  * If this is set to `S2N_CERT_AUTH_OPTIONAL` the server will request a client certificate but allow the client to not provide one.
  * Rejecting a client certificate when using `S2N_CERT_AUTH_OPTIONAL` will terminate the handshake.
@@ -2396,7 +2396,7 @@ S2N_API extern int s2n_config_set_client_auth_type(struct s2n_config *config, s2
 S2N_API extern int s2n_connection_get_client_auth_type(struct s2n_connection *conn, s2n_cert_auth_type *client_auth_type);
 
 /**
- * Sets whether or not a Client Certificate should be required to complete the TLS Connection. 
+ * Sets whether or not a Client Certificate should be required to complete the TLS Connection.
  *
  * If this is set to `S2N_CERT_AUTH_OPTIONAL` the server will request a client certificate but allow the client to not provide one.
  * Rejecting a client certificate when using `S2N_CERT_AUTH_OPTIONAL` will terminate the handshake.
@@ -2537,7 +2537,7 @@ S2N_API extern int s2n_session_ticket_get_lifetime(struct s2n_session_ticket *ti
  * @param session A pointer to a buffer of size `length`
  * @param length The size of the `session` buffer
  *
- * @returns The number of copied bytes 
+ * @returns The number of copied bytes
  */
 S2N_API extern int s2n_connection_set_session(struct s2n_connection *conn, const uint8_t *session, size_t length);
 
@@ -2552,13 +2552,13 @@ S2N_API extern int s2n_connection_set_session(struct s2n_connection *conn, const
  * @param session A pointer to a buffer of size `max_length`
  * @param max_length The size of the `session` buffer
  *
- * @returns The number of copied bytes 
+ * @returns The number of copied bytes
  */
 S2N_API extern int s2n_connection_get_session(struct s2n_connection *conn, uint8_t *session, size_t max_length);
 
 /**
  * Retrieves a hint from the server indicating how long this ticket's lifetime is.
- * 
+ *
  * @note This function is not recommended for > TLS 1.2 because in TLS1.3
  * servers can send multiple session tickets and this function will only
  * return the most recently received ticket lifetime hint.
@@ -2590,9 +2590,9 @@ S2N_API extern int s2n_connection_get_session_length(struct s2n_connection *conn
 S2N_API extern int s2n_connection_get_session_id_length(struct s2n_connection *conn);
 
 /**
-* Gets the latest session id from the connection, copies it into the `session_id` buffer, and returns the number of copied bytes. 
+* Gets the latest session id from the connection, copies it into the `session_id` buffer, and returns the number of copied bytes.
 *
-* The session id may change between s2n receiving the ClientHello and sending the ServerHello, but this function will always describe the latest session id. 
+* The session id may change between s2n receiving the ClientHello and sending the ServerHello, but this function will always describe the latest session id.
 *
 * See s2n_client_hello_get_session_id() to get the session id as it was sent by the client in the ClientHello message.
  *
@@ -2622,9 +2622,9 @@ S2N_API extern int s2n_connection_is_session_resumed(struct s2n_connection *conn
  */
 S2N_API extern int s2n_connection_is_ocsp_stapled(struct s2n_connection *conn);
 
-/** 
- * TLS Signature Algorithms - RFC 5246 7.4.1.4.1 
- * https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-16 
+/**
+ * TLS Signature Algorithms - RFC 5246 7.4.1.4.1
+ * https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-16
  */
 typedef enum {
     S2N_TLS_SIGNATURE_ANONYMOUS = 0,
@@ -2636,8 +2636,8 @@ typedef enum {
     S2N_TLS_SIGNATURE_RSA_PSS_PSS
 } s2n_tls_signature_algorithm;
 
-/** TLS Hash Algorithms - https://tools.ietf.org/html/rfc5246#section-7.4.1.4.1 
- * https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-18 
+/** TLS Hash Algorithms - https://tools.ietf.org/html/rfc5246#section-7.4.1.4.1
+ * https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-18
  */
 typedef enum {
     S2N_TLS_HASH_NONE = 0,
@@ -2658,7 +2658,7 @@ typedef enum {
  * @param conn A pointer to the s2n_connection object
  * @param chosen_alg A pointer to a s2n_tls_signature_algorithm object. This is an output parameter.
  *
- * @returns S2N_SUCCESS on success. S2N_FAILURE if bad parameters are received. 
+ * @returns S2N_SUCCESS on success. S2N_FAILURE if bad parameters are received.
  */
 S2N_API extern int s2n_connection_get_selected_signature_algorithm(struct s2n_connection *conn, s2n_tls_signature_algorithm *chosen_alg);
 
@@ -2668,7 +2668,7 @@ S2N_API extern int s2n_connection_get_selected_signature_algorithm(struct s2n_co
  * @param conn A pointer to the s2n_connection object
  * @param chosen_alg A pointer to a s2n_tls_hash_algorithm object. This is an output parameter.
  *
- * @returns S2N_SUCCESS on success. S2N_FAILURE if bad parameters are received. 
+ * @returns S2N_SUCCESS on success. S2N_FAILURE if bad parameters are received.
  */
 S2N_API extern int s2n_connection_get_selected_digest_algorithm(struct s2n_connection *conn, s2n_tls_hash_algorithm *chosen_alg);
 
@@ -2678,7 +2678,7 @@ S2N_API extern int s2n_connection_get_selected_digest_algorithm(struct s2n_conne
  * @param conn A pointer to the s2n_connection object
  * @param chosen_alg A pointer to a s2n_tls_signature_algorithm object. This is an output parameter.
  *
- * @returns S2N_SUCCESS on success. S2N_FAILURE if bad parameters are received. 
+ * @returns S2N_SUCCESS on success. S2N_FAILURE if bad parameters are received.
  */
 S2N_API extern int s2n_connection_get_selected_client_cert_signature_algorithm(struct s2n_connection *conn, s2n_tls_signature_algorithm *chosen_alg);
 
@@ -2688,7 +2688,7 @@ S2N_API extern int s2n_connection_get_selected_client_cert_signature_algorithm(s
  * @param conn A pointer to the s2n_connection object
  * @param chosen_alg A pointer to a s2n_tls_hash_algorithm object. This is an output parameter.
  *
- * @returns S2N_SUCCESS on success. S2N_FAILURE if bad parameters are received. 
+ * @returns S2N_SUCCESS on success. S2N_FAILURE if bad parameters are received.
  */
 S2N_API extern int s2n_connection_get_selected_client_cert_digest_algorithm(struct s2n_connection *conn, s2n_tls_hash_algorithm *chosen_alg);
 
@@ -2716,15 +2716,15 @@ S2N_API extern int s2n_cert_chain_get_length(const struct s2n_cert_chain_and_key
 
 /**
  * Returns the certificate `out_cert` present at the index `cert_idx` of the certificate chain `chain_and_key`.
- * 
+ *
  * Note that the index of the leaf certificate is zero. If the certificate chain `chain_and_key` is NULL or the
  * certificate index value is not in the acceptable range for the input certificate chain, an error is returned.
- * 
- * # Safety 
+ *
+ * # Safety
  *
  * There is no memory allocation required for `out_cert` buffer prior to calling the `s2n_cert_chain_get_cert` API.
  * The `out_cert` will contain the pointer to the s2n_cert initialized within the input s2n_cert_chain_and_key `chain_and_key`.
- * The pointer to the output s2n certificate `out_cert` is valid until `chain_and_key` is freed up. 
+ * The pointer to the output s2n certificate `out_cert` is valid until `chain_and_key` is freed up.
  * If a caller wishes to persist the `out_cert` beyond the lifetime of `chain_and_key`, the contents would need to be
  * copied prior to freeing `chain_and_key`.
  *
@@ -2736,25 +2736,25 @@ S2N_API extern int s2n_cert_chain_get_cert(const struct s2n_cert_chain_and_key *
 
 /**
  * Returns the s2n certificate in DER format along with its length.
- * 
+ *
  * The API gets the s2n certificate `cert` in DER format. The certificate is returned in the `out_cert_der` buffer.
  * Here, `cert_len` represents the length of the certificate.
- * 
+ *
  * A caller can use certificate parsing tools such as the ones provided by OpenSSL to parse the DER encoded certificate chain returned.
  *
  * # Safety
- * 
- * The memory for the `out_cert_der` buffer is allocated and owned by s2n-tls. 
- * Since the size of the certificate can potentially be very large, a pointer to internal connection data is returned instead of 
+ *
+ * The memory for the `out_cert_der` buffer is allocated and owned by s2n-tls.
+ * Since the size of the certificate can potentially be very large, a pointer to internal connection data is returned instead of
  * copying the contents into a caller-provided buffer.
- * 
+ *
  * The pointer to the output buffer `out_cert_der` is valid only while the connection exists.
  * The `s2n_connection_free` API frees the memory associated with the out_cert_der buffer and after the `s2n_connection_wipe` API is
  * called the memory pointed by out_cert_der is invalid.
- * 
+ *
  * If a caller wishes to persist the `out_cert_der` beyond the lifetime of the connection, the contents would need to be
  * copied prior to the connection termination.
- * 
+ *
  * @param cert A pointer to the s2n_cert object being read.
  * @param out_cert_der A pointer to the output buffer which will hold the s2n certificate `cert` in DER format.
  * @param cert_length This return value represents the length of the certificate.
@@ -2763,11 +2763,11 @@ S2N_API extern int s2n_cert_get_der(const struct s2n_cert *cert, const uint8_t *
 
 /**
  * Returns the validated peer certificate chain as a `s2n_cert_chain_and_key` opaque object.
- * 
+ *
  * The `s2n_cert_chain_and_key` parameter must be allocated by the caller using the `s2n_cert_chain_and_key_new` API
- * prior to this function call and must be empty. To free the memory associated with the `s2n_cert_chain_and_key` object use the 
+ * prior to this function call and must be empty. To free the memory associated with the `s2n_cert_chain_and_key` object use the
  * `s2n_cert_chain_and_key_free` API.
- * 
+ *
  * @param conn A pointer to the s2n_connection object being read.
  * @param cert_chain The returned validated peer certificate chain `cert_chain` retrieved from the s2n connection.
  */
@@ -2775,7 +2775,7 @@ S2N_API extern int s2n_connection_get_peer_cert_chain(const struct s2n_connectio
 
 /**
  * Returns the length of the DER encoded extension value of the ASN.1 X.509 certificate extension.
- * 
+ *
  * @param cert A pointer to the s2n_cert object being read.
  * @param oid A null-terminated cstring that contains the OID of the X.509 certificate extension to be read.
  * @param ext_value_len This return value contains the length of DER encoded extension value of the ASN.1 X.509 certificate extension.
@@ -2784,20 +2784,20 @@ S2N_API extern int s2n_cert_get_x509_extension_value_length(struct s2n_cert *cer
 
 /**
  * Returns the DER encoding of an ASN.1 X.509 certificate extension value, it's length and a boolean critical.
- * 
+ *
  * @param cert A pointer to the s2n_cert object being read.
  * @param oid A null-terminated cstring that contains the OID of the X.509 certificate extension to be read.
- * @param ext_value A pointer to the output buffer which will hold the DER encoding of an ASN.1 X.509 certificate extension value returned. 
- * @param ext_value_len  This value is both an input and output parameter and represents the length of the output buffer `ext_value`. 
- * When used as an input parameter, the caller must use this parameter to convey the maximum length of `ext_value`. 
- * When used as an output parameter, `ext_value_len` holds the actual length of the DER encoding of the ASN.1 X.509 certificate extension value returned. 
+ * @param ext_value A pointer to the output buffer which will hold the DER encoding of an ASN.1 X.509 certificate extension value returned.
+ * @param ext_value_len  This value is both an input and output parameter and represents the length of the output buffer `ext_value`.
+ * When used as an input parameter, the caller must use this parameter to convey the maximum length of `ext_value`.
+ * When used as an output parameter, `ext_value_len` holds the actual length of the DER encoding of the ASN.1 X.509 certificate extension value returned.
  * @param critical This return value contains the boolean value for `critical`.
  */
 S2N_API extern int s2n_cert_get_x509_extension_value(struct s2n_cert *cert, const uint8_t *oid, uint8_t *ext_value, uint32_t *ext_value_len, bool *critical);
 
 /**
- * Returns the UTF8 String length of the ASN.1 X.509 certificate extension data. 
- * 
+ * Returns the UTF8 String length of the ASN.1 X.509 certificate extension data.
+ *
  * @param extension_data A pointer to the DER encoded ASN.1 X.509 certificate extension value being read.
  * @param extension_len represents the length of the input buffer `extension_data`.
  * @param utf8_str_len This return value contains the UTF8 String length of the ASN.1 X.509 certificate extension data.
@@ -2806,18 +2806,18 @@ S2N_API extern int s2n_cert_get_utf8_string_from_extension_data_length(const uin
 
 /**
  * Returns the UTF8 String representation of the DER encoded ASN.1 X.509 certificate extension data.
- * 
+ *
  * @param extension_data A pointer to the DER encoded ASN.1 X.509 certificate extension value being read.
  * @param extension_len represents the length of the input buffer `extension_data`.
- * @param out_data A pointer to the output buffer which will hold the UTF8 String representation of the DER encoded ASN.1 X.509 
- * certificate extension data returned. 
+ * @param out_data A pointer to the output buffer which will hold the UTF8 String representation of the DER encoded ASN.1 X.509
+ * certificate extension data returned.
  * @param out_len This value is both an input and output parameter and represents the length of the output buffer `out_data`.
- * When used as an input parameter, the caller must use this parameter to convey the maximum length of `out_data`. 
+ * When used as an input parameter, the caller must use this parameter to convey the maximum length of `out_data`.
  * When used as an output parameter, `out_len` holds the actual length of UTF8 String returned.
  */
 S2N_API extern int s2n_cert_get_utf8_string_from_extension_data(const uint8_t *extension_data, uint32_t extension_len, uint8_t *out_data, uint32_t *out_len);
 
-/** 
+/**
  * Pre-shared key (PSK) Hash Algorithm - RFC 8446 Section-2.2
  */
 typedef enum {
@@ -2831,10 +2831,10 @@ typedef enum {
 struct s2n_psk;
 
 /**
- * Creates a new s2n external pre-shared key (PSK) object with `S2N_PSK_HMAC_SHA256` as the default 
+ * Creates a new s2n external pre-shared key (PSK) object with `S2N_PSK_HMAC_SHA256` as the default
  * PSK hash algorithm. An external PSK is a key established outside of TLS using a secure mutually agreed upon mechanism.
- * 
- * Use `s2n_psk_free` to free the memory allocated to the s2n external PSK object created by this API. 
+ *
+ * Use `s2n_psk_free` to free the memory allocated to the s2n external PSK object created by this API.
  *
  * @returns struct s2n_psk* Returns a pointer to the newly created external PSK object.
  */
@@ -2852,13 +2852,13 @@ S2N_API int s2n_psk_free(struct s2n_psk **psk);
  * The identity is a unique identifier for the pre-shared secret.
  * It is a non-secret value represented by raw bytes.
  *
- * # Safety 
+ * # Safety
  *
  * The identity is transmitted over the network unencrypted and is a non-secret value.
  * Do not include confidential information in the identity.
- * 
- * Note that the identity is copied into s2n-tls memory and the caller is responsible for 
- * freeing the memory associated with the identity input. 
+ *
+ * Note that the identity is copied into s2n-tls memory and the caller is responsible for
+ * freeing the memory associated with the identity input.
  *
  * @param psk A pointer to a PSK object to be updated with the identity.
  * @param identity The identity in raw bytes format to be copied.
@@ -2871,8 +2871,8 @@ S2N_API int s2n_psk_set_identity(struct s2n_psk *psk, const uint8_t *identity, u
  *
  * # Safety
  *
- * Note that the secret is copied into s2n-tls memory and the caller is responsible for 
- * freeing the memory associated with the `secret` input. 
+ * Note that the secret is copied into s2n-tls memory and the caller is responsible for
+ * freeing the memory associated with the `secret` input.
  *
  * Deriving a shared secret from a password or other low-entropy source
  * is not secure and is subject to dictionary attacks.
@@ -2885,18 +2885,18 @@ S2N_API int s2n_psk_set_identity(struct s2n_psk *psk, const uint8_t *identity, u
 S2N_API int s2n_psk_set_secret(struct s2n_psk *psk, const uint8_t *secret, uint16_t secret_size);
 
 /**
- * Sets the hash algorithm for a given external PSK object. The supported PSK hash 
+ * Sets the hash algorithm for a given external PSK object. The supported PSK hash
  * algorithms are as listed in the enum `s2n_psk_hmac` above.
- * 
+ *
  * @param psk A pointer to the external PSK object to be updated with the PSK hash algorithm.
- * @param hmac The PSK hash algorithm being set.  
+ * @param hmac The PSK hash algorithm being set.
  */
 S2N_API int s2n_psk_set_hmac(struct s2n_psk *psk, s2n_psk_hmac hmac);
 
 /**
- * Appends a PSK object to the list of PSKs supported by the s2n connection. 
+ * Appends a PSK object to the list of PSKs supported by the s2n connection.
  * If a PSK with a duplicate identity is found, an error is returned and the PSK is not added to the list.
- * Note that a copy of `psk` is stored on the connection. The user is still responsible for freeing the 
+ * Note that a copy of `psk` is stored on the connection. The user is still responsible for freeing the
  * memory associated with `psk`.
  *
  * @param conn A pointer to the s2n_connection object that contains the list of PSKs supported.
@@ -2906,8 +2906,8 @@ S2N_API int s2n_connection_append_psk(struct s2n_connection *conn, struct s2n_ps
 
 /**
  * The list of PSK modes supported by s2n-tls for TLS versions >= TLS1.3.
- * Currently s2n-tls supports two modes - `S2N_PSK_MODE_RESUMPTION`, which represents the PSKs established 
- * using the previous connection via session resumption, and `S2N_PSK_MODE_EXTERNAL`, which represents PSKs 
+ * Currently s2n-tls supports two modes - `S2N_PSK_MODE_RESUMPTION`, which represents the PSKs established
+ * using the previous connection via session resumption, and `S2N_PSK_MODE_EXTERNAL`, which represents PSKs
  * established out-of-band/externally using a secure mutually agreed upon mechanism.
  */
 typedef enum {
@@ -2916,9 +2916,9 @@ typedef enum {
 } s2n_psk_mode;
 
 /**
- * Sets the PSK mode on the s2n config object. 
- * The supported PSK modes are listed in the enum `s2n_psk_mode` above. 
- * 
+ * Sets the PSK mode on the s2n config object.
+ * The supported PSK modes are listed in the enum `s2n_psk_mode` above.
+ *
  * @param config A pointer to the s2n_config object being updated.
  * @param mode The PSK mode to be set.
  */
@@ -2926,7 +2926,7 @@ S2N_API int s2n_config_set_psk_mode(struct s2n_config *config, s2n_psk_mode mode
 
 /**
  * Sets the PSK mode on the s2n connection object.
- * The supported PSK modes are listed in the enum `s2n_psk_mode` above. 
+ * The supported PSK modes are listed in the enum `s2n_psk_mode` above.
  * This API overrides the PSK mode set on config for this connection.
  *
  * @param conn A pointer to the s2n_connection object being updated.
@@ -2935,32 +2935,32 @@ S2N_API int s2n_config_set_psk_mode(struct s2n_config *config, s2n_psk_mode mode
 S2N_API int s2n_connection_set_psk_mode(struct s2n_connection *conn, s2n_psk_mode mode);
 
 /**
- * Gets the negotiated PSK identity length from the s2n connection object. The negotiated PSK 
- * refers to the chosen PSK by the server to be used for the connection. 
- * 
- * This API can be used to determine if the negotiated PSK exists. If negotiated PSK exists a 
- * call to this API returns a value greater than zero. If the negotiated PSK does not exist, the 
+ * Gets the negotiated PSK identity length from the s2n connection object. The negotiated PSK
+ * refers to the chosen PSK by the server to be used for the connection.
+ *
+ * This API can be used to determine if the negotiated PSK exists. If negotiated PSK exists a
+ * call to this API returns a value greater than zero. If the negotiated PSK does not exist, the
  * value `0` is returned.
- * 
+ *
  * @param conn A pointer to the s2n_connection object that successfully negotiated a PSK connection.
- * @param identity_length The length of the negotiated PSK identity. 
+ * @param identity_length The length of the negotiated PSK identity.
  */
 S2N_API int s2n_connection_get_negotiated_psk_identity_length(struct s2n_connection *conn, uint16_t *identity_length);
 
 /**
- * Gets the negotiated PSK identity from the s2n connection object. 
- * If the negotiated PSK does not exist, the PSK identity will not be obtained and no error will be returned. 
- * Prior to this API call, use `s2n_connection_get_negotiated_psk_identity_length` to determine if a 
- * negotiated PSK exists or not. 
+ * Gets the negotiated PSK identity from the s2n connection object.
+ * If the negotiated PSK does not exist, the PSK identity will not be obtained and no error will be returned.
+ * Prior to this API call, use `s2n_connection_get_negotiated_psk_identity_length` to determine if a
+ * negotiated PSK exists or not.
  *
  * # Safety
  *
  * The negotiated PSK identity will be copied into the identity buffer on success.
  * Therefore, the identity buffer must have enough memory to fit the identity length.
- * 
+ *
  * @param conn A pointer to the s2n_connection object.
- * @param identity The negotiated PSK identity obtained from the s2n_connection object. 
- * @param max_identity_length The maximum length for the PSK identity. If the negotiated psk_identity length is 
+ * @param identity The negotiated PSK identity obtained from the s2n_connection object.
+ * @param max_identity_length The maximum length for the PSK identity. If the negotiated psk_identity length is
  * greater than this `max_identity_length` value an error will be returned.
  */
 S2N_API int s2n_connection_get_negotiated_psk_identity(struct s2n_connection *conn, uint8_t *identity, uint16_t max_identity_length);
@@ -2968,12 +2968,12 @@ S2N_API int s2n_connection_get_negotiated_psk_identity(struct s2n_connection *co
 struct s2n_offered_psk;
 
 /**
- * Creates a new s2n offered PSK object. 
+ * Creates a new s2n offered PSK object.
  * An offered PSK object represents a single PSK sent by the client.
- * 
+ *
  * # Safety
- * 
- * Use `s2n_offered_psk_free` to free the memory allocated to the s2n offered PSK object created by this API. 
+ *
+ * Use `s2n_offered_psk_free` to free the memory allocated to the s2n offered PSK object created by this API.
  *
  * @returns struct s2n_offered_psk* Returns a pointer to the newly created offered PSK object.
  */
@@ -2987,8 +2987,8 @@ S2N_API struct s2n_offered_psk *s2n_offered_psk_new(void);
 S2N_API int s2n_offered_psk_free(struct s2n_offered_psk **psk);
 
 /**
- * Gets the PSK identity and PSK identity length for a given offered PSK object. 
- * 
+ * Gets the PSK identity and PSK identity length for a given offered PSK object.
+ *
  * @param psk A pointer to the offered PSK object being read.
  * @param identity The PSK identity being obtained.
  * @param size The length of the PSK identity being obtained.
@@ -3000,10 +3000,10 @@ struct s2n_offered_psk_list;
 /**
  * Checks whether the offered PSK list has an offered psk object next in line in the list.
  * An offered PSK list contains all the PSKs offered by the client for the server to select.
- * 
- * # Safety 
- * 
- * This API returns a pointer to the s2n-tls internal memory with limited lifetime. 
+ *
+ * # Safety
+ *
+ * This API returns a pointer to the s2n-tls internal memory with limited lifetime.
  * After the completion of `s2n_psk_selection_callback` this pointer is invalid.
  *
  * @param psk_list A pointer to the offered PSK list being read.
@@ -3012,9 +3012,9 @@ struct s2n_offered_psk_list;
 S2N_API bool s2n_offered_psk_list_has_next(struct s2n_offered_psk_list *psk_list);
 
 /**
- * Obtains the next offered PSK object from the list of offered PSKs. Use `s2n_offered_psk_list_has_next` 
+ * Obtains the next offered PSK object from the list of offered PSKs. Use `s2n_offered_psk_list_has_next`
  * prior to this API call to ensure we have not reached the end of the list.
- * 
+ *
  * @param psk_list A pointer to the offered PSK list being read.
  * @param psk A pointer to the next offered PSK object being obtained.
  */
@@ -3023,7 +3023,7 @@ S2N_API int s2n_offered_psk_list_next(struct s2n_offered_psk_list *psk_list, str
 /**
  * Returns the offered PSK list to its original read state.
  *
- * When `s2n_offered_psk_list_reread` is called, `s2n_offered_psk_list_next` will return the first PSK 
+ * When `s2n_offered_psk_list_reread` is called, `s2n_offered_psk_list_next` will return the first PSK
  * in the offered PSK list.
  *
  * @param psk_list A pointer to the offered PSK list being reread.
@@ -3031,13 +3031,13 @@ S2N_API int s2n_offered_psk_list_next(struct s2n_offered_psk_list *psk_list, str
 S2N_API int s2n_offered_psk_list_reread(struct s2n_offered_psk_list *psk_list);
 
 /**
- * Chooses a PSK from the offered PSK list to be used for the connection.  
- * This API matches the PSK identity received from the client against the server's known PSK identities 
- * list, in order to choose the PSK to be used for the connection. If the PSK identity sent from the client 
- * is NULL, no PSK is chosen for the connection. If the client offered PSK identity has no matching PSK identity 
- * with the server, an error will be returned. Use this API along with the `s2n_psk_selection_callback` callback 
+ * Chooses a PSK from the offered PSK list to be used for the connection.
+ * This API matches the PSK identity received from the client against the server's known PSK identities
+ * list, in order to choose the PSK to be used for the connection. If the PSK identity sent from the client
+ * is NULL, no PSK is chosen for the connection. If the client offered PSK identity has no matching PSK identity
+ * with the server, an error will be returned. Use this API along with the `s2n_psk_selection_callback` callback
  * to select a PSK identity.
- * 
+ *
  * @param psk_list A pointer to the server's known PSK list used to compare for a matching PSK with the client.
  * @param psk A pointer to the client's PSK object used to compare with the server's known PSK identities.
  */
@@ -3045,9 +3045,9 @@ S2N_API int s2n_offered_psk_list_choose_psk(struct s2n_offered_psk_list *psk_lis
 
 /**
  * Callback function to select a PSK from a list of offered PSKs.
- * Use this callback to implement custom PSK selection logic. The s2n-tls default PSK selection logic 
+ * Use this callback to implement custom PSK selection logic. The s2n-tls default PSK selection logic
  * chooses the first matching PSK from the list of offered PSKs sent by the client.
- * 
+ *
  * # Safety
  *
  * `context` is a void pointer and the caller is responsible for ensuring it is cast to the correct type.
@@ -3061,10 +3061,10 @@ typedef int (*s2n_psk_selection_callback)(struct s2n_connection *conn, void *con
         struct s2n_offered_psk_list *psk_list);
 
 /**
- * Sets the callback to select the matching PSK. 
- * If this callback is not set s2n-tls uses a default PSK selection logic that selects the first matching 
+ * Sets the callback to select the matching PSK.
+ * If this callback is not set s2n-tls uses a default PSK selection logic that selects the first matching
  * server PSK.
- * 
+ *
  * @param config A pointer to the s2n_config object.
  * @param cb The function that should be called when the callback is triggered.
  * @param context A pointer to a context for the caller to pass state to the callback, if needed.
@@ -3125,15 +3125,15 @@ S2N_API extern int s2n_connection_get_actual_protocol_version(struct s2n_connect
  *
  * @note The return value corresponds to the macros defined as S2N_SSLv2,
  * S2N_SSLv3, S2N_TLS10, S2N_TLS11, S2N_TLS12, and S2N_TLS13.
- * 
+ *
  * @param conn A pointer to the connection
- * @returns The protocol version used to send the initial client hello message. 
+ * @returns The protocol version used to send the initial client hello message.
  */
 S2N_API extern int s2n_connection_get_client_hello_version(struct s2n_connection *conn);
 
 /**
  * Access the protocol version from the header of the first record that contained the ClientHello message.
- * 
+ *
  * @note This field has been deprecated and should not be confused with the client hello
  * version. It is often set very low, usually to TLS1.0 for compatibility reasons,
  * and should never be set higher than TLS1.2. Therefore this method should only be used
@@ -3284,7 +3284,7 @@ S2N_API extern const char *s2n_connection_get_handshake_type_name(struct s2n_con
 /**
  * Function to return the last TLS message that was processed. The returned format is a human readable string.
  * @param conn A pointer to the s2n connection
- * @returns The last message name in the TLS state machine, e.g. "SERVER_HELLO", "APPLICATION_DATA". 
+ * @returns The last message name in the TLS state machine, e.g. "SERVER_HELLO", "APPLICATION_DATA".
  */
 S2N_API extern const char *s2n_connection_get_last_message_name(struct s2n_connection *conn);
 
@@ -3472,7 +3472,7 @@ typedef int (*s2n_key_log_fn)(void *ctx, struct s2n_connection *conn, uint8_t *l
  */
 S2N_API extern int s2n_config_set_key_log_cb(struct s2n_config *config, s2n_key_log_fn callback, void *ctx);
 
-/** 
+/**
  * s2n_config_enable_cert_req_dss_legacy_compat adds a dss cert type in the server certificate request when being called.
  * It only sends the dss cert type in the cert request but does not succeed the handshake if a dss cert is received.
  * Please DO NOT call this api unless you know you actually need legacy DSS certificate type compatibility
@@ -3565,7 +3565,7 @@ S2N_API int s2n_psk_set_application_protocol(struct s2n_psk *psk, const uint8_t 
  */
 S2N_API int s2n_psk_set_early_data_context(struct s2n_psk *psk, const uint8_t *context, uint16_t size);
 
-/** 
+/**
  * The status of early data on a connection.
  *
  * S2N_EARLY_DATA_STATUS_OK: Early data is in progress.
@@ -3809,16 +3809,16 @@ S2N_API int s2n_connection_serialize(struct s2n_connection *conn, uint8_t *buffe
 /**
  * Deserializes the provided buffer into the `s2n_connection` parameter.
  *
- * @warning s2n-tls DOES NOT check the integrity of the provided buffer. s2n-tls may successfully 
+ * @warning s2n-tls DOES NOT check the integrity of the provided buffer. s2n-tls may successfully
  * deserialize a corrupted buffer which WILL cause a connection failure when attempting to resume
- * sending/receiving encrypted data. To avoid this, it is recommended to MAC and encrypt the serialized 
+ * sending/receiving encrypted data. To avoid this, it is recommended to MAC and encrypt the serialized
  * connection before sending it off-box and deserializing it.
  *
  * @warning Only a minimal amount of information about the original TLS connection is serialized.
- * Therefore, after deserialization, the connection will behave like a new `s2n_connection` from the 
+ * Therefore, after deserialization, the connection will behave like a new `s2n_connection` from the
  * `s2n_connection_new()` call, except that it can read/write encrypted data from a peer. Any desired
  * config-level or connection-level configuration will need to be re-applied to the deserialized connection.
- * For this same reason none of the connection getters will return useful information about the 
+ * For this same reason none of the connection getters will return useful information about the
  * original connection after deserialization. Any information about the original connection needs to
  * be retrieved before serialization.
  *

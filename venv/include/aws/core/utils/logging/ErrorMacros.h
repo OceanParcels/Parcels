@@ -65,4 +65,3 @@ if(!m_isInitialized) \
   return Aws::Client::AWSError<CoreErrors>(CoreErrors::NOT_INITIALIZED, "NOT_INITIALIZED", "Client is not initialized or already terminated", false); \
 } \
 Aws::Utils::RAIICounter(this->m_operationsProcessed, &this->m_shutdownSignal)
-

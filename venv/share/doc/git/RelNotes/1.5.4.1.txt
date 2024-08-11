@@ -14,4 +14,3 @@ Fixes since v1.5.4
 
  * Customized color specification was parsed incorrectly when
    numeric color values are used.  This was fixed in 1.5.4.1.
-

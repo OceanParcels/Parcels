@@ -93,7 +93,7 @@ void
 chacha_set_counter32(struct chacha_ctx *ctx, const uint8_t *counter);
 
 void
-chacha_crypt(struct chacha_ctx *ctx, size_t length, 
+chacha_crypt(struct chacha_ctx *ctx, size_t length,
              uint8_t *dst, const uint8_t *src);
 
 void

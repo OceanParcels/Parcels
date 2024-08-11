@@ -23,19 +23,19 @@ hwlocality_linux_libnuma_ulongs \- Interoperability with Linux libnuma unsigned 
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 This interface helps converting between Linux libnuma unsigned long masks and hwloc cpusets and nodesets\&.
 .PP
 \fBNote\fP
 .RS 4
 Topology \fCtopology\fP must match the current machine\&.
 .PP
-The behavior of libnuma is undefined if the kernel is not NUMA-aware\&. (when CONFIG_NUMA is not set in the kernel configuration)\&. This helper and libnuma may thus not be strictly compatible in this case, which may be detected by checking whether numa_available() returns -1\&. 
+The behavior of libnuma is undefined if the kernel is not NUMA-aware\&. (when CONFIG_NUMA is not set in the kernel configuration)\&. This helper and libnuma may thus not be strictly compatible in this case, which may be detected by checking whether numa_available() returns -1\&.
 .RE
 .PP
 
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static int hwloc_cpuset_from_linux_libnuma_ulongs (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP cpuset, const unsigned long * mask, unsigned long maxnode)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
@@ -45,9 +45,9 @@ This function may be used after calling get_mempolicy or any other function that
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 on error, for instance if failing an internal reallocation\&. 
+-1 on error, for instance if failing an internal reallocation\&.
 .RE
 .PP
 
@@ -60,7 +60,7 @@ This function may be used before calling set_mempolicy, mbind, migrate_pages or 
 .PP
 \fBReturns\fP
 .RS 4
-0\&. 
+0\&.
 .RE
 .PP
 
@@ -73,9 +73,9 @@ This function may be used after calling get_mempolicy or any other function that
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCENOMEM\fP if some internal reallocation failed\&. 
+-1 with errno set to \fCENOMEM\fP if some internal reallocation failed\&.
 .RE
 .PP
 
@@ -88,10 +88,10 @@ This function may be used before calling set_mempolicy, mbind, migrate_pages or 
 .PP
 \fBReturns\fP
 .RS 4
-0\&. 
+0\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

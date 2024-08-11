@@ -45,4 +45,3 @@ private:
 } //namespace geos.triangulate.quadedge
 } //namespace geos.triangulate
 } //namespace goes
-

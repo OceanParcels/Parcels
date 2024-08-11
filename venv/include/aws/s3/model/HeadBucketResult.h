@@ -36,7 +36,7 @@ namespace Model
     ///@{
     /**
      * <p>The type of location where the bucket is created.</p>  <p>This
-     * functionality is only supported by directory buckets.</p> 
+     * functionality is only supported by directory buckets.</p>
      */
     inline const LocationType& GetBucketLocationType() const{ return m_bucketLocationType; }
     inline void SetBucketLocationType(const LocationType& value) { m_bucketLocationType = value; }
@@ -50,7 +50,7 @@ namespace Model
      * <p>The name of the location where the bucket will be created.</p> <p>For
      * directory buckets, the AZ ID of the Availability Zone where the bucket is
      * created. An example AZ ID value is <code>usw2-az1</code>.</p>  <p>This
-     * functionality is only supported by directory buckets.</p> 
+     * functionality is only supported by directory buckets.</p>
      */
     inline const Aws::String& GetBucketLocationName() const{ return m_bucketLocationName; }
     inline void SetBucketLocationName(const Aws::String& value) { m_bucketLocationName = value; }
@@ -64,7 +64,7 @@ namespace Model
     ///@{
     /**
      * <p>The Region that the bucket is located.</p>  <p>This functionality is
-     * not supported for directory buckets.</p> 
+     * not supported for directory buckets.</p>
      */
     inline const Aws::String& GetBucketRegion() const{ return m_bucketRegion; }
     inline void SetBucketRegion(const Aws::String& value) { m_bucketRegion = value; }
@@ -79,7 +79,7 @@ namespace Model
     /**
      * <p>Indicates whether the bucket name used in the request is an access point
      * alias.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline bool GetAccessPointAlias() const{ return m_accessPointAlias; }
     inline void SetAccessPointAlias(bool value) { m_accessPointAlias = value; }
@@ -87,7 +87,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

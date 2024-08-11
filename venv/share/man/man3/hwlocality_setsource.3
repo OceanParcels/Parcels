@@ -33,28 +33,28 @@ hwlocality_setsource \- Changing the Source of Topology Discovery
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 These functions must be called between \fBhwloc_topology_init()\fP and \fBhwloc_topology_load()\fP\&. Otherwise, they will return -1 with errno set to \fCEBUSY\fP\&.
 .PP
 If none of the functions below is called, the default is to detect all the objects of the machine that the caller is allowed to access\&.
 .PP
 This default behavior may also be modified through environment variables if the application did not modify it already\&. Setting HWLOC_XMLFILE in the environment enforces the discovery from a XML file as if \fBhwloc_topology_set_xml()\fP had been called\&. Setting HWLOC_SYNTHETIC enforces a synthetic topology as if \fBhwloc_topology_set_synthetic()\fP had been called\&.
 .PP
-Finally, HWLOC_THISSYSTEM enforces the return value of \fBhwloc_topology_is_thissystem()\fP\&. 
+Finally, HWLOC_THISSYSTEM enforces the return value of \fBhwloc_topology_is_thissystem()\fP\&.
 .SH "Enumeration Type Documentation"
-.PP 
+.PP
 .SS "enum \fBhwloc_topology_components_flag_e\fP"
 
 .PP
-Flags to be passed to \fBhwloc_topology_set_components()\fP 
+Flags to be passed to \fBhwloc_topology_set_components()\fP
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_TOPOLOGY_COMPONENTS_FLAG_BLACKLIST \fP\fP
-Blacklist the target component from being used\&. 
+Blacklist the target component from being used\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_topology_set_components (\fBhwloc_topology_t\fP restrict topology, unsigned long flags, const char *restrict name)"
 
 .PP
@@ -68,9 +68,9 @@ This may be used to avoid expensive parts of the discovery process\&. For instan
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 on error, for instance if flags are invalid\&. 
+-1 on error, for instance if flags are invalid\&.
 .RE
 .PP
 
@@ -90,7 +90,7 @@ The PID will not actually be used until \fBhwloc_topology_load()\fP\&. If the co
 .PP
 \fBReturns\fP
 .RS 4
-0 on success, -1 on error\&. 
+0 on success, -1 on error\&.
 .RE
 .PP
 
@@ -107,7 +107,7 @@ Note that this function does not actually load topology information; it just tel
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
 -1 with errno set to \fCEINVAL\fP if the description was invalid\&.
 .RE
@@ -116,7 +116,7 @@ Note that this function does not actually load topology information; it just tel
 .RS 4
 For convenience, this backend provides empty binding hooks which just return success\&.
 .PP
-On success, the synthetic component replaces the previously enabled component (if any), but the topology is not actually modified until \fBhwloc_topology_load()\fP\&. 
+On success, the synthetic component replaces the previously enabled component (if any), but the topology is not actually modified until \fBhwloc_topology_load()\fP\&.
 .RE
 .PP
 
@@ -129,7 +129,7 @@ Note that this function does not actually load topology information; it just tel
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
 -1 with errno set to \fCEINVAL\fP on failure to read the XML file\&.
 .RE
@@ -142,7 +142,7 @@ For convenience, this backend provides empty binding hooks which just return suc
 .PP
 On success, the XML component replaces the previously enabled component (if any), but the topology is not actually modified until \fBhwloc_topology_load()\fP\&.
 .PP
-If an invalid XML input file is given, the error may be reported either here or later by \fBhwloc_topology_load()\fP depending on the XML library used by hwloc\&. 
+If an invalid XML input file is given, the error may be reported either here or later by \fBhwloc_topology_load()\fP depending on the XML library used by hwloc\&.
 .RE
 .PP
 
@@ -155,7 +155,7 @@ Note that this function does not actually load topology information; it just tel
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
 -1 with errno set to \fCEINVAL\fP on failure to read the XML buffer\&.
 .RE
@@ -168,10 +168,10 @@ For convenience, this backend provides empty binding hooks which just return suc
 .PP
 On success, the XML component replaces the previously enabled component (if any), but the topology is not actually modified until \fBhwloc_topology_load()\fP\&.
 .PP
-If an invalid XML input file is given, the error may be reported either here or later by \fBhwloc_topology_load()\fP depending on the XML library used by hwloc\&. 
+If an invalid XML input file is given, the error may be reported either here or later by \fBhwloc_topology_load()\fP depending on the XML library used by hwloc\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

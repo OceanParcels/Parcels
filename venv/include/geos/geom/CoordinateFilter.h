@@ -126,4 +126,3 @@ public:
 
 } // namespace geos::geom
 } // namespace geos
-

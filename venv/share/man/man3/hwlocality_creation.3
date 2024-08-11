@@ -36,16 +36,16 @@ hwlocality_creation \- Topology Creation and Destruction
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Typedef Documentation"
-.PP 
+.PP
 .SS "typedef struct hwloc_topology* \fBhwloc_topology_t\fP"
 
 .PP
-Topology context\&. To be initialized with \fBhwloc_topology_init()\fP and built with \fBhwloc_topology_load()\fP\&. 
+Topology context\&. To be initialized with \fBhwloc_topology_init()\fP and built with \fBhwloc_topology_load()\fP\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_topology_abi_check (\fBhwloc_topology_t\fP topology)"
 
 .PP
@@ -62,7 +62,7 @@ If all libraries/programs use the same hwloc installation, this function always 
 .PP
 \fBNote\fP
 .RS 4
-If sharing between processes with \fBhwloc_shmem_topology_write()\fP, the relevant check is already performed inside \fBhwloc_shmem_topology_adopt()\fP\&. 
+If sharing between processes with \fBhwloc_shmem_topology_write()\fP, the relevant check is already performed inside \fBhwloc_shmem_topology_adopt()\fP\&.
 .RE
 .PP
 
@@ -80,18 +80,18 @@ Run internal checks on a topology structure\&. The program aborts if an inconsis
 .RS 4
 This routine is only useful to developers\&.
 .PP
-The input topology should have been previously loaded with \fBhwloc_topology_load()\fP\&. 
+The input topology should have been previously loaded with \fBhwloc_topology_load()\fP\&.
 .RE
 .PP
 
 .SS "void hwloc_topology_destroy (\fBhwloc_topology_t\fP topology)"
 
 .PP
-Terminate and free a topology context\&. 
+Terminate and free a topology context\&.
 .PP
 \fBParameters\fP
 .RS 4
-\fItopology\fP is the topology to be freed 
+\fItopology\fP is the topology to be freed
 .RE
 .PP
 
@@ -109,14 +109,14 @@ This is useful for keeping a backup while modifying a topology\&.
 .PP
 \fBNote\fP
 .RS 4
-Object userdata is not duplicated since hwloc does not know what it point to\&. The objects of both old and new topologies will point to the same userdata\&. 
+Object userdata is not duplicated since hwloc does not know what it point to\&. The objects of both old and new topologies will point to the same userdata\&.
 .RE
 .PP
 
 .SS "int hwloc_topology_init (\fBhwloc_topology_t\fP * topologyp)"
 
 .PP
-Allocate a topology context\&. 
+Allocate a topology context\&.
 .PP
 \fBParameters\fP
 .RS 4
@@ -125,7 +125,7 @@ Allocate a topology context\&.
 .PP
 \fBReturns\fP
 .RS 4
-0 on success, -1 on error\&. 
+0 on success, -1 on error\&.
 .RE
 .PP
 
@@ -155,10 +155,10 @@ The binding of the current thread or process may temporarily change during this 
 .PP
 \fBSee also\fP
 .RS 4
-\fBTopology Detection Configuration and Query\fP and \fBChanging the Source of Topology Discovery\fP 
+\fBTopology Detection Configuration and Query\fP and \fBChanging the Source of Topology Discovery\fP
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

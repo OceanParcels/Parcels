@@ -177,14 +177,14 @@
 	x_0=500000 y_0=300000 k_0=0.999625769
 	no_defs <>
 # Gauss Krueger Grid for Germany
-# 
+#
 # The first figure of the easting is lon_0 divided by 3
 # ( 2 for 6d0E, 3 for 9d0E, 4 for 12d0E)
 # For translations you have to remove this first figure
 # and convert northings and eastings from km to meter .
 # The other way round, divide by 1000 and add the figure.
 # I made 3 entries for the officially used grids in Germany
-# 
+#
 #
 # Und nochmal in deutsch :
 # Die erste Ziffer des Rechtswerts beschreibt den Hauptmeridian
@@ -194,7 +194,7 @@
 # Zur Umrechnung in Gauss Krueger Koordinaten entsprechend die
 # Ziffer fuer den Hauptmeridian vor dem Rechtswert ergaenzen.
 # Ich hab fuer alle drei in Deutschland ueblichen Hauptmeridiane
-# jeweils einen Eintrag ergaenzt.   
+# jeweils einen Eintrag ergaenzt.
 #
 #
 # added by Michael Goepel <goepel@ffm.plusline.de>
@@ -211,4 +211,3 @@
         proj=tmerc ellps=bessel lon_0=12d0E lat_0=0
         x_0=500000
         no_defs<>
-

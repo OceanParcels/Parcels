@@ -107,7 +107,7 @@ namespace Model
      * are returned by this operation when you use this parameter. To get complete
      * information about these alarms, perform another <code>DescribeAlarms</code>
      * operation and specify the parent alarm names in the <code>AlarmNames</code>
-     * parameter.</p> 
+     * parameter.</p>
      */
     inline const Aws::String& GetChildrenOfAlarmName() const{ return m_childrenOfAlarmName; }
     inline bool ChildrenOfAlarmNameHasBeenSet() const { return m_childrenOfAlarmNameHasBeenSet; }
@@ -132,7 +132,7 @@ namespace Model
      * validation error.</p>  <p>Only the Alarm Name and ARN are returned by this
      * operation when you use this parameter. To get complete information about these
      * alarms, perform another <code>DescribeAlarms</code> operation and specify the
-     * parent alarm names in the <code>AlarmNames</code> parameter.</p> 
+     * parent alarm names in the <code>AlarmNames</code> parameter.</p>
      */
     inline const Aws::String& GetParentsOfAlarmName() const{ return m_parentsOfAlarmName; }
     inline bool ParentsOfAlarmNameHasBeenSet() const { return m_parentsOfAlarmNameHasBeenSet; }

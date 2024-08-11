@@ -30,8 +30,8 @@ DFdi;
 
 /* For annotations */
 /* enumerated types of the varous annotation types */
-typedef enum 
-{ 
+typedef enum
+{
     AN_UNDEF = -1,
     AN_DATA_LABEL = 0, /* Data label */
     AN_DATA_DESC,      /* Data description */
@@ -169,4 +169,3 @@ typedef intn (*hdf_termfunc_t)(void);   /* termination function typedef */
 #define MP_PAGEALL    0x01  /* page the whole file i.e. no limit on 'maxcache'*/
 
 #endif /* HDF_H */
-

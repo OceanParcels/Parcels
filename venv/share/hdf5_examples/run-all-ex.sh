@@ -24,16 +24,16 @@
 
 echo "Run c examples"
 if ((cd c; sh ./run-c-ex.sh) && \
-   (if test -d fortran; then   
-       echo "Run fortran examples" 
-       cd fortran; sh ./run-fortran-ex.sh 
-    fi) 
+   (if test -d fortran; then
+       echo "Run fortran examples"
+       cd fortran; sh ./run-fortran-ex.sh
+    fi)
    (if test -d c++; then
-       echo "Run c++ examples" 
+       echo "Run c++ examples"
        cd c++; sh ./run-c++-ex.sh
     fi)
    (if test -d hl; then
-       echo "Run hl examples." 
+       echo "Run hl examples."
        cd hl; sh ./run-hl-ex.sh
     fi)); then
    echo "Done"
@@ -41,4 +41,3 @@ if ((cd c; sh ./run-c-ex.sh) && \
 else
    exit 1
 fi
-

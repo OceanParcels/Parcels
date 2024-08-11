@@ -48,7 +48,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetNextToken() const{ return m_nextToken; }
     inline void SetNextToken(const Aws::String& value) { m_nextToken = value; }
     inline void SetNextToken(Aws::String&& value) { m_nextToken = std::move(value); }
@@ -59,7 +59,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

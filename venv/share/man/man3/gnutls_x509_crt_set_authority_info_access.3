@@ -15,14 +15,14 @@ what data to get, a \fBgnutls_info_access_what_t\fP type.
 output data to be freed with \fBgnutls_free()\fP.
 .SH "DESCRIPTION"
 This function sets the Authority Information Access (AIA)
-extension, see RFC 5280 section 4.2.2.1 for more information.  
+extension, see RFC 5280 section 4.2.2.1 for more information.
 
 The type of data stored in  \fIdata\fP is specified via  \fIwhat\fP which
 should be \fBgnutls_info_access_what_t\fP values.
 
 If  \fIwhat\fP is \fBGNUTLS_IA_OCSP_URI\fP,  \fIdata\fP will hold the OCSP URI.
 If  \fIwhat\fP is \fBGNUTLS_IA_CAISSUERS_URI\fP,  \fIdata\fP will hold the caIssuers
-URI.  
+URI.
 .SH "RETURNS"
 On success, \fBGNUTLS_E_SUCCESS\fP (0) is returned, otherwise a
 negative error value.

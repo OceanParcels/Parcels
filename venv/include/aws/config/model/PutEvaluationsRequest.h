@@ -78,7 +78,7 @@ namespace Model
      * are not sent to Config.</p>  <p>When <code>TestMode</code> is
      * <code>true</code>, <code>PutEvaluations</code> doesn't require a valid value for
      * the <code>ResultToken</code> parameter, but the value cannot be null.</p>
-     * 
+     *
      */
     inline bool GetTestMode() const{ return m_testMode; }
     inline bool TestModeHasBeenSet() const { return m_testModeHasBeenSet; }

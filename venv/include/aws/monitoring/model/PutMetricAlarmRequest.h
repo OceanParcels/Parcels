@@ -436,7 +436,7 @@ namespace Model
      * <code>ignore</code> missing data even if you choose a different option for
      * <code>TreatMissingData</code>. When an <code>AWS/DynamoDB</code> metric has
      * missing data, alarms that evaluate that metric remain in their current
-     * state.</p> 
+     * state.</p>
      */
     inline const Aws::String& GetTreatMissingData() const{ return m_treatMissingData; }
     inline bool TreatMissingDataHasBeenSet() const { return m_treatMissingDataHasBeenSet; }

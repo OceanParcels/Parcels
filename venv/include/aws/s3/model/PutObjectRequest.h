@@ -81,7 +81,7 @@ namespace Model
      * Controlling ownership of objects and disabling ACLs</a> in the <i>Amazon S3 User
      * Guide</i>.</p>  <ul> <li> <p>This functionality is not supported for
      * directory buckets.</p> </li> <li> <p>This functionality is not supported for
-     * Amazon S3 on Outposts.</p> </li> </ul> 
+     * Amazon S3 on Outposts.</p> </li> </ul>
      */
     inline const ObjectCannedACL& GetACL() const{ return m_aCL; }
     inline bool ACLHasBeenSet() const { return m_aCLHasBeenSet; }
@@ -223,8 +223,8 @@ namespace Model
      * using Amazon S3 Object Lock. For more information about Amazon S3 Object Lock,
      * see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock-overview.html">Amazon
-     * S3 Object Lock Overview</a> in the <i>Amazon S3 User Guide</i>. </p> 
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     * S3 Object Lock Overview</a> in the <i>Amazon S3 User Guide</i>. </p>
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetContentMD5() const{ return m_contentMD5; }
     inline bool ContentMD5HasBeenSet() const { return m_contentMD5HasBeenSet; }
@@ -257,7 +257,7 @@ namespace Model
      * checksum algorithm that matches the provided value in
      * <code>x-amz-checksum-<i>algorithm</i> </code>.</p>  <p>For directory
      * buckets, when you use Amazon Web Services SDKs, <code>CRC32</code> is the
-     * default checksum algorithm that's used for performance.</p> 
+     * default checksum algorithm that's used for performance.</p>
      */
     inline const ChecksumAlgorithm& GetChecksumAlgorithm() const{ return m_checksumAlgorithm; }
     inline bool ChecksumAlgorithmHasBeenSet() const { return m_checksumAlgorithmHasBeenSet; }
@@ -361,7 +361,7 @@ namespace Model
      * <p>Gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the
      * object.</p>  <ul> <li> <p>This functionality is not supported for
      * directory buckets.</p> </li> <li> <p>This functionality is not supported for
-     * Amazon S3 on Outposts.</p> </li> </ul> 
+     * Amazon S3 on Outposts.</p> </li> </ul>
      */
     inline const Aws::String& GetGrantFullControl() const{ return m_grantFullControl; }
     inline bool GrantFullControlHasBeenSet() const { return m_grantFullControlHasBeenSet; }
@@ -378,7 +378,7 @@ namespace Model
      * <p>Allows grantee to read the object data and its metadata.</p>  <ul> <li>
      * <p>This functionality is not supported for directory buckets.</p> </li> <li>
      * <p>This functionality is not supported for Amazon S3 on Outposts.</p> </li>
-     * </ul> 
+     * </ul>
      */
     inline const Aws::String& GetGrantRead() const{ return m_grantRead; }
     inline bool GrantReadHasBeenSet() const { return m_grantReadHasBeenSet; }
@@ -395,7 +395,7 @@ namespace Model
      * <p>Allows grantee to read the object ACL.</p>  <ul> <li> <p>This
      * functionality is not supported for directory buckets.</p> </li> <li> <p>This
      * functionality is not supported for Amazon S3 on Outposts.</p> </li> </ul>
-     * 
+     *
      */
     inline const Aws::String& GetGrantReadACP() const{ return m_grantReadACP; }
     inline bool GrantReadACPHasBeenSet() const { return m_grantReadACPHasBeenSet; }
@@ -412,7 +412,7 @@ namespace Model
      * <p>Allows grantee to write the ACL for the applicable object.</p>  <ul>
      * <li> <p>This functionality is not supported for directory buckets.</p> </li>
      * <li> <p>This functionality is not supported for Amazon S3 on Outposts.</p> </li>
-     * </ul> 
+     * </ul>
      */
     inline const Aws::String& GetGrantWriteACP() const{ return m_grantWriteACP; }
     inline bool GrantWriteACPHasBeenSet() const { return m_grantWriteACPHasBeenSet; }
@@ -494,7 +494,7 @@ namespace Model
      * Classes</a> in the <i>Amazon S3 User Guide</i>.</p>  <ul> <li> <p>For
      * directory buckets, only the S3 Express One Zone storage class is supported to
      * store newly created objects.</p> </li> <li> <p>Amazon S3 on Outposts only uses
-     * the OUTPOSTS Storage Class.</p> </li> </ul> 
+     * the OUTPOSTS Storage Class.</p> </li> </ul>
      */
     inline const StorageClass& GetStorageClass() const{ return m_storageClass; }
     inline bool StorageClassHasBeenSet() const { return m_storageClassHasBeenSet; }
@@ -522,7 +522,7 @@ namespace Model
      * Websites on Amazon S3</a> and <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/how-to-page-redirect.html">How
      * to Configure Website Page Redirects</a> in the <i>Amazon S3 User Guide</i>. </p>
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetWebsiteRedirectLocation() const{ return m_websiteRedirectLocation; }
     inline bool WebsiteRedirectLocationHasBeenSet() const { return m_websiteRedirectLocationHasBeenSet; }
@@ -538,7 +538,7 @@ namespace Model
     /**
      * <p>Specifies the algorithm to use when encrypting the object (for example,
      * <code>AES256</code>).</p>  <p>This functionality is not supported for
-     * directory buckets.</p> 
+     * directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerAlgorithm() const{ return m_sSECustomerAlgorithm; }
     inline bool SSECustomerAlgorithmHasBeenSet() const { return m_sSECustomerAlgorithmHasBeenSet; }
@@ -556,8 +556,8 @@ namespace Model
      * encrypting data. This value is used to store the object and then it is
      * discarded; Amazon S3 does not store the encryption key. The key must be
      * appropriate for use with the algorithm specified in the
-     * <code>x-amz-server-side-encryption-customer-algorithm</code> header.</p> 
-     * <p>This functionality is not supported for directory buckets.</p> 
+     * <code>x-amz-server-side-encryption-customer-algorithm</code> header.</p>
+     * <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerKey() const{ return m_sSECustomerKey; }
     inline bool SSECustomerKeyHasBeenSet() const { return m_sSECustomerKeyHasBeenSet; }
@@ -574,7 +574,7 @@ namespace Model
      * <p>Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
      * Amazon S3 uses this header for a message integrity check to ensure that the
      * encryption key was transmitted without error.</p>  <p>This functionality
-     * is not supported for directory buckets.</p> 
+     * is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerKeyMD5() const{ return m_sSECustomerKeyMD5; }
     inline bool SSECustomerKeyMD5HasBeenSet() const { return m_sSECustomerKeyMD5HasBeenSet; }
@@ -598,7 +598,7 @@ namespace Model
      * Web Services managed key (<code>aws/s3</code>) to protect the data. If the KMS
      * key does not exist in the same account that's issuing the command, you must use
      * the full ARN and not just the ID. </p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSEKMSKeyId() const{ return m_sSEKMSKeyId; }
     inline bool SSEKMSKeyIdHasBeenSet() const { return m_sSEKMSKeyIdHasBeenSet; }
@@ -619,7 +619,7 @@ namespace Model
      * <code>GetObject</code> or <code>CopyObject</code> operations on this object.
      * This value must be explicitly added during <code>CopyObject</code>
      * operations.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetSSEKMSEncryptionContext() const{ return m_sSEKMSEncryptionContext; }
     inline bool SSEKMSEncryptionContextHasBeenSet() const { return m_sSEKMSEncryptionContextHasBeenSet; }
@@ -637,8 +637,8 @@ namespace Model
      * with server-side encryption using Key Management Service (KMS) keys (SSE-KMS).
      * Setting this header to <code>true</code> causes Amazon S3 to use an S3 Bucket
      * Key for object encryption with SSE-KMS.</p> <p>Specifying this header with a PUT
-     * action doesn’t affect bucket-level settings for S3 Bucket Key.</p> 
-     * <p>This functionality is not supported for directory buckets.</p> 
+     * action doesn’t affect bucket-level settings for S3 Bucket Key.</p>
+     * <p>This functionality is not supported for directory buckets.</p>
      */
     inline bool GetBucketKeyEnabled() const{ return m_bucketKeyEnabled; }
     inline bool BucketKeyEnabledHasBeenSet() const { return m_bucketKeyEnabledHasBeenSet; }
@@ -647,7 +647,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
     inline void SetRequestPayer(const RequestPayer& value) { m_requestPayerHasBeenSet = true; m_requestPayer = value; }
@@ -660,7 +660,7 @@ namespace Model
     /**
      * <p>The tag-set for the object. The tag-set must be encoded as URL Query
      * parameters. (For example, "Key1=Value1")</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::String& GetTagging() const{ return m_tagging; }
     inline bool TaggingHasBeenSet() const { return m_taggingHasBeenSet; }
@@ -674,8 +674,8 @@ namespace Model
 
     ///@{
     /**
-     * <p>The Object Lock mode that you want to apply to this object.</p> 
-     * <p>This functionality is not supported for directory buckets.</p> 
+     * <p>The Object Lock mode that you want to apply to this object.</p>
+     * <p>This functionality is not supported for directory buckets.</p>
      */
     inline const ObjectLockMode& GetObjectLockMode() const{ return m_objectLockMode; }
     inline bool ObjectLockModeHasBeenSet() const { return m_objectLockModeHasBeenSet; }
@@ -689,7 +689,7 @@ namespace Model
     /**
      * <p>The date and time when you want this object's Object Lock to expire. Must be
      * formatted as a timestamp parameter.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::Utils::DateTime& GetObjectLockRetainUntilDate() const{ return m_objectLockRetainUntilDate; }
     inline bool ObjectLockRetainUntilDateHasBeenSet() const { return m_objectLockRetainUntilDateHasBeenSet; }
@@ -705,7 +705,7 @@ namespace Model
      * information about S3 Object Lock, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html">Object
      * Lock</a> in the <i>Amazon S3 User Guide</i>.</p>  <p>This functionality is
-     * not supported for directory buckets.</p> 
+     * not supported for directory buckets.</p>
      */
     inline const ObjectLockLegalHoldStatus& GetObjectLockLegalHoldStatus() const{ return m_objectLockLegalHoldStatus; }
     inline bool ObjectLockLegalHoldStatusHasBeenSet() const { return m_objectLockLegalHoldStatusHasBeenSet; }
@@ -732,7 +732,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

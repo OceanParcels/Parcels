@@ -233,4 +233,3 @@ private:
 } // namespace geos::operation::intersection
 } // namespace geos::operation
 } // namespace geos
-

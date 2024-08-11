@@ -68,25 +68,25 @@ extern "C" {
   //! C-API for LERC library
 
 
-  //! Added in version 4.0: 
+  //! Added in version 4.0:
   //!
   //! - 1) better support 3D and 4D data, allow for lossy encoding even if a noData value is used
   //! - 2) better lossless compression for float and double (pass maxZError = 0)
   //! - 3) allow to pass integer > 32 bit as double (Lerc detects it is all integer and uses that)
   //! - 4) renamed nDim to nDepth (without changing the function signatures)
   //!
-  //! More on 1). In version 3.0, for 2D images, the 2D valid / invalid byte masks represent invalid pixels. 
-  //! For more than 1 band, different masks per band can be used. No change to that. 
-  //! For nDepth > 1, or an array of values per pixel, there is the special case of a mix of valid and invalid values 
-  //! at the same pixel. The 2D mask cannot cover this case. 
+  //! More on 1). In version 3.0, for 2D images, the 2D valid / invalid byte masks represent invalid pixels.
+  //! For more than 1 band, different masks per band can be used. No change to that.
+  //! For nDepth > 1, or an array of values per pixel, there is the special case of a mix of valid and invalid values
+  //! at the same pixel. The 2D mask cannot cover this case.
   //! We have added 4 new functions to version 4.0 to cover this case, see below. If you don't encounter this
-  //! "mixed case", you can continue using the same API functions as in version 3.0. 
-  //! If you should encounter a Lerc blob that has this mix, both the regular lerc_decode() and 
-  //! lerc_getDataRanges() functions will fail with "ErrCode::HasNoData". 
-  //! In that case, you need to call the new lerc_decode_4D() function. 
-  //! 
-  //! More on 2). Better lossless compression for float and double is enabled for all API functions. 
-  //! For 1) and 3) you have to call the new "..._4D()" functions, see further below. 
+  //! "mixed case", you can continue using the same API functions as in version 3.0.
+  //! If you should encounter a Lerc blob that has this mix, both the regular lerc_decode() and
+  //! lerc_getDataRanges() functions will fail with "ErrCode::HasNoData".
+  //! In that case, you need to call the new lerc_decode_4D() function.
+  //!
+  //! More on 2). Better lossless compression for float and double is enabled for all API functions.
+  //! For 1) and 3) you have to call the new "..._4D()" functions, see further below.
 
 
   typedef unsigned int lerc_status;
@@ -116,7 +116,7 @@ extern "C" {
       const unsigned char* pValidBytes,  // nullptr if all pixels are valid; otherwise 1 byte per pixel (1 = valid, 0 = invalid)
       double maxZErr,                    // max coding error per pixel, defines the precision
       unsigned int* numBytes);           // size of outgoing Lerc blob
-      
+
   //! Encode the input data into a compressed Lerc blob.
 
   LERCDLL_API
@@ -150,7 +150,7 @@ extern "C" {
       const unsigned char* pValidBytes,  // nullptr if all pixels are valid; otherwise 1 byte per pixel (1 = valid, 0 = invalid)
       double maxZErr,                    // max coding error per pixel, defines the precision
       unsigned int* numBytes);           // size of outgoing Lerc blob
-     
+
   LERCDLL_API
     lerc_status lerc_encodeForVersion(
       const void* pData,                 // raw image data, row by row, band by band
@@ -253,35 +253,35 @@ extern "C" {
 
   //! Added in version 4.0:
   //!
-  //! The 4 functions below are new. The main purpose (and difference to the functions above) is to support, for 3D and 4D data, 
-  //! the special case of a mix of valid and invalid values at the same pixel. 
-  //! 
-  //! Main idea: Lerc has the property that for each 8x8 pixel block the minimum value is always encoded lossless in the block header. 
+  //! The 4 functions below are new. The main purpose (and difference to the functions above) is to support, for 3D and 4D data,
+  //! the special case of a mix of valid and invalid values at the same pixel.
+  //!
+  //! Main idea: Lerc has the property that for each 8x8 pixel block the minimum value is always encoded lossless in the block header.
   //! To enable lossy encoding in the presence of noData values, the original noData value is mapped below the range of the valid values,
   //! if possible. If not possible, it switches to lossless. On decode, that temporary noData value gets mapped back to the original
-  //! noData value. 
-  //! 
-  //! To minimize the occurence of noData values (and for better compression), Lerc tries to move noData values to the byte mask 
+  //! noData value.
+  //!
+  //! To minimize the occurence of noData values (and for better compression), Lerc tries to move noData values to the byte mask
   //! wherever possible (e.g., all values at some pixel are invalid). So for a given band the noData values may disappear and get
   //! all moved to the byte mask. Decode only returns a noData value if it is really used. In that case the caller needs to filter
-  //! the decoded arrays using both the byte mask returned and the noData value returned. 
-  //! 
-  //! In addition to the noData support, the new functions can also take integer values > 32 bit (but < 53 bit) as a double array, 
-  //! and if all integer, use that for compression. 
+  //! the decoded arrays using both the byte mask returned and the noData value returned.
   //!
-  //! If floating point data contains NaN, Lerc tries to move it to the byte mask or replace it by a passed noData value. 
-  //! Note, if not all NaN values can be moved to the mask (mixed case), and no noData value was passed, Lerc will fail. 
-  //! It would be wrong to invent a noData value on the tile level. 
+  //! In addition to the noData support, the new functions can also take integer values > 32 bit (but < 53 bit) as a double array,
+  //! and if all integer, use that for compression.
+  //!
+  //! If floating point data contains NaN, Lerc tries to move it to the byte mask or replace it by a passed noData value.
+  //! Note, if not all NaN values can be moved to the mask (mixed case), and no noData value was passed, Lerc will fail.
+  //! It would be wrong to invent a noData value on the tile level.
 
 
   //! Encode functions:
   //!
-  //! If you don't use a noData value, are fine with the byte masks, just pass nullptr for the last 2 arguments. 
-  //! 
-  //! If you do have noData values at pixels that are marked as valid pixels by the byte mask, 
-  //! pass 2 arrays of size nBands each, one value per band. 
+  //! If you don't use a noData value, are fine with the byte masks, just pass nullptr for the last 2 arguments.
+  //!
+  //! If you do have noData values at pixels that are marked as valid pixels by the byte mask,
+  //! pass 2 arrays of size nBands each, one value per band.
   //! In pUsesNoData array, for each band, pass 1 for noData value is used, 0 if not.
-  //! In noDataValues array, for each band, pass the noData value if there is one. 
+  //! In noDataValues array, for each band, pass the noData value if there is one.
 
   LERCDLL_API
     lerc_status lerc_computeCompressedSize_4D(
@@ -318,15 +318,15 @@ extern "C" {
 
   //! Decode functions:
   //!
-  //! Same as for regular decode, first call lerc_getBlobInfo() to get all info needed from the blob header. 
-  //! Check the property (InfoArray::nUsesNoDataValue) to check if there is any noData value used. 
+  //! Same as for regular decode, first call lerc_getBlobInfo() to get all info needed from the blob header.
+  //! Check the property (InfoArray::nUsesNoDataValue) to check if there is any noData value used.
   //!
-  //! If not, just pass nullptr for the last 2 arguments. 
-  //! 
-  //! If yes, pass 2 arrays of size nBands each, one value per band. 
+  //! If not, just pass nullptr for the last 2 arguments.
+  //!
+  //! If yes, pass 2 arrays of size nBands each, one value per band.
   //! In pUsesNoData array, for each band, 1 means a noData value is used, 0 means not.
-  //! In noDataValues array, for each band, it has the noData value if there is one. 
-  //! This is the same noData value as passed for encode. 
+  //! In noDataValues array, for each band, it has the noData value if there is one.
+  //! This is the same noData value as passed for encode.
 
   LERCDLL_API
 #ifdef USE_EMSCRIPTEN

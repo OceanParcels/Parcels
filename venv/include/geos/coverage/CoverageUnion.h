@@ -65,13 +65,3 @@ public:
 
 } // namespace geos::coverage
 } // namespace geos
-
-
-
-
-
-
-
-
-
-

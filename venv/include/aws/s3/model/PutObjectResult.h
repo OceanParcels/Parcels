@@ -42,7 +42,7 @@ namespace Model
      * includes the <code>expiry-date</code> and <code>rule-id</code> key-value pairs
      * that provide information about object expiration. The value of the
      * <code>rule-id</code> is URL-encoded.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::String& GetExpiration() const{ return m_expiration; }
     inline void SetExpiration(const Aws::String& value) { m_expiration = value; }
@@ -157,7 +157,7 @@ namespace Model
      * Amazon S3 (for example, <code>AES256</code>, <code>aws:kms</code>,
      * <code>aws:kms:dsse</code>).</p>  <p>For directory buckets, only
      * server-side encryption with Amazon S3 managed keys (SSE-S3)
-     * (<code>AES256</code>) is supported.</p> 
+     * (<code>AES256</code>) is supported.</p>
      */
     inline const ServerSideEncryption& GetServerSideEncryption() const{ return m_serverSideEncryption; }
     inline void SetServerSideEncryption(const ServerSideEncryption& value) { m_serverSideEncryption = value; }
@@ -179,7 +179,7 @@ namespace Model
      * For information about returning the versioning state of a bucket, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketVersioning.html">GetBucketVersioning</a>.
      * </p>  <p>This functionality is not supported for directory buckets.</p>
-     * 
+     *
      */
     inline const Aws::String& GetVersionId() const{ return m_versionId; }
     inline void SetVersionId(const Aws::String& value) { m_versionId = value; }
@@ -195,7 +195,7 @@ namespace Model
      * <p>If server-side encryption with a customer-provided encryption key was
      * requested, the response will include this header to confirm the encryption
      * algorithm that's used.</p>  <p>This functionality is not supported for
-     * directory buckets.</p> 
+     * directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerAlgorithm() const{ return m_sSECustomerAlgorithm; }
     inline void SetSSECustomerAlgorithm(const Aws::String& value) { m_sSECustomerAlgorithm = value; }
@@ -211,7 +211,7 @@ namespace Model
      * <p>If server-side encryption with a customer-provided encryption key was
      * requested, the response will include this header to provide the round-trip
      * message integrity verification of the customer-provided encryption key.</p>
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerKeyMD5() const{ return m_sSECustomerKeyMD5; }
     inline void SetSSECustomerKeyMD5(const Aws::String& value) { m_sSECustomerKeyMD5 = value; }
@@ -228,7 +228,7 @@ namespace Model
      * <code>aws:kms</code> or <code>aws:kms:dsse</code>, this header indicates the ID
      * of the Key Management Service (KMS) symmetric encryption customer managed key
      * that was used for the object. </p>  <p>This functionality is not supported
-     * for directory buckets.</p> 
+     * for directory buckets.</p>
      */
     inline const Aws::String& GetSSEKMSKeyId() const{ return m_sSEKMSKeyId; }
     inline void SetSSEKMSKeyId(const Aws::String& value) { m_sSEKMSKeyId = value; }
@@ -247,7 +247,7 @@ namespace Model
      * as object metadata and automatically gets passed on to Amazon Web Services KMS
      * for future <code>GetObject</code> or <code>CopyObject</code> operations on this
      * object.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetSSEKMSEncryptionContext() const{ return m_sSEKMSEncryptionContext; }
     inline void SetSSEKMSEncryptionContext(const Aws::String& value) { m_sSEKMSEncryptionContext = value; }
@@ -262,7 +262,7 @@ namespace Model
     /**
      * <p>Indicates whether the uploaded object uses an S3 Bucket Key for server-side
      * encryption with Key Management Service (KMS) keys (SSE-KMS).</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline bool GetBucketKeyEnabled() const{ return m_bucketKeyEnabled; }
     inline void SetBucketKeyEnabled(bool value) { m_bucketKeyEnabled = value; }
@@ -270,7 +270,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestCharged& GetRequestCharged() const{ return m_requestCharged; }
     inline void SetRequestCharged(const RequestCharged& value) { m_requestCharged = value; }
     inline void SetRequestCharged(RequestCharged&& value) { m_requestCharged = std::move(value); }
@@ -279,7 +279,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

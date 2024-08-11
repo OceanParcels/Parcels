@@ -5,22 +5,22 @@
  *   Behdad Esfahbod, 2004
  *
  * Copyright (C) 2004 Sharif FarsiWeb, Inc
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library, in a file named COPYING; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA
- * 
+ *
  * For licensing issues, contact <fribidi.license@gmail.com>.
  */
 #ifndef _FRIBIDI_H
@@ -56,10 +56,10 @@
  * position_from_this_list is positions_V_to_L;  if str is the logical
  * string, the other way. Moreover, the position maps should be filled with
  * valid entries.
- * 
+ *
  * A position map pointing to a removed character is filled with \(mi1. By the
  * way, you should not use embedding_levels if str is visual string.
- * 
+ *
  * For best results this function should be run on a whole paragraph, not
  * lines; but feel free to do otherwise if you know what you are doing.
  *
@@ -102,7 +102,7 @@ FRIBIDI_ENTRY FriBidiLevel fribidi_log2vis (
   FriBidiParType *pbase_dir,	/* requested and resolved paragraph
 				 * base direction */
   FriBidiChar *visual_str,	/* output visual string */
-  FriBidiStrIndex *positions_L_to_V,	/* output mapping from logical to 
+  FriBidiStrIndex *positions_L_to_V,	/* output mapping from logical to
 					 * visual string positions */
   FriBidiStrIndex *positions_V_to_L,	/* output mapping from visual string
 					 * back to the logical string

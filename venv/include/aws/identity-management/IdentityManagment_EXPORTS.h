@@ -22,4 +22,3 @@
 #else // defined (USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32)
     #define AWS_IDENTITY_MANAGEMENT_API
 #endif // defined (USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32)
-

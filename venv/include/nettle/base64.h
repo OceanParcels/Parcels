@@ -1,5 +1,5 @@
 /* base64.h
-   
+
    Base-64 encoding and decoding.
 
    Copyright (C) 2002 Niels Möller, Dan Egnor
@@ -30,7 +30,7 @@
    the GNU Lesser General Public License along with this program.  If
    not, see http://www.gnu.org/licenses/.
 */
- 
+
 #ifndef NETTLE_BASE64_H_INCLUDED
 #define NETTLE_BASE64_H_INCLUDED
 

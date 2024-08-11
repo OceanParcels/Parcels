@@ -109,7 +109,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const EncodingType& GetEncodingType() const{ return m_encodingType; }
     inline bool EncodingTypeHasBeenSet() const { return m_encodingTypeHasBeenSet; }
     inline void SetEncodingType(const EncodingType& value) { m_encodingTypeHasBeenSet = true; m_encodingType = value; }
@@ -205,7 +205,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

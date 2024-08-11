@@ -178,7 +178,7 @@ typedef struct Itcl_List {
  */
 typedef struct Itcl_InterpState_ *Itcl_InterpState;
 
-
+
 /*
  * Include all the public API, generated from itcl.decls.
  */

@@ -26,7 +26,7 @@ namespace thrift {
 class TConfiguration
 {
 public:
-  TConfiguration(int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE, 
+  TConfiguration(int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE,
                 int maxFrameSize = DEFAULT_MAX_FRAME_SIZE, int recursionLimit = DEFAULT_RECURSION_DEPTH)
     : maxMessageSize_(maxMessageSize), maxFrameSize_(maxFrameSize), recursionLimit_(recursionLimit) {}
 
@@ -35,7 +35,7 @@ public:
   const static int DEFAULT_RECURSION_DEPTH = 64;
 
   inline int  getMaxMessageSize() { return maxMessageSize_; }
-  inline void setMaxMessageSize(int maxMessageSize) { maxMessageSize_ = maxMessageSize; } 
+  inline void setMaxMessageSize(int maxMessageSize) { maxMessageSize_ = maxMessageSize; }
   inline int getMaxFrameSize() { return maxFrameSize_; }
   inline void setMaxFrameSize(int maxFrameSize) { maxFrameSize_ = maxFrameSize; }
   inline int getRecursionLimit() { return recursionLimit_; }
@@ -52,4 +52,3 @@ private:
 } // apache::thrift
 
 #endif /* THRIFT_TCONFIGURATION_H */
-

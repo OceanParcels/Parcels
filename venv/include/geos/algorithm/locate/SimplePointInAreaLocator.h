@@ -113,5 +113,3 @@ private:
 } // geos::algorithm::locate
 } // geos::algorithm
 } // geos
-
-

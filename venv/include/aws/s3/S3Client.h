@@ -334,7 +334,7 @@ namespace Aws
         }
 
         /**
-         * <p>Creates a copy of an object that is already stored in Amazon S3.</p> 
+         * <p>Creates a copy of an object that is already stored in Amazon S3.</p>
          * <p>You can store individual objects of up to 5 TB in Amazon S3. You create a
          * copy of your object up to 5 GB in size in a single atomic action using this API.
          * However, to copy an object greater than 5 GB, you must use the multipart upload
@@ -552,7 +552,7 @@ namespace Aws
          * buckets</a> in the <i>Amazon S3 User Guide</i>. For more information about
          * supported S3 features for directory buckets, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-express-one-zone.html#s3-express-features">Features
-         * of S3 Express One Zone</a> in the <i>Amazon S3 User Guide</i>.</p> 
+         * of S3 Express One Zone</a> in the <i>Amazon S3 User Guide</i>.</p>
          * </li> </ul> </dd> <dt>HTTP Host header syntax</dt> <dd> <p> <b>Directory buckets
          * </b> - The HTTP Host header syntax is
          * <code>s3express-control.<i>region</i>.amazonaws.com</code>.</p> </dd> </dl>
@@ -917,7 +917,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Deletes an analytics configuration for the bucket (specified by the analytics
          * configuration ID).</p> <p>To use this operation, you must have permissions to
          * perform the <code>s3:PutAnalyticsConfiguration</code> action. The bucket owner
@@ -961,7 +961,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Deletes the <code>cors</code> configuration information set for the
          * bucket.</p> <p>To use this operation, you must have permission to perform the
          * <code>s3:PutBucketCORS</code> action. The bucket owner has this permission by
@@ -998,7 +998,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>This implementation of the DELETE action resets the default encryption for
          * the bucket as server-side encryption with Amazon S3 managed keys (SSE-S3). For
          * information about the bucket default encryption feature, see <a
@@ -1042,7 +1042,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Deletes the S3 Intelligent-Tiering configuration from the specified
          * bucket.</p> <p>The S3 Intelligent-Tiering storage class is designed to optimize
          * storage costs by automatically moving data to the most cost-effective storage
@@ -1092,7 +1092,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Deletes an inventory configuration (identified by the inventory ID) from the
          * bucket.</p> <p>To use this operation, you must have permissions to perform the
          * <code>s3:PutInventoryConfiguration</code> action. The bucket owner has this
@@ -1136,7 +1136,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Deletes the lifecycle configuration from the specified bucket. Amazon S3
          * removes all the lifecycle configuration rules in the lifecycle subresource
          * associated with the bucket. Your objects never expire, and Amazon S3 no longer
@@ -1178,7 +1178,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Deletes a metrics configuration for the Amazon CloudWatch request metrics
          * (specified by the metrics configuration ID) from the bucket. Note that this
          * doesn't include the daily storage metrics.</p> <p> To use this operation, you
@@ -1225,7 +1225,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Removes <code>OwnershipControls</code> for an Amazon S3 bucket. To use this
          * operation, you must have the <code>s3:PutBucketOwnershipControls</code>
          * permission. For more information about Amazon S3 permissions, see <a
@@ -1374,7 +1374,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Deletes the tags from the bucket.</p> <p>To use this operation, you must have
          * permission to perform the <code>s3:PutBucketTagging</code> action. By default,
          * the bucket owner has this permission and can grant this permission to others.
@@ -1408,7 +1408,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>This action removes the website configuration for a bucket. Amazon S3 returns
          * a <code>200 OK</code> response upon successfully deleting a website
          * configuration on the specified bucket. You will get a <code>200 OK</code>
@@ -1502,7 +1502,7 @@ namespace Aws
          * accounts from removing or deleting objects from your bucket, you must deny them
          * the <code>s3:DeleteObject</code>, <code>s3:DeleteObjectVersion</code>, and
          * <code>s3:PutLifeCycleConfiguration</code> actions. </p>  <p> <b>Directory
-         * buckets</b> - S3 Lifecycle is not supported by directory buckets.</p> 
+         * buckets</b> - S3 Lifecycle is not supported by directory buckets.</p>
          * <dl> <dt>Permissions</dt> <dd> <ul> <li> <p> <b>General purpose bucket
          * permissions</b> - The following permissions are required in your policies when
          * your <code>DeleteObjects</code> request includes specific headers.</p> <ul> <li>
@@ -1557,7 +1557,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Removes the entire tag set from the specified object. For more information
          * about managing object tags, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-tagging.html">
@@ -1698,7 +1698,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Removes the <code>PublicAccessBlock</code> configuration for an Amazon S3
          * bucket. To use this operation, you must have the
          * <code>s3:PutBucketPublicAccessBlock</code> permission. For more information
@@ -1741,7 +1741,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>This implementation of the GET action uses the <code>accelerate</code>
          * subresource to return the Transfer Acceleration state of a bucket, which is
          * either <code>Enabled</code> or <code>Suspended</code>. Amazon S3 Transfer
@@ -1791,7 +1791,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>This implementation of the <code>GET</code> action uses the <code>acl</code>
          * subresource to return the access control list (ACL) of a bucket. To use
          * <code>GET</code> to return the ACL of the bucket, you must have the
@@ -1839,7 +1839,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>This implementation of the GET action returns an analytics configuration
          * (identified by the analytics configuration ID) from the bucket.</p> <p>To use
          * this operation, you must have permissions to perform the
@@ -1885,7 +1885,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the Cross-Origin Resource Sharing (CORS) configuration information
          * set for the bucket.</p> <p> To use this operation, you must have permission to
          * perform the <code>s3:GetBucketCORS</code> action. By default, the bucket owner
@@ -1929,7 +1929,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the default encryption configuration for an Amazon S3 bucket. By
          * default, all buckets have a default encryption configuration that uses
          * server-side encryption with Amazon S3 managed keys (SSE-S3). For information
@@ -1973,7 +1973,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Gets the S3 Intelligent-Tiering configuration from the specified bucket.</p>
          * <p>The S3 Intelligent-Tiering storage class is designed to optimize storage
          * costs by automatically moving data to the most cost-effective storage access
@@ -2022,7 +2022,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns an inventory configuration (identified by the inventory configuration
          * ID) from the bucket.</p> <p>To use this operation, you must have permissions to
          * perform the <code>s3:GetInventoryConfiguration</code> action. The bucket owner
@@ -2066,7 +2066,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          *  <p>Bucket lifecycle configuration now supports specifying a lifecycle
          * rule using an object key name prefix, one or more object tags, object size, or
          * any combination of these. Accordingly, this section describes the latest API.
@@ -2077,7 +2077,7 @@ namespace Aws
          * Accordingly, this section describes the latest API. The response describes the
          * new filter element that you can use to specify a filter to select a subset of
          * objects to which the rule applies. If you are using a previous version of the
-         * lifecycle configuration, it still works. For the earlier action, </p> 
+         * lifecycle configuration, it still works. For the earlier action, </p>
          * <p>Returns the lifecycle configuration information set on the bucket. For
          * information about lifecycle configuration, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html">Object
@@ -2125,7 +2125,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the Region the bucket resides in. You set the bucket's Region using
          * the <code>LocationConstraint</code> request parameter in a
          * <code>CreateBucket</code> request. For more information, see <a
@@ -2171,7 +2171,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the logging status of a bucket and the permissions users have to view
          * and modify that status.</p> <p>The following operations are related to
          * <code>GetBucketLogging</code>:</p> <ul> <li> <p> <a
@@ -2203,7 +2203,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Gets a metrics configuration (specified by the metrics configuration ID) from
          * the bucket. Note that this doesn't include the daily storage metrics.</p> <p> To
          * use this operation, you must have permissions to perform the
@@ -2250,7 +2250,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the notification configuration of a bucket.</p> <p>If notifications
          * are not enabled on the bucket, the action returns an empty
          * <code>NotificationConfiguration</code> element.</p> <p>By default, you must be
@@ -2299,7 +2299,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Retrieves <code>OwnershipControls</code> for an Amazon S3 bucket. To use this
          * operation, you must have the <code>s3:GetBucketOwnershipControls</code>
          * permission. For more information about Amazon S3 permissions, see <a
@@ -2411,7 +2411,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Retrieves the policy status for an Amazon S3 bucket, indicating whether the
          * bucket is public. In order to use this operation, you must have the
          * <code>s3:GetBucketPolicyStatus</code> permission. For more information about
@@ -2454,7 +2454,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the replication configuration of a bucket.</p>  <p> It can take
          * a while to propagate the put or delete a replication configuration to all Amazon
          * S3 systems. Therefore, a get request soon after put or delete can return a wrong
@@ -2500,7 +2500,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the request payment configuration of a bucket. To use this version of
          * the operation, you must be the bucket owner. For more information, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/RequesterPaysBuckets.html">Requester
@@ -2532,7 +2532,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the tag set associated with the bucket.</p> <p>To use this operation,
          * you must have permission to perform the <code>s3:GetBucketTagging</code> action.
          * By default, the bucket owner has this permission and can grant this permission
@@ -2569,7 +2569,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the versioning state of a bucket.</p> <p>To retrieve the versioning
          * state of a bucket, you must be the bucket owner.</p> <p>This implementation also
          * returns the MFA Delete status of the versioning state. If the MFA Delete status
@@ -2606,7 +2606,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the website configuration for a bucket. To host website on Amazon S3,
          * you can configure a bucket as website by adding a website configuration. For
          * more information about hosting websites, see <a
@@ -2775,7 +2775,7 @@ namespace Aws
         virtual void GetObjectAsync(const Model::GetObjectRequest& request, const GetObjectResponseReceivedHandler& handler, const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context = nullptr) const;
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the access control list (ACL) of an object. To use this operation,
          * you must have <code>s3:GetObjectAcl</code> permissions or <code>READ_ACP</code>
          * access to the object. For more information, see <a
@@ -2958,7 +2958,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Gets an object's current legal hold status. For more information, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html">Locking
          * Objects</a>.</p> <p>This functionality is not supported for Amazon S3 on
@@ -2990,7 +2990,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Gets the Object Lock configuration for a bucket. The rule specified in the
          * Object Lock configuration will be applied by default to every new object placed
          * in the specified bucket. For more information, see <a
@@ -3023,7 +3023,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Retrieves an object's retention settings. For more information, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html">Locking
          * Objects</a>.</p> <p>This functionality is not supported for Amazon S3 on
@@ -3055,7 +3055,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns the tag-set of an object. You send the GET request against the
          * tagging subresource associated with the object.</p> <p>To use this operation,
          * you must have permission to perform the <code>s3:GetObjectTagging</code> action.
@@ -3099,11 +3099,11 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns torrent files from a bucket. BitTorrent can save you bandwidth when
          * you're distributing large files.</p>  <p>You can get torrent only for
          * objects that are less than 5 GB in size, and that are not encrypted using
-         * server-side encryption with a customer-provided encryption key.</p> 
+         * server-side encryption with a customer-provided encryption key.</p>
          * <p>To use GET, you must have READ access to the object.</p> <p>This
          * functionality is not supported for Amazon S3 on Outposts.</p> <p>The following
          * action is related to <code>GetObjectTorrent</code>:</p> <ul> <li> <p> <a
@@ -3133,7 +3133,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Retrieves the <code>PublicAccessBlock</code> configuration for an Amazon S3
          * bucket. To use this operation, you must have the
          * <code>s3:GetBucketPublicAccessBlock</code> permission. For more information
@@ -3336,7 +3336,7 @@ namespace Aws
          * buckets</b> - S3 Versioning isn't enabled and supported for directory buckets.
          * For this API operation, only the <code>null</code> value of the version ID is
          * supported by directory buckets. You can only specify <code>null</code> to the
-         * <code>versionId</code> query parameter in the request.</p> </li> </ul> 
+         * <code>versionId</code> query parameter in the request.</p> </li> </ul>
          * </dd> <dt>HTTP Host header syntax</dt> <dd> <p> <b>Directory buckets </b> - The
          * HTTP Host header syntax is <code>
          * <i>Bucket_name</i>.s3express-<i>az_id</i>.<i>region</i>.amazonaws.com</code>.</p>
@@ -3370,7 +3370,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Lists the analytics configurations for the bucket. You can have up to 1,000
          * analytics configurations per bucket.</p> <p>This action supports list pagination
          * and does not return more than 100 configurations at a time. You should always
@@ -3422,7 +3422,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Lists the S3 Intelligent-Tiering configuration from the specified bucket.</p>
          * <p>The S3 Intelligent-Tiering storage class is designed to optimize storage
          * costs by automatically moving data to the most cost-effective storage access
@@ -3471,7 +3471,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns a list of inventory configurations for the bucket. You can have up to
          * 1,000 analytics configurations per bucket.</p> <p>This action supports list
          * pagination and does not return more than 100 configurations at a time. Always
@@ -3523,7 +3523,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Lists the metrics configurations for the bucket. The metrics configurations
          * are only for the request metrics of the bucket and do not provide information on
          * daily storage metrics. You can have up to 1,000 configurations per bucket.</p>
@@ -3577,13 +3577,13 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns a list of all buckets owned by the authenticated sender of the
          * request. To use this operation, you must have the
          * <code>s3:ListAllMyBuckets</code> permission. </p> <p>For information about
          * Amazon S3 buckets, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-buckets-s3.html">Creating,
-         * configuring, and working with Amazon S3 buckets</a>.</p><p><h3>See Also:</h3>  
+         * configuring, and working with Amazon S3 buckets</a>.</p><p><h3>See Also:</h3>
          * <a href="http://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/ListBuckets">AWS
          * API Reference</a></p>
          */
@@ -3759,14 +3759,14 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns metadata about all versions of the objects in a bucket. You can also
          * use request parameters as selection criteria to return metadata about a subset
          * of all the object versions.</p>  <p> To use this operation, you must
          * have permission to perform the <code>s3:ListBucketVersions</code> action. Be
          * aware of the name difference. </p>   <p> A <code>200 OK</code>
          * response can contain valid or invalid XML. Make sure to design your application
-         * to parse the contents of the response and handle it appropriately.</p> 
+         * to parse the contents of the response and handle it appropriately.</p>
          * <p>To use this operation, you must have READ access to the bucket.</p> <p>The
          * following operations are related to <code>ListObjectVersions</code>:</p> <ul>
          * <li> <p> <a
@@ -3802,7 +3802,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Returns some or all (up to 1,000) of the objects in a bucket. You can use the
          * request parameters as selection criteria to return a subset of the objects in a
          * bucket. A 200 OK response can contain valid or invalid XML. Be sure to design
@@ -4024,7 +4024,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Sets the accelerate configuration of an existing bucket. Amazon S3 Transfer
          * Acceleration is a bucket-level feature that enables you to perform faster data
          * transfers to Amazon S3.</p> <p> To use this operation, you must have permission
@@ -4077,7 +4077,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Sets the permissions on an existing bucket using access control lists (ACL).
          * For more information, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3_ACLs_UsingACLs.html">Using
@@ -4120,7 +4120,7 @@ namespace Aws
          * – if the value specified is the canonical user ID of an Amazon Web Services
          * account</p> </li> <li> <p> <code>uri</code> – if you are granting permissions to
          * a predefined group</p> </li> <li> <p> <code>emailAddress</code> – if the value
-         * specified is the email address of an Amazon Web Services account</p> 
+         * specified is the email address of an Amazon Web Services account</p>
          * <p>Using email addresses to specify a grantee is only supported in the following
          * Amazon Web Services Regions: </p> <ul> <li> <p>US East (N. Virginia)</p> </li>
          * <li> <p>US West (N. California)</p> </li> <li> <p> US West (Oregon)</p> </li>
@@ -4129,7 +4129,7 @@ namespace Aws
          * <li> <p>South America (São Paulo)</p> </li> </ul> <p>For a list of all the
          * Amazon S3 supported Regions and endpoints, see <a
          * href="https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">Regions
-         * and Endpoints</a> in the Amazon Web Services General Reference.</p> 
+         * and Endpoints</a> in the Amazon Web Services General Reference.</p>
          * </li> </ul> <p>For example, the following <code>x-amz-grant-write</code> header
          * grants create, overwrite, and delete objects permission to LogDelivery group
          * predefined by Amazon S3 and two Amazon Web Services accounts identified by their
@@ -4159,7 +4159,7 @@ namespace Aws
          * <p>South America (São Paulo)</p> </li> </ul> <p>For a list of all the Amazon S3
          * supported Regions and endpoints, see <a
          * href="https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">Regions
-         * and Endpoints</a> in the Amazon Web Services General Reference.</p> 
+         * and Endpoints</a> in the Amazon Web Services General Reference.</p>
          * </li> </ul> </dd> </dl> <p>The following operations are related to
          * <code>PutBucketAcl</code>:</p> <ul> <li> <p> <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html">CreateBucket</a>
@@ -4192,7 +4192,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Sets an analytics configuration for the bucket (specified by the analytics
          * configuration ID). You can have up to 1,000 analytics configurations per
          * bucket.</p> <p>You can choose to have storage class analysis export analysis
@@ -4262,7 +4262,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Sets the <code>cors</code> configuration for your bucket. If the
          * configuration exists, Amazon S3 replaces it.</p> <p>To use this operation, you
          * must be allowed to perform the <code>s3:PutBucketCORS</code> action. By default,
@@ -4323,7 +4323,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>This action uses the <code>encryption</code> subresource to configure default
          * encryption and Amazon S3 Bucket Keys for an existing bucket.</p> <p>By default,
          * all buckets have a default encryption configuration that uses server-side
@@ -4379,7 +4379,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Puts a S3 Intelligent-Tiering configuration to the specified bucket. You can
          * have up to 1,000 S3 Intelligent-Tiering configurations per bucket.</p> <p>The S3
          * Intelligent-Tiering storage class is designed to optimize storage costs by
@@ -4441,7 +4441,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>This implementation of the <code>PUT</code> action adds an inventory
          * configuration (identified by the inventory ID) to the bucket. You can have up to
          * 1,000 inventory configurations per bucket. </p> <p>Amazon S3 inventory generates
@@ -4524,7 +4524,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Creates a new lifecycle configuration for the bucket or replaces an existing
          * lifecycle configuration. Keep in mind that this will overwrite an existing
          * lifecycle configuration, so if you want to retain any configuration details,
@@ -4603,7 +4603,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Set the logging parameters for a bucket and to specify permissions for who
          * can view and modify the logging parameters. All logs are saved to buckets in the
          * same Amazon Web Services Region as the source bucket. To set the logging status
@@ -4676,7 +4676,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Sets a metrics configuration (specified by the metrics configuration ID) for
          * the bucket. You can have up to 1,000 metrics configurations per bucket. If
          * you're updating an existing metrics configuration, note that this is a full
@@ -4728,7 +4728,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Enables notifications of specified events for a bucket. For more information
          * about event notifications, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html">Configuring
@@ -4796,7 +4796,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Creates or modifies <code>OwnershipControls</code> for an Amazon S3 bucket.
          * To use this operation, you must have the
          * <code>s3:PutBucketOwnershipControls</code> permission. For more information
@@ -4994,7 +4994,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Sets the request payment configuration for a bucket. By default, the bucket
          * owner pays for downloads from the bucket. This configuration parameter enables
          * the bucket owner (only) to specify that the person requesting the download will
@@ -5030,7 +5030,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Sets the tags for a bucket.</p> <p>Use tags to organize your Amazon Web
          * Services bill to reflect your own cost structure. To do this, sign up to get
          * your Amazon Web Services account bill with tag key values included. Then, to see
@@ -5095,7 +5095,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Sets the versioning state of an existing bucket.</p> <p>You can set the
          * versioning state with one of the following values:</p> <p>
          * <b>Enabled</b>—Enables versioning for the objects in the bucket. All objects
@@ -5149,7 +5149,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Sets the configuration of the website that is specified in the
          * <code>website</code> subresource. To configure a bucket as a website, you can
          * add this subresource on the bucket with website configuration information such
@@ -5305,7 +5305,7 @@ namespace Aws
         virtual void PutObjectAsync(const Model::PutObjectRequest& request, const PutObjectResponseReceivedHandler& handler, const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context = nullptr) const;
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Uses the <code>acl</code> subresource to set the access control list (ACL)
          * permissions for a new or existing object in an S3 bucket. You must have the
          * <code>WRITE_ACP</code> permission to set the ACL of an object. For more
@@ -5350,7 +5350,7 @@ namespace Aws
          * – if the value specified is the canonical user ID of an Amazon Web Services
          * account</p> </li> <li> <p> <code>uri</code> – if you are granting permissions to
          * a predefined group</p> </li> <li> <p> <code>emailAddress</code> – if the value
-         * specified is the email address of an Amazon Web Services account</p> 
+         * specified is the email address of an Amazon Web Services account</p>
          * <p>Using email addresses to specify a grantee is only supported in the following
          * Amazon Web Services Regions: </p> <ul> <li> <p>US East (N. Virginia)</p> </li>
          * <li> <p>US West (N. California)</p> </li> <li> <p> US West (Oregon)</p> </li>
@@ -5359,7 +5359,7 @@ namespace Aws
          * <li> <p>South America (São Paulo)</p> </li> </ul> <p>For a list of all the
          * Amazon S3 supported Regions and endpoints, see <a
          * href="https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">Regions
-         * and Endpoints</a> in the Amazon Web Services General Reference.</p> 
+         * and Endpoints</a> in the Amazon Web Services General Reference.</p>
          * </li> </ul> <p>For example, the following <code>x-amz-grant-read</code> header
          * grants list objects permission to the two Amazon Web Services accounts
          * identified by their email addresses.</p> <p> <code>x-amz-grant-read:
@@ -5388,7 +5388,7 @@ namespace Aws
          * <p>South America (São Paulo)</p> </li> </ul> <p>For a list of all the Amazon S3
          * supported Regions and endpoints, see <a
          * href="https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">Regions
-         * and Endpoints</a> in the Amazon Web Services General Reference.</p> 
+         * and Endpoints</a> in the Amazon Web Services General Reference.</p>
          * </li> </ul> </dd> <dt>Versioning</dt> <dd> <p>The ACL of an object is set at the
          * object version level. By default, PUT sets the ACL of the current version of an
          * object. To set the ACL of a different version, use the <code>versionId</code>
@@ -5422,7 +5422,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Applies a legal hold configuration to the specified object. For more
          * information, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html">Locking
@@ -5452,7 +5452,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Places an Object Lock configuration on the specified bucket. The rule
          * specified in the Object Lock configuration will be applied by default to every
          * new object placed in the specified bucket. For more information, see <a
@@ -5489,7 +5489,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Places an Object Retention configuration on an object. For more information,
          * see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html">Locking
@@ -5522,7 +5522,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Sets the supplied tag-set to an object that already exists in a bucket. A tag
          * is a key-value pair. For more information, see <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-tagging.html">Object
@@ -5580,7 +5580,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Creates or modifies the <code>PublicAccessBlock</code> configuration for an
          * Amazon S3 bucket. To use this operation, you must have the
          * <code>s3:PutBucketPublicAccessBlock</code> permission. For more information
@@ -5629,7 +5629,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Restores an archived copy of an object back into Amazon S3</p> <p>This
          * functionality is not supported for Amazon S3 on Outposts.</p> <p>This action
          * performs the following types of requests: </p> <ul> <li> <p> <code>restore an
@@ -5768,7 +5768,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>This action filters the contents of an Amazon S3 object based on a simple
          * structured query language (SQL) statement. In the request, along with the SQL
          * expression, you must also specify a data serialization format (JSON, CSV, or
@@ -6013,7 +6013,7 @@ namespace Aws
          * upload limits</a> in the <i>Amazon S3 User Guide</i>. </p>  <p>Instead of
          * copying data from an existing object as part data, you might use the <a
          * href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html">UploadPart</a>
-         * action to upload new data as a part of an object in your request.</p> 
+         * action to upload new data as a part of an object in your request.</p>
          * <p>You must initiate a multipart upload before you can upload any part. In
          * response to your initiate request, Amazon S3 returns the upload ID, a unique
          * identifier that you must include in your upload part request.</p> <p>For
@@ -6133,7 +6133,7 @@ namespace Aws
         }
 
         /**
-         *  <p>This operation is not supported by directory buckets.</p> 
+         *  <p>This operation is not supported by directory buckets.</p>
          * <p>Passes transformed objects to a <code>GetObject</code> operation when using
          * Object Lambda access points. For information about Object Lambda access points,
          * see <a

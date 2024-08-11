@@ -645,4 +645,3 @@ gnutls_pkcs7_verify_direct
      to verify to a 'GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE' .
 
      *Since:* 3.4.2
-

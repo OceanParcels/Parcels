@@ -303,4 +303,3 @@ BufferOp::setSingleSided(bool isSingleSided)
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-

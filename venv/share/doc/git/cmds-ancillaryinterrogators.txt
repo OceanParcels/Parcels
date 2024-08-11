@@ -48,4 +48,3 @@ linkgit:git-whatchanged[1]::
 
 linkgit:gitweb[1]::
 	Git web interface (web frontend to Git repositories).
-

@@ -56,7 +56,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetFilterPattern() const{ return m_filterPattern; }
     inline bool FilterPatternHasBeenSet() const { return m_filterPatternHasBeenSet; }
     inline void SetFilterPattern(const Aws::String& value) { m_filterPatternHasBeenSet = true; m_filterPattern = value; }

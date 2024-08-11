@@ -5,4 +5,3 @@
 XLC	common/xlibi18n	_XlcGenericLoader	# XLC_open
 XIM	common/xiiimp	_XimpLocalOpenIM	# XIM_open
 XOM	common/xomGeneric 	_XomGenericOpenOM	# XOM_open
-

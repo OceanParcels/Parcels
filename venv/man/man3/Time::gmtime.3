@@ -145,12 +145,12 @@ Time::gmtime \- by\-name interface to Perl's built\-in gmtime() function
 .Vb 4
 \& use Time::gmtime;
 \& $gm = gmtime();
-\& printf "The day in Greenwich is %s\en", 
+\& printf "The day in Greenwich is %s\en",
 \&    (qw(Sun Mon Tue Wed Thu Fri Sat Sun))[ $gm\->wday() ];
 \&
 \& use Time::gmtime qw(:FIELDS);
 \& gmtime();
-\& printf "The day in Greenwich is %s\en", 
+\& printf "The day in Greenwich is %s\en",
 \&    (qw(Sun Mon Tue Wed Thu Fri Sat Sun))[ $tm_wday ];
 \&
 \& $now = gmctime();
@@ -173,7 +173,7 @@ still overrides your core functions.)  Access these fields as variables
 named with a preceding \f(CW\*(C`tm_\*(C'\fR in front their method names.  Thus,
 \&\f(CW\*(C`$tm_obj\->mday()\*(C'\fR corresponds to \f(CW$tm_mday\fR if you import the fields.
 .PP
-The \fBgmctime()\fR function provides a way of getting at the 
+The \fBgmctime()\fR function provides a way of getting at the
 scalar sense of the original \fBCORE::gmtime()\fR function.
 .PP
 To access this functionality without the core overrides,

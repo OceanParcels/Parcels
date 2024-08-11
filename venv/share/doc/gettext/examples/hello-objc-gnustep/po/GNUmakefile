@@ -269,4 +269,3 @@ $(ENSTRINGSFILES): $(DOMAIN).pot
 
 echo-languages:
 	@echo $(foreach lang, $(LINGUAS), $(NSLOCALE_$(lang)))
-

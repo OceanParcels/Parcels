@@ -27,7 +27,7 @@ namespace Model
 
   /**
    * <p> Contains the information that's required to enable a managed Contributor
-   * Insights rule for an Amazon Web Services resource. </p><p><h3>See Also:</h3>  
+   * Insights rule for an Amazon Web Services resource. </p><p><h3>See Also:</h3>
    * <a
    * href="http://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ManagedRule">AWS
    * API Reference</a></p>

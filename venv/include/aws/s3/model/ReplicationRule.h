@@ -76,7 +76,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const ReplicationRuleFilter& GetFilter() const{ return m_filter; }
     inline bool FilterHasBeenSet() const { return m_filterHasBeenSet; }
     inline void SetFilter(const ReplicationRuleFilter& value) { m_filterHasBeenSet = true; m_filter = value; }
@@ -142,7 +142,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const DeleteMarkerReplication& GetDeleteMarkerReplication() const{ return m_deleteMarkerReplication; }
     inline bool DeleteMarkerReplicationHasBeenSet() const { return m_deleteMarkerReplicationHasBeenSet; }
     inline void SetDeleteMarkerReplication(const DeleteMarkerReplication& value) { m_deleteMarkerReplicationHasBeenSet = true; m_deleteMarkerReplication = value; }

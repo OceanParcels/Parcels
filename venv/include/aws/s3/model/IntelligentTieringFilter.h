@@ -47,7 +47,7 @@ namespace Model
      * containing special characters (such as carriage returns) when using XML
      * requests. For more information, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-xml-related-constraints">
-     * XML related object key constraints</a>.</p> 
+     * XML related object key constraints</a>.</p>
      */
     inline const Aws::String& GetPrefix() const{ return m_prefix; }
     inline bool PrefixHasBeenSet() const { return m_prefixHasBeenSet; }
@@ -60,7 +60,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Tag& GetTag() const{ return m_tag; }
     inline bool TagHasBeenSet() const { return m_tagHasBeenSet; }
     inline void SetTag(const Tag& value) { m_tagHasBeenSet = true; m_tag = value; }

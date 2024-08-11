@@ -42,4 +42,3 @@ PyAPI_FUNC(int) PyErr_WarnExplicit(
 }
 #endif
 #endif /* !Py_WARNINGS_H */
-

@@ -15,7 +15,7 @@ namespace Aws
         {
             /**
              * Interface for generating Random Bytes with guaranteed entropy for use with cryptographic functions.
-             * An instance is not guaranteed to be thread safe. This is intentional, that is needless overhead to 
+             * An instance is not guaranteed to be thread safe. This is intentional, that is needless overhead to
              *  pay for something you probably don't need. If you encounter a need for thread safety, you are responsible
              *  for memory fencing.
              */
@@ -51,7 +51,7 @@ namespace Aws
             public:
                 /**
                  * Initialize with the results of CreateSecureRandomBytesImplementation().
-                 *  An instance is not guaranteed to be thread safe. This is intentional, that is needless overhead to 
+                 *  An instance is not guaranteed to be thread safe. This is intentional, that is needless overhead to
                  *  pay for something you probably don't need. If you encounter a need for thread safety, you are responsible
                  *  for memory fencing.
                  */
@@ -89,7 +89,7 @@ namespace Aws
 
             private:
                 std::shared_ptr<SecureRandomBytes> m_entropy;
-            };           
+            };
 
             class SecureRandomFactory
             {

@@ -60,7 +60,7 @@ When the frontend is a ZMQ_PULL socket, and the backend is a ZMQ_PUSH socket, th
 The \fIzmq_proxy()\fR function always returns \-1 and \fIerrno\fR set to \fBETERM\fR or \fBEINTR\fR (the 0MQ \fIcontext\fR associated with either of the specified sockets was terminated) or \fBEFAULT\fR (the provided \fIfrontend\fR or \fIbackend\fR was invalid)\&.
 .SH "EXAMPLE"
 .PP
-\fBCreating a shared queue proxy\fR. 
+\fBCreating a shared queue proxy\fR.
 .sp
 .if n \{\
 .RS 4

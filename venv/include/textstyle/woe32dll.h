@@ -24,7 +24,7 @@
 # define LIBTEXTSTYLE_DLL_VARIABLE
 #else
 /* References from outside of libtextstyle.  */
-# define LIBTEXTSTYLE_DLL_VARIABLE 
+# define LIBTEXTSTYLE_DLL_VARIABLE
 #endif
 
 #endif /* _TEXTSTYLE_WOE32DLL_H */

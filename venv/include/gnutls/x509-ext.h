@@ -112,7 +112,7 @@ int gnutls_x509_ext_import_authority_key_id(const gnutls_datum_t * ext,
 					 gnutls_x509_aki_t,
 					 unsigned int flags);
 
-int gnutls_x509_othername_to_virtual(const char *oid, 
+int gnutls_x509_othername_to_virtual(const char *oid,
 				     const gnutls_datum_t *othername,
 				     unsigned int *virt_type,
 				     gnutls_datum_t *virt);
@@ -124,8 +124,8 @@ int gnutls_x509_aki_get_cert_issuer(gnutls_x509_aki_t aki, unsigned int seq,
 				 gnutls_datum_t *othername_oid,
 				 gnutls_datum_t *serial);
 int gnutls_x509_aki_set_id(gnutls_x509_aki_t aki, const gnutls_datum_t *id);
-int gnutls_x509_aki_set_cert_issuer(gnutls_x509_aki_t aki, 
-				 unsigned int san_type, 
+int gnutls_x509_aki_set_cert_issuer(gnutls_x509_aki_t aki,
+				 unsigned int san_type,
 				 const gnutls_datum_t * san,
 				 const char *othername_oid,
 				 const gnutls_datum_t * serial);

@@ -167,7 +167,7 @@ namespace CloudWatchLogs
 
         /**
          * <p>Cancels the specified export task.</p> <p>The task must be in the
-         * <code>PENDING</code> or <code>RUNNING</code> state.</p><p><h3>See Also:</h3>  
+         * <code>PENDING</code> or <code>RUNNING</code> state.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/CancelExportTask">AWS
          * API Reference</a></p>
@@ -261,7 +261,7 @@ namespace CloudWatchLogs
          * href="https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_CancelExportTask.html">CancelExportTask</a>.</p>
          * <p>You can export logs from multiple log groups or multiple time ranges to the
          * same S3 bucket. To separate log data for each export task, specify a prefix to
-         * be used as the Amazon S3 key prefix for all exported objects.</p> 
+         * be used as the Amazon S3 key prefix for all exported objects.</p>
          * <p>Time-based sorting on chunks of log data inside an exported file is not
          * guaranteed. You can sort the exported log field data by using Linux
          * utilities.</p> <p><h3>See Also:</h3>   <a
@@ -310,7 +310,7 @@ namespace CloudWatchLogs
          * parts of log events that are masked as sensitive data are not scanned for
          * anomalies. For more information about masking sensitive data, see <a
          * href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html">Help
-         * protect sensitive log data with masking</a>. </p> <p><h3>See Also:</h3>  
+         * protect sensitive log data with masking</a>. </p> <p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/CreateLogAnomalyDetector">AWS
          * API Reference</a></p>
@@ -788,7 +788,7 @@ namespace CloudWatchLogs
 
         /**
          * <p>Deletes the specified retention policy.</p> <p>Log events do not expire if
-         * they belong to log groups without a retention policy.</p><p><h3>See Also:</h3>  
+         * they belong to log groups without a retention policy.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteRetentionPolicy">AWS
          * API Reference</a></p>
@@ -980,7 +980,7 @@ namespace CloudWatchLogs
 
         /**
          * <p>Lists the specified export tasks. You can list all your export tasks or
-         * filter the results based on task ID or task status.</p><p><h3>See Also:</h3>  
+         * filter the results based on task ID or task status.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeExportTasks">AWS
          * API Reference</a></p>
@@ -1791,7 +1791,7 @@ namespace CloudWatchLogs
         /**
          * <p>Creates a data protection policy for the specified log group. A data
          * protection policy can help safeguard sensitive data that's ingested by the log
-         * group by auditing and masking the sensitive log data.</p> 
+         * group by auditing and masking the sensitive log data.</p>
          * <p>Sensitive data is detected and masked when it is ingested into the log group.
          * When you set a data protection policy, log events ingested into the log group
          * before that time are not masked.</p>  <p>By default, when a user
@@ -2065,7 +2065,7 @@ namespace CloudWatchLogs
         }
 
         /**
-         * <p>Uploads a batch of log events to the specified log stream.</p> 
+         * <p>Uploads a batch of log events to the specified log stream.</p>
          * <p>The sequence token is now ignored in <code>PutLogEvents</code> actions.
          * <code>PutLogEvents</code> actions are always accepted and never return
          * <code>InvalidSequenceTokenException</code> or

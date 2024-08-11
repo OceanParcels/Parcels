@@ -64,7 +64,7 @@ namespace Model
     /**
      * <p>The version of the SSM document to use to create a conformance pack. By
      * default, Config uses the latest version.</p>  <p>This field is
-     * optional.</p> 
+     * optional.</p>
      */
     inline const Aws::String& GetDocumentVersion() const{ return m_documentVersion; }
     inline bool DocumentVersionHasBeenSet() const { return m_documentVersionHasBeenSet; }

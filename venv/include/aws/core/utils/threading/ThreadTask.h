@@ -33,12 +33,12 @@ namespace Aws
                 ThreadTask(ThreadTask&&) = delete;
                 ThreadTask& operator =(ThreadTask&&) = delete;
 
-                void StopProcessingWork();                
+                void StopProcessingWork();
 
             protected:
                 void MainTaskRunner();
 
-            private:                
+            private:
                 std::atomic<bool> m_continue;
                 PooledThreadExecutor& m_executor;
                 std::thread m_thread;

@@ -50,4 +50,3 @@ _XFUNCPROTOEND
 #endif
 
 #endif /* !_X11_EXTENSIONS_DPMS_H */
-

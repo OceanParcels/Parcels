@@ -202,7 +202,7 @@ namespace Model
      * the HTTP Range header, see <a
      * href="https://www.rfc-editor.org/rfc/rfc9110.html#name-range">https://www.rfc-editor.org/rfc/rfc9110.html#name-range</a>.</p>
      *  <p>Amazon S3 doesn't support retrieving multiple ranges of data per
-     * <code>GET</code> request.</p> 
+     * <code>GET</code> request.</p>
      */
     inline const Aws::String& GetRange() const{ return m_range; }
     inline bool RangeHasBeenSet() const { return m_rangeHasBeenSet; }
@@ -312,7 +312,7 @@ namespace Model
      * Versioning isn't enabled and supported for directory buckets. For this API
      * operation, only the <code>null</code> value of the version ID is supported by
      * directory buckets. You can only specify <code>null</code> to the
-     * <code>versionId</code> query parameter in the request.</p> </li> </ul> 
+     * <code>versionId</code> query parameter in the request.</p> </li> </ul>
      * <p>For more information about versioning, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketVersioning.html">PutBucketVersioning</a>.</p>
      */
@@ -340,7 +340,7 @@ namespace Model
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html">Server-Side
      * Encryption (Using Customer-Provided Encryption Keys)</a> in the <i>Amazon S3
      * User Guide</i>.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetSSECustomerAlgorithm() const{ return m_sSECustomerAlgorithm; }
     inline bool SSECustomerAlgorithmHasBeenSet() const { return m_sSECustomerAlgorithmHasBeenSet; }
@@ -369,7 +369,7 @@ namespace Model
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html">Server-Side
      * Encryption (Using Customer-Provided Encryption Keys)</a> in the <i>Amazon S3
      * User Guide</i>.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetSSECustomerKey() const{ return m_sSECustomerKey; }
     inline bool SSECustomerKeyHasBeenSet() const { return m_sSECustomerKeyHasBeenSet; }
@@ -396,7 +396,7 @@ namespace Model
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html">Server-Side
      * Encryption (Using Customer-Provided Encryption Keys)</a> in the <i>Amazon S3
      * User Guide</i>.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetSSECustomerKeyMD5() const{ return m_sSECustomerKeyMD5; }
     inline bool SSECustomerKeyMD5HasBeenSet() const { return m_sSECustomerKeyMD5HasBeenSet; }
@@ -409,7 +409,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
     inline void SetRequestPayer(const RequestPayer& value) { m_requestPayerHasBeenSet = true; m_requestPayer = value; }
@@ -459,7 +459,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

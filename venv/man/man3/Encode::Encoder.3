@@ -144,7 +144,7 @@ Encode::Encoder \-\- Object Oriented Encoder
 .IX Header "SYNOPSIS"
 .Vb 10
 \&  use Encode::Encoder;
-\&  # Encode::encode("ISO\-8859\-1", $data); 
+\&  # Encode::encode("ISO\-8859\-1", $data);
 \&  Encode::Encoder\->new($data)\->iso_8859_1; # OOP way
 \&  # shortcut
 \&  use Encode::Encoder qw(encoder);
@@ -192,7 +192,7 @@ When there is no method, it takes the method name as the name of the
 encoding and encodes the instance \fIdata\fR with \fIencoding\fR.  If successful,
 the instance \fIencoding\fR is set accordingly.
 .IP "\(bu" 4
-You can retrieve the result via \->data but usually you don't have to 
+You can retrieve the result via \->data but usually you don't have to
 because the stringify operator ("") is overridden to do exactly that.
 .SS "Predefined Methods"
 .IX Subsection "Predefined Methods"
@@ -240,12 +240,12 @@ write a module like this:
 \&  use parent \*(AqEncode::Encoding\*(Aq;
 \&  _\|_PACKAGE_\|_\->Define(\*(Aqbase64\*(Aq);
 \&  use MIME::Base64;
-\&  sub encode{ 
-\&      my ($obj, $data) = @_; 
+\&  sub encode{
+\&      my ($obj, $data) = @_;
 \&      return encode_base64($data);
 \&  }
 \&  sub decode{
-\&      my ($obj, $data) = @_; 
+\&      my ($obj, $data) = @_;
 \&      return decode_base64($data);
 \&  }
 \&  1;

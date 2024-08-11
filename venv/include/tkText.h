@@ -1163,7 +1163,7 @@ MODULE_SCOPE void       TkTextRunAfterSyncCmd(ClientData clientData);
 MODULE_SCOPE int        TkTextIndexAdjustToStartEnd(TkText *textPtr,
 			    TkTextIndex *indexPtr, int err);
 #endif /* _TKTEXT */
-
+
 /*
  * Local Variables:
  * mode: c

@@ -146,11 +146,11 @@ perldata \- Perl data types
 .IX Xref "variable, name variable name data type type"
 .IX Subsection "Variable names"
 Perl has three built-in data types: scalars, arrays of scalars, and
-associative arrays of scalars, known as \*(L"hashes\*(R".  A scalar is a 
+associative arrays of scalars, known as \*(L"hashes\*(R".  A scalar is a
 single string (of any size, limited only by the available memory),
 number, or a reference to something (which will be discussed
 in perlref).  Normal arrays are ordered lists of scalars indexed
-by number, starting with 0.  Hashes are unordered collections of scalar 
+by number, starting with 0.  Hashes are unordered collections of scalar
 values indexed by their associated string key.
 .PP
 Values are usually referred to by name, or through a named reference.
@@ -418,7 +418,7 @@ assignment to an array or hash evaluates the righthand side in list
 context.  Assignment to a list (or slice, which is just a list
 anyway) also evaluates the right-hand side in list context.
 .PP
-When you use the \f(CW\*(C`use warnings\*(C'\fR pragma or Perl's \fB\-w\fR command-line 
+When you use the \f(CW\*(C`use warnings\*(C'\fR pragma or Perl's \fB\-w\fR command-line
 option, you may see warnings
 about useless uses of constants or functions in \*(L"void context\*(R".
 Void context just means the value has been discarded, such as a
@@ -454,12 +454,12 @@ are considered pretty much the same thing for nearly all purposes,
 references are strongly-typed, uncastable pointers with builtin
 reference-counting and destructor invocation.
 .PP
-       
- 
+
+
 A scalar value is interpreted as \s-1FALSE\s0 in the Boolean sense
 if it is undefined, the null string or the number 0 (or its
 string equivalent, \*(L"0\*(R"), and \s-1TRUE\s0 if it is anything else.  The
-Boolean context is just a special kind of scalar context where no 
+Boolean context is just a special kind of scalar context where no
 conversion to a string or a number is ever performed.
 Negation of a true value by \f(CW\*(C`!\*(C'\fR or \f(CW\*(C`not\*(C'\fR returns a special false value.
 When evaluated as a string it is treated as \f(CW""\fR, but as a number, it
@@ -484,7 +484,7 @@ operator to produce an undefined value.
 .PP
 To find out whether a given string is a valid non-zero number, it's
 sometimes enough to test it against both numeric 0 and also lexical
-\&\*(L"0\*(R" (although this will cause noises if warnings are on).  That's 
+\&\*(L"0\*(R" (although this will cause noises if warnings are on).  That's
 because strings that aren't numbers count as 0, just as they do in \fBawk\fR:
 .PP
 .Vb 3
@@ -542,7 +542,7 @@ always true:
 \&    scalar(@whatever) == $#whatever + 1;
 .Ve
 .PP
-Some programmers choose to use an explicit conversion so as to 
+Some programmers choose to use an explicit conversion so as to
 leave nothing to doubt:
 .PP
 .Vb 1
@@ -799,7 +799,7 @@ A word that has no other interpretation in the grammar will
 be treated as if it were a quoted string.  These are known as
 \&\*(L"barewords\*(R".  As with filehandles and labels, a bareword that consists
 entirely of lowercase letters risks conflict with future reserved
-words, and if you use the \f(CW\*(C`use warnings\*(C'\fR pragma or the \fB\-w\fR switch, 
+words, and if you use the \f(CW\*(C`use warnings\*(C'\fR pragma or the \fB\-w\fR switch,
 Perl will warn you about any such words.  Perl limits barewords (like
 identifiers) to about 250 characters.  Future versions of Perl are likely
 to eliminate these arbitrary limitations.
@@ -822,7 +822,7 @@ by saying \f(CW\*(C`no strict \*(Aqsubs\*(Aq\*(C'\fR.
 .PP
 Arrays and slices are interpolated into double-quoted strings
 by joining the elements with the delimiter specified in the \f(CW$"\fR
-variable (\f(CW$LIST_SEPARATOR\fR if \*(L"use English;\*(R" is specified), 
+variable (\f(CW$LIST_SEPARATOR\fR if \*(L"use English;\*(R" is specified),
 space by default.  The following are equivalent:
 .PP
 .Vb 2
@@ -913,7 +913,7 @@ identity in a LIST\*(--the list
 .Ve
 .PP
 contains all the elements of \f(CW@foo\fR followed by all the elements of \f(CW@bar\fR,
-followed by all the elements returned by the subroutine named SomeSub 
+followed by all the elements returned by the subroutine named SomeSub
 called in list context, followed by the key/value pairs of \f(CW%glarch\fR.
 To make a list reference that does \fI\s-1NOT\s0\fR interpolate, see perlref.
 .PP
@@ -1163,15 +1163,15 @@ square brackets.  For example:
 \&    print "The Third Element is", $myarray[2], "\en";
 .Ve
 .PP
-The array indices start with 0.  A negative subscript retrieves its 
-value from the end.  In our example, \f(CW$myarray[\-1]\fR would have been 
+The array indices start with 0.  A negative subscript retrieves its
+value from the end.  In our example, \f(CW$myarray[\-1]\fR would have been
 5000, and \f(CW$myarray[\-2]\fR would have been 500.
 .PP
 Hash subscripts are similar, only instead of square brackets curly brackets
 are used.  For example:
 .PP
 .Vb 7
-\&    %scientists = 
+\&    %scientists =
 \&    (
 \&        "Newton" => "Isaac",
 \&        "Einstein" => "Albert",
@@ -1224,7 +1224,7 @@ an array or hash slice.
 .PP
 .Vb 4
 \&    @days[3..5]    = qw/Wed Thu Fri/;
-\&    @colors{\*(Aqred\*(Aq,\*(Aqblue\*(Aq,\*(Aqgreen\*(Aq} 
+\&    @colors{\*(Aqred\*(Aq,\*(Aqblue\*(Aq,\*(Aqgreen\*(Aq}
 \&                   = (0xff0000, 0x0000ff, 0x00ff00);
 \&    @folks[0, \-1]  = @folks[\-1, 0];
 .Ve
@@ -1243,7 +1243,7 @@ slicing, a \f(CW\*(C`foreach\*(C'\fR construct will alter some\*(--or even all\*
 values of the array or hash.
 .PP
 .Vb 1
-\&    foreach (@array[ 4 .. 10 ]) { s/peter/paul/ } 
+\&    foreach (@array[ 4 .. 10 ]) { s/peter/paul/ }
 \&
 \&    foreach (@hash{qw[key1 key2]}) {
 \&        s/^\es+//;           # trim leading whitespace

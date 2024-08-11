@@ -42,20 +42,20 @@ system-dependent definitions.  Finally, it creates a shell script
 current configuration, a file `config.cache' that saves the
 results of its tests to speed up reconfiguring, and a file
 `config.log' containing compiler output (useful mainly for
-debugging `configure'). 
+debugging `configure').
 
 If you need to do unusual things to compile readline, please try
 to figure out how `configure' could check whether to do them, and
 mail diffs or instructions to <bug-readline@gnu.org> so they can
 be considered for the next release.  If at some point
 `config.cache' contains results you don't want to keep, you may
-remove or edit it. 
+remove or edit it.
 
 The file `configure.in' is used to create `configure' by a
 program called `autoconf'.  You only need `configure.in' if you
 want to change it or regenerate `configure' using a newer version
 of `autoconf'.  The readline `configure.in' requires autoconf
-version 2.69 or newer. 
+version 2.69 or newer.
 
 Compilers and Options
 =====================
@@ -87,7 +87,7 @@ If you have to use a `make' that does not supports the `VPATH'
 variable, you have to compile readline for one architecture at a
 time in the source code directory.  After you have installed
 readline for one architecture, use `make distclean' before
-reconfiguring for another architecture. 
+reconfiguring for another architecture.
 
 Installation Names
 ==================
@@ -98,14 +98,14 @@ By default, `make install' will install the readline libraries in
 and the info files in `/usr/local/info'.  You can specify an
 installation prefix other than `/usr/local' by giving `configure'
 the option `--prefix=PATH' or by supplying a value for the
-DESTDIR variable when running `make install'. 
+DESTDIR variable when running `make install'.
 
 You can specify separate installation prefixes for
-architecture-specific files and architecture-independent files. 
+architecture-specific files and architecture-independent files.
 If you give `configure' the option `--exec-prefix=PATH', the
 readline Makefiles will use PATH as the prefix for installing the
 libraries.  Documentation and other data files will still use the
-regular prefix. 
+regular prefix.
 
 Specifying the System Type
 ==========================
@@ -116,7 +116,7 @@ will run on.  Usually `configure' can figure that out, but if it
 prints a message saying it can not guess the host type, give it
 the `--host=TYPE' option.  TYPE can either be a short name for
 the system type, such as `sun4', or a canonical name with three
-fields: CPU-COMPANY-SYSTEM (e.g., i386-unknown-freebsd4.2). 
+fields: CPU-COMPANY-SYSTEM (e.g., i386-unknown-freebsd4.2).
 
 See the file `config.sub' for the possible values of each field.
 
@@ -303,8 +303,8 @@ Once you have updated support/shobj-conf, re-run configure and type
 `make shared' or `make'.  The shared libraries will be created in the
 shlib subdirectory.
 
-If shared libraries are created, `make install' will install them. 
+If shared libraries are created, `make install' will install them.
 You may install only the shared libraries by running `make
 install-shared' from the top-level build directory.  Running `make
 install' in the shlib subdirectory will also work.  If you don't want
-to install any created shared libraries, run `make install-static'. 
+to install any created shared libraries, run `make install-static'.

@@ -97,7 +97,7 @@ namespace Model
      * <code>GetAggregateComplianceDetailsByConfigRuleRequest</code> data type, Config
      * supports only the <code>COMPLIANT</code> and <code>NON_COMPLIANT</code>. Config
      * does not support the <code>NOT_APPLICABLE</code> and
-     * <code>INSUFFICIENT_DATA</code> values.</p> 
+     * <code>INSUFFICIENT_DATA</code> values.</p>
      */
     inline const ComplianceType& GetComplianceType() const{ return m_complianceType; }
     inline bool ComplianceTypeHasBeenSet() const { return m_complianceTypeHasBeenSet; }

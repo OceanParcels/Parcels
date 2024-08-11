@@ -140,4 +140,3 @@ public:
 
 } // namespace geos.geomgraph
 } // namespace geos
-

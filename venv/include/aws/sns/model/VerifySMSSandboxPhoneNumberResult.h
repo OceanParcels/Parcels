@@ -25,7 +25,7 @@ namespace SNS
 namespace Model
 {
   /**
-   * <p>The destination phone number's verification status.</p><p><h3>See Also:</h3> 
+   * <p>The destination phone number's verification status.</p><p><h3>See Also:</h3>
    * <a
    * href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/VerifySMSSandboxPhoneNumberResult">AWS
    * API Reference</a></p>
@@ -39,7 +39,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const ResponseMetadata& GetResponseMetadata() const{ return m_responseMetadata; }
     inline void SetResponseMetadata(const ResponseMetadata& value) { m_responseMetadata = value; }
     inline void SetResponseMetadata(ResponseMetadata&& value) { m_responseMetadata = std::move(value); }

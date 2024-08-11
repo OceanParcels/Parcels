@@ -187,4 +187,3 @@ PROGRAM example_ds
   CALL H5Fclose_f(fid, err)
 
 END PROGRAM example_ds
-

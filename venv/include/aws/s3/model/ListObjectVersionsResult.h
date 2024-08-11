@@ -218,7 +218,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestCharged& GetRequestCharged() const{ return m_requestCharged; }
     inline void SetRequestCharged(const RequestCharged& value) { m_requestCharged = value; }
     inline void SetRequestCharged(RequestCharged&& value) { m_requestCharged = std::move(value); }
@@ -227,7 +227,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

@@ -261,10 +261,10 @@ xcb_damage_query_version_reply (xcb_connection_t                   *c,
  *
  * This creates a Damage object to monitor changes to a drawable, and specifies
  * the level of detail to be reported for changes.
- * 
+ *
  * We call changes made to pixel contents of windows and pixmaps 'damage'
  * throughout this extension.
- * 
+ *
  * Damage accumulates as drawing occurs in the drawable.  Each drawing operation
  * 'damages' one or more rectangular areas within the drawable.  The rectangles
  * are guaranteed to include the set of pixels modified by each operation, but
@@ -274,12 +274,12 @@ xcb_damage_query_version_reply (xcb_connection_t                   *c,
  * object drawn (line, string, rectangle) to be represented as a single
  * rectangle and for the damage area of the operation to be the union of these
  * rectangles.
- * 
+ *
  * The DAMAGE extension allows applications to either receive the raw
  * rectangles as a stream of events, or to have them partially processed within
  * the X server to reduce the amount of data transmitted as well as reduce the
  * processing latency once the repaint operation has started.
- * 
+ *
  * The Damage object holds any accumulated damage region and reflects the
  * relationship between the drawable selected for damage notification and the
  * drawable for which damage is tracked.
@@ -307,10 +307,10 @@ xcb_damage_create_checked (xcb_connection_t    *c,
  *
  * This creates a Damage object to monitor changes to a drawable, and specifies
  * the level of detail to be reported for changes.
- * 
+ *
  * We call changes made to pixel contents of windows and pixmaps 'damage'
  * throughout this extension.
- * 
+ *
  * Damage accumulates as drawing occurs in the drawable.  Each drawing operation
  * 'damages' one or more rectangular areas within the drawable.  The rectangles
  * are guaranteed to include the set of pixels modified by each operation, but
@@ -320,12 +320,12 @@ xcb_damage_create_checked (xcb_connection_t    *c,
  * object drawn (line, string, rectangle) to be represented as a single
  * rectangle and for the damage area of the operation to be the union of these
  * rectangles.
- * 
+ *
  * The DAMAGE extension allows applications to either receive the raw
  * rectangles as a stream of events, or to have them partially processed within
  * the X server to reduce the amount of data transmitted as well as reduce the
  * processing latency once the repaint operation has started.
- * 
+ *
  * The Damage object holds any accumulated damage region and reflects the
  * relationship between the drawable selected for damage notification and the
  * drawable for which damage is tracked.

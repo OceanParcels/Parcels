@@ -1,6 +1,6 @@
-# 
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
 on_demand_loading	True
 object_name		generic
@@ -76,9 +76,9 @@ fs6 {
   }
 }
 END XLC_FONTSET
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name		UTF-8
 mb_cur_max		6
@@ -101,21 +101,21 @@ cs2     {
         length          2
         ct_encoding     KSC5601.1987-0:GL; KSC5601.1987-0:GR;                        KSC5601.1987-1:GL; KSC5601.1987-1:GR
 }
- 
+
 #	cs3 class
 cs3	{
 	side		GR
 	length		2
 	ct_encoding	JISX0208.1983-0:GL; JISX0208.1983-0:GR;			JISX0208.1983-1:GL; JISX0208.1983-1:GR
 }
- 
+
 #	cs4 class
 cs4     {
         side            GR
         length          2
         ct_encoding     GB2312.1980-0:GL; GB2312.1980-0:GR
 }
- 
+
 #	cs5 class
 cs5	{
 	side		GR

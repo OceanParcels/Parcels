@@ -1,11 +1,11 @@
-# 
+#
 #  X11R6 L10N for Chinese GBK Encoding.
 #     modified from xc/nls/XLC_LOCALE/zh_TW.Big5
 #     by Sean Chen <seanc@turbolinux.com>
-# 
-# 
+#
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
 #        fs0 class (7 bit ASCII)
 fs0     {
@@ -28,9 +28,9 @@ fs1     {
         }
 }
 END XLC_FONTSET
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name		zh_CN.GBK
 mb_cur_max		2

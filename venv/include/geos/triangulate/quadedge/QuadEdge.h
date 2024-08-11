@@ -440,4 +440,3 @@ GEOS_DLL std::ostream& operator<< (std::ostream& os, const QuadEdge* e);
 } //namespace geos.triangulate.quadedge
 } //namespace geos.triangulate
 } //namespace geos
-

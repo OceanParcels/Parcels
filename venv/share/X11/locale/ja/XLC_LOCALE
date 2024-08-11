@@ -1,9 +1,9 @@
 #
-#  XLocale Database Sample for ja_JP.euc 
-# 
-# 
+#  XLocale Database Sample for ja_JP.euc
+#
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
 # 	fs0 class (7 bit ASCII)
 fs0	{
@@ -49,9 +49,9 @@ fs2	{
 # 	}
 # }
 END XLC_FONTSET
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name		ja.euc
 mb_cur_max		3

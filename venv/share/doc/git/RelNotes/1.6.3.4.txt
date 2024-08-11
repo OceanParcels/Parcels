@@ -33,4 +33,3 @@ Fixes since v1.6.3.3
    repository to learn the current tip of branches.
 
 Includes other documentation updates and minor fixes.
-

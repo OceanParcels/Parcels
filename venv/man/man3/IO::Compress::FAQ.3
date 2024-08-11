@@ -455,14 +455,14 @@ taken from
 .Vb 2
 \&  package Apache::GZip;
 \&  #File: Apache::GZip.pm
-\&  
+\&
 \&  use strict vars;
 \&  use Apache::Constants \*(Aq:common\*(Aq;
 \&  use Compress::Zlib;
 \&  use IO::File;
 \&  use constant GZIP_MAGIC => 0x1f8b;
 \&  use constant OS_MAGIC => 0x03;
-\&  
+\&
 \&  sub handler {
 \&      my $r = shift;
 \&      my ($fh,$gz);
@@ -471,28 +471,28 @@ taken from
 \&      $r\->header_out(\*(AqContent\-Encoding\*(Aq=>\*(Aqgzip\*(Aq);
 \&      $r\->send_http_header;
 \&      return OK if $r\->header_only;
-\&  
+\&
 \&      tie *STDOUT,\*(AqApache::GZip\*(Aq,$r;
 \&      print($_) while <$fh>;
 \&      untie *STDOUT;
 \&      return OK;
 \&  }
-\&  
+\&
 \&  sub TIEHANDLE {
 \&      my($class,$r) = @_;
 \&      # initialize a deflation stream
 \&      my $d = deflateInit(\-WindowBits=>\-MAX_WBITS()) || return undef;
-\&  
+\&
 \&      # gzip header \-\- don\*(Aqt ask how I found out
 \&      $r\->print(pack("nccVcc",GZIP_MAGIC,Z_DEFLATED,0,time(),0,OS_MAGIC));
-\&  
+\&
 \&      return bless { r   => $r,
 \&                     crc =>  crc32(undef),
 \&                     d   => $d,
 \&                     l   =>  0
 \&                   },$class;
 \&  }
-\&  
+\&
 \&  sub PRINT {
 \&      my $self = shift;
 \&      foreach (@_) {
@@ -504,18 +504,18 @@ taken from
 \&        $self\->{crc} = crc32($_,$self\->{crc});
 \&      }
 \&  }
-\&  
+\&
 \&  sub DESTROY {
 \&     my $self = shift;
-\&     
+\&
 \&     # flush the output buffers
 \&     my $data = $self\->{d}\->flush;
 \&     $self\->{r}\->print($data);
-\&     
+\&
 \&     # print the CRC and the total length (uncompressed)
 \&     $self\->{r}\->print(pack("LL",@{$self}{qw/crc l/}));
 \&  }
-\&   
+\&
 \&  1;
 .Ve
 .PP
@@ -552,12 +552,12 @@ filehandle code can be removed. Here is the rewritten code.
 .PP
 .Vb 1
 \&  package Apache::GZip;
-\&  
+\&
 \&  use strict vars;
 \&  use Apache::Constants \*(Aq:common\*(Aq;
 \&  use IO::Compress::Gzip;
 \&  use IO::File;
-\&  
+\&
 \&  sub handler {
 \&      my $r = shift;
 \&      my ($fh,$gz);
@@ -571,7 +571,7 @@ filehandle code can be removed. Here is the rewritten code.
 \&          or return DECLINED ;
 \&
 \&      print $gz $_ while <$fh>;
-\&  
+\&
 \&      return OK;
 \&  }
 .Ve
@@ -580,11 +580,11 @@ or even more succinctly, like this, using a one-shot gzip
 .PP
 .Vb 1
 \&  package Apache::GZip;
-\&  
+\&
 \&  use strict vars;
 \&  use Apache::Constants \*(Aq:common\*(Aq;
 \&  use IO::Compress::Gzip qw(gzip);
-\&  
+\&
 \&  sub handler {
 \&      my $r = shift;
 \&      $r\->header_out(\*(AqContent\-Encoding\*(Aq=>\*(Aqgzip\*(Aq);
@@ -596,7 +596,7 @@ or even more succinctly, like this, using a one-shot gzip
 \&
 \&      return OK;
 \&  }
-\&   
+\&
 \&  1;
 .Ve
 .PP
@@ -745,7 +745,7 @@ header data. The code that I want to focus on is at the bottom.
 .PP
 .Vb 1
 \&    while (1) {
-\&    
+\&
 \&        # read local zip header data
 \&        # get $filename
 \&        # get $compressedLength
@@ -780,7 +780,7 @@ Now consider what the code looks like without \f(CW\*(C`InputLength\*(C'\fR
 .PP
 .Vb 1
 \&    while (1) {
-\&    
+\&
 \&        # read local zip header data
 \&        # get $filename
 \&        # get $compressedLength
@@ -820,7 +820,7 @@ know the length of the compressed data beforehand, like here with a zip
 file.
 .SH "SUPPORT"
 .IX Header "SUPPORT"
-General feedback/questions/bug reports should be sent to 
+General feedback/questions/bug reports should be sent to
 <https://github.com/pmqs//issues> (preferred) or
 <https://rt.cpan.org/Public/Dist/Display.html?Name=>.
 .SH "SEE ALSO"

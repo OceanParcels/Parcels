@@ -88,13 +88,13 @@ extern "C" {
   uint8_t nonce[AES_BLOCK_SIZE];			\
   unsigned short nonce_length /* For incrementing */
 
-  /* Buffering */ 
+  /* Buffering */
 #define _UMAC_BUFFER					\
   unsigned index;					\
   /* Complete blocks processed */			\
   uint64_t count;					\
   uint8_t block[UMAC_BLOCK_SIZE]
-  
+
 #define _UMAC_NONCE_CACHED 0x80
 
 struct umac32_ctx

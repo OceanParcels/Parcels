@@ -30,4 +30,3 @@ linkgit:gitprotocol-pack[5]::
 
 linkgit:gitprotocol-v2[5]::
 	Git Wire Protocol, Version 2.
-

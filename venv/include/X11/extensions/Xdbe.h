@@ -135,4 +135,3 @@ extern XdbeBackBufferAttributes *XdbeGetBackBufferAttributes(
 _XFUNCPROTOEND
 
 #endif /* XDBE_H */
-

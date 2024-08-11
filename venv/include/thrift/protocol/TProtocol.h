@@ -558,14 +558,14 @@ public:
   void setRecurisionLimit(uint32_t depth) {recursion_limit_ = depth;}
 
   // Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
-  virtual int getMinSerializedSize(TType type) { 
+  virtual int getMinSerializedSize(TType type) {
     THRIFT_UNUSED_VARIABLE(type);
     return 0;
   }
 
 protected:
   TProtocol(std::shared_ptr<TTransport> ptrans)
-    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0), 
+    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0),
       recursion_limit_(ptrans->getConfiguration()->getRecursionLimit())
   {}
 

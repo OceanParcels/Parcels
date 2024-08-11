@@ -61,4 +61,3 @@ GEOS_DLL std::ostream& operator<<(std::ostream& os, const Location& loc);
 
 } // namespace geos::geom
 } // namespace geos
-

@@ -62,7 +62,7 @@ namespace Model
      * <p>An array where each item in the array is a log group to include in the Live
      * Tail session.</p> <p>Specify each log group by its ARN. </p> <p>If you specify
      * an ARN, the ARN can't end with an asterisk (*).</p>  <p> You can include
-     * up to 10 log groups.</p> 
+     * up to 10 log groups.</p>
      */
     inline const Aws::Vector<Aws::String>& GetLogGroupIdentifiers() const{ return m_logGroupIdentifiers; }
     inline bool LogGroupIdentifiersHasBeenSet() const { return m_logGroupIdentifiersHasBeenSet; }
@@ -81,7 +81,7 @@ namespace Model
      * you specify here are included in the Live Tail session.</p> <p>If you specify
      * this field, you can't also specify the <code>logStreamNamePrefixes</code>
      * field.</p>  <p>You can specify this parameter only if you specify only one
-     * log group in <code>logGroupIdentifiers</code>.</p> 
+     * log group in <code>logGroupIdentifiers</code>.</p>
      */
     inline const Aws::Vector<Aws::String>& GetLogStreamNames() const{ return m_logStreamNames; }
     inline bool LogStreamNamesHasBeenSet() const { return m_logStreamNamesHasBeenSet; }
@@ -101,7 +101,7 @@ namespace Model
      * the Live Tail session.</p> <p>If you specify this field, you can't also specify
      * the <code>logStreamNames</code> field.</p>  <p>You can specify this
      * parameter only if you specify only one log group in
-     * <code>logGroupIdentifiers</code>.</p> 
+     * <code>logGroupIdentifiers</code>.</p>
      */
     inline const Aws::Vector<Aws::String>& GetLogStreamNamePrefixes() const{ return m_logStreamNamePrefixes; }
     inline bool LogStreamNamePrefixesHasBeenSet() const { return m_logStreamNamePrefixesHasBeenSet; }

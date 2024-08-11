@@ -102,4 +102,3 @@ typedef struct {
 #define sz_xXcupStoreColorsReply	32
 
 #endif /* } _XCUPPROTO_H_ */
-

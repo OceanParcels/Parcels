@@ -16,11 +16,11 @@
 /*-----------------------------------------------------------------------------
  * File:    dynarray.h
  * Purpose: header file for dynamic array API
- * Dependencies: 
+ * Dependencies:
  * Invokes:
  * Contents:
- * Structure definitions: 
- * Constant definitions: 
+ * Structure definitions:
+ * Constant definitions:
  *---------------------------------------------------------------------------*/
 
 /* avoid re-inclusion */
@@ -36,7 +36,7 @@
 typedef struct dynarray_tag *dynarr_p;
 
 #if defined DYNARRAY_MASTER | defined DYNARRAY_TESTER
-typedef struct dynarray_tag 
+typedef struct dynarray_tag
   {
       intn num_elems;       /* Number of elements in the array currently */
       intn incr_mult;       /* Multiple to increment the array size by */
@@ -154,4 +154,3 @@ VOIDP DAdel_elem(dynarr_p arr_ptr, /* IN: Array to access */
 #endif                          /* c_plusplus || __cplusplus */
 
 #endif /* __DYNARRAY_H */
-

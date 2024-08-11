@@ -20,10 +20,10 @@ hwlocality_openfabrics \- Interoperability with OpenFabrics
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
-This interface offers ways to retrieve topology information about OpenFabrics devices (InfiniBand, Omni-Path, usNIC, etc)\&. 
+.PP
+This interface offers ways to retrieve topology information about OpenFabrics devices (InfiniBand, Omni-Path, usNIC, etc)\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static int hwloc_ibv_get_device_cpuset (\fBhwloc_topology_t\fP topology, struct ibv_device * ibdev, \fBhwloc_cpuset_t\fP set)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
@@ -37,20 +37,20 @@ This function is currently only implemented in a meaningful way for Linux; other
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 on error, for instance if device information could not be found\&. 
+-1 on error, for instance if device information could not be found\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_ibv_get_device_osdev (\fBhwloc_topology_t\fP topology, struct ibv_device * ibdev)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the hwloc OS device object corresponding to the OpenFabrics device \fCibdev\fP\&. 
+Get the hwloc OS device object corresponding to the OpenFabrics device \fCibdev\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The hwloc OS device object describing the OpenFabrics device \fCibdev\fP (InfiniBand, etc)\&. 
+The hwloc OS device object describing the OpenFabrics device \fCibdev\fP (InfiniBand, etc)\&.
 .PP
 \fCNULL\fP if none could be found\&.
 .RE
@@ -59,18 +59,18 @@ Topology \fCtopology\fP and device \fCibdev\fP must match the local machine\&. I
 .PP
 \fBNote\fP
 .RS 4
-The corresponding PCI device object can be obtained by looking at the OS device parent object\&. 
+The corresponding PCI device object can be obtained by looking at the OS device parent object\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_ibv_get_device_osdev_by_name (\fBhwloc_topology_t\fP topology, const char * ibname)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the hwloc OS device object corresponding to the OpenFabrics device named \fCibname\fP\&. 
+Get the hwloc OS device object corresponding to the OpenFabrics device named \fCibname\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The hwloc OS device object describing the OpenFabrics device (InfiniBand, Omni-Path, usNIC, etc) whose name is \fCibname\fP (mlx5_0, hfi1_0, usnic_0, qib0, etc)\&. 
+The hwloc OS device object describing the OpenFabrics device (InfiniBand, Omni-Path, usNIC, etc) whose name is \fCibname\fP (mlx5_0, hfi1_0, usnic_0, qib0, etc)\&.
 .PP
 \fCNULL\fP if none could be found\&.
 .RE
@@ -81,10 +81,10 @@ The topology \fCtopology\fP does not necessarily have to match the current machi
 .PP
 \fBNote\fP
 .RS 4
-The corresponding PCI device object can be obtained by looking at the OS device parent object\&. 
+The corresponding PCI device object can be obtained by looking at the OS device parent object\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

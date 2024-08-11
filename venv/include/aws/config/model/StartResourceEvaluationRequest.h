@@ -95,7 +95,7 @@ namespace Model
      * succeeds without performing any further actions. If you retry a successful
      * request using the same client token, but one or more of the parameters are
      * different, other than the Region or Availability Zone, the retry fails with an
-     * IdempotentParameterMismatch error.</p> 
+     * IdempotentParameterMismatch error.</p>
      */
     inline const Aws::String& GetClientToken() const{ return m_clientToken; }
     inline bool ClientTokenHasBeenSet() const { return m_clientTokenHasBeenSet; }

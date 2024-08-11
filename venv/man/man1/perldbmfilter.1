@@ -231,7 +231,7 @@ fix very easily.
 \&    # Install DBM Filters
 \&    $db\->filter_fetch_key  ( sub { s/\e0$//    } );
 \&    $db\->filter_store_key  ( sub { $_ .= "\e0" } );
-\&    $db\->filter_fetch_value( 
+\&    $db\->filter_fetch_value(
 \&        sub { no warnings \*(Aquninitialized\*(Aq; s/\e0$// } );
 \&    $db\->filter_store_value( sub { $_ .= "\e0" } );
 \&

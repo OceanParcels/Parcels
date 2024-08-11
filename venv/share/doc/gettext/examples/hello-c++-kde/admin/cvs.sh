@@ -41,7 +41,7 @@ case $AUTOCONF_VERSION in
     exit 1
     ;;
 esac
- 
+
 AUTOHEADER_VERSION=`$AUTOHEADER --version | head -n 1`
 case $AUTOHEADER_VERSION in
   Autoconf*2.[5-9]* | autoheader*2.[5-9]* ) : ;;
@@ -85,12 +85,12 @@ esac
 cvs()
 {
 check_autotool_versions
- 
+
 ### Produce acinclude.m4
 if grep '\$(top_srcdir)/acinclude.m4:' $makefile_am >/dev/null; then
   echo "*** Creating acinclude.m4"
   rm -f acinclude.m4 configure.files
-  
+
   strip_makefile
   $MAKE -f $makefile_wo top_srcdir=. ./acinclude.m4
 fi
@@ -238,7 +238,7 @@ done
 
 files=`cat configure.files`
 list=`egrep '^dnl AC_OUTPUT\(.*\)' $files | sed -e "s#^.*dnl AC_OUTPUT(\(.*\))#\1#"`
-for file in $list; do 
+for file in $list; do
     echo "AC_CONFIG_FILES([ $file ])" >>  configure.in.new
 done
 
@@ -265,10 +265,10 @@ if test -z "$VERSION" || test "$VERSION" = "@VERSION@"; then
      VERSION="\"3.1.3\""
 fi
 if test -z "$modulename" || test "$modulename" = "@MODULENAME@"; then
-   modulename=`pwd`; 
+   modulename=`pwd`;
    modulename=`basename $modulename`
    esc_VERSION=`echo $VERSION | sed -e "s#[^.0-9a-zA-Z]##g"`
-   modulename=`echo $modulename | sed -e "s#-$esc_VERSION##"`   
+   modulename=`echo $modulename | sed -e "s#-$esc_VERSION##"`
 
 fi
 if test -n "$kde_use_qt_param"; then
@@ -324,7 +324,7 @@ for d in $compilefirst; do
    echo $d >> ./_SUBDIRS
 done
 
-(for d in $dirs; do 
+(for d in $dirs; do
    list=`sed -ne "s#^COMPILE_BEFORE_$d""[ ]*=[ ]*##p" $makefile_am | head -n 1`
    for s in $list; do
       echo $s $d
@@ -430,7 +430,7 @@ for subdir in $dirs; do
 
    $MAKE -s -f _transMakefile podir=$podir EXTRACTRC="$EXTRACTRC" PREPARETIPS="$PREPARETIPS" \
 	XGETTEXT="${XGETTEXT:-xgettext} -C -ki18n -ktr2i18n -kI18N_NOOP -ktranslate -kaliasLocale -x ${includedir:-$KDEDIR/include}/kde.pot" \
-	messages 
+	messages
    ) 2>&1 | grep -v '^make\[1\]' > $tmpname
    test -s $tmpname && { echo $subdir ; cat "$tmpname"; }
    test -f $subdir/rc.cpp && rm -f $subdir/rc.cpp

@@ -196,4 +196,3 @@ class GEOS_DLL DD {
 
 } // namespace geos::math
 } // namespace geos
-

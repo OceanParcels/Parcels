@@ -207,7 +207,7 @@ typedef unsigned int			(*hb_unicode_decompose_compatibility_func_t)	(hb_unicode_
  *
  * Sets the implementation function for #hb_unicode_decompose_compatibility_func_t.
  *
- * 
+ *
  *
  * Since: 0.9.2
  * Deprecated: 2.0.0

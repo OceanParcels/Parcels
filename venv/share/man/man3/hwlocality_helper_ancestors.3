@@ -26,36 +26,36 @@ hwlocality_helper_ancestors \- Looking at Ancestor and Child Objects
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
-Be sure to see the figure in \fBTerms and Definitions\fP that shows a complete topology tree, including depths, child/sibling/cousin relationships, and an example of an asymmetric topology where one package has fewer caches than its peers\&. 
+.PP
+Be sure to see the figure in \fBTerms and Definitions\fP that shows a complete topology tree, including depths, child/sibling/cousin relationships, and an example of an asymmetric topology where one package has fewer caches than its peers\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static \fBhwloc_obj_t\fP hwloc_get_ancestor_obj_by_depth (\fBhwloc_topology_t\fP topology, int depth, \fBhwloc_obj_t\fP obj)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Returns the ancestor object of \fCobj\fP at depth \fCdepth\fP\&. 
+Returns the ancestor object of \fCobj\fP at depth \fCdepth\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-the ancestor if any\&. 
+the ancestor if any\&.
 .PP
 \fCNULL\fP if no such ancestor exists\&.
 .RE
 .PP
 \fBNote\fP
 .RS 4
-\fCdepth\fP should not be the depth of PU or NUMA objects since they are ancestors of no objects (except Misc or I/O)\&. This function rather expects an intermediate level depth, such as the depth of Packages, Cores, or Caches\&. 
+\fCdepth\fP should not be the depth of PU or NUMA objects since they are ancestors of no objects (except Misc or I/O)\&. This function rather expects an intermediate level depth, such as the depth of Packages, Cores, or Caches\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_ancestor_obj_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP obj)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Returns the ancestor object of \fCobj\fP with type \fCtype\fP\&. 
+Returns the ancestor object of \fCobj\fP with type \fCtype\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-the ancestor if any\&. 
+the ancestor if any\&.
 .PP
 \fCNULL\fP if no such ancestor exists\&.
 .RE
@@ -64,14 +64,14 @@ the ancestor if any\&.
 .RS 4
 if multiple matching ancestors exist (e\&.g\&. multiple levels of \fBHWLOC_OBJ_GROUP\fP) the lowest one is returned\&.
 .PP
-\fCtype\fP should not be \fBHWLOC_OBJ_PU\fP or \fBHWLOC_OBJ_NUMANODE\fP since these objects are ancestors of no objects (except Misc or I/O)\&. This function rather expects an intermediate object type, such as \fBHWLOC_OBJ_PACKAGE\fP, \fBHWLOC_OBJ_CORE\fP, etc\&. 
+\fCtype\fP should not be \fBHWLOC_OBJ_PU\fP or \fBHWLOC_OBJ_NUMANODE\fP since these objects are ancestors of no objects (except Misc or I/O)\&. This function rather expects an intermediate object type, such as \fBHWLOC_OBJ_PACKAGE\fP, \fBHWLOC_OBJ_CORE\fP, etc\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_common_ancestor_obj (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj1, \fBhwloc_obj_t\fP obj2)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Returns the common parent object to objects \fCobj1\fP and \fCobj2\fP\&. 
+Returns the common parent object to objects \fCobj1\fP and \fCobj2\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
@@ -80,7 +80,7 @@ the common ancestor\&.
 .PP
 \fBNote\fP
 .RS 4
-This function cannot return \fCNULL\fP\&. 
+This function cannot return \fCNULL\fP\&.
 .RE
 .PP
 
@@ -91,18 +91,18 @@ Return the next child\&. Return the next child among the normal children list, t
 .PP
 \fBReturns\fP
 .RS 4
-the first child if \fCprev\fP is \fCNULL\fP\&. 
+the first child if \fCprev\fP is \fCNULL\fP\&.
 .PP
-the next child if \fCprev\fP is not \fCNULL\fP\&. 
+the next child if \fCprev\fP is not \fCNULL\fP\&.
 .PP
-\fCNULL\fP when there is no next child\&. 
+\fCNULL\fP when there is no next child\&.
 .RE
 .PP
 
 .SS "static int hwloc_obj_is_in_subtree (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj, \fBhwloc_obj_t\fP subtree_root)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Returns true if \fCobj\fP is inside the subtree beginning with ancestor object \fCsubtree_root\fP\&. 
+Returns true if \fCobj\fP is inside the subtree beginning with ancestor object \fCsubtree_root\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
@@ -111,10 +111,10 @@ Returns true if \fCobj\fP is inside the subtree beginning with ancestor object \
 .PP
 \fBNote\fP
 .RS 4
-This function cannot work if \fCobj\fP and \fCsubtree_root\fP objects do not have CPU sets (I/O or Misc objects)\&. 
+This function cannot work if \fCobj\fP and \fCsubtree_root\fP objects do not have CPU sets (I/O or Misc objects)\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

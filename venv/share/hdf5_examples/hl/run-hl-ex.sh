@@ -24,10 +24,10 @@
 if (echo "Run hl c examples" && \
    (cd c; sh ./run-hlc-ex.sh) && \
    (if test -d fortran; then
-       echo "Run hl fortran examples" 
+       echo "Run hl fortran examples"
        cd fortran; sh ./run-hlfortran-ex.sh
-    fi) 
-   (if test -d c++; then 
+    fi)
+   (if test -d c++; then
        echo "Run hl c++ examples"
        cd c++; sh ./run-hlc++-ex.sh
     fi)); then
@@ -35,4 +35,4 @@ if (echo "Run hl c examples" && \
    exit 0
 else
    exit 1
-fi  
+fi

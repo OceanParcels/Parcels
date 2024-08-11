@@ -58,7 +58,7 @@ namespace Aws
                 void Stop() override;
 
                 /**
-                 * Structure containing semaphores, queue etc... 
+                 * Structure containing semaphores, queue etc...
                  */
                 struct LogSynchronizationData
                 {

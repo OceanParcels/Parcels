@@ -70,5 +70,3 @@ protected:
 
 } // namespace geos.precision
 } // namespace geos
-
-

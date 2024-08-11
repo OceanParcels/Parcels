@@ -14,7 +14,7 @@ is the session's socket descriptor
 .IP "struct sockaddr * connect_addr" 12
 is the address we want to connect to
 .IP "socklen_t connect_addrlen" 12
-is the length of  \fIconnect_addr\fP 
+is the length of  \fIconnect_addr\fP
 .IP "unsigned int flags" 12
 must be zero
 .SH "DESCRIPTION"
@@ -31,7 +31,7 @@ to gnutls using \fBconnect()\fP transparently during the first write.
 This function overrides all the transport callback functions.
 If this is undesirable, TCP Fast Open must be implemented on the user
 callback functions without calling this function. When using
-this function, transport callbacks must not be set, and 
+this function, transport callbacks must not be set, and
 \fBgnutls_transport_set_ptr()\fP or \fBgnutls_transport_set_int()\fP
 must not be called.
 

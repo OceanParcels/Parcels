@@ -72,7 +72,7 @@ namespace Model
     ///@{
     /**
      * <p>The name of the Amazon S3 bucket where Config stores conformance pack
-     * templates. </p>  <p>This field is optional.</p> 
+     * templates. </p>  <p>This field is optional.</p>
      */
     inline const Aws::String& GetDeliveryS3Bucket() const{ return m_deliveryS3Bucket; }
     inline bool DeliveryS3BucketHasBeenSet() const { return m_deliveryS3BucketHasBeenSet; }
@@ -86,8 +86,8 @@ namespace Model
 
     ///@{
     /**
-     * <p>Any folder structure you want to add to an Amazon S3 bucket.</p> 
-     * <p>This field is optional.</p> 
+     * <p>Any folder structure you want to add to an Amazon S3 bucket.</p>
+     * <p>This field is optional.</p>
      */
     inline const Aws::String& GetDeliveryS3KeyPrefix() const{ return m_deliveryS3KeyPrefix; }
     inline bool DeliveryS3KeyPrefixHasBeenSet() const { return m_deliveryS3KeyPrefixHasBeenSet; }

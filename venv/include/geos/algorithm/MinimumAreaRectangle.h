@@ -156,4 +156,3 @@ public:
 
 } // namespace geos::algorithm
 } // namespace geos
-

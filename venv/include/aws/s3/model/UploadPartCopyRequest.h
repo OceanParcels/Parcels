@@ -136,7 +136,7 @@ namespace Model
      * is a delete marker, Amazon S3 returns an HTTP <code>400 Bad Request</code>
      * error, because you are not allowed to specify a delete marker as a version for
      * the <code>x-amz-copy-source</code>. </p>  <p> <b>Directory buckets</b> -
-     * S3 Versioning isn't enabled and supported for directory buckets.</p> 
+     * S3 Versioning isn't enabled and supported for directory buckets.</p>
      */
     inline const Aws::String& GetCopySource() const{ return m_copySource; }
     inline bool CopySourceHasBeenSet() const { return m_copySourceHasBeenSet; }
@@ -289,7 +289,7 @@ namespace Model
     /**
      * <p>Specifies the algorithm to use when encrypting the object (for example,
      * AES256).</p>  <p>This functionality is not supported when the destination
-     * bucket is a directory bucket.</p> 
+     * bucket is a directory bucket.</p>
      */
     inline const Aws::String& GetSSECustomerAlgorithm() const{ return m_sSECustomerAlgorithm; }
     inline bool SSECustomerAlgorithmHasBeenSet() const { return m_sSECustomerAlgorithmHasBeenSet; }
@@ -310,7 +310,7 @@ namespace Model
      * <code>x-amz-server-side-encryption-customer-algorithm</code> header. This must
      * be the same encryption key specified in the initiate multipart upload
      * request.</p>  <p>This functionality is not supported when the destination
-     * bucket is a directory bucket.</p> 
+     * bucket is a directory bucket.</p>
      */
     inline const Aws::String& GetSSECustomerKey() const{ return m_sSECustomerKey; }
     inline bool SSECustomerKeyHasBeenSet() const { return m_sSECustomerKeyHasBeenSet; }
@@ -327,7 +327,7 @@ namespace Model
      * <p>Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
      * Amazon S3 uses this header for a message integrity check to ensure that the
      * encryption key was transmitted without error.</p>  <p>This functionality
-     * is not supported when the destination bucket is a directory bucket.</p> 
+     * is not supported when the destination bucket is a directory bucket.</p>
      */
     inline const Aws::String& GetSSECustomerKeyMD5() const{ return m_sSECustomerKeyMD5; }
     inline bool SSECustomerKeyMD5HasBeenSet() const { return m_sSECustomerKeyMD5HasBeenSet; }
@@ -343,7 +343,7 @@ namespace Model
     /**
      * <p>Specifies the algorithm to use when decrypting the source object (for
      * example, <code>AES256</code>).</p>  <p>This functionality is not supported
-     * when the source object is in a directory bucket.</p> 
+     * when the source object is in a directory bucket.</p>
      */
     inline const Aws::String& GetCopySourceSSECustomerAlgorithm() const{ return m_copySourceSSECustomerAlgorithm; }
     inline bool CopySourceSSECustomerAlgorithmHasBeenSet() const { return m_copySourceSSECustomerAlgorithmHasBeenSet; }
@@ -361,7 +361,7 @@ namespace Model
      * decrypt the source object. The encryption key provided in this header must be
      * one that was used when the source object was created.</p>  <p>This
      * functionality is not supported when the source object is in a directory
-     * bucket.</p> 
+     * bucket.</p>
      */
     inline const Aws::String& GetCopySourceSSECustomerKey() const{ return m_copySourceSSECustomerKey; }
     inline bool CopySourceSSECustomerKeyHasBeenSet() const { return m_copySourceSSECustomerKeyHasBeenSet; }
@@ -378,7 +378,7 @@ namespace Model
      * <p>Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
      * Amazon S3 uses this header for a message integrity check to ensure that the
      * encryption key was transmitted without error.</p>  <p>This functionality
-     * is not supported when the source object is in a directory bucket.</p> 
+     * is not supported when the source object is in a directory bucket.</p>
      */
     inline const Aws::String& GetCopySourceSSECustomerKeyMD5() const{ return m_copySourceSSECustomerKeyMD5; }
     inline bool CopySourceSSECustomerKeyMD5HasBeenSet() const { return m_copySourceSSECustomerKeyMD5HasBeenSet; }
@@ -391,7 +391,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
     inline void SetRequestPayer(const RequestPayer& value) { m_requestPayerHasBeenSet = true; m_requestPayer = value; }
@@ -434,7 +434,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

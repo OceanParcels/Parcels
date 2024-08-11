@@ -54,4 +54,3 @@
 #define DbeNumberErrors			(DbeBadBuffer + 1)
 
 #endif /* DBE_H */
-

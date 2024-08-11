@@ -2602,9 +2602,9 @@ in any future release of perl.  See the explanation under
 .ie n .IP "Global symbol ""%s"" requires explicit package name (did you forget to declare ""my %s""?)" 4
 .el .IP "Global symbol ``%s'' requires explicit package name (did you forget to declare ``my \f(CW%s\fR''?)" 4
 .IX Item "Global symbol %s requires explicit package name (did you forget to declare my %s?)"
-(F) You've said \*(L"use strict\*(R" or \*(L"use strict vars\*(R", which indicates 
-that all variables must either be lexically scoped (using \*(L"my\*(R" or \*(L"state\*(R"), 
-declared beforehand using \*(L"our\*(R", or explicitly qualified to say 
+(F) You've said \*(L"use strict\*(R" or \*(L"use strict vars\*(R", which indicates
+that all variables must either be lexically scoped (using \*(L"my\*(R" or \*(L"state\*(R"),
+declared beforehand using \*(L"our\*(R", or explicitly qualified to say
 which package the global variable is in (using \*(L"::\*(R").
 .IP "glob failed (%s)" 4
 .IX Item "glob failed (%s)"
@@ -5071,7 +5071,7 @@ The regex \f(CW\*(C`m/foo$\es+bar/m\*(C'\fR translates to: match the word 'foo',
 record separator (see \*(L"$\e\*(R" in perlvar) and the letter 's' (one time or more)
 followed by the word 'bar'.
 .Sp
-If this is what you intended then you can silence the warning by using 
+If this is what you intended then you can silence the warning by using
 \&\f(CW\*(C`m/${\e}/\*(C'\fR (for example: \f(CW\*(C`m/foo${\e}s+bar/\*(C'\fR).
 .Sp
 If instead you intended to match the word 'foo' at the end of the line
@@ -7429,7 +7429,7 @@ with alpha parts.
 argument or check that you are using the right verb.
 .IP "Verb pattern '%s' may not have an argument in regex; marked by <\-\-\ \s-1HERE\s0 in m/%s/" 4
 .IX Item "Verb pattern '%s' may not have an argument in regex; marked by <--HERE in m/%s/"
-(F) You used a verb pattern that is not allowed an argument.  Remove the 
+(F) You used a verb pattern that is not allowed an argument.  Remove the
 argument or check that you are using the right verb.
 .IP "Version control conflict marker" 4
 .IX Item "Version control conflict marker"

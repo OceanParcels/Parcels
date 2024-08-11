@@ -49,4 +49,3 @@ public:
 
 } // namespace geos::util
 } // namespace geos
-

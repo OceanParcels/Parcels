@@ -162,6 +162,3 @@ public:
 } // namespace geos::noding::snapround
 } // namespace geos::noding
 } // namespace geos
-
-
-

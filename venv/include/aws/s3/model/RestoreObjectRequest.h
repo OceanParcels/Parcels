@@ -113,7 +113,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RestoreRequest& GetRestoreRequest() const{ return m_restoreRequest; }
     inline bool RestoreRequestHasBeenSet() const { return m_restoreRequestHasBeenSet; }
     inline void SetRestoreRequest(const RestoreRequest& value) { m_restoreRequestHasBeenSet = true; m_restoreRequest = value; }
@@ -123,7 +123,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
     inline void SetRequestPayer(const RequestPayer& value) { m_requestPayerHasBeenSet = true; m_requestPayer = value; }
@@ -170,7 +170,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

@@ -141,4 +141,3 @@ public:
 } // geos::geom::prep
 } // geos::geom
 } // geos
-

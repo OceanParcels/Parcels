@@ -171,4 +171,3 @@ public: \
 }//namespace orgQhull
 
 #endif // QHULLITERATOR_H
-

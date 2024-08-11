@@ -65,4 +65,3 @@ typedef struct hdf_ddinfo_t
 }
 #endif				/* c_plusplus || __cplusplus */
 #endif                          /* _HDATAINFO */
-

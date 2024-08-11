@@ -683,7 +683,7 @@ Remember that \f(CW\*(C`hv_store\*(C'\fR and \f(CW\*(C`hv_fetch\*(C'\fR return \
 value.  However, you should check to make sure that the return value is
 not \s-1NULL\s0 before dereferencing it.
 .PP
-The first of these two functions checks if a hash table entry exists, and the 
+The first of these two functions checks if a hash table entry exists, and the
 second deletes it.
 .PP
 .Vb 2
@@ -1509,17 +1509,17 @@ The current kinds of Magic Virtual Tables are:
 \&                                             tables
 \& <  PERL_MAGIC_backref        vtbl_backref   For weak ref data
 \& @  PERL_MAGIC_arylen_p       (none)         To move arylen out of XPVAV
-\& B  PERL_MAGIC_bm             vtbl_regexp    Boyer\-Moore 
+\& B  PERL_MAGIC_bm             vtbl_regexp    Boyer\-Moore
 \&                                             (fast string search)
-\& c  PERL_MAGIC_overload_table vtbl_ovrld     Holds overload table 
+\& c  PERL_MAGIC_overload_table vtbl_ovrld     Holds overload table
 \&                                             (AMT) on stash
-\& D  PERL_MAGIC_regdata        vtbl_regdata   Regex match position data 
+\& D  PERL_MAGIC_regdata        vtbl_regdata   Regex match position data
 \&                                             (@+ and @\- vars)
 \& d  PERL_MAGIC_regdatum       vtbl_regdatum  Regex match position data
 \&                                             element
 \& E  PERL_MAGIC_env            vtbl_env       %ENV hash
 \& e  PERL_MAGIC_envelem        vtbl_envelem   %ENV hash element
-\& f  PERL_MAGIC_fm             vtbl_regexp    Formline 
+\& f  PERL_MAGIC_fm             vtbl_regexp    Formline
 \&                                             (\*(Aqcompiled\*(Aq format)
 \& g  PERL_MAGIC_regex_global   vtbl_mglob     m//g target
 \& H  PERL_MAGIC_hints          vtbl_hints     %^H hash

@@ -18,7 +18,7 @@ namespace Model
 {
 
   /**
-   * <p>Input to the <code>DeleteIdentities</code> action.</p><p><h3>See Also:</h3>  
+   * <p>Input to the <code>DeleteIdentities</code> action.</p><p><h3>See Also:</h3>
    * <a
    * href="http://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/DeleteIdentitiesInput">AWS
    * API Reference</a></p>

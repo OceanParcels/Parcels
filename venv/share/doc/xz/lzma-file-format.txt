@@ -170,4 +170,3 @@ The .lzma File Format
 
         The .xz file format - The successor of the .lzma format
         http://tukaani.org/xz/xz-file-format.txt
-

@@ -39,7 +39,7 @@ namespace Model
      * was (true) or was not (false) a delete marker before deletion. In a simple
      * DELETE, this header indicates whether (true) or not (false) the current version
      * of the object is a delete marker.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline bool GetDeleteMarker() const{ return m_deleteMarker; }
     inline void SetDeleteMarker(bool value) { m_deleteMarker = value; }
@@ -50,7 +50,7 @@ namespace Model
     /**
      * <p>Returns the version ID of the delete marker created as a result of the DELETE
      * operation.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetVersionId() const{ return m_versionId; }
     inline void SetVersionId(const Aws::String& value) { m_versionId = value; }
@@ -62,7 +62,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestCharged& GetRequestCharged() const{ return m_requestCharged; }
     inline void SetRequestCharged(const RequestCharged& value) { m_requestCharged = value; }
     inline void SetRequestCharged(RequestCharged&& value) { m_requestCharged = std::move(value); }
@@ -71,7 +71,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

@@ -152,7 +152,7 @@ number of bytes sent by the backend socket
 The \fIzmq_proxy_steerable()\fR function returns 0 if TERMINATE is received on its control socket\&. Otherwise, it returns \-1 and errno set to ETERM or EINTR (the 0MQ context associated with either of the specified sockets was terminated) or EFAULT (the provided frontend or backend was invalid)\&.
 .SH "EXAMPLE"
 .PP
-\fBCreate a function to run the proxy\fR. 
+\fBCreate a function to run the proxy\fR.
 .sp
 .if n \{\
 .RS 4
@@ -176,7 +176,7 @@ zmq_proxy_steerable(frontend, backend, NULL, control);
 .RE
 .\}
 .PP
-\fBCode in another thread/process to steer the proxy.\fR. 
+\fBCode in another thread/process to steer the proxy.\fR.
 .sp
 .if n \{\
 .RS 4

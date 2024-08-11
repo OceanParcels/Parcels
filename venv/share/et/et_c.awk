@@ -1,4 +1,4 @@
-BEGIN { 
+BEGIN {
 char_shift=64
 ## "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
 c2n["A"]=1
@@ -149,7 +149,7 @@ c2n["_"]=63
 
 /^[ \t]*(error_code|ec)[ \t]+[A-Z_0-9]+,[ \t]*".*"[ \t]*$/ {
 	text=""
-	for (i=3; i<=NF; i++) { 
+	for (i=3; i<=NF; i++) {
 	    text = text FS $i
 	}
 	text=substr(text,2,length(text)-1);
@@ -159,7 +159,7 @@ c2n["_"]=63
 
 /^[ \t]*(error_code|ec)[ \t]+[A-Z_0-9]+,[ \t]*".*\\[ \t]*$/ {
 	text=""
-	for (i=3; i<=NF; i++) { 
+	for (i=3; i<=NF; i++) {
 	    text = text FS $i
 	}
 	text=substr(text,2,length(text)-2);
@@ -178,7 +178,7 @@ c2n["_"]=63
 	skipone=0
 }
 
-{ 
+{
 	if (skipone) {
 	    printf "\tN_(%s),\n", $0 > outfile
 	}

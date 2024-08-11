@@ -23,19 +23,19 @@ hwlocality_linux_libnuma_bitmask \- Interoperability with Linux libnuma bitmask
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 This interface helps converting between Linux libnuma bitmasks and hwloc cpusets and nodesets\&.
 .PP
 \fBNote\fP
 .RS 4
 Topology \fCtopology\fP must match the current machine\&.
 .PP
-The behavior of libnuma is undefined if the kernel is not NUMA-aware\&. (when CONFIG_NUMA is not set in the kernel configuration)\&. This helper and libnuma may thus not be strictly compatible in this case, which may be detected by checking whether numa_available() returns -1\&. 
+The behavior of libnuma is undefined if the kernel is not NUMA-aware\&. (when CONFIG_NUMA is not set in the kernel configuration)\&. This helper and libnuma may thus not be strictly compatible in this case, which may be detected by checking whether numa_available() returns -1\&.
 .RE
 .PP
 
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static int hwloc_cpuset_from_linux_libnuma_bitmask (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP cpuset, const struct bitmask * bitmask)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
@@ -43,9 +43,9 @@ Convert libnuma bitmask \fCbitmask\fP into hwloc CPU set \fCcpuset\fP\&. This fu
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCENOMEM\fP if some internal reallocation failed\&. 
+-1 with errno set to \fCENOMEM\fP if some internal reallocation failed\&.
 .RE
 .PP
 
@@ -58,7 +58,7 @@ This function may be used before calling many numa_ functions that use a struct 
 .PP
 \fBReturns\fP
 .RS 4
-newly allocated struct bitmask, or \fCNULL\fP on error\&. 
+newly allocated struct bitmask, or \fCNULL\fP on error\&.
 .RE
 .PP
 
@@ -69,9 +69,9 @@ Convert libnuma bitmask \fCbitmask\fP into hwloc NUMA node set \fCnodeset\fP\&. 
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCENOMEM\fP if some internal reallocation failed\&. 
+-1 with errno set to \fCENOMEM\fP if some internal reallocation failed\&.
 .RE
 .PP
 
@@ -84,10 +84,10 @@ This function may be used before calling many numa_ functions that use a struct 
 .PP
 \fBReturns\fP
 .RS 4
-newly allocated struct bitmask, or \fCNULL\fP on error\&. 
+newly allocated struct bitmask, or \fCNULL\fP on error\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

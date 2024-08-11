@@ -79,5 +79,3 @@ PROGRAM H5_CRTDAT
   CALL h5close_f(error)
 
 END PROGRAM H5_CRTDAT
-
-

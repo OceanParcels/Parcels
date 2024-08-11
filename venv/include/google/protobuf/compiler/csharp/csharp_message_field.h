@@ -65,4 +65,3 @@ class MessageOneofFieldGenerator : public MessageFieldGenerator {
 }  // namespace google
 
 #endif  // GOOGLE_PROTOBUF_COMPILER_CSHARP_MESSAGE_FIELD_H__
-

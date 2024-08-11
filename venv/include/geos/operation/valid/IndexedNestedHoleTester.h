@@ -80,4 +80,3 @@ public:
 } // namespace geos.operation.valid
 } // namespace geos.operation
 } // namespace geos
-

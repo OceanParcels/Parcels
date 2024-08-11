@@ -16,8 +16,8 @@ function set the environment variable \fBGNUTLS_NO_IMPLICIT_INIT\fP to 1.
 
 This function performs any required precalculations, detects
 the supported CPU capabilities and initializes the underlying
-cryptographic backend. In order to free any resources 
-taken by this call you should \fBgnutls_global_deinit()\fP 
+cryptographic backend. In order to free any resources
+taken by this call you should \fBgnutls_global_deinit()\fP
 when gnutls usage is no longer needed.
 
 This function increments a global counter, so that

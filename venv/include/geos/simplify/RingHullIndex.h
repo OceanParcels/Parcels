@@ -52,4 +52,3 @@ class RingHullIndex
 
 } // geos::simplify
 } // geos
-

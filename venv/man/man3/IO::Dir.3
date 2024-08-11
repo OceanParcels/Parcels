@@ -196,15 +196,15 @@ reading routines by the use of \f(CW\*(C`lstat\*(C'\fR, from the \f(CW\*(C`File:
 .el .IP "tie \f(CW%hash\fR, 'IO::Dir', \s-1DIRNAME\s0 [, \s-1OPTIONS\s0 ]" 4
 .IX Item "tie %hash, 'IO::Dir', DIRNAME [, OPTIONS ]"
 .PP
-The keys of the hash will be the names of the entries in the directory. 
+The keys of the hash will be the names of the entries in the directory.
 Reading a value from the hash will be the result of calling
-\&\f(CW\*(C`File::stat::lstat\*(C'\fR.  Deleting an element from the hash will 
+\&\f(CW\*(C`File::stat::lstat\*(C'\fR.  Deleting an element from the hash will
 delete the corresponding file or subdirectory,
 provided that \f(CW\*(C`DIR_UNLINK\*(C'\fR is included in the \f(CW\*(C`OPTIONS\*(C'\fR.
 .PP
 Assigning to an entry in the hash will cause the time stamps of the file
 to be modified. If the file does not exist then it will be created. Assigning
-a single integer to a hash element will cause both the access and 
+a single integer to a hash element will cause both the access and
 modification times to be changed to that value. Alternatively a reference to
 an array of two values can be passed. The first array element will be used to
 set the access time and the second element will be used to set the modification

@@ -49,38 +49,38 @@ hwlocality_distances_get \- Retrieve distances between objects
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Enumeration Type Documentation"
-.PP 
+.PP
 .SS "enum \fBhwloc_distances_kind_e\fP"
 
 .PP
 Kinds of distance matrices\&. The \fCkind\fP attribute of struct \fBhwloc_distances_s\fP is a OR'ed set of kinds\&.
 .PP
-Each distance matrix may have only one kind among HWLOC_DISTANCES_KIND_FROM_* specifying where distance information comes from, and one kind among HWLOC_DISTANCES_KIND_MEANS_* specifying whether values are latencies or bandwidths\&. 
+Each distance matrix may have only one kind among HWLOC_DISTANCES_KIND_FROM_* specifying where distance information comes from, and one kind among HWLOC_DISTANCES_KIND_MEANS_* specifying whether values are latencies or bandwidths\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_DISTANCES_KIND_FROM_OS \fP\fP
-These distances were obtained from the operating system or hardware\&. 
+These distances were obtained from the operating system or hardware\&.
 .TP
 \fB\fIHWLOC_DISTANCES_KIND_FROM_USER \fP\fP
-These distances were provided by the user\&. 
+These distances were provided by the user\&.
 .TP
 \fB\fIHWLOC_DISTANCES_KIND_MEANS_LATENCY \fP\fP
-Distance values are similar to latencies between objects\&. Values are smaller for closer objects, hence minimal on the diagonal of the matrix (distance between an object and itself)\&. It could also be the number of network hops between objects, etc\&. 
+Distance values are similar to latencies between objects\&. Values are smaller for closer objects, hence minimal on the diagonal of the matrix (distance between an object and itself)\&. It could also be the number of network hops between objects, etc\&.
 .TP
 \fB\fIHWLOC_DISTANCES_KIND_MEANS_BANDWIDTH \fP\fP
-Distance values are similar to bandwidths between objects\&. Values are higher for closer objects, hence maximal on the diagonal of the matrix (distance between an object and itself)\&. Such values are currently ignored for distance-based grouping\&. 
+Distance values are similar to bandwidths between objects\&. Values are higher for closer objects, hence maximal on the diagonal of the matrix (distance between an object and itself)\&. Such values are currently ignored for distance-based grouping\&.
 .TP
 \fB\fIHWLOC_DISTANCES_KIND_HETEROGENEOUS_TYPES \fP\fP
-This distances structure covers objects of different types\&. This may apply to the 'NVLinkBandwidth' structure in presence of a NVSwitch or POWER processor NVLink port\&. 
+This distances structure covers objects of different types\&. This may apply to the 'NVLinkBandwidth' structure in presence of a NVSwitch or POWER processor NVLink port\&.
 .SS "enum \fBhwloc_distances_transform_e\fP"
 
 .PP
-Transformations of distances structures\&. 
+Transformations of distances structures\&.
 .PP
 \fBEnumerator\fP
 .in +1c
@@ -90,22 +90,22 @@ Remove \fCNULL\fP objects from the distances structure\&. Every object that was 
 .PP
 At least \fC2\fP objects must remain, otherwise \fBhwloc_distances_transform()\fP will return \fC-1\fP with \fCerrno\fP set to \fCEINVAL\fP\&.
 .PP
-\fCkind\fP will be updated with or without \fBHWLOC_DISTANCES_KIND_HETEROGENEOUS_TYPES\fP according to the remaining objects\&. 
+\fCkind\fP will be updated with or without \fBHWLOC_DISTANCES_KIND_HETEROGENEOUS_TYPES\fP according to the remaining objects\&.
 .TP
 \fB\fIHWLOC_DISTANCES_TRANSFORM_LINKS \fP\fP
 Replace bandwidth values with a number of links\&. Usually all values will be either \fC0\fP (no link) or \fC1\fP (one link)\&. However some matrices could get larger values if some pairs of peers are connected by different numbers of links\&.
 .PP
 Values on the diagonal are set to \fC0\fP\&.
 .PP
-This transformation only applies to bandwidth matrices\&. 
+This transformation only applies to bandwidth matrices\&.
 .TP
 \fB\fIHWLOC_DISTANCES_TRANSFORM_MERGE_SWITCH_PORTS \fP\fP
-Merge switches with multiple ports into a single object\&. This currently only applies to NVSwitches where GPUs seem connected to different separate switch ports in the NVLinkBandwidth matrix\&. This transformation will replace all of them with the same port connected to all GPUs\&. Other ports are removed by applying \fBHWLOC_DISTANCES_TRANSFORM_REMOVE_NULL\fP internally\&. 
+Merge switches with multiple ports into a single object\&. This currently only applies to NVSwitches where GPUs seem connected to different separate switch ports in the NVLinkBandwidth matrix\&. This transformation will replace all of them with the same port connected to all GPUs\&. Other ports are removed by applying \fBHWLOC_DISTANCES_TRANSFORM_REMOVE_NULL\fP internally\&.
 .TP
 \fB\fIHWLOC_DISTANCES_TRANSFORM_TRANSITIVE_CLOSURE \fP\fP
-Apply a transitive closure to the matrix to connect objects across switches\&. This currently only applies to GPUs and NVSwitches in the NVLinkBandwidth matrix\&. All pairs of GPUs will be reported as directly connected\&. 
+Apply a transitive closure to the matrix to connect objects across switches\&. This currently only applies to GPUs and NVSwitches in the NVLinkBandwidth matrix\&. All pairs of GPUs will be reported as directly connected\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_distances_get (\fBhwloc_topology_t\fP topology, unsigned * nr, struct \fBhwloc_distances_s\fP ** distances, unsigned long kind, unsigned long flags)"
 
 .PP
@@ -121,7 +121,7 @@ Each distance matrix returned in the \fCdistances\fP array should be released by
 .PP
 \fBReturns\fP
 .RS 4
-0 on success, -1 on error\&. 
+0 on success, -1 on error\&.
 .RE
 .PP
 
@@ -132,7 +132,7 @@ Retrieve distance matrices for object at a specific depth in the topology\&. Ide
 .PP
 \fBReturns\fP
 .RS 4
-0 on success, -1 on error\&. 
+0 on success, -1 on error\&.
 .RE
 .PP
 
@@ -145,7 +145,7 @@ The name of the most common structure is 'NUMALatency'\&. Others include 'XGMIBa
 .PP
 \fBReturns\fP
 .RS 4
-0 on success, -1 on error\&. 
+0 on success, -1 on error\&.
 .RE
 .PP
 
@@ -156,7 +156,7 @@ Retrieve distance matrices for object of a specific type\&. Identical to \fBhwlo
 .PP
 \fBReturns\fP
 .RS 4
-0 on success, -1 on error\&. 
+0 on success, -1 on error\&.
 .RE
 .PP
 
@@ -172,18 +172,18 @@ the constant string with the name of the distance structure\&.
 .PP
 \fBNote\fP
 .RS 4
-The returned name should not be freed by the caller, it belongs to the hwloc library\&. 
+The returned name should not be freed by the caller, it belongs to the hwloc library\&.
 .RE
 .PP
 
 .SS "void hwloc_distances_release (\fBhwloc_topology_t\fP topology, struct \fBhwloc_distances_s\fP * distances)"
 
 .PP
-Release a distance matrix structure previously returned by \fBhwloc_distances_get()\fP\&. 
+Release a distance matrix structure previously returned by \fBhwloc_distances_get()\fP\&.
 .PP
 \fBNote\fP
 .RS 4
-This function is not required if the structure is removed with \fBhwloc_distances_release_remove()\fP\&. 
+This function is not required if the structure is removed with \fBhwloc_distances_release_remove()\fP\&.
 .RE
 .PP
 
@@ -209,10 +209,10 @@ These transformations may modify the contents of the \fCobjs\fP or \fCvalues\fP 
 .PP
 \fBNote\fP
 .RS 4
-Objects in distances array \fCobjs\fP may be directly modified in place without using \fBhwloc_distances_transform()\fP\&. One may use \fBhwloc_get_obj_with_same_locality()\fP to easily convert between similar objects of different types\&. 
+Objects in distances array \fCobjs\fP may be directly modified in place without using \fBhwloc_distances_transform()\fP\&. One may use \fBhwloc_get_obj_with_same_locality()\fP to easily convert between similar objects of different types\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

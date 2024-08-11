@@ -432,7 +432,7 @@ namespace CloudWatch
 
         /**
          * <p>Disables the specified Contributor Insights rules. When rules are disabled,
-         * they do not analyze log groups and do not incur costs.</p><p><h3>See Also:</h3> 
+         * they do not analyze log groups and do not incur costs.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableInsightRules">AWS
          * API Reference</a></p>
@@ -837,7 +837,7 @@ namespace CloudWatch
         }
 
         /**
-         * <p>Returns a list of metric streams in this account.</p><p><h3>See Also:</h3>  
+         * <p>Returns a list of metric streams in this account.</p><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListMetricStreams">AWS
          * API Reference</a></p>

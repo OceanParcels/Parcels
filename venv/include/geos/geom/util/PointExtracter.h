@@ -60,4 +60,3 @@ private:
 } // namespace geos.geom.util
 } // namespace geos.geom
 } // namespace geos
-

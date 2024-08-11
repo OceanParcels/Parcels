@@ -153,4 +153,3 @@ class HullTri : public Tri
 } // geos::algorithm::hull
 } // geos::algorithm
 } // geos
-

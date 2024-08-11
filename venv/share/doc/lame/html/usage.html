@@ -47,7 +47,7 @@ for the -b settings depend on the sampling rate<a href="#note1"><sup>1</sup></a>
 <li><strong>Variable Bitrate (<a href="abr.html">ABR</a> mode)</strong>:
  <span class="hilight">--abr number</span> or <span class="hilight">--preset number</span>
  Valid values for the --abr setting range from 8 to 320.
-<pre>lame --abr 128 sample.wav sample.mp3</pre> 
+<pre>lame --abr 128 sample.wav sample.mp3</pre>
 </li>
 <li><strong>Variable Bitrate (<a href="vbr.html">VBR</a> mode)</strong>:
  <span class="hilight">-V number</span> Valid values
@@ -58,7 +58,7 @@ while 9.999 is the lowest one.
 </ul>
 <h3>Hydrogenaudio recommended settings</h3>
 <ul>
-<strong>Very high quality</strong>, HiFi, home, or quiet listening, with best file size<a href="#note2"></a> : 
+<strong>Very high quality</strong>, HiFi, home, or quiet listening, with best file size<a href="#note2"></a> :
 <span class="hilight">-V0</span> (avg. 245 kbps) or <span class="hilight">-V1</span>
  (avg. 225 kbps) or <span class="hilight">-V2</span> (avg. 190 kbps) or <span class="hilight">-V3</span> (avg. 175 kbps).
  <p>VBR settings will normally produce transparent results.
@@ -66,16 +66,16 @@ while 9.999 is the lowest one.
 </p>
 </li>
 <li>
-<strong>Very high quality</strong>, HiFi, home, or quiet listening, with maximum file size<a href="#note2"><sup>2</sup></a> : 
+<strong>Very high quality</strong>, HiFi, home, or quiet listening, with maximum file size<a href="#note2"><sup>2</sup></a> :
 <span class="hilight">-b 320</span>
-<p>This CBR mode will maximize the MP3's bitrate and overall file 
-size. The extra space may allow for some parts of the audio to be 
+<p>This CBR mode will maximize the MP3's bitrate and overall file
+size. The extra space may allow for some parts of the audio to be
 compressed with fewer sacrifices, but to date, no one has produced
 ABX test results demonstrating that perceived quality is ever better
 than the highest VBR profiles described above.
 </p>
 </li>
-<li><strong>Portable</strong>, listening in noisy conditions, lower bitrate, smaller file size: 
+<li><strong>Portable</strong>, listening in noisy conditions, lower bitrate, smaller file size:
 <span class="hilight">-V4</span> (avg. 160 kbps) or <span class="hilight">-V5</span>
 (avg. 130 kbps) or <span class="hilight"> -V6</span> (avg. 115 kbps)
 <p>
@@ -86,10 +86,10 @@ than the highest VBR profiles described above.
 <span class="hilight">--abr 80</span> (stereo) or <span class="hilight">--abr 56 -m m</span> (mono)
 <p>
 For very low bitrates, up to 100kbps, ABR is most often the best solution.
---preset voice is only available in the command line front-end, and 
+--preset voice is only available in the command line front-end, and
 is there for compatibility. It is currently mapped to --abr 56 -mm,
- so that means that the recommendation would be to encode in mono, 
- and use ABR. 
+ so that means that the recommendation would be to encode in mono,
+ and use ABR.
 </p>
 </li>
 </ul>
@@ -130,7 +130,7 @@ sounds transparent. Use lossless codecs for this purpose.
 
 <p>HTML markup and design by <a
 href="http://www.rjamorim.com" target="_blank">Roberto Amorim</a> and <a
-href="http://www.maresweb.de" target="_blank">Sebastian Mares</a>. Logo by <a 
+href="http://www.maresweb.de" target="_blank">Sebastian Mares</a>. Logo by <a
 href="http://www.brightercreative.co.uk">Sam Fisher</a>.</p>
 
 </div>

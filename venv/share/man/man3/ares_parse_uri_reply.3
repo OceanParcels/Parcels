@@ -15,7 +15,7 @@ int ares_parse_uri_reply(const unsigned char* \fIabuf\fP, int \fIalen\fP,
 .SH DESCRIPTION
 The \fIares_parse_uri_reply(3)\fP function parses the response to a query of
 type URI into a linked list of
-.I struct ares_uri_reply 
+.I struct ares_uri_reply
 The parameters
 .I abuf
 and
@@ -28,7 +28,7 @@ It is the caller's responsibility to free the resulting
 structure when it is no longer needed using the function
 \fBares_free_data(3)\fP.
 
-The structure 
+The structure
 .I ares_uri_reply
 contains the following fields:
 .nf

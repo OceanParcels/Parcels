@@ -74,4 +74,3 @@ protected:
 } // namespace geos::index::bintree
 } // namespace geos::index
 } // namespace geos
-

@@ -66,7 +66,7 @@ class FieldGeneratorBase : public SourceGeneratorBase {
       absl::flat_hash_map<absl::string_view, std::string>* variables);
 
   std::string oneof_property_name();
-  std::string oneof_case_name(); 
+  std::string oneof_case_name();
   std::string oneof_name();
   std::string property_name();
   std::string name();
@@ -91,4 +91,3 @@ class FieldGeneratorBase : public SourceGeneratorBase {
 }  // namespace google
 
 #endif  // GOOGLE_PROTOBUF_COMPILER_CSHARP_FIELD_BASE_H__
-

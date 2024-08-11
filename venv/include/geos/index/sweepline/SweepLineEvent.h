@@ -92,4 +92,3 @@ struct GEOS_DLL  SweepLineEventLessThen {
 } // namespace geos:index:sweepline
 } // namespace geos:index
 } // namespace geos
-

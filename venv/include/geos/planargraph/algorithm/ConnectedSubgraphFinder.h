@@ -89,4 +89,3 @@ private:
 } // namespace geos::planargraph::algorithm
 } // namespace geos::planargraph
 } // namespace geos
-

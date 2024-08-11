@@ -23,10 +23,10 @@ hwlocality_linux \- Linux-specific helpers
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
-This includes helpers for manipulating Linux kernel cpumap files, and hwloc equivalents of the Linux sched_setaffinity and sched_getaffinity system calls\&. 
+.PP
+This includes helpers for manipulating Linux kernel cpumap files, and hwloc equivalents of the Linux sched_setaffinity and sched_getaffinity system calls\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_linux_get_tid_cpubind (\fBhwloc_topology_t\fP topology, pid_t tid, \fBhwloc_cpuset_t\fP set)"
 
 .PP
@@ -41,7 +41,7 @@ The behavior is exactly the same as the Linux sched_getaffinity system call, but
 .PP
 \fBNote\fP
 .RS 4
-This is equivalent to calling \fBhwloc_get_proc_cpubind()\fP with \fBHWLOC_CPUBIND_THREAD\fP as flags\&. 
+This is equivalent to calling \fBhwloc_get_proc_cpubind()\fP with \fBHWLOC_CPUBIND_THREAD\fP as flags\&.
 .RE
 .PP
 
@@ -57,7 +57,7 @@ Get the last physical CPU where thread \fCtid\fP ran\&. The CPU-set \fCset\fP (p
 .PP
 \fBNote\fP
 .RS 4
-This is equivalent to calling \fBhwloc_get_proc_last_cpu_location()\fP with \fBHWLOC_CPUBIND_THREAD\fP as flags\&. 
+This is equivalent to calling \fBhwloc_get_proc_last_cpu_location()\fP with \fBHWLOC_CPUBIND_THREAD\fP as flags\&.
 .RE
 .PP
 
@@ -73,7 +73,7 @@ Convert a linux kernel cpumask file \fCpath\fP into a hwloc bitmap \fCset\fP\&. 
 .PP
 \fBNote\fP
 .RS 4
-This function ignores the HWLOC_FSROOT environment variable\&. 
+This function ignores the HWLOC_FSROOT environment variable\&.
 .RE
 .PP
 
@@ -89,10 +89,10 @@ Bind a thread \fCtid\fP on cpus given in cpuset \fCset\fP\&. The behavior is exa
 .PP
 \fBNote\fP
 .RS 4
-This is equivalent to calling \fBhwloc_set_proc_cpubind()\fP with HWLOC_CPUBIND_THREAD as flags\&. 
+This is equivalent to calling \fBhwloc_set_proc_cpubind()\fP with HWLOC_CPUBIND_THREAD as flags\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

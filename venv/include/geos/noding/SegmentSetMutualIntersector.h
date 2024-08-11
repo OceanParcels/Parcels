@@ -77,4 +77,3 @@ protected:
 
 } // geos::noding
 } // geos
-

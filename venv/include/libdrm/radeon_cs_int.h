@@ -11,7 +11,7 @@ struct radeon_cs_space_check {
 
 struct radeon_cs_int {
     /* keep first two in same place */
-    uint32_t                    *packets;    
+    uint32_t                    *packets;
     unsigned                    cdw;
     unsigned                    ndw;
     unsigned                    section_ndw;

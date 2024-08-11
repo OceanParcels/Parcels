@@ -141,12 +141,12 @@ private:
 
     /** \brief
      * Tests whether a segment is in a section of a TaggedLineString.
-     * Sections may wrap around the endpoint of the line, 
+     * Sections may wrap around the endpoint of the line,
      * to support ring endpoint simplification.
      * This is indicated by excludedStart > excludedEnd
      *
      * @param line line to be checked for the presence of `seg`
-     * @param excludeStart  the index of the first segment in the excluded section  
+     * @param excludeStart  the index of the first segment in the excluded section
      * @param excludeEnd the index of the last segment in the excluded section
      * @param seg segment to look for in `line`
      * @return true if the test segment intersects some segment in the line not in the excluded section

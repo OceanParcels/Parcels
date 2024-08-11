@@ -880,7 +880,7 @@ private:
     void setFallbackPattern(UCalendarDateFields field,
                             const UnicodeString& skeleton,
                             UErrorCode& status);
-    
+
 
 
     /**

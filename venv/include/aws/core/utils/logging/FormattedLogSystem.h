@@ -63,7 +63,7 @@ namespace Aws
                 /**
                  * This is the method that most logger implementations will want to override.
                  * At this point the message is formatted and is ready to go to the output stream
-                 */                
+                 */
                 virtual void ProcessFormattedStatement(Aws::String&& statement) = 0;
 
             private:

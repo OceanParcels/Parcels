@@ -60,4 +60,3 @@ linkgit:git-var[1]::
 
 linkgit:git-verify-pack[1]::
 	Validate packed Git archive files.
-

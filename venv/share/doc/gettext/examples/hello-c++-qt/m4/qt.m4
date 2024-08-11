@@ -10,9 +10,9 @@
 AC_DEFUN([FUN_TYPE_BOOL],
 [
   AC_REQUIRE([AC_PROG_CXX])
-    
+
   AC_LANG_PUSH(C++)
-  AC_CHECK_TYPE(bool, ac_check_bool=yes, ac_check_bool=no) 
+  AC_CHECK_TYPE(bool, ac_check_bool=yes, ac_check_bool=no)
   AC_LANG_POP(C++)
   if test "x$ac_check_bool" = "xyes" ; then
     AC_DEFINE(HAVE_BOOL,,[define if bool is a built-in type])
@@ -318,7 +318,7 @@ AC_DEFUN([FUN_QT_LIBRARIES],
         qt_tree="`dirname $qt_tree`"
       fi
     done
-  fi  
+  fi
 
   if test "x$qt_libraries" = "x" ; then
     AC_MSG_RESULT([no])
@@ -363,7 +363,7 @@ AC_DEFUN([FUN_QT_PROGRAMS],
       fi
     done
     # if we haven't found the progs, there's not much more we can do
-  fi  
+  fi
 
   if test "x$qt_programs" = "x" ; then
     AC_MSG_RESULT([no])

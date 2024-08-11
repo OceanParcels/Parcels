@@ -94,7 +94,7 @@ void gnutls_pkcs11_obj_set_pin_function(gnutls_pkcs11_obj_t obj,
 
 /**
  * gnutls_pkcs11_obj_flags:
- * @GNUTLS_PKCS11_OBJ_FLAG_LOGIN: Force login in the token for the operation (seek+store). 
+ * @GNUTLS_PKCS11_OBJ_FLAG_LOGIN: Force login in the token for the operation (seek+store).
  * @GNUTLS_PKCS11_OBJ_FLAG_MARK_TRUSTED: object marked as trusted (seek+store).
  * @GNUTLS_PKCS11_OBJ_FLAG_MARK_SENSITIVE: object is explicitly marked as sensitive -unexportable (store).
  * @GNUTLS_PKCS11_OBJ_FLAG_LOGIN_SO: force login as a security officer in the token for the operation (seek+store).
@@ -195,7 +195,7 @@ int gnutls_pkcs11_get_raw_issuer_by_dn (const char *url, const gnutls_datum_t *d
 					gnutls_x509_crt_fmt_t fmt,
 					unsigned int flags);
 
-int gnutls_pkcs11_get_raw_issuer_by_subject_key_id (const char *url, 
+int gnutls_pkcs11_get_raw_issuer_by_subject_key_id (const char *url,
 					const gnutls_datum_t *dn,
 					const gnutls_datum_t *spki,
 					gnutls_datum_t *issuer,

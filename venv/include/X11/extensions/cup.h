@@ -35,4 +35,3 @@ in this Software without prior written authorization from The Open Group.
 #define XcupNumberErrors			0
 
 #endif /* _CUP_H_ */
-

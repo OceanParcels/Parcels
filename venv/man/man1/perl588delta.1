@@ -1131,7 +1131,7 @@ This is a new warning, produced when number has been passed as an argument to
 \&    # Wrong, will now warn
 \&    $rin = fileno(STDIN);
 \&    ($nfound,$timeleft) = select($rout=$rin, undef, undef, $timeout);
-\&    
+\&
 \&    # Should be
 \&    $rin = \*(Aq\*(Aq;
 \&    vec($rin,fileno(STDIN),1) = 1;

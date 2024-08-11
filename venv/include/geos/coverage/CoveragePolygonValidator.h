@@ -273,7 +273,7 @@ public:
 
 private:
 
-    static std::vector<std::unique_ptr<CoveragePolygon>> 
+    static std::vector<std::unique_ptr<CoveragePolygon>>
         toCoveragePolygons(const std::vector<const Polygon*> polygons);
     static std::vector<const Polygon*> extractPolygons(std::vector<const Geometry*>& geoms);
 
@@ -346,8 +346,8 @@ private:
 
     void markInvalidInteriorSection(
         CoverageRing& ring,
-        std::size_t iStart, 
-        std::size_t iEnd, 
+        std::size_t iStart,
+        std::size_t iEnd,
         std::vector<std::unique_ptr<CoveragePolygon>>& adjCovPolygons );
 
     void markInvalidInteriorSegment(

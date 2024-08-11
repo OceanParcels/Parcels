@@ -135,6 +135,3 @@ private:
 } // namespace geos.shape.fractal
 } // namespace geos.shape
 } // namespace geos
-
-
-

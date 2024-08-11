@@ -2,9 +2,9 @@
 #
 #
 # Modified from original th_TH.TACTIS
-# 
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
 #	fs0 class
 fs0	{
@@ -22,15 +22,15 @@ fs1	{
 	charset		ISO8859-1:GL
 	font            ISO8859-1:GL
 }
-# 	fs1 class (Thai) 
+# 	fs1 class (Thai)
 fs2	{
 	charset         ISO8859-11:GR
 	font            ISO8859-11:GR
 }
 END XLC_FONTSET
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name           UTF-8
 mb_cur_max		3

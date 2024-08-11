@@ -153,7 +153,7 @@ by default, write a \fIstreamed\fR zip file to stdout. No temporary files are cr
 .PP
 The zip container written to stdout is, by necessity, written in streaming
 format.  Most programs that read Zip files can cope with a streamed zip file,
-but if interoperability is important, and your workflow allows you to write the 
+but if interoperability is important, and your workflow allows you to write the
 zip file directly to disk you can create a non-streamed zip file using the \f(CW\*(C`zipfile\*(C'\fR option.
 .SS "\s-1OPTIONS\s0"
 .IX Subsection "OPTIONS"
@@ -205,11 +205,11 @@ Display version number [$VERSION]
 Display help
 .SS "When to use a Streamed Zip File"
 .IX Subsection "When to use a Streamed Zip File"
-A Zip file created with streaming mode enabled allows you to create a zip file 
+A Zip file created with streaming mode enabled allows you to create a zip file
 in situations where you cannot seek backwards/forwards in the file.
 .PP
 A good examples is when you are
-serving dynamic content from a Web Server straight into a socket 
+serving dynamic content from a Web Server straight into a socket
 without needing to create a temporary zip file in the filesystsm.
 .PP
 Similarly if your workfow uses a Linux pipelined commands.

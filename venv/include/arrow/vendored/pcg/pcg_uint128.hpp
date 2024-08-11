@@ -687,7 +687,7 @@ uint_x4<UInt,UIntX2> operator*(const uint_x4<UInt,UIntX2>& a,
     return r;
 }
 
- 
+
 template <typename UInt, typename UIntX2>
 uint_x4<UInt,UIntX2> operator*(const uint_x4<UInt,UIntX2>& a,
                                UIntX2 b01)
@@ -976,11 +976,11 @@ uint_x4<UInt32,uint64_t> operator<<(const uint_x4<UInt32,uint64_t>& v,
 				    const bitcount_t shift)
 {
     constexpr bitcount_t bits2   = uint_x4<UInt32,uint64_t>::UINT_BITS * 2;
-    
+
     if (shift >= bits2) {
         return {v.d.v01 << (shift-bits2), uint64_t(0u)};
     } else {
-        return {shift ? (v.d.v23 << shift) | (v.d.v01 >> (bits2-shift)) 
+        return {shift ? (v.d.v23 << shift) | (v.d.v01 >> (bits2-shift))
                       : v.d.v23,
                 v.d.v01 << shift};
     }
@@ -991,7 +991,7 @@ uint_x4<UInt32,uint64_t> operator>>(const uint_x4<UInt32,uint64_t>& v,
 				    const bitcount_t shift)
 {
     constexpr bitcount_t bits2   = uint_x4<UInt32,uint64_t>::UINT_BITS * 2;
-    
+
     if (shift >= bits2) {
         return {uint64_t(0u), v.d.v23 >> (shift-bits2)};
     } else {

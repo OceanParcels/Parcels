@@ -176,6 +176,3 @@ coordT  qh_vertex_bestdist2(setT *vertices, vertexT **vertexp, vertexT **vertexp
 pointT *qh_voronoi_center(int dim, setT *points);
 
 #endif /* qhDEFgeom */
-
-
-

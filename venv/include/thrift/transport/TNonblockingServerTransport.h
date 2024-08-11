@@ -65,8 +65,8 @@ public:
 
   /**
   * Utility method
-  * 
-  * @return server socket file descriptor 
+  *
+  * @return server socket file descriptor
   * @throw TTransportException If an error occurs
   */
 

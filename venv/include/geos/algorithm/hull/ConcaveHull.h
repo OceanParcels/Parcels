@@ -314,4 +314,3 @@ private:
 } // geos::algorithm::hull
 } // geos::algorithm
 } // geos
-

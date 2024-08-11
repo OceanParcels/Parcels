@@ -42,7 +42,7 @@ namespace Model
      * <code>QueryName</code> and <code>Expression</code>.</p>  <p>When you are
      * creating a query, you must provide a query name and an expression. When you are
      * updating a query, you must provide a query name but updating the description is
-     * optional.</p> 
+     * optional.</p>
      */
     inline const StoredQuery& GetStoredQuery() const{ return m_storedQuery; }
     inline bool StoredQueryHasBeenSet() const { return m_storedQueryHasBeenSet; }

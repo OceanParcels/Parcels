@@ -300,17 +300,17 @@ Here is an example:
 \&  open my $fh, $layer, $file or die "$file : $!";
 \&  while(<$fh>){
 \&    $_ = decode($enc, $_) unless $use_perlio;
-\&    # .... 
+\&    # ....
 \&  }
 .Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 Encode::Encoding,
 Encode::Supported,
-Encode::PerlIO, 
+Encode::PerlIO,
 encoding,
-perlebcdic, 
-\&\*(L"open\*(R" in perlfunc, 
-perlunicode, 
-utf8, 
+perlebcdic,
+\&\*(L"open\*(R" in perlfunc,
+perlunicode,
+utf8,
 the Perl Unicode Mailing List <perl\-unicode@perl.org>

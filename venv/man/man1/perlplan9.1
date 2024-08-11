@@ -144,68 +144,68 @@ perlplan9 \- Plan 9\-specific documentation for Perl
 .IX Header "DESCRIPTION"
 These are a few notes describing features peculiar to
 Plan 9 Perl. As such, it is not intended to be a replacement
-for the rest of the Perl 5 documentation (which is both 
-copious and excellent). If you have any questions to 
-which you can't find answers in these man pages, contact 
-Luther Huffman at lutherh@stratcom.com and we'll try to 
+for the rest of the Perl 5 documentation (which is both
+copious and excellent). If you have any questions to
+which you can't find answers in these man pages, contact
+Luther Huffman at lutherh@stratcom.com and we'll try to
 answer them.
 .SS "Invoking Perl"
 .IX Subsection "Invoking Perl"
-Perl is invoked from the command line as described in 
-perl. Most perl scripts, however, do have a first line 
-such as \*(L"#!/usr/local/bin/perl\*(R". This is known as a shebang 
-(shell-bang) statement and tells the \s-1OS\s0 shell where to find 
-the perl interpreter. In Plan 9 Perl this statement should be 
-\&\*(L"#!/bin/perl\*(R" if you wish to be able to directly invoke the 
+Perl is invoked from the command line as described in
+perl. Most perl scripts, however, do have a first line
+such as \*(L"#!/usr/local/bin/perl\*(R". This is known as a shebang
+(shell-bang) statement and tells the \s-1OS\s0 shell where to find
+the perl interpreter. In Plan 9 Perl this statement should be
+\&\*(L"#!/bin/perl\*(R" if you wish to be able to directly invoke the
 script by its name.
      Alternatively, you may invoke perl with the command \*(L"Perl\*(R"
 instead of \*(L"perl\*(R". This will produce Acme-friendly error
 messages of the form \*(L"filename:18\*(R".
 .PP
-Some scripts, usually identified with a *.PL extension, are 
-self-configuring and are able to correctly create their own 
-shebang path from config information located in Plan 9 
+Some scripts, usually identified with a *.PL extension, are
+self-configuring and are able to correctly create their own
+shebang path from config information located in Plan 9
 Perl. These you won't need to be worried about.
 .SS "What's in Plan 9 Perl"
 .IX Subsection "What's in Plan 9 Perl"
-Although Plan 9 Perl currently only  provides static 
-loading, it is built with a number of useful extensions. 
-These include Opcode, FileHandle, Fcntl, and \s-1POSIX.\s0 Expect 
+Although Plan 9 Perl currently only  provides static
+loading, it is built with a number of useful extensions.
+These include Opcode, FileHandle, Fcntl, and \s-1POSIX.\s0 Expect
 to see others (and DynaLoading!) in the future.
 .SS "What's not in Plan 9 Perl"
 .IX Subsection "What's not in Plan 9 Perl"
-As mentioned previously, dynamic loading isn't currently 
+As mentioned previously, dynamic loading isn't currently
 available nor is MakeMaker. Both are high-priority items.
 .SS "Perl5 Functions not currently supported in Plan 9 Perl"
 .IX Subsection "Perl5 Functions not currently supported in Plan 9 Perl"
-Some, such as \f(CW\*(C`chown\*(C'\fR and \f(CW\*(C`umask\*(C'\fR aren't provided 
+Some, such as \f(CW\*(C`chown\*(C'\fR and \f(CW\*(C`umask\*(C'\fR aren't provided
 because the concept does not exist within Plan 9. Others,
 such as some of the socket-related functions, simply
-haven't been written yet. Many in the latter category 
+haven't been written yet. Many in the latter category
 may be supported in the future.
 .PP
 The functions not currently implemented include:
 .PP
 .Vb 5
-\&    chown, chroot, dbmclose, dbmopen, getsockopt, 
-\&    setsockopt, recvmsg, sendmsg, getnetbyname, 
-\&    getnetbyaddr, getnetent, getprotoent, getservent, 
-\&    sethostent, setnetent, setprotoent, setservent, 
+\&    chown, chroot, dbmclose, dbmopen, getsockopt,
+\&    setsockopt, recvmsg, sendmsg, getnetbyname,
+\&    getnetbyaddr, getnetent, getprotoent, getservent,
+\&    sethostent, setnetent, setprotoent, setservent,
 \&    endservent, endnetent, endprotoent, umask
 .Ve
 .PP
-There may be several other functions that have undefined 
+There may be several other functions that have undefined
 behavior so this list shouldn't be considered complete.
 .SS "Signals in Plan 9 Perl"
 .IX Subsection "Signals in Plan 9 Perl"
-For compatibility with perl scripts written for the Unix 
+For compatibility with perl scripts written for the Unix
 environment, Plan 9 Perl uses the \s-1POSIX\s0 signal emulation
 provided in Plan 9's \s-1ANSI POSIX\s0 Environment (\s-1APE\s0). Signal stacking
 isn't supported. The signals provided are:
 .PP
 .Vb 4
 \&    SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT,
-\&    SIGFPE, SIGKILL, SIGSEGV, SIGPIPE, SIGPIPE, SIGALRM, 
+\&    SIGFPE, SIGKILL, SIGSEGV, SIGPIPE, SIGPIPE, SIGALRM,
 \&    SIGTERM, SIGUSR1, SIGUSR2, SIGCHLD, SIGCONT,
 \&    SIGSTOP, SIGTSTP, SIGTTIN, SIGTTOU
 .Ve
@@ -270,7 +270,7 @@ pages that may interest you.
 (Note: \*(L"mk man\*(R" may produce some extraneous noise. Fear not.)
 .SH "BUGS"
 .IX Header "BUGS"
-\&\*(L"As many as there are grains of sand on all the beaches of the 
+\&\*(L"As many as there are grains of sand on all the beaches of the
 world . . .\*(R" \- Carl Sagan
 .SH "Revision date"
 .IX Header "Revision date"
@@ -280,5 +280,5 @@ This document was revised 09\-October\-1996 for Perl 5.003_7.
 Direct questions, comments, and the unlikely bug report (ahem) direct
 comments toward:
 .PP
-Luther Huffman, lutherh@stratcom.com, 
+Luther Huffman, lutherh@stratcom.com,
 Strategic Computer Solutions, Inc.

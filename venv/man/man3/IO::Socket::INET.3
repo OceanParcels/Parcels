@@ -228,9 +228,9 @@ Examples:
 \&   $sock = IO::Socket::INET\->new(
 \&                           PeerPort  => 9999,
 \&                           PeerAddr  => inet_ntoa(INADDR_BROADCAST),
-\&                           Proto     => udp,    
+\&                           Proto     => udp,
 \&                           LocalAddr => \*(Aqlocalhost\*(Aq,
-\&                           Broadcast => 1 ) 
+\&                           Broadcast => 1 )
 \&                       or die "Can\*(Aqt bind : $@\en";
 .Ve
 .Sp

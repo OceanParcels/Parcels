@@ -131,7 +131,7 @@ public:
 
     if (detached_)
       thread_->detach();
-    
+
     // Wait for the thread to start and get far enough to grab everything
     // that it needs from the calling context, thus absolving the caller
     // from being required to hold on to runnable indefinitely.
@@ -163,7 +163,7 @@ protected:
 
   virtual thread_funct_t getThreadFunc() const {
       return threadMain;
-  } 
+  }
 
 private:
   std::shared_ptr<Runnable> _runnable;

@@ -100,4 +100,3 @@ public:
 
 } // namespace geos.index
 } // namespace geos
-

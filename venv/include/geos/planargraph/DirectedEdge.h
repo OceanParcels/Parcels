@@ -234,4 +234,3 @@ std::ostream& operator << (std::ostream&, const DirectedEdge&);
 
 } // namespace geos::planargraph
 } // namespace geos
-

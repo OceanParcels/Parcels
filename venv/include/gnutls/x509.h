@@ -246,7 +246,7 @@ int gnutls_x509_crt_get_signature_oid(gnutls_x509_crt_t cert, char *oid, size_t 
  * @GNUTLS_KEYID_USE_BEST_KNOWN: Use the best known algorithm to calculate key ID. Using that option will make your program behavior depend on the version of gnutls linked with. That option has a cap of 64-bytes key IDs.
  *
  * Enumeration of different flags for the key ID functions.
- 
+
  */
 typedef enum {
 	GNUTLS_KEYID_USE_SHA1 = 0,
@@ -351,7 +351,7 @@ int gnutls_x509_name_constraints_add_permitted(gnutls_x509_name_constraints_t nc
 int gnutls_x509_name_constraints_add_excluded(gnutls_x509_name_constraints_t nc,
 					      gnutls_x509_subject_alt_name_t type,
 					      const gnutls_datum_t * name);
-int gnutls_x509_crt_set_name_constraints(gnutls_x509_crt_t crt, 
+int gnutls_x509_crt_set_name_constraints(gnutls_x509_crt_t crt,
 					 gnutls_x509_name_constraints_t nc,
 					 unsigned int critical);
 int gnutls_x509_name_constraints_get_permitted(gnutls_x509_name_constraints_t nc,
@@ -376,7 +376,7 @@ int gnutls_x509_cidr_to_rfc5280(const char *cidr, gnutls_datum_t *cidr_rfc5280);
    * @GNUTLS_CRL_REASON_UNUSED: The key was never used.
    * @GNUTLS_CRL_REASON_AA_COMPROMISE: AA compromised.
    *
-   * Enumeration of types for the CRL revocation reasons. 
+   * Enumeration of types for the CRL revocation reasons.
    */
 typedef enum gnutls_x509_crl_reason_flags_t {
 	GNUTLS_CRL_REASON_UNSPECIFIED = 0,
@@ -556,7 +556,7 @@ unsigned gnutls_x509_tlsfeatures_check_crt(gnutls_x509_tlsfeatures_t feat,
    * @GNUTLS_X509_QUALIFIER_URI: A URL
    * @GNUTLS_X509_QUALIFIER_NOICE: A text notice.
    *
-   * Enumeration of types for the X.509 qualifiers, of the certificate policy extension. 
+   * Enumeration of types for the X.509 qualifiers, of the certificate policy extension.
    */
 typedef enum gnutls_x509_qualifier_t {
 	GNUTLS_X509_QUALIFIER_UNKNOWN = 0, GNUTLS_X509_QUALIFIER_URI,
@@ -937,7 +937,7 @@ int gnutls_x509_crl_set_number(gnutls_x509_crl_t crl,
  * @GNUTLS_VERIFY_ALLOW_ANY_X509_V1_CA_CRT: Allow CA certificates that
  *   have version 1 (both root and intermediate). This might be
  *   dangerous since those haven't the basicConstraints
- *   extension. 
+ *   extension.
  * @GNUTLS_VERIFY_ALLOW_SIGN_RSA_MD2: Allow certificates to be signed
  *   using the broken MD2 algorithm.
  * @GNUTLS_VERIFY_ALLOW_SIGN_RSA_MD5: Allow certificates to be signed
@@ -1024,7 +1024,7 @@ typedef enum gnutls_certificate_verification_profiles_t {
 	GNUTLS_PROFILE_HIGH = 6,
 	GNUTLS_PROFILE_ULTRA = 7,
 	GNUTLS_PROFILE_FUTURE = 8,
-	
+
 	GNUTLS_PROFILE_SUITEB128=32,
 	GNUTLS_PROFILE_SUITEB192=33
 	/*GNUTLS_PROFILE_MAX=255*/
@@ -1631,7 +1631,7 @@ typedef int gnutls_verify_output_function(gnutls_x509_crt_t cert, gnutls_x509_cr
 												 /* The issuer if verification failed
 												 * because of him. might be null.
 												 */
-					  gnutls_x509_crl_t crl,	/* The CRL that caused verification failure 
+					  gnutls_x509_crl_t crl,	/* The CRL that caused verification failure
 									 * if any. Might be null.
 									 */
 					  unsigned int

@@ -34,7 +34,7 @@ namespace Model
    * messages only to verified destination phone numbers. For more information,
    * including how to move out of the sandbox to send messages without restrictions,
    * see <a href="https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html">SMS
-   * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>  
+   * sandbox</a> in the <i>Amazon SNS Developer Guide</i>.</p><p><h3>See Also:</h3>
    * <a
    * href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SMSSandboxPhoneNumber">AWS
    * API Reference</a></p>

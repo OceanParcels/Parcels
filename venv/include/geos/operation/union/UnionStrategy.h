@@ -70,4 +70,3 @@ public:
 } // namespace geos::operation::geounion
 } // namespace geos::operation
 } // namespace geos
-

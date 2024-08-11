@@ -251,4 +251,3 @@ typedef struct _VAEncFEIDistortionHevc {
 #endif
 
 #endif
-

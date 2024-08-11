@@ -26,10 +26,10 @@ hwlocality_object_strings \- Converting between Object Types and Attributes, and
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_obj_attr_snprintf (char *restrict string, size_t size, \fBhwloc_obj_t\fP obj, const char *restrict separator, int verbose)"
 
 .PP
@@ -41,7 +41,7 @@ If \fCsize\fP is 0, \fCstring\fP may safely be \fCNULL\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-the number of characters that were actually written if not truncating, or that would have been written (not including the ending \\0)\&. 
+the number of characters that were actually written if not truncating, or that would have been written (not including the ending \\0)\&.
 .RE
 .PP
 
@@ -60,7 +60,7 @@ If \fCsize\fP is 0, \fCstring\fP may safely be \fCNULL\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-the number of characters that were actually written if not truncating, or that would have been written (not including the ending \\0)\&. 
+the number of characters that were actually written if not truncating, or that would have been written (not including the ending \\0)\&.
 .RE
 .PP
 
@@ -73,7 +73,7 @@ Return a constant stringified object type\&. This function is the basic way to c
 .PP
 \fBReturns\fP
 .RS 4
-A constant string containing the object type name or \fC'Unknown'\fP\&. 
+A constant string containing the object type name or \fC'Unknown'\fP\&.
 .RE
 .PP
 
@@ -97,7 +97,7 @@ Type-specific attributes, for instance Cache type, Cache depth, Group depth, Bri
 .RS 4
 This function is guaranteed to match any string returned by \fBhwloc_obj_type_string()\fP or \fBhwloc_obj_type_snprintf()\fP\&.
 .PP
-This is an extended version of the now deprecated hwloc_obj_type_sscanf()\&. 
+This is an extended version of the now deprecated hwloc_obj_type_sscanf()\&.
 .RE
 .PP
 
@@ -116,10 +116,10 @@ The matched object type is set in \fCtypep\fP if \fCtypep\fP is non \fCNULL\fP\&
 .RS 4
 This function is similar to \fBhwloc_type_sscanf()\fP followed by \fBhwloc_get_type_depth()\fP but it also automatically disambiguates multiple group levels etc\&.
 .PP
-This function is guaranteed to match any string returned by \fBhwloc_obj_type_string()\fP or \fBhwloc_obj_type_snprintf()\fP\&. 
+This function is guaranteed to match any string returned by \fBhwloc_obj_type_string()\fP or \fBhwloc_obj_type_snprintf()\fP\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

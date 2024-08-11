@@ -68,11 +68,11 @@ namespace Model
      * all objects in the <code>docs/</code> folder. Required when the parent element
      * <code>Condition</code> is specified and sibling
      * <code>HttpErrorCodeReturnedEquals</code> is not specified. If both conditions
-     * are specified, both must be true for the redirect to be applied.</p> 
+     * are specified, both must be true for the redirect to be applied.</p>
      * <p>Replacement must be made for object keys containing special characters (such
      * as carriage returns) when using XML requests. For more information, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-xml-related-constraints">
-     * XML related object key constraints</a>.</p> 
+     * XML related object key constraints</a>.</p>
      */
     inline const Aws::String& GetKeyPrefixEquals() const{ return m_keyPrefixEquals; }
     inline bool KeyPrefixEqualsHasBeenSet() const { return m_keyPrefixEqualsHasBeenSet; }

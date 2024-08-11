@@ -144,8 +144,8 @@ perlpacktut \- tutorial on "pack" and "unpack"
 .IX Header "DESCRIPTION"
 \&\f(CW\*(C`pack\*(C'\fR and \f(CW\*(C`unpack\*(C'\fR are two functions for transforming data according
 to a user-defined template, between the guarded way Perl stores values
-and some well-defined representation as might be required in the 
-environment of a Perl program. Unfortunately, they're also two of 
+and some well-defined representation as might be required in the
+environment of a Perl program. Unfortunately, they're also two of
 the most misunderstood and most often overlooked functions that Perl
 provides. This tutorial will demystify them for you.
 .SH "The Basic Principle"
@@ -162,7 +162,7 @@ excellent alternative. The \f(CW\*(C`pack\*(C'\fR function converts values to a 
 sequence containing representations according to a given specification,
 the so-called \*(L"template\*(R" argument. \f(CW\*(C`unpack\*(C'\fR is the reverse process,
 deriving some values from the contents of a string of bytes. (Be cautioned,
-however, that not all that has been packed together can be neatly unpacked \- 
+however, that not all that has been packed together can be neatly unpacked \-
 a very common experience as seasoned travellers are likely to confirm.)
 .PP
 Why, you may ask, would you need a chunk of memory containing some values
@@ -171,8 +171,8 @@ some file, a device, or a network connection, whereby this binary
 representation is either forced on you or will give you some benefit
 in processing. Another cause is passing data to some system call that
 is not available as a Perl function: \f(CW\*(C`syscall\*(C'\fR requires you to provide
-parameters stored in the way it happens in a C program. Even text processing 
-(as shown in the next section) may be simplified with judicious usage 
+parameters stored in the way it happens in a C program. Even text processing
+(as shown in the next section) may be simplified with judicious usage
 of these two functions.
 .PP
 To see how (un)packing works, we'll start with a simple template
@@ -180,8 +180,8 @@ code where the conversion is in low gear: between the contents of a byte
 sequence and a string of hexadecimal digits. Let's use \f(CW\*(C`unpack\*(C'\fR, since
 this is likely to remind you of a dump program, or some desperate last
 message unfortunate programs are wont to throw at you before they expire
-into the wild blue yonder. Assuming that the variable \f(CW$mem\fR holds a 
-sequence of bytes that we'd like to inspect without assuming anything 
+into the wild blue yonder. Assuming that the variable \f(CW$mem\fR holds a
+sequence of bytes that we'd like to inspect without assuming anything
 about its meaning, we can write
 .PP
 .Vb 2
@@ -237,7 +237,7 @@ How do we do it? You might think first to use \f(CW\*(C`split\*(C'\fR; however, 
 income or expenditure. Oops. Well, you could always use \f(CW\*(C`substr\*(C'\fR:
 .PP
 .Vb 7
-\&    while (<>) { 
+\&    while (<>) {
 \&        my $date   = substr($_,  0, 11);
 \&        my $desc   = substr($_, 12, 27);
 \&        my $income = substr($_, 40,  7);
@@ -255,8 +255,8 @@ as horribly unfriendly.
 Or maybe we could use regular expressions:
 .PP
 .Vb 5
-\&    while (<>) { 
-\&        my($date, $desc, $income, $expend) = 
+\&    while (<>) {
+\&        my($date, $desc, $income, $expend) =
 \&            m|(\ed\ed/\ed\ed/\ed{4}) (.{27}) (.{7})(.*)|;
 \&        ...
 \&    }
@@ -271,7 +271,7 @@ you out when dealing with fixed-width data like the above. Let's have a
 look at a solution with \f(CW\*(C`unpack\*(C'\fR:
 .PP
 .Vb 4
-\&    while (<>) { 
+\&    while (<>) {
 \&        my($date, $desc, $income, $expend) = unpack("A10xA27xA7A*", $_);
 \&        ...
 \&    }
@@ -284,7 +284,7 @@ Where did I pull that out of?
 the headers, and a handy ruler so we can keep track of where we are.
 .PP
 .Vb 5
-\&             1         2         3         4         5        
+\&             1         2         3         4         5
 \&    1234567890123456789012345678901234567890123456789012345678
 \&    Date      |Description                | Income|Expenditure
 \&    01/28/2001 Flea spray                                24.99
@@ -342,10 +342,10 @@ how much we've spent:
 \&        $tot_expend += $expend;
 \&    }
 \&
-\&    $tot_income = sprintf("%.2f", $tot_income); # Get them into 
+\&    $tot_income = sprintf("%.2f", $tot_income); # Get them into
 \&    $tot_expend = sprintf("%.2f", $tot_expend); # "financial" format
 \&
-\&    $date = POSIX::strftime("%m/%d/%Y", localtime); 
+\&    $date = POSIX::strftime("%m/%d/%Y", localtime);
 \&
 \&    # OK, let\*(Aqs go:
 \&
@@ -400,9 +400,9 @@ unfortunately, we can't get \f(CW\*(C`pack\*(C'\fR to right-justify our fields, 
 can get \f(CW\*(C`sprintf\*(C'\fR to do it:
 .PP
 .Vb 5
-\&    $tot_income = sprintf("%.2f", $tot_income); 
+\&    $tot_income = sprintf("%.2f", $tot_income);
 \&    $tot_expend = sprintf("%12.2f", $tot_expend);
-\&    $date = POSIX::strftime("%m/%d/%Y", localtime); 
+\&    $date = POSIX::strftime("%m/%d/%Y", localtime);
 \&    print pack("A11 A28 A8 A*", $date, "Totals",
 \&        $tot_income, $tot_expend);
 .Ve
@@ -474,7 +474,7 @@ computer's representation you write
 \&   my $ps = pack( \*(Aqs\*(Aq, 20302 );
 .Ve
 .PP
-Again, the result is a string, now containing 2 bytes. If you print 
+Again, the result is a string, now containing 2 bytes. If you print
 this string (which is, generally, not recommended) you might see
 \&\f(CW\*(C`ON\*(C'\fR or \f(CW\*(C`NO\*(C'\fR (depending on your system's byte ordering) \- or something
 entirely different if your computer doesn't use \s-1ASCII\s0 character encoding.
@@ -495,15 +495,15 @@ getting set, and unpacking this will smartly return a negative value.
 for signed and unsigned 32\-bit integers. And if this is not enough and
 your system supports 64 bit integers you can push the limits much closer
 to infinity with pack codes \f(CW\*(C`q\*(C'\fR and \f(CW\*(C`Q\*(C'\fR. A notable exception is provided
-by pack codes \f(CW\*(C`i\*(C'\fR and \f(CW\*(C`I\*(C'\fR for signed and unsigned integers of the 
+by pack codes \f(CW\*(C`i\*(C'\fR and \f(CW\*(C`I\*(C'\fR for signed and unsigned integers of the
 \&\*(L"local custom\*(R" variety: Such an integer will take up as many bytes as
 a local C compiler returns for \f(CW\*(C`sizeof(int)\*(C'\fR, but it'll use \fIat least\fR
 32 bits.
 .PP
 Each of the integer pack codes \f(CW\*(C`sSlLqQ\*(C'\fR results in a fixed number of bytes,
-no matter where you execute your program. This may be useful for some 
-applications, but it does not provide for a portable way to pass data 
-structures between Perl and C programs (bound to happen when you call 
+no matter where you execute your program. This may be useful for some
+applications, but it does not provide for a portable way to pass data
+structures between Perl and C programs (bound to happen when you call
 \&\s-1XS\s0 extensions or the Perl function \f(CW\*(C`syscall\*(C'\fR), or when you read or
 write binary files. What you'll need in this case are template codes that
 depend on what your local C compiler compiles when you code \f(CW\*(C`short\*(C'\fR or
@@ -515,7 +515,7 @@ C and Perl. (If you'd like to use values from \f(CW%Config\fR in your program
 you have to import it with \f(CW\*(C`use Config\*(C'\fR.)
 .PP
 .Vb 5
-\&   signed unsigned  byte length in C   byte length in Perl       
+\&   signed unsigned  byte length in C   byte length in Perl
 \&     s!     S!      sizeof(short)      $Config{shortsize}
 \&     i!     I!      sizeof(int)        $Config{intsize}
 \&     l!     L!      sizeof(long)       $Config{longsize}
@@ -571,7 +571,7 @@ together, we may now write:
 .Vb 5
 \&   my( $ip, $cs,
 \&       $flags,$fl,$fh,
-\&       $ax,$al,$ah, $bx,$bl,$bh, $cx,$cl,$ch, $dx,$dl,$dh, 
+\&       $ax,$al,$ah, $bx,$bl,$bh, $cx,$cl,$ch, $dx,$dl,$dh,
 \&       $si, $di, $bp, $ds, $es ) =
 \&   unpack( \*(Aqv2\*(Aq . (\*(AqvXXCC\*(Aq x 5) . \*(Aqv5\*(Aq, $frame );
 .Ve
@@ -694,7 +694,7 @@ string codes:
 It is not possible to pack or unpack bit fields \- just integral bytes.
 \&\f(CW\*(C`pack\*(C'\fR always starts at the next byte boundary and \*(L"rounds up\*(R" to the
 next multiple of 8 by adding zero bits as required. (If you do want bit
-fields, there is \*(L"vec\*(R" in perlfunc. Or you could implement bit field 
+fields, there is \*(L"vec\*(R" in perlfunc. Or you could implement bit field
 handling at the character string level, using split, substr, and
 concatenation on unpacked bit strings.)
 .PP
@@ -708,7 +708,7 @@ status register (a \*(L"\-\*(R" stands for a \*(L"reserved\*(R" bit):
 \&    MSB           LSB MSB           LSB
 .Ve
 .PP
-Converting these two bytes to a string can be done with the unpack 
+Converting these two bytes to a string can be done with the unpack
 template \f(CW\*(Aqb16\*(Aq\fR. To obtain the individual bit values from the bit
 string we use \f(CW\*(C`split\*(C'\fR with the \*(L"empty\*(R" separator pattern which dissects
 into individual characters. Bit values from the \*(L"reserved\*(R" positions are
@@ -729,10 +729,10 @@ Another odd-man-out in the template alphabet is \f(CW\*(C`u\*(C'\fR, which packs
 \&\*(L"uuencoded string\*(R". (\*(L"uu\*(R" is short for Unix-to-Unix.) Chances are that
 you won't ever need this encoding technique which was invented to overcome
 the shortcomings of old-fashioned transmission mediums that do not support
-other than simple \s-1ASCII\s0 data. The essential recipe is simple: Take three 
-bytes, or 24 bits. Split them into 4 six-packs, adding a space (0x20) to 
-each. Repeat until all of the data is blended. Fold groups of 4 bytes into 
-lines no longer than 60 and garnish them in front with the original byte count 
+other than simple \s-1ASCII\s0 data. The essential recipe is simple: Take three
+bytes, or 24 bits. Split them into 4 six-packs, adding a space (0x20) to
+each. Repeat until all of the data is blended. Fold groups of 4 bytes into
+lines no longer than 60 and garnish them in front with the original byte count
 (incremented by 0x20) and a \f(CW"\en"\fR at the end. \- The \f(CW\*(C`pack\*(C'\fR chef will
 prepare this for you, a la minute, when you select pack code \f(CW\*(C`u\*(C'\fR on the menu:
 .PP
@@ -746,11 +746,11 @@ set to some (smaller) integer multiple of three. \f(CW\*(C`unpack\*(C'\fR simply
 the repeat count.
 .SS "Doing Sums"
 .IX Subsection "Doing Sums"
-An even stranger template code is \f(CW\*(C`%\*(C'\fR<\fInumber\fR>. First, because 
+An even stranger template code is \f(CW\*(C`%\*(C'\fR<\fInumber\fR>. First, because
 it's used as a prefix to some other template code. Second, because it
 cannot be used in \f(CW\*(C`pack\*(C'\fR at all, and third, in \f(CW\*(C`unpack\*(C'\fR, doesn't return the
 data as defined by the template code it precedes. Instead it'll give you an
-integer of \fInumber\fR bits that is computed from the data value by 
+integer of \fInumber\fR bits that is computed from the data value by
 doing sums. For numeric unpack codes, no big feat is achieved:
 .PP
 .Vb 2
@@ -924,7 +924,7 @@ endian shorts and packing them in the reverse byte order:
 .IX Subsection "String Lengths"
 In the previous section we've seen a network message that was constructed
 by prefixing the binary message length to the actual message. You'll find
-that packing a length followed by so many bytes of data is a 
+that packing a length followed by so many bytes of data is a
 frequently used recipe since appending a null byte won't work
 if a null byte may be part of the data. Here is an example where both
 techniques are used: after two null terminated strings with source and
@@ -970,7 +970,7 @@ Combining two pack codes with a slash (\f(CW\*(C`/\*(C'\fR) associates them with
 value from the argument list. In \f(CW\*(C`pack\*(C'\fR, the length of the argument is
 taken and packed according to the first code while the argument itself
 is added after being converted with the template code after the slash.
-This saves us the trouble of inserting the \f(CW\*(C`length\*(C'\fR call, but it is 
+This saves us the trouble of inserting the \f(CW\*(C`length\*(C'\fR call, but it is
 in \f(CW\*(C`unpack\*(C'\fR where we really score: The value of the length byte marks the
 end of the string to be taken from the buffer. Since this combination
 doesn't make sense except when the second pack code isn't \f(CW\*(C`a*\*(C'\fR, \f(CW\*(C`A*\*(C'\fR
@@ -1073,7 +1073,7 @@ complement sum of the preceding bytes. Example: \f(CW\*(C`:0300300002337A1E\*(C'
 .PP
 The first step of processing such a line is the conversion, to binary,
 of the hexadecimal data, to obtain the four fields, while checking the
-checksum. No surprise here: we'll start with a simple \f(CW\*(C`pack\*(C'\fR call to 
+checksum. No surprise here: we'll start with a simple \f(CW\*(C`pack\*(C'\fR call to
 convert everything to binary:
 .PP
 .Vb 1
@@ -1125,7 +1125,7 @@ In the consideration of speed against memory requirements the balance
 has been tilted in favor of faster execution. This has influenced the
 way C compilers allocate memory for structures: On architectures
 where a 16\-bit or 32\-bit operand can be moved faster between places in
-memory, or to or from a \s-1CPU\s0 register, if it is aligned at an even or 
+memory, or to or from a \s-1CPU\s0 register, if it is aligned at an even or
 multiple-of-four or even at a multiple-of eight address, a C compiler
 will give you this speed benefit by stuffing extra bytes into structures.
 If you don't cross the C shoreline this is not likely to cause you any
@@ -1182,7 +1182,7 @@ the amount of fill bytes cannot be derived from the alignment of the next
 item alone.
 .PP
 \&\s-1OK,\s0 so let's bite the bullet. Here's one way to get the alignment right
-by inserting template codes \f(CW\*(C`x\*(C'\fR, which don't take a corresponding item 
+by inserting template codes \f(CW\*(C`x\*(C'\fR, which don't take a corresponding item
 from the list:
 .PP
 .Vb 1
@@ -1195,7 +1195,7 @@ work for the platforms where the compiler aligns things as above.
 And somebody somewhere has a platform where it doesn't.
 [Probably a Cray, where \f(CW\*(C`short\*(C'\fRs, \f(CW\*(C`int\*(C'\fRs and \f(CW\*(C`long\*(C'\fRs are all 8 bytes. :\-)]
 .PP
-Counting bytes and watching alignments in lengthy structures is bound to 
+Counting bytes and watching alignments in lengthy structures is bound to
 be a drag. Isn't there a way we can create the template with a simple
 program? Here's a C program that does the trick:
 .PP
@@ -1228,11 +1228,11 @@ The output line can be used as a template in a \f(CW\*(C`pack\*(C'\fR or \f(CW\*
 \&  my $gappy = pack( \*(Aq@0c @2s! @4c @8l!\*(Aq, $c1, $s, $c2, $l );
 .Ve
 .PP
-Gee, yet another template code \- as if we hadn't plenty. But 
+Gee, yet another template code \- as if we hadn't plenty. But
 \&\f(CW\*(C`@\*(C'\fR saves our day by enabling us to specify the offset from the beginning
 of the pack buffer to the next item: This is just the value
 the \f(CW\*(C`offsetof\*(C'\fR macro (defined in \f(CW\*(C`<stddef.h>\*(C'\fR) returns when
-given a \f(CW\*(C`struct\*(C'\fR type and one of its field names (\*(L"member-designator\*(R" in 
+given a \f(CW\*(C`struct\*(C'\fR type and one of its field names (\*(L"member-designator\*(R" in
 C standardese).
 .PP
 Neither using offsets nor adding \f(CW\*(C`x\*(C'\fR's to bridge the gaps is satisfactory.
@@ -1308,7 +1308,7 @@ like this:
 \&         map{ ( $_\->{count}, $_\->{glyph} ) } @buffer );
 .Ve
 .PP
-This packs \f(CW\*(C`3*@buffer\*(C'\fR bytes, but it turns out that the size of 
+This packs \f(CW\*(C`3*@buffer\*(C'\fR bytes, but it turns out that the size of
 \&\f(CW\*(C`buffer_t\*(C'\fR is four times \f(CW\*(C`BUFLEN\*(C'\fR! The moral of the story is that
 the required alignment of a structure or array is propagated to the
 next higher level where we have to consider padding \fIat the end\fR
@@ -1407,7 +1407,7 @@ it's up to you to specify the actual size as an explicit length after \f(CW\*(C`
 As a consequence, \f(CW\*(C`pack\*(C'\fR ignores any number or \f(CW\*(C`*\*(C'\fR after \f(CW\*(C`P\*(C'\fR.
 .PP
 Now that we have seen \f(CW\*(C`P\*(C'\fR at work, we might as well give \f(CW\*(C`p\*(C'\fR a whirl.
-Why do we need a second template code for packing pointers at all? The 
+Why do we need a second template code for packing pointers at all? The
 answer lies behind the simple fact that an \f(CW\*(C`unpack\*(C'\fR with \f(CW\*(C`p\*(C'\fR promises
 a null-terminated string starting at the address taken from the buffer,
 and that implies a length for the data item to be returned:
@@ -1423,7 +1423,7 @@ count, not a length as after \f(CW\*(C`P\*(C'\fR.
 .PP
 Using \f(CW\*(C`pack(..., $x)\*(C'\fR with \f(CW\*(C`P\*(C'\fR or \f(CW\*(C`p\*(C'\fR to get the address where \f(CW$x\fR is
 actually stored must be used with circumspection. Perl's internal machinery
-considers the relation between a variable and that address as its very own 
+considers the relation between a variable and that address as its very own
 private matter and doesn't really care that we have obtained a copy. Therefore:
 .IP "\(bu" 4
 Do not use \f(CW\*(C`pack\*(C'\fR with \f(CW\*(C`p\*(C'\fR or \f(CW\*(C`P\*(C'\fR to obtain the address of variable
@@ -1448,7 +1448,7 @@ and \f(CW\*(C`unpack\*(C'\fR:
 .PP
 .Vb 2
 \&    # Convert IP address for socket functions
-\&    pack( "C4", split /\e./, "123.4.5.6" ); 
+\&    pack( "C4", split /\e./, "123.4.5.6" );
 \&
 \&    # Count the bits in a chunk of memory (e.g. a select vector)
 \&    unpack( \*(Aq%32b*\*(Aq, $mask );
@@ -1464,7 +1464,7 @@ and \f(CW\*(C`unpack\*(C'\fR:
 \&    my $timespec = pack( \*(AqL!L!\*(Aq, $secs, $nanosecs );
 .Ve
 .PP
-For a simple memory dump we unpack some bytes into just as 
+For a simple memory dump we unpack some bytes into just as
 many pairs of hex digits, and use \f(CW\*(C`map\*(C'\fR to handle the traditional
 spacing \- 16 bytes to a line:
 .PP

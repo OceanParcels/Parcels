@@ -221,4 +221,3 @@ typedef struct
 #define sz_xDbeGetBackBufferAttributesReply	32
 
 #endif /* DBE_PROTO_H */
-

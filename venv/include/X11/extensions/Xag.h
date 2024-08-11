@@ -87,4 +87,3 @@ Status XagDestroyAssociation(
 _XFUNCPROTOEND
 
 #endif /* _XAG_H_ */
-

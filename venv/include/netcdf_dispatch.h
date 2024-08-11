@@ -231,7 +231,7 @@ extern "C" {
                                         nc_type *, size_t *, int *);
     EXTERNL int NC_NOTNC4_def_var_quantize(int, int,  int, int);
     EXTERNL int NC_NOTNC4_inq_var_quantize(int, int,  int *, int *);
-    
+
     /* These functions are for dispatch layers that don't implement
      * the enhanced model, but want to succeed anyway.
      * They return NC_NOERR plus properly set the out parameters.

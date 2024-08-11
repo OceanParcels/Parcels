@@ -155,7 +155,7 @@ Test::Builder::Module \- Base class for test modules
 \&      my $tb = $CLASS\->builder;
 \&      return $tb\->ok(@_);
 \&  }
-\&  
+\&
 \&  1;
 .Ve
 .SH "DESCRIPTION"
@@ -180,8 +180,8 @@ same basic way as Test::More's, setting the plan and controlling
 exporting of functions and variables.  This allows your module to set
 the plan independent of Test::More.
 .PP
-All arguments passed to \f(CW\*(C`import()\*(C'\fR are passed onto 
-\&\f(CW\*(C`Your::Module\->builder\->plan()\*(C'\fR with the exception of 
+All arguments passed to \f(CW\*(C`import()\*(C'\fR are passed onto
+\&\f(CW\*(C`Your::Module\->builder\->plan()\*(C'\fR with the exception of
 \&\f(CW\*(C`import =>[qw(things to import)]\*(C'\fR.
 .PP
 .Vb 1

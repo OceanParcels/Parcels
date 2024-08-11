@@ -23,7 +23,7 @@ hwlocality_cpukinds \- Kinds of CPU cores
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 Platforms with heterogeneous CPUs may have some cores with different features or frequencies\&. This API exposes identical PUs in sets called CPU kinds\&. Each PU of the topology may only be in a single kind\&.
 .PP
 The number of kinds may be obtained with \fBhwloc_cpukinds_get_nr()\fP\&. If the platform is homogeneous, there may be a single kind with all PUs\&. If the platform or operating system does not expose any information about CPU cores, there may be no kind at all\&.
@@ -38,9 +38,9 @@ When available, efficiency values are gathered from the operating system\&. If s
 .PP
 If the operating system does not expose core efficiencies natively, hwloc tries to compute efficiencies by comparing CPU kinds using frequencies (on ARM), or core types and frequencies (on other architectures)\&. The environment variable HWLOC_CPUKINDS_RANKING may be used to change this heuristics, see \fBEnvironment Variables\fP\&.
 .PP
-If hwloc fails to rank any kind, for instance because the operating system does not expose efficiencies and core frequencies, all kinds will have an unknown efficiency (\fC-1\fP), and they are not indexed/ordered in any specific way\&. 
+If hwloc fails to rank any kind, for instance because the operating system does not expose efficiencies and core frequencies, all kinds will have an unknown efficiency (\fC-1\fP), and they are not indexed/ordered in any specific way\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_cpukinds_get_by_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_bitmap_t\fP cpuset, unsigned long flags)"
 
 .PP
@@ -48,13 +48,13 @@ Get the index of the CPU kind that contains CPUs listed in \fCcpuset\fP\&. \fCfl
 .PP
 \fBReturns\fP
 .RS 4
-The index of the CPU kind (positive integer or 0) on success\&. 
+The index of the CPU kind (positive integer or 0) on success\&.
 .PP
-\fC-1\fP with \fCerrno\fP set to \fCEXDEV\fP if \fCcpuset\fP is only partially included in the some kind\&. 
+\fC-1\fP with \fCerrno\fP set to \fCEXDEV\fP if \fCcpuset\fP is only partially included in the some kind\&.
 .PP
-\fC-1\fP with \fCerrno\fP set to \fCENOENT\fP if \fCcpuset\fP is not included in any kind, even partially\&. 
+\fC-1\fP with \fCerrno\fP set to \fCENOENT\fP if \fCcpuset\fP is not included in any kind, even partially\&.
 .PP
-\fC-1\fP with \fCerrno\fP set to \fCEINVAL\fP if parameters are invalid\&. 
+\fC-1\fP with \fCerrno\fP set to \fCEINVAL\fP if parameters are invalid\&.
 .RE
 .PP
 
@@ -79,11 +79,11 @@ If \fCnr_infos\fP or \fCinfos\fP is \fCNULL\fP, no info is returned\&.
 .PP
 \fBReturns\fP
 .RS 4
-\fC0\fP on success\&. 
+\fC0\fP on success\&.
 .PP
-\fC-1\fP with \fCerrno\fP set to \fCENOENT\fP if \fCkind_index\fP does not match any CPU kind\&. 
+\fC-1\fP with \fCerrno\fP set to \fCENOENT\fP if \fCkind_index\fP does not match any CPU kind\&.
 .PP
-\fC-1\fP with \fCerrno\fP set to \fCEINVAL\fP if parameters are invalid\&. 
+\fC-1\fP with \fCerrno\fP set to \fCEINVAL\fP if parameters are invalid\&.
 .RE
 .PP
 
@@ -94,11 +94,11 @@ Get the number of different kinds of CPU cores in the topology\&. \fCflags\fP mu
 .PP
 \fBReturns\fP
 .RS 4
-The number of CPU kinds (positive integer) on success\&. 
+The number of CPU kinds (positive integer) on success\&.
 .PP
-\fC0\fP if no information about kinds was found\&. 
+\fC0\fP if no information about kinds was found\&.
 .PP
-\fC-1\fP with \fCerrno\fP set to \fCEINVAL\fP if \fCflags\fP is invalid\&. 
+\fC-1\fP with \fCerrno\fP set to \fCEINVAL\fP if \fCflags\fP is invalid\&.
 .RE
 .PP
 
@@ -124,12 +124,12 @@ The efficiency \fCforced_efficiency\fP provided to this function may be differen
 .PP
 \fBReturns\fP
 .RS 4
-\fC0\fP on success\&. 
+\fC0\fP on success\&.
 .PP
-\fC-1\fP with \fCerrno\fP set to \fCEINVAL\fP if some parameters are invalid, for instance if \fCcpuset\fP is \fCNULL\fP or empty\&. 
+\fC-1\fP with \fCerrno\fP set to \fCEINVAL\fP if some parameters are invalid, for instance if \fCcpuset\fP is \fCNULL\fP or empty\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

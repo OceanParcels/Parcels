@@ -342,4 +342,3 @@ bool EdgeComparator(const Edge* a, const Edge* b);
 } // namespace geos.operation.overlayng
 } // namespace geos.operation
 } // namespace geos
-

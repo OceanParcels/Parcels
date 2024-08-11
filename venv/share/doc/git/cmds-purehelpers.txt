@@ -51,4 +51,3 @@ linkgit:git-sh-setup[1]::
 
 linkgit:git-stripspace[1]::
 	Remove unnecessary whitespace.
-

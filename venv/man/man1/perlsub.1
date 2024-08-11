@@ -357,7 +357,7 @@ Do not, however, be tempted to do this:
 .PP
 Like the flattened incoming parameter list, the return list is also
 flattened on return.  So all you have managed to do here is stored
-everything in \f(CW@a\fR and made \f(CW@b\fR empty.  See 
+everything in \f(CW@a\fR and made \f(CW@b\fR empty.  See
 \&\*(L"Pass by Reference\*(R" for alternatives.
 .PP
 A subroutine may be called using an explicit \f(CW\*(C`&\*(C'\fR prefix.  The
@@ -421,8 +421,8 @@ Subroutines whose names are in all upper case are reserved to the Perl
 core, as are modules whose names are in all lower case.  A subroutine in
 all capitals is a loosely-held convention meaning it will be called
 indirectly by the run-time system itself, usually due to a triggered event.
-Subroutines whose name start with a left parenthesis are also reserved the 
-same way.  The following is a list of some subroutines that currently do 
+Subroutines whose name start with a left parenthesis are also reserved the
+same way.  The following is a list of some subroutines that currently do
 special, pre-defined things.
 .IP "documented later in this document" 4
 .IX Item "documented later in this document"
@@ -435,16 +435,16 @@ special, pre-defined things.
 \&\f(CW\*(C`DESTROY\*(C'\fR, \f(CW\*(C`DOES\*(C'\fR
 .IP "documented in perltie" 4
 .IX Item "documented in perltie"
-\&\f(CW\*(C`BINMODE\*(C'\fR, \f(CW\*(C`CLEAR\*(C'\fR, \f(CW\*(C`CLOSE\*(C'\fR, \f(CW\*(C`DELETE\*(C'\fR, \f(CW\*(C`DESTROY\*(C'\fR, \f(CW\*(C`EOF\*(C'\fR, \f(CW\*(C`EXISTS\*(C'\fR, 
-\&\f(CW\*(C`EXTEND\*(C'\fR, \f(CW\*(C`FETCH\*(C'\fR, \f(CW\*(C`FETCHSIZE\*(C'\fR, \f(CW\*(C`FILENO\*(C'\fR, \f(CW\*(C`FIRSTKEY\*(C'\fR, \f(CW\*(C`GETC\*(C'\fR, 
-\&\f(CW\*(C`NEXTKEY\*(C'\fR, \f(CW\*(C`OPEN\*(C'\fR, \f(CW\*(C`POP\*(C'\fR, \f(CW\*(C`PRINT\*(C'\fR, \f(CW\*(C`PRINTF\*(C'\fR, \f(CW\*(C`PUSH\*(C'\fR, \f(CW\*(C`READ\*(C'\fR, 
-\&\f(CW\*(C`READLINE\*(C'\fR, \f(CW\*(C`SCALAR\*(C'\fR, \f(CW\*(C`SEEK\*(C'\fR, \f(CW\*(C`SHIFT\*(C'\fR, \f(CW\*(C`SPLICE\*(C'\fR, \f(CW\*(C`STORE\*(C'\fR, 
-\&\f(CW\*(C`STORESIZE\*(C'\fR, \f(CW\*(C`TELL\*(C'\fR, \f(CW\*(C`TIEARRAY\*(C'\fR, \f(CW\*(C`TIEHANDLE\*(C'\fR, \f(CW\*(C`TIEHASH\*(C'\fR, 
+\&\f(CW\*(C`BINMODE\*(C'\fR, \f(CW\*(C`CLEAR\*(C'\fR, \f(CW\*(C`CLOSE\*(C'\fR, \f(CW\*(C`DELETE\*(C'\fR, \f(CW\*(C`DESTROY\*(C'\fR, \f(CW\*(C`EOF\*(C'\fR, \f(CW\*(C`EXISTS\*(C'\fR,
+\&\f(CW\*(C`EXTEND\*(C'\fR, \f(CW\*(C`FETCH\*(C'\fR, \f(CW\*(C`FETCHSIZE\*(C'\fR, \f(CW\*(C`FILENO\*(C'\fR, \f(CW\*(C`FIRSTKEY\*(C'\fR, \f(CW\*(C`GETC\*(C'\fR,
+\&\f(CW\*(C`NEXTKEY\*(C'\fR, \f(CW\*(C`OPEN\*(C'\fR, \f(CW\*(C`POP\*(C'\fR, \f(CW\*(C`PRINT\*(C'\fR, \f(CW\*(C`PRINTF\*(C'\fR, \f(CW\*(C`PUSH\*(C'\fR, \f(CW\*(C`READ\*(C'\fR,
+\&\f(CW\*(C`READLINE\*(C'\fR, \f(CW\*(C`SCALAR\*(C'\fR, \f(CW\*(C`SEEK\*(C'\fR, \f(CW\*(C`SHIFT\*(C'\fR, \f(CW\*(C`SPLICE\*(C'\fR, \f(CW\*(C`STORE\*(C'\fR,
+\&\f(CW\*(C`STORESIZE\*(C'\fR, \f(CW\*(C`TELL\*(C'\fR, \f(CW\*(C`TIEARRAY\*(C'\fR, \f(CW\*(C`TIEHANDLE\*(C'\fR, \f(CW\*(C`TIEHASH\*(C'\fR,
 \&\f(CW\*(C`TIESCALAR\*(C'\fR, \f(CW\*(C`UNSHIFT\*(C'\fR, \f(CW\*(C`UNTIE\*(C'\fR, \f(CW\*(C`WRITE\*(C'\fR
 .IP "documented in PerlIO::via" 4
 .IX Item "documented in PerlIO::via"
-\&\f(CW\*(C`BINMODE\*(C'\fR, \f(CW\*(C`CLEARERR\*(C'\fR, \f(CW\*(C`CLOSE\*(C'\fR, \f(CW\*(C`EOF\*(C'\fR, \f(CW\*(C`ERROR\*(C'\fR, \f(CW\*(C`FDOPEN\*(C'\fR, \f(CW\*(C`FILENO\*(C'\fR, 
-\&\f(CW\*(C`FILL\*(C'\fR, \f(CW\*(C`FLUSH\*(C'\fR, \f(CW\*(C`OPEN\*(C'\fR, \f(CW\*(C`POPPED\*(C'\fR, \f(CW\*(C`PUSHED\*(C'\fR, \f(CW\*(C`READ\*(C'\fR, \f(CW\*(C`SEEK\*(C'\fR, 
+\&\f(CW\*(C`BINMODE\*(C'\fR, \f(CW\*(C`CLEARERR\*(C'\fR, \f(CW\*(C`CLOSE\*(C'\fR, \f(CW\*(C`EOF\*(C'\fR, \f(CW\*(C`ERROR\*(C'\fR, \f(CW\*(C`FDOPEN\*(C'\fR, \f(CW\*(C`FILENO\*(C'\fR,
+\&\f(CW\*(C`FILL\*(C'\fR, \f(CW\*(C`FLUSH\*(C'\fR, \f(CW\*(C`OPEN\*(C'\fR, \f(CW\*(C`POPPED\*(C'\fR, \f(CW\*(C`PUSHED\*(C'\fR, \f(CW\*(C`READ\*(C'\fR, \f(CW\*(C`SEEK\*(C'\fR,
 \&\f(CW\*(C`SETLINEBUF\*(C'\fR, \f(CW\*(C`SYSOPEN\*(C'\fR, \f(CW\*(C`TELL\*(C'\fR, \f(CW\*(C`UNREAD\*(C'\fR, \f(CW\*(C`UTF8\*(C'\fR, \f(CW\*(C`WRITE\*(C'\fR
 .IP "documented in perlfunc" 4
 .IX Item "documented in perlfunc"
@@ -835,7 +835,7 @@ it.  Similarly, in the conditional
 .Ve
 .PP
 the scope of \f(CW$answer\fR extends from its declaration through the rest
-of that conditional, including any \f(CW\*(C`elsif\*(C'\fR and \f(CW\*(C`else\*(C'\fR clauses, 
+of that conditional, including any \f(CW\*(C`elsif\*(C'\fR and \f(CW\*(C`else\*(C'\fR clauses,
 but not beyond it.  See \*(L"Simple Statements\*(R" in perlsyn for information
 on the scope of variables in statements with modifiers.
 .PP
@@ -1506,7 +1506,7 @@ Despite the existence of \f(CW\*(C`my\*(C'\fR, there are still three places wher
 .IP "1." 4
 You need to give a global variable a temporary value, especially \f(CW$_\fR.
 .Sp
-The global variables, like \f(CW@ARGV\fR or the punctuation variables, must be 
+The global variables, like \f(CW@ARGV\fR or the punctuation variables, must be
 \&\f(CW\*(C`local\*(C'\fRized with \f(CW\*(C`local()\*(C'\fR.  This block reads in \fI/etc/motd\fR, and splits
 it up into chunks separated by lines of equal signs, which are placed
 in \f(CW@Fields\fR.
@@ -1515,7 +1515,7 @@ in \f(CW@Fields\fR.
 \&    {
 \&        local @ARGV = ("/etc/motd");
 \&        local $/ = undef;
-\&        local $_ = <>;  
+\&        local $_ = <>;
 \&        @Fields = split /^\es*=+\es*$/;
 \&    }
 .Ve
@@ -1566,7 +1566,7 @@ is done on dynamics:
 \&    {
 \&        local $SIG{INT} = \*(AqIGNORE\*(Aq;
 \&        funct();                            # uninterruptible
-\&    } 
+\&    }
 \&    # interruptibility automatically restored here
 .Ve
 .Sp
@@ -2195,9 +2195,9 @@ that understands regular expressions.
 \&    sub glob {
 \&        my $pat = shift;
 \&        my @got;
-\&        if (opendir my $d, \*(Aq.\*(Aq) { 
-\&            @got = grep /$pat/, readdir $d; 
-\&            closedir $d;   
+\&        if (opendir my $d, \*(Aq.\*(Aq) {
+\&            @got = grep /$pat/, readdir $d;
+\&            closedir $d;
 \&        }
 \&        return @got;
 \&    }
@@ -2363,8 +2363,8 @@ see attributes and Attribute::Handlers.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 See \*(L"Function Templates\*(R" in perlref for more about references and closures.
-See perlxs if you'd like to learn about calling C subroutines from Perl.  
-See perlembed if you'd like to learn about calling Perl subroutines from C.  
+See perlxs if you'd like to learn about calling C subroutines from Perl.
+See perlembed if you'd like to learn about calling Perl subroutines from C.
 See perlmod to learn about bundling up your functions in separate files.
 See perlmodlib to learn what library modules come standard on your system.
 See perlootut to learn how to make object method calls.

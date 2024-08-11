@@ -110,4 +110,3 @@ operator< (const OrientedCoordinateArray& oca1,
 
 } // namespace geos.noding
 } // namespace geos
-

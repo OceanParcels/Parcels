@@ -89,8 +89,8 @@ typedef void (*evconnlistener_errorcb)(struct evconnlistener *, void *);
  */
 #define LEV_OPT_DEFERRED_ACCEPT		(1u<<6)
 /** Flag: Indicates that we ask to allow multiple servers (processes or
- * threads) to bind to the same port if they each set the option. 
- * 
+ * threads) to bind to the same port if they each set the option.
+ *
  * SO_REUSEPORT is what most people would expect SO_REUSEADDR to be, however
  * SO_REUSEPORT does not imply SO_REUSEADDR.
  *

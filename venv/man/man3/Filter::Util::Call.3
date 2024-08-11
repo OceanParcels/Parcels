@@ -195,7 +195,7 @@ and this is the equivalent skeleton for the \fIclosure filter\fR:
 \&        my($type, @arguments) = @_ ;
 \&
 \&        filter_add(
-\&            sub 
+\&            sub
 \&            {
 \&                my($status) ;
 \&                $status = filter_read() ;
@@ -457,7 +457,7 @@ arbitrary \fIfrom\fR and \fIto\fR strings to be used. This time we will use a
 \&            unless @_ == 3 ;
 \&        my ($self, $from, $to) = @_ ;
 \&        filter_add(
-\&            sub 
+\&            sub
 \&            {
 \&                my ($status) ;
 \&                s/$from/$to/
@@ -565,8 +565,8 @@ Here is the module.
 \&        croak("usage: use Subst qw(start stop from to)")
 \&            unless @_ == 5 ;
 \&
-\&        filter_add( 
-\&            sub 
+\&        filter_add(
+\&            sub
 \&            {
 \&                my ($status) ;
 \&

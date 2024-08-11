@@ -759,7 +759,7 @@ added new methods to inspect and manipulate queues:  \f(CW\*(C`peek\*(C'\fR, \f(
 .IP "\(bu" 4
 \&\f(CW\*(C`Time::Local\*(C'\fR upgraded to version 1.1901
 .IP "\(bu" 4
-\&\f(CW\*(C`Time::HiRes\*(C'\fR upgraded to version 1.9715 with various build improvements 
+\&\f(CW\*(C`Time::HiRes\*(C'\fR upgraded to version 1.9715 with various build improvements
 (including \s-1VMS\s0) and minor platform-specific bug fixes (including
 for HP-UX 11 ia64).
 .IP "\(bu" 4
@@ -1219,7 +1219,7 @@ In the presence of \f(CW\*(C`my\*(C'\fR in the conditional of a \f(CW\*(C`while(
 or \f(CW\*(C`for(;;)\*(C'\fR loop, we now add an extra scope to the body so that \f(CW\*(C`redo\*(C'\fR
 doesn't \f(CW\*(C`undef\*(C'\fR the lexical.
 .IP "\(bu" 4
-The \f(CW\*(C`encoding\*(C'\fR pragma now correctly ignores anything following an \f(CW\*(C`@\*(C'\fR 
+The \f(CW\*(C`encoding\*(C'\fR pragma now correctly ignores anything following an \f(CW\*(C`@\*(C'\fR
 character in the \f(CW\*(C`LC_ALL\*(C'\fR and \f(CW\*(C`LANG\*(C'\fR environment variables. [\s-1RT\s0 # 49646]
 .IP "\(bu" 4
 A segfault observed with some \fIgcc\fR 3.3 optimisations is resolved.
@@ -1469,7 +1469,7 @@ Two new macros \f(CW\*(C`mPUSHs()\*(C'\fR and \f(CW\*(C`mXPUSHs()\*(C'\fR are ad
 push mortal SVs onto the stack. They were then used to fix several bugs where
 values on the stack had not been mortalised.
 .PP
-A \f(CW\*(C`Perl_signbit()\*(C'\fR function was added to test the sign of an \f(CW\*(C`NV\*(C'\fR. It 
+A \f(CW\*(C`Perl_signbit()\*(C'\fR function was added to test the sign of an \f(CW\*(C`NV\*(C'\fR. It
 maps to the system one when available.
 .PP
 \&\f(CW\*(C`Perl_av_reify()\*(C'\fR, \f(CW\*(C`Perl_lex_end()\*(C'\fR, \f(CW\*(C`Perl_mod()\*(C'\fR, \f(CW\*(C`Perl_op_clear()\*(C'\fR,

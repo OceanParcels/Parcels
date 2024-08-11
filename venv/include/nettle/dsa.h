@@ -30,7 +30,7 @@
    the GNU Lesser General Public License along with this program.  If
    not, see http://www.gnu.org/licenses/.
 */
- 
+
 #ifndef NETTLE_DSA_H_INCLUDED
 #define NETTLE_DSA_H_INCLUDED
 
@@ -57,7 +57,7 @@ extern "C" {
 #define dsa_sha256_keypair_from_sexp nettle_dsa_sha256_keypair_from_sexp
 #define dsa_params_from_der_iterator nettle_dsa_params_from_der_iterator
 #define dsa_public_key_from_der_iterator nettle_dsa_public_key_from_der_iterator
-#define dsa_openssl_private_key_from_der_iterator nettle_dsa_openssl_private_key_from_der_iterator 
+#define dsa_openssl_private_key_from_der_iterator nettle_dsa_openssl_private_key_from_der_iterator
 #define dsa_openssl_private_key_from_der nettle_openssl_provate_key_from_der
 
 /* For FIPS approved parameters */
@@ -70,7 +70,7 @@ extern "C" {
 #define DSA_SHA256_Q_BITS 256
 
 struct dsa_params
-{  
+{
   /* Modulo */
   mpz_t p;
 

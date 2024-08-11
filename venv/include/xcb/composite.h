@@ -267,7 +267,7 @@ xcb_composite_query_version_reply (xcb_connection_t                      *c,
  * The hierarchy starting at 'window' is directed to off-screen
  * 	storage.  When all clients enabling redirection terminate,
  * 	the redirection will automatically be disabled.
- * 
+ *
  * 	The root window may not be redirected. Doing so results in a Match
  * 	error.
  *
@@ -294,7 +294,7 @@ xcb_composite_redirect_window_checked (xcb_connection_t *c,
  * The hierarchy starting at 'window' is directed to off-screen
  * 	storage.  When all clients enabling redirection terminate,
  * 	the redirection will automatically be disabled.
- * 
+ *
  * 	The root window may not be redirected. Doing so results in a Match
  * 	error.
  *

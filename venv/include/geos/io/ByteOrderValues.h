@@ -58,4 +58,3 @@ public:
 
 } // namespace io
 } // namespace geos
-

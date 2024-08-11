@@ -225,5 +225,3 @@
      CALL h5close_f(error)
 
      END PROGRAM COMPOUNDEXAMPLE
-
-

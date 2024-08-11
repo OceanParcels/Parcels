@@ -72,7 +72,7 @@ namespace Model
      * <code>NextMarker</code> element and it is truncated, you can use the value of
      * the last <code>Key</code> element in the response as the <code>marker</code>
      * parameter in the subsequent request to get the next set of object keys.</p>
-     * 
+     *
      */
     inline const Aws::String& GetNextMarker() const{ return m_nextMarker; }
     inline void SetNextMarker(const Aws::String& value) { m_nextMarker = value; }
@@ -186,7 +186,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestCharged& GetRequestCharged() const{ return m_requestCharged; }
     inline void SetRequestCharged(const RequestCharged& value) { m_requestCharged = value; }
     inline void SetRequestCharged(RequestCharged&& value) { m_requestCharged = std::move(value); }
@@ -195,7 +195,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

@@ -198,4 +198,3 @@ std::ostream& operator<< (std::ostream& os, const EdgeRing& er);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-

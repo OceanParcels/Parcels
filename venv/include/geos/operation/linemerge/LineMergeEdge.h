@@ -59,4 +59,3 @@ public:
 } // namespace geos::operation::linemerge
 } // namespace geos::operation
 } // namespace geos
-

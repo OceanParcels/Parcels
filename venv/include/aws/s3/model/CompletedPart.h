@@ -147,7 +147,7 @@ namespace Model
      * Bad Request</code> status code and an <code>InvalidPartOrder</code> error
      * code.</p> </li> <li> <p> <b>Directory buckets</b> - In
      * <code>CompleteMultipartUpload</code>, the <code>PartNumber</code> must start at
-     * 1 and the part numbers must be consecutive.</p> </li> </ul> 
+     * 1 and the part numbers must be consecutive.</p> </li> </ul>
      */
     inline int GetPartNumber() const{ return m_partNumber; }
     inline bool PartNumberHasBeenSet() const { return m_partNumberHasBeenSet; }

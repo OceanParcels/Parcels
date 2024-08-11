@@ -160,4 +160,3 @@ private:
 
 } // namespace geos.geomgraph
 } // namespace geos
-

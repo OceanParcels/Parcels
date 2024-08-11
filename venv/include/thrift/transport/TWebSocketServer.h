@@ -292,7 +292,7 @@ private:
       if (read < length) {
         return false;
       }
-      
+
       // Unmask the data
       for (size_t i = 0; i < length; i++) {
         buffer[i] ^= headerBuffer[i % 4];

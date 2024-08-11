@@ -36,28 +36,28 @@ hwlocality_memattrs_manage \- Managing memory attributes
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Enumeration Type Documentation"
-.PP 
+.PP
 .SS "enum \fBhwloc_memattr_flag_e\fP"
 
 .PP
-Memory attribute flags\&. Given to \fBhwloc_memattr_register()\fP and returned by \fBhwloc_memattr_get_flags()\fP\&. 
+Memory attribute flags\&. Given to \fBhwloc_memattr_register()\fP and returned by \fBhwloc_memattr_get_flags()\fP\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_MEMATTR_FLAG_HIGHER_FIRST \fP\fP
-The best nodes for this memory attribute are those with the higher values\&. For instance Bandwidth\&. 
+The best nodes for this memory attribute are those with the higher values\&. For instance Bandwidth\&.
 .TP
 \fB\fIHWLOC_MEMATTR_FLAG_LOWER_FIRST \fP\fP
-The best nodes for this memory attribute are those with the lower values\&. For instance Latency\&. 
+The best nodes for this memory attribute are those with the lower values\&. For instance Latency\&.
 .TP
 \fB\fIHWLOC_MEMATTR_FLAG_NEED_INITIATOR \fP\fP
-The value returned for this memory attribute depends on the given initiator\&. For instance Bandwidth and Latency, but not Capacity\&. 
+The value returned for this memory attribute depends on the given initiator\&. For instance Bandwidth and Latency, but not Capacity\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_memattr_get_flags (\fBhwloc_topology_t\fP topology, \fBhwloc_memattr_id_t\fP attribute, unsigned long * flags)"
 
 .PP
@@ -65,9 +65,9 @@ Return the flags of the given attribute\&. Flags are a OR'ed set of \fBhwloc_mem
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCEINVAL\fP if the attribute does not exist\&. 
+-1 with errno set to \fCEINVAL\fP if the attribute does not exist\&.
 .RE
 .PP
 
@@ -91,20 +91,20 @@ If the attribute does not relate to a specific initiator (it does not have the f
 .PP
 \fBNote\fP
 .RS 4
-This function is meant for tools and debugging (listing internal information) rather than for application queries\&. Applications should rather select useful NUMA nodes with \fBhwloc_get_local_numanode_objs()\fP and then look at their attribute values for some relevant initiators\&. 
+This function is meant for tools and debugging (listing internal information) rather than for application queries\&. Applications should rather select useful NUMA nodes with \fBhwloc_get_local_numanode_objs()\fP and then look at their attribute values for some relevant initiators\&.
 .RE
 .PP
 
 .SS "int hwloc_memattr_get_name (\fBhwloc_topology_t\fP topology, \fBhwloc_memattr_id_t\fP attribute, const char ** name)"
 
 .PP
-Return the name of a memory attribute\&. 
+Return the name of a memory attribute\&.
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCEINVAL\fP if the attribute does not exist\&. 
+-1 with errno set to \fCEINVAL\fP if the attribute does not exist\&.
 .RE
 .PP
 
@@ -133,7 +133,7 @@ This function is meant for tools and debugging (listing internal information) ra
 .PP
 \fBNote\fP
 .RS 4
-The initiator \fCinitiator\fP should be of type \fBHWLOC_LOCATION_TYPE_CPUSET\fP when referring to accesses performed by CPU cores\&. \fBHWLOC_LOCATION_TYPE_OBJECT\fP is currently unused internally by hwloc, but users may for instance use it to provide custom information about host memory accesses performed by GPUs\&. 
+The initiator \fCinitiator\fP should be of type \fBHWLOC_LOCATION_TYPE_CPUSET\fP when referring to accesses performed by CPU cores\&. \fBHWLOC_LOCATION_TYPE_OBJECT\fP is currently unused internally by hwloc, but users may for instance use it to provide custom information about host memory accesses performed by GPUs\&.
 .RE
 .PP
 
@@ -144,9 +144,9 @@ Register a new memory attribute\&. Add a specific memory attribute that is not d
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCEBUSY\fP if another attribute already uses this name\&. 
+-1 with errno set to \fCEBUSY\fP if another attribute already uses this name\&.
 .RE
 .PP
 
@@ -166,10 +166,10 @@ The initiator \fCinitiator\fP should be of type \fBHWLOC_LOCATION_TYPE_CPUSET\fP
 .PP
 \fBReturns\fP
 .RS 4
-0 on success or -1 on error\&. 
+0 on success or -1 on error\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

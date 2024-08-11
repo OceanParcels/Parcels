@@ -38,7 +38,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const Aws::String& GetMessage() const{ return m_message; }
     inline bool MessageHasBeenSet() const { return m_messageHasBeenSet; }
     inline void SetMessage(const Aws::String& value) { m_messageHasBeenSet = true; m_message = value; }

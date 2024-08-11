@@ -2269,7 +2269,7 @@ stringification of the decimal point. [perl #108378] [perl #115800]
 .IP "\(bu" 4
 There have been several fixes related to Perl's handling of locales.  perl
 #38193 was described above in \*(L"Internal Changes\*(R".
-Also fixed is 
+Also fixed is
 #118197, where the radix (decimal point) character had to be an \s-1ASCII\s0
 character (which doesn't work for some non-Western languages);
 and #115808, in which \f(CW\*(C`POSIX::setlocale()\*(C'\fR on failure returned an

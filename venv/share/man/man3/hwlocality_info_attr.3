@@ -20,10 +20,10 @@ hwlocality_info_attr \- Consulting and Adding Info Attributes
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_obj_add_info (\fBhwloc_obj_t\fP obj, const char * name, const char * value)"
 
 .PP
@@ -40,7 +40,7 @@ The input strings are copied before being added in the object infos\&.
 .RS 4
 This function may be used to enforce object colors in the lstopo graphical output by adding 'lstopoStyle' as a name and 'Background=#rrggbb' as a value\&. See CUSTOM COLORS in the lstopo(1) manpage for details\&.
 .PP
-If \fCname\fP or \fCvalue\fP contain some non-printable characters, they will be dropped when exporting to XML, see \fBhwloc_topology_export_xml()\fP in \fBhwloc/export\&.h\fP\&. 
+If \fCname\fP or \fCvalue\fP contain some non-printable characters, they will be dropped when exporting to XML, see \fBhwloc_topology_export_xml()\fP in \fBhwloc/export\&.h\fP\&.
 .RE
 .PP
 
@@ -51,14 +51,14 @@ Search the given name in object infos and return the corresponding value\&. If m
 .PP
 \fBReturns\fP
 .RS 4
-A pointer to the value string if it exists\&. 
+A pointer to the value string if it exists\&.
 .PP
 \fCNULL\fP if no such info attribute exists\&.
 .RE
 .PP
 \fBNote\fP
 .RS 4
-The string should not be freed by the caller, it belongs to the hwloc library\&. 
+The string should not be freed by the caller, it belongs to the hwloc library\&.
 .RE
 .PP
 
@@ -76,12 +76,12 @@ This function is mostly meant to initialize the subtype of user-added objects su
 .PP
 \fBReturns\fP
 .RS 4
-\fC0\fP on success\&. 
+\fC0\fP on success\&.
 .PP
-\fC-1\fP with \fCerrno\fP set to \fCENOMEM\fP on failure to allocate memory\&. 
+\fC-1\fP with \fCerrno\fP set to \fCENOMEM\fP on failure to allocate memory\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

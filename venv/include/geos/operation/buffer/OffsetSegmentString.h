@@ -212,4 +212,3 @@ operator<< (std::ostream& os,
 } // namespace geos.operation.buffer
 } // namespace geos.operation
 } // namespace geos
-

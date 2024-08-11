@@ -40,11 +40,11 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
 <!--Navigation Panel
 <DIV CLASS="navigation">
 <IMG WIDTH="81" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next_inactive"
- SRC="file:/usr/share/latex2html/icons/nx_grp_g.png"> 
+ SRC="file:/usr/share/latex2html/icons/nx_grp_g.png">
 <IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
- SRC="file:/usr/share/latex2html/icons/up_g.png"> 
+ SRC="file:/usr/share/latex2html/icons/up_g.png">
 <IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
- SRC="file:/usr/share/latex2html/icons/prev_g.png">   
+ SRC="file:/usr/share/latex2html/icons/prev_g.png">
 <BR>
 <BR><BR></DIV>
 End of Navigation Panel-->
@@ -121,7 +121,7 @@ clarity. Compile as usual with <TT>gcc -o hello hello.c</TT>. The program should
 be linked to the GNU libintl library, but as this is part of the GNU C
 library, this is done automatically for you under Linux, and other systems
 using glibc.
-  
+
 <H2><A NAME="SECTION00021000000000000000">
 The programmer's viewpoint</A>
 </H2>
@@ -188,7 +188,7 @@ package to use GNU <TT>gettext</TT> for the first time, or to upgrade to a newer
 version of <TT>gettext</TT>.
 </LI>
 </OL>
-  
+
 <H2><A NAME="SECTION00022000000000000000">
 Extracting translatable strings</A>
 </H2>
@@ -236,7 +236,7 @@ omitted.  For me, the oriya.po file produced by <TT>msginit</TT> would look like
   "MIME-Version: 1.0\n"
   "Content-Type: text/plain; charset=UTF-8\n"
   "Content-Transfer-Encoding: 8bit\n"
- 
+
   #: hello.c:10
   msgid "Hello, world!\n"
   msgstr ""
@@ -269,7 +269,7 @@ the <TT>msgstr</TT> line is where the translated string is to be entered. More o
 this later. For details on the format of PO files see gettext::Basics::PO
 Files:: in the Emacs info-browser (see Appdx.&nbsp;<A HREF="#sec:emacs-info">A</A> for an
 introduction to using the info-browser in Emacs).
-  
+
 <H2><A NAME="SECTION00023000000000000000">
 Making translations</A>
 </H2>
@@ -324,7 +324,7 @@ oriya.po file might look like:
 
 <P>
 For editing PO files, I have found the <TT>kbabel</TT> editor suits me the best. The
-only problem is that while Oriya text can be entered directly into <TT>kbabel</TT> 
+only problem is that while Oriya text can be entered directly into <TT>kbabel</TT>
 using the xkb Oriya keyboard layouts&nbsp;[<A
  HREF="memo.html#xkb-oriya-layout">1</A>] and the entries
 are saved properly, the text is not displayed correctly in the <TT>kbabel</TT> window
@@ -336,7 +336,7 @@ is followed. You can play around a bit with these editors to find one that
 suits your personal preferences. One possibility might be to first edit the
 header entry with <TT>kbabel</TT> or Emacs po-mode, and then use <TT>yudit</TT> to enter
 the Oriya text on the <TT>msgstr</TT> lines.
-  
+
 <H2><A NAME="SECTION00024000000000000000">
 Message catalogs</A>
 </H2>
@@ -364,7 +364,7 @@ directory. Thus,
   mkdir -p /usr/share/locale/or_IN/LC_MESSAGES
   cp hello.mo /usr/share/locale/or_IN/LC_MESSAGES
 </FONT></PRE>
-  
+
 <H2><A NAME="SECTION00025000000000000000">
 The user's viewpoint</A>
 </H2>
@@ -463,7 +463,7 @@ pasting most of the old oriya.po file into the new one. However, real programs
 will have thousands of such strings, and we would like to be able to translate
 only the changed strings, and have the <TT>gettext</TT> utilities handle the drudgery
 of combining the new translations with the old ones. This is indeed possible.
-  
+
 <H2><A NAME="SECTION00031000000000000000">
 Merging old and new translations</A>
 </H2>
@@ -509,7 +509,7 @@ including the translation might look like:
   "Content-Type: text/plain; charset=UTF-8\n"
   "Content-Transfer-Encoding: 8bit\n"
   "X-Generator: KBabel 1.3\n"
-  
+
   #: hello.c:10
   msgid "Hello, world!\n"
   msgstr "&#x0b28;&#x0b2e;&#x0b38;&#x0b4d;&#x0b15;&#x0b3e;&#x0b30;\n"
@@ -641,7 +641,7 @@ are specialized for editing PO files under Linux. This is still work in
 progress, as I am in the process of trying out different editors before
 settling on one. The ones considered here are: Emacs in po-mode, <TT>poedit</TT>,
 <TT>kbabel</TT>, and <TT>gtranslator</TT>.
-  
+
 <H2><A NAME="SECTION00081000000000000000">
 Emacs PO mode</A>
 </H2>
@@ -655,12 +655,12 @@ with it. Its main advantage is that it imposes rigid conformance to the PO
 file format, and checks the file format when closing the .po file
 buffer. Emacs po-mode is not useful for Oriya translation, as I know of no way
 to directly enter Oriya text under Emacs.
-  
+
 <H2><A NAME="SECTION00082000000000000000">
 poedit</A>
 </H2>
   XXX: in preparation.
-  
+
 <H2><A NAME="SECTION00083000000000000000">
 KDE: the kbabel editor</A>
 </H2>
@@ -670,7 +670,7 @@ either of Emacs po-mode or <TT>poedit</TT>. It is integrated into KDE, and offer
 extensive contextual help. Besides support for various PO file features, it
 has a plugin framework for dictionaries, that allows consistency checks and
 translation suggestions.
-  
+
 <H2><A NAME="SECTION00084000000000000000">
 GNOME: the gtranslator editor</A>
 </H2>
@@ -715,10 +715,10 @@ This document was generated using the
 <A HREF="http://www.latex2html.org/"><STRONG>LaTeX</STRONG>2<tt>HTML</tt></A> translator Version 2002-2-1 (1.70)
 <P>
 Copyright &#169; 1993, 1994, 1995, 1996,
-<A HREF="http://cbl.leeds.ac.uk/nikos/personal.html">Nikos Drakos</A>, 
+<A HREF="http://cbl.leeds.ac.uk/nikos/personal.html">Nikos Drakos</A>,
 Computer Based Learning Unit, University of Leeds.
 <BR>Copyright &#169; 1997, 1998, 1999,
-<A HREF="http://www.maths.mq.edu.au/~ross/">Ross Moore</A>, 
+<A HREF="http://www.maths.mq.edu.au/~ross/">Ross Moore</A>,
 Mathematics Department, Macquarie University, Sydney.
 <P>
 The command line arguments were: <BR>
@@ -729,11 +729,11 @@ The translation was initiated by Gora Mohanty on 2004-07-24
 
 <!--Navigation Panel
 <IMG WIDTH="81" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next_inactive"
- SRC="file:/usr/share/latex2html/icons/nx_grp_g.png"> 
+ SRC="file:/usr/share/latex2html/icons/nx_grp_g.png">
 <IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
- SRC="file:/usr/share/latex2html/icons/up_g.png"> 
+ SRC="file:/usr/share/latex2html/icons/up_g.png">
 <IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
- SRC="file:/usr/share/latex2html/icons/prev_g.png">   
+ SRC="file:/usr/share/latex2html/icons/prev_g.png">
 <BR></DIV>
 End of Navigation Panel-->
 

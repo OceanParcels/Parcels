@@ -123,4 +123,3 @@ class AWS_CORE_API SimpleOStringStream : public std::ostream
 };
 
 } // namespace Aws
-

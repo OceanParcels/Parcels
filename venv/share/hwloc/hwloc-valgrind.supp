@@ -158,4 +158,3 @@
    ...
    fun:udev_device_new_from_subsystem_sysname
 }
-

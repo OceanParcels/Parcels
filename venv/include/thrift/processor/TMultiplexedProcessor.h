@@ -115,8 +115,8 @@ public:
    */
   TException protocol_error(std::shared_ptr<protocol::TProtocol> in,
                             std::shared_ptr<protocol::TProtocol> out,
-                            const std::string& name, 
-                            int32_t seqid, 
+                            const std::string& name,
+                            int32_t seqid,
                             const std::string& msg) const {
     in->skip(::apache::thrift::protocol::T_STRUCT);
     in->readMessageEnd();
@@ -131,7 +131,7 @@ public:
     out->getTransport()->flush();
     return TException(msg);
 }
-   
+
   /**
    * This implementation of <code>process</code> performs the following steps:
    *
@@ -187,14 +187,14 @@ public:
                       connectionContext);
       } else {
         // Unknown service.
-        throw protocol_error(in, out, name, seqid, 
+        throw protocol_error(in, out, name, seqid,
             "Unknown service: " + tokens[0] +
 				". Did you forget to call registerProcessor()?");
       }
     } else if (tokens.size() == 1) {
 	  if (defaultProcessor) {
         // non-multiplexed client forwards to default processor
-        return defaultProcessor            
+        return defaultProcessor
             ->process(std::shared_ptr<protocol::TProtocol>(
                           new protocol::StoredMessageProtocol(in, tokens[0], type, seqid)),
                       out,
@@ -213,7 +213,7 @@ public:
 private:
   /** Map of service processor objects, indexed by service names. */
   services_t services;
-  
+
   //! If a non-multi client requests something, it goes to the
   //! default processor (if one is defined) for backwards compatibility.
   std::shared_ptr<TProcessor> defaultProcessor;

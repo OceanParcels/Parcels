@@ -136,4 +136,3 @@ public:
 } // geos::algorithm::locate
 } // geos::algorithm
 } // geos
-

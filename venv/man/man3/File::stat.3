@@ -147,7 +147,7 @@ File::stat \- by\-name interface to Perl's built\-in stat() functions
 \& $st = stat($file) or die "No $file: $!";
 \& if ( ($st\->mode & 0111) && $st\->nlink > 1) ) {
 \&     print "$file is executable with lotsa links\en";
-\& } 
+\& }
 \&
 \& if ( \-x $st ) {
 \&     print "$file is executable\en";
@@ -166,8 +166,8 @@ File::stat \- by\-name interface to Perl's built\-in stat() functions
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-This module's default exports override the core \fBstat()\fR 
-and \fBlstat()\fR functions, replacing them with versions that return 
+This module's default exports override the core \fBstat()\fR
+and \fBlstat()\fR functions, replacing them with versions that return
 \&\*(L"File::stat\*(R" objects.  This object has methods that
 return the similarly named structure field name from the
 \&\fBstat\fR\|(2) function; namely,

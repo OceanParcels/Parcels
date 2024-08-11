@@ -165,12 +165,12 @@ A copy of a Win* viewer is contained in the \*(L"Just add \s-1OS/2\s0 Warp\*(R" 
 \&  ftp://ftp.software.ibm.com/ps/products/os2/tools/jaow/jaow.zip
 .Ve
 .PP
-in \fI?:\eJUST_ADD\eview.exe\fR. This gives one an access to \s-1EMX\s0's 
-\&\fI.INF\fR docs as well (text form is available in \fI/emx/doc\fR in 
+in \fI?:\eJUST_ADD\eview.exe\fR. This gives one an access to \s-1EMX\s0's
+\&\fI.INF\fR docs as well (text form is available in \fI/emx/doc\fR in
 \&\s-1EMX\s0's distribution).  There is also a different viewer named xview.
 .PP
 Note that if you have \fIlynx.exe\fR or \fInetscape.exe\fR installed, you can follow \s-1WWW\s0 links
-from this document in \fI.INF\fR format. If you have \s-1EMX\s0 docs installed 
+from this document in \fI.INF\fR format. If you have \s-1EMX\s0 docs installed
 correctly, you can follow library links (you need to have \f(CW\*(C`view emxbook\*(C'\fR
 working by setting \f(CW\*(C`EMXBOOK\*(C'\fR environment variable as it is described
 in \s-1EMX\s0 docs).
@@ -259,7 +259,7 @@ will work as well.)
 .IP "\s-1RSX\s0" 6
 .IX Item "RSX"
 To run Perl on \s-1DPMI\s0 platforms one needs \s-1RSX\s0 runtime. This is
-needed under DOS\-inside\-OS/2, Win0.3*, Win0.95 and WinNT (see 
+needed under DOS\-inside\-OS/2, Win0.3*, Win0.95 and WinNT (see
 \&\*(L"Other OSes\*(R"). \s-1RSX\s0 would not work with \s-1VCPI\s0
 only, as \s-1EMX\s0 would, it requires \s-1DMPI.\s0
 .Sp
@@ -366,7 +366,7 @@ There are also endless possibilities to use \fIexecutable extensions\fR of
 *nixish shell (like \fIsh.exe\fR supplied in the binary distribution),
 you need to follow the syntax specified in \*(L"Command Switches\*(R" in perlrun.
 .PP
-Note that \fB\-S\fR switch supports scripts with additional extensions 
+Note that \fB\-S\fR switch supports scripts with additional extensions
 \&\fI.cmd\fR, \fI.btm\fR, \fI.bat\fR, \fI.pl\fR as well.
 .SS "Starting \s-1OS/2\s0 (and \s-1DOS\s0) programs under Perl"
 .IX Subsection "Starting OS/2 (and DOS) programs under Perl"
@@ -376,7 +376,7 @@ are for. (Avoid \fBexec()\fR (see \*(L"exec\*(R" in perlfunc) unless you know wh
 do).
 .PP
 Note however that to use some of these operators you need to have a
-sh-syntax shell installed (see \*(L"Pdksh\*(R", 
+sh-syntax shell installed (see \*(L"Pdksh\*(R",
 \&\*(L"Frequently asked questions\*(R"), and perl should be able to find it
 (see "\f(CW\*(C`PERL_SH_DIR\*(C'\fR").
 .PP
@@ -385,7 +385,7 @@ The cases when the shell is used are:
 One-argument \fBsystem()\fR (see \*(L"system\*(R" in perlfunc), \fBexec()\fR (see \*(L"exec\*(R" in perlfunc)
 with redirection or shell meta-characters;
 .IP "2." 4
-Pipe-open (see \*(L"open\*(R" in perlfunc) with the command which contains redirection 
+Pipe-open (see \*(L"open\*(R" in perlfunc) with the command which contains redirection
 or shell meta-characters;
 .IP "3." 4
 Backticks \f(CW\*(C`\`\`\*(C'\fR (see \*(L"I/O Operators\*(R" in perlop) with the command which contains
@@ -403,7 +403,7 @@ found (is not this remark obsolete?);
 For globbing (see \*(L"glob\*(R" in perlfunc, \*(L"I/O Operators\*(R" in perlop)
 (obsolete? Perl uses builtin globbing nowadays...).
 .PP
-For the sake of speed for a common case, in the above algorithms 
+For the sake of speed for a common case, in the above algorithms
 backslashes in the command name are not considered as shell metacharacters.
 .PP
 Perl starts scripts which begin with cookies
@@ -412,7 +412,7 @@ same algorithm to find the executable as \fIpdksh\fR: if the path
 on \f(CW\*(C`#!\*(C'\fR line does not work, and contains \f(CW\*(C`/\*(C'\fR, then the directory
 part of the executable is ignored, and the executable
 is searched in \fI.\fR and on \f(CW\*(C`PATH\*(C'\fR.  To find arguments for these scripts
-Perl uses a different algorithm than \fIpdksh\fR: up to 3 arguments are 
+Perl uses a different algorithm than \fIpdksh\fR: up to 3 arguments are
 recognized, and trailing whitespace is stripped.
 .PP
 If a script
@@ -422,14 +422,14 @@ script is given as the first argument to this command, if not set, then
 \&\f(CW\*(C`$ENV{COMSPEC} /c\*(C'\fR is used (or a hardwired guess if \f(CW$ENV{COMSPEC}\fR is
 not set).
 .PP
-When starting scripts directly, Perl uses exactly the same algorithm as for 
+When starting scripts directly, Perl uses exactly the same algorithm as for
 the search of script given by \fB\-S\fR command-line option: it will look in
-the current directory, then on components of \f(CW$ENV{PATH}\fR using the 
-following order of appended extensions: no extension, \fI.cmd\fR, \fI.btm\fR, 
+the current directory, then on components of \f(CW$ENV{PATH}\fR using the
+following order of appended extensions: no extension, \fI.cmd\fR, \fI.btm\fR,
 \&\fI.bat\fR, \fI.pl\fR.
 .PP
 Note that Perl will start to look for scripts only if \s-1OS/2\s0 cannot start the
-specified application, thus \f(CW\*(C`system \*(Aqblah\*(Aq\*(C'\fR will not look for a script if 
+specified application, thus \f(CW\*(C`system \*(Aqblah\*(Aq\*(C'\fR will not look for a script if
 there is an executable file \fIblah.exe\fR \fIanywhere\fR on \f(CW\*(C`PATH\*(C'\fR.  In
 other words, \f(CW\*(C`PATH\*(C'\fR is essentially searched twice: once by the \s-1OS\s0 for
 an executable, then by Perl for scripts.
@@ -461,7 +461,7 @@ managed to goof.  \f(CW\*(C`;\-)\*(C'\fR
 .SS "I cannot run external programs"
 .IX Subsection "I cannot run external programs"
 .IP "\(bu" 4
-Did you run your programs with \f(CW\*(C`\-w\*(C'\fR switch? See 
+Did you run your programs with \f(CW\*(C`\-w\*(C'\fR switch? See
 \&\*(L"Starting \s-1OS/2\s0 (and \s-1DOS\s0) programs under Perl\*(R".
 .IP "\(bu" 4
 Do you try to run \fIinternal\fR shell commands, like \f(CW\*(C`\`copy a b\`\*(C'\fR
@@ -879,7 +879,7 @@ check use
 .PP
 ). You need the latest version of \fIpdksh\fR installed as \fIsh.exe\fR.
 .PP
-Check that you have \fB\s-1BSD\s0\fR libraries and headers installed, and \- 
+Check that you have \fB\s-1BSD\s0\fR libraries and headers installed, and \-
 optionally \- Berkeley \s-1DB\s0 headers and libraries, and crypt.
 .PP
 Possible locations to get the files:
@@ -1633,8 +1633,8 @@ OS2::Process.
 .PP
 When finding a program to run, Perl first asks the \s-1OS\s0 to look for executables
 on \f(CW\*(C`PATH\*(C'\fR (\s-1OS/2\s0 adds extension \fI.exe\fR if no extension is present).
-If not found, it looks for a script with possible extensions 
-added in this order: no extension, \fI.cmd\fR, \fI.btm\fR, 
+If not found, it looks for a script with possible extensions
+added in this order: no extension, \fI.cmd\fR, \fI.btm\fR,
 \&\fI.bat\fR, \fI.pl\fR.  If found, Perl checks the start of the file for magic
 strings \f(CW"#!"\fR and \f(CW"extproc "\fR.  If found, Perl uses the rest of the
 first line as the beginning of the command line to run this script.  The
@@ -1755,7 +1755,7 @@ Returns	\f(CW\*(C`undef\*(C'\fR if it was not called yet, otherwise bit 1 is
 set if on the previous call do_harderror was enabled, bit
 2 is set if on previous call do_exception was enabled.
 .Sp
-This function enables/disables error popups associated with 
+This function enables/disables error popups associated with
 hardware errors (Disk not ready etc.) and software exceptions.
 .Sp
 I know of no way to find out the state of popups \fIbefore\fR the first call
@@ -1812,7 +1812,7 @@ Dies with \*(L"QUITing...\*(R" if \s-1WM_QUIT\s0 message is obtained.
 .ie n .IP """OS2::Process_Messages(force [, cnt])""" 4
 .el .IP "\f(CWOS2::Process_Messages(force [, cnt])\fR" 4
 .IX Item "OS2::Process_Messages(force [, cnt])"
-Retrieval of \s-1PM\s0 messages until window creation/destruction.  
+Retrieval of \s-1PM\s0 messages until window creation/destruction.
 If \f(CW\*(C`force\*(C'\fR is false, will not dispatch messages if a real message loop
 is known to be present.
 .Sp
@@ -1881,7 +1881,7 @@ messages in this file have an \f(CW\*(C`SYS0003\*(C'\fR\-like id prepended, some
 .SS "Misfeatures"
 .IX Subsection "Misfeatures"
 .IP "\(bu" 4
-Since \fBflock\fR\|(3) is present in \s-1EMX,\s0 but is not functional, it is 
+Since \fBflock\fR\|(3) is present in \s-1EMX,\s0 but is not functional, it is
 emulated by perl.  To disable the emulations, set environment variable
 \&\f(CW\*(C`USE_PERL_FLOCK=0\*(C'\fR.
 .IP "\(bu" 4
@@ -1988,7 +1988,7 @@ Perl contains a workaround for this.
 .ie n .IP """flock""" 9
 .el .IP "\f(CWflock\fR" 9
 .IX Item "flock"
-Since \fBflock\fR\|(3) is present in \s-1EMX,\s0 but is not functional, it is 
+Since \fBflock\fR\|(3) is present in \s-1EMX,\s0 but is not functional, it is
 emulated by perl.  To disable the emulations, set environment variable
 \&\f(CW\*(C`USE_PERL_FLOCK=0\*(C'\fR.
 .SS "Identifying DLLs"
@@ -2177,7 +2177,7 @@ It can load perl dynamic extensions, and it can \fBfork()\fR.
 .IX Subsection "perl_.exe"
 This is a statically linked \f(CW\*(C`a.out\*(C'\fR\-style executable. It cannot
 load dynamic Perl extensions. The executable supplied in binary
-distributions has a lot of extensions prebuilt, thus the above restriction is 
+distributions has a lot of extensions prebuilt, thus the above restriction is
 important only if you use custom-built extensions. This executable is a \s-1VIO\s0
 application.
 .PP
@@ -2235,7 +2235,7 @@ that the build process is not so convoluted as with \f(CW\*(C`perl.exe\*(C'\fR.
 It is a \s-1VIO\s0 application.
 .SS "Why strange names?"
 .IX Subsection "Why strange names?"
-Since Perl processes the \f(CW\*(C`#!\*(C'\fR\-line (cf. 
+Since Perl processes the \f(CW\*(C`#!\*(C'\fR\-line (cf.
 \&\*(L"\s-1DESCRIPTION\*(R"\s0 in perlrun, \*(L"Command Switches\*(R" in perlrun,
 \&\*(L"No Perl script found in input\*(R" in perldiag), it should know when a
 program \fIis a Perl\fR. There is some naming convention which allows
@@ -2394,8 +2394,8 @@ Specific for \s-1EMX\s0 port. Gives the directory part of the location for
 .ie n .SS """USE_PERL_FLOCK"""
 .el .SS "\f(CWUSE_PERL_FLOCK\fP"
 .IX Subsection "USE_PERL_FLOCK"
-Specific for \s-1EMX\s0 port. Since \fBflock\fR\|(3) is present in \s-1EMX,\s0 but is not 
-functional, it is emulated by perl.  To disable the emulations, set 
+Specific for \s-1EMX\s0 port. Since \fBflock\fR\|(3) is present in \s-1EMX,\s0 but is not
+functional, it is emulated by perl.  To disable the emulations, set
 environment variable \f(CW\*(C`USE_PERL_FLOCK=0\*(C'\fR.
 .ie n .SS """TMP"" or ""TEMP"""
 .el .SS "\f(CWTMP\fP or \f(CWTEMP\fP"
@@ -2585,8 +2585,8 @@ overridable at runtime,
 one non-overridable shell per platform. The obvious choices for \s-1OS/2\s0
 are \fIcmd.exe\fR and \fIsh.exe\fR. Having perl build itself would be impossible
 with \fIcmd.exe\fR as a shell, thus I picked up \f(CW\*(C`sh.exe\*(C'\fR. This assures almost
-100% compatibility with the scripts coming from *nix. As an added benefit 
-this works as well under \s-1DOS\s0 if you use DOS-enabled port of pdksh 
+100% compatibility with the scripts coming from *nix. As an added benefit
+this works as well under \s-1DOS\s0 if you use DOS-enabled port of pdksh
 (see \*(L"Prerequisites\*(R").
 .PP
 \&\fBDisadvantages:\fR currently \fIsh.exe\fR of pdksh calls external programs
@@ -2643,14 +2643,14 @@ a (pretty random) benchmark showed that Perl's one is 5% better.
 .PP
 Combination of perl's \fBmalloc()\fR and rigid \s-1DLL\s0 name resolution creates
 a special problem with library functions which expect their return value to
-be \fBfree()\fRd by system's \fBfree()\fR. To facilitate extensions which need to call 
+be \fBfree()\fRd by system's \fBfree()\fR. To facilitate extensions which need to call
 such functions, system memory-allocation functions are still available with
-the prefix \f(CW\*(C`emx_\*(C'\fR added. (Currently only \s-1DLL\s0 perl has this, it should 
+the prefix \f(CW\*(C`emx_\*(C'\fR added. (Currently only \s-1DLL\s0 perl has this, it should
 propagate to \fIperl_.exe\fR shortly.)
 .SS "Threads"
 .IX Subsection "Threads"
 One can build perl with thread support enabled by providing \f(CW\*(C`\-D usethreads\*(C'\fR
-option to \fIConfigure\fR.  Currently \s-1OS/2\s0 support of threads is very 
+option to \fIConfigure\fR.  Currently \s-1OS/2\s0 support of threads is very
 preliminary.
 .PP
 Most notable problems:

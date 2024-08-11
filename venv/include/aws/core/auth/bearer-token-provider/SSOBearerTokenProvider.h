@@ -13,7 +13,7 @@
 
 namespace Aws
 {
-    namespace Auth 
+    namespace Auth
     {
         /**
         * To support usage of SSO bearerToken.

@@ -24,7 +24,7 @@ namespace Model
 {
 
   /**
-   * <p>Encloses a receipt handle and an identifier for it.</p><p><h3>See Also:</h3> 
+   * <p>Encloses a receipt handle and an identifier for it.</p><p><h3>See Also:</h3>
    * <a
    * href="http://docs.aws.amazon.com/goto/WebAPI/sqs-2012-11-05/DeleteMessageBatchRequestEntry">AWS
    * API Reference</a></p>
@@ -44,7 +44,7 @@ namespace Model
      * communicate the result.</p>  <p>The <code>Id</code>s of a batch request
      * need to be unique within a request.</p> <p>This identifier can have up to 80
      * characters. The following characters are accepted: alphanumeric characters,
-     * hyphens(-), and underscores (_).</p> 
+     * hyphens(-), and underscores (_).</p>
      */
     inline const Aws::String& GetId() const{ return m_id; }
     inline bool IdHasBeenSet() const { return m_idHasBeenSet; }

@@ -4336,9 +4336,9 @@ extern GEOSGeometry GEOS_DLL *GEOSPolygonize(
     unsigned int ngeoms);
 
 /**
-* Has the same polygonizing behavior as GEOSPolygonize(), 
+* Has the same polygonizing behavior as GEOSPolygonize(),
 * but returns a result which is a valid polygonal geometry.
-* The result will not contain any edge-adjacent elements. 
+* The result will not contain any edge-adjacent elements.
 *
 * \param geoms Array of linear geometries to polygons. Caller retains ownersihp of both array container and objects.
 * \param ngeoms Size of the geoms array.

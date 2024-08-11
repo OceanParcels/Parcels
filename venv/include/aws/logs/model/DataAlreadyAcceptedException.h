@@ -27,7 +27,7 @@ namespace Model
    * <p>The event was already logged.</p>  <p> <code>PutLogEvents</code>
    * actions are now always accepted and never return
    * <code>DataAlreadyAcceptedException</code> regardless of whether a given batch of
-   * log events has already been accepted. </p> <p><h3>See Also:</h3>  
+   * log events has already been accepted. </p> <p><h3>See Also:</h3>
    * <a
    * href="http://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DataAlreadyAcceptedException">AWS
    * API Reference</a></p>
@@ -42,7 +42,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const Aws::String& GetExpectedSequenceToken() const{ return m_expectedSequenceToken; }
     inline bool ExpectedSequenceTokenHasBeenSet() const { return m_expectedSequenceTokenHasBeenSet; }
     inline void SetExpectedSequenceToken(const Aws::String& value) { m_expectedSequenceTokenHasBeenSet = true; m_expectedSequenceToken = value; }

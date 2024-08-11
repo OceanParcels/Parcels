@@ -124,7 +124,7 @@ namespace FileSystem
         /**
          * Initialize a directory with it's absolute path. If the path is invalid, the bool operator will return false.
          */
-        Directory(const Aws::String& path, const Aws::String& relativePath);        
+        Directory(const Aws::String& path, const Aws::String& relativePath);
 
         /**
          * If this directory is valid for use.
@@ -166,10 +166,10 @@ namespace FileSystem
     /**
      * Visitor for a Directory Tree traversal. Return true to continue the traversal, false to exit the traversal immediately.
      */
-    typedef std::function<bool(const DirectoryTree*, const DirectoryEntry&)> DirectoryEntryVisitor;    
+    typedef std::function<bool(const DirectoryTree*, const DirectoryEntry&)> DirectoryEntryVisitor;
 
     /**
-     * Wrapper around directory. Currently provides a Depth-first and Breadth-first traversal of the provided path. This is most likely the class you are 
+     * Wrapper around directory. Currently provides a Depth-first and Breadth-first traversal of the provided path. This is most likely the class you are
      * looking for.
      */
     class AWS_CORE_API DirectoryTree

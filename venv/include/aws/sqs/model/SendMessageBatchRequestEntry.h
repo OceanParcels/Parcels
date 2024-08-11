@@ -48,7 +48,7 @@ namespace Model
      *  <p>The <code>Id</code>s of a batch request need to be unique within a
      * request.</p> <p>This identifier can have up to 80 characters. The following
      * characters are accepted: alphanumeric characters, hyphens(-), and underscores
-     * (_).</p> 
+     * (_).</p>
      */
     inline const Aws::String& GetId() const{ return m_id; }
     inline bool IdHasBeenSet() const { return m_idHasBeenSet; }
@@ -82,7 +82,7 @@ namespace Model
      * period is finished. If you don't specify a value, the default value for the
      * queue is applied. </p>  <p>When you set <code>FifoQueue</code>, you can't
      * set <code>DelaySeconds</code> per message. You can set this parameter only on a
-     * queue level.</p> 
+     * queue level.</p>
      */
     inline int GetDelaySeconds() const{ return m_delaySeconds; }
     inline bool DelaySecondsHasBeenSet() const { return m_delaySecondsHasBeenSet; }
@@ -119,7 +119,7 @@ namespace Model
      * is <code>AWSTraceHeader</code>. Its type must be <code>String</code> and its
      * value must be a correctly formatted X-Ray trace header string.</p> </li> <li>
      * <p>The size of a message system attribute doesn't count towards the total size
-     * of a message.</p> </li> </ul> 
+     * of a message.</p> </li> </ul>
      */
     inline const Aws::Map<MessageSystemAttributeNameForSends, MessageSystemAttributeValue>& GetMessageSystemAttributes() const{ return m_messageSystemAttributes; }
     inline bool MessageSystemAttributesHasBeenSet() const { return m_messageSystemAttributesHasBeenSet; }
@@ -210,7 +210,7 @@ namespace Model
      * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/using-messagegroupid-property.html">Using
      * the MessageGroupId Property</a> in the <i>Amazon SQS Developer Guide</i>.</p>
      *  <p> <code>MessageGroupId</code> is required for FIFO queues. You
-     * can't use it for Standard queues.</p> 
+     * can't use it for Standard queues.</p>
      */
     inline const Aws::String& GetMessageGroupId() const{ return m_messageGroupId; }
     inline bool MessageGroupIdHasBeenSet() const { return m_messageGroupIdHasBeenSet; }

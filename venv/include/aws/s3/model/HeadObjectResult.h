@@ -45,7 +45,7 @@ namespace Model
     /**
      * <p>Specifies whether the object retrieved was (true) or was not (false) a Delete
      * Marker. If false, this response header does not appear in the response.</p>
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline bool GetDeleteMarker() const{ return m_deleteMarker; }
     inline void SetDeleteMarker(bool value) { m_deleteMarker = value; }
@@ -73,7 +73,7 @@ namespace Model
      * header. It includes the <code>expiry-date</code> and <code>rule-id</code>
      * key-value pairs providing object expiration information. The value of the
      * <code>rule-id</code> is URL-encoded.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::String& GetExpiration() const{ return m_expiration; }
     inline void SetExpiration(const Aws::String& value) { m_expiration = value; }
@@ -100,7 +100,7 @@ namespace Model
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html#lifecycle-transition-general-considerations">Transitioning
      * Objects: General Considerations</a>.</p>  <p>This functionality is not
      * supported for directory buckets. Only the S3 Express One Zone storage class is
-     * supported by directory buckets to store objects.</p> 
+     * supported by directory buckets to store objects.</p>
      */
     inline const Aws::String& GetRestore() const{ return m_restore; }
     inline void SetRestore(const Aws::String& value) { m_restore = value; }
@@ -114,7 +114,7 @@ namespace Model
     ///@{
     /**
      * <p>The archive state of the head object.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const ArchiveStatus& GetArchiveStatus() const{ return m_archiveStatus; }
     inline void SetArchiveStatus(const ArchiveStatus& value) { m_archiveStatus = value; }
@@ -244,7 +244,7 @@ namespace Model
      * API like SOAP that supports more flexible metadata than the REST API. For
      * example, using SOAP, you can create metadata whose values are not legal HTTP
      * headers.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline int GetMissingMeta() const{ return m_missingMeta; }
     inline void SetMissingMeta(int value) { m_missingMeta = value; }
@@ -254,7 +254,7 @@ namespace Model
     ///@{
     /**
      * <p>Version ID of the object.</p>  <p>This functionality is not supported
-     * for directory buckets.</p> 
+     * for directory buckets.</p>
      */
     inline const Aws::String& GetVersionId() const{ return m_versionId; }
     inline void SetVersionId(const Aws::String& value) { m_versionId = value; }
@@ -348,7 +348,7 @@ namespace Model
      * <p>If the bucket is configured as a website, redirects requests for this object
      * to another object in the same bucket or to an external URL. Amazon S3 stores the
      * value of this header in the object metadata.</p>  <p>This functionality is
-     * not supported for directory buckets.</p> 
+     * not supported for directory buckets.</p>
      */
     inline const Aws::String& GetWebsiteRedirectLocation() const{ return m_websiteRedirectLocation; }
     inline void SetWebsiteRedirectLocation(const Aws::String& value) { m_websiteRedirectLocation = value; }
@@ -365,7 +365,7 @@ namespace Model
      * Amazon S3 (for example, <code>AES256</code>, <code>aws:kms</code>,
      * <code>aws:kms:dsse</code>).</p>  <p>For directory buckets, only
      * server-side encryption with Amazon S3 managed keys (SSE-S3)
-     * (<code>AES256</code>) is supported.</p> 
+     * (<code>AES256</code>) is supported.</p>
      */
     inline const ServerSideEncryption& GetServerSideEncryption() const{ return m_serverSideEncryption; }
     inline void SetServerSideEncryption(const ServerSideEncryption& value) { m_serverSideEncryption = value; }
@@ -397,7 +397,7 @@ namespace Model
      * <p>If server-side encryption with a customer-provided encryption key was
      * requested, the response will include this header to confirm the encryption
      * algorithm that's used.</p>  <p>This functionality is not supported for
-     * directory buckets.</p> 
+     * directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerAlgorithm() const{ return m_sSECustomerAlgorithm; }
     inline void SetSSECustomerAlgorithm(const Aws::String& value) { m_sSECustomerAlgorithm = value; }
@@ -413,7 +413,7 @@ namespace Model
      * <p>If server-side encryption with a customer-provided encryption key was
      * requested, the response will include this header to provide the round-trip
      * message integrity verification of the customer-provided encryption key.</p>
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSECustomerKeyMD5() const{ return m_sSECustomerKeyMD5; }
     inline void SetSSECustomerKeyMD5(const Aws::String& value) { m_sSECustomerKeyMD5 = value; }
@@ -428,7 +428,7 @@ namespace Model
     /**
      * <p>If present, indicates the ID of the Key Management Service (KMS) symmetric
      * encryption customer managed key that was used for the object.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSEKMSKeyId() const{ return m_sSEKMSKeyId; }
     inline void SetSSEKMSKeyId(const Aws::String& value) { m_sSEKMSKeyId = value; }
@@ -443,7 +443,7 @@ namespace Model
     /**
      * <p>Indicates whether the object uses an S3 Bucket Key for server-side encryption
      * with Key Management Service (KMS) keys (SSE-KMS).</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline bool GetBucketKeyEnabled() const{ return m_bucketKeyEnabled; }
     inline void SetBucketKeyEnabled(bool value) { m_bucketKeyEnabled = value; }
@@ -458,7 +458,7 @@ namespace Model
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html">Storage
      * Classes</a>.</p>  <p> <b>Directory buckets </b> - Only the S3 Express One
      * Zone storage class is supported by directory buckets to store objects.</p>
-     * 
+     *
      */
     inline const StorageClass& GetStorageClass() const{ return m_storageClass; }
     inline void SetStorageClass(const StorageClass& value) { m_storageClass = value; }
@@ -468,7 +468,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestCharged& GetRequestCharged() const{ return m_requestCharged; }
     inline void SetRequestCharged(const RequestCharged& value) { m_requestCharged = value; }
     inline void SetRequestCharged(RequestCharged&& value) { m_requestCharged = std::move(value); }
@@ -507,7 +507,7 @@ namespace Model
      * fails replication the header will return FAILED. </p> </li> </ul> <p>For more
      * information, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html">Replication</a>.</p>
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline const ReplicationStatus& GetReplicationStatus() const{ return m_replicationStatus; }
     inline void SetReplicationStatus(const ReplicationStatus& value) { m_replicationStatus = value; }
@@ -534,7 +534,7 @@ namespace Model
      * permission. For more information about S3 Object Lock, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html">Object
      * Lock</a>. </p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const ObjectLockMode& GetObjectLockMode() const{ return m_objectLockMode; }
     inline void SetObjectLockMode(const ObjectLockMode& value) { m_objectLockMode = value; }
@@ -548,7 +548,7 @@ namespace Model
      * <p>The date and time when the Object Lock retention period expires. This header
      * is only returned if the requester has the <code>s3:GetObjectRetention</code>
      * permission.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::Utils::DateTime& GetObjectLockRetainUntilDate() const{ return m_objectLockRetainUntilDate; }
     inline void SetObjectLockRetainUntilDate(const Aws::Utils::DateTime& value) { m_objectLockRetainUntilDate = value; }
@@ -566,7 +566,7 @@ namespace Model
      * see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html">Object
      * Lock</a>.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const ObjectLockLegalHoldStatus& GetObjectLockLegalHoldStatus() const{ return m_objectLockLegalHoldStatus; }
     inline void SetObjectLockLegalHoldStatus(const ObjectLockLegalHoldStatus& value) { m_objectLockLegalHoldStatus = value; }
@@ -589,7 +589,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

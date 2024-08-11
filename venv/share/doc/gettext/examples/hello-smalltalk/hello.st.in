@@ -21,7 +21,7 @@ Transcript message: saved.
 
 Object subclass: #Main
   instanceVariableNames: ''
-  classVariableNames: 'NLS' 
+  classVariableNames: 'NLS'
   poolDictionaries: ''
   category: 'Program'
 !

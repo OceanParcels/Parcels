@@ -1,8 +1,8 @@
 #  XLocale Database Sample for en_US.UTF-8
-# 
-# 
+#
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
 on_demand_loading	True
 object_name		generic
@@ -163,9 +163,9 @@ fs16	{
 	}
 }
 END XLC_FONTSET
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name		UTF-8
 mb_cur_max		6
@@ -182,70 +182,70 @@ cs1     {
         length          1
         ct_encoding     ISO8859-1:GR
 }
- 
+
 #	cs2 class
 cs2     {
         side            GR
         length          1
         ct_encoding     ISO8859-2:GR
 }
- 
+
 #	cs3 class
 cs3     {
         side            GR
         length          1
         ct_encoding     ISO8859-3:GR
 }
- 
+
 #	cs4 class
 cs4     {
         side            GR
         length          1
         ct_encoding     ISO8859-4:GR
 }
- 
+
 #	cs5 class
 cs5     {
         side            GR
         length          1
         ct_encoding     ISO8859-5:GR
 }
- 
+
 #	cs6 class
 cs6     {
         side            GR
         length          1
         ct_encoding     ISO8859-7:GR
 }
- 
+
 #	cs7 class
 cs7     {
         side            GR
         length          1
         ct_encoding     ISO8859-9:GR
 }
- 
+
 #	cs8 class
 cs8     {
         side            GR
         length          1
         ct_encoding     ISO8859-13:GR
 }
- 
+
 #	cs9 class
 cs9     {
         side            GR
         length          1
         ct_encoding     ISO8859-14:GR
 }
- 
+
 #	cs10 class
 cs10    {
         side            GR
         length          1
         ct_encoding     ISO8859-15:GR
 }
- 
+
 #	cs11 class
 cs11	{
 	side		GR
@@ -258,21 +258,21 @@ cs12    {
         length          2
         ct_encoding     KSC5601.1987-0:GL; KSC5601.1987-0:GR;                        KSC5601.1987-1:GL; KSC5601.1987-1:GR
 }
- 
+
 #	cs13 class
 cs13    {
         side            GR
         length          2
         ct_encoding     GB2312.1980-0:GL; GB2312.1980-0:GR
 }
- 
+
 #	cs14 class
 cs14	{
 	side		GR
 	length		1
 	ct_encoding	JISX0201.1976-0:GR
 }
- 
+
 #	cs15 class
 cs15	{
 	side		none

@@ -31,7 +31,7 @@ namespace Aws
     /**
      * Std allocator interface that is used for all STL types in the SDK
      * in the event that Custom Memory Management is being used.
-     */  
+     */
     template <typename T>
     class Allocator : public std::allocator<T>
     {

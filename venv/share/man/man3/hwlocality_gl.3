@@ -20,12 +20,12 @@ hwlocality_gl \- Interoperability with OpenGL displays
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 This interface offers ways to retrieve topology information about OpenGL displays\&.
 .PP
-Only the NVIDIA display locality information is currently available, using the NV-CONTROL X11 extension and the NVCtrl library\&. 
+Only the NVIDIA display locality information is currently available, using the NV-CONTROL X11 extension and the NVCtrl library\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static int hwloc_gl_get_display_by_osdev (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP osdev, unsigned * port, unsigned * device)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
@@ -33,20 +33,20 @@ Get the OpenGL display port and device corresponding to the given hwloc OS objec
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
 -1 if none could be found\&.
 .RE
 .PP
-The topology \fCtopology\fP does not necessarily have to match the current machine\&. For instance the topology may be an XML import of a remote host\&. I/O devices detection and the GL component must be enabled in the topology\&. 
+The topology \fCtopology\fP does not necessarily have to match the current machine\&. For instance the topology may be an XML import of a remote host\&. I/O devices detection and the GL component must be enabled in the topology\&.
 .SS "static \fBhwloc_obj_t\fP hwloc_gl_get_display_osdev_by_name (\fBhwloc_topology_t\fP topology, const char * name)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the hwloc OS device object corresponding to the OpenGL display given by name\&. 
+Get the hwloc OS device object corresponding to the OpenGL display given by name\&.
 .PP
 \fBReturns\fP
 .RS 4
-The hwloc OS device object describing the OpenGL display whose name is \fCname\fP, built as ':port\&.device' such as ':0\&.0' \&. 
+The hwloc OS device object describing the OpenGL display whose name is \fCname\fP, built as ':port\&.device' such as ':0\&.0' \&.
 .PP
 \fCNULL\fP if none could be found\&.
 .RE
@@ -55,18 +55,18 @@ The topology \fCtopology\fP does not necessarily have to match the current machi
 .PP
 \fBNote\fP
 .RS 4
-The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&. 
+The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_gl_get_display_osdev_by_port_device (\fBhwloc_topology_t\fP topology, unsigned port, unsigned device)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the hwloc OS device object corresponding to the OpenGL display given by port and device index\&. 
+Get the hwloc OS device object corresponding to the OpenGL display given by port and device index\&.
 .PP
 \fBReturns\fP
 .RS 4
-The hwloc OS device object describing the OpenGL display whose port (server) is \fCport\fP and device (screen) is \fCdevice\fP\&. 
+The hwloc OS device object describing the OpenGL display whose port (server) is \fCport\fP and device (screen) is \fCdevice\fP\&.
 .PP
 \fCNULL\fP if none could be found\&.
 .RE
@@ -75,10 +75,10 @@ The topology \fCtopology\fP does not necessarily have to match the current machi
 .PP
 \fBNote\fP
 .RS 4
-The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&. 
+The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

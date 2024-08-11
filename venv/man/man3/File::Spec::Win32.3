@@ -207,9 +207,9 @@ On Win32 makes
 \&                                                         $no_file );
 .Ve
 .Sp
-Splits a path into volume, directory, and filename portions. Assumes that 
+Splits a path into volume, directory, and filename portions. Assumes that
 the last file is a path unless the path ends in '\e\e', '\e\e.', '\e\e..'
-or \f(CW$no_file\fR is true.  On Win32 this means that \f(CW$no_file\fR true makes this return 
+or \f(CW$no_file\fR is true.  On Win32 this means that \f(CW$no_file\fR true makes this return
 ( \f(CW$volume\fR, \f(CW$path\fR, '' ).
 .Sp
 Separators accepted are \e and /.
@@ -226,11 +226,11 @@ The opposite of \fBcatdir()\fR.
 \&    @dirs = File::Spec\->splitdir( $directories );
 .Ve
 .Sp
-\&\f(CW$directories\fR must be only the directory portion of the path on systems 
+\&\f(CW$directories\fR must be only the directory portion of the path on systems
 that have the concept of a volume or that have path syntax that differentiates
 files from directories.
 .Sp
-Unlike just splitting the directories on the separator, leading empty and 
+Unlike just splitting the directories on the separator, leading empty and
 trailing directory entries can be returned, because these are significant
 on some OSs. So,
 .Sp

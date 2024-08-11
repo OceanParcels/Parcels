@@ -33,4 +33,3 @@ linkgit:git-repack[1]::
 
 linkgit:git-replace[1]::
 	Create, list, delete refs to replace objects.
-

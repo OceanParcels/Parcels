@@ -75,5 +75,3 @@ namespace Aws
         } // namespace Standard
     } // namespace Http
 } // namespace Aws
-
-

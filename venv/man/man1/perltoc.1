@@ -268,7 +268,7 @@ Parentheses for capturing, Other regexp features
 [\f(BInumber/list\fB]\fR , \fB\-c\fR , \fB\-d\fR  , \fB\-dt\fR,
 \&\fB\-d:\fR\fIMOD[=bar,baz]\fR  , \fB\-dt:\fR\fIMOD[=bar,baz]\fR,
 \&\fB\-D\fR\fIletters\fR   , \fB\-D\fR\fInumber\fR, \fB\-e\fR
-\&\fIcommandline\fR , \fB\-E\fR \fIcommandline\fR , \fB\-f\fR 
+\&\fIcommandline\fR , \fB\-E\fR \fIcommandline\fR , \fB\-f\fR
  , \fB\-F\fR\fIpattern\fR , \fB\-h\fR ,
 \&\fB\-i\fR[\fIextension\fR]  , \fB\-I\fR\fIdirectory\fR  ,
 \&\fB\-l\fR[\fIoctnum\fR]   , \fB\-m\fR[\fB\-\fR]\fImodule\fR  ,
@@ -2035,8 +2035,8 @@ unary &, unary *, (\s-1TYPE\s0)
 .IX Xref "operator, regexp"
 .IX Item "Regexp Quote-Like Operators"
 \&\f(CW\*(C`qr/\f(CISTRING\f(CW/msixpodualn\*(C'\fR       ,
-\&\f(CW\*(C`m/\f(CIPATTERN\f(CW/msixpodualngc\*(C'\fR   
-        
+\&\f(CW\*(C`m/\f(CIPATTERN\f(CW/msixpodualngc\*(C'\fR
+
  , \f(CW\*(C`/\f(CIPATTERN\f(CW/msixpodualngc\*(C'\fR, The empty pattern \f(CW\*(C`//\*(C'\fR,
 Matching in list context, \f(CW\*(C`\eG \f(CIassertion\f(CW\*(C'\fR, \f(CW\*(C`m?\f(CIPATTERN\f(CW?msixpodualngc\*(C'\fR
  ,
@@ -2049,7 +2049,7 @@ Matching in list context, \f(CW\*(C`\eG \f(CIassertion\f(CW\*(C'\fR, \f(CW\*(C`m
 \&\f(CW\*(C`qq/\f(CISTRING\f(CW/\*(C'\fR    , \f(CW"\f(CISTRING\f(CW"\fR,
 \&\f(CW\*(C`qx/\f(CISTRING\f(CW/\*(C'\fR    , \f(CW\*(C`\`\f(CISTRING\f(CW\`\*(C'\fR,
 \&\f(CW\*(C`qw/\f(CISTRING\f(CW/\*(C'\fR   ,
-\&\f(CW\*(C`tr/\f(CISEARCHLIST\f(CW/\f(CIREPLACEMENTLIST\f(CW/cdsr\*(C'\fR   
+\&\f(CW\*(C`tr/\f(CISEARCHLIST\f(CW/\f(CIREPLACEMENTLIST\f(CW/cdsr\*(C'\fR
   , \f(CW\*(C`y/\f(CISEARCHLIST\f(CW/\f(CIREPLACEMENTLIST\f(CW/cdsr\*(C'\fR, \f(CW\*(C`<<\f(CIEOF\f(CW\*(C'\fR    , Double Quotes,
 Single Quotes, Backticks, Indented Here-docs
 .IX Xref "q quote, single ' '' qq quote, double "" """" qx ` `` backtick qw quote, list quote, words tr y transliterate c d s here-doc heredoc here-document <<"
@@ -2162,19 +2162,19 @@ Functions for SCALARs or strings   , Regular
 expressions and pattern matching   ,
 Numeric functions    ,
 Functions for real \f(CW@ARRAYs\fR , Functions for list data ,
-Functions for real \f(CW%HASHes\fR , Input and output functions 
+Functions for real \f(CW%HASHes\fR , Input and output functions
   , Functions for fixed-length data or records,
-Functions for filehandles, files, or directories  
+Functions for filehandles, files, or directories
    , Keywords related to the control
 flow of your Perl program , Keywords related to scoping,
 Miscellaneous functions, Functions for processes and process groups
   , Keywords related to Perl modules
-, Keywords related to classes and object-orientation 
+, Keywords related to classes and object-orientation
  , Low-level socket functions  , System V
-interprocess communication functions   
-  , Fetching user and group info 
+interprocess communication functions
+  , Fetching user and group info
       , Fetching
-network info      
+network info
 , Time-related functions  , Non-function keywords
 .IX Xref "scalar string character regular expression regex regexp numeric number trigonometric trigonometry array list hash I O input output dbm file filehandle directory pipe link symlink control flow process pid process id module object class package socket sock IPC System V semaphore shared memory memory message user group password uid gid passwd etc passwd network protocol host hostname IP address service time date"
 .IP "Portability" 4
@@ -2188,48 +2188,48 @@ network info
 
 , \-\fIX\fR \s-1EXPR,\s0
 \&\-\fIX\fR \s-1DIRHANDLE,\s0 \-\fIX\fR, abs \s-1VALUE\s0  , abs, accept
-\&\s-1NEWSOCKET,GENERICSOCKET\s0 , alarm \s-1SECONDS\s0  
+\&\s-1NEWSOCKET,GENERICSOCKET\s0 , alarm \s-1SECONDS\s0
 , alarm, atan2 Y,X    , bind
-\&\s-1SOCKET,NAME\s0 , binmode \s-1FILEHANDLE, LAYER\s0   
+\&\s-1SOCKET,NAME\s0 , binmode \s-1FILEHANDLE, LAYER\s0
  , binmode \s-1FILEHANDLE,\s0 bless \s-1REF,CLASSNAME\s0 , bless
 \&\s-1REF,\s0 break, caller \s-1EXPR\s0    ,
 caller, chdir \s-1EXPR\s0   , chdir \s-1FILEHANDLE,\s0
 chdir \s-1DIRHANDLE,\s0 chdir, chmod \s-1LIST\s0   , chomp
 \&\s-1VARIABLE\s0     , chomp(
 \&\s-1LIST\s0 ), chomp, chop \s-1VARIABLE\s0 , chop( \s-1LIST\s0 ), chop, chown \s-1LIST\s0
-   , chr \s-1NUMBER\s0   
+   , chr \s-1NUMBER\s0
 , chr, chroot \s-1FILENAME\s0  , chroot, close
 \&\s-1FILEHANDLE\s0 , close, closedir \s-1DIRHANDLE\s0 , connect
 \&\s-1SOCKET,NAME\s0 , continue \s-1BLOCK\s0 , continue, cos \s-1EXPR\s0
-   , cos, crypt \s-1PLAINTEXT,SALT\s0 
-     
+   , cos, crypt \s-1PLAINTEXT,SALT\s0
+
   , dbmclose \s-1HASH\s0 , dbmopen
 \&\s-1HASH,DBNAME,MASK\s0     , defined \s-1EXPR\s0
   , defined, delete \s-1EXPR\s0 , die \s-1LIST\s0
-     , do \s-1BLOCK\s0 
+     , do \s-1BLOCK\s0
 , do \s-1EXPR\s0 , dump \s-1LABEL\s0   , dump \s-1EXPR,\s0
 dump, each \s-1HASH\s0  , each \s-1ARRAY\s0 ,
 eof \s-1FILEHANDLE\s0   , eof (), eof, eval \s-1EXPR\s0
-      
+
 , eval \s-1BLOCK,\s0 eval, String eval, Under the
 \&\f(CW"unicode_eval"\fR feature, Outside the \f(CW"unicode_eval"\fR feature, Block eval, evalbytes
 \&\s-1EXPR\s0 , evalbytes, exec \s-1LIST\s0  , exec \s-1PROGRAM
-LIST,\s0 exists \s-1EXPR\s0  , exit \s-1EXPR\s0 
- , exit, exp \s-1EXPR\s0   
- , exp, fc \s-1EXPR\s0   
+LIST,\s0 exists \s-1EXPR\s0  , exit \s-1EXPR\s0
+ , exit, exp \s-1EXPR\s0
+ , exp, fc \s-1EXPR\s0
  , fc, fcntl \s-1FILEHANDLE,FUNCTION,SCALAR\s0 ,
 _\|_FILE_\|_ , fileno \s-1FILEHANDLE\s0 , fileno \s-1DIRHANDLE,\s0 flock
-\&\s-1FILEHANDLE,OPERATION\s0   , fork  
+\&\s-1FILEHANDLE,OPERATION\s0   , fork
 , format , formline \s-1PICTURE,LIST\s0 , getc
 \&\s-1FILEHANDLE\s0    , getc, getlogin
  , getpeername \s-1SOCKET\s0  , getpgrp
 \&\s-1PID\s0  , getppid   , getpriority
-\&\s-1WHICH,WHO\s0   , getpwnam \s-1NAME\s0 
-    
-   
-    
-    
-    
+\&\s-1WHICH,WHO\s0   , getpwnam \s-1NAME\s0
+
+
+
+
+
     ,
 getgrnam \s-1NAME,\s0 gethostbyname \s-1NAME,\s0 getnetbyname \s-1NAME,\s0 getprotobyname \s-1NAME,\s0
 getpwuid \s-1UID,\s0 getgrgid \s-1GID,\s0 getservbyname \s-1NAME,PROTO,\s0 gethostbyaddr
@@ -2246,16 +2246,16 @@ goto \s-1EXPR,\s0 goto &NAME, grep \s-1BLOCK LIST\s0 , grep \s-1EXPR,LIST,\s0 he
 \&\s-1STR,SUBSTR,POSITION\s0   , index \s-1STR,SUBSTR,\s0 int
 \&\s-1EXPR\s0     , int, ioctl
 \&\s-1FILEHANDLE,FUNCTION,SCALAR\s0 , join \s-1EXPR,LIST\s0 , keys \s-1HASH\s0
- , keys \s-1ARRAY,\s0 kill \s-1SIGNAL, LIST,\s0 kill \s-1SIGNAL\s0 
-, last \s-1LABEL\s0  , last \s-1EXPR,\s0 last, lc \s-1EXPR\s0 
+ , keys \s-1ARRAY,\s0 kill \s-1SIGNAL, LIST,\s0 kill \s-1SIGNAL\s0
+, last \s-1LABEL\s0  , last \s-1EXPR,\s0 last, lc \s-1EXPR\s0
 , lc, If \f(CW\*(C`use bytes\*(C'\fR is in effect:, Otherwise, if \f(CW\*(C`use
 locale\*(C'\fR for \f(CW\*(C`LC_CTYPE\*(C'\fR is in effect:, Otherwise, If \s-1EXPR\s0 has the \s-1UTF8\s0 flag
 set:, Otherwise, if \f(CW\*(C`use feature \*(Aqunicode_strings\*(Aq\*(C'\fR or \f(CW\*(C`use locale
-\&\*(Aq:not_characters\*(Aq\*(C'\fR is in effect:, Otherwise:, lcfirst \s-1EXPR\s0 
+\&\*(Aq:not_characters\*(Aq\*(C'\fR is in effect:, Otherwise:, lcfirst \s-1EXPR\s0
 , lcfirst, length \s-1EXPR\s0  , length, _\|_LINE_\|_
 , link \s-1OLDFILE,NEWFILE\s0 , listen \s-1SOCKET,QUEUESIZE\s0
 , local \s-1EXPR\s0 , localtime \s-1EXPR\s0  ,
-localtime, lock \s-1THING\s0 , log \s-1EXPR\s0    
+localtime, lock \s-1THING\s0 , log \s-1EXPR\s0
 , log, lstat \s-1FILEHANDLE\s0 , lstat \s-1EXPR,\s0 lstat \s-1DIRHANDLE,\s0
 lstat, m//, map \s-1BLOCK LIST\s0 , map \s-1EXPR,LIST,\s0 mkdir \s-1FILENAME,MODE\s0
   , mkdir \s-1FILENAME,\s0 mkdir, msgctl
@@ -2263,8 +2263,8 @@ lstat, m//, map \s-1BLOCK LIST\s0 , map \s-1EXPR,LIST,\s0 mkdir \s-1FILENAME,MOD
 \&\s-1ID,VAR,SIZE,TYPE,FLAGS\s0 , msgsnd \s-1ID,MSG,FLAGS\s0 , my \s-1VARLIST\s0
 , my \s-1TYPE VARLIST,\s0 my \s-1VARLIST : ATTRS,\s0 my \s-1TYPE VARLIST : ATTRS,\s0 next
 \&\s-1LABEL\s0  , next \s-1EXPR,\s0 next, no \s-1MODULE VERSION LIST\s0  , no \s-1MODULE VERSION,\s0 no \s-1MODULE LIST,\s0 no \s-1MODULE,\s0
-no \s-1VERSION,\s0 oct \s-1EXPR\s0     
-, oct, open \s-1FILEHANDLE,MODE,EXPR\s0   
+no \s-1VERSION,\s0 oct \s-1EXPR\s0
+, oct, open \s-1FILEHANDLE,MODE,EXPR\s0
 , open \s-1FILEHANDLE,MODE,EXPR,LIST,\s0 open \s-1FILEHANDLE,MODE,REFERENCE,\s0
 open \s-1FILEHANDLE,EXPR,\s0 open \s-1FILEHANDLE,\s0 Working with files, Simple examples,
 About filehandles, About modes, Checking the return value, Specifying I/O
@@ -2280,7 +2280,7 @@ Invoking C\-style \f(CW\*(C`open\*(C'\fR, Portability issues, opendir \s-1DIRHAN
 our \s-1TYPE VARLIST,\s0 our \s-1VARLIST : ATTRS,\s0 our \s-1TYPE VARLIST : ATTRS,\s0 pack
 \&\s-1TEMPLATE,LIST\s0 , package \s-1NAMESPACE,\s0 package \s-1NAMESPACE VERSION\s0
    , package \s-1NAMESPACE BLOCK,\s0
-package \s-1NAMESPACE VERSION BLOCK\s0   
+package \s-1NAMESPACE VERSION BLOCK\s0
 , _\|_PACKAGE_\|_ , pipe \s-1READHANDLE,WRITEHANDLE\s0
 , pop \s-1ARRAY\s0  , pop, pos \s-1SCALAR\s0  , pos, print \s-1FILEHANDLE LIST\s0 , print \s-1FILEHANDLE,\s0 print
 \&\s-1LIST,\s0 print, printf \s-1FILEHANDLE FORMAT, LIST\s0 , printf \s-1FILEHANDLE,\s0
@@ -2299,18 +2299,18 @@ ref, rename \s-1OLDNAME,NEWNAME\s0    , require \s-1VERSION\s0
 \&\s-1DIRHANDLE\s0 , rindex \s-1STR,SUBSTR,POSITION\s0 , rindex
 \&\s-1STR,SUBSTR,\s0 rmdir \s-1FILENAME\s0   , rmdir,
 s///, say \s-1FILEHANDLE LIST\s0 , say \s-1FILEHANDLE,\s0 say \s-1LIST,\s0 say, scalar
-\&\s-1EXPR\s0  , seek \s-1FILEHANDLE,POSITION,WHENCE\s0  
+\&\s-1EXPR\s0  , seek \s-1FILEHANDLE,POSITION,WHENCE\s0
 , seekdir \s-1DIRHANDLE,POS\s0 , select
 \&\s-1FILEHANDLE\s0  , select, select
 \&\s-1RBITS,WBITS,EBITS,TIMEOUT\s0 , semctl \s-1ID,SEMNUM,CMD,ARG\s0 ,
 semget \s-1KEY,NSEMS,FLAGS\s0 , semop \s-1KEY,OPSTRING\s0 , send
 \&\s-1SOCKET,MSG,FLAGS,TO\s0 , send \s-1SOCKET,MSG,FLAGS,\s0 setpgrp \s-1PID,PGRP\s0
- , setpriority \s-1WHICH,WHO,PRIORITY\s0 
+ , setpriority \s-1WHICH,WHO,PRIORITY\s0
   , setsockopt \s-1SOCKET,LEVEL,OPTNAME,OPTVAL\s0
 , shift \s-1ARRAY\s0 , shift, shmctl \s-1ID,CMD,ARG\s0 ,
-shmget \s-1KEY,SIZE,FLAGS\s0 , shmread \s-1ID,VAR,POS,SIZE\s0 
+shmget \s-1KEY,SIZE,FLAGS\s0 , shmread \s-1ID,VAR,POS,SIZE\s0
 , shmwrite \s-1ID,STRING,POS,SIZE,\s0 shutdown \s-1SOCKET,HOW\s0 ,
-sin \s-1EXPR\s0    , sin, sleep \s-1EXPR\s0 
+sin \s-1EXPR\s0    , sin, sleep \s-1EXPR\s0
 , sleep, socket \s-1SOCKET,DOMAIN,TYPE,PROTOCOL\s0 , socketpair
 \&\s-1SOCKET1,SOCKET2,DOMAIN,TYPE,PROTOCOL\s0 , sort \s-1SUBNAME LIST\s0
 , sort \s-1BLOCK LIST,\s0 sort \s-1LIST,\s0 splice \s-1ARRAY,OFFSET,LENGTH,LIST\s0
@@ -2319,27 +2319,27 @@ split /PATTERN/,EXPR,LIMIT , split /PATTERN/,EXPR, split /PATTERN/,
 split, sprintf \s-1FORMAT, LIST\s0 , format parameter index, flags,
 vector flag, (minimum) width, precision, or maximum width ,
 size, order of arguments, sqrt \s-1EXPR\s0   , sqrt,
-srand \s-1EXPR\s0   , srand, stat \s-1FILEHANDLE\s0 
+srand \s-1EXPR\s0   , srand, stat \s-1FILEHANDLE\s0
  , stat \s-1EXPR,\s0 stat \s-1DIRHANDLE,\s0 stat, state \s-1VARLIST\s0
 , state \s-1TYPE VARLIST,\s0 state \s-1VARLIST : ATTRS,\s0 state \s-1TYPE VARLIST :
 ATTRS,\s0 study \s-1SCALAR\s0 , study, sub \s-1NAME BLOCK\s0 , sub \s-1NAME\s0
 (\s-1PROTO\s0) \s-1BLOCK,\s0 sub \s-1NAME : ATTRS BLOCK,\s0 sub \s-1NAME\s0 (\s-1PROTO\s0) : \s-1ATTRS BLOCK,\s0
-_\|_SUB_\|_ , substr \s-1EXPR,OFFSET,LENGTH,REPLACEMENT\s0 
+_\|_SUB_\|_ , substr \s-1EXPR,OFFSET,LENGTH,REPLACEMENT\s0
    , substr \s-1EXPR,OFFSET,LENGTH,\s0 substr
-\&\s-1EXPR,OFFSET,\s0 symlink \s-1OLDFILE,NEWFILE\s0   
+\&\s-1EXPR,OFFSET,\s0 symlink \s-1OLDFILE,NEWFILE\s0
 , syscall \s-1NUMBER, LIST\s0  , sysopen
 \&\s-1FILEHANDLE,FILENAME,MODE\s0 , sysopen
 \&\s-1FILEHANDLE,FILENAME,MODE,PERMS,\s0 sysread \s-1FILEHANDLE,SCALAR,LENGTH,OFFSET\s0
 , sysread \s-1FILEHANDLE,SCALAR,LENGTH,\s0 sysseek
-\&\s-1FILEHANDLE,POSITION,WHENCE\s0  , system \s-1LIST\s0 
+\&\s-1FILEHANDLE,POSITION,WHENCE\s0  , system \s-1LIST\s0
 , system \s-1PROGRAM LIST,\s0 syswrite \s-1FILEHANDLE,SCALAR,LENGTH,OFFSET\s0
 , syswrite \s-1FILEHANDLE,SCALAR,LENGTH,\s0 syswrite \s-1FILEHANDLE,SCALAR,\s0
 tell \s-1FILEHANDLE\s0 , tell, telldir \s-1DIRHANDLE\s0 , tie
-\&\s-1VARIABLE,CLASSNAME,LIST\s0 , tied \s-1VARIABLE\s0 , time 
+\&\s-1VARIABLE,CLASSNAME,LIST\s0 , tied \s-1VARIABLE\s0 , time
 , times , tr///, truncate \s-1FILEHANDLE,LENGTH\s0 ,
 truncate \s-1EXPR,LENGTH,\s0 uc \s-1EXPR\s0   , uc, ucfirst
 \&\s-1EXPR\s0  , ucfirst, umask \s-1EXPR\s0 , umask, undef
-\&\s-1EXPR\s0  , undef, unlink \s-1LIST\s0   
+\&\s-1EXPR\s0  , undef, unlink \s-1LIST\s0
  , unlink, unpack \s-1TEMPLATE,EXPR\s0 , unpack \s-1TEMPLATE,\s0
 unshift \s-1ARRAY,LIST\s0 , untie \s-1VARIABLE\s0 , use Module \s-1VERSION
 LIST\s0   , use Module \s-1VERSION,\s0 use Module \s-1LIST,\s0 use
@@ -2489,9 +2489,9 @@ foreach, if, unless, until, while, elseif, default, given, when
 .IX Xref "POD, command"
 .IX Item "Command Paragraph"
 .PD
-\&\f(CW\*(C`=head1 \f(CIHeading Text\f(CW\*(C'\fR     
+\&\f(CW\*(C`=head1 \f(CIHeading Text\f(CW\*(C'\fR
   , \f(CW\*(C`=head2 \f(CIHeading Text\f(CW\*(C'\fR, \f(CW\*(C`=head3 \f(CIHeading
-Text\f(CW\*(C'\fR, \f(CW\*(C`=head4 \f(CIHeading Text\f(CW\*(C'\fR, \f(CW\*(C`=over \f(CIindentlevel\f(CW\*(C'\fR 
+Text\f(CW\*(C'\fR, \f(CW\*(C`=head4 \f(CIHeading Text\f(CW\*(C'\fR, \f(CW\*(C`=over \f(CIindentlevel\f(CW\*(C'\fR
     , \f(CW\*(C`=item \f(CIstuff...\f(CW\*(C'\fR, \f(CW\*(C`=back\*(C'\fR,
 \&\f(CW\*(C`=cut\*(C'\fR  , \f(CW\*(C`=pod\*(C'\fR  , \f(CW\*(C`=begin \f(CIformatname\f(CW\*(C'\fR
      , \f(CW\*(C`=end \f(CIformatname\f(CW\*(C'\fR,
@@ -2500,15 +2500,15 @@ Text\f(CW\*(C'\fR, \f(CW\*(C`=head4 \f(CIHeading Text\f(CW\*(C'\fR, \f(CW\*(C`=o
 .IP "Formatting Codes" 4
 .IX Xref "POD, formatting code formatting code POD, interior sequence interior sequence"
 .IX Item "Formatting Codes"
-\&\f(CW\*(C`I<text>\*(C'\fR \*(-- italic text    , \f(CW\*(C`B<text>\*(C'\fR \*(-- bold text  
- , \f(CW\*(C`C<code>\*(C'\fR \*(-- code text 
+\&\f(CW\*(C`I<text>\*(C'\fR \*(-- italic text    , \f(CW\*(C`B<text>\*(C'\fR \*(-- bold text
+ , \f(CW\*(C`C<code>\*(C'\fR \*(-- code text
   , \f(CW\*(C`L<name>\*(C'\fR \*(--
-a hyperlink   
-, \f(CW\*(C`E<escape>\*(C'\fR \*(-- a character escape  
+a hyperlink
+, \f(CW\*(C`E<escape>\*(C'\fR \*(-- a character escape
  , \f(CW\*(C`F<filename>\*(C'\fR \*(-- used
-for filenames   
-, \f(CW\*(C`S<text>\*(C'\fR \*(-- text contains non-breaking spaces 
-   , \f(CW\*(C`X<topic name>\*(C'\fR \*(-- an index entry  
+for filenames
+, \f(CW\*(C`S<text>\*(C'\fR \*(-- text contains non-breaking spaces
+   , \f(CW\*(C`X<topic name>\*(C'\fR \*(-- an index entry
  , \f(CW\*(C`Z<>\*(C'\fR \*(-- a
 null (zero-effect) formatting code
 .IX Xref "I I<> POD, formatting code, italic italic B B<> POD, formatting code, bold bold C C<> POD, formatting code, code code L L<> POD, formatting code, hyperlink hyperlink E E<> POD, formatting code, escape escape F F<> POD, formatting code, filename filename S S<> POD, formatting code, non-breaking space non-breaking space X X<> POD, formatting code, index entry index entry Z Z<> POD, formatting code, null null"
@@ -2647,15 +2647,15 @@ x [maxdepth] expr , V [pkg [vars]] , X [vars] , y [level [vars]] , T   , s
 , l min+incr, l min-max, l line, l subname, \-
 , v [line] , . , f filename , /pattern/, ?pattern?, L
 [abw] , S [[!]regex] , t [n]
-, t [n] expr , b 
+, t [n] expr , b
 , b [line] [condition]  , b [file]:[line] [condition]  , b subname [condition]  , b postpone
 subname [condition]  , b load filename
- , b compile subname 
+ , b compile subname
 , B line  , B *
- , disable [file]:[line] 
- , disable [line] 
- , enable [file]:[line] 
- , enable [line] 
+ , disable [file]:[line]
+ , disable [line]
+ , enable [file]:[line]
+ , enable [line]
  , a [line] command , A line , A * , w
 expr , W expr , W * , o , o booloption ... , o anyoption? ... , o option=value ... , < ? , < [ command ] , < * , << command , > ? , > command , > * , >> command , { ? , { [ command ], { * , {{ command , ! number , ! \-number , ! pattern , !! cmd , source file , H \-number , q or ^D  , R , |dbcmd
 , ||dbcmd , command, m expr
@@ -2668,9 +2668,9 @@ expr , W expr , W * , o , o booloption ... , o anyoption? ... , o option=value .
   , \f(CW\*(C`AutoTrace\*(C'\fR , \f(CW\*(C`LineInfo\*(C'\fR
 , \f(CW\*(C`inhibit_exit\*(C'\fR , \f(CW\*(C`PrintRet\*(C'\fR , \f(CW\*(C`ornaments\*(C'\fR
 , \f(CW\*(C`frame\*(C'\fR ,
-\&\f(CW\*(C`maxTraceLen\*(C'\fR , \f(CW\*(C`windowSize\*(C'\fR , \f(CW\*(C`arrayDepth\*(C'\fR, \f(CW\*(C`hashDepth\*(C'\fR  , \f(CW\*(C`dumpDepth\*(C'\fR , \f(CW\*(C`compactDump\*(C'\fR, \f(CW\*(C`veryCompact\*(C'\fR 
+\&\f(CW\*(C`maxTraceLen\*(C'\fR , \f(CW\*(C`windowSize\*(C'\fR , \f(CW\*(C`arrayDepth\*(C'\fR, \f(CW\*(C`hashDepth\*(C'\fR  , \f(CW\*(C`dumpDepth\*(C'\fR , \f(CW\*(C`compactDump\*(C'\fR, \f(CW\*(C`veryCompact\*(C'\fR
 , \f(CW\*(C`globPrint\*(C'\fR , \f(CW\*(C`DumpDBFiles\*(C'\fR , \f(CW\*(C`DumpPackages\*(C'\fR
-, \f(CW\*(C`DumpReused\*(C'\fR , \f(CW\*(C`quote\*(C'\fR, \f(CW\*(C`HighBit\*(C'\fR, \f(CW\*(C`undefPrint\*(C'\fR 
+, \f(CW\*(C`DumpReused\*(C'\fR , \f(CW\*(C`quote\*(C'\fR, \f(CW\*(C`HighBit\*(C'\fR, \f(CW\*(C`undefPrint\*(C'\fR
  , \f(CW\*(C`UsageOnly\*(C'\fR
 , \f(CW\*(C`HistFile\*(C'\fR , \f(CW\*(C`HistSize\*(C'\fR , \f(CW\*(C`TTY\*(C'\fR
 , \f(CW\*(C`noTTY\*(C'\fR , \f(CW\*(C`ReadLine\*(C'\fR
@@ -2723,20 +2723,20 @@ Prompt, Multiline commands, Stack backtrace  , Line Listing Format, Frame listin
 .IP "General Variables" 4
 .IX Item "General Variables"
 .PD
-\&\f(CW$ARG\fR, \f(CW$_\fR  , \f(CW@ARG\fR, \f(CW@_\fR  , \f(CW$LIST_SEPARATOR\fR, $" 
+\&\f(CW$ARG\fR, \f(CW$_\fR  , \f(CW@ARG\fR, \f(CW@_\fR  , \f(CW$LIST_SEPARATOR\fR, $"
 , \f(CW$PROCESS_ID\fR, \f(CW$PID\fR, $$   ,
-\&\f(CW$PROGRAM_NAME\fR, \f(CW$0\fR  , \f(CW$REAL_GROUP_ID\fR, \f(CW$GID\fR, $( 
- , \f(CW$EFFECTIVE_GROUP_ID\fR, \f(CW$EGID\fR, $)  
-, \f(CW$REAL_USER_ID\fR, \f(CW$UID\fR, $<  
-, \f(CW$EFFECTIVE_USER_ID\fR, \f(CW$EUID\fR, $>  
-, \f(CW$SUBSCRIPT_SEPARATOR\fR, \f(CW$SUBSEP\fR, $;  
+\&\f(CW$PROGRAM_NAME\fR, \f(CW$0\fR  , \f(CW$REAL_GROUP_ID\fR, \f(CW$GID\fR, $(
+ , \f(CW$EFFECTIVE_GROUP_ID\fR, \f(CW$EGID\fR, $)
+, \f(CW$REAL_USER_ID\fR, \f(CW$UID\fR, $<
+, \f(CW$EFFECTIVE_USER_ID\fR, \f(CW$EUID\fR, $>
+, \f(CW$SUBSCRIPT_SEPARATOR\fR, \f(CW$SUBSEP\fR, $;
 , \f(CW$a\fR, \f(CW$b\fR  , \f(CW%ENV\fR ,
 \&\f(CW$OLD_PERL_VERSION\fR, $]  , \f(CW$SYSTEM_FD_MAX\fR, $^F
  , \f(CW@F\fR , \f(CW@INC\fR , \f(CW%INC\fR ,
 \&\f(CW$INPLACE_EDIT\fR, $^I  , \f(CW@ISA\fR , $^M ,
-\&\f(CW$OSNAME\fR, $^O  , \f(CW%SIG\fR , \f(CW$BASETIME\fR, $^T 
+\&\f(CW$OSNAME\fR, $^O  , \f(CW%SIG\fR , \f(CW$BASETIME\fR, $^T
 , \f(CW$PERL_VERSION\fR, $^V  ,
-${^WIN32_SLOPPY_STAT}  
+${^WIN32_SLOPPY_STAT}
 , \f(CW$EXECUTABLE_NAME\fR, $^X
 .IX Xref "$_ $ARG @_ @ARG $"" $LIST_SEPARATOR $$ $PID $PROCESS_ID $0 $PROGRAM_NAME $( $GID $REAL_GROUP_ID $) $EGID $EFFECTIVE_GROUP_ID $< $UID $REAL_USER_ID $> $EUID $EFFECTIVE_USER_ID $; $SUBSEP SUBSCRIPT_SEPARATOR $a $b %ENV $] $OLD_PERL_VERSION $^F $SYSTEM_FD_MAX @F @INC %INC $^I $INPLACE_EDIT @ISA $^M $^O $OSNAME %SIG $^T $BASETIME $^V $PERL_VERSION ${^WIN32_SLOPPY_STAT} sitecustomize sitecustomize.pl $^X $EXECUTABLE_NAME"
 .IP "Variables related to regular expressions" 4
@@ -2744,18 +2744,18 @@ ${^WIN32_SLOPPY_STAT}
 $<\fIdigits\fR> ($1, \f(CW$2\fR, ...)    , @{^CAPTURE}
  , \f(CW$MATCH\fR, $&  , ${^MATCH}
 , \f(CW$PREMATCH\fR, $`   ,
-${^PREMATCH}  , \f(CW$POSTMATCH\fR, $'  
+${^PREMATCH}  , \f(CW$POSTMATCH\fR, $'
  , ${^POSTMATCH}   ,
 \&\f(CW$LAST_PAREN_MATCH\fR, $+  , \f(CW$LAST_SUBMATCH_RESULT\fR,
-$^N  , \f(CW@LAST_MATCH_END\fR, @+ 
-, %{^CAPTURE}, \f(CW%LAST_PAREN_MATCH\fR, %+ 
- , \f(CW@LAST_MATCH_START\fR, @\- 
+$^N  , \f(CW@LAST_MATCH_END\fR, @+
+, %{^CAPTURE}, \f(CW%LAST_PAREN_MATCH\fR, %+
+ , \f(CW@LAST_MATCH_START\fR, @\-
 , \f(CW\*(C`$\`\*(C'\fR is the same as \f(CW\*(C`substr($var, 0, $\-[0])\*(C'\fR, \f(CW$&\fR
 is the same as \f(CW\*(C`substr($var, $\-[0], $+[0] \- $\-[0])\*(C'\fR, \f(CW\*(C`$\*(Aq\*(C'\fR is the same as
 \&\f(CW\*(C`substr($var, $+[0])\*(C'\fR, \f(CW$1\fR is the same as \f(CW\*(C`substr($var, $\-[1], $+[1] \-
 $\-[1])\*(C'\fR, \f(CW$2\fR is the same as \f(CW\*(C`substr($var, $\-[2], $+[2] \- $\-[2])\*(C'\fR, \f(CW$3\fR
 is the same as \f(CW\*(C`substr($var, $\-[3], $+[3] \- $\-[3])\*(C'\fR, %{^CAPTURE_ALL}
-, %\- , \f(CW$LAST_REGEXP_CODE_RESULT\fR, $^R 
+, %\- , \f(CW$LAST_REGEXP_CODE_RESULT\fR, $^R
 , ${^RE_COMPILE_RECURSION_LIMIT}
 , ${^RE_DEBUG_FLAGS}
 , ${^RE_TRIE_MAXBUF}
@@ -2765,20 +2765,20 @@ is the same as \f(CW\*(C`substr($var, $\-[3], $+[3] \- $\-[3])\*(C'\fR, %{^CAPTU
 \&\f(CW$ARGV\fR , \f(CW@ARGV\fR , \s-1ARGV\s0 , \s-1ARGVOUT\s0 ,
 IO::Handle\->output_field_separator( \s-1EXPR\s0 ), \f(CW$OUTPUT_FIELD_SEPARATOR\fR, \f(CW$OFS\fR,
 $,   , \s-1HANDLE\-\s0>input_line_number(
-\&\s-1EXPR\s0 ), \f(CW$INPUT_LINE_NUMBER\fR, \f(CW$NR\fR, $.   
+\&\s-1EXPR\s0 ), \f(CW$INPUT_LINE_NUMBER\fR, \f(CW$NR\fR, $.
 , IO::Handle\->input_record_separator( \s-1EXPR\s0 ),
 \&\f(CW$INPUT_RECORD_SEPARATOR\fR, \f(CW$RS\fR, $/   ,
 IO::Handle\->output_record_separator( \s-1EXPR\s0 ), \f(CW$OUTPUT_RECORD_SEPARATOR\fR,
 \&\f(CW$ORS\fR, $\e   , \s-1HANDLE\-\s0>autoflush( \s-1EXPR\s0
 ), \f(CW$OUTPUT_AUTOFLUSH\fR, $|    ,
 ${^LAST_FH} , \f(CW$ACCUMULATOR\fR, $^A  ,
-IO::Handle\->format_formfeed(\s-1EXPR\s0), \f(CW$FORMAT_FORMFEED\fR, $^L 
+IO::Handle\->format_formfeed(\s-1EXPR\s0), \f(CW$FORMAT_FORMFEED\fR, $^L
 , \s-1HANDLE\-\s0>format_page_number(\s-1EXPR\s0), \f(CW$FORMAT_PAGE_NUMBER\fR,
 $%  , \s-1HANDLE\-\s0>format_lines_left(\s-1EXPR\s0),
 \&\f(CW$FORMAT_LINES_LEFT\fR, $\-  ,
 IO::Handle\->format_line_break_characters \s-1EXPR,
 \&\f(CW$FORMAT_LINE_BREAK_CHARACTERS\fR, \f(CW$:\fR\s0  ,
-\&\s-1HANDLE\-\s0>format_lines_per_page(\s-1EXPR\s0), \f(CW$FORMAT_LINES_PER_PAGE\fR, $= 
+\&\s-1HANDLE\-\s0>format_lines_per_page(\s-1EXPR\s0), \f(CW$FORMAT_LINES_PER_PAGE\fR, $=
 , \s-1HANDLE\-\s0>format_top_name(\s-1EXPR\s0), \f(CW$FORMAT_TOP_NAME\fR,
 $^  , \s-1HANDLE\-\s0>format_name(\s-1EXPR\s0), \f(CW$FORMAT_NAME\fR, $~
 .IX Xref "$ARGV @ARGV ARGV ARGVOUT $, $OFS $OUTPUT_FIELD_SEPARATOR $. $NR $INPUT_LINE_NUMBER line number $ $RS $INPUT_RECORD_SEPARATOR $\\ $ORS $OUTPUT_RECORD_SEPARATOR $| autoflush flush $OUTPUT_AUTOFLUSH ${^LAST_FH} $^A $ACCUMULATOR $^L $FORMAT_FORMFEED $% $FORMAT_PAGE_NUMBER $- $FORMAT_LINES_LEFT $: FORMAT_LINE_BREAK_CHARACTERS $= $FORMAT_LINES_PER_PAGE $^ $FORMAT_TOP_NAME $~ $FORMAT_NAME"
@@ -2786,9 +2786,9 @@ $^  , \s-1HANDLE\-\s0>format_name(\s-1EXPR\s0), \f(CW$FORMAT_NAME\fR, $~
 .IX Xref "error exception"
 .IX Item "Error Variables"
 ${^CHILD_ERROR_NATIVE} , \f(CW$EXTENDED_OS_ERROR\fR, $^E
- , \f(CW$EXCEPTIONS_BEING_CAUGHT\fR, $^S 
+ , \f(CW$EXCEPTIONS_BEING_CAUGHT\fR, $^S
 , \f(CW$WARNING\fR, $^W  ,
-${^WARNING_BITS} , \f(CW$OS_ERROR\fR, \f(CW$ERRNO\fR, $!  
+${^WARNING_BITS} , \f(CW$OS_ERROR\fR, \f(CW$ERRNO\fR, $!
 , \f(CW%OS_ERROR\fR, \f(CW%ERRNO\fR, %!   ,
 \&\f(CW$CHILD_ERROR\fR, $?  , \f(CW$EVAL_ERROR\fR, $@
 .IX Xref "$^CHILD_ERROR_NATIVE $^E $EXTENDED_OS_ERROR $^S $EXCEPTIONS_BEING_CAUGHT $^W $WARNING ${^WARNING_BITS} $! $ERRNO $OS_ERROR %! %OS_ERROR %ERRNO $? $CHILD_ERROR $@ $EVAL_ERROR"
@@ -2821,7 +2821,7 @@ $# , $* , $[
 .IP "Modifiers" 4
 .IX Item "Modifiers"
 .PD
-\&\fB\f(CB\*(C`m\*(C'\fB\fR    , \fB\f(CB\*(C`s\*(C'\fB\fR    , \fB\f(CB\*(C`i\*(C'\fB\fR    , \fB\f(CB\*(C`x\*(C'\fB\fR and \fB\f(CB\*(C`xx\*(C'\fB\fR , \fB\f(CB\*(C`p\*(C'\fB\fR   , \fB\f(CB\*(C`a\*(C'\fB\fR, \fB\f(CB\*(C`d\*(C'\fB\fR, \fB\f(CB\*(C`l\*(C'\fB\fR, and \fB\f(CB\*(C`u\*(C'\fB\fR 
+\&\fB\f(CB\*(C`m\*(C'\fB\fR    , \fB\f(CB\*(C`s\*(C'\fB\fR    , \fB\f(CB\*(C`i\*(C'\fB\fR    , \fB\f(CB\*(C`x\*(C'\fB\fR and \fB\f(CB\*(C`xx\*(C'\fB\fR , \fB\f(CB\*(C`p\*(C'\fB\fR   , \fB\f(CB\*(C`a\*(C'\fB\fR, \fB\f(CB\*(C`d\*(C'\fB\fR, \fB\f(CB\*(C`l\*(C'\fB\fR, and \fB\f(CB\*(C`u\*(C'\fB\fR
   , \fB\f(CB\*(C`n\*(C'\fB\fR    , Other Modifiers
 .IX Xref " m regex, multiline regexp, multiline regular expression, multiline s regex, single-line regexp, single-line regular expression, single-line i regex, case-insensitive regexp, case-insensitive regular expression, case-insensitive x p regex, preserve regexp, preserve a d l u n regex, non-capture regexp, non-capture regular expression, non-capture"
 .IP "Regular Expressions" 4
@@ -2833,25 +2833,25 @@ $# , $* , $[
 .IP "Extended Patterns" 4
 .IX Item "Extended Patterns"
 .PD
-\&\f(CW\*(C`(?#\f(CItext\f(CW)\*(C'\fR , \f(CW\*(C`(?adlupimnsx\-imnsx)\*(C'\fR, \f(CW\*(C`(?^alupimnsx)\*(C'\fR 
+\&\f(CW\*(C`(?#\f(CItext\f(CW)\*(C'\fR , \f(CW\*(C`(?adlupimnsx\-imnsx)\*(C'\fR, \f(CW\*(C`(?^alupimnsx)\*(C'\fR
 , \f(CW\*(C`(?:\f(CIpattern\f(CW)\*(C'\fR , \f(CW\*(C`(?adluimnsx\-imnsx:\f(CIpattern\f(CW)\*(C'\fR,
 \&\f(CW\*(C`(?^aluimnsx:\f(CIpattern\f(CW)\*(C'\fR , \f(CW\*(C`(?|\f(CIpattern\f(CW)\*(C'\fR  , Lookaround Assertions    , \f(CW\*(C`(?=\f(CIpattern\f(CW)\*(C'\fR,
-\&\f(CW\*(C`(*pla:\f(CIpattern\f(CW)\*(C'\fR, \f(CW\*(C`(*positive_lookahead:\f(CIpattern\f(CW)\*(C'\fR  
+\&\f(CW\*(C`(*pla:\f(CIpattern\f(CW)\*(C'\fR, \f(CW\*(C`(*positive_lookahead:\f(CIpattern\f(CW)\*(C'\fR
   ,
 \&\f(CW\*(C`(?!\f(CIpattern\f(CW)\*(C'\fR, \f(CW\*(C`(*nla:\f(CIpattern\f(CW)\*(C'\fR,
-\&\f(CW\*(C`(*negative_lookahead:\f(CIpattern\f(CW)\*(C'\fR  
+\&\f(CW\*(C`(*negative_lookahead:\f(CIpattern\f(CW)\*(C'\fR
   ,
 \&\f(CW\*(C`(?<=\f(CIpattern\f(CW)\*(C'\fR, \f(CW\*(C`\eK\*(C'\fR, \f(CW\*(C`(*plb:\f(CIpattern\f(CW)\*(C'\fR,
-\&\f(CW\*(C`(*positive_lookbehind:\f(CIpattern\f(CW)\*(C'\fR  
-  
+\&\f(CW\*(C`(*positive_lookbehind:\f(CIpattern\f(CW)\*(C'\fR
+
 , \f(CW\*(C`(?<!\f(CIpattern\f(CW)\*(C'\fR, \f(CW\*(C`(*nlb:\f(CIpattern\f(CW)\*(C'\fR,
-\&\f(CW\*(C`(*negative_lookbehind:\f(CIpattern\f(CW)\*(C'\fR  
+\&\f(CW\*(C`(*negative_lookbehind:\f(CIpattern\f(CW)\*(C'\fR
   ,
-\&\f(CW\*(C`(?<\f(CINAME\f(CW>\f(CIpattern\f(CW)\*(C'\fR, \f(CW\*(C`(?\*(Aq\f(CINAME\f(CW\*(Aq\f(CIpattern\f(CW)\*(C'\fR 
+\&\f(CW\*(C`(?<\f(CINAME\f(CW>\f(CIpattern\f(CW)\*(C'\fR, \f(CW\*(C`(?\*(Aq\f(CINAME\f(CW\*(Aq\f(CIpattern\f(CW)\*(C'\fR
   , \f(CW\*(C`\ek<\f(CINAME\f(CW>\*(C'\fR, \f(CW\*(C`\ek\*(Aq\f(CINAME\f(CW\*(Aq\*(C'\fR, \f(CW\*(C`(?{ \f(CIcode\f(CW })\*(C'\fR    , \f(CW\*(C`(??{ \f(CIcode\f(CW })\*(C'\fR    ,
-\&\f(CW\*(C`(?\f(CIPARNO\f(CW)\*(C'\fR \f(CW\*(C`(?\-\f(CIPARNO\f(CW)\*(C'\fR \f(CW\*(C`(?+\f(CIPARNO\f(CW)\*(C'\fR \f(CW\*(C`(?R)\*(C'\fR \f(CW\*(C`(?0)\*(C'\fR 
-      
-  
+\&\f(CW\*(C`(?\f(CIPARNO\f(CW)\*(C'\fR \f(CW\*(C`(?\-\f(CIPARNO\f(CW)\*(C'\fR \f(CW\*(C`(?+\f(CIPARNO\f(CW)\*(C'\fR \f(CW\*(C`(?R)\*(C'\fR \f(CW\*(C`(?0)\*(C'\fR
+
+
   , \f(CW\*(C`(?&\f(CINAME\f(CW)\*(C'\fR
 , \f(CW\*(C`(?(\f(CIcondition\f(CW)\f(CIyes\-pattern\f(CW|\f(CIno\-pattern\f(CW)\*(C'\fR ,
 \&\f(CW\*(C`(?(\f(CIcondition\f(CW)\f(CIyes\-pattern\f(CW)\*(C'\fR, an integer in parentheses, a
@@ -2860,7 +2860,7 @@ brackets or single quotes, the special symbol \f(CW\*(C`(R)\*(C'\fR, \f(CW\*(C`(
 \&\f(CW\*(C`(<\f(CINAME\f(CW>)\*(C'\fR \f(CW\*(C`(\*(Aq\f(CINAME\f(CW\*(Aq)\*(C'\fR, \f(CW\*(C`(?=...)\*(C'\fR \f(CW\*(C`(?!...)\*(C'\fR \f(CW\*(C`(?<=...)\*(C'\fR
 \&\f(CW\*(C`(?<!...)\*(C'\fR, \f(CW\*(C`(?{ \f(CICODE\f(CW })\*(C'\fR, \f(CW\*(C`(R)\*(C'\fR, \f(CW\*(C`(R1)\*(C'\fR \f(CW\*(C`(R2)\*(C'\fR .., \f(CW\*(C`(R&\f(CINAME\f(CW)\*(C'\fR,
 \&\f(CW\*(C`(DEFINE)\*(C'\fR, \f(CW\*(C`(?>\f(CIpattern\f(CW)\*(C'\fR, \f(CW\*(C`(*atomic:\f(CIpattern\f(CW)\*(C'\fR
-    
+
 , \f(CW\*(C`(?[ ])\*(C'\fR
 .IX Xref "(?#) (?) (?^) (?:) (?^:) (?|) Branch reset look-around assertion lookaround assertion look-around lookaround (?=) (*pla (*positive_lookahead look-ahead, positive lookahead, positive (?!) (*nla (*negative_lookahead look-ahead, negative lookahead, negative (?<=) (*plb (*positive_lookbehind look-behind, positive lookbehind, positive \\K (?<!) (*nlb (*negative_lookbehind look-behind, negative lookbehind, negative (?<NAME>) (?'NAME') named capture capture (?{}) regex, code in regexp, code in regular expression, code in (??{}) regex, postponed regexp, postponed regular expression, postponed (?PARNO) (?1) (?R) (?0) (?-1) (?+1) (?-PARNO) (?+PARNO) regex, recursive regexp, recursive regular expression, recursive regex, relative recursion GOSUB GOSTART (?&NAME) (?() (?>pattern) (*atomic backtrack backtracking atomic possessive"
 .IP "Backtracking" 4
@@ -3198,7 +3198,7 @@ value , \s-1UNTIE\s0 this , \s-1DESTROY\s0 this
 this, index, value , \s-1FETCHSIZE\s0 this , \s-1STORESIZE\s0 this,
 count , \s-1EXTEND\s0 this, count , \s-1EXISTS\s0 this, key
 , \s-1DELETE\s0 this, key , \s-1CLEAR\s0 this , \s-1PUSH\s0 this, \s-1LIST\s0
- , \s-1POP\s0 this , \s-1SHIFT\s0 this , \s-1UNSHIFT\s0 this, \s-1LIST\s0 
+ , \s-1POP\s0 this , \s-1SHIFT\s0 this , \s-1UNSHIFT\s0 this, \s-1LIST\s0
 , \s-1SPLICE\s0 this, offset, length, \s-1LIST\s0 , \s-1UNTIE\s0 this
 , \s-1DESTROY\s0 this
 .IX Xref "TIEARRAY FETCH STORE FETCHSIZE STORESIZE EXTEND EXISTS DELETE CLEAR PUSH POP SHIFT UNSHIFT SPLICE UNTIE DESTROY"
@@ -3861,7 +3861,7 @@ for regular expression patterns
 Non_Canonical}\*(C'\fB\fR    (Short: \f(CW\*(C`\ep{Dt=NonCanon}\*(C'\fR), \fB\f(CB\*(C`\ep{Graph}\*(C'\fB\fR,
 \&\fB\f(CB\*(C`\ep{HorizSpace}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{In=*}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{PerlSpace}\*(C'\fB\fR,
 \&\fB\f(CB\*(C`\ep{PerlWord}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{Posix...}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{Present_In: *}\*(C'\fB\fR    (Short:
-\&\f(CW\*(C`\ep{In=*}\*(C'\fR), \fB\f(CB\*(C`\ep{Print}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{SpacePerl}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{Title}\*(C'\fB\fR and 
+\&\f(CW\*(C`\ep{In=*}\*(C'\fR), \fB\f(CB\*(C`\ep{Print}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{SpacePerl}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{Title}\*(C'\fB\fR and
 \&\fB\f(CB\*(C`\ep{Titlecase}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{Unicode}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{VertSpace}\*(C'\fB\fR,
 \&\fB\f(CB\*(C`\ep{Word}\*(C'\fB\fR, \fB\f(CB\*(C`\ep{XPosix...}\*(C'\fB\fR
 .ie n .IP "Comparison of ""\eN{...}"" and ""\ep{name=...}""" 4
@@ -6277,10 +6277,10 @@ grok_bin , grok_hex , grok_infnan ,
 grok_number , grok_number_flags ,
 \&\s-1GROK_NUMERIC_RADIX\s0 , grok_numeric_radix
 , grok_oct , isinfnan ,
-\&\s-1IS_NUMBER_GREATER_THAN_UV_MAX\s0 	    bool   
-\&\s-1IS_NUMBER_GREATER_THAN_UV_MAX, IS_NUMBER_INFINITY\s0     
-    bool    \s-1IS_NUMBER_INFINITY, IS_NUMBER_IN_UV\s0   bool   
-\&\s-1IS_NUMBER_IN_UV, IS_NUMBER_NAN\s0  	bool   
+\&\s-1IS_NUMBER_GREATER_THAN_UV_MAX\s0 	    bool
+\&\s-1IS_NUMBER_GREATER_THAN_UV_MAX, IS_NUMBER_INFINITY\s0
+    bool    \s-1IS_NUMBER_INFINITY, IS_NUMBER_IN_UV\s0   bool
+\&\s-1IS_NUMBER_IN_UV, IS_NUMBER_NAN\s0  	bool
 \&\s-1IS_NUMBER_NAN, IS_NUMBER_NEG\s0 	bool	\s-1IS_NUMBER_NEG,
 IS_NUMBER_NOT_INT\s0 , my_strtod , \s-1PERL_ABS\s0
 , \s-1PERL_INT_MAX\s0 , Perl_signbit ,
@@ -15321,10 +15321,10 @@ A lot of \f(CW\*(C`bad free\*(C'\fR, Process terminated by \s-1SIGTERM/SIGINT,\s
 .IX Item "Prebuilt methods:"
 .PD
 \&\f(CW\*(C`File::Copy::syscopy\*(C'\fR, \f(CW\*(C`DynaLoader::mod2fname\*(C'\fR,  \f(CW\*(C`Cwd::current_drive()\*(C'\fR,
- \f(CW\*(C`Cwd::sys_chdir(name)\*(C'\fR,  \f(CW\*(C`Cwd::change_drive(name)\*(C'\fR, 
-\&\f(CW\*(C`Cwd::sys_is_absolute(name)\*(C'\fR,	\f(CW\*(C`Cwd::sys_is_rooted(name)\*(C'\fR, 
-\&\f(CW\*(C`Cwd::sys_is_relative(name)\*(C'\fR,	\f(CW\*(C`Cwd::sys_cwd(name)\*(C'\fR, 
-\&\f(CW\*(C`Cwd::sys_abspath(name, dir)\*(C'\fR,  \f(CW\*(C`Cwd::extLibpath([type])\*(C'\fR, 
+ \f(CW\*(C`Cwd::sys_chdir(name)\*(C'\fR,  \f(CW\*(C`Cwd::change_drive(name)\*(C'\fR,
+\&\f(CW\*(C`Cwd::sys_is_absolute(name)\*(C'\fR,	\f(CW\*(C`Cwd::sys_is_rooted(name)\*(C'\fR,
+\&\f(CW\*(C`Cwd::sys_is_relative(name)\*(C'\fR,	\f(CW\*(C`Cwd::sys_cwd(name)\*(C'\fR,
+\&\f(CW\*(C`Cwd::sys_abspath(name, dir)\*(C'\fR,  \f(CW\*(C`Cwd::extLibpath([type])\*(C'\fR,
 \&\f(CW\*(C`Cwd::extLibpath_set( path [, type ] )\*(C'\fR,
 \&\f(CW\*(C`OS2::Error(do_harderror,do_exception)\*(C'\fR, \f(CW\*(C`OS2::Errors2Drive(drive)\*(C'\fR,
 \&\fBOS2::SysInfo()\fR, \fBOS2::BootDrive()\fR, \f(CW\*(C`OS2::MorphPM(serve)\*(C'\fR,
@@ -20535,8 +20535,8 @@ abs_path, realpath, fast_abs_path
 .IX Item "Global Variables"
 .PD
 .Vb 3
-\& $DB::sub,  %DB::sub,  $DB::single,  $DB::signal,  $DB::trace,  @DB::args, 
-\&@DB::dbline,  %DB::dbline,  $DB::package,  $DB::filename,  $DB::subname, 
+\& $DB::sub,  %DB::sub,  $DB::single,  $DB::signal,  $DB::trace,  @DB::args,
+\&@DB::dbline,  %DB::dbline,  $DB::package,  $DB::filename,  $DB::subname,
 \&$DB::lineno
 .Ve
 .IP "\s-1API\s0 Methods" 4
@@ -20695,7 +20695,7 @@ utf8, encode, compress, int32, null
 .IP "Methods" 4
 .IX Item "Methods"
 .PD
-\&\fI\s-1PACKAGE\s0\fR\->new(\fI\s-1ARRAYREF\s0 [\fR, \fI\s-1ARRAYREF\s0]\fR), \fI\f(CI$OBJ\fI\fR\->Dump  \fIor\fR 
+\&\fI\s-1PACKAGE\s0\fR\->new(\fI\s-1ARRAYREF\s0 [\fR, \fI\s-1ARRAYREF\s0]\fR), \fI\f(CI$OBJ\fI\fR\->Dump  \fIor\fR
 \&\fI\s-1PACKAGE\s0\fR\->Dump(\fI\s-1ARRAYREF\s0 [\fR, \fI\s-1ARRAYREF\s0]\fR), \fI\f(CI$OBJ\fI\fR\->Seen(\fI[\s-1HASHREF\s0]\fR),
 \&\fI\f(CI$OBJ\fI\fR\->Values(\fI[\s-1ARRAYREF\s0]\fR), \fI\f(CI$OBJ\fI\fR\->Names(\fI[\s-1ARRAYREF\s0]\fR),
 \&\fI\f(CI$OBJ\fI\fR\->Reset
@@ -22647,7 +22647,7 @@ test, tool_autosplit
 .PD
 .Vb 3
 \&   make distcheck,    make skipcheck,    make distclean,    make veryclean,
-\&   make manifest,    make distdir,   make disttest,    make tardist,   
+\&   make manifest,    make distdir,   make disttest,    make tardist,
 \&make dist,    make uutardist,    make shdist,    make zipdist,    make ci
 .Ve
 .IP "Module Meta-Data (\s-1META\s0 and \s-1MYMETA\s0)" 4
@@ -23624,7 +23624,7 @@ canonpath , catdir , catfile , curdir
 , devnull , rootdir , tmpdir , updir
 , no_upwards, case_tolerant, file_name_is_absolute, path ,
 join , splitpath  , splitdir
- , \fBcatpath()\fR, abs2rel  
+ , \fBcatpath()\fR, abs2rel
 , \fBrel2abs()\fR
 .IX Xref "canonpath catdir catfile curdir devnull rootdir tmpdir updir path join, path splitpath split, path splitdir split, dir abs2rel absolute, path relative, path rel2abs absolute, path relative, path"
 .IP "\s-1SEE ALSO\s0" 4
@@ -28436,9 +28436,9 @@ banner (), capa (),  capabilities (), top ( \s-1MSGNUM\s0 [, \s-1NUMLINES\s0 ] )
 .IP "Functions" 4
 .IX Item "Functions"
 .PD
-Net::Ping\->new([proto, timeout, bytes, device, tos, ttl, family,	   
-	   host, port, bind, gateway, retrans, pingstring,		   
-     source_verify econnrefused dontfrag		      
+Net::Ping\->new([proto, timeout, bytes, device, tos, ttl, family,
+	   host, port, bind, gateway, retrans, pingstring,
+     source_verify econnrefused dontfrag
 \&\s-1IPV6_USE_MIN_MTU IPV6_RECVPATHMTU\s0]) , \f(CW$p\fR\->ping($host [, \f(CW$timeout\fR [,
 \&\f(CW$family\fR]]); , \f(CW$p\fR\->source_verify( { 0 | 1 } ); ,
 \&\f(CW$p\fR\->service_check( { 0 | 1 } ); , \f(CW$p\fR\->tcp_service_check( {
@@ -29388,9 +29388,9 @@ Invalid quote specification \*(L"%s\*(R", \s-1POD\s0 document had syntax errors
 .IX Item "DESCRIPTION"
 .PD
 Call Pod::Perldoc::GetOptsOO::getopts($object, \e@ARGV, \f(CW$truth\fR), Given \-n,
-if there's a opt_n_with, it'll call \f(CW$object\fR\->opt_n_with( \s-1ARGUMENT\s0 )   
+if there's a opt_n_with, it'll call \f(CW$object\fR\->opt_n_with( \s-1ARGUMENT\s0 )
 (e.g., \*(L"\-n foo\*(R" => \f(CW$object\fR\->opt_n_with('foo').	Ditto \*(L"\-nfoo\*(R"), Otherwise
-(given \-n) if there's an opt_n, we'll call it \f(CW$object\fR\->opt_n($truth)   
+(given \-n) if there's an opt_n, we'll call it \f(CW$object\fR\->opt_n($truth)
 (Truth defaults to 1), Otherwise we try calling
 \&\f(CW$object\fR\->handle_unknown_option('n')    (and we increment the error count by
 the return value of it), If there's no handle_unknown_option, then we just
@@ -30099,8 +30099,8 @@ events with an element_name of for, events with an element_name of Data
 .IP "More Pod::Simple Methods" 4
 .IX Item "More Pod::Simple Methods"
 \&\f(CW\*(C`$parser\->accept_targets( \f(CISOMEVALUE\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->accept_targets_as_text(  \f(CISOMEVALUE\f(CW	)\*(C'\fR, \f(CW\*(C`$parser\->accept_codes( \f(CICodename\f(CW, \f(CICodename\f(CW...  )\*(C'\fR, \f(CW\*(C`$parser\->accept_directive_as_data( \f(CIdirective_name\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->accept_directive_as_verbatim( \f(CIdirective_name\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->accept_directive_as_processed( \f(CIdirective_name\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->nbsp_for_S( \f(CIBOOLEAN\f(CW );\*(C'\fR, \f(CW\*(C`$parser\->version_report()\*(C'\fR,
-\&\f(CW\*(C`$parser\->pod_para_count()\*(C'\fR, \f(CW\*(C`$parser\->line_count()\*(C'\fR, \f(CW\*(C`$parser\->nix_X_codes(  \f(CISOMEVALUE\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->keep_encoding_directive(  \f(CISOMEVALUE\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->merge_text(  \f(CISOMEVALUE\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->code_handler( 
-\&\f(CICODE_REF\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->cut_handler(  \f(CICODE_REF\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->pod_handler(  \f(CICODE_REF\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->whiteline_handler( 
+\&\f(CW\*(C`$parser\->pod_para_count()\*(C'\fR, \f(CW\*(C`$parser\->line_count()\*(C'\fR, \f(CW\*(C`$parser\->nix_X_codes(  \f(CISOMEVALUE\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->keep_encoding_directive(  \f(CISOMEVALUE\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->merge_text(  \f(CISOMEVALUE\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->code_handler(
+\&\f(CICODE_REF\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->cut_handler(  \f(CICODE_REF\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->pod_handler(  \f(CICODE_REF\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->whiteline_handler(
 \&\f(CICODE_REF\f(CW  )\*(C'\fR, \f(CW\*(C`$parser\->whine( \f(CIlinenumber\f(CW, \f(CIcomplaint string\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->scream( \f(CIlinenumber\f(CW, \f(CIcomplaint string\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->source_dead(1)\*(C'\fR, \f(CW\*(C`$parser\->hide_line_numbers( \f(CISOMEVALUE\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->no_whining( \f(CISOMEVALUE\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->no_errata_section( \f(CISOMEVALUE\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->complain_stderr( \f(CISOMEVALUE\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->bare_output(
 \&\f(CISOMEVALUE\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->preserve_whitespace( \f(CISOMEVALUE\f(CW )\*(C'\fR, \f(CW\*(C`$parser\->parse_empty_lists( \f(CISOMEVALUE\f(CW )\*(C'\fR
 .IP "\s-1SEE ALSO\s0" 4
@@ -34448,9 +34448,9 @@ Chad Granum <exodist@cpan.org>
 .IX Item "DIAGNOSTICS"
 .PD
 .Vb 10
-\& C<Did not find a suitable bracket: "%s">,  C<Did not find prefix: /%s/>, 
+\& C<Did not find a suitable bracket: "%s">,  C<Did not find prefix: /%s/>,
 \&C<Did not find opening bracket after prefix: "%s">,  C<No quotelike
-\&operator found after prefix: "%s">,  C<Unmatched closing bracket: "%c">, 
+\&operator found after prefix: "%s">,  C<Unmatched closing bracket: "%c">,
 \&C<Unmatched opening bracket(s): "%s">, C<Unmatched embedded quote (%s)>,
 \&C<Did not find closing delimiter to match \*(Aq%s\*(Aq>,  C<Mismatched closing
 \&bracket: expected "%c" but found "%s">,  C<No block delimiter found after

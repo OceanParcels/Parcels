@@ -40,7 +40,7 @@ namespace Model
      * <p>A list of names of retention configurations for which you want details. If
      * you do not specify a name, Config returns details for all the retention
      * configurations for that account.</p>  <p>Currently, Config supports only
-     * one retention configuration per region in your account.</p> 
+     * one retention configuration per region in your account.</p>
      */
     inline const Aws::Vector<Aws::String>& GetRetentionConfigurationNames() const{ return m_retentionConfigurationNames; }
     inline bool RetentionConfigurationNamesHasBeenSet() const { return m_retentionConfigurationNamesHasBeenSet; }

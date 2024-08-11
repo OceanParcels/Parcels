@@ -1037,7 +1037,7 @@ struct dxsm_mixin {
         constexpr bitcount_t itypebits = bitcount_t(sizeof(itype) * 8);
         static_assert(xtypebits <= itypebits/2,
                       "Output type must be half the size of the state type.");
-        
+
         xtype hi = xtype(internal >> (itypebits - xtypebits));
         xtype lo = xtype(internal);
 

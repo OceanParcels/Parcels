@@ -74,7 +74,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Encryption& GetEncryption() const{ return m_encryption; }
     inline bool EncryptionHasBeenSet() const { return m_encryptionHasBeenSet; }
     inline void SetEncryption(const Encryption& value) { m_encryptionHasBeenSet = true; m_encryption = value; }

@@ -142,5 +142,3 @@ namespace geom { // geos::geom
 #endif
 
 using namespace geos::geom;
-
-

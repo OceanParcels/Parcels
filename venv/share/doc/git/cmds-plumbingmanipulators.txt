@@ -57,4 +57,3 @@ linkgit:git-update-ref[1]::
 
 linkgit:git-write-tree[1]::
 	Create a tree object from the current index.
-

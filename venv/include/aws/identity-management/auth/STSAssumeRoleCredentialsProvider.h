@@ -44,8 +44,8 @@ namespace Aws
              * For more information, see:
              *    http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html
              */
-            STSAssumeRoleCredentialsProvider(const Aws::String& roleArn, const Aws::String& sessionName = Aws::String(), 
-                const Aws::String& externalId = Aws::String(), int loadFrequency = DEFAULT_CREDS_LOAD_FREQ_SECONDS, 
+            STSAssumeRoleCredentialsProvider(const Aws::String& roleArn, const Aws::String& sessionName = Aws::String(),
+                const Aws::String& externalId = Aws::String(), int loadFrequency = DEFAULT_CREDS_LOAD_FREQ_SECONDS,
                 const std::shared_ptr<Aws::STS::STSClient>& stsClient = nullptr);
 
             AWSCredentials GetAWSCredentials() override;

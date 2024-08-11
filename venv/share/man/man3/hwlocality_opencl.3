@@ -23,12 +23,12 @@ hwlocality_opencl \- Interoperability with OpenCL
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 This interface offers ways to retrieve topology information about OpenCL devices\&.
 .PP
-Only AMD and NVIDIA OpenCL implementations currently offer useful locality information about their devices\&. 
+Only AMD and NVIDIA OpenCL implementations currently offer useful locality information about their devices\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static int hwloc_opencl_get_device_cpuset (\fBhwloc_topology_t\fP topology, cl_device_id device, \fBhwloc_cpuset_t\fP set)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
@@ -42,20 +42,20 @@ This function is currently only implemented in a meaningful way for Linux with t
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 on error, for instance if the device could not be found\&. 
+-1 on error, for instance if the device could not be found\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_opencl_get_device_osdev (\fBhwloc_topology_t\fP topology, cl_device_id device)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the hwloc OS device object corresponding to OpenCL device \fCdeviceX\fP\&. 
+Get the hwloc OS device object corresponding to OpenCL device \fCdeviceX\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The hwloc OS device object corresponding to the given OpenCL device \fCdevice\fP\&. 
+The hwloc OS device object corresponding to the given OpenCL device \fCdevice\fP\&.
 .PP
 \fCNULL\fP if none could be found, for instance if required OpenCL attributes are not available\&.
 .RE
@@ -68,18 +68,18 @@ Topology \fCtopology\fP and device \fCdevice\fP must match the local machine\&. 
 .RS 4
 This function cannot work if PCI devices are filtered out\&.
 .PP
-The corresponding hwloc PCI device may be found by looking at the result parent pointer (unless PCI devices are filtered out)\&. 
+The corresponding hwloc PCI device may be found by looking at the result parent pointer (unless PCI devices are filtered out)\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_opencl_get_device_osdev_by_index (\fBhwloc_topology_t\fP topology, unsigned platform_index, unsigned device_index)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the hwloc OS device object corresponding to the OpenCL device for the given indexes\&. 
+Get the hwloc OS device object corresponding to the OpenCL device for the given indexes\&.
 .PP
 \fBReturns\fP
 .RS 4
-The hwloc OS device object describing the OpenCL device whose platform index is \fCplatform_index\fP, and whose device index within this platform if \fCdevice_index\fP\&. 
+The hwloc OS device object describing the OpenCL device whose platform index is \fCplatform_index\fP, and whose device index within this platform if \fCdevice_index\fP\&.
 .PP
 \fCNULL\fP if there is none\&.
 .RE
@@ -88,7 +88,7 @@ The topology \fCtopology\fP does not necessarily have to match the current machi
 .PP
 \fBNote\fP
 .RS 4
-The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&. 
+The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&.
 .RE
 .PP
 
@@ -99,12 +99,12 @@ Return the domain, bus and device IDs of the OpenCL device \fCdevice\fP\&. Devic
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 on error, for instance if device information could not be found\&. 
+-1 on error, for instance if device information could not be found\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

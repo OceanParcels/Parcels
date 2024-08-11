@@ -34,4 +34,3 @@ private:
 } // namespace geos:index:sweepline
 } // namespace geos:index
 } // namespace geos
-

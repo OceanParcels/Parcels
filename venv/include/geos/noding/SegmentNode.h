@@ -153,9 +153,3 @@ struct GEOS_DLL SegmentNodeLT {
 
 } // namespace geos.noding
 } // namespace geos
-
-
-
-
-
-

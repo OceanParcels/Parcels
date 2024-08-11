@@ -67,7 +67,7 @@ namespace Model
      * replicate modifications on replicas. </p>  <p> If you don't specify the
      * <code>Filter</code> element, Amazon S3 assumes that the replication
      * configuration is the earlier version, V1. In the earlier version, this element
-     * is not allowed</p> 
+     * is not allowed</p>
      */
     inline const ReplicaModifications& GetReplicaModifications() const{ return m_replicaModifications; }
     inline bool ReplicaModificationsHasBeenSet() const { return m_replicaModificationsHasBeenSet; }

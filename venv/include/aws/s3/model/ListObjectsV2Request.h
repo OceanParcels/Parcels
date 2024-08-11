@@ -103,7 +103,7 @@ namespace Model
      * prefixes that are associated with the in-progress multipart uploads. For more
      * information about multipart uploads, see <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/mpuoverview.html">Multipart
-     * Upload Overview</a> in the <i>Amazon S3 User Guide</i>.</p> </li> </ul> 
+     * Upload Overview</a> in the <i>Amazon S3 User Guide</i>.</p> </li> </ul>
      */
     inline const Aws::String& GetDelimiter() const{ return m_delimiter; }
     inline bool DelimiterHasBeenSet() const { return m_delimiterHasBeenSet; }
@@ -144,9 +144,9 @@ namespace Model
 
     ///@{
     /**
-     * <p>Limits the response to keys that begin with the specified prefix.</p> 
+     * <p>Limits the response to keys that begin with the specified prefix.</p>
      * <p> <b>Directory buckets</b> - For directory buckets, only prefixes that end in
-     * a delimiter (<code>/</code>) are supported.</p> 
+     * a delimiter (<code>/</code>) are supported.</p>
      */
     inline const Aws::String& GetPrefix() const{ return m_prefix; }
     inline bool PrefixHasBeenSet() const { return m_prefixHasBeenSet; }
@@ -181,7 +181,7 @@ namespace Model
      * you want to return the owner field with each key in the result, then set the
      * <code>FetchOwner</code> field to <code>true</code>.</p>  <p> <b>Directory
      * buckets</b> - For directory buckets, the bucket owner is returned as the object
-     * owner for all objects.</p> 
+     * owner for all objects.</p>
      */
     inline bool GetFetchOwner() const{ return m_fetchOwner; }
     inline bool FetchOwnerHasBeenSet() const { return m_fetchOwnerHasBeenSet; }
@@ -194,7 +194,7 @@ namespace Model
      * <p>StartAfter is where you want Amazon S3 to start listing from. Amazon S3
      * starts listing after this specified key. StartAfter can be any key in the
      * bucket.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetStartAfter() const{ return m_startAfter; }
     inline bool StartAfterHasBeenSet() const { return m_startAfterHasBeenSet; }
@@ -211,7 +211,7 @@ namespace Model
      * <p>Confirms that the requester knows that she or he will be charged for the list
      * objects request in V2 style. Bucket owners need not specify this parameter in
      * their requests.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
@@ -241,7 +241,7 @@ namespace Model
     /**
      * <p>Specifies the optional fields that you want returned in the response. Fields
      * that you do not specify are not returned.</p>  <p>This functionality is
-     * not supported for directory buckets.</p> 
+     * not supported for directory buckets.</p>
      */
     inline const Aws::Vector<OptionalObjectAttributes>& GetOptionalObjectAttributes() const{ return m_optionalObjectAttributes; }
     inline bool OptionalObjectAttributesHasBeenSet() const { return m_optionalObjectAttributesHasBeenSet; }
@@ -254,7 +254,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

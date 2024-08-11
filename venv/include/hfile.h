@@ -39,7 +39,7 @@
 #define NDDS_SZ 2
 #define OFFSET_SZ 4
 
-/* invalid offset & length to indicate a partially defined element 
+/* invalid offset & length to indicate a partially defined element
 * written to the HDF file i.e. can handle the case where the the
 * element is defined but not written out */
 #define INVALID_OFFSET -1
@@ -50,8 +50,8 @@
 /* Library version numbers */
 
 #define LIBVER_MAJOR    4
-#define LIBVER_MINOR    2 
-#define LIBVER_RELEASE  15 
+#define LIBVER_MINOR    2
+#define LIBVER_RELEASE  15
 #define LIBVER_SUBRELEASE ""   /* For pre-releases like snap0       */
                                 /* Empty string for real releases.           */
 #define LIBVER_STRING   "HDF Version 4.2 Release 15, November 28, 2019"
@@ -129,7 +129,7 @@ typedef short hdf_file_t;
 /* ----------------------- Internal Data Structures ----------------------- */
 /* The internal structure used to keep track of the files opened: an
    array of filerec_t structures, each has a linked list of ddblock_t.
-   Each ddblock_t struct points to an array of dd_t structs. 
+   Each ddblock_t struct points to an array of dd_t structs.
 
    File Header(4 bytes)
    ===================
@@ -150,14 +150,14 @@ typedef short hdf_file_t;
         \____________/
                V
         tag/ref (unique data indentifier in file)
-   
+
    Tag  -- identifies the type of data, 16 bit unsigned integer whose
            value ranges from 1 - 65535. Tags are assigned by NCSA.
            The HDF tag space is divided as follows based on the 2 highest bits:
 
               00: NCSA reserved ordinary tags
-              01: NCSA reserved special tags(i.e. regular tags made into 
-                                                  linked-block, external, 
+              01: NCSA reserved special tags(i.e. regular tags made into
+                                                  linked-block, external,
                                                   compressed or chunked.)
               10, 11: User tags.
 
@@ -169,10 +169,10 @@ typedef short hdf_file_t;
            65000 - 65535  - reserved for expansion of format
 
    Refererence number - 16 bit unsigned integer whose assignment is not
-          gauranteed to be consecutive. Provides a way to distinguish 
+          gauranteed to be consecutive. Provides a way to distinguish
           elements with the same tag in the file.
 
-   Offset - Specifies the byte offset of the data element from the 
+   Offset - Specifies the byte offset of the data element from the
             beginning of the file - 32 bit unsigned integer
 
    Length - Indicates the byte length of the data element
@@ -208,7 +208,7 @@ typedef short hdf_file_t;
    ---------------------------------------------------------------------
    | FH | DD Block | Data | DD Block | Data | DD Block | Data | .....
    ---------------------------------------------------------------------
- 
+
 */
 
 /* record of each data decsriptor */
@@ -300,7 +300,7 @@ typedef struct filerec_t
 
       /* annotation stuff for file */
       intn       an_num[4];   /* Holds number of annotations found of each type */
-      TBBT_TREE *an_tree[4];  /* tbbt trees for each type of annotation in file 
+      TBBT_TREE *an_tree[4];  /* tbbt trees for each type of annotation in file
                                * i.e. file/data labels and descriptions.
                                * This is done for faster searching of annotations
                                * of a particular type. */
@@ -737,7 +737,7 @@ intn HTPinit(filerec_t *file_rec,       /* IN: File record to store info in */
  DESCRIPTION
     Syncronizes the in-memory copy of the DD list with the copy on disk by
     writing out the DD blocks which have changed to disk.
-    
+
  RETURNS
     Returns SUCCEED if successful and FAIL otherwise
 
@@ -760,7 +760,7 @@ intn HTPsync(filerec_t *file_rec       /* IN:  File record to store info in */
 
 *******************************************************************************/
 intn HTPend(filerec_t *file_rec       /* IN:  File record to store info in */
-); 
+);
 
 /******************************************************************************
  NAME

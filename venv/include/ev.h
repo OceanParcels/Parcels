@@ -857,4 +857,3 @@ EV_API_DECL void ev_async_send     (EV_P_ ev_async *w) EV_NOEXCEPT;
 EV_CPP(})
 
 #endif
-

@@ -123,4 +123,3 @@ XMLPUBFUN int
 
 #endif /* LIBXML_C14N_ENABLED */
 #endif /* __XML_C14N_H__ */
-

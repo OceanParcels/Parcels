@@ -131,4 +131,3 @@ public:
 
 } // geos.linearref
 } // geos
-

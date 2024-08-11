@@ -229,4 +229,3 @@ private:
 
 } // geos::simplify
 } // geos
-

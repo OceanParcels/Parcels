@@ -8,17 +8,17 @@ gnutls_pubkey_import \- API function
 .BI "int gnutls_pubkey_import(gnutls_pubkey_t " key ", const gnutls_datum_t * " data ", gnutls_x509_crt_fmt_t " format ");"
 .SH ARGUMENTS
 .IP "gnutls_pubkey_t key" 12
-The public key. 
+The public key.
 .IP "const gnutls_datum_t * data" 12
-The DER or PEM encoded certificate. 
+The DER or PEM encoded certificate.
 .IP "gnutls_x509_crt_fmt_t format" 12
-One of DER or PEM 
+One of DER or PEM
 .SH "DESCRIPTION"
 This function will import the provided public key in
 a SubjectPublicKeyInfo X.509 structure to a native
-\fBgnutls_pubkey_t\fP type. The output will be stored 
-in  \fIkey\fP . If the public key is PEM encoded it should have a header 
-of "PUBLIC KEY". 
+\fBgnutls_pubkey_t\fP type. The output will be stored
+in  \fIkey\fP . If the public key is PEM encoded it should have a header
+of "PUBLIC KEY".
 .SH "RETURNS"
 On success, \fBGNUTLS_E_SUCCESS\fP (0) is returned, otherwise a
 negative error value.

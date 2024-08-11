@@ -336,7 +336,7 @@ with no concept of volume, returns '' for volume.
 \&                       File::Spec\->splitpath( $path, $no_file );
 .Ve
 .Sp
-For systems with no syntax differentiating filenames from directories, 
+For systems with no syntax differentiating filenames from directories,
 assumes that the last file is a path unless \f(CW$no_file\fR is true or a
 trailing separator or \fI/.\fR or \fI/..\fR is present. On Unix, this means that \f(CW$no_file\fR
 true makes this return ( '', \f(CW$path\fR, '' ).
@@ -354,7 +354,7 @@ The opposite of \*(L"catdir\*(R".
 \&    @dirs = File::Spec\->splitdir( $directories );
 .Ve
 .Sp
-\&\f(CW$directories\fR must be only the directory portion of the path on systems 
+\&\f(CW$directories\fR must be only the directory portion of the path on systems
 that have the concept of a volume or that have path syntax that differentiates
 files from directories.
 .Sp
@@ -392,7 +392,7 @@ paths, and we will instead simply return \f(CW$path\fR.  Note that previous
 versions of this module ignored the volume of \f(CW$base\fR, which resulted in
 garbage results part of the time.
 .Sp
-On systems that have a grammar that indicates filenames, this ignores the 
+On systems that have a grammar that indicates filenames, this ignores the
 \&\f(CW$base\fR filename as well. Otherwise all path components are assumed to be
 directories.
 .Sp
@@ -424,7 +424,7 @@ paths, and we will instead simply return \f(CW$path\fR.  Note that previous
 versions of this module ignored the volume of \f(CW$base\fR, which resulted in
 garbage results part of the time.
 .Sp
-On systems that have a grammar that indicates filenames, this ignores the 
+On systems that have a grammar that indicates filenames, this ignores the
 \&\f(CW$base\fR filename as well. Otherwise all path components are assumed to be
 directories.
 .Sp

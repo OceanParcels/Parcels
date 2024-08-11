@@ -93,7 +93,7 @@ namespace Model
      * Regions:</p> <ul> <li> <p>Asia Pacific (Hyderabad)</p> </li> <li> <p>Asia
      * Pacific (Melbourne)</p> </li> <li> <p>Canada West (Calgary)</p> </li> <li>
      * <p>Europe (Spain)</p> </li> <li> <p>Europe (Zurich)</p> </li> <li> <p>Israel
-     * (Tel Aviv)</p> </li> <li> <p>Middle East (UAE)</p> </li> </ul> 
+     * (Tel Aviv)</p> </li> <li> <p>Middle East (UAE)</p> </li> </ul>
      */
     inline const RecordingStrategyType& GetUseOnly() const{ return m_useOnly; }
     inline bool UseOnlyHasBeenSet() const { return m_useOnlyHasBeenSet; }

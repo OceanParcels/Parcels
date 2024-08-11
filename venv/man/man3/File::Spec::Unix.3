@@ -215,7 +215,7 @@ is not or is significant when comparing file specifications.
 .IX Item "file_name_is_absolute"
 Takes as argument a path and returns true if it is an absolute path.
 .Sp
-This does not consult the local filesystem on Unix, Win32, \s-1OS/2\s0 or Mac 
+This does not consult the local filesystem on Unix, Win32, \s-1OS/2\s0 or Mac
 \&\s-1OS\s0 (Classic).  It does consult the working environment for \s-1VMS\s0 (see
 \&\*(L"file_name_is_absolute\*(R" in File::Spec::VMS).
 .IP "path" 2
@@ -235,8 +235,8 @@ join is the same as catfile.
 Splits a path into volume, directory, and filename portions. On systems
 with no concept of volume, returns '' for volume.
 .Sp
-For systems with no syntax differentiating filenames from directories, 
-assumes that the last file is a path unless \f(CW$no_file\fR is true or a 
+For systems with no syntax differentiating filenames from directories,
+assumes that the last file is a path unless \f(CW$no_file\fR is true or a
 trailing separator or /. or /.. is present. On Unix this means that \f(CW$no_file\fR
 true makes this return ( '', \f(CW$path\fR, '' ).
 .Sp
@@ -252,7 +252,7 @@ The opposite of \*(L"\fBcatdir()\fR\*(R".
 \&    @dirs = File::Spec\->splitdir( $directories );
 .Ve
 .Sp
-\&\f(CW$directories\fR must be only the directory portion of the path on systems 
+\&\f(CW$directories\fR must be only the directory portion of the path on systems
 that have the concept of a volume or that have path syntax that differentiates
 files from directories.
 .Sp
@@ -292,7 +292,7 @@ relative, then it is converted to absolute form using
 \&\*(L"\fBrel2abs()\fR\*(R". This means that it is taken to be relative to
 \&\fBcwd()\fR.
 .Sp
-On systems that have a grammar that indicates filenames, this ignores the 
+On systems that have a grammar that indicates filenames, this ignores the
 \&\f(CW$base\fR filename. Otherwise all path components are assumed to be
 directories.
 .Sp

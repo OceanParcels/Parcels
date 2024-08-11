@@ -241,4 +241,3 @@ operator<< (std::ostream& os, const CoordinateList& cl)
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-

@@ -246,7 +246,7 @@ is called.
 .ie n .IP "$search\->laborious( \fItrue-or-false\fR );" 4
 .el .IP "\f(CW$search\fR\->laborious( \fItrue-or-false\fR );" 4
 .IX Item "$search->laborious( true-or-false );"
-Unless you set this attribute to a true value, Pod::Search will 
+Unless you set this attribute to a true value, Pod::Search will
 apply Perl-specific heuristics to find the correct module PODs quickly.
 This attribute's default value is false.  You won't normally need
 to set this to true.
@@ -315,7 +315,7 @@ and usually dir_prefix.)
 .el .IP "\f(CW$search\fR\->progress( \fIsome-progress-object\fR );" 4
 .IX Item "$search->progress( some-progress-object );"
 If you set a value for this attribute, the value is expected
-to be an object (probably of a class that you define) that has a 
+to be an object (probably of a class that you define) that has a
 \&\f(CW\*(C`reach\*(C'\fR method and a \f(CW\*(C`done\*(C'\fR method.  This is meant for reporting
 progress during the search, if you don't want to use a simple
 callback.
@@ -447,7 +447,7 @@ The \f(CW\*(C`verbose\*(C'\fR and \f(CW\*(C`inc\*(C'\fR attributes influence the
 search; notably, \f(CW\*(C`inc\*(C'\fR, if true, adds \f(CW@INC\fR \fIand also
 \&\f(CI$Config::Config\fI{'scriptdir'}\fR to the list of directories to search.
 .PP
-It is common to simply say \f(CW\*(C`$filename = Pod::Simple::Search\-> new 
+It is common to simply say \f(CW\*(C`$filename = Pod::Simple::Search\-> new
 \&\->find("perlvar")\*(C'\fR so that just the \f(CW@INC\fR (well, and scriptdir)
 directories are searched.  (This happens because the \f(CW\*(C`inc\*(C'\fR
 attribute is true by default.)

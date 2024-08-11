@@ -21,7 +21,7 @@
 #include <memory>
 
 namespace Aws
-{    
+{
     namespace Transfer
     {
         class TransferManager;
@@ -82,7 +82,7 @@ namespace Aws
             /**
              * If you have special arguments you want passed to our upload part calls, put them here. We will copy the template for each call
              * overriding the body stream, bucket, and key. If object metadata is passed through, we will override that as well.
-             */             
+             */
             Aws::S3::Model::UploadPartRequest uploadPartTemplate;
             /**
              * Maximum size of the working buffers to use. This is not the same thing as max heap size for your process. This is the maximum amount of memory we will
@@ -117,7 +117,7 @@ namespace Aws
              */
             ErrorCallback errorCallback;
             /**
-             * To support Customer Access Log Information when access S3. 
+             * To support Customer Access Log Information when access S3.
              * https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html
              * Note: query string key not started with "x-" will be filtered out.
              * key/val of map entries will be key/val of query strings.
@@ -130,7 +130,7 @@ namespace Aws
              * is set to true.
              */
             Aws::S3::Model::ChecksumAlgorithm checksumAlgorithm = S3::Model::ChecksumAlgorithm::CRC32;
-        };        
+        };
 
         /**
          * This is a utility around Amazon Simple Storage Service. It can Upload large files via parts in parallel, Upload files less than 5MB in single PutObject, and download files via GetObject,
@@ -172,7 +172,7 @@ namespace Aws
             std::shared_ptr<TransferHandle> UploadFile(const Aws::String& fileName,
                                                        const Aws::String& bucketName,
                                                        const Aws::String& keyName,
-                                                       const Aws::String& contentType, 
+                                                       const Aws::String& contentType,
                                                        const Aws::Map<Aws::String, Aws::String>& metadata,
                                                        const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context = nullptr);
 
@@ -183,7 +183,7 @@ namespace Aws
             std::shared_ptr<TransferHandle> UploadFile(const std::shared_ptr<Aws::IOStream>& stream,
                                                        const Aws::String& bucketName,
                                                        const Aws::String& keyName,
-                                                       const Aws::String& contentType, 
+                                                       const Aws::String& contentType,
                                                        const Aws::Map<Aws::String, Aws::String>& metadata,
                                                        const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context = nullptr);
 
@@ -198,9 +198,9 @@ namespace Aws
             /**
              * Downloads the contents of bucketName/keyName in S3 and writes it to writeToStream. This will perform a GetObject operation.
              */
-            std::shared_ptr<TransferHandle> DownloadFile(const Aws::String& bucketName, 
-                                                         const Aws::String& keyName, 
-                                                         CreateDownloadStreamCallback writeToStreamfn, 
+            std::shared_ptr<TransferHandle> DownloadFile(const Aws::String& bucketName,
+                                                         const Aws::String& keyName,
+                                                         CreateDownloadStreamCallback writeToStreamfn,
                                                          const DownloadConfiguration& downloadConfig = DownloadConfiguration(),
                                                          const Aws::String& writeToFile = "",
                                                          const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context = nullptr);
@@ -208,11 +208,11 @@ namespace Aws
             /**
              * Downloads the contents of bucketName/keyName in S3 and writes it to writeToStream. This will perform a GetObject operation for the given range.
              */
-            std::shared_ptr<TransferHandle> DownloadFile(const Aws::String& bucketName, 
-                                                         const Aws::String& keyName, 
+            std::shared_ptr<TransferHandle> DownloadFile(const Aws::String& bucketName,
+                                                         const Aws::String& keyName,
                                                          uint64_t fileOffset,
                                                          uint64_t downloadBytes,
-                                                         CreateDownloadStreamCallback writeToStreamfn, 
+                                                         CreateDownloadStreamCallback writeToStreamfn,
                                                          const DownloadConfiguration& downloadConfig = DownloadConfiguration(),
                                                          const Aws::String& writeToFile = "",
                                                          const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context = nullptr);
@@ -230,7 +230,7 @@ namespace Aws
              * Retry an upload that failed from a previous UploadFile operation. If a multi-part upload was used, only the failed parts will be re-sent.
              */
             std::shared_ptr<TransferHandle> RetryUpload(const std::shared_ptr<Aws::IOStream>& stream, const std::shared_ptr<TransferHandle>& retryHandle);
-            
+
             /**
              * By default, multi-part uploads will remain in a FAILED state if they fail, or a CANCELED state if they were canceled. Leaving failed uploads around
              * still costs the owner of the bucket money. If you know you will not be retrying the request, abort the request after canceling it or if it fails and you don't
@@ -273,7 +273,7 @@ namespace Aws
             std::shared_ptr<TransferHandle> CreateUploadFileHandle(Aws::IOStream* fileStream,
                                                                    const Aws::String& bucketName,
                                                                    const Aws::String& keyName,
-                                                                   const Aws::String& contentType, 
+                                                                   const Aws::String& contentType,
                                                                    const Aws::Map<Aws::String,
                                                                    Aws::String>& metadata,
                                                                    const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context,
@@ -283,7 +283,7 @@ namespace Aws
              * Submits the actual task to task scheduler
              */
             std::shared_ptr<TransferHandle> SubmitUpload(const std::shared_ptr<TransferHandle>& handle, const std::shared_ptr<Aws::IOStream>& fileStream = nullptr);
-            
+
             bool MultipartUploadSupported(uint64_t length) const;
             bool InitializePartsForDownload(const std::shared_ptr<TransferHandle>& handle);
 
@@ -296,9 +296,9 @@ namespace Aws
             void DoDownload(const std::shared_ptr<TransferHandle>& handle);
             void DoSinglePartDownload(const std::shared_ptr<TransferHandle>& handle);
 
-            void HandleGetObjectResponse(const Aws::S3::S3Client* client, 
+            void HandleGetObjectResponse(const Aws::S3::S3Client* client,
                                          const Aws::S3::Model::GetObjectRequest& request,
-                                         const Aws::S3::Model::GetObjectOutcome& outcome, 
+                                         const Aws::S3::Model::GetObjectOutcome& outcome,
                                          const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context);
 
             void WaitForCancellationAndAbortUpload(const std::shared_ptr<TransferHandle>& canceledHandle);
@@ -340,6 +340,6 @@ namespace Aws
             static bool IsWithinParentDirectory(Aws::String parentDirectory, Aws::String filePath);
         };
 
-        
+
     }
 }

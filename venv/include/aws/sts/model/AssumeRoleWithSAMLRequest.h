@@ -99,7 +99,7 @@ namespace Model
      * session tags into a packed binary format that has a separate limit. Your request
      * can fail for this limit even if your plaintext meets the other requirements. The
      * <code>PackedPolicySize</code> response element indicates by percentage how close
-     * the policies and tags for your request are to the upper size limit.</p> 
+     * the policies and tags for your request are to the upper size limit.</p>
      * <p>Passing policies to this operation returns new temporary credentials. The
      * resulting session's permissions are the intersection of the role's
      * identity-based policy and the session policies. You can use the role's temporary
@@ -142,7 +142,7 @@ namespace Model
      * packed binary format that has a separate limit. Your request can fail for this
      * limit even if your plaintext meets the other requirements. The
      * <code>PackedPolicySize</code> response element indicates by percentage how close
-     * the policies and tags for your request are to the upper size limit.</p> 
+     * the policies and tags for your request are to the upper size limit.</p>
      */
     inline const Aws::String& GetPolicy() const{ return m_policy; }
     inline bool PolicyHasBeenSet() const { return m_policyHasBeenSet; }
@@ -176,7 +176,7 @@ namespace Model
      * of the console session. For more information, see <a
      * href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-custom-url.html">Creating
      * a URL that Enables Federated Users to Access the Amazon Web Services Management
-     * Console</a> in the <i>IAM User Guide</i>.</p> 
+     * Console</a> in the <i>IAM User Guide</i>.</p>
      */
     inline int GetDurationSeconds() const{ return m_durationSeconds; }
     inline bool DurationSecondsHasBeenSet() const { return m_durationSecondsHasBeenSet; }

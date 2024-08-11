@@ -44,7 +44,7 @@ namespace Model
      * buckets, an object that's composed entirely of whitespace characters is not
      * supported by the <code>DeleteObjects</code> API operation. The request will
      * receive a <code>400 Bad Request</code> error and none of the objects in the
-     * request will be deleted.</p> 
+     * request will be deleted.</p>
      */
     inline const Aws::Vector<ObjectIdentifier>& GetObjects() const{ return m_objects; }
     inline bool ObjectsHasBeenSet() const { return m_objectsHasBeenSet; }

@@ -162,7 +162,7 @@ This module's default exports override the core \fBgetnetbyname()\fR and
 \&\fBgetnetbyaddr()\fR functions, replacing them with versions that return
 \&\*(L"Net::netent\*(R" objects.  This object has methods that return the similarly
 named structure field name from the C's netent structure from \fInetdb.h\fR;
-namely name, aliases, addrtype, and net.  The aliases 
+namely name, aliases, addrtype, and net.  The aliases
 method returns an array reference, the rest scalars.
 .PP
 You may also import all the structure fields directly into your namespace
@@ -216,13 +216,13 @@ This seems a bug, but here's how to deal with it:
 \&        next;
 \&     }
 \&
-\&     printf "\en%s is %s%s\en", 
-\&            $net, 
+\&     printf "\en%s is %s%s\en",
+\&            $net,
 \&            lc($n\->name) eq lc($net) ? "" : "*really* ",
 \&            $n\->name;
 \&
 \&     print "\etaliases are ", join(", ", @{$n\->aliases}), "\en"
-\&                if @{$n\->aliases};     
+\&                if @{$n\->aliases};
 \&
 \&     # this is stupid; first, why is this not in binary?
 \&     # second, why am i going through these convolutions
@@ -238,7 +238,7 @@ This seems a bug, but here's how to deal with it:
 \&            printf "\etThat addr reverses to net %s!\en", $n\->name;
 \&            $net = $n\->name;
 \&            redo;
-\&        } 
+\&        }
 \&     }
 \& }
 .Ve

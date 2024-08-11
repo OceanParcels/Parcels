@@ -349,7 +349,7 @@ namespace STS
          * with a consistent identity throughout the lifetime of an application.</p> <p>To
          * learn more about Amazon Cognito, see <a
          * href="https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-identity.html">Amazon
-         * Cognito identity pools</a> in <i>Amazon Cognito Developer Guide</i>.</p> 
+         * Cognito identity pools</a> in <i>Amazon Cognito Developer Guide</i>.</p>
          * <p>Calling <code>AssumeRoleWithWebIdentity</code> does not require the use of
          * Amazon Web Services security credentials. Therefore, you can distribute an
          * application (for example, on mobile devices) that requests temporary security
@@ -461,7 +461,7 @@ namespace STS
          * href="http://aws.amazon.com/articles/web-identity-federation-with-mobile-applications">Web
          * Identity Federation with Mobile Applications</a>. This article discusses web
          * identity federation and shows an example of how to use web identity federation
-         * to get access to content in Amazon S3. </p> </li> </ul><p><h3>See Also:</h3>  
+         * to get access to content in Amazon S3. </p> </li> </ul><p><h3>See Also:</h3>
          * <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/sts-2011-06-15/AssumeRoleWithWebIdentity">AWS
          * API Reference</a></p>
@@ -496,7 +496,7 @@ namespace STS
          * provide details about this authorization failure. </p>  <p>Only certain
          * Amazon Web Services operations return an encoded authorization message. The
          * documentation for an individual operation indicates whether that operation
-         * returns an encoded message in addition to returning an HTTP code.</p> 
+         * returns an encoded message in addition to returning an HTTP code.</p>
          * <p>The message is encoded because the details of the authorization status can
          * contain privileged information that the user who requested the operation should
          * not see. To decode an authorization status message, a user must be granted

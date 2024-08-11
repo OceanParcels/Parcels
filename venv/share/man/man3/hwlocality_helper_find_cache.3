@@ -20,18 +20,18 @@ hwlocality_helper_find_cache \- Looking at Cache Objects
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static \fBhwloc_obj_t\fP hwloc_get_cache_covering_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the first data (or unified) cache covering a cpuset \fCset\fP\&. 
+Get the first data (or unified) cache covering a cpuset \fCset\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-a covering cache, or \fCNULL\fP if no cache matches\&. 
+a covering cache, or \fCNULL\fP if no cache matches\&.
 .RE
 .PP
 
@@ -52,23 +52,23 @@ the depth of the matching level if \fCcachetype\fP is \fC-1\fP but only one leve
 .PP
 \fBHWLOC_TYPE_DEPTH_MULTIPLE\fP if \fCcachetype\fP is \fC-1\fP but multiple levels match\&.
 .PP
-\fBHWLOC_TYPE_DEPTH_UNKNOWN\fP if no cache level matches\&. 
+\fBHWLOC_TYPE_DEPTH_UNKNOWN\fP if no cache level matches\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_get_shared_cache_covering_obj (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the first data (or unified) cache shared between an object and somebody else\&. 
+Get the first data (or unified) cache shared between an object and somebody else\&.
 .PP
 \fBReturns\fP
 .RS 4
-a shared cache\&. 
+a shared cache\&.
 .PP
-\fCNULL\fP if no cache matches or if an invalid object is given (e\&.g\&. I/O object)\&. 
+\fCNULL\fP if no cache matches or if an invalid object is given (e\&.g\&. I/O object)\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

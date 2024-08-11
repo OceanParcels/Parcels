@@ -53,7 +53,7 @@ hwlocality_memattrs \- Comparing memory node attributes for finding where to all
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
+.PP
 Platforms with heterogeneous memory require ways to decide whether a buffer should be allocated on 'fast' memory (such as HBM), 'normal' memory (DDR) or even 'slow' but large-capacity memory (non-volatile memory)\&. These memory nodes are called 'Targets' while the CPU accessing them is called the 'Initiator'\&. Access performance depends on their locality (NUMA platforms) as well as the intrinsic performance of the targets (heterogeneous platforms)\&.
 .PP
 The following attributes describe the performance of memory accesses from an Initiator to a memory Target, for instance their latency or bandwidth\&. Initiators performing these memory accesses are usually some PUs or Cores (described as a CPU set)\&. Hence a Core may choose where to allocate a memory buffer by comparing the attributes of different target memory nodes nearby\&.
@@ -75,51 +75,51 @@ An example is available in doc/examples/memory-attributes\&.c in the source tree
 .RS 4
 The API also supports specific objects as initiator, but it is currently not used internally by hwloc\&. Users may for instance use it to provide custom performance values for host memory accesses performed by GPUs\&.
 .PP
-The interface actually also accepts targets that are not NUMA nodes\&. 
+The interface actually also accepts targets that are not NUMA nodes\&.
 .RE
 .PP
 
 .SH "Typedef Documentation"
-.PP 
+.PP
 .SS "typedef unsigned \fBhwloc_memattr_id_t\fP"
 
 .PP
-A memory attribute identifier\&. May be either one of \fBhwloc_memattr_id_e\fP or a new id returned by \fBhwloc_memattr_register()\fP\&. 
+A memory attribute identifier\&. May be either one of \fBhwloc_memattr_id_e\fP or a new id returned by \fBhwloc_memattr_register()\fP\&.
 .SH "Enumeration Type Documentation"
-.PP 
+.PP
 .SS "enum \fBhwloc_local_numanode_flag_e\fP"
 
 .PP
-Flags for selecting target NUMA nodes\&. 
+Flags for selecting target NUMA nodes\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_LOCAL_NUMANODE_FLAG_LARGER_LOCALITY \fP\fP
-Select NUMA nodes whose locality is larger than the given cpuset\&. For instance, if a single PU (or its cpuset) is given in \fCinitiator\fP, select all nodes close to the package that contains this PU\&. 
+Select NUMA nodes whose locality is larger than the given cpuset\&. For instance, if a single PU (or its cpuset) is given in \fCinitiator\fP, select all nodes close to the package that contains this PU\&.
 .TP
 \fB\fIHWLOC_LOCAL_NUMANODE_FLAG_SMALLER_LOCALITY \fP\fP
-Select NUMA nodes whose locality is smaller than the given cpuset\&. For instance, if a package (or its cpuset) is given in \fCinitiator\fP, also select nodes that are attached to only a half of that package\&. 
+Select NUMA nodes whose locality is smaller than the given cpuset\&. For instance, if a package (or its cpuset) is given in \fCinitiator\fP, also select nodes that are attached to only a half of that package\&.
 .TP
 \fB\fIHWLOC_LOCAL_NUMANODE_FLAG_ALL \fP\fP
-Select all NUMA nodes in the topology\&. The initiator \fCinitiator\fP is ignored\&. 
+Select all NUMA nodes in the topology\&. The initiator \fCinitiator\fP is ignored\&.
 .SS "enum \fBhwloc_location_type_e\fP"
 
 .PP
-Type of location\&. 
+Type of location\&.
 .PP
 \fBEnumerator\fP
 .in +1c
 .TP
 \fB\fIHWLOC_LOCATION_TYPE_CPUSET \fP\fP
-Location is given as a cpuset, in the location cpuset union field\&. 
+Location is given as a cpuset, in the location cpuset union field\&.
 .TP
 \fB\fIHWLOC_LOCATION_TYPE_OBJECT \fP\fP
-Location is given as an object, in the location object union field\&. 
+Location is given as an object, in the location object union field\&.
 .SS "enum \fBhwloc_memattr_id_e\fP"
 
 .PP
-Memory node attributes\&. 
+Memory node attributes\&.
 .PP
 \fBEnumerator\fP
 .in +1c
@@ -127,48 +127,48 @@ Memory node attributes\&.
 \fB\fIHWLOC_MEMATTR_ID_CAPACITY \fP\fP
 The "Capacity" is returned in bytes (local_memory attribute in objects)\&. Best capacity nodes are nodes with \fBhigher capacity\fP\&.
 .PP
-No initiator is involved when looking at this attribute\&. The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_HIGHER_FIRST\fP\&. 
+No initiator is involved when looking at this attribute\&. The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_HIGHER_FIRST\fP\&.
 .TP
 \fB\fIHWLOC_MEMATTR_ID_LOCALITY \fP\fP
 The "Locality" is returned as the number of PUs in that locality (e\&.g\&. the weight of its cpuset)\&. Best locality nodes are nodes with \fBsmaller locality\fP (nodes that are local to very few PUs)\&. Poor locality nodes are nodes with larger locality (nodes that are local to the entire machine)\&.
 .PP
-No initiator is involved when looking at this attribute\&. The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_HIGHER_FIRST\fP\&. 
+No initiator is involved when looking at this attribute\&. The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_HIGHER_FIRST\fP\&.
 .TP
 \fB\fIHWLOC_MEMATTR_ID_BANDWIDTH \fP\fP
 The "Bandwidth" is returned in MiB/s, as seen from the given initiator location\&. Best bandwidth nodes are nodes with \fBhigher bandwidth\fP\&.
 .PP
 The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_HIGHER_FIRST\fP and \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP\&.
 .PP
-This is the average bandwidth for read and write accesses\&. If the platform provides individual read and write bandwidths but no explicit average value, hwloc computes and returns the average\&. 
+This is the average bandwidth for read and write accesses\&. If the platform provides individual read and write bandwidths but no explicit average value, hwloc computes and returns the average\&.
 .TP
 \fB\fIHWLOC_MEMATTR_ID_READ_BANDWIDTH \fP\fP
 The "ReadBandwidth" is returned in MiB/s, as seen from the given initiator location\&. Best bandwidth nodes are nodes with \fBhigher bandwidth\fP\&.
 .PP
-The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_HIGHER_FIRST\fP and \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP\&. 
+The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_HIGHER_FIRST\fP and \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP\&.
 .TP
 \fB\fIHWLOC_MEMATTR_ID_WRITE_BANDWIDTH \fP\fP
 The "WriteBandwidth" is returned in MiB/s, as seen from the given initiator location\&. Best bandwidth nodes are nodes with \fBhigher bandwidth\fP\&.
 .PP
-The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_HIGHER_FIRST\fP and \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP\&. 
+The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_HIGHER_FIRST\fP and \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP\&.
 .TP
 \fB\fIHWLOC_MEMATTR_ID_LATENCY \fP\fP
 The "Latency" is returned as nanoseconds, as seen from the given initiator location\&. Best latency nodes are nodes with \fBsmaller latency\fP\&.
 .PP
 The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_LOWER_FIRST\fP and \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP\&.
 .PP
-This is the average latency for read and write accesses\&. If the platform provides individual read and write latencies but no explicit average value, hwloc computes and returns the average\&. 
+This is the average latency for read and write accesses\&. If the platform provides individual read and write latencies but no explicit average value, hwloc computes and returns the average\&.
 .TP
 \fB\fIHWLOC_MEMATTR_ID_READ_LATENCY \fP\fP
 The "ReadLatency" is returned as nanoseconds, as seen from the given initiator location\&. Best latency nodes are nodes with \fBsmaller latency\fP\&.
 .PP
-The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_LOWER_FIRST\fP and \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP\&. 
+The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_LOWER_FIRST\fP and \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP\&.
 .TP
 \fB\fIHWLOC_MEMATTR_ID_WRITE_LATENCY \fP\fP
 The "WriteLatency" is returned as nanoseconds, as seen from the given initiator location\&. Best latency nodes are nodes with \fBsmaller latency\fP\&.
 .PP
-The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_LOWER_FIRST\fP and \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP\&. 
+The corresponding attribute flags are \fBHWLOC_MEMATTR_FLAG_LOWER_FIRST\fP and \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "int hwloc_get_local_numanode_objs (\fBhwloc_topology_t\fP topology, struct \fBhwloc_location\fP * location, unsigned * nr, \fBhwloc_obj_t\fP * nodes, unsigned long flags)"
 
 .PP
@@ -189,7 +189,7 @@ Some of these NUMA nodes may not have any memory attribute values and hence not 
 .PP
 The number of NUMA nodes in the topology (obtained by \fBhwloc_bitmap_weight()\fP on the root object nodeset) may be used to allocate the \fCnodes\fP array\&.
 .PP
-When an object CPU set is given as locality, for instance a Package, and when flags contain both \fBHWLOC_LOCAL_NUMANODE_FLAG_LARGER_LOCALITY\fP and \fBHWLOC_LOCAL_NUMANODE_FLAG_SMALLER_LOCALITY\fP, the returned array corresponds to the nodeset of that object\&. 
+When an object CPU set is given as locality, for instance a Package, and when flags contain both \fBHWLOC_LOCAL_NUMANODE_FLAG_LARGER_LOCALITY\fP and \fBHWLOC_LOCAL_NUMANODE_FLAG_SMALLER_LOCALITY\fP, the returned array corresponds to the nodeset of that object\&.
 .RE
 .PP
 
@@ -206,11 +206,11 @@ The returned initiator should not be modified or freed, it belongs to the topolo
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCENOENT\fP if there are no matching initiators\&. 
+-1 with errno set to \fCENOENT\fP if there are no matching initiators\&.
 .PP
--1 with errno set to \fCEINVAL\fP if the attribute does not relate to a specific initiator (it does not have the flag \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP)\&. 
+-1 with errno set to \fCEINVAL\fP if the attribute does not relate to a specific initiator (it does not have the flag \fBHWLOC_MEMATTR_FLAG_NEED_INITIATOR\fP)\&.
 .RE
 .PP
 
@@ -227,29 +227,29 @@ If multiple targets have the same attribute values, only one is returned (and th
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCENOENT\fP if there are no matching targets\&. 
+-1 with errno set to \fCENOENT\fP if there are no matching targets\&.
 .PP
 -1 with errno set to \fCEINVAL\fP if flags are invalid, or no such attribute exists\&.
 .RE
 .PP
 \fBNote\fP
 .RS 4
-The initiator \fCinitiator\fP should be of type \fBHWLOC_LOCATION_TYPE_CPUSET\fP when refering to accesses performed by CPU cores\&. \fBHWLOC_LOCATION_TYPE_OBJECT\fP is currently unused internally by hwloc, but users may for instance use it to provide custom information about host memory accesses performed by GPUs\&. 
+The initiator \fCinitiator\fP should be of type \fBHWLOC_LOCATION_TYPE_CPUSET\fP when refering to accesses performed by CPU cores\&. \fBHWLOC_LOCATION_TYPE_OBJECT\fP is currently unused internally by hwloc, but users may for instance use it to provide custom information about host memory accesses performed by GPUs\&.
 .RE
 .PP
 
 .SS "int hwloc_memattr_get_by_name (\fBhwloc_topology_t\fP topology, const char * name, \fBhwloc_memattr_id_t\fP * id)"
 
 .PP
-Return the identifier of the memory attribute with the given name\&. 
+Return the identifier of the memory attribute with the given name\&.
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 with errno set to \fCEINVAL\fP if no such attribute exists\&. 
+-1 with errno set to \fCEINVAL\fP if no such attribute exists\&.
 .RE
 .PP
 
@@ -262,17 +262,17 @@ Return an attribute value for a specific target NUMA node\&. If the attribute do
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
 -1 on error, for instance with errno set to \fCEINVAL\fP if flags are invalid or no such attribute exists\&.
 .RE
 .PP
 \fBNote\fP
 .RS 4
-The initiator \fCinitiator\fP should be of type \fBHWLOC_LOCATION_TYPE_CPUSET\fP when refering to accesses performed by CPU cores\&. \fBHWLOC_LOCATION_TYPE_OBJECT\fP is currently unused internally by hwloc, but users may for instance use it to provide custom information about host memory accesses performed by GPUs\&. 
+The initiator \fCinitiator\fP should be of type \fBHWLOC_LOCATION_TYPE_CPUSET\fP when refering to accesses performed by CPU cores\&. \fBHWLOC_LOCATION_TYPE_OBJECT\fP is currently unused internally by hwloc, but users may for instance use it to provide custom information about host memory accesses performed by GPUs\&.
 .RE
 .PP
 
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

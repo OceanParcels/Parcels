@@ -24,7 +24,7 @@ namespace Model
 {
 
   /**
-   * <p>Contains the details of a message movement task. </p><p><h3>See Also:</h3>  
+   * <p>Contains the details of a message movement task. </p><p><h3>See Also:</h3>
    * <a
    * href="http://docs.aws.amazon.com/goto/WebAPI/sqs-2012-11-05/ListMessageMoveTasksResultEntry">AWS
    * API Reference</a></p>

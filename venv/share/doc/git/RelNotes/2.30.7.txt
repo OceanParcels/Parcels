@@ -83,4 +83,3 @@ Patrick Steinhardt (21):
       utf8: fix checking for glyph width in `strbuf_utf8_replace()`
       utf8: refactor `strbuf_utf8_replace` to not rely on preallocated buffer
       pretty: restrict input lengths for padding and wrapping formats
-

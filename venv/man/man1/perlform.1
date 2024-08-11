@@ -171,8 +171,8 @@ Output record formats are declared as follows:
 \&    .
 .Ve
 .PP
-If the name is omitted, format \*(L"\s-1STDOUT\*(R"\s0 is defined. A single \*(L".\*(R" in 
-column 1 is used to terminate a format.  \s-1FORMLIST\s0 consists of a sequence 
+If the name is omitted, format \*(L"\s-1STDOUT\*(R"\s0 is defined. A single \*(L".\*(R" in
+column 1 is used to terminate a format.  \s-1FORMLIST\s0 consists of a sequence
 of lines, each of which may be one of three types:
 .IP "1." 4
 A comment, indicated by putting a '#' in the first column.
@@ -212,13 +212,13 @@ the various possibilities in detail.
 .SS "Text Fields"
 .IX Xref "format, text field"
 .IX Subsection "Text Fields"
-The length of the field is supplied by padding out the field with multiple 
+The length of the field is supplied by padding out the field with multiple
 \&\*(L"<\*(R", \*(L">\*(R", or \*(L"|\*(R" characters to specify a non-numeric field with,
-respectively, left justification, right justification, or centering. 
+respectively, left justification, right justification, or centering.
 For a regular field, the value (up to the first newline) is taken and
 printed according to the selected justification, truncating excess characters.
 If you terminate a text field with \*(L"...\*(R", three dots will be shown if
-the value is truncated. A special text field may be used to do rudimentary 
+the value is truncated. A special text field may be used to do rudimentary
 multi-line text block filling; see \*(L"Using Fill Mode\*(R" for details.
 .PP
 .Vb 7
@@ -259,10 +259,10 @@ line feed is chomped off, but all other characters are emitted verbatim.
 .SS "The Field ^* for Variable-Width One-line-at-a-time Text"
 .IX Xref "^*"
 .IX Subsection "The Field ^* for Variable-Width One-line-at-a-time Text"
-Like \*(L"@*\*(R", this is a variable-width field. The value supplied must be a 
-scalar variable. Perl puts the first line (up to the first \*(L"\en\*(R") of the 
-text into the field, and then chops off the front of the string so that 
-the next time the variable is referenced, more of the text can be printed. 
+Like \*(L"@*\*(R", this is a variable-width field. The value supplied must be a
+scalar variable. Perl puts the first line (up to the first \*(L"\en\*(R") of the
+text into the field, and then chops off the front of the string so that
+the next time the variable is referenced, more of the text can be printed.
 The variable will \fInot\fR be restored.
 .PP
 .Vb 12
@@ -307,14 +307,14 @@ the variable is referenced, more of the text can be printed.  (Yes, this
 means that the variable itself is altered during execution of the \fBwrite()\fR
 call, and is not restored.)  The next portion of text is determined by
 a crude line-breaking algorithm. You may use the carriage return character
-(\f(CW\*(C`\er\*(C'\fR) to force a line break. You can change which characters are legal 
-to break on by changing the variable \f(CW$:\fR (that's 
-\&\f(CW$FORMAT_LINE_BREAK_CHARACTERS\fR if you're using the English module) to a 
+(\f(CW\*(C`\er\*(C'\fR) to force a line break. You can change which characters are legal
+to break on by changing the variable \f(CW$:\fR (that's
+\&\f(CW$FORMAT_LINE_BREAK_CHARACTERS\fR if you're using the English module) to a
 list of the desired characters.
 .PP
-Normally you would use a sequence of fields in a vertical stack associated 
-with the same scalar variable to print out a block of text. You might wish 
-to end the final field with the text \*(L"...\*(R", which will appear in the output 
+Normally you would use a sequence of fields in a vertical stack associated
+with the same scalar variable to print out a block of text. You might wish
+to end the final field with the text \*(L"...\*(R", which will appear in the output
 if the text was too long to appear in its entirety.
 .SS "Suppressing Lines Where All Fields Are Void"
 .IX Xref "format, suppressing lines"
@@ -330,7 +330,7 @@ the line will be repeated until all the fields on the line are exhausted,
 i.e. undefined. For special (caret) text fields this will occur sooner or
 later, but if you use a text field of the at variety, the  expression you
 supply had better not give the same value every time forever! (\f(CW\*(C`shift(@f)\*(C'\fR
-is a simple example that would work.)  Don't use a regular (at) numeric 
+is a simple example that would work.)  Don't use a regular (at) numeric
 field in such lines, because it will never go blank.
 .SS "Top of Form Processing"
 .IX Xref "format, top of form top header"

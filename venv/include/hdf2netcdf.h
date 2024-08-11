@@ -17,8 +17,8 @@
 #include "H4api_adpt.h"
 /* If we disable the HDF version of the netCDF API (ncxxx interface)
    (--disable-netcdf configure flag; the old way was to use -DHAVE_NETCDF compilation flag)
- ) we need to rename all the relevant function names 
-   In this version we exclude renaming the netCDF fortran API so 
+ ) we need to rename all the relevant function names
+   In this version we exclude renaming the netCDF fortran API so
    the MFHDF side must be compilied without fortran support. */
 #ifndef H4_HAVE_NETCDF
 #define  HNAME(x)  sd_##x     /* pre-append 'sd_' to all netCDF fcn names */
@@ -27,7 +27,7 @@
 #endif /* H4_HAVE_NETCDF i.e. USING HDF NETCDF */
 
 /* If using the real netCDF library and API (use --disable-netcdf configure flag))
-   need to mangle the HDF versions of netCDF API function names 
+   need to mangle the HDF versions of netCDF API function names
    to not conflict w/ oriinal netCDF ones */
 #ifndef H4_HAVE_NETCDF
 #define ncerr     HNAME(ncerr)
@@ -70,4 +70,4 @@
 #define ncrecput  HNAME(ncrecput)
 #define ncnobuf   HNAME(ncnobuf) /* no prototype for this one */
 
-#endif /* !H4_HAVE_NETCDF i.e NOT USING HDF version of netCDF API */ 
+#endif /* !H4_HAVE_NETCDF i.e NOT USING HDF version of netCDF API */

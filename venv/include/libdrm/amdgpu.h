@@ -375,7 +375,7 @@ struct amdgpu_cs_request {
 	struct amdgpu_cs_ib_info *ibs;
 
 	/**
-	 * The returned sequence number for the command submission 
+	 * The returned sequence number for the command submission
 	 */
 	uint64_t seq_no;
 

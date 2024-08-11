@@ -131,7 +131,7 @@ namespace Model
     /**
      * <p>The list of tags to add to a new topic.</p>  <p>To be able to tag a
      * topic on creation, you must have the <code>sns:CreateTopic</code> and
-     * <code>sns:TagResource</code> permissions.</p> 
+     * <code>sns:TagResource</code> permissions.</p>
      */
     inline const Aws::Vector<Tag>& GetTags() const{ return m_tags; }
     inline bool TagsHasBeenSet() const { return m_tagsHasBeenSet; }

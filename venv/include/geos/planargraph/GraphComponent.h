@@ -179,4 +179,3 @@ public:
 
 } // namespace geos::planargraph
 } // namespace geos
-

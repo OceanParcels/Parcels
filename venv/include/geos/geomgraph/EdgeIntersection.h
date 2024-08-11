@@ -146,4 +146,3 @@ operator<< (std::ostream& os, const EdgeIntersection& e)
 
 } // namespace geos.geomgraph
 } // namespace geos
-

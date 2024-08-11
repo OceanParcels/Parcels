@@ -436,4 +436,3 @@ private:
 } // apache::thrift::transport
 
 #endif // _THRIFT_TRANSPORT_TFILETRANSPORT_H_
-

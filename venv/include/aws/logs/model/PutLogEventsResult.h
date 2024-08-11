@@ -41,7 +41,7 @@ namespace Model
      * accepted even if the sequence token is not valid. You can use parallel
      * <code>PutLogEvents</code> actions on the same log stream and you do not need to
      * wait for the response of a previous <code>PutLogEvents</code> action to obtain
-     * the <code>nextSequenceToken</code> value.</p> 
+     * the <code>nextSequenceToken</code> value.</p>
      */
     inline const Aws::String& GetNextSequenceToken() const{ return m_nextSequenceToken; }
     inline void SetNextSequenceToken(const Aws::String& value) { m_nextSequenceToken = value; }
@@ -64,7 +64,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

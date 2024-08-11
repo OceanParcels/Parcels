@@ -482,7 +482,7 @@ above the legal Unicode maximum, those can be delimiters.
 .IX Subsection "Attributes :locked and :unique"
 .PP
 The attributes \f(CW\*(C`:locked\*(C'\fR (on code references) and \f(CW\*(C`:unique\*(C'\fR
-(on array, hash and scalar references) have had no effect since 
+(on array, hash and scalar references) have had no effect since
 Perl 5.005 and Perl 5.8.8 respectively. Their use has been deprecated
 since.
 .PP
@@ -593,7 +593,7 @@ throws a fatal error as of Perl 5.28.
 .IX Subsection "B::OP::terse"
 .PP
 This method, which just calls \f(CW\*(C`B::Concise::b_terse\*(C'\fR, has been
-deprecated, and disappeared in Perl 5.28. Please use 
+deprecated, and disappeared in Perl 5.28. Please use
 \&\f(CW\*(C`B::Concise\*(C'\fR instead.
 .PP
 \fIUse of inherited \s-1AUTOLOAD\s0 for non-method \f(CI%s::\fI%s() is no longer allowed\fR
@@ -621,7 +621,7 @@ you should remove AutoLoader from \f(CW@ISA\fR and change \f(CW\*(C`use AutoLoad
 .IX Subsection "Use of code points over 0xFF in string bitwise operators"
 .PP
 The string bitwise operators, \f(CW\*(C`&\*(C'\fR, \f(CW\*(C`|\*(C'\fR, \f(CW\*(C`^\*(C'\fR, and \f(CW\*(C`~\*(C'\fR, treat
-their operands as strings of bytes. As such, values above 0xFF 
+their operands as strings of bytes. As such, values above 0xFF
 are nonsensical. Using such code points with these operators
 was deprecated in Perl 5.24, and is fatal as of Perl 5.28.
 .PP
@@ -662,7 +662,7 @@ rectify this have been scrapped, as users found that rewriting a
 pending exception is actually a useful feature, and not a bug.
 .PP
 Perl never issued a deprecation warning for this; the deprecation
-was by documentation policy only. But this deprecation has been 
+was by documentation policy only. But this deprecation has been
 lifted as of Perl 5.26.
 .PP
 \fIMalformed \s-1UTF\-8\s0 string in \*(L"%s\*(R"\fR
@@ -684,7 +684,7 @@ became fatal in Perl 5.26.
 .IX Subsection "Use of *glob{FILEHANDLE}"
 .PP
 The use of \f(CW*glob{FILEHANDLE}\fR was deprecated in Perl 5.8.
-The intention was to use \f(CW*glob{IO}\fR instead, for which 
+The intention was to use \f(CW*glob{IO}\fR instead, for which
 \&\f(CW*glob{FILEHANDLE}\fR is an alias.
 .PP
 However, this feature was undeprecated in Perl 5.24.
@@ -693,8 +693,8 @@ However, this feature was undeprecated in Perl 5.24.
 .IX Subsection "Calling POSIX::%s() is deprecated"
 .PP
 The following functions in the \f(CW\*(C`POSIX\*(C'\fR module are no longer available:
-\&\f(CW\*(C`isalnum\*(C'\fR, \f(CW\*(C`isalpha\*(C'\fR, \f(CW\*(C`iscntrl\*(C'\fR, \f(CW\*(C`isdigit\*(C'\fR, \f(CW\*(C`isgraph\*(C'\fR, \f(CW\*(C`islower\*(C'\fR,  
-\&\f(CW\*(C`isprint\*(C'\fR, \f(CW\*(C`ispunct\*(C'\fR, \f(CW\*(C`isspace\*(C'\fR, \f(CW\*(C`isupper\*(C'\fR, and \f(CW\*(C`isxdigit\*(C'\fR.  The 
+\&\f(CW\*(C`isalnum\*(C'\fR, \f(CW\*(C`isalpha\*(C'\fR, \f(CW\*(C`iscntrl\*(C'\fR, \f(CW\*(C`isdigit\*(C'\fR, \f(CW\*(C`isgraph\*(C'\fR, \f(CW\*(C`islower\*(C'\fR,
+\&\f(CW\*(C`isprint\*(C'\fR, \f(CW\*(C`ispunct\*(C'\fR, \f(CW\*(C`isspace\*(C'\fR, \f(CW\*(C`isupper\*(C'\fR, and \f(CW\*(C`isxdigit\*(C'\fR.  The
 functions are buggy and don't work on \s-1UTF\-8\s0 encoded strings.  See their
 entries in \s-1POSIX\s0 for more information.
 .PP

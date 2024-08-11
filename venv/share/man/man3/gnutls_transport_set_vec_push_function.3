@@ -13,7 +13,7 @@ is a \fBgnutls_session_t\fP type.
 a callback function similar to \fBwritev()\fP
 .SH "DESCRIPTION"
 Using this function you can override the default writev(2)
-function for gnutls to send data. Setting this callback 
+function for gnutls to send data. Setting this callback
 instead of \fBgnutls_transport_set_push_function()\fP is recommended
 since it introduces less overhead in the TLS handshake process.
 

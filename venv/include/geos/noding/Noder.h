@@ -76,4 +76,3 @@ protected:
 
 } // namespace geos.noding
 } // namespace geos
-

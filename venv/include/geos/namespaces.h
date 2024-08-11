@@ -314,4 +314,3 @@ namespace triangulate { // geos.triangulate
 namespace util {}
 
 } // namespace geos
-

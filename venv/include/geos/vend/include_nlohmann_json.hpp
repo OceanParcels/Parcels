@@ -16,7 +16,7 @@
 
 #ifdef nlohmann
     #error "GEOS modifies the nlohmann define "
-#endif    
+#endif
 #define nlohmann geos_nlohmann
 #include "geos/vend/json.hpp"
 #undef nlohmann

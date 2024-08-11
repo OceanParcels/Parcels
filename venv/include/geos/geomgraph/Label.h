@@ -286,5 +286,3 @@ std::ostream& operator<< (std::ostream&, const Label&);
 
 } // namespace geos.geomgraph
 } // namespace geos
-
-

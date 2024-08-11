@@ -15,7 +15,7 @@ int ares_gethostbyname_file(ares_channel_t *\fIchannel\fP, const char *\fIname\f
 .SH DESCRIPTION
 The
 .B ares_gethostbyname_file
-function performs a host lookup by name against the system's hosts file (or equivalent local hostname database).  
+function performs a host lookup by name against the system's hosts file (or equivalent local hostname database).
 The
 .IR channel
 parameter is required, but no asynchronous queries are performed.  Instead, the
@@ -27,13 +27,13 @@ The parameter
 .I name
 gives the hostname as a NUL-terminated C string, and
 .I family
-gives the desired type of address for the resulting host entry.  
+gives the desired type of address for the resulting host entry.
 .PP
 The return value indicates whether the query succeeded and, if not, how it
 failed.  It may have any of the following values:
 .TP 19
 .B ARES_SUCCESS
-The host lookup completed successfully and 
+The host lookup completed successfully and
 .I host
 now points to the result (and must be freed with \fIares_free_hostent(3)\fP).
 .TP 19
@@ -56,7 +56,7 @@ containing the address of the host returned by the lookup.  The user must
 free the memory pointed to by
 .IR host
 when finished with it by calling \fIares_free_hostent(3)\fP.  If the lookup did
-not complete successfully, 
+not complete successfully,
 .I host
 will be
 .BR NULL .

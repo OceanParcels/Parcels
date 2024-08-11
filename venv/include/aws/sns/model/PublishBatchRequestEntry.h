@@ -48,7 +48,7 @@ namespace Model
      * <p>An identifier for the message in this batch.</p>  <p>The
      * <code>Ids</code> of a batch request must be unique within a request. </p>
      * <p>This identifier can have up to 80 characters. The following characters are
-     * accepted: alphanumeric characters, hyphens(-), and underscores (_). </p> 
+     * accepted: alphanumeric characters, hyphens(-), and underscores (_). </p>
      */
     inline const Aws::String& GetId() const{ return m_id; }
     inline bool IdHasBeenSet() const { return m_idHasBeenSet; }
@@ -195,7 +195,7 @@ namespace Model
      * 0-9)</code> and punctuation
      * <code>(!"#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^_`{|}~)</code>.</p>  <p>
      * <code>MessageGroupId</code> is required for FIFO topics. You can't use it for
-     * standard topics. </p> 
+     * standard topics. </p>
      */
     inline const Aws::String& GetMessageGroupId() const{ return m_messageGroupId; }
     inline bool MessageGroupIdHasBeenSet() const { return m_messageGroupIdHasBeenSet; }

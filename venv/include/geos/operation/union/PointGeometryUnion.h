@@ -69,4 +69,3 @@ private:
 } // namespace geos::operation::union
 } // namespace geos::operation
 } // namespace geos
-

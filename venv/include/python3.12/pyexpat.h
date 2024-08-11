@@ -54,4 +54,3 @@ struct PyExpat_CAPI
     XML_Bool (*SetReparseDeferralEnabled)(XML_Parser parser, XML_Bool enabled);
     /* always add new stuff to the end! */
 };
-

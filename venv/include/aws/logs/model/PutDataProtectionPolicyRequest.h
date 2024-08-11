@@ -71,7 +71,7 @@ namespace Model
      * <code>Deidentify</code> action is what actually masks the data, and it must
      * contain the <code> "MaskConfig": {}</code> object. The <code> "MaskConfig":
      * {}</code> object must be empty.</p> </li> </ul> <p>For an example data
-     * protection policy, see the <b>Examples</b> section on this page.</p> 
+     * protection policy, see the <b>Examples</b> section on this page.</p>
      * <p>The contents of the two <code>DataIdentifer</code> arrays must match
      * exactly.</p>  <p>In addition to the two JSON blocks, the
      * <code>policyDocument</code> can also include <code>Name</code>,

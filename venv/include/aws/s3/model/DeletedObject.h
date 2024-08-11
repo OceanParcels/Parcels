@@ -54,7 +54,7 @@ namespace Model
     ///@{
     /**
      * <p>The version ID of the deleted object.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::String& GetVersionId() const{ return m_versionId; }
     inline bool VersionIdHasBeenSet() const { return m_versionIdHasBeenSet; }
@@ -72,7 +72,7 @@ namespace Model
      * was (true) or was not (false) a delete marker before deletion. In a simple
      * DELETE, this header indicates whether (true) or not (false) the current version
      * of the object is a delete marker.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline bool GetDeleteMarker() const{ return m_deleteMarker; }
     inline bool DeleteMarkerHasBeenSet() const { return m_deleteMarkerHasBeenSet; }
@@ -85,7 +85,7 @@ namespace Model
      * <p>The version ID of the delete marker created as a result of the DELETE
      * operation. If you delete a specific object version, the value returned by this
      * header is the version ID of the object version deleted.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetDeleteMarkerVersionId() const{ return m_deleteMarkerVersionId; }
     inline bool DeleteMarkerVersionIdHasBeenSet() const { return m_deleteMarkerVersionIdHasBeenSet; }

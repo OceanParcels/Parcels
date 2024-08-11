@@ -137,5 +137,3 @@ extern const TclPlatStubs *tclPlatStubsPtr;
 #define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TCLPLATDECLS */
-
-

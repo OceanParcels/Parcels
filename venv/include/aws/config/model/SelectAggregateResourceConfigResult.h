@@ -49,7 +49,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const QueryInfo& GetQueryInfo() const{ return m_queryInfo; }
     inline void SetQueryInfo(const QueryInfo& value) { m_queryInfo = value; }
     inline void SetQueryInfo(QueryInfo&& value) { m_queryInfo = std::move(value); }
@@ -72,7 +72,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

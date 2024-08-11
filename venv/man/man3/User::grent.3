@@ -147,13 +147,13 @@ User::grent \- by\-name interface to Perl's built\-in getgr*() functions
 \& $gr = getgrgid(0) or die "No group zero";
 \& if ( $gr\->name eq \*(Aqwheel\*(Aq && @{$gr\->members} > 1 ) {
 \&     print "gid zero name wheel, with other members";
-\& } 
+\& }
 \&
 \& use User::grent qw(:FIELDS);
 \& getgrgid(0) or die "No group zero";
 \& if ( $gr_name eq \*(Aqwheel\*(Aq && @gr_members > 1 ) {
 \&     print "gid zero name wheel, with other members";
-\& } 
+\& }
 \&
 \& $gr = getgr($whoever);
 .Ve
@@ -162,7 +162,7 @@ User::grent \- by\-name interface to Perl's built\-in getgr*() functions
 This module's default exports override the core \fBgetgrent()\fR, \fBgetgrgid()\fR,
 and \fBgetgrnam()\fR functions, replacing them with versions that return
 \&\*(L"User::grent\*(R" objects.  This object has methods that return the similarly
-named structure field name from the C's passwd structure from \fIgrp.h\fR; 
+named structure field name from the C's passwd structure from \fIgrp.h\fR;
 namely name, passwd, gid, and members (not mem).  The first three
 return scalars, the last an array reference.
 .PP

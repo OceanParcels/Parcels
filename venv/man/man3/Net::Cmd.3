@@ -163,11 +163,11 @@ These methods provide a user interface to the \f(CW\*(C`Net::Cmd\*(C'\fR object.
 .IP "debug ( \s-1VALUE\s0 )" 4
 .IX Item "debug ( VALUE )"
 Set the level of debug information for this object. If \f(CW\*(C`VALUE\*(C'\fR is not given
-then the current state is returned. Otherwise the state is changed to 
+then the current state is returned. Otherwise the state is changed to
 \&\f(CW\*(C`VALUE\*(C'\fR and the previous state returned.
 .Sp
 Different packages
-may implement different levels of debug but a non-zero value results in 
+may implement different levels of debug but a non-zero value results in
 copies of all commands and responses also being sent to \s-1STDERR.\s0
 .Sp
 If \f(CW\*(C`VALUE\*(C'\fR is \f(CW\*(C`undef\*(C'\fR then the debug level will be set to the default
@@ -208,7 +208,7 @@ transmission. Once this data has been sent \f(CW\*(C`dataend\*(C'\fR calls \f(CW
 returns true if \f(CW\*(C`response\*(C'\fR returns \s-1CMD_OK.\s0
 .SH "CLASS METHODS"
 .IX Header "CLASS METHODS"
-These methods are not intended to be called by the user, but used or 
+These methods are not intended to be called by the user, but used or
 over-ridden by a sub-class of \f(CW\*(C`Net::Cmd\*(C'\fR
 .IP "debug_print ( \s-1DIR, TEXT\s0 )" 4
 .IX Item "debug_print ( DIR, TEXT )"

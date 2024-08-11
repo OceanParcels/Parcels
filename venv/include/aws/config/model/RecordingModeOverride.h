@@ -62,7 +62,7 @@ namespace Model
      * following resource types:</p> <ul> <li> <p>
      * <code>AWS::Config::ResourceCompliance</code> </p> </li> <li> <p>
      * <code>AWS::Config::ConformancePackCompliance</code> </p> </li> <li> <p>
-     * <code>AWS::Config::ConfigurationRecorder</code> </p> </li> </ul> 
+     * <code>AWS::Config::ConfigurationRecorder</code> </p> </li> </ul>
      */
     inline const Aws::Vector<ResourceType>& GetResourceTypes() const{ return m_resourceTypes; }
     inline bool ResourceTypesHasBeenSet() const { return m_resourceTypesHasBeenSet; }
@@ -84,7 +84,7 @@ namespace Model
      * period, only if it’s different from the previous CI recorded. </p> </li> </ul>
      *  <p>Firewall Manager depends on continuous recording to monitor your
      * resources. If you are using Firewall Manager, it is recommended that you set the
-     * recording frequency to Continuous.</p> 
+     * recording frequency to Continuous.</p>
      */
     inline const RecordingFrequency& GetRecordingFrequency() const{ return m_recordingFrequency; }
     inline bool RecordingFrequencyHasBeenSet() const { return m_recordingFrequencyHasBeenSet; }

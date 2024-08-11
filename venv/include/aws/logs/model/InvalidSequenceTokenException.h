@@ -43,7 +43,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const Aws::String& GetExpectedSequenceToken() const{ return m_expectedSequenceToken; }
     inline bool ExpectedSequenceTokenHasBeenSet() const { return m_expectedSequenceTokenHasBeenSet; }
     inline void SetExpectedSequenceToken(const Aws::String& value) { m_expectedSequenceTokenHasBeenSet = true; m_expectedSequenceToken = value; }

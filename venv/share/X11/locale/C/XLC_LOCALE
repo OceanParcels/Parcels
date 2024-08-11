@@ -1,8 +1,8 @@
 #  XLocale Database Sample for C.
-# 
-# 
+#
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
 # 	fs0 class (7 bit ASCII)
 fs0	{
@@ -15,9 +15,9 @@ fs0	{
 	}
 }
 END XLC_FONTSET
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name		STRING
 mb_cur_max		1

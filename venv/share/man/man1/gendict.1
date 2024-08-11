@@ -39,7 +39,7 @@
 .B gendict
 reads the word list from
 .I dictionary-file
-and creates a string trie dictionary file. Normally this data file has the 
+and creates a string trie dictionary file. Normally this data file has the
 .B .dict
 extension.
 .PP
@@ -77,7 +77,7 @@ Set the output trie type to UChar. Mutually exclusive with
 .BR --bytes.
 .TP
 .BR "\fB\-\-bytes"
-Set the output trie type to Bytes. Mutually exclusive with 
+Set the output trie type to Bytes. Mutually exclusive with
 .BR --uchars.
 .TP
 .BR "\fB\-\-transform"
@@ -86,11 +86,11 @@ Set the transform type. Should only be specified with
 Currently supported transforms are:
 .BR offset-<hex-number>,
 which specifies an offset to subtract from all input characters.
-It should be noted that the offset transform also maps U+200D 
-to 0xFF and U+200C to 0xFE, in order to offer compatibility to 
+It should be noted that the offset transform also maps U+200D
+to 0xFF and U+200C to 0xFE, in order to offer compatibility to
 languages that require these characters.
-A transform must be specified for a bytes trie, and when applied 
-to the non-value characters in the 
+A transform must be specified for a bytes trie, and when applied
+to the non-value characters in the
 .IR input-file
 must produce output between 0x00 and 0xFF.
 .TP
@@ -100,17 +100,17 @@ The source file to read.
 .BI " output\-file"
 The file to write the output dictionary to.
 .SH CAVEATS
-The 
+The
 .IR input-file
 is assumed to be encoded in UTF-8.
-The integers in the 
-.IR input-file 
-that are used as values must be made up of ASCII digits. They 
-may be specified either in hex, by using a 0x prefix, or in 
+The integers in the
+.IR input-file
+that are used as values must be made up of ASCII digits. They
+may be specified either in hex, by using a 0x prefix, or in
 decimal.
 Either
 .BI --bytes
-or 
+or
 .BI --uchars
 must be specified.
 .SH ENVIRONMENT
@@ -130,4 +130,3 @@ Maxime Serrano
 Copyright (C) 2012 International Business Machines Corporation and others
 .SH SEE ALSO
 .BR http://www.icu-project.org/userguide/boundaryAnalysis.html
-

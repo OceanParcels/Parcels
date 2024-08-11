@@ -163,7 +163,7 @@ TAILQ_HEAD (event_list, event);
 #undef TAILQ_HEAD
 #endif
 
-LIST_HEAD (event_dlist, event); 
+LIST_HEAD (event_dlist, event);
 
 #ifdef EVENT_DEFINED_LISTENTRY_
 #undef LIST_ENTRY

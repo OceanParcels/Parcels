@@ -538,7 +538,7 @@ It's also useful in those cases where you are comparing numbers and
 \&    cmp_ok( $big_hairy_number, \*(Aq==\*(Aq, $another_big_hairy_number );
 .Ve
 .Sp
-It's especially useful when comparing greater-than or smaller-than 
+It's especially useful when comparing greater-than or smaller-than
 relation between values:
 .Sp
 .Vb 1
@@ -561,9 +561,9 @@ Checks to make sure the \f(CW$module\fR or \f(CW$object\fR can do these \f(CW@me
 is almost exactly like saying:
 .Sp
 .Vb 4
-\&    ok( Foo\->can(\*(Aqthis\*(Aq) && 
-\&        Foo\->can(\*(Aqthat\*(Aq) && 
-\&        Foo\->can(\*(Aqwhatever\*(Aq) 
+\&    ok( Foo\->can(\*(Aqthis\*(Aq) &&
+\&        Foo\->can(\*(Aqthat\*(Aq) &&
+\&        Foo\->can(\*(Aqwhatever\*(Aq)
 \&      );
 .Ve
 .Sp
@@ -655,7 +655,7 @@ For example...
 .Sp
 .Vb 1
 \&  use Test::More tests => 3;
-\& 
+\&
 \&  pass("First test");
 \&
 \&  subtest \*(AqAn example subtest\*(Aq => sub {
@@ -964,7 +964,7 @@ or
 .IX Subsection "Conditional tests"
 Sometimes running a test under certain conditions will cause the
 test script to die.  A certain function or method isn't implemented
-(such as \f(CW\*(C`fork()\*(C'\fR on MacOS), some resource isn't available (like a 
+(such as \f(CW\*(C`fork()\*(C'\fR on MacOS), some resource isn't available (like a
 net connection) or a module isn't available.  In these cases it's
 necessary to skip tests, or declare that they are supposed to fail
 but will work in the future (a todo test).

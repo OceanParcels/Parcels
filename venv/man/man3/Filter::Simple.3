@@ -170,7 +170,7 @@ Filter::Simple \- Simplified source filtering
 .SS "The Problem"
 .IX Subsection "The Problem"
 Source filtering is an immensely powerful feature of recent versions of Perl.
-It allows one to extend the language itself (e.g. the Switch module), to 
+It allows one to extend the language itself (e.g. the Switch module), to
 simplify the language (e.g. Language::Pythonesque), or to completely recast the
 language (e.g. Lingua::Romana::Perligata). Effectively, it allows one to use
 the full power of Perl as its own, recursively applied, macro language.
@@ -477,13 +477,13 @@ Filters only Perl quotelikes (as interpreted by
 .ie n .IP """string""" 4
 .el .IP "\f(CW``string''\fR" 4
 .IX Item """string"""
-Filters only the string literal parts of a Perl quotelike (i.e. the 
+Filters only the string literal parts of a Perl quotelike (i.e. the
 contents of a string literal, either half of a \f(CW\*(C`tr///\*(C'\fR, the second
 half of an \f(CW\*(C`s///\*(C'\fR).
 .ie n .IP """regex""" 4
 .el .IP "\f(CW``regex''\fR" 4
 .IX Item """regex"""
-Filters only the pattern literal parts of a Perl quotelike (i.e. the 
+Filters only the pattern literal parts of a Perl quotelike (i.e. the
 contents of a \f(CW\*(C`qr//\*(C'\fR or an \f(CW\*(C`m//\*(C'\fR, the first half of an \f(CW\*(C`s///\*(C'\fR).
 .ie n .IP """all""" 4
 .el .IP "\f(CW``all''\fR" 4
@@ -495,7 +495,7 @@ the component filters is called repeatedly, once for each component
 found in the source code.
 .PP
 Note that you can also apply two or more of the same type of filter in
-a single \f(CW\*(C`FILTER_ONLY\*(C'\fR. For example, here's a simple 
+a single \f(CW\*(C`FILTER_ONLY\*(C'\fR. For example, here's a simple
 macro-preprocessor that is only applied within regexes,
 with a final debugging pass that prints the resulting source code:
 .PP
@@ -656,7 +656,7 @@ subroutines \*(-- \f(CW\*(C`import\*(C'\fR and \f(CW\*(C`unimport\*(C'\fR \*(-- 
 nasty details.
 .PP
 In addition, the generated \f(CW\*(C`import\*(C'\fR subroutine passes its own argument
-list to the filtering subroutine, so the \s-1BANG\s0.pm filter could easily 
+list to the filtering subroutine, so the \s-1BANG\s0.pm filter could easily
 be made parametric:
 .PP
 .Vb 1

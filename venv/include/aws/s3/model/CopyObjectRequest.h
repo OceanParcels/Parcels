@@ -78,7 +78,7 @@ namespace Model
      * by any account will be owned by the bucket owner.</p> </li> <li> <p>This
      * functionality is not supported for directory buckets.</p> </li> <li> <p>This
      * functionality is not supported for Amazon S3 on Outposts.</p> </li> </ul>
-     * 
+     *
      */
     inline const ObjectCannedACL& GetACL() const{ return m_aCL; }
     inline bool ACLHasBeenSet() const { return m_aCLHasBeenSet; }
@@ -161,7 +161,7 @@ namespace Model
      * Unrecognized or unsupported values will respond with the HTTP status code
      * <code>400 Bad Request</code>.</p>  <p>For directory buckets, when you use
      * Amazon Web Services SDKs, <code>CRC32</code> is the default checksum algorithm
-     * that's used for performance.</p> 
+     * that's used for performance.</p>
      */
     inline const ChecksumAlgorithm& GetChecksumAlgorithm() const{ return m_checksumAlgorithm; }
     inline bool ChecksumAlgorithmHasBeenSet() const { return m_checksumAlgorithmHasBeenSet; }
@@ -192,7 +192,7 @@ namespace Model
      * <p>Specifies what content encodings have been applied to the object and thus
      * what decoding mechanisms must be applied to obtain the media-type referenced by
      * the Content-Type header field.</p>  <p>For directory buckets, only the
-     * <code>aws-chunked</code> value is supported in this header field.</p> 
+     * <code>aws-chunked</code> value is supported in this header field.</p>
      */
     inline const Aws::String& GetContentEncoding() const{ return m_contentEncoding; }
     inline bool ContentEncodingHasBeenSet() const { return m_contentEncodingHasBeenSet; }
@@ -285,7 +285,7 @@ namespace Model
      * the destination bucket, the version ID that Amazon S3 generates in the
      * <code>x-amz-version-id</code> response header is always null.</p>  <p>
      * <b>Directory buckets</b> - S3 Versioning isn't enabled and supported for
-     * directory buckets.</p> 
+     * directory buckets.</p>
      */
     inline const Aws::String& GetCopySource() const{ return m_copySource; }
     inline bool CopySourceHasBeenSet() const { return m_copySourceHasBeenSet; }
@@ -394,7 +394,7 @@ namespace Model
      * <p>Gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the
      * object.</p>  <ul> <li> <p>This functionality is not supported for
      * directory buckets.</p> </li> <li> <p>This functionality is not supported for
-     * Amazon S3 on Outposts.</p> </li> </ul> 
+     * Amazon S3 on Outposts.</p> </li> </ul>
      */
     inline const Aws::String& GetGrantFullControl() const{ return m_grantFullControl; }
     inline bool GrantFullControlHasBeenSet() const { return m_grantFullControlHasBeenSet; }
@@ -411,7 +411,7 @@ namespace Model
      * <p>Allows grantee to read the object data and its metadata.</p>  <ul> <li>
      * <p>This functionality is not supported for directory buckets.</p> </li> <li>
      * <p>This functionality is not supported for Amazon S3 on Outposts.</p> </li>
-     * </ul> 
+     * </ul>
      */
     inline const Aws::String& GetGrantRead() const{ return m_grantRead; }
     inline bool GrantReadHasBeenSet() const { return m_grantReadHasBeenSet; }
@@ -428,7 +428,7 @@ namespace Model
      * <p>Allows grantee to read the object ACL.</p>  <ul> <li> <p>This
      * functionality is not supported for directory buckets.</p> </li> <li> <p>This
      * functionality is not supported for Amazon S3 on Outposts.</p> </li> </ul>
-     * 
+     *
      */
     inline const Aws::String& GetGrantReadACP() const{ return m_grantReadACP; }
     inline bool GrantReadACPHasBeenSet() const { return m_grantReadACPHasBeenSet; }
@@ -445,7 +445,7 @@ namespace Model
      * <p>Allows grantee to write the ACL for the applicable object.</p>  <ul>
      * <li> <p>This functionality is not supported for directory buckets.</p> </li>
      * <li> <p>This functionality is not supported for Amazon S3 on Outposts.</p> </li>
-     * </ul> 
+     * </ul>
      */
     inline const Aws::String& GetGrantWriteACP() const{ return m_grantWriteACP; }
     inline bool GrantWriteACPHasBeenSet() const { return m_grantWriteACPHasBeenSet; }
@@ -505,7 +505,7 @@ namespace Model
      * <code>x-amz-website-redirect-location</code> is unique to each object and is not
      * copied when using the <code>x-amz-metadata-directive</code> header. To copy the
      * value, you must specify <code>x-amz-website-redirect-location</code> in the
-     * request header.</p> 
+     * request header.</p>
      */
     inline const MetadataDirective& GetMetadataDirective() const{ return m_metadataDirective; }
     inline bool MetadataDirectiveHasBeenSet() const { return m_metadataDirectiveHasBeenSet; }
@@ -545,7 +545,7 @@ namespace Model
      * attempt to <code>REPLACE</code> the tag-set of a directory bucket source object
      * and don't set the <code>x-amz-tagging</code> value of the directory bucket
      * destination object. This is because the default value of
-     * <code>x-amz-tagging</code> is the empty value.</p> </li> </ul> 
+     * <code>x-amz-tagging</code> is the empty value.</p> </li> </ul>
      */
     inline const TaggingDirective& GetTaggingDirective() const{ return m_taggingDirective; }
     inline bool TaggingDirectiveHasBeenSet() const { return m_taggingDirectiveHasBeenSet; }
@@ -584,7 +584,7 @@ namespace Model
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/serv-side-encryption.html">Using
      * Server-Side Encryption</a> in the <i>Amazon S3 User Guide</i>.</p>  <p>For
      * directory buckets, only server-side encryption with Amazon S3 managed keys
-     * (SSE-S3) (<code>AES256</code>) is supported.</p> 
+     * (SSE-S3) (<code>AES256</code>) is supported.</p>
      */
     inline const ServerSideEncryption& GetServerSideEncryption() const{ return m_serverSideEncryption; }
     inline bool ServerSideEncryptionHasBeenSet() const { return m_serverSideEncryptionHasBeenSet; }
@@ -641,7 +641,7 @@ namespace Model
      * <code>x-amz-metadata-directive</code> header. Instead, you may opt to provide
      * this header in combination with the <code>x-amz-metadata-directive</code>
      * header.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetWebsiteRedirectLocation() const{ return m_websiteRedirectLocation; }
     inline bool WebsiteRedirectLocationHasBeenSet() const { return m_websiteRedirectLocationHasBeenSet; }
@@ -664,7 +664,7 @@ namespace Model
      * from the default encryption configuration of the destination bucket, the
      * encryption setting in your request takes precedence. </p>  <p>This
      * functionality is not supported when the destination bucket is a directory
-     * bucket.</p> 
+     * bucket.</p>
      */
     inline const Aws::String& GetSSECustomerAlgorithm() const{ return m_sSECustomerAlgorithm; }
     inline bool SSECustomerAlgorithmHasBeenSet() const { return m_sSECustomerAlgorithmHasBeenSet; }
@@ -682,9 +682,9 @@ namespace Model
      * encrypting data. This value is used to store the object and then it is
      * discarded. Amazon S3 does not store the encryption key. The key must be
      * appropriate for use with the algorithm specified in the
-     * <code>x-amz-server-side-encryption-customer-algorithm</code> header.</p> 
+     * <code>x-amz-server-side-encryption-customer-algorithm</code> header.</p>
      * <p>This functionality is not supported when the destination bucket is a
-     * directory bucket.</p> 
+     * directory bucket.</p>
      */
     inline const Aws::String& GetSSECustomerKey() const{ return m_sSECustomerKey; }
     inline bool SSECustomerKeyHasBeenSet() const { return m_sSECustomerKeyHasBeenSet; }
@@ -701,7 +701,7 @@ namespace Model
      * <p>Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
      * Amazon S3 uses this header for a message integrity check to ensure that the
      * encryption key was transmitted without error.</p>  <p>This functionality
-     * is not supported when the destination bucket is a directory bucket.</p> 
+     * is not supported when the destination bucket is a directory bucket.</p>
      */
     inline const Aws::String& GetSSECustomerKeyMD5() const{ return m_sSECustomerKeyMD5; }
     inline bool SSECustomerKeyMD5HasBeenSet() const { return m_sSECustomerKeyMD5HasBeenSet; }
@@ -723,7 +723,7 @@ namespace Model
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingAWSSDK.html#specify-signature-version">Specifying
      * the Signature Version in Request Authentication</a> in the <i>Amazon S3 User
      * Guide</i>.</p>  <p>This functionality is not supported when the
-     * destination bucket is a directory bucket.</p> 
+     * destination bucket is a directory bucket.</p>
      */
     inline const Aws::String& GetSSEKMSKeyId() const{ return m_sSEKMSKeyId; }
     inline bool SSEKMSKeyIdHasBeenSet() const { return m_sSEKMSKeyIdHasBeenSet; }
@@ -742,7 +742,7 @@ namespace Model
      * JSON with the encryption context key-value pairs. This value must be explicitly
      * added to specify encryption context for <code>CopyObject</code> requests.</p>
      *  <p>This functionality is not supported when the destination bucket is a
-     * directory bucket.</p> 
+     * directory bucket.</p>
      */
     inline const Aws::String& GetSSEKMSEncryptionContext() const{ return m_sSEKMSEncryptionContext; }
     inline bool SSEKMSEncryptionContextHasBeenSet() const { return m_sSEKMSEncryptionContextHasBeenSet; }
@@ -766,7 +766,7 @@ namespace Model
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-key.html">Amazon S3
      * Bucket Keys</a> in the <i>Amazon S3 User Guide</i>.</p>  <p>This
      * functionality is not supported when the destination bucket is a directory
-     * bucket.</p> 
+     * bucket.</p>
      */
     inline bool GetBucketKeyEnabled() const{ return m_bucketKeyEnabled; }
     inline bool BucketKeyEnabledHasBeenSet() const { return m_bucketKeyEnabledHasBeenSet; }
@@ -781,7 +781,7 @@ namespace Model
      * stored in Amazon S3 using SSE-C, you must provide the necessary encryption
      * information in your request so that Amazon S3 can decrypt the object for
      * copying.</p>  <p>This functionality is not supported when the source
-     * object is in a directory bucket.</p> 
+     * object is in a directory bucket.</p>
      */
     inline const Aws::String& GetCopySourceSSECustomerAlgorithm() const{ return m_copySourceSSECustomerAlgorithm; }
     inline bool CopySourceSSECustomerAlgorithmHasBeenSet() const { return m_copySourceSSECustomerAlgorithmHasBeenSet; }
@@ -801,7 +801,7 @@ namespace Model
      * source object for the copy is stored in Amazon S3 using SSE-C, you must provide
      * the necessary encryption information in your request so that Amazon S3 can
      * decrypt the object for copying.</p>  <p>This functionality is not
-     * supported when the source object is in a directory bucket.</p> 
+     * supported when the source object is in a directory bucket.</p>
      */
     inline const Aws::String& GetCopySourceSSECustomerKey() const{ return m_copySourceSSECustomerKey; }
     inline bool CopySourceSSECustomerKeyHasBeenSet() const { return m_copySourceSSECustomerKeyHasBeenSet; }
@@ -821,7 +821,7 @@ namespace Model
      * the copy is stored in Amazon S3 using SSE-C, you must provide the necessary
      * encryption information in your request so that Amazon S3 can decrypt the object
      * for copying.</p>  <p>This functionality is not supported when the source
-     * object is in a directory bucket.</p> 
+     * object is in a directory bucket.</p>
      */
     inline const Aws::String& GetCopySourceSSECustomerKeyMD5() const{ return m_copySourceSSECustomerKeyMD5; }
     inline bool CopySourceSSECustomerKeyMD5HasBeenSet() const { return m_copySourceSSECustomerKeyMD5HasBeenSet; }
@@ -834,7 +834,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestPayer& GetRequestPayer() const{ return m_requestPayer; }
     inline bool RequestPayerHasBeenSet() const { return m_requestPayerHasBeenSet; }
     inline void SetRequestPayer(const RequestPayer& value) { m_requestPayerHasBeenSet = true; m_requestPayer = value; }
@@ -877,7 +877,7 @@ namespace Model
      * empty.</p> </li> <li> <p>When you attempt to <code>REPLACE</code> the tag-set of
      * a directory bucket source object and don't set the <code>x-amz-tagging</code>
      * value of the directory bucket destination object. This is because the default
-     * value of <code>x-amz-tagging</code> is the empty value.</p> </li> </ul> 
+     * value of <code>x-amz-tagging</code> is the empty value.</p> </li> </ul>
      */
     inline const Aws::String& GetTagging() const{ return m_tagging; }
     inline bool TaggingHasBeenSet() const { return m_taggingHasBeenSet; }
@@ -891,8 +891,8 @@ namespace Model
 
     ///@{
     /**
-     * <p>The Object Lock mode that you want to apply to the object copy.</p> 
-     * <p>This functionality is not supported for directory buckets.</p> 
+     * <p>The Object Lock mode that you want to apply to the object copy.</p>
+     * <p>This functionality is not supported for directory buckets.</p>
      */
     inline const ObjectLockMode& GetObjectLockMode() const{ return m_objectLockMode; }
     inline bool ObjectLockModeHasBeenSet() const { return m_objectLockModeHasBeenSet; }
@@ -906,7 +906,7 @@ namespace Model
     /**
      * <p>The date and time when you want the Object Lock of the object copy to
      * expire.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::Utils::DateTime& GetObjectLockRetainUntilDate() const{ return m_objectLockRetainUntilDate; }
     inline bool ObjectLockRetainUntilDateHasBeenSet() const { return m_objectLockRetainUntilDateHasBeenSet; }
@@ -919,7 +919,7 @@ namespace Model
     ///@{
     /**
      * <p>Specifies whether you want to apply a legal hold to the object copy.</p>
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline const ObjectLockLegalHoldStatus& GetObjectLockLegalHoldStatus() const{ return m_objectLockLegalHoldStatus; }
     inline bool ObjectLockLegalHoldStatusHasBeenSet() const { return m_objectLockLegalHoldStatusHasBeenSet; }
@@ -963,7 +963,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::Map<Aws::String, Aws::String>& GetCustomizedAccessLogTag() const{ return m_customizedAccessLogTag; }
     inline bool CustomizedAccessLogTagHasBeenSet() const { return m_customizedAccessLogTagHasBeenSet; }
     inline void SetCustomizedAccessLogTag(const Aws::Map<Aws::String, Aws::String>& value) { m_customizedAccessLogTagHasBeenSet = true; m_customizedAccessLogTag = value; }

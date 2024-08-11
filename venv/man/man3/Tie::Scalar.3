@@ -203,7 +203,7 @@ destruction of an instance.
 .SS "Tie::Scalar vs Tie::StdScalar"
 .IX Subsection "Tie::Scalar vs Tie::StdScalar"
 \&\f(CW\*(C`Tie::Scalar\*(C'\fR provides all the necessary methods, but one should realize
-they do not do anything useful. Calling \f(CW\*(C`Tie::Scalar::FETCH\*(C'\fR or 
+they do not do anything useful. Calling \f(CW\*(C`Tie::Scalar::FETCH\*(C'\fR or
 \&\f(CW\*(C`Tie::Scalar::STORE\*(C'\fR results in a (trappable) croak. And if you inherit
 from \f(CW\*(C`Tie::Scalar\*(C'\fR, you \fImust\fR provide either a \f(CW\*(C`new\*(C'\fR or a
 \&\f(CW\*(C`TIESCALAR\*(C'\fR method.

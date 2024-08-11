@@ -86,7 +86,7 @@ namespace Model
      * actions. <code>PutLogEvents</code> actions are now accepted and never return
      * <code>InvalidSequenceTokenException</code> or
      * <code>DataAlreadyAcceptedException</code> even if the sequence token is not
-     * valid.</p> 
+     * valid.</p>
      */
     inline const Aws::String& GetSequenceToken() const{ return m_sequenceToken; }
     inline bool SequenceTokenHasBeenSet() const { return m_sequenceTokenHasBeenSet; }

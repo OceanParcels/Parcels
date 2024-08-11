@@ -51,7 +51,7 @@ namespace Model
     /**
      * <p>The name of the bucket that contains the newly created object. Does not
      * return the access point ARN or access point alias if used.</p>  <p>Access
-     * points are not supported by directory buckets.</p> 
+     * points are not supported by directory buckets.</p>
      */
     inline const Aws::String& GetBucket() const{ return m_bucket; }
     inline void SetBucket(const Aws::String& value) { m_bucket = value; }
@@ -80,7 +80,7 @@ namespace Model
      * <p>If the object expiration is configured, this will contain the expiration date
      * (<code>expiry-date</code>) and rule ID (<code>rule-id</code>). The value of
      * <code>rule-id</code> is URL-encoded.</p>  <p>This functionality is not
-     * supported for directory buckets.</p> 
+     * supported for directory buckets.</p>
      */
     inline const Aws::String& GetExpiration() const{ return m_expiration; }
     inline void SetExpiration(const Aws::String& value) { m_expiration = value; }
@@ -197,7 +197,7 @@ namespace Model
      * <p>The server-side encryption algorithm used when storing this object in Amazon
      * S3 (for example, <code>AES256</code>, <code>aws:kms</code>).</p>  <p>For
      * directory buckets, only server-side encryption with Amazon S3 managed keys
-     * (SSE-S3) (<code>AES256</code>) is supported.</p> 
+     * (SSE-S3) (<code>AES256</code>) is supported.</p>
      */
     inline const ServerSideEncryption& GetServerSideEncryption() const{ return m_serverSideEncryption; }
     inline void SetServerSideEncryption(const ServerSideEncryption& value) { m_serverSideEncryption = value; }
@@ -210,7 +210,7 @@ namespace Model
     /**
      * <p>Version ID of the newly created object, in case the bucket has versioning
      * turned on.</p>  <p>This functionality is not supported for directory
-     * buckets.</p> 
+     * buckets.</p>
      */
     inline const Aws::String& GetVersionId() const{ return m_versionId; }
     inline void SetVersionId(const Aws::String& value) { m_versionId = value; }
@@ -225,7 +225,7 @@ namespace Model
     /**
      * <p>If present, indicates the ID of the Key Management Service (KMS) symmetric
      * encryption customer managed key that was used for the object.</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetSSEKMSKeyId() const{ return m_sSEKMSKeyId; }
     inline void SetSSEKMSKeyId(const Aws::String& value) { m_sSEKMSKeyId = value; }
@@ -240,7 +240,7 @@ namespace Model
     /**
      * <p>Indicates whether the multipart upload uses an S3 Bucket Key for server-side
      * encryption with Key Management Service (KMS) keys (SSE-KMS).</p>  <p>This
-     * functionality is not supported for directory buckets.</p> 
+     * functionality is not supported for directory buckets.</p>
      */
     inline bool GetBucketKeyEnabled() const{ return m_bucketKeyEnabled; }
     inline void SetBucketKeyEnabled(bool value) { m_bucketKeyEnabled = value; }
@@ -248,7 +248,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestCharged& GetRequestCharged() const{ return m_requestCharged; }
     inline void SetRequestCharged(const RequestCharged& value) { m_requestCharged = value; }
     inline void SetRequestCharged(RequestCharged&& value) { m_requestCharged = std::move(value); }
@@ -257,7 +257,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

@@ -70,7 +70,7 @@ DLLIMPORT int		Tdbc_Init(Tcl_Interp* interp);
 #include "tdbcDecls.h"
 
 #endif
-
+
 /*
  * Local Variables:
  * mode: c

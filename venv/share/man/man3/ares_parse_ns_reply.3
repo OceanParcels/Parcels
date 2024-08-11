@@ -23,12 +23,12 @@ and
 .I alen
 give the contents of the response.  The result is stored in allocated
 memory and a pointer to it stored into the variable pointed to by
-.IR host . 
-The nameservers are stored into the 
-.BR aliases 
-field of the 
-.IR host 
-structure. 
+.IR host .
+The nameservers are stored into the
+.BR aliases
+field of the
+.IR host
+structure.
 It is the caller's responsibility to free the resulting host structure
 using
 .BR ares_free_hostent (3)

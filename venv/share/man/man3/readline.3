@@ -42,7 +42,7 @@ readline \- get a line from a user with editing
 will read a line from the terminal
 and return it, using
 .B prompt
-as a prompt.  If 
+as a prompt.  If
 .B prompt
 is \fBNULL\fP or the empty string, no prompt is issued.
 The line returned is allocated with
@@ -410,7 +410,7 @@ The value is ignored if it is less than 0 or greater than the terminal
 screen width.
 A value of 0 will cause matches to be displayed one per line.
 The default value is \-1.
-.TP 
+.TP
 .B completion\-ignore\-case (Off)
 If set to \fBOn\fP, readline performs filename matching and completion
 in a case\-insensitive fashion.
@@ -445,11 +445,11 @@ by stripping the eighth bit and prefixing it with an
 escape character (in effect, using escape as the \fImeta prefix\fP).
 The default is \fIOn\fP, but readline will set it to \fIOff\fP if the
 locale contains eight-bit characters.
-This variable is dependent on the \fBLC_CTYPE\fP locale category, and 
+This variable is dependent on the \fBLC_CTYPE\fP locale category, and
 may change if the locale is changed.
 .TP
 .B disable\-completion (Off)
-If set to \fBOn\fP, readline will inhibit word completion.  Completion 
+If set to \fBOn\fP, readline will inhibit word completion.  Completion
 characters will be inserted into the line as if they had been
 mapped to \fBself-insert\fP.
 .TP
@@ -468,13 +468,13 @@ or
 .BR vi .
 .TP
 .B emacs\-mode\-string (@)
-If the \fIshow\-mode\-in\-prompt\fP variable is enabled, 
+If the \fIshow\-mode\-in\-prompt\fP variable is enabled,
 this string is displayed immediately before the last line of the primary
 prompt when emacs editing mode is active.  The value is expanded like a
 key binding, so the standard set of meta- and control prefixes and
 backslash escape sequences is available.
 Use the \e1 and \e2 escapes to begin and end sequences of
-non-printing characters, which can be used to embed a terminal control 
+non-printing characters, which can be used to embed a terminal control
 sequence into the mode string.
 .TP
 .B enable\-active\-region (On)
@@ -512,8 +512,8 @@ If set to \fBOn\fP, tilde expansion is performed when readline
 attempts word completion.
 .TP
 .B history\-preserve\-point (Off)
-If set to \fBOn\fP, the history code attempts to place point at the 
-same location on each history line retrieved with \fBprevious-history\fP 
+If set to \fBOn\fP, the history code attempts to place point at the
+same location on each history line retrieved with \fBprevious-history\fP
 or \fBnext-history\fP.
 .TP
 .B history\-size (unset)
@@ -538,9 +538,9 @@ it will not clear the eighth bit in the characters it reads),
 regardless of what the terminal claims it can support.  The name
 .B meta\-flag
 is a synonym for this variable.
-The default is \fIOff\fP, but readline will set it to \fIOn\fP if the 
+The default is \fIOff\fP, but readline will set it to \fIOn\fP if the
 locale contains eight-bit characters.
-This variable is dependent on the \fBLC_CTYPE\fP locale category, and 
+This variable is dependent on the \fBLC_CTYPE\fP locale category, and
 may change if the locale is changed.
 .TP
 .B isearch\-terminators (``C\-[ C\-J'')
@@ -564,7 +564,7 @@ also affects the default keymap.
 .B keyseq\-timeout (500)
 Specifies the duration \fIreadline\fP will wait for a character when reading an
 ambiguous key sequence (one that can form a complete key sequence using
-the input read so far, or can take additional input to complete a longer 
+the input read so far, or can take additional input to complete a longer
 key sequence).
 If no input is received within the timeout, \fIreadline\fP will use the shorter
 but complete key sequence.
@@ -588,7 +588,7 @@ have a slash appended (subject to the value of
 \fBmark\-directories\fP).
 .TP
 .B match\-hidden\-files (On)
-This variable, when set to \fBOn\fP, causes readline to match files whose 
+This variable, when set to \fBOn\fP, causes readline to match files whose
 names begin with a `.' (hidden files) when performing filename
 completion.
 If set to \fBOff\fP, the leading `.' must be
@@ -633,9 +633,9 @@ matches to be listed immediately instead of ringing the bell.
 This alters the default behavior of the completion functions in
 a fashion similar to \fBshow\-all\-if\-ambiguous\fP.
 If set to
-.BR On , 
+.BR On ,
 words which have more than one possible completion without any
-possible partial completion (the possible completions don't share 
+possible partial completion (the possible completions don't share
 a common prefix) cause the matches to be listed immediately instead
 of ringing the bell.
 .TP
@@ -653,7 +653,7 @@ after point in the word being completed, so portions of the word
 following the cursor are not duplicated.
 .TP
 .B vi\-cmd\-mode\-string ((cmd))
-If the \fIshow\-mode\-in\-prompt\fP variable is enabled, 
+If the \fIshow\-mode\-in\-prompt\fP variable is enabled,
 this string is displayed immediately before the last line of the primary
 prompt when vi editing mode is active and in command mode.
 The value is expanded like a
@@ -664,18 +664,18 @@ non-printing characters, which can be used to embed a terminal control
 sequence into the mode string.
 .TP
 .B vi\-ins\-mode\-string ((ins))
-If the \fIshow\-mode\-in\-prompt\fP variable is enabled, 
+If the \fIshow\-mode\-in\-prompt\fP variable is enabled,
 this string is displayed immediately before the last line of the primary
-prompt when vi editing mode is active and in insertion mode.  
+prompt when vi editing mode is active and in insertion mode.
 The value is expanded like a
-key binding, so the standard set of meta- and control prefixes and  
+key binding, so the standard set of meta- and control prefixes and
 backslash escape sequences is available.
 Use the \e1 and \e2 escapes to begin and end sequences of
-non-printing characters, which can be used to embed a terminal control 
+non-printing characters, which can be used to embed a terminal control
 sequence into the mode string.
 .TP
 .B visible\-stats (Off)
-If set to \fBOn\fP, a character denoting a file's type as reported  
+If set to \fBOn\fP, a character denoting a file's type as reported
 by \fIstat\fP(2) is appended to the filename when listing possible
 completions.
 .PD
@@ -774,7 +774,7 @@ would read \fI/etc/inputrc\fP:
 .RS
 .nf
 \fB$include\fP \^ \fI/etc/inputrc\fP
-.fi 
+.fi
 .RE
 .SH SEARCHING
 Readline provides commands for searching through the command history
@@ -1005,7 +1005,7 @@ commonly is, see above for the effects.
 Delete the character behind the cursor.  When given a numeric argument,
 save the deleted text on the kill ring.
 .TP
-.B forward\-backward\-delete\-char   
+.B forward\-backward\-delete\-char
 Delete the character under the cursor, unless the cursor is at the
 end of the line, in which case the character behind the cursor is
 deleted.
@@ -1179,7 +1179,7 @@ At the end of the list of completions, the bell is rung
 (subject to the setting of \fBbell\-style\fP)
 and the original text is restored.
 An argument of \fIn\fP moves \fIn\fP positions forward in the list
-of matches; a negative argument may be used to move backward 
+of matches; a negative argument may be used to move backward
 through the list.
 This command is intended to be bound to \fBTAB\fP, but is unbound
 by default.
@@ -1279,8 +1279,8 @@ Without a numeric argument, the value of the readline
 .B comment\-begin
 variable is inserted at the beginning of the current line.
 If a numeric argument is supplied, this command acts as a toggle: if
-the characters at the beginning of the line do not match the value   
-of \fBcomment\-begin\fP, the value is inserted, otherwise             
+the characters at the beginning of the line do not match the value
+of \fBcomment\-begin\fP, the value is inserted, otherwise
 the characters in \fBcomment-begin\fP are deleted from the beginning of
 the line.
 In either case, the line is accepted as if a newline had been typed.

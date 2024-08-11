@@ -20,16 +20,16 @@
 
 #ifdef DISABLE_AWS_LOGGING
 
-    #define AWS_LOG(level, tag, ...) 
-    #define AWS_LOG_FATAL(tag, ...) 
-    #define AWS_LOG_ERROR(tag, ...) 
-    #define AWS_LOG_WARN(tag, ...) 
-    #define AWS_LOG_INFO(tag, ...) 
-    #define AWS_LOG_DEBUG(tag, ...) 
-    #define AWS_LOG_TRACE(tag, ...) 
+    #define AWS_LOG(level, tag, ...)
+    #define AWS_LOG_FATAL(tag, ...)
+    #define AWS_LOG_ERROR(tag, ...)
+    #define AWS_LOG_WARN(tag, ...)
+    #define AWS_LOG_INFO(tag, ...)
+    #define AWS_LOG_DEBUG(tag, ...)
+    #define AWS_LOG_TRACE(tag, ...)
     #define AWS_LOG_FLUSH()
 
-    #define AWS_LOGSTREAM(level, tag, streamExpression) 
+    #define AWS_LOGSTREAM(level, tag, streamExpression)
     #define AWS_LOGSTREAM_FATAL(tag, streamExpression)
     #define AWS_LOGSTREAM_ERROR(tag, streamExpression)
     #define AWS_LOGSTREAM_WARN(tag, streamExpression)

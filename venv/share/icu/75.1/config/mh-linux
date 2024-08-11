@@ -19,7 +19,7 @@ THREADSCPPFLAGS = -D_REENTRANT
 LIBCPPFLAGS =
 
 ## Compiler switch to embed a runtime search path
-LD_RPATH= -Wl,-zorigin,-rpath,'$$'ORIGIN 
+LD_RPATH= -Wl,-zorigin,-rpath,'$$'ORIGIN
 LD_RPATH_PRE = -Wl,-rpath,
 
 ## These are the library specific LDFLAGS
@@ -80,8 +80,7 @@ BIR_LDFLAGS= -Wl,-Bsymbolic
 BIR_DEPS=
 
 ## Remove shared library 's'
-STATIC_PREFIX_WHEN_USED = 
-STATIC_PREFIX = 
+STATIC_PREFIX_WHEN_USED =
+STATIC_PREFIX =
 
 ## End Linux-specific setup
-

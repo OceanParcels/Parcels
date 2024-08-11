@@ -212,4 +212,3 @@ U_NAMESPACE_END
 #endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif // __FORMATTEDNUMBER_H__
-

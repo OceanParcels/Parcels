@@ -57,7 +57,7 @@ namespace Model
     /**
      * <p>The prefix to match.</p>  <p> <code>logGroupNamePrefix</code> and
      * <code>logGroupNamePattern</code> are mutually exclusive. Only one of these
-     * parameters can be passed. </p> 
+     * parameters can be passed. </p>
      */
     inline const Aws::String& GetLogGroupNamePrefix() const{ return m_logGroupNamePrefix; }
     inline bool LogGroupNamePrefixHasBeenSet() const { return m_logGroupNamePrefixHasBeenSet; }
@@ -80,7 +80,7 @@ namespace Model
      * then only <code>arn</code>, <code>creationTime</code>, and
      * <code>logGroupName</code> are included in the response. </p>  <p>
      * <code>logGroupNamePattern</code> and <code>logGroupNamePrefix</code> are
-     * mutually exclusive. Only one of these parameters can be passed. </p> 
+     * mutually exclusive. Only one of these parameters can be passed. </p>
      */
     inline const Aws::String& GetLogGroupNamePattern() const{ return m_logGroupNamePattern; }
     inline bool LogGroupNamePatternHasBeenSet() const { return m_logGroupNamePatternHasBeenSet; }

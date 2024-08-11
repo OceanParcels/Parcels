@@ -332,7 +332,7 @@ there. */
 #define NC_SZIP_NN 32 /**< SZIP NN option mask. */
 #define NC_SZIP_EC 4  /**< SZIP EC option mask. */
 
-#define NC_NOQUANTIZE 0 /**< No quantization in use. */    
+#define NC_NOQUANTIZE 0 /**< No quantization in use. */
 #define NC_QUANTIZE_BITGROOM 1 /**< Use BitGroom quantization. */
 #define NC_QUANTIZE_GRANULARBR 2 /**< Use Granular BitRound quantization. */
 #define NC_QUANTIZE_BITROUND 3 /**< Use BitRound quantization. */

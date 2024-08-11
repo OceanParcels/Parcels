@@ -48,4 +48,3 @@ protected:
 
 } // namespace geos.geomgraph
 } // namespace geos
-

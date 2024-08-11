@@ -1,4 +1,4 @@
-BEGIN { 
+BEGIN {
 char_shift=64
 ## "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
 c2n["A"]=1
@@ -159,4 +159,3 @@ END {
 	print "#define " table_name "_err_base ERROR_TABLE_BASE_" table_name > outfile
 	print "#endif" > outfile
 }
-

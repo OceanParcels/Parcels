@@ -1,8 +1,8 @@
 #  XLocale Database Sample for ko.
-# 
-# 
+#
+#
 # 	XLC_FONTSET category
-# 
+#
 XLC_FONTSET
 # 	fs0 class (7 bit ASCII)
 fs0	{
@@ -14,7 +14,7 @@ fs0	{
 		vertical_rotate	all
 	}
 }
-# 	fs1 class 
+# 	fs1 class
 fs1	{
 	charset	{
 		name	KSC5601.1987-0:GL
@@ -25,9 +25,9 @@ fs1	{
 	}
 }
 END XLC_FONTSET
-# 
+#
 # 	XLC_XLOCALE category
-# 
+#
 XLC_XLOCALE
 encoding_name		ko.euc
 mb_cur_max		2

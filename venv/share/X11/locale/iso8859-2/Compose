@@ -458,7 +458,7 @@
 <dead_circumflex> <a>                   : "\342"        acircumflex
 <dead_circumflex> <i>                   : "\356"        icircumflex
 <dead_circumflex> <o>                   : "\364"        ocircumflex
-<dead_circumflex> <u>                   : "\373"        ucircumflex      
+<dead_circumflex> <u>                   : "\373"        ucircumflex
 <dead_circumflex> <dead_circumflex>	: "\136"	asciicircum
 <dead_circumflex> <asciicircum>		: "\136"	asciicircum
 <dead_circumflex> <space>		: "\136"	asciicircum
@@ -478,7 +478,7 @@
 <dead_ogonek> <a>                       : "\261"        aogonek
 <dead_ogonek> <i>                       : "\347"        iogonek
 <dead_ogonek> <e>                       : "\352"        eogonek
-<dead_ogonek> <u>                       : "\371"        uogonek          
+<dead_ogonek> <u>                       : "\371"        uogonek
 <dead_ogonek> <dead_ogonek>		: "\662"	ogonek
 <dead_ogonek> <ogonek>			: "\662"	ogonek
 <dead_ogonek> <space>			: "\662"	ogonek

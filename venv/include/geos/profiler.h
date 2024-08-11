@@ -182,4 +182,3 @@ GEOS_DLL std::ostream& operator<< (std::ostream& os, const Profiler&);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-

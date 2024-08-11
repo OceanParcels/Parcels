@@ -77,7 +77,7 @@ HDFLIBAPI int32 SDselect
     (int32 fid, int32 idx);
 
 HDFLIBAPI intn SDgetinfo
-    (int32 sdsid, char *name, int32 *rank, int32 *dimsizes, 
+    (int32 sdsid, char *name, int32 *rank, int32 *dimsizes,
            int32 *nt, int32 *nattr);
 
 #ifndef __CSTAR__
@@ -149,7 +149,7 @@ HDFLIBAPI intn SDgetdatastrs
     (int32 sdsid, char *l, char *u, char *f, char *c, intn len);
 
 HDFLIBAPI intn SDgetcal
-    (int32 sdsid, float64 *cal, float64 *cale, float64 *ioff, 
+    (int32 sdsid, float64 *cal, float64 *cale, float64 *ioff,
                float64 *ioffe, int32 *nt);
 
 HDFLIBAPI intn SDsetdimstrs
@@ -247,7 +247,7 @@ HDFLIBAPI intn SDgetnamelen
 
 /*====================== Chunking Routines ================================*/
 
-/* For defintion of HDF_CHUNK_DEF union see hproto.h since 
+/* For defintion of HDF_CHUNK_DEF union see hproto.h since
    this defintion is also used by GRs. */
 
 /******************************************************************************
@@ -267,23 +267,23 @@ HDFLIBAPI intn SDgetnamelen
       {
          int32   chunk_lengths[H4_MAX_VAR_DIMS];  Chunk lengths along each dimension
 
-         struct 
-          {   
+         struct
+          {
             int32     chunk_lengths[H4_MAX_VAR_DIMS]; Chunk lengths along each dimension
-            int32     comp_type;                   Compression type 
-            comp_info cinfo;                       Compression info struct 
+            int32     comp_type;                   Compression type
+            comp_info cinfo;                       Compression info struct
           }comp;
 
       } HDF_CHUNK_DEF
 
-      The simplist is the 'chunk_lengths' array specifiying chunk 
-      lengths for each dimension where the 'flags' argument set to 
+      The simplist is the 'chunk_lengths' array specifiying chunk
+      lengths for each dimension where the 'flags' argument set to
       'HDF_CHUNK';
 
       COMPRESSION is set by using the 'HDF_CHUNK_DEF' structure to set the
       appropriate compression information along with the required chunk lengths
-      for each dimension. The compression information is the same as 
-      that set in 'SDsetcompress()'. The bit-or'd'flags' argument' is set to 
+      for each dimension. The compression information is the same as
+      that set in 'SDsetcompress()'. The bit-or'd'flags' argument' is set to
       'HDF_CHUNK | HDF_COMP'.
 
       See the example in pseudo-C below for further usage.
@@ -294,49 +294,49 @@ HDFLIBAPI intn SDgetnamelen
 
       The performance of the SDxxx interface with chunking is greatly
       affected by the users access pattern over the dataset and by
-      the maximum number of chunks set in the chunk cache. The cache contains 
+      the maximum number of chunks set in the chunk cache. The cache contains
       the Least Recently Used(LRU cache replacment policy) chunks. See the
-      routine SDsetchunkcache() for further info on the chunk cache and how 
-      to set the maximum number of chunks in the chunk cache. A default chunk 
+      routine SDsetchunkcache() for further info on the chunk cache and how
+      to set the maximum number of chunks in the chunk cache. A default chunk
       cache is always created.
 
       The following example shows the organization of chunks for a 2D array.
       e.g. 4x4 array with 2x2 chunks. The array shows the layout of
            chunks in the chunk array.
 
-            4 ---------------------                                           
-              |         |         |                                                 
-        Y     |  (0,1)  |  (1,1)  |                                       
-        ^     |         |         |                                      
-        |   2 ---------------------                                       
-        |     |         |         |                                               
-        |     |  (0,0)  |  (1,0)  |                                      
-        |     |         |         |                                           
-        |     ---------------------                                         
-        |     0         2         4                                       
-        ---------------> X                                                       
-                                                                                
-        --Without compression--:
-        {                                                                    
-        HDF_CHUNK_DEF chunk_def;
-                                                                            
-        .......                                                                    
-        -- Set chunk lengths --                                                    
-        chunk_def.chunk_lengths[0]= 2;                                                     
-        chunk_def.chunk_lengths[1]= 2; 
+            4 ---------------------
+              |         |         |
+        Y     |  (0,1)  |  (1,1)  |
+        ^     |         |         |
+        |   2 ---------------------
+        |     |         |         |
+        |     |  (0,0)  |  (1,0)  |
+        |     |         |         |
+        |     ---------------------
+        |     0         2         4
+        ---------------> X
 
-        -- Set Chunking -- 
-        SDsetchunk(sdsid, chunk_def, HDF_CHUNK);                      
-         ......                                                                  
-        }                                                                           
+        --Without compression--:
+        {
+        HDF_CHUNK_DEF chunk_def;
+
+        .......
+        -- Set chunk lengths --
+        chunk_def.chunk_lengths[0]= 2;
+        chunk_def.chunk_lengths[1]= 2;
+
+        -- Set Chunking --
+        SDsetchunk(sdsid, chunk_def, HDF_CHUNK);
+         ......
+        }
 
         --With compression--:
-        {                                                                    
+        {
         HDF_CHUNK_DEF chunk_def;
-                                                                            
-        .......                
-        -- Set chunk lengths first --                                                    
-        chunk_def.chunk_lengths[0]= 2;                                                     
+
+        .......
+        -- Set chunk lengths first --
+        chunk_def.chunk_lengths[0]= 2;
         chunk_def.chunk_lengths[1]= 2;
 
         -- Set compression --
@@ -344,9 +344,9 @@ HDFLIBAPI intn SDgetnamelen
         chunk_def.comp.comp_type = COMP_CODE_DEFLATE;
 
         -- Set Chunking with Compression --
-        SDsetchunk(sdsid, chunk_def, HDF_CHUNK | HDF_COMP);                      
-         ......                                                                  
-        }                                                                           
+        SDsetchunk(sdsid, chunk_def, HDF_CHUNK | HDF_COMP);
+         ......
+        }
 
  RETURNS
         SUCCEED/FAIL
@@ -367,13 +367,13 @@ HDFLIBAPI intn SDsetchunk
      the 'HDF_CHUNK_DEF' union. It does not tell you the type of compression
      used or the compression parameters. You can pass in a NULL for 'chunk_def'
      if don't want the chunk lengths for each dimension.
-     Additionaly if successfull it will return a bit-or'd value in 'flags' 
+     Additionaly if successfull it will return a bit-or'd value in 'flags'
      indicating if the SDS is:
 
      Chunked                  -> flags = HDF_CHUNK
-     Chunked and compressed   -> flags = HDF_CHUNK | HDF_COMP 
+     Chunked and compressed   -> flags = HDF_CHUNK | HDF_COMP
      Non-chunked              -> flags = HDF_NONE
-  
+
      e.g. 4x4 array - Pseudo-C
      {
      int32   rcdims[3];
@@ -398,7 +398,7 @@ HDFLIBAPI intn SDgetchunkinfo
      SDwritechunk  -- write the specified chunk to the SDS
 
  DESCRIPTION
-     This routine writes a whole chunk of data to the chunked SDS 
+     This routine writes a whole chunk of data to the chunked SDS
      specified by chunk 'origin' for the given SDS and can be used
      instead of SDwritedata() when this information is known. This
      routine has less overhead and is much faster than using SDwritedata().
@@ -445,24 +445,24 @@ HDFLIBAPI intn SDreadchunk
 
 /******************************************************************************
 NAME
-     SDsetchunkcache -- maximum number of chunks to cache 
+     SDsetchunkcache -- maximum number of chunks to cache
 
 DESCRIPTION
      Set the maximum number of chunks to cache.
 
-     The cache contains the Least Recently Used(LRU cache replacment policy) 
-     chunks. This routine allows the setting of maximum number of chunks that 
+     The cache contains the Least Recently Used(LRU cache replacment policy)
+     chunks. This routine allows the setting of maximum number of chunks that
      can be cached, 'maxcache'.
 
      The performance of the SDxxx interface with chunking is greatly
      affected by the users access pattern over the dataset and by
-     the maximum number of chunks set in the chunk cache. The number chunks 
-     that can be set in the cache is process memory limited. It is a good 
-     idea to always set the maximum number of chunks in the cache as the 
-     default heuristic does not take into account the memory available for 
+     the maximum number of chunks set in the chunk cache. The number chunks
+     that can be set in the cache is process memory limited. It is a good
+     idea to always set the maximum number of chunks in the cache as the
+     default heuristic does not take into account the memory available for
      the application.
 
-     By default when the SDS is promoted to a chunked element the 
+     By default when the SDS is promoted to a chunked element the
      maximum number of chunks in the cache 'maxcache' is set to the number of
      chunks along the last dimension.
 
@@ -477,14 +477,14 @@ DESCRIPTION
      new 'maxcache' value only if the new 'maxcache' value is greater than the
      current number of chunks in the cache.
 
-     Use flags argument of 'HDF_CACHEALL' if the whole object is to be cached 
+     Use flags argument of 'HDF_CACHEALL' if the whole object is to be cached
      in memory, otherwise pass in zero(0). Currently you can only
      pass in zero.
 
     See SDsetchunk() for a description of the organization of chunks in an SDS.
 
 RETURNS
-     Returns the 'maxcache' value for the chunk cache if successful 
+     Returns the 'maxcache' value for the chunk cache if successful
      and FAIL otherwise
 ******************************************************************************/
 HDFLIBAPI intn SDsetchunkcache

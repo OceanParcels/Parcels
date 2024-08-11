@@ -23,10 +23,10 @@ hwlocality_cudart \- Interoperability with the CUDA Runtime API
 .br
 .in -1c
 .SH "Detailed Description"
-.PP 
-This interface offers ways to retrieve topology information about CUDA devices when using the CUDA Runtime API\&. 
+.PP
+This interface offers ways to retrieve topology information about CUDA devices when using the CUDA Runtime API\&.
 .SH "Function Documentation"
-.PP 
+.PP
 .SS "static int hwloc_cudart_get_device_cpuset (\fBhwloc_topology_t\fP topology, int idx, \fBhwloc_cpuset_t\fP set)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
@@ -40,20 +40,20 @@ This function is currently only implemented in a meaningful way for Linux; other
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 on error, for instance if device information could not be found\&. 
+-1 on error, for instance if device information could not be found\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_cudart_get_device_osdev_by_index (\fBhwloc_topology_t\fP topology, unsigned idx)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the hwloc OS device object corresponding to the CUDA device whose index is \fCidx\fP\&. 
+Get the hwloc OS device object corresponding to the CUDA device whose index is \fCidx\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The hwloc OS device object describing the CUDA device whose index is \fCidx\fP\&. 
+The hwloc OS device object describing the CUDA device whose index is \fCidx\fP\&.
 .PP
 \fCNULL\fP if none could be found\&.
 .RE
@@ -64,7 +64,7 @@ The topology \fCtopology\fP does not necessarily have to match the current machi
 .RS 4
 The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&.
 .PP
-This function is identical to \fBhwloc_cuda_get_device_osdev_by_index()\fP\&. 
+This function is identical to \fBhwloc_cuda_get_device_osdev_by_index()\fP\&.
 .RE
 .PP
 
@@ -75,25 +75,25 @@ Return the domain, bus and device IDs of the CUDA device whose index is \fCidx\f
 .PP
 \fBReturns\fP
 .RS 4
-0 on success\&. 
+0 on success\&.
 .PP
--1 on error, for instance if device information could not be found\&. 
+-1 on error, for instance if device information could not be found\&.
 .RE
 .PP
 
 .SS "static \fBhwloc_obj_t\fP hwloc_cudart_get_device_pcidev (\fBhwloc_topology_t\fP topology, int idx)\fC [inline]\fP, \fC [static]\fP"
 
 .PP
-Get the hwloc PCI device object corresponding to the CUDA device whose index is \fCidx\fP\&. 
+Get the hwloc PCI device object corresponding to the CUDA device whose index is \fCidx\fP\&.
 .PP
 \fBReturns\fP
 .RS 4
-The hwloc PCI device object describing the CUDA device whose index is \fCidx\fP\&. 
+The hwloc PCI device object describing the CUDA device whose index is \fCidx\fP\&.
 .PP
 \fCNULL\fP if none could be found\&.
 .RE
 .PP
-Topology \fCtopology\fP and device \fCidx\fP must match the local machine\&. I/O devices detection must be enabled in topology \fCtopology\fP\&. The CUDA component is not needed in the topology\&. 
+Topology \fCtopology\fP and device \fCidx\fP must match the local machine\&. I/O devices detection must be enabled in topology \fCtopology\fP\&. The CUDA component is not needed in the topology\&.
 .SH "Author"
-.PP 
+.PP
 Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

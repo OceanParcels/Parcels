@@ -27,7 +27,7 @@ namespace Model
 
   /**
    * <p>Identifies an Amazon Web Services resource and indicates whether it complies
-   * with the Config rule that it was evaluated against.</p><p><h3>See Also:</h3>  
+   * with the Config rule that it was evaluated against.</p><p><h3>See Also:</h3>
    * <a
    * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/Evaluation">AWS
    * API Reference</a></p>

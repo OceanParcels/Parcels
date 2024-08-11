@@ -233,4 +233,3 @@ public:
 } // namespace geos::geom::prep
 } // namespace geos::geom
 } // namespace geos
-

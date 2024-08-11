@@ -40,7 +40,7 @@ namespace Aws
             virtual Aws::String GetAccountId() const = 0;
             virtual Aws::String GetIdentityPoolId() const = 0;
             virtual void PersistIdentityId(const Aws::String&) = 0;
-            virtual void PersistLogins(const Aws::Map<Aws::String, LoginAccessTokens>&) = 0;            
+            virtual void PersistLogins(const Aws::Map<Aws::String, LoginAccessTokens>&) = 0;
             inline void ClearLogins() { PersistLogins(Aws::Map<Aws::String, LoginAccessTokens>()); }
             inline void ClearIdentity() { PersistIdentityId(""); }
             inline void Logout() { ClearIdentity(); ClearLogins(); }

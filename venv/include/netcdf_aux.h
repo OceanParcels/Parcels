@@ -64,7 +64,7 @@ EXTERNL int ncaux_h5filterspec_parselist(const char* txt0, int* formatp, size_t*
 EXTERNL int ncaux_h5filterspec_parse_parameter(const char* txt, size_t* nuiparamsp, unsigned int* uiparams);
 EXTERNL void ncaux_h5filterspec_free(struct NC_H5_Filterspec* f);
 EXTERNL void ncaux_h5filterspec_fix8(unsigned char* mem, int decode);
-	    
+
 /**************************************************/
 /* Wrappers to export selected functions from libnetcdf */
 
@@ -94,4 +94,3 @@ EXTERNL int ncaux_add_field(void* tag,  const char *name, nc_type field_type,
 #endif
 
 #endif /*NCAUX_H*/
-

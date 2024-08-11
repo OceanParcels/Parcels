@@ -82,11 +82,11 @@ chacha_poly1305_update (struct chacha_poly1305_ctx *ctx,
 void
 chacha_poly1305_encrypt (struct chacha_poly1305_ctx *ctx,
 			 size_t length, uint8_t *dst, const uint8_t *src);
-			 
+
 void
 chacha_poly1305_decrypt (struct chacha_poly1305_ctx *ctx,
 			 size_t length, uint8_t *dst, const uint8_t *src);
-			 
+
 void
 chacha_poly1305_digest (struct chacha_poly1305_ctx *ctx,
 			size_t length, uint8_t *digest);

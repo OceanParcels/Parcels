@@ -102,4 +102,3 @@ funclist_t  cdeflate_funcs =
 #endif
 
 #endif /* __CDEFLATE_H */
-

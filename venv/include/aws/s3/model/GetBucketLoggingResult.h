@@ -34,7 +34,7 @@ namespace Model
 
 
     ///@{
-    
+
     inline const LoggingEnabled& GetLoggingEnabled() const{ return m_loggingEnabled; }
     inline void SetLoggingEnabled(const LoggingEnabled& value) { m_loggingEnabled = value; }
     inline void SetLoggingEnabled(LoggingEnabled&& value) { m_loggingEnabled = std::move(value); }
@@ -43,7 +43,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

@@ -148,4 +148,3 @@ private:
 } // geos::algorithm::distance
 } // geos::algorithm
 } // geos
-

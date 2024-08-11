@@ -67,7 +67,7 @@ typedef struct {
 } SmProp;
 
 
-
+
 /*
  * SmcCloseConnection status return
  */
@@ -79,7 +79,7 @@ typedef enum {
 } SmcCloseStatus;
 
 
-
+
 /*
  * Client callbacks
  */
@@ -160,7 +160,7 @@ typedef struct {
 #define SmcShutdownCancelledProcMask	(1L << 3)
 
 
-
+
 /*
  * Session manager callbacks
  */
@@ -312,7 +312,7 @@ typedef Status (*SmsNewClientProc) (
 );
 
 
-
+
 /*
  * Error handlers
  */
@@ -338,7 +338,7 @@ typedef void (*SmsErrorHandler) (
 );
 
 
-
+
 /*
  * Function Prototypes
  */

@@ -21,4 +21,3 @@ linkgit:gitrepository-layout[5]::
 
 linkgit:gitrevisions[7]::
 	Specifying revisions and ranges for Git.
-

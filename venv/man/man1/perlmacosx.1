@@ -252,13 +252,13 @@ Apple includes with the 10.4u \s-1SDK\s0 are all universal, but user-installed l
 may need to be re-installed as universal binaries.
 .SS "64\-bit \s-1PPC\s0 support"
 .IX Subsection "64-bit PPC support"
-Follow the instructions in \fI\s-1INSTALL\s0\fR to build perl with support for 64\-bit 
+Follow the instructions in \fI\s-1INSTALL\s0\fR to build perl with support for 64\-bit
 integers (\f(CW\*(C`use64bitint\*(C'\fR) or both 64\-bit integers and 64\-bit addressing
 (\f(CW\*(C`use64bitall\*(C'\fR). In the latter case, the resulting binary will run only
 on G5\-based hosts.
 .PP
 Support for 64\-bit addressing is experimental: some aspects of Perl may be
-omitted or buggy. Note the messages output by \fIConfigure\fR for further 
+omitted or buggy. Note the messages output by \fIConfigure\fR for further
 information. Please use <https://github.com/Perl/perl5/issues> to submit a
 problem report in the event that you encounter difficulties.
 .PP
@@ -269,7 +269,7 @@ result in run-time dynamic linking errors, and subsequent test failures.
 You can use \f(CW\*(C`file\*(C'\fR to discover the architectures supported by a library:
 .PP
 .Vb 4
-\&    $ file libgdbm.3.0.0.dylib 
+\&    $ file libgdbm.3.0.0.dylib
 \&    libgdbm.3.0.0.dylib: Mach\-O fat file with 2 architectures
 \&    libgdbm.3.0.0.dylib (for architecture ppc):      Mach\-O dynamically linked shared library ppc
 \&    libgdbm.3.0.0.dylib (for architecture ppc64):    Mach\-O 64\-bit dynamically linked shared library ppc64

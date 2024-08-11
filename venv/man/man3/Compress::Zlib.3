@@ -433,23 +433,23 @@ Here is an example script which uses the interface. It implements a
 .Vb 2
 \&    use strict ;
 \&    use warnings ;
-\&    
+\&
 \&    use Compress::Zlib ;
-\&    
+\&
 \&    # use stdin if no files supplied
 \&    @ARGV = \*(Aq\-\*(Aq unless @ARGV ;
-\&    
+\&
 \&    foreach my $file (@ARGV) {
 \&        my $buffer ;
-\&    
+\&
 \&        my $gz = gzopen($file, "rb")
 \&             or die "Cannot open $file: $gzerrno\en" ;
-\&    
+\&
 \&        print $buffer while $gz\->gzread($buffer) > 0 ;
-\&    
+\&
 \&        die "Error reading from $file: $gzerrno" . ($gzerrno+0) . "\en"
 \&            if $gzerrno != Z_STREAM_END ;
-\&        
+\&
 \&        $gz\->gzclose() ;
 \&    }
 .Ve
@@ -460,28 +460,28 @@ very simple \fIgrep\fR like script.
 .Vb 2
 \&    use strict ;
 \&    use warnings ;
-\&    
+\&
 \&    use Compress::Zlib ;
-\&    
+\&
 \&    die "Usage: gzgrep pattern [file...]\en"
 \&        unless @ARGV >= 1;
-\&    
+\&
 \&    my $pattern = shift ;
-\&    
+\&
 \&    # use stdin if no files supplied
 \&    @ARGV = \*(Aq\-\*(Aq unless @ARGV ;
-\&    
+\&
 \&    foreach my $file (@ARGV) {
 \&        my $gz = gzopen($file, "rb")
 \&             or die "Cannot open $file: $gzerrno\en" ;
-\&    
+\&
 \&        while ($gz\->gzreadline($_) > 0) {
 \&            print if /$pattern/ ;
 \&        }
-\&    
+\&
 \&        die "Error reading from $file: $gzerrno\en"
 \&            if $gzerrno != Z_STREAM_END ;
-\&        
+\&
 \&        $gz\->gzclose() ;
 \&    }
 .Ve
@@ -493,14 +493,14 @@ standard output.
 .Vb 2
 \&    use strict ;
 \&    use warnings ;
-\&    
+\&
 \&    use Compress::Zlib ;
-\&    
+\&
 \&    binmode STDOUT;  # gzopen only sets it on the fd
-\&    
+\&
 \&    my $gz = gzopen(\e*STDOUT, "wb")
 \&          or die "Cannot open stdout: $gzerrno\en" ;
-\&    
+\&
 \&    while (<>) {
 \&        $gz\->gzwrite($_)
 \&          or die "error writing: $gzerrno\en" ;
@@ -745,18 +745,18 @@ input, deflates it and writes it to standard output.
 \&    while (<>)
 \&    {
 \&        ($output, $status) = $x\->deflate($_) ;
-\&    
+\&
 \&        $status == Z_OK
 \&            or die "deflation failed\en" ;
-\&    
+\&
 \&        print $output ;
 \&    }
-\&    
+\&
 \&    ($output, $status) = $x\->flush() ;
-\&    
+\&
 \&    $status == Z_OK
 \&        or die "deflation failed\en" ;
-\&    
+\&
 \&    print $output ;
 .Ve
 .SH "Inflate Interface"
@@ -867,27 +867,27 @@ Here is an example of using \f(CW\*(C`inflate\*(C'\fR.
 .Vb 2
 \&    use strict ;
 \&    use warnings ;
-\&    
+\&
 \&    use Compress::Zlib ;
-\&    
+\&
 \&    my $x = inflateInit()
 \&       or die "Cannot create a inflation stream\en" ;
-\&    
+\&
 \&    my $input = \*(Aq\*(Aq ;
 \&    binmode STDIN;
 \&    binmode STDOUT;
-\&    
+\&
 \&    my ($output, $status) ;
 \&    while (read(STDIN, $input, 4096))
 \&    {
 \&        ($output, $status) = $x\->inflate(\e$input) ;
-\&    
+\&
 \&        print $output
 \&            if $status == Z_OK or $status == Z_STREAM_END ;
-\&    
+\&
 \&        last if $status != Z_OK ;
 \&    }
-\&    
+\&
 \&    die "inflation failed\en"
 \&        unless $status == Z_STREAM_END ;
 .Ve
@@ -929,7 +929,7 @@ All the \fIzlib\fR constants are automatically imported when you make use
 of \fICompress::Zlib\fR.
 .SH "SUPPORT"
 .IX Header "SUPPORT"
-General feedback/questions/bug reports should be sent to 
+General feedback/questions/bug reports should be sent to
 <https://github.com/pmqs/IO\-Compress/issues> (preferred) or
 <https://rt.cpan.org/Public/Dist/Display.html?Name=IO\-Compress>.
 .SH "SEE ALSO"

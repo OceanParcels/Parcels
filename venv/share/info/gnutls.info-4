@@ -9181,4 +9181,3 @@ gnutls_x509_trust_list_verify_named_crt
      otherwise a negative error value.
 
      *Since:* 3.0.0
-

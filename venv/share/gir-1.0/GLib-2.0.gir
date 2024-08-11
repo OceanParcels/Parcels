@@ -23428,11 +23428,11 @@ loop with a termination condition, computed from multiple threads:
   #define NUM_TASKS 10
   static gint tasks_remaining = NUM_TASKS;  // (atomic)
   ...
- 
+
   while (g_atomic_int_get (&amp;tasks_remaining) != 0)
     g_main_context_iteration (NULL, TRUE);
 ]|
- 
+
 Then in a thread:
 |[&lt;!-- language="C" --&gt;
   perform_work();
@@ -33668,7 +33668,7 @@ print_uppercase_words (const gchar *string)
   // Print all uppercase-only words.
   GRegex *regex;
   GMatchInfo *match_info;
- 
+
   regex = g_regex_new ("[A-Z]+", G_REGEX_DEFAULT, G_REGEX_MATCH_DEFAULT, NULL);
   g_regex_match (regex, string, 0, &amp;match_info);
   while (g_match_info_matches (match_info))
@@ -33919,7 +33919,7 @@ print_uppercase_words (const gchar *string)
   GRegex *regex;
   GMatchInfo *match_info;
   GError *error = NULL;
-  
+
   regex = g_regex_new ("[A-Z]+", G_REGEX_DEFAULT, G_REGEX_MATCH_DEFAULT, NULL);
   g_regex_match_full (regex, string, -1, 0, 0, &amp;match_info, &amp;error);
   while (g_match_info_matches (match_info))
@@ -40004,15 +40004,15 @@ static gboolean
 idle_callback (gpointer data)
 {
   SomeWidget *self = data;
-   
+
   g_mutex_lock (&amp;self-&gt;idle_id_mutex);
   // do stuff with self
   self-&gt;idle_id = 0;
   g_mutex_unlock (&amp;self-&gt;idle_id_mutex);
-   
+
   return G_SOURCE_REMOVE;
 }
- 
+
 static void
 some_widget_do_stuff_later (SomeWidget *self)
 {
@@ -40020,7 +40020,7 @@ some_widget_do_stuff_later (SomeWidget *self)
   self-&gt;idle_id = g_idle_add (idle_callback, self);
   g_mutex_unlock (&amp;self-&gt;idle_id_mutex);
 }
- 
+
 static void
 some_widget_init (SomeWidget *self)
 {
@@ -40033,10 +40033,10 @@ static void
 some_widget_finalize (GObject *object)
 {
   SomeWidget *self = SOME_WIDGET (object);
-   
+
   if (self-&gt;idle_id)
     g_source_remove (self-&gt;idle_id);
-   
+
   g_mutex_clear (&amp;self-&gt;idle_id_mutex);
 
   G_OBJECT_CLASS (parent_class)-&gt;finalize (object);
@@ -40054,14 +40054,14 @@ static gboolean
 idle_callback (gpointer data)
 {
   SomeWidget *self = data;
-  
+
   g_mutex_lock (&amp;self-&gt;idle_id_mutex);
   if (!g_source_is_destroyed (g_main_current_source ()))
     {
       // do stuff with self
     }
   g_mutex_unlock (&amp;self-&gt;idle_id_mutex);
-  
+
   return FALSE;
 }
 ]|
@@ -68330,7 +68330,7 @@ same way that execvp() would locate it. Returns an allocated string
 with the absolute path name, or %NULL if the program is not found in
 the path. If @program is already an absolute path, returns a copy of
 @program if @program exists and is executable, and %NULL otherwise.
- 
+
 On Windows, if @program does not have a file type suffix, tries
 with the suffixes .exe, .cmd, .bat and .com, and the suffixes in
 the `PATHEXT` environment variable.
@@ -73347,7 +73347,7 @@ void
 free_allocated_memory (void)
 {
   GList *l;
-  
+
   int depth = g_main_depth ();
   for (l = free_list; l; );
     {
@@ -73359,7 +73359,7 @@ free_allocated_memory (void)
           g_free (block);
           free_list = g_list_delete_link (free_list, l);
         }
-              
+
       l = next;
     }
   }

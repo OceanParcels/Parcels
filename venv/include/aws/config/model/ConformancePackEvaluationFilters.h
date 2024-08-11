@@ -88,7 +88,7 @@ namespace Model
     /**
      * <p>Filters the results by resource IDs.</p>  <p>This is valid only when
      * you provide resource type. If there is no resource type, you will see an
-     * error.</p> 
+     * error.</p>
      */
     inline const Aws::Vector<Aws::String>& GetResourceIds() const{ return m_resourceIds; }
     inline bool ResourceIdsHasBeenSet() const { return m_resourceIdsHasBeenSet; }

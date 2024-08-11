@@ -30,7 +30,7 @@
    the GNU Lesser General Public License along with this program.  If
    not, see http://www.gnu.org/licenses/.
 */
- 
+
 #ifndef NETTLE_BIGNUM_H_INCLUDED
 #define NETTLE_BIGNUM_H_INCLUDED
 
@@ -96,7 +96,7 @@ nettle_mpz_random_size(mpz_t x,
 /* Returns a number x, almost uniformly random in the range
  * 0 <= x < n. */
 void
-nettle_mpz_random(mpz_t x, 
+nettle_mpz_random(mpz_t x,
 		  void *ctx, nettle_random_func *random,
 		  const mpz_t n);
 
@@ -105,7 +105,7 @@ nettle_random_prime(mpz_t p, unsigned bits, int top_bits_set,
 		    void *ctx, nettle_random_func *random,
 		    void *progress_ctx, nettle_progress_func *progress);
 
-  
+
 /* sexp parsing */
 struct sexp_iterator;
 

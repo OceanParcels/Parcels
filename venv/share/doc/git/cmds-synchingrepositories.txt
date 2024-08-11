@@ -12,4 +12,3 @@ linkgit:git-send-pack[1]::
 
 linkgit:git-update-server-info[1]::
 	Update auxiliary info file to help dumb servers.
-

@@ -149,4 +149,3 @@ struct {
 #endif
 
 #endif /* EVENT2_HTTP_STRUCT_H_INCLUDED_ */
-

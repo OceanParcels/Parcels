@@ -113,4 +113,3 @@ unsigned char *evbuffer_find(struct evbuffer *buffer, const unsigned char *what,
 #define EVBUFFER_DATA(x)	evbuffer_pullup((x), -1)
 
 #endif
-

@@ -152,7 +152,7 @@ DB \- programmatic interface to the Perl debugging API
 \&    CLIENT\->register()      # register a client package name
 \&    CLIENT\->done()          # de\-register from the debugging API
 \&    CLIENT\->skippkg(\*(Aqhide::hide\*(Aq)  # ask DB not to stop in this package
-\&    CLIENT\->cont([WHERE])       # run some more (until BREAK or 
+\&    CLIENT\->cont([WHERE])       # run some more (until BREAK or
 \&                                # another breakpointt)
 \&    CLIENT\->step()              # single step
 \&    CLIENT\->next()              # step over
@@ -199,7 +199,7 @@ by Swat, the perl/Tk \s-1GUI\s0 debugger.
 .PP
 Note that multiple \*(L"front-ends\*(R" can latch into this debugging \s-1API\s0
 simultaneously.  This is intended to facilitate things like
-debugging with a command line and \s-1GUI\s0 at the same time, debugging 
+debugging with a command line and \s-1GUI\s0 at the same time, debugging
 debuggers etc.  [Sounds nice, but this needs some serious support \*(-- \s-1GSAR\s0]
 .PP
 In particular, this \s-1API\s0 does \fBnot\fR provide the following functions:
@@ -228,7 +228,7 @@ Name of current executing subroutine.
 .el .IP "\f(CW%DB::sub\fR" 8
 .IX Item "%DB::sub"
 The keys of this hash are the names of all the known subroutines.  Each value
-is an encoded string that has the \fBsprintf\fR\|(3) format 
+is an encoded string that has the \fBsprintf\fR\|(3) format
 \&\f(CW\*(C`("%s:%d\-%d", filename, fromline, toline)\*(C'\fR.
 .ie n .IP "$DB::single" 8
 .el .IP "\f(CW$DB::single\fR" 8
@@ -246,7 +246,7 @@ This flag is set to true if the \s-1API\s0 is tracing through subroutine calls.
 .ie n .IP "@DB::args" 8
 .el .IP "\f(CW@DB::args\fR" 8
 .IX Item "@DB::args"
-Contains the arguments of current subroutine, or the \f(CW@ARGV\fR array if in the 
+Contains the arguments of current subroutine, or the \f(CW@ARGV\fR array if in the
 toplevel context.
 .ie n .IP "@DB::dbline" 8
 .el .IP "\f(CW@DB::dbline\fR" 8

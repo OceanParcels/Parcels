@@ -576,7 +576,7 @@ VISIBILITY_HIDDEN
 @end
 
 #endif /* _TKMACPRIV */
-
+
 /*
  * Local Variables:
  * mode: objc

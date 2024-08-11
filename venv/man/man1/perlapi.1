@@ -240,7 +240,7 @@ A small internal helper function to remove a commonly duplicated idiom.
 \&\s-1NOTE:\s0 this function must be explicitly called as Perl_av_create_and_unshift_one with an aTHX_ parameter.
 .Sp
 .Vb 3
-\&        SV**    Perl_av_create_and_unshift_one(pTHX_ 
+\&        SV**    Perl_av_create_and_unshift_one(pTHX_
 \&                                               AV **const avp,
 \&                                               SV *const val)
 .Ve
@@ -454,7 +454,7 @@ Perl equivalent: \f(CW\*(C`unshift\ @myarray,\ ((undef)\ x\ $num);\*(C'\fR
 .IX Xref "get_av"
 .IX Item "get_av"
 Returns the \s-1AV\s0 of the specified Perl global or package array with the given
-name (so it won't work on lexical variables).  \f(CW\*(C`flags\*(C'\fR are passed 
+name (so it won't work on lexical variables).  \f(CW\*(C`flags\*(C'\fR are passed
 to \f(CW\*(C`gv_fetchpv\*(C'\fR.  If \f(CW\*(C`GV_ADD\*(C'\fR is set and the
 Perl variable does not exist then it will be created.  If \f(CW\*(C`flags\*(C'\fR is zero
 and the variable does not exist then \s-1NULL\s0 is returned.
@@ -493,7 +493,7 @@ flexible routine.
 .IP "call_argv" 8
 .IX Xref "call_argv"
 .IX Item "call_argv"
-Performs a callback to the specified named and package-scoped Perl subroutine 
+Performs a callback to the specified named and package-scoped Perl subroutine
 with \f(CW\*(C`argv\*(C'\fR (a \f(CW\*(C`NULL\*(C'\fR\-terminated array of strings) as arguments.  See
 perlcall.
 .Sp
@@ -1691,7 +1691,7 @@ Register a custom op.  See \*(L"Custom Operators\*(R" in perlguts.
 \&\s-1NOTE:\s0 this function must be explicitly called as Perl_custom_op_register with an aTHX_ parameter.
 .Sp
 .Vb 3
-\&        void    Perl_custom_op_register(pTHX_ 
+\&        void    Perl_custom_op_register(pTHX_
 \&                                        Perl_ppaddr_t ppaddr,
 \&                                        const XOP *xop)
 .Ve
@@ -1855,7 +1855,7 @@ must be called prior to setup the \f(CW\*(C`MARK\*(C'\fR variable.
 .IP "\s-1CLASS\s0" 8
 .IX Xref "CLASS"
 .IX Item "CLASS"
-Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to indicate the 
+Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to indicate the
 class name for a \*(C+ \s-1XS\s0 constructor.  This is always a \f(CW\*(C`char*\*(C'\fR.  See
 \&\f(CW"THIS"\fR.
 .Sp
@@ -1921,7 +1921,7 @@ handled automatically by \f(CW\*(C`xsubpp\*(C'\fR.
 .IP "items" 8
 .IX Xref "items"
 .IX Item "items"
-Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to indicate the number of 
+Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to indicate the number of
 items on the stack.  See \*(L"Variable-length Parameter Lists\*(R" in perlxs.
 .Sp
 .Vb 1
@@ -1930,7 +1930,7 @@ items on the stack.  See \*(L"Variable-length Parameter Lists\*(R" in perlxs.
 .IP "ix" 8
 .IX Xref "ix"
 .IX Item "ix"
-Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to indicate which of an 
+Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to indicate which of an
 \&\s-1XSUB\s0's aliases was used to invoke it.  See \*(L"The \s-1ALIAS:\s0 Keyword\*(R" in perlxs.
 .Sp
 .Vb 1
@@ -1939,8 +1939,8 @@ Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to indicate which of an
 .IP "\s-1RETVAL\s0" 8
 .IX Xref "RETVAL"
 .IX Item "RETVAL"
-Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to hold the return value for an 
-\&\s-1XSUB.\s0  This is always the proper type for the \s-1XSUB.\s0  See 
+Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to hold the return value for an
+\&\s-1XSUB.\s0  This is always the proper type for the \s-1XSUB.\s0  See
 \&\*(L"The \s-1RETVAL\s0 Variable\*(R" in perlxs.
 .Sp
 .Vb 1
@@ -1957,7 +1957,7 @@ Used to access elements on the \s-1XSUB\s0's stack.
 .IP "\s-1THIS\s0" 8
 .IX Xref "THIS"
 .IX Item "THIS"
-Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to designate the object in a \*(C+ 
+Variable which is setup by \f(CW\*(C`xsubpp\*(C'\fR to designate the object in a \*(C+
 \&\s-1XSUB.\s0  This is always the proper type for the \*(C+ object.  See \f(CW"CLASS"\fR and
 \&\*(L"Using \s-1XS\s0 With \*(C+\*(R" in perlxs.
 .Sp
@@ -1989,7 +1989,7 @@ symbols unnecessarily.
 .IP "dump_all" 8
 .IX Xref "dump_all"
 .IX Item "dump_all"
-Dumps the entire optree of the current program starting at \f(CW\*(C`PL_main_root\*(C'\fR to 
+Dumps the entire optree of the current program starting at \f(CW\*(C`PL_main_root\*(C'\fR to
 \&\f(CW\*(C`STDERR\*(C'\fR.  Also dumps the optrees for all visible subroutines in
 \&\f(CW\*(C`PL_defstash\*(C'\fR.
 .Sp
@@ -2763,7 +2763,7 @@ to force this \s-1SV\s0 to be interpreted as an \*(L"extended\*(R" version.
 .IP "vcmp" 8
 .IX Xref "vcmp"
 .IX Item "vcmp"
-Version object aware cmp.  Both operands must already have been 
+Version object aware cmp.  Both operands must already have been
 converted into version objects.
 .Sp
 .Vb 1
@@ -3105,7 +3105,7 @@ parameter.
 .IP "gv_fetchmeth_pv" 8
 .IX Xref "gv_fetchmeth_pv"
 .IX Item "gv_fetchmeth_pv"
-Exactly like \*(L"gv_fetchmeth_pvn\*(R", but takes a nul-terminated string 
+Exactly like \*(L"gv_fetchmeth_pvn\*(R", but takes a nul-terminated string
 instead of a string/length pair.
 .Sp
 .Vb 2
@@ -6386,7 +6386,7 @@ mro functions.
 \&\s-1NOTE:\s0 this function must be explicitly called as Perl_mro_register with an aTHX_ parameter.
 .Sp
 .Vb 2
-\&        void    Perl_mro_register(pTHX_ 
+\&        void    Perl_mro_register(pTHX_
 \&                                  const struct mro_alg *mro)
 .Ve
 .SH "Multicall Functions"
@@ -8288,7 +8288,7 @@ at that depth of recursion into the \s-1CV.\s0  The 0th slot of a frame \s-1AV\s
 .Sp
 Iterating over the \s-1PADNAMELIST\s0 iterates over all possible pad
 items.  Pad slots for targets (\f(CW\*(C`SVs_PADTMP\*(C'\fR)
-and GVs end up having &PL_padname_undef \*(L"names\*(R", while slots for constants 
+and GVs end up having &PL_padname_undef \*(L"names\*(R", while slots for constants
 have \f(CW&PL_padname_const\fR \*(L"names\*(R" (see \f(CW"pad_alloc"\fR).  That
 \&\f(CW&PL_padname_undef\fR
 and \f(CW&PL_padname_const\fR are used is an implementation detail subject to
@@ -9083,7 +9083,7 @@ Pops an unsigned long off the stack.
 .IX Item "PUSHi"
 Push an integer onto the stack.  The stack must have room for this element.
 Handles 'set' magic.  Uses \f(CW\*(C`TARG\*(C'\fR, so \f(CW\*(C`dTARGET\*(C'\fR or \f(CW\*(C`dXSTARG\*(C'\fR should be
-called to declare it.  Do not call multiple \f(CW\*(C`TARG\*(C'\fR\-oriented macros to 
+called to declare it.  Do not call multiple \f(CW\*(C`TARG\*(C'\fR\-oriented macros to
 return lists from \s-1XSUB\s0's \- see \f(CW"mPUSHi"\fR instead.  See also \f(CW"XPUSHi"\fR
 and \f(CW"mXPUSHi"\fR.
 .Sp
@@ -9348,7 +9348,7 @@ is stored in a new mortal \s-1SV.\s0
 .IP "XST_mPV" 8
 .IX Xref "XST_mPV"
 .IX Item "XST_mPV"
-Place a copy of a string into the specified position \f(CW\*(C`pos\*(C'\fR on the stack. 
+Place a copy of a string into the specified position \f(CW\*(C`pos\*(C'\fR on the stack.
 The value is stored in a new mortal \s-1SV.\s0
 .Sp
 .Vb 1
@@ -10324,7 +10324,7 @@ Exactly like \*(L"sv_derived_from_pv\*(R", but doesn't take a \f(CW\*(C`flags\*(
 .IP "sv_derived_from_pv" 8
 .IX Xref "sv_derived_from_pv"
 .IX Item "sv_derived_from_pv"
-Exactly like \*(L"sv_derived_from_pvn\*(R", but takes a nul-terminated string 
+Exactly like \*(L"sv_derived_from_pvn\*(R", but takes a nul-terminated string
 instead of a string/length pair.
 .Sp
 .Vb 3
@@ -10735,7 +10735,7 @@ Like \f(CW\*(C`SvIV\*(C'\fR but doesn't process magic.
 .IX Item "SvIV_set"
 Set the value of the \s-1IV\s0 pointer in sv to val.  It is possible to perform
 the same function of this macro with an lvalue assignment to \f(CW\*(C`SvIVX\*(C'\fR.
-With future Perls, however, it will be more efficient to use 
+With future Perls, however, it will be more efficient to use
 \&\f(CW\*(C`SvIV_set\*(C'\fR instead of the lvalue assignment to \f(CW\*(C`SvIVX\*(C'\fR.
 .Sp
 .Vb 1

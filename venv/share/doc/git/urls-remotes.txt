@@ -90,7 +90,3 @@ git push uses:
 ------------
 	HEAD:refs/heads/<head>
 ------------
-
-
-
-

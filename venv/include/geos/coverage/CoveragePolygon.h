@@ -46,12 +46,11 @@ public:
     bool intersectsEnv(const Envelope& env) const;
     bool intersectsEnv(const CoordinateXY& p) const;
     bool contains(const CoordinateXY& p) const;
-    
+
 private:
-    IndexedPointInAreaLocator& getLocator() const;  
+    IndexedPointInAreaLocator& getLocator() const;
 
 };
 
 } // namespace geos::coverage
 } // namespace geos
-

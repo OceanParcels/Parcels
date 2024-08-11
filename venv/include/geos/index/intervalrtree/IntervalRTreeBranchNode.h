@@ -50,4 +50,3 @@ public:
 } // geos::intervalrtree
 } // geos::index
 } // geos
-

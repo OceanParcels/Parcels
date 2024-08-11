@@ -103,4 +103,3 @@ public:
 
 } // namespace geos.linearref
 } // namespace geos
-

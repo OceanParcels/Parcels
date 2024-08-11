@@ -55,7 +55,7 @@ namespace Model
     ///@{
     /**
      * <p>Indicates whether to replicate delete markers.</p>  <p>Indicates
-     * whether to replicate delete markers.</p> 
+     * whether to replicate delete markers.</p>
      */
     inline const DeleteMarkerReplicationStatus& GetStatus() const{ return m_status; }
     inline bool StatusHasBeenSet() const { return m_statusHasBeenSet; }

@@ -111,4 +111,3 @@ The Open Group.
 # define XFree86Server
 # undef _XFree86Server
 #endif
-

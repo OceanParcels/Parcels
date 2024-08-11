@@ -118,7 +118,7 @@ namespace Model
      * more information, see <a>ConfigSnapshotDeliveryProperties</a>.</p>  <p>By
      * default, rules with a periodic trigger are evaluated every 24 hours. To change
      * the frequency, specify a valid value for the
-     * <code>MaximumExecutionFrequency</code> parameter.</p> 
+     * <code>MaximumExecutionFrequency</code> parameter.</p>
      */
     inline const MaximumExecutionFrequency& GetMaximumExecutionFrequency() const{ return m_maximumExecutionFrequency; }
     inline bool MaximumExecutionFrequencyHasBeenSet() const { return m_maximumExecutionFrequencyHasBeenSet; }

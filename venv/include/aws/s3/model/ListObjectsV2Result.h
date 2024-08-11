@@ -79,7 +79,7 @@ namespace Model
     /**
      * <p>Keys that begin with the indicated prefix.</p>  <p> <b>Directory
      * buckets</b> - For directory buckets, only prefixes that end in a delimiter
-     * (<code>/</code>) are supported.</p> 
+     * (<code>/</code>) are supported.</p>
      */
     inline const Aws::String& GetPrefix() const{ return m_prefix; }
     inline void SetPrefix(const Aws::String& value) { m_prefix = value; }
@@ -98,7 +98,7 @@ namespace Model
      * not returned elsewhere in the response. Each rolled-up result counts as only one
      * return against the <code>MaxKeys</code> value.</p>  <p> <b>Directory
      * buckets</b> - For directory buckets, <code>/</code> is the only supported
-     * delimiter.</p> 
+     * delimiter.</p>
      */
     inline const Aws::String& GetDelimiter() const{ return m_delimiter; }
     inline void SetDelimiter(const Aws::String& value) { m_delimiter = value; }
@@ -133,7 +133,7 @@ namespace Model
      * example, if the prefix is <code>notes/</code> and the delimiter is a slash
      * (<code>/</code>) as in <code>notes/summer/july</code>, the common prefix is
      * <code>notes/summer/</code>. All of the keys that roll up into a common prefix
-     * count as a single return when calculating the number of returns. </p> 
+     * count as a single return when calculating the number of returns. </p>
      * <ul> <li> <p> <b>Directory buckets</b> - For directory buckets, only prefixes
      * that end in a delimiter (<code>/</code>) are supported.</p> </li> <li> <p>
      * <b>Directory buckets </b> - When you query <code>ListObjectsV2</code> with a
@@ -142,7 +142,7 @@ namespace Model
      * in-progress multipart uploads. For more information about multipart uploads, see
      * <a
      * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/mpuoverview.html">Multipart
-     * Upload Overview</a> in the <i>Amazon S3 User Guide</i>.</p> </li> </ul> 
+     * Upload Overview</a> in the <i>Amazon S3 User Guide</i>.</p> </li> </ul>
      */
     inline const Aws::Vector<CommonPrefix>& GetCommonPrefixes() const{ return m_commonPrefixes; }
     inline void SetCommonPrefixes(const Aws::Vector<CommonPrefix>& value) { m_commonPrefixes = value; }
@@ -216,7 +216,7 @@ namespace Model
     ///@{
     /**
      * <p>If StartAfter was sent with the request, it is included in the response.</p>
-     *  <p>This functionality is not supported for directory buckets.</p> 
+     *  <p>This functionality is not supported for directory buckets.</p>
      */
     inline const Aws::String& GetStartAfter() const{ return m_startAfter; }
     inline void SetStartAfter(const Aws::String& value) { m_startAfter = value; }
@@ -228,7 +228,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const RequestCharged& GetRequestCharged() const{ return m_requestCharged; }
     inline void SetRequestCharged(const RequestCharged& value) { m_requestCharged = value; }
     inline void SetRequestCharged(RequestCharged&& value) { m_requestCharged = std::move(value); }
@@ -237,7 +237,7 @@ namespace Model
     ///@}
 
     ///@{
-    
+
     inline const Aws::String& GetRequestId() const{ return m_requestId; }
     inline void SetRequestId(const Aws::String& value) { m_requestId = value; }
     inline void SetRequestId(Aws::String&& value) { m_requestId = std::move(value); }

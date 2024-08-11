@@ -111,7 +111,7 @@ namespace Model
      * information, see <a
      * href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html">
      * Creating a Billing Alarm to Monitor Your Estimated Amazon Web Services
-     * Charges</a>. </p> 
+     * Charges</a>. </p>
      */
     inline const Aws::Map<Aws::String, Aws::String>& GetDimensions() const{ return m_dimensions; }
     inline bool DimensionsHasBeenSet() const { return m_dimensionsHasBeenSet; }

@@ -102,4 +102,3 @@ protected:
 } // geos::geom::prep
 } // geos::geom
 } // geos
-

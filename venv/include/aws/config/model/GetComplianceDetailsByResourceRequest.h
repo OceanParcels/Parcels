@@ -106,7 +106,7 @@ namespace Model
      * <p>The unique ID of Amazon Web Services resource execution for which you want to
      * retrieve evaluation results. </p>  <p>You need to only provide either a
      * <code>ResourceEvaluationID</code> or a <code>ResourceID </code>and
-     * <code>ResourceType</code>.</p> 
+     * <code>ResourceType</code>.</p>
      */
     inline const Aws::String& GetResourceEvaluationId() const{ return m_resourceEvaluationId; }
     inline bool ResourceEvaluationIdHasBeenSet() const { return m_resourceEvaluationIdHasBeenSet; }

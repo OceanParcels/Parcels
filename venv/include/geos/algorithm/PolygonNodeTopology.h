@@ -114,4 +114,3 @@ private:
 
 } // namespace geos::algorithm
 } // namespace geos
-

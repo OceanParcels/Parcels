@@ -1793,4 +1793,3 @@ struct _cl_icd_dispatch {
 
 };
 #endif
-

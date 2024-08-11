@@ -46,5 +46,3 @@
 /** DOC_ENABLE */
 
 #endif /* __XML_EXPORTS_H__ */
-
-

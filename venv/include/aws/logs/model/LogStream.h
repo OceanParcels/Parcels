@@ -107,7 +107,7 @@ namespace Model
      * <code>PutLogEvents</code> actions. <code>PutLogEvents</code> actions are always
      * accepted regardless of receiving an invalid sequence token. You don't need to
      * obtain <code>uploadSequenceToken</code> to use a <code>PutLogEvents</code>
-     * action.</p> 
+     * action.</p>
      */
     inline const Aws::String& GetUploadSequenceToken() const{ return m_uploadSequenceToken; }
     inline bool UploadSequenceTokenHasBeenSet() const { return m_uploadSequenceTokenHasBeenSet; }

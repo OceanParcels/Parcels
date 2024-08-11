@@ -385,7 +385,7 @@ below.  Examples:
 \&
 \&  =item *
 \&
-\&  =item      *    
+\&  =item      *
 \&
 \&  =item 14
 \&
@@ -466,7 +466,7 @@ before any non-US-ASCII data!), declares that this document is
 encoded in the encoding \fIencodingname\fR, which must be
 an encoding name that Encode recognizes.  (Encode's list
 of supported encodings, in Encode::Supported, is useful here.)
-If the Pod parser cannot decode the declared encoding, it 
+If the Pod parser cannot decode the declared encoding, it
 should emit a warning and may abort parsing the document
 altogether.
 .Sp
@@ -659,7 +659,7 @@ would parse as equivalent to this:
 \&    C<$foo\-E<gt>bar>
 .Ve
 .PP
-instead of as equivalent to a \*(L"C\*(R" formatting code containing 
+instead of as equivalent to a \*(L"C\*(R" formatting code containing
 only \*(L"$foo\-\*(R", and then a \*(L"bar>\*(R" outside the \*(L"C\*(R" formatting code.  This
 problem has since been solved by the addition of syntaxes like this:
 .PP
@@ -1460,7 +1460,7 @@ The \*(L"=item [text]\*(R" paragraph should not match
 match just \f(CW\*(C`m/\eA=item\es*\ez/\*(C'\fR.
 .IP "\(bu" 4
 An \*(L"=over\*(R" ... \*(L"=back\*(R" region containing no \*(L"=item\*(R" paragraphs at
-all, and containing only some number of 
+all, and containing only some number of
 ordinary/verbatim paragraphs, and possibly also some nested \*(L"=over\*(R"
 \&... \*(L"=back\*(R" regions, \*(L"=for...\*(R" paragraphs, and \*(L"=begin\*(R"...\*(L"=end\*(R"
 regions.  Such an itemless \*(L"=over\*(R" ... \*(L"=back\*(R" region in Pod is
@@ -1470,7 +1470,7 @@ equivalent in meaning to a \*(L"<blockquote>...</blockquote>\*(R" element in
 .RS 4
 .Sp
 Note that with all the above cases, you can determine which type of
-\&\*(L"=over\*(R" ... \*(L"=back\*(R" you have, by examining the first (non\-\*(L"=cut\*(R", 
+\&\*(L"=over\*(R" ... \*(L"=back\*(R" you have, by examining the first (non\-\*(L"=cut\*(R",
 non\-\*(L"=pod\*(R") Pod paragraph after the \*(L"=over\*(R" command.
 .RE
 .IP "\(bu" 4
@@ -1542,7 +1542,7 @@ Authors of Pod formatters should note that this construct:
 \&
 \&  =item Quisquam Est
 \&
-\&  Qui dolorem ipsum quia dolor sit amet, consectetur, adipisci 
+\&  Qui dolorem ipsum quia dolor sit amet, consectetur, adipisci
 \&  velit, sed quia non numquam eius modi tempora incidunt ut
 \&  labore et dolore magnam aliquam quaerat voluptatem.
 \&
@@ -1793,7 +1793,7 @@ The contents of the above \*(L"=begin :yetanotherformat\*(R" ...
 \&\*(L"=end :yetanotherformat\*(R" region \fIaren't\fR data paragraphs, because
 the immediately containing region's identifier (\*(L":yetanotherformat\*(R")
 begins with a colon.  In practice, most regions that contain
-data paragraphs will contain \fIonly\fR data paragraphs; however, 
+data paragraphs will contain \fIonly\fR data paragraphs; however,
 the above nesting is syntactically valid as Pod, even if it is
 rare.  However, the handlers for some formats, like \*(L"html\*(R",
 will accept only data paragraphs, not nested regions; and they may
@@ -1849,7 +1849,7 @@ the content of the above \*(L"=begin html\*(R"...\*(L"=end html\*(R" \fImay\fR b
 as two data paragraphs (one consisting of
 \&\*(L"<img src='wirth_spokesmodeling_book.png'>\en\*(R"
 and another consisting of \*(L"<hr>\en\*(R"), but \fIshould\fR be stored as
-a single data paragraph (consisting of 
+a single data paragraph (consisting of
 \&\*(L"<img src='wirth_spokesmodeling_book.png'>\en\en<hr>\en\*(R").
 .PP
 Pod processors should tolerate empty

@@ -18,7 +18,7 @@
  * of this file to be included in source files only. Thus we are not using the
  * prefix "Tk_" here for functions, because all the functions have private scope.
  */
-
+
 /*
  * -------------------------------------------------------------------------------
  * Use the double linked list in the following way:
@@ -38,7 +38,7 @@
  * -------------------------------------------------------------------------------
  * IMPORTANT NOTE: TK_DLIST_LINKS must be used at start of struct!
  */
-
+
 #ifndef TK_DLIST_DEFINED
 #define TK_DLIST_DEFINED
 
@@ -218,7 +218,7 @@ struct {									\
  * current element.
  */
 /*************************************************************************/
-
+
 #if defined(__GNUC__) || defined(__clang__)
 # define __TK_DLIST_UNUSED __attribute__((unused))
 #else
@@ -533,9 +533,9 @@ LT##_Traverse(LT *head, LT##_Func func)						\
 #define TK_DLIST_FOREACH_REVERSE(var, head)					\
     assert(head);								\
     for (var = head->last ? head->last : (void *) head; var != (void *) head; var = var->_dl_.prev)
-
+
 #endif /* TK_DLIST_DEFINED */
-
+
 /*
  * Local Variables:
  * mode: c

@@ -28,7 +28,7 @@ namespace Model
   /**
    * <p>The current status of the configuration recorder.</p>  <p>For a
    * detailed status of recording events over time, add your Config events to
-   * CloudWatch metrics and use CloudWatch metrics.</p> <p><h3>See Also:</h3> 
+   * CloudWatch metrics and use CloudWatch metrics.</p> <p><h3>See Also:</h3>
    * <a
    * href="http://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/ConfigurationRecorderStatus">AWS
    * API Reference</a></p>

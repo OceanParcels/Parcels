@@ -52,7 +52,7 @@ while (<>) {
         if (/^\s*ac_max_sed_([a-z]+).*=\s*([0-9]+)/ ) {
 	    $flag = 1;
 	    if ($1 eq 'lines') {
-                # lets hope its different with 2141, 
+                # lets hope its different with 2141,
                 # wasn't able to verify that
               if ($2 eq '48') {
                 $ac_version = 250;
