@@ -1269,8 +1269,8 @@ class Field:
         self.grid.load_chunk = np.zeros(npartitions, dtype=c_int, order='C')
         # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #      chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
-        self.grid.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
-        self.grid.chunk_info = sum(self.grid.chunk_info, [])
+        self.grid.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]  # noqa: RUF017 # TODO: Perhaps avoid quadratic list summation here
+        self.grid.chunk_info = sum(self.grid.chunk_info, [])  # noqa: RUF017
         self.chunk_set = True
 
     def chunk_data(self):

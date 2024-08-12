@@ -25,7 +25,7 @@ class DaskChunkingError(RuntimeError):
     """Error indicating to the user that something with setting up Dask and chunked fieldsets went wrong."""
 
     def __init__(self, src_class_type, message):
-        msg = f"[{str(src_class_type)}]: {message}"
+        msg = f"[{src_class_type}]: {message}"
         super().__init__(msg)
 
 

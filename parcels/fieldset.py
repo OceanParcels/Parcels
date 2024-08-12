@@ -302,7 +302,7 @@ class FieldSet:
             paths = sorted(glob(str(paths)))
         if len(paths) == 0:
             notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-            raise OSError(f"FieldSet files not found for variable {var}: {str(notfound_paths)}")
+            raise OSError(f"FieldSet files not found for variable {var}: {notfound_paths}")
         for fp in paths:
             if not os.path.exists(fp):
                 raise OSError(f"FieldSet file not found: {fp}")

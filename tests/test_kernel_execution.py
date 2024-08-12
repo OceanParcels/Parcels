@@ -43,7 +43,7 @@ def test_execution_order(mode, kernel_type):
     fieldset = FieldSet.from_data({'U': [[0, 1], [2, 3]], 'V': np.ones((2, 2))}, {'lon': [0, 2], 'lat': [0, 2]}, mesh='flat')
 
     def MoveLon_Update_Lon(particle, fieldset, time):
-       particle.lon += 0.2  # noqa
+       particle.lon += 0.2
 
     def MoveLon_Update_dlon(particle, fieldset, time):
        particle_dlon += 0.2  # noqa
@@ -130,7 +130,7 @@ def test_execution_fail_python_exception(fieldset, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_fail_out_of_bounds(fieldset, mode, npart=10):
     def MoveRight(particle, fieldset, time):
-        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]  # noqa
+        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
@@ -145,7 +145,7 @@ def test_execution_fail_out_of_bounds(fieldset, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_recover_out_of_bounds(fieldset, mode, npart=2):
     def MoveRight(particle, fieldset, time):
-        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]  # noqa
+        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
 
     def MoveLeft(particle, fieldset, time):
@@ -165,7 +165,7 @@ def test_execution_recover_out_of_bounds(fieldset, mode, npart=2):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_check_all_errors(fieldset, mode):
     def MoveRight(particle, fieldset, time):
-        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon, particle]  # noqa
+        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon, particle]
 
     def RecoverAllErrors(particle, fieldset, time):
         if particle.state > 4:
@@ -196,7 +196,7 @@ def test_execution_check_stopallexecution(fieldset, mode):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_delete_out_of_bounds(fieldset, mode, npart=10):
     def MoveRight(particle, fieldset, time):
-        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]  # noqa
+        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
 
     def DeleteMe(particle, fieldset, time):
