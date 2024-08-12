@@ -67,14 +67,6 @@ example_data_files = {
         "t.x1_SAMOC_flux.169004.nc",
         "t.x1_SAMOC_flux.169005.nc",
     ],
-    "SWASH_data": [
-        "field_0065532.nc",
-        "field_0065537.nc",
-        "field_0065542.nc",
-        "field_0065548.nc",
-        "field_0065552.nc",
-        "field_0065557.nc",
-    ],
     "WOA_data": [f"woa18_decav_t{m:02d}_04.nc" for m in range(1, 13)],
     "CROCOidealized_data": ["CROCO_idealized.nc"],
 }

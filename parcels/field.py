@@ -177,9 +177,6 @@ class Field:
         else:
             self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
-        if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'] and \
-           self.grid.gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
-            logger.warning_once('General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal.')
 
         self.fieldset = None
         if allow_time_extrapolation is None:
@@ -243,9 +240,6 @@ class Field:
         self.chunksize = kwargs.pop('chunksize', None)
         self.netcdf_chunkdims_name_map = kwargs.pop('chunkdims_name_map', None)
         self.grid.depth_field = kwargs.pop('depth_field', None)
-
-        if self.grid.depth_field == 'not_yet_set':
-            assert self.grid.z4d, 'Providing the depth dimensions from another field data is only available for 4d S grids'
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
@@ -445,11 +439,7 @@ class Field:
                                 netcdf_decodewarning=netcdf_decodewarning,
                                 gridindexingtype=gridindexingtype) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
-                if dimensions['depth'] == 'not_yet_set':
-                    depth = filebuffer.depth_dimensions
-                    kwargs['depth_field'] = 'not_yet_set'
-                else:
-                    depth = filebuffer.depth
+                depth = filebuffer.depth
                 data_full_zdim = filebuffer.data_full_zdim
         else:
             indices['depth'] = [0]
@@ -690,7 +680,7 @@ class Field:
         Currently only works for Rectilinear Grids
         """
         if not self.grid.cell_edge_sizes:
-            if self.grid.gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):
+            if self.grid.gtype in (GridType.RectilinearZGrid):
                 self.grid.cell_edge_sizes['x'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
                 self.grid.cell_edge_sizes['y'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
 
@@ -747,57 +737,6 @@ class Field:
             else:
                 zi = depth_indices.argmin() - 1 if z <= grid.depth[0] else 0
         zeta = (z-grid.depth[zi]) / (grid.depth[zi+1]-grid.depth[zi])
-        return (zi, zeta)
-
-    def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, ti, time):
-        grid = self.grid
-        if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-            xsi = 1
-            eta = 1
-        if time < grid.time[ti]:
-            ti -= 1
-        if grid.z4d:
-            if ti == len(grid.time)-1:
-                depth_vector = (1-xsi)*(1-eta) * grid.depth[-1, :, yi, xi] + \
-                    xsi*(1-eta) * grid.depth[-1, :, yi, xi+1] + \
-                    xsi*eta * grid.depth[-1, :, yi+1, xi+1] + \
-                    (1-xsi)*eta * grid.depth[-1, :, yi+1, xi]
-            else:
-                dv2 = (1-xsi)*(1-eta) * grid.depth[ti:ti+2, :, yi, xi] + \
-                    xsi*(1-eta) * grid.depth[ti:ti+2, :, yi, xi+1] + \
-                    xsi*eta * grid.depth[ti:ti+2, :, yi+1, xi+1] + \
-                    (1-xsi)*eta * grid.depth[ti:ti+2, :, yi+1, xi]
-                tt = (time-grid.time[ti]) / (grid.time[ti+1]-grid.time[ti])
-                assert tt >= 0 and tt <= 1, 'Vertical s grid is being wrongly interpolated in time'
-                depth_vector = dv2[0, :] * (1-tt) + dv2[1, :] * tt
-        else:
-            depth_vector = (1-xsi)*(1-eta) * grid.depth[:, yi, xi] + \
-                xsi*(1-eta) * grid.depth[:, yi, xi+1] + \
-                xsi*eta * grid.depth[:, yi+1, xi+1] + \
-                (1-xsi)*eta * grid.depth[:, yi+1, xi]
-        z = np.float32(z)
-
-        if depth_vector[-1] > depth_vector[0]:
-            depth_indices = depth_vector <= z
-            if z >= depth_vector[-1]:
-                zi = len(depth_vector) - 2
-            else:
-                zi = depth_indices.argmin() - 1 if z >= depth_vector[0] else 0
-            if z < depth_vector[zi]:
-                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
-            elif z > depth_vector[zi+1]:
-                raise FieldOutOfBoundError(x, y, z, field=self)
-        else:
-            depth_indices = depth_vector >= z
-            if z <= depth_vector[-1]:
-                zi = len(depth_vector) - 2
-            else:
-                zi = depth_indices.argmin() - 1 if z <= depth_vector[0] else 0
-            if z > depth_vector[zi]:
-                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
-            elif z < depth_vector[zi+1]:
-                raise FieldOutOfBoundError(x, y, z, field=self)
-        zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
 
     def reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
@@ -891,8 +830,6 @@ class Field:
                     raise FieldOutOfBoundError(x, y, z, field=self)
                 except FieldOutOfBoundSurfaceError:
                     raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
-            elif grid.gtype == GridType.RectilinearSGrid:
-                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi, zeta = -1, 0
 
@@ -984,8 +921,6 @@ class Field:
                     (zi, zeta) = self.search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
-            elif grid.gtype == GridType.CurvilinearSGrid:
-                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi = -1
             zeta = 0
@@ -1001,7 +936,7 @@ class Field:
         return (xsi, eta, zeta, xi, yi, zi)
 
     def search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
-        if self.grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
+        if self.grid.gtype in [GridType.RectilinearZGrid]:
             return self.search_indices_rectilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
         else:
             return self.search_indices_curvilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
@@ -1565,7 +1500,7 @@ class VectorField:
         grid = self.U.grid
         (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
 
-        if grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
+        if grid.gtype in [GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
             py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi+1], grid.lat[yi+1]])
         else:
@@ -1629,110 +1564,6 @@ class VectorField:
             v = v.compute()
         return (u, v)
 
-    def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time, particle=None):
-        grid = self.U.grid
-        (xsi, eta, zet, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
-
-        if grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
-            px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
-            py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi+1], grid.lat[yi+1]])
-        else:
-            px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
-            py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
-
-        if grid.mesh == 'spherical':
-            px[0] = px[0]+360 if px[0] < x-225 else px[0]
-            px[0] = px[0]-360 if px[0] > x+225 else px[0]
-            px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
-            px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
-        xx = (1-xsi)*(1-eta) * px[0] + xsi*(1-eta) * px[1] + xsi*eta * px[2] + (1-xsi)*eta * px[3]
-        assert abs(xx-x) < 1e-4
-
-        px = np.concatenate((px, px))
-        py = np.concatenate((py, py))
-        if grid.z4d:
-            pz = np.array([grid.depth[0, zi, yi, xi], grid.depth[0, zi, yi, xi+1], grid.depth[0, zi, yi+1, xi+1], grid.depth[0, zi, yi+1, xi],
-                           grid.depth[0, zi+1, yi, xi], grid.depth[0, zi+1, yi, xi+1], grid.depth[0, zi+1, yi+1, xi+1], grid.depth[0, zi+1, yi+1, xi]])
-        else:
-            pz = np.array([grid.depth[zi, yi, xi], grid.depth[zi, yi, xi+1], grid.depth[zi, yi+1, xi+1], grid.depth[zi, yi+1, xi],
-                           grid.depth[zi+1, yi, xi], grid.depth[zi+1, yi, xi+1], grid.depth[zi+1, yi+1, xi+1], grid.depth[zi+1, yi+1, xi]])
-
-        u0 = self.U.data[ti, zi, yi+1, xi]
-        u1 = self.U.data[ti, zi, yi+1, xi+1]
-        v0 = self.V.data[ti, zi, yi, xi+1]
-        v1 = self.V.data[ti, zi, yi+1, xi+1]
-        w0 = self.W.data[ti, zi, yi+1, xi+1]
-        w1 = self.W.data[ti, zi+1, yi+1, xi+1]
-
-        U0 = u0 * i_u.jacobian3D_lin_face(px, py, pz, 0, eta, zet, 'zonal', grid.mesh)
-        U1 = u1 * i_u.jacobian3D_lin_face(px, py, pz, 1, eta, zet, 'zonal', grid.mesh)
-        V0 = v0 * i_u.jacobian3D_lin_face(px, py, pz, xsi, 0, zet, 'meridional', grid.mesh)
-        V1 = v1 * i_u.jacobian3D_lin_face(px, py, pz, xsi, 1, zet, 'meridional', grid.mesh)
-        W0 = w0 * i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, 0, 'vertical', grid.mesh)
-        W1 = w1 * i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, 1, 'vertical', grid.mesh)
-
-        # Computing fluxes in half left hexahedron -> flux_u05
-        xx = [px[0], (px[0]+px[1])/2, (px[2]+px[3])/2, px[3], px[4], (px[4]+px[5])/2, (px[6]+px[7])/2, px[7]]
-        yy = [py[0], (py[0]+py[1])/2, (py[2]+py[3])/2, py[3], py[4], (py[4]+py[5])/2, (py[6]+py[7])/2, py[7]]
-        zz = [pz[0], (pz[0]+pz[1])/2, (pz[2]+pz[3])/2, pz[3], pz[4], (pz[4]+pz[5])/2, (pz[6]+pz[7])/2, pz[7]]
-        flux_u0 = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal', grid.mesh)
-        flux_v0_halfx = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional', grid.mesh)
-        flux_v1_halfx = v1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 1, .5, 'meridional', grid.mesh)
-        flux_w0_halfx = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 0, 'vertical', grid.mesh)
-        flux_w1_halfx = w1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 1, 'vertical', grid.mesh)
-        flux_u05 = flux_u0 + flux_v0_halfx - flux_v1_halfx + flux_w0_halfx - flux_w1_halfx
-
-        # Computing fluxes in half front hexahedron -> flux_v05
-        xx = [px[0], px[1], (px[1]+px[2])/2, (px[0]+px[3])/2, px[4], px[5], (px[5]+px[6])/2, (px[4]+px[7])/2]
-        yy = [py[0], py[1], (py[1]+py[2])/2, (py[0]+py[3])/2, py[4], py[5], (py[5]+py[6])/2, (py[4]+py[7])/2]
-        zz = [pz[0], pz[1], (pz[1]+pz[2])/2, (pz[0]+pz[3])/2, pz[4], pz[5], (pz[5]+pz[6])/2, (pz[4]+pz[7])/2]
-        flux_u0_halfy = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal', grid.mesh)
-        flux_u1_halfy = u1 * i_u.jacobian3D_lin_face(xx, yy, zz, 1, .5, .5, 'zonal', grid.mesh)
-        flux_v0 = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional', grid.mesh)
-        flux_w0_halfy = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 0, 'vertical', grid.mesh)
-        flux_w1_halfy = w1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 1, 'vertical', grid.mesh)
-        flux_v05 = flux_u0_halfy - flux_u1_halfy + flux_v0 + flux_w0_halfy - flux_w1_halfy
-
-        # Computing fluxes in half lower hexahedron -> flux_w05
-        xx = [px[0], px[1], px[2], px[3], (px[0]+px[4])/2, (px[1]+px[5])/2, (px[2]+px[6])/2, (px[3]+px[7])/2]
-        yy = [py[0], py[1], py[2], py[3], (py[0]+py[4])/2, (py[1]+py[5])/2, (py[2]+py[6])/2, (py[3]+py[7])/2]
-        zz = [pz[0], pz[1], pz[2], pz[3], (pz[0]+pz[4])/2, (pz[1]+pz[5])/2, (pz[2]+pz[6])/2, (pz[3]+pz[7])/2]
-        flux_u0_halfz = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal', grid.mesh)
-        flux_u1_halfz = u1 * i_u.jacobian3D_lin_face(xx, yy, zz, 1, .5, .5, 'zonal', grid.mesh)
-        flux_v0_halfz = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional', grid.mesh)
-        flux_v1_halfz = v1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 1, .5, 'meridional', grid.mesh)
-        flux_w0 = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 0, 'vertical', grid.mesh)
-        flux_w05 = flux_u0_halfz - flux_u1_halfz + flux_v0_halfz - flux_v1_halfz + flux_w0
-
-        surf_u05 = i_u.jacobian3D_lin_face(px, py, pz, .5, .5, .5, 'zonal', grid.mesh)
-        jac_u05 = i_u.jacobian3D_lin_face(px, py, pz, .5, eta, zet, 'zonal', grid.mesh)
-        U05 = flux_u05 / surf_u05 * jac_u05
-
-        surf_v05 = i_u.jacobian3D_lin_face(px, py, pz, .5, .5, .5, 'meridional', grid.mesh)
-        jac_v05 = i_u.jacobian3D_lin_face(px, py, pz, xsi, .5, zet, 'meridional', grid.mesh)
-        V05 = flux_v05 / surf_v05 * jac_v05
-
-        surf_w05 = i_u.jacobian3D_lin_face(px, py, pz, .5, .5, .5, 'vertical', grid.mesh)
-        jac_w05 = i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, .5, 'vertical', grid.mesh)
-        W05 = flux_w05 / surf_w05 * jac_w05
-
-        jac = i_u.jacobian3D_lin(px, py, pz, xsi, eta, zet, grid.mesh)
-        dxsidt = i_u.interpolate(i_u.phi1D_quad, [U0, U05, U1], xsi) / jac
-        detadt = i_u.interpolate(i_u.phi1D_quad, [V0, V05, V1], eta) / jac
-        dzetdt = i_u.interpolate(i_u.phi1D_quad, [W0, W05, W1], zet) / jac
-
-        dphidxsi, dphideta, dphidzet = i_u.dphidxsi3D_lin(xsi, eta, zet)
-
-        u = np.dot(dphidxsi, px) * dxsidt + np.dot(dphideta, px) * detadt + np.dot(dphidzet, px) * dzetdt
-        v = np.dot(dphidxsi, py) * dxsidt + np.dot(dphideta, py) * detadt + np.dot(dphidzet, py) * dzetdt
-        w = np.dot(dphidxsi, pz) * dxsidt + np.dot(dphideta, pz) * detadt + np.dot(dphidzet, pz) * dzetdt
-
-        if isinstance(u, da.core.Array):
-            u = u.compute()
-            v = v.compute()
-            w = w.compute()
-        return (u, v, w)
-
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         """Perform C grid interpolation in 3D. ::
 
@@ -1749,15 +1580,12 @@ class VectorField:
         interpolating linearly V depending on the latitude coordinate.
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
-        if self.U.grid.gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
-            (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
-        else:
-            if self.gridindexingtype == 'croco':
-                z = z/self.fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
-            (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
-            w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
-            if applyConversion:
-                w = self.W.units.to_target(w, x, y, z)
+        if self.gridindexingtype == 'croco':
+            z = z/self.fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
+        (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
+        w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
+        if applyConversion:
+            w = self.W.units.to_target(w, x, y, z)
         return (u, v, w)
 
     def _is_land2D(self, di, yi, xi):

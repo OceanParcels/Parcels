@@ -7,14 +7,12 @@ import numpy as np
 from parcels.tools.converters import TimeConverter
 from parcels.tools.loggers import logger
 
-__all__ = ['GridType', 'GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid', 'Grid']
+__all__ = ['GridType', 'GridCode', 'RectilinearZGrid', 'CurvilinearZGrid', 'CGrid', 'Grid']
 
 
 class GridType(IntEnum):
     RectilinearZGrid = 0
-    RectilinearSGrid = 1
-    CurvilinearZGrid = 2
-    CurvilinearSGrid = 3
+    CurvilinearZGrid = 1
 
 
 # GridCode has been renamed to GridType for consistency.
@@ -79,15 +77,9 @@ class Grid:
         if not (depth is None or isinstance(depth, np.ndarray)):
             depth = np.array(depth)
         if len(lon.shape) <= 1:
-            if depth is None or len(depth.shape) <= 1:
-                return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
-            else:
-                return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+            return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
         else:
-            if depth is None or len(depth.shape) <= 1:
-                return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
-            else:
-                return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+            return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
 
     @property
     def ctypes_struct(self):
@@ -102,9 +94,7 @@ class Grid:
         pointers and sizes for this grid.
         """
         class CStructuredGrid(Structure):
-            # z4d is only to have same cstruct as RectilinearSGrid
-            _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('z4d', c_int),
+            _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int), ('tdim', c_int),
                         ('mesh_spherical', c_int), ('zonal_periodic', c_int),
                         ('chunk_info', POINTER(c_int)),
                         ('load_chunk', POINTER(c_int)),
@@ -119,8 +109,7 @@ class Grid:
             if not isinstance(self.periods, c_int):
                 self.periods = c_int()
                 self.periods.value = 0
-            self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
-                                           self.tdim, self.z4d,
+            self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim, self.tdim,
                                            int(self.mesh == 'spherical'), int(self.zonal_periodic),
                                            (c_int * len(self.chunk_info))(*self.chunk_info),
                                            self.load_chunk.ctypes.data_as(POINTER(c_int)),
@@ -245,7 +234,7 @@ class Grid:
 class RectilinearGrid(Grid):
     """Rectilinear Grid class
 
-    Private base class for RectilinearZGrid and RectilinearSGrid
+    Private base class for RectilinearZGrid
 
     """
 
@@ -297,8 +286,6 @@ class RectilinearGrid(Grid):
             self.ydim = self.lat.size
             self.meridional_halo = halosize
         self.lonlat_minmax = np.array([np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32)
-        if isinstance(self, RectilinearSGrid):
-            self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 class RectilinearZGrid(RectilinearGrid):
@@ -336,64 +323,8 @@ class RectilinearZGrid(RectilinearGrid):
         if not self.depth.flags['C_CONTIGUOUS']:
             self.depth = np.array(self.depth, order='C')
         self.zdim = self.depth.size
-        self.z4d = -1  # only used in RectilinearSGrid
         if not self.depth.dtype == np.float32:
             self.depth = self.depth.astype(np.float32)
-
-
-class RectilinearSGrid(RectilinearGrid):
-    """Rectilinear S Grid. Same horizontal discretisation as a rectilinear z grid,
-       but with s vertical coordinates
-
-    Parameters
-    ----------
-    lon :
-        Vector containing the longitude coordinates of the grid
-    lat :
-        Vector containing the latitude coordinates of the grid
-    depth :
-        4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
-        which are s-coordinates.
-        s-coordinates can be terrain-following (sigma) or iso-density (rho) layers,
-        or any generalised vertical discretisation.
-        The depth of each node depends then on the horizontal position (lon, lat),
-        the number of the layer and the time is depth is a 4D array.
-        depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
-    time :
-        Vector containing the time coordinates of the grid
-    time_origin : parcels.tools.converters.TimeConverter
-        Time origin of the time axis
-    mesh : str
-        String indicating the type of mesh coordinates and
-        units used during velocity interpolation:
-
-        1. spherical (default): Lat and lon in degree, with a
-           correction for zonal velocity U near the poles.
-        2. flat: No conversion, lat/lon are assumed to be in m.
-    """
-
-    def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
-        super().__init__(lon, lat, time, time_origin, mesh)
-        assert (isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
-
-        self.gtype = GridType.RectilinearSGrid
-        self.depth = depth
-        if not self.depth.flags['C_CONTIGUOUS']:
-            self.depth = np.array(self.depth, order='C')
-        self.zdim = self.depth.shape[-3]
-        self.z4d = 1 if len(self.depth.shape) == 4 else 0
-        if self.z4d:
-            # self.depth.shape[0] is 0 for S grids loaded from netcdf file
-            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-        else:
-            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
-            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
-        if not self.depth.dtype == np.float32:
-            self.depth = self.depth.astype(np.float32)
-        if self.lat_flipped:
-            self.depth = np.flip(self.depth, axis=-2)
 
 
 class CurvilinearGrid(Grid):
@@ -452,8 +383,6 @@ class CurvilinearGrid(Grid):
             self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
             self.meridional_halo = halosize
-        if isinstance(self, CurvilinearSGrid):
-            self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 class CurvilinearZGrid(CurvilinearGrid):
@@ -491,58 +420,5 @@ class CurvilinearZGrid(CurvilinearGrid):
         if not self.depth.flags['C_CONTIGUOUS']:
             self.depth = np.array(self.depth, order='C')
         self.zdim = self.depth.size
-        self.z4d = -1  # only for SGrid
-        if not self.depth.dtype == np.float32:
-            self.depth = self.depth.astype(np.float32)
-
-
-class CurvilinearSGrid(CurvilinearGrid):
-    """Curvilinear S Grid.
-
-    Parameters
-    ----------
-    lon :
-        2D array containing the longitude coordinates of the grid
-    lat :
-        2D array containing the latitude coordinates of the grid
-    depth :
-        4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
-        which are s-coordinates.
-        s-coordinates can be terrain-following (sigma) or iso-density (rho) layers,
-        or any generalised vertical discretisation.
-        The depth of each node depends then on the horizontal position (lon, lat),
-        the number of the layer and the time is depth is a 4D array.
-        depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
-    time :
-        Vector containing the time coordinates of the grid
-    time_origin : parcels.tools.converters.TimeConverter
-        Time origin of the time axis
-    mesh : str
-        String indicating the type of mesh coordinates and
-        units used during velocity interpolation:
-
-        1. spherical (default): Lat and lon in degree, with a
-           correction for zonal velocity U near the poles.
-        2. flat: No conversion, lat/lon are assumed to be in m.
-    """
-
-    def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
-        super().__init__(lon, lat, time, time_origin, mesh)
-        assert (isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
-
-        self.gtype = GridType.CurvilinearSGrid
-        self.depth = depth  # should be a C-contiguous array of floats
-        if not self.depth.flags['C_CONTIGUOUS']:
-            self.depth = np.array(self.depth, order='C')
-        self.zdim = self.depth.shape[-3]
-        self.z4d = 1 if len(self.depth.shape) == 4 else 0
-        if self.z4d:
-            # self.depth.shape[0] is 0 for S grids loaded from netcdf file
-            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-        else:
-            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
-            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
         if not self.depth.dtype == np.float32:
             self.depth = self.depth.astype(np.float32)

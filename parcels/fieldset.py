@@ -289,8 +289,6 @@ class FieldSet:
             if isinstance(f, (VectorField, NestedField)) or f.dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
-                if f.grid.depth_field == 'not_yet_set':
-                    raise ValueError("If depth dimension is set at 'not_yet_set', it must be added later using Field.set_depth_from_field(field)")
                 if not f.grid.defer_load:
                     depth_data = f.grid.depth_field.data
                     f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
@@ -437,8 +435,6 @@ class FieldSet:
                     if not possibly_samegrid:
                         break
                     if varchunksize == 'auto':
-                        break
-                    if 'depth' in dims and dims['depth'] == 'not_yet_set':
                         break
                     processedGrid = False
                     if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):

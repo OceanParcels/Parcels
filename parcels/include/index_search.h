@@ -37,7 +37,7 @@ typedef struct
 
 typedef struct
 {
-  int xdim, ydim, zdim, tdim, z4d;
+  int xdim, ydim, zdim, tdim;
   int sphere_mesh, zonal_periodic;
   int *chunk_info;
   int *load_chunk;
@@ -127,62 +127,6 @@ static inline StatusCode search_indices_vertical_z(type_coord z, int zdim, float
   return SUCCESS;
 }
 
-static inline StatusCode search_indices_vertical_s(type_coord z, int xdim, int ydim, int zdim, float *zvals,
-                                    int xi, int yi, int *zi, double xsi, double eta, double *zeta,
-                                    int z4d, int ti, int tdim, double time, double t0, double t1, int interp_method)
-{
-  if (interp_method == BGRID_VELOCITY || interp_method == BGRID_W_VELOCITY || interp_method == BGRID_TRACER){
-    xsi = 1;
-    eta = 1;
-  }
-  float zcol[zdim];
-  int zii;
-  if (z4d == 1){
-    float (*zvalstab)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) zvals;
-    int ti1 = ti;
-    if (ti < tdim-1)
-       ti1= ti+1;
-    double zt0, zt1;
-    for (zii=0; zii < zdim; zii++){
-      zt0 = (1-xsi)*(1-eta) * zvalstab[ti ][zii][yi  ][xi  ]
-          + (  xsi)*(1-eta) * zvalstab[ti ][zii][yi  ][xi+1]
-          + (  xsi)*(  eta) * zvalstab[ti ][zii][yi+1][xi+1]
-          + (1-xsi)*(  eta) * zvalstab[ti ][zii][yi+1][xi  ];
-      zt1 = (1-xsi)*(1-eta) * zvalstab[ti1][zii][yi  ][xi  ]
-          + (  xsi)*(1-eta) * zvalstab[ti1][zii][yi  ][xi+1]
-          + (  xsi)*(  eta) * zvalstab[ti1][zii][yi+1][xi+1]
-          + (1-xsi)*(  eta) * zvalstab[ti1][zii][yi+1][xi  ];
-      zcol[zii] = zt0 + (zt1 - zt0) * (float)((time - t0) / (t1 - t0));
-    }
-
-  }
-  else{
-    float (*zvalstab)[ydim][xdim] = (float (*)[ydim][xdim]) zvals;
-    for (zii=0; zii < zdim; zii++){
-      zcol[zii] = (1-xsi)*(1-eta) * zvalstab[zii][yi  ][xi  ]
-                + (  xsi)*(1-eta) * zvalstab[zii][yi  ][xi+1]
-                + (  xsi)*(  eta) * zvalstab[zii][yi+1][xi+1]
-                + (1-xsi)*(  eta) * zvalstab[zii][yi+1][xi  ];
-    }
-  }
-
-  if (zcol[zdim-1] > zcol[0]){
-    if (z < zcol[0]) {return ERRORTHROUGHSURFACE;}
-    if (z > zcol[zdim-1]) {return ERROROUTOFBOUNDS;}
-    while (*zi < zdim-1 && z > zcol[*zi+1]) ++(*zi);
-    while (*zi > 0 && z < zcol[*zi]) --(*zi);
-  }
-  else{
-    if (z > zcol[0]) {return ERRORTHROUGHSURFACE;}
-    if (z < zcol[zdim-1]) {return ERROROUTOFBOUNDS;}
-    while (*zi < zdim-1 && z < zcol[*zi+1]) ++(*zi);
-    while (*zi > 0 && z > zcol[*zi]) --(*zi);
-  }
-  if (*zi == zdim-1) {--*zi;}
-
-  *zeta = (z - zcol[*zi]) / (zcol[*zi+1] - zcol[*zi]);
-  return SUCCESS;
-}
 
 static inline void reconnect_bnd_indices(int *xi, int *yi, int xdim, int ydim, int onlyX, int sphere_mesh)
 {
@@ -226,7 +170,6 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
   float *xy_minmax = grid->lonlat_minmax;
   int sphere_mesh = grid->sphere_mesh;
   int zonal_periodic = grid->zonal_periodic;
-  int z4d = grid->z4d;
 
   if (zonal_periodic == 0){
     if ((xdim > 1) && ((x < xy_minmax[0]) || (x > xy_minmax[1])))
@@ -293,11 +236,6 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
       case RECTILINEAR_Z_GRID:
         status = search_indices_vertical_z(z, zdim, zvals, zi, zeta, gridindexingtype);
         break;
-      case RECTILINEAR_S_GRID:
-        status = search_indices_vertical_s(z, xdim, ydim, zdim, zvals,
-                                        *xi, *yi, zi, *xsi, *eta, zeta,
-                                        z4d, ti, tdim, time, t0, t1, interp_method);
-        break;
       default:
         status = ERRORINTERPOLATION;
     }
@@ -338,7 +276,6 @@ static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, 
   float *xy_minmax = grid->lonlat_minmax;
   int sphere_mesh = grid->sphere_mesh;
   int zonal_periodic = grid->zonal_periodic;
-  int z4d = grid->z4d;
 
   // NEMO convention
   float (* xgrid)[xdim] = (float (*)[xdim]) xvals;
@@ -436,11 +373,6 @@ static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, 
     switch(gtype){
       case CURVILINEAR_Z_GRID:
         status = search_indices_vertical_z(z, zdim, zvals, zi, zeta, gridindexingtype);
-        break;
-      case CURVILINEAR_S_GRID:
-        status = search_indices_vertical_s(z, xdim, ydim, zdim, zvals,
-                                        *xi, *yi, zi, *xsi, *eta, zeta,
-                                        z4d, ti, tdim, time, t0, t1, interp_method);
         break;
       default:
         status = ERRORINTERPOLATION;

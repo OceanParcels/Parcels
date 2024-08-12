@@ -770,20 +770,11 @@ static inline StatusCode spatial_interpolation_UVW_c_grid(double xsi, double eta
   double py[8] = {ygrid_loc[0], ygrid_loc[1], ygrid_loc[2], ygrid_loc[3],
                   ygrid_loc[0], ygrid_loc[1], ygrid_loc[2], ygrid_loc[3]};
   double pz[8];
-  if (grid->z4d == 1){
-    float (*zvals)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) grid->depth;
-    for (iN=0; iN < 4; ++iN){
-      pz[iN] = zvals[ti][zi][yi+iN/2][xi+min(1, (iN%3))];
-      pz[iN+4] = zvals[ti][zi+1][yi+iN/2][xi+min(1, (iN%3))];
+  float (*zvals)[ydim][xdim] = (float (*)[ydim][xdim]) grid->depth;
+  for (iN=0; iN < 4; ++iN){
+    pz[iN] = zvals[zi][yi+iN/2][xi+min(1, (iN%3))];
+    pz[iN+4] = zvals[zi+1][yi+iN/2][xi+min(1, (iN%3))];
     }
-  }
-  else{
-    float (*zvals)[ydim][xdim] = (float (*)[ydim][xdim]) grid->depth;
-    for (iN=0; iN < 4; ++iN){
-      pz[iN] = zvals[zi][yi+iN/2][xi+min(1, (iN%3))];
-      pz[iN+4] = zvals[zi+1][yi+iN/2][xi+min(1, (iN%3))];
-    }
-  }
 
   double U0 = u0 * jacobian3D_lin_face(px, py, pz, 0, eta, zet, ZONAL, grid->sphere_mesh);
   double U1 = u1 * jacobian3D_lin_face(px, py, pz, 1, eta, zet, ZONAL, grid->sphere_mesh);

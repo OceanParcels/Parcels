@@ -554,7 +554,7 @@ class ParticleSet(ABC):
             j, i = np.unravel_index(inds, p_interior.shape)
             grid = start_field.grid
             lon, lat = ([], [])
-            if grid.gtype in [GridType.RectilinearZGrid, GridType.RectilinearSGrid]:
+            if grid.gtype in [GridType.RectilinearZGrid]:
                 lon = grid.lon[i] + xsi * (grid.lon[i + 1] - grid.lon[i])
                 lat = grid.lat[j] + eta * (grid.lat[j + 1] - grid.lat[j])
             else:
