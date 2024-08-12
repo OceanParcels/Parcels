@@ -533,7 +533,7 @@ class FieldSet:
             This flag overrides the allow_time_extrapolation and sets it to False
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
-            Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
+            Note that in the case of from_nemo() and from_c_grid_dataset(), the velocity fields are default to 'cgrid_velocity'
         chunksize :
             size of the chunks in dask loading. Default is None (no chunking)
         **kwargs :
@@ -645,7 +645,7 @@ class FieldSet:
             This flag overrides the allow_time_extrapolation and sets it to False
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
-            Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
+            Note that in the case of from_nemo() and from_c_grid_dataset(), the velocity fields are default to 'cgrid_velocity'
         gridindexingtype : str
             The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo()
             See also the Grid indexing documentation on oceanparcels.org (Default value = 'nemo')
@@ -745,7 +745,7 @@ class FieldSet:
             This flag overrides the allow_time_extrapolation and sets it to False
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-            Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
+            Note that in the case of from_pop() and from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
         chunksize :
             size of the chunks in dask loading (Default value = None)
         depth_units :
@@ -860,11 +860,21 @@ class FieldSet:
         """
         Load a FieldSet from an A-grid dataset, which is the default grid type.
 
-        :param filenames: Path to the input files.
-        :param variables: Dictionary of the variables in the NetCDF file.
-        :param dimensions: Dictionary of the dimensions in the NetCDF file.
-        :param kwargs: Additional keyword arguments for from_netcdf().
-        :return: A FieldSet object.
+        Parameters
+        ----------
+        filenames :
+            Path(s) to the input files.
+        variables :
+            Dictionary of the variables in the NetCDF file.
+        dimensions :
+            Dictionary of the dimensions in the NetCDF file.
+        **kwargs :
+            Additional keyword arguments for `from_netcdf()`.
+
+        Returns
+        -------
+        FieldSet
+            A FieldSet object.
         """
         return cls.from_netcdf(filenames, variables, dimensions, **kwargs)
 

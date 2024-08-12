@@ -503,12 +503,9 @@ def test_analyticalAgrid(mode):
     V = np.ones((lat.size, lon.size), dtype=np.float32)
     fieldset = FieldSet.from_data({'U': U, 'V': V}, {'lon': lon, 'lat': lat}, mesh='flat')
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=1, lat=1)
-    failed = False
-    try:
+
+    with pytest.raises(NotImplementedError):
         pset.execute(AdvectionAnalytical, runtime=1)
-    except NotImplementedError:
-        failed = True
-    assert failed
 
 
 @pytest.mark.parametrize('mode', ['scipy'])  # JIT not implemented
