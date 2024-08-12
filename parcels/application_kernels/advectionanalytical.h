@@ -56,7 +56,8 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   int xdim = grid->xdim;
   int igrid = fu->igrid;
 
-  double tol = 1e-10;
+  double tol_grid = 1e-4;  // Tolerance for grid search
+  double tol_compute = 1e-10;  // Tolerance for analytical computation
   double I_s = 10;  // number of intermediate time steps
   double direction = 1;
   if (*dt < 0)
@@ -108,27 +109,27 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     status = getCell2D(fv, *xi, *yi, tii, dataV_2D, first_tstep_only); CHECKSTATUS(status);
 
     bool updateCells = 0;
-    if (fabs(xsi - 1) < tol){
+    if (xsi > 1 - tol_grid){
       if (dataU_2D[0][1][1]*direction > 0){
         *xi += 1;
         xsi = 0;
         updateCells = 1;
       }
-    } else if (fabs(xsi) < tol){
-      if (dataU_2D[0][0][0]*direction < 0){
+    } else if (xsi < tol_grid){
+      if (dataU_2D[0][1][0]*direction < 0){
         *xi -= 1;
         xsi = 1;
         updateCells = 1;
       }
     }
-    if (fabs(eta - 1) < tol){
+    if (eta > 1 - tol_grid){
       if (dataV_2D[0][1][1]*direction > 0){
         *yi += 1;
         eta = 0;
         updateCells = 1;
       }
-    } else if (fabs(eta) < tol){
-      if (dataV_2D[0][0][0]*direction < 0){
+    } else if (eta < tol_grid){
+      if (dataV_2D[0][0][1]*direction < 0){
         *yi -= 1;
         eta = 1;
         updateCells = 1;
@@ -143,40 +144,40 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     status = getCell3D(fv, *xi, *yi, *zi, tii, dataV_3D, first_tstep_only); CHECKSTATUS(status);
     status = getCell3D(fw, *xi, *yi, *zi, tii, dataW_3D, first_tstep_only); CHECKSTATUS(status);
     bool updateCells = 0;
-    if (fabs(xsi - 1) < tol){
+    if (xsi > 1 - tol_grid){
       if (dataU_3D[0][1][1][1]*direction > 0){
         *xi += 1;
         xsi = 0;
         updateCells = 1;
       }
-    } else if (fabs(xsi) < tol){
-      if (dataU_3D[0][0][0][0]*direction < 0){
+    } else if (xsi < tol_grid){
+      if (dataU_3D[0][1][1][0]*direction < 0){
         *xi -= 1;
         xsi = 1;
         updateCells = 1;
       }
     }
-    if (fabs(eta - 1) < tol){
+    if (eta > 1 - tol_grid){
       if (dataV_3D[0][1][1][1]*direction > 0){
         *yi += 1;
         eta = 0;
         updateCells = 1;
       }
-    } else if (fabs(eta) < tol){
-      if (dataV_3D[0][0][0][0]*direction < 0){
+    } else if (eta < tol_grid){
+      if (dataV_3D[0][1][0][1]*direction < 0){
         *yi -= 1;
         eta = 1;
         updateCells = 1;
       }
     }
-    if (fabs(zeta - 1) < tol){
+    if (zeta > 1 - tol_grid){
       if (dataW_3D[0][1][1][1]*direction > 0){
         *zi += 1;
         zeta = 0;
         updateCells = 1;
       }
-    } else if (fabs(zeta) < tol){
-      if (dataW_3D[0][0][0][0]*direction < 0){
+    } else if (zeta < tol_grid){
+      if (dataW_3D[0][0][1][1]*direction < 0){
         *zi -= 1;
         zeta = 1;
         updateCells = 1;
@@ -266,25 +267,44 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     W1 = ((1-tau)*dataW_3D[0][1][1][1] + tau*dataW_3D[1][1][1][1]) * dxdy * direction;
   }
 
-  compute_ds(U0, U1, xsi, direction, tol, &ds_x, &B_x, &delta_x);
-  compute_ds(V0, V1, eta, direction, tol, &ds_y, &B_y, &delta_y);
+  compute_ds(U0, U1, xsi, direction, tol_compute, &ds_x, &B_x, &delta_x);
+  compute_ds(V0, V1, eta, direction, tol_compute, &ds_y, &B_y, &delta_y);
   if (flow3D == 1){
-    compute_ds(W0, W1, zeta, direction, tol, &ds_z, &B_z, &delta_z);
+    compute_ds(W0, W1, zeta, direction, tol_compute, &ds_z, &B_z, &delta_z);
   } else {
     ds_z = 1.0/0.0;
   }
 
   double s_min = min(min(min(fabs(ds_x), fabs(ds_y)), fabs(ds_z)), fabs(ds_t / (dxdy * dz)));
 
-  rs_x = compute_rs(xsi, B_x, delta_x, s_min, tol);
-  rs_y = compute_rs(eta, B_y, delta_y, s_min, tol);
+  rs_x = compute_rs(xsi, B_x, delta_x, s_min, tol_compute);
+  rs_y = compute_rs(eta, B_y, delta_y, s_min, tol_compute);
 
   *particle_dlon += (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3] - *lon;
   *particle_dlat += (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3] - *lat;
 
   if (flow3D == 1){
-    rs_z = compute_rs(zeta, B_z, delta_z, s_min, tol);
+    rs_z = compute_rs(zeta, B_z, delta_z, s_min, tol_compute);
     *particle_ddepth += (1.-rs_z) * pz[0] + rs_z * pz[1] - *depth;
+  }
+
+  if ((rs_x < -tol_grid) || (rs_x > 1+tol_grid) ||
+      (rs_y < -tol_grid) || (rs_y > 1+tol_grid) ||
+      (rs_z < -tol_grid) || (rs_z > 1+tol_grid)){
+
+    // TODO remove this extensive print statement (useful for debugging purposes)
+    printf("Particle out of bounds\n");
+    printf("rs_x, rs_y, rs_z, s_min = %f, %f, %f %f\n", rs_x, rs_y, rs_z, s_min);
+    printf("xi, yi, zi, ti = %d, %d, %d, %d\n", *xi, *yi, *zi, tii);
+    printf("xsi, eta, zeta = %f, %f, %f\n", xsi, eta, zeta);
+    printf("c1, c2, c3, c4 = %f, %f, %f, %f\n", c1, c2, c3, c4);
+    printf("U0, U1, V0, V1, W0, W1 = %f, %f, %f, %f, %f, %f\n", U0, U1, V0, V1, W0, W1);
+    printf("px, py, pz = %f, %f, %f\n", px[0], py[0], pz[0]);
+    printf("dxdxsi, dxdeta, dydxsi, dydeta = %f, %f, %f, %f\n", dxdxsi, dxdeta, dydxsi, dydeta);
+    printf("dxdy, dz = %f, %f\n", dxdy, dz);
+    printf("B_y, delta_y, ds_y = %f, %f, %f\n", B_y, delta_y, ds_y);
+
+    return ERRORINTERPOLATION;
   }
 
   if (*dt > 0){
