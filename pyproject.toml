@@ -102,8 +102,10 @@ ignore = [
 convention = "numpy"
 
 [tool.ruff.format]
-# List of files to ignore formatting (ordered by ascending line count)
 exclude = [
+  "parcels/tools/interpolation_utils.py",
+
+  # List of files to ignore formatting (ordered by ascending line count)
   "tests/test_mpirun.py",
   "parcels/tools/global_statics.py",
   "tests/test_tools.py",
@@ -117,7 +119,6 @@ exclude = [
   "tests/test_data/create_testfields.py",
   "tests/test_diffusion.py",
   "parcels/tools/exampledata_utils.py",
-  "parcels/tools/interpolation_utils.py",
   "parcels/interaction/neighborsearch/hashflat.py",
   "parcels/interaction/neighborsearch/hashspherical.py",
   "parcels/interaction/neighborsearch/basehash.py",
