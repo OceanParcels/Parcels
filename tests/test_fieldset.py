@@ -68,12 +68,9 @@ def test_fieldset_from_data(xdim, ydim):
 def test_fieldset_extra_syntax():
     """Simple test for fieldset initialisation from data."""
     data, dimensions = generate_fieldset(10, 10)
-    failed = False
-    try:
+
+    with pytest.raises(SyntaxError):
         FieldSet.from_data(data, dimensions, unknown_keyword=5)
-    except SyntaxError:
-        failed = True
-    assert failed
 
 
 def test_fieldset_vmin_vmax():
@@ -152,13 +149,9 @@ def test_field_from_netcdf_variables():
     assert np.allclose(f1.data, f2.data, atol=1e-12)
     assert np.allclose(f1.data, f3.data, atol=1e-12)
 
-    failed = False
-    try:
+    with pytest.raises(AssertionError):
         variable = {'U': 'vozocrtx', 'nav_lat': 'nav_lat'}  # multiple variables will fail
         f3 = Field.from_netcdf(filename, variable, dims)
-    except AssertionError:
-        failed = True
-    assert failed
 
 
 @pytest.mark.parametrize('calendar, cftime_datetime',
@@ -237,6 +230,17 @@ def test_field_from_netcdf_fieldtypes():
     fset = FieldSet.from_nemo(filenames, variables, dimensions, fieldtype={'varU': 'U', 'varV': 'V'})
     assert isinstance(fset.varU.units, GeographicPolar)
 
+def test_fieldset_from_agrid_dataset():
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
+
+    filenames = {
+        'lon': data_path + 'mask_nemo_cross_180lon.nc',
+        'lat': data_path + 'mask_nemo_cross_180lon.nc',
+        'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'
+    }
+    variable = {'U': 'U'}
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+    FieldSet.from_a_grid_dataset(filenames, variable, dimensions)
 
 def test_fieldset_from_cgrid_interpmethod():
     data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
@@ -246,13 +250,10 @@ def test_fieldset_from_cgrid_interpmethod():
                  'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'}
     variable = 'U'
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-    failed = False
-    try:
+
+    with pytest.raises(TypeError):
         # should fail because FieldSet.from_c_grid_dataset does not support interp_method
         FieldSet.from_c_grid_dataset(filenames, variable, dimensions, interp_method='partialslip')
-    except TypeError:
-        failed = True
-    assert failed
 
 
 @pytest.mark.parametrize('cast_data_dtype', ['float32', 'float64'])
@@ -951,12 +952,8 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     pset = ParticleSet(fieldset, pclass=SampleParticle, time=[0, time2], lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
 
     if time2 > 1:
-        failed = False
-        try:
+        with pytest.raises(TimeExtrapolationError):
             pset.execute(SampleField, runtime=10)
-        except TimeExtrapolationError:
-            failed = True
-        assert failed
     else:
         pset.execute(SampleField, runtime=1)
         assert np.allclose([p.u_kernel for p in pset], [p.u_scipy for p in pset], atol=1e-5)

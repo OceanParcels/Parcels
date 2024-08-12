@@ -18,7 +18,7 @@ There are two primary groups that contribute to Parcels; oceanographers who brin
 
 .. note::
 
-    The first component of this documentation is geared to those new to open source. Already familiar with GitHub and open source? Skip ahead to `"Editing Parcels code" <https://www.notion.so/Parcels-Contributing-md-c8bc5a057b7f47e885f3eee82ea6fdf6?pvs=21>`_. See the panel on the right hand side for the table of contents.
+    The first component of this documentation is geared to those new to open source. Already familiar with GitHub and open source? Skip ahead to the `Editing Parcels code`_ section.
 
 What is open source?
 --------------------
@@ -52,6 +52,8 @@ If you want to suggest quick edits to the documentation, it's as easy as going t
 If you're having trouble using Parcels, feel free to create a discussion in our Discussions tab and we'll be happy to support. Want to suggest a feature, or have encountered a problem that is a result of a bug in Parcels, then search for an issue in the tracker or `create a new one <https://github.com/OceanParcels/parcels/issues/new/choose>`_ with the relevant details.
 
 In the `Projects panel <https://github.com/OceanParcels/parcels/projects?query=is%3Aopen>`_, you'll see the "Parcels development" project. This is used by the core development team for project management, as well as drafting up new ideas for the codebase that aren't mature enough to be issues themselves. Everything in "backlog" is not being actively worked on and is fair game for open source contributions.
+
+.. _editing-parcels-code:
 
 Editing Parcels code
 ---------------------
