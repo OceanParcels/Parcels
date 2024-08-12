@@ -59,6 +59,8 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   double tol_grid = 1e-4;  // Tolerance for grid search
   double tol_compute = 1e-10;  // Tolerance for analytical computation
   double I_s = 10;  // number of intermediate time steps
+  int maxCellupdates = 10;  // Maximum number of cell updates before throwing an interpolation error
+
   double direction = 1;
   if (*dt < 0)
     direction = -1;
@@ -104,90 +106,91 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 
   int flow3D = (int) *flow3D_dbl;
 
-  if (flow3D == 0){
-    status = getCell2D(fu, *xi, *yi, tii, dataU_2D, first_tstep_only); CHECKSTATUS(status);
-    status = getCell2D(fv, *xi, *yi, tii, dataV_2D, first_tstep_only); CHECKSTATUS(status);
-
-    bool updateCells = 0;
-    if (xsi > 1 - tol_grid){
-      if (dataU_2D[0][1][1]*direction > 0){
-        *xi += 1;
-        xsi = 0;
-        updateCells = 1;
-      }
-    } else if (xsi < tol_grid){
-      if (dataU_2D[0][1][0]*direction < 0){
-        *xi -= 1;
-        xsi = 1;
-        updateCells = 1;
-      }
-    }
-    if (eta > 1 - tol_grid){
-      if (dataV_2D[0][1][1]*direction > 0){
-        *yi += 1;
-        eta = 0;
-        updateCells = 1;
-      }
-    } else if (eta < tol_grid){
-      if (dataV_2D[0][0][1]*direction < 0){
-        *yi -= 1;
-        eta = 1;
-        updateCells = 1;
-      }
-    }
-    if (updateCells == 1){
+  bool updateCells = 1;
+  int numUpdates = 0;
+  while ((updateCells == 1) && (numUpdates < maxCellupdates)){
+    if (flow3D == 0){
       status = getCell2D(fu, *xi, *yi, tii, dataU_2D, first_tstep_only); CHECKSTATUS(status);
       status = getCell2D(fv, *xi, *yi, tii, dataV_2D, first_tstep_only); CHECKSTATUS(status);
-    }
-  } else if (flow3D == 1){
-    status = getCell3D(fu, *xi, *yi, *zi, tii, dataU_3D, first_tstep_only); CHECKSTATUS(status);
-    status = getCell3D(fv, *xi, *yi, *zi, tii, dataV_3D, first_tstep_only); CHECKSTATUS(status);
-    status = getCell3D(fw, *xi, *yi, *zi, tii, dataW_3D, first_tstep_only); CHECKSTATUS(status);
-    bool updateCells = 0;
-    if (xsi > 1 - tol_grid){
-      if (dataU_3D[0][1][1][1]*direction > 0){
-        *xi += 1;
-        xsi = 0;
-        updateCells = 1;
+
+      updateCells = 0;
+      if (xsi > 1 - tol_grid){
+        if (dataU_2D[0][1][1]*direction > 0){
+          *xi += 1;
+          xsi = 0;
+          updateCells = 1;
+        }
+      } else if (xsi < tol_grid){
+        if (dataU_2D[0][1][0]*direction < 0){
+          *xi -= 1;
+          xsi = 1;
+          updateCells = 1;
+        }
       }
-    } else if (xsi < tol_grid){
-      if (dataU_3D[0][1][1][0]*direction < 0){
-        *xi -= 1;
-        xsi = 1;
-        updateCells = 1;
+      if (eta > 1 - tol_grid){
+        if (dataV_2D[0][1][1]*direction > 0){
+          *yi += 1;
+          eta = 0;
+          updateCells = 1;
+        }
+      } else if (eta < tol_grid){
+        if (dataV_2D[0][0][1]*direction < 0){
+          *yi -= 1;
+          eta = 1;
+          updateCells = 1;
+        }
       }
-    }
-    if (eta > 1 - tol_grid){
-      if (dataV_3D[0][1][1][1]*direction > 0){
-        *yi += 1;
-        eta = 0;
-        updateCells = 1;
-      }
-    } else if (eta < tol_grid){
-      if (dataV_3D[0][1][0][1]*direction < 0){
-        *yi -= 1;
-        eta = 1;
-        updateCells = 1;
-      }
-    }
-    if (zeta > 1 - tol_grid){
-      if (dataW_3D[0][1][1][1]*direction > 0){
-        *zi += 1;
-        zeta = 0;
-        updateCells = 1;
-      }
-    } else if (zeta < tol_grid){
-      if (dataW_3D[0][0][1][1]*direction < 0){
-        *zi -= 1;
-        zeta = 1;
-        updateCells = 1;
-      }
-    }
-    if (updateCells == 1){
+    } else if (flow3D == 1){
       status = getCell3D(fu, *xi, *yi, *zi, tii, dataU_3D, first_tstep_only); CHECKSTATUS(status);
       status = getCell3D(fv, *xi, *yi, *zi, tii, dataV_3D, first_tstep_only); CHECKSTATUS(status);
       status = getCell3D(fw, *xi, *yi, *zi, tii, dataW_3D, first_tstep_only); CHECKSTATUS(status);
+
+      updateCells = 0;
+      if (xsi > 1 - tol_grid){
+        if (dataU_3D[0][1][1][1]*direction > 0){
+          *xi += 1;
+          xsi = 0;
+          updateCells = 1;
+        }
+      } else if (xsi < tol_grid){
+        if (dataU_3D[0][1][1][0]*direction < 0){
+          *xi -= 1;
+          xsi = 1;
+          updateCells = 1;
+        }
+      }
+      if (eta > 1 - tol_grid){
+        if (dataV_3D[0][1][1][1]*direction > 0){
+          *yi += 1;
+          eta = 0;
+          updateCells = 1;
+        }
+      } else if (eta < tol_grid){
+        if (dataV_3D[0][1][0][1]*direction < 0){
+          *yi -= 1;
+          eta = 1;
+          updateCells = 1;
+        }
+      }
+      if (zeta > 1 - tol_grid){
+        if (dataW_3D[0][1][1][1]*direction > 0){
+          *zi += 1;
+          zeta = 0;
+          updateCells = 1;
+        }
+      } else if (zeta < tol_grid){
+        if (dataW_3D[0][0][1][1]*direction < 0){
+          *zi -= 1;
+          zeta = 1;
+          updateCells = 1;
+        }
+      }
     }
+    numUpdates++;
+  }
+  if (numUpdates >= maxCellupdates){
+    printf("Number of cell updates exceeded maximum number of updates\n");
+    return ERRORINTERPOLATION;
   }
 
   double px[4];
