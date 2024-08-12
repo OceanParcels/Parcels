@@ -584,8 +584,15 @@ class FieldSet:
                    allow_time_extrapolation=None, time_periodic=False,
                    tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of CROCO fields.
-        All parameters and keywords are exactly the same as for FieldSet.from_nemo().
-        """  # TODO expand this docstring
+        All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
+        the vertical coordinate is scaled by the bathymetry (``h``) field from CROCO, in order to
+        account for the sigma-grid. The horizontal interpolation uses the MITgcm grid indexing
+        as described in FieldSet.from_mitgcm().
+
+        The sigma grid scaling means that FieldSet.from_croco() requires a variable ``H: h`` to work.
+
+        See `the CROCO 3D tutorial <../examples/tutorial_croco_3D.ipynb>`__ for more infomation.
+        """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_croco'
         if kwargs.pop('gridindexingtype', 'croco') != 'croco':
