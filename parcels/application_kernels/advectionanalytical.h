@@ -28,17 +28,17 @@ void compute_ds(double F0, double F1, double r, double direction, double tol,
   }
 
   if (fabs(*B) < tol && fabs(*delta) < tol){
-      *ds = 1.0 /0.0;  // SET TO INFINITY
+    *ds = 1.0 /0.0;  // SET TO INFINITY
   } else if (*B == 0){
-      *ds = -(r_target - r) / *delta;
+    *ds = -(r_target - r) / *delta;
   } else if (F_r1 * F_r0 < tol){
-      *ds = 1.0 /0.0;  // SET TO INFINITY
+    *ds = 1.0 /0.0;  // SET TO INFINITY
   } else {
-      *ds = - 1. / *B * log(F_r1 / F_r0);
+    *ds = - 1. / *B * log(F_r1 / F_r0);
   }
 
   if (fabs(*ds) < tol){
-      *ds = 1.0 /0.0;  // SET TO INFINITY
+    *ds = 1.0 /0.0;  // SET TO INFINITY
   }
 }
 
@@ -115,26 +115,26 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 
       updateCells = 0;
       if (xsi > 1 - tol_grid){
-        if (dataU_2D[0][1][1]*direction > 0){
+        if (((1-tau)*dataU_2D[0][1][1] + tau*dataU_2D[1][1][1])*direction > 0){
           *xi += 1;
           xsi = 0;
           updateCells = 1;
         }
       } else if (xsi < tol_grid){
-        if (dataU_2D[0][1][0]*direction < 0){
+        if (((1-tau)*dataU_2D[0][1][0] + tau*dataU_2D[1][1][0])*direction < 0){
           *xi -= 1;
           xsi = 1;
           updateCells = 1;
         }
       }
       if (eta > 1 - tol_grid){
-        if (dataV_2D[0][1][1]*direction > 0){
+        if (((1-tau)*dataV_2D[0][1][1] + tau*dataV_2D[1][1][1])*direction > 0){
           *yi += 1;
           eta = 0;
           updateCells = 1;
         }
       } else if (eta < tol_grid){
-        if (dataV_2D[0][0][1]*direction < 0){
+        if (((1-tau)*dataV_2D[0][0][1] + tau*dataV_2D[1][0][1])*direction < 0){
           *yi -= 1;
           eta = 1;
           updateCells = 1;
@@ -147,39 +147,39 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 
       updateCells = 0;
       if (xsi > 1 - tol_grid){
-        if (dataU_3D[0][1][1][1]*direction > 0){
+        if (((1-tau)*dataU_3D[0][1][1][1] + tau*dataU_3D[1][1][1][1])*direction > 0){
           *xi += 1;
           xsi = 0;
           updateCells = 1;
         }
       } else if (xsi < tol_grid){
-        if (dataU_3D[0][1][1][0]*direction < 0){
+        if (((1-tau)*dataU_3D[0][1][1][0] + tau*dataU_3D[1][1][1][0])*direction < 0){
           *xi -= 1;
           xsi = 1;
           updateCells = 1;
         }
       }
       if (eta > 1 - tol_grid){
-        if (dataV_3D[0][1][1][1]*direction > 0){
+        if (((1-tau)*dataV_3D[0][1][1][1] + tau*dataV_3D[1][1][1][1])*direction > 0){
           *yi += 1;
           eta = 0;
           updateCells = 1;
         }
       } else if (eta < tol_grid){
-        if (dataV_3D[0][1][0][1]*direction < 0){
+        if (((1-tau)*dataV_3D[0][1][0][1] + tau*dataV_3D[1][1][0][1])*direction < 0){
           *yi -= 1;
           eta = 1;
           updateCells = 1;
         }
       }
       if (zeta > 1 - tol_grid){
-        if (dataW_3D[0][1][1][1]*direction > 0){
+        if (((1-tau)*dataW_3D[0][1][1][1] + tau*dataW_3D[1][1][1][1])*direction > 0){
           *zi += 1;
           zeta = 0;
           updateCells = 1;
         }
       } else if (zeta < tol_grid){
-        if (dataW_3D[0][0][1][1]*direction < 0){
+        if (((1-tau)*dataW_3D[0][0][1][1] + tau*dataW_3D[1][0][1][1])*direction < 0){
           *zi -= 1;
           zeta = 1;
           updateCells = 1;
