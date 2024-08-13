@@ -6,6 +6,7 @@ try:
 except ModuleNotFoundError:
     MPI = None
 
+__all__ = []
 
 class Timer():
     def __init__(self, name, parent=None, start=True):
