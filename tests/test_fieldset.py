@@ -12,7 +12,7 @@ import psutil
 import pytest
 import xarray as xr
 
-from parcels import (  # noqa
+from parcels import (
     AdvectionRK4,
     AdvectionRK4_3D,
     FieldSet,
@@ -648,7 +648,7 @@ def test_fieldset_write(tmpdir):
     fieldset.U.to_write = True
 
     def UpdateU(particle, fieldset, time):
-        tmp1, tmp2 = fieldset.UV[particle]  # noqa
+        tmp1, tmp2 = fieldset.UV[particle]
         fieldset.U.data[particle.ti, particle.yi, particle.xi] += 1
         fieldset.U.grid.time[0] = time
 
@@ -694,11 +694,11 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
         while particle.lon > 180.:
             particle_dlon -= 360.  # noqa
         while particle.lon < -180.:
-            particle_dlon += 360.  # noqa
+            particle_dlon += 360.
         while particle.lat > 90.:
             particle_dlat -= 180.  # noqa
         while particle.lat < -90.:
-            particle_dlat += 180.  # noqa
+            particle_dlat += 180.
 
     process = psutil.Process(os.getpid())
     mem_0 = process.memory_info().rss

@@ -64,7 +64,12 @@ select = [
     "E",  # Error
     "F",  # pyflakes
     "I",  # isort
+    "B",  # Bugbear
     # "UP", # pyupgrade
+    "LOG", # logging
+    "ICN", # import conventions
+    "G", # logging-format
+    "RUF", # ruff
 ]
 
 ignore = [
@@ -72,6 +77,13 @@ ignore = [
     "E501",
     # ‘from module import *’ used; unable to detect undefined names
     "F403",
+    # Mutable class attributes should be annotated with `typing.ClassVar`
+    "RUF012",
+    # Consider `(slice(2), *block)` instead of concatenation
+    "RUF005",
+    # Prefer `next(iter(variable.items()))` over single element slice
+    "RUF015",
+
 
     # TODO: ignore for now (requires more work). Remove ignore once fixed
     # Missing docstring in public module
@@ -96,6 +108,12 @@ ignore = [
     "D205",
     # do not use bare except, specify exception instead
     "E722",
+
+
+    # TODO: These bugbear issues are to be resolved
+    "B011", # Do not `assert False`
+    "B016", # Cannot raise a literal. Did you intend to return it or raise an Exception?
+    "B904", # Within an `except` clause, raise exceptions
 ]
 
 [tool.ruff.lint.pydocstyle]

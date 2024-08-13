@@ -21,11 +21,11 @@ def compute_nemo_particle_advection(fieldset, mode):
         if particle.lon > 15.0:
             particle_dlon -= 15.0  # noqa
         if particle.lon < 0:
-            particle_dlon += 15.0  # noqa
+            particle_dlon += 15.0
         if particle.lat > 60.0:
             particle_dlat -= 11.0  # noqa
         if particle.lat < 49.0:
-            particle_dlat += 11.0  # noqa
+            particle_dlat += 11.0
 
     pset = parcels.ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
     kernels = pset.Kernel(parcels.AdvectionRK4) + periodicBC

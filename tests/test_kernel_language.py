@@ -193,7 +193,7 @@ def test_varname_as_fieldname():
     pset = ParticleSet(fset, pclass=Particle, lon=0, lat=0)
 
     def kernel_particlename(particle, fieldset, time):
-        particle.speed = fieldset.speed[particle]  # noqa
+        particle.speed = fieldset.speed[particle]
 
     pset.execute(kernel_particlename, endtime=1, dt=1.)
     assert pset[0].speed == 10
@@ -210,7 +210,7 @@ def test_abs():
     pset = ParticleSet(fieldset(), pclass=JITParticle, lon=0, lat=0)
 
     def kernel_abs(particle, fieldset, time):
-        particle.lon = abs(3.1)  # noqa
+        particle.lon = abs(3.1)
 
     with pytest.raises(NotImplementedError):
         pset.execute(kernel_abs, endtime=1, dt=1.)

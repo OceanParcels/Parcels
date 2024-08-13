@@ -302,7 +302,7 @@ class FieldSet:
             paths = sorted(glob(str(paths)))
         if len(paths) == 0:
             notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-            raise OSError(f"FieldSet files not found for variable {var}: {str(notfound_paths)}")
+            raise OSError(f"FieldSet files not found for variable {var}: {notfound_paths}")
         for fp in paths:
             if not os.path.exists(fp):
                 raise OSError(f"FieldSet file not found: {fp}")
@@ -1168,7 +1168,7 @@ class FieldSet:
         """
         for grid in self.gridset.grids:
             grid.add_periodic_halo(zonal, meridional, halosize)
-        for attr, value in iter(self.__dict__.items()):
+        for value in self.__dict__.values():
             if isinstance(value, Field):
                 value.add_periodic_halo(zonal, meridional, halosize)
 
