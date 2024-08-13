@@ -10,6 +10,10 @@ from parcels.interaction.neighborsearch.kdtreeflat import (  # noqa
     KDTreeFlatNeighborSearch,
 )
 
-__all__ = ["HashFlatNeighborSearch", "HashSphericalNeighborSearch",
-           "BruteFlatNeighborSearch",
-           "BruteSphericalNeighborSearch", "KDTreeFlatNeighborSearch"]
+__all__ = [
+    "HashFlatNeighborSearch",
+    "HashSphericalNeighborSearch",
+    "BruteFlatNeighborSearch",
+    "BruteSphericalNeighborSearch",
+    "KDTreeFlatNeighborSearch",
+]

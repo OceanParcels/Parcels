@@ -1,9 +1,8 @@
+import _ctypes
 import os
 import sys
 from pathlib import Path
 from tempfile import gettempdir
-
-import _ctypes
 
 try:
     from os import getuid
@@ -12,6 +11,7 @@ except:
     def getuid():
         return 'tmp'
 
+__all__ = ['cleanup_remove_files', 'cleanup_unload_lib', 'get_package_dir', 'get_cache_dir']
 
 def cleanup_remove_files(lib_file, log_file):
     if os.path.isfile(lib_file):

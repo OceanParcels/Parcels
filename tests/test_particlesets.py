@@ -53,6 +53,18 @@ def test_pset_create_line(fieldset, mode, lonlatdepth_dtype, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_create_empty_pset(fieldset, mode):
+    pset = ParticleSet(fieldset, pclass=ptype[mode])
+    assert pset.size == 0
+
+    def DoNothing(particle, fieldset, time):
+        pass
+
+    pset.execute(DoNothing, endtime=1., dt=1.)
+    assert pset.size == 0
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)

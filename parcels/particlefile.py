@@ -1,22 +1,19 @@
 """Module controlling the writing of ParticleSets to Zarr file."""
 import os
 from abc import ABC
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import xarray as xr
 import zarr
 
+import parcels
 from parcels.tools.loggers import logger
 
 try:
     from mpi4py import MPI
 except ModuleNotFoundError:
     MPI = None
-try:
-    from parcels._version import version as parcels_version
-except ModuleNotFoundError:
-    raise OSError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
 
 
 __all__ = ['ParticleFile']
@@ -61,7 +58,7 @@ class ParticleFile(ABC):
 
     def __init__(self, name, particleset, outputdt=np.inf, chunks=None, create_new_zarrfile=True):
 
-        self.outputdt = outputdt.total_seconds() if isinstance(outputdt, delta) else outputdt
+        self.outputdt = outputdt.total_seconds() if isinstance(outputdt, timedelta) else outputdt
         self.chunks = chunks
         self.particleset = particleset
         self.parcels_mesh = 'spherical'
@@ -85,7 +82,7 @@ class ParticleFile(ABC):
 
         self.metadata = {"feature_type": "trajectory", "Conventions": "CF-1.6/CF-1.7",
                          "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
-                         "parcels_version": parcels_version,
+                         "parcels_version": parcels.__version__,
                          "parcels_mesh": self.parcels_mesh}
 
         # Create dictionary to translate datatypes and fill_values
@@ -202,7 +199,7 @@ class ParticleFile(ABC):
         time :
             Time at which to write ParticleSet
         """
-        time = time.total_seconds() if isinstance(time, delta) else time
+        time = time.total_seconds() if isinstance(time, timedelta) else time
 
         if pset.particledata._ncount == 0:
             logger.warning("ParticleSet is empty on writing as array at time %g" % time)

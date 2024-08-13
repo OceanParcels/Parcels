@@ -1,9 +1,10 @@
+import os
 import sys
-from os import path
 
 import numpy as np
 import pytest
 
+import parcels
 from parcels import (
     AdvectionRK4,
     FieldOutOfBoundError,
@@ -335,9 +336,9 @@ def test_execution_keep_cfiles_and_nocompilation_warnings(fieldset, delete_cfile
     logfile = pset.kernel.log_file
     del pset.kernel
     if delete_cfiles:
-        assert not path.exists(cfile)
+        assert not os.path.exists(cfile)
     else:
-        assert path.exists(cfile)
+        assert os.path.exists(cfile)
         with open(logfile) as f:
             assert 'warning' not in f.read(), 'Compilation WARNING in log file'
 
@@ -354,3 +355,63 @@ def test_compilers():
         params = param_class()  # noqa
 
     print(CCompiler_SS())
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_explicit_ParcelsRandom(fieldset, mode):
+    """Testing `from parcels import ParcelsRandom` in kernel code"""
+    from parcels import ParcelsRandom
+
+    def nudge_kernel(particle, fieldset, time):
+        dlat = ParcelsRandom.uniform(2, 3)
+        particle_dlat += dlat  # noqa
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(nudge_kernel, runtime=2, dt=1)
+    assert 2.5 <= pset[0].lat <= 3.5
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_parcels_dot_ParcelsRandom(fieldset, mode):
+    """Testing `parcels.ParcelsRandom` in kernel code"""
+
+    def nudge_kernel(particle, fieldset, time):
+        particle_dlat += parcels.ParcelsRandom.uniform(2, 3) # noqa
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(nudge_kernel, runtime=2, dt=1)
+    assert 2.5 <= pset[0].lat <= 3.5
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_parcels_dot_rng(fieldset, mode):
+    """Testing `parcels.rng` in kernel code."""
+
+    def nudge_kernel(particle, fieldset, time):
+        dlat = parcels.rng.uniform(2, 3)
+        particle_dlat += dlat  # noqa
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(nudge_kernel, runtime=2, dt=1)
+    assert 2.5 <= pset[0].lat <= 3.5
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_custom_ParcelsRandom_alias(fieldset, mode):
+    """Testing aliasing ParcelsRandom to another name."""
+    from parcels import ParcelsRandom as my_custom_name
+
+    def nudge_kernel(particle, fieldset, time):
+        particle_dlat += my_custom_name.uniform(2, 3)  # noqa
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+
+    try:
+        pset.execute(nudge_kernel, runtime=2, dt=1)
+    except Exception:
+        pass  # This test is expected to fail
+    else:
+        pytest.fail(
+            "Parcels uses function name to determine kernel support. "
+            "Aliasing ParcelsRandom to another name is not supported."
+        )

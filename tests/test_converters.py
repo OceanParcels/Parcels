@@ -10,5 +10,5 @@ def test_TimeConverter():
         date = getattr(cftime, cf_datetime)(1990, 1, 1)
         assert TimeConverter(date).calendar == date.calendar
     assert TimeConverter(None).calendar is None
-    date_datetime64 = np.datetime64('2001-01-01T12:00')
+    date_datetime64 = np.datetime64("2001-01-01T12:00")
     assert TimeConverter(date_datetime64).calendar == "np_datetime64"

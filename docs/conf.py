@@ -72,7 +72,8 @@ linkcheck_ignore = [
     r"https://www\.sciencedirect\.com/.*",  # Site doesn't allow crawling
     r"https://lxml\.de/",  # Crawler occasionally fails to establish connection
     r"https://linux\.die\.net/",  # Site doesn't allow crawling
-
+    r"https://doi\.org/10\.1029/.*",  # Site doesn't allow crawling
+    r"https://doi\.org/10\.1111/cobi\.14295",  # Site doesn't allow crawling
     # To monitor
     r"http://marine.copernicus.eu/",  # 2023-06-07 Site non-responsive
     r"https://www\.nodc\.noaa\.gov/",  # 2023-06-23 Site non-responsive
@@ -316,7 +317,11 @@ html_extra_path = ["robots.txt"]
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-# html_sidebars = {}
+
+html_sidebars = {
+    "**": ["sidebar-nav-bs"],
+    "documentation/additional_examples": []
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.

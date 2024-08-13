@@ -2,8 +2,7 @@ import datetime
 import gc
 import os
 import sys
-from datetime import timedelta as delta
-from os import path
+from datetime import timedelta
 
 import cftime
 import dask
@@ -69,12 +68,9 @@ def test_fieldset_from_data(xdim, ydim):
 def test_fieldset_extra_syntax():
     """Simple test for fieldset initialisation from data."""
     data, dimensions = generate_fieldset(10, 10)
-    failed = False
-    try:
+
+    with pytest.raises(SyntaxError):
         FieldSet.from_data(data, dimensions, unknown_keyword=5)
-    except SyntaxError:
-        failed = True
-    assert failed
 
 
 def test_fieldset_vmin_vmax():
@@ -139,7 +135,7 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
 
 
 def test_field_from_netcdf_variables():
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
     filename = data_path + 'perlinfieldsU.nc'
     dims = {'lon': 'x', 'lat': 'y'}
 
@@ -153,13 +149,9 @@ def test_field_from_netcdf_variables():
     assert np.allclose(f1.data, f2.data, atol=1e-12)
     assert np.allclose(f1.data, f3.data, atol=1e-12)
 
-    failed = False
-    try:
+    with pytest.raises(AssertionError):
         variable = {'U': 'vozocrtx', 'nav_lat': 'nav_lat'}  # multiple variables will fail
         f3 = Field.from_netcdf(filename, variable, dims)
-    except AssertionError:
-        failed = True
-    assert failed
 
 
 @pytest.mark.parametrize('calendar, cftime_datetime',
@@ -185,7 +177,7 @@ def test_fieldset_nonstandardtime(calendar, cftime_datetime, tmpdir, filename='t
 
 @pytest.mark.parametrize('with_timestamps', [True, False])
 def test_field_from_netcdf(with_timestamps):
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
 
     filenames = {'lon': data_path + 'mask_nemo_cross_180lon.nc',
                  'lat': data_path + 'mask_nemo_cross_180lon.nc',
@@ -201,7 +193,7 @@ def test_field_from_netcdf(with_timestamps):
 
 
 def test_fieldset_from_modulefile():
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
     fieldset = FieldSet.from_modulefile(data_path + 'fieldset_nemo.py')
     assert fieldset.U.creation_log == 'from_nemo'
 
@@ -219,7 +211,7 @@ def test_fieldset_from_modulefile():
 
 
 def test_field_from_netcdf_fieldtypes():
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
 
     filenames = {'varU': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
                           'lat': data_path + 'mask_nemo_cross_180lon.nc',
@@ -238,22 +230,30 @@ def test_field_from_netcdf_fieldtypes():
     fset = FieldSet.from_nemo(filenames, variables, dimensions, fieldtype={'varU': 'U', 'varV': 'V'})
     assert isinstance(fset.varU.units, GeographicPolar)
 
+def test_fieldset_from_agrid_dataset():
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
+
+    filenames = {
+        'lon': data_path + 'mask_nemo_cross_180lon.nc',
+        'lat': data_path + 'mask_nemo_cross_180lon.nc',
+        'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'
+    }
+    variable = {'U': 'U'}
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+    FieldSet.from_a_grid_dataset(filenames, variable, dimensions)
 
 def test_fieldset_from_cgrid_interpmethod():
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
 
     filenames = {'lon': data_path + 'mask_nemo_cross_180lon.nc',
                  'lat': data_path + 'mask_nemo_cross_180lon.nc',
                  'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'}
     variable = 'U'
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-    failed = False
-    try:
+
+    with pytest.raises(TypeError):
         # should fail because FieldSet.from_c_grid_dataset does not support interp_method
         FieldSet.from_c_grid_dataset(filenames, variable, dimensions, interp_method='partialslip')
-    except TypeError:
-        failed = True
-    assert failed
 
 
 @pytest.mark.parametrize('cast_data_dtype', ['float32', 'float64'])
@@ -329,7 +329,7 @@ def test_illegal_dimensionsdict(calltype):
             dimensions['test'] = None
             FieldSet.from_data(data, dimensions)
         elif calltype == 'from_nemo':
-            fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+            fname = os.path.join(os.path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
             filenames = {'dx': fname, 'mesh_mask': fname}
             variables = {'dx': 'e1u'}
             dimensions = {'lon': 'glamu', 'lat': 'gphiu', 'test': 'test'}
@@ -500,7 +500,7 @@ def test_fieldset_celledgesizes(mesh):
 
 @pytest.mark.parametrize('dx, dy', [('e1u', 'e2u'), ('e1v', 'e2v')])
 def test_fieldset_celledgesizes_curvilinear(dx, dy):
-    fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+    fname = os.path.join(os.path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
     filenames = {'dx': fname, 'dy': fname, 'mesh_mask': fname}
     variables = {'dx': dx, 'dy': dy}
     dimensions = {'dx': {'lon': 'glamu', 'lat': 'gphiu'},
@@ -516,7 +516,7 @@ def test_fieldset_celledgesizes_curvilinear(dx, dy):
 
 
 def test_fieldset_write_curvilinear(tmpdir):
-    fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+    fname = os.path.join(os.path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
     filenames = {'dx': fname, 'mesh_mask': fname}
     variables = {'dx': 'e1u'}
     dimensions = {'lon': 'glamu', 'lat': 'gphiu'}
@@ -536,7 +536,7 @@ def test_fieldset_write_curvilinear(tmpdir):
 
 
 def test_curv_fieldset_add_periodic_halo():
-    fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+    fname = os.path.join(os.path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
     filenames = {'dx': fname, 'dy': fname, 'mesh_mask': fname}
     variables = {'dx': 'e1u', 'dy': 'e1v'}
     dimensions = {'dx': {'lon': 'glamu', 'lat': 'gphiu'},
@@ -702,8 +702,8 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
 
     process = psutil.Process(os.getpid())
     mem_0 = process.memory_info().rss
-    fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
-    fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
+    fnameU = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
+    fnameV = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
     vfiles = [fnameV, ] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
@@ -721,7 +721,7 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
     mem_0 = process.memory_info().rss
     mem_exhausted = False
     try:
-        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=dt, runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
+        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=dt, runtime=timedelta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=timedelta(hours=12))
     except MemoryError:
         mem_exhausted = True
     mem_steps_np = np.array(perflog.memory_steps)
@@ -737,8 +737,8 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
 @pytest.mark.parametrize('chunksize', [False, 'auto', {'lat': ('y', 32), 'lon': ('x', 32)}, {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
 @pytest.mark.parametrize('deferLoad', [True, False])
 def test_from_netcdf_chunking(mode, time_periodic, chunksize, deferLoad):
-    fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
-    fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
+    fnameU = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
+    fnameV = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
     vfiles = [fnameV, ] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
@@ -771,9 +771,9 @@ def test_timestamps(datetype, tmpdir):
     fieldset2.U.data[0, :, :] = 0.
     fieldset2.write(tmpdir.join('file2'))
 
-    fieldset3 = FieldSet.from_parcels(tmpdir.join('file*'), time_periodic=delta(days=14))
+    fieldset3 = FieldSet.from_parcels(tmpdir.join('file*'), time_periodic=timedelta(days=14))
     timestamps = [dims1['time'], dims2['time']]
-    fieldset4 = FieldSet.from_parcels(tmpdir.join('file*'), timestamps=timestamps, time_periodic=delta(days=14))
+    fieldset4 = FieldSet.from_parcels(tmpdir.join('file*'), timestamps=timestamps, time_periodic=timedelta(days=14))
     assert np.allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
 
     for d in [0, 8, 10, 13]:
@@ -843,7 +843,7 @@ def test_periodic(mode, use_xarray, time_periodic, dt_sign):
     ])
 
     pset = ParticleSet.from_list(fieldset, pclass=MyParticle, lon=[0.5], lat=[0.5], depth=[0.5])
-    pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp), runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
+    pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp), runtime=timedelta(hours=51), dt=timedelta(hours=dt_sign*1))
 
     if time_periodic is not False:
         t = pset.time[0]
@@ -883,7 +883,7 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='te
     assert fieldset.U.creation_log == 'from_parcels'
     pset = ParticleSet.from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
                                  time=[datetime.datetime(2018, 4, 20, 1)])
-    pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
+    pset.execute(AdvectionRK4_3D, runtime=timedelta(hours=4), dt=timedelta(hours=1))
 
 
 @pytest.mark.parametrize('zdim', [2, 8])
@@ -952,12 +952,8 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     pset = ParticleSet(fieldset, pclass=SampleParticle, time=[0, time2], lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
 
     if time2 > 1:
-        failed = False
-        try:
+        with pytest.raises(TimeExtrapolationError):
             pset.execute(SampleField, runtime=10)
-        except TimeExtrapolationError:
-            failed = True
-        assert failed
     else:
         pset.execute(SampleField, runtime=1)
         assert np.allclose([p.u_kernel for p in pset], [p.u_scipy for p in pset], atol=1e-5)
@@ -1008,7 +1004,7 @@ def test_fieldset_from_xarray(tdim):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_frompop(mode):
-    filenames = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
+    filenames = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
     variables = {'U': 'U', 'V': 'V', 'W': 'W', 'T': 'T'}
     dimensions = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
 
@@ -1097,7 +1093,7 @@ def test_deferredload_simplefield(mode, direction, time_extrapolation, tmpdir, t
 
 def test_daskfieldfilebuffer_dimnames():
     DaskFileBuffer.add_to_dimension_name_map_global({'lat': 'nydim', 'lon': 'nxdim'})
-    fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
+    fnameU = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
     fb = DaskFileBuffer(fnameU, dimensions, indices={})
     assert ('nxdim' in fb._static_name_maps['lon']) and ('ntdim' not in fb._static_name_maps['time'])

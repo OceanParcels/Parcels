@@ -236,7 +236,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = StatusCodeNode(math, ccode='')
         elif node.id == 'math':
             node = MathNode(math, ccode='')
-        elif node.id == 'ParcelsRandom':
+        elif node.id in ['ParcelsRandom', 'rng']:
             node = RandomNode(math, ccode='')
         elif node.id == 'print':
             node = PrintNode()
@@ -439,6 +439,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
+        self.ccode.body.insert(0, c.Value("int", "parcels_interp_state"))
         if len(funcvars) > 0:
             for f in funcvars:
                 self.ccode.body.insert(0, c.Statement(f"type_coord {f} = 0"))
@@ -560,8 +561,9 @@ class KernelGenerator(ABC, ast.NodeVisitor):
                     self.visit(node.func)
                     rhs = f"{node.func.ccode}({ccode_args})"
                     if parcels_customed_Cfunc:
-                        node.ccode = str(c.Block([c.Assign("particles->state[pnum]", rhs),
-                                                  c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")]))
+                        node.ccode = str(c.Block([c.Assign("parcels_interp_state", rhs),
+                                                  c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
+                                                  c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")]))
                     else:
                         node.ccode = rhs
             except:
@@ -791,14 +793,15 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
         ccode_eval = node.field.obj.ccode_eval(node.var, *args)
-        stmts = [c.Assign("particles->state[pnum]", ccode_eval)]
+        stmts = [c.Assign("parcels_interp_state", ccode_eval),
+                 c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)")]
 
         if node.convert:
             ccode_conv = node.field.obj.ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             stmts += [conv_stat]
 
-        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
+        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")])
 
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
@@ -817,8 +820,9 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             ccode_conv3 = node.field.obj.W.ccode_convert(*args)
             statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
         conv_stat = c.Block(statements)
-        node.ccode = c.Block([c.Assign("particles->state[pnum]", ccode_eval),
-                              conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
+        node.ccode = c.Block([c.Assign("parcels_interp_state", ccode_eval),
+                              c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
+                              conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")])
 
     def visit_NestedFieldEvalNode(self, node):
         self.visit(node.fields)

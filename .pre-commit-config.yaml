@@ -9,26 +9,18 @@ repos:
       - id: check-json
         types: [text]
         files: \.(json|ipynb)$
-  - repo: https://github.com/pycqa/flake8
-    rev: "7.1.0"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.6
     hooks:
-      - id: flake8
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0 # pick a git hash / tag to point to
+      - id: ruff
+        args: [ --fix ]
+      - id: ruff
+        name: ruff (isort jupyter)
+        args: [--select, I, --fix]
+        types_or: [ jupyter ]
+      - id: ruff-format
+        types_or: [ python, jupyter ]
+  - repo: https://github.com/biomejs/pre-commit
+    rev: v0.4.0
     hooks:
-      - id: pydocstyle
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.8.5
-    hooks:
-      - id: nbqa-black
-      - id: nbqa-check-ast
-      - id: nbqa-isort
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        name: isort (python)
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v4.0.0-alpha.8"
-    hooks:
-      - id: prettier
+      - id: biome-format

@@ -1,6 +1,6 @@
 # flake8: noqa: E999
 import inspect
-from datetime import timedelta as delta
+from datetime import timedelta
 from math import cos, pi
 
 import cftime
@@ -116,7 +116,7 @@ class TimeConverter:
             else:
                 return self.time_origin + np.timedelta64(int(time), 's')
         elif self.calendar in _get_cftime_calendars():
-            return self.time_origin + delta(seconds=time)
+            return self.time_origin + timedelta(seconds=time)
         elif self.calendar is None:
             return self.time_origin + time
         else:

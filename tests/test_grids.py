@@ -1,6 +1,6 @@
 import math
-from datetime import timedelta as delta
-from os import path
+import os
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -359,7 +359,7 @@ def test_curvilinear_grids(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nemo_grid(mode):
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
 
     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
@@ -393,7 +393,7 @@ def test_nemo_grid(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advect_nemo(mode):
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
 
     filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
                        'lat': data_path + 'mask_nemo_cross_180lon.nc',
@@ -408,7 +408,7 @@ def test_advect_nemo(mode):
     lonp = 175.5
     latp = 81.5
     pset = ParticleSet.from_list(fieldset, ptype[mode], lon=[lonp], lat=[latp])
-    pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
+    pset.execute(AdvectionRK4, runtime=timedelta(days=2), dt=timedelta(hours=6))
     assert abs(pset.lat[0] - latp) < 1e-3
 
 
@@ -510,7 +510,7 @@ def test_cgrid_uniform_3dvel(mode, vert_mode, time):
 @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1'])
 @pytest.mark.parametrize('time', [True, False])
 def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    data_path = os.path.join(os.path.dirname(__file__), 'test_data/')
     dim_file = xr.open_dataset(data_path + 'mask_nemo_cross_180lon.nc')
     u_file = xr.open_dataset(data_path + 'Uu_eastward_nemo_cross_180lon.nc')
     v_file = xr.open_dataset(data_path + 'Vv_eastward_nemo_cross_180lon.nc')
@@ -571,7 +571,7 @@ def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
 @pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
 @pytest.mark.parametrize('deferred_load', [True, False])
 def test_popgrid(mode, vert_discretisation, deferred_load):
-    mesh = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
+    mesh = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
     if vert_discretisation == 'zlevel':
         w_dep = 'w_dep'
     elif vert_discretisation == 'slevel':
@@ -633,7 +633,7 @@ def test_cgrid_indexing(mode, gridindexingtype, coordtype):
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
     lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
     dx, dy = lon[2] - lon[1], lat[2] - lat[1]
-    omega = 2 * np.pi / delta(days=1).total_seconds()
+    omega = 2 * np.pi / timedelta(days=1).total_seconds()
 
     index_signs = {'nemo': -1, 'mitgcm': 1}
     isign = index_signs[gridindexingtype]
@@ -703,7 +703,7 @@ def test_cgrid_indexing(mode, gridindexingtype, coordtype):
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=4e3, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4,
-                 runtime=delta(hours=14), dt=delta(minutes=5))
+                 runtime=timedelta(hours=14), dt=timedelta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
@@ -719,7 +719,7 @@ def test_cgrid_indexing_3D(mode, gridindexingtype, withtime):
     lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
     depth = np.linspace(-c / 2, c / 2, zdim, dtype=np.float32)
     dx, dz = lon[1] - lon[0], depth[1] - depth[0]
-    omega = 2 * np.pi / delta(days=1).total_seconds()
+    omega = 2 * np.pi / timedelta(days=1).total_seconds()
     if withtime:
         time = np.linspace(0, 24*60*60, 10)
         dimensions = {"lon": lon, "lat": lat, "depth": depth, "time": time}
@@ -781,7 +781,7 @@ def test_cgrid_indexing_3D(mode, gridindexingtype, withtime):
     pset = ParticleSet(fieldset, pclass=MyParticle, depth=4e3, lon=0, lat=0, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
-                 runtime=delta(hours=14), dt=delta(minutes=5))
+                 runtime=timedelta(hours=14), dt=timedelta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
@@ -797,7 +797,7 @@ def test_bgrid_indexing_3D(mode, gridindexingtype, withtime):
     lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
     depth = np.linspace(-c / 2, c / 2, zdim, dtype=np.float32)
     dx, dz = lon[1] - lon[0], depth[1] - depth[0]
-    omega = 2 * np.pi / delta(days=1).total_seconds()
+    omega = 2 * np.pi / timedelta(days=1).total_seconds()
     if withtime:
         time = np.linspace(0, 24*60*60, 10)
         dimensions = {"lon": lon, "lat": lat, "depth": depth, "time": time}
@@ -860,7 +860,7 @@ def test_bgrid_indexing_3D(mode, gridindexingtype, withtime):
     pset = ParticleSet(fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
-                 runtime=delta(hours=14), dt=delta(minutes=5))
+                 runtime=timedelta(hours=14), dt=timedelta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
@@ -874,9 +874,9 @@ def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
     else:
         zi = 2
     if gridindexingtype == 'mom5':
-        ufile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_u.nc')
-        vfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_v.nc')
-        wfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_wt.nc')
+        ufile = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'access-om2-01_u.nc')
+        vfile = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'access-om2-01_v.nc')
+        wfile = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'access-om2-01_wt.nc')
 
         filenames = {"U": {"lon": ufile, "lat": ufile, "depth": wfile, "data": ufile},
                      "V": {"lon": ufile, "lat": ufile, "depth": wfile, "data": vfile},
@@ -897,8 +897,8 @@ def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
         w = ds_w.wt.isel(time=0, sw_ocean=zi, yt_ocean=yi, xt_ocean=xi)
 
     elif gridindexingtype == 'pop':
-        datafname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popdata.nc')
-        coordfname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popcoordinates.nc')
+        datafname = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'popdata.nc')
+        coordfname = os.path.join(os.path.join(os.path.dirname(__file__), 'test_data'), 'popcoordinates.nc')
         filenames = {"U": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
                      "V": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
                      "W": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname}}

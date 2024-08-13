@@ -2,6 +2,20 @@ import os
 import subprocess
 
 try:
-    version = subprocess.check_output(['git', '-C', os.path.dirname(__file__), 'describe', '--tags'], stderr=subprocess.PIPE).decode('ascii').strip()
-except:
-    from parcels._version_setup import version as version  # noqa
+    from parcels._version_setup import version  # noqa
+except ModuleNotFoundError:
+    try:
+        version = (
+            subprocess.check_output(
+                ["git", "-C", os.path.dirname(__file__), "describe", "--tags"],
+                stderr=subprocess.PIPE,
+            )
+            .decode("ascii")
+            .strip()
+        )
+    except subprocess.SubprocessError as e:
+        e.add_note(
+            "Looks like you're trying to do a development install of parcels. "
+            "This needs to be in a git repo so that version information is available. "
+        )
+        raise e

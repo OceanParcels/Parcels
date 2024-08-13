@@ -1,24 +1,16 @@
-from datetime import timedelta as delta
+from datetime import timedelta
 
 import numpy as np
 import xarray as xr
 
-from parcels import (
-    AdvectionRK4,
-    FieldSet,
-    JITParticle,
-    ParticleFile,
-    ParticleSet,
-    ScipyParticle,
-    download_example_dataset,
-)
+import parcels
 
-ptype = {"scipy": ScipyParticle, "jit": JITParticle}
+ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 
 
 def run_mitgcm_zonally_reentrant(mode):
     """Function that shows how to load MITgcm data in a zonally periodic domain."""
-    data_folder = download_example_dataset("MITgcm_example_data")
+    data_folder = parcels.download_example_dataset("MITgcm_example_data")
     filenames = {
         "U": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc",
         "V": f"{data_folder}/mitgcm_UV_surface_zonally_reentrant.nc",
@@ -28,10 +20,12 @@ def run_mitgcm_zonally_reentrant(mode):
         "U": {"lon": "XG", "lat": "YG", "time": "time"},
         "V": {"lon": "XG", "lat": "YG", "time": "time"},
     }
-    fieldset = FieldSet.from_mitgcm(filenames, variables, dimensions, mesh="flat")
+    fieldset = parcels.FieldSet.from_mitgcm(
+        filenames, variables, dimensions, mesh="flat"
+    )
 
     fieldset.add_periodic_halo(zonal=True)
-    fieldset.add_constant('domain_width', 1000000)
+    fieldset.add_constant("domain_width", 1000000)
 
     def periodicBC(particle, fieldset, time):
         if particle.lon < 0:
@@ -40,19 +34,22 @@ def run_mitgcm_zonally_reentrant(mode):
             particle_dlon -= fieldset.domain_width  # noqa
 
     # Release particles 5 cells away from the Eastern boundary
-    pset = ParticleSet.from_line(
+    pset = parcels.ParticleSet.from_line(
         fieldset,
         pclass=ptype[mode],
         start=(fieldset.U.grid.lon[-5], fieldset.U.grid.lat[5]),
         finish=(fieldset.U.grid.lon[-5], fieldset.U.grid.lat[-5]),
         size=10,
     )
-    pfile = ParticleFile(
-        "MIT_particles_" + str(mode) + ".zarr", pset, outputdt=delta(days=1), chunks=(len(pset), 1)
+    pfile = parcels.ParticleFile(
+        "MIT_particles_" + str(mode) + ".zarr",
+        pset,
+        outputdt=timedelta(days=1),
+        chunks=(len(pset), 1),
     )
-    kernels = AdvectionRK4 + pset.Kernel(periodicBC)
+    kernels = parcels.AdvectionRK4 + pset.Kernel(periodicBC)
     pset.execute(
-        kernels, runtime=delta(days=5), dt=delta(minutes=30), output_file=pfile
+        kernels, runtime=timedelta(days=5), dt=timedelta(minutes=30), output_file=pfile
     )
 
 

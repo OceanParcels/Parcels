@@ -3,3 +3,6 @@
 
 # whitespace fixes
 e99e0d170a7dc128031b82ea00cdf9e9a0164b03
+
+# Run black on examples
+cbf96c4e1f58fa6348695d7553900ba3f7c3383b
