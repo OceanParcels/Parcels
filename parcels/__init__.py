@@ -4,7 +4,6 @@ __version__ = version
 
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.application_kernels import *
-from parcels.compilation import *
 from parcels.field import *
 from parcels.fieldset import *
 from parcels.grid import *
