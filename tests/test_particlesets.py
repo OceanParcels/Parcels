@@ -408,7 +408,7 @@ def test_from_field_exact_val(staggered_grid):
         data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
         mask = np.array([[1, 1, 0, 0],
                          [1, 1, 1, 0],
-                         [1, 1, 1, 1]])
+                         [1, 1, 1, 1]])  # fmt: skip
         fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
         FMask = Field('mask', mask, lon, lat)
@@ -416,10 +416,10 @@ def test_from_field_exact_val(staggered_grid):
     elif staggered_grid == 'Cgrid':
         U = np.array([[0, 0, 0, 0],
                       [1, 0, 0, 0],
-                      [1, 1, 0, 0]])
+                      [1, 1, 0, 0]])  # fmt: skip
         V = np.array([[0, 1, 0, 0],
                       [0, 1, 0, 0],
-                      [0, 1, 1, 0]])
+                      [0, 1, 1, 0]])  # fmt: skip
         data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
         mask = np.array([[-1, -1, -1, -1],
                          [-1, 1, 0, 0],

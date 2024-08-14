@@ -390,7 +390,7 @@ class Kernel(BaseKernel):
         lib_path = "lib" + basename
         src_file_or_files = None
         if type(basename) in (list, dict, tuple, ndarray):
-            src_file_or_files = ["", ] * len(basename)
+            src_file_or_files = [""] * len(basename)
             for i, src_file in enumerate(basename):
                 src_file_or_files[i] = f"{os.path.join(dyn_dir, src_file)}.c"
         else:
@@ -484,7 +484,7 @@ class Kernel(BaseKernel):
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
         if lib_file is not None:
             if os.path.isfile(lib_file):  # and delete_cfiles
-                [os.remove(s) for s in [lib_file, ] if os.path is not None and os.path.exists(s)]
+                [os.remove(s) for s in [lib_file] if os.path is not None and os.path.exists(s)]
             if delete_cfiles and len(all_files_array) > 0:
                 [os.remove(s) for s in all_files_array if os.path is not None and os.path.exists(s)]
 

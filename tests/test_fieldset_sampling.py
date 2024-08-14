@@ -609,9 +609,9 @@ def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs,
     fieldset.write(filepath)
     fieldset = None
 
-    ufiles = [filepath+'U.nc', ] * 4
-    vfiles = [filepath+'V.nc', ] * 4
-    bfiles = [filepath+'B.nc', ] * 4
+    ufiles = [filepath+'U.nc'] * 4
+    vfiles = [filepath+'V.nc'] * 4
+    bfiles = [filepath+'B.nc'] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
     timestamps = np.expand_dims(timestamps, 1)
     files = {'U': ufiles, 'V': vfiles, 'B': bfiles}

@@ -385,8 +385,8 @@ def test_fieldset_samegrids_from_file(tmpdir, chunksize, filename='test_subsets'
     fieldset1 = FieldSet.from_data(data, dimensions)
     fieldset1.write(filepath1)
 
-    ufiles = [filepath1+'U.nc', ] * 4
-    vfiles = [filepath1+'V.nc', ] * 4
+    ufiles = [filepath1+'U.nc'] * 4
+    vfiles = [filepath1+'V.nc'] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
     timestamps = np.expand_dims(timestamps, 1)
     files = {'U': ufiles, 'V': vfiles}
@@ -429,8 +429,8 @@ def test_fieldset_diffgrids_from_file(tmpdir, chunksize, filename='test_subsets'
     fieldset2 = FieldSet.from_data(data, dimensions)
     fieldset2.write(filepath2)
 
-    ufiles = [filepath1+'U.nc', ] * 4
-    vfiles = [filepath2+'V.nc', ] * 4
+    ufiles = [filepath1+'U.nc'] * 4
+    vfiles = [filepath2+'V.nc'] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
     timestamps = np.expand_dims(timestamps, 1)
     files = {'U': ufiles, 'V': vfiles}
@@ -452,8 +452,8 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize, filename='test_sub
     field_data = fieldset_data.U
     field_data.name = "B"
 
-    ufiles = [filepath+'U.nc', ] * 4
-    vfiles = [filepath+'V.nc', ] * 4
+    ufiles = [filepath+'U.nc'] * 4
+    vfiles = [filepath+'V.nc'] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
     timestamps = np.expand_dims(timestamps, 1)
     files = {'U': ufiles, 'V': vfiles}
@@ -704,8 +704,8 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
     mem_0 = process.memory_info().rss
     fnameU = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
-    ufiles = [fnameU, ] * 4
-    vfiles = [fnameV, ] * 4
+    ufiles = [fnameU] * 4
+    vfiles = [fnameV] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
     timestamps = np.expand_dims(timestamps, 1)
     files = {'U': ufiles, 'V': vfiles}
@@ -714,10 +714,10 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
 
     fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, allow_time_extrapolation=True if time_periodic in [False, None] else False, chunksize=chunksize)
     perflog = PerformanceLog()
-    postProcessFuncs = [perflog.advance, ]
+    postProcessFuncs = [perflog.advance]
     if with_GC:
         postProcessFuncs.append(perIterGC)
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=[0.5, ], lat=[0.5, ])
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     mem_0 = process.memory_info().rss
     mem_exhausted = False
     try:
@@ -739,8 +739,8 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
 def test_from_netcdf_chunking(mode, time_periodic, chunksize, deferLoad):
     fnameU = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = os.path.join(os.path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
-    ufiles = [fnameU, ] * 4
-    vfiles = [fnameV, ] * 4
+    ufiles = [fnameU] * 4
+    vfiles = [fnameV] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
     timestamps = np.expand_dims(timestamps, 1)
     files = {'U': ufiles, 'V': vfiles}

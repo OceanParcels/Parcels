@@ -105,7 +105,7 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
         ccompiler = compiler
         if ccompiler is None:
             cppargs = []
-            incdirs = [os.path.join(get_package_dir(), 'include'), ]
+            incdirs = [os.path.join(get_package_dir(), 'include')]
             ccompiler = GNUCompiler(cppargs=cppargs, incdirs=incdirs)
         if self._lib is None:
             with open(self.src_file, 'w+') as f:

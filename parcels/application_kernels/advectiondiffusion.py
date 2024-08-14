@@ -6,7 +6,7 @@ import math
 
 import parcels
 
-__all__ = ['DiffusionUniformKh', 'AdvectionDiffusionM1', 'AdvectionDiffusionEM', ]
+__all__ = ['DiffusionUniformKh', 'AdvectionDiffusionM1', 'AdvectionDiffusionEM']
 
 
 def AdvectionDiffusionM1(particle, fieldset, time):

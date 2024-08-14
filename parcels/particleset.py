@@ -748,7 +748,7 @@ class ParticleSet:
             Numpy array of indices that satisfy the test.
 
         """
-        compare_values = np.array([compare_values, ]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
+        compare_values = np.array([compare_values]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
         return np.where(np.isin(self.particledata.data[variable_name], compare_values, invert=invert))[0]
 
     @property
