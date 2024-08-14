@@ -90,11 +90,9 @@ class BaseHashNeighborSearch(ABC):
             new_active_mask = np.full(new_values.shape[1], True)
 
         # Figure out the changes in the active mask.
-        deactivated_mask = np.logical_and(
-            self._active_mask, np.logical_not(new_active_mask))
+        deactivated_mask = np.logical_and(self._active_mask, np.logical_not(new_active_mask))
         stay_active_mask = np.logical_and(self._active_mask, new_active_mask)
-        activated_mask = np.logical_and(
-            np.logical_not(self._active_mask), new_active_mask)
+        activated_mask = np.logical_and(np.logical_not(self._active_mask), new_active_mask)
 
         stay_active_idx = np.where(stay_active_mask)[0]
 
@@ -110,8 +108,7 @@ class BaseHashNeighborSearch(ABC):
         # Remove/add/modify particles.
         self._deactivate_particles(remove_idx)
         self._particle_hashes[stay_active_mask] = new_hashes
-        self._particle_hashes[activated_mask] = self._values_to_hashes(
-            new_values[:, activated_mask])
+        self._particle_hashes[activated_mask] = self._values_to_hashes(new_values[:, activated_mask])
         self._activate_particles(add_idx)
 
         # Set the state to the new values.
@@ -151,10 +148,8 @@ class BaseHashNeighborSearch(ABC):
             # Else create a new array that doesn't include remove_idx.
             else:
                 rel_remove_idx = self._hash_idx[particle_idx[remove_idx]]
-                self._hashtable[cur_hash] = np.delete(
-                    self._hashtable[cur_hash], rel_remove_idx)
-                self._hash_idx[self._hashtable[cur_hash]] = np.arange(
-                    len(self._hashtable[cur_hash]))
+                self._hashtable[cur_hash] = np.delete(self._hashtable[cur_hash], rel_remove_idx)
+                self._hash_idx[self._hashtable[cur_hash]] = np.arange(len(self._hashtable[cur_hash]))
 
     def _activate_particles(self, particle_idx):
         """Add particles to the hashtable"""
@@ -166,10 +161,9 @@ class BaseHashNeighborSearch(ABC):
                 self._hash_idx[particle_idx[add_idx]] = np.arange(len(add_idx))
             else:
                 self._hash_idx[particle_idx[add_idx]] = np.arange(
-                    len(self._hashtable[cur_hash]),
-                    len(self._hashtable[cur_hash]) + len(add_idx))
-                self._hashtable[cur_hash] = np.append(
-                    self._hashtable[cur_hash], particle_idx[add_idx])
+                    len(self._hashtable[cur_hash]), len(self._hashtable[cur_hash]) + len(add_idx)
+                )
+                self._hashtable[cur_hash] = np.append(self._hashtable[cur_hash], particle_idx[add_idx])
 
 
 def hash_split(hash_ids, active_idx=None):

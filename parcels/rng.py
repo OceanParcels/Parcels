@@ -10,7 +10,7 @@ from parcels.compilation.codecompiler import GNUCompiler
 from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools.loggers import logger
 
-__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', 'vonmisesvariate']
+__all__ = ["seed", "random", "uniform", "randint", "normalvariate", "expovariate", "vonmisesvariate"]
 
 
 class RandomC:
@@ -78,13 +78,13 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
     def unload_lib(self):
         # Unload the currently loaded dynamic linked library to be secure
         if self._lib is not None and self._loaded and _ctypes is not None:
-            _ctypes.FreeLibrary(self._lib._handle) if sys.platform == 'win32' else _ctypes.dlclose(self._lib._handle)
+            _ctypes.FreeLibrary(self._lib._handle) if sys.platform == "win32" else _ctypes.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
             self._loaded = False
 
     def load_lib(self):
-        self._lib = npct.load_library(self.lib_file, '.')
+        self._lib = npct.load_library(self.lib_file, ".")
         self._loaded = True
 
     def remove_lib(self):
@@ -95,7 +95,7 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
 
     def compile(self, compiler=None):
         if self.src_file is None or self.lib_file is None or self.log_file is None:
-            basename = 'parcels_random_%s' % uuid.uuid4()
+            basename = "parcels_random_%s" % uuid.uuid4()
             lib_filename = "lib" + basename
             basepath = os.path.join(get_cache_dir(), f"{basename}")
             libpath = os.path.join(get_cache_dir(), f"{lib_filename}")
@@ -105,10 +105,10 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
         ccompiler = compiler
         if ccompiler is None:
             cppargs = []
-            incdirs = [os.path.join(get_package_dir(), 'include')]
+            incdirs = [os.path.join(get_package_dir(), "include")]
             ccompiler = GNUCompiler(cppargs=cppargs, incdirs=incdirs)
         if self._lib is None:
-            with open(self.src_file, 'w+') as f:
+            with open(self.src_file, "w+") as f:
                 f.write(self.ccode)
             ccompiler.compile(self.src_file, self.lib_file, self.log_file)
             logger.info(f"Compiled ParcelsRandom ==> {self.src_file}")

@@ -24,10 +24,7 @@ example_data_files = {
     ],
     "GlobCurrent_example_data": [
         f"{date.strftime('%Y%m%d')}000000-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc"
-        for date in (
-            [datetime(2002, 1, 1) + timedelta(days=x) for x in range(0, 365)]
-            + [datetime(2003, 1, 1)]
-        )
+        for date in ([datetime(2002, 1, 1) + timedelta(days=x) for x in range(0, 365)] + [datetime(2003, 1, 1)])
     ],
     "DecayingMovingEddy_data": [
         "decaying_moving_eddyU.nc",
@@ -135,8 +132,7 @@ def download_example_dataset(dataset: str, data_home=None):
     # Dev note: `dataset` is assumed to be a folder name with netcdf files
     if dataset not in example_data_files:
         raise ValueError(
-            f"Dataset {dataset!r} not found. Available datasets are: "
-            ", ".join(example_data_files.keys())
+            f"Dataset {dataset!r} not found. Available datasets are: " ", ".join(example_data_files.keys())
         )
 
     cache_folder = get_data_home(data_home)

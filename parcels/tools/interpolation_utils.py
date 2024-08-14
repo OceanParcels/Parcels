@@ -1,6 +1,7 @@
 import numpy as np
 
-__all__=[]
+__all__ = []
+
 
 # fmt: off
 def phi1D_lin(xsi):
