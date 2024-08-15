@@ -4,9 +4,8 @@ from glob import glob
 
 import dask
 import numpy as np
-import pytest
-
 import parcels
+import pytest
 from parcels.tools.statuscodes import DaskChunkingError
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}

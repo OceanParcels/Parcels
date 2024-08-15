@@ -1,8 +1,13 @@
 """Handling of Errors and particle status codes"""
 
-
-__all__ = ['StatusCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
-           'KernelError', 'AllParcelsErrorCodes']
+__all__ = [
+    "StatusCode",
+    "FieldSamplingError",
+    "FieldOutOfBoundError",
+    "TimeExtrapolationError",
+    "KernelError",
+    "AllParcelsErrorCodes",
+]
 
 
 class StatusCode:
@@ -61,20 +66,22 @@ class FieldOutOfBoundSurfaceError(RuntimeError):
         self.x = x
         self.y = y
         self.z = z
-        message = f"{field.name if field else 'Field'} sampled out-of-bound at the surface, at ({self.x}, {self.y}, {self.z})"
+        message = (
+            f"{field.name if field else 'Field'} sampled out-of-bound at the surface, at ({self.x}, {self.y}, {self.z})"
+        )
         super().__init__(message)
 
 
 class TimeExtrapolationError(RuntimeError):
     """Utility error class to propagate erroneous time extrapolation sampling."""
 
-    def __init__(self, time, field=None, msg='allow_time_extrapoltion'):
+    def __init__(self, time, field=None, msg="allow_time_extrapoltion"):
         if field is not None and field.grid.time_origin and time is not None:
             time = field.grid.time_origin.fulltime(time)
         message = f"{field.name if field else 'Field'} sampled outside time domain at time {time}."
-        if msg == 'allow_time_extrapoltion':
+        if msg == "allow_time_extrapoltion":
             message += " Try setting allow_time_extrapolation to True"
-        elif msg == 'show_time':
+        elif msg == "show_time":
             message += " Try explicitly providing a 'show_time'"
         else:
             message += msg + " Try setting allow_time_extrapolation to True"
@@ -85,10 +92,12 @@ class KernelError(RuntimeError):
     """General particle kernel error with optional custom message."""
 
     def __init__(self, particle, fieldset=None, msg=None):
-        message = (f"{particle.state}\n"
-                   f"Particle {particle}\n"
-                   f"Time: {parse_particletime(particle.time, fieldset)}\n"
-                   f"timestep dt: {particle.dt}\n")
+        message = (
+            f"{particle.state}\n"
+            f"Particle {particle}\n"
+            f"Time: {parse_particletime(particle.time, fieldset)}\n"
+            f"timestep dt: {particle.dt}\n"
+        )
         if msg:
             message += msg
         super().__init__(message)
@@ -111,9 +120,10 @@ class InterpolationError(KernelError):
         super().__init__(particle, fieldset=fieldset, msg=message)
 
 
-AllParcelsErrorCodes = {FieldSamplingError: StatusCode.Error,
-                        FieldOutOfBoundError: StatusCode.ErrorOutOfBounds,
-                        FieldOutOfBoundSurfaceError: StatusCode.ErrorThroughSurface,
-                        TimeExtrapolationError: StatusCode.ErrorTimeExtrapolation,
-                        KernelError: StatusCode.Error,
-                        }
+AllParcelsErrorCodes = {
+    FieldSamplingError: StatusCode.Error,
+    FieldOutOfBoundError: StatusCode.ErrorOutOfBounds,
+    FieldOutOfBoundSurfaceError: StatusCode.ErrorThroughSurface,
+    TimeExtrapolationError: StatusCode.ErrorTimeExtrapolation,
+    KernelError: StatusCode.Error,
+}

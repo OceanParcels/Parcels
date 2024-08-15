@@ -8,7 +8,8 @@ except ModuleNotFoundError:
 
 __all__ = []
 
-class Timer():
+
+class Timer:
     def __init__(self, name, parent=None, start=True):
         self._start = None
         self._t = 0
@@ -22,13 +23,13 @@ class Timer():
 
     def start(self):
         if self._parent:
-            assert self._parent._start, (f"Timer '{self._name}' cannot be started. Its parent timer does not run")
+            assert self._parent._start, f"Timer '{self._name}' cannot be started. Its parent timer does not run"
         if self._start is not None:
-            raise RuntimeError(f'Timer {self._name} cannot start since it is already running')
+            raise RuntimeError(f"Timer {self._name} cannot start since it is already running")
         self._start = time.time()
 
     def stop(self):
-        assert self._start, (f"Timer '{self._name}' was stopped before being started")
+        assert self._start, f"Timer '{self._name}' was stopped before being started"
         self._t += time.time() - self._start
         self._start = None
 
@@ -45,14 +46,14 @@ class Timer():
         time = self.local_time()
         if step == 0:
             root_time = time
-        print(('(%3d%%)' % round(time/root_time*100)), end='')
-        print('  ' * (step + 1), end='')
+        print(("(%3d%%)" % round(time / root_time * 100)), end="")
+        print("  " * (step + 1), end="")
         if step > 0:
-            print('(%3d%%) ' % round(time/parent_time*100), end='')
-        t_str = '%1.3e s' % time if root_time < 300 else datetime.timedelta(seconds=time)
+            print("(%3d%%) " % round(time / parent_time * 100), end="")
+        t_str = "%1.3e s" % time if root_time < 300 else datetime.timedelta(seconds=time)
         print(f"Timer {(self._name).ljust(20 - 2*step + 7*(step == 0))}: {t_str}")
         for child in self._children:
-            child.print_tree_sequential(step+1, root_time, time)
+            child.print_tree_sequential(step + 1, root_time, time)
 
     def print_tree(self, step=0, root_time=0, parent_time=0):
         if MPI is None:

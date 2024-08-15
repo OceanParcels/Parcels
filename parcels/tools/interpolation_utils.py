@@ -1,8 +1,9 @@
-# flake8: noqa
 import numpy as np
 
-__all__=[]
+__all__ = []
 
+
+# fmt: off
 def phi1D_lin(xsi):
     phi = [1-xsi,
            xsi]
@@ -166,3 +167,5 @@ def length2d_lin_edge(quad_x, quad_y, ids):
 
 def interpolate(phi, f, xsi):
     return np.dot(phi(xsi), f)
+
+# fmt: on

@@ -1,9 +1,8 @@
 from datetime import timedelta
 
 import numpy as np
-import xarray as xr
-
 import parcels
+import xarray as xr
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 

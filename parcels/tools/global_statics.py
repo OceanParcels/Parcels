@@ -9,9 +9,11 @@ try:
 except:
     # Windows does not have getuid(), so define to simply return 'tmp'
     def getuid():
-        return 'tmp'
+        return "tmp"
 
-__all__ = ['cleanup_remove_files', 'cleanup_unload_lib', 'get_package_dir', 'get_cache_dir']
+
+__all__ = ["cleanup_remove_files", "cleanup_unload_lib", "get_package_dir", "get_cache_dir"]
+
 
 def cleanup_remove_files(lib_file, log_file):
     if os.path.isfile(lib_file):
@@ -23,7 +25,7 @@ def cleanup_unload_lib(lib):
     # This is not really necessary, as these programs are not that large, but with the new random
     # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
     if lib is not None:
-        _ctypes.FreeLibrary(lib._handle) if sys.platform == 'win32' else _ctypes.dlclose(lib._handle)
+        _ctypes.FreeLibrary(lib._handle) if sys.platform == "win32" else _ctypes.dlclose(lib._handle)
 
 
 def get_package_dir():

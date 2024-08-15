@@ -1,6 +1,6 @@
 import numpy as np
 
-__all__ = ['GridSet']
+__all__ = ["GridSet"]
 
 
 class GridSet:
@@ -13,7 +13,7 @@ class GridSet:
         grid = field.grid
         existing_grid = False
         for g in self.grids:
-            if field.chunksize == 'auto':
+            if field.chunksize == "auto":
                 break
             if g == grid:
                 existing_grid = True
@@ -21,7 +21,7 @@ class GridSet:
             sameGrid = True
             if grid.time_origin != g.time_origin:
                 continue
-            for attr in ['lon', 'lat', 'depth', 'time']:
+            for attr in ["lon", "lat", "depth", "time"]:
                 gattr = getattr(g, attr)
                 gridattr = getattr(grid, attr)
                 if gattr.shape != gridattr.shape or not np.allclose(gattr, gridattr):
@@ -54,7 +54,7 @@ class GridSet:
             if getattr(g, dim).size == 1:
                 continue  # not including grids where only one entry
             else:
-                if dim == 'depth':
+                if dim == "depth":
                     maxleft = max(maxleft, np.min(getattr(g, dim)))
                     minright = min(minright, np.max(getattr(g, dim)))
                 else:

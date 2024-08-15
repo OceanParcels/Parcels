@@ -20,7 +20,7 @@ except ModuleNotFoundError:
     MPI = None
 
 
-__all__ = ['FieldSet']
+__all__ = ["FieldSet"]
 
 
 class FieldSet:
@@ -42,10 +42,10 @@ class FieldSet:
         self.completed = False
         self.particlefile = None
         if U:
-            self.add_field(U, 'U')
+            self.add_field(U, "U")
             self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
         if V:
-            self.add_field(V, 'V')
+            self.add_field(V, "V")
 
         # Add additional fields as attributes
         if fields:
@@ -58,12 +58,20 @@ class FieldSet:
     @staticmethod
     def checkvaliddimensionsdict(dims):
         for d in dims:
-            if d not in ['lon', 'lat', 'depth', 'time']:
-                raise NameError(f'{d} is not a valid key in the dimensions dictionary')
+            if d not in ["lon", "lat", "depth", "time"]:
+                raise NameError(f"{d} is not a valid key in the dimensions dictionary")
 
     @classmethod
-    def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
-                  allow_time_extrapolation=None, time_periodic=False, **kwargs):
+    def from_data(
+        cls,
+        data,
+        dimensions,
+        transpose=False,
+        mesh="spherical",
+        allow_time_extrapolation=None,
+        time_periodic=False,
+        **kwargs,
+    ):
         """Initialise FieldSet object from raw data.
 
         Parameters
@@ -122,26 +130,33 @@ class FieldSet:
             cls.checkvaliddimensionsdict(dims)
 
             if allow_time_extrapolation is None:
-                allow_time_extrapolation = False if 'time' in dims else True
+                allow_time_extrapolation = False if "time" in dims else True
 
-            lon = dims['lon']
-            lat = dims['lat']
-            depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
-            time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
+            lon = dims["lon"]
+            lat = dims["lat"]
+            depth = np.zeros(1, dtype=np.float32) if "depth" not in dims else dims["depth"]
+            time = np.zeros(1, dtype=np.float64) if "time" not in dims else dims["time"]
             time = np.array(time) if not isinstance(time, np.ndarray) else time
             if isinstance(time[0], np.datetime64):
                 time_origin = TimeConverter(time[0])
                 time = np.array([time_origin.reltime(t) for t in time])
             else:
-                time_origin = kwargs.pop('time_origin', TimeConverter(0))
+                time_origin = kwargs.pop("time_origin", TimeConverter(0))
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-            if 'creation_log' not in kwargs.keys():
-                kwargs['creation_log'] = 'from_data'
+            if "creation_log" not in kwargs.keys():
+                kwargs["creation_log"] = "from_data"
 
-            fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
-                                 allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
-        u = fields.pop('U', None)
-        v = fields.pop('V', None)
+            fields[name] = Field(
+                name,
+                datafld,
+                grid=grid,
+                transpose=transpose,
+                allow_time_extrapolation=allow_time_extrapolation,
+                time_periodic=time_periodic,
+                **kwargs,
+            )
+        u = fields.pop("U", None)
+        v = fields.pop("V", None)
         return cls(u, v, fields=fields)
 
     def add_field(self, field, name=None):
@@ -165,7 +180,9 @@ class FieldSet:
 
         """
         if self.completed:
-            raise RuntimeError("FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?")
+            raise RuntimeError(
+                "FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?"
+            )
         name = field.name if name is None else name
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
             raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
@@ -179,7 +196,7 @@ class FieldSet:
             self.gridset.add_grid(field)
             field.fieldset = self
 
-    def add_constant_field(self, name, value, mesh='flat'):
+    def add_constant_field(self, name, value, mesh="flat"):
         """Wrapper function to add a Field that is constant in space,
            useful e.g. when using constant horizontal diffusivity
 
@@ -217,58 +234,65 @@ class FieldSet:
                 f.fieldset = self
 
     def add_UVfield(self):
-        if not hasattr(self, 'UV') and hasattr(self, 'U') and hasattr(self, 'V'):
+        if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
             if isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField('UV', self.U, self.V))
+                self.add_vector_field(NestedField("UV", self.U, self.V))
             else:
-                self.add_vector_field(VectorField('UV', self.U, self.V))
-        if not hasattr(self, 'UVW') and hasattr(self, 'W'):
+                self.add_vector_field(VectorField("UV", self.U, self.V))
+        if not hasattr(self, "UVW") and hasattr(self, "W"):
             if isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
+                self.add_vector_field(NestedField("UVW", self.U, self.V, self.W))
             else:
-                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
+                self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
 
     def check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
         assert self.V, 'FieldSet does not have a Field named "V"'
         for attr, value in vars(self).items():
             if type(value) is Field:
-                assert value.name == attr, f'Field {value.name}.name ({attr}) is not consistent'
+                assert value.name == attr, f"Field {value.name}.name ({attr}) is not consistent"
 
         def check_velocityfields(U, V, W):
-            if (U.interp_method == 'cgrid_velocity' and V.interp_method != 'cgrid_velocity') or \
-                    (U.interp_method != 'cgrid_velocity' and V.interp_method == 'cgrid_velocity'):
+            if (U.interp_method == "cgrid_velocity" and V.interp_method != "cgrid_velocity") or (
+                U.interp_method != "cgrid_velocity" and V.interp_method == "cgrid_velocity"
+            ):
                 raise ValueError("If one of U,V.interp_method='cgrid_velocity', the other should be too")
 
-            if 'linear_invdist_land_tracer' in [U.interp_method, V.interp_method]:
-                raise NotImplementedError("interp_method='linear_invdist_land_tracer' is not implemented for U and V Fields")
+            if "linear_invdist_land_tracer" in [U.interp_method, V.interp_method]:
+                raise NotImplementedError(
+                    "interp_method='linear_invdist_land_tracer' is not implemented for U and V Fields"
+                )
 
-            if U.interp_method == 'cgrid_velocity':
+            if U.interp_method == "cgrid_velocity":
                 if U.grid.xdim == 1 or U.grid.ydim == 1 or V.grid.xdim == 1 or V.grid.ydim == 1:
-                    raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
+                    raise NotImplementedError(
+                        "C-grid velocities require longitude and latitude dimensions at least length 2"
+                    )
 
-            if U.gridindexingtype not in ['nemo', 'mitgcm', 'mom5', 'pop']:
+            if U.gridindexingtype not in ["nemo", "mitgcm", "mom5", "pop"]:
                 raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm', 'mom5' or 'pop'")
 
             if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
-                raise ValueError('Not all velocity Fields have the same gridindexingtype')
+                raise ValueError("Not all velocity Fields have the same gridindexingtype")
 
             if U.cast_data_dtype != V.cast_data_dtype or (W and W.cast_data_dtype != U.cast_data_dtype):
-                raise ValueError('Not all velocity Fields have the same dtype')
+                raise ValueError("Not all velocity Fields have the same dtype")
 
         if isinstance(self.U, NestedField):
-            w = self.W if hasattr(self, 'W') else [None]*len(self.U)
+            w = self.W if hasattr(self, "W") else [None] * len(self.U)
             for U, V, W in zip(self.U, self.V, w):
                 check_velocityfields(U, V, W)
         else:
-            W = self.W if hasattr(self, 'W') else None
+            W = self.W if hasattr(self, "W") else None
             check_velocityfields(self.U, self.V, W)
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()
             if len(g.time) == 1:
                 continue
-            assert isinstance(g.time_origin.time_origin, type(self.time_origin.time_origin)), 'time origins of different grids must be have the same type'
+            assert isinstance(
+                g.time_origin.time_origin, type(self.time_origin.time_origin)
+            ), "time origins of different grids must be have the same type"
             g.time = g.time + self.time_origin.reltime(g.time_origin)
             if g.defer_load:
                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
@@ -289,8 +313,10 @@ class FieldSet:
             if isinstance(f, (VectorField, NestedField)) or f.dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
-                if f.grid.depth_field == 'not_yet_set':
-                    raise ValueError("If depth dimension is set at 'not_yet_set', it must be added later using Field.set_depth_from_field(field)")
+                if f.grid.depth_field == "not_yet_set":
+                    raise ValueError(
+                        "If depth dimension is set at 'not_yet_set', it must be added later using Field.set_depth_from_field(field)"
+                    )
                 if not f.grid.defer_load:
                     depth_data = f.grid.depth_field.data
                     f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
@@ -309,9 +335,21 @@ class FieldSet:
         return paths
 
     @classmethod
-    def from_netcdf(cls, filenames, variables, dimensions, indices=None, fieldtype=None,
-                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
-                    deferred_load=True, chunksize=None, **kwargs):
+    def from_netcdf(
+        cls,
+        filenames,
+        variables,
+        dimensions,
+        indices=None,
+        fieldtype=None,
+        mesh="spherical",
+        timestamps=None,
+        allow_time_extrapolation=None,
+        time_periodic=False,
+        deferred_load=True,
+        chunksize=None,
+        **kwargs,
+    ):
         """Initialises FieldSet object from NetCDF files.
 
         Parameters
@@ -396,13 +434,13 @@ class FieldSet:
 
         """
         # Ensure that times are not provided both in netcdf file and in 'timestamps'.
-        if timestamps is not None and 'time' in dimensions:
+        if timestamps is not None and "time" in dimensions:
             logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
             timestamps = None
 
         fields = {}
-        if 'creation_log' not in kwargs.keys():
-            kwargs['creation_log'] = 'from_netcdf'
+        if "creation_log" not in kwargs.keys():
+            kwargs["creation_log"] = "from_netcdf"
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
             paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
@@ -417,7 +455,9 @@ class FieldSet:
             cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
             fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
-            varchunksize = chunksize[var] if (chunksize and var in chunksize) else chunksize  # <varname> -> {<netcdf_dimname>: (<parcels_dimname>, <chunksize_as_int_numeral>) }
+            varchunksize = (
+                chunksize[var] if (chunksize and var in chunksize) else chunksize
+            )  # <varname> -> {<netcdf_dimname>: (<parcels_dimname>, <chunksize_as_int_numeral>) }
 
             grid = None
             dFiles = None
@@ -436,16 +476,16 @@ class FieldSet:
                                 possibly_samegrid &= False
                     if not possibly_samegrid:
                         break
-                    if varchunksize == 'auto':
+                    if varchunksize == "auto":
                         break
-                    if 'depth' in dims and dims['depth'] == 'not_yet_set':
+                    if "depth" in dims and dims["depth"] == "not_yet_set":
                         break
                     processedGrid = False
-                    if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):
+                    if (not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]:
                         processedGrid = True
                     elif isinstance(filenames[procvar], dict):
                         processedGrid = True
-                        for dim in ['lon', 'lat', 'depth']:
+                        for dim in ["lon", "lat", "depth"]:
                             if dim in dimensions:
                                 processedGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if processedGrid:
@@ -453,19 +493,41 @@ class FieldSet:
                         if procpaths == nowpaths:
                             dFiles = fields[procvar].dataFiles
                             break
-            fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
-                                            allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, deferred_load=deferred_load,
-                                            fieldtype=fieldtype, chunksize=varchunksize, dataFiles=dFiles, **kwargs)
+            fields[var] = Field.from_netcdf(
+                paths,
+                (var, name),
+                dims,
+                inds,
+                grid=grid,
+                mesh=mesh,
+                timestamps=timestamps,
+                allow_time_extrapolation=allow_time_extrapolation,
+                time_periodic=time_periodic,
+                deferred_load=deferred_load,
+                fieldtype=fieldtype,
+                chunksize=varchunksize,
+                dataFiles=dFiles,
+                **kwargs,
+            )
 
-        u = fields.pop('U', None)
-        v = fields.pop('V', None)
+        u = fields.pop("U", None)
+        v = fields.pop("V", None)
         return cls(u, v, fields=fields)
 
     @classmethod
-    def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                  allow_time_extrapolation=None, time_periodic=False,
-                  tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
+    def from_nemo(
+        cls,
+        filenames,
+        variables,
+        dimensions,
+        indices=None,
+        mesh="spherical",
+        allow_time_extrapolation=None,
+        time_periodic=False,
+        tracer_interp_method="cgrid_tracer",
+        chunksize=None,
+        **kwargs,
+    ):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         See `here <../examples/tutorial_nemo_curvilinear.ipynb>`__
@@ -540,21 +602,43 @@ class FieldSet:
             Keyword arguments passed to the :func:`Fieldset.from_c_grid_dataset` constructor.
 
         """
-        if 'creation_log' not in kwargs.keys():
-            kwargs['creation_log'] = 'from_nemo'
-        if kwargs.pop('gridindexingtype', 'nemo') != 'nemo':
-            raise ValueError("gridindexingtype must be 'nemo' in FieldSet.from_nemo(). Use FieldSet.from_c_grid_dataset otherwise")
-        fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
-                                           chunksize=chunksize, gridindexingtype='nemo', **kwargs)
-        if hasattr(fieldset, 'W'):
-            fieldset.W.set_scaling_factor(-1.)
+        if "creation_log" not in kwargs.keys():
+            kwargs["creation_log"] = "from_nemo"
+        if kwargs.pop("gridindexingtype", "nemo") != "nemo":
+            raise ValueError(
+                "gridindexingtype must be 'nemo' in FieldSet.from_nemo(). Use FieldSet.from_c_grid_dataset otherwise"
+            )
+        fieldset = cls.from_c_grid_dataset(
+            filenames,
+            variables,
+            dimensions,
+            mesh=mesh,
+            indices=indices,
+            time_periodic=time_periodic,
+            allow_time_extrapolation=allow_time_extrapolation,
+            tracer_interp_method=tracer_interp_method,
+            chunksize=chunksize,
+            gridindexingtype="nemo",
+            **kwargs,
+        )
+        if hasattr(fieldset, "W"):
+            fieldset.W.set_scaling_factor(-1.0)
         return fieldset
 
     @classmethod
-    def from_mitgcm(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                    allow_time_extrapolation=None, time_periodic=False,
-                    tracer_interp_method='cgrid_tracer', chunksize=None, **kwargs):
+    def from_mitgcm(
+        cls,
+        filenames,
+        variables,
+        dimensions,
+        indices=None,
+        mesh="spherical",
+        allow_time_extrapolation=None,
+        time_periodic=False,
+        tracer_interp_method="cgrid_tracer",
+        chunksize=None,
+        **kwargs,
+    ):
         """Initialises FieldSet object from NetCDF files of MITgcm fields.
         All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
         gridindexing is set to 'mitgcm' for grids that have the shape::
@@ -570,19 +654,42 @@ class FieldSet:
         For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
         Note that vertical velocity (W) is assumed positive in the positive z direction (which is upward in MITgcm)
         """
-        if 'creation_log' not in kwargs.keys():
-            kwargs['creation_log'] = 'from_mitgcm'
-        if kwargs.pop('gridindexingtype', 'mitgcm') != 'mitgcm':
-            raise ValueError("gridindexingtype must be 'mitgcm' in FieldSet.from_mitgcm(). Use FieldSet.from_c_grid_dataset otherwise")
-        fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
-                                           chunksize=chunksize, gridindexingtype='mitgcm', **kwargs)
+        if "creation_log" not in kwargs.keys():
+            kwargs["creation_log"] = "from_mitgcm"
+        if kwargs.pop("gridindexingtype", "mitgcm") != "mitgcm":
+            raise ValueError(
+                "gridindexingtype must be 'mitgcm' in FieldSet.from_mitgcm(). Use FieldSet.from_c_grid_dataset otherwise"
+            )
+        fieldset = cls.from_c_grid_dataset(
+            filenames,
+            variables,
+            dimensions,
+            mesh=mesh,
+            indices=indices,
+            time_periodic=time_periodic,
+            allow_time_extrapolation=allow_time_extrapolation,
+            tracer_interp_method=tracer_interp_method,
+            chunksize=chunksize,
+            gridindexingtype="mitgcm",
+            **kwargs,
+        )
         return fieldset
 
     @classmethod
-    def from_c_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                            allow_time_extrapolation=None, time_periodic=False,
-                            tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', chunksize=None, **kwargs):
+    def from_c_grid_dataset(
+        cls,
+        filenames,
+        variables,
+        dimensions,
+        indices=None,
+        mesh="spherical",
+        allow_time_extrapolation=None,
+        time_periodic=False,
+        tracer_interp_method="cgrid_tracer",
+        gridindexingtype="nemo",
+        chunksize=None,
+        **kwargs,
+    ):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         See `here <../examples/documentation_indexing.ipynb>`__
@@ -654,32 +761,57 @@ class FieldSet:
         **kwargs :
             Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
         """
-        if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
-            raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
-                             "See also ../examples/documentation_indexing.ipynb")
-        if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
-            raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U, V and W. "
-                             "See also ../examples/documentation_indexing.ipynb")
-        if 'interp_method' in kwargs.keys():
+        if "U" in dimensions and "V" in dimensions and dimensions["U"] != dimensions["V"]:
+            raise ValueError(
+                "On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
+                "See also ../examples/documentation_indexing.ipynb"
+            )
+        if "U" in dimensions and "W" in dimensions and dimensions["U"] != dimensions["W"]:
+            raise ValueError(
+                "On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U, V and W. "
+                "See also ../examples/documentation_indexing.ipynb"
+            )
+        if "interp_method" in kwargs.keys():
             raise TypeError("On a C-grid, the interpolation method for velocities should not be overridden")
 
         interp_method = {}
         for v in variables:
-            if v in ['U', 'V', 'W']:
-                interp_method[v] = 'cgrid_velocity'
+            if v in ["U", "V", "W"]:
+                interp_method[v] = "cgrid_velocity"
             else:
                 interp_method[v] = tracer_interp_method
-        if 'creation_log' not in kwargs.keys():
-            kwargs['creation_log'] = 'from_c_grid_dataset'
+        if "creation_log" not in kwargs.keys():
+            kwargs["creation_log"] = "from_c_grid_dataset"
 
-        return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
-                               chunksize=chunksize, gridindexingtype=gridindexingtype, **kwargs)
+        return cls.from_netcdf(
+            filenames,
+            variables,
+            dimensions,
+            mesh=mesh,
+            indices=indices,
+            time_periodic=time_periodic,
+            allow_time_extrapolation=allow_time_extrapolation,
+            interp_method=interp_method,
+            chunksize=chunksize,
+            gridindexingtype=gridindexingtype,
+            **kwargs,
+        )
 
     @classmethod
-    def from_pop(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                 allow_time_extrapolation=None, time_periodic=False,
-                 tracer_interp_method='bgrid_tracer', chunksize=None, depth_units='m', **kwargs):
+    def from_pop(
+        cls,
+        filenames,
+        variables,
+        dimensions,
+        indices=None,
+        mesh="spherical",
+        allow_time_extrapolation=None,
+        time_periodic=False,
+        tracer_interp_method="bgrid_tracer",
+        chunksize=None,
+        depth_units="m",
+        **kwargs,
+    ):
         """Initialises FieldSet object from NetCDF files of POP fields.
             It is assumed that the velocities in the POP fields is in cm/s.
 
@@ -755,29 +887,51 @@ class FieldSet:
             Keyword arguments passed to the :func:`Fieldset.from_b_grid_dataset` constructor.
 
         """
-        if 'creation_log' not in kwargs.keys():
-            kwargs['creation_log'] = 'from_pop'
-        fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
-                                           chunksize=chunksize, gridindexingtype='pop', **kwargs)
-        if hasattr(fieldset, 'U'):
+        if "creation_log" not in kwargs.keys():
+            kwargs["creation_log"] = "from_pop"
+        fieldset = cls.from_b_grid_dataset(
+            filenames,
+            variables,
+            dimensions,
+            mesh=mesh,
+            indices=indices,
+            time_periodic=time_periodic,
+            allow_time_extrapolation=allow_time_extrapolation,
+            tracer_interp_method=tracer_interp_method,
+            chunksize=chunksize,
+            gridindexingtype="pop",
+            **kwargs,
+        )
+        if hasattr(fieldset, "U"):
             fieldset.U.set_scaling_factor(0.01)  # cm/s to m/s
-        if hasattr(fieldset, 'V'):
+        if hasattr(fieldset, "V"):
             fieldset.V.set_scaling_factor(0.01)  # cm/s to m/s
-        if hasattr(fieldset, 'W'):
-            if depth_units == 'm':
+        if hasattr(fieldset, "W"):
+            if depth_units == "m":
                 fieldset.W.set_scaling_factor(-0.01)  # cm/s to m/s and change the W direction
-                logger.warning_once("Parcels assumes depth in POP output to be in 'm'. Use depth_units='cm' if the output depth is in 'cm'.")
-            elif depth_units == 'cm':
-                fieldset.W.set_scaling_factor(-1.)  # change the W direction but keep W in cm/s because depth is in cm
+                logger.warning_once(
+                    "Parcels assumes depth in POP output to be in 'm'. Use depth_units='cm' if the output depth is in 'cm'."
+                )
+            elif depth_units == "cm":
+                fieldset.W.set_scaling_factor(-1.0)  # change the W direction but keep W in cm/s because depth is in cm
             else:
                 raise SyntaxError("'depth_units' has to be 'm' or 'cm'")
         return fieldset
 
     @classmethod
-    def from_mom5(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                  allow_time_extrapolation=None, time_periodic=False,
-                  tracer_interp_method='bgrid_tracer', chunksize=None, **kwargs):
+    def from_mom5(
+        cls,
+        filenames,
+        variables,
+        dimensions,
+        indices=None,
+        mesh="spherical",
+        allow_time_extrapolation=None,
+        time_periodic=False,
+        tracer_interp_method="bgrid_tracer",
+        chunksize=None,
+        **kwargs,
+    ):
         """Initialises FieldSet object from NetCDF files of MOM5 fields.
 
         Parameters
@@ -846,12 +1000,22 @@ class FieldSet:
         **kwargs :
             Keyword arguments passed to the :func:`Fieldset.from_b_grid_dataset` constructor.
         """
-        if 'creation_log' not in kwargs.keys():
-            kwargs['creation_log'] = 'from_mom5'
-        fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
-                                           chunksize=chunksize, gridindexingtype='mom5', **kwargs)
-        if hasattr(fieldset, 'W'):
+        if "creation_log" not in kwargs.keys():
+            kwargs["creation_log"] = "from_mom5"
+        fieldset = cls.from_b_grid_dataset(
+            filenames,
+            variables,
+            dimensions,
+            mesh=mesh,
+            indices=indices,
+            time_periodic=time_periodic,
+            allow_time_extrapolation=allow_time_extrapolation,
+            tracer_interp_method=tracer_interp_method,
+            chunksize=chunksize,
+            gridindexingtype="mom5",
+            **kwargs,
+        )
+        if hasattr(fieldset, "W"):
             fieldset.W.set_scaling_factor(-1)
         return fieldset
 
@@ -879,9 +1043,19 @@ class FieldSet:
         return cls.from_netcdf(filenames, variables, dimensions, **kwargs)
 
     @classmethod
-    def from_b_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                            allow_time_extrapolation=None, time_periodic=False,
-                            tracer_interp_method='bgrid_tracer', chunksize=None, **kwargs):
+    def from_b_grid_dataset(
+        cls,
+        filenames,
+        variables,
+        dimensions,
+        indices=None,
+        mesh="spherical",
+        allow_time_extrapolation=None,
+        time_periodic=False,
+        tracer_interp_method="bgrid_tracer",
+        chunksize=None,
+        **kwargs,
+    ):
         """Initialises FieldSet object from NetCDF files of Bgrid fields.
 
         Parameters
@@ -949,32 +1123,55 @@ class FieldSet:
         **kwargs :
             Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
         """
-        if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
-            raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U and V. "
-                             "See also ../examples/documentation_indexing.ipynb")
-        if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
-            raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U, V and W. "
-                             "See also ../examples/documentation_indexing.ipynb")
+        if "U" in dimensions and "V" in dimensions and dimensions["U"] != dimensions["V"]:
+            raise ValueError(
+                "On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U and V. "
+                "See also ../examples/documentation_indexing.ipynb"
+            )
+        if "U" in dimensions and "W" in dimensions and dimensions["U"] != dimensions["W"]:
+            raise ValueError(
+                "On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U, V and W. "
+                "See also ../examples/documentation_indexing.ipynb"
+            )
 
         interp_method = {}
         for v in variables:
-            if v in ['U', 'V']:
-                interp_method[v] = 'bgrid_velocity'
-            elif v in ['W']:
-                interp_method[v] = 'bgrid_w_velocity'
+            if v in ["U", "V"]:
+                interp_method[v] = "bgrid_velocity"
+            elif v in ["W"]:
+                interp_method[v] = "bgrid_w_velocity"
             else:
                 interp_method[v] = tracer_interp_method
-        if 'creation_log' not in kwargs.keys():
-            kwargs['creation_log'] = 'from_b_grid_dataset'
+        if "creation_log" not in kwargs.keys():
+            kwargs["creation_log"] = "from_b_grid_dataset"
 
-        return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
-                               chunksize=chunksize, **kwargs)
+        return cls.from_netcdf(
+            filenames,
+            variables,
+            dimensions,
+            mesh=mesh,
+            indices=indices,
+            time_periodic=time_periodic,
+            allow_time_extrapolation=allow_time_extrapolation,
+            interp_method=interp_method,
+            chunksize=chunksize,
+            **kwargs,
+        )
 
     @classmethod
-    def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
-                     allow_time_extrapolation=None, time_periodic=False, deferred_load=True,
-                     chunksize=None, **kwargs):
+    def from_parcels(
+        cls,
+        basename,
+        uvar="vozocrtx",
+        vvar="vomecrty",
+        indices=None,
+        extra_fields=None,
+        allow_time_extrapolation=None,
+        time_periodic=False,
+        deferred_load=True,
+        chunksize=None,
+        **kwargs,
+    ):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
         Parameters
@@ -1015,25 +1212,32 @@ class FieldSet:
         """
         if extra_fields is None:
             extra_fields = {}
-        if 'creation_log' not in kwargs.keys():
-            kwargs['creation_log'] = 'from_parcels'
+        if "creation_log" not in kwargs.keys():
+            kwargs["creation_log"] = "from_parcels"
 
         dimensions = {}
-        default_dims = {'lon': 'nav_lon', 'lat': 'nav_lat',
-                        'depth': 'depth', 'time': 'time_counter'}
-        extra_fields.update({'U': uvar, 'V': vvar})
+        default_dims = {"lon": "nav_lon", "lat": "nav_lat", "depth": "depth", "time": "time_counter"}
+        extra_fields.update({"U": uvar, "V": vvar})
         for vars in extra_fields:
             dimensions[vars] = deepcopy(default_dims)
-            dimensions[vars]['depth'] = 'depth%s' % vars.lower()
+            dimensions[vars]["depth"] = "depth%s" % vars.lower()
         filenames = {v: str(f"{basename}{v}.nc") for v in extra_fields.keys()}
-        return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
-                               dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
-                               time_periodic=time_periodic, deferred_load=deferred_load,
-                               chunksize=chunksize, **kwargs)
+        return cls.from_netcdf(
+            filenames,
+            indices=indices,
+            variables=extra_fields,
+            dimensions=dimensions,
+            allow_time_extrapolation=allow_time_extrapolation,
+            time_periodic=time_periodic,
+            deferred_load=deferred_load,
+            chunksize=chunksize,
+            **kwargs,
+        )
 
     @classmethod
-    def from_xarray_dataset(cls, ds, variables, dimensions, mesh='spherical', allow_time_extrapolation=None,
-                            time_periodic=False, **kwargs):
+    def from_xarray_dataset(
+        cls, ds, variables, dimensions, mesh="spherical", allow_time_extrapolation=None, time_periodic=False, **kwargs
+    ):
         """Initialises FieldSet data from xarray Datasets.
 
         Parameters
@@ -1070,21 +1274,28 @@ class FieldSet:
             Keyword arguments passed to the :func:`Field.from_xarray` constructor.
         """
         fields = {}
-        if 'creation_log' not in kwargs.keys():
-            kwargs['creation_log'] = 'from_xarray_dataset'
-        if 'time' in dimensions:
-            if 'units' not in ds[dimensions['time']].attrs and 'Unit' in ds[dimensions['time']].attrs:
+        if "creation_log" not in kwargs.keys():
+            kwargs["creation_log"] = "from_xarray_dataset"
+        if "time" in dimensions:
+            if "units" not in ds[dimensions["time"]].attrs and "Unit" in ds[dimensions["time"]].attrs:
                 # Fix DataArrays that have time.Unit instead of expected time.units
-                convert_xarray_time_units(ds, dimensions['time'])
+                convert_xarray_time_units(ds, dimensions["time"])
 
         for var, name in variables.items():
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
 
-            fields[var] = Field.from_xarray(ds[name], var, dims, mesh=mesh, allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, **kwargs)
-        u = fields.pop('U', None)
-        v = fields.pop('V', None)
+            fields[var] = Field.from_xarray(
+                ds[name],
+                var,
+                dims,
+                mesh=mesh,
+                allow_time_extrapolation=allow_time_extrapolation,
+                time_periodic=time_periodic,
+                **kwargs,
+            )
+        u = fields.pop("U", None)
+        v = fields.pop("V", None)
         return cls(u, v, fields=fields)
 
     @classmethod
@@ -1183,16 +1394,16 @@ class FieldSet:
         if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
             logger.info(f"Generating FieldSet output with basename: {filename}")
 
-            if hasattr(self, 'U'):
-                self.U.write(filename, varname='vozocrtx')
-            if hasattr(self, 'V'):
-                self.V.write(filename, varname='vomecrty')
+            if hasattr(self, "U"):
+                self.U.write(filename, varname="vozocrtx")
+            if hasattr(self, "V"):
+                self.V.write(filename, varname="vomecrty")
 
             for v in self.get_fields():
-                if isinstance(v, Field) and (v.name != 'U') and (v.name != 'V'):
+                if isinstance(v, Field) and (v.name != "U") and (v.name != "V"):
                     v.write(filename)
 
-    def computeTimeChunk(self, time=0., dt=1):
+    def computeTimeChunk(self, time=0.0, dt=1):
         """Load a chunk of three data time steps into the FieldSet.
         This is used when FieldSet uses data imported from netcdf,
         with default option deferred_load. The loaded time steps are at or immediatly before time
@@ -1212,21 +1423,21 @@ class FieldSet:
         nextTime = np.inf if dt > 0 else -np.inf
 
         for g in self.gridset.grids:
-            g.update_status = 'not_updated'
+            g.update_status = "not_updated"
         for f in self.get_fields():
             if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load:
                 continue
-            if f.grid.update_status == 'not_updated':
+            if f.grid.update_status == "not_updated":
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
                 if time == nextTime_loc and signdt != 0:
-                    raise TimeExtrapolationError(time, field=f, msg='In fset.computeTimeChunk')
+                    raise TimeExtrapolationError(time, field=f, msg="In fset.computeTimeChunk")
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.get_fields():
             if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f.dataFiles is None:
                 continue
             g = f.grid
-            if g.update_status == 'first_updated':  # First load of data
+            if g.update_status == "first_updated":  # First load of data
                 if f.data is not None and not isinstance(f.data, DeferredArray):
                     if not isinstance(f.data, list):
                         f.data = None
@@ -1235,11 +1446,13 @@ class FieldSet:
                             del f.data[i, :]
 
                 lib = np if f.chunksize in [False, None] else da
-                if f.gridindexingtype == 'pop' and g.zdim > 1:
+                if f.gridindexingtype == "pop" and g.zdim > 1:
                     zd = g.zdim - 1
                 else:
                     zd = g.zdim
-                data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                data = lib.empty(
+                    (g.tdim, zd, g.ydim - 2 * g.meridional_halo, g.xdim - 2 * g.zonal_halo), dtype=np.float32
+                )
                 f.loaded_time_indices = range(2)
                 for tind in f.loaded_time_indices:
                     for fb in f.filebuffers:
@@ -1249,24 +1462,26 @@ class FieldSet:
                     data = f.computeTimeChunk(data, tind)
                 data = f.rescale_and_set_minmax(data)
 
-                if (isinstance(f.data, DeferredArray)):
+                if isinstance(f.data, DeferredArray):
                     f.data = DeferredArray()
                 f.data = f.reshape(data)
                 if not f.chunk_set:
                     f.chunk_setup()
                 if len(g.load_chunk) > g.chunk_not_loaded:
-                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
-                                            g.chunk_loading_requested, g.load_chunk)
-                    g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated,
-                                            g.chunk_not_loaded, g.load_chunk)
+                    g.load_chunk = np.where(
+                        g.load_chunk == g.chunk_loaded_touched, g.chunk_loading_requested, g.load_chunk
+                    )
+                    g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated, g.chunk_not_loaded, g.load_chunk)
 
-            elif g.update_status == 'updated':
+            elif g.update_status == "updated":
                 lib = np if isinstance(f.data, np.ndarray) else da
-                if f.gridindexingtype == 'pop' and g.zdim > 1:
+                if f.gridindexingtype == "pop" and g.zdim > 1:
                     zd = g.zdim - 1
                 else:
                     zd = g.zdim
-                data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                data = lib.empty(
+                    (g.tdim, zd, g.ydim - 2 * g.meridional_halo, g.xdim - 2 * g.zonal_halo), dtype=np.float32
+                )
                 if signdt >= 0:
                     f.loaded_time_indices = [1]
                     if f.filebuffers[0] is not None:
@@ -1306,10 +1521,8 @@ class FieldSet:
                                 f.data[1, :] = None
                         f.data[1, :] = f.data[0, :]
                         f.data[0, :] = data
-                g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
-                                        g.chunk_loading_requested, g.load_chunk)
-                g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated,
-                                        g.chunk_not_loaded, g.load_chunk)
+                g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched, g.chunk_loading_requested, g.load_chunk)
+                g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated, g.chunk_not_loaded, g.load_chunk)
                 if isinstance(f.data, da.core.Array) and len(g.load_chunk) > 0:
                     if signdt >= 0:
                         for block_id in range(len(g.load_chunk)):
@@ -1320,7 +1533,7 @@ class FieldSet:
                                     break
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][0] = None
-                                f.data_chunks[block_id][1] = np.array(f.data.blocks[(slice(2),)+block][1])
+                                f.data_chunks[block_id][1] = np.array(f.data.blocks[(slice(2),) + block][1])
                     else:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == g.chunk_loaded_touched:
@@ -1330,7 +1543,7 @@ class FieldSet:
                                     break
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][1] = None
-                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(2),)+block][0])
+                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(2),) + block][0])
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)

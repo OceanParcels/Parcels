@@ -2,10 +2,9 @@ from datetime import timedelta
 from glob import glob
 
 import numpy as np
+import parcels
 import pytest
 import xarray as xr
-
-import parcels
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 
