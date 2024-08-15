@@ -285,3 +285,4 @@ def convert_xarray_time_units(ds, time):
             "try using the timestamps keyword in the construction of your Field. "
             "See also the tutorial at https://docs.oceanparcels.org/en/latest/examples/tutorial_timestamps.html"
         )
+    ds[time] = da2[time]
