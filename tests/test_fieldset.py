@@ -156,7 +156,9 @@ def test_field_from_netcdf_variables():
         f3 = Field.from_netcdf(filename, variable, dims)
 
 
-@pytest.mark.parametrize("calendar, cftime_datetime", zip(_get_cftime_calendars(), _get_cftime_datetimes()))
+@pytest.mark.parametrize(
+    "calendar, cftime_datetime", zip(_get_cftime_calendars(), _get_cftime_datetimes(), strict=True)
+)
 def test_fieldset_nonstandardtime(
     calendar, cftime_datetime, tmpdir, filename="test_nonstandardtime.nc", xdim=4, ydim=6
 ):

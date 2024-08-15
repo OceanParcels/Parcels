@@ -248,7 +248,7 @@ class Kernel(BaseKernel):
             fieldset = self.fieldset
             for f in self.vector_field_args.values():
                 Wname = f.W.ccode_name if f.W else "not_defined"
-                for sF_name, sF_component in zip([f.U.ccode_name, f.V.ccode_name, Wname], ["U", "V", "W"]):
+                for sF_name, sF_component in zip([f.U.ccode_name, f.V.ccode_name, Wname], ["U", "V", "W"], strict=True):
                     if sF_name not in self.field_args:
                         if sF_name != "not_defined":
                             self.field_args[sF_name] = getattr(f, sF_component)

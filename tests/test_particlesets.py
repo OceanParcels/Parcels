@@ -323,7 +323,7 @@ def test_pset_remove_index(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
     pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode], lonlatdepth_dtype=np.float64)
-    for ilon, ilat in zip(lon[::-1], lat[::-1]):
+    for ilon, ilat in zip(lon[::-1], lat[::-1], strict=True):
         assert pset[-1].lon == ilon
         assert pset[-1].lat == ilat
         pset.remove_indices(-1)
@@ -336,7 +336,7 @@ def test_pset_remove_particle(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
     pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode])
-    for ilon, ilat in zip(lon[::-1], lat[::-1]):
+    for ilon, ilat in zip(lon[::-1], lat[::-1], strict=True):
         assert pset.lon[-1] == ilon
         assert pset.lat[-1] == ilat
         pset.remove_indices(pset[-1])
