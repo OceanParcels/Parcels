@@ -176,7 +176,7 @@ class ParticleSet:
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError("If fieldset.time_origin is not a date, time of a particle must be a double")
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
-        assert lon.size == time.size, "time and positions (lon, lat, depth) don" "t have the same lengths."
+        assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
 
         if lonlatdepth_dtype is None:
             lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
@@ -244,7 +244,7 @@ class ParticleSet:
                 else:
                     interaction_class = KDTreeFlatNeighborSearch
             else:
-                assert False, "Interaction is only possible on 'flat' and " "'spherical' meshes"
+                assert False, "Interaction is only possible on 'flat' and 'spherical' meshes"
             try:
                 if len(interaction_distance) == 2:
                     inter_dist_vert, inter_dist_horiz = interaction_distance

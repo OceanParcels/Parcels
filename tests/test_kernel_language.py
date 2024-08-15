@@ -27,7 +27,8 @@ ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
 def expr_kernel(name, pset, expr):
-    pycode = f"def {name}(particle, fieldset, time):\n" f"    particle.p = {expr}"
+    pycode = (f"def {name}(particle, fieldset, time):\n"
+              f"    particle.p = {expr}")  # fmt: skip
     return Kernel(
         pset.fieldset, pset.particledata.ptype, pyfunc=None, funccode=pycode, funcname=name, funcvars=["particle"]
     )

@@ -399,7 +399,7 @@ latex_documents = [
         master_doc,
         "parcels.tex",
         "Parcels Documentation",
-        "M. Lange, E. van Sebille",
+        "The Parcels developers",
         "manual",
     ),
 ]

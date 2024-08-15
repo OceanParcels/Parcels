@@ -80,7 +80,7 @@ class InteractionKernel(BaseKernel):
 
         if self._ptype.uses_jit:
             raise NotImplementedError(
-                "JIT mode is not supported for" " InteractionKernels. Please run your" " simulation in SciPy mode."
+                "JIT mode is not supported for InteractionKernels. Please run your simulation in SciPy mode."
             )
 
         for func in self._pyfunc:
@@ -166,7 +166,7 @@ class InteractionKernel(BaseKernel):
 
     def execute_jit(self, pset, endtime, dt):
         raise NotImplementedError(
-            "JIT mode is not supported for" " InteractionKernels. Please run your" " simulation in SciPy mode."
+            "JIT mode is not supported for InteractionKernels. Please run your simulation in SciPy mode."
         )
 
     def execute_python(self, pset, endtime, dt):

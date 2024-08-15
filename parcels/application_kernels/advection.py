@@ -35,9 +35,9 @@ def AdvectionRK4_3D(particle, fieldset, time):
     lat3 = particle.lat + v3 * particle.dt
     dep3 = particle.depth + w3 * particle.dt
     (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3, particle]
-    particle_dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6.0 * particle.dt  # noqa
-    particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6.0 * particle.dt  # noqa
-    particle_ddepth += (w1 + 2 * w2 + 2 * w3 + w4) / 6.0 * particle.dt  # noqa
+    particle_dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6 * particle.dt  # noqa
+    particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6 * particle.dt  # noqa
+    particle_ddepth += (w1 + 2 * w2 + 2 * w3 + w4) / 6 * particle.dt  # noqa
 
 
 def AdvectionEE(particle, fieldset, time):
