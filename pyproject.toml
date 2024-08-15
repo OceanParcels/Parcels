@@ -71,6 +71,7 @@ select = [
     "ICN", # import conventions
     "G", # logging-format
     "RUF", # ruff
+    "ISC001", # single-line-implicit-string-concatenation
 ]
 
 ignore = [

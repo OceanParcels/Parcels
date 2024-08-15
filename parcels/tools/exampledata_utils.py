@@ -132,7 +132,7 @@ def download_example_dataset(dataset: str, data_home=None):
     # Dev note: `dataset` is assumed to be a folder name with netcdf files
     if dataset not in example_data_files:
         raise ValueError(
-            f"Dataset {dataset!r} not found. Available datasets are: " ", ".join(example_data_files.keys())
+            f"Dataset {dataset!r} not found. Available datasets are: " + ", ".join(example_data_files.keys())
         )
 
     cache_folder = get_data_home(data_home)

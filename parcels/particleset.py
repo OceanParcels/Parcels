@@ -166,7 +166,7 @@ class ParticleSet:
             depth = np.ones(lon.size) * mindepth
         else:
             depth = convert_to_flat_array(depth)
-        assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don" "t all have the same lenghts"
+        assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
         time = convert_to_flat_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time

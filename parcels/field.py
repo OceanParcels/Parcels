@@ -475,10 +475,10 @@ class Field:
                 raise RuntimeError(f"Indices for {ind} can not be empty")
             assert np.min(indices[ind]) >= 0, (
                 "Negative indices are currently not allowed in Parcels. "
-                + "This is related to the non-increasing dimension it could generate "
-                + "if the domain goes from lon[-4] to lon[6] for example. "
-                + "Please raise an issue on https://github.com/OceanParcels/parcels/issues "
-                + "if you would need such feature implemented."
+                "This is related to the non-increasing dimension it could generate "
+                "if the domain goes from lon[-4] to lon[6] for example. "
+                "Please raise an issue on https://github.com/OceanParcels/parcels/issues "
+                "if you would need such feature implemented."
             )
 
         interp_method = kwargs.pop("interp_method", "linear")
