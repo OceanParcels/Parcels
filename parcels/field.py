@@ -569,7 +569,7 @@ class Field:
             # Pre-allocate data before reading files into buffer
             data_list = []
             ti = 0
-            for tslice, fname in zip(grid.timeslices, data_filenames):
+            for tslice, fname in zip(grid.timeslices, data_filenames, strict=True):
                 with _field_fb_class(
                     fname,
                     dimensions,
@@ -798,8 +798,8 @@ class Field:
 
                 x_conv = GeographicPolar() if self.grid.mesh == "spherical" else UnitConverter()
                 y_conv = Geographic() if self.grid.mesh == "spherical" else UnitConverter()
-                for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat))):
-                    for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon))):
+                for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat), strict=False)):
+                    for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon), strict=False)):
                         self.grid.cell_edge_sizes["x"][y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
                         self.grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
                 self.cell_edge_sizes = self.grid.cell_edge_sizes
@@ -2299,13 +2299,13 @@ class NestedField(list):
                 ), "Components of a NestedField must be Field or VectorField"
                 self.append(Fi)
         elif W is None:
-            for i, Fi, Vi in zip(range(len(F)), F, V):
+            for i, Fi, Vi in zip(range(len(F)), F, V, strict=True):
                 assert isinstance(Fi, Field) and isinstance(
                     Vi, Field
                 ), "F, and V components of a NestedField must be Field"
                 self.append(VectorField(name + "_%d" % i, Fi, Vi))
         else:
-            for i, Fi, Vi, Wi in zip(range(len(F)), F, V, W):
+            for i, Fi, Vi, Wi in zip(range(len(F)), F, V, W, strict=True):
                 assert (
                     isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field)
                 ), "F, V and W components of a NestedField must be Field"

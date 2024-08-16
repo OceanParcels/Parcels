@@ -352,8 +352,8 @@ def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npa
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
-    exp_lon = [truth_stationary(x, y, pset[0].time)[0] for x, y in zip(lon, lat)]
-    exp_lat = [truth_stationary(x, y, pset[0].time)[1] for x, y in zip(lon, lat)]
+    exp_lon = [truth_stationary(x, y, pset[0].time)[0] for x, y in zip(lon, lat, strict=True)]
+    exp_lat = [truth_stationary(x, y, pset[0].time)[1] for x, y in zip(lon, lat, strict=True)]
     assert np.allclose(pset.lon, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
@@ -380,8 +380,8 @@ def test_stationary_eddy_vertical(mode, npart=1):
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
     pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
-    exp_lon = [truth_stationary(x, z, pset[0].time)[0] for x, z in zip(lon, depth)]
-    exp_depth = [truth_stationary(x, z, pset[0].time)[1] for x, z in zip(lon, depth)]
+    exp_lon = [truth_stationary(x, z, pset[0].time)[0] for x, z in zip(lon, depth, strict=True)]
+    exp_depth = [truth_stationary(x, z, pset[0].time)[1] for x, z in zip(lon, depth, strict=True)]
     print(pset, exp_lon)
     assert np.allclose(pset.lon, exp_lon, rtol=1e-5)
     assert np.allclose(pset.lat, lat, rtol=1e-5)
@@ -392,8 +392,8 @@ def test_stationary_eddy_vertical(mode, npart=1):
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
     pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
-    exp_depth = [truth_stationary(z, y, pset[0].time)[0] for z, y in zip(depth, lat)]
-    exp_lat = [truth_stationary(z, y, pset[0].time)[1] for z, y in zip(depth, lat)]
+    exp_depth = [truth_stationary(z, y, pset[0].time)[0] for z, y in zip(depth, lat, strict=True)]
+    exp_lat = [truth_stationary(z, y, pset[0].time)[1] for z, y in zip(depth, lat, strict=True)]
     assert np.allclose(pset.lon, lon, rtol=1e-5)
     assert np.allclose(pset.lat, exp_lat, rtol=1e-5)
     assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
@@ -453,8 +453,8 @@ def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField, npart=1):
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
-    exp_lon = [truth_moving(x, y, t)[0] for x, y, t in zip(lon, lat, pset.time)]
-    exp_lat = [truth_moving(x, y, t)[1] for x, y, t in zip(lon, lat, pset.time)]
+    exp_lon = [truth_moving(x, y, t)[0] for x, y, t in zip(lon, lat, pset.time, strict=True)]
+    exp_lat = [truth_moving(x, y, t)[1] for x, y, t in zip(lon, lat, pset.time, strict=True)]
     assert np.allclose(pset.lon, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
@@ -528,8 +528,8 @@ def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
-    exp_lon = [truth_decaying(x, y, t)[0] for x, y, t in zip(lon, lat, pset.time)]
-    exp_lat = [truth_decaying(x, y, t)[1] for x, y, t in zip(lon, lat, pset.time)]
+    exp_lon = [truth_decaying(x, y, t)[0] for x, y, t in zip(lon, lat, pset.time, strict=True)]
+    exp_lat = [truth_decaying(x, y, t)[1] for x, y, t in zip(lon, lat, pset.time, strict=True)]
     assert np.allclose(pset.lon, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
