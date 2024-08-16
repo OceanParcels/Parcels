@@ -55,6 +55,7 @@ python_files = ["test_*.py", "example_*.py", "*tutorial*"]
 
 [tool.ruff]
 target-version = "py38"
+line-length = 120
 
 [tool.ruff.lint]
 exclude = ["*.ipynb"]
@@ -64,7 +65,12 @@ select = [
     "E",  # Error
     "F",  # pyflakes
     "I",  # isort
+    "B",  # Bugbear
     # "UP", # pyupgrade
+    "LOG", # logging
+    "ICN", # import conventions
+    "G", # logging-format
+    "RUF", # ruff
 ]
 
 ignore = [
@@ -72,6 +78,13 @@ ignore = [
     "E501",
     # ‘from module import *’ used; unable to detect undefined names
     "F403",
+    # Mutable class attributes should be annotated with `typing.ClassVar`
+    "RUF012",
+    # Consider `(slice(2), *block)` instead of concatenation
+    "RUF005",
+    # Prefer `next(iter(variable.items()))` over single element slice
+    "RUF015",
+
 
     # TODO: ignore for now (requires more work). Remove ignore once fixed
     # Missing docstring in public module
@@ -96,56 +109,13 @@ ignore = [
     "D205",
     # do not use bare except, specify exception instead
     "E722",
+
+
+    # TODO: These bugbear issues are to be resolved
+    "B011", # Do not `assert False`
+    "B016", # Cannot raise a literal. Did you intend to return it or raise an Exception?
+    "B904", # Within an `except` clause, raise exceptions
 ]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
-
-[tool.ruff.format]
-# List of files to ignore formatting (ordered by ascending line count)
-exclude = [
-  "tests/test_mpirun.py",
-  "parcels/tools/global_statics.py",
-  "tests/test_tools.py",
-  "parcels/gridset.py",
-  "parcels/tools/timer.py",
-  "parcels/application_kernels/TEOSseawaterdensity.py",
-  "tests/test_particles.py",
-  "parcels/application_kernels/interaction.py",
-  "parcels/application_kernels/advectiondiffusion.py",
-  "parcels/tools/statuscodes.py",
-  "tests/test_data/create_testfields.py",
-  "tests/test_diffusion.py",
-  "parcels/tools/exampledata_utils.py",
-  "parcels/tools/interpolation_utils.py",
-  "parcels/interaction/neighborsearch/hashflat.py",
-  "parcels/interaction/neighborsearch/hashspherical.py",
-  "parcels/interaction/neighborsearch/basehash.py",
-  "parcels/rng.py",
-  "parcels/interaction/neighborsearch/base.py",
-  "parcels/interaction/interactionkernel.py",
-  "parcels/tools/converters.py",
-  "parcels/application_kernels/advection.py",
-  "parcels/particlefile.py",
-  "parcels/compilation/codecompiler.py",
-  "parcels/particle.py",
-  "tests/test_interaction.py",
-  "tests/test_particlefile.py",
-  "parcels/application_kernels/EOSseawaterproperties.py",
-  "tests/test_kernel_execution.py",
-  "tests/test_particlesets.py",
-  "parcels/particledata.py",
-  "tests/test_kernel_language.py",
-  "docs/conf.py",
-  "parcels/grid.py",
-  "tests/test_advection.py",
-  "parcels/kernel.py",
-  "parcels/fieldfilebuffer.py",
-  "tests/test_fieldset_sampling.py",
-  "parcels/compilation/codegenerator.py",
-  "tests/test_grids.py",
-  "parcels/particleset.py",
-  "tests/test_fieldset.py",
-  "parcels/fieldset.py",
-  "parcels/field.py",
-]

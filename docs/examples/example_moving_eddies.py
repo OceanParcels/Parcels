@@ -4,9 +4,8 @@ from argparse import ArgumentParser
 from datetime import timedelta
 
 import numpy as np
-import pytest
-
 import parcels
+import pytest
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 method = {
@@ -273,11 +272,11 @@ def test_periodic_and_computeTimeChunk_eddies(mode):
         if particle.lon < fieldset.halo_west:
             particle_dlon += fieldset.halo_east - fieldset.halo_west  # noqa
         elif particle.lon > fieldset.halo_east:
-            particle_dlon -= fieldset.halo_east - fieldset.halo_west  # noqa
+            particle_dlon -= fieldset.halo_east - fieldset.halo_west
         if particle.lat < fieldset.halo_south:
             particle_dlat += fieldset.halo_north - fieldset.halo_south  # noqa
         elif particle.lat > fieldset.halo_north:
-            particle_dlat -= fieldset.halo_north - fieldset.halo_south  # noqa
+            particle_dlat -= fieldset.halo_north - fieldset.halo_south
 
     def slowlySouthWestward(particle, fieldset, time):
         particle_dlon -= 5 * particle.dt / 1e5  # noqa

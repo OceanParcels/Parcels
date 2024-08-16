@@ -5,7 +5,7 @@ import numpy as np
 
 from parcels.tools.statuscodes import StatusCode
 
-__all__ = ['ScipyParticle', 'JITParticle', 'Variable', 'ScipyInteractionParticle']
+__all__ = ["ScipyParticle", "JITParticle", "Variable", "ScipyInteractionParticle"]
 
 indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 
@@ -80,14 +80,15 @@ class ParticleType:
                 for v in self.variables:
                     if v.name in [v.name for v in ptype.variables]:
                         raise AttributeError(
-                            f"Custom Variable name '{v.name}' is not allowed, as it is also a built-in variable")
-                    if v.name == 'z':
+                            f"Custom Variable name '{v.name}' is not allowed, as it is also a built-in variable"
+                        )
+                    if v.name == "z":
                         raise AttributeError(
-                            "Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
+                            "Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile"
+                        )
                 self.variables = ptype.variables + self.variables
         # Sort variables with all the 64-bit first so that they are aligned for the JIT cptr
-        self.variables = [v for v in self.variables if v.is64bit()] + \
-                         [v for v in self.variables if not v.is64bit()]
+        self.variables = [v for v in self.variables if v.is64bit()] + [v for v in self.variables if not v.is64bit()]
 
     def __repr__(self):
         return f"PType<{self.name}>::{self.variables}"
@@ -110,7 +111,7 @@ class ParticleType:
                 raise RuntimeError(str(v.dtype) + " variables are not implemented in JIT mode")
         if self.size % 8 > 0:
             # Add padding to be 64-bit aligned
-            type_list += [('pad', np.float32)]
+            type_list += [("pad", np.float32)]
         return np.dtype(type_list)
 
     @property
@@ -149,23 +150,22 @@ class ScipyParticle:
     Additional Variables can be added via the :Class Variable: objects
     """
 
-    lon = Variable('lon', dtype=np.float32)
-    lon_nextloop = Variable('lon_nextloop', dtype=np.float32, to_write=False)
-    lat = Variable('lat', dtype=np.float32)
-    lat_nextloop = Variable('lat_nextloop', dtype=np.float32, to_write=False)
-    depth = Variable('depth', dtype=np.float32)
-    depth_nextloop = Variable('depth_nextloop', dtype=np.float32, to_write=False)
-    time = Variable('time', dtype=np.float64)
-    time_nextloop = Variable('time_nextloop', dtype=np.float64, to_write=False)
-    id = Variable('id', dtype=np.int64, to_write='once')
-    obs_written = Variable('obs_written', dtype=np.int32, initial=0, to_write=False)
-    dt = Variable('dt', dtype=np.float64, to_write=False)
-    state = Variable('state', dtype=np.int32, initial=StatusCode.Evaluate, to_write=False)
+    lon = Variable("lon", dtype=np.float32)
+    lon_nextloop = Variable("lon_nextloop", dtype=np.float32, to_write=False)
+    lat = Variable("lat", dtype=np.float32)
+    lat_nextloop = Variable("lat_nextloop", dtype=np.float32, to_write=False)
+    depth = Variable("depth", dtype=np.float32)
+    depth_nextloop = Variable("depth_nextloop", dtype=np.float32, to_write=False)
+    time = Variable("time", dtype=np.float64)
+    time_nextloop = Variable("time_nextloop", dtype=np.float64, to_write=False)
+    id = Variable("id", dtype=np.int64, to_write="once")
+    obs_written = Variable("obs_written", dtype=np.int32, initial=0, to_write=False)
+    dt = Variable("dt", dtype=np.float64, to_write=False)
+    state = Variable("state", dtype=np.int32, initial=StatusCode.Evaluate, to_write=False)
 
     lastID = 0  # class-level variable keeping track of last Particle ID used
 
-    def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0., time=0., cptr=None):
-
+    def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0.0, time=0.0, cptr=None):
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lon_nextloop.initial = lon
@@ -195,10 +195,10 @@ class ScipyParticle:
         pass  # superclass is 'object', and object itself has no destructor, hence 'pass'
 
     def __repr__(self):
-        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else f"{self.time:f}"
+        time_string = "not_yet_set" if self.time is None or np.isnan(self.time) else f"{self.time:f}"
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in vars(type(self)):
-            if var in ['lon_nextloop', 'lat_nextloop', 'depth_nextloop', 'time_nextloop']:
+            if var in ["lon_nextloop", "lat_nextloop", "depth_nextloop", "time_nextloop"]:
                 continue
             if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
                 str += f"{var}={getattr(self, var):f}, "
@@ -217,15 +217,15 @@ class ScipyParticle:
         if isinstance(var, list):
             return cls.add_variables(var)
         if not isinstance(var, Variable):
-            if len(args) > 0 and 'dtype' not in kwargs:
-                kwargs['dtype'] = args[0]
-            if len(args) > 1 and 'initial' not in kwargs:
-                kwargs['initial'] = args[1]
-            if len(args) > 2 and 'to_write' not in kwargs:
-                kwargs['to_write'] = args[2]
-            dtype = kwargs.pop('dtype', np.float32)
-            initial = kwargs.pop('initial', 0)
-            to_write = kwargs.pop('to_write', True)
+            if len(args) > 0 and "dtype" not in kwargs:
+                kwargs["dtype"] = args[0]
+            if len(args) > 1 and "initial" not in kwargs:
+                kwargs["initial"] = args[1]
+            if len(args) > 2 and "to_write" not in kwargs:
+                kwargs["to_write"] = args[2]
+            dtype = kwargs.pop("dtype", np.float32)
+            initial = kwargs.pop("initial", 0)
+            to_write = kwargs.pop("to_write", True)
             var = Variable(var, dtype=dtype, initial=initial, to_write=to_write)
 
         class NewParticle(cls):
@@ -266,9 +266,9 @@ class ScipyParticle:
         ScipyParticle.lastID = offset
 
 
-ScipyInteractionParticle = ScipyParticle.add_variables([
-    Variable("vert_dist", dtype=np.float32),
-    Variable("horiz_dist", dtype=np.float32)])
+ScipyInteractionParticle = ScipyParticle.add_variables(
+    [Variable("vert_dist", dtype=np.float32), Variable("horiz_dist", dtype=np.float32)]
+)
 
 
 class JITParticle(ScipyParticle):
@@ -296,7 +296,7 @@ class JITParticle(ScipyParticle):
     """
 
     def __init__(self, *args, **kwargs):
-        self._cptr = kwargs.pop('cptr', None)
+        self._cptr = kwargs.pop("cptr", None)
         if self._cptr is None:
             # Allocate data for a single particle
             ptype = self.getPType()

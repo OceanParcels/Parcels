@@ -24,7 +24,7 @@ from pathlib import Path
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath(".."))
 
 # -- General configuration ------------------------------------------------
 
@@ -35,8 +35,8 @@ sys.path.insert(0, os.path.abspath('..'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.todo',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.todo",
     "sphinx.ext.linkcode",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
@@ -46,26 +46,26 @@ extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = 'Parcels'
-copyright = f'{datetime.datetime.now().year}, The OceanParcels Team'
-author = 'The OceanParcels Team'
+project = "Parcels"
+copyright = f"{datetime.datetime.now().year}, The OceanParcels Team"
+author = "The OceanParcels Team"
 
 linkcheck_ignore = [
-    r'http://localhost:\d+/',
+    r"http://localhost:\d+/",
     r"http://www2\.cesm\.ucar\.edu/models/cesm1\.0/pop2/doc/sci/POPRefManual.pdf",  # Site doesn't allow crawling
     r"https://pubs\.acs\.org/doi/10\.1021/acs\.est\.0c01984",  # Site doesn't allow crawling
     r"https://aip\.scitation\.org/doi/10\.1063/1\.4982720",  # Site doesn't allow crawling
@@ -107,7 +107,7 @@ release = version
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = 'en'
+language = "en"
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -117,7 +117,7 @@ language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', '**.ipynb_checkpoints']
+exclude_patterns = ["_build", "**.ipynb_checkpoints"]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -135,7 +135,7 @@ exclude_patterns = ['_build', '**.ipynb_checkpoints']
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'monokai'
+pygments_style = "monokai"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -150,7 +150,7 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'pydata_sphinx_theme'
+html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -191,7 +191,7 @@ numpydoc_validation_checks = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 html_theme_options = {
     "logo": {
         "image_light": "parcelslogo.png",
@@ -206,7 +206,7 @@ html_theme_options = {
             "icon": "fa-solid fa-box",
             "type": "fontawesome",
         }
-    ]
+    ],
 }
 
 html_context = {
@@ -222,7 +222,7 @@ downloads_folder = Path("_downloads")
 downloads_folder.mkdir(exist_ok=True)
 
 
-def make_filename_safe(filename: str, safe_char: str = '_') -> str:
+def make_filename_safe(filename: str, safe_char: str = "_") -> str:
     """Make a filename safe for saving to disk."""
     # Replace any characters that are not allowed in a filename with the safe character
     safe_filename = re.sub(r'[\\/:*?"<>|]', safe_char, filename)
@@ -318,10 +318,7 @@ html_extra_path = ["robots.txt"]
 
 # Custom sidebar templates, maps document names to template names.
 
-html_sidebars = {
-    "**": ["sidebar-nav-bs"],
-    "documentation/additional_examples": []
-}
+html_sidebars = {"**": ["sidebar-nav-bs"], "documentation/additional_examples": []}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -368,31 +365,28 @@ html_sidebars = {
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'parcelsdoc'
+htmlhelp_basename = "parcelsdoc"
 
 nbsphinx_thumbnails = {
-    'examples/tutorial_parcels_structure': '_images/parcels_user_diagram.png',
-    'examples/tutorial_timestamps': '_static/calendar-icon.jpg',
-    'examples/tutorial_jit_vs_scipy': '_static/clock-icon.png',
-    'examples/documentation_homepage_animation': '_images/homepage.gif',
-    'examples/tutorial_interaction': '_static/pulled_particles_twoatractors_line.gif',
-    'examples/documentation_LargeRunsOutput': '_static/harddrive.png',
-    'examples/tutorial_unitconverters': '_static/globe-icon.jpg',
-    'examples/documentation_geospatial': '_images/tutorial_geospatial_google_earth.png',
-    'examples/tutorial_kernelloop': '_static/loop-icon.jpeg',
+    "examples/tutorial_parcels_structure": "_images/parcels_user_diagram.png",
+    "examples/tutorial_timestamps": "_static/calendar-icon.jpg",
+    "examples/tutorial_jit_vs_scipy": "_static/clock-icon.png",
+    "examples/documentation_homepage_animation": "_images/homepage.gif",
+    "examples/tutorial_interaction": "_static/pulled_particles_twoatractors_line.gif",
+    "examples/documentation_LargeRunsOutput": "_static/harddrive.png",
+    "examples/tutorial_unitconverters": "_static/globe-icon.jpg",
+    "examples/documentation_geospatial": "_images/tutorial_geospatial_google_earth.png",
+    "examples/tutorial_kernelloop": "_static/loop-icon.jpeg",
 }
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     # 'preamble': '',
-
     # Latex figure (float) alignment
     # 'figure_align': 'htbp',
 }
@@ -402,8 +396,12 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (
-        master_doc, 'parcels.tex', 'Parcels Documentation',
-        'M. Lange, E. van Sebille', 'manual'),
+        master_doc,
+        "parcels.tex",
+        "Parcels Documentation",
+        "M. Lange, E. van Sebille",
+        "manual",
+    ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -431,10 +429,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'Parcels', 'Parcels Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, "Parcels", "Parcels Documentation", [author], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -447,9 +442,14 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (
-        master_doc, 'parcels', 'Parcels Documentation',
-        author, 'Parcels', 'One line description of project.',
-        'Miscellaneous'),
+        master_doc,
+        "parcels",
+        "Parcels Documentation",
+        author,
+        "Parcels",
+        "One line description of project.",
+        "Miscellaneous",
+    ),
 ]
 
 # Documents to append as an appendix to all manuals.

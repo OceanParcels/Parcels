@@ -14,7 +14,7 @@ from parcels.kernel import BaseKernel
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
 
-__all__ = ['InteractionKernel']
+__all__ = ["InteractionKernel"]
 
 
 class InteractionKernel(BaseKernel):
@@ -26,29 +26,49 @@ class InteractionKernel(BaseKernel):
     InteractionKernel.
     """
 
-    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None,
-                 c_include="", delete_cfiles=True):
+    def __init__(
+        self,
+        fieldset,
+        ptype,
+        pyfunc=None,
+        funcname=None,
+        funccode=None,
+        py_ast=None,
+        funcvars=None,
+        c_include="",
+        delete_cfiles=True,
+    ):
         if MPI is not None and MPI.COMM_WORLD.Get_size() > 1:
-            raise NotImplementedError("InteractionKernels are not supported in an MPI environment. Please run your simulation outside MPI.")
+            raise NotImplementedError(
+                "InteractionKernels are not supported in an MPI environment. Please run your simulation outside MPI."
+            )
 
         if MPI is not None and MPI.COMM_WORLD.Get_size() > 1:
-            raise NotImplementedError("InteractionKernels are not supported in an MPI environment. Please run your simulation outside MPI.")
+            raise NotImplementedError(
+                "InteractionKernels are not supported in an MPI environment. Please run your simulation outside MPI."
+            )
 
         if pyfunc is not None:
             if isinstance(pyfunc, list):
-                funcname = ''.join([func.__name__ for func in pyfunc])
+                funcname = "".join([func.__name__ for func in pyfunc])
             else:
                 funcname = pyfunc.__name__
 
         super().__init__(
-            fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname,
-            funccode=funccode, py_ast=py_ast, funcvars=funcvars,
-            c_include=c_include, delete_cfiles=delete_cfiles)
+            fieldset=fieldset,
+            ptype=ptype,
+            pyfunc=pyfunc,
+            funcname=funcname,
+            funccode=funccode,
+            py_ast=py_ast,
+            funcvars=funcvars,
+            c_include=c_include,
+            delete_cfiles=delete_cfiles,
+        )
 
         if pyfunc is not None:
             if isinstance(pyfunc, list):
-                funcname = ''.join([func.__name__ for func in pyfunc])
+                funcname = "".join([func.__name__ for func in pyfunc])
             else:
                 funcname = pyfunc.__name__
 
@@ -59,18 +79,18 @@ class InteractionKernel(BaseKernel):
                 self._pyfunc = [pyfunc]
 
         if self._ptype.uses_jit:
-            raise NotImplementedError("JIT mode is not supported for"
-                                      " InteractionKernels. Please run your"
-                                      " simulation in SciPy mode.")
+            raise NotImplementedError(
+                "JIT mode is not supported for" " InteractionKernels. Please run your" " simulation in SciPy mode."
+            )
 
         for func in self._pyfunc:
             self.check_fieldsets_in_kernels(func)
 
         numkernelargs = self.check_kernel_signature_on_version()
 
-        assert numkernelargs[0] == 5 and \
-            numkernelargs.count(numkernelargs[0]) == len(numkernelargs), \
-            'Interactionkernels take exactly 5 arguments: particle, fieldset, time, neighbors, mutator'
+        assert numkernelargs[0] == 5 and numkernelargs.count(numkernelargs[0]) == len(
+            numkernelargs
+        ), "Interactionkernels take exactly 5 arguments: particle, fieldset, time, neighbors, mutator"
 
         # At this time, JIT mode is not supported for InteractionKernels,
         # so there is no need for any further "processing" of pyfunc's.
@@ -94,13 +114,9 @@ class InteractionKernel(BaseKernel):
         if self._pyfunc is not None and isinstance(self._pyfunc, list):
             for func in self._pyfunc:
                 if sys.version_info[0] < 3:
-                    numkernelargs.append(
-                        len(inspect.getargspec(func).args)
-                    )
+                    numkernelargs.append(len(inspect.getargspec(func).args))
                 else:
-                    numkernelargs.append(
-                        len(inspect.getfullargspec(func).args)
-                    )
+                    numkernelargs.append(len(inspect.getfullargspec(func).args))
         return numkernelargs
 
     def remove_lib(self):
@@ -122,8 +138,7 @@ class InteractionKernel(BaseKernel):
         funcname = self.funcname + kernel.funcname
         # delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
         pyfunc = self._pyfunc + kernel._pyfunc
-        return kclass(self._fieldset, self._ptype, pyfunc=pyfunc,
-                      funcname=funcname)
+        return kclass(self._fieldset, self._ptype, pyfunc=pyfunc, funcname=funcname)
 
     def __add__(self, kernel):
         if not isinstance(kernel, InteractionKernel):
@@ -150,9 +165,9 @@ class InteractionKernel(BaseKernel):
         raise NotImplementedError
 
     def execute_jit(self, pset, endtime, dt):
-        raise NotImplementedError("JIT mode is not supported for"
-                                  " InteractionKernels. Please run your"
-                                  " simulation in SciPy mode.")
+        raise NotImplementedError(
+            "JIT mode is not supported for" " InteractionKernels. Please run your" " simulation in SciPy mode."
+        )
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python.
@@ -179,10 +194,10 @@ class InteractionKernel(BaseKernel):
             for particle_idx in active_idx:
                 p = pset[particle_idx]
                 # Don't use particles that are not started.
-                if (endtime-p.time)/dt <= -1e-7:
+                if (endtime - p.time) / dt <= -1e-7:
                     continue
-                elif (endtime-p.time)/dt < 1:
-                    p.dt = endtime-p.time
+                elif (endtime - p.time) / dt < 1:
+                    p.dt = endtime - p.time
                     reset_particle_idx.append(particle_idx)
 
                 neighbors = pset.neighbors_by_index(particle_idx)
@@ -195,7 +210,9 @@ class InteractionKernel(BaseKernel):
                 # InteractionKernels do not implement a way to recover
                 # from errors.
                 if res != StatusCode.Success:
-                    logger.warning_once("Some InteractionKernel was not completed succesfully, likely because a Particle threw an error that was not captured.")
+                    logger.warning_once(
+                        "Some InteractionKernel was not completed succesfully, likely because a Particle threw an error that was not captured."
+                    )
 
             for particle_idx in active_idx:
                 p = pset[particle_idx]
@@ -218,13 +235,14 @@ class InteractionKernel(BaseKernel):
         pset.particledata.state[:] = StatusCode.Evaluate
 
         if abs(dt) < 1e-6:
-            logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
+            logger.warning_once(
+                "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)"
+            )
 
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
                 if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
-                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
-                                            g.chunk_deprecated, g.load_chunk)
+                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched, g.chunk_deprecated, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:
@@ -235,7 +253,7 @@ class InteractionKernel(BaseKernel):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        self.remove_deleted(pset)   # Generalizable version!
+        self.remove_deleted(pset)  # Generalizable version!
 
         # Identify particles that threw errors
         n_error = pset.num_error_particles
@@ -251,11 +269,11 @@ class InteractionKernel(BaseKernel):
                 elif p.state == StatusCode.Delete:
                     pass
                 else:
-                    logger.warning_once(f'Deleting particle {p.id} because of non-recoverable error')
+                    logger.warning_once(f"Deleting particle {p.id} because of non-recoverable error")
                     p.delete()
 
             # Remove all particles that signalled deletion
-            self.remove_deleted(pset)   # Generalizable version!
+            self.remove_deleted(pset)  # Generalizable version!
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:
