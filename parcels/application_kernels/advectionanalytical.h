@@ -44,6 +44,7 @@ void compute_ds(double F0, double F1, double r, double direction, double tol,
 
 
 static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CField *fw, double *flow3D_dbl,
+                              CField *e2u, CField *e1v, CField *e1t, CField *e2t,
                               int *xi, int *yi, int *zi, int *ti,
                               double *lon, double *lat, double *depth,
                               double *time, double *dt,
@@ -58,7 +59,6 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 
   double tol_grid = 1e-4;  // Tolerance for grid search
   double tol_compute = 1e-10;  // Tolerance for analytical computation
-  double I_s = 10;  // number of intermediate time steps
   int maxCellupdates = 10;  // Maximum number of cell updates before throwing an interpolation error
 
   double direction = 1;
@@ -86,11 +86,18 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     double t0 = grid->time[ti[igrid]];
     double t1 = grid->time[ti[igrid]+1];
     tau = (*time - t0) / (t1 - t0);
-    for (double i=I_s; i>0; i--){
-      if (*time - t0 < i / I_s * (t1 - t0)){
-        ds_t = min(ds_t, i / I_s);
+    double ds_tfull = 600;  // TODO now hardcoded to 10 minutes
+    if (direction > 0){
+      if (tau < tol_grid){
+        ds_tfull /= 2;
+      }
+    } else {
+      if (tau > 1 - tol_grid){
+        ds_tfull /= 2;
       }
     }
+    ds_t = min(ds_tfull, fabs(*dt))*direction;
+
     tii = ti[igrid];
     status = search_indices(*lon, *lat, *depth, grid, &xi[igrid], &yi[igrid], &zi[igrid],
                             &xsi, &eta, &zeta, gtype, tii, *time, t0, t1, CGRID_VELOCITY, gridindexingtype);
@@ -193,6 +200,15 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     return ERRORINTERPOLATION;
   }
 
+  float data_e2u[2][2][2];
+  float data_e1v[2][2][2];
+  float data_e1t[2][2][2];
+  float data_e2t[2][2][2];
+  status = getCell2D(e2u, *xi, *yi, tii, data_e2u, 1); CHECKSTATUS(status);
+  status = getCell2D(e1v, *xi, *yi, tii, data_e1v, 1); CHECKSTATUS(status);
+  status = getCell2D(e1t, *xi, *yi, tii, data_e1t, 1); CHECKSTATUS(status);
+  status = getCell2D(e2t, *xi, *yi, tii, data_e2t, 1); CHECKSTATUS(status);
+
   double px[4];
   double py[4];
   int iN;
@@ -217,44 +233,33 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     }
   }
 
-  double dphidxsi[4] = {eta-1, 1-eta, eta, -eta};
-  double dphideta[4] = {xsi-1, -xsi, xsi, 1-xsi};
-  double dxdxsi = 0; double dxdeta = 0;
-  double dydxsi = 0; double dydeta = 0;
-  for(int i=0; i<4; ++i){
-    dxdxsi += px[i] *dphidxsi[i];
-    dxdeta += px[i] *dphideta[i];
-    dydxsi += py[i] *dphidxsi[i];
-    dydeta += py[i] *dphideta[i];
-  }
-  double meshJac = 1;
-  double phi[4];
-  if (grid->sphere_mesh == 1){
-    double deg2m = 1852 * 60.;
-    double rad = M_PI / 180.;
-    phi2D_lin(xsi, eta, phi);
-    double lat = dot_prod(phi, py, 4);
-    meshJac = deg2m * deg2m * cos(rad * lat);
-  }
-  double dxdy = (dxdxsi*dydeta - dxdeta * dydxsi) * meshJac;
+  double dxdy = data_e1t[0][0][0] * data_e2t[0][0][0];
 
   double pz[2];
   double dz = 1;
+  double dz_full[50] = {1.02248397,   1.07392811,   1.13674814,   1.21345585,
+                        1.30711575,   1.42146585,   1.56106425,   1.73146709,
+                        1.93944404,   2.19323886,   2.50288376,   2.88057740,
+                        3.34113807,   3.90254432,   4.58657651,   5.41957269,
+                        6.43331124,   7.66602970,   9.16358317,  10.98073496,
+                       13.18255503,  15.84587558,  19.06071452,  22.93152421,
+                       27.57805183,  33.13550866,  39.75364387,  47.59421545,
+                       56.82627305,  67.61865655,  80.12922983,  94.49068120,
+                      110.79329098, 129.06589988, 149.25731937, 171.22136908,
+                      194.70923404, 219.37249455, 244.7787401 , 270.43925990,
+                      295.84550545, 320.50876596, 343.99663092, 365.96068063,
+                      386.15210012, 404.42470902, 420.7273188 , 435.08877017,
+                      447.59934345, 458.39172695}; // e3t values
   if (flow3D == 1){
     pz[0] = grid->depth[*zi];
     pz[1] = grid->depth[*zi+1];
-    dz = pz[1] - pz[0];
+    dz = dz_full[*zi];
   }
 
-  phi2D_lin(xsi, 0., phi);
-  double c1 = dist(px[0], px[1], py[0], py[1], grid->sphere_mesh, dot_prod(phi, py, 4));
-  phi2D_lin(1., eta, phi);
-  double c2 = dist(px[1], px[2], py[1], py[2], grid->sphere_mesh, dot_prod(phi, py, 4));
-  phi2D_lin(xsi, 1., phi);
-  double c3 = dist(px[2], px[3], py[2], py[3], grid->sphere_mesh, dot_prod(phi, py, 4));
-  phi2D_lin(0., eta, phi);
-  double c4 = dist(px[3], px[0], py[3], py[0], grid->sphere_mesh, dot_prod(phi, py, 4));
-
+  double c4 = data_e2u[0][1][0];
+  double c2 = data_e2u[0][1][1];
+  double c1 = data_e1v[0][0][1];
+  double c3 = data_e1v[0][1][1];
   double U0, U1, V0, V1, W0, W1;
   if (flow3D == 0){
     U0 = ((1-tau)*dataU_2D[0][1][0] + tau*dataU_2D[1][1][0]) * c4 * direction;
@@ -303,7 +308,6 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     printf("c1, c2, c3, c4 = %f, %f, %f, %f\n", c1, c2, c3, c4);
     printf("U0, U1, V0, V1, W0, W1 = %f, %f, %f, %f, %f, %f\n", U0, U1, V0, V1, W0, W1);
     printf("px, py, pz = %f, %f, %f\n", px[0], py[0], pz[0]);
-    printf("dxdxsi, dxdeta, dydxsi, dydeta = %f, %f, %f, %f\n", dxdxsi, dxdeta, dydxsi, dydeta);
     printf("dxdy, dz = %f, %f\n", dxdy, dz);
     printf("B_y, delta_y, ds_y = %f, %f, %f\n", B_y, delta_y, ds_y);
 
