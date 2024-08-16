@@ -392,7 +392,7 @@ class TupleSplitter(ast.NodeTransformer):
             if len(t_elts) != len(v_elts):
                 raise AttributeError("Tuple lengths in assignment do not agree")
             node = [ast.Assign() for _ in t_elts]
-            for n, t, v in zip(node, t_elts, v_elts):
+            for n, t, v in zip(node, t_elts, v_elts, strict=True):
                 n.targets = [t]
                 n.value = v
         return node

@@ -197,4 +197,4 @@ def hash_split(hash_ids, active_idx=None):
     unq_items = a_sorted[unq_first]
     unq_count = np.diff(np.nonzero(unq_first)[0])
     unq_idx = np.split(sort_idx, np.cumsum(unq_count))
-    return dict(zip(unq_items, unq_idx))
+    return dict(zip(unq_items, unq_idx, strict=True))

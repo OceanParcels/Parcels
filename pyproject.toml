@@ -8,13 +8,13 @@ description = "Framework for Lagrangian tracking of virtual ocean particles in t
 readme = "README.md"
 dynamic = ["version"]
 authors = [{name = "oceanparcels.org team"}]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {file = "LICENSE.md"}
 classifiers = [
   "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Operating System :: OS Independent",
   "Topic :: Scientific/Engineering",
   "Intended Audience :: Science/Research",
@@ -54,7 +54,7 @@ local_scheme = "no-local-version"
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py310"
 line-length = 120
 
 [tool.ruff.lint]
