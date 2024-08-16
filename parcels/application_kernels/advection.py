@@ -42,9 +42,9 @@ def AdvectionRK4_3D(particle, fieldset, time):
     lat3 = particle.lat + v3 * particle.dt
     dep3 = particle.depth + w3 * particle.dt
     (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3, particle]
-    particle_dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6.0 * particle.dt  # noqa
-    particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6.0 * particle.dt  # noqa
-    particle_ddepth += (w1 + 2 * w2 + 2 * w3 + w4) / 6.0 * particle.dt  # noqa
+    particle_dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6 * particle.dt  # noqa
+    particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6 * particle.dt  # noqa
+    particle_ddepth += (w1 + 2 * w2 + 2 * w3 + w4) / 6 * particle.dt  # noqa
 
 
 def AdvectionRK4_3D_CROCO(particle, fieldset, time):
@@ -81,15 +81,15 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):
     sig_dep4 = sig_dep + w4 * particle.dt
     dep4 = sig_dep4 * fieldset.H[time, 0, lat4, lon4]
 
-    particle_dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6.0 * particle.dt  # noqa
-    particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6.0 * particle.dt  # noqa
+    particle_dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6 * particle.dt  # noqa
+    particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6 * particle.dt  # noqa
     particle_ddepth += (  # noqa
         (dep1 - particle.depth) * 2
         + 2 * (dep2 - particle.depth) * 2
         + 2 * (dep3 - particle.depth)
         + dep4
         - particle.depth
-    ) / 6.0
+    ) / 6
 
 
 def AdvectionEE(particle, fieldset, time):

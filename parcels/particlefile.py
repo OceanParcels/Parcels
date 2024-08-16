@@ -212,9 +212,10 @@ class ParticleFile:
             logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             return
 
-        indices_to_write = (
-            pset.particledata._to_write_particles(pset.particledata._data, time) if indices is None else indices
-        )
+        if indices is None:
+            indices_to_write = pset.particledata._to_write_particles(pset.particledata._data, time)
+        else:
+            indices_to_write = indices
 
         if len(indices_to_write) > 0:
             pids = pset.particledata.getvardata("id", indices_to_write)

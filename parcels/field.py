@@ -1565,7 +1565,7 @@ class Field:
         if varname is None:
             varname = self.name
         # Derive name of 'depth' variable for NEMO convention
-        vname_depth = "depth%s" % self.name.lower()
+        vname_depth = f"depth{self.name.lower()}"
 
         # Create DataArray objects for file I/O
         if self.grid.gtype == GridType.RectilinearZGrid:

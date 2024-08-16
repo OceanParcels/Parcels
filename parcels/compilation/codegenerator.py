@@ -629,7 +629,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             self.array_vars += [node.targets[0].id]
         elif isinstance(node.value, ParticleXiYiZiTiAttributeNode):
             raise RuntimeError(
-                f"Add index of the grid when using particle.{node.value.attr} " f"(e.g. particle.{node.value.attr}[0])."
+                f"Add index of the grid when using particle.{node.value.attr} (e.g. particle.{node.value.attr}[0])."
             )
         else:
             node.ccode = c.Assign(node.targets[0].ccode, node.value.ccode)
