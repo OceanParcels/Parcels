@@ -280,7 +280,7 @@ class FieldSet:
 
         if isinstance(self.U, NestedField):
             w = self.W if hasattr(self, "W") else [None] * len(self.U)
-            for U, V, W in zip(self.U, self.V, w):
+            for U, V, W in zip(self.U, self.V, w, strict=True):
                 check_velocityfields(U, V, W)
         else:
             W = self.W if hasattr(self, "W") else None
