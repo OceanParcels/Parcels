@@ -322,17 +322,17 @@ def test_write_xiyi(fieldset, mode, tmpdir):
         assert (pxi0[p, 0] == 0) and (pxi0[p, -1] == pset[p].pxi0)  # check that particle has moved
         assert np.all(pxi1[p, :6] == 0)  # check that particle has not been sampled on grid 1 until time 6
         assert np.all(pxi1[p, 6:] > 0)  # check that particle has not been sampled on grid 1 after time 6
-        for xi, lon in zip(pxi0[p, 1:], lons[p, 1:]):
+        for xi, lon in zip(pxi0[p, 1:], lons[p, 1:], strict=True):
             assert fieldset.U.grid.lon[xi] <= lon < fieldset.U.grid.lon[xi + 1]
-        for xi, lon in zip(pxi1[p, 6:], lons[p, 6:]):
+        for xi, lon in zip(pxi1[p, 6:], lons[p, 6:], strict=True):
             assert fieldset.P.grid.lon[xi] <= lon < fieldset.P.grid.lon[xi + 1]
-        for yi, lat in zip(pyi[p, 1:], lats[p, 1:]):
+        for yi, lat in zip(pyi[p, 1:], lats[p, 1:], strict=True):
             assert fieldset.U.grid.lat[yi] <= lat < fieldset.U.grid.lat[yi + 1]
     ds.close()
 
 
 def test_set_calendar():
-    for _calendar_name, cf_datetime in zip(_get_cftime_calendars(), _get_cftime_datetimes()):
+    for _calendar_name, cf_datetime in zip(_get_cftime_calendars(), _get_cftime_datetimes(), strict=True):
         date = getattr(cftime, cf_datetime)(1990, 1, 1)
         assert _set_calendar(date.calendar) == date.calendar
     assert _set_calendar("np_datetime64") == "standard"
