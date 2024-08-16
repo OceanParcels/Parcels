@@ -15,18 +15,19 @@ from parcels.tools.statuscodes import DaskChunkingError
 
 
 class _FileBuffer:
-    def __init__(self, filename, dimensions, indices, timestamp=None,
-                 interp_method='linear', data_full_zdim=None, **kwargs):
+    def __init__(
+        self, filename, dimensions, indices, timestamp=None, interp_method="linear", data_full_zdim=None, **kwargs
+    ):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
         self.dataset = None
         self.timestamp = timestamp
-        self.cast_data_dtype = kwargs.pop('cast_data_dtype', np.float32)
+        self.cast_data_dtype = kwargs.pop("cast_data_dtype", np.float32)
         self.ti = None
         self.interp_method = interp_method
         self.data_full_zdim = data_full_zdim
-        if ('lon' in self.indices) or ('lat' in self.indices):
+        if ("lon" in self.indices) or ("lat" in self.indices):
             self.nolonlatindices = False
         else:
             self.nolonlatindices = True
@@ -35,8 +36,8 @@ class _FileBuffer:
 class NetcdfFileBuffer(_FileBuffer):
     def __init__(self, *args, **kwargs):
         self.lib = np
-        self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
-        self.netcdf_decodewarning = kwargs.pop('netcdf_decodewarning', True)
+        self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
+        self.netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
         super().__init__(*args, **kwargs)
 
     def __enter__(self):
@@ -45,17 +46,19 @@ class NetcdfFileBuffer(_FileBuffer):
             # (which we would rather want to have being auto-managed).
             # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
-            self.dataset['decoded'] = True
+            self.dataset["decoded"] = True
         except:
             if self.netcdf_decodewarning:
-                logger.warning_once(f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
-                                    "It will be opened with no decoding. Filling values might be wrongly parsed.")
+                logger.warning_once(
+                    f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
+                    "It will be opened with no decoding. Filling values might be wrongly parsed."
+                )
 
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
-            self.dataset['decoded'] = False
+            self.dataset["decoded"] = False
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
-                raise RuntimeError('Indices for field subsetting need to be a list')
+                raise RuntimeError("Indices for field subsetting need to be a list")
         return self
 
     def __exit__(self, type, value, traceback):
@@ -73,13 +76,13 @@ class NetcdfFileBuffer(_FileBuffer):
                     name = nm
                     break
         if isinstance(name, list):
-            raise OSError('None of variables in list found in file')
+            raise OSError("None of variables in list found in file")
         return name
 
     @property
     def lonlat(self):
-        lon = self.dataset[self.dimensions['lon']]
-        lat = self.dataset[self.dimensions['lat']]
+        lon = self.dataset[self.dimensions["lon"]]
+        lat = self.dataset[self.dimensions["lat"]]
         if self.nolonlatindices:
             if len(lon.shape) < 3:
                 lon_subset = np.array(lon)
@@ -93,20 +96,20 @@ class NetcdfFileBuffer(_FileBuffer):
         else:
             xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
             ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-            self.indices['lon'] = self.indices['lon'] if 'lon' in self.indices else range(xdim)
-            self.indices['lat'] = self.indices['lat'] if 'lat' in self.indices else range(ydim)
+            self.indices["lon"] = self.indices["lon"] if "lon" in self.indices else range(xdim)
+            self.indices["lat"] = self.indices["lat"] if "lat" in self.indices else range(ydim)
             if len(lon.shape) == 1:
-                lon_subset = np.array(lon[self.indices['lon']])
-                lat_subset = np.array(lat[self.indices['lat']])
+                lon_subset = np.array(lon[self.indices["lon"]])
+                lat_subset = np.array(lat[self.indices["lat"]])
             elif len(lon.shape) == 2:
-                lon_subset = np.array(lon[self.indices['lat'], self.indices['lon']])
-                lat_subset = np.array(lat[self.indices['lat'], self.indices['lon']])
+                lon_subset = np.array(lon[self.indices["lat"], self.indices["lon"]])
+                lat_subset = np.array(lat[self.indices["lat"], self.indices["lon"]])
             elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-                lon_subset = np.array(lon[0, self.indices['lat'], self.indices['lon']])
-                lat_subset = np.array(lat[0, self.indices['lat'], self.indices['lon']])
+                lon_subset = np.array(lon[0, self.indices["lat"], self.indices["lon"]])
+                lat_subset = np.array(lat[0, self.indices["lat"], self.indices["lon"]])
             elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
-                lon_subset = np.array(lon[0, 0, self.indices['lat'], self.indices['lon']])
-                lat_subset = np.array(lat[0, 0, self.indices['lat'], self.indices['lon']])
+                lon_subset = np.array(lon[0, 0, self.indices["lat"], self.indices["lon"]])
+                lat_subset = np.array(lat[0, 0, self.indices["lat"], self.indices["lon"]])
 
         if len(lon.shape) > 1:  # Tests if lon, lat are rectilinear but were stored in arrays
             rectilinear = True
@@ -127,77 +130,79 @@ class NetcdfFileBuffer(_FileBuffer):
 
     @property
     def depth(self):
-        if 'depth' in self.dimensions:
-            depth = self.dataset[self.dimensions['depth']]
+        if "depth" in self.dimensions:
+            depth = self.dataset[self.dimensions["depth"]]
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
             self.data_full_zdim = depthsize
-            self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
+            self.indices["depth"] = self.indices["depth"] if "depth" in self.indices else range(depthsize)
             if len(depth.shape) == 1:
-                return np.array(depth[self.indices['depth']])
+                return np.array(depth[self.indices["depth"]])
             elif len(depth.shape) == 3:
                 if self.nolonlatindices:
-                    return np.array(depth[self.indices['depth'], :, :])
+                    return np.array(depth[self.indices["depth"], :, :])
                 else:
-                    return np.array(depth[self.indices['depth'], self.indices['lat'], self.indices['lon']])
+                    return np.array(depth[self.indices["depth"], self.indices["lat"], self.indices["lon"]])
             elif len(depth.shape) == 4:
                 if self.nolonlatindices:
-                    return np.array(depth[:, self.indices['depth'], :, :])
+                    return np.array(depth[:, self.indices["depth"], :, :])
                 else:
-                    return np.array(depth[:, self.indices['depth'], self.indices['lat'], self.indices['lon']])
+                    return np.array(depth[:, self.indices["depth"], self.indices["lat"], self.indices["lon"]])
         else:
-            self.indices['depth'] = [0]
+            self.indices["depth"] = [0]
             return np.zeros(1)
 
     @property
     def depth_dimensions(self):
-        if 'depth' in self.dimensions:
+        if "depth" in self.dimensions:
             data = self.dataset[self.name]
             depthsize = data.shape[-3]
             self.data_full_zdim = depthsize
-            self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
+            self.indices["depth"] = self.indices["depth"] if "depth" in self.indices else range(depthsize)
             if self.nolonlatindices:
-                return np.empty((0, len(self.indices['depth'])) + data.shape[-2:])
+                return np.empty((0, len(self.indices["depth"])) + data.shape[-2:])
             else:
-                return np.empty((0, len(self.indices['depth']), len(self.indices['lat']), len(self.indices['lon'])))
+                return np.empty((0, len(self.indices["depth"]), len(self.indices["lat"]), len(self.indices["lon"])))
 
     def _check_extend_depth(self, data, di):
-        return (self.indices['depth'][-1] == self.data_full_zdim-1
-                and data.shape[di] == self.data_full_zdim-1
-                and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'])
+        return (
+            self.indices["depth"][-1] == self.data_full_zdim - 1
+            and data.shape[di] == self.data_full_zdim - 1
+            and self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"]
+        )
 
     def _apply_indices(self, data, ti):
         if len(data.shape) == 2:
             if self.nolonlatindices:
                 pass
             else:
-                data = data[self.indices['lat'], self.indices['lon']]
+                data = data[self.indices["lat"], self.indices["lon"]]
         elif len(data.shape) == 3:
             if self._check_extend_depth(data, 0):
                 if self.nolonlatindices:
-                    data = data[self.indices['depth'][:-1], :, :]
+                    data = data[self.indices["depth"][:-1], :, :]
                 else:
-                    data = data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
-            elif len(self.indices['depth']) > 1:
+                    data = data[self.indices["depth"][:-1], self.indices["lat"], self.indices["lon"]]
+            elif len(self.indices["depth"]) > 1:
                 if self.nolonlatindices:
-                    data = data[self.indices['depth'], :, :]
+                    data = data[self.indices["depth"], :, :]
                 else:
-                    data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
+                    data = data[self.indices["depth"], self.indices["lat"], self.indices["lon"]]
             else:
                 if self.nolonlatindices:
                     data = data[ti, :, :]
                 else:
-                    data = data[ti, self.indices['lat'], self.indices['lon']]
+                    data = data[ti, self.indices["lat"], self.indices["lon"]]
         else:
             if self._check_extend_depth(data, 1):
                 if self.nolonlatindices:
-                    data = data[ti, self.indices['depth'][:-1], :, :]
+                    data = data[ti, self.indices["depth"][:-1], :, :]
                 else:
-                    data = data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
+                    data = data[ti, self.indices["depth"][:-1], self.indices["lat"], self.indices["lon"]]
             else:
                 if self.nolonlatindices:
-                    data = data[ti, self.indices['depth'], :, :]
+                    data = data[ti, self.indices["depth"], :, :]
                 else:
-                    data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
+                    data = data[ti, self.indices["depth"], self.indices["lat"], self.indices["lon"]]
         return data
 
     @property
@@ -218,14 +223,20 @@ class NetcdfFileBuffer(_FileBuffer):
         if self.timestamp is not None:
             return self.timestamp
 
-        if 'time' not in self.dimensions:
+        if "time" not in self.dimensions:
             return np.array([None])
 
-        time_da = self.dataset[self.dimensions['time']]
-        convert_xarray_time_units(time_da, self.dimensions['time'])
-        time = np.array([time_da[self.dimensions['time']].data]) if len(time_da.shape) == 0 else np.array(time_da[self.dimensions['time']])
+        time_da = self.dataset[self.dimensions["time"]]
+        convert_xarray_time_units(time_da, self.dimensions["time"])
+        time = (
+            np.array([time_da[self.dimensions["time"]].data])
+            if len(time_da.shape) == 0
+            else np.array(time_da[self.dimensions["time"]])
+        )
         if isinstance(time[0], datetime.datetime):
-            raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
+            raise NotImplementedError(
+                "Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page."
+            )
         return time
 
 
@@ -235,15 +246,39 @@ class DeferredNetcdfFileBuffer(NetcdfFileBuffer):
 
 
 class DaskFileBuffer(NetcdfFileBuffer):
-    _static_name_maps = {'time': ['time', 'time_count', 'time_counter', 'timer_count', 't'],
-                         'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy',
-                                   'depthz', 'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1',
-                                   'Zl', 'Zu', 'level'],
-                         'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
-                         'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG']}
+    _static_name_maps = {
+        "time": ["time", "time_count", "time_counter", "timer_count", "t"],
+        "depth": [
+            "depth",
+            "depthu",
+            "depthv",
+            "depthw",
+            "depths",
+            "deptht",
+            "depthx",
+            "depthy",
+            "depthz",
+            "z",
+            "z_u",
+            "z_v",
+            "z_w",
+            "d",
+            "k",
+            "w_dep",
+            "w_deps",
+            "Z",
+            "Zp1",
+            "Zl",
+            "Zu",
+            "level",
+        ],
+        "lat": ["lat", "nav_lat", "y", "latitude", "la", "lt", "j", "YC", "YG"],
+        "lon": ["lon", "nav_lon", "x", "longitude", "lo", "ln", "i", "XC", "XG"],
+    }
     _min_dim_chunksize = 16
 
     """ Class that encapsulates and manages deferred access to file data. """
+
     def __init__(self, *args, **kwargs):
         """
         Initializes this specific filebuffer type. As a result of using dask, the internal library is set to 'da'.
@@ -251,10 +286,10 @@ class DaskFileBuffer(NetcdfFileBuffer):
         rechunk callback function. Also chunking-related variables are initialized.
         """
         self.lib = da
-        self.chunksize = kwargs.pop('chunksize', 'auto')
-        self.lock_file = kwargs.pop('lock_file', True)
+        self.chunksize = kwargs.pop("chunksize", "auto")
+        self.lock_file = kwargs.pop("lock_file", True)
         self.chunk_mapping = None
-        self.rechunk_callback_fields = kwargs.pop('rechunk_callback_fields', None)
+        self.rechunk_callback_fields = kwargs.pop("rechunk_callback_fields", None)
         self.chunking_finalized = False
         self.autochunkingfailed = False
         super().__init__(*args, **kwargs)
@@ -269,8 +304,10 @@ class DaskFileBuffer(NetcdfFileBuffer):
         where - due to the chunking, the file is 'locked', meaning that it cannot be simultaneously accessed by
         another process. This is significant in a cluster setup.
         """
-        if self.chunksize not in [False, None, 'auto'] and type(self.chunksize) is not dict:
-            raise AttributeError("'chunksize' is of wrong type. Parameter is expected to be a dict per data dimension, or be False, None or 'auto'.")
+        if self.chunksize not in [False, None, "auto"] and type(self.chunksize) is not dict:
+            raise AttributeError(
+                "'chunksize' is of wrong type. Parameter is expected to be a dict per data dimension, or be False, None or 'auto'."
+            )
         if isinstance(self.chunksize, list):
             self.chunksize = tuple(self.chunksize)
 
@@ -282,21 +319,31 @@ class DaskFileBuffer(NetcdfFileBuffer):
             # (which we would rather want to have being auto-managed).
             # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
             if self.lock_file:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict)
+                self.dataset = xr.open_dataset(
+                    str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict
+                )
             else:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
-            self.dataset['decoded'] = True
+                self.dataset = xr.open_dataset(
+                    str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False
+                )
+            self.dataset["decoded"] = True
         except:
-            logger.warning_once(f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). It will be opened with no decoding. Filling values might be wrongly parsed.")
+            logger.warning_once(
+                f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). It will be opened with no decoding. Filling values might be wrongly parsed."
+            )
             if self.lock_file:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict)
+                self.dataset = xr.open_dataset(
+                    str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict
+                )
             else:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
-            self.dataset['decoded'] = False
+                self.dataset = xr.open_dataset(
+                    str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False
+                )
+            self.dataset["decoded"] = False
 
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
-                raise RuntimeError('Indices for field subsetting need to be a list')
+                raise RuntimeError("Indices for field subsetting need to be a list")
         return self
 
     def __exit__(self, type, value, traceback):
@@ -368,18 +415,29 @@ class DaskFileBuffer(NetcdfFileBuffer):
         result = {}
         neg_offset = 0
         tpl_offset = 0
-        for name in ['time', 'depth', 'lat', 'lon']:
+        for name in ["time", "depth", "lat", "lon"]:
             i = list(self._static_name_maps.keys()).index(name)
-            if (name not in self.dimensions):
+            if name not in self.dimensions:
                 result[name] = None
                 tpl_offset += 1
                 neg_offset += 1
-            elif ((type(self.chunksize) is dict) and (name not in self.chunksize or (type(self.chunksize[name]) is tuple and len(self.chunksize[name]) == 2 and self.chunksize[name][1] <= 1))) or \
-                    ((type(self.chunksize) is tuple) and name in self.dimensions and (self.chunksize[i-tpl_offset] <= 1)):
+            elif (
+                (type(self.chunksize) is dict)
+                and (
+                    name not in self.chunksize
+                    or (
+                        type(self.chunksize[name]) is tuple
+                        and len(self.chunksize[name]) == 2
+                        and self.chunksize[name][1] <= 1
+                    )
+                )
+            ) or (
+                (type(self.chunksize) is tuple) and name in self.dimensions and (self.chunksize[i - tpl_offset] <= 1)
+            ):
                 result[name] = None
                 neg_offset += 1
             else:
-                result[name] = i-neg_offset
+                result[name] = i - neg_offset
         return result
 
     def _get_available_dims_indices_by_namemap(self):
@@ -389,7 +447,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         Example: {'time': 0, 'depth': 1, 'lat': 2, 'lon': 3}
         """
         result = {}
-        for name in ['time', 'depth', 'lat', 'lon']:
+        for name in ["time", "depth", "lat", "lon"]:
             result[name] = list(self._static_name_maps.keys()).index(name)
         return result
 
@@ -410,7 +468,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if self.dataset is None:
             raise OSError("Trying to parse NetCDF header information before opening the file.")
         result = {}
-        for pcls_dimname in ['time', 'depth', 'lat', 'lon']:
+        for pcls_dimname in ["time", "depth", "lat", "lon"]:
             for nc_dimname in self._static_name_maps[pcls_dimname]:
                 if nc_dimname not in self.dataset.sizes.keys():
                     continue
@@ -433,10 +491,14 @@ class DaskFileBuffer(NetcdfFileBuffer):
         dimensions, the NetCDF file dataset, and is also required to be chunked according to the requested
         chunksize dictionary. If any of the two conditions is not met, if returns 'False'.
         """
-        if self.dimensions is None or self.dataset is None or self.chunksize in [None, False, 'auto']:
+        if self.dimensions is None or self.dataset is None or self.chunksize in [None, False, "auto"]:
             return False
         dim_chunked = False
-        dim_chunked = True if (not dim_chunked and type(self.chunksize) is dict and dimension_name in self.chunksize.keys()) else False
+        dim_chunked = (
+            True
+            if (not dim_chunked and type(self.chunksize) is dict and dimension_name in self.chunksize.keys())
+            else False
+        )
         dim_chunked = True if (not dim_chunked and type(self.chunksize) in [None, False]) else False
         return (dimension_name in self.dimensions) and dim_chunked
 
@@ -450,7 +512,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         """
         if self.dataset is None:
             raise OSError("Trying to parse NetCDF header information before opening the file.")
-        k, dname, dvalue = (-1, '', 0)
+        k, dname, dvalue = (-1, "", 0)
         dimension_name = parcels_dimension_name.lower()
         dim_indices = self._get_available_dims_indices_by_request()
         i = dim_indices[dimension_name]
@@ -474,7 +536,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         of tuples of parcels dimensions and their chunk mapping (i.e. dict(parcels_dim_name => (netcdf_dim_name, chunksize)).
         It requires as input the name of the related parcels dimension (i.e. one of ['time', 'depth', 'lat', 'lon'].
         """
-        k, dname, dvalue = (-1, '', 0)
+        k, dname, dvalue = (-1, "", 0)
         if self.dimensions is None or self.dataset is None:
             return k, dname, dvalue
         parcels_dimension_name = parcels_dimension_name.lower()
@@ -500,32 +562,32 @@ class DaskFileBuffer(NetcdfFileBuffer):
             return
         self.chunksize = {}
         chunk_map = self.chunk_mapping
-        timei, timename, timevalue = self._is_dimension_in_dataset('time')
-        depthi, depthname, depthvalue = self._is_dimension_in_dataset('depth')
-        lati, latname, latvalue = self._is_dimension_in_dataset('lat')
-        loni, lonname, lonvalue = self._is_dimension_in_dataset('lon')
+        timei, timename, timevalue = self._is_dimension_in_dataset("time")
+        depthi, depthname, depthvalue = self._is_dimension_in_dataset("depth")
+        lati, latname, latvalue = self._is_dimension_in_dataset("lat")
+        loni, lonname, lonvalue = self._is_dimension_in_dataset("lon")
         if len(chunk_map) == 2:
-            self.chunksize['lon'] = (latname, chunk_map[0])
-            self.chunksize['lat'] = (lonname, chunk_map[1])
+            self.chunksize["lon"] = (latname, chunk_map[0])
+            self.chunksize["lat"] = (lonname, chunk_map[1])
         elif len(chunk_map) == 3:
             chunk_dim_index = 0
-            if depthi is not None and depthi >= 0 and depthvalue > 1 and self._is_dimension_available('depth'):
-                self.chunksize['depth'] = (depthname, chunk_map[chunk_dim_index])
+            if depthi is not None and depthi >= 0 and depthvalue > 1 and self._is_dimension_available("depth"):
+                self.chunksize["depth"] = (depthname, chunk_map[chunk_dim_index])
                 chunk_dim_index += 1
-            elif timei is not None and timei >= 0 and timevalue > 1 and self._is_dimension_available('time'):
-                self.chunksize['time'] = (timename, chunk_map[chunk_dim_index])
+            elif timei is not None and timei >= 0 and timevalue > 1 and self._is_dimension_available("time"):
+                self.chunksize["time"] = (timename, chunk_map[chunk_dim_index])
                 chunk_dim_index += 1
-            self.chunksize['lat'] = (latname, chunk_map[chunk_dim_index])
+            self.chunksize["lat"] = (latname, chunk_map[chunk_dim_index])
             chunk_dim_index += 1
-            self.chunksize['lon'] = (lonname, chunk_map[chunk_dim_index])
+            self.chunksize["lon"] = (lonname, chunk_map[chunk_dim_index])
         elif len(chunk_map) >= 4:
-            self.chunksize['time'] = (timename, chunk_map[0])
-            self.chunksize['depth'] = (depthname, chunk_map[1])
-            self.chunksize['lat'] = (latname, chunk_map[2])
-            self.chunksize['lon'] = (lonname, chunk_map[3])
+            self.chunksize["time"] = (timename, chunk_map[0])
+            self.chunksize["depth"] = (depthname, chunk_map[1])
+            self.chunksize["lat"] = (latname, chunk_map[2])
+            self.chunksize["lon"] = (lonname, chunk_map[3])
             dim_index = 4
             for dim_name in self.dimensions:
-                if dim_name not in ['time', 'depth', 'lat', 'lon']:
+                if dim_name not in ["time", "depth", "lat", "lon"]:
                     self.chunksize[dim_name] = (self.dimensions[dim_name], chunk_map[dim_index])
                     dim_index += 1
 
@@ -542,42 +604,50 @@ class DaskFileBuffer(NetcdfFileBuffer):
         chunk_dict = {}
         chunk_index_map = {}
         neg_offset = 0
-        if 'time' in self.chunksize.keys():
-            timei, timename, timesize = self._is_dimension_in_dataset(parcels_dimension_name='time', netcdf_dimension_name=self.chunksize['time'][0])
-            timevalue = self.chunksize['time'][1]
+        if "time" in self.chunksize.keys():
+            timei, timename, timesize = self._is_dimension_in_dataset(
+                parcels_dimension_name="time", netcdf_dimension_name=self.chunksize["time"][0]
+            )
+            timevalue = self.chunksize["time"][1]
             if timei is not None and timei >= 0 and timevalue > 1:
                 timevalue = min(timesize, timevalue)
                 chunk_dict[timename] = timevalue
-                chunk_index_map[timei-neg_offset] = timevalue
+                chunk_index_map[timei - neg_offset] = timevalue
             else:
-                self.chunksize.pop('time')
-        if 'depth' in self.chunksize.keys():
-            depthi, depthname, depthsize = self._is_dimension_in_dataset(parcels_dimension_name='depth', netcdf_dimension_name=self.chunksize['depth'][0])
-            depthvalue = self.chunksize['depth'][1]
+                self.chunksize.pop("time")
+        if "depth" in self.chunksize.keys():
+            depthi, depthname, depthsize = self._is_dimension_in_dataset(
+                parcels_dimension_name="depth", netcdf_dimension_name=self.chunksize["depth"][0]
+            )
+            depthvalue = self.chunksize["depth"][1]
             if depthi is not None and depthi >= 0 and depthvalue > 1:
                 depthvalue = min(depthsize, depthvalue)
                 chunk_dict[depthname] = depthvalue
-                chunk_index_map[depthi-neg_offset] = depthvalue
+                chunk_index_map[depthi - neg_offset] = depthvalue
             else:
-                self.chunksize.pop('depth')
-        if 'lat' in self.chunksize.keys():
-            lati, latname, latsize = self._is_dimension_in_dataset(parcels_dimension_name='lat', netcdf_dimension_name=self.chunksize['lat'][0])
-            latvalue = self.chunksize['lat'][1]
+                self.chunksize.pop("depth")
+        if "lat" in self.chunksize.keys():
+            lati, latname, latsize = self._is_dimension_in_dataset(
+                parcels_dimension_name="lat", netcdf_dimension_name=self.chunksize["lat"][0]
+            )
+            latvalue = self.chunksize["lat"][1]
             if lati is not None and lati >= 0 and latvalue > 1:
                 latvalue = min(latsize, latvalue)
                 chunk_dict[latname] = latvalue
-                chunk_index_map[lati-neg_offset] = latvalue
+                chunk_index_map[lati - neg_offset] = latvalue
             else:
-                self.chunksize.pop('lat')
-        if 'lon' in self.chunksize.keys():
-            loni, lonname, lonsize = self._is_dimension_in_dataset(parcels_dimension_name='lon', netcdf_dimension_name=self.chunksize['lon'][0])
-            lonvalue = self.chunksize['lon'][1]
+                self.chunksize.pop("lat")
+        if "lon" in self.chunksize.keys():
+            loni, lonname, lonsize = self._is_dimension_in_dataset(
+                parcels_dimension_name="lon", netcdf_dimension_name=self.chunksize["lon"][0]
+            )
+            lonvalue = self.chunksize["lon"][1]
             if loni is not None and loni >= 0 and lonvalue > 1:
                 lonvalue = min(lonsize, lonvalue)
                 chunk_dict[lonname] = lonvalue
-                chunk_index_map[loni-neg_offset] = lonvalue
+                chunk_index_map[loni - neg_offset] = lonvalue
             else:
-                self.chunksize.pop('lon')
+                self.chunksize.pop("lon")
         return chunk_dict, chunk_index_map
 
     def _failsafe_parse_(self):
@@ -617,7 +687,12 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 nc_dimsize = self.dataset.dimensions[nc_dname].size
                 if pcls_dname in self.chunksize.keys():
                     pcls_dim_chunksize = self.chunksize[pcls_dname][1]
-            if pcls_dname is not None and nc_dname is not None and nc_dimsize is not None and pcls_dim_chunksize is not None:
+            if (
+                pcls_dname is not None
+                and nc_dname is not None
+                and nc_dimsize is not None
+                and pcls_dim_chunksize is not None
+            ):
                 init_chunk_dict[nc_dname] = pcls_dim_chunksize
 
         # ==== because in this case it has shown that the requested chunksize setup cannot be used, ==== #
@@ -638,38 +713,42 @@ class DaskFileBuffer(NetcdfFileBuffer):
         """
         # ==== check-opening requested dataset to access metadata                   ==== #
         # ==== file-opening and dimension-reading does not require a decode or lock ==== #
-        self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks={}, lock=False)
-        self.dataset['decoded'] = False
+        self.dataset = xr.open_dataset(
+            str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks={}, lock=False
+        )
+        self.dataset["decoded"] = False
         # ==== self.dataset temporarily available ==== #
         init_chunk_dict = {}
         init_chunk_map = {}
         if isinstance(self.chunksize, dict):
             init_chunk_dict, init_chunk_map = self._get_initial_chunk_dictionary_by_dict_()
-        elif self.chunksize == 'auto':
+        elif self.chunksize == "auto":
             av_mem = psutil.virtual_memory().available
-            chunk_cap = av_mem * (1/8) * (1/3)
-            if 'array.chunk-size' in da_conf.config.keys():
-                chunk_cap = da_utils.parse_bytes(da_conf.config.get('array.chunk-size'))
+            chunk_cap = av_mem * (1 / 8) * (1 / 3)
+            if "array.chunk-size" in da_conf.config.keys():
+                chunk_cap = da_utils.parse_bytes(da_conf.config.get("array.chunk-size"))
             else:
-                predefined_cap = da_conf.get('array.chunk-size')
+                predefined_cap = da_conf.get("array.chunk-size")
                 if predefined_cap is not None:
                     chunk_cap = da_utils.parse_bytes(predefined_cap)
                 else:
-                    logger.info_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically."
-                                     "Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.oceanparcels.org/en/latest/examples/documentation_MPI.html#Chunking-the-FieldSet-with-dask and https://docs.dask.org).")
-            loni, lonname, lonvalue = self._is_dimension_in_dataset('lon')
-            lati, latname, latvalue = self._is_dimension_in_dataset('lat')
+                    logger.info_once(
+                        "Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically."
+                        "Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.oceanparcels.org/en/latest/examples/documentation_MPI.html#Chunking-the-FieldSet-with-dask and https://docs.dask.org)."
+                    )
+            loni, lonname, lonvalue = self._is_dimension_in_dataset("lon")
+            lati, latname, latvalue = self._is_dimension_in_dataset("lat")
             if lati is not None and loni is not None and lati >= 0 and loni >= 0:
-                pDim = int(math.floor(math.sqrt(chunk_cap/np.dtype(np.float64).itemsize)))
+                pDim = int(math.floor(math.sqrt(chunk_cap / np.dtype(np.float64).itemsize)))
                 init_chunk_dict[latname] = min(latvalue, pDim)
                 init_chunk_map[lati] = min(latvalue, pDim)
                 init_chunk_dict[lonname] = min(lonvalue, pDim)
                 init_chunk_map[loni] = min(lonvalue, pDim)
-            timei, timename, timevalue = self._is_dimension_in_dataset('time')
+            timei, timename, timevalue = self._is_dimension_in_dataset("time")
             if timei is not None and timei >= 0:
                 init_chunk_dict[timename] = min(1, timevalue)
                 init_chunk_map[timei] = min(1, timevalue)
-            depthi, depthname, depthvalue = self._is_dimension_in_dataset('depth')
+            depthi, depthname, depthvalue = self._is_dimension_in_dataset("depth")
             if depthi is not None and depthi >= 0:
                 init_chunk_dict[depthname] = max(1, depthvalue)
                 init_chunk_map[depthi] = max(1, depthvalue)
@@ -677,17 +756,24 @@ class DaskFileBuffer(NetcdfFileBuffer):
         self.dataset.close()
         # ==== check if the chunksize reading is successful. if not, load the file ONCE really into memory and ==== #
         # ==== deduce the chunking from the array dims.                                                         ==== #
-        if len(init_chunk_dict) == 0 and self.chunksize not in [False, None, 'auto']:
+        if len(init_chunk_dict) == 0 and self.chunksize not in [False, None, "auto"]:
             self.autochunkingfailed = True
-            raise DaskChunkingError(self.__class__.__name__, "No correct mapping found between Parcels- and NetCDF dimensions! Please correct the 'FieldSet(..., chunksize={...})' parameter and try again.")
+            raise DaskChunkingError(
+                self.__class__.__name__,
+                "No correct mapping found between Parcels- and NetCDF dimensions! Please correct the 'FieldSet(..., chunksize={...})' parameter and try again.",
+            )
         else:
             self.autochunkingfailed = False
         try:
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
+            self.dataset = xr.open_dataset(
+                str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False
+            )
             if isinstance(self.chunksize, dict):
                 self.chunksize = init_chunk_dict
         except:
-            logger.warning(f"Chunking with init_chunk_dict = {init_chunk_dict} failed - Executing Dask chunking 'failsafe'...")
+            logger.warning(
+                f"Chunking with init_chunk_dict = {init_chunk_dict} failed - Executing Dask chunking 'failsafe'..."
+            )
             self.autochunkingfailed = True
             if not self.autochunkingfailed:
                 init_chunk_dict = self._failsafe_parse_()
@@ -714,7 +800,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
         if isinstance(data, da.core.Array):
             if not self.chunking_finalized:
-                if self.chunksize == 'auto':
+                if self.chunksize == "auto":
                     # ==== as the chunksize is not initiated, the data is chunked automatically by Dask.  ==== #
                     # ==== the resulting chunk dictionary is stored, to be re-used later. This prevents   ==== #
                     # ==== the expensive re-calculation and PHYSICAL FILE RECHUNKING on each data access. ==== #
@@ -734,7 +820,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                     self.chunking_finalized = True
         else:
             da_data = da.from_array(data, chunks=self.chunksize)
-            if self.chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
+            if self.chunksize == "auto" and da_data.shape[-2:] == da_data.chunksize[-2:]:
                 data = np.array(data)
             else:
                 data = da_data

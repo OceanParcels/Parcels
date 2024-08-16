@@ -2,7 +2,7 @@ import os
 import subprocess
 
 try:
-    from parcels._version_setup import version  # noqa
+    from parcels._version_setup import version
 except ModuleNotFoundError:
     try:
         version = (

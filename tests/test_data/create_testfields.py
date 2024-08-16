@@ -25,21 +25,24 @@ scalefac = 2.0
 
 
 def generate_testfieldset(xdim, ydim, zdim, tdim):
-    lon = np.linspace(0., 2., xdim, dtype=np.float32)
-    lat = np.linspace(0., 1., ydim, dtype=np.float32)
-    depth = np.linspace(0., 0.5, zdim, dtype=np.float32)
-    time = np.linspace(0., tdim, tdim, dtype=np.float64)
+    lon = np.linspace(0.0, 2.0, xdim, dtype=np.float32)
+    lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
+    depth = np.linspace(0.0, 0.5, zdim, dtype=np.float32)
+    time = np.linspace(0.0, tdim, tdim, dtype=np.float64)
     U = np.ones((xdim, ydim, zdim, tdim), dtype=np.float32)
     V = np.zeros((xdim, ydim, zdim, tdim), dtype=np.float32)
-    P = 2.*np.ones((xdim, ydim, zdim, tdim), dtype=np.float32)
-    data = {'U': U, 'V': V, 'P': P}
-    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
-    fieldset.write('testfields')
+    P = 2.0 * np.ones((xdim, ydim, zdim, tdim), dtype=np.float32)
+    data = {"U": U, "V": V, "P": P}
+    dimensions = {"lon": lon, "lat": lat, "depth": depth, "time": time}
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    fieldset.write("testfields")
 
 
 def generate_perlin_testfield():
-    img_shape = (int(math.pow(2, noctaves)) * perlinres[0] * shapescale[0], int(math.pow(2, noctaves)) * perlinres[1] * shapescale[1])
+    img_shape = (
+        int(math.pow(2, noctaves)) * perlinres[0] * shapescale[0],
+        int(math.pow(2, noctaves)) * perlinres[1] * shapescale[1],
+    )
 
     # Coordinates of the test fieldset (on A-grid in deg)
     lon = np.linspace(-180.0, 180.0, img_shape[0], dtype=np.float32)
@@ -53,21 +56,21 @@ def generate_perlin_testfield():
         U = PERLIN.generate_fractal_noise_2d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
         V = PERLIN.generate_fractal_noise_2d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
     else:
-        U = np.ones(img_shape, dtype=np.float32)*scalefac
-        V = np.ones(img_shape, dtype=np.float32)*scalefac
+        U = np.ones(img_shape, dtype=np.float32) * scalefac
+        V = np.ones(img_shape, dtype=np.float32) * scalefac
     U = np.transpose(U, (1, 0))
     U = np.expand_dims(U, 0)
     V = np.transpose(V, (1, 0))
     V = np.expand_dims(V, 0)
-    data = {'U': U, 'V': V}
-    dimensions = {'time': time, 'lon': lon, 'lat': lat}
+    data = {"U": U, "V": V}
+    dimensions = {"time": time, "lon": lon, "lat": lat}
     if asizeof is not None:
         print(f"Perlin U-field requires {U.size * U.itemsize} bytes of memory.")
         print(f"Perlin V-field requires {V.size * V.itemsize} bytes of memory.")
-    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical', transpose=False)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical", transpose=False)
     # fieldset.write("perlinfields")  # can also be used, but then has a ghost depth dimension
-    write_simple_2Dt(fieldset.U, os.path.join(os.path.dirname(__file__), 'perlinfields'), varname='vozocrtx')
-    write_simple_2Dt(fieldset.V, os.path.join(os.path.dirname(__file__), 'perlinfields'), varname='vomecrty')
+    write_simple_2Dt(fieldset.U, os.path.join(os.path.dirname(__file__), "perlinfields"), varname="vozocrtx")
+    write_simple_2Dt(fieldset.V, os.path.join(os.path.dirname(__file__), "perlinfields"), varname="vomecrty")
 
 
 def write_simple_2Dt(field, filename, varname=None):
@@ -82,33 +85,36 @@ def write_simple_2Dt(field, filename, varname=None):
     varname : str, optional
         Name of the variable to write to file. If None, defaults to field.name
     """
-    filepath = str(f'{filename}{field.name}.nc')
+    filepath = str(f"{filename}{field.name}.nc")
     if varname is None:
         varname = field.name
 
     # Create DataArray objects for file I/O
     if field.grid.gtype == GridType.RectilinearZGrid:
-        nav_lon = xr.DataArray(field.grid.lon + np.zeros((field.grid.ydim, field.grid.xdim), dtype=np.float32),
-                               coords=[('y', field.grid.lat), ('x', field.grid.lon)])
-        nav_lat = xr.DataArray(field.grid.lat.reshape(field.grid.ydim, 1) + np.zeros(field.grid.xdim, dtype=np.float32),
-                               coords=[('y', field.grid.lat), ('x', field.grid.lon)])
+        nav_lon = xr.DataArray(
+            field.grid.lon + np.zeros((field.grid.ydim, field.grid.xdim), dtype=np.float32),
+            coords=[("y", field.grid.lat), ("x", field.grid.lon)],
+        )
+        nav_lat = xr.DataArray(
+            field.grid.lat.reshape(field.grid.ydim, 1) + np.zeros(field.grid.xdim, dtype=np.float32),
+            coords=[("y", field.grid.lat), ("x", field.grid.lon)],
+        )
     elif field.grid.gtype == GridType.CurvilinearZGrid:
-        nav_lon = xr.DataArray(field.grid.lon, coords=[('y', range(field.grid.ydim)), ('x', range(field.grid.xdim))])
-        nav_lat = xr.DataArray(field.grid.lat, coords=[('y', range(field.grid.ydim)), ('x', range(field.grid.xdim))])
+        nav_lon = xr.DataArray(field.grid.lon, coords=[("y", range(field.grid.ydim)), ("x", range(field.grid.xdim))])
+        nav_lat = xr.DataArray(field.grid.lat, coords=[("y", range(field.grid.ydim)), ("x", range(field.grid.xdim))])
     else:
-        raise NotImplementedError('Field.write only implemented for RectilinearZGrid and CurvilinearZGrid')
+        raise NotImplementedError("Field.write only implemented for RectilinearZGrid and CurvilinearZGrid")
 
-    attrs = {'units': 'seconds since ' + str(field.grid.time_origin)} if field.grid.time_origin.calendar else {}
-    time_counter = xr.DataArray(field.grid.time,
-                                dims=['time_counter'],
-                                attrs=attrs)
-    vardata = xr.DataArray(field.data.reshape((field.grid.tdim, field.grid.ydim, field.grid.xdim)),
-                           dims=['time_counter', 'y', 'x'])
+    attrs = {"units": "seconds since " + str(field.grid.time_origin)} if field.grid.time_origin.calendar else {}
+    time_counter = xr.DataArray(field.grid.time, dims=["time_counter"], attrs=attrs)
+    vardata = xr.DataArray(
+        field.data.reshape((field.grid.tdim, field.grid.ydim, field.grid.xdim)), dims=["time_counter", "y", "x"]
+    )
     # Create xarray Dataset and output to netCDF format
-    attrs = {'parcels_mesh': field.grid.mesh}
-    dset = xr.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
-                                                  'nav_lat': nav_lat,
-                                                  'time_counter': time_counter}, attrs=attrs)
+    attrs = {"parcels_mesh": field.grid.mesh}
+    dset = xr.Dataset(
+        {varname: vardata}, coords={"nav_lon": nav_lon, "nav_lat": nav_lat, "time_counter": time_counter}, attrs=attrs
+    )
     dset.to_netcdf(filepath)
     if asizeof is not None:
         mem = 0

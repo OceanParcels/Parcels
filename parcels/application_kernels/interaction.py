@@ -1,10 +1,10 @@
 """Collection of pre-built interaction kernels."""
+
 import numpy as np
 
 from parcels.tools.statuscodes import StatusCode
 
-__all__ = ['AsymmetricAttraction', 'NearestNeighborWithinRange',
-           'MergeWithNearestNeighbor']
+__all__ = ["AsymmetricAttraction", "NearestNeighborWithinRange", "MergeWithNearestNeighbor"]
 
 
 def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
@@ -29,6 +29,7 @@ def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
 
     def f(p, neighbor):
         p.nearest_neighbor = neighbor
+
     mutator[particle.id].append((f, [neighbor_id]))
 
     return StatusCode.Success
@@ -42,6 +43,7 @@ def MergeWithNearestNeighbor(particle, fieldset, time, neighbors, mutator):
     properties. Only pairs of particles that have each other as nearest
     neighbors will be merged.
     """
+
     def delete_particle(p):
         p.state = StatusCode.Delete
 
@@ -87,13 +89,12 @@ def AsymmetricAttraction(particle, fieldset, time, neighbors, mutator):
     velocity_param = 0.04
     for n in na_neighbors:
         assert n.dt == particle.dt
-        dx = np.array([particle.lat-n.lat, particle.lon-n.lon,
-                       particle.depth-n.depth])
+        dx = np.array([particle.lat - n.lat, particle.lon - n.lon, particle.depth - n.depth])
         dx_norm = np.linalg.norm(dx)
-        velocity = velocity_param/(dx_norm**2)
+        velocity = velocity_param / (dx_norm**2)
 
-        distance = velocity*n.dt
-        d_vec = distance*dx/dx_norm
+        distance = velocity * n.dt
+        d_vec = distance * dx / dx_norm
 
         def f(n, dlat, dlon, ddepth):
             n.lat_nextloop += dlat

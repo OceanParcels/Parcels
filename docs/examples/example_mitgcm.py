@@ -1,9 +1,8 @@
 from datetime import timedelta
 
 import numpy as np
-import xarray as xr
-
 import parcels
+import xarray as xr
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 
@@ -31,7 +30,7 @@ def run_mitgcm_zonally_reentrant(mode):
         if particle.lon < 0:
             particle_dlon += fieldset.domain_width  # noqa
         elif particle.lon > fieldset.domain_width:
-            particle_dlon -= fieldset.domain_width  # noqa
+            particle_dlon -= fieldset.domain_width
 
     # Release particles 5 cells away from the Eastern boundary
     pset = parcels.ParticleSet.from_line(
