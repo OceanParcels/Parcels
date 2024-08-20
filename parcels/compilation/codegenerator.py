@@ -4,14 +4,15 @@ import math
 import random
 from abc import ABC
 from copy import copy
+import warnings
 
 import cgen as c
 
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.particle import JITParticle
-from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
+from parcels.tools.warnings import KernelWarning
 
 
 class IntrinsicNode(ast.AST):
@@ -178,9 +179,10 @@ class ParticleAttributeNode(IntrinsicNode):
 
 class ParticleXiYiZiTiAttributeNode(IntrinsicNode):
     def __init__(self, obj, attr):
-        logger.warning_once(
+        warnings.warn(
             f"Be careful when sampling particle.{attr}, as this is updated in the kernel loop. "
-            "Best to place the sampling statement before advection."
+            "Best to place the sampling statement before advection.",
+            KernelWarning,
         )
         self.obj = obj.ccode
         self.attr = attr
@@ -309,8 +311,9 @@ class IntrinsicTransformer(ast.NodeTransformer):
     def visit_AugAssign(self, node):
         node.target = self.visit(node.target)
         if isinstance(node.target, ParticleAttributeNode) and node.target.attr in ["lon", "lat", "depth", "time"]:
-            logger.warning_once(
-                "Don't change the location of a particle directly in a Kernel. Use particle_dlon, particle_dlat, etc."
+            warnings.warn(
+                "Don't change the location of a particle directly in a Kernel. Use particle_dlon, particle_dlat, etc.",
+                KernelWarning,
             )
         node.op = self.visit(node.op)
         node.value = self.visit(node.value)
@@ -439,7 +442,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         for kvar in funcvars:
             if kvar in used_vars + ["particle_dlon", "particle_dlat", "particle_ddepth"]:
                 if kvar not in ["particle", "fieldset", "time", "particle_dlon", "particle_dlat", "particle_ddepth"]:
-                    logger.warning(kvar + " declared in multiple Kernels")
+                    warnings.warn(kvar + " declared in multiple Kernels", KernelWarning)
                 funcvars_copy.remove(kvar)
             else:
                 used_vars.append(kvar)

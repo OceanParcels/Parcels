@@ -1,9 +1,9 @@
 from ctypes import POINTER, Structure
 from operator import attrgetter
+import warnings
 
 import numpy as np
 
-from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
 
 try:
@@ -34,9 +34,10 @@ def partitionParticlesMPI_default(coords, mpi_size=1):
         kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
         mpiProcs = kmeans.labels_
     else:  # assigning random labels if no KMeans (see https://github.com/OceanParcels/parcels/issues/1261)
-        logger.warning_once(
+        warnings.warn(
             "sklearn needs to be available if MPI is installed. "
-            "See https://docs.oceanparcels.org/en/latest/installation.html#installation-for-developers for more information"
+            "See https://docs.oceanparcels.org/en/latest/installation.html#installation-for-developers for more information",
+            RuntimeWarning,
         )
         mpiProcs = np.random.randint(0, mpi_size, size=coords.shape[0])
 

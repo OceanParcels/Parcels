@@ -3,6 +3,7 @@ import datetime
 import math
 from ctypes import POINTER, Structure, c_float, c_int, pointer
 from pathlib import Path
+import warnings
 
 import dask.array as da
 import numpy as np
@@ -16,7 +17,6 @@ from parcels.tools.converters import (
     UnitConverter,
     unitconverters_map,
 )
-from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
     AllParcelsErrorCodes,
     FieldOutOfBoundError,
@@ -24,6 +24,7 @@ from parcels.tools.statuscodes import (
     FieldSamplingError,
     TimeExtrapolationError,
 )
+from parcels.tools.warnings import FieldSetWarning
 
 from .fieldfilebuffer import (
     DaskFileBuffer,
@@ -203,8 +204,9 @@ class Field:
             GridType.RectilinearSGrid,
             GridType.CurvilinearSGrid,
         ]:
-            logger.warning_once(
-                "General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal."
+            warnings.warn(
+                "General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal.",
+                FieldSetWarning,
             )
 
         self.fieldset = None
@@ -215,9 +217,9 @@ class Field:
 
         self.time_periodic = time_periodic
         if self.time_periodic is not False and self.allow_time_extrapolation:
-            logger.warning_once(
-                "allow_time_extrapolation and time_periodic cannot be used together.\n \
-                                 allow_time_extrapolation is set to False"
+            warnings.warn(
+                "allow_time_extrapolation and time_periodic cannot be used together. allow_time_extrapolation is set to False",
+                FieldSetWarning,
             )
             self.allow_time_extrapolation = False
         if self.time_periodic is True:
@@ -546,7 +548,7 @@ class Field:
         grid.chunksize = chunksize
 
         if "time" in indices:
-            logger.warning_once("time dimension in indices is not necessary anymore. It is then ignored.")
+            warnings.warn("time dimension in indices is not necessary anymore. It is then ignored.", FieldSetWarning)
 
         if "full_load" in kwargs:  # for backward compatibility with Parcels < v2.0.0
             deferred_load = not kwargs["full_load"]
@@ -804,7 +806,7 @@ class Field:
                         self.grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
                 self.cell_edge_sizes = self.grid.cell_edge_sizes
             else:
-                logger.error(
+                raise ValueError(
                     (
                         "Field.cell_edge_sizes() not implemented for ",
                         self.grid.gtype,
@@ -813,7 +815,6 @@ class Field:
                         "by in e.g. NEMO using the e1u fields etc from the mesh_mask.nc file",
                     )
                 )
-                exit(-1)
 
     def cell_areas(self):
         """Method to calculate cell sizes based on cell_edge_sizes.
@@ -1329,8 +1330,9 @@ class Field:
 
     def _check_velocitysampling(self):
         if self.name in ["U", "V", "W"]:
-            logger.warning_once(
-                "Sampling of velocities should normally be done using fieldset.UV or fieldset.UVW object; tread carefully"
+            warnings.warn(
+                "Sampling of velocities should normally be done using fieldset.UV or fieldset.UVW object; tread carefully",
+                RuntimeWarning,
             )
 
     def __getitem__(self, key):

@@ -12,6 +12,7 @@ import types
 from copy import deepcopy
 from ctypes import byref, c_double, c_int
 from time import time as ostime
+import warnings
 
 import numpy as np
 import numpy.ctypeslib as npct
@@ -41,6 +42,7 @@ from parcels.tools.statuscodes import (
     StatusCode,
     TimeExtrapolationError,
 )
+from parcels.tools.warnings import KernelWarning
 
 __all__ = ["Kernel", "BaseKernel"]
 
@@ -219,7 +221,7 @@ class Kernel(BaseKernel):
                 user_ctx["random"] = globals()["random"]
                 user_ctx["StatusCode"] = globals()["StatusCode"]
             except:
-                logger.warning("Could not access user context when merging kernels")
+                warnings.warn("Could not access user context when merging kernels", KernelWarning)
                 user_ctx = globals()
             finally:
                 del stack  # Remove cyclic references
@@ -347,9 +349,10 @@ class Kernel(BaseKernel):
                         if f.creation_log != "from_nemo" and f._scaling_factor is not None and f._scaling_factor > 0:
                             warning = True
                 if warning:
-                    logger.warning_once(
-                        "Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n"
-                        "  If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)"
+                    warnings.warn(
+                        "Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z. "
+                        "If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)",
+                        KernelWarning,
                     )
             elif pyfunc is AdvectionAnalytical:
                 if self.fieldset.particlefile is not None:
@@ -362,8 +365,9 @@ class Kernel(BaseKernel):
                     raise NotImplementedError("Analytical Advection only works with Z-grids in the vertical")
             elif pyfunc is AdvectionRK45:
                 if not hasattr(self.fieldset, "RK45_tol"):
-                    logger.info(
-                        "Setting RK45 tolerance to 10 m. Use fieldset.add_constant('RK45_tol', [distance]) to change."
+                    warnings.warn(
+                        "Setting RK45 tolerance to 10 m. Use fieldset.add_constant('RK45_tol', [distance]) to change.",
+                        KernelWarning,
                     )
                     self.fieldset.add_constant("RK45_tol", 10)
                 if self.fieldset.U.grid.mesh == "spherical":
@@ -371,13 +375,15 @@ class Kernel(BaseKernel):
                         1852 * 60
                     )  # TODO does not account for zonal variation in meter -> degree conversion
                 if not hasattr(self.fieldset, "RK45_min_dt"):
-                    logger.info(
-                        "Setting RK45 minimum timestep to 1 s. Use fieldset.add_constant('RK45_min_dt', [timestep]) to change."
+                    warnings.warn(
+                        "Setting RK45 minimum timestep to 1 s. Use fieldset.add_constant('RK45_min_dt', [timestep]) to change.",
+                        KernelWarning,
                     )
                     self.fieldset.add_constant("RK45_min_dt", 1)
                 if not hasattr(self.fieldset, "RK45_max_dt"):
-                    logger.info(
-                        "Setting RK45 maximum timestep to 1 day. Use fieldset.add_constant('RK45_max_dt', [timestep]) to change."
+                    warnings.warn(
+                        "Setting RK45 maximum timestep to 1 day. Use fieldset.add_constant('RK45_max_dt', [timestep]) to change.",
+                        KernelWarning,
                     )
                     self.fieldset.add_constant("RK45_max_dt", 60 * 60 * 24)
 
@@ -622,8 +628,9 @@ class Kernel(BaseKernel):
         pset.particledata.state[:] = StatusCode.Evaluate
 
         if abs(dt) < 1e-6:
-            logger.warning_once(
-                "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)"
+            warnings.warn(
+                "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)",
+                RuntimeWarning,
             )
 
         if pset.fieldset is not None:
@@ -664,7 +671,7 @@ class Kernel(BaseKernel):
                 elif p.state == StatusCode.Delete:
                     pass
                 else:
-                    logger.warning_once(f"Deleting particle {p.id} because of non-recoverable error")
+                    warnings.warn(f"Deleting particle {p.id} because of non-recoverable error", RuntimeWarning)
                     p.delete()
 
             # Remove all particles that signalled deletion

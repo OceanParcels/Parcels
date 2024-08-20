@@ -1,5 +1,6 @@
 import datetime
 import math
+import warnings
 
 import dask.array as da
 import numpy as np
@@ -10,8 +11,8 @@ from dask import utils as da_utils
 from netCDF4 import Dataset as ncDataset
 
 from parcels.tools.converters import convert_xarray_time_units
-from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import DaskChunkingError
+from parcels.tools.warnings import FileWarning, FileWarning
 
 
 class _FileBuffer:
@@ -49,9 +50,10 @@ class NetcdfFileBuffer(_FileBuffer):
             self.dataset["decoded"] = True
         except:
             if self.netcdf_decodewarning:
-                logger.warning_once(
+                warnings.warn(
                     f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
-                    "It will be opened with no decoding. Filling values might be wrongly parsed."
+                    "It will be opened with no decoding. Filling values might be wrongly parsed.",
+                    FileWarning,
                 )
 
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
@@ -328,8 +330,9 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 )
             self.dataset["decoded"] = True
         except:
-            logger.warning_once(
-                f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). It will be opened with no decoding. Filling values might be wrongly parsed."
+            warnings.warn(
+                f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). It will be opened with no decoding. Filling values might be wrongly parsed.",
+                FileWarning,
             )
             if self.lock_file:
                 self.dataset = xr.open_dataset(
@@ -732,9 +735,10 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 if predefined_cap is not None:
                     chunk_cap = da_utils.parse_bytes(predefined_cap)
                 else:
-                    logger.info_once(
-                        "Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically."
-                        "Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.oceanparcels.org/en/latest/examples/documentation_MPI.html#Chunking-the-FieldSet-with-dask and https://docs.dask.org)."
+                    warnings.warn(
+                        "Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. "
+                        "Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.oceanparcels.org/en/latest/examples/documentation_MPI.html#Chunking-the-FieldSet-with-dask and https://docs.dask.org).",
+                        FileWarning,
                     )
             loni, lonname, lonvalue = self._is_dimension_in_dataset("lon")
             lati, latname, latvalue = self._is_dimension_in_dataset("lat")
@@ -771,8 +775,9 @@ class DaskFileBuffer(NetcdfFileBuffer):
             if isinstance(self.chunksize, dict):
                 self.chunksize = init_chunk_dict
         except:
-            logger.warning(
-                f"Chunking with init_chunk_dict = {init_chunk_dict} failed - Executing Dask chunking 'failsafe'..."
+            warnings.warn(
+                f"Chunking with init_chunk_dict = {init_chunk_dict} failed - Executing Dask chunking 'failsafe'...",
+                FileWarning,
             )
             self.autochunkingfailed = True
             if not self.autochunkingfailed:
