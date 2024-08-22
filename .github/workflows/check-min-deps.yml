@@ -26,4 +26,4 @@ jobs:
 
       - name: Core deps minimum versions policy
         run: |
-          python ci/min_deps_check.py ci/min-core-deps.yml
+          python .github/ci/min_deps_check.py .github/ci/min-core-deps.yml
