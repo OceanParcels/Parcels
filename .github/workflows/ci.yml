@@ -43,6 +43,7 @@ jobs:
       - name: Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
@@ -71,6 +72,7 @@ jobs:
       - name: Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
