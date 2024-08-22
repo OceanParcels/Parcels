@@ -1,5 +1,5 @@
 Contributing to Parcels
-======================
+=======================
 
 Why contribute?
 ---------------
