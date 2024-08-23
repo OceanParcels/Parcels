@@ -136,7 +136,7 @@ class FieldSet:
             lat = dims["lat"]
             depth = np.zeros(1, dtype=np.float32) if "depth" not in dims else dims["depth"]
             time = np.zeros(1, dtype=np.float64) if "time" not in dims else dims["time"]
-            time = np.array(time) if not isinstance(time, np.ndarray) else time
+            time = np.array(time)
             if isinstance(time[0], np.datetime64):
                 time_origin = TimeConverter(time[0])
                 time = np.array([time_origin.reltime(t) for t in time])

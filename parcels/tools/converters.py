@@ -2,7 +2,6 @@
 import inspect
 from datetime import timedelta
 from math import cos, pi
-from typing import Any
 
 import cftime
 import numpy as np
@@ -22,20 +21,15 @@ __all__ = [
 ]
 
 
-def convert_to_flat_array(var: list[float] | float | int | NDArray[Any] | ArrayLike) -> NDArray[Any]:
+def convert_to_flat_array(var: ArrayLike) -> NDArray:
     """Convert lists and single integers/floats to one-dimensional numpy arrays
 
     Parameters
     ----------
-    var : np.ndarray, float or array_like
+    var : Array
         list or numeric to convert to a one-dimensional numpy array
     """
-    if isinstance(var, np.ndarray):
-        return var.flatten()
-    elif isinstance(var, (int, float, np.float32, np.int32)):
-        return np.array([var])
-    else:
-        return np.array(var)
+    return np.array(var).flatten()
 
 
 def _get_cftime_datetimes():
