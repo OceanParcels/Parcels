@@ -6,7 +6,7 @@ try:
 except ModuleNotFoundError:
     MPI = None
 
-__all__ = []
+__all__ = []  # type: ignore
 
 
 class Timer:

@@ -36,7 +36,7 @@ class InteractionKernel(BaseKernel):
         py_ast=None,
         funcvars=None,
         c_include="",
-        delete_cfiles=True,
+        delete_cfiles: bool = True,
     ):
         if MPI is not None and MPI.COMM_WORLD.Get_size() > 1:
             raise NotImplementedError(

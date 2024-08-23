@@ -8,7 +8,7 @@ try:
     from os import getuid
 except:
     # Windows does not have getuid(), so define to simply return 'tmp'
-    def getuid():
+    def getuid():  # type: ignore
         return "tmp"
 
 

@@ -2,10 +2,12 @@
 import inspect
 from datetime import timedelta
 from math import cos, pi
+from typing import Any
 
 import cftime
 import numpy as np
 import xarray as xr
+from numpy.typing import ArrayLike, NDArray
 
 __all__ = [
     "UnitConverter",
@@ -20,7 +22,7 @@ __all__ = [
 ]
 
 
-def convert_to_flat_array(var):
+def convert_to_flat_array(var: list[float] | float | int | NDArray[Any] | ArrayLike) -> NDArray[Any]:
     """Convert lists and single integers/floats to one-dimensional numpy arrays
 
     Parameters
@@ -167,8 +169,8 @@ class TimeConverter:
 class UnitConverter:
     """Interface class for spatial unit conversion during field sampling that performs no conversion."""
 
-    source_unit = None
-    target_unit = None
+    source_unit: str | None = None
+    target_unit: str | None = None
 
     def to_target(self, value, x, y, z):
         return value
