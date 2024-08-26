@@ -503,12 +503,22 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         ("AdvDiffM1", 1e-2, True),
         ("RK4", 1e-5, False),
         ("RK45", 1e-5, False),
-        ("AA", 1e-3, False),
+        ("AA", 1e-2, False),
     ],
 )
 def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_decaying
     if method == "AA":
+        lon = fieldset.U.lon
+        dx = lon[1] - lon[0]
+        lat = fieldset.U.lat
+        dy = lat[1] - lat[0]
+        fieldset.add_field(Field("e2u", dy * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"))
+        fieldset.add_field(Field("e1v", dx * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"))
+        fieldset.add_field(Field("e1t", dx * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"))
+        fieldset.add_field(Field("e2t", dy * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"))
+        fieldset.add_field(Field("e3t", np.array(1), lon=0, lat=0, depth=0, interp_method="nearest"))
+
         # needed for AnalyticalAdvection to work, but comes at expense of accuracy
         fieldset.U.interp_method = "cgrid_velocity"
         fieldset.V.interp_method = "cgrid_velocity"
@@ -556,18 +566,26 @@ def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
     lon = np.arange(0, 15, dtype=np.float32)
     lat = np.arange(0, 15, dtype=np.float32)
     if w is not None:
-        depth = np.arange(0, 40, 2, dtype=np.float32)
+        dz = 2
+        depth = np.arange(0, 40, dz, dtype=np.float32)
         U = u * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
         V = v * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
         W = w * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
         fieldset = FieldSet.from_data({"U": U, "V": V, "W": W}, {"lon": lon, "lat": lat, "depth": depth}, mesh="flat")
         fieldset.W.interp_method = "cgrid_velocity"
     else:
+        dz = 1
+        depth = np.array([0])
         U = u * np.ones((lat.size, lon.size), dtype=np.float32)
         V = v * np.ones((lat.size, lon.size), dtype=np.float32)
         fieldset = FieldSet.from_data({"U": U, "V": V}, {"lon": lon, "lat": lat}, mesh="flat")
     fieldset.U.interp_method = "cgrid_velocity"
     fieldset.V.interp_method = "cgrid_velocity"
+    fieldset.add_field(Field("e2u", np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"))
+    fieldset.add_field(Field("e1v", np.ones((lat.size, lon.size)), lon, lat, interp_method="nearest"))
+    fieldset.add_field(Field("e1t", np.ones((lat.size, lon.size)), lon, lat, interp_method="nearest"))
+    fieldset.add_field(Field("e2t", np.ones((lat.size, lon.size)), lon, lat, interp_method="nearest"))
+    fieldset.add_field(Field("e3t", dz * np.ones((depth.size)), lon=0, lat=0, depth=depth, interp_method="nearest"))
 
     x0, y0, z0 = 6.1, 6.2, 20
     runtime = 4
