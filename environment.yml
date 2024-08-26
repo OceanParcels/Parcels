@@ -22,7 +22,6 @@ dependencies:
   - dask>=2.0
   - nbval
   - scikit-learn
-  - pykdtree
   - zarr>=2.11.0,!=2.18.0
 
   # Formatting

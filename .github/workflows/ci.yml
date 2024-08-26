@@ -1,4 +1,4 @@
-name: unit-tests
+name: ci
 on:
   push:
     branches:
@@ -16,7 +16,7 @@ defaults:
 
 jobs:
   unit-test:
-    name: Unittesting on ${{ matrix.os }} with python ${{ matrix.python-version }}
+    name: "py${{ matrix.python-version }} | ${{ matrix.os }} | unit tests"
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -43,6 +43,7 @@ jobs:
       - name: Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
@@ -50,3 +51,33 @@ jobs:
         with:
           name: Unittest report
           path: ${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html
+  integration-test:
+    name: "py${{ matrix.python-version }} | ${{ matrix.os }} | integration tests"
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos, ubuntu, windows]
+        python-version: ["3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Conda and parcels
+        uses: ./.github/actions/install-parcels
+        with:
+          environment-file: environment.yml
+      - name: Integration test
+        run: |
+          coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html docs/examples
+          coverage xml
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: integration-tests
+      - name: Upload test results
+        if: ${{ always() }} # Always run this step, even if tests fail
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: Integration test report
+          path: ${{ matrix.os }}_integration_test_report.html

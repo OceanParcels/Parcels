@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 import cftime
 import numpy as np
 import xarray as xr
+from scipy.spatial import KDTree
 from tqdm import tqdm
 
 try:
@@ -13,10 +14,6 @@ try:
 except ModuleNotFoundError:
     MPI = None
 
-try:
-    from pykdtree.kdtree import KDTree
-except ModuleNotFoundError:
-    KDTree = None
 
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.compilation.codecompiler import GNUCompiler
@@ -446,33 +443,30 @@ class ParticleSet:
         neighbor_ids = self.particledata.data["id"][neighbor_idx]
         return neighbor_ids
 
+    # TODO: This method is only tested in tutorial notebook. Add unit test?
     def populate_indices(self):
         """Pre-populate guesses of particle xi/yi indices using a kdtree.
 
         This is only intended for curvilinear grids, where the initial index search
         may be quite expensive.
         """
-        if KDTree is None:
-            logger.warning("KDTree is not installed, pre-populated guesses are not indexed")
-            return
-        else:
-            for i, grid in enumerate(self.fieldset.gridset.grids):
-                if not isinstance(grid, CurvilinearGrid):
-                    continue
+        for i, grid in enumerate(self.fieldset.gridset.grids):
+            if not isinstance(grid, CurvilinearGrid):
+                continue
 
-                tree_data = np.stack((grid.lon.flat, grid.lat.flat), axis=-1)
-                IN = np.all(~np.isnan(tree_data), axis=1)
-                tree = KDTree(tree_data[IN, :])
-                # stack all the particle positions for a single query
-                pts = np.stack((self.particledata.data["lon"], self.particledata.data["lat"]), axis=-1)
-                # query datatype needs to match tree datatype
-                _, idx_nan = tree.query(pts.astype(tree_data.dtype))
+            tree_data = np.stack((grid.lon.flat, grid.lat.flat), axis=-1)
+            IN = np.all(~np.isnan(tree_data), axis=1)
+            tree = KDTree(tree_data[IN, :])
+            # stack all the particle positions for a single query
+            pts = np.stack((self.particledata.data["lon"], self.particledata.data["lat"]), axis=-1)
+            # query datatype needs to match tree datatype
+            _, idx_nan = tree.query(pts.astype(tree_data.dtype))
 
-                idx = np.where(IN)[0][idx_nan]
-                yi, xi = np.unravel_index(idx, grid.lon.shape)
+            idx = np.where(IN)[0][idx_nan]
+            yi, xi = np.unravel_index(idx, grid.lon.shape)
 
-                self.particledata.data["xi"][:, i] = xi
-                self.particledata.data["yi"][:, i] = yi
+            self.particledata.data["xi"][:, i] = xi
+            self.particledata.data["yi"][:, i] = yi
 
     @classmethod
     def from_list(
