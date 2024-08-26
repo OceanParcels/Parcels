@@ -4,11 +4,7 @@ from collections import defaultdict
 
 import numpy as np
 
-try:
-    from mpi4py import MPI
-except ModuleNotFoundError:
-    MPI = None
-
+from parcels._compat import MPI
 from parcels.field import NestedField, VectorField
 from parcels.kernel import BaseKernel
 from parcels.tools.loggers import logger

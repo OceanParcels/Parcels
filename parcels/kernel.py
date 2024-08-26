@@ -18,13 +18,9 @@ import numpy as np
 import numpy.ctypeslib as npct
 from numpy import ndarray
 
-try:
-    from mpi4py import MPI
-except ModuleNotFoundError:
-    MPI = None
-
 import parcels.rng as ParcelsRandom  # noqa
 from parcels import rng  # noqa
+from parcels._compat import MPI
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
     AdvectionRK4_3D,

@@ -7,6 +7,7 @@ from glob import glob
 import dask.array as da
 import numpy as np
 
+from parcels._compat import MPI
 from parcels._typing import Mesh, TimePeriodic
 from parcels.field import DeferredArray, Field, NestedField, VectorField
 from parcels.grid import Grid
@@ -15,12 +16,6 @@ from parcels.particlefile import ParticleFile
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import TimeExtrapolationError
-
-try:
-    from mpi4py import MPI  # pyright: ignore[reportMissingImports]
-except ModuleNotFoundError:
-    MPI = None
-
 
 __all__ = ["FieldSet"]
 

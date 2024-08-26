@@ -1,10 +1,7 @@
 import datetime
 import time
 
-try:
-    from mpi4py import MPI
-except ModuleNotFoundError:
-    MPI = None
+from parcels._compat import MPI
 
 __all__ = []  # type: ignore
 
