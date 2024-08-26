@@ -140,7 +140,7 @@ def AdvectionAnalytical(particle, fieldset, time):
         updatexi = 0
         updateyi = 0
         if abs(xsi - 1) < tol:
-            if fieldset.U.data[0, zi + 1, yi + 1, xi + 1] > 0:
+            if fieldset.U.data[0, zi + 1, yi + 1, xi + 1] > 0:  # TODO update scipy code here to match JIT kernel
                 updatexi = 1
                 xsi = 0
         elif abs(xsi) < tol:
