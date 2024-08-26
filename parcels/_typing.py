@@ -35,6 +35,10 @@ ChunkMode = Literal["auto", "specific", "failsafe"]  # mostly corresponds with `
 GridIndexingType = Literal["pop", "mom5", "mitgcm", "nemo"]  # mostly corresponds with `grid_indexing_type`
 UpdateStatus = Literal["not_updated", "first_updated", "updated"]  # mostly corresponds with `update_status`
 TimePeriodic = float | datetime.timedelta | Literal[False]  # mostly corresponds with `update_status`
+NetcdfEngine = Literal[
+    "netcdf4", "xarray"
+]  # TODO: It seems that "scipy" is also an option (according to a docstring) but can't find mention in code. Investigate.
+
 
 KernelFunction = Callable[..., None]
 

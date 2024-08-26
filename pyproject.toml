@@ -128,6 +128,8 @@ files = [
   "parcels/_typing.py",
   "parcels/tools/*.py",
   "parcels/grid.py",
+  "parcels/field.py",
+  "parcels/fieldset.py",
 ]
 
 [[tool.mypy.overrides]]

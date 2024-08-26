@@ -1,4 +1,5 @@
 import _ctypes
+import abc
 import ast
 import functools
 import hashlib
@@ -45,7 +46,7 @@ from parcels.tools.statuscodes import (
 __all__ = ["Kernel", "BaseKernel"]
 
 
-class BaseKernel:
+class BaseKernel(abc.ABC):
     """Superclass for 'normal' and Interactive Kernels"""
 
     def __init__(
@@ -138,6 +139,9 @@ class BaseKernel:
         if len(indices) > 0 and self.fieldset.particlefile is not None:
             self.fieldset.particlefile.write(pset, None, indices=indices)
         pset.remove_indices(indices)
+
+    @abc.abstractmethod
+    def get_kernel_compile_files(self): ...
 
 
 class Kernel(BaseKernel):
