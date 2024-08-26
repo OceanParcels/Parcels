@@ -312,9 +312,8 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 
   if ((rs_x < -tol_grid) || (rs_x > 1+tol_grid) ||
       (rs_y < -tol_grid) || (rs_y > 1+tol_grid) ||
-      (rs_z < -tol_grid) || (rs_z > 1+tol_grid)){
+      ((flow3D == 1) && ((rs_z < -tol_grid) || (rs_z > 1+tol_grid)))){
 
-    // TODO remove this extensive print statement (useful for debugging purposes)
     printf("Particle out of bounds\n");
     printf("rs_x, rs_y, rs_z, s_min = %f, %f, %f %f\n", rs_x, rs_y, rs_z, s_min);
     printf("xi, yi, zi, ti = %d, %d, %d, %d\n", *xi, *yi, *zi, tii);
