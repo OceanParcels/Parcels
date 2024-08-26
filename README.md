@@ -2,6 +2,7 @@
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels/master?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
 [![unit-tests](https://github.com/OceanParcels/parcels/actions/workflows/ci.yml/badge.svg)](https://github.com/OceanParcels/parcels/actions/workflows/ci.yml)
+[![Code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/format.json)](https://github.com/astral-sh/ruff)
 [![codecov](https://codecov.io/gh/OceanParcels/parcels/branch/master/graph/badge.svg)](https://codecov.io/gh/OceanParcels/parcels)
 [![Anaconda-release](https://anaconda.org/conda-forge/parcels/badges/version.svg)](https://anaconda.org/conda-forge/parcels/)
 [![Anaconda-date](https://anaconda.org/conda-forge/parcels/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/parcels/)
