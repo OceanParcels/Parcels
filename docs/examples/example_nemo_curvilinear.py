@@ -35,7 +35,7 @@ def run_nemo_curvilinear(mode, outfile, advtype="RK4"):
         filenames, variables, dimensions, chunksize=chunksize
     )
     if advtype == "AA":
-        mesh_mask = f"{data_folder}/mesh_mask_edges.nc"
+        mesh_mask = f"{data_folder}/mesh_mask_edges.nc4"
         fieldset.add_field(
             parcels.Field.from_netcdf(
                 mesh_mask, "e2u", dimensions, interp_method="nearest"
