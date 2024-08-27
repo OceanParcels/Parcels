@@ -1,7 +1,6 @@
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List
 from urllib.request import urlretrieve
 
 import platformdirs
@@ -96,7 +95,7 @@ def get_data_home(data_home=None):
     return data_home
 
 
-def list_example_datasets() -> List[str]:
+def list_example_datasets() -> list[str]:
     """List the available example datasets.
 
     Use :func:`download_example_dataset` to download one of the datasets.

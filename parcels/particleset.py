@@ -152,7 +152,7 @@ class ParticleSet:
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
 
-        if isinstance(pid_orig, (type(None), type(False))):
+        if isinstance(pid_orig, (type(None), bool)):
             pid_orig = np.arange(lon.size)
 
         if depth is None:

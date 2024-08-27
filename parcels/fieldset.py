@@ -1317,7 +1317,7 @@ class FieldSet:
         """
         # check if filename exists
         if not os.path.exists(filename):
-            raise IOError(f"FieldSet module file {filename} does not exist")
+            raise OSError(f"FieldSet module file {filename} does not exist")
 
         # Importing the source file directly (following https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly)
         spec = importlib.util.spec_from_file_location(modulename, filename)
@@ -1326,10 +1326,10 @@ class FieldSet:
         spec.loader.exec_module(fieldset_module)
 
         if not hasattr(fieldset_module, modulename):
-            raise IOError(f"{filename} does not contain a {modulename} function")
+            raise OSError(f"{filename} does not contain a {modulename} function")
         fieldset = getattr(fieldset_module, modulename)(**kwargs)
         if not isinstance(fieldset, FieldSet):
-            raise IOError(f"Module {filename}.{modulename} does not return a FieldSet object")
+            raise OSError(f"Module {filename}.{modulename} does not return a FieldSet object")
         return fieldset
 
     def get_fields(self):
