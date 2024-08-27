@@ -1228,7 +1228,7 @@ class FieldSet:
         extra_fields.update({"U": uvar, "V": vvar})
         for vars in extra_fields:
             dimensions[vars] = deepcopy(default_dims)
-            dimensions[vars]["depth"] = "depth%s" % vars.lower()
+            dimensions[vars]["depth"] = f"depth{vars.lower()}"
         filenames = {v: str(f"{basename}{v}.nc") for v in extra_fields.keys()}
         return cls.from_netcdf(
             filenames,

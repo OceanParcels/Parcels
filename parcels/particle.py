@@ -39,13 +39,13 @@ class Variable:
         if issubclass(cls, JITParticle):
             return instance._cptr.__getitem__(self.name)
         else:
-            return getattr(instance, "_%s" % self.name, self.initial)
+            return getattr(instance, f"_{self.name}", self.initial)
 
     def __set__(self, instance, value):
         if isinstance(instance, JITParticle):
             instance._cptr.__setitem__(self.name, value)
         else:
-            setattr(instance, "_%s" % self.name, value)
+            setattr(instance, f"_{self.name}", value)
 
     def __repr__(self):
         return f"PVar<{self.name}|{self.dtype}>"

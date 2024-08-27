@@ -127,7 +127,7 @@ class BaseKernel(abc.ABC):
             field_keys = "-".join(
                 [f"{name}:{field.units.__class__.__name__}" for name, field in self.field_args.items()]
             )
-        key = self.name + self.ptype._cache_key + field_keys + ("TIME:%f" % ostime())
+        key = self.name + self.ptype._cache_key + field_keys + (f"TIME:{ostime():f}")
         return hashlib.md5(key.encode("utf-8")).hexdigest()
 
     def remove_deleted(self, pset):
@@ -310,7 +310,7 @@ class Kernel(BaseKernel):
             field_keys = "-".join(
                 [f"{name}:{field.units.__class__.__name__}" for name, field in self.field_args.items()]
             )
-        key = self.name + self.ptype._cache_key + field_keys + ("TIME:%f" % ostime())
+        key = self.name + self.ptype._cache_key + field_keys + (f"TIME:{ostime():f}")
         return hashlib.md5(key.encode("utf-8")).hexdigest()
 
     def add_scipy_positionupdate_kernels(self):
@@ -449,7 +449,7 @@ class Kernel(BaseKernel):
                 self._cache_key
             )  # only required here because loading is done by Kernel class instead of Compiler class
             dyn_dir = get_cache_dir()
-            basename = "%s_0" % cache_name
+            basename = f"{cache_name}_0"
         lib_path = "lib" + basename
         src_file_or_files = None
         if type(basename) in (list, dict, tuple, ndarray):

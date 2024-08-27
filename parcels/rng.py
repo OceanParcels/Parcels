@@ -95,7 +95,7 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
 
     def compile(self, compiler=None):
         if self.src_file is None or self.lib_file is None or self.log_file is None:
-            basename = "parcels_random_%s" % uuid.uuid4()
+            basename = f"parcels_random_{uuid.uuid4()}"
             lib_filename = "lib" + basename
             basepath = os.path.join(get_cache_dir(), f"{basename}")
             libpath = os.path.join(get_cache_dir(), f"{lib_filename}")

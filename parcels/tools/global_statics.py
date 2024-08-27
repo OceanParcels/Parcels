@@ -34,6 +34,6 @@ def get_package_dir():
 
 
 def get_cache_dir():
-    directory = os.path.join(gettempdir(), "parcels-%s" % getuid())
+    directory = os.path.join(gettempdir(), f"parcels-{getuid()}")
     Path(directory).mkdir(exist_ok=True)
     return directory
