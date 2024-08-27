@@ -1,16 +1,13 @@
 import functools
 from ctypes import POINTER, Structure, c_double, c_float, c_int, c_void_p, cast, pointer
 from enum import IntEnum
-from typing import TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
 
 from parcels._typing import Mesh
 from parcels.tools.converters import TimeConverter
 from parcels.tools.loggers import logger
-
-if TYPE_CHECKING:
-    import numpy.typing as npt
 
 __all__ = [
     "GridType",
