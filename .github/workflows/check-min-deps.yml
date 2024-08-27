@@ -1,0 +1,29 @@
+name: CI Additional
+on:
+  workflow_dispatch: # allows you to trigger manually
+  schedule:
+    - cron: "0 0 1 */3 *" # Run every 3 months
+
+jobs:
+  min-version-policy:
+    name: Minimum Version Policy
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-name: min-deps
+          create-args: >-
+            python=3.12
+            pyyaml
+            conda
+            python-dateutil
+
+      - name: Core deps minimum versions policy
+        run: |
+          python .github/ci/min_deps_check.py .github/ci/min-core-deps.yml
