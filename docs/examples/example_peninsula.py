@@ -199,13 +199,40 @@ def test_peninsula_fieldset(mode, mesh, tmpdir):
     assert (err_smpl <= 1.0e-3).all()
 
 
-@pytest.mark.parametrize(
-    "mode", ["scipy"]
-)  # Analytical Advection only implemented in Scipy mode
-@pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_peninsula_fieldset_AnalyticalAdvection(mode, mesh, tmpdir):
+@pytest.mark.parametrize("mode", ["jit", "scipy"])
+def test_peninsula_fieldset_AnalyticalAdvection(mode, tmpdir):
     """Execute peninsula test using Analytical Advection on C grid."""
     fieldset = peninsula_fieldset(101, 51, "flat", grid_type="C")
+    lon = fieldset.U.lon
+    lat = fieldset.U.lat
+    dx = lon[1] - lon[0]
+    dy = lat[1] - lat[0]
+    fieldset.add_field(
+        parcels.Field(
+            "e2u", dy * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"
+        )
+    )
+    fieldset.add_field(
+        parcels.Field(
+            "e1v", dx * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"
+        )
+    )
+    fieldset.add_field(
+        parcels.Field(
+            "e1t", dx * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"
+        )
+    )
+    fieldset.add_field(
+        parcels.Field(
+            "e2t", dy * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"
+        )
+    )
+    fieldset.add_field(
+        parcels.Field(
+            "e3t", np.array(1), lon=0, lat=0, depth=0, interp_method="nearest"
+        )
+    )
+
     outfile = tmpdir.join("PeninsulaAA")
     pset = peninsula_example(
         fieldset, outfile, npart=10, mode=mode, method=parcels.AdvectionAnalytical
