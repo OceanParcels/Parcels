@@ -34,6 +34,34 @@ def run_nemo_curvilinear(mode, outfile, advtype="RK4"):
     fieldset = parcels.FieldSet.from_nemo(
         filenames, variables, dimensions, chunksize=chunksize
     )
+    if advtype == "AA":
+        mesh_mask = f"{data_folder}/mesh_mask_edges.nc"
+        fieldset.add_field(
+            parcels.Field.from_netcdf(
+                mesh_mask, "e2u", dimensions, interp_method="nearest"
+            )
+        )
+        fieldset.add_field(
+            parcels.Field.from_netcdf(
+                mesh_mask, "e1v", dimensions, interp_method="nearest"
+            )
+        )
+        fieldset.add_field(
+            parcels.Field.from_netcdf(
+                mesh_mask, "e1t", dimensions, interp_method="nearest"
+            )
+        )
+        fieldset.add_field(
+            parcels.Field.from_netcdf(
+                mesh_mask, "e2t", dimensions, interp_method="nearest"
+            )
+        )
+        fieldset.add_field(
+            parcels.Field(
+                "e3t", np.array(1), lon=0, lat=0, depth=0, interp_method="nearest"
+            )
+        )
+
     assert fieldset.U.chunksize == chunksize
 
     # Now run particles as normal
