@@ -9,10 +9,10 @@ import random  # noqa
 import sys
 import textwrap
 import types
+import warnings
 from copy import deepcopy
 from ctypes import byref, c_double, c_int
 from time import time as ostime
-import warnings
 
 import numpy as np
 import numpy.ctypeslib as npct
@@ -221,7 +221,11 @@ class Kernel(BaseKernel):
                 user_ctx["random"] = globals()["random"]
                 user_ctx["StatusCode"] = globals()["StatusCode"]
             except:
-                warnings.warn("Could not access user context when merging kernels", KernelWarning)
+                warnings.warn(
+                    "Could not access user context when merging kernels",
+                    KernelWarning,
+                    stacklevel=2,
+                )
                 user_ctx = globals()
             finally:
                 del stack  # Remove cyclic references
@@ -353,6 +357,7 @@ class Kernel(BaseKernel):
                         "Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z. "
                         "If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)",
                         KernelWarning,
+                        stacklevel=2,
                     )
             elif pyfunc is AdvectionAnalytical:
                 if self.fieldset.particlefile is not None:
@@ -368,6 +373,7 @@ class Kernel(BaseKernel):
                     warnings.warn(
                         "Setting RK45 tolerance to 10 m. Use fieldset.add_constant('RK45_tol', [distance]) to change.",
                         KernelWarning,
+                        stacklevel=2,
                     )
                     self.fieldset.add_constant("RK45_tol", 10)
                 if self.fieldset.U.grid.mesh == "spherical":
@@ -378,12 +384,14 @@ class Kernel(BaseKernel):
                     warnings.warn(
                         "Setting RK45 minimum timestep to 1 s. Use fieldset.add_constant('RK45_min_dt', [timestep]) to change.",
                         KernelWarning,
+                        stacklevel=2,
                     )
                     self.fieldset.add_constant("RK45_min_dt", 1)
                 if not hasattr(self.fieldset, "RK45_max_dt"):
                     warnings.warn(
                         "Setting RK45 maximum timestep to 1 day. Use fieldset.add_constant('RK45_max_dt', [timestep]) to change.",
                         KernelWarning,
+                        stacklevel=2,
                     )
                     self.fieldset.add_constant("RK45_max_dt", 60 * 60 * 24)
 
@@ -631,6 +639,7 @@ class Kernel(BaseKernel):
             warnings.warn(
                 "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)",
                 RuntimeWarning,
+                stacklevel=2,
             )
 
         if pset.fieldset is not None:
@@ -671,7 +680,11 @@ class Kernel(BaseKernel):
                 elif p.state == StatusCode.Delete:
                     pass
                 else:
-                    warnings.warn(f"Deleting particle {p.id} because of non-recoverable error", RuntimeWarning)
+                    warnings.warn(
+                        f"Deleting particle {p.id} because of non-recoverable error",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
                     p.delete()
 
             # Remove all particles that signalled deletion

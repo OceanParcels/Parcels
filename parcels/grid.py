@@ -1,7 +1,7 @@
 import functools
+import warnings
 from ctypes import POINTER, Structure, c_double, c_float, c_int, c_void_p, cast, pointer
 from enum import IntEnum
-import warnings
 
 import numpy as np
 
@@ -331,7 +331,8 @@ class RectilinearGrid(Grid):
             warnings.warn(
                 "Flipping lat data from North-South to South-North. "
                 "Note that this may lead to wrong sign for meridional velocity, so tread very carefully",
-                FieldSetWarning
+                FieldSetWarning,
+                stacklevel=2,
             )
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
@@ -355,18 +356,20 @@ class RectilinearGrid(Grid):
                     "with a dx = lon[1]-lon[0] between the last nodes of the original grid and the first ones of the halo. "
                     "In your grid, lon[1]-lon[0] != lon[-1]-lon[-2]. Is the halo computed as you expect?",
                     FieldSetWarning,
+                    stacklevel=2,
                 )
             self.lon = np.concatenate((self.lon[-halosize:] - lonshift, self.lon, self.lon[0:halosize] + lonshift))
             self.xdim = self.lon.size
             self.zonal_periodic = True
             self.zonal_halo = halosize
         if meridional:
-            if not np.allclose(self.lat[1]-self.lat[0], self.lat[-1]-self.lat[-2]):
+            if not np.allclose(self.lat[1] - self.lat[0], self.lat[-1] - self.lat[-2]):
                 warnings.warn(
                     "The meridional halo is located at the north and south of current grid, "
                     "with a dy = lat[1]-lat[0] between the last nodes of the original grid and the first ones of the halo. "
                     "In your grid, lat[1]-lat[0] != lat[-1]-lat[-2]. Is the halo computed as you expect?",
                     FieldSetWarning,
+                    stacklevel=2,
                 )
             latshift = self.lat[-1] - 2 * self.lat[0] + self.lat[1]
             self.lat = np.concatenate((self.lat[-halosize:] - latshift, self.lat, self.lat[0:halosize] + latshift))
@@ -514,12 +517,13 @@ class CurvilinearGrid(Grid):
         """
         if zonal:
             lonshift = self.lon[:, -1] - 2 * self.lon[:, 0] + self.lon[:, 1]
-            if not np.allclose(self.lon[:, 1]-self.lon[:, 0], self.lon[:, -1]-self.lon[:, -2]):
+            if not np.allclose(self.lon[:, 1] - self.lon[:, 0], self.lon[:, -1] - self.lon[:, -2]):
                 warnings.warn(
                     "The zonal halo is located at the east and west of current grid, "
                     "with a dx = lon[1]-lon[0] between the last nodes of the original grid and the first ones of the halo. "
                     "In your grid, lon[1]-lon[0] != lon[-1]-lon[-2]. Is the halo computed as you expect?",
                     FieldSetWarning,
+                    stacklevel=2,
                 )
             self.lon = np.concatenate(
                 (
@@ -537,12 +541,13 @@ class CurvilinearGrid(Grid):
             self.zonal_periodic = True
             self.zonal_halo = halosize
         if meridional:
-            if not np.allclose(self.lat[1, :]-self.lat[0, :], self.lat[-1, :]-self.lat[-2, :]):
+            if not np.allclose(self.lat[1, :] - self.lat[0, :], self.lat[-1, :] - self.lat[-2, :]):
                 warnings.warn(
                     "The meridional halo is located at the north and south of current grid, "
                     "with a dy = lat[1]-lat[0] between the last nodes of the original grid and the first ones of the halo. "
                     "In your grid, lat[1]-lat[0] != lat[-1]-lat[-2]. Is the halo computed as you expect?",
                     FieldSetWarning,
+                    stacklevel=2,
                 )
             latshift = self.lat[-1, :] - 2 * self.lat[0, :] + self.lat[1, :]
             self.lat = np.concatenate(

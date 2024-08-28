@@ -1,15 +1,15 @@
 """Module controlling the writing of ParticleSets to Zarr file."""
 
 import os
-from datetime import timedelta
 import warnings
+from datetime import timedelta
 
 import numpy as np
 import xarray as xr
 import zarr
 
 import parcels
-from parcels.tools.warnings import FileWarning, FileWarning
+from parcels.tools.warnings import FileWarning
 
 try:
     from mpi4py import MPI
@@ -121,6 +121,7 @@ class ParticleFile:
                     warnings.warn(
                         f"The ParticleFile name contains .zarr extension, but zarr files will be written per processor in MPI mode at {self.fname}",
                         FileWarning,
+                        stacklevel=2,
                     )
             else:
                 self.fname = name if extension in [".zarr"] else "%s.zarr" % name
@@ -211,7 +212,11 @@ class ParticleFile:
         time = time.total_seconds() if isinstance(time, timedelta) else time
 
         if pset.particledata._ncount == 0:
-            warnings.warn("ParticleSet is empty on writing as array at time %g" % time, RuntimeWarning)
+            warnings.warn(
+                "ParticleSet is empty on writing as array at time %g" % time,
+                RuntimeWarning,
+                stacklevel=2,
+            )
             return
 
         if indices is None:
@@ -241,6 +246,7 @@ class ParticleFile:
                         f"a significant slowdown in Parcels when many calls to repeatdt. "
                         f"Consider setting a larger chunk size for your ParticleFile (e.g. chunks=(int(1e4), 1)).",
                         FileWarning,
+                        stacklevel=2,
                     )
                 if (self.maxids > len(ids)) or (self.maxids > self.chunks[0]):
                     arrsize = (self.maxids, self.chunks[1])

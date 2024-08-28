@@ -1,9 +1,9 @@
 import collections
 import datetime
 import math
+import warnings
 from ctypes import POINTER, Structure, c_float, c_int, pointer
 from pathlib import Path
-import warnings
 
 import dask.array as da
 import numpy as np
@@ -207,6 +207,7 @@ class Field:
             warnings.warn(
                 "General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal.",
                 FieldSetWarning,
+                stacklevel=2,
             )
 
         self.fieldset = None
@@ -220,6 +221,7 @@ class Field:
             warnings.warn(
                 "allow_time_extrapolation and time_periodic cannot be used together. allow_time_extrapolation is set to False",
                 FieldSetWarning,
+                stacklevel=2,
             )
             self.allow_time_extrapolation = False
         if self.time_periodic is True:
@@ -548,7 +550,9 @@ class Field:
         grid.chunksize = chunksize
 
         if "time" in indices:
-            warnings.warn("time dimension in indices is not necessary anymore. It is then ignored.", FieldSetWarning)
+            warnings.warn(
+                "time dimension in indices is not necessary anymore. It is then ignored.", FieldSetWarning, stacklevel=2
+            )
 
         if "full_load" in kwargs:  # for backward compatibility with Parcels < v2.0.0
             deferred_load = not kwargs["full_load"]
@@ -1333,6 +1337,7 @@ class Field:
             warnings.warn(
                 "Sampling of velocities should normally be done using fieldset.UV or fieldset.UVW object; tread carefully",
                 RuntimeWarning,
+                stacklevel=2,
             )
 
     def __getitem__(self, key):

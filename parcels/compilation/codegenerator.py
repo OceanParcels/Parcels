@@ -2,9 +2,9 @@ import ast
 import collections
 import math
 import random
+import warnings
 from abc import ABC
 from copy import copy
-import warnings
 
 import cgen as c
 
@@ -183,6 +183,7 @@ class ParticleXiYiZiTiAttributeNode(IntrinsicNode):
             f"Be careful when sampling particle.{attr}, as this is updated in the kernel loop. "
             "Best to place the sampling statement before advection.",
             KernelWarning,
+            stacklevel=2,
         )
         self.obj = obj.ccode
         self.attr = attr
@@ -314,6 +315,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
             warnings.warn(
                 "Don't change the location of a particle directly in a Kernel. Use particle_dlon, particle_dlat, etc.",
                 KernelWarning,
+                stacklevel=2,
             )
         node.op = self.visit(node.op)
         node.value = self.visit(node.value)
@@ -442,7 +444,11 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         for kvar in funcvars:
             if kvar in used_vars + ["particle_dlon", "particle_dlat", "particle_ddepth"]:
                 if kvar not in ["particle", "fieldset", "time", "particle_dlon", "particle_dlat", "particle_ddepth"]:
-                    warnings.warn(kvar + " declared in multiple Kernels", KernelWarning)
+                    warnings.warn(
+                        kvar + " declared in multiple Kernels",
+                        KernelWarning,
+                        stacklevel=2,
+                    )
                 funcvars_copy.remove(kvar)
             else:
                 used_vars.append(kvar)

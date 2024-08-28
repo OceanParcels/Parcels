@@ -1,9 +1,9 @@
 import importlib.util
 import os
 import sys
+import warnings
 from copy import deepcopy
 from glob import glob
-import warnings
 
 import dask.array as da
 import numpy as np
@@ -437,7 +437,11 @@ class FieldSet:
         """
         # Ensure that times are not provided both in netcdf file and in 'timestamps'.
         if timestamps is not None and "time" in dimensions:
-            warnings.warn("Time already provided, defaulting to dimensions['time'] over timestamps.", FieldSetWarning)
+            warnings.warn(
+                "Time already provided, defaulting to dimensions['time'] over timestamps.",
+                FieldSetWarning,
+                stacklevel=2,
+            )
             timestamps = None
 
         fields = {}
@@ -914,6 +918,7 @@ class FieldSet:
                 warnings.warn(
                     "Parcels assumes depth in POP output to be in 'm'. Use depth_units='cm' if the output depth is in 'cm'.",
                     FieldSetWarning,
+                    stacklevel=2,
                 )
             elif depth_units == "cm":
                 fieldset.W.set_scaling_factor(-1.0)  # change the W direction but keep W in cm/s because depth is in cm

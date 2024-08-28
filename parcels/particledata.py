@@ -1,6 +1,6 @@
+import warnings
 from ctypes import POINTER, Structure
 from operator import attrgetter
-import warnings
 
 import numpy as np
 
@@ -38,6 +38,7 @@ def partitionParticlesMPI_default(coords, mpi_size=1):
             "sklearn needs to be available if MPI is installed. "
             "See https://docs.oceanparcels.org/en/latest/installation.html#installation-for-developers for more information",
             RuntimeWarning,
+            stacklevel=2,
         )
         mpiProcs = np.random.randint(0, mpi_size, size=coords.shape[0])
 

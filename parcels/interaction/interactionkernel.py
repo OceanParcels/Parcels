@@ -1,7 +1,7 @@
 import inspect
 import sys
-from collections import defaultdict
 import warnings
+from collections import defaultdict
 
 import numpy as np
 
@@ -213,6 +213,7 @@ class InteractionKernel(BaseKernel):
                     warnings.warn(
                         "Some InteractionKernel was not completed succesfully, likely because a Particle threw an error that was not captured.",
                         RuntimeWarning,
+                        stacklevel=2,
                     )
 
             for particle_idx in active_idx:
@@ -239,6 +240,7 @@ class InteractionKernel(BaseKernel):
             warnings.warn(
                 "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)",
                 RuntimeWarning,
+                stacklevel=2,
             )
 
         if pset.fieldset is not None:
@@ -271,7 +273,11 @@ class InteractionKernel(BaseKernel):
                 elif p.state == StatusCode.Delete:
                     pass
                 else:
-                    warnings.warn(f"Deleting particle {p.id} because of non-recoverable error", RuntimeWarning)
+                    warnings.warn(
+                        f"Deleting particle {p.id} because of non-recoverable error",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
                     p.delete()
 
             # Remove all particles that signalled deletion
