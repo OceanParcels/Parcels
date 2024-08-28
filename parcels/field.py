@@ -10,7 +10,7 @@ import numpy as np
 import xarray as xr
 
 import parcels.tools.interpolation_utils as i_u
-from parcels._typing import GridIndexingType, Mesh, TimePeriodic, VectorType
+from parcels._typing import GridIndexingType, InterpMethod, Mesh, TimePeriodic, VectorType
 from parcels.tools.converters import (
     Geographic,
     GeographicPolar,
@@ -156,7 +156,7 @@ class Field:
         vmax=None,
         cast_data_dtype="float32",
         time_origin=None,
-        interp_method="linear",
+        interp_method: InterpMethod = "linear",
         allow_time_extrapolation: bool | None = None,
         time_periodic: TimePeriodic = False,
         gridindexingtype: GridIndexingType = "nemo",
@@ -199,7 +199,7 @@ class Field:
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.timestamps = timestamps
-        if type(interp_method) is dict:
+        if isinstance(interp_method, dict):
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
             else:
@@ -215,7 +215,7 @@ class Field:
                 "General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal."
             )
 
-        self.fieldset: FieldSet | None = None
+        self.fieldset: "FieldSet" | None = None
         if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
         else:
@@ -292,7 +292,7 @@ class Field:
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop("data_full_zdim", None)
         self.data_chunks = []  # type: ignore # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
-        self.c_data_chunks: list[PointerType | None] = []  # C-pointers to the data_chunks array
+        self.c_data_chunks: list["PointerType" | None] = []  # C-pointers to the data_chunks array
         self.nchunks: tuple[int, ...] = ()
         self.chunk_set: bool = False
         self.filebuffers = [None] * 2
@@ -489,7 +489,7 @@ class Field:
                 "if you would need such feature implemented."
             )
 
-        interp_method = kwargs.pop("interp_method", "linear")
+        interp_method: InterpMethod = kwargs.pop("interp_method", "linear")
         if type(interp_method) is dict:
             if variable[0] in interp_method:
                 interp_method = interp_method[variable[0]]
@@ -871,7 +871,7 @@ class Field:
         return (zi, zeta)
 
     def search_indices_vertical_s(
-        self, x: float, y: float, z: float, xi: int, yi: int, xsi: float, eta: float, ti: int, time
+        self, x: float, y: float, z: float, xi: int, yi: int, xsi: float, eta: float, ti: int, time: float
     ):
         grid = self.grid
         if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"]:

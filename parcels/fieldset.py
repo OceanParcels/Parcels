@@ -8,7 +8,7 @@ import dask.array as da
 import numpy as np
 
 from parcels._compat import MPI
-from parcels._typing import Mesh, TimePeriodic
+from parcels._typing import GridIndexingType, InterpMethodOption, Mesh, TimePeriodic
 from parcels.field import DeferredArray, Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
@@ -415,7 +415,7 @@ class FieldSet:
             ``{parcels_varname: {netcdf_dimname : (parcels_dimname, chunksize_as_int)}, ...}``, where ``parcels_dimname`` is one of ('time', 'depth', 'lat', 'lon')
         netcdf_engine :
             engine to use for netcdf reading in xarray. Default is 'netcdf',
-            but in cases where this doesn't work, setting netcdf_engine='scipy' could help
+            but in cases where this doesn't work, setting netcdf_engine='scipy' could help. Accepted options are the same as the ``engine`` parameter in ``xarray.open_dataset()``.
         **kwargs :
             Keyword arguments passed to the :class:`parcels.Field` constructor.
 
@@ -524,7 +524,7 @@ class FieldSet:
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         time_periodic: TimePeriodic = False,
-        tracer_interp_method="cgrid_tracer",
+        tracer_interp_method: InterpMethodOption = "cgrid_tracer",
         chunksize=None,
         **kwargs,
     ):
@@ -635,7 +635,7 @@ class FieldSet:
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         time_periodic: TimePeriodic = False,
-        tracer_interp_method="cgrid_tracer",
+        tracer_interp_method: InterpMethodOption = "cgrid_tracer",
         chunksize=None,
         **kwargs,
     ):
@@ -685,8 +685,8 @@ class FieldSet:
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         time_periodic: TimePeriodic = False,
-        tracer_interp_method="cgrid_tracer",
-        gridindexingtype="nemo",
+        tracer_interp_method: InterpMethodOption = "cgrid_tracer",
+        gridindexingtype: GridIndexingType = "nemo",
         chunksize=None,
         **kwargs,
     ):
@@ -807,7 +807,7 @@ class FieldSet:
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         time_periodic: TimePeriodic = False,
-        tracer_interp_method="bgrid_tracer",
+        tracer_interp_method: InterpMethodOption = "bgrid_tracer",
         chunksize=None,
         depth_units="m",
         **kwargs,
@@ -928,7 +928,7 @@ class FieldSet:
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         time_periodic: TimePeriodic = False,
-        tracer_interp_method="bgrid_tracer",
+        tracer_interp_method: InterpMethodOption = "bgrid_tracer",
         chunksize=None,
         **kwargs,
     ):
@@ -1052,7 +1052,7 @@ class FieldSet:
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         time_periodic: TimePeriodic = False,
-        tracer_interp_method="bgrid_tracer",
+        tracer_interp_method: InterpMethodOption = "bgrid_tracer",
         chunksize=None,
         **kwargs,
     ):

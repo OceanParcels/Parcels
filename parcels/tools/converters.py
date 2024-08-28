@@ -5,8 +5,8 @@ from math import cos, pi
 
 import cftime
 import numpy as np
+import numpy.typing as npt
 import xarray as xr
-from numpy.typing import ArrayLike, NDArray
 
 __all__ = [
     "UnitConverter",
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-def convert_to_flat_array(var: ArrayLike) -> NDArray:
+def convert_to_flat_array(var: npt.ArrayLike) -> npt.NDArray:
     """Convert lists and single integers/floats to one-dimensional numpy arrays
 
     Parameters
