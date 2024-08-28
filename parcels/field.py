@@ -407,6 +407,7 @@ class Field:
             Whether to show a warning id there is a problem decoding the netcdf files.
             Default is True, but in some cases where these warnings are expected, it may be useful to silence them
             by setting netcdf_decodewarning=False.
+            This argument is being deprecated in favor of warnings control through the Python warnings module.
         grid :
              (Default value = None)
         **kwargs :
@@ -471,6 +472,13 @@ class Field:
             depth_filename = depth_filename[0]
 
         netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
+        if kwargs.get("netcdf_decodewarning", None) is not None:
+            warnings.warn(
+                "The 'netcdf_decodewarning' argument is deprecated and will be removed in a future release. "
+                "Please use the Python warnings module to control warnings.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
 
         indices = {} if indices is None else indices.copy()
