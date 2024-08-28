@@ -568,7 +568,7 @@ class Field:
         if "full_load" in kwargs:  # for backward compatibility with Parcels < v2.0.0
             deferred_load = not kwargs["full_load"]
 
-        if grid.time.size <= 2 or deferred_load is False:
+        if grid.time.size <= 2:
             deferred_load = False
 
         _field_fb_class: Type[DeferredDaskFileBuffer | DaskFileBuffer | DeferredNetcdfFileBuffer | NetcdfFileBuffer]
