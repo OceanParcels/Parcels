@@ -44,8 +44,9 @@ jobs:
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v4.5.0
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
@@ -74,8 +75,9 @@ jobs:
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v4.5.0
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
@@ -100,8 +102,9 @@ jobs:
       - name: Upload mypy coverage to Codecov
         uses: codecov/codecov-action@v4.5.0
         if: ${{ always() }} # Upload even on error of mypy
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           file: mypy_report/cobertura.xml
           flags: mypy
           fail_ci_if_error: false
