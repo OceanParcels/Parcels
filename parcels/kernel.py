@@ -239,9 +239,10 @@ class Kernel(BaseKernel):
 
         numkernelargs = self.check_kernel_signature_on_version()
 
-        assert (
-            numkernelargs == 3
-        ), "Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon."
+        if numkernelargs != 3:
+            raise ValueError(
+                "Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon."
+            )
 
         self.name = f"{ptype.name}{self.funcname}"
 
@@ -330,7 +331,7 @@ class Kernel(BaseKernel):
             particle.depth_nextloop = particle.depth + particle_ddepth  # noqa
             particle.time_nextloop = particle.time + particle.dt
 
-        self._pyfunc = self.__radd__(Setcoords).__add__(Updatecoords)._pyfunc
+        self._pyfunc = (Setcoords + self + Updatecoords)._pyfunc
 
     def check_fieldsets_in_kernels(self, pyfunc):
         """
@@ -396,13 +397,10 @@ class Kernel(BaseKernel):
                     self.fieldset.add_constant("RK45_max_dt", 60 * 60 * 24)
 
     def check_kernel_signature_on_version(self):
-        numkernelargs = 0
-        if self._pyfunc is not None:
-            if sys.version_info[0] < 3:
-                numkernelargs = len(inspect.getargspec(self._pyfunc).args)
-            else:
-                numkernelargs = len(inspect.getfullargspec(self._pyfunc).args)
-        return numkernelargs
+        """Returns number of arguments in a Python function."""
+        if self._pyfunc is None:
+            return 0
+        return len(inspect.getfullargspec(self._pyfunc).args)
 
     def remove_lib(self):
         if self._lib is not None:

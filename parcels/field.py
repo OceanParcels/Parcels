@@ -565,9 +565,6 @@ class Field:
                 "time dimension in indices is not necessary anymore. It is then ignored.", FieldSetWarning, stacklevel=2
             )
 
-        if "full_load" in kwargs:  # for backward compatibility with Parcels < v2.0.0
-            deferred_load = not kwargs["full_load"]
-
         if grid.time.size <= 2:
             deferred_load = False
 

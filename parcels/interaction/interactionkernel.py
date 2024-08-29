@@ -1,5 +1,4 @@
 import inspect
-import sys
 import warnings
 from collections import defaultdict
 
@@ -109,10 +108,7 @@ class InteractionKernel(BaseKernel):
         numkernelargs = []
         if self._pyfunc is not None and isinstance(self._pyfunc, list):
             for func in self._pyfunc:
-                if sys.version_info[0] < 3:
-                    numkernelargs.append(len(inspect.getargspec(func).args))
-                else:
-                    numkernelargs.append(len(inspect.getfullargspec(func).args))
+                numkernelargs.append(len(inspect.getfullargspec(func).args))
         return numkernelargs
 
     def remove_lib(self):
