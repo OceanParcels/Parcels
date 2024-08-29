@@ -9,6 +9,7 @@ from dask import config as da_conf
 from dask import utils as da_utils
 from netCDF4 import Dataset as ncDataset
 
+from parcels._typing import InterpMethodOption
 from parcels.tools.converters import convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import DaskChunkingError
@@ -16,7 +17,14 @@ from parcels.tools.statuscodes import DaskChunkingError
 
 class _FileBuffer:
     def __init__(
-        self, filename, dimensions, indices, timestamp=None, interp_method="linear", data_full_zdim=None, **kwargs
+        self,
+        filename,
+        dimensions,
+        indices,
+        timestamp=None,
+        interp_method: InterpMethodOption = "linear",
+        data_full_zdim=None,
+        **kwargs,
     ):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data

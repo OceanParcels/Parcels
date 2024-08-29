@@ -1,4 +1,5 @@
 import _ctypes
+import abc
 import ast
 import functools
 import hashlib
@@ -17,13 +18,9 @@ import numpy as np
 import numpy.ctypeslib as npct
 from numpy import ndarray
 
-try:
-    from mpi4py import MPI
-except ModuleNotFoundError:
-    MPI = None
-
 import parcels.rng as ParcelsRandom  # noqa
 from parcels import rng  # noqa
+from parcels._compat import MPI
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
     AdvectionRK4_3D,
@@ -45,7 +42,7 @@ from parcels.tools.statuscodes import (
 __all__ = ["Kernel", "BaseKernel"]
 
 
-class BaseKernel:
+class BaseKernel(abc.ABC):
     """Superclass for 'normal' and Interactive Kernels"""
 
     def __init__(
@@ -138,6 +135,9 @@ class BaseKernel:
         if len(indices) > 0 and self.fieldset.particlefile is not None:
             self.fieldset.particlefile.write(pset, None, indices=indices)
         pset.remove_indices(indices)
+
+    @abc.abstractmethod
+    def get_kernel_compile_files(self): ...
 
 
 class Kernel(BaseKernel):

@@ -1,17 +1,19 @@
+from typing import Callable, Literal
+
 import numpy as np
 
-__all__ = []
+from parcels._typing import Mesh
+
+__all__ = []  # type: ignore
 
 
-# fmt: off
-def phi1D_lin(xsi):
-    phi = [1-xsi,
-           xsi]
-
+def phi1D_lin(xsi: float) -> list[float]:
+    phi = [1 - xsi, xsi]
     return phi
 
 
-def phi1D_quad(xsi):
+# fmt: off
+def phi1D_quad(xsi: float) -> list[float]:
     phi = [2*xsi**2-3*xsi+1,
            -4*xsi**2+4*xsi,
            2*xsi**2-xsi]
@@ -19,7 +21,8 @@ def phi1D_quad(xsi):
     return phi
 
 
-def phi2D_lin(xsi, eta):
+
+def phi2D_lin(xsi: float, eta: float) -> list[float]:
     phi = [(1-xsi) * (1-eta),
               xsi  * (1-eta),
               xsi  *    eta ,
@@ -28,7 +31,7 @@ def phi2D_lin(xsi, eta):
     return phi
 
 
-def phi3D_lin(xsi, eta, zet):
+def phi3D_lin(xsi: float, eta: float, zet: float) -> list[float]:
     phi = [(1-xsi) * (1-eta) * (1-zet),
               xsi  * (1-eta) * (1-zet),
               xsi  *    eta  * (1-zet),
@@ -41,7 +44,7 @@ def phi3D_lin(xsi, eta, zet):
     return phi
 
 
-def dphidxsi3D_lin(xsi, eta, zet):
+def dphidxsi3D_lin(xsi: float, eta: float, zet: float) -> tuple[list[float], list[float], list[float]]:
     dphidxsi = [ - (1-eta) * (1-zet),
                    (1-eta) * (1-zet),
                    (  eta) * (1-zet),
@@ -70,7 +73,9 @@ def dphidxsi3D_lin(xsi, eta, zet):
     return dphidxsi, dphideta, dphidzet
 
 
-def dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
+def dxdxsi3D_lin(
+    hexa_x: list[float], hexa_y: list[float], hexa_z: list[float], xsi: float, eta: float, zet: float, mesh: Mesh
+) -> tuple[float, float, float, float, float, float, float, float, float]:
     dphidxsi, dphideta, dphidzet = dphidxsi3D_lin(xsi, eta, zet)
 
     if mesh == 'spherical':
@@ -99,16 +104,29 @@ def dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
     return dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet
 
 
-def jacobian3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
+def jacobian3D_lin(
+    hexa_x: list[float], hexa_y: list[float], hexa_z: list[float], xsi: float, eta: float, zet: float, mesh: Mesh
+) -> float:
     dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh)
 
-    jac = dxdxsi * (dydeta*dzdzet - dzdeta*dydzet)\
-        - dxdeta * (dydxsi*dzdzet - dzdxsi*dydzet)\
-        + dxdzet * (dydxsi*dzdeta - dzdxsi*dydeta)
+    jac = (
+        dxdxsi * (dydeta * dzdzet - dzdeta * dydzet)
+        - dxdeta * (dydxsi * dzdzet - dzdxsi * dydzet)
+        + dxdzet * (dydxsi * dzdeta - dzdxsi * dydeta)
+    )
     return jac
 
 
-def jacobian3D_lin_face(hexa_x, hexa_y, hexa_z, xsi, eta, zet, orientation, mesh):
+def jacobian3D_lin_face(
+    hexa_x: list[float],
+    hexa_y: list[float],
+    hexa_z: list[float],
+    xsi: float,
+    eta: float,
+    zet: float,
+    orientation: Literal["zonal", "meridional", "vertical"],
+    mesh: Mesh,
+) -> float:
     dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh)
 
     if orientation == 'zonal':
@@ -128,7 +146,7 @@ def jacobian3D_lin_face(hexa_x, hexa_y, hexa_z, xsi, eta, zet, orientation, mesh
     return jac
 
 
-def dphidxsi2D_lin(xsi, eta):
+def dphidxsi2D_lin(xsi: float, eta: float) -> tuple[list[float], list[float]]:
     dphidxsi = [-(1-eta),
                   1-eta,
                     eta,
@@ -141,7 +159,12 @@ def dphidxsi2D_lin(xsi, eta):
     return dphidxsi, dphideta
 
 
-def dxdxsi2D_lin(quad_x, quad_y, xsi, eta,):
+def dxdxsi2D_lin(
+    quad_x,
+    quad_y,
+    xsi: float,
+    eta: float,
+):
     dphidxsi, dphideta = dphidxsi2D_lin(xsi, eta)
 
     dxdxsi = np.dot(quad_x, dphidxsi)
@@ -152,20 +175,21 @@ def dxdxsi2D_lin(quad_x, quad_y, xsi, eta,):
     return dxdxsi, dxdeta, dydxsi, dydeta
 
 
-def jacobian2D_lin(quad_x, quad_y, xsi, eta):
+def jacobian2D_lin(quad_x, quad_y, xsi: float, eta: float):
     dxdxsi, dxdeta, dydxsi, dydeta = dxdxsi2D_lin(quad_x, quad_y, xsi, eta)
 
-    jac = dxdxsi*dydeta - dxdeta*dydxsi
+    jac = dxdxsi * dydeta - dxdeta * dydxsi
     return jac
 
 
 def length2d_lin_edge(quad_x, quad_y, ids):
     xe = [quad_x[ids[0]], quad_x[ids[1]]]
     ye = [quad_y[ids[0]], quad_y[ids[1]]]
-    return np.sqrt((xe[1]-xe[0])**2+(ye[1]-ye[0])**2)
+    return np.sqrt((xe[1] - xe[0]) ** 2 + (ye[1] - ye[0]) ** 2)
 
 
-def interpolate(phi, f, xsi):
+def interpolate(phi: Callable[[float], list[float]], f: list[float], xsi: float) -> float:
     return np.dot(phi(xsi), f)
+
 
 # fmt: on

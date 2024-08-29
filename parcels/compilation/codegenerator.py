@@ -410,7 +410,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
 
     # Intrinsic variables that appear as function arguments
     kernel_vars = ["particle", "fieldset", "time", "output_time", "tol"]
-    array_vars = []
+    array_vars: list[str] = []
 
     def __init__(self, fieldset=None, ptype=JITParticle):
         self.fieldset = fieldset
@@ -419,7 +419,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.vector_field_args = collections.OrderedDict()
         self.const_args = collections.OrderedDict()
 
-    def generate(self, py_ast, funcvars):
+    def generate(self, py_ast, funcvars: list[str]):
         # Replace occurrences of intrinsic objects in Python AST
         transformer = IntrinsicTransformer(self.fieldset, self.ptype)
         py_ast = transformer.visit(py_ast)
@@ -434,7 +434,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         # Insert variable declarations for non-intrinsic variables
         # Make sure that repeated variables are not declared more than
         # once. If variables occur in multiple Kernels, give a warning
-        used_vars = []
+        used_vars: list[str] = []
         funcvars_copy = copy(funcvars)  # editing a list while looping over it is dangerous
         for kvar in funcvars:
             if kvar in used_vars + ["particle_dlon", "particle_dlat", "particle_ddepth"]:
