@@ -43,7 +43,7 @@ jobs:
           coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html tests
           coverage xml
       - name: Codecov
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v4.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit-tests
@@ -73,7 +73,7 @@ jobs:
           coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html docs/examples
           coverage xml
       - name: Codecov
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v4.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration-tests
@@ -98,7 +98,7 @@ jobs:
         run: |
           mypy --install-types --non-interactive parcels --cobertura-xml-report mypy_report
       - name: Upload mypy coverage to Codecov
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v4.5.0
         if: ${{ always() }} # Upload even on error of mypy
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
