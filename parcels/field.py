@@ -1371,7 +1371,7 @@ class Field:
 
     def ccode_eval(self, var, t, z, y, x):
         self._check_velocitysampling()
-        ccode_str = f"temporal_interpolation({x}, {y}, {z}, {t}, {self.ccode_name}, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
+        ccode_str = f"temporal_interpolation({x}, {y}, {z}, {t}, {self.ccode_name}, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{var}, {self.interp_method.upper()})"
         return ccode_str
 
     def ccode_convert(self, _, z, y, x):
@@ -2223,13 +2223,13 @@ class VectorField:
             ccode_str = (
                 f"temporal_interpolationUVW({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, {W.ccode_name}, "
                 + "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid],"
-                + f"&{varU}, &{varV}, &{varW}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
+                + f"&{varU}, &{varV}, &{varW}, {U.interp_method.upper()})"
             )
         else:
             ccode_str = (
                 f"temporal_interpolationUV({x}, {y}, {z}, {t}, {U.ccode_name}, {V.ccode_name}, "
                 + "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid],"
-                + f" &{varU}, &{varV}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
+                + f" &{varU}, &{varV}, {U.interp_method.upper()})"
             )
         return ccode_str
 
