@@ -1722,9 +1722,9 @@ class VectorField:
         if self.U.gridindexingtype == "croco" and self.W:
             self.vector_type: VectorType = "3DSigma"
         elif self.W:
-            self.vector_type: VectorType = "3D"
+            self.vector_type = "3D"
         else:
-            self.vector_type: VectorType = "2D"
+            self.vector_type = "2D"
         self.gridindexingtype = U.gridindexingtype
         if self.U.interp_method == "cgrid_velocity":
             assert self.V.interp_method == "cgrid_velocity", "Interpolation methods of U and V are not the same."
