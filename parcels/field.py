@@ -273,7 +273,6 @@ class Field:
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         if kwargs.get("netcdf_decodewarning") is not None:
             _deprecated_param_netcdf_decodewarning()
-        self.netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop("creation_log", "")
         self.chunksize = kwargs.pop("chunksize", None)
@@ -312,9 +311,7 @@ class Field:
             return filenames
 
     @staticmethod
-    def collect_timeslices(
-        timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning=True
-    ):
+    def collect_timeslices(timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine):
         if timestamps is not None:
             dataFiles = []
             for findex in range(len(data_filenames)):
@@ -327,9 +324,7 @@ class Field:
             timeslices = []
             dataFiles = []
             for fname in data_filenames:
-                with _grid_fb_class(
-                    fname, dimensions, indices, netcdf_engine=netcdf_engine, netcdf_decodewarning=netcdf_decodewarning
-                ) as filebuffer:
+                with _grid_fb_class(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
                     ftime = filebuffer.time
                     timeslices.append(ftime)
                     dataFiles.append([fname] * len(ftime))
@@ -409,7 +404,11 @@ class Field:
             Whether to show a warning id there is a problem decoding the netcdf files.
             Default is True, but in some cases where these warnings are expected, it may be useful to silence them
             by setting netcdf_decodewarning=False.
-            This argument is being deprecated in favor of warnings control through the Python warnings module.
+            .. deprecated:: 3.1.0
+                The 'netcdf_decodewarning' argument is deprecated in v3.1.0 and will be removed completely in a future release.
+                The parameter no longer has any effect, please use the Python warnings module to control warnings,
+                e.g., warnings.filterwarnings('ignore', category=parcels.FileWarning).
+                See also https://docs.oceanparcels.org/en/latest/examples/tutorial_nemo_3D.html
         grid :
              (Default value = None)
         **kwargs :
@@ -476,7 +475,6 @@ class Field:
         netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         if kwargs.get("netcdf_decodewarning") is not None:
             _deprecated_param_netcdf_decodewarning()
-        netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
 
         indices = {} if indices is None else indices.copy()
         for ind in indices:
@@ -499,9 +497,7 @@ class Field:
 
         _grid_fb_class = NetcdfFileBuffer
 
-        with _grid_fb_class(
-            lonlat_filename, dimensions, indices, netcdf_engine, netcdf_decodewarning=netcdf_decodewarning
-        ) as filebuffer:
+        with _grid_fb_class(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.lonlat
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
@@ -515,7 +511,6 @@ class Field:
                 indices,
                 netcdf_engine,
                 interp_method=interp_method,
-                netcdf_decodewarning=netcdf_decodewarning,
             ) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 if dimensions["depth"] == "not_yet_set":
@@ -538,7 +533,7 @@ class Field:
             # Concatenate time variable to determine overall dimension
             # across multiple files
             time, time_origin, timeslices, dataFiles = cls.collect_timeslices(
-                timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning
+                timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
             )
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
@@ -547,7 +542,7 @@ class Field:
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
             _, _, _, dataFiles = cls.collect_timeslices(
-                timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning
+                timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
             )
             kwargs["dataFiles"] = dataFiles
 
@@ -589,7 +584,6 @@ class Field:
                     interp_method=interp_method,
                     data_full_zdim=data_full_zdim,
                     chunksize=chunksize,
-                    netcdf_decodewarning=netcdf_decodewarning,
                 ) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
@@ -634,7 +628,6 @@ class Field:
         kwargs["indices"] = indices
         kwargs["time_periodic"] = time_periodic
         kwargs["netcdf_engine"] = netcdf_engine
-        kwargs["netcdf_decodewarning"] = netcdf_decodewarning
 
         return cls(
             variable,
@@ -1645,7 +1638,6 @@ class Field:
             cast_data_dtype=self.cast_data_dtype,
             rechunk_callback_fields=rechunk_callback_fields,
             chunkdims_name_map=self.netcdf_chunkdims_name_map,
-            netcdf_decodewarning=self.netcdf_decodewarning,
         )
         filebuffer.__enter__()
         time_data = filebuffer.time

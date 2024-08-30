@@ -38,7 +38,7 @@ def _deprecated_param_netcdf_decodewarning():
     warnings.warn(
         "The 'netcdf_decodewarning' argument is deprecated in v3.1.0 and will be removed completely in a future release. "
         "The parameter no longer has any effect, please use the Python warnings module to control warnings, "
-        "e.g., from parcels import FileWarning; warnings.filterwarnings('ignore', category=FileWarning). "
+        "e.g., warnings.filterwarnings('ignore', category=parcels.FileWarning). "
         "See also https://docs.oceanparcels.org/en/latest/examples/tutorial_nemo_3D.html",
         DeprecationWarning,
         stacklevel=2,
