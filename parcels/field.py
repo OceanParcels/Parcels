@@ -311,7 +311,11 @@ class Field:
             return filenames
 
     @staticmethod
-    def collect_timeslices(timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine):
+    def collect_timeslices(
+        timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning=None
+    ):
+        if netcdf_decodewarning is not None:
+            _deprecated_param_netcdf_decodewarning()
         if timestamps is not None:
             dataFiles = []
             for findex in range(len(data_filenames)):
