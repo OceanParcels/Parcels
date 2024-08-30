@@ -49,9 +49,9 @@ jobs:
           flags: unit-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4
         with:
-          name: Unittest report
+          name: Unittest report ${{ matrix.os }}-${{ matrix.python-version }}
           path: ${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html
   integration-test:
     name: "py${{ matrix.python-version }} | ${{ matrix.os }} | integration tests"
@@ -79,10 +79,21 @@ jobs:
           flags: integration-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4
         with:
-          name: Integration test report
+          name: Integration test report ${{ matrix.os }}
           path: ${{ matrix.os }}_integration_test_report.html
+  merge-test-artifacts:
+    runs-on: ubuntu-latest
+    needs:
+      - unit-test
+      - integration-test
+    steps:
+    - name: Merge Artifacts
+      uses: actions/upload-artifact/merge@v4
+      with:
+        name: Testing reports
+        pattern: "* report *"
   typechecking:
     name: mypy
     runs-on: ubuntu-latest
