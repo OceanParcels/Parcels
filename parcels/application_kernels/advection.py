@@ -110,7 +110,8 @@ def AdvectionRK45(particle, fieldset, time):
 
 
 def AdvectionAnalytical(particle, fieldset, time):
-    """Advection of particles using 'analytical advection' integration.
+    """Advection of particles using 'analytical advection' integration. This code only works in SciPy mode.
+    The JIT version of this code is hardcoded in C in advectionanalytical.h, and is called by the JIT version of this kernel.
 
     Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017).
     Note that the time-dependent scheme is currently implemented with 'intermediate timesteps'
@@ -136,27 +137,53 @@ def AdvectionAnalytical(particle, fieldset, time):
         particle.lon, particle.lat, particle.depth, particle=particle
     )
     if withW:
+        updatexi = 0
+        updateyi = 0
         if abs(xsi - 1) < tol:
-            if fieldset.U.data[0, zi + 1, yi + 1, xi + 1] > 0:
-                xi += 1
+            if fieldset.U.data[0, zi + 1, yi + 1, xi + 1] > 0:  # TODO update scipy code here to match JIT kernel
+                updatexi = 1
                 xsi = 0
+        elif abs(xsi) < tol:
+            if fieldset.U.data[0, zi, yi, xi] < 0:
+                updatexi = -1
+                xsi = 1
         if abs(eta - 1) < tol:
             if fieldset.V.data[0, zi + 1, yi + 1, xi + 1] > 0:
-                yi += 1
+                updateyi = 1
                 eta = 0
+        elif abs(eta) < tol:
+            if fieldset.V.data[0, zi, yi, xi] < 0:
+                yi -= 1
+                eta = 1
         if abs(zeta - 1) < tol:
             if fieldset.W.data[0, zi + 1, yi + 1, xi + 1] > 0:
                 zi += 1
                 zeta = 0
+        if abs(zeta) < tol:
+            if fieldset.W.data[0, zi, yi, xi] < 0:
+                zi -= 1
+                zeta = 1
+        xi += updatexi
+        yi += updateyi
     else:
+        updatexi = 0
         if abs(xsi - 1) < tol:
             if fieldset.U.data[0, yi + 1, xi + 1] > 0:
-                xi += 1
+                updatexi = 1
                 xsi = 0
+        elif abs(xsi) < tol:
+            if fieldset.U.data[0, yi, xi] < 0:
+                updatexi = -1
+                xsi = 1
         if abs(eta - 1) < tol:
             if fieldset.V.data[0, yi + 1, xi + 1] > 0:
                 yi += 1
                 eta = 0
+        elif abs(eta) < tol:
+            if fieldset.V.data[0, yi, xi] < 0:
+                yi -= 1
+                eta = 1
+        xi += updatexi
 
     particle.xi[:] = xi
     particle.yi[:] = yi
@@ -284,3 +311,69 @@ def AdvectionAnalytical(particle, fieldset, time):
         particle.dt = max(direction * s_min * (dxdy * dz), 1e-7)
     else:
         particle.dt = min(direction * s_min * (dxdy * dz), -1e-7)
+
+
+def AdvectionAnalytical_2D_JIT(particle, fieldset, time):
+    """JIT version of 2D AdvectionAnalytical kernel.
+
+    The code itself is in advectionanalytical.h and is automatically included
+    when using AdvectionAnalytical in JIT mode.
+    """
+    flow3D = 0
+    calcAdvectionAnalytical_JIT(  # noqa
+        "parcels_customed_Cfunc_pointer_args",
+        fieldset.U,
+        fieldset.V,
+        fieldset.V,  # Note repeating V field here; W is not used in 2D
+        flow3D,
+        fieldset.e2u,
+        fieldset.e1v,
+        fieldset.e1t,
+        fieldset.e2t,
+        fieldset.e3t,
+        particle.xi,
+        particle.yi,
+        particle.zi,
+        particle.ti,
+        particle.lon,
+        particle.lat,
+        particle.depth,
+        time,
+        particle.dt,
+        particle_dlon,  # noqa
+        particle_dlat,  # noqa
+        particle_ddepth,  # noqa
+    )
+
+
+def AdvectionAnalytical_3D_JIT(particle, fieldset, time):
+    """JIT version of 3D AdvectionAnalytical kernel.
+
+    The code itself is in advectionanalytical.h and is automatically included
+    when using AdvectionAnalytical in JIT mode.
+    """
+    flow3D = 1
+    calcAdvectionAnalytical_JIT(  # noqa
+        "parcels_customed_Cfunc_pointer_args",
+        fieldset.U,
+        fieldset.V,
+        fieldset.W,
+        flow3D,
+        fieldset.e2u,
+        fieldset.e1v,
+        fieldset.e1t,
+        fieldset.e2t,
+        fieldset.e3t,
+        particle.xi,
+        particle.yi,
+        particle.zi,
+        particle.ti,
+        particle.lon,
+        particle.lat,
+        particle.depth,
+        time,
+        particle.dt,
+        particle_dlon,  # noqa
+        particle_dlat,  # noqa
+        particle_ddepth,  # noqa
+    )

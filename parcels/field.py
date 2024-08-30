@@ -1473,6 +1473,7 @@ class Field:
                 ("igrid", c_int),
                 ("allow_time_extrapolation", c_int),
                 ("time_periodic", c_int),
+                ("gridindexingtype", c_int),
                 ("data_chunks", POINTER(POINTER(POINTER(c_float)))),
                 ("grid", POINTER(CGrid)),
             ]
@@ -1492,6 +1493,8 @@ class Field:
             else:
                 self.c_data_chunks[i] = None
 
+        gridindexingtype_mapping = {"nemo": 0, "mitgcm": 1, "mom5": 2, "pop": 3}
+
         cstruct = CField(
             self.grid.xdim,
             self.grid.ydim,
@@ -1500,6 +1503,7 @@ class Field:
             self.igrid,
             allow_time_extrapolation,
             time_periodic,
+            gridindexingtype_mapping[self.gridindexingtype],
             (POINTER(POINTER(c_float)) * len(self.c_data_chunks))(*self.c_data_chunks),
             pointer(self.grid.ctypes_struct),
         )

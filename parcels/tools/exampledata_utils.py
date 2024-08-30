@@ -34,6 +34,7 @@ example_data_files = {
         "U_purely_zonal-ORCA025_grid_U.nc4",
         "V_purely_zonal-ORCA025_grid_V.nc4",
         "mesh_mask.nc4",
+        "mesh_mask_edges.nc4",
     ],
     "NemoNorthSeaORCA025-N006_data": [
         "ORCA025-N06_20000104d05U.nc",

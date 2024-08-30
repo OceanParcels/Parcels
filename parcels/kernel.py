@@ -23,6 +23,8 @@ from parcels import rng  # noqa
 from parcels._compat import MPI
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
+    AdvectionAnalytical_2D_JIT,
+    AdvectionAnalytical_3D_JIT,
     AdvectionRK4_3D,
     AdvectionRK45,
 )
@@ -191,6 +193,17 @@ class Kernel(BaseKernel):
         # Derive meta information from pyfunc, if not given
         self.check_fieldsets_in_kernels(pyfunc)
 
+        if (pyfunc is AdvectionAnalytical) and self.ptype.uses_jit:
+            if fieldset.U.grid.zdim > 1:
+                pyfunc = AdvectionAnalytical_3D_JIT
+                self.funcname = "AdvectionAnalytical_3D_JIT"
+                if not hasattr(fieldset, "W"):
+                    raise AttributeError("AdvectionAnalytical in 3D requires a W field in the fieldset")
+            else:
+                pyfunc = AdvectionAnalytical_2D_JIT
+                self.funcname = "AdvectionAnalytical_2D_JIT"
+            self._c_include = "advectionanalytical.h"
+
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, "__code__"):
@@ -354,12 +367,15 @@ class Kernel(BaseKernel):
             elif pyfunc is AdvectionAnalytical:
                 if self.fieldset.particlefile is not None:
                     self.fieldset.particlefile.analytical = True
-                if self._ptype.uses_jit:
-                    raise NotImplementedError("Analytical Advection only works in Scipy mode")
                 if self._fieldset.U.interp_method != "cgrid_velocity":
                     raise NotImplementedError("Analytical Advection only works with C-grids")
                 if self._fieldset.U.grid.gtype not in [GridType.CurvilinearZGrid, GridType.RectilinearZGrid]:
                     raise NotImplementedError("Analytical Advection only works with Z-grids in the vertical")
+                for f in ["e2u", "e1v", "e1t", "e2t", "e3t"]:
+                    if not hasattr(self._fieldset, f):
+                        raise AttributeError(
+                            f"Analytical Advection requires fieldset.{f}, as provided in Nemo mesh files"
+                        )
             elif pyfunc is AdvectionRK45:
                 if not hasattr(self.fieldset, "RK45_tol"):
                     logger.info(

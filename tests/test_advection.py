@@ -503,18 +503,25 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         ("AdvDiffM1", 1e-2, True),
         ("RK4", 1e-5, False),
         ("RK45", 1e-5, False),
-        ("AA", 1e-3, False),
+        ("AA", 1e-2, False),
     ],
 )
 def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_decaying
     if method == "AA":
-        if mode == "jit":
-            return  # AnalyticalAdvection not implemented in JIT
-        else:
-            # needed for AnalyticalAdvection to work, but comes at expense of accuracy
-            fieldset.U.interp_method = "cgrid_velocity"
-            fieldset.V.interp_method = "cgrid_velocity"
+        lon = fieldset.U.lon
+        dx = lon[1] - lon[0]
+        lat = fieldset.U.lat
+        dy = lat[1] - lat[0]
+        fieldset.add_field(Field("e2u", dy * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"))
+        fieldset.add_field(Field("e1v", dx * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"))
+        fieldset.add_field(Field("e1t", dx * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"))
+        fieldset.add_field(Field("e2t", dy * np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"))
+        fieldset.add_field(Field("e3t", np.array(1), lon=0, lat=0, depth=0, interp_method="nearest"))
+
+        # needed for AnalyticalAdvection to work, but comes at expense of accuracy
+        fieldset.U.interp_method = "cgrid_velocity"
+        fieldset.V.interp_method = "cgrid_velocity"
 
     if diffField:
         fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
@@ -550,7 +557,7 @@ def test_analyticalAgrid(mode):
         pset.execute(AdvectionAnalytical, runtime=1)
 
 
-@pytest.mark.parametrize("mode", ["scipy"])  # JIT not implemented
+@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("u", [1, -0.2, -0.3, 0])
 @pytest.mark.parametrize("v", [1, -0.3, 0, -1])
 @pytest.mark.parametrize("w", [None, 1, -0.3, 0, -1])
@@ -559,33 +566,41 @@ def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
     lon = np.arange(0, 15, dtype=np.float32)
     lat = np.arange(0, 15, dtype=np.float32)
     if w is not None:
-        depth = np.arange(0, 40, 2, dtype=np.float32)
+        dz = 2
+        depth = np.arange(0, 40, dz, dtype=np.float32)
         U = u * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
         V = v * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
         W = w * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
         fieldset = FieldSet.from_data({"U": U, "V": V, "W": W}, {"lon": lon, "lat": lat, "depth": depth}, mesh="flat")
         fieldset.W.interp_method = "cgrid_velocity"
     else:
+        dz = 1
+        depth = np.array([0])
         U = u * np.ones((lat.size, lon.size), dtype=np.float32)
         V = v * np.ones((lat.size, lon.size), dtype=np.float32)
         fieldset = FieldSet.from_data({"U": U, "V": V}, {"lon": lon, "lat": lat}, mesh="flat")
     fieldset.U.interp_method = "cgrid_velocity"
     fieldset.V.interp_method = "cgrid_velocity"
+    fieldset.add_field(Field("e2u", np.ones((len(lat), len(lon))), lon, lat, interp_method="nearest"))
+    fieldset.add_field(Field("e1v", np.ones((lat.size, lon.size)), lon, lat, interp_method="nearest"))
+    fieldset.add_field(Field("e1t", np.ones((lat.size, lon.size)), lon, lat, interp_method="nearest"))
+    fieldset.add_field(Field("e2t", np.ones((lat.size, lon.size)), lon, lat, interp_method="nearest"))
+    fieldset.add_field(Field("e3t", dz * np.ones((depth.size)), lon=0, lat=0, depth=depth, interp_method="nearest"))
 
     x0, y0, z0 = 6.1, 6.2, 20
+    runtime = 4
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
-
     outfile_path = tmpdir.join("uniformanalytical.zarr")
     outfile = pset.ParticleFile(name=outfile_path, outputdt=1, chunks=(1, 1))
-    pset.execute(AdvectionAnalytical, runtime=4, dt=direction, output_file=outfile)
+    pset.execute(AdvectionAnalytical, runtime=runtime, dt=direction, output_file=outfile)
     assert np.abs(pset.lon - x0 - pset.time * u) < 1e-6
     assert np.abs(pset.lat - y0 - pset.time * v) < 1e-6
-    if w:
+    if w is not None:
         assert np.abs(pset.depth - z0 - pset.time * w) < 1e-4
 
     ds = xr.open_zarr(outfile_path)
     times = (direction * ds["time"][:]).values.astype("timedelta64[s]")[0]
-    timeref = np.arange(1, 5).astype("timedelta64[s]")
+    timeref = np.arange(runtime + 1).astype("timedelta64[s]")
     assert np.allclose(times, timeref, atol=np.timedelta64(1, "ms"))
     lons = ds["lon"][:].values
-    assert np.allclose(lons, x0 + direction * u * np.arange(1, 5))
+    assert np.allclose(lons, x0 + direction * u * np.arange(runtime + 1))

@@ -959,7 +959,14 @@ class ParticleSet:
                 self.kernel.remove_lib()
                 cppargs = ["-DDOUBLE_COORD_VARIABLES"] if self.particledata.lonlatdepth_dtype else None
                 self.kernel.compile(
-                    compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), "include"), "."])
+                    compiler=GNUCompiler(
+                        cppargs=cppargs,
+                        incdirs=[
+                            os.path.join(get_package_dir(), "include"),
+                            os.path.join(get_package_dir(), "application_kernels"),
+                            ".",
+                        ],
+                    )
                 )
                 self.kernel.load_lib()
         if output_file:
@@ -1060,6 +1067,11 @@ class ParticleSet:
 
         tol = 1e-12
         time = starttime
+
+        if (
+            output_file and output_file.analytical
+        ):  # output analytical solution at start time  # TODO check if possible to make this cleaner
+            output_file.write(self, time)
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0):
             time_at_startofloop = time
