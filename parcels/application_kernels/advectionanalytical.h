@@ -10,7 +10,7 @@ double compute_rs(double r, double B, double delta, double s_min, double tol){
   }
 }
 
-void compute_ds(double F0, double F1, double r, double direction, double tol,
+void compute_ds(double F0, double F1, double r, double time_direction, double tol,
                 double *ds, double *B, double *delta){
   double up = F0 * (1-r) + F1 * r;
   double r_target = 0;
@@ -61,9 +61,9 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   double tol_compute = 1e-10;  // Tolerance for analytical computation
   int maxCellupdates = 10;  // Maximum number of cell updates before throwing an interpolation error
   double numIntermediateTimeSteps= 144; // TODO check 10;  // number of intermediate time steps
-  double direction = 1;  // TODO rename to time_direction
+  double time_direction = 1;  // TODO rename to time_time_direction
   if (*dt < 0)
-    direction = -1;
+    time_direction = -1;
 
   double xsi, rs_x, ds_x, B_x, delta_x;
   double eta, rs_y, ds_y, B_y, delta_y;
@@ -88,12 +88,12 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
     tau = (*time - t0) / (t1 - t0);
 
     double tau_IntermediateTimeStep = roundf(tau*numIntermediateTimeSteps)/numIntermediateTimeSteps;
-    double tau_NextIntermediateTimeStep = tau_IntermediateTimeStep + 1/numIntermediateTimeSteps*direction;
+    double tau_NextIntermediateTimeStep = tau_IntermediateTimeStep + 1/numIntermediateTimeSteps*time_direction;
     ds_t = (tau_IntermediateTimeStep+tau_NextIntermediateTimeStep)/2*(t1 - t0) - (*time - t0);
     if (fabs(ds_t) < 1e-3){
-      ds_t = 1/numIntermediateTimeSteps*(t1 - t0)*direction;
+      ds_t = 1/numIntermediateTimeSteps*(t1 - t0)*time_direction;
     }
-    ds_t = min(fabs(ds_t), fabs(*dt))*direction;
+    ds_t = min(fabs(ds_t), fabs(*dt))*time_direction;
     status = search_indices(*lon, *lat, *depth, grid, &xi[igrid], &yi[igrid], &zi[igrid],
                             &xsi, &eta, &zeta, gtype, tii, *time, t0, t1, CGRID_VELOCITY, gridindexingtype);
     first_tstep_only = 0;
@@ -117,30 +117,30 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 
       updateCells = 0;
       if (xsi > 1 - tol_grid){
-        if (((grid->tdim > 1) && (((1-tau)*dataU_2D[0][1][1] + tau*dataU_2D[1][1][1])*direction > 0)) ||
-           ((grid->tdim == 1) && (dataU_2D[0][1][1]*direction > 0))){
+        if (((grid->tdim > 1) && (((1-tau)*dataU_2D[0][1][1] + tau*dataU_2D[1][1][1])*time_direction > 0)) ||
+           ((grid->tdim == 1) && (dataU_2D[0][1][1]*time_direction > 0))){
           *xi += 1;
           xsi = 0;
           updateCells = 1;
         }
       } else if (xsi < tol_grid){
-        if (((grid->tdim > 1) && (((1-tau)*dataU_2D[0][1][0] + tau*dataU_2D[1][1][0])*direction < 0)) ||
-           ((grid->tdim == 1) && (dataU_2D[0][1][0]*direction < 0))){
+        if (((grid->tdim > 1) && (((1-tau)*dataU_2D[0][1][0] + tau*dataU_2D[1][1][0])*time_direction < 0)) ||
+           ((grid->tdim == 1) && (dataU_2D[0][1][0]*time_direction < 0))){
           *xi -= 1;
           xsi = 1;
           updateCells = 1;
         }
       }
       if (eta > 1 - tol_grid){
-        if (((grid->tdim > 1) && (((1-tau)*dataV_2D[0][1][1] + tau*dataV_2D[1][1][1])*direction > 0)) ||
-           ((grid->tdim == 1) && (dataV_2D[0][1][1]*direction > 0))){
+        if (((grid->tdim > 1) && (((1-tau)*dataV_2D[0][1][1] + tau*dataV_2D[1][1][1])*time_direction > 0)) ||
+           ((grid->tdim == 1) && (dataV_2D[0][1][1]*time_direction > 0))){
           *yi += 1;
           eta = 0;
           updateCells = 1;
         }
       } else if (eta < tol_grid){
-        if (((grid->tdim > 1) && (((1-tau)*dataV_2D[0][0][1] + tau*dataV_2D[1][0][1])*direction < 0)) ||
-           ((grid->tdim == 1) && (dataV_2D[0][0][1]*direction < 0))){
+        if (((grid->tdim > 1) && (((1-tau)*dataV_2D[0][0][1] + tau*dataV_2D[1][0][1])*time_direction < 0)) ||
+           ((grid->tdim == 1) && (dataV_2D[0][0][1]*time_direction < 0))){
           *yi -= 1;
           eta = 1;
           updateCells = 1;
@@ -153,45 +153,45 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 
       updateCells = 0;
       if (xsi > 1 - tol_grid){
-        if (((grid->tdim > 1) && (((1-tau)*dataU_3D[0][1][1][1] + tau*dataU_3D[1][1][1][1])*direction > 0)) ||
-           ((grid->tdim == 1) && (dataU_3D[0][1][1][1]*direction > 0))){
+        if (((grid->tdim > 1) && (((1-tau)*dataU_3D[0][1][1][1] + tau*dataU_3D[1][1][1][1])*time_direction > 0)) ||
+           ((grid->tdim == 1) && (dataU_3D[0][1][1][1]*time_direction > 0))){
           *xi += 1;
           xsi = 0;
           updateCells = 1;
         }
       } else if (xsi < tol_grid){
-        if (((grid->tdim > 1) && (((1-tau)*dataU_3D[0][1][1][0] + tau*dataU_3D[1][1][1][0])*direction < 0)) ||
-           ((grid->tdim == 1) && (dataU_3D[0][1][1][0]*direction < 0))){
+        if (((grid->tdim > 1) && (((1-tau)*dataU_3D[0][1][1][0] + tau*dataU_3D[1][1][1][0])*time_direction < 0)) ||
+           ((grid->tdim == 1) && (dataU_3D[0][1][1][0]*time_direction < 0))){
           *xi -= 1;
           xsi = 1;
           updateCells = 1;
         }
       }
       if (eta > 1 - tol_grid){
-        if (((grid->tdim > 1) && (((1-tau)*dataV_3D[0][1][1][1] + tau*dataV_3D[1][1][1][1])*direction > 0)) ||
-           ((grid->tdim == 1) && (dataV_3D[0][1][1][1]*direction > 0))){
+        if (((grid->tdim > 1) && (((1-tau)*dataV_3D[0][1][1][1] + tau*dataV_3D[1][1][1][1])*time_direction > 0)) ||
+           ((grid->tdim == 1) && (dataV_3D[0][1][1][1]*time_direction > 0))){
           *yi += 1;
           eta = 0;
           updateCells = 1;
         }
       } else if (eta < tol_grid){
-        if (((grid->tdim > 1) && (((1-tau)*dataV_3D[0][1][0][1] + tau*dataV_3D[1][1][0][1])*direction < 0)) ||
-           ((grid->tdim == 1) && (dataV_3D[0][1][0][1]*direction < 0))){
+        if (((grid->tdim > 1) && (((1-tau)*dataV_3D[0][1][0][1] + tau*dataV_3D[1][1][0][1])*time_direction < 0)) ||
+           ((grid->tdim == 1) && (dataV_3D[0][1][0][1]*time_direction < 0))){
           *yi -= 1;
           eta = 1;
           updateCells = 1;
         }
       }
       if (zeta > 1 - tol_grid){
-        if (((grid->tdim > 1) && (((1-tau)*dataW_3D[0][1][1][1] + tau*dataW_3D[1][1][1][1])*direction > 0)) ||
-           ((grid->tdim == 1) && (dataW_3D[0][1][1][1]*direction > 0))){
+        if (((grid->tdim > 1) && (((1-tau)*dataW_3D[0][1][1][1] + tau*dataW_3D[1][1][1][1])*time_direction > 0)) ||
+           ((grid->tdim == 1) && (dataW_3D[0][1][1][1]*time_direction > 0))){
           *zi += 1;
           zeta = 0;
           updateCells = 1;
         }
       } else if (zeta < tol_grid){
-        if (((grid->tdim > 1) && (((1-tau)*dataW_3D[0][0][1][1] + tau*dataW_3D[1][0][1][1])*direction < 0)) ||
-           ((grid->tdim == 1) && (dataW_3D[0][0][1][1]*direction < 0))){
+        if (((grid->tdim > 1) && (((1-tau)*dataW_3D[0][0][1][1] + tau*dataW_3D[1][0][1][1])*time_direction < 0)) ||
+           ((grid->tdim == 1) && (dataW_3D[0][0][1][1]*time_direction < 0))){
           *zi -= 1;
           zeta = 1;
           updateCells = 1;
@@ -256,38 +256,38 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   double U0, U1, V0, V1, W0, W1;
   if (flow3D == 0){
     if (grid->tdim > 1){
-      U0 = ((1-tau)*dataU_2D[0][1][0] + tau*dataU_2D[1][1][0]) * c4 * direction;
-      U1 = ((1-tau)*dataU_2D[0][1][1] + tau*dataU_2D[1][1][1]) * c2 * direction;
-      V0 = ((1-tau)*dataV_2D[0][0][1] + tau*dataV_2D[1][0][1]) * c1 * direction;
-      V1 = ((1-tau)*dataV_2D[0][1][1] + tau*dataV_2D[1][1][1]) * c3 * direction;
+      U0 = ((1-tau)*dataU_2D[0][1][0] + tau*dataU_2D[1][1][0]) * c4 * time_direction;
+      U1 = ((1-tau)*dataU_2D[0][1][1] + tau*dataU_2D[1][1][1]) * c2 * time_direction;
+      V0 = ((1-tau)*dataV_2D[0][0][1] + tau*dataV_2D[1][0][1]) * c1 * time_direction;
+      V1 = ((1-tau)*dataV_2D[0][1][1] + tau*dataV_2D[1][1][1]) * c3 * time_direction;
     } else {
-      U0 = dataU_2D[0][1][0] * c4 * direction;
-      U1 = dataU_2D[0][1][1] * c2 * direction;
-      V0 = dataV_2D[0][0][1] * c1 * direction;
-      V1 = dataV_2D[0][1][1] * c3 * direction;
+      U0 = dataU_2D[0][1][0] * c4 * time_direction;
+      U1 = dataU_2D[0][1][1] * c2 * time_direction;
+      V0 = dataV_2D[0][0][1] * c1 * time_direction;
+      V1 = dataV_2D[0][1][1] * c3 * time_direction;
     }
   } else if (flow3D == 1){
     if (grid->tdim > 1){
-      U0 = ((1-tau)*dataU_3D[0][1][1][0] + tau*dataU_3D[1][1][1][0]) * c4 * dz * direction;
-      U1 = ((1-tau)*dataU_3D[0][1][1][1] + tau*dataU_3D[1][1][1][1]) * c2 * dz * direction;
-      V0 = ((1-tau)*dataV_3D[0][1][0][1] + tau*dataV_3D[1][1][0][1]) * c1 * dz * direction;
-      V1 = ((1-tau)*dataV_3D[0][1][1][1] + tau*dataV_3D[1][1][1][1]) * c3 * dz * direction;
-      W0 = ((1-tau)*dataW_3D[0][0][1][1] + tau*dataW_3D[1][0][1][1]) * dxdy * direction;
-      W1 = ((1-tau)*dataW_3D[0][1][1][1] + tau*dataW_3D[1][1][1][1]) * dxdy * direction;
+      U0 = ((1-tau)*dataU_3D[0][1][1][0] + tau*dataU_3D[1][1][1][0]) * c4 * dz * time_direction;
+      U1 = ((1-tau)*dataU_3D[0][1][1][1] + tau*dataU_3D[1][1][1][1]) * c2 * dz * time_direction;
+      V0 = ((1-tau)*dataV_3D[0][1][0][1] + tau*dataV_3D[1][1][0][1]) * c1 * dz * time_direction;
+      V1 = ((1-tau)*dataV_3D[0][1][1][1] + tau*dataV_3D[1][1][1][1]) * c3 * dz * time_direction;
+      W0 = ((1-tau)*dataW_3D[0][0][1][1] + tau*dataW_3D[1][0][1][1]) * dxdy * time_direction;
+      W1 = ((1-tau)*dataW_3D[0][1][1][1] + tau*dataW_3D[1][1][1][1]) * dxdy * time_direction;
     } else {
-      U0 = dataU_3D[0][1][1][0] * c4 * dz * direction;
-      U1 = dataU_3D[0][1][1][1] * c2 * dz * direction;
-      V0 = dataV_3D[0][1][0][1] * c1 * dz * direction;
-      V1 = dataV_3D[0][1][1][1] * c3 * dz * direction;
-      W0 = dataW_3D[0][0][1][1] * dxdy * direction;
-      W1 = dataW_3D[0][1][1][1] * dxdy * direction;
+      U0 = dataU_3D[0][1][1][0] * c4 * dz * time_direction;
+      U1 = dataU_3D[0][1][1][1] * c2 * dz * time_direction;
+      V0 = dataV_3D[0][1][0][1] * c1 * dz * time_direction;
+      V1 = dataV_3D[0][1][1][1] * c3 * dz * time_direction;
+      W0 = dataW_3D[0][0][1][1] * dxdy * time_direction;
+      W1 = dataW_3D[0][1][1][1] * dxdy * time_direction;
     }
   }
 
-  compute_ds(U0, U1, xsi, direction, tol_compute, &ds_x, &B_x, &delta_x);
-  compute_ds(V0, V1, eta, direction, tol_compute, &ds_y, &B_y, &delta_y);
+  compute_ds(U0, U1, xsi, time_direction, tol_compute, &ds_x, &B_x, &delta_x);
+  compute_ds(V0, V1, eta, time_direction, tol_compute, &ds_y, &B_y, &delta_y);
   if (flow3D == 1){
-    compute_ds(W0, W1, zeta, direction, tol_compute, &ds_z, &B_z, &delta_z);
+    compute_ds(W0, W1, zeta, time_direction, tol_compute, &ds_z, &B_z, &delta_z);
   } else {
     ds_z = 1.0/0.0;
   }
@@ -322,9 +322,9 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   }
 
   if (*dt > 0){
-    *dt = max(direction * s_min * dxdy * dz, 1e-7);
+    *dt = max(time_direction * s_min * dxdy * dz, 1e-7);
   } else {
-    *dt = min(direction * s_min * dxdy * dz, 1e-7);
+    *dt = min(time_direction * s_min * dxdy * dz, 1e-7);
   }
 
   return SUCCESS;
