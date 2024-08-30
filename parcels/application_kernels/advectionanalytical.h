@@ -60,22 +60,21 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   double tol_grid = 1e-4;  // Tolerance for grid search
   double tol_compute = 1e-10;  // Tolerance for analytical computation
   int maxCellupdates = 10;  // Maximum number of cell updates before throwing an interpolation error
-
-  double direction = 1;
+  double numIntermediateTimeSteps= 144; // TODO check 10;  // number of intermediate time steps
+  double direction = 1;  // TODO rename to time_direction
   if (*dt < 0)
     direction = -1;
 
   double xsi, rs_x, ds_x, B_x, delta_x;
   double eta, rs_y, ds_y, B_y, delta_y;
   double zeta, rs_z, ds_z, B_z, delta_z;
-
-  double tau;
-  double ds_t = *dt;
+  double tau, ds_t;
   int tii, first_tstep_only;
 
   if (grid->tdim == 1){
     tii = 0;
     tau = 0;
+    ds_t = *dt;
     status = search_indices(*lon, *lat, *depth, grid, &xi[igrid], &yi[igrid], &zi[igrid],
                             &xsi, &eta, &zeta, gtype, tii, 0, 0, 1, CGRID_VELOCITY, gridindexingtype);
     first_tstep_only = 1;
@@ -85,20 +84,16 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
 
     double t0 = grid->time[ti[igrid]];
     double t1 = grid->time[ti[igrid]+1];
-    tau = (*time - t0) / (t1 - t0);
-    double ds_tfull = 600;  // TODO now hardcoded to 10 minutes
-    if (direction > 0){
-      if (tau < tol_grid){
-        ds_tfull /= 2;
-      }
-    } else {
-      if (tau > 1 - tol_grid){
-        ds_tfull /= 2;
-      }
-    }
-    ds_t = min(ds_tfull, fabs(*dt))*direction;
-
     tii = ti[igrid];
+    tau = (*time - t0) / (t1 - t0);
+
+    double tau_IntermediateTimeStep = roundf(tau*numIntermediateTimeSteps)/numIntermediateTimeSteps;
+    double tau_NextIntermediateTimeStep = tau_IntermediateTimeStep + 1/numIntermediateTimeSteps*direction;
+    ds_t = (tau_IntermediateTimeStep+tau_NextIntermediateTimeStep)/2*(t1 - t0) - (*time - t0);
+    if (fabs(ds_t) < 1e-3){
+      ds_t = 1/numIntermediateTimeSteps*(t1 - t0)*direction;
+    }
+    ds_t = min(fabs(ds_t), fabs(*dt))*direction;
     status = search_indices(*lon, *lat, *depth, grid, &xi[igrid], &yi[igrid], &zi[igrid],
                             &xsi, &eta, &zeta, gtype, tii, *time, t0, t1, CGRID_VELOCITY, gridindexingtype);
     first_tstep_only = 0;
