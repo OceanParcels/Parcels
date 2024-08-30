@@ -472,10 +472,10 @@ class Field:
             depth_filename = depth_filename[0]
 
         netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        if kwargs.get("netcdf_decodewarning", None) is not None:
+        if kwargs.get("netcdf_decodewarning") is not None:
             warnings.warn(
-                "The 'netcdf_decodewarning' argument is deprecated and will be removed in a future release. "
-                "Please use the Python warnings module to control warnings.",
+                "The 'netcdf_decodewarning' argument is deprecated in v3.1.0 and will be removed completely in a future release. "
+                "The parameter no longer has any effect, please use the Python warnings module to control warnings.",
                 DeprecationWarning,
                 stacklevel=2,
             )
