@@ -38,7 +38,6 @@ class NetcdfFileBuffer(_FileBuffer):
     def __init__(self, *args, **kwargs):
         self.lib = np
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        self.netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
         super().__init__(*args, **kwargs)
 
     def __enter__(self):
@@ -49,13 +48,12 @@ class NetcdfFileBuffer(_FileBuffer):
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
             self.dataset["decoded"] = True
         except:
-            if self.netcdf_decodewarning:
-                warnings.warn(
-                    f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
-                    "It will be opened with no decoding. Filling values might be wrongly parsed.",
-                    FileWarning,
-                    stacklevel=2,
-                )
+            warnings.warn(
+                f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
+                "It will be opened with no decoding. Filling values might be wrongly parsed.",
+                FileWarning,
+                stacklevel=2,
+            )
 
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
             self.dataset["decoded"] = False
@@ -332,7 +330,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
             self.dataset["decoded"] = True
         except:
             warnings.warn(
-                f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). It will be opened with no decoding. Filling values might be wrongly parsed.",
+                f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
+                "It will be opened with no decoding. Filling values might be wrongly parsed.",
                 FileWarning,
                 stacklevel=2,
             )

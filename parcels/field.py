@@ -24,7 +24,7 @@ from parcels.tools.statuscodes import (
     FieldSamplingError,
     TimeExtrapolationError,
 )
-from parcels.tools.warnings import FieldSetWarning
+from parcels.tools.warnings import FieldSetWarning, _deprecated_param_netcdf_decodewarning
 
 from .fieldfilebuffer import (
     DaskFileBuffer,
@@ -271,6 +271,8 @@ class Field:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
+        if kwargs.get("netcdf_decodewarning") is not None:
+            _deprecated_param_netcdf_decodewarning()
         self.netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop("creation_log", "")
@@ -473,12 +475,7 @@ class Field:
 
         netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         if kwargs.get("netcdf_decodewarning") is not None:
-            warnings.warn(
-                "The 'netcdf_decodewarning' argument is deprecated in v3.1.0 and will be removed completely in a future release. "
-                "The parameter no longer has any effect, please use the Python warnings module to control warnings.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+            _deprecated_param_netcdf_decodewarning()
         netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
 
         indices = {} if indices is None else indices.copy()
