@@ -1729,7 +1729,7 @@ class VectorField:
         if self.U.interp_method == "cgrid_velocity":
             assert self.V.interp_method == "cgrid_velocity", "Interpolation methods of U and V are not the same."
             assert self._check_grid_dimensions(U.grid, V.grid), "Dimensions of U and V are not the same."
-            if W is not None:
+            if W is not None and self.U.gridindexingtype != "croco":
                 assert W.interp_method == "cgrid_velocity", "Interpolation methods of U and W are not the same."
                 assert self._check_grid_dimensions(U.grid, W.grid), "Dimensions of U and W are not the same."
 
