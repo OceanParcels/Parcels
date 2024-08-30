@@ -54,7 +54,6 @@ local_scheme = "no-local-version"
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
 
 [tool.ruff]
-target-version = "py310"
 line-length = 120
 
 [tool.ruff.lint]
@@ -121,3 +120,27 @@ ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.mypy]
+files = [
+  "parcels/compilation/codegenerator.py",
+  "parcels/_typing.py",
+  "parcels/tools/*.py",
+  "parcels/grid.py",
+  "parcels/field.py",
+  "parcels/fieldset.py",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "parcels._version_setup",
+    "mpi4py",
+    "scipy.spatial",
+    "sklearn.cluster",
+    "zarr",
+    "cftime",
+    "pykdtree.kdtree",
+    "netCDF4",
+    "cgen"
+]
+ignore_missing_imports = true
