@@ -40,10 +40,10 @@ handler.setFormatter(logging.Formatter(fmt="%(levelname)s: %(message)s"))
 logger.addHandler(handler)
 
 logging.addLevelName(warning_once_level, "WARNING")
-logging.Logger.warning_once = warning_once
+logging.Logger.warning_once = warning_once  # type: ignore
 
 logging.addLevelName(info_once_level, "INFO")
-logging.Logger.info_once = info_once
+logging.Logger.info_once = info_once  # type: ignore
 
 dup_filter = DuplicateFilter()
 logger.addFilter(dup_filter)

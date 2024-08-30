@@ -8,13 +8,8 @@ import xarray as xr
 import zarr
 
 import parcels
+from parcels._compat import MPI
 from parcels.tools.loggers import logger
-
-try:
-    from mpi4py import MPI
-except ModuleNotFoundError:
-    MPI = None
-
 
 __all__ = ["ParticleFile"]
 

@@ -3,12 +3,14 @@ import datetime
 import math
 from ctypes import POINTER, Structure, c_float, c_int, pointer
 from pathlib import Path
+from typing import TYPE_CHECKING, Iterable, Type
 
 import dask.array as da
 import numpy as np
 import xarray as xr
 
 import parcels.tools.interpolation_utils as i_u
+from parcels._typing import GridIndexingType, InterpMethod, Mesh, TimePeriodic, VectorType
 from parcels.tools.converters import (
     Geographic,
     GeographicPolar,
@@ -33,6 +35,11 @@ from .fieldfilebuffer import (
 )
 from .grid import CGrid, Grid, GridType
 
+if TYPE_CHECKING:
+    from ctypes import _Pointer as PointerType
+
+    from parcels.fieldset import FieldSet
+
 __all__ = ["Field", "VectorField", "NestedField"]
 
 
@@ -43,7 +50,7 @@ def _isParticle(key):
         return False
 
 
-def _deal_with_errors(error, key, vector_type):
+def _deal_with_errors(error, key, vector_type: VectorType):
     if _isParticle(key):
         key.state = AllParcelsErrorCodes[type(error)]
     elif _isParticle(key[-1]):
@@ -134,14 +141,14 @@ class Field:
 
     def __init__(
         self,
-        name,
+        name: str | tuple[str, str],
         data,
         lon=None,
         lat=None,
         depth=None,
         time=None,
         grid=None,
-        mesh="flat",
+        mesh: Mesh = "flat",
         timestamps=None,
         fieldtype=None,
         transpose=False,
@@ -149,10 +156,10 @@ class Field:
         vmax=None,
         cast_data_dtype="float32",
         time_origin=None,
-        interp_method="linear",
-        allow_time_extrapolation=None,
-        time_periodic=False,
-        gridindexingtype="nemo",
+        interp_method: InterpMethod = "linear",
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
+        gridindexingtype: GridIndexingType = "nemo",
         to_write=False,
         **kwargs,
     ):
@@ -160,7 +167,8 @@ class Field:
             self.name = name
             self.filebuffername = name
         else:
-            self.name, self.filebuffername = name
+            self.name = name[0]
+            self.filebuffername = name[1]
         self.data = data
         if grid:
             if grid.defer_load and isinstance(data, np.ndarray):
@@ -191,7 +199,7 @@ class Field:
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.timestamps = timestamps
-        if type(interp_method) is dict:
+        if isinstance(interp_method, dict):
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
             else:
@@ -203,11 +211,11 @@ class Field:
             GridType.RectilinearSGrid,
             GridType.CurvilinearSGrid,
         ]:
-            logger.warning_once(
+            logger.warning_once(  # type: ignore
                 "General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal."
             )
 
-        self.fieldset = None
+        self.fieldset: "FieldSet" | None = None
         if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
         else:
@@ -215,7 +223,7 @@ class Field:
 
         self.time_periodic = time_periodic
         if self.time_periodic is not False and self.allow_time_extrapolation:
-            logger.warning_once(
+            logger.warning_once(  # type: ignore
                 "allow_time_extrapolation and time_periodic cannot be used together.\n \
                                  allow_time_extrapolation is set to False"
             )
@@ -268,8 +276,8 @@ class Field:
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         self.netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
-        self.loaded_time_indices = []
-        self.creation_log = kwargs.pop("creation_log", "")
+        self.loaded_time_indices: Iterable[int] = []
+        self.creation_log: str = kwargs.pop("creation_log", "")
         self.chunksize = kwargs.pop("chunksize", None)
         self.netcdf_chunkdims_name_map = kwargs.pop("chunkdims_name_map", None)
         self.grid.depth_field = kwargs.pop("depth_field", None)
@@ -283,10 +291,10 @@ class Field:
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop("data_full_zdim", None)
-        self.data_chunks = []  # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
-        self.c_data_chunks = []  # C-pointers to the data_chunks array
-        self.nchunks = []
-        self.chunk_set = False
+        self.data_chunks = []  # type: ignore # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
+        self.c_data_chunks: list["PointerType" | None] = []  # C-pointers to the data_chunks array
+        self.nchunks: tuple[int, ...] = ()
+        self.chunk_set: bool = False
         self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
@@ -349,13 +357,13 @@ class Field:
         dimensions,
         indices=None,
         grid=None,
-        mesh="spherical",
+        mesh: Mesh = "spherical",
         timestamps=None,
-        allow_time_extrapolation=None,
-        time_periodic=False,
-        deferred_load=True,
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
+        deferred_load: bool = True,
         **kwargs,
-    ):
+    ) -> "Field":
         """Create field from netCDF file.
 
         Parameters
@@ -481,7 +489,7 @@ class Field:
                 "if you would need such feature implemented."
             )
 
-        interp_method = kwargs.pop("interp_method", "linear")
+        interp_method: InterpMethod = kwargs.pop("interp_method", "linear")
         if type(interp_method) is dict:
             if variable[0] in interp_method:
                 interp_method = interp_method[variable[0]]
@@ -542,11 +550,11 @@ class Field:
             )
             kwargs["dataFiles"] = dataFiles
 
-        chunksize = kwargs.get("chunksize", None)
+        chunksize: bool | None = kwargs.get("chunksize", None)
         grid.chunksize = chunksize
 
         if "time" in indices:
-            logger.warning_once("time dimension in indices is not necessary anymore. It is then ignored.")
+            logger.warning_once("time dimension in indices is not necessary anymore. It is then ignored.")  # type: ignore
 
         if "full_load" in kwargs:  # for backward compatibility with Parcels < v2.0.0
             deferred_load = not kwargs["full_load"]
@@ -554,6 +562,7 @@ class Field:
         if grid.time.size <= 2 or deferred_load is False:
             deferred_load = False
 
+        _field_fb_class: Type[DeferredDaskFileBuffer | DaskFileBuffer | DeferredNetcdfFileBuffer | NetcdfFileBuffer]
         if chunksize not in [False, None]:
             if deferred_load:
                 _field_fb_class = DeferredDaskFileBuffer
@@ -570,7 +579,7 @@ class Field:
             data_list = []
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames, strict=True):
-                with _field_fb_class(
+                with _field_fb_class(  # type: ignore[operator]
                     fname,
                     dimensions,
                     indices,
@@ -637,7 +646,14 @@ class Field:
 
     @classmethod
     def from_xarray(
-        cls, da, name, dimensions, mesh="spherical", allow_time_extrapolation=None, time_periodic=False, **kwargs
+        cls,
+        da: xr.DataArray,
+        name: str,
+        dimensions,
+        mesh: Mesh = "spherical",
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
+        **kwargs,
     ):
         """Create field from xarray Variable.
 
@@ -854,7 +870,9 @@ class Field:
         zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
         return (zi, zeta)
 
-    def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, ti, time):
+    def search_indices_vertical_s(
+        self, x: float, y: float, z: float, xi: int, yi: int, xsi: float, eta: float, ti: int, time: float
+    ):
         grid = self.grid
         if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"]:
             xsi = 1
@@ -886,7 +904,7 @@ class Field:
                 + xsi * eta * grid.depth[:, yi + 1, xi + 1]
                 + (1 - xsi) * eta * grid.depth[:, yi + 1, xi]
             )
-        z = np.float32(z)
+        z = np.float32(z)  # type: ignore # TODO: remove type ignore once we migrate to float64
 
         if depth_vector[-1] > depth_vector[0]:
             depth_indices = depth_vector <= z
@@ -930,7 +948,7 @@ class Field:
                 xi = xdim - xi
         return xi, yi
 
-    def search_indices_rectilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+    def search_indices_rectilinear(self, x: float, y: float, z: float, ti=-1, time=-1, particle=None, search2D=False):
         grid = self.grid
 
         if grid.xdim > 1 and (not grid.zonal_periodic):
@@ -1688,18 +1706,18 @@ class VectorField:
         field defining the vertical component (default: None)
     """
 
-    def __init__(self, name, U, V, W=None):
+    def __init__(self, name: str, U: Field, V: Field, W: Field | None = None):
         self.name = name
         self.U = U
         self.V = V
         self.W = W
-        self.vector_type = "3D" if W else "2D"
+        self.vector_type: VectorType = "3D" if W else "2D"
         self.gridindexingtype = U.gridindexingtype
         if self.U.interp_method == "cgrid_velocity":
             assert self.V.interp_method == "cgrid_velocity", "Interpolation methods of U and V are not the same."
             assert self._check_grid_dimensions(U.grid, V.grid), "Dimensions of U and V are not the same."
-            if self.vector_type == "3D":
-                assert self.W.interp_method == "cgrid_velocity", "Interpolation methods of U and W are not the same."
+            if W is not None:
+                assert W.interp_method == "cgrid_velocity", "Interpolation methods of U and W are not the same."
                 assert self._check_grid_dimensions(U.grid, W.grid), "Dimensions of U and W are not the same."
 
     @staticmethod
@@ -1711,7 +1729,7 @@ class VectorField:
             and np.allclose(grid1.time_full, grid2.time_full)
         )
 
-    def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
+    def dist(self, lon1: float, lon2: float, lat1: float, lat2: float, mesh: Mesh, lat: float):
         if mesh == "spherical":
             rad = np.pi / 180.0
             deg2m = 1852 * 60.0
@@ -1719,7 +1737,7 @@ class VectorField:
         else:
             return np.sqrt((lon2 - lon1) ** 2 + (lat2 - lat1) ** 2)
 
-    def jacobian(self, xsi, eta, px, py):
+    def jacobian(self, xsi: float, eta: float, px: np.ndarray, py: np.ndarray):
         dphidxsi = [eta - 1, 1 - eta, eta, -eta]
         dphideta = [xsi - 1, -xsi, xsi, 1 - xsi]
 
@@ -2289,7 +2307,7 @@ class NestedField(list):
 
     """
 
-    def __init__(self, name, F, V=None, W=None):
+    def __init__(self, name: str, F, V=None, W=None):
         if V is None:
             if isinstance(F[0], VectorField):
                 vector_type = F[0].vector_type

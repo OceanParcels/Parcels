@@ -13,6 +13,5 @@ comment:
   require_base: false
   require_head: true
   hide_project_coverage: true
-
 # When modifying this file, please validate using
 # curl -X POST --data-binary @codecov.yml https://codecov.io/validate
