@@ -820,11 +820,9 @@ class Field:
             else:
                 raise ValueError(
                     (
-                        "Field.cell_edge_sizes() not implemented for ",
-                        self.grid.gtype,
-                        "grids.",
-                        "You can provide Field.grid.cell_edge_sizes yourself",
-                        "by in e.g. NEMO using the e1u fields etc from the mesh_mask.nc file",
+                        f"Field.cell_edge_sizes() not implemented for {self.grid.gtype} grids. "
+                        "You can provide Field.grid.cell_edge_sizes yourself by in, e.g., "
+                        "NEMO using the e1u fields etc from the mesh_mask.nc file."
                     )
                 )
 
