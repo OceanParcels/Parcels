@@ -3,18 +3,9 @@ from operator import attrgetter
 
 import numpy as np
 
+from parcels._compat import MPI, KMeans
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
-
-try:
-    from mpi4py import MPI
-except ModuleNotFoundError:
-    MPI = None
-if MPI:
-    try:
-        from sklearn.cluster import KMeans
-    except:
-        KMeans = None
 
 
 def partitionParticlesMPI_default(coords, mpi_size=1):

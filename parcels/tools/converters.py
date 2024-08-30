@@ -5,6 +5,7 @@ from math import cos, pi
 
 import cftime
 import numpy as np
+import numpy.typing as npt
 import xarray as xr
 
 __all__ = [
@@ -20,20 +21,15 @@ __all__ = [
 ]
 
 
-def convert_to_flat_array(var):
+def convert_to_flat_array(var: npt.ArrayLike) -> npt.NDArray:
     """Convert lists and single integers/floats to one-dimensional numpy arrays
 
     Parameters
     ----------
-    var : np.ndarray, float or array_like
+    var : Array
         list or numeric to convert to a one-dimensional numpy array
     """
-    if isinstance(var, np.ndarray):
-        return var.flatten()
-    elif isinstance(var, (int, float, np.float32, np.int32)):
-        return np.array([var])
-    else:
-        return np.array(var)
+    return np.array(var).flatten()
 
 
 def _get_cftime_datetimes():
@@ -167,8 +163,8 @@ class TimeConverter:
 class UnitConverter:
     """Interface class for spatial unit conversion during field sampling that performs no conversion."""
 
-    source_unit = None
-    target_unit = None
+    source_unit: str | None = None
+    target_unit: str | None = None
 
     def to_target(self, value, x, y, z):
         return value
