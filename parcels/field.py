@@ -2,9 +2,10 @@ import collections
 import datetime
 import math
 import warnings
+from collections.abc import Iterable
 from ctypes import POINTER, Structure, c_float, c_int, pointer
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Type
+from typing import TYPE_CHECKING
 
 import dask.array as da
 import numpy as np
@@ -222,7 +223,7 @@ class Field:
                 stacklevel=2,
             )
 
-        self.fieldset: "FieldSet" | None = None
+        self.fieldset: FieldSet | None = None
         if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
         else:
@@ -299,7 +300,7 @@ class Field:
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop("data_full_zdim", None)
         self.data_chunks = []  # type: ignore # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
-        self.c_data_chunks: list["PointerType" | None] = []  # C-pointers to the data_chunks array
+        self.c_data_chunks: list[PointerType | None] = []  # C-pointers to the data_chunks array
         self.nchunks: tuple[int, ...] = ()
         self.chunk_set: bool = False
         self.filebuffers = [None] * 2
@@ -568,7 +569,7 @@ class Field:
         if grid.time.size <= 2:
             deferred_load = False
 
-        _field_fb_class: Type[DeferredDaskFileBuffer | DaskFileBuffer | DeferredNetcdfFileBuffer | NetcdfFileBuffer]
+        _field_fb_class: type[DeferredDaskFileBuffer | DaskFileBuffer | DeferredNetcdfFileBuffer | NetcdfFileBuffer]
         if chunksize not in [False, None]:
             if deferred_load:
                 _field_fb_class = DeferredDaskFileBuffer
@@ -825,11 +826,9 @@ class Field:
                 self.cell_edge_sizes = self.grid.cell_edge_sizes
             else:
                 raise ValueError(
-                    (
-                        f"Field.cell_edge_sizes() not implemented for {self.grid.gtype} grids. "
-                        "You can provide Field.grid.cell_edge_sizes yourself by in, e.g., "
-                        "NEMO using the e1u fields etc from the mesh_mask.nc file."
-                    )
+                    f"Field.cell_edge_sizes() not implemented for {self.grid.gtype} grids. "
+                    "You can provide Field.grid.cell_edge_sizes yourself by in, e.g., "
+                    "NEMO using the e1u fields etc from the mesh_mask.nc file."
                 )
 
     def cell_areas(self):
