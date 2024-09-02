@@ -4,7 +4,7 @@ import math
 import warnings
 from ctypes import POINTER, Structure, c_float, c_int, pointer
 from pathlib import Path
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Iterable, Type
 
 import dask.array as da
 import numpy as np
@@ -283,7 +283,7 @@ class Field:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        self.loaded_time_indices = []
+        self.loaded_time_indices: Iterable[int] = []  # type: ignore
         self.creation_log = kwargs.pop("creation_log", "")
         self.chunksize = kwargs.pop("chunksize", None)
         self.netcdf_chunkdims_name_map = kwargs.pop("chunkdims_name_map", None)
