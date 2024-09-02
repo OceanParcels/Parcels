@@ -5,10 +5,12 @@ on:
       - "master"
       - "test-me/*"
   pull_request:
-    branches:
-      - "*"
   schedule:
     - cron: "0 7 * * 1" # Run every Monday at 7:00 UTC
+
+concurrency:
+  group: branch-${{ github.head_ref }}
+  cancel-in-progress: true
 
 defaults:
   run:
@@ -30,7 +32,7 @@ jobs:
             python-version: "3.11"
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Conda and parcels
         uses: ./.github/actions/install-parcels
         with:
@@ -41,15 +43,16 @@ jobs:
           coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html tests
           coverage xml
       - name: Codecov
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v4.5.0
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4
         with:
-          name: Unittest report
+          name: Unittest report ${{ matrix.os }}-${{ matrix.python-version }}
           path: ${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html
   integration-test:
     name: "py${{ matrix.python-version }} | ${{ matrix.os }} | integration tests"
@@ -61,7 +64,7 @@ jobs:
         python-version: ["3.12"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Conda and parcels
         uses: ./.github/actions/install-parcels
         with:
@@ -71,13 +74,48 @@ jobs:
           coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html docs/examples
           coverage xml
       - name: Codecov
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v4.5.0
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration-tests
       - name: Upload test results
         if: ${{ always() }} # Always run this step, even if tests fail
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4
         with:
-          name: Integration test report
+          name: Integration test report ${{ matrix.os }}
           path: ${{ matrix.os }}_integration_test_report.html
+  merge-test-artifacts:
+    runs-on: ubuntu-latest
+    needs:
+      - unit-test
+      - integration-test
+    steps:
+    - name: Merge Artifacts
+      uses: actions/upload-artifact/merge@v4
+      with:
+        name: Testing reports
+        pattern: "* report *"
+  typechecking:
+    name: mypy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Conda and parcels
+        uses: ./.github/actions/install-parcels
+        with:
+          environment-file: environment.yml
+      - run: conda install lxml # dep for report generation
+      - name: Typechecking
+        run: |
+          mypy --install-types --non-interactive parcels --cobertura-xml-report mypy_report
+      - name: Upload mypy coverage to Codecov
+        uses: codecov/codecov-action@v4.5.0
+        if: ${{ always() }} # Upload even on error of mypy
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          file: mypy_report/cobertura.xml
+          flags: mypy
+          fail_ci_if_error: false

@@ -4,7 +4,9 @@ from ctypes import POINTER, Structure, c_double, c_float, c_int, c_void_p, cast,
 from enum import IntEnum
 
 import numpy as np
+import numpy.typing as npt
 
+from parcels._typing import Mesh
 from parcels.tools.converters import TimeConverter
 from parcels.tools.warnings import FieldSetWarning
 
@@ -39,7 +41,14 @@ class CGrid(Structure):
 class Grid:
     """Grid class that defines a (spatial and temporal) grid on which Fields are defined."""
 
-    def __init__(self, lon, lat, time, time_origin, mesh):
+    def __init__(
+        self,
+        lon: npt.NDArray,
+        lat: npt.NDArray,
+        time: npt.NDArray | None,
+        time_origin: TimeConverter | None,
+        mesh: Mesh,
+    ):
         self.xi = None
         self.yi = None
         self.zi = None
@@ -67,7 +76,7 @@ class Grid:
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
         self.mesh = mesh
         self.cstruct = None
-        self.cell_edge_sizes = {}
+        self.cell_edge_sizes: dict[str, npt.NDArray] = {}
         self.zonal_periodic = False
         self.zonal_halo = 0
         self.meridional_halo = 0
@@ -77,20 +86,28 @@ class Grid:
             [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32
         )
         self.periods = 0
-        self.load_chunk = []
+        self.load_chunk: npt.NDArray = np.array([])
         self.chunk_info = None
         self.chunksize = None
         self._add_last_periodic_data_timestep = False
         self.depth_field = None
 
     @staticmethod
-    def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
-        if not isinstance(lon, np.ndarray):
-            lon = np.array(lon)
-        if not isinstance(lat, np.ndarray):
-            lat = np.array(lat)
-        if not (depth is None or isinstance(depth, np.ndarray)):
+    def create_grid(
+        lon: npt.ArrayLike,
+        lat: npt.ArrayLike,
+        depth,
+        time,
+        time_origin,
+        mesh: Mesh,
+        **kwargs,
+    ):
+        lon = np.array(lon)
+        lat = np.array(lat)
+
+        if depth is not None:
             depth = np.array(depth)
+
         if len(lon.shape) <= 1:
             if depth is None or len(depth.shape) <= 1:
                 return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
@@ -314,7 +331,7 @@ class RectilinearGrid(Grid):
 
     """
 
-    def __init__(self, lon, lat, time, time_origin, mesh):
+    def __init__(self, lon, lat, time, time_origin, mesh: Mesh):
         assert isinstance(lon, np.ndarray) and len(lon.shape) <= 1, "lon is not a numpy vector"
         assert isinstance(lat, np.ndarray) and len(lat.shape) <= 1, "lat is not a numpy vector"
         assert isinstance(time, np.ndarray) or not time, "time is not a numpy array"
@@ -407,7 +424,7 @@ class RectilinearZGrid(RectilinearGrid):
         2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh="flat"):
+    def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh: Mesh = "flat"):
         super().__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
             assert len(depth.shape) <= 1, "depth is not a vector"
@@ -453,7 +470,15 @@ class RectilinearSGrid(RectilinearGrid):
         2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh="flat"):
+    def __init__(
+        self,
+        lon: npt.NDArray,
+        lat: npt.NDArray,
+        depth: npt.NDArray,
+        time: npt.NDArray | None = None,
+        time_origin: TimeConverter | None = None,
+        mesh: Mesh = "flat",
+    ):
         super().__init__(lon, lat, time, time_origin, mesh)
         assert isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4], "depth is not a 3D or 4D numpy array"
 
@@ -488,7 +513,14 @@ class RectilinearSGrid(RectilinearGrid):
 
 
 class CurvilinearGrid(Grid):
-    def __init__(self, lon, lat, time=None, time_origin=None, mesh="flat"):
+    def __init__(
+        self,
+        lon: npt.NDArray,
+        lat: npt.NDArray,
+        time: npt.NDArray | None = None,
+        time_origin: TimeConverter | None = None,
+        mesh: Mesh = "flat",
+    ):
         assert isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2, "lon is not a 2D numpy array"
         assert isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2, "lat is not a 2D numpy array"
         assert isinstance(time, np.ndarray) or not time, "time is not a numpy array"
@@ -593,7 +625,15 @@ class CurvilinearZGrid(CurvilinearGrid):
         2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh="flat"):
+    def __init__(
+        self,
+        lon: npt.NDArray,
+        lat: npt.NDArray,
+        depth: npt.NDArray | None = None,
+        time: npt.NDArray | None = None,
+        time_origin: TimeConverter | None = None,
+        mesh: Mesh = "flat",
+    ):
         super().__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
             assert len(depth.shape) == 1, "depth is not a vector"
@@ -638,7 +678,15 @@ class CurvilinearSGrid(CurvilinearGrid):
         2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh="flat"):
+    def __init__(
+        self,
+        lon: npt.NDArray,
+        lat: npt.NDArray,
+        depth: npt.NDArray,
+        time: npt.NDArray | None = None,
+        time_origin: TimeConverter | None = None,
+        mesh: Mesh = "flat",
+    ):
         super().__init__(lon, lat, time, time_origin, mesh)
         assert isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4], "depth is not a 4D numpy array"
 

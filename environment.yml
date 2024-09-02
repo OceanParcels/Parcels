@@ -33,10 +33,13 @@ dependencies:
   - pytest-html
   - coverage
 
+  # Typing
+  - mypy
+  - types-tqdm
+  - types-psutil
+
   # Linting
-  - flake8>=2.1.0
   - pre_commit
-  - pydocstyle
 
   # Docs
   - ipython

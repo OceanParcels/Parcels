@@ -48,7 +48,6 @@ def generate_perlin_testfield():
     lon = np.linspace(-180.0, 180.0, img_shape[0], dtype=np.float32)
     lat = np.linspace(-90.0, 90.0, img_shape[1], dtype=np.float32)
     time = np.zeros(1, dtype=np.float64)
-    time = np.array(time) if not isinstance(time, np.ndarray) else time
 
     # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
     # surface height) all on A-grid

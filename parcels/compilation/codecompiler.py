@@ -2,10 +2,7 @@ import os
 import subprocess
 from struct import calcsize
 
-try:
-    from mpi4py import MPI
-except ModuleNotFoundError:
-    MPI = None
+from parcels._compat import MPI
 
 _tmp_dir = os.getcwd()
 

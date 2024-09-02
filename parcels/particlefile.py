@@ -9,13 +9,8 @@ import xarray as xr
 import zarr
 
 import parcels
+from parcels._compat import MPI
 from parcels.tools.warnings import FileWarning
-
-try:
-    from mpi4py import MPI
-except ModuleNotFoundError:
-    MPI = None
-
 
 __all__ = ["ParticleFile"]
 

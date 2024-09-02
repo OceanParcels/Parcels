@@ -8,19 +8,16 @@ from glob import glob
 import dask.array as da
 import numpy as np
 
+from parcels._compat import MPI
+from parcels._typing import GridIndexingType, InterpMethodOption, Mesh, TimePeriodic
 from parcels.field import DeferredArray, Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
+from parcels.particlefile import ParticleFile
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.warnings import FieldSetWarning
-
-try:
-    from mpi4py import MPI
-except ModuleNotFoundError:
-    MPI = None
-
 
 __all__ = ["FieldSet"]
 
@@ -39,13 +36,14 @@ class FieldSet:
         in custom kernels.
     """
 
-    def __init__(self, U, V, fields=None):
+    def __init__(self, U: Field | NestedField | None, V: Field | NestedField | None, fields=None):
         self.gridset = GridSet()
-        self.completed = False
-        self.particlefile = None
+        self.completed: bool = False
+        self.particlefile: ParticleFile | None = None
         if U:
             self.add_field(U, "U")
-            self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
+            # see #1663 for type-ignore reason
+            self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin  # type: ignore
         if V:
             self.add_field(V, "V")
 
@@ -69,9 +67,9 @@ class FieldSet:
         data,
         dimensions,
         transpose=False,
-        mesh="spherical",
-        allow_time_extrapolation=None,
-        time_periodic=False,
+        mesh: Mesh = "spherical",
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
         **kwargs,
     ):
         """Initialise FieldSet object from raw data.
@@ -138,7 +136,7 @@ class FieldSet:
             lat = dims["lat"]
             depth = np.zeros(1, dtype=np.float32) if "depth" not in dims else dims["depth"]
             time = np.zeros(1, dtype=np.float64) if "time" not in dims else dims["time"]
-            time = np.array(time) if not isinstance(time, np.ndarray) else time
+            time = np.array(time)
             if isinstance(time[0], np.datetime64):
                 time_origin = TimeConverter(time[0])
                 time = np.array([time_origin.reltime(t) for t in time])
@@ -161,7 +159,7 @@ class FieldSet:
         v = fields.pop("V", None)
         return cls(u, v, fields=fields)
 
-    def add_field(self, field, name=None):
+    def add_field(self, field: Field | NestedField, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
 
         Parameters
@@ -169,7 +167,8 @@ class FieldSet:
         field : parcels.field.Field
             Field object to be added
         name : str
-            Name of the :class:`parcels.field.Field` object to be added
+            Name of the :class:`parcels.field.Field` object to be added. Defaults
+            to name in Field object.
 
 
         Examples
@@ -186,6 +185,7 @@ class FieldSet:
                 "FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?"
             )
         name = field.name if name is None else name
+
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
             raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
         if isinstance(field, NestedField):
@@ -198,7 +198,7 @@ class FieldSet:
             self.gridset.add_grid(field)
             field.fieldset = self
 
-    def add_constant_field(self, name, value, mesh="flat"):
+    def add_constant_field(self, name: str, value: float, mesh: Mesh = "flat"):
         """Wrapper function to add a Field that is constant in space,
            useful e.g. when using constant horizontal diffusivity
 
@@ -344,10 +344,10 @@ class FieldSet:
         dimensions,
         indices=None,
         fieldtype=None,
-        mesh="spherical",
+        mesh: Mesh = "spherical",
         timestamps=None,
-        allow_time_extrapolation=None,
-        time_periodic=False,
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
         deferred_load=True,
         chunksize=None,
         **kwargs,
@@ -417,7 +417,7 @@ class FieldSet:
             ``{parcels_varname: {netcdf_dimname : (parcels_dimname, chunksize_as_int)}, ...}``, where ``parcels_dimname`` is one of ('time', 'depth', 'lat', 'lon')
         netcdf_engine :
             engine to use for netcdf reading in xarray. Default is 'netcdf',
-            but in cases where this doesn't work, setting netcdf_engine='scipy' could help
+            but in cases where this doesn't work, setting netcdf_engine='scipy' could help. Accepted options are the same as the ``engine`` parameter in ``xarray.open_dataset()``.
         **kwargs :
             Keyword arguments passed to the :class:`parcels.Field` constructor.
 
@@ -444,7 +444,7 @@ class FieldSet:
             )
             timestamps = None
 
-        fields = {}
+        fields: dict[str, Field] = {}
         if "creation_log" not in kwargs.keys():
             kwargs["creation_log"] = "from_netcdf"
         for var, name in variables.items():
@@ -527,10 +527,10 @@ class FieldSet:
         variables,
         dimensions,
         indices=None,
-        mesh="spherical",
-        allow_time_extrapolation=None,
-        time_periodic=False,
-        tracer_interp_method="cgrid_tracer",
+        mesh: Mesh = "spherical",
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
+        tracer_interp_method: InterpMethodOption = "cgrid_tracer",
         chunksize=None,
         **kwargs,
     ):
@@ -638,10 +638,10 @@ class FieldSet:
         variables,
         dimensions,
         indices=None,
-        mesh="spherical",
-        allow_time_extrapolation=None,
-        time_periodic=False,
-        tracer_interp_method="cgrid_tracer",
+        mesh: Mesh = "spherical",
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
+        tracer_interp_method: InterpMethodOption = "cgrid_tracer",
         chunksize=None,
         **kwargs,
     ):
@@ -688,11 +688,11 @@ class FieldSet:
         variables,
         dimensions,
         indices=None,
-        mesh="spherical",
-        allow_time_extrapolation=None,
-        time_periodic=False,
-        tracer_interp_method="cgrid_tracer",
-        gridindexingtype="nemo",
+        mesh: Mesh = "spherical",
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
+        tracer_interp_method: InterpMethodOption = "cgrid_tracer",
+        gridindexingtype: GridIndexingType = "nemo",
         chunksize=None,
         **kwargs,
     ):
@@ -770,12 +770,12 @@ class FieldSet:
         if "U" in dimensions and "V" in dimensions and dimensions["U"] != dimensions["V"]:
             raise ValueError(
                 "On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
-                "See also ../examples/documentation_indexing.ipynb"
+                "See also https://docs.oceanparcels.org/en/latest/examples/documentation_indexing.html"
             )
         if "U" in dimensions and "W" in dimensions and dimensions["U"] != dimensions["W"]:
             raise ValueError(
                 "On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U, V and W. "
-                "See also ../examples/documentation_indexing.ipynb"
+                "See also https://docs.oceanparcels.org/en/latest/examples/documentation_indexing.html"
             )
         if "interp_method" in kwargs.keys():
             raise TypeError("On a C-grid, the interpolation method for velocities should not be overridden")
@@ -810,10 +810,10 @@ class FieldSet:
         variables,
         dimensions,
         indices=None,
-        mesh="spherical",
-        allow_time_extrapolation=None,
-        time_periodic=False,
-        tracer_interp_method="bgrid_tracer",
+        mesh: Mesh = "spherical",
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
+        tracer_interp_method: InterpMethodOption = "bgrid_tracer",
         chunksize=None,
         depth_units="m",
         **kwargs,
@@ -933,10 +933,10 @@ class FieldSet:
         variables,
         dimensions,
         indices=None,
-        mesh="spherical",
-        allow_time_extrapolation=None,
-        time_periodic=False,
-        tracer_interp_method="bgrid_tracer",
+        mesh: Mesh = "spherical",
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
+        tracer_interp_method: InterpMethodOption = "bgrid_tracer",
         chunksize=None,
         **kwargs,
     ):
@@ -1057,10 +1057,10 @@ class FieldSet:
         variables,
         dimensions,
         indices=None,
-        mesh="spherical",
-        allow_time_extrapolation=None,
-        time_periodic=False,
-        tracer_interp_method="bgrid_tracer",
+        mesh: Mesh = "spherical",
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
+        tracer_interp_method: InterpMethodOption = "bgrid_tracer",
         chunksize=None,
         **kwargs,
     ):
@@ -1134,12 +1134,12 @@ class FieldSet:
         if "U" in dimensions and "V" in dimensions and dimensions["U"] != dimensions["V"]:
             raise ValueError(
                 "On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U and V. "
-                "See also ../examples/documentation_indexing.ipynb"
+                "See also https://docs.oceanparcels.org/en/latest/examples/documentation_indexing.html"
             )
         if "U" in dimensions and "W" in dimensions and dimensions["U"] != dimensions["W"]:
             raise ValueError(
                 "On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U, V and W. "
-                "See also ../examples/documentation_indexing.ipynb"
+                "See also https://docs.oceanparcels.org/en/latest/examples/documentation_indexing.html"
             )
 
         interp_method = {}
@@ -1174,8 +1174,8 @@ class FieldSet:
         vvar="vomecrty",
         indices=None,
         extra_fields=None,
-        allow_time_extrapolation=None,
-        time_periodic=False,
+        allow_time_extrapolation: bool | None = None,
+        time_periodic: TimePeriodic = False,
         deferred_load=True,
         chunksize=None,
         **kwargs,
