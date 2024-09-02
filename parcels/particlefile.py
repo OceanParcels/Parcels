@@ -1,6 +1,7 @@
 """Module controlling the writing of ParticleSets to Zarr file."""
 
 import os
+import warnings
 from datetime import timedelta
 
 import numpy as np
@@ -9,7 +10,7 @@ import zarr
 
 import parcels
 from parcels._compat import MPI
-from parcels.tools.loggers import logger
+from parcels.tools.warnings import FileWarning
 
 __all__ = ["ParticleFile"]
 
@@ -112,8 +113,10 @@ class ParticleFile:
             if MPI and MPI.COMM_WORLD.Get_size() > 1:
                 self.fname = os.path.join(name, f"proc{self.mpi_rank:02d}.zarr")
                 if extension in [".zarr"]:
-                    logger.warning(
-                        f"The ParticleFile name contains .zarr extension, but zarr files will be written per processor in MPI mode at {self.fname}"
+                    warnings.warn(
+                        f"The ParticleFile name contains .zarr extension, but zarr files will be written per processor in MPI mode at {self.fname}",
+                        FileWarning,
+                        stacklevel=2,
                     )
             else:
                 self.fname = name if extension in [".zarr"] else "%s.zarr" % name
@@ -204,7 +207,11 @@ class ParticleFile:
         time = time.total_seconds() if isinstance(time, timedelta) else time
 
         if pset.particledata._ncount == 0:
-            logger.warning("ParticleSet is empty on writing as array at time %g" % time)
+            warnings.warn(
+                "ParticleSet is empty on writing as array at time %g" % time,
+                RuntimeWarning,
+                stacklevel=2,
+            )
             return
 
         if indices is None:
@@ -229,10 +236,12 @@ class ParticleFile:
                 if self.chunks is None:
                     self.chunks = (len(ids), 1)
                 if pset.repeatpclass is not None and self.chunks[0] < 1e4:
-                    logger.warning(
+                    warnings.warn(
                         f"ParticleFile chunks are set to {self.chunks}, but this may lead to "
                         f"a significant slowdown in Parcels when many calls to repeatdt. "
-                        f"Consider setting a larger chunk size for your ParticleFile (e.g. chunks=(int(1e4), 1))."
+                        f"Consider setting a larger chunk size for your ParticleFile (e.g. chunks=(int(1e4), 1)).",
+                        FileWarning,
+                        stacklevel=2,
                     )
                 if (self.maxids > len(ids)) or (self.maxids > self.chunks[0]):
                     arrsize = (self.maxids, self.chunks[1])

@@ -1,6 +1,7 @@
 import collections
 import datetime
 import math
+import warnings
 from ctypes import POINTER, Structure, c_float, c_int, pointer
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Type
@@ -18,7 +19,6 @@ from parcels.tools.converters import (
     UnitConverter,
     unitconverters_map,
 )
-from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
     AllParcelsErrorCodes,
     FieldOutOfBoundError,
@@ -26,6 +26,7 @@ from parcels.tools.statuscodes import (
     FieldSamplingError,
     TimeExtrapolationError,
 )
+from parcels.tools.warnings import FieldSetWarning, _deprecated_param_netcdf_decodewarning
 
 from .fieldfilebuffer import (
     DaskFileBuffer,
@@ -163,6 +164,10 @@ class Field:
         to_write=False,
         **kwargs,
     ):
+        if kwargs.get("netcdf_decodewarning") is not None:
+            _deprecated_param_netcdf_decodewarning()
+            kwargs.pop("netcdf_decodewarning")
+
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
@@ -211,8 +216,10 @@ class Field:
             GridType.RectilinearSGrid,
             GridType.CurvilinearSGrid,
         ]:
-            logger.warning_once(  # type: ignore
-                "General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal."
+            warnings.warn(
+                "General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal.",
+                FieldSetWarning,
+                stacklevel=2,
             )
 
         self.fieldset: "FieldSet" | None = None
@@ -223,9 +230,10 @@ class Field:
 
         self.time_periodic = time_periodic
         if self.time_periodic is not False and self.allow_time_extrapolation:
-            logger.warning_once(  # type: ignore
-                "allow_time_extrapolation and time_periodic cannot be used together.\n \
-                                 allow_time_extrapolation is set to False"
+            warnings.warn(
+                "allow_time_extrapolation and time_periodic cannot be used together. allow_time_extrapolation is set to False",
+                FieldSetWarning,
+                stacklevel=2,
             )
             self.allow_time_extrapolation = False
         if self.time_periodic is True:
@@ -275,9 +283,8 @@ class Field:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        self.netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
-        self.loaded_time_indices: Iterable[int] = []
-        self.creation_log: str = kwargs.pop("creation_log", "")
+        self.loaded_time_indices: Iterable[int] = []  # type: ignore
+        self.creation_log = kwargs.pop("creation_log", "")
         self.chunksize = kwargs.pop("chunksize", None)
         self.netcdf_chunkdims_name_map = kwargs.pop("chunkdims_name_map", None)
         self.grid.depth_field = kwargs.pop("depth_field", None)
@@ -315,8 +322,10 @@ class Field:
 
     @staticmethod
     def collect_timeslices(
-        timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning=True
+        timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning=None
     ):
+        if netcdf_decodewarning is not None:
+            _deprecated_param_netcdf_decodewarning()
         if timestamps is not None:
             dataFiles = []
             for findex in range(len(data_filenames)):
@@ -329,9 +338,7 @@ class Field:
             timeslices = []
             dataFiles = []
             for fname in data_filenames:
-                with _grid_fb_class(
-                    fname, dimensions, indices, netcdf_engine=netcdf_engine, netcdf_decodewarning=netcdf_decodewarning
-                ) as filebuffer:
+                with _grid_fb_class(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
                     ftime = filebuffer.time
                     timeslices.append(ftime)
                     dataFiles.append([fname] * len(ftime))
@@ -408,7 +415,7 @@ class Field:
         chunksize :
             size of the chunks in dask loading
         netcdf_decodewarning : bool
-            Whether to show a warning id there is a problem decoding the netcdf files.
+            (DEPRECATED - v3.1.0) Whether to show a warning if there is a problem decoding the netcdf files.
             Default is True, but in some cases where these warnings are expected, it may be useful to silence them
             by setting netcdf_decodewarning=False.
         grid :
@@ -423,6 +430,10 @@ class Field:
         * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
 
         """
+        if kwargs.get("netcdf_decodewarning") is not None:
+            _deprecated_param_netcdf_decodewarning()
+            kwargs.pop("netcdf_decodewarning")
+
         # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
             if isinstance(filenames, list):
@@ -475,7 +486,6 @@ class Field:
             depth_filename = depth_filename[0]
 
         netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
 
         indices = {} if indices is None else indices.copy()
         for ind in indices:
@@ -498,9 +508,7 @@ class Field:
 
         _grid_fb_class = NetcdfFileBuffer
 
-        with _grid_fb_class(
-            lonlat_filename, dimensions, indices, netcdf_engine, netcdf_decodewarning=netcdf_decodewarning
-        ) as filebuffer:
+        with _grid_fb_class(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.lonlat
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
@@ -514,7 +522,6 @@ class Field:
                 indices,
                 netcdf_engine,
                 interp_method=interp_method,
-                netcdf_decodewarning=netcdf_decodewarning,
             ) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 if dimensions["depth"] == "not_yet_set":
@@ -537,7 +544,7 @@ class Field:
             # Concatenate time variable to determine overall dimension
             # across multiple files
             time, time_origin, timeslices, dataFiles = cls.collect_timeslices(
-                timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning
+                timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
             )
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
@@ -546,7 +553,7 @@ class Field:
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
             _, _, _, dataFiles = cls.collect_timeslices(
-                timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning
+                timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
             )
             kwargs["dataFiles"] = dataFiles
 
@@ -554,7 +561,9 @@ class Field:
         grid.chunksize = chunksize
 
         if "time" in indices:
-            logger.warning_once("time dimension in indices is not necessary anymore. It is then ignored.")  # type: ignore
+            warnings.warn(
+                "time dimension in indices is not necessary anymore. It is then ignored.", FieldSetWarning, stacklevel=2
+            )
 
         if "full_load" in kwargs:  # for backward compatibility with Parcels < v2.0.0
             deferred_load = not kwargs["full_load"]
@@ -587,7 +596,6 @@ class Field:
                     interp_method=interp_method,
                     data_full_zdim=data_full_zdim,
                     chunksize=chunksize,
-                    netcdf_decodewarning=netcdf_decodewarning,
                 ) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
@@ -632,7 +640,6 @@ class Field:
         kwargs["indices"] = indices
         kwargs["time_periodic"] = time_periodic
         kwargs["netcdf_engine"] = netcdf_engine
-        kwargs["netcdf_decodewarning"] = netcdf_decodewarning
 
         return cls(
             variable,
@@ -820,16 +827,13 @@ class Field:
                         self.grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
                 self.cell_edge_sizes = self.grid.cell_edge_sizes
             else:
-                logger.error(
+                raise ValueError(
                     (
-                        "Field.cell_edge_sizes() not implemented for ",
-                        self.grid.gtype,
-                        "grids.",
-                        "You can provide Field.grid.cell_edge_sizes yourself",
-                        "by in e.g. NEMO using the e1u fields etc from the mesh_mask.nc file",
+                        f"Field.cell_edge_sizes() not implemented for {self.grid.gtype} grids. "
+                        "You can provide Field.grid.cell_edge_sizes yourself by in, e.g., "
+                        "NEMO using the e1u fields etc from the mesh_mask.nc file."
                     )
                 )
-                exit(-1)
 
     def cell_areas(self):
         """Method to calculate cell sizes based on cell_edge_sizes.
@@ -1347,8 +1351,10 @@ class Field:
 
     def _check_velocitysampling(self):
         if self.name in ["U", "V", "W"]:
-            logger.warning_once(
-                "Sampling of velocities should normally be done using fieldset.UV or fieldset.UVW object; tread carefully"
+            warnings.warn(
+                "Sampling of velocities should normally be done using fieldset.UV or fieldset.UVW object; tread carefully",
+                RuntimeWarning,
+                stacklevel=2,
             )
 
     def __getitem__(self, key):
@@ -1653,7 +1659,6 @@ class Field:
             cast_data_dtype=self.cast_data_dtype,
             rechunk_callback_fields=rechunk_callback_fields,
             chunkdims_name_map=self.netcdf_chunkdims_name_map,
-            netcdf_decodewarning=self.netcdf_decodewarning,
         )
         filebuffer.__enter__()
         time_data = filebuffer.time

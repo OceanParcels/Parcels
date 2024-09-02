@@ -1,5 +1,6 @@
 import datetime
 import math
+import warnings
 
 import dask.array as da
 import numpy as np
@@ -11,8 +12,8 @@ from netCDF4 import Dataset as ncDataset
 
 from parcels._typing import InterpMethodOption
 from parcels.tools.converters import convert_xarray_time_units
-from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import DaskChunkingError
+from parcels.tools.warnings import FileWarning
 
 
 class _FileBuffer:
@@ -45,7 +46,6 @@ class NetcdfFileBuffer(_FileBuffer):
     def __init__(self, *args, **kwargs):
         self.lib = np
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        self.netcdf_decodewarning = kwargs.pop("netcdf_decodewarning", True)
         super().__init__(*args, **kwargs)
 
     def __enter__(self):
@@ -56,11 +56,12 @@ class NetcdfFileBuffer(_FileBuffer):
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
             self.dataset["decoded"] = True
         except:
-            if self.netcdf_decodewarning:
-                logger.warning_once(
-                    f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
-                    "It will be opened with no decoding. Filling values might be wrongly parsed."
-                )
+            warnings.warn(
+                f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
+                "It will be opened with no decoding. Filling values might be wrongly parsed.",
+                FileWarning,
+                stacklevel=2,
+            )
 
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
             self.dataset["decoded"] = False
@@ -336,8 +337,11 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 )
             self.dataset["decoded"] = True
         except:
-            logger.warning_once(
-                f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). It will be opened with no decoding. Filling values might be wrongly parsed."
+            warnings.warn(
+                f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
+                "It will be opened with no decoding. Filling values might be wrongly parsed.",
+                FileWarning,
+                stacklevel=2,
             )
             if self.lock_file:
                 self.dataset = xr.open_dataset(
@@ -740,9 +744,11 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 if predefined_cap is not None:
                     chunk_cap = da_utils.parse_bytes(predefined_cap)
                 else:
-                    logger.info_once(
-                        "Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically."
-                        "Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.oceanparcels.org/en/latest/examples/documentation_MPI.html#Chunking-the-FieldSet-with-dask and https://docs.dask.org)."
+                    warnings.warn(
+                        "Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. "
+                        "Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.oceanparcels.org/en/latest/examples/documentation_MPI.html#Chunking-the-FieldSet-with-dask and https://docs.dask.org).",
+                        FileWarning,
+                        stacklevel=2,
                     )
             loni, lonname, lonvalue = self._is_dimension_in_dataset("lon")
             lati, latname, latvalue = self._is_dimension_in_dataset("lat")
@@ -779,8 +785,10 @@ class DaskFileBuffer(NetcdfFileBuffer):
             if isinstance(self.chunksize, dict):
                 self.chunksize = init_chunk_dict
         except:
-            logger.warning(
-                f"Chunking with init_chunk_dict = {init_chunk_dict} failed - Executing Dask chunking 'failsafe'..."
+            warnings.warn(
+                f"Chunking with init_chunk_dict = {init_chunk_dict} failed - Executing Dask chunking 'failsafe'...",
+                FileWarning,
+                stacklevel=2,
             )
             self.autochunkingfailed = True
             if not self.autochunkingfailed:

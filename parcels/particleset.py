@@ -1,5 +1,6 @@
 import os
 import sys
+import warnings
 from copy import copy
 from datetime import date, datetime, timedelta
 
@@ -29,6 +30,7 @@ from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_arra
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
+from parcels.tools.warnings import FileWarning
 
 __all__ = ["ParticleSet"]
 
@@ -710,10 +712,12 @@ class ParticleSet:
             Keyword arguments passed to the particleset constructor.
         """
         if repeatdt is not None:
-            logger.warning(
+            warnings.warn(
                 f"Note that the `repeatdt` argument is not retained from {filename}, and that "
                 "setting a new repeatdt will start particles from the _new_ particle "
-                "locations."
+                "locations.",
+                FileWarning,
+                stacklevel=2,
             )
 
         pfile = xr.open_zarr(str(filename))
