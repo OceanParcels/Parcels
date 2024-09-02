@@ -157,6 +157,10 @@ class Field:
         to_write=False,
         **kwargs,
     ):
+        if kwargs.get("netcdf_decodewarning") is not None:
+            _deprecated_param_netcdf_decodewarning()
+            kwargs.pop("netcdf_decodewarning")
+
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
@@ -271,8 +275,6 @@ class Field:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        if kwargs.get("netcdf_decodewarning") is not None:
-            _deprecated_param_netcdf_decodewarning()
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop("creation_log", "")
         self.chunksize = kwargs.pop("chunksize", None)
@@ -405,14 +407,9 @@ class Field:
         chunksize :
             size of the chunks in dask loading
         netcdf_decodewarning : bool
-            Whether to show a warning id there is a problem decoding the netcdf files.
+            (DEPRECATED - v3.1.0) Whether to show a warning if there is a problem decoding the netcdf files.
             Default is True, but in some cases where these warnings are expected, it may be useful to silence them
             by setting netcdf_decodewarning=False.
-            .. deprecated:: 3.1.0
-                The 'netcdf_decodewarning' argument is deprecated in v3.1.0 and will be removed completely in a future release.
-                The parameter no longer has any effect, please use the Python warnings module to control warnings,
-                e.g., warnings.filterwarnings('ignore', category=parcels.FileWarning).
-                See also https://docs.oceanparcels.org/en/latest/examples/tutorial_nemo_3D.html
         grid :
              (Default value = None)
         **kwargs :
@@ -425,6 +422,10 @@ class Field:
         * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
 
         """
+        if kwargs.get("netcdf_decodewarning") is not None:
+            _deprecated_param_netcdf_decodewarning()
+            kwargs.pop("netcdf_decodewarning")
+
         # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
             if isinstance(filenames, list):
@@ -477,8 +478,6 @@ class Field:
             depth_filename = depth_filename[0]
 
         netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        if kwargs.get("netcdf_decodewarning") is not None:
-            _deprecated_param_netcdf_decodewarning()
 
         indices = {} if indices is None else indices.copy()
         for ind in indices:
