@@ -1,9 +1,6 @@
 import pytest
 
-from parcels.util._helpers import deprecated, deprecated_made_private
-
-# Write me tests to test deprecated and depreacted_made_private decorators
-# They should raise a DeprecationWarning, and also have the function name (or in the case of a method, {class_name}.{method_name}) in the warning message
+from parcels.tools._helpers import deprecated, deprecated_made_private
 
 
 def test_deprecated():
