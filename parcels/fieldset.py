@@ -725,6 +725,12 @@ class FieldSet:
             else:
                 interp_method[v] = tracer_interp_method
 
+        # Suppress the warning about the velocity interpolation since it is ok for CROCO
+        warnings.filterwarnings(
+            "ignore",
+            "Sampling of velocities should normally be done using fieldset.UV or fieldset.UVW object; tread carefully",
+        )
+
         fieldset = cls.from_netcdf(
             filenames,
             variables,
