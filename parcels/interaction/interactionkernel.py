@@ -1,5 +1,6 @@
 import inspect
 import sys
+import warnings
 from collections import defaultdict
 
 import numpy as np
@@ -7,7 +8,6 @@ import numpy as np
 from parcels._compat import MPI
 from parcels.field import NestedField, VectorField
 from parcels.kernel import BaseKernel
-from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
 
 __all__ = ["InteractionKernel"]
@@ -206,8 +206,10 @@ class InteractionKernel(BaseKernel):
                 # InteractionKernels do not implement a way to recover
                 # from errors.
                 if res != StatusCode.Success:
-                    logger.warning_once(
-                        "Some InteractionKernel was not completed succesfully, likely because a Particle threw an error that was not captured."
+                    warnings.warn(
+                        "Some InteractionKernel was not completed succesfully, likely because a Particle threw an error that was not captured.",
+                        RuntimeWarning,
+                        stacklevel=2,
                     )
 
             for particle_idx in active_idx:
@@ -231,8 +233,10 @@ class InteractionKernel(BaseKernel):
         pset.particledata.state[:] = StatusCode.Evaluate
 
         if abs(dt) < 1e-6:
-            logger.warning_once(
-                "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)"
+            warnings.warn(
+                "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)",
+                RuntimeWarning,
+                stacklevel=2,
             )
 
         if pset.fieldset is not None:
@@ -265,7 +269,11 @@ class InteractionKernel(BaseKernel):
                 elif p.state == StatusCode.Delete:
                     pass
                 else:
-                    logger.warning_once(f"Deleting particle {p.id} because of non-recoverable error")
+                    warnings.warn(
+                        f"Deleting particle {p.id} because of non-recoverable error",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
                     p.delete()
 
             # Remove all particles that signalled deletion

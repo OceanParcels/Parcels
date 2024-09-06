@@ -3,7 +3,10 @@ import unittest.mock
 import pytest
 import requests
 
-from parcels import download_example_dataset, list_example_datasets
+from parcels import (
+    download_example_dataset,
+    list_example_datasets,
+)
 
 
 @pytest.mark.skip(reason="too time intensive")

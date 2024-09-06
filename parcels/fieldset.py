@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import sys
+import warnings
 from copy import deepcopy
 from glob import glob
 
@@ -16,6 +17,7 @@ from parcels.particlefile import ParticleFile
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import TimeExtrapolationError
+from parcels.tools.warnings import FieldSetWarning
 
 __all__ = ["FieldSet"]
 
@@ -435,7 +437,11 @@ class FieldSet:
         """
         # Ensure that times are not provided both in netcdf file and in 'timestamps'.
         if timestamps is not None and "time" in dimensions:
-            logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")  # type: ignore
+            warnings.warn(
+                "Time already provided, defaulting to dimensions['time'] over timestamps.",
+                FieldSetWarning,
+                stacklevel=2,
+            )
             timestamps = None
 
         fields: dict[str, Field] = {}
@@ -968,8 +974,10 @@ class FieldSet:
         if hasattr(fieldset, "W"):
             if depth_units == "m":
                 fieldset.W.set_scaling_factor(-0.01)  # cm/s to m/s and change the W direction
-                logger.warning_once(  # type: ignore
-                    "Parcels assumes depth in POP output to be in 'm'. Use depth_units='cm' if the output depth is in 'cm'."
+                warnings.warn(
+                    "Parcels assumes depth in POP output to be in 'm'. Use depth_units='cm' if the output depth is in 'cm'.",
+                    FieldSetWarning,
+                    stacklevel=2,
                 )
             elif depth_units == "cm":
                 fieldset.W.set_scaling_factor(-1.0)  # change the W direction but keep W in cm/s because depth is in cm
