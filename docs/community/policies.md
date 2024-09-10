@@ -6,9 +6,9 @@ Parcels, as of v3.1.0, has adopted versioning and deprecation policies.
 
 Parcels mostly follows [semantic versioning](https://semver.org/), where the version number (e.g., v2.1.0) is thought of as `MAJOR.MINOR.PATCH`.
 
-> MAJOR version for incompatible API changes
-> MINOR version for added functionality in a backward compatible manner
-> PATCH version for backward compatible bug fixes
+> MAJOR version for incompatible API changes<br>
+> MINOR version for added functionality in a backward compatible manner<br>
+> PATCH version for backward compatible bug fixes<br>
 
 Parcels doesn't implement strict backwards compatibility between minor versions. We may make small changes that deprecate elements of the codebase (e.g., an obscure parameter that is no longer needed). Such deprecations will follow our deprecation policy.
 

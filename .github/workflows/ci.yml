@@ -46,6 +46,7 @@ jobs:
         uses: codecov/codecov-action@v4.5.0
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        if: matrix.python-version == '3.12'
         with:
           flags: unit-tests
       - name: Upload test results

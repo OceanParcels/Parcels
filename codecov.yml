@@ -7,6 +7,9 @@ coverage:
       default:
         informational: true
 comment:
+  # Wait until all builds that upload coverage report have completed before commenting on
+  # the PR with the coverage report.
+  after_n_builds: 6
   layout: " diff, flags, files"
   behavior: default
   require_changes: true
