@@ -7,7 +7,7 @@ from parcels.grid import RectilinearGrid
 
 
 def validate_simple_repr(class_: type, kwargs: dict[str, Any]):
-    """Test that the repr of an object contains all the arguments. This only works for simple objects."""
+    """Test that the repr of an object contains all the arguments. This only works for objects where the repr matches the calling signature."""
     obj = class_(**kwargs)
     obj_repr = repr(obj)
 
