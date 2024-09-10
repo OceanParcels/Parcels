@@ -92,6 +92,14 @@ class Grid:
         self._add_last_periodic_data_timestep = False
         self.depth_field = None
 
+    def __repr__(self):
+        with np.printoptions(threshold=5, suppress=True, linewidth=120, formatter={"float": "{: 0.2f}".format}):
+            return (
+                f"{type(self).__name__}("
+                f"lon={self.lon!r}, lat={self.lat!r}, time={self.time!r}, "
+                f"time_origin={self.time_origin!r}, mesh={self.mesh!r})"
+            )
+
     @staticmethod
     def create_grid(
         lon: npt.ArrayLike,
