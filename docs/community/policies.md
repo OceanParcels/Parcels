@@ -24,4 +24,4 @@ Deprecations in the Parcels codebase between minor releases will be handled usin
 
 These changes will be communicated in release notes.
 
-Note that objects and modules won't be deprecated between minor releases, and that deprecations between major releases can be done at will as API changes are already expected.
+Deprecations of classes or modules between minor releases will be avoided, except in the instance where it is deemed to have little to no impact on the end user (e.g., if the class/module was mistakenly included in the Public API to begin with, and isn't used in any user scripts or tutorial notebooks).
