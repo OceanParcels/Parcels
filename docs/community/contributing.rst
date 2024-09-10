@@ -41,8 +41,8 @@ Your first contribution
 There are many ways that you can contribute to Parcels. You can:
 
 - Participate in discussion about Parcels, either through the `issues <https://github.com/OceanParcels/parcels/issues>`_ or `discussions <https://github.com/OceanParcels/parcels/discussions>`_ tab
-- Suggest improvements to `tutorials <documentation/index.rst>`_
-- Suggest improvements to `documentation <index.rst>`_
+- Suggest improvements to `tutorials <../documentation/index.rst>`_
+- Suggest improvements to `documentation <../index.rst>`_
 - Write code (fix bugs, implement features, codebase improvements, etc)
 
 All of these require you to make an account on GitHub, so that should be your first step.
@@ -64,7 +64,7 @@ Development environment setup
 To get started contributing to Parcels:
 
 - `fork the repo <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo#forking-a-repository>`_
-- install the developer version of Parcels following `our developer installation instructions <installation.rst#installation-for-developers>`_
+- install the developer version of Parcels following `our developer installation instructions <../installation.rst#installation-for-developers>`_
     - but instead of cloning the Parcels repo, you should clone your fork
 
 Now you have a cloned repo that you have full control over, and a conda environment where Parcels is installed in an editable mode (i.e., any changes that you make to the Parcels code will take effect when you use that conda environment to run Python code).
@@ -72,7 +72,7 @@ Now you have a cloned repo that you have full control over, and a conda environm
 From there:
 
 - create a git branch, implement, commit, and push your changes
-- `create a pull request <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork>`_ into ``master`` of the original repo making sure to link to the issue that you are working on. This can either be done while you're developing (as a draft pull request) so that feedback can be given, or when you think your change is ready to be seen.
+- `create a pull request <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork>`_ (PR) into ``master`` of the original repo making sure to link to the issue that you are working on. Not yet finished with your feature but still want feedback on how you're going? Then mark it as "draft" and ``@ping`` a maintainer. See our `maintainer notes <maintainer.md>`_ to see our PR review workflow.
 
 If you made changes to the documentation, and want to render a local version, you can run the command ``sphinx-autobuild --ignore "*.zip" docs docs/_build`` to create a server to automatically rebuild the documentation when you make changes.
 
