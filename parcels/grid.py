@@ -352,7 +352,7 @@ class RectilinearGrid(Grid):
                 stacklevel=2,
             )
 
-    def add_periodic_halo(self, zonal, meridional, halosize=5):
+    def add_periodic_halo(self, zonal: bool, meridional: bool, halosize: int = 5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
         similarly to the halo created for the Fields
 

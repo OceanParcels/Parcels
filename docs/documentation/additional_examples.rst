@@ -1,3 +1,6 @@
+Python Example Scripts
+======================
+
 example_brownian.py
 -------------------
 

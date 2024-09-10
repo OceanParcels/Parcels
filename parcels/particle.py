@@ -1,5 +1,6 @@
 from ctypes import c_void_p
 from operator import attrgetter
+from typing import Literal
 
 import numpy as np
 
@@ -27,7 +28,7 @@ class Variable:
         If to_write = 'once', the variable will be written as a time-independent 1D array
     """
 
-    def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
+    def __init__(self, name, dtype=np.float32, initial=0, to_write: bool | Literal["once"] = True):
         self.name = name
         self.dtype = dtype
         self.initial = initial
