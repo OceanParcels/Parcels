@@ -46,6 +46,7 @@ jobs:
         uses: codecov/codecov-action@v4.5.0
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        if: matrix.python-version == '3.12'
         with:
           flags: unit-tests
       - name: Upload test results
@@ -91,11 +92,11 @@ jobs:
       - unit-test
       - integration-test
     steps:
-    - name: Merge Artifacts
-      uses: actions/upload-artifact/merge@v4
-      with:
-        name: Testing reports
-        pattern: "* report *"
+      - name: Merge Artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: Testing reports
+          pattern: "* report *"
   typechecking:
     name: mypy
     runs-on: ubuntu-latest
