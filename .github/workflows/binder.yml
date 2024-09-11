@@ -1,0 +1,10 @@
+name: Binder
+on:
+  workflow_dispatch:
+
+jobs:
+  binder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: cache binder build on mybinder.org
+        uses: jupyterhub/repo2docker-action@master
