@@ -5,10 +5,10 @@
 ## PR review workflow
 
 - Submit a PR (mark as draft if your feature isn't ready yet, but still want to share your work)
-- Request PR to be reviewed by a maintainer
+- Request PR to be reviewed by at least one maintainer. Other users are also welcome to submit reviews on PRs.
 - Implement or discuss suggested edits
 - Once PR is approved:
-  - Original author merge (if original author has sufficient permissions)
+  - Original author merges the PR (if original author has sufficient permissions)
   - Wait for maintainer to merge
   - If more edits are required: Implement edits and re-request review if changes are significant
 - Close linked issue

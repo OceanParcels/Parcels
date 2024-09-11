@@ -79,7 +79,7 @@ If you made changes to the documentation, and want to render a local version, yo
 Code guidelines
 ~~~~~~~~~~~~~~~
 
-.. warning::
+.. note::
 
     These guidelines are here to promote Python best practices, as well as standardise the Parcels code. If you're not sure what some of these guidelines mean, don't worry! Your contribution is still appreciated. When you create your pull request, maintainers can modify your code to comply with these guidelines.
 

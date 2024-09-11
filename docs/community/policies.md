@@ -12,7 +12,7 @@ Parcels mostly follows [semantic versioning](https://semver.org/), where the ver
 
 Parcels doesn't implement strict backwards compatibility between minor versions. We may make small changes that deprecate elements of the codebase (e.g., an obscure parameter that is no longer needed). Such deprecations will follow our deprecation policy.
 
-Note when conducting research we highly recommend documenting which version of Parcels (and other packages) you are using. This can be as easy as doing `conda env export > environment.yml` alongside your project code.
+Note when conducting research we highly recommend documenting which version of Parcels (and other packages) you are using. This can be as easy as doing `conda env export > environment.yml` alongside your project code. The Parcels version used to generate an output file is also stored as metadata entry in the `.zarr` output file.
 
 ## Deprecation policy
 
