@@ -119,7 +119,7 @@ class ParticleFile:
                         stacklevel=2,
                     )
             else:
-                self.fname = name if extension in [".zarr"] else "%s.zarr" % name
+                self.fname = name if extension in [".zarr"] else f"{name}.zarr"
 
     def _create_variables_attribute_dict(self):
         """Creates the dictionary with variable attributes.
@@ -208,7 +208,7 @@ class ParticleFile:
 
         if pset.particledata._ncount == 0:
             warnings.warn(
-                "ParticleSet is empty on writing as array at time %g" % time,
+                f"ParticleSet is empty on writing as array at time {time:g}",
                 RuntimeWarning,
                 stacklevel=2,
             )
