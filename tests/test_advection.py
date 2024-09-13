@@ -339,8 +339,8 @@ def fieldset_stationary():
         ("RK45", 1e-5, False),
     ],
 )
-def test_stationary_eddy(create_fieldset_stationary, mode, method, rtol, diffField, npart=1):
-    fieldset = create_fieldset_stationary
+def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npart=1):
+    fieldset = fieldset_stationary
     if diffField:
         fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
         fieldset.add_field(Field("Kh_meridional", np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
@@ -444,8 +444,8 @@ def fieldset_moving():
         ("RK45", 1e-5, False),
     ],
 )
-def test_moving_eddy(create_fieldset_moving, mode, method, rtol, diffField, npart=1):
-    fieldset = create_fieldset_moving
+def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField, npart=1):
+    fieldset = fieldset_moving
     if diffField:
         fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
         fieldset.add_field(Field("Kh_meridional", np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
@@ -518,8 +518,8 @@ def fieldset_decaying():
         ("AA", 1e-3, False),
     ],
 )
-def test_decaying_eddy(create_fieldset_decaying, mode, method, rtol, diffField, npart=1):
-    fieldset = create_fieldset_decaying
+def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1):
+    fieldset = fieldset_decaying
     if method == "AA":
         if mode == "jit":
             return  # AnalyticalAdvection not implemented in JIT
