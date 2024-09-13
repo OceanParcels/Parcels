@@ -39,31 +39,21 @@ gamma = 1 / (86400.0 * 2.89)
 gamma_g = 1 / (86400.0 * 28.9)
 
 
-def create_lon(xdim=200):
+@pytest.fixture
+def lon():
+    xdim = 200
     return np.linspace(-170, 170, xdim, dtype=np.float32)
 
 
-@pytest.fixture
-def lon():
-    return create_lon(xdim=200)
-
-
-def create_lat(ydim=100):
+def lat():
+    ydim = 100
     return np.linspace(-80, 80, ydim, dtype=np.float32)
 
 
 @pytest.fixture
-def lat():
-    return create_lat(ydim=100)
-
-
-def create_depth(zdim=2):
-    return np.linspace(0, 30, zdim, dtype=np.float32)
-
-
-@pytest.fixture
 def depth():
-    return create_depth(zdim=2)
+    zdim = 2
+    return np.linspace(0, 30, zdim, dtype=np.float32)
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])

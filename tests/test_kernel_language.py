@@ -22,6 +22,8 @@ from parcels.application_kernels.EOSseawaterproperties import (
     UNESCODensity,
 )
 from parcels.application_kernels.TEOSseawaterdensity import PolyTEOS10_bsq
+from tests.common_kernels import DoNothing
+from tests.utils import create_fieldset_unit_mesh
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
@@ -34,19 +36,9 @@ def expr_kernel(name, pset, expr):
     )
 
 
-def create_fieldset_unit_mesh(xdim=20, ydim=20):
-    """Standard unit mesh fieldset."""
-    lon = np.linspace(0.0, 1.0, xdim, dtype=np.float32)
-    lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
-    U, V = np.meshgrid(lat, lon)
-    data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
-    dimensions = {"lat": lat, "lon": lon}
-    return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
-
-
 @pytest.fixture
 def fieldset_unit_mesh():
-    return create_fieldset_unit_mesh()
+    return create_fieldset_unit_mesh(mesh="flat")
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
@@ -415,9 +407,6 @@ def test_small_dt(mode, dt, expectation, npart=10):
         lat=np.zeros(npart),
         time=np.arange(0, npart) * dt * 10,
     )
-
-    def DoNothing(particle, fieldset, time):
-        pass
 
     with expectation:
         pset.execute(DoNothing, dt=dt, runtime=dt * 101)

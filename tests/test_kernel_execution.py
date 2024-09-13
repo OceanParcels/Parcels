@@ -14,27 +14,15 @@ from parcels import (
     ScipyParticle,
     StatusCode,
 )
+from tests.common_kernels import DeleteParticle, DoNothing, MoveEast, MoveNorth
+from tests.utils import create_fieldset_unit_mesh
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
-def DoNothing(particle, fieldset, time):
-    pass
-
-
-def create_fieldset_unit_mesh(xdim=20, ydim=20):
-    """Standard unit mesh fieldset."""
-    lon = np.linspace(0.0, 1.0, xdim, dtype=np.float32)
-    lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
-    U, V = np.meshgrid(lat, lon)
-    data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
-    dimensions = {"lat": lat, "lon": lon}
-    return FieldSet.from_data(data, dimensions, mesh="flat")
-
-
 @pytest.fixture
 def fieldset_unit_mesh():
-    return create_fieldset_unit_mesh()
+    return create_fieldset_unit_mesh(mesh="flat")
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
@@ -206,25 +194,15 @@ def test_execution_delete_out_of_bounds(fieldset_unit_mesh, mode, npart=10):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
 
-    def DeleteMe(particle, fieldset, time):
-        if particle.state == StatusCode.ErrorOutOfBounds:
-            particle.delete()
-
     lon = np.linspace(0.05, 0.95, npart)
     lat = np.linspace(1, 0, npart)
     pset = ParticleSet(fieldset_unit_mesh, pclass=ptype[mode], lon=lon, lat=lat)
-    pset.execute([MoveRight, DeleteMe], endtime=10.0, dt=1.0)
+    pset.execute([MoveRight, DeleteParticle], endtime=10.0, dt=1.0)
     assert len(pset) == 0
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_kernel_add_no_new_variables(fieldset_unit_mesh, mode):
-    def MoveEast(particle, fieldset, time):
-        particle_dlon += 0.1  # noqa
-
-    def MoveNorth(particle, fieldset, time):
-        particle_dlat += 0.1  # noqa
-
     pset = ParticleSet(fieldset_unit_mesh, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveNorth), endtime=2.0, dt=1.0)
     assert np.allclose(pset.lon, 0.6, rtol=1e-5)
@@ -235,16 +213,16 @@ def test_kernel_add_no_new_variables(fieldset_unit_mesh, mode):
 def test_multi_kernel_duplicate_varnames(fieldset_unit_mesh, mode):
     # Testing for merging of two Kernels with the same variable declared
     # Should throw a warning, but go ahead regardless
-    def MoveEast(particle, fieldset, time):
+    def Kernel1(particle, fieldset, time):
         add_lon = 0.1
         particle_dlon += add_lon  # noqa
 
-    def MoveWest(particle, fieldset, time):
+    def Kernel2(particle, fieldset, time):
         add_lon = -0.3
         particle_dlon += add_lon  # noqa
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute([MoveEast, MoveWest], endtime=2.0, dt=1.0)
+    pset.execute([Kernel1, Kernel2], endtime=2.0, dt=1.0)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)
 
 
@@ -293,13 +271,6 @@ def test_combined_kernel_from_list_error_checking(fieldset):
 
     Tests that various error cases raise appropriate messages.
     """
-
-    def MoveEast(particle, fieldset, time):
-        particle_dlon += 0.1  # noqa
-
-    def MoveNorth(particle, fieldset, time):
-        particle_dlat += 0.1  # noqa
-
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
 
     # Test that list has to be non-empty

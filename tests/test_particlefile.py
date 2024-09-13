@@ -17,6 +17,7 @@ from parcels import (
 )
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
+from tests.common_kernels import DoNothing
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
@@ -41,9 +42,6 @@ def fieldset():
 def test_metadata(fieldset, mode, tmpdir):
     filepath = tmpdir.join("pfile_metadata.zarr")
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
-
-    def DoNothing(particle, fieldset, time):
-        pass
 
     pset.execute(DoNothing, runtime=1, output_file=pset.ParticleFile(filepath))
 

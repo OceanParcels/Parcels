@@ -11,6 +11,7 @@ from parcels import (
     StatusCode,
     Variable,
 )
+from tests.common_kernels import DoNothing
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
@@ -57,9 +58,6 @@ def test_pset_create_line(fieldset, mode, lonlatdepth_dtype, npart=100):
 def test_create_empty_pset(fieldset, mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode])
     assert pset.size == 0
-
-    def DoNothing(particle, fieldset, time):
-        pass
 
     pset.execute(DoNothing, endtime=1.0, dt=1.0)
     assert pset.size == 0
@@ -215,9 +213,6 @@ def test_pset_repeatdt_custominit(fieldset, mode):
     MyParticle = ptype[mode].add_variable("sample_var")
 
     pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5)
-
-    def DoNothing(particle, fieldset, time):
-        pass
 
     pset.execute(DoNothing, dt=1, runtime=21)
     assert np.allclose([p.sample_var for p in pset], 5.0)

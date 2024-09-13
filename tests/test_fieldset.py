@@ -32,6 +32,7 @@ from parcels.tools.converters import (
     _get_cftime_calendars,
     _get_cftime_datetimes,
 )
+from tests.common_kernels import DoNothing
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
@@ -998,9 +999,6 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename="test
     assert np.allclose(fieldset.U.data, scale_fac * (zdim - 1.0) / zdim)
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
-
-    def DoNothing(particle, fieldset, time):
-        pass
 
     pset.execute(DoNothing, dt=3600)
     assert np.allclose(fieldset.U.data, scale_fac * (zdim - 1.0) / zdim)
