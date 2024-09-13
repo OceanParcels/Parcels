@@ -35,11 +35,7 @@ def k_sample_uv():
     return SampleUV
 
 
-@pytest.fixture(name="k_sample_uv")
-def k_sample_uv_fixture():
-    return k_sample_uv()
-
-
+@pytest.fixture
 def k_sample_uv_noconvert():
     def SampleUVNoConvert(particle, fieldset, time):
         (particle.u, particle.v) = fieldset.UV.eval(
@@ -49,24 +45,15 @@ def k_sample_uv_noconvert():
     return SampleUVNoConvert
 
 
-@pytest.fixture(name="k_sample_uv_noconvert")
-def k_sample_uv_noconvert_fixture():
-    return k_sample_uv_noconvert()
-
-
-def k_sample_p():
+@pytest.fixture
+def k_sample_P():
     def SampleP(particle, fieldset, time):
         particle.p = fieldset.P[particle]
 
     return SampleP
 
 
-@pytest.fixture(name="k_sample_p")
-def k_sample_P_fixture():
-    return k_sample_p()
-
-
-def fieldset(xdim=200, ydim=100):
+def create_fieldset(xdim=200, ydim=100):
     """Standard fieldset spanning the earth's coordinates with U and V equivalent to longitude and latitude in deg."""
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
@@ -77,12 +64,12 @@ def fieldset(xdim=200, ydim=100):
     return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
 
-@pytest.fixture(name="fieldset")
-def fieldset_fixture(xdim=200, ydim=100):
-    return fieldset(xdim=xdim, ydim=ydim)
+@pytest.fixture
+def fieldset():
+    return create_fieldset()
 
 
-def fieldset_geometric(xdim=200, ydim=100):
+def create_fieldset_geometric(xdim=200, ydim=100):
     """Standard earth fieldset with U and V equivalent to lon/lat in m."""
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
@@ -97,12 +84,12 @@ def fieldset_geometric(xdim=200, ydim=100):
     return fieldset
 
 
-@pytest.fixture(name="fieldset_geometric")
-def fieldset_geometric_fixture(xdim=200, ydim=100):
-    return fieldset_geometric(xdim=xdim, ydim=ydim)
+@pytest.fixture
+def fieldset_geometric():
+    return create_fieldset_geometric()
 
 
-def fieldset_geometric_polar(xdim=200, ydim=100):
+def create_fieldset_geometric_polar(xdim=200, ydim=100):
     """Standard earth fieldset with U and V equivalent to lon/lat in m
     and the inversion of the pole correction applied to U.
     """
@@ -119,9 +106,9 @@ def fieldset_geometric_polar(xdim=200, ydim=100):
     return FieldSet.from_data(data, dimensions, mesh="spherical", transpose=True)
 
 
-@pytest.fixture(name="fieldset_geometric_polar")
-def fieldset_geometric_polar_fixture(xdim=200, ydim=100):
-    return fieldset_geometric_polar(xdim=xdim, ydim=ydim)
+@pytest.fixture
+def fieldset_geometric_polar():
+    return create_fieldset_geometric_polar()
 
 
 def test_fieldset_sample(fieldset, xdim=120, ydim=80):
@@ -885,7 +872,7 @@ def test_nestedfields(mode, k_sample_p):
 
 
 @pytest.mark.parametrize("mode", ["jit", "scipy"])
-def fieldset_sampling_updating_order(mode, tmpdir):
+def test_fieldset_sampling_updating_order(mode, tmpdir):
     def calc_p(t, y, x):
         return 10 * t + x + 0.2 * y
 

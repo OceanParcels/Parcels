@@ -39,31 +39,31 @@ gamma = 1 / (86400.0 * 2.89)
 gamma_g = 1 / (86400.0 * 28.9)
 
 
-def lon(xdim=200):
+def create_lon(xdim=200):
     return np.linspace(-170, 170, xdim, dtype=np.float32)
 
 
-@pytest.fixture(name="lon")
-def lon_fixture(xdim=200):
-    return lon(xdim=xdim)
+@pytest.fixture
+def lon():
+    return create_lon(xdim=200)
 
 
-def lat(ydim=100):
+def create_lat(ydim=100):
     return np.linspace(-80, 80, ydim, dtype=np.float32)
 
 
-@pytest.fixture(name="lat")
-def lat_fixture(ydim=100):
-    return lat(ydim=ydim)
+@pytest.fixture
+def lat():
+    return create_lat(ydim=100)
 
 
-def depth(zdim=2):
+def create_depth(zdim=2):
     return np.linspace(0, 30, zdim, dtype=np.float32)
 
 
-@pytest.fixture(name="depth")
-def depth_fixture(zdim=2):
-    return depth(zdim=zdim)
+@pytest.fixture
+def depth():
+    return create_depth(zdim=2)
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
@@ -198,7 +198,7 @@ def test_advection_RK45(lon, lat, mode, rk45_tol, npart=10):
     print(fieldset.RK45_tol)
 
 
-def periodicfields(xdim, ydim, uvel, vvel):
+def create_periodic_fieldset(xdim, ydim, uvel, vvel):
     dimensions = {
         "lon": np.linspace(0.0, 1.0, xdim + 1, dtype=np.float32)[1:],  # don't include both 0 and 1, for periodic b.c.
         "lat": np.linspace(0.0, 1.0, ydim + 1, dtype=np.float32)[1:],
@@ -215,7 +215,7 @@ def periodicBC(particle, fieldset, time):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
-    fieldset = periodicfields(xdim, ydim, uvel=1.0, vvel=0.0)
+    fieldset = create_periodic_fieldset(xdim, ydim, uvel=1.0, vvel=0.0)
     fieldset.add_periodic_halo(zonal=True, halosize=halosize)
     assert len(fieldset.U.lon) == xdim + 2 * halosize
 
@@ -226,7 +226,7 @@ def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
-    fieldset = periodicfields(xdim, ydim, uvel=0.0, vvel=1.0)
+    fieldset = create_periodic_fieldset(xdim, ydim, uvel=0.0, vvel=1.0)
     fieldset.add_periodic_halo(meridional=True)
     assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
 
@@ -237,7 +237,7 @@ def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
-    fieldset = periodicfields(xdim, ydim, uvel=1.0, vvel=1.0)
+    fieldset = create_periodic_fieldset(xdim, ydim, uvel=1.0, vvel=1.0)
     fieldset.add_periodic_halo(zonal=True, meridional=True)
     assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
     assert len(fieldset.U.lon) == xdim + 10  # default halo size is 5 grid points
@@ -299,8 +299,7 @@ def truth_stationary(x_0, y_0, t):
     return lon, lat
 
 
-@pytest.fixture
-def fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
+def create_fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     """Generate a FieldSet encapsulating the flow field of a stationary eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
@@ -324,6 +323,11 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     return fieldset
 
 
+@pytest.fixture
+def fieldset_stationary():
+    return create_fieldset_stationary()
+
+
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize(
     "method, rtol, diffField",
@@ -335,8 +339,8 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         ("RK45", 1e-5, False),
     ],
 )
-def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npart=1):
-    fieldset = fieldset_stationary
+def test_stationary_eddy(create_fieldset_stationary, mode, method, rtol, diffField, npart=1):
+    fieldset = create_fieldset_stationary
     if diffField:
         fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
         fieldset.add_field(Field("Kh_meridional", np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
@@ -405,8 +409,7 @@ def truth_moving(x_0, y_0, t):
     return lon, lat
 
 
-@pytest.fixture
-def fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
+def create_fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     """Generate a FieldSet encapsulating the flow field of a moving eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
@@ -425,6 +428,11 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
 
+@pytest.fixture
+def fieldset_moving():
+    return create_fieldset_moving()
+
+
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize(
     "method, rtol, diffField",
@@ -436,8 +444,8 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         ("RK45", 1e-5, False),
     ],
 )
-def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField, npart=1):
-    fieldset = fieldset_moving
+def test_moving_eddy(create_fieldset_moving, mode, method, rtol, diffField, npart=1):
+    fieldset = create_fieldset_moving
     if diffField:
         fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
         fieldset.add_field(Field("Kh_meridional", np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
@@ -473,8 +481,7 @@ def truth_decaying(x_0, y_0, t):
     return lon, lat
 
 
-@pytest.fixture
-def fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
+def create_fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     """Generate a FieldSet encapsulating the flow field of a decaying eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
@@ -494,6 +501,11 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
 
+@pytest.fixture
+def fieldset_decaying():
+    return create_fieldset_decaying()
+
+
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize(
     "method, rtol, diffField",
@@ -506,8 +518,8 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         ("AA", 1e-3, False),
     ],
 )
-def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1):
-    fieldset = fieldset_decaying
+def test_decaying_eddy(create_fieldset_decaying, mode, method, rtol, diffField, npart=1):
+    fieldset = create_fieldset_decaying
     if method == "AA":
         if mode == "jit":
             return  # AnalyticalAdvection not implemented in JIT

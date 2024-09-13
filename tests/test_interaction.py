@@ -42,7 +42,7 @@ def DoNothing(particle, fieldset, time):
     pass
 
 
-def fieldset(xdim=20, ydim=20, mesh="spherical"):
+def create_fieldset_unit_mesh(xdim=20, ydim=20, mesh="spherical"):
     """Standard unit mesh fieldset."""
     lon = np.linspace(0.0, 1.0, xdim, dtype=np.float32)
     lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
@@ -52,18 +52,20 @@ def fieldset(xdim=20, ydim=20, mesh="spherical"):
     return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
-@pytest.fixture(name="fieldset")
-def fieldset_fixture(xdim=20, ydim=20):
-    return fieldset(xdim=xdim, ydim=ydim)
+@pytest.fixture
+def fieldset_unit_mesh():
+    return create_fieldset_unit_mesh()
 
 
 @pytest.mark.parametrize("mode", ["scipy"])
-def test_simple_interaction_kernel(fieldset, mode):
+def test_simple_interaction_kernel(fieldset_unit_mesh, mode):
     lons = [0.0, 0.1, 0.25, 0.44]
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000 * 0.2 * np.pi / 180
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats, interaction_distance=interaction_distance)
+    pset = ParticleSet(
+        fieldset_unit_mesh, pclass=ptype[mode], lon=lons, lat=lats, interaction_distance=interaction_distance
+    )
     pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=2.0, dt=1.0)
     assert np.allclose(pset.lat, [0.1, 0.2, 0.1, 0.0], rtol=1e-5)
 
@@ -72,7 +74,7 @@ def test_simple_interaction_kernel(fieldset, mode):
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
 @pytest.mark.parametrize("periodic_domain_zonal", [False, True])
 def test_zonal_periodic_distance(mode, mesh, periodic_domain_zonal):
-    fset = fieldset(mesh=mesh)
+    fset = create_fieldset_unit_mesh(mesh=mesh)
     interaction_distance = 0.2 if mesh == "flat" else 6371000 * 0.2 * np.pi / 180
     lons = [0.05, 0.4, 0.95]
     pset = ParticleSet(
@@ -92,13 +94,15 @@ def test_zonal_periodic_distance(mode, mesh, periodic_domain_zonal):
 
 
 @pytest.mark.parametrize("mode", ["scipy"])
-def test_concatenate_interaction_kernels(fieldset, mode):
+def test_concatenate_interaction_kernels(fieldset_unit_mesh, mode):
     lons = [0.0, 0.1, 0.25, 0.44]
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000 * 0.2 * np.pi / 180
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats, interaction_distance=interaction_distance)
+    pset = ParticleSet(
+        fieldset_unit_mesh, pclass=ptype[mode], lon=lons, lat=lats, interaction_distance=interaction_distance
+    )
     pset.execute(
         DoNothing,
         pyfunc_inter=pset.InteractionKernel(DummyMoveNeighbor) + pset.InteractionKernel(DummyMoveNeighbor),
@@ -112,13 +116,15 @@ def test_concatenate_interaction_kernels(fieldset, mode):
 
 
 @pytest.mark.parametrize("mode", ["scipy"])
-def test_concatenate_interaction_kernels_as_pyfunc(fieldset, mode):
+def test_concatenate_interaction_kernels_as_pyfunc(fieldset_unit_mesh, mode):
     lons = [0.0, 0.1, 0.25, 0.44]
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000 * 0.2 * np.pi / 180
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats, interaction_distance=interaction_distance)
+    pset = ParticleSet(
+        fieldset_unit_mesh, pclass=ptype[mode], lon=lons, lat=lats, interaction_distance=interaction_distance
+    )
     pset.execute(
         DoNothing, pyfunc_inter=pset.InteractionKernel(DummyMoveNeighbor) + DummyMoveNeighbor, endtime=2.0, dt=1.0
     )
@@ -145,14 +151,14 @@ def test_neighbor_merge(fieldset):
 
 
 @pytest.mark.parametrize("mode", ["scipy"])
-def test_asymmetric_attraction(fieldset, mode):
+def test_asymmetric_attraction(fieldset_unit_mesh, mode):
     lons = [0.0, 0.1, 0.2]
     lats = [0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000 * 5.5 * np.pi / 180
     AttractingParticle = ScipyInteractionParticle.add_variable("attractor", dtype=np.bool_, to_write="once")
     pset = ParticleSet(
-        fieldset,
+        fieldset_unit_mesh,
         pclass=AttractingParticle,
         lon=lons,
         lat=lats,

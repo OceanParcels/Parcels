@@ -21,7 +21,7 @@ from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetime
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
-def fieldset(xdim=40, ydim=100):
+def create_fieldset(xdim=40, ydim=100):
     U = np.zeros((ydim, xdim), dtype=np.float32)
     V = np.zeros((ydim, xdim), dtype=np.float32)
     lon = np.linspace(0, 1, xdim, dtype=np.float32)
@@ -32,9 +32,9 @@ def fieldset(xdim=40, ydim=100):
     return FieldSet.from_data(data, dimensions)
 
 
-@pytest.fixture(name="fieldset")
-def fieldset_ficture(xdim=40, ydim=100):
-    return fieldset(xdim=xdim, ydim=ydim)
+@pytest.fixture
+def fieldset():
+    return create_fieldset()
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
