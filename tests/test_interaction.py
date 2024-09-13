@@ -18,7 +18,7 @@ from parcels.interaction.neighborsearch import (
 from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
 from parcels.particle import ScipyInteractionParticle, ScipyParticle, Variable
 from tests.common_kernels import DoNothing
-from tests.utils import create_fieldset_unit_mesh
+from tests.utils import create_fieldset_unit_mesh, create_flat_positions, create_spherical_positions
 
 ptype = {"scipy": ScipyInteractionParticle, "jit": JITParticle}
 
@@ -229,18 +229,6 @@ def test_flat_neighbors(test_class):
     for particle_idx in np.random.choice(positions.shape[1], 100, replace=False):
         ref_result, _ = ref_instance.find_neighbors_by_idx(particle_idx)
         compare_results_by_idx(test_instance, particle_idx, ref_result)
-
-
-def create_spherical_positions(n_particles, max_depth=100000):
-    yrange = 2 * np.random.rand(n_particles)
-    lat = 180 * (np.arccos(1 - yrange) - 0.5 * np.pi) / np.pi
-    lon = 360 * np.random.rand(n_particles)
-    depth = max_depth * np.random.rand(n_particles)
-    return np.array((depth, lat, lon))
-
-
-def create_flat_positions(n_particle):
-    return np.random.rand(n_particle * 3).reshape(3, n_particle)
 
 
 @pytest.mark.parametrize("test_class", [BruteSphericalNeighborSearch, HashSphericalNeighborSearch])

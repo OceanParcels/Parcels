@@ -9,25 +9,15 @@ from parcels import (
     AdvectionDiffusionM1,
     DiffusionUniformKh,
     Field,
-    FieldSet,
     JITParticle,
     ParcelsRandom,
     ParticleSet,
     RectilinearZGrid,
     ScipyParticle,
 )
+from tests.utils import create_zeros_fieldset
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
-
-
-def create_zeros_fieldset(mesh="spherical", xdim=200, ydim=100, mesh_conversion=1):
-    """Generates a zero velocity field."""
-    lon = np.linspace(-1e5 * mesh_conversion, 1e5 * mesh_conversion, xdim, dtype=np.float32)
-    lat = np.linspace(-1e5 * mesh_conversion, 1e5 * mesh_conversion, ydim, dtype=np.float32)
-
-    dimensions = {"lon": lon, "lat": lat}
-    data = {"U": np.zeros((ydim, xdim), dtype=np.float32), "V": np.zeros((ydim, xdim), dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])

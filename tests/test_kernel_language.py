@@ -38,7 +38,7 @@ def expr_kernel(name, pset, expr):
 
 @pytest.fixture
 def fieldset_unit_mesh():
-    return create_fieldset_unit_mesh(mesh="flat")
+    return create_fieldset_unit_mesh(mesh="flat", transpose=True)
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
