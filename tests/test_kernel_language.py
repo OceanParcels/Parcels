@@ -38,7 +38,7 @@ def expr_kernel(name, pset, expr):
 
 @pytest.fixture
 def fieldset_unit_mesh():
-    return create_fieldset_unit_mesh(mesh="flat", transpose=True)
+    return create_fieldset_unit_mesh(transpose=True)
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
@@ -55,7 +55,10 @@ def test_expression_int(mode, name, expr, result, npart=10):
     """Test basic arithmetic expressions."""
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
-        create_fieldset_unit_mesh(), pclass=TestParticle, lon=np.linspace(0.0, 1.0, npart), lat=np.zeros(npart) + 0.5
+        create_fieldset_unit_mesh(mesh="spherical"),
+        pclass=TestParticle,
+        lon=np.linspace(0.0, 1.0, npart),
+        lat=np.zeros(npart) + 0.5,
     )
     pset.execute(expr_kernel(f"Test{name}", pset, expr), endtime=1.0, dt=1.0)
     assert np.all([p.p == result for p in pset])
@@ -76,7 +79,10 @@ def test_expression_float(mode, name, expr, result, npart=10):
     """Test basic arithmetic expressions."""
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
-        create_fieldset_unit_mesh(), pclass=TestParticle, lon=np.linspace(0.0, 1.0, npart), lat=np.zeros(npart) + 0.5
+        create_fieldset_unit_mesh(mesh="spherical"),
+        pclass=TestParticle,
+        lon=np.linspace(0.0, 1.0, npart),
+        lat=np.zeros(npart) + 0.5,
     )
     pset.execute(expr_kernel(f"Test{name}", pset, expr), endtime=1.0, dt=1.0)
     assert np.all([p.p == result for p in pset])
@@ -103,7 +109,10 @@ def test_expression_bool(mode, name, expr, result, npart=10):
     """Test basic arithmetic expressions."""
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
-        create_fieldset_unit_mesh(), pclass=TestParticle, lon=np.linspace(0.0, 1.0, npart), lat=np.zeros(npart) + 0.5
+        create_fieldset_unit_mesh(mesh="spherical"),
+        pclass=TestParticle,
+        lon=np.linspace(0.0, 1.0, npart),
+        lat=np.zeros(npart) + 0.5,
     )
     pset.execute(expr_kernel(f"Test{name}", pset, expr), endtime=1.0, dt=1.0)
     if mode == "jit":
@@ -116,7 +125,7 @@ def test_expression_bool(mode, name, expr, result, npart=10):
 def test_while_if_break(mode):
     """Test while, if and break commands."""
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
-    pset = ParticleSet(create_fieldset_unit_mesh(), pclass=TestParticle, lon=[0], lat=[0])
+    pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=[0], lat=[0])
 
     def kernel(particle, fieldset, time):
         while particle.p < 30:
@@ -136,7 +145,7 @@ def test_nested_if(mode):
     TestParticle = ptype[mode].add_variables(
         [Variable("p0", dtype=np.int32, initial=0), Variable("p1", dtype=np.int32, initial=1)]
     )
-    pset = ParticleSet(create_fieldset_unit_mesh(), pclass=TestParticle, lon=0, lat=0)
+    pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=0, lat=0)
 
     def kernel(particle, fieldset, time):
         if particle.p1 >= particle.p0:
@@ -152,7 +161,7 @@ def test_nested_if(mode):
 def test_pass(mode):
     """Test pass commands."""
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
-    pset = ParticleSet(create_fieldset_unit_mesh(), pclass=TestParticle, lon=0, lat=0)
+    pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=0, lat=0)
 
     def kernel(particle, fieldset, time):
         particle.p = -1
@@ -164,7 +173,7 @@ def test_pass(mode):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_dt_as_variable_in_kernel(mode):
-    pset = ParticleSet(create_fieldset_unit_mesh(), pclass=ptype[mode], lon=0, lat=0)
+    pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=ptype[mode], lon=0, lat=0)
 
     def kernel(particle, fieldset, time):
         dt = 1.0  # noqa
@@ -174,7 +183,7 @@ def test_dt_as_variable_in_kernel(mode):
 
 def test_parcels_tmpvar_in_kernel():
     """Tests for error thrown if variable with 'tmp' defined in custom kernel."""
-    pset = ParticleSet(create_fieldset_unit_mesh(), pclass=JITParticle, lon=0, lat=0)
+    pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=JITParticle, lon=0, lat=0)
 
     def kernel_tmpvar(particle, fieldset, time):
         parcels_tmpvar0 = 0  # noqa
@@ -189,7 +198,7 @@ def test_parcels_tmpvar_in_kernel():
 
 def test_varname_as_fieldname():
     """Tests for error thrown if variable has same name as Field."""
-    fset = create_fieldset_unit_mesh()
+    fset = create_fieldset_unit_mesh(mesh="spherical")
     fset.add_field(Field("speed", 10, lon=0, lat=0))
     fset.add_constant("vertical_speed", 0.1)
     Particle = JITParticle.add_variable("speed")
@@ -210,7 +219,7 @@ def test_varname_as_fieldname():
 
 def test_abs():
     """Tests for error thrown if using abs in kernel."""
-    pset = ParticleSet(create_fieldset_unit_mesh(), pclass=JITParticle, lon=0, lat=0)
+    pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=JITParticle, lon=0, lat=0)
 
     def kernel_abs(particle, fieldset, time):
         particle.lon = abs(3.1)
@@ -321,7 +330,10 @@ def test_random_float(mode, rngfunc, rngargs, npart=10):
     """Test basic random number generation."""
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
-        create_fieldset_unit_mesh(), pclass=TestParticle, lon=np.linspace(0.0, 1.0, npart), lat=np.zeros(npart) + 0.5
+        create_fieldset_unit_mesh(mesh="spherical"),
+        pclass=TestParticle,
+        lon=np.linspace(0.0, 1.0, npart),
+        lat=np.zeros(npart) + 0.5,
     )
     series = random_series(npart, rngfunc, rngargs, mode)
     rnglib = "ParcelsRandom" if mode == "jit" else "random"
@@ -384,7 +396,7 @@ def test_c_kernel(fieldset_unit_mesh, mode, c_inc):
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_dt_modif_by_kernel(mode):
     TestParticle = ptype[mode].add_variable("age", dtype=np.float32, initial=0)
-    pset = ParticleSet(create_fieldset_unit_mesh(), pclass=TestParticle, lon=[0.5], lat=[0])
+    pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=[0.5], lat=[0])
 
     def modif_dt(particle, fieldset, time):
         particle.age += particle.dt
@@ -401,7 +413,7 @@ def test_dt_modif_by_kernel(mode):
 )
 def test_small_dt(mode, dt, expectation, npart=10):
     pset = ParticleSet(
-        create_fieldset_unit_mesh(),
+        create_fieldset_unit_mesh(mesh="spherical"),
         pclass=ptype[mode],
         lon=np.zeros(npart),
         lat=np.zeros(npart),

@@ -22,7 +22,7 @@ ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 @pytest.fixture
 def fieldset_unit_mesh():
-    return create_fieldset_unit_mesh(mesh="flat")
+    return create_fieldset_unit_mesh()
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
@@ -242,7 +242,7 @@ def test_multi_kernel_reuse_varnames(fieldset_unit_mesh, mode):
     assert np.allclose(pset.lon, [0.9], rtol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
 
 
-def test_combined_kernel_from_list(fieldset):
+def test_combined_kernel_from_list(fieldset_unit_mesh):
     """
     Test pset.Kernel(List[function])
 
@@ -256,7 +256,7 @@ def test_combined_kernel_from_list(fieldset):
     def MoveNorth(particle, fieldset, time):
         particle_dlat += 0.1  # noqa
 
-    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset_unit_mesh, pclass=JITParticle, lon=[0.5], lat=[0.5])
     kernels_single = pset.Kernel([AdvectionRK4])
     kernels_functions = pset.Kernel([AdvectionRK4, MoveEast, MoveNorth])
 
@@ -265,13 +265,13 @@ def test_combined_kernel_from_list(fieldset):
     assert kernels_functions.funcname == "AdvectionRK4MoveEastMoveNorth"
 
 
-def test_combined_kernel_from_list_error_checking(fieldset):
+def test_combined_kernel_from_list_error_checking(fieldset_unit_mesh):
     """
     Test pset.Kernel(List[function])
 
     Tests that various error cases raise appropriate messages.
     """
-    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset_unit_mesh, pclass=JITParticle, lon=[0.5], lat=[0.5])
 
     # Test that list has to be non-empty
     with pytest.raises(ValueError):
@@ -397,13 +397,13 @@ def test_custom_ParcelsRandom_alias(fieldset_unit_mesh, mode):
         )
 
 
-def test_outdated_kernel(fieldset):
+def test_outdated_kernel(fieldset_unit_mesh):
     """
     Make sure that if users try using a kernel from pre Parcels 2.0 they get an error.
 
     Prevents users from copy-pasting old kernels that are no longer supported.
     """
-    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset_unit_mesh, pclass=JITParticle, lon=[0.5], lat=[0.5])
 
     def outdated_kernel(particle, fieldset, time, dt):
         particle.lon += 0.1

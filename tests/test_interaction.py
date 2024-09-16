@@ -42,7 +42,7 @@ def DummyMoveNeighbor(particle, fieldset, time, neighbors, mutator):
 
 @pytest.fixture
 def fieldset_unit_mesh():
-    return create_fieldset_unit_mesh()
+    return create_fieldset_unit_mesh(mesh="spherical")
 
 
 @pytest.mark.parametrize("mode", ["scipy"])
@@ -122,7 +122,7 @@ def test_concatenate_interaction_kernels_as_pyfunc(fieldset_unit_mesh, mode):
     assert np.allclose(pset.lat, [0.2, 0.4, 0.2, 0.0], rtol=1e-5)
 
 
-def test_neighbor_merge(fieldset):
+def test_neighbor_merge(fieldset_unit_mesh):
     lons = [0.0, 0.1, 0.25, 0.44]
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
@@ -130,7 +130,9 @@ def test_neighbor_merge(fieldset):
     MergeParticle = ScipyInteractionParticle.add_variables(
         [Variable("nearest_neighbor", dtype=np.int64, to_write=False), Variable("mass", initial=1, dtype=np.float32)]
     )
-    pset = ParticleSet(fieldset, pclass=MergeParticle, lon=lons, lat=lats, interaction_distance=interaction_distance)
+    pset = ParticleSet(
+        fieldset_unit_mesh, pclass=MergeParticle, lon=lons, lat=lats, interaction_distance=interaction_distance
+    )
     pyfunc_inter = pset.InteractionKernel(NearestNeighborWithinRange) + MergeWithNearestNeighbor
     pset.execute(DoNothing, pyfunc_inter=pyfunc_inter, runtime=3.0, dt=1.0)
 
