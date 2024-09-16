@@ -1,4 +1,3 @@
-import os
 import warnings
 
 import numpy as np
@@ -13,6 +12,7 @@ from parcels import (
     ParticleSet,
     ScipyParticle,
 )
+from tests.utils import TEST_DATA
 
 
 def test_fieldset_warnings():
@@ -43,8 +43,7 @@ def test_fieldset_warnings():
             time_periodic=1,
         )
 
-    mesh = os.path.join(os.path.join(os.path.dirname(__file__), os.pardir, "test_data"), "POPtestdata_time.nc")
-    filenames = mesh
+    filenames = str(TEST_DATA / "POPtestdata_time.nc")
     variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
     dimensions = {"lon": "lon", "lat": "lat", "depth": "w_deps", "time": "time"}
     with pytest.warns(FieldSetWarning):
@@ -57,8 +56,7 @@ def test_fieldset_warnings():
 
 def test_kernel_warnings():
     # positive scaling factor for W
-    mesh = os.path.join(os.path.join(os.path.dirname(__file__), os.pardir, "test_data"), "POPtestdata_time.nc")
-    filenames = mesh
+    filenames = str(TEST_DATA / "POPtestdata_time.nc")
     variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
     dimensions = {"lon": "lon", "lat": "lat", "depth": "w_deps", "time": "time"}
     with warnings.catch_warnings():

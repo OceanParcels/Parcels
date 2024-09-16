@@ -1,8 +1,14 @@
 """General helper functions and utilies for test suite."""
 
+from pathlib import Path
+
 import numpy as np
 
 from parcels import FieldSet
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+TEST_ROOT = PROJECT_ROOT / "tests"
+TEST_DATA = TEST_ROOT / "test_data"
 
 
 def create_fieldset_unit_mesh(xdim=20, ydim=20, mesh="flat", transpose=False) -> FieldSet:
