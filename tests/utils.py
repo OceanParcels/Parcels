@@ -33,18 +33,6 @@ def create_fieldset_global(xdim=200, ydim=100):
     return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
 
-def create_fieldset_zeros_lon_slice(xdim=40, ydim=100):
-    """Zero velocity fieldset, but with a slice in the longitude dimension."""
-    U = np.zeros((ydim, xdim), dtype=np.float32)
-    V = np.zeros((ydim, xdim), dtype=np.float32)
-    lon = np.linspace(0, 1, xdim, dtype=np.float32)
-    lat = np.linspace(-60, 60, ydim, dtype=np.float32)
-    depth = np.zeros(1, dtype=np.float32)
-    data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
-    dimensions = {"lat": lat, "lon": lon, "depth": depth}
-    return FieldSet.from_data(data, dimensions)
-
-
 def create_fieldset_zeros_conversion(mesh="spherical", xdim=200, ydim=100, mesh_conversion=1) -> FieldSet:
     """Zero velocity field with lat and lon determined by a conversion factor."""
     lon = np.linspace(-1e5 * mesh_conversion, 1e5 * mesh_conversion, xdim, dtype=np.float32)
