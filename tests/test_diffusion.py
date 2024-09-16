@@ -15,7 +15,7 @@ from parcels import (
     RectilinearZGrid,
     ScipyParticle,
 )
-from tests.utils import create_zeros_fieldset
+from tests.utils import create_fieldset_zeros_conversion
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
@@ -24,7 +24,7 @@ ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_meridional=50):
     mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
-    fieldset = create_zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
+    fieldset = create_fieldset_zeros_conversion(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
     fieldset.add_constant_field("Kh_zonal", kh_zonal, mesh=mesh)
     fieldset.add_constant_field("Kh_meridional", kh_meridional, mesh=mesh)
@@ -55,7 +55,7 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
 def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=100):
     """Test advection-diffusion kernels on a non-uniform diffusivity field with a linear gradient in one direction."""
     mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
-    fieldset = create_zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
+    fieldset = create_fieldset_zeros_conversion(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
     Kh = np.zeros((ydim, xdim), dtype=np.float32)
     for x in range(xdim):
@@ -84,7 +84,7 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=10
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("lambd", [1, 5])
 def test_randomexponential(mode, lambd, npart=1000):
-    fieldset = create_zeros_fieldset()
+    fieldset = create_fieldset_zeros_conversion()
 
     # Rate parameter for random.expovariate
     fieldset.lambd = lambd
@@ -111,7 +111,7 @@ def test_randomexponential(mode, lambd, npart=1000):
 @pytest.mark.parametrize("mu", [0.8 * np.pi, np.pi])
 @pytest.mark.parametrize("kappa", [2, 4])
 def test_randomvonmises(mode, mu, kappa, npart=10000):
-    fieldset = create_zeros_fieldset()
+    fieldset = create_fieldset_zeros_conversion()
 
     # Parameters for random.vonmisesvariate
     fieldset.mu = mu

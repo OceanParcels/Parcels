@@ -15,7 +15,7 @@ def create_fieldset_unit_mesh(xdim=20, ydim=20, mesh="flat", transpose=False) ->
     return FieldSet.from_data(data, dimensions, mesh=mesh, transpose=transpose)
 
 
-def create_zeros_fieldset(mesh="spherical", xdim=200, ydim=100, mesh_conversion=1) -> FieldSet:
+def create_fieldset_zeros_conversion(mesh="spherical", xdim=200, ydim=100, mesh_conversion=1) -> FieldSet:
     """Generates a zero velocity field."""
     lon = np.linspace(-1e5 * mesh_conversion, 1e5 * mesh_conversion, xdim, dtype=np.float32)
     lat = np.linspace(-1e5 * mesh_conversion, 1e5 * mesh_conversion, ydim, dtype=np.float32)
@@ -35,3 +35,42 @@ def create_spherical_positions(n_particles, max_depth=100000):
 
 def create_flat_positions(n_particle):
     return np.random.rand(n_particle * 3).reshape(3, n_particle)
+
+
+def create_fieldset_zeros_simple(xdim=40, ydim=100):
+    U = np.zeros((ydim, xdim), dtype=np.float32)
+    V = np.zeros((ydim, xdim), dtype=np.float32)
+    lon = np.linspace(0, 1, xdim, dtype=np.float32)
+    lat = np.linspace(-60, 60, ydim, dtype=np.float32)
+    depth = np.zeros(1, dtype=np.float32)
+    data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
+    dimensions = {"lat": lat, "lon": lon, "depth": depth}
+    return FieldSet.from_data(data, dimensions)
+
+
+def create_fieldset_global(xdim=200, ydim=100):
+    """Standard fieldset spanning the earth's coordinates with U and V equivalent to longitude and latitude in deg."""
+    lon = np.linspace(-180, 180, xdim, dtype=np.float32)
+    lat = np.linspace(-90, 90, ydim, dtype=np.float32)
+    U, V = np.meshgrid(lat, lon)
+    data = {"U": U, "V": V}
+    dimensions = {"lon": lon, "lat": lat}
+
+    return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+
+
+def create_fieldset_lon_slice(xdim=40, ydim=100):
+    U = np.zeros((ydim, xdim), dtype=np.float32)
+    V = np.zeros((ydim, xdim), dtype=np.float32)
+    lon = np.linspace(0, 1, xdim, dtype=np.float32)
+    lat = np.linspace(-60, 60, ydim, dtype=np.float32)
+    depth = np.zeros(1, dtype=np.float32)
+    data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
+    dimensions = {"lat": lat, "lon": lon, "depth": depth}
+    return FieldSet.from_data(data, dimensions)
+
+
+def create_fieldset_zeros(xdim=100, ydim=100):
+    data = {"U": np.zeros((ydim, xdim), dtype=np.float32), "V": np.zeros((ydim, xdim), dtype=np.float32)}
+    dimensions = {"lon": np.linspace(0, 1, xdim, dtype=np.float32), "lat": np.linspace(0, 1, ydim, dtype=np.float32)}
+    return FieldSet.from_data(data, dimensions, mesh="flat")

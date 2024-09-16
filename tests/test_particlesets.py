@@ -12,24 +12,14 @@ from parcels import (
     Variable,
 )
 from tests.common_kernels import DoNothing
+from tests.utils import create_fieldset_zeros_simple
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
-def create_fieldset(xdim=40, ydim=100):
-    U = np.zeros((ydim, xdim), dtype=np.float32)
-    V = np.zeros((ydim, xdim), dtype=np.float32)
-    lon = np.linspace(0, 1, xdim, dtype=np.float32)
-    lat = np.linspace(-60, 60, ydim, dtype=np.float32)
-    depth = np.zeros(1, dtype=np.float32)
-    data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
-    dimensions = {"lat": lat, "lon": lon, "depth": depth}
-    return FieldSet.from_data(data, dimensions)
-
-
 @pytest.fixture
 def fieldset():
-    return create_fieldset()
+    return create_fieldset_zeros_simple()
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])

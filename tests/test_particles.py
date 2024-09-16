@@ -5,25 +5,19 @@ import pytest
 
 from parcels import (
     AdvectionRK4,
-    FieldSet,
     JITParticle,
     ParticleSet,
     ScipyParticle,
     Variable,
 )
+from tests.utils import create_fieldset_zeros
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
-def create_fieldset(xdim=100, ydim=100):
-    data = {"U": np.zeros((ydim, xdim), dtype=np.float32), "V": np.zeros((ydim, xdim), dtype=np.float32)}
-    dimensions = {"lon": np.linspace(0, 1, xdim, dtype=np.float32), "lat": np.linspace(0, 1, ydim, dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh="flat")
-
-
 @pytest.fixture
 def fieldset():
-    return create_fieldset()
+    return create_fieldset_zeros()
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])

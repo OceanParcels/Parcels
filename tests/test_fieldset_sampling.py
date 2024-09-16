@@ -18,6 +18,7 @@ from parcels import (
     StatusCode,
     Variable,
 )
+from tests.utils import create_fieldset_global
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
@@ -40,20 +41,9 @@ def SampleP(particle, fieldset, time):
     particle.p = fieldset.P[particle]
 
 
-def create_fieldset(xdim=200, ydim=100):
-    """Standard fieldset spanning the earth's coordinates with U and V equivalent to longitude and latitude in deg."""
-    lon = np.linspace(-180, 180, xdim, dtype=np.float32)
-    lat = np.linspace(-90, 90, ydim, dtype=np.float32)
-    U, V = np.meshgrid(lat, lon)
-    data = {"U": U, "V": V}
-    dimensions = {"lon": lon, "lat": lat}
-
-    return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
-
-
 @pytest.fixture
 def fieldset():
-    return create_fieldset()
+    return create_fieldset_global()
 
 
 def create_fieldset_geometric(xdim=200, ydim=100):

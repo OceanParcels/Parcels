@@ -45,6 +45,7 @@ def lon():
     return np.linspace(-170, 170, xdim, dtype=np.float32)
 
 
+@pytest.fixture
 def lat():
     ydim = 100
     return np.linspace(-80, 80, ydim, dtype=np.float32)
