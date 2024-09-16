@@ -10,14 +10,14 @@ from parcels import (
     ScipyParticle,
     Variable,
 )
-from tests.utils import create_fieldset_zeros
+from tests.utils import create_fieldset_zeros_unit_mesh
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
 @pytest.fixture
 def fieldset():
-    return create_fieldset_zeros()
+    return create_fieldset_zeros_unit_mesh()
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])

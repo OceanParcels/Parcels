@@ -17,14 +17,14 @@ from parcels import (
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 from tests.common_kernels import DoNothing
-from tests.utils import create_fieldset_lon_slice
+from tests.utils import create_fieldset_zeros_lon_slice
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
 @pytest.fixture
 def fieldset():
-    return create_fieldset_lon_slice()
+    return create_fieldset_zeros_lon_slice()
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
