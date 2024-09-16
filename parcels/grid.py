@@ -92,6 +92,14 @@ class Grid:
         self._add_last_periodic_data_timestep = False
         self.depth_field = None
 
+    def __repr__(self):
+        with np.printoptions(threshold=5, suppress=True, linewidth=120, formatter={"float": "{: 0.2f}".format}):
+            return (
+                f"{type(self).__name__}("
+                f"lon={self.lon!r}, lat={self.lat!r}, time={self.time!r}, "
+                f"time_origin={self.time_origin!r}, mesh={self.mesh!r})"
+            )
+
     @staticmethod
     def create_grid(
         lon: npt.ArrayLike,
@@ -352,7 +360,7 @@ class RectilinearGrid(Grid):
                 stacklevel=2,
             )
 
-    def add_periodic_halo(self, zonal, meridional, halosize=5):
+    def add_periodic_halo(self, zonal: bool, meridional: bool, halosize: int = 5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
         similarly to the halo created for the Fields
 

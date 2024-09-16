@@ -33,7 +33,7 @@ class FieldSetNode(IntrinsicNode):
         elif isinstance(getattr(self.obj, attr), VectorField):
             return VectorFieldNode(getattr(self.obj, attr), ccode=f"{self.ccode}->{attr}")
         else:
-            return ConstNode(getattr(self.obj, attr), ccode="%s" % (attr))
+            return ConstNode(getattr(self.obj, attr), ccode=f"{attr}")
 
 
 class FieldNode(IntrinsicNode):
@@ -494,13 +494,13 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             c.Value("double", "time"),
         ]
         for field in self.field_args.values():
-            args += [c.Pointer(c.Value("CField", "%s" % field.ccode_name))]
+            args += [c.Pointer(c.Value("CField", f"{field.ccode_name}"))]
         for field in self.vector_field_args.values():
             for fcomponent in ["U", "V", "W"]:
                 try:
                     f = getattr(field, fcomponent)
                     if f.ccode_name not in self.field_args:
-                        args += [c.Pointer(c.Value("CField", "%s" % f.ccode_name))]
+                        args += [c.Pointer(c.Value("CField", f"{f.ccode_name}"))]
                         self.field_args[f.ccode_name] = f
                 except:
                     pass  # field.W does not always exist
@@ -533,9 +533,9 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         if isinstance(node.func, PrintNode):
             # Write our own Print parser because Python3-AST does not seem to have one
             if isinstance(node.args[0], ast.Str):
-                node.ccode = str(c.Statement('printf("%s\\n")' % (node.args[0].s)))
+                node.ccode = str(c.Statement(f'printf("{node.args[0].s}\\n")'))
             elif isinstance(node.args[0], ast.Name):
-                node.ccode = str(c.Statement('printf("%%f\\n", %s)' % (node.args[0].id)))
+                node.ccode = str(c.Statement(f'printf("%f\\n", {node.args[0].id})'))
             elif isinstance(node.args[0], ast.BinOp):
                 if hasattr(node.args[0].right, "ccode"):
                     args = node.args[0].right.ccode
@@ -550,12 +550,12 @@ class KernelGenerator(ABC, ast.NodeVisitor):
                             args.append(a.id)
                 else:
                     args = []
-                s = 'printf("%s\\n"' % node.args[0].left.s
+                s = f'printf("{node.args[0].left.s}\\n"'
                 if isinstance(args, str):
-                    s = s + (", %s)" % args)
+                    s = s + f", {args})"
                 else:
                     for arg in args:
-                        s = s + (", %s" % arg)
+                        s = s + (f", {arg}")
                     s = s + ")"
                 node.ccode = str(c.Statement(s))
             else:
@@ -573,7 +573,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
                 elif isinstance(a, ParticleNode):
                     continue
                 elif pointer_args:
-                    a.ccode = "&%s" % a.ccode
+                    a.ccode = f"&{a.ccode}"
             ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
             try:
                 if isinstance(node.func, str):
@@ -747,7 +747,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.op)
         for v in node.values:
             self.visit(v)
-        op_str = " %s " % node.op.ccode
+        op_str = f" {node.op.ccode} "
         node.ccode = op_str.join([v.ccode for v in node.values])
 
     def visit_Eq(self, node):
@@ -818,7 +818,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
 
     def visit_Return(self, node):
         self.visit(node.value)
-        node.ccode = c.Statement("return %s" % node.value.ccode)
+        node.ccode = c.Statement(f"return {node.value.ccode}")
 
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
@@ -925,16 +925,16 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         for n in node.values:
             self.visit(n)
         if hasattr(node.values[0], "s"):
-            node.ccode = c.Statement('printf("%s\\n")' % (n.ccode))
+            node.ccode = c.Statement(f'printf("{n.ccode}\\n")')
             return
         if hasattr(node.values[0], "s_print"):
             args = node.values[0].right.ccode
-            s = 'printf("%s\\n"' % node.values[0].left.ccode
+            s = f'printf("{node.values[0].left.ccode}\\n"'
             if isinstance(args, str):
-                s = s + (", %s)" % args)
+                s = s + f", {args})"
             else:
                 for arg in args:
-                    s = s + (", %s" % arg)
+                    s = s + (f", {arg}")
                 s = s + ")"
             node.ccode = c.Statement(s)
             return
@@ -989,7 +989,7 @@ class LoopGenerator:
             c.Value("double", "dt"),
         ]
         for field, _ in field_args.items():
-            args += [c.Pointer(c.Value("CField", "%s" % field))]
+            args += [c.Pointer(c.Value("CField", f"{field}"))]
         for const, _ in const_args.items():
             args += [c.Value("double", const)]  # are we SURE those const's are double's ?
         fargs_str = ", ".join(["particles->time_nextloop[pnum]"] + list(field_args.keys()) + list(const_args.keys()))

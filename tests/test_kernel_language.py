@@ -277,7 +277,7 @@ def test_print(fieldset, mode, capfd):
 
     def kernel2(particle, fieldset, time):
         tmp = 3
-        print("%f" % (tmp))
+        print(f"{tmp:f}")
 
     pset.execute(kernel2, endtime=2.0, dt=1.0, verbose_progress=False)
     out, err = capfd.readouterr()

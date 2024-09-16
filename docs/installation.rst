@@ -55,6 +55,7 @@ The steps below are the installation instructions for Linux, macOS and Windows.
     conda activate parcels
 
 
+
 Installation for developers
 ===========================
 

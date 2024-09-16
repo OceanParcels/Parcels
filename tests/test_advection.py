@@ -614,7 +614,7 @@ def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction, output_file=outfile)
     assert np.abs(pset.lon - x0 - pset.time * u) < 1e-6
     assert np.abs(pset.lat - y0 - pset.time * v) < 1e-6
-    if w:
+    if w is not None:
         assert np.abs(pset.depth - z0 - pset.time * w) < 1e-4
 
     ds = xr.open_zarr(outfile_path)

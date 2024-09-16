@@ -420,3 +420,25 @@ def test_custom_ParcelsRandom_alias(fieldset, mode):
             "Parcels uses function name to determine kernel support. "
             "Aliasing ParcelsRandom to another name is not supported."
         )
+
+
+def test_outdated_kernel(fieldset):
+    """
+    Make sure that if users try using a kernel from pre Parcels 2.0 they get an error.
+
+    Prevents users from copy-pasting old kernels that are no longer supported.
+    """
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5])
+
+    def outdated_kernel(particle, fieldset, time, dt):
+        particle.lon += 0.1
+
+    with pytest.raises(ValueError) as e:
+        pset.Kernel(outdated_kernel)
+
+    assert "Since Parcels v2.0" in str(e.value)
+
+    with pytest.raises(ValueError) as e:
+        pset.execute(outdated_kernel, endtime=1.0, dt=1.0)
+
+    assert "Since Parcels v2.0" in str(e.value)

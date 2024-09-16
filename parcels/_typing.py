@@ -9,7 +9,8 @@ used for runtime parameter validation (to ensure users are only using the right 
 import ast
 import datetime
 import os
-from typing import Callable, Literal
+from collections.abc import Callable
+from typing import Literal
 
 
 class ParcelsAST(ast.AST):

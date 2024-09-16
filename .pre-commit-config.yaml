@@ -10,7 +10,7 @@ repos:
         types: [text]
         files: \.(json|ipynb)$
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.6
+    rev: v0.6.4
     hooks:
       - id: ruff
         args: [--fix, --show-fixes]
@@ -19,15 +19,15 @@ repos:
         args: [--select, I, --fix]
         types_or: [jupyter]
       - id: ruff-format
-        types_or: [ python, jupyter ]
-  - repo: https://github.com/biomejs/pre-commit
-    rev: v0.4.0
+        types_or: [python, jupyter]
+  - repo: https://github.com/rbubley/mirrors-prettier # Update mirror as official mirror is deprecated
+    rev: v3.3.3
     hooks:
-      - id: biome-format
+      - id: prettier
 
   # Ruff doesn't have full coverage of pydoclint https://github.com/astral-sh/ruff/issues/12434
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.0.0
+    rev: 7.1.1
     hooks:
       - id: flake8
         name: pydoclint
