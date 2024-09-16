@@ -51,8 +51,9 @@ def fieldset_unit_mesh():
         ("Div", "24 / 4", 6),
     ],
 )
-def test_expression_int(mode, name, expr, result, npart=10):
+def test_expression_int(mode, name, expr, result):
     """Test basic arithmetic expressions."""
+    npart = 10
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
         create_fieldset_unit_mesh(mesh="spherical"),
@@ -75,8 +76,9 @@ def test_expression_int(mode, name, expr, result, npart=10):
         ("Pow", "2 ** 3", 8),
     ],
 )
-def test_expression_float(mode, name, expr, result, npart=10):
+def test_expression_float(mode, name, expr, result):
     """Test basic arithmetic expressions."""
+    npart = 10
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
         create_fieldset_unit_mesh(mesh="spherical"),
@@ -105,8 +107,9 @@ def test_expression_float(mode, name, expr, result, npart=10):
         ("CheckNaN", "math.nan != math.nan", True),
     ],
 )
-def test_expression_bool(mode, name, expr, result, npart=10):
+def test_expression_bool(mode, name, expr, result):
     """Test basic arithmetic expressions."""
+    npart = 10
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
         create_fieldset_unit_mesh(mesh="spherical"),
@@ -326,8 +329,9 @@ def random_series(npart, rngfunc, rngargs, mode):
         ("randint", [0, 20]),
     ],
 )
-def test_random_float(mode, rngfunc, rngargs, npart=10):
+def test_random_float(mode, rngfunc, rngargs):
     """Test basic random number generation."""
+    npart = 10
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
         create_fieldset_unit_mesh(mesh="spherical"),
@@ -411,7 +415,8 @@ def test_dt_modif_by_kernel(mode):
 @pytest.mark.parametrize(
     ("dt", "expectation"), [(1e-2, does_not_raise()), (1e-5, does_not_raise()), (1e-6, pytest.raises(ValueError))]
 )
-def test_small_dt(mode, dt, expectation, npart=10):
+def test_small_dt(mode, dt, expectation):
+    npart = 10
     pset = ParticleSet(
         create_fieldset_unit_mesh(mesh="spherical"),
         pclass=ptype[mode],

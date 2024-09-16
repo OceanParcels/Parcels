@@ -39,8 +39,9 @@ def test_metadata(fieldset, mode, tmpdir):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_pfile_array_write_zarr_memorystore(fieldset, mode, npart=10):
+def test_pfile_array_write_zarr_memorystore(fieldset, mode):
     """Check that writing to a Zarr MemoryStore works."""
+    npart = 10
     zarr_store = MemoryStore()
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
     pfile = pset.ParticleFile(zarr_store)
@@ -52,7 +53,8 @@ def test_pfile_array_write_zarr_memorystore(fieldset, mode, npart=10):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
+def test_pfile_array_remove_particles(fieldset, mode, tmpdir):
+    npart = 10
     filepath = tmpdir.join("pfile_array_remove_particles.zarr")
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
     pfile = pset.ParticleFile(filepath)
@@ -69,7 +71,8 @@ def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_pfile_set_towrite_False(fieldset, mode, tmpdir, npart=10):
+def test_pfile_set_towrite_False(fieldset, mode, tmpdir):
+    npart = 10
     filepath = tmpdir.join("pfile_set_towrite_False.zarr")
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart))
     pset.set_variable_write_status("depth", False)
@@ -94,7 +97,8 @@ def test_pfile_set_towrite_False(fieldset, mode, tmpdir, npart=10):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("chunks_obs", [1, None])
-def test_pfile_array_remove_all_particles(fieldset, mode, chunks_obs, tmpdir, npart=10):
+def test_pfile_array_remove_all_particles(fieldset, mode, chunks_obs, tmpdir):
+    npart = 10
     filepath = tmpdir.join("pfile_array_remove_particles.zarr")
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
     chunks = (npart, chunks_obs) if chunks_obs else None
@@ -188,7 +192,8 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
 @pytest.mark.parametrize("repeatdt", range(1, 3))
 @pytest.mark.parametrize("dt", [-1, 1])
 @pytest.mark.parametrize("maxvar", [2, 4, 10])
-def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
+def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, repeatdt, tmpdir, dt, maxvar):
+    runtime = 10
     fieldset.maxvar = maxvar
     pset = None
 

@@ -28,8 +28,9 @@ def test_print(fieldset, mode):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_variable_init(fieldset, mode, npart=10):
+def test_variable_init(fieldset, mode):
     """Test that checks correct initialisation of custom variables."""
+    npart = 10
     extra_vars = [
         Variable("p_float", dtype=np.float32, initial=10.0),
         Variable("p_double", dtype=np.float64, initial=11.0),
@@ -69,8 +70,9 @@ def test_variable_special_names(fieldset, mode):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("coord_type", [np.float32, np.float64])
-def test_variable_init_relative(fieldset, mode, coord_type, npart=10):
+def test_variable_init_relative(fieldset, mode, coord_type):
     """Test that checks relative initialisation of custom variables."""
+    npart = 10
     lonlat_type = np.float64 if coord_type == "double" else np.float32
 
     TestParticle = ptype[mode].add_variables(

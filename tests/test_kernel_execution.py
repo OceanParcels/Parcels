@@ -75,7 +75,8 @@ def test_execution_order(mode, kernel_type):
         (20.0, -10.0, 7, -2.0),
     ],
 )
-def test_execution_endtime(fieldset_unit_mesh, mode, start, end, substeps, dt, npart=10):
+def test_execution_endtime(fieldset_unit_mesh, mode, start, end, substeps, dt):
+    npart = 10
     pset = ParticleSet(
         fieldset_unit_mesh, pclass=ptype[mode], time=start, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
     )
@@ -95,7 +96,8 @@ def test_execution_endtime(fieldset_unit_mesh, mode, start, end, substeps, dt, n
         (20.0, -10.0, 7, -2.0),
     ],
 )
-def test_execution_runtime(fieldset_unit_mesh, mode, start, end, substeps, dt, npart=10):
+def test_execution_runtime(fieldset_unit_mesh, mode, start, end, substeps, dt):
+    npart = 10
     pset = ParticleSet(
         fieldset_unit_mesh, pclass=ptype[mode], time=start, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
     )
@@ -106,7 +108,9 @@ def test_execution_runtime(fieldset_unit_mesh, mode, start, end, substeps, dt, n
 
 
 @pytest.mark.parametrize("mode", ["scipy"])
-def test_execution_fail_python_exception(fieldset_unit_mesh, mode, npart=10):
+def test_execution_fail_python_exception(fieldset_unit_mesh, mode):
+    npart = 10
+
     def PythonFail(particle, fieldset, time):
         if particle.time >= 10.0:
             raise RuntimeError("Enough is enough!")
@@ -124,7 +128,9 @@ def test_execution_fail_python_exception(fieldset_unit_mesh, mode, npart=10):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_execution_fail_out_of_bounds(fieldset_unit_mesh, mode, npart=10):
+def test_execution_fail_out_of_bounds(fieldset_unit_mesh, mode):
+    npart = 10
+
     def MoveRight(particle, fieldset, time):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
@@ -139,7 +145,9 @@ def test_execution_fail_out_of_bounds(fieldset_unit_mesh, mode, npart=10):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_execution_recover_out_of_bounds(fieldset_unit_mesh, mode, npart=2):
+def test_execution_recover_out_of_bounds(fieldset_unit_mesh, mode):
+    npart = 2
+
     def MoveRight(particle, fieldset, time):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
@@ -189,7 +197,9 @@ def test_execution_check_stopallexecution(fieldset_unit_mesh, mode):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_execution_delete_out_of_bounds(fieldset_unit_mesh, mode, npart=10):
+def test_execution_delete_out_of_bounds(fieldset_unit_mesh, mode):
+    npart = 10
+
     def MoveRight(particle, fieldset, time):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa

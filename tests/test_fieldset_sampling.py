@@ -88,8 +88,9 @@ def fieldset_geometric_polar():
     return create_fieldset_geometric_polar()
 
 
-def test_fieldset_sample(fieldset, xdim=120, ydim=80):
+def test_fieldset_sample(fieldset):
     """Sample the fieldset using indexing notation."""
+    xdim, ydim = 120, 80
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([fieldset.UV[0, 0.0, 70.0, x][1] for x in lon])
@@ -100,8 +101,9 @@ def test_fieldset_sample(fieldset, xdim=120, ydim=80):
     assert np.allclose(u_s, lat, rtol=1e-5)
 
 
-def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
+def test_fieldset_sample_eval(fieldset):
     """Sample the fieldset using the explicit eval function."""
+    xdim, ydim = 60, 60
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([fieldset.UV.eval(0, 0.0, 70.0, x)[1] for x in lon])
@@ -137,7 +139,11 @@ def test_verticalsampling(mode, zdir):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_pset_from_field(mode, xdim=10, ydim=20, npart=10000):
+def test_pset_from_field(mode):
+    xdim = 10
+    ydim = 20
+    npart = 10000
+
     np.random.seed(123456)
     dimensions = {
         "lon": np.linspace(0.0, 1.0, xdim, dtype=np.float32),
@@ -170,7 +176,8 @@ def test_pset_from_field(mode, xdim=10, ydim=20, npart=10000):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_nearest_neighbor_interpolation2D(mode, npart=81):
+def test_nearest_neighbor_interpolation2D(mode):
+    npart = 81
     dims = (2, 2)
     dimensions = {
         "lon": np.linspace(0.0, 1.0, dims[0], dtype=np.float32),
@@ -192,7 +199,8 @@ def test_nearest_neighbor_interpolation2D(mode, npart=81):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_nearest_neighbor_interpolation3D(mode, npart=81):
+def test_nearest_neighbor_interpolation3D(mode):
+    npart = 81
     dims = (2, 2, 2)
     dimensions = {
         "lon": np.linspace(0.0, 1.0, dims[0], dtype=np.float32),
@@ -220,7 +228,8 @@ def test_nearest_neighbor_interpolation3D(mode, npart=81):
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("withDepth", [True, False])
 @pytest.mark.parametrize("arrtype", ["ones", "rand"])
-def test_inversedistance_nearland(mode, withDepth, arrtype, npart=81):
+def test_inversedistance_nearland(mode, withDepth, arrtype):
+    npart = 81
     dims = (4, 4, 6) if withDepth else (4, 6)
     dimensions = {
         "lon": np.linspace(0.0, 1.0, dims[-1], dtype=np.float32),
@@ -262,7 +271,8 @@ def test_inversedistance_nearland(mode, withDepth, arrtype, npart=81):
 @pytest.mark.parametrize("boundaryslip", ["freeslip", "partialslip"])
 @pytest.mark.parametrize("withW", [False, True])
 @pytest.mark.parametrize("withT", [False, True])
-def test_partialslip_nearland_zonal(mode, boundaryslip, withW, withT, npart=20):
+def test_partialslip_nearland_zonal(mode, boundaryslip, withW, withT):
+    npart = 20
     dims = (3, 9, 3)
     U = 0.1 * np.ones(dims, dtype=np.float32)
     U[:, 0, :] = np.nan
@@ -312,7 +322,8 @@ def test_partialslip_nearland_zonal(mode, boundaryslip, withW, withT, npart=20):
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("boundaryslip", ["freeslip", "partialslip"])
 @pytest.mark.parametrize("withW", [False, True])
-def test_partialslip_nearland_meridional(mode, boundaryslip, withW, npart=20):
+def test_partialslip_nearland_meridional(mode, boundaryslip, withW):
+    npart = 20
     dims = (1, 1, 9)
     U = np.zeros(dims, dtype=np.float32)
     U[:, :, 0] = np.nan
@@ -353,7 +364,8 @@ def test_partialslip_nearland_meridional(mode, boundaryslip, withW, npart=20):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("boundaryslip", ["freeslip", "partialslip"])
-def test_partialslip_nearland_vertical(mode, boundaryslip, npart=20):
+def test_partialslip_nearland_vertical(mode, boundaryslip):
+    npart = 20
     dims = (9, 1, 1)
     U = 0.1 * np.ones(dims, dtype=np.float32)
     U[0, :, :] = np.nan
@@ -381,13 +393,14 @@ def test_partialslip_nearland_vertical(mode, boundaryslip, npart=20):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("lat_flip", [False, True])
-def test_fieldset_sample_particle(mode, lat_flip, npart=120):
+def test_fieldset_sample_particle(mode, lat_flip):
     """Sample the fieldset using an array of particles.
 
     Note that the low tolerances (1.e-6) are due to the first-order
     interpolation in JIT mode and give an indication of the
     corresponding sampling error.
     """
+    npart = 120
     lon = np.linspace(-180, 180, 200, dtype=np.float32)
     if lat_flip:
         lat = np.linspace(90, -90, 100, dtype=np.float32)
@@ -411,8 +424,9 @@ def test_fieldset_sample_particle(mode, lat_flip, npart=120):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_fieldset_sample_geographic(fieldset_geometric, mode, npart=120):
+def test_fieldset_sample_geographic(fieldset_geometric, mode):
     """Sample a fieldset with conversion to geographic units (degrees)."""
+    npart = 120
     fieldset = fieldset_geometric
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
@@ -427,8 +441,9 @@ def test_fieldset_sample_geographic(fieldset_geometric, mode, npart=120):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_fieldset_sample_geographic_noconvert(fieldset_geometric, mode, npart=120):
+def test_fieldset_sample_geographic_noconvert(fieldset_geometric, mode):
     """Sample a fieldset without conversion to geographic units."""
+    npart = 120
     fieldset = fieldset_geometric
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
@@ -443,8 +458,9 @@ def test_fieldset_sample_geographic_noconvert(fieldset_geometric, mode, npart=12
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, mode, npart=120):
+def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, mode):
     """Sample a fieldset with conversion to geographic units and a pole correction."""
+    npart = 120
     fieldset = fieldset_geometric_polar
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
@@ -461,11 +477,14 @@ def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, mode, npart=
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_meridionalflow_spherical(mode, xdim=100, ydim=200):
+def test_meridionalflow_spherical(mode):
     """Create uniform NORTHWARD flow on spherical earth and advect particles.
 
     As flow is so simple, it can be directly compared to analytical solution.
     """
+    xdim = 100
+    ydim = 200
+
     maxvel = 1.0
     dimensions = {
         "lon": np.linspace(-180, 180, xdim, dtype=np.float32),
@@ -488,12 +507,14 @@ def test_meridionalflow_spherical(mode, xdim=100, ydim=200):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_zonalflow_spherical(mode, xdim=100, ydim=200):
+def test_zonalflow_spherical(mode):
     """Create uniform EASTWARD flow on spherical earth and advect particles.
 
     As flow is so simple, it can be directly compared to analytical solution
     Note that in this case the cosine conversion is needed
     """
+    xdim, ydim = 100, 200
+
     maxvel = 1.0
     p_fld = 10
     dimensions = {
@@ -523,8 +544,11 @@ def test_zonalflow_spherical(mode, xdim=100, ydim=200):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_random_field(mode, xdim=20, ydim=20, npart=100):
+def test_random_field(mode):
     """Sampling test that tests for overshoots by sampling a field of random numbers between 0 and 1."""
+    xdim, ydim = 20, 20
+    npart = 100
+
     np.random.seed(123456)
     dimensions = {
         "lon": np.linspace(0.0, 1.0, xdim, dtype=np.float32),
@@ -546,7 +570,9 @@ def test_random_field(mode, xdim=20, ydim=20, npart=100):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("allow_time_extrapolation", [True, False])
-def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, xdim=10, ydim=10, tdim=10):
+def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation):
+    xdim, ydim, tdim = 10, 10, 10
+
     dimensions = {
         "lon": np.linspace(0.0, 1.0, xdim, dtype=np.float32),
         "lat": np.linspace(0.0, 1.0, ydim, dtype=np.float32),
@@ -593,9 +619,9 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, xdim=10, yd
 @pytest.mark.parametrize("mode", ["jit", "scipy"])
 @pytest.mark.parametrize("npart", [1, 10])
 @pytest.mark.parametrize("chs", [False, "auto", {"lat": ("y", 10), "lon": ("x", 10)}])
-def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs, filename="test_subsets"):
+def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs):
     xdim, ydim = 100, 200
-    filepath = tmpdir.join(filename)
+    filepath = tmpdir.join("test_subsets")
     U = Field(
         "U",
         np.zeros((ydim, xdim), dtype=np.float32),

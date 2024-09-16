@@ -22,7 +22,12 @@ ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_meridional=50):
+def test_fieldKh_Brownian(mesh, mode):
+    xdim = 200
+    ydim = 100
+    kh_zonal = 100
+    kh_meridional = 50
+
     mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
     fieldset = create_fieldset_zeros_conversion(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
@@ -52,8 +57,10 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("kernel", [AdvectionDiffusionM1, AdvectionDiffusionEM])
-def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=100):
+def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel):
     """Test advection-diffusion kernels on a non-uniform diffusivity field with a linear gradient in one direction."""
+    xdim = 200
+    ydim = 100
     mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
     fieldset = create_fieldset_zeros_conversion(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
@@ -83,8 +90,9 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=10
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("lambd", [1, 5])
-def test_randomexponential(mode, lambd, npart=1000):
+def test_randomexponential(mode, lambd):
     fieldset = create_fieldset_zeros_conversion()
+    npart = 1000
 
     # Rate parameter for random.expovariate
     fieldset.lambd = lambd
@@ -110,7 +118,8 @@ def test_randomexponential(mode, lambd, npart=1000):
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("mu", [0.8 * np.pi, np.pi])
 @pytest.mark.parametrize("kappa", [2, 4])
-def test_randomvonmises(mode, mu, kappa, npart=10000):
+def test_randomvonmises(mode, mu, kappa):
+    npart = 10000
     fieldset = create_fieldset_zeros_conversion()
 
     # Parameters for random.vonmisesvariate
