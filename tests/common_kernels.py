@@ -1,14 +1,12 @@
 """Shared kernels between tests."""
 
-from parcels import StatusCode
-
 
 def DoNothing(particle, fieldset, time):
     pass
 
 
 def DeleteParticle(particle, fieldset, time):
-    if particle.state == StatusCode.ErrorOutOfBounds or particle.state == StatusCode.ErrorThroughSurface:
+    if particle.state >= 50:  # This captures all Errors
         particle.delete()
 
 
