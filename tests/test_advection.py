@@ -20,6 +20,7 @@ from parcels import (
     ParticleSet,
     ScipyParticle,
     StatusCode,
+    Variable,
 )
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
@@ -208,9 +209,14 @@ def test_advection_3DCROCO(mode, npart=10):
     runtime = 1e4
     X, Z = np.meshgrid([40e3, 80e3, 120e3], [-10, -130])
     Y = np.ones(X.size) * 100e3
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=X, lat=Y, depth=Z)
 
-    pset.execute([AdvectionRK4_3D], runtime=runtime, dt=100)
+    pclass = ptype[mode].add_variable(Variable("w"))
+    pset = ParticleSet(fieldset=fieldset, pclass=pclass, lon=X, lat=Y, depth=Z)
+
+    def SampleW(particle, fieldset, time):
+        particle.w = fieldset.W[time, particle.depth, particle.lat, particle.lon]  # noqa
+
+    pset.execute([AdvectionRK4_3D, SampleW], runtime=runtime, dt=100)
     assert np.allclose(pset.depth, Z.flatten(), atol=5)  # TODO lower this atol
     assert np.allclose(pset.lon_nextloop, [x + runtime for x in X.flatten()], atol=1e-3)
 
