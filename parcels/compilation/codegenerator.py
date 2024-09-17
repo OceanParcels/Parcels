@@ -824,6 +824,16 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
+        statements_croco = []
+        if "croco" in node.field.obj.gridindexingtype and node.field.obj.name != "H":  # TODO needs to be sigma
+            statements_croco.append(
+                c.Assign(
+                    "parcels_interp_state",
+                    f"temporal_interpolation({args[3]}, {args[2]}, 0, time, H, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{node.var}, LINEAR, {node.field.obj.gridindexingtype.upper()})",
+                )
+            )
+            statements_croco.append(c.Statement(f"{node.var} = {args[1]}/{node.var}"))
+            args = (args[0], node.var, args[2], args[3])
         ccode_eval = node.field.obj.ccode_eval(node.var, *args)
         stmts = [
             c.Assign("parcels_interp_state", ccode_eval),
@@ -835,7 +845,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             stmts += [conv_stat]
 
-        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")])
+        node.ccode = c.Block(statements_croco + stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")])
 
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
