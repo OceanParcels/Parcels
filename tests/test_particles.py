@@ -5,25 +5,19 @@ import pytest
 
 from parcels import (
     AdvectionRK4,
-    FieldSet,
     JITParticle,
     ParticleSet,
     ScipyParticle,
     Variable,
 )
+from tests.utils import create_fieldset_zeros_unit_mesh
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
-def fieldset(xdim=100, ydim=100):
-    data = {"U": np.zeros((ydim, xdim), dtype=np.float32), "V": np.zeros((ydim, xdim), dtype=np.float32)}
-    dimensions = {"lon": np.linspace(0, 1, xdim, dtype=np.float32), "lat": np.linspace(0, 1, ydim, dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh="flat")
-
-
-@pytest.fixture(name="fieldset")
-def fieldset_fixture(xdim=100, ydim=100):
-    return fieldset(xdim=xdim, ydim=ydim)
+@pytest.fixture
+def fieldset():
+    return create_fieldset_zeros_unit_mesh()
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
@@ -34,8 +28,9 @@ def test_print(fieldset, mode):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_variable_init(fieldset, mode, npart=10):
+def test_variable_init(fieldset, mode):
     """Test that checks correct initialisation of custom variables."""
+    npart = 10
     extra_vars = [
         Variable("p_float", dtype=np.float32, initial=10.0),
         Variable("p_double", dtype=np.float64, initial=11.0),
@@ -75,8 +70,9 @@ def test_variable_special_names(fieldset, mode):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("coord_type", [np.float32, np.float64])
-def test_variable_init_relative(fieldset, mode, coord_type, npart=10):
+def test_variable_init_relative(fieldset, mode, coord_type):
     """Test that checks relative initialisation of custom variables."""
+    npart = 10
     lonlat_type = np.float64 if coord_type == "double" else np.float32
 
     TestParticle = ptype[mode].add_variables(

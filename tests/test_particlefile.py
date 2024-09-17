@@ -9,7 +9,6 @@ from zarr.storage import MemoryStore
 from parcels import (
     AdvectionRK4,
     Field,
-    FieldSet,
     JITParticle,
     ParticleSet,
     ScipyParticle,
@@ -17,33 +16,21 @@ from parcels import (
 )
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
+from tests.common_kernels import DoNothing
+from tests.utils import create_fieldset_zeros_simple
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
-def fieldset(xdim=40, ydim=100):
-    U = np.zeros((ydim, xdim), dtype=np.float32)
-    V = np.zeros((ydim, xdim), dtype=np.float32)
-    lon = np.linspace(0, 1, xdim, dtype=np.float32)
-    lat = np.linspace(-60, 60, ydim, dtype=np.float32)
-    depth = np.zeros(1, dtype=np.float32)
-    data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
-    dimensions = {"lat": lat, "lon": lon, "depth": depth}
-    return FieldSet.from_data(data, dimensions)
-
-
-@pytest.fixture(name="fieldset")
-def fieldset_ficture(xdim=40, ydim=100):
-    return fieldset(xdim=xdim, ydim=ydim)
+@pytest.fixture
+def fieldset():
+    return create_fieldset_zeros_simple()
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_metadata(fieldset, mode, tmpdir):
     filepath = tmpdir.join("pfile_metadata.zarr")
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
-
-    def DoNothing(particle, fieldset, time):
-        pass
 
     pset.execute(DoNothing, runtime=1, output_file=pset.ParticleFile(filepath))
 
@@ -52,8 +39,9 @@ def test_metadata(fieldset, mode, tmpdir):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_pfile_array_write_zarr_memorystore(fieldset, mode, npart=10):
+def test_pfile_array_write_zarr_memorystore(fieldset, mode):
     """Check that writing to a Zarr MemoryStore works."""
+    npart = 10
     zarr_store = MemoryStore()
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
     pfile = pset.ParticleFile(zarr_store)
@@ -65,7 +53,8 @@ def test_pfile_array_write_zarr_memorystore(fieldset, mode, npart=10):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
+def test_pfile_array_remove_particles(fieldset, mode, tmpdir):
+    npart = 10
     filepath = tmpdir.join("pfile_array_remove_particles.zarr")
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
     pfile = pset.ParticleFile(filepath)
@@ -82,7 +71,8 @@ def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_pfile_set_towrite_False(fieldset, mode, tmpdir, npart=10):
+def test_pfile_set_towrite_False(fieldset, mode, tmpdir):
+    npart = 10
     filepath = tmpdir.join("pfile_set_towrite_False.zarr")
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart))
     pset.set_variable_write_status("depth", False)
@@ -107,7 +97,8 @@ def test_pfile_set_towrite_False(fieldset, mode, tmpdir, npart=10):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("chunks_obs", [1, None])
-def test_pfile_array_remove_all_particles(fieldset, mode, chunks_obs, tmpdir, npart=10):
+def test_pfile_array_remove_all_particles(fieldset, mode, chunks_obs, tmpdir):
+    npart = 10
     filepath = tmpdir.join("pfile_array_remove_particles.zarr")
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
     chunks = (npart, chunks_obs) if chunks_obs else None
@@ -201,7 +192,8 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
 @pytest.mark.parametrize("repeatdt", range(1, 3))
 @pytest.mark.parametrize("dt", [-1, 1])
 @pytest.mark.parametrize("maxvar", [2, 4, 10])
-def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
+def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, repeatdt, tmpdir, dt, maxvar):
+    runtime = 10
     fieldset.maxvar = maxvar
     pset = None
 
