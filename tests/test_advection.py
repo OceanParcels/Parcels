@@ -214,7 +214,7 @@ def test_advection_3DCROCO(mode, npart=10):
     pset = ParticleSet(fieldset=fieldset, pclass=pclass, lon=X, lat=Y, depth=Z)
 
     def SampleW(particle, fieldset, time):
-        particle.w = fieldset.W[time, particle.depth, particle.lat, particle.lon]  # noqa
+        particle.w = fieldset.W[time, particle.depth, particle.lat, particle.lon]
 
     pset.execute([AdvectionRK4_3D, SampleW], runtime=runtime, dt=100)
     assert np.allclose(pset.depth, Z.flatten(), atol=5)  # TODO lower this atol
