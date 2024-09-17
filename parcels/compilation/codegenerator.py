@@ -426,7 +426,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.fieldset = fieldset
         self.ptype = ptype
         self.field_args = collections.OrderedDict()
-        if fieldset.U.gridindexingtype == "croco":
+        if isinstance(fieldset.U, Field) and fieldset.U.gridindexingtype == "croco" and hasattr(fieldset, "H"):
             self.field_args["H"] = fieldset.H  # CROCO requires H field
         self.vector_field_args = collections.OrderedDict()
         self.const_args = collections.OrderedDict()
