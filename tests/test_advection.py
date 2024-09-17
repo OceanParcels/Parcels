@@ -201,7 +201,7 @@ def test_advection_RK45(lon, lat, mode, rk45_tol, npart=10):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_3DCROCO(mode, npart=10):
+def test_advection_3DCROCO(mode):
     data_path = os.path.join(os.path.dirname(__file__), "test_data/")
     fieldset = FieldSet.from_modulefile(data_path + "fieldset_CROCO3D.py")
     assert fieldset.U.creation_log == "from_croco"
@@ -222,7 +222,7 @@ def test_advection_3DCROCO(mode, npart=10):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_2DCROCO(mode, npart=10):
+def test_advection_2DCROCO(mode):
     data_path = os.path.join(os.path.dirname(__file__), "test_data/")
     fieldset = FieldSet.from_modulefile(data_path + "fieldset_CROCO2D.py")
     assert fieldset.U.creation_log == "from_croco"
