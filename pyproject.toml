@@ -52,6 +52,7 @@ local_scheme = "no-local-version"
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
+filterwarnings = ["error::DeprecationWarning"]
 
 [tool.ruff]
 line-length = 120
