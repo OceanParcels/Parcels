@@ -181,21 +181,15 @@ class Field:
                 raise ValueError(
                     "Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately"
                 )
-            self.grid = grid
+            self._grid = grid
         else:
             if (time is not None) and isinstance(time[0], np.datetime64):
                 time_origin = TimeConverter(time[0])
                 time = np.array([time_origin.reltime(t) for t in time])
             else:
                 time_origin = TimeConverter(0)
-            self.grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self._grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
-        # self.lon, self.lat, self.depth and self.time are not used any more in parcels.
-        # self.grid should be used instead.
-        # Those variables are still defined for backwards compatibility with users codes.
-        self.lon = self.grid.lon
-        self.lat = self.grid.lat
-        self.depth = self.grid.depth
         self.fieldtype = self.name if fieldtype is None else fieldtype
         self.to_write = to_write
         if self.grid.mesh == "flat" or (self.fieldtype not in unitconverters_map.keys()):
@@ -207,12 +201,12 @@ class Field:
         self.timestamps = timestamps
         if isinstance(interp_method, dict):
             if self.name in interp_method:
-                self.interp_method = interp_method[self.name]
+                self._interp_method = interp_method[self.name]
             else:
                 raise RuntimeError(f"interp_method is a dictionary but {name} is not in it")
         else:
-            self.interp_method = interp_method
-        self.gridindexingtype = gridindexingtype
+            self._interp_method = interp_method
+        self._gridindexingtype = gridindexingtype
         if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"] and self.grid.gtype in [
             GridType.RectilinearSGrid,
             GridType.CurvilinearSGrid,
@@ -253,11 +247,11 @@ class Field:
 
         self.vmin = vmin
         self.vmax = vmax
-        self.cast_data_dtype = cast_data_dtype
+        self._cast_data_dtype = cast_data_dtype
         if self.cast_data_dtype == "float32":
-            self.cast_data_dtype = np.float32
+            self._cast_data_dtype = np.float32
         elif self.cast_data_dtype == "float64":
-            self.cast_data_dtype = np.float64
+            self._cast_data_dtype = np.float64
 
         if not self.grid.defer_load:
             self.data = self.reshape(self.data, transpose)
@@ -306,6 +300,41 @@ class Field:
         self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
+
+    @property
+    def grid(self):
+        return self._grid
+
+    @property
+    def lon(self):
+        """Lon defined on the Grid object"""
+        return self.grid.lon
+
+    @property
+    def lat(self):
+        """Lat defined on the Grid object"""
+        return self.grid.lat
+
+    @property
+    def depth(self):
+        """Depth defined on the Grid object"""
+        return self.grid.depth
+
+    @property
+    def cell_edge_sizes(self):
+        return self.grid.cell_edge_sizes
+
+    @property
+    def interp_method(self):
+        return self._interp_method
+
+    @property
+    def gridindexingtype(self):
+        return self._gridindexingtype
+
+    @property
+    def cast_data_dtype(self):
+        return self._cast_data_dtype
 
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
@@ -823,7 +852,6 @@ class Field:
                     for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon), strict=False)):
                         self.grid.cell_edge_sizes["x"][y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
                         self.grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
-                self.cell_edge_sizes = self.grid.cell_edge_sizes
             else:
                 raise ValueError(
                     f"Field.cell_edge_sizes() not implemented for {self.grid.gtype} grids. "
@@ -1542,8 +1570,6 @@ class Field:
                     (data[:, :, :, -halosize:], data, data[:, :, :, 0:halosize]), axis=len(data.shape) - 1
                 )
                 assert data.shape[3] == self.grid.xdim, "Fourth dim must be x."
-            self.lon = self.grid.lon
-            self.lat = self.grid.lat
         if meridional:
             if len(data.shape) == 3:
                 data = lib.concatenate((data[:, -halosize:, :], data, data[:, 0:halosize, :]), axis=len(data.shape) - 2)
@@ -1553,7 +1579,6 @@ class Field:
                     (data[:, :, -halosize:, :], data, data[:, :, 0:halosize, :]), axis=len(data.shape) - 2
                 )
                 assert data.shape[2] == self.grid.ydim, "Third dim must be y."
-            self.lat = self.grid.lat
         if dataNone:
             self.data = data
         else:
