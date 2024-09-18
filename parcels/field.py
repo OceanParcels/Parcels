@@ -13,6 +13,7 @@ import xarray as xr
 
 import parcels.tools.interpolation_utils as i_u
 from parcels._typing import GridIndexingType, InterpMethod, Mesh, TimePeriodic, VectorType
+from parcels.tools._helpers import deprecated_made_private
 from parcels.tools.converters import (
     Geographic,
     GeographicPolar,
@@ -337,7 +338,12 @@ class Field:
         return self._cast_data_dtype
 
     @classmethod
-    def get_dim_filenames(cls, filenames, dim):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def get_dim_filenames(cls, *args, **kwargs):
+        return cls._get_dim_filenames(*args, **kwargs)
+
+    @classmethod
+    def _get_dim_filenames(cls, filenames, dim):
         if isinstance(filenames, str) or not isinstance(filenames, collections.abc.Iterable):
             return [filenames]
         elif isinstance(filenames, dict):
@@ -351,7 +357,12 @@ class Field:
             return filenames
 
     @staticmethod
-    def collect_timeslices(
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def collect_timeslices(*args, **kwargs):
+        return Field._collect_timeslices(*args, **kwargs)
+
+    @staticmethod
+    def _collect_timeslices(
         timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning=None
     ):
         if netcdf_decodewarning is not None:
@@ -500,17 +511,17 @@ class Field:
             len(variable) == 2
         ), "The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables"
 
-        data_filenames = cls.get_dim_filenames(filenames, "data")
-        lonlat_filename = cls.get_dim_filenames(filenames, "lon")
+        data_filenames = cls._get_dim_filenames(filenames, "data")
+        lonlat_filename = cls._get_dim_filenames(filenames, "lon")
         if isinstance(filenames, dict):
             assert len(lonlat_filename) == 1
-        if lonlat_filename != cls.get_dim_filenames(filenames, "lat"):
+        if lonlat_filename != cls._get_dim_filenames(filenames, "lat"):
             raise NotImplementedError(
                 "longitude and latitude dimensions are currently processed together from one single file"
             )
         lonlat_filename = lonlat_filename[0]
         if "depth" in dimensions:
-            depth_filename = cls.get_dim_filenames(filenames, "depth")
+            depth_filename = cls._get_dim_filenames(filenames, "depth")
             if isinstance(filenames, dict) and len(depth_filename) != 1:
                 raise NotImplementedError("Vertically adaptive meshes not implemented for from_netcdf()")
             depth_filename = depth_filename[0]
@@ -573,7 +584,7 @@ class Field:
         if grid is None:
             # Concatenate time variable to determine overall dimension
             # across multiple files
-            time, time_origin, timeslices, dataFiles = cls.collect_timeslices(
+            time, time_origin, timeslices, dataFiles = cls._collect_timeslices(
                 timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
             )
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
@@ -582,7 +593,7 @@ class Field:
         elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
-            _, _, _, dataFiles = cls.collect_timeslices(
+            _, _, _, dataFiles = cls._collect_timeslices(
                 timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
             )
             kwargs["dataFiles"] = dataFiles
@@ -836,7 +847,11 @@ class Field:
         if self.grid != field.grid:
             field.grid.depth_field = field
 
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def calc_cell_edge_sizes(self):
+        return self._calc_cell_edge_sizes()
+
+    def _calc_cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method.
 
         Currently only works for Rectilinear Grids
@@ -865,10 +880,14 @@ class Field:
         Currently only works for Rectilinear Grids
         """
         if not self.grid.cell_edge_sizes:
-            self.calc_cell_edge_sizes()
+            self._calc_cell_edge_sizes()
         return self.grid.cell_edge_sizes["x"] * self.grid.cell_edge_sizes["y"]
 
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def search_indices_vertical_z(self, z):
+        return self._search_indices_vertical_z(z)
+
+    def _search_indices_vertical_z(self, z):
         grid = self.grid
         z = np.float32(z)
         if grid.depth[-1] > grid.depth[0]:
@@ -898,7 +917,11 @@ class Field:
         zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
         return (zi, zeta)
 
-    def search_indices_vertical_s(
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def search_indices_vertical_s(self, *args, **kwargs):
+        return self._search_indices_vertical_s(*args, **kwargs)
+
+    def _search_indices_vertical_s(
         self, x: float, y: float, z: float, xi: int, yi: int, xsi: float, eta: float, ti: int, time: float
     ):
         grid = self.grid
@@ -957,7 +980,11 @@ class Field:
         zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
         return (zi, zeta)
 
-    def reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def reconnect_bnd_indices(self, *args, **kwargs):
+        return self._reconnect_bnd_indices(*args, **kwargs)
+
+    def _reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
         if xi < 0:
             if sphere_mesh:
                 xi = xdim - 2
@@ -976,7 +1003,11 @@ class Field:
                 xi = xdim - xi
         return xi, yi
 
-    def search_indices_rectilinear(self, x: float, y: float, z: float, ti=-1, time=-1, particle=None, search2D=False):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def search_indices_rectilinear(self, *args, **kwargs):
+        return self._search_indices_rectilinear(*args, **kwargs)
+
+    def _search_indices_rectilinear(self, x: float, y: float, z: float, ti=-1, time=-1, particle=None, search2D=False):
         grid = self.grid
 
         if grid.xdim > 1 and (not grid.zonal_periodic):
@@ -1043,13 +1074,13 @@ class Field:
             if grid.gtype == GridType.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
                 try:
-                    (zi, zeta) = self.search_indices_vertical_z(z)
+                    (zi, zeta) = self._search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
                 except FieldOutOfBoundSurfaceError:
                     raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
             elif grid.gtype == GridType.RectilinearSGrid:
-                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
+                (zi, zeta) = self._search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi, zeta = -1, 0
 
@@ -1063,7 +1094,11 @@ class Field:
 
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices_curvilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def search_indices_curvilinear(self, *args, **kwargs):
+        return self._search_indices_curvilinear(*args, **kwargs)
+
+    def _search_indices_curvilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
         if particle:
             xi = particle.xi[self.igrid]
             yi = particle.yi[self.igrid]
@@ -1122,7 +1157,7 @@ class Field:
                 yi -= 1
             elif eta > 1 + tol:
                 yi += 1
-            (xi, yi) = self.reconnect_bnd_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
+            (xi, yi) = self._reconnect_bnd_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
             it += 1
             if it > maxIterSearch:
                 print("Correct cell not found after %d iterations" % maxIterSearch)
@@ -1135,11 +1170,11 @@ class Field:
         if grid.zdim > 1 and not search2D:
             if grid.gtype == GridType.CurvilinearZGrid:
                 try:
-                    (zi, zeta) = self.search_indices_vertical_z(z)
+                    (zi, zeta) = self._search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
             elif grid.gtype == GridType.CurvilinearSGrid:
-                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
+                (zi, zeta) = self._search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi = -1
             zeta = 0
@@ -1154,14 +1189,22 @@ class Field:
 
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
-        if self.grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
-            return self.search_indices_rectilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
-        else:
-            return self.search_indices_curvilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def search_indices(self, *args, **kwargs):
+        return self._search_indices(*args, **kwargs)
 
-    def interpolator2D(self, ti, z, y, x, particle=None):
-        (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, particle=particle)
+    def _search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+        if self.grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
+            return self._search_indices_rectilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
+        else:
+            return self._search_indices_curvilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
+
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def interpolator2D(self, *args, **kwargs):
+        return self._interpolator2D(*args, **kwargs)
+
+    def _interpolator2D(self, ti, z, y, x, particle=None):
+        (xsi, eta, _, xi, yi, _) = self._search_indices(x, y, z, particle=particle)
         if self.interp_method == "nearest":
             xii = xi if xsi <= 0.5 else xi + 1
             yii = yi if eta <= 0.5 else yi + 1
@@ -1211,8 +1254,12 @@ class Field:
         else:
             raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
 
-    def interpolator3D(self, ti, z, y, x, time, particle=None):
-        (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, ti, time, particle=particle)
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def interpolator3D(self, *args, **kwargs):
+        return self._interpolator3D(*args, **kwargs)
+
+    def _interpolator3D(self, ti, z, y, x, time, particle=None):
+        (xsi, eta, zeta, xi, yi, zi) = self._search_indices(x, y, z, ti, time, particle=particle)
         if self.interp_method == "nearest":
             xii = xi if xsi <= 0.5 else xi + 1
             yii = yi if eta <= 0.5 else yi + 1
@@ -1321,12 +1368,16 @@ class Field:
             f1 = self.data[ti + 1, :]
             return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
-    def spatial_interpolation(self, ti, z, y, x, time, particle=None):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def spatial_interpolation(self, *args, **kwargs):
+        return self._spatial_interpolation(*args, **kwargs)
+
+    def _spatial_interpolation(self, ti, z, y, x, time, particle=None):
         """Interpolate horizontal field values using a SciPy interpolator."""
         if self.grid.zdim == 1:
-            val = self.interpolator2D(ti, z, y, x, particle=particle)
+            val = self._interpolator2D(ti, z, y, x, particle=particle)
         else:
-            val = self.interpolator3D(ti, z, y, x, time, particle=particle)
+            val = self._interpolator3D(ti, z, y, x, time, particle=particle)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldOutOfBoundError(x, y, z, field=self)
@@ -1335,7 +1386,11 @@ class Field:
                 val = val.compute()
             return val
 
-    def time_index(self, time):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def time_index(self, *args, **kwargs):
+        return self._time_index(*args, **kwargs)
+
+    def _time_index(self, time):
         """Find the index in the time array associated with a given time.
 
         Note that we normalize to either the first or the last index
@@ -1398,11 +1453,11 @@ class Field:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        (ti, periods) = self.time_index(time)
+        (ti, periods) = self._time_index(time)
         time -= periods * (self.grid.time_full[-1] - self.grid.time_full[0])
         if ti < self.grid.tdim - 1 and time > self.grid.time[ti]:
-            f0 = self.spatial_interpolation(ti, z, y, x, time, particle=particle)
-            f1 = self.spatial_interpolation(ti + 1, z, y, x, time, particle=particle)
+            f0 = self._spatial_interpolation(ti, z, y, x, time, particle=particle)
+            f1 = self._spatial_interpolation(ti + 1, z, y, x, time, particle=particle)
             t0 = self.grid.time[ti]
             t1 = self.grid.time[ti + 1]
             value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
@@ -1410,28 +1465,48 @@ class Field:
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # exact value in the time array.
-            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
+            value = self._spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
 
         if applyConversion:
             return self.units.to_target(value, x, y, z)
         else:
             return value
 
-    def ccode_eval(self, var, t, z, y, x):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def ccode_eval(self, *args, **kwargs):
+        return self._ccode_eval(*args, **kwargs)
+
+    def _ccode_eval(self, var, t, z, y, x):
         self._check_velocitysampling()
         ccode_str = f"temporal_interpolation({x}, {y}, {z}, {t}, {self.ccode_name}, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
         return ccode_str
 
-    def ccode_convert(self, _, z, y, x):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def ccode_convert(self, *args, **kwargs):
+        return self._ccode_convert(*args, **kwargs)
+
+    def _ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
 
-    def get_block_id(self, block):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def get_block_id(self, *args, **kwargs):
+        return self._get_block_id(*args, **kwargs)
+
+    def _get_block_id(self, block):
         return np.ravel_multi_index(block, self.nchunks)
 
-    def get_block(self, bid):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def get_block(self, *args, **kwargs):
+        return self._get_block(*args, **kwargs)
+
+    def _get_block(self, bid):
         return np.unravel_index(bid, self.nchunks[1:])
 
-    def chunk_setup(self):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def chunk_setup(self, *args, **kwargs):
+        return self._chunk_setup(*args, **kwargs)
+
+    def _chunk_setup(self):
         if isinstance(self.data, da.core.Array):
             chunks = self.data.chunks
             self.nchunks = self.data.numblocks
@@ -1461,9 +1536,13 @@ class Field:
         self.grid.chunk_info = sum(self.grid.chunk_info, [])  # noqa: RUF017
         self.chunk_set = True
 
-    def chunk_data(self):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def chunk_data(self, *args, **kwargs):
+        return self._chunk_data(*args, **kwargs)
+
+    def _chunk_data(self):
         if not self.chunk_set:
-            self.chunk_setup()
+            self._chunk_setup()
         g = self.grid
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid.load_chunk)):
@@ -1472,7 +1551,7 @@ class Field:
                     or g.load_chunk[block_id] in g.chunk_loaded
                     and self.data_chunks[block_id] is None
                 ):
-                    block = self.get_block(block_id)
+                    block = self._get_block(block_id)
                     self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block], order="C")
                 elif g.load_chunk[block_id] == g.chunk_not_loaded:
                     if isinstance(self.data_chunks, list):
@@ -1631,7 +1710,11 @@ class Field:
         )
         dset.to_netcdf(filepath, unlimited_dims="time_counter")
 
-    def rescale_and_set_minmax(self, data):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def rescale_and_set_minmax(self, *args, **kwargs):
+        return self._rescale_and_set_minmax(*args, **kwargs)
+
+    def _rescale_and_set_minmax(self, data):
         data[np.isnan(data)] = 0
         if self._scaling_factor:
             data *= self._scaling_factor
@@ -1641,7 +1724,11 @@ class Field:
             data[data > self.vmax] = 0
         return data
 
-    def data_concatenate(self, data, data_to_concat, tindex):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def data_concatenate(self, *args, **kwargs):
+        return self._data_concatenate(*args, **kwargs)
+
+    def _data_concatenate(self, data, data_to_concat, tindex):
         if data[tindex] is not None:
             if isinstance(data, np.ndarray):
                 data[tindex] = None
@@ -1667,7 +1754,7 @@ class Field:
                 ti = g.ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
-        rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None
+        rechunk_callback_fields = self._chunk_setup if isinstance(tindex, list) else None
         filebuffer = self._field_fb_class(
             self.dataFiles[g.ti + tindex],
             self.dimensions,
@@ -1707,7 +1794,7 @@ class Field:
                     (),
                 ),
             )
-        data = self.data_concatenate(data, buffer_data, tindex)
+        data = self._data_concatenate(data, buffer_data, tindex)
         self.filebuffers[tindex] = filebuffer
         return data
 
@@ -1772,7 +1859,7 @@ class VectorField:
 
     def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         grid = self.U.grid
-        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
+        (xsi, eta, zeta, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
 
         if grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
@@ -1844,7 +1931,7 @@ class VectorField:
 
     def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time, particle=None):
         grid = self.U.grid
-        (xsi, eta, zet, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
+        (xsi, eta, zet, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
 
         if grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
@@ -2085,7 +2172,7 @@ class VectorField:
                 return True
 
     def spatial_slip_interpolation(self, ti, z, y, x, time, particle=None, applyConversion=True):
-        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
+        (xsi, eta, zeta, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
         f_u, f_v, f_w = 1, 1, 1
@@ -2209,7 +2296,7 @@ class VectorField:
                 "freeslip": {"2D": self.spatial_slip_interpolation, "3D": self.spatial_slip_interpolation},
             }
             grid = self.U.grid
-            (ti, periods) = self.U.time_index(time)
+            (ti, periods) = self.U._time_index(time)
             time -= periods * (grid.time_full[-1] - grid.time_full[0])
             if ti < grid.tdim - 1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
