@@ -32,11 +32,13 @@ from parcels.tools.converters import (
     _get_cftime_calendars,
     _get_cftime_datetimes,
 )
+from tests.common_kernels import DoNothing
+from tests.utils import TEST_DATA
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
-def generate_fieldset(xdim, ydim, zdim=1, tdim=1):
+def generate_fieldset_data(xdim, ydim, zdim=1, tdim=1):
     lon = np.linspace(0.0, 10.0, xdim, dtype=np.float32)
     lat = np.linspace(0.0, 10.0, ydim, dtype=np.float32)
     depth = np.zeros(zdim, dtype=np.float32)
@@ -57,7 +59,7 @@ def generate_fieldset(xdim, ydim, zdim=1, tdim=1):
 @pytest.mark.parametrize("ydim", [100, 200])
 def test_fieldset_from_data(xdim, ydim):
     """Simple test for fieldset initialisation from data."""
-    data, dimensions = generate_fieldset(xdim, ydim)
+    data, dimensions = generate_fieldset_data(xdim, ydim)
     fieldset = FieldSet.from_data(data, dimensions)
     assert len(fieldset.U.data.shape) == 3
     assert len(fieldset.V.data.shape) == 3
@@ -67,14 +69,14 @@ def test_fieldset_from_data(xdim, ydim):
 
 def test_fieldset_extra_syntax():
     """Simple test for fieldset initialisation from data."""
-    data, dimensions = generate_fieldset(10, 10)
+    data, dimensions = generate_fieldset_data(10, 10)
 
     with pytest.raises(SyntaxError):
         FieldSet.from_data(data, dimensions, unknown_keyword=5)
 
 
 def test_fieldset_vmin_vmax():
-    data, dimensions = generate_fieldset(11, 11)
+    data, dimensions = generate_fieldset_data(11, 11)
     fieldset = FieldSet.from_data(data, dimensions, vmin=3, vmax=7)
     assert np.isclose(np.amin(fieldset.U.data[fieldset.U.data > 0.0]), 3)
     assert np.isclose(np.amax(fieldset.U.data), 7)
@@ -83,7 +85,7 @@ def test_fieldset_vmin_vmax():
 @pytest.mark.parametrize("ttype", ["float", "datetime64"])
 @pytest.mark.parametrize("tdim", [1, 20])
 def test_fieldset_from_data_timedims(ttype, tdim):
-    data, dimensions = generate_fieldset(10, 10, tdim=tdim)
+    data, dimensions = generate_fieldset_data(10, 10, tdim=tdim)
     if ttype == "float":
         dimensions["time"] = np.linspace(0, 5, tdim)
     else:
@@ -95,8 +97,9 @@ def test_fieldset_from_data_timedims(ttype, tdim):
 
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 50])
-def test_fieldset_from_data_different_dimensions(xdim, ydim, zdim=4, tdim=2):
+def test_fieldset_from_data_different_dimensions(xdim, ydim):
     """Test for fieldset initialisation from data using dict-of-dict for dimensions."""
+    zdim, tdim = 4, 2
     lon = np.linspace(0.0, 1.0, xdim, dtype=np.float32)
     lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
     depth = np.zeros(zdim, dtype=np.float32)
@@ -123,10 +126,10 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim, zdim=4, tdim=2):
 
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 200])
-def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename="test_parcels"):
+def test_fieldset_from_parcels(xdim, ydim, tmpdir):
     """Simple test for fieldset initialisation from Parcels FieldSet file format."""
-    filepath = tmpdir.join(filename)
-    data, dimensions = generate_fieldset(xdim, ydim)
+    filepath = tmpdir.join("test_parcels")
+    data, dimensions = generate_fieldset_data(xdim, ydim)
     fieldset_out = FieldSet.from_data(data, dimensions)
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath)
@@ -137,8 +140,7 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename="test_parcels"):
 
 
 def test_field_from_netcdf_variables():
-    data_path = os.path.join(os.path.dirname(__file__), "test_data/")
-    filename = data_path + "perlinfieldsU.nc"
+    filename = str(TEST_DATA / "perlinfieldsU.nc")
     dims = {"lon": "x", "lat": "y"}
 
     variable = "vozocrtx"
@@ -181,12 +183,10 @@ def test_fieldset_nonstandardtime(
 
 @pytest.mark.parametrize("with_timestamps", [True, False])
 def test_field_from_netcdf(with_timestamps):
-    data_path = os.path.join(os.path.dirname(__file__), "test_data/")
-
     filenames = {
-        "lon": data_path + "mask_nemo_cross_180lon.nc",
-        "lat": data_path + "mask_nemo_cross_180lon.nc",
-        "data": data_path + "Uu_eastward_nemo_cross_180lon.nc",
+        "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+        "lat": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+        "data": str(TEST_DATA / "Uu_eastward_nemo_cross_180lon.nc"),
     }
     variable = "U"
     dimensions = {"lon": "glamf", "lat": "gphif"}
@@ -199,36 +199,36 @@ def test_field_from_netcdf(with_timestamps):
 
 
 def test_fieldset_from_modulefile():
-    data_path = os.path.join(os.path.dirname(__file__), "test_data/")
-    fieldset = FieldSet.from_modulefile(data_path + "fieldset_nemo.py")
+    nemo_fname = str(TEST_DATA / "fieldset_nemo.py")
+    nemo_error_fname = str(TEST_DATA / "fieldset_nemo_error.py")
+
+    fieldset = FieldSet.from_modulefile(nemo_fname)
     assert fieldset.U._creation_log == "from_nemo"
 
     indices = {"lon": range(6, 10)}
-    fieldset = FieldSet.from_modulefile(data_path + "fieldset_nemo.py", indices=indices)
+    fieldset = FieldSet.from_modulefile(nemo_fname, indices=indices)
     assert fieldset.U.grid.lon.shape[1] == 4
 
     with pytest.raises(IOError):
-        FieldSet.from_modulefile(data_path + "fieldset_nemo_error.py")
+        FieldSet.from_modulefile(nemo_error_fname)
 
-    FieldSet.from_modulefile(data_path + "fieldset_nemo_error.py", modulename="random_function_name")
+    FieldSet.from_modulefile(nemo_error_fname, modulename="random_function_name")
 
     with pytest.raises(IOError):
-        FieldSet.from_modulefile(data_path + "fieldset_nemo_error.py", modulename="none_returning_function")
+        FieldSet.from_modulefile(nemo_error_fname, modulename="none_returning_function")
 
 
 def test_field_from_netcdf_fieldtypes():
-    data_path = os.path.join(os.path.dirname(__file__), "test_data/")
-
     filenames = {
         "varU": {
-            "lon": data_path + "mask_nemo_cross_180lon.nc",
-            "lat": data_path + "mask_nemo_cross_180lon.nc",
-            "data": data_path + "Uu_eastward_nemo_cross_180lon.nc",
+            "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+            "lat": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+            "data": str(TEST_DATA / "Uu_eastward_nemo_cross_180lon.nc"),
         },
         "varV": {
-            "lon": data_path + "mask_nemo_cross_180lon.nc",
-            "lat": data_path + "mask_nemo_cross_180lon.nc",
-            "data": data_path + "Vv_eastward_nemo_cross_180lon.nc",
+            "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+            "lat": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+            "data": str(TEST_DATA / "Vv_eastward_nemo_cross_180lon.nc"),
         },
     }
     variables = {"varU": "U", "varV": "V"}
@@ -244,12 +244,10 @@ def test_field_from_netcdf_fieldtypes():
 
 
 def test_fieldset_from_agrid_dataset():
-    data_path = os.path.join(os.path.dirname(__file__), "test_data/")
-
     filenames = {
-        "lon": data_path + "mask_nemo_cross_180lon.nc",
-        "lat": data_path + "mask_nemo_cross_180lon.nc",
-        "data": data_path + "Uu_eastward_nemo_cross_180lon.nc",
+        "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+        "lat": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+        "data": str(TEST_DATA / "Uu_eastward_nemo_cross_180lon.nc"),
     }
     variable = {"U": "U"}
     dimensions = {"lon": "glamf", "lat": "gphif"}
@@ -257,12 +255,10 @@ def test_fieldset_from_agrid_dataset():
 
 
 def test_fieldset_from_cgrid_interpmethod():
-    data_path = os.path.join(os.path.dirname(__file__), "test_data/")
-
     filenames = {
-        "lon": data_path + "mask_nemo_cross_180lon.nc",
-        "lat": data_path + "mask_nemo_cross_180lon.nc",
-        "data": data_path + "Uu_eastward_nemo_cross_180lon.nc",
+        "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+        "lat": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+        "data": str(TEST_DATA / "Uu_eastward_nemo_cross_180lon.nc"),
     }
     variable = "U"
     dimensions = {"lon": "glamf", "lat": "gphif"}
@@ -274,7 +270,8 @@ def test_fieldset_from_cgrid_interpmethod():
 
 @pytest.mark.parametrize("cast_data_dtype", ["float32", "float64"])
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_fieldset_float64(cast_data_dtype, mode, tmpdir, xdim=10, ydim=5):
+def test_fieldset_float64(cast_data_dtype, mode, tmpdir):
+    xdim, ydim = 10, 5
     lon = np.linspace(0.0, 10.0, xdim, dtype=np.float64)
     lat = np.linspace(0.0, 10.0, ydim, dtype=np.float64)
     U, V = np.meshgrid(lon, lat)
@@ -309,10 +306,10 @@ def test_fieldset_float64(cast_data_dtype, mode, tmpdir, xdim=10, ydim=5):
 
 @pytest.mark.parametrize("indslon", [range(10, 20), [1]])
 @pytest.mark.parametrize("indslat", [range(30, 60), [22]])
-def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename="test_subsets"):
+def test_fieldset_from_file_subsets(indslon, indslat, tmpdir):
     """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset(100, 100)
-    filepath = tmpdir.join(filename)
+    data, dimensions = generate_fieldset_data(100, 100)
+    filepath = tmpdir.join("test_subsets")
     fieldsetfull = FieldSet.from_data(data, dimensions)
     fieldsetfull.write(filepath)
     indices = {"lon": indslon, "lat": indslat}
@@ -329,9 +326,9 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename="test_sub
     assert np.allclose(fieldsetsub.V.data, fieldsetfull.V.data[ixgrid])
 
 
-def test_empty_indices(tmpdir, filename="test_subsets"):
-    data, dimensions = generate_fieldset(100, 100)
-    filepath = tmpdir.join(filename)
+def test_empty_indices(tmpdir):
+    data, dimensions = generate_fieldset_data(100, 100)
+    filepath = tmpdir.join("test_subsets")
     FieldSet.from_data(data, dimensions).write(filepath)
     with pytest.raises(RuntimeError):
         FieldSet.from_parcels(filepath, indices={"lon": []})
@@ -341,11 +338,11 @@ def test_empty_indices(tmpdir, filename="test_subsets"):
 def test_illegal_dimensionsdict(calltype):
     with pytest.raises(NameError):
         if calltype == "from_data":
-            data, dimensions = generate_fieldset(10, 10)
+            data, dimensions = generate_fieldset_data(10, 10)
             dimensions["test"] = None
             FieldSet.from_data(data, dimensions)
         elif calltype == "from_nemo":
-            fname = os.path.join(os.path.dirname(__file__), "test_data", "mask_nemo_cross_180lon.nc")
+            fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")
             filenames = {"dx": fname, "mesh_mask": fname}
             variables = {"dx": "e1u"}
             dimensions = {"lon": "glamu", "lat": "gphiu", "test": "test"}
@@ -354,9 +351,9 @@ def test_illegal_dimensionsdict(calltype):
 
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 200])
-def test_add_field(xdim, ydim, tmpdir, filename="test_add"):
-    filepath = tmpdir.join(filename)
-    data, dimensions = generate_fieldset(xdim, ydim)
+def test_add_field(xdim, ydim, tmpdir):
+    filepath = tmpdir.join("test_add")
+    data, dimensions = generate_fieldset_data(xdim, ydim)
     fieldset = FieldSet.from_data(data, dimensions)
     field = Field("newfld", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     fieldset.add_field(field)
@@ -366,7 +363,7 @@ def test_add_field(xdim, ydim, tmpdir, filename="test_add"):
 
 @pytest.mark.parametrize("dupobject", ["same", "new"])
 def test_add_duplicate_field(dupobject):
-    data, dimensions = generate_fieldset(100, 100)
+    data, dimensions = generate_fieldset_data(100, 100)
     fieldset = FieldSet.from_data(data, dimensions)
     field = Field("newfld", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     fieldset.add_field(field)
@@ -380,7 +377,7 @@ def test_add_duplicate_field(dupobject):
 
 @pytest.mark.parametrize("fieldtype", ["normal", "vector"])
 def test_add_field_after_pset(fieldtype):
-    data, dimensions = generate_fieldset(100, 100)
+    data, dimensions = generate_fieldset_data(100, 100)
     fieldset = FieldSet.from_data(data, dimensions)
     pset = ParticleSet(fieldset, ScipyParticle, lon=0, lat=0)  # noqa ; to trigger fieldset._check_complete
     field1 = Field("field1", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
@@ -394,10 +391,10 @@ def test_add_field_after_pset(fieldtype):
 
 
 @pytest.mark.parametrize("chunksize", ["auto", None])
-def test_fieldset_samegrids_from_file(tmpdir, chunksize, filename="test_subsets"):
+def test_fieldset_samegrids_from_file(tmpdir, chunksize):
     """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset(100, 100)
-    filepath1 = tmpdir.join(filename + "_1")
+    data, dimensions = generate_fieldset_data(100, 100)
+    filepath1 = tmpdir.join("test_subsets_1")
     fieldset1 = FieldSet.from_data(data, dimensions)
     fieldset1.write(filepath1)
 
@@ -436,13 +433,14 @@ def test_fieldset_dimlength1_cgrid(gridtype):
 
 
 @pytest.mark.parametrize("chunksize", ["auto", None])
-def test_fieldset_diffgrids_from_file(tmpdir, chunksize, filename="test_subsets"):
+def test_fieldset_diffgrids_from_file(tmpdir, chunksize):
     """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset(100, 100)
+    filename = "test_subsets"
+    data, dimensions = generate_fieldset_data(100, 100)
     filepath1 = tmpdir.join(filename + "_1")
     fieldset1 = FieldSet.from_data(data, dimensions)
     fieldset1.write(filepath1)
-    data, dimensions = generate_fieldset(50, 50)
+    data, dimensions = generate_fieldset_data(50, 50)
     filepath2 = tmpdir.join(filename + "_2")
     fieldset2 = FieldSet.from_data(data, dimensions)
     fieldset2.write(filepath2)
@@ -463,10 +461,10 @@ def test_fieldset_diffgrids_from_file(tmpdir, chunksize, filename="test_subsets"
 
 
 @pytest.mark.parametrize("chunksize", ["auto", None])
-def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize, filename="test_subsets"):
+def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize):
     """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset(100, 100)
-    filepath = tmpdir.join(filename)
+    data, dimensions = generate_fieldset_data(100, 100)
+    filepath = tmpdir.join("test_subsets")
     fieldset_data = FieldSet.from_data(data, dimensions)
     fieldset_data.write(filepath)
     field_data = fieldset_data.U
@@ -493,9 +491,9 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize, filename="test_sub
     assert fieldset_file.U.grid != fieldset_file.B.grid
 
 
-def test_fieldset_samegrids_from_data(tmpdir, filename="test_subsets"):
+def test_fieldset_samegrids_from_data():
     """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset(100, 100)
+    data, dimensions = generate_fieldset_data(100, 100)
     fieldset1 = FieldSet.from_data(data, dimensions)
     field_data = fieldset1.U
     field_data.name = "B"
@@ -506,7 +504,7 @@ def test_fieldset_samegrids_from_data(tmpdir, filename="test_subsets"):
 
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
 def test_fieldset_celledgesizes(mesh):
-    data, dimensions = generate_fieldset(10, 7)
+    data, dimensions = generate_fieldset_data(10, 7)
     fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
 
     fieldset.U._calc_cell_edge_sizes()
@@ -524,7 +522,7 @@ def test_fieldset_celledgesizes(mesh):
 
 @pytest.mark.parametrize("dx, dy", [("e1u", "e2u"), ("e1v", "e2v")])
 def test_fieldset_celledgesizes_curvilinear(dx, dy):
-    fname = os.path.join(os.path.dirname(__file__), "test_data", "mask_nemo_cross_180lon.nc")
+    fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")
     filenames = {"dx": fname, "dy": fname, "mesh_mask": fname}
     variables = {"dx": dx, "dy": dy}
     dimensions = {"dx": {"lon": "glamu", "lat": "gphiu"}, "dy": {"lon": "glamu", "lat": "gphiu"}}
@@ -539,7 +537,7 @@ def test_fieldset_celledgesizes_curvilinear(dx, dy):
 
 
 def test_fieldset_write_curvilinear(tmpdir):
-    fname = os.path.join(os.path.dirname(__file__), "test_data", "mask_nemo_cross_180lon.nc")
+    fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")
     filenames = {"dx": fname, "mesh_mask": fname}
     variables = {"dx": "e1u"}
     dimensions = {"lon": "glamu", "lat": "gphiu"}
@@ -561,7 +559,7 @@ def test_fieldset_write_curvilinear(tmpdir):
 
 
 def test_curv_fieldset_add_periodic_halo():
-    fname = os.path.join(os.path.dirname(__file__), "test_data", "mask_nemo_cross_180lon.nc")
+    fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")
     filenames = {"dx": fname, "dy": fname, "mesh_mask": fname}
     variables = {"dx": "e1u", "dy": "e1v"}
     dimensions = {"dx": {"lon": "glamu", "lat": "gphiu"}, "dy": {"lon": "glamu", "lat": "gphiu"}}
@@ -572,7 +570,7 @@ def test_curv_fieldset_add_periodic_halo():
 
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
 def test_fieldset_cellareas(mesh):
-    data, dimensions = generate_fieldset(10, 7)
+    data, dimensions = generate_fieldset_data(10, 7)
     fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
     cell_areas = fieldset.V.cell_areas()
     if mesh == "flat":
@@ -591,7 +589,7 @@ def addConst(particle, fieldset, time):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_fieldset_constant(mode):
-    data, dimensions = generate_fieldset(100, 100)
+    data, dimensions = generate_fieldset_data(100, 100)
     fieldset = FieldSet.from_data(data, dimensions)
     westval = -0.2
     eastval = 0.3
@@ -727,8 +725,8 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
 
     process = psutil.Process(os.getpid())
     mem_0 = process.memory_info().rss
-    fnameU = os.path.join(os.path.dirname(__file__), "test_data", "perlinfieldsU.nc")
-    fnameV = os.path.join(os.path.dirname(__file__), "test_data", "perlinfieldsV.nc")
+    fnameU = str(TEST_DATA / "perlinfieldsU.nc")
+    fnameV = str(TEST_DATA / "perlinfieldsV.nc")
     ufiles = [fnameU] * 4
     vfiles = [fnameV] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
@@ -784,8 +782,8 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
 )
 @pytest.mark.parametrize("deferLoad", [True, False])
 def test_from_netcdf_chunking(mode, time_periodic, chunksize, deferLoad):
-    fnameU = os.path.join(os.path.dirname(__file__), "test_data", "perlinfieldsU.nc")
-    fnameV = os.path.join(os.path.dirname(__file__), "test_data", "perlinfieldsV.nc")
+    fnameU = str(TEST_DATA / "perlinfieldsU.nc")
+    fnameV = str(TEST_DATA / "perlinfieldsV.nc")
     ufiles = [fnameU] * 4
     vfiles = [fnameV] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
@@ -810,8 +808,8 @@ def test_from_netcdf_chunking(mode, time_periodic, chunksize, deferLoad):
 
 @pytest.mark.parametrize("datetype", ["float", "datetime64"])
 def test_timestamps(datetype, tmpdir):
-    data1, dims1 = generate_fieldset(10, 10, 1, 10)
-    data2, dims2 = generate_fieldset(10, 10, 1, 4)
+    data1, dims1 = generate_fieldset_data(10, 10, 1, 10)
+    data2, dims2 = generate_fieldset_data(10, 10, 1, 4)
     if datetype == "float":
         dims1["time"] = np.arange(0, 10, 1) * 86400
         dims2["time"] = np.arange(10, 14, 1) * 86400
@@ -930,14 +928,14 @@ def test_periodic(mode, use_xarray, time_periodic, dt_sign):
 
 
 @pytest.mark.parametrize("fail", [False, pytest.param(True, marks=pytest.mark.xfail(strict=True))])
-def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename="test_parcels_defer_loading"):
-    filepath = tmpdir.join(filename)
-    data0, dims0 = generate_fieldset(10, 10, 1, 10)
+def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail):
+    filepath = tmpdir.join("test_parcels_defer_loading")
+    data0, dims0 = generate_fieldset_data(10, 10, 1, 10)
     dims0["time"] = np.arange(0, 10, 1) * 3600
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.U.grid.time_origin = TimeConverter(np.datetime64("2018-04-20"))
     fieldset_out.V.grid.time_origin = TimeConverter(np.datetime64("2018-04-20"))
-    data1, dims1 = generate_fieldset(10, 10, 1, 10)
+    data1, dims1 = generate_fieldset_data(10, 10, 1, 10)
     if fail:
         dims1["time"] = np.arange(0, 10, 1) * 3600
     else:
@@ -960,9 +958,9 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename="te
 
 @pytest.mark.parametrize("zdim", [2, 8])
 @pytest.mark.parametrize("scale_fac", [0.2, 4, 1])
-def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename="test_parcels_defer_loading"):
-    filepath = tmpdir.join(filename)
-    data0, dims0 = generate_fieldset(3, 3, zdim, 10)
+def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir):
+    filepath = tmpdir.join("test_parcels_defer_loading")
+    data0, dims0 = generate_fieldset_data(3, 3, zdim, 10)
     data0["U"][:, 0, :, :] = (
         np.nan
     )  # setting first layer to nan, which will be changed to zero (and all other layers to 1)
@@ -1000,17 +998,14 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename="test
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
-    def DoNothing(particle, fieldset, time):
-        pass
-
     pset.execute(DoNothing, dt=3600)
     assert np.allclose(fieldset.U.data, scale_fac * (zdim - 1.0) / zdim)
 
 
 @pytest.mark.parametrize("time2", [1, 7])
-def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename="test_parcels_defer_loading"):
-    filepath = tmpdir.join(filename)
-    data0, dims0 = generate_fieldset(3, 3, 4, 10)
+def test_fieldset_initialisation_kernel_dask(time2, tmpdir):
+    filepath = tmpdir.join("test_parcels_defer_loading")
+    data0, dims0 = generate_fieldset_data(3, 3, 4, 10)
     data0["U"] = np.random.rand(10, 4, 3, 3)
     dims0["time"] = np.arange(0, 10, 1)
     dims0["depth"] = np.arange(0, 4, 1)
@@ -1089,7 +1084,7 @@ def test_fieldset_from_xarray(tdim):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_fieldset_frompop(mode):
-    filenames = os.path.join(os.path.join(os.path.dirname(__file__), "test_data"), "POPtestdata_time.nc")
+    filenames = str(TEST_DATA / "POPtestdata_time.nc")
     variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
     dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
 
@@ -1098,8 +1093,10 @@ def test_fieldset_frompop(mode):
     pset.execute(AdvectionRK4, runtime=3, dt=1)
 
 
-def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
+def test_fieldset_from_data_gridtypes():
     """Simple test for fieldset initialisation from data."""
+    xdim, ydim, zdim = 20, 10, 4
+
     lon = np.linspace(0.0, 10.0, xdim, dtype=np.float32)
     lat = np.linspace(0.0, 10.0, ydim, dtype=np.float32)
     depth = np.linspace(0.0, 1.0, zdim, dtype=np.float32)
@@ -1153,7 +1150,8 @@ def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("direction", [1, -1])
 @pytest.mark.parametrize("time_extrapolation", [True, False])
-def test_deferredload_simplefield(mode, direction, time_extrapolation, tmpdir, tdim=10):
+def test_deferredload_simplefield(mode, direction, time_extrapolation, tmpdir):
+    tdim = 10
     filename = tmpdir.join("simplefield_deferredload.nc")
     data = np.zeros((tdim, 2, 2))
     for ti in range(tdim):
@@ -1186,7 +1184,7 @@ def test_deferredload_simplefield(mode, direction, time_extrapolation, tmpdir, t
 
 def test_daskfieldfilebuffer_dimnames():
     DaskFileBuffer.add_to_dimension_name_map_global({"lat": "nydim", "lon": "nxdim"})
-    fnameU = os.path.join(os.path.dirname(__file__), "test_data", "perlinfieldsU.nc")
+    fnameU = str(TEST_DATA / "perlinfieldsU.nc")
     dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
     fb = DaskFileBuffer(fnameU, dimensions, indices={})
     assert ("nxdim" in fb._static_name_maps["lon"]) and ("ntdim" not in fb._static_name_maps["time"])
