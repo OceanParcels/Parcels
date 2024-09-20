@@ -344,14 +344,14 @@ class Kernel(BaseKernel):
                 warning = False
                 if (
                     isinstance(self._fieldset.W, Field)
-                    and self._fieldset.W.creation_log != "from_nemo"
+                    and self._fieldset.W._creation_log != "from_nemo"
                     and self._fieldset.W._scaling_factor is not None
                     and self._fieldset.W._scaling_factor > 0
                 ):
                     warning = True
                 if isinstance(self._fieldset.W, NestedField):
                     for f in self._fieldset.W:
-                        if f.creation_log != "from_nemo" and f._scaling_factor is not None and f._scaling_factor > 0:
+                        if f._creation_log != "from_nemo" and f._scaling_factor is not None and f._scaling_factor > 0:
                             warning = True
                 if warning:
                     warnings.warn(
@@ -587,9 +587,9 @@ class Kernel(BaseKernel):
                 if f in self.field_args.values():
                     f._chunk_data()
                 else:
-                    for block_id in range(len(f.data_chunks)):
-                        f.data_chunks[block_id] = None
-                        f.c_data_chunks[block_id] = None
+                    for block_id in range(len(f._data_chunks)):
+                        f._data_chunks[block_id] = None
+                        f._c_data_chunks[block_id] = None
 
             for g in pset.fieldset.gridset.grids:
                 g.load_chunk = np.where(g.load_chunk == g.chunk_loading_requested, g.chunk_loaded_touched, g.load_chunk)

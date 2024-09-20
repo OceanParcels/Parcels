@@ -264,7 +264,7 @@ class Field:
             self._cast_data_dtype = np.float64
 
         if not self.grid.defer_load:
-            self.data = self.reshape(self.data, transpose)
+            self.data = self._reshape(self.data, transpose)
 
             # Hack around the fact that NaN and ridiculously large values
             # propagate in SciPy's interpolators
@@ -283,13 +283,13 @@ class Field:
         # Variable names in JIT code
         self.dimensions = kwargs.pop("dimensions", None)
         self.indices = kwargs.pop("indices", None)
-        self.dataFiles = kwargs.pop("dataFiles", None)
-        if self.grid._add_last_periodic_data_timestep and self.dataFiles is not None:
-            self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
+        self._dataFiles = kwargs.pop("dataFiles", None)
+        if self.grid._add_last_periodic_data_timestep and self._dataFiles is not None:
+            self._dataFiles = np.append(self._dataFiles, self._dataFiles[0])
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
         self._netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        self.loaded_time_indices: Iterable[int] = []  # type: ignore
-        self.creation_log = kwargs.pop("creation_log", "")
+        self._loaded_time_indices: Iterable[int] = []  # type: ignore
+        self._creation_log = kwargs.pop("creation_log", "")
         self.chunksize = kwargs.pop("chunksize", None)
         self.netcdf_chunkdims_name_map = kwargs.pop("chunkdims_name_map", None)
         self.grid.depth_field = kwargs.pop("depth_field", None)
@@ -303,13 +303,43 @@ class Field:
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop("data_full_zdim", None)
-        self.data_chunks = []  # type: ignore # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
-        self.c_data_chunks: list[PointerType | None] = []  # C-pointers to the data_chunks array
+        self._data_chunks = []  # type: ignore # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
+        self._c_data_chunks: list[PointerType | None] = []  # C-pointers to the data_chunks array
         self.nchunks: tuple[int, ...] = ()
-        self.chunk_set: bool = False
+        self._chunk_set: bool = False
         self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def dataFiles(self):
+        return self._dataFiles
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def chunk_set(self):
+        return self._chunk_set
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def c_data_chunks(self):
+        return self._c_data_chunks
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def data_chunks(self):
+        return self._data_chunks
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def creation_log(self):
+        return self._creation_log
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def loaded_time_indices(self):
+        return self._loaded_time_indices
 
     @property
     def grid(self):
@@ -767,7 +797,11 @@ class Field:
             **kwargs,
         )
 
-    def reshape(self, data, transpose=False):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def reshape(self, *args, **kwargs):
+        return self._reshape(*args, **kwargs)
+
+    def _reshape(self, data, transpose=False):
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray, da.core.Array)):
             data = np.array(data)
@@ -1541,8 +1575,8 @@ class Field:
         else:
             return
 
-        self.data_chunks = [None] * npartitions
-        self.c_data_chunks = [None] * npartitions
+        self._data_chunks = [None] * npartitions
+        self._c_data_chunks = [None] * npartitions
         self.grid.load_chunk = np.zeros(npartitions, dtype=c_int, order="C")
         # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #      chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
@@ -1552,14 +1586,14 @@ class Field:
             sum(list(list(ci) for ci in chunks[1:]), []),  # noqa: RUF017 # TODO: Perhaps avoid quadratic list summation here
         ]
         self.grid.chunk_info = sum(self.grid.chunk_info, [])  # noqa: RUF017
-        self.chunk_set = True
+        self._chunk_set = True
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def chunk_data(self, *args, **kwargs):
         return self._chunk_data(*args, **kwargs)
 
     def _chunk_data(self):
-        if not self.chunk_set:
+        if not self._chunk_set:
             self._chunk_setup()
         g = self.grid
         if isinstance(self.data, da.core.Array):
@@ -1567,24 +1601,26 @@ class Field:
                 if (
                     g.load_chunk[block_id] == g.chunk_loading_requested
                     or g.load_chunk[block_id] in g.chunk_loaded
-                    and self.data_chunks[block_id] is None
+                    and self._data_chunks[block_id] is None
                 ):
                     block = self._get_block(block_id)
-                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block], order="C")
+                    self._data_chunks[block_id] = np.array(
+                        self.data.blocks[(slice(self.grid.tdim),) + block], order="C"
+                    )
                 elif g.load_chunk[block_id] == g.chunk_not_loaded:
-                    if isinstance(self.data_chunks, list):
-                        self.data_chunks[block_id] = None
+                    if isinstance(self._data_chunks, list):
+                        self._data_chunks[block_id] = None
                     else:
-                        self.data_chunks[block_id, :] = None
-                    self.c_data_chunks[block_id] = None
+                        self._data_chunks[block_id, :] = None
+                    self._c_data_chunks[block_id] = None
         else:
-            if isinstance(self.data_chunks, list):
-                self.data_chunks[0] = None
+            if isinstance(self._data_chunks, list):
+                self._data_chunks[0] = None
             else:
-                self.data_chunks[0, :] = None
-            self.c_data_chunks[0] = None
+                self._data_chunks[0, :] = None
+            self._c_data_chunks[0] = None
             self.grid.load_chunk[0] = g.chunk_loaded_touched
-            self.data_chunks[0] = np.array(self.data, order="C")
+            self._data_chunks[0] = np.array(self.data, order="C")
 
     @property
     def ctypes_struct(self):
@@ -1613,11 +1649,11 @@ class Field:
                     "data_chunks should have been loaded by now if requested. grid.load_chunk[bid] cannot be 1"
                 )
             if self.grid.load_chunk[i] in self.grid.chunk_loaded:
-                if not self.data_chunks[i].flags["C_CONTIGUOUS"]:
-                    self.data_chunks[i] = np.array(self.data_chunks[i], order="C")
-                self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
+                if not self._data_chunks[i].flags["C_CONTIGUOUS"]:
+                    self._data_chunks[i] = np.array(self._data_chunks[i], order="C")
+                self._c_data_chunks[i] = self._data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
             else:
-                self.c_data_chunks[i] = None
+                self._c_data_chunks[i] = None
 
         cstruct = CField(
             self.grid.xdim,
@@ -1627,7 +1663,7 @@ class Field:
             self.igrid,
             allow_time_extrapolation,
             time_periodic,
-            (POINTER(POINTER(c_float)) * len(self.c_data_chunks))(*self.c_data_chunks),
+            (POINTER(POINTER(c_float)) * len(self._c_data_chunks))(*self._c_data_chunks),
             pointer(self.grid.ctypes_struct),
         )
         return cstruct
@@ -1774,7 +1810,7 @@ class Field:
 
         rechunk_callback_fields = self._chunk_setup if isinstance(tindex, list) else None
         filebuffer = self._field_fb_class(
-            self.dataFiles[g.ti + tindex],
+            self._dataFiles[g.ti + tindex],
             self.dimensions,
             self.indices,
             netcdf_engine=self.netcdf_engine,

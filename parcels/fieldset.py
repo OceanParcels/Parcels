@@ -14,6 +14,7 @@ from parcels.field import DeferredArray, Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.particlefile import ParticleFile
+from parcels.tools._helpers import deprecated_made_private
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import TimeExtrapolationError
@@ -38,7 +39,7 @@ class FieldSet:
 
     def __init__(self, U: Field | NestedField | None, V: Field | NestedField | None, fields=None):
         self.gridset = GridSet()
-        self.completed: bool = False
+        self._completed: bool = False
         self._particlefile: ParticleFile | None = None
         if U:
             self.add_field(U, "U")
@@ -58,6 +59,11 @@ class FieldSet:
     @property
     def particlefile(self):
         return self._particlefile
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def completed(self):
+        return self._completed
 
     @staticmethod
     def checkvaliddimensionsdict(dims):
@@ -184,7 +190,7 @@ class FieldSet:
         * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
-        if self.completed:
+        if self._completed:
             raise RuntimeError(
                 "FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?"
             )
@@ -251,7 +257,11 @@ class FieldSet:
             else:
                 self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
 
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def check_complete(self):
+        return self._check_complete()
+
+    def _check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
         assert self.V, 'FieldSet does not have a Field named "V"'
         for attr, value in vars(self).items():
@@ -316,7 +326,7 @@ class FieldSet:
             ccode_fieldnames.append(fld.ccode_name)
 
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or f._dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
                 if f.grid.depth_field == "not_yet_set":
@@ -326,7 +336,7 @@ class FieldSet:
                 if not f.grid.defer_load:
                     depth_data = f.grid.depth_field.data
                     f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
-        self.completed = True
+        self._completed = True
 
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
@@ -501,7 +511,7 @@ class FieldSet:
                     if processedGrid:
                         grid = fields[procvar].grid
                         if procpaths == nowpaths:
-                            dFiles = fields[procvar].dataFiles
+                            dFiles = fields[procvar]._dataFiles
                             break
             fields[var] = Field.from_netcdf(
                 paths,
@@ -1446,7 +1456,7 @@ class FieldSet:
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f._dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == "first_updated":  # First load of data
@@ -1465,8 +1475,8 @@ class FieldSet:
                 data = lib.empty(
                     (g.tdim, zd, g.ydim - 2 * g.meridional_halo, g.xdim - 2 * g.zonal_halo), dtype=np.float32
                 )
-                f.loaded_time_indices = range(2)
-                for tind in f.loaded_time_indices:
+                f._loaded_time_indices = range(2)
+                for tind in f._loaded_time_indices:
                     for fb in f.filebuffers:
                         if fb is not None:
                             fb.close()
@@ -1476,8 +1486,8 @@ class FieldSet:
 
                 if isinstance(f.data, DeferredArray):
                     f.data = DeferredArray()
-                f.data = f.reshape(data)
-                if not f.chunk_set:
+                f.data = f._reshape(data)
+                if not f._chunk_set:
                     f._chunk_setup()
                 if len(g.load_chunk) > g.chunk_not_loaded:
                     g.load_chunk = np.where(
@@ -1495,14 +1505,14 @@ class FieldSet:
                     (g.tdim, zd, g.ydim - 2 * g.meridional_halo, g.xdim - 2 * g.zonal_halo), dtype=np.float32
                 )
                 if signdt >= 0:
-                    f.loaded_time_indices = [1]
+                    f._loaded_time_indices = [1]
                     if f.filebuffers[0] is not None:
                         f.filebuffers[0].close()
                         f.filebuffers[0] = None
                     f.filebuffers[0] = f.filebuffers[1]
                     data = f.computeTimeChunk(data, 1)
                 else:
-                    f.loaded_time_indices = [0]
+                    f._loaded_time_indices = [0]
                     if f.filebuffers[1] is not None:
                         f.filebuffers[1].close()
                         f.filebuffers[1] = None
@@ -1510,7 +1520,7 @@ class FieldSet:
                     data = f.computeTimeChunk(data, 0)
                 data = f._rescale_and_set_minmax(data)
                 if signdt >= 0:
-                    data = f.reshape(data)[1, :]
+                    data = f._reshape(data)[1, :]
                     if lib is da:
                         f.data = lib.stack([f.data[1, :], data], axis=0)
                     else:
@@ -1522,7 +1532,7 @@ class FieldSet:
                         f.data[0, :] = f.data[1, :]
                         f.data[1, :] = data
                 else:
-                    data = f.reshape(data)[0, :]
+                    data = f._reshape(data)[0, :]
                     if lib is da:
                         f.data = lib.stack([data, f.data[0, :]], axis=0)
                     else:
@@ -1539,30 +1549,30 @@ class FieldSet:
                     if signdt >= 0:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == g.chunk_loaded_touched:
-                                if f.data_chunks[block_id] is None:
+                                if f._data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break
                                 block = f.get_block(block_id)
-                                f.data_chunks[block_id][0] = None
-                                f.data_chunks[block_id][1] = np.array(f.data.blocks[(slice(2),) + block][1])
+                                f._data_chunks[block_id][0] = None
+                                f._data_chunks[block_id][1] = np.array(f.data.blocks[(slice(2),) + block][1])
                     else:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == g.chunk_loaded_touched:
-                                if f.data_chunks[block_id] is None:
+                                if f._data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break
                                 block = f.get_block(block_id)
-                                f.data_chunks[block_id][1] = None
-                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(2),) + block][0])
+                                f._data_chunks[block_id][1] = None
+                                f._data_chunks[block_id][0] = np.array(f.data.blocks[(slice(2),) + block][0])
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)
 
         # update time varying grid depth
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f._dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
                 depth_data = f.grid.depth_field.data

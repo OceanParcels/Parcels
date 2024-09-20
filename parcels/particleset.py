@@ -108,7 +108,7 @@ class ParticleSet:
         self.interaction_kernel = None
 
         self.fieldset = fieldset
-        self.fieldset.check_complete()
+        self.fieldset._check_complete()
         self.time_origin = fieldset.time_origin
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
