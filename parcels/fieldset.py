@@ -39,7 +39,7 @@ class FieldSet:
     def __init__(self, U: Field | NestedField | None, V: Field | NestedField | None, fields=None):
         self.gridset = GridSet()
         self.completed: bool = False
-        self.particlefile: ParticleFile | None = None
+        self._particlefile: ParticleFile | None = None
         if U:
             self.add_field(U, "U")
             # see #1663 for type-ignore reason
@@ -54,6 +54,10 @@ class FieldSet:
 
         self.compute_on_defer = None
         self.add_UVfield()
+
+    @property
+    def particlefile(self):
+        return self._particlefile
 
     @staticmethod
     def checkvaliddimensionsdict(dims):

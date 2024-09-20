@@ -287,7 +287,7 @@ class Field:
         if self.grid._add_last_periodic_data_timestep and self.dataFiles is not None:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
-        self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
+        self._netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         self.loaded_time_indices: Iterable[int] = []  # type: ignore
         self.creation_log = kwargs.pop("creation_log", "")
         self.chunksize = kwargs.pop("chunksize", None)
@@ -350,6 +350,10 @@ class Field:
     @property
     def cast_data_dtype(self):
         return self._cast_data_dtype
+
+    @property
+    def netcdf_engine(self):
+        return self._netcdf_engine
 
     @classmethod
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
