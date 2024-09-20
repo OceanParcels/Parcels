@@ -10,7 +10,7 @@ import ast
 import datetime
 import os
 from collections.abc import Callable
-from typing import Literal
+from typing import Any, Literal, get_args
 
 
 class ParcelsAST(ast.AST):
@@ -37,10 +37,33 @@ PathLike = str | os.PathLike
 Mesh = Literal["spherical", "flat"]  # corresponds with `mesh`
 VectorType = Literal["3D", "2D"] | None  # corresponds with `vector_type`
 ChunkMode = Literal["auto", "specific", "failsafe"]  # corresponds with `chunk_mode`
-GridIndexingType = Literal["pop", "mom5", "mitgcm", "nemo"]  # corresponds with `grid_indexing_type`
+GridIndexingType = Literal["pop", "mom5", "mitgcm", "nemo"]  # corresponds with `gridindexingtype`
 UpdateStatus = Literal["not_updated", "first_updated", "updated"]  # corresponds with `update_status`
 TimePeriodic = float | datetime.timedelta | Literal[False]  # corresponds with `update_status`
 NetcdfEngine = Literal["netcdf4", "xarray", "scipy"]
 
 
 KernelFunction = Callable[..., None]
+
+
+def _validate_against_pure_literal(value, typing_literal):
+    """Uses a Literal type alias to validate.
+
+    Can't be used with ``Literal[...] | None`` etc. as its not a pure literal.
+    """
+    if value not in get_args(typing_literal):
+        msg = f"Invalid value {value!r}. Valid options are {get_args(typing_literal)!r}"
+        raise ValueError(msg)
+
+
+# Assertion functions to clean user input
+def assert_valid_interp_method(value: Any):
+    _validate_against_pure_literal(value, InterpMethodOption)
+
+
+def assert_valid_mesh(value: Any) -> Mesh:
+    _validate_against_pure_literal(value, Mesh)
+
+
+def assert_valid_gridindexingtype(value: Any):
+    _validate_against_pure_literal(value, GridIndexingType)

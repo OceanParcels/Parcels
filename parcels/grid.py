@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
-from parcels._typing import Mesh, UpdateStatus
+from parcels._typing import Mesh, UpdateStatus, assert_valid_mesh
 from parcels.tools.converters import TimeConverter
 from parcels.tools.warnings import FieldSetWarning
 
@@ -79,6 +79,7 @@ class Grid:
         self.time_full = self.time  # needed for deferred_loaded Fields
         self.time_origin = TimeConverter() if time_origin is None else time_origin
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
+        assert_valid_mesh(mesh)
         self.mesh = mesh
         self.cstruct = None
         self.cell_edge_sizes: dict[str, npt.NDArray] = {}

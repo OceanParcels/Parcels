@@ -12,7 +12,14 @@ import numpy as np
 import xarray as xr
 
 import parcels.tools.interpolation_utils as i_u
-from parcels._typing import GridIndexingType, InterpMethod, Mesh, TimePeriodic, VectorType
+from parcels._typing import (
+    GridIndexingType,
+    InterpMethod,
+    Mesh,
+    TimePeriodic,
+    VectorType,
+    assert_valid_gridindexingtype,
+)
 from parcels.tools._helpers import deprecated_made_private
 from parcels.tools.converters import (
     Geographic,
@@ -207,6 +214,7 @@ class Field:
                 raise RuntimeError(f"interp_method is a dictionary but {name} is not in it")
         else:
             self._interp_method = interp_method
+        assert_valid_gridindexingtype(gridindexingtype)
         self._gridindexingtype = gridindexingtype
         if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"] and self.grid.gtype in [
             GridType.RectilinearSGrid,
