@@ -19,6 +19,7 @@ from parcels._typing import (
     TimePeriodic,
     VectorType,
     assert_valid_gridindexingtype,
+    assert_valid_interp_method,
 )
 from parcels.tools._helpers import deprecated_made_private
 from parcels.tools.converters import (
@@ -209,11 +210,11 @@ class Field:
         self.timestamps = timestamps
         if isinstance(interp_method, dict):
             if self.name in interp_method:
-                self._interp_method = interp_method[self.name]
+                self.interp_method = interp_method[self.name]
             else:
                 raise RuntimeError(f"interp_method is a dictionary but {name} is not in it")
         else:
-            self._interp_method = interp_method
+            self.interp_method = interp_method
         assert_valid_gridindexingtype(gridindexingtype)
         self._gridindexingtype = gridindexingtype
         if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"] and self.grid.gtype in [
@@ -336,6 +337,11 @@ class Field:
     @property
     def interp_method(self):
         return self._interp_method
+
+    @interp_method.setter
+    def interp_method(self, value):
+        assert_valid_interp_method(value)
+        self._interp_method = value
 
     @property
     def gridindexingtype(self):
