@@ -1332,7 +1332,7 @@ class FieldSet:
             raise OSError(f"Module {filename}.{modulename} does not return a FieldSet object")
         return fieldset
 
-    def get_fields(self):
+    def get_fields(self) -> list[Field | VectorField]:
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
         objects associated with this FieldSet.
         """
@@ -1468,13 +1468,13 @@ class FieldSet:
                             fb.close()
                         fb = None
                     data = f.computeTimeChunk(data, tind)
-                data = f.rescale_and_set_minmax(data)
+                data = f._rescale_and_set_minmax(data)
 
                 if isinstance(f.data, DeferredArray):
                     f.data = DeferredArray()
                 f.data = f.reshape(data)
                 if not f.chunk_set:
-                    f.chunk_setup()
+                    f._chunk_setup()
                 if len(g.load_chunk) > g.chunk_not_loaded:
                     g.load_chunk = np.where(
                         g.load_chunk == g.chunk_loaded_touched, g.chunk_loading_requested, g.load_chunk
@@ -1504,7 +1504,7 @@ class FieldSet:
                         f.filebuffers[1] = None
                     f.filebuffers[1] = f.filebuffers[0]
                     data = f.computeTimeChunk(data, 0)
-                data = f.rescale_and_set_minmax(data)
+                data = f._rescale_and_set_minmax(data)
                 if signdt >= 0:
                     data = f.reshape(data)[1, :]
                     if lib is da:

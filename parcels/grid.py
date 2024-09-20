@@ -2,13 +2,17 @@ import functools
 import warnings
 from ctypes import POINTER, Structure, c_double, c_float, c_int, c_void_p, cast, pointer
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
-from parcels._typing import Mesh
+from parcels._typing import Mesh, UpdateStatus
 from parcels.tools.converters import TimeConverter
 from parcels.tools.warnings import FieldSetWarning
+
+if TYPE_CHECKING:
+    from parcels.field import Field
 
 __all__ = [
     "GridType",
@@ -54,6 +58,7 @@ class Grid:
         self.zi = None
         self.ti = -1
         self.lon = lon
+        self.update_status: UpdateStatus | None = None
         if not self.lon.flags["C_CONTIGUOUS"]:
             self.lon = np.array(self.lon, order="C")
         self.lat = lat
@@ -237,7 +242,7 @@ class Grid:
                 )
                 assert self.depth.shape[2] == self.ydim, "Third dim must be y."
 
-    def computeTimeChunk(self, f, time, signdt):
+    def computeTimeChunk(self, f: "Field", time, signdt):
         nextTime_loc = np.inf if signdt >= 0 else -np.inf
         periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
         prev_time_indices = self.time
@@ -276,7 +281,7 @@ class Grid:
                     self.update_status = "updated"
             if self.ti == -1:
                 self.time = self.time_full
-                self.ti, _ = f.time_index(time)
+                self.ti, _ = f._time_index(time)
                 periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
                 if (
                     signdt == -1

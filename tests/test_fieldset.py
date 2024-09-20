@@ -509,7 +509,7 @@ def test_fieldset_celledgesizes(mesh):
     data, dimensions = generate_fieldset(10, 7)
     fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
 
-    fieldset.U.calc_cell_edge_sizes()
+    fieldset.U._calc_cell_edge_sizes()
     D_meridional = fieldset.U.cell_edge_sizes["y"]
     D_zonal = fieldset.U.cell_edge_sizes["x"]
 

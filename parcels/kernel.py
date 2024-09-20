@@ -585,7 +585,7 @@ class Kernel(BaseKernel):
                 if f.data.dtype != np.float32:
                     raise RuntimeError(f"Field {f.name} data needs to be float32 in JIT mode")
                 if f in self.field_args.values():
-                    f.chunk_data()
+                    f._chunk_data()
                 else:
                     for block_id in range(len(f.data_chunks)):
                         f.data_chunks[block_id] = None

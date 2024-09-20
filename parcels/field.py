@@ -2344,7 +2344,11 @@ class VectorField:
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
 
-    def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def ccode_eval(self, *args, **kwargs):
+        return self._ccode_eval(*args, **kwargs)
+
+    def _ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         ccode_str = ""
         if self.vector_type == "3D":
             ccode_str = (
