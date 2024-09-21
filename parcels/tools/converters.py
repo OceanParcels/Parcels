@@ -131,7 +131,7 @@ class TimeConverter:
             raise RuntimeError(f"Calendar {self.calendar} not implemented in TimeConverter")
 
     def __repr__(self):
-        return "%s" % self.time_origin
+        return f"{self.time_origin}"
 
     def __eq__(self, other):
         other = other.time_origin if isinstance(other, TimeConverter) else other
@@ -213,10 +213,10 @@ class GeographicPolar(UnitConverter):
         return value * 1000.0 * 1.852 * 60.0 * cos(y * pi / 180)
 
     def ccode_to_target(self, x, y, z):
-        return "(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)))" % y
+        return f"(1.0 / (1000. * 1.852 * 60. * cos({y} * M_PI / 180)))"
 
     def ccode_to_source(self, x, y, z):
-        return "(1000. * 1.852 * 60. * cos(%s * M_PI / 180))" % y
+        return f"(1000. * 1.852 * 60. * cos({y} * M_PI / 180))"
 
 
 class GeographicSquare(UnitConverter):
@@ -253,10 +253,10 @@ class GeographicPolarSquare(UnitConverter):
         return value * pow(1000.0 * 1.852 * 60.0 * cos(y * pi / 180), 2)
 
     def ccode_to_target(self, x, y, z):
-        return "pow(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
+        return f"pow(1.0 / (1000. * 1.852 * 60. * cos({y} * M_PI / 180)), 2)"
 
     def ccode_to_source(self, x, y, z):
-        return "pow((1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
+        return f"pow((1000. * 1.852 * 60. * cos({y} * M_PI / 180)), 2)"
 
 
 unitconverters_map = {

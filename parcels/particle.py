@@ -1,5 +1,6 @@
 from ctypes import c_void_p
 from operator import attrgetter
+from typing import Literal
 
 import numpy as np
 
@@ -27,7 +28,7 @@ class Variable:
         If to_write = 'once', the variable will be written as a time-independent 1D array
     """
 
-    def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
+    def __init__(self, name, dtype=np.float32, initial=0, to_write: bool | Literal["once"] = True):
         self.name = name
         self.dtype = dtype
         self.initial = initial
@@ -39,13 +40,13 @@ class Variable:
         if issubclass(cls, JITParticle):
             return instance._cptr.__getitem__(self.name)
         else:
-            return getattr(instance, "_%s" % self.name, self.initial)
+            return getattr(instance, f"_{self.name}", self.initial)
 
     def __set__(self, instance, value):
         if isinstance(instance, JITParticle):
             instance._cptr.__setitem__(self.name, value)
         else:
-            setattr(instance, "_%s" % self.name, value)
+            setattr(instance, f"_{self.name}", value)
 
     def __repr__(self):
         return f"PVar<{self.name}|{self.dtype}>"

@@ -39,36 +39,28 @@ gamma = 1 / (86400.0 * 2.89)
 gamma_g = 1 / (86400.0 * 28.9)
 
 
-def lon(xdim=200):
+@pytest.fixture
+def lon():
+    xdim = 200
     return np.linspace(-170, 170, xdim, dtype=np.float32)
 
 
-@pytest.fixture(name="lon")
-def lon_fixture(xdim=200):
-    return lon(xdim=xdim)
-
-
-def lat(ydim=100):
+@pytest.fixture
+def lat():
+    ydim = 100
     return np.linspace(-80, 80, ydim, dtype=np.float32)
 
 
-@pytest.fixture(name="lat")
-def lat_fixture(ydim=100):
-    return lat(ydim=ydim)
-
-
-def depth(zdim=2):
+@pytest.fixture
+def depth():
+    zdim = 2
     return np.linspace(0, 30, zdim, dtype=np.float32)
 
 
-@pytest.fixture(name="depth")
-def depth_fixture(zdim=2):
-    return depth(zdim=zdim)
-
-
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_zonal(lon, lat, depth, mode, npart=10):
+def test_advection_zonal(lon, lat, depth, mode):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
+    npart = 10
     data2D = {
         "U": np.ones((lon.size, lat.size), dtype=np.float32),
         "V": np.zeros((lon.size, lat.size), dtype=np.float32),
@@ -99,8 +91,9 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_meridional(lon, lat, mode, npart=10):
+def test_advection_meridional(lon, lat, mode):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
+    npart = 10
     data = {"U": np.zeros((lon.size, lat.size), dtype=np.float32), "V": np.ones((lon.size, lat.size), dtype=np.float32)}
     dimensions = {"lon": lon, "lat": lat}
     fieldset = FieldSet.from_data(data, dimensions, mesh="spherical", transpose=True)
@@ -112,9 +105,10 @@ def test_advection_meridional(lon, lat, mode, npart=10):
 
 
 @pytest.mark.parametrize("mode", ["jit", "scipy"])
-def test_advection_3D(mode, npart=11):
+def test_advection_3D(mode):
     """Flat 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
     xdim = ydim = zdim = 2
+    npart = 11
     dimensions = {
         "lon": np.linspace(0.0, 1e4, xdim, dtype=np.float32),
         "lat": np.linspace(0.0, 1e4, ydim, dtype=np.float32),
@@ -180,7 +174,8 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("rk45_tol", [10, 100])
-def test_advection_RK45(lon, lat, mode, rk45_tol, npart=10):
+def test_advection_RK45(lon, lat, mode, rk45_tol):
+    npart = 10
     data2D = {
         "U": np.ones((lon.size, lat.size), dtype=np.float32),
         "V": np.zeros((lon.size, lat.size), dtype=np.float32),
@@ -198,7 +193,7 @@ def test_advection_RK45(lon, lat, mode, rk45_tol, npart=10):
     print(fieldset.RK45_tol)
 
 
-def periodicfields(xdim, ydim, uvel, vvel):
+def create_periodic_fieldset(xdim, ydim, uvel, vvel):
     dimensions = {
         "lon": np.linspace(0.0, 1.0, xdim + 1, dtype=np.float32)[1:],  # don't include both 0 and 1, for periodic b.c.
         "lat": np.linspace(0.0, 1.0, ydim + 1, dtype=np.float32)[1:],
@@ -214,8 +209,9 @@ def periodicBC(particle, fieldset, time):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
-    fieldset = periodicfields(xdim, ydim, uvel=1.0, vvel=0.0)
+def test_advection_periodic_zonal(mode):
+    xdim, ydim, halosize = 100, 100, 3
+    fieldset = create_periodic_fieldset(xdim, ydim, uvel=1.0, vvel=0.0)
     fieldset.add_periodic_halo(zonal=True, halosize=halosize)
     assert len(fieldset.U.lon) == xdim + 2 * halosize
 
@@ -225,8 +221,9 @@ def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
-    fieldset = periodicfields(xdim, ydim, uvel=0.0, vvel=1.0)
+def test_advection_periodic_meridional(mode):
+    xdim, ydim = 100, 100
+    fieldset = create_periodic_fieldset(xdim, ydim, uvel=0.0, vvel=1.0)
     fieldset.add_periodic_halo(meridional=True)
     assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
 
@@ -236,8 +233,9 @@ def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
-    fieldset = periodicfields(xdim, ydim, uvel=1.0, vvel=1.0)
+def test_advection_periodic_zonal_meridional(mode):
+    xdim, ydim = 100, 100
+    fieldset = create_periodic_fieldset(xdim, ydim, uvel=1.0, vvel=1.0)
     fieldset.add_periodic_halo(zonal=True, meridional=True)
     assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
     assert len(fieldset.U.lon) == xdim + 10  # default halo size is 5 grid points
@@ -299,8 +297,7 @@ def truth_stationary(x_0, y_0, t):
     return lon, lat
 
 
-@pytest.fixture
-def fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
+def create_fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     """Generate a FieldSet encapsulating the flow field of a stationary eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
@@ -324,6 +321,11 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     return fieldset
 
 
+@pytest.fixture
+def fieldset_stationary():
+    return create_fieldset_stationary()
+
+
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize(
     "method, rtol, diffField",
@@ -335,7 +337,8 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         ("RK45", 1e-5, False),
     ],
 )
-def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npart=1):
+def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField):
+    npart = 1
     fieldset = fieldset_stationary
     if diffField:
         fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
@@ -359,7 +362,8 @@ def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npa
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_stationary_eddy_vertical(mode, npart=1):
+def test_stationary_eddy_vertical(mode):
+    npart = 1
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(10000, 20000, npart)
     depth = np.linspace(12500, 12500, npart)
@@ -405,8 +409,7 @@ def truth_moving(x_0, y_0, t):
     return lon, lat
 
 
-@pytest.fixture
-def fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
+def create_fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     """Generate a FieldSet encapsulating the flow field of a moving eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
@@ -425,6 +428,11 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
 
+@pytest.fixture
+def fieldset_moving():
+    return create_fieldset_moving()
+
+
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize(
     "method, rtol, diffField",
@@ -436,7 +444,8 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         ("RK45", 1e-5, False),
     ],
 )
-def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField, npart=1):
+def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField):
+    npart = 1
     fieldset = fieldset_moving
     if diffField:
         fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
@@ -473,8 +482,7 @@ def truth_decaying(x_0, y_0, t):
     return lon, lat
 
 
-@pytest.fixture
-def fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
+def create_fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     """Generate a FieldSet encapsulating the flow field of a decaying eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
@@ -494,6 +502,11 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
     return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
 
+@pytest.fixture
+def fieldset_decaying():
+    return create_fieldset_decaying()
+
+
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize(
     "method, rtol, diffField",
@@ -506,7 +519,8 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         ("AA", 1e-3, False),
     ],
 )
-def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1):
+def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField):
+    npart = 1
     fieldset = fieldset_decaying
     if method == "AA":
         if mode == "jit":
@@ -580,7 +594,7 @@ def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction, output_file=outfile)
     assert np.abs(pset.lon - x0 - pset.time * u) < 1e-6
     assert np.abs(pset.lat - y0 - pset.time * v) < 1e-6
-    if w:
+    if w is not None:
         assert np.abs(pset.depth - z0 - pset.time * w) < 1e-4
 
     ds = xr.open_zarr(outfile_path)

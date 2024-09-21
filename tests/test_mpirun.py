@@ -6,12 +6,14 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from tests.utils import PROJECT_ROOT
+
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows as mpi4py not available for windows")
 @pytest.mark.parametrize("repeatdt, maxage", [(200 * 86400, 600 * 86400), (100 * 86400, 100 * 86400)])
 @pytest.mark.parametrize("nump", [8])
 def test_mpi_run(tmpdir, repeatdt, maxage, nump):
-    stommel_file = os.path.join(os.path.dirname(__file__), "..", "docs", "examples", "example_stommel.py")
+    stommel_file = PROJECT_ROOT / "docs/examples/example_stommel.py"
     outputMPI = tmpdir.join("StommelMPI")
     outputMPI_partition_function = tmpdir.join("StommelMPI_partition_function")
     outputNoMPI = tmpdir.join("StommelNoMPI.zarr")
