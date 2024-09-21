@@ -1,4 +1,5 @@
 import time as time_module
+
 import numpy as np
 
 try:
@@ -6,11 +7,11 @@ try:
 except:
     MPI = None
 
-from threading import Thread
-from threading import Event
+from threading import Event, Thread
 from time import sleep
 
-class TimingLog():
+
+class TimingLog:
     stime = 0
     etime = 0
     mtime = 0
@@ -74,11 +75,11 @@ class TimingLog():
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
             if mpi_rank == 0:
-                self.mtime += (self.etime-self.stime)
+                self.mtime += self.etime - self.stime
             else:
                 self.mtime = 0
         else:
-            self.mtime += (self.etime-self.stime)
+            self.mtime += self.etime - self.stime
 
     def advance_iteration(self):
         if MPI:
@@ -130,7 +131,7 @@ class TimingLog():
         self._iter = 0
 
 
-class ParamLogging():
+class ParamLogging:
     _samples = []
     _params = []
     _iter = 0
@@ -155,7 +156,7 @@ class ParamLogging():
         N = len(self._params)
         result = 0
         if N > 0:
-            result = self._params[min(max(index, 0), N-1)]
+            result = self._params[min(max(index, 0), N - 1)]
         return result
 
     def __len__(self):
@@ -178,7 +179,8 @@ class ParamLogging():
             self._samples.append(self._iter)
             self._iter += 1
 
-class Asynchronous_ParamLogging():
+
+class Asynchronous_ParamLogging:
     _samples = []
     _params = []
     _iter = 0
@@ -255,12 +257,12 @@ class Asynchronous_ParamLogging():
             self._measure_start_value = self._measure_func()
             self._measure_partial_values.append(0)
         while not self._event.is_set():
-            self._measure_partial_values.append( self._measure_func()-self._measure_start_value )
+            self._measure_partial_values.append(self._measure_func() - self._measure_start_value)
             sleep(self._measure_interval)
 
     def async_run_measurement(self):
         while not self._event.is_set():
-            self._measure_partial_values.append( self.measure_func() )
+            self._measure_partial_values.append(self.measure_func())
             sleep(self.measure_interval)
 
     def start_partial_measurement(self):
@@ -296,7 +298,7 @@ class Asynchronous_ParamLogging():
         N = len(self._params)
         result = 0
         if N > 0:
-            result = self._params[min(max(index, 0), N-1)]
+            result = self._params[min(max(index, 0), N - 1)]
         return result
 
     def __len__(self):
@@ -318,4 +320,3 @@ class Asynchronous_ParamLogging():
             self._params.append(param)
             self._samples.append(self._iter)
             self._iter += 1
-
