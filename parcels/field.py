@@ -281,7 +281,7 @@ class Field:
         self._scaling_factor = None
 
         # Variable names in JIT code
-        self.dimensions = kwargs.pop("dimensions", None)
+        self._dimensions = kwargs.pop("dimensions", None)
         self.indices = kwargs.pop("indices", None)
         self._dataFiles = kwargs.pop("dataFiles", None)
         if self.grid._add_last_periodic_data_timestep and self._dataFiles is not None:
@@ -340,6 +340,10 @@ class Field:
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def loaded_time_indices(self):
         return self._loaded_time_indices
+
+    @property
+    def dimensions(self):
+        return self._dimensions
 
     @property
     def grid(self):

@@ -54,7 +54,7 @@ class FieldSet:
                 self.add_field(field, name)
 
         self.compute_on_defer = None
-        self.add_UVfield()
+        self._add_UVfield()
 
     @property
     def particlefile(self):
@@ -245,7 +245,11 @@ class FieldSet:
             for f in vfield:
                 f.fieldset = self
 
-    def add_UVfield(self):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def add_UVfield(self, *args, **kwargs):
+        return self._add_UVfield(*args, **kwargs)
+
+    def _add_UVfield(self):
         if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
             if isinstance(self.U, NestedField):
                 self.add_vector_field(NestedField("UV", self.U, self.V))
@@ -313,7 +317,7 @@ class FieldSet:
             if g.defer_load:
                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
             g.time_origin = self.time_origin
-        self.add_UVfield()
+        self._add_UVfield()
 
         ccode_fieldnames = []
         counter = 1
