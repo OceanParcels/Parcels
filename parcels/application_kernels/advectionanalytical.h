@@ -112,9 +112,13 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   int numUpdates = 0;
   while ((updateCells == 1) && (numUpdates < maxCellupdates)){
     if (flow3D == 0){
-      status = getCell2D(fu, *xi, *yi, tii, dataU_2D, first_tstep_only); CHECKSTATUS(status);
-      status = getCell2D(fv, *xi, *yi, tii, dataV_2D, first_tstep_only); CHECKSTATUS(status);
-
+      if (gridindexingtype == NEMO) {
+        status = getCell2D(fu, xi[igrid], yi[igrid], tii, dataU_2D, first_tstep_only); CHECKSTATUS(status);
+        status = getCell2D(fv, xi[igrid], yi[igrid], tii, dataV_2D, first_tstep_only); CHECKSTATUS(status);
+      } else if (gridindexingtype == MITGCM) {
+        status = getCell2D(fu, xi[igrid], yi[igrid]-1, tii, dataU_2D, first_tstep_only); CHECKSTATUS(status);
+        status = getCell2D(fv, xi[igrid]-1, yi[igrid], tii, dataV_2D, first_tstep_only); CHECKSTATUS(status);
+      }
       updateCells = 0;
       if (xsi > 1 - tol_grid){
         if (((grid->tdim > 1) && (((1-tau)*dataU_2D[0][1][1] + tau*dataU_2D[1][1][1])*time_direction > 0)) ||
@@ -147,10 +151,15 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
         }
       }
     } else if (flow3D == 1){
-      status = getCell3D(fu, *xi, *yi, *zi, tii, dataU_3D, first_tstep_only); CHECKSTATUS(status);
-      status = getCell3D(fv, *xi, *yi, *zi, tii, dataV_3D, first_tstep_only); CHECKSTATUS(status);
-      status = getCell3D(fw, *xi, *yi, *zi, tii, dataW_3D, first_tstep_only); CHECKSTATUS(status);
-
+      if (gridindexingtype == NEMO) {
+        status = getCell3D(fu, xi[igrid], yi[igrid], zi[igrid], tii, dataU_3D, first_tstep_only); CHECKSTATUS(status);
+        status = getCell3D(fv, xi[igrid], yi[igrid], zi[igrid], tii, dataV_3D, first_tstep_only); CHECKSTATUS(status);
+        status = getCell3D(fw, xi[igrid], yi[igrid], zi[igrid], tii, dataW_3D, first_tstep_only); CHECKSTATUS(status);
+      } else if (gridindexingtype == MITGCM) {
+        status = getCell3D(fu, xi[igrid], yi[igrid]-1, zi[igrid], tii, dataU_3D, first_tstep_only); CHECKSTATUS(status);
+        status = getCell3D(fv, xi[igrid]-1, yi[igrid], zi[igrid], tii, dataV_3D, first_tstep_only); CHECKSTATUS(status);
+        status = getCell3D(fw, xi[igrid], yi[igrid], zi[igrid], tii, dataW_3D, first_tstep_only); CHECKSTATUS(status);
+      }
       updateCells = 0;
       if (xsi > 1 - tol_grid){
         if (((grid->tdim > 1) && (((1-tau)*dataU_3D[0][1][1][1] + tau*dataU_3D[1][1][1][1])*time_direction > 0)) ||
@@ -243,10 +252,15 @@ static inline StatusCode calcAdvectionAnalytical_JIT(CField *fu, CField *fv, CFi
   float data_e1v[2][2][2];
   float data_e1t[2][2][2];
   float data_e2t[2][2][2];
-  status = getCell2D(e2u, *xi, *yi, 0, data_e2u, 1); CHECKSTATUS(status);
-  status = getCell2D(e1v, *xi, *yi, 0, data_e1v, 1); CHECKSTATUS(status);
-  status = getCell2D(e1t, *xi, *yi, 0, data_e1t, 1); CHECKSTATUS(status);
-  status = getCell2D(e2t, *xi, *yi, 0, data_e2t, 1); CHECKSTATUS(status);
+  if (gridindexingtype == NEMO) {
+    status = getCell2D(e2u, xi[igrid], yi[igrid], 0, data_e2u, 1); CHECKSTATUS(status);
+    status = getCell2D(e1v, xi[igrid], yi[igrid], 0, data_e1v, 1); CHECKSTATUS(status);
+  } else if (gridindexingtype == MITGCM) {
+    status = getCell2D(e2u, xi[igrid], yi[igrid]-1, 0, data_e2u, 1); CHECKSTATUS(status);
+    status = getCell2D(e1v, xi[igrid]-1, yi[igrid], 0, data_e1v, 1); CHECKSTATUS(status);
+  }
+  status = getCell2D(e1t, xi[igrid], yi[igrid], 0, data_e1t, 1); CHECKSTATUS(status);  // TODO check if this is same for NEMO and MITGCM
+  status = getCell2D(e2t, xi[igrid], yi[igrid], 0, data_e2t, 1); CHECKSTATUS(status);
   double c4 = data_e2u[0][1][0];
   double c2 = data_e2u[0][1][1];
   double c1 = data_e1v[0][0][1];
