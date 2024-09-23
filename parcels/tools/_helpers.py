@@ -7,7 +7,7 @@ from collections.abc import Callable
 PACKAGE = "Parcels"
 
 
-def deprecated(msg: str = "", stacklevel: int = 2) -> Callable:
+def deprecated(msg: str = "") -> Callable:
     """Decorator marking a function as being deprecated
 
     Parameters
@@ -37,7 +37,7 @@ def deprecated(msg: str = "", stacklevel: int = 2) -> Callable:
                 f"`{func.__qualname__}` is deprecated and will be removed in a future release of {PACKAGE}.{msg}"
             )
 
-            warnings.warn(msg_formatted, category=DeprecationWarning, stacklevel=stacklevel)
+            warnings.warn(msg_formatted, category=DeprecationWarning, stacklevel=3)
             return func(*args, **kwargs)
 
         return wrapper
@@ -50,5 +50,4 @@ def deprecated_made_private(func: Callable) -> Callable:
         "It has moved to the internal API as it is not expected to be directly used by "
         "the end-user. If you feel that you use this code directly in your scripts, please "
         "comment on our tracking issue at <>.",  # TODO: Add tracking issue
-        stacklevel=3,
     )(func)
