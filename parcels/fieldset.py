@@ -343,7 +343,12 @@ class FieldSet:
         self._completed = True
 
     @classmethod
-    def parse_wildcards(cls, paths, filenames, var):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def parse_wildcards(self, *args, **kwargs):
+        return self._parse_wildcards(*args, **kwargs)
+
+    @classmethod
+    def _parse_wildcards(cls, paths, filenames, var):
         if not isinstance(paths, list):
             paths = sorted(glob(str(paths)))
         if len(paths) == 0:
@@ -469,10 +474,10 @@ class FieldSet:
             # Resolve all matching paths for the current variable
             paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
             if type(paths) is not dict:
-                paths = cls.parse_wildcards(paths, filenames, var)
+                paths = cls._parse_wildcards(paths, filenames, var)
             else:
                 for dim, p in paths.items():
-                    paths[dim] = cls.parse_wildcards(p, filenames, var)
+                    paths[dim] = cls._parse_wildcards(p, filenames, var)
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
