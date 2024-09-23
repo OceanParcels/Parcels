@@ -61,7 +61,7 @@ def assert_valid_interp_method(value: Any):
     _validate_against_pure_literal(value, InterpMethodOption)
 
 
-def assert_valid_mesh(value: Any) -> Mesh:
+def assert_valid_mesh(value: Any):
     _validate_against_pure_literal(value, Mesh)
 
 

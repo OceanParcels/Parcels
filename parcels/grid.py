@@ -2,7 +2,6 @@ import functools
 import warnings
 from ctypes import POINTER, Structure, c_double, c_float, c_int, c_void_p, cast, pointer
 from enum import IntEnum
-from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -10,9 +9,6 @@ import numpy.typing as npt
 from parcels._typing import Mesh, UpdateStatus, assert_valid_mesh
 from parcels.tools.converters import TimeConverter
 from parcels.tools.warnings import FieldSetWarning
-
-if TYPE_CHECKING:
-    from parcels.field import Field
 
 __all__ = [
     "GridType",
@@ -243,7 +239,7 @@ class Grid:
                 )
                 assert self.depth.shape[2] == self.ydim, "Third dim must be y."
 
-    def computeTimeChunk(self, f: "Field", time, signdt):
+    def computeTimeChunk(self, f, time, signdt):
         nextTime_loc = np.inf if signdt >= 0 else -np.inf
         periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
         prev_time_indices = self.time
