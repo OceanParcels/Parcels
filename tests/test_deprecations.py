@@ -27,7 +27,7 @@ def test_private_attribute_field(private_attribute):
     with pytest.raises(DeprecationWarning):
         assert hasattr(field, attribute)
         assert hasattr(field, private_attribute)
-        assert getattr(field, attribute) == getattr(field, private_attribute)
+        assert getattr(field, attribute) is getattr(field, private_attribute)
 
 
 @pytest.mark.parametrize("private_attribute", private_fieldset_attrs)
@@ -38,4 +38,4 @@ def test_private_attribute_fieldset(private_attribute):
     with pytest.raises(DeprecationWarning):
         assert hasattr(fieldset, attribute)
         assert hasattr(fieldset, private_attribute)
-        assert getattr(fieldset, attribute) == getattr(fieldset, private_attribute)
+        assert getattr(fieldset, attribute) is getattr(fieldset, private_attribute)
