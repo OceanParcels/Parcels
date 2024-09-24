@@ -9,32 +9,27 @@ from parcels import (
     AdvectionDiffusionM1,
     DiffusionUniformKh,
     Field,
-    FieldSet,
     JITParticle,
     ParcelsRandom,
     ParticleSet,
     RectilinearZGrid,
     ScipyParticle,
 )
+from tests.utils import create_fieldset_zeros_conversion
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 
 
-def zeros_fieldset(mesh="spherical", xdim=200, ydim=100, mesh_conversion=1):
-    """Generates a zero velocity field."""
-    lon = np.linspace(-1e5 * mesh_conversion, 1e5 * mesh_conversion, xdim, dtype=np.float32)
-    lat = np.linspace(-1e5 * mesh_conversion, 1e5 * mesh_conversion, ydim, dtype=np.float32)
-
-    dimensions = {"lon": lon, "lat": lat}
-    data = {"U": np.zeros((ydim, xdim), dtype=np.float32), "V": np.zeros((ydim, xdim), dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh=mesh)
-
-
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_meridional=50):
+def test_fieldKh_Brownian(mesh, mode):
+    xdim = 200
+    ydim = 100
+    kh_zonal = 100
+    kh_meridional = 50
+
     mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
-    fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
+    fieldset = create_fieldset_zeros_conversion(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
     fieldset.add_constant_field("Kh_zonal", kh_zonal, mesh=mesh)
     fieldset.add_constant_field("Kh_meridional", kh_meridional, mesh=mesh)
@@ -62,10 +57,12 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("kernel", [AdvectionDiffusionM1, AdvectionDiffusionEM])
-def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=100):
+def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel):
     """Test advection-diffusion kernels on a non-uniform diffusivity field with a linear gradient in one direction."""
+    xdim = 200
+    ydim = 100
     mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
-    fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
+    fieldset = create_fieldset_zeros_conversion(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
     Kh = np.zeros((ydim, xdim), dtype=np.float32)
     for x in range(xdim):
@@ -93,8 +90,9 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=10
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("lambd", [1, 5])
-def test_randomexponential(mode, lambd, npart=1000):
-    fieldset = zeros_fieldset()
+def test_randomexponential(mode, lambd):
+    fieldset = create_fieldset_zeros_conversion()
+    npart = 1000
 
     # Rate parameter for random.expovariate
     fieldset.lambd = lambd
@@ -120,8 +118,9 @@ def test_randomexponential(mode, lambd, npart=1000):
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("mu", [0.8 * np.pi, np.pi])
 @pytest.mark.parametrize("kappa", [2, 4])
-def test_randomvonmises(mode, mu, kappa, npart=10000):
-    fieldset = zeros_fieldset()
+def test_randomvonmises(mode, mu, kappa):
+    npart = 10000
+    fieldset = create_fieldset_zeros_conversion()
 
     # Parameters for random.vonmisesvariate
     fieldset.mu = mu
