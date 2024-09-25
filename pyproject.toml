@@ -52,6 +52,9 @@ local_scheme = "no-local-version"
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
+filterwarnings = [
+  "error:.*removed in a future release of Parcels.*:DeprecationWarning", # Have Parcels DeprecationWarnings fail CI (prevents deprecated items being used in internal code)
+  ]
 
 [tool.ruff]
 line-length = 120

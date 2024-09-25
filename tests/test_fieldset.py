@@ -203,7 +203,7 @@ def test_fieldset_from_modulefile():
     nemo_error_fname = str(TEST_DATA / "fieldset_nemo_error.py")
 
     fieldset = FieldSet.from_modulefile(nemo_fname)
-    assert fieldset.U.creation_log == "from_nemo"
+    assert fieldset.U._creation_log == "from_nemo"
 
     indices = {"lon": range(6, 10)}
     fieldset = FieldSet.from_modulefile(nemo_fname, indices=indices)
@@ -379,7 +379,7 @@ def test_add_duplicate_field(dupobject):
 def test_add_field_after_pset(fieldtype):
     data, dimensions = generate_fieldset_data(100, 100)
     fieldset = FieldSet.from_data(data, dimensions)
-    pset = ParticleSet(fieldset, ScipyParticle, lon=0, lat=0)  # noqa ; to trigger fieldset.check_complete
+    pset = ParticleSet(fieldset, ScipyParticle, lon=0, lat=0)  # noqa ; to trigger fieldset._check_complete
     field1 = Field("field1", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     field2 = Field("field2", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     vfield = VectorField("vfield", field1, field2)
@@ -425,7 +425,7 @@ def test_fieldset_dimlength1_cgrid(gridtype):
         fieldset.U.interp_method = "cgrid_velocity"
         fieldset.V.interp_method = "cgrid_velocity"
     try:
-        fieldset.check_complete()
+        fieldset._check_complete()
         success = True if gridtype == "A" else False
     except NotImplementedError:
         success = True if gridtype == "C" else False
@@ -507,7 +507,7 @@ def test_fieldset_celledgesizes(mesh):
     data, dimensions = generate_fieldset_data(10, 7)
     fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
 
-    fieldset.U.calc_cell_edge_sizes()
+    fieldset.U._calc_cell_edge_sizes()
     D_meridional = fieldset.U.cell_edge_sizes["y"]
     D_zonal = fieldset.U.cell_edge_sizes["x"]
 
@@ -542,7 +542,7 @@ def test_fieldset_write_curvilinear(tmpdir):
     variables = {"dx": "e1u"}
     dimensions = {"lon": "glamu", "lat": "gphiu"}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
-    assert fieldset.dx.creation_log == "from_nemo"
+    assert fieldset.dx._creation_log == "from_nemo"
 
     newfile = tmpdir.join("curv_field")
     fieldset.write(newfile)
@@ -552,7 +552,7 @@ def test_fieldset_write_curvilinear(tmpdir):
         variables={"dx": "dx"},
         dimensions={"time": "time_counter", "depth": "depthdx", "lon": "nav_lon", "lat": "nav_lat"},
     )
-    assert fieldset2.dx.creation_log == "from_netcdf"
+    assert fieldset2.dx._creation_log == "from_netcdf"
 
     for var in ["lon", "lat", "data"]:
         assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
@@ -949,7 +949,7 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail):
     fieldset_out.add_field(fieldW)
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath, extra_fields={"W": "W"})
-    assert fieldset.U.creation_log == "from_parcels"
+    assert fieldset.U._creation_log == "from_parcels"
     pset = ParticleSet.from_list(
         fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5], time=[datetime.datetime(2018, 4, 20, 1)]
     )
@@ -984,11 +984,12 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir):
 
     def compute(fieldset):
         # Calculating vertical weighted average
+        f: Field
         for f in [fieldset.U, fieldset.V]:
-            for tind in f.loaded_time_indices:
+            for tind in f._loaded_time_indices:
                 data = da.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
                 data = da.broadcast_to(data, (1, f.grid.zdim, f.grid.ydim, f.grid.xdim))
-                f.data = f.data_concatenate(f.data, data, tind)
+                f.data = f._data_concatenate(f.data, data, tind)
 
     fieldset.compute_on_defer = compute
     fieldset.computeTimeChunk(1, 1)
@@ -1070,7 +1071,7 @@ def test_fieldset_from_xarray(tdim):
     else:
         dimensions = {"lat": "lat", "lon": "lon", "depth": "depth"}
     fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh="flat")
-    assert fieldset.U.creation_log == "from_xarray_dataset"
+    assert fieldset.U._creation_log == "from_xarray_dataset"
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0, depth=20)
 

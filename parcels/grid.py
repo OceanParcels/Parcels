@@ -6,7 +6,7 @@ from enum import IntEnum
 import numpy as np
 import numpy.typing as npt
 
-from parcels._typing import Mesh
+from parcels._typing import Mesh, UpdateStatus, assert_valid_mesh
 from parcels.tools.converters import TimeConverter
 from parcels.tools.warnings import FieldSetWarning
 
@@ -54,6 +54,7 @@ class Grid:
         self.zi = None
         self.ti = -1
         self.lon = lon
+        self.update_status: UpdateStatus | None = None
         if not self.lon.flags["C_CONTIGUOUS"]:
             self.lon = np.array(self.lon, order="C")
         self.lat = lat
@@ -74,6 +75,7 @@ class Grid:
         self.time_full = self.time  # needed for deferred_loaded Fields
         self.time_origin = TimeConverter() if time_origin is None else time_origin
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
+        assert_valid_mesh(mesh)
         self.mesh = mesh
         self.cstruct = None
         self.cell_edge_sizes: dict[str, npt.NDArray] = {}
@@ -276,7 +278,7 @@ class Grid:
                     self.update_status = "updated"
             if self.ti == -1:
                 self.time = self.time_full
-                self.ti, _ = f.time_index(time)
+                self.ti, _ = f._time_index(time)
                 periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
                 if (
                     signdt == -1

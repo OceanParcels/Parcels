@@ -819,14 +819,14 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval(node.var, *args)
+        ccode_eval = node.field.obj._ccode_eval(node.var, *args)
         stmts = [
             c.Assign("parcels_interp_state", ccode_eval),
             c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
         ]
 
         if node.convert:
-            ccode_conv = node.field.obj.ccode_convert(*args)
+            ccode_conv = node.field.obj._ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             stmts += [conv_stat]
 
@@ -836,17 +836,17 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval(
+        ccode_eval = node.field.obj._ccode_eval(
             node.var, node.var2, node.var3, node.field.obj.U, node.field.obj.V, node.field.obj.W, *args
         )
         if node.convert and node.field.obj.U.interp_method != "cgrid_velocity":
-            ccode_conv1 = node.field.obj.U.ccode_convert(*args)
-            ccode_conv2 = node.field.obj.V.ccode_convert(*args)
+            ccode_conv1 = node.field.obj.U._ccode_convert(*args)
+            ccode_conv2 = node.field.obj.V._ccode_convert(*args)
             statements = [c.Statement(f"{node.var} *= {ccode_conv1}"), c.Statement(f"{node.var2} *= {ccode_conv2}")]
         else:
             statements = []
         if node.convert and node.field.obj.vector_type == "3D":
-            ccode_conv3 = node.field.obj.W.ccode_convert(*args)
+            ccode_conv3 = node.field.obj.W._ccode_convert(*args)
             statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
         conv_stat = c.Block(statements)
         node.ccode = c.Block(
@@ -864,8 +864,8 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval(node.var, *args)
-            ccode_conv = fld.ccode_convert(*args)
+            ccode_eval = fld._ccode_eval(node.var, *args)
+            ccode_conv = fld._ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             cstat += [
                 c.Assign("particles->state[pnum]", ccode_eval),
@@ -884,15 +884,15 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *args)
+            ccode_eval = fld._ccode_eval(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *args)
             if fld.U.interp_method != "cgrid_velocity":
-                ccode_conv1 = fld.U.ccode_convert(*args)
-                ccode_conv2 = fld.V.ccode_convert(*args)
+                ccode_conv1 = fld.U._ccode_convert(*args)
+                ccode_conv2 = fld.V._ccode_convert(*args)
                 statements = [c.Statement(f"{node.var} *= {ccode_conv1}"), c.Statement(f"{node.var2} *= {ccode_conv2}")]
             else:
                 statements = []
             if fld.vector_type == "3D":
-                ccode_conv3 = fld.W.ccode_convert(*args)
+                ccode_conv3 = fld.W._ccode_convert(*args)
                 statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
             cstat += [
                 c.Assign("particles->state[pnum]", ccode_eval),
