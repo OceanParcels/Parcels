@@ -1,15 +1,15 @@
 import os
-import sys
 from glob import glob
 
 import numpy as np
 import pytest
 import xarray as xr
 
+from parcels._compat import MPI
 from tests.utils import PROJECT_ROOT
 
 
-@pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows as mpi4py not available for windows")
+@pytest.mark.skipif(MPI is None, reason="MPI not installed")
 @pytest.mark.parametrize("repeatdt, maxage", [(200 * 86400, 600 * 86400), (100 * 86400, 100 * 86400)])
 @pytest.mark.parametrize("nump", [8])
 def test_mpi_run(tmpdir, repeatdt, maxage, nump):
