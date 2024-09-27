@@ -235,7 +235,7 @@ class ParticleFile:
             if self.create_new_zarrfile:
                 if self.chunks is None:
                     self.chunks = (len(ids), 1)
-                if pset.repeatpclass is not None and self.chunks[0] < 1e4:
+                if pset._repeatpclass is not None and self.chunks[0] < 1e4:
                     warnings.warn(
                         f"ParticleFile chunks are set to {self.chunks}, but this may lead to "
                         f"a significant slowdown in Parcels when many calls to repeatdt. "

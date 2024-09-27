@@ -1,9 +1,10 @@
 import inspect
 from typing import Literal
 
+import numpy as np
 import pytest
 
-from parcels import Field, FieldSet
+from parcels import Field, FieldSet, Grid, JITParticle, ParticleSet, RectilinearZGrid
 from tests.utils import create_fieldset_unit_mesh
 
 
@@ -73,58 +74,108 @@ def test_testing_action_class():
 
 # fmt: off
 actions = [
-    Action("Field",      "dataFiles",                       "make_private"  ),
-    Action("Field",      "netcdf_engine",                   "read_only"     ),
-    Action("Field",      "loaded_time_indices",             "make_private"  ),
-    Action("Field",      "creation_log",                    "make_private"  ),
-    Action("Field",      "data_chunks",                     "make_private"  ),
-    Action("Field",      "c_data_chunks",                   "make_private"  ),
-    Action("Field",      "chunk_set",                       "make_private"  ),
-    Action("Field",      "cell_edge_sizes",                 "read_only"     ),
-    Action("Field",      "get_dim_filenames()",             "make_private"  ),
-    Action("Field",      "collect_timeslices()",            "make_private"  ),
-    Action("Field",      "reshape()",                       "make_private"  ),
-    Action("Field",      "calc_cell_edge_sizes()",          "make_private"  ),
-    Action("Field",      "search_indices_vertical_z()",     "make_private"  ),
-    Action("Field",      "search_indices_vertical_s()",     "make_private"  ),
-    Action("Field",      "reconnect_bnd_indices()",         "make_private"  ),
-    Action("Field",      "search_indices_rectilinear()",    "make_private"  ),
-    Action("Field",      "search_indices_curvilinear()",    "make_private"  ),
-    Action("Field",      "search_indices()",                "make_private"  ),
-    Action("Field",      "interpolator2D()",                "make_private"  ),
-    Action("Field",      "interpolator3D()",                "make_private"  ),
-    Action("Field",      "spatial_interpolation()",         "make_private"  ),
-    Action("Field",      "time_index()",                    "make_private"  ),
-    Action("Field",      "ccode_eval()",                    "make_private"  ),
-    Action("Field",      "ccode_convert()",                 "make_private"  ),
-    Action("Field",      "get_block_id()",                  "make_private"  ),
-    Action("Field",      "get_block()",                     "make_private"  ),
-    Action("Field",      "chunk_setup()",                   "make_private"  ),
-    Action("Field",      "chunk_data()",                    "make_private"  ),
-    Action("Field",      "rescale_and_set_minmax()",        "make_private"  ),
-    Action("Field",      "data_concatenate()",              "make_private"  ),
-    Action("FieldSet",   "completed",                       "make_private"  ),
-    Action("FieldSet",   "particlefile",                    "read_only"     ),
-    Action("FieldSet",   "add_UVfield()",                   "make_private"  ),
-    Action("FieldSet",   "check_complete()",                "make_private"  ),
-    Action("FieldSet",   "parse_wildcards()",               "make_private"  ),
+    # 1709
+    Action("Field",           "dataFiles",                       "make_private"  ),
+    Action("Field",           "netcdf_engine",                   "read_only"     ),
+    Action("Field",           "loaded_time_indices",             "make_private"  ),
+    Action("Field",           "creation_log",                    "make_private"  ),
+    Action("Field",           "data_chunks",                     "make_private"  ),
+    Action("Field",           "c_data_chunks",                   "make_private"  ),
+    Action("Field",           "chunk_set",                       "make_private"  ),
+    Action("Field",           "cell_edge_sizes",                 "read_only"     ),
+    Action("Field",           "get_dim_filenames()",             "make_private"  ),
+    Action("Field",           "collect_timeslices()",            "make_private"  ),
+    Action("Field",           "reshape()",                       "make_private"  ),
+    Action("Field",           "calc_cell_edge_sizes()",          "make_private"  ),
+    Action("Field",           "search_indices_vertical_z()",     "make_private"  ),
+    Action("Field",           "search_indices_vertical_s()",     "make_private"  ),
+    Action("Field",           "reconnect_bnd_indices()",         "make_private"  ),
+    Action("Field",           "search_indices_rectilinear()",    "make_private"  ),
+    Action("Field",           "search_indices_curvilinear()",    "make_private"  ),
+    Action("Field",           "search_indices()",                "make_private"  ),
+    Action("Field",           "interpolator2D()",                "make_private"  ),
+    Action("Field",           "interpolator3D()",                "make_private"  ),
+    Action("Field",           "spatial_interpolation()",         "make_private"  ),
+    Action("Field",           "time_index()",                    "make_private"  ),
+    Action("Field",           "ccode_eval()",                    "make_private"  ),
+    Action("Field",           "ccode_convert()",                 "make_private"  ),
+    Action("Field",           "get_block_id()",                  "make_private"  ),
+    Action("Field",           "get_block()",                     "make_private"  ),
+    Action("Field",           "chunk_setup()",                   "make_private"  ),
+    Action("Field",           "chunk_data()",                    "make_private"  ),
+    Action("Field",           "rescale_and_set_minmax()",        "make_private"  ),
+    Action("Field",           "data_concatenate()",              "make_private"  ),
+    Action("FieldSet",        "completed",                       "make_private"  ),
+    Action("FieldSet",        "particlefile",                    "read_only"     ),
+    Action("FieldSet",        "add_UVfield()",                   "make_private"  ),
+    Action("FieldSet",        "check_complete()",                "make_private"  ),
+    Action("FieldSet",        "parse_wildcards()",               "make_private"  ),
+
+    # 1713
+    Action("ParticleSet",     "active_particles_mask()",         "make_private"  ),
+    Action("ParticleSet",     "compute_neighbor_tree()",         "make_private"  ),
+    Action("ParticleSet",     "neighbors_by_index()",            "make_private"  ),
+    Action("ParticleSet",     "neighbors_by_coor()",             "make_private"  ),
+    Action("ParticleSet",     "monte_carlo_sample()",            "make_private"  ),
+    Action("Grid",            "check_zonal_periodic()",          "make_private"  ),
+    Action("Grid",            "add_Sdepth_periodic_halo()",      "make_private"  ),
+    Action("Grid",            "computeTimeChunk()",              "make_private"  ),
+    Action("ParticleSet",     "repeat_starttime",                "make_private"  ),
+    Action("ParticleSet",     "repeatlon",                       "make_private"  ),
+    Action("ParticleSet",     "repeatlat",                       "make_private"  ),
+    Action("ParticleSet",     "repeatdepth",                     "make_private"  ),
+    Action("ParticleSet",     "repeatpclass",                    "make_private"  ),
+    Action("ParticleSet",     "repeatkwargs",                    "make_private"  ),
+    Action("ParticleSet",     "kernel",                          "make_private"  ),
+    Action("ParticleSet",     "interaction_kernel",              "make_private"  ),
+    Action("ParticleSet",     "repeatpid",                       "make_private"  ),
+    Action("ParticleSet",     "error_particles",                 "make_private"  ),
+    Action("ParticleSet",     "num_error_particles",             "make_private"  ),
+
+
 ]
 # fmt: on
 
-# Create test data dictionary
-fieldset = create_fieldset_unit_mesh()
-field = fieldset.U
 
-test_data = {
-    "Field": {
-        "class": Field,
-        "object": field,
-    },
-    "FieldSet": {
-        "class": FieldSet,
-        "object": fieldset,
-    },
-}
+def create_test_data():
+    """Creates and returns the test data dictionary."""
+    fieldset = create_fieldset_unit_mesh()
+    field = fieldset.U
+
+    npart = 100
+    pset = ParticleSet(
+        fieldset,
+        lon=np.linspace(0, 1, npart, dtype=np.float32),
+        lat=np.linspace(1, 0, npart, dtype=np.float32),
+        pclass=JITParticle,
+    )
+
+    lon_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
+    lat_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
+    time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
+    grid = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
+
+    return {
+        "Field": {
+            "class": Field,
+            "object": field,
+        },
+        "FieldSet": {
+            "class": FieldSet,
+            "object": fieldset,
+        },
+        "ParticleSet": {
+            "class": ParticleSet,
+            "object": pset,
+        },
+        "Grid": {
+            "class": Grid,
+            "object": grid,
+        },
+    }
+
+
+test_data = create_test_data()
 
 
 @pytest.mark.parametrize(

@@ -177,7 +177,7 @@ class InteractionKernel(BaseKernel):
 
         reset_particle_idx = []
         for pyfunc in self._pyfunc:
-            pset.compute_neighbor_tree(endtime, dt)
+            pset._compute_neighbor_tree(endtime, dt)
             active_idx = pset._active_particle_idx
 
             mutator = defaultdict(lambda: [])
@@ -192,7 +192,7 @@ class InteractionKernel(BaseKernel):
                     p.dt = endtime - p.time
                     reset_particle_idx.append(particle_idx)
 
-                neighbors = pset.neighbors_by_index(particle_idx)
+                neighbors = pset._neighbors_by_index(particle_idx)
                 try:
                     res = pyfunc(p, pset.fieldset, p.time, neighbors, mutator)
                 except Exception as e:
@@ -252,10 +252,10 @@ class InteractionKernel(BaseKernel):
         self.remove_deleted(pset)  # Generalizable version!
 
         # Identify particles that threw errors
-        n_error = pset.num_error_particles
+        n_error = pset._num_error_particles
 
         while n_error > 0:
-            error_pset = pset.error_particles
+            error_pset = pset._error_particles
             # Check for StatusCodes
             for p in error_pset:
                 if p.state == StatusCode.StopExecution:
@@ -281,4 +281,4 @@ class InteractionKernel(BaseKernel):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            n_error = pset.num_error_particles
+            n_error = pset._num_error_particles

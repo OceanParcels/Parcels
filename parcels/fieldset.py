@@ -307,7 +307,7 @@ class FieldSet:
             check_velocityfields(self.U, self.V, W)
 
         for g in self.gridset.grids:
-            g.check_zonal_periodic()
+            g._check_zonal_periodic()
             if len(g.time) == 1:
                 continue
             assert isinstance(
@@ -1459,7 +1459,7 @@ class FieldSet:
             if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load:
                 continue
             if f.grid.update_status == "not_updated":
-                nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
+                nextTime_loc = f.grid._computeTimeChunk(f, time, signdt)
                 if time == nextTime_loc and signdt != 0:
                     raise TimeExtrapolationError(time, field=f, msg="In fset.computeTimeChunk")
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)

@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 from parcels._typing import Mesh, UpdateStatus, assert_valid_mesh
+from parcels.tools._helpers import deprecated_made_private
 from parcels.tools.converters import TimeConverter
 from parcels.tools.warnings import FieldSetWarning
 
@@ -203,7 +204,11 @@ class Grid:
             return self.lon_remapping.particle_to_target(lon)
         return lon
 
-    def check_zonal_periodic(self):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def check_zonal_periodic(self, *args, **kwargs):
+        return self._check_zonal_periodic(*args, **kwargs)
+
+    def _check_zonal_periodic(self):
         if self.zonal_periodic or self.mesh == "flat" or self.lon.size == 1:
             return
         dx = (self.lon[1:] - self.lon[:-1]) if len(self.lon.shape) == 1 else self.lon[0, 1:] - self.lon[0, :-1]
@@ -211,7 +216,11 @@ class Grid:
         dx = np.where(dx > 180, dx - 360, dx)
         self.zonal_periodic = sum(dx) > 359.9
 
-    def add_Sdepth_periodic_halo(self, zonal, meridional, halosize):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def add_Sdepth_periodic_halo(self, *args, **kwargs):
+        return self._add_Sdepth_periodic_halo(*args, **kwargs)
+
+    def _add_Sdepth_periodic_halo(self, zonal, meridional, halosize):
         if zonal:
             if len(self.depth.shape) == 3:
                 self.depth = np.concatenate(
@@ -239,7 +248,11 @@ class Grid:
                 )
                 assert self.depth.shape[2] == self.ydim, "Third dim must be y."
 
-    def computeTimeChunk(self, f, time, signdt):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def computeTimeChunk(self, *args, **kwargs):
+        return self._computeTimeChunk(*args, **kwargs)
+
+    def _computeTimeChunk(self, f, time, signdt):
         nextTime_loc = np.inf if signdt >= 0 else -np.inf
         periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
         prev_time_indices = self.time
@@ -406,7 +419,7 @@ class RectilinearGrid(Grid):
             [np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32
         )
         if isinstance(self, RectilinearSGrid):
-            self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
+            self._add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 class RectilinearZGrid(RectilinearGrid):
@@ -607,7 +620,7 @@ class CurvilinearGrid(Grid):
             self.ydim = self.lat.shape[0]
             self.meridional_halo = halosize
         if isinstance(self, CurvilinearSGrid):
-            self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
+            self._add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 class CurvilinearZGrid(CurvilinearGrid):

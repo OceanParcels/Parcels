@@ -655,10 +655,10 @@ class Kernel(BaseKernel):
         self.remove_deleted(pset)
 
         # Identify particles that threw errors
-        n_error = pset.num_error_particles
+        n_error = pset._num_error_particles
 
         while n_error > 0:
-            error_pset = pset.error_particles
+            error_pset = pset._error_particles
             # Check for StatusCodes
             for p in error_pset:
                 if p.state == StatusCode.StopExecution:
@@ -694,7 +694,7 @@ class Kernel(BaseKernel):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            n_error = pset.num_error_particles
+            n_error = pset._num_error_particles
 
     def evaluate_particle(self, p, endtime):
         """Execute the kernel evaluation of for an individual particle.
