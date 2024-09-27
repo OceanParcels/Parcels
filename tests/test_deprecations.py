@@ -24,6 +24,7 @@ class Action:
         class_: Literal["Field", "FieldSet"],
         name: str,
         type_: Literal["read_only", "make_private", "remove"],
+        *,
         skip_reason: str = "",
     ):
         if name.startswith("_"):
@@ -89,6 +90,9 @@ def test_testing_action_class():
 
     with pytest.raises(ValueError):  # Can't have read-only method
         Action("Field", "my_method()", "read_only")
+
+    action = Action("Field", "my_method()", "make_private", skip_reason="Reason")
+    assert action.skip
 
 
 # fmt: off
@@ -180,7 +184,7 @@ actions = [
 ]
 # fmt: on
 
-actions = filter(lambda action: not action.skip, actions)
+actions = list(filter(lambda action: not action.skip, actions))
 
 
 def create_test_data():
