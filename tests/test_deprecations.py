@@ -4,20 +4,35 @@ from typing import Literal
 import numpy as np
 import pytest
 
-from parcels import Field, FieldSet, Grid, JITParticle, ParticleSet, RectilinearZGrid
+from parcels import Field, FieldSet, JITParticle, ParticleSet
+from parcels.grid import (
+    CurvilinearSGrid,
+    CurvilinearZGrid,
+    Grid,
+    RectilinearGrid,
+    RectilinearSGrid,
+    RectilinearZGrid,
+)
 from tests.utils import create_fieldset_unit_mesh
 
 
 class Action:
     """Utility class to help manage, document, and test deprecations."""
 
-    def __init__(self, class_: Literal["Field", "FieldSet"], name: str, type_: Literal["read_only", "make_private"]):
+    def __init__(
+        self,
+        class_: Literal["Field", "FieldSet"],
+        name: str,
+        type_: Literal["read_only", "make_private", "remove"],
+        skip_reason: str = "",
+    ):
         if name.startswith("_"):
             raise ValueError("name should not start with an underscore")
 
         self.class_ = class_
         self._raw_name = name
         self.type_ = type_
+        self.skip_reason = skip_reason
 
         if type_ == "read_only" and self.is_method:
             raise ValueError("read_only attributes should not be methods")
@@ -37,6 +52,10 @@ class Action:
         if self._raw_name.endswith("()"):
             return True
         return False
+
+    @property
+    def skip(self):
+        return bool(self.skip_reason)
 
     def __str__(self):
         return f"{self.class_}.{self.public_name}"
@@ -131,10 +150,37 @@ actions = [
     Action("ParticleSet",     "repeatpid",                       "make_private"  ),
     Action("ParticleSet",     "error_particles",                 "make_private"  ),
     Action("ParticleSet",     "num_error_particles",             "make_private"  ),
-
-
+    Action("Grid",            "xi",                              "remove"        ),
+    Action("Grid",            "yi",                              "remove"        ),
+    Action("Grid",            "zi",                              "remove"        ),
+    Action("Grid",            "ti",                              "make_private"  ),
+    Action("Grid",            "cstruct",                         "make_private"  ),
+    Action("Grid",            "lat_flipped",                     "make_private"  ),
+    Action("Grid",            "load_chunk",                      "make_private"  ),
+    Action("Grid",            "cgrid",                           "make_private"  ),
+    Action("Grid",            "child_ctypes_struct",             "make_private"  ),
+    Action("Grid",            "gtype",                           "make_private"  ),
+    Action("Grid",            "z4d",                             "make_private"  ),
+    Action("Grid",            "update_status",                   "make_private"  ),
+    Action("Grid",            "chunk_not_loaded",                "make_private"  ),
+    Action("Grid",            "chunk_loading_requested",         "make_private"  ),
+    Action("Grid",            "chunk_loaded_touched",            "make_private"  ),
+    Action("Grid",            "chunk_deprecated",                "make_private"  ),
+    Action("Grid",            "chunk_loaded",                    "make_private"  ),
+    Action("RectilinearGrid", "lat_flipped",                     "make_private"  ),
+    Action("RectilinearZGrid", "gtype",                          "make_private"  ),
+    Action("RectilinearZGrid", "z4d",                            "make_private"  ),
+    Action("RectilinearSGrid", "gtype",                          "make_private"  ),
+    Action("RectilinearSGrid", "z4d",                            "make_private"  ),
+    Action("RectilinearSGrid", "lat_flipped",                    "make_private"  ),
+    Action("CurvilinearZGrid", "gtype",                          "make_private"  ),
+    Action("CurvilinearZGrid", "z4d",                            "make_private"  ),
+    Action("CurvilinearSGrid", "gtype",                          "make_private"  ),
+    Action("CurvilinearSGrid", "z4d",                            "make_private"  ),
 ]
 # fmt: on
+
+actions = filter(lambda action: not action.skip, actions)
 
 
 def create_test_data():
@@ -170,6 +216,26 @@ def create_test_data():
         },
         "Grid": {
             "class": Grid,
+            "object": grid,
+        },
+        "RectilinearGrid": {
+            "class": RectilinearGrid,
+            "object": grid,
+        },
+        "RectilinearZGrid": {
+            "class": RectilinearZGrid,
+            "object": grid,
+        },
+        "RectilinearSGrid": {
+            "class": RectilinearSGrid,
+            "object": grid,
+        },
+        "CurvilinearZGrid": {
+            "class": CurvilinearZGrid,
+            "object": grid,
+        },
+        "CurvilinearSGrid": {
+            "class": CurvilinearSGrid,
             "object": grid,
         },
     }
@@ -230,3 +296,18 @@ def test_read_only_attr(read_only_attribute_action: Action):
     assert hasattr(obj, action.public_name)
     with pytest.raises(AttributeError):
         setattr(obj, action.public_name, None)
+
+
+@pytest.mark.parametrize(
+    "removed_attribute_action",
+    filter(lambda action: not action.is_method and action.type_ == "remove", actions),
+    ids=str,
+)
+def test_removed_attrib(removed_attribute_action: Action):
+    """Checks that attribute has been deleted."""
+    action = removed_attribute_action
+
+    obj = test_data[action.class_]["object"]
+
+    with pytest.raises(AttributeError):
+        getattr(obj, action.public_name)

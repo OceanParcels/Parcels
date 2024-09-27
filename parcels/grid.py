@@ -50,12 +50,9 @@ class Grid:
         time_origin: TimeConverter | None,
         mesh: Mesh,
     ):
-        self.xi = None
-        self.yi = None
-        self.zi = None
-        self.ti = -1
+        self._ti = -1
         self.lon = lon
-        self.update_status: UpdateStatus | None = None
+        self._update_status: UpdateStatus | None = None
         if not self.lon.flags["C_CONTIGUOUS"]:
             self.lon = np.array(self.lon, order="C")
         self.lat = lat
@@ -78,18 +75,18 @@ class Grid:
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
         assert_valid_mesh(mesh)
         self.mesh = mesh
-        self.cstruct = None
+        self._cstruct = None
         self.cell_edge_sizes: dict[str, npt.NDArray] = {}
         self.zonal_periodic = False
         self.zonal_halo = 0
         self.meridional_halo = 0
-        self.lat_flipped = False
+        self._lat_flipped = False
         self.defer_load = False
         self.lonlat_minmax = np.array(
             [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32
         )
         self.periods = 0
-        self.load_chunk: npt.NDArray = np.array([])
+        self._load_chunk: npt.NDArray = np.array([])
         self.chunk_info = None
         self.chunksize = None
         self._add_last_periodic_data_timestep = False
@@ -102,6 +99,46 @@ class Grid:
                 f"lon={self.lon!r}, lat={self.lat!r}, time={self.time!r}, "
                 f"time_origin={self.time_origin!r}, mesh={self.mesh!r})"
             )
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def ti(self):
+        return self._ti
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def cstruct(self):
+        return self._cstruct
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def lat_flipped(self):
+        return self._lat_flipped
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def cgrid(self):
+        return self._cgrid
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def gtype(self):
+        return self._gtype
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def z4d(self):
+        return self._z4d
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def update_status(self):
+        return self._update_status
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def load_chunk(self):
+        return self._load_chunk
 
     @staticmethod
     def create_grid(
@@ -133,12 +170,17 @@ class Grid:
     @property
     def ctypes_struct(self):
         # This is unnecessary for the moment, but it could be useful when going will fully unstructured grids
-        self.cgrid = cast(pointer(self.child_ctypes_struct), c_void_p)
-        cstruct = CGrid(self.gtype, self.cgrid.value)
+        self._cgrid = cast(pointer(self._child_ctypes_struct), c_void_p)
+        cstruct = CGrid(self._gtype, self._cgrid.value)
         return cstruct
 
     @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def child_ctypes_struct(self):
+        return self._child_ctypes_struct
+
+    @property
+    def _child_ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
         pointers and sizes for this grid.
         """
@@ -166,20 +208,20 @@ class Grid:
             ]
 
         # Create and populate the c-struct object
-        if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
+        if not self._cstruct:  # Not to point to the same grid various times if grid in various fields
             if not isinstance(self.periods, c_int):
                 self.periods = c_int()
                 self.periods.value = 0
-            self.cstruct = CStructuredGrid(
+            self._cstruct = CStructuredGrid(
                 self.xdim,
                 self.ydim,
                 self.zdim,
                 self.tdim,
-                self.z4d,
+                self._z4d,
                 int(self.mesh == "spherical"),
                 int(self.zonal_periodic),
                 (c_int * len(self.chunk_info))(*self.chunk_info),
-                self.load_chunk.ctypes.data_as(POINTER(c_int)),
+                self._load_chunk.ctypes.data_as(POINTER(c_int)),
                 self.time_full[0],
                 self.time_full[-1],
                 pointer(self.periods),
@@ -189,7 +231,7 @@ class Grid:
                 self.depth.ctypes.data_as(POINTER(c_float)),
                 self.time.ctypes.data_as(POINTER(c_double)),
             )
-        return self.cstruct
+        return self._cstruct
 
     def lon_grid_to_target(self):
         if self.lon_remapping:
@@ -256,94 +298,119 @@ class Grid:
         nextTime_loc = np.inf if signdt >= 0 else -np.inf
         periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
         prev_time_indices = self.time
-        if self.update_status == "not_updated":
-            if self.ti >= 0:
+        if self._update_status == "not_updated":
+            if self._ti >= 0:
                 if (
                     time - periods * (self.time_full[-1] - self.time_full[0]) < self.time[0]
                     or time - periods * (self.time_full[-1] - self.time_full[0]) > self.time[1]
                 ):
-                    self.ti = -1  # reset
+                    self._ti = -1  # reset
                 elif signdt >= 0 and (
                     time - periods * (self.time_full[-1] - self.time_full[0]) < self.time_full[0]
                     or time - periods * (self.time_full[-1] - self.time_full[0]) >= self.time_full[-1]
                 ):
-                    self.ti = -1  # reset
+                    self._ti = -1  # reset
                 elif signdt < 0 and (
                     time - periods * (self.time_full[-1] - self.time_full[0]) <= self.time_full[0]
                     or time - periods * (self.time_full[-1] - self.time_full[0]) > self.time_full[-1]
                 ):
-                    self.ti = -1  # reset
+                    self._ti = -1  # reset
                 elif (
                     signdt >= 0
                     and time - periods * (self.time_full[-1] - self.time_full[0]) >= self.time[1]
-                    and self.ti < len(self.time_full) - 2
+                    and self._ti < len(self.time_full) - 2
                 ):
-                    self.ti += 1
-                    self.time = self.time_full[self.ti : self.ti + 2]
-                    self.update_status = "updated"
+                    self._ti += 1
+                    self.time = self.time_full[self._ti : self._ti + 2]
+                    self._update_status = "updated"
                 elif (
                     signdt < 0
                     and time - periods * (self.time_full[-1] - self.time_full[0]) <= self.time[0]
-                    and self.ti > 0
+                    and self._ti > 0
                 ):
-                    self.ti -= 1
-                    self.time = self.time_full[self.ti : self.ti + 2]
-                    self.update_status = "updated"
-            if self.ti == -1:
+                    self._ti -= 1
+                    self.time = self.time_full[self._ti : self._ti + 2]
+                    self._update_status = "updated"
+            if self._ti == -1:
                 self.time = self.time_full
-                self.ti, _ = f._time_index(time)
+                self._ti, _ = f._time_index(time)
                 periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
                 if (
                     signdt == -1
-                    and self.ti == 0
+                    and self._ti == 0
                     and (time - periods * (self.time_full[-1] - self.time_full[0])) == self.time[0]
                     and f.time_periodic
                 ):
-                    self.ti = len(self.time) - 1
+                    self._ti = len(self.time) - 1
                     periods -= 1
-                if signdt == -1 and self.ti > 0 and self.time_full[self.ti] == time:
-                    self.ti -= 1
-                if self.ti >= len(self.time_full) - 1:
-                    self.ti = len(self.time_full) - 2
+                if signdt == -1 and self._ti > 0 and self.time_full[self._ti] == time:
+                    self._ti -= 1
+                if self._ti >= len(self.time_full) - 1:
+                    self._ti = len(self.time_full) - 2
 
-                self.time = self.time_full[self.ti : self.ti + 2]
+                self.time = self.time_full[self._ti : self._ti + 2]
                 self.tdim = 2
                 if prev_time_indices is None or len(prev_time_indices) != 2 or len(prev_time_indices) != len(self.time):
-                    self.update_status = "first_updated"
+                    self._update_status = "first_updated"
                 elif functools.reduce(
                     lambda i, j: i and j, map(lambda m, k: m == k, self.time, prev_time_indices), True
                 ) and len(prev_time_indices) == len(self.time):
-                    self.update_status = "not_updated"
+                    self._update_status = "not_updated"
                 elif functools.reduce(
                     lambda i, j: i and j, map(lambda m, k: m == k, self.time[:1], prev_time_indices[:1]), True
                 ) and len(prev_time_indices) == len(self.time):
-                    self.update_status = "updated"
+                    self._update_status = "updated"
                 else:
-                    self.update_status = "first_updated"
-            if signdt >= 0 and (self.ti < len(self.time_full) - 2 or not f.allow_time_extrapolation):
+                    self._update_status = "first_updated"
+            if signdt >= 0 and (self._ti < len(self.time_full) - 2 or not f.allow_time_extrapolation):
                 nextTime_loc = self.time[1] + periods * (self.time_full[-1] - self.time_full[0])
-            elif signdt < 0 and (self.ti > 0 or not f.allow_time_extrapolation):
+            elif signdt < 0 and (self._ti > 0 or not f.allow_time_extrapolation):
                 nextTime_loc = self.time[0] + periods * (self.time_full[-1] - self.time_full[0])
         return nextTime_loc
 
     @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def chunk_not_loaded(self):
+        return self._chunk_not_loaded
+
+    @property
+    def _chunk_not_loaded(self):
         return 0
 
     @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def chunk_loading_requested(self):
+        return self._chunk_loading_requested
+
+    @property
+    def _chunk_loading_requested(self):
         return 1
 
     @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def chunk_loaded_touched(self):
+        return self._chunk_loaded_touched
+
+    @property
+    def _chunk_loaded_touched(self):
         return 2
 
     @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def chunk_deprecated(self):
+        return self._chunk_deprecated
+
+    @property
+    def _chunk_deprecated(self):
         return 3
 
     @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def chunk_loaded(self):
+        return self._chunk_loaded
+
+    @property
+    def _chunk_loaded(self):
         return [2, 3]
 
 
@@ -367,7 +434,7 @@ class RectilinearGrid(Grid):
         self.tdim = self.time.size
         if self.ydim > 1 and self.lat[-1] < self.lat[0]:
             self.lat = np.flip(self.lat, axis=0)
-            self.lat_flipped = True
+            self._lat_flipped = True
             warnings.warn(
                 "Flipping lat data from North-South to South-North. "
                 "Note that this may lead to wrong sign for meridional velocity, so tread very carefully",
@@ -452,12 +519,12 @@ class RectilinearZGrid(RectilinearGrid):
         if isinstance(depth, np.ndarray):
             assert len(depth.shape) <= 1, "depth is not a vector"
 
-        self.gtype = GridType.RectilinearZGrid
+        self._gtype = GridType.RectilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         if not self.depth.flags["C_CONTIGUOUS"]:
             self.depth = np.array(self.depth, order="C")
         self.zdim = self.depth.size
-        self.z4d = -1  # only used in RectilinearSGrid
+        self._z4d = -1  # only used in RectilinearSGrid
         if not self.depth.dtype == np.float32:
             self.depth = self.depth.astype(np.float32)
 
@@ -505,13 +572,13 @@ class RectilinearSGrid(RectilinearGrid):
         super().__init__(lon, lat, time, time_origin, mesh)
         assert isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4], "depth is not a 3D or 4D numpy array"
 
-        self.gtype = GridType.RectilinearSGrid
+        self._gtype = GridType.RectilinearSGrid
         self.depth = depth
         if not self.depth.flags["C_CONTIGUOUS"]:
             self.depth = np.array(self.depth, order="C")
         self.zdim = self.depth.shape[-3]
-        self.z4d = 1 if len(self.depth.shape) == 4 else 0
-        if self.z4d:
+        self._z4d = 1 if len(self.depth.shape) == 4 else 0
+        if self._z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
             assert (
                 self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0
@@ -531,7 +598,7 @@ class RectilinearSGrid(RectilinearGrid):
             ), "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
         if not self.depth.dtype == np.float32:
             self.depth = self.depth.astype(np.float32)
-        if self.lat_flipped:
+        if self._lat_flipped:
             self.depth = np.flip(self.depth, axis=-2)
 
 
@@ -661,12 +728,12 @@ class CurvilinearZGrid(CurvilinearGrid):
         if isinstance(depth, np.ndarray):
             assert len(depth.shape) == 1, "depth is not a vector"
 
-        self.gtype = GridType.CurvilinearZGrid
+        self._gtype = GridType.CurvilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         if not self.depth.flags["C_CONTIGUOUS"]:
             self.depth = np.array(self.depth, order="C")
         self.zdim = self.depth.size
-        self.z4d = -1  # only for SGrid
+        self._z4d = -1  # only for SGrid
         if not self.depth.dtype == np.float32:
             self.depth = self.depth.astype(np.float32)
 
@@ -713,13 +780,13 @@ class CurvilinearSGrid(CurvilinearGrid):
         super().__init__(lon, lat, time, time_origin, mesh)
         assert isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4], "depth is not a 4D numpy array"
 
-        self.gtype = GridType.CurvilinearSGrid
+        self._gtype = GridType.CurvilinearSGrid
         self.depth = depth  # should be a C-contiguous array of floats
         if not self.depth.flags["C_CONTIGUOUS"]:
             self.depth = np.array(self.depth, order="C")
         self.zdim = self.depth.shape[-3]
-        self.z4d = 1 if len(self.depth.shape) == 4 else 0
-        if self.z4d:
+        self._z4d = 1 if len(self.depth.shape) == 4 else 0
+        if self._z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
             assert (
                 self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0

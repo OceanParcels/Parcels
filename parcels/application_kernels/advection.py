@@ -163,7 +163,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     particle.zi[:] = zi
 
     grid = fieldset.U.grid
-    if grid.gtype < 2:
+    if grid._gtype < 2:
         px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
         py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi + 1], grid.lat[yi + 1]])
     else:

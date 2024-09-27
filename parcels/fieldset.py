@@ -1454,11 +1454,11 @@ class FieldSet:
         nextTime = np.inf if dt > 0 else -np.inf
 
         for g in self.gridset.grids:
-            g.update_status = "not_updated"
+            g._update_status = "not_updated"
         for f in self.get_fields():
             if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load:
                 continue
-            if f.grid.update_status == "not_updated":
+            if f.grid._update_status == "not_updated":
                 nextTime_loc = f.grid._computeTimeChunk(f, time, signdt)
                 if time == nextTime_loc and signdt != 0:
                     raise TimeExtrapolationError(time, field=f, msg="In fset.computeTimeChunk")
@@ -1468,7 +1468,7 @@ class FieldSet:
             if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f._dataFiles is None:
                 continue
             g = f.grid
-            if g.update_status == "first_updated":  # First load of data
+            if g._update_status == "first_updated":  # First load of data
                 if f.data is not None and not isinstance(f.data, DeferredArray):
                     if not isinstance(f.data, list):
                         f.data = None
@@ -1498,13 +1498,13 @@ class FieldSet:
                 f.data = f._reshape(data)
                 if not f._chunk_set:
                     f._chunk_setup()
-                if len(g.load_chunk) > g.chunk_not_loaded:
-                    g.load_chunk = np.where(
-                        g.load_chunk == g.chunk_loaded_touched, g.chunk_loading_requested, g.load_chunk
+                if len(g._load_chunk) > g._chunk_not_loaded:
+                    g._load_chunk = np.where(
+                        g._load_chunk == g._chunk_loaded_touched, g._chunk_loading_requested, g._load_chunk
                     )
-                    g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated, g.chunk_not_loaded, g.load_chunk)
+                    g._load_chunk = np.where(g._load_chunk == g._chunk_deprecated, g._chunk_not_loaded, g._load_chunk)
 
-            elif g.update_status == "updated":
+            elif g._update_status == "updated":
                 lib = np if isinstance(f.data, np.ndarray) else da
                 if f.gridindexingtype == "pop" and g.zdim > 1:
                     zd = g.zdim - 1
@@ -1552,12 +1552,14 @@ class FieldSet:
                                 f.data[1, :] = None
                         f.data[1, :] = f.data[0, :]
                         f.data[0, :] = data
-                g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched, g.chunk_loading_requested, g.load_chunk)
-                g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated, g.chunk_not_loaded, g.load_chunk)
-                if isinstance(f.data, da.core.Array) and len(g.load_chunk) > 0:
+                g._load_chunk = np.where(
+                    g._load_chunk == g._chunk_loaded_touched, g._chunk_loading_requested, g._load_chunk
+                )
+                g._load_chunk = np.where(g._load_chunk == g._chunk_deprecated, g._chunk_not_loaded, g._load_chunk)
+                if isinstance(f.data, da.core.Array) and len(g._load_chunk) > 0:
                     if signdt >= 0:
-                        for block_id in range(len(g.load_chunk)):
-                            if g.load_chunk[block_id] == g.chunk_loaded_touched:
+                        for block_id in range(len(g._load_chunk)):
+                            if g._load_chunk[block_id] == g._chunk_loaded_touched:
                                 if f._data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
@@ -1566,8 +1568,8 @@ class FieldSet:
                                 f._data_chunks[block_id][0] = None
                                 f._data_chunks[block_id][1] = np.array(f.data.blocks[(slice(2),) + block][1])
                     else:
-                        for block_id in range(len(g.load_chunk)):
-                            if g.load_chunk[block_id] == g.chunk_loaded_touched:
+                        for block_id in range(len(g._load_chunk)):
+                            if g._load_chunk[block_id] == g._chunk_loaded_touched:
                                 if f._data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
