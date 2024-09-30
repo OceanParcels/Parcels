@@ -265,27 +265,27 @@ def create_test_data():
         },
         "RectilinearGrid": {
             "class": RectilinearGrid,
-            "object": grid,  # TODO: Update object
+            "object": grid,  # not exactly right but good enough
         },
         "RectilinearZGrid": {
             "class": RectilinearZGrid,
-            "object": grid,  # TODO: Update object
+            "object": grid,  # not exactly right but good enough
         },
         "RectilinearSGrid": {
             "class": RectilinearSGrid,
-            "object": grid,  # TODO: Update object
+            "object": grid,  # not exactly right but good enough
         },
         "CurvilinearZGrid": {
             "class": CurvilinearZGrid,
-            "object": grid,  # TODO: Update object
+            "object": grid,  # not exactly right but good enough
         },
         "CurvilinearGrid": {
             "class": CurvilinearGrid,
-            "object": grid,  # TODO: Update object
+            "object": grid,  # not exactly right but good enough
         },
         "CurvilinearSGrid": {
             "class": CurvilinearSGrid,
-            "object": grid,  # TODO: Update object
+            "object": grid,  # not exactly right but good enough
         },
     }
 
