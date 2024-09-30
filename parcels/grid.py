@@ -475,9 +475,8 @@ class RectilinearGrid(Grid):
             assert len(time.shape) == 1, "time is not a vector"
 
         super().__init__(lon, lat, time, time_origin, mesh)
-        self.xdim = self.lon.size
-        self.ydim = self.lat.size
         self.tdim = self.time.size
+
         if self.ydim > 1 and self.lat[-1] < self.lat[0]:
             self._lat = np.flip(self.lat, axis=0)
             self._lat_flipped = True
@@ -487,6 +486,14 @@ class RectilinearGrid(Grid):
                 FieldSetWarning,
                 stacklevel=2,
             )
+
+    @property
+    def xdim(self):
+        return self.lon.size
+
+    @property
+    def ydim(self):
+        return self.lat.size
 
     def add_periodic_halo(self, zonal: bool, meridional: bool, halosize: int = 5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
@@ -512,7 +519,6 @@ class RectilinearGrid(Grid):
                     stacklevel=2,
                 )
             self._lon = np.concatenate((self.lon[-halosize:] - lonshift, self.lon, self.lon[0:halosize] + lonshift))
-            self.xdim = self.lon.size
             self._zonal_periodic = True
             self._zonal_halo = halosize
         if meridional:
@@ -526,7 +532,6 @@ class RectilinearGrid(Grid):
                 )
             latshift = self.lat[-1] - 2 * self.lat[0] + self.lat[1]
             self._lat = np.concatenate((self.lat[-halosize:] - latshift, self.lat, self.lat[0:halosize] + latshift))
-            self.ydim = self.lat.size
             self._meridional_halo = halosize
         self._lonlat_minmax = np.array(
             [np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32
@@ -569,10 +574,13 @@ class RectilinearZGrid(RectilinearGrid):
         self._depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         if not self.depth.flags["C_CONTIGUOUS"]:
             self._depth = np.array(self.depth, order="C")
-        self.zdim = self.depth.size
         self._z4d = -1  # only used in RectilinearSGrid
         if not self.depth.dtype == np.float32:
             self._depth = self.depth.astype(np.float32)
+
+    @property
+    def zdim(self):
+        return self.depth.size
 
 
 class RectilinearSGrid(RectilinearGrid):
@@ -622,7 +630,6 @@ class RectilinearSGrid(RectilinearGrid):
         self._depth = depth
         if not self.depth.flags["C_CONTIGUOUS"]:
             self._depth = np.array(self.depth, order="C")
-        self.zdim = self.depth.shape[-3]
         self._z4d = 1 if len(self.depth.shape) == 4 else 0
         if self._z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
@@ -647,6 +654,10 @@ class RectilinearSGrid(RectilinearGrid):
         if self._lat_flipped:
             self._depth = np.flip(self.depth, axis=-2)
 
+    @property
+    def zdim(self):
+        return self.depth.shape[-3]
+
 
 class CurvilinearGrid(Grid):
     def __init__(
@@ -666,9 +677,15 @@ class CurvilinearGrid(Grid):
         lon = lon.squeeze()
         lat = lat.squeeze()
         super().__init__(lon, lat, time, time_origin, mesh)
-        self.xdim = self.lon.shape[1]
-        self.ydim = self.lon.shape[0]
         self.tdim = self.time.size
+
+    @property
+    def xdim(self):
+        return self.lon.shape[1]
+
+    @property
+    def ydim(self):
+        return self.lon.shape[0]
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
@@ -704,8 +721,6 @@ class CurvilinearGrid(Grid):
             self._lat = np.concatenate(
                 (self.lat[:, -halosize:], self.lat, self.lat[:, 0:halosize]), axis=len(self.lat.shape) - 1
             )
-            self.xdim = self.lon.shape[1]
-            self.ydim = self.lat.shape[0]
             self._zonal_periodic = True
             self._zonal_halo = halosize
         if meridional:
@@ -729,8 +744,6 @@ class CurvilinearGrid(Grid):
             self._lon = np.concatenate(
                 (self.lon[-halosize:, :], self.lon, self.lon[0:halosize, :]), axis=len(self.lon.shape) - 2
             )
-            self.xdim = self.lon.shape[1]
-            self.ydim = self.lat.shape[0]
             self._meridional_halo = halosize
         if isinstance(self, CurvilinearSGrid):
             self._add_Sdepth_periodic_halo(zonal, meridional, halosize)
@@ -778,10 +791,13 @@ class CurvilinearZGrid(CurvilinearGrid):
         self._depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         if not self.depth.flags["C_CONTIGUOUS"]:
             self._depth = np.array(self.depth, order="C")
-        self.zdim = self.depth.size
         self._z4d = -1  # only for SGrid
         if not self.depth.dtype == np.float32:
             self._depth = self.depth.astype(np.float32)
+
+    @property
+    def zdim(self):
+        return self.depth.size
 
 
 class CurvilinearSGrid(CurvilinearGrid):
@@ -830,7 +846,6 @@ class CurvilinearSGrid(CurvilinearGrid):
         self._depth = depth  # should be a C-contiguous array of floats
         if not self.depth.flags["C_CONTIGUOUS"]:
             self._depth = np.array(self.depth, order="C")
-        self.zdim = self.depth.shape[-3]
         self._z4d = 1 if len(self.depth.shape) == 4 else 0
         if self._z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
@@ -852,3 +867,7 @@ class CurvilinearSGrid(CurvilinearGrid):
             ), "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
         if not self.depth.dtype == np.float32:
             self._depth = self.depth.astype(np.float32)
+
+    @property
+    def zdim(self):
+        return self.depth.shape[-3]
