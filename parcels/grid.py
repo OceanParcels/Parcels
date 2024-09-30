@@ -78,12 +78,12 @@ class Grid:
         assert_valid_mesh(mesh)
         self._mesh = mesh
         self._cstruct = None
-        self.cell_edge_sizes: dict[str, npt.NDArray] = {}
-        self.zonal_periodic = False
-        self.zonal_halo = 0
+        self._cell_edge_sizes: dict[str, npt.NDArray] = {}
+        self._zonal_periodic = False
+        self._zonal_halo = 0
         self._meridional_halo = 0
         self._lat_flipped = False
-        self.defer_load = False
+        self._defer_load = False
         self._lonlat_minmax = np.array(
             [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32
         )
@@ -129,6 +129,22 @@ class Grid:
     @property
     def time_origin(self):
         return self._time_origin
+
+    @property
+    def zonal_periodic(self):
+        return self._zonal_periodic
+
+    @property
+    def zonal_halo(self):
+        return self._zonal_halo
+
+    @property
+    def defer_load(self):
+        return self._defer_load
+
+    @property
+    def cell_edge_sizes(self):
+        return self._cell_edge_sizes
 
     @property
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
@@ -286,7 +302,7 @@ class Grid:
         dx = (self.lon[1:] - self.lon[:-1]) if len(self.lon.shape) == 1 else self.lon[0, 1:] - self.lon[0, :-1]
         dx = np.where(dx < -180, dx + 360, dx)
         dx = np.where(dx > 180, dx - 360, dx)
-        self.zonal_periodic = sum(dx) > 359.9
+        self._zonal_periodic = sum(dx) > 359.9
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def add_Sdepth_periodic_halo(self, *args, **kwargs):
@@ -497,8 +513,8 @@ class RectilinearGrid(Grid):
                 )
             self._lon = np.concatenate((self.lon[-halosize:] - lonshift, self.lon, self.lon[0:halosize] + lonshift))
             self.xdim = self.lon.size
-            self.zonal_periodic = True
-            self.zonal_halo = halosize
+            self._zonal_periodic = True
+            self._zonal_halo = halosize
         if meridional:
             if not np.allclose(self.lat[1] - self.lat[0], self.lat[-1] - self.lat[-2]):
                 warnings.warn(
@@ -690,8 +706,8 @@ class CurvilinearGrid(Grid):
             )
             self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
-            self.zonal_periodic = True
-            self.zonal_halo = halosize
+            self._zonal_periodic = True
+            self._zonal_halo = halosize
         if meridional:
             if not np.allclose(self.lat[1, :] - self.lat[0, :], self.lat[-1, :] - self.lat[-2, :]):
                 warnings.warn(

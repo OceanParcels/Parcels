@@ -718,7 +718,7 @@ class Field:
             lib = np if isinstance(data_list[0], np.ndarray) else da
             data = lib.concatenate(data_list, axis=0)
         else:
-            grid.defer_load = True
+            grid._defer_load = True
             grid._ti = -1
             data = DeferredArray()
             data.compute_shape(grid.xdim, grid.ydim, grid.zdim, grid.tdim, len(grid.timeslices))
