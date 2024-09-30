@@ -316,7 +316,7 @@ class FieldSet:
             g.time = g.time + self.time_origin.reltime(g.time_origin)
             if g.defer_load:
                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
-            g.time_origin = self.time_origin
+            g._time_origin = self.time_origin
         self._add_UVfield()
 
         ccode_fieldnames = []

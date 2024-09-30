@@ -73,18 +73,18 @@ class Grid:
         self._lat = lat
         self.time = time
         self.time_full = self.time  # needed for deferred_loaded Fields
-        self.time_origin = TimeConverter() if time_origin is None else time_origin
+        self._time_origin = TimeConverter() if time_origin is None else time_origin
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
         assert_valid_mesh(mesh)
-        self.mesh = mesh
+        self._mesh = mesh
         self._cstruct = None
         self.cell_edge_sizes: dict[str, npt.NDArray] = {}
         self.zonal_periodic = False
         self.zonal_halo = 0
-        self.meridional_halo = 0
+        self._meridional_halo = 0
         self._lat_flipped = False
         self.defer_load = False
-        self.lonlat_minmax = np.array(
+        self._lonlat_minmax = np.array(
             [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32
         )
         self.periods = 0
@@ -113,6 +113,22 @@ class Grid:
     @property
     def depth(self):
         return self._depth
+
+    @property
+    def mesh(self):
+        return self._mesh
+
+    @property
+    def meridional_halo(self):
+        return self._meridional_halo
+
+    @property
+    def lonlat_minmax(self):
+        return self._lonlat_minmax
+
+    @property
+    def time_origin(self):
+        return self._time_origin
 
     @property
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
@@ -495,8 +511,8 @@ class RectilinearGrid(Grid):
             latshift = self.lat[-1] - 2 * self.lat[0] + self.lat[1]
             self._lat = np.concatenate((self.lat[-halosize:] - latshift, self.lat, self.lat[0:halosize] + latshift))
             self.ydim = self.lat.size
-            self.meridional_halo = halosize
-        self.lonlat_minmax = np.array(
+            self._meridional_halo = halosize
+        self._lonlat_minmax = np.array(
             [np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32
         )
         if isinstance(self, RectilinearSGrid):
@@ -699,7 +715,7 @@ class CurvilinearGrid(Grid):
             )
             self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
-            self.meridional_halo = halosize
+            self._meridional_halo = halosize
         if isinstance(self, CurvilinearSGrid):
             self._add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
