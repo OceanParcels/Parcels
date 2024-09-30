@@ -599,11 +599,11 @@ class Kernel(BaseKernel):
                     if not g._load_chunk.flags["C_CONTIGUOUS"]:
                         g._load_chunk = np.array(g._load_chunk, order="C")
                 if not g.depth.flags.c_contiguous:
-                    g.depth = np.array(g.depth, order="C")
+                    g._depth = np.array(g.depth, order="C")
                 if not g.lon.flags.c_contiguous:
-                    g.lon = np.array(g.lon, order="C")
+                    g._lon = np.array(g.lon, order="C")
                 if not g.lat.flags.c_contiguous:
-                    g.lat = np.array(g.lat, order="C")
+                    g._lat = np.array(g.lat, order="C")
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop."""

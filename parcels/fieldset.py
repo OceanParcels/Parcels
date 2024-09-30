@@ -339,7 +339,7 @@ class FieldSet:
                     )
                 if not f.grid.defer_load:
                     depth_data = f.grid.depth_field.data
-                    f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
+                    f.grid._depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
         self._completed = True
 
     @classmethod
@@ -1587,7 +1587,7 @@ class FieldSet:
                 continue
             if f.grid.depth_field is not None:
                 depth_data = f.grid.depth_field.data
-                f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
+                f.grid._depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
 
         if abs(nextTime) == np.inf or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime

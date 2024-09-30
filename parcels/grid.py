@@ -51,25 +51,27 @@ class Grid:
         mesh: Mesh,
     ):
         self._ti = -1
-        self.lon = lon
         self._update_status: UpdateStatus | None = None
-        if not self.lon.flags["C_CONTIGUOUS"]:
-            self.lon = np.array(self.lon, order="C")
-        self.lat = lat
-        if not self.lat.flags["C_CONTIGUOUS"]:
-            self.lat = np.array(self.lat, order="C")
-        self.time = np.zeros(1, dtype=np.float64) if time is None else time
-        if not self.time.flags["C_CONTIGUOUS"]:
-            self.time = np.array(self.time, order="C")
-        if not self.lon.dtype == np.float32:
-            self.lon = self.lon.astype(np.float32)
-        if not self.lat.dtype == np.float32:
-            self.lat = self.lat.astype(np.float32)
-        if not self.time.dtype == np.float64:
+        if not lon.flags["C_CONTIGUOUS"]:
+            lon = np.array(lon, order="C")
+        if not lat.flags["C_CONTIGUOUS"]:
+            lat = np.array(lat, order="C")
+        time = np.zeros(1, dtype=np.float64) if time is None else time
+        if not time.flags["C_CONTIGUOUS"]:
+            time = np.array(time, order="C")
+        if not lon.dtype == np.float32:
+            lon = lon.astype(np.float32)
+        if not lat.dtype == np.float32:
+            lat = lat.astype(np.float32)
+        if not time.dtype == np.float64:
             assert isinstance(
-                self.time[0], (np.integer, np.floating, float, int)
+                time[0], (np.integer, np.floating, float, int)
             ), "Time vector must be an array of int or floats"
-            self.time = self.time.astype(np.float64)
+            time = time.astype(np.float64)
+
+        self._lon = lon
+        self._lat = lat
+        self.time = time
         self.time_full = self.time  # needed for deferred_loaded Fields
         self.time_origin = TimeConverter() if time_origin is None else time_origin
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
@@ -99,6 +101,18 @@ class Grid:
                 f"lon={self.lon!r}, lat={self.lat!r}, time={self.time!r}, "
                 f"time_origin={self.time_origin!r}, mesh={self.mesh!r})"
             )
+
+    @property
+    def lon(self):
+        return self._lon
+
+    @property
+    def lat(self):
+        return self._lat
+
+    @property
+    def depth(self):
+        return self._depth
 
     @property
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
@@ -235,11 +249,11 @@ class Grid:
 
     def lon_grid_to_target(self):
         if self.lon_remapping:
-            self.lon = self.lon_remapping.to_target(self.lon)
+            self._lon = self.lon_remapping.to_target(self.lon)
 
     def lon_grid_to_source(self):
         if self.lon_remapping:
-            self.lon = self.lon_remapping.to_source(self.lon)
+            self._lon = self.lon_remapping.to_source(self.lon)
 
     def lon_particle_to_target(self, lon):
         if self.lon_remapping:
@@ -265,26 +279,26 @@ class Grid:
     def _add_Sdepth_periodic_halo(self, zonal, meridional, halosize):
         if zonal:
             if len(self.depth.shape) == 3:
-                self.depth = np.concatenate(
+                self._depth = np.concatenate(
                     (self.depth[:, :, -halosize:], self.depth, self.depth[:, :, 0:halosize]),
                     axis=len(self.depth.shape) - 1,
                 )
                 assert self.depth.shape[2] == self.xdim, "Third dim must be x."
             else:
-                self.depth = np.concatenate(
+                self._depth = np.concatenate(
                     (self.depth[:, :, :, -halosize:], self.depth, self.depth[:, :, :, 0:halosize]),
                     axis=len(self.depth.shape) - 1,
                 )
                 assert self.depth.shape[3] == self.xdim, "Fourth dim must be x."
         if meridional:
             if len(self.depth.shape) == 3:
-                self.depth = np.concatenate(
+                self._depth = np.concatenate(
                     (self.depth[:, -halosize:, :], self.depth, self.depth[:, 0:halosize, :]),
                     axis=len(self.depth.shape) - 2,
                 )
                 assert self.depth.shape[1] == self.ydim, "Second dim must be y."
             else:
-                self.depth = np.concatenate(
+                self._depth = np.concatenate(
                     (self.depth[:, :, -halosize:, :], self.depth, self.depth[:, :, 0:halosize, :]),
                     axis=len(self.depth.shape) - 2,
                 )
@@ -433,7 +447,7 @@ class RectilinearGrid(Grid):
         self.ydim = self.lat.size
         self.tdim = self.time.size
         if self.ydim > 1 and self.lat[-1] < self.lat[0]:
-            self.lat = np.flip(self.lat, axis=0)
+            self._lat = np.flip(self.lat, axis=0)
             self._lat_flipped = True
             warnings.warn(
                 "Flipping lat data from North-South to South-North. "
@@ -465,7 +479,7 @@ class RectilinearGrid(Grid):
                     FieldSetWarning,
                     stacklevel=2,
                 )
-            self.lon = np.concatenate((self.lon[-halosize:] - lonshift, self.lon, self.lon[0:halosize] + lonshift))
+            self._lon = np.concatenate((self.lon[-halosize:] - lonshift, self.lon, self.lon[0:halosize] + lonshift))
             self.xdim = self.lon.size
             self.zonal_periodic = True
             self.zonal_halo = halosize
@@ -479,7 +493,7 @@ class RectilinearGrid(Grid):
                     stacklevel=2,
                 )
             latshift = self.lat[-1] - 2 * self.lat[0] + self.lat[1]
-            self.lat = np.concatenate((self.lat[-halosize:] - latshift, self.lat, self.lat[0:halosize] + latshift))
+            self._lat = np.concatenate((self.lat[-halosize:] - latshift, self.lat, self.lat[0:halosize] + latshift))
             self.ydim = self.lat.size
             self.meridional_halo = halosize
         self.lonlat_minmax = np.array(
@@ -520,13 +534,13 @@ class RectilinearZGrid(RectilinearGrid):
             assert len(depth.shape) <= 1, "depth is not a vector"
 
         self._gtype = GridType.RectilinearZGrid
-        self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        self._depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         if not self.depth.flags["C_CONTIGUOUS"]:
-            self.depth = np.array(self.depth, order="C")
+            self._depth = np.array(self.depth, order="C")
         self.zdim = self.depth.size
         self._z4d = -1  # only used in RectilinearSGrid
         if not self.depth.dtype == np.float32:
-            self.depth = self.depth.astype(np.float32)
+            self._depth = self.depth.astype(np.float32)
 
 
 class RectilinearSGrid(RectilinearGrid):
@@ -573,9 +587,9 @@ class RectilinearSGrid(RectilinearGrid):
         assert isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4], "depth is not a 3D or 4D numpy array"
 
         self._gtype = GridType.RectilinearSGrid
-        self.depth = depth
+        self._depth = depth
         if not self.depth.flags["C_CONTIGUOUS"]:
-            self.depth = np.array(self.depth, order="C")
+            self._depth = np.array(self.depth, order="C")
         self.zdim = self.depth.shape[-3]
         self._z4d = 1 if len(self.depth.shape) == 4 else 0
         if self._z4d:
@@ -597,9 +611,9 @@ class RectilinearSGrid(RectilinearGrid):
                 self.ydim == self.depth.shape[-2]
             ), "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
         if not self.depth.dtype == np.float32:
-            self.depth = self.depth.astype(np.float32)
+            self._depth = self.depth.astype(np.float32)
         if self._lat_flipped:
-            self.depth = np.flip(self.depth, axis=-2)
+            self._depth = np.flip(self.depth, axis=-2)
 
 
 class CurvilinearGrid(Grid):
@@ -647,7 +661,7 @@ class CurvilinearGrid(Grid):
                     FieldSetWarning,
                     stacklevel=2,
                 )
-            self.lon = np.concatenate(
+            self._lon = np.concatenate(
                 (
                     self.lon[:, -halosize:] - lonshift[:, np.newaxis],
                     self.lon,
@@ -655,7 +669,7 @@ class CurvilinearGrid(Grid):
                 ),
                 axis=len(self.lon.shape) - 1,
             )
-            self.lat = np.concatenate(
+            self._lat = np.concatenate(
                 (self.lat[:, -halosize:], self.lat, self.lat[:, 0:halosize]), axis=len(self.lat.shape) - 1
             )
             self.xdim = self.lon.shape[1]
@@ -672,7 +686,7 @@ class CurvilinearGrid(Grid):
                     stacklevel=2,
                 )
             latshift = self.lat[-1, :] - 2 * self.lat[0, :] + self.lat[1, :]
-            self.lat = np.concatenate(
+            self._lat = np.concatenate(
                 (
                     self.lat[-halosize:, :] - latshift[np.newaxis, :],
                     self.lat,
@@ -680,7 +694,7 @@ class CurvilinearGrid(Grid):
                 ),
                 axis=len(self.lat.shape) - 2,
             )
-            self.lon = np.concatenate(
+            self._lon = np.concatenate(
                 (self.lon[-halosize:, :], self.lon, self.lon[0:halosize, :]), axis=len(self.lon.shape) - 2
             )
             self.xdim = self.lon.shape[1]
@@ -729,13 +743,13 @@ class CurvilinearZGrid(CurvilinearGrid):
             assert len(depth.shape) == 1, "depth is not a vector"
 
         self._gtype = GridType.CurvilinearZGrid
-        self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        self._depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         if not self.depth.flags["C_CONTIGUOUS"]:
-            self.depth = np.array(self.depth, order="C")
+            self._depth = np.array(self.depth, order="C")
         self.zdim = self.depth.size
         self._z4d = -1  # only for SGrid
         if not self.depth.dtype == np.float32:
-            self.depth = self.depth.astype(np.float32)
+            self._depth = self.depth.astype(np.float32)
 
 
 class CurvilinearSGrid(CurvilinearGrid):
@@ -781,9 +795,9 @@ class CurvilinearSGrid(CurvilinearGrid):
         assert isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4], "depth is not a 4D numpy array"
 
         self._gtype = GridType.CurvilinearSGrid
-        self.depth = depth  # should be a C-contiguous array of floats
+        self._depth = depth  # should be a C-contiguous array of floats
         if not self.depth.flags["C_CONTIGUOUS"]:
-            self.depth = np.array(self.depth, order="C")
+            self._depth = np.array(self.depth, order="C")
         self.zdim = self.depth.shape[-3]
         self._z4d = 1 if len(self.depth.shape) == 4 else 0
         if self._z4d:
@@ -805,4 +819,4 @@ class CurvilinearSGrid(CurvilinearGrid):
                 self.ydim == self.depth.shape[-2]
             ), "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
         if not self.depth.dtype == np.float32:
-            self.depth = self.depth.astype(np.float32)
+            self._depth = self.depth.astype(np.float32)
