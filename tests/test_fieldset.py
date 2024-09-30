@@ -683,6 +683,7 @@ def test_fieldset_write(tmpdir):
     assert np.allclose(fieldset.U.data, da["U"].values, atol=1.0)
 
 
+@pytest.mark.flaky
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("time_periodic", [4 * 86400.0, False])
 @pytest.mark.parametrize("dt", [-3600, 3600])

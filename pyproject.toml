@@ -51,10 +51,18 @@ write_to = "parcels/_version_setup.py"
 local_scheme = "no-local-version"
 
 [tool.pytest.ini_options]
+addopts = ["--strict-config", "--strict-markers"]
+testpaths = ["parcels/tests", "docs/examples"]
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
+minversion = "7"
+markers = [ # can be skipped by doing `pytest -m "not slow"` etc.
+  "flaky: flaky tests",
+  "slow: slow tests",
+]
+
 filterwarnings = [
   "error:.*removed in a future release of Parcels.*:DeprecationWarning", # Have Parcels DeprecationWarnings fail CI (prevents deprecated items being used in internal code)
-  ]
+]
 
 [tool.ruff]
 line-length = 120
