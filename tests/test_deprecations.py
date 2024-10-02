@@ -224,6 +224,7 @@ actions = [
     Action("CurvilinearSGrid", "ydim",                           "read_only"     ),
 ]
 # fmt: on
+assert len({str(a) for a in actions}) == len(actions)  # Check that all actions are unique
 
 actions = list(filter(lambda action: not action.skip, actions))
 
