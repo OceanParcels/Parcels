@@ -367,7 +367,7 @@ class Kernel(BaseKernel):
                     raise NotImplementedError("Analytical Advection only works in Scipy mode")
                 if self._fieldset.U.interp_method != "cgrid_velocity":
                     raise NotImplementedError("Analytical Advection only works with C-grids")
-                if self._fieldset.U.grid.gtype not in [GridType.CurvilinearZGrid, GridType.RectilinearZGrid]:
+                if self._fieldset.U.grid._gtype not in [GridType.CurvilinearZGrid, GridType.RectilinearZGrid]:
                     raise NotImplementedError("Analytical Advection only works with Z-grids in the vertical")
             elif pyfunc is AdvectionRK45:
                 if not hasattr(self.fieldset, "RK45_tol"):
@@ -576,7 +576,7 @@ class Kernel(BaseKernel):
         """Updates the loaded fields of pset's fieldset according to the chunk information within their grids."""
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
-                g.cstruct = None  # This force to point newly the grids from Python to C
+                g._cstruct = None  # This force to point newly the grids from Python to C
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
             for f in pset.fieldset.get_fields():
@@ -592,16 +592,18 @@ class Kernel(BaseKernel):
                         f._c_data_chunks[block_id] = None
 
             for g in pset.fieldset.gridset.grids:
-                g.load_chunk = np.where(g.load_chunk == g.chunk_loading_requested, g.chunk_loaded_touched, g.load_chunk)
-                if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
-                    if not g.load_chunk.flags["C_CONTIGUOUS"]:
-                        g.load_chunk = np.array(g.load_chunk, order="C")
+                g._load_chunk = np.where(
+                    g._load_chunk == g._chunk_loading_requested, g._chunk_loaded_touched, g._load_chunk
+                )
+                if len(g._load_chunk) > g._chunk_not_loaded:  # not the case if a field in not called in the kernel
+                    if not g._load_chunk.flags["C_CONTIGUOUS"]:
+                        g._load_chunk = np.array(g._load_chunk, order="C")
                 if not g.depth.flags.c_contiguous:
-                    g.depth = np.array(g.depth, order="C")
+                    g._depth = np.array(g.depth, order="C")
                 if not g.lon.flags.c_contiguous:
-                    g.lon = np.array(g.lon, order="C")
+                    g._lon = np.array(g.lon, order="C")
                 if not g.lat.flags.c_contiguous:
-                    g.lat = np.array(g.lat, order="C")
+                    g._lat = np.array(g.lat, order="C")
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop."""
@@ -642,8 +644,10 @@ class Kernel(BaseKernel):
 
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
-                if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
-                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched, g.chunk_deprecated, g.load_chunk)
+                if len(g._load_chunk) > g._chunk_not_loaded:  # not the case if a field in not called in the kernel
+                    g._load_chunk = np.where(
+                        g._load_chunk == g._chunk_loaded_touched, g._chunk_deprecated, g._load_chunk
+                    )
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:
@@ -655,10 +659,10 @@ class Kernel(BaseKernel):
         self.remove_deleted(pset)
 
         # Identify particles that threw errors
-        n_error = pset.num_error_particles
+        n_error = pset._num_error_particles
 
         while n_error > 0:
-            error_pset = pset.error_particles
+            error_pset = pset._error_particles
             # Check for StatusCodes
             for p in error_pset:
                 if p.state == StatusCode.StopExecution:
@@ -694,7 +698,7 @@ class Kernel(BaseKernel):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            n_error = pset.num_error_particles
+            n_error = pset._num_error_particles
 
     def evaluate_particle(self, p, endtime):
         """Execute the kernel evaluation of for an individual particle.

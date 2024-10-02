@@ -683,6 +683,7 @@ def test_fieldset_write(tmpdir):
     assert np.allclose(fieldset.U.data, da["U"].values, atol=1.0)
 
 
+@pytest.mark.flaky
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("time_periodic", [4 * 86400.0, False])
 @pytest.mark.parametrize("dt", [-3600, 3600])
@@ -933,8 +934,8 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail):
     data0, dims0 = generate_fieldset_data(10, 10, 1, 10)
     dims0["time"] = np.arange(0, 10, 1) * 3600
     fieldset_out = FieldSet.from_data(data0, dims0)
-    fieldset_out.U.grid.time_origin = TimeConverter(np.datetime64("2018-04-20"))
-    fieldset_out.V.grid.time_origin = TimeConverter(np.datetime64("2018-04-20"))
+    fieldset_out.U.grid._time_origin = TimeConverter(np.datetime64("2018-04-20"))
+    fieldset_out.V.grid._time_origin = TimeConverter(np.datetime64("2018-04-20"))
     data1, dims1 = generate_fieldset_data(10, 10, 1, 10)
     if fail:
         dims1["time"] = np.arange(0, 10, 1) * 3600

@@ -322,9 +322,9 @@ def test_update_kernel_in_script(fieldset_unit_mesh, mode):
 def test_execution_keep_cfiles_and_nocompilation_warnings(fieldset_unit_mesh, delete_cfiles):
     pset = ParticleSet(fieldset_unit_mesh, pclass=JITParticle, lon=[0.0], lat=[0.0])
     pset.execute(AdvectionRK4, delete_cfiles=delete_cfiles, endtime=1.0, dt=1.0)
-    cfile = pset.kernel.src_file
-    logfile = pset.kernel.log_file
-    del pset.kernel
+    cfile = pset._kernel.src_file
+    logfile = pset._kernel.log_file
+    del pset._kernel
     if delete_cfiles:
         assert not os.path.exists(cfile)
     else:

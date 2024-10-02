@@ -217,7 +217,7 @@ class Field:
             self.interp_method = interp_method
         assert_valid_gridindexingtype(gridindexingtype)
         self._gridindexingtype = gridindexingtype
-        if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"] and self.grid.gtype in [
+        if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"] and self.grid._gtype in [
             GridType.RectilinearSGrid,
             GridType.CurvilinearSGrid,
         ]:
@@ -296,7 +296,7 @@ class Field:
 
         if self.grid.depth_field == "not_yet_set":
             assert (
-                self.grid.z4d
+                self.grid._z4d
             ), "Providing the depth dimensions from another field data is only available for 4d S grids"
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
@@ -718,8 +718,8 @@ class Field:
             lib = np if isinstance(data_list[0], np.ndarray) else da
             data = lib.concatenate(data_list, axis=0)
         else:
-            grid.defer_load = True
-            grid.ti = -1
+            grid._defer_load = True
+            grid._ti = -1
             data = DeferredArray()
             data.compute_shape(grid.xdim, grid.ydim, grid.zdim, grid.tdim, len(grid.timeslices))
 
@@ -816,7 +816,7 @@ class Field:
         lib = np if isinstance(data, np.ndarray) else da
         if transpose:
             data = lib.transpose(data)
-        if self.grid.lat_flipped:
+        if self.grid._lat_flipped:
             data = lib.flip(data, axis=-2)
 
         if self.grid.xdim == 1 or self.grid.ydim == 1:
@@ -913,7 +913,7 @@ class Field:
         Currently only works for Rectilinear Grids
         """
         if not self.grid.cell_edge_sizes:
-            if self.grid.gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):
+            if self.grid._gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):
                 self.grid.cell_edge_sizes["x"] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
                 self.grid.cell_edge_sizes["y"] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
 
@@ -925,7 +925,7 @@ class Field:
                         self.grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
             else:
                 raise ValueError(
-                    f"Field.cell_edge_sizes() not implemented for {self.grid.gtype} grids. "
+                    f"Field.cell_edge_sizes() not implemented for {self.grid._gtype} grids. "
                     "You can provide Field.grid.cell_edge_sizes yourself by in, e.g., "
                     "NEMO using the e1u fields etc from the mesh_mask.nc file."
                 )
@@ -986,7 +986,7 @@ class Field:
             eta = 1
         if time < grid.time[ti]:
             ti -= 1
-        if grid.z4d:
+        if grid._z4d:
             if ti == len(grid.time) - 1:
                 depth_vector = (
                     (1 - xsi) * (1 - eta) * grid.depth[-1, :, yi, xi]
@@ -1127,7 +1127,7 @@ class Field:
             yi, eta = -1, 0
 
         if grid.zdim > 1 and not search2D:
-            if grid.gtype == GridType.RectilinearZGrid:
+            if grid._gtype == GridType.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
                 try:
                     (zi, zeta) = self._search_indices_vertical_z(z)
@@ -1135,7 +1135,7 @@ class Field:
                     raise FieldOutOfBoundError(x, y, z, field=self)
                 except FieldOutOfBoundSurfaceError:
                     raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
-            elif grid.gtype == GridType.RectilinearSGrid:
+            elif grid._gtype == GridType.RectilinearSGrid:
                 (zi, zeta) = self._search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi, zeta = -1, 0
@@ -1224,12 +1224,12 @@ class Field:
         eta = min(1.0, eta)
 
         if grid.zdim > 1 and not search2D:
-            if grid.gtype == GridType.CurvilinearZGrid:
+            if grid._gtype == GridType.CurvilinearZGrid:
                 try:
                     (zi, zeta) = self._search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
-            elif grid.gtype == GridType.CurvilinearSGrid:
+            elif grid._gtype == GridType.CurvilinearSGrid:
                 (zi, zeta) = self._search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi = -1
@@ -1250,7 +1250,7 @@ class Field:
         return self._search_indices(*args, **kwargs)
 
     def _search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
-        if self.grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
+        if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             return self._search_indices_rectilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
         else:
             return self._search_indices_curvilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
@@ -1581,7 +1581,7 @@ class Field:
 
         self._data_chunks = [None] * npartitions
         self._c_data_chunks = [None] * npartitions
-        self.grid.load_chunk = np.zeros(npartitions, dtype=c_int, order="C")
+        self.grid._load_chunk = np.zeros(npartitions, dtype=c_int, order="C")
         # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #      chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
         self.grid.chunk_info = [
@@ -1601,17 +1601,17 @@ class Field:
             self._chunk_setup()
         g = self.grid
         if isinstance(self.data, da.core.Array):
-            for block_id in range(len(self.grid.load_chunk)):
+            for block_id in range(len(self.grid._load_chunk)):
                 if (
-                    g.load_chunk[block_id] == g.chunk_loading_requested
-                    or g.load_chunk[block_id] in g.chunk_loaded
+                    g._load_chunk[block_id] == g._chunk_loading_requested
+                    or g._load_chunk[block_id] in g._chunk_loaded
                     and self._data_chunks[block_id] is None
                 ):
                     block = self._get_block(block_id)
                     self._data_chunks[block_id] = np.array(
                         self.data.blocks[(slice(self.grid.tdim),) + block], order="C"
                     )
-                elif g.load_chunk[block_id] == g.chunk_not_loaded:
+                elif g._load_chunk[block_id] == g._chunk_not_loaded:
                     if isinstance(self._data_chunks, list):
                         self._data_chunks[block_id] = None
                     else:
@@ -1623,7 +1623,7 @@ class Field:
             else:
                 self._data_chunks[0, :] = None
             self._c_data_chunks[0] = None
-            self.grid.load_chunk[0] = g.chunk_loaded_touched
+            self.grid._load_chunk[0] = g._chunk_loaded_touched
             self._data_chunks[0] = np.array(self.data, order="C")
 
     @property
@@ -1647,12 +1647,12 @@ class Field:
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
-        for i in range(len(self.grid.load_chunk)):
-            if self.grid.load_chunk[i] == self.grid.chunk_loading_requested:
+        for i in range(len(self.grid._load_chunk)):
+            if self.grid._load_chunk[i] == self.grid._chunk_loading_requested:
                 raise ValueError(
-                    "data_chunks should have been loaded by now if requested. grid.load_chunk[bid] cannot be 1"
+                    "data_chunks should have been loaded by now if requested. grid._load_chunk[bid] cannot be 1"
                 )
-            if self.grid.load_chunk[i] in self.grid.chunk_loaded:
+            if self.grid._load_chunk[i] in self.grid._chunk_loaded:
                 if not self._data_chunks[i].flags["C_CONTIGUOUS"]:
                     self._data_chunks[i] = np.array(self._data_chunks[i], order="C")
                 self._c_data_chunks[i] = self._data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
@@ -1738,7 +1738,7 @@ class Field:
         vname_depth = f"depth{self.name.lower()}"
 
         # Create DataArray objects for file I/O
-        if self.grid.gtype == GridType.RectilinearZGrid:
+        if self.grid._gtype == GridType.RectilinearZGrid:
             nav_lon = xr.DataArray(
                 self.grid.lon + np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32),
                 coords=[("y", self.grid.lat), ("x", self.grid.lon)],
@@ -1747,7 +1747,7 @@ class Field:
                 self.grid.lat.reshape(self.grid.ydim, 1) + np.zeros(self.grid.xdim, dtype=np.float32),
                 coords=[("y", self.grid.lat), ("x", self.grid.lon)],
             )
-        elif self.grid.gtype == GridType.CurvilinearZGrid:
+        elif self.grid._gtype == GridType.CurvilinearZGrid:
             nav_lon = xr.DataArray(self.grid.lon, coords=[("y", range(self.grid.ydim)), ("x", range(self.grid.xdim))])
             nav_lat = xr.DataArray(self.grid.lat, coords=[("y", range(self.grid.ydim)), ("x", range(self.grid.xdim))])
         else:
@@ -1806,15 +1806,15 @@ class Field:
         timestamp = self.timestamps
         if timestamp is not None:
             summedlen = np.cumsum([len(ls) for ls in self.timestamps])
-            if g.ti + tindex >= summedlen[-1]:
-                ti = g.ti + tindex - summedlen[-1]
+            if g._ti + tindex >= summedlen[-1]:
+                ti = g._ti + tindex - summedlen[-1]
             else:
-                ti = g.ti + tindex
+                ti = g._ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
         rechunk_callback_fields = self._chunk_setup if isinstance(tindex, list) else None
         filebuffer = self._field_fb_class(
-            self._dataFiles[g.ti + tindex],
+            self._dataFiles[g._ti + tindex],
             self.dimensions,
             self.indices,
             netcdf_engine=self.netcdf_engine,
@@ -1919,7 +1919,7 @@ class VectorField:
         grid = self.U.grid
         (xsi, eta, zeta, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
 
-        if grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
+        if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
             py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi + 1], grid.lat[yi + 1]])
         else:
@@ -1991,7 +1991,7 @@ class VectorField:
         grid = self.U.grid
         (xsi, eta, zet, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
 
-        if grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
+        if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
             py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi + 1], grid.lat[yi + 1]])
         else:
@@ -2008,7 +2008,7 @@ class VectorField:
 
         px = np.concatenate((px, px))
         py = np.concatenate((py, py))
-        if grid.z4d:
+        if grid._z4d:
             pz = np.array(
                 [
                     grid.depth[0, zi, yi, xi],
@@ -2208,7 +2208,7 @@ class VectorField:
         interpolating linearly V depending on the latitude coordinate.
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
-        if self.U.grid.gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
+        if self.U.grid._gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
             (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
         else:
             (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
