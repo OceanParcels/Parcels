@@ -190,9 +190,9 @@ class ParticleSet:
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, timedelta) else repeatdt
         if self.repeatdt:
             if self.repeatdt <= 0:
-                raise "Repeatdt should be > 0"
+                raise ValueError("Repeatdt should be > 0")
             if time[0] and not np.allclose(time, time[0]):
-                raise "All Particle.time should be the same when repeatdt is not None"
+                raise ValueError("All Particle.time should be the same when repeatdt is not None")
             self._repeatpclass = pclass
             self._repeatkwargs = kwargs
             self._repeatkwargs.pop("partition_function", None)
