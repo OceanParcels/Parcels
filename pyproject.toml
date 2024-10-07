@@ -52,7 +52,7 @@ local_scheme = "no-local-version"
 
 [tool.pytest.ini_options]
 addopts = ["--strict-config", "--strict-markers"]
-testpaths = ["parcels/tests", "docs/examples"]
+testpaths = ["tests", "docs/examples"]
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
 minversion = "7"
 markers = [ # can be skipped by doing `pytest -m "not slow"` etc.

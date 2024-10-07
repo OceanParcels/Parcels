@@ -22,6 +22,13 @@ def fieldset():
     return create_fieldset_zeros_simple()
 
 
+@pytest.fixture
+def pset(fieldset):
+    npart = 10
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
+    return pset
+
+
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_pset_create_lon_lat(fieldset, mode):
     npart = 100
