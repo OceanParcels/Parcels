@@ -1060,7 +1060,7 @@ class ParticleSet:
             next_output = starttime + dt
         else:
             next_output = np.inf * np.sign(dt)
-        next_callback = starttime * np.sign(dt)
+        next_callback = starttime + callbackdt * np.sign(dt)
 
         tol = 1e-12
         time = starttime
