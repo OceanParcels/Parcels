@@ -27,3 +27,18 @@ jobs:
       - name: Core deps minimum versions policy
         run: |
           python .github/ci/min_deps_check.py .github/ci/min-core-deps.yml
+
+  linkcheck:
+    name: Sphinx linkcheck
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup parcels
+        uses: ./.github/actions/install-parcels
+        with:
+          environment-file: environment.yml
+      - run: sphinx-build -b linkcheck docs/ _build/linkcheck
