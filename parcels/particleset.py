@@ -1188,7 +1188,7 @@ class ParticleSet:
 
             if abs(time - next_output) < tol:
                 if output_file:
-                    if output_file.analytical:  # output analytical solution at later time
+                    if output_file._analytical:  # output analytical solution at later time
                         output_file.write_latest_locations(self, time)
                     else:
                         output_file.write(self, time_at_startofloop)
