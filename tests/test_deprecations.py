@@ -257,7 +257,11 @@ actions = [
     Action("ParticleFile",     "mpi_rank",                       "make_private"  ),
     Action("ParticleFile",     "fill_value_map",                 "make_private"  ),
     Action("ParticleFile",     "analytical",                     "make_private"  ),
-]
+    Action("Grid",             "lon_grid_to_target()",           "remove"        ),
+    Action("Grid",             "lon_remapping",                  "remove"        ),
+    Action("Grid",             "lon_grid_to_source()",           "remove"        ),
+    Action("Grid",             "lon_particle_to_target()",       "remove"        ),
+    ]
 # fmt: on
 assert len({str(a) for a in actions}) == len(actions)  # Check that all actions are unique
 
