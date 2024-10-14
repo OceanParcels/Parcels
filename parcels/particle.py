@@ -32,15 +32,11 @@ class Variable:
         self._name = name
         self.dtype = dtype
         self.initial = initial
-        self._to_write = to_write
+        self.to_write = to_write
 
     @property
     def name(self):
         return self._name
-
-    @property
-    def to_write(self):
-        return self._to_write
 
     def __get__(self, instance, cls):
         if instance is None:
