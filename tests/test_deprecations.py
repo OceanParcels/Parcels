@@ -4,7 +4,7 @@ from typing import Literal
 import numpy as np
 import pytest
 
-from parcels import Field, FieldSet, JITParticle, ParticleFile, ParticleSet
+from parcels import Field, FieldSet, JITParticle, ParticleFile, ParticleSet, Variable
 from parcels.grid import (
     CurvilinearGrid,
     CurvilinearSGrid,
@@ -261,6 +261,8 @@ actions = [
     Action("Grid",             "lon_remapping",                  "remove"        ),
     Action("Grid",             "lon_grid_to_source()",           "remove"        ),
     Action("Grid",             "lon_particle_to_target()",       "remove"        ),
+    Action("Variable",         "name",                           "read_only"     ),
+    Action("Variable",         "to_write",                       "read_only"     ),
     ]
 # fmt: on
 assert len({str(a) for a in actions}) == len(actions)  # Check that all actions are unique
@@ -332,6 +334,10 @@ def create_test_data():
         "ParticleFile": {
             "class": ParticleFile,
             "object": pfile,
+        },
+        "Variable": {
+            "class": Variable,
+            "object": Variable("test"),
         },
     }
 
