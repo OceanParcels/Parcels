@@ -35,7 +35,7 @@ InterpMethod = (
 )  # corresponds with `interp_method` (which can also be dict mapping field names to method)
 PathLike = str | os.PathLike
 Mesh = Literal["spherical", "flat"]  # corresponds with `mesh`
-VectorType = Literal["3D", "2D"] | None  # corresponds with `vector_type`
+VectorType = Literal["3D", "3DSigma", "2D"] | None  # corresponds with `vector_type`
 ChunkMode = Literal["auto", "specific", "failsafe"]  # corresponds with `chunk_mode`
 GridIndexingType = Literal["pop", "mom5", "mitgcm", "nemo"]  # corresponds with `gridindexingtype`
 UpdateStatus = Literal["not_updated", "first_updated", "updated"]  # corresponds with `_update_status`
