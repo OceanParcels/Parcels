@@ -134,32 +134,32 @@ def test_nemo_3D(mode, chunk_mode):
     compute_nemo_particle_advection(fieldset, mode)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     if chunk_mode != "failsafe":
-        assert len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)
-        assert len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk)
+        assert len(fieldset.U.grid._load_chunk) == len(fieldset.V.grid._load_chunk)
+        assert len(fieldset.U.grid._load_chunk) == len(fieldset.W.grid._load_chunk)
     if chunk_mode is False:
-        assert len(fieldset.U.grid.load_chunk) == 1
+        assert len(fieldset.U.grid._load_chunk) == 1
     elif chunk_mode == "auto":
         assert (
             fieldset.gridset.size == 3
         )  # because three different grids in 'auto' mode
-        assert len(fieldset.U.grid.load_chunk) != 1
+        assert len(fieldset.U.grid._load_chunk) != 1
     elif chunk_mode == "specific":
-        assert len(fieldset.U.grid.load_chunk) == (
+        assert len(fieldset.U.grid._load_chunk) == (
             1
             * int(math.ceil(75.0 / 75.0))
             * int(math.ceil(201.0 / 16.0))
             * int(math.ceil(151.0 / 16.0))
         )
     elif chunk_mode == "failsafe":  # chunking time and depth but not lat and lon
-        assert len(fieldset.U.grid.load_chunk) != 1
-        assert len(fieldset.U.grid.load_chunk) == (
+        assert len(fieldset.U.grid._load_chunk) != 1
+        assert len(fieldset.U.grid._load_chunk) == (
             1
             * int(math.ceil(75.0 / 25.0))
             * int(math.ceil(201.0 / 171.0))
             * int(math.ceil(151.0 / 151.0))
         )
-        assert len(fieldset.V.grid.load_chunk) != 1
-        assert len(fieldset.V.grid.load_chunk) == (
+        assert len(fieldset.V.grid._load_chunk) != 1
+        assert len(fieldset.V.grid._load_chunk) == (
             1
             * int(math.ceil(75.0 / 75.0))
             * int(math.ceil(201.0 / 171.0))
@@ -214,18 +214,18 @@ def test_globcurrent_2D(mode, chunk_mode):
             return
     # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
     if chunk_mode != "failsafe":  # chunking time but not lat
-        assert len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)
+        assert len(fieldset.U.grid._load_chunk) == len(fieldset.V.grid._load_chunk)
     if chunk_mode is False:
-        assert len(fieldset.U.grid.load_chunk) == 1
+        assert len(fieldset.U.grid._load_chunk) == 1
     elif chunk_mode == "auto":
-        assert len(fieldset.U.grid.load_chunk) != 1
+        assert len(fieldset.U.grid._load_chunk) != 1
     elif chunk_mode == "specific":
-        assert len(fieldset.U.grid.load_chunk) == (
+        assert len(fieldset.U.grid._load_chunk) == (
             1 * int(math.ceil(41.0 / 8.0)) * int(math.ceil(81.0 / 8.0))
         )
     elif chunk_mode == "failsafe":  # chunking time but not lat
-        assert len(fieldset.U.grid.load_chunk) != 1
-        assert len(fieldset.V.grid.load_chunk) != 1
+        assert len(fieldset.U.grid._load_chunk) != 1
+        assert len(fieldset.V.grid._load_chunk) != 1
     assert abs(pset[0].lon - 23.8) < 1
     assert abs(pset[0].lat - -35.3) < 1
 
@@ -267,33 +267,33 @@ def test_pop(mode, chunk_mode):
     pset = parcels.ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
     pset.execute(parcels.AdvectionRK4, runtime=timedelta(days=90), dt=timedelta(days=2))
     # POP sample file dimensions: k=21, j=60, i=60
-    assert len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)
-    assert len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk)
+    assert len(fieldset.U.grid._load_chunk) == len(fieldset.V.grid._load_chunk)
+    assert len(fieldset.U.grid._load_chunk) == len(fieldset.W.grid._load_chunk)
     if chunk_mode is False:
         assert fieldset.gridset.size == 1
-        assert len(fieldset.U.grid.load_chunk) == 1
-        assert len(fieldset.V.grid.load_chunk) == 1
-        assert len(fieldset.W.grid.load_chunk) == 1
+        assert len(fieldset.U.grid._load_chunk) == 1
+        assert len(fieldset.V.grid._load_chunk) == 1
+        assert len(fieldset.W.grid._load_chunk) == 1
     elif chunk_mode == "auto":
         assert (
             fieldset.gridset.size == 3
         )  # because three different grids in 'auto' mode
-        assert len(fieldset.U.grid.load_chunk) != 1
-        assert len(fieldset.V.grid.load_chunk) != 1
-        assert len(fieldset.W.grid.load_chunk) != 1
+        assert len(fieldset.U.grid._load_chunk) != 1
+        assert len(fieldset.V.grid._load_chunk) != 1
+        assert len(fieldset.W.grid._load_chunk) != 1
     elif chunk_mode == "specific":
         assert fieldset.gridset.size == 1
-        assert len(fieldset.U.grid.load_chunk) == (
+        assert len(fieldset.U.grid._load_chunk) == (
             int(math.ceil(21.0 / 3.0))
             * int(math.ceil(60.0 / 8.0))
             * int(math.ceil(60.0 / 8.0))
         )
     elif chunk_mode == "failsafe":  # here: done a typo in the netcdf dimname field
         assert fieldset.gridset.size == 1
-        assert len(fieldset.U.grid.load_chunk) != 1
-        assert len(fieldset.V.grid.load_chunk) != 1
-        assert len(fieldset.W.grid.load_chunk) != 1
-        assert len(fieldset.U.grid.load_chunk) == (
+        assert len(fieldset.U.grid._load_chunk) != 1
+        assert len(fieldset.V.grid._load_chunk) != 1
+        assert len(fieldset.W.grid._load_chunk) != 1
+        assert len(fieldset.U.grid._load_chunk) == (
             int(math.ceil(21.0 / 3.0))
             * int(math.ceil(60.0 / 8.0))
             * int(math.ceil(60.0 / 8.0))
@@ -376,33 +376,33 @@ def test_swash(mode, chunk_mode):
     if chunk_mode not in [
         "failsafe",
     ]:
-        assert len(fieldset.U.grid.load_chunk) == len(
-            fieldset.V.grid.load_chunk
+        assert len(fieldset.U.grid._load_chunk) == len(
+            fieldset.V.grid._load_chunk
         ), f"U {fieldset.U.grid.chunk_info} vs V {fieldset.V.grid.chunk_info}"
     if chunk_mode not in ["failsafe", "auto"]:
-        assert len(fieldset.U.grid.load_chunk) == len(
-            fieldset.W.grid.load_chunk
+        assert len(fieldset.U.grid._load_chunk) == len(
+            fieldset.W.grid._load_chunk
         ), f"U {fieldset.U.grid.chunk_info} vs W {fieldset.W.grid.chunk_info}"
     if chunk_mode is False:
-        assert len(fieldset.U.grid.load_chunk) == 1
+        assert len(fieldset.U.grid._load_chunk) == 1
     else:
-        assert len(fieldset.U.grid.load_chunk) != 1
-        assert len(fieldset.V.grid.load_chunk) != 1
-        assert len(fieldset.W.grid.load_chunk) != 1
+        assert len(fieldset.U.grid._load_chunk) != 1
+        assert len(fieldset.V.grid._load_chunk) != 1
+        assert len(fieldset.W.grid._load_chunk) != 1
     if chunk_mode == "specific":
-        assert len(fieldset.U.grid.load_chunk) == (
+        assert len(fieldset.U.grid._load_chunk) == (
             1
             * int(math.ceil(6.0 / 6.0))
             * int(math.ceil(21.0 / 4.0))
             * int(math.ceil(51.0 / 4.0))
         )
-        assert len(fieldset.V.grid.load_chunk) == (
+        assert len(fieldset.V.grid._load_chunk) == (
             1
             * int(math.ceil(6.0 / 6.0))
             * int(math.ceil(21.0 / 4.0))
             * int(math.ceil(51.0 / 4.0))
         )
-        assert len(fieldset.W.grid.load_chunk) == (
+        assert len(fieldset.W.grid._load_chunk) == (
             1
             * int(math.ceil(7.0 / 7.0))
             * int(math.ceil(21.0 / 4.0))
@@ -452,11 +452,11 @@ def test_ofam_3D(mode, chunk_mode):
         parcels.AdvectionRK4, runtime=timedelta(days=10), dt=timedelta(minutes=5)
     )
     # OFAM sample file dimensions: time=UNLIMITED, st_ocean=1, st_edges_ocean=52, lat=601, lon=2001
-    assert len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)
+    assert len(fieldset.U.grid._load_chunk) == len(fieldset.V.grid._load_chunk)
     if chunk_mode is False:
-        assert len(fieldset.U.grid.load_chunk) == 1
+        assert len(fieldset.U.grid._load_chunk) == 1
     elif chunk_mode == "auto":
-        assert len(fieldset.U.grid.load_chunk) != 1
+        assert len(fieldset.U.grid._load_chunk) != 1
     elif chunk_mode == "specific":
         numblocks = [i for i in fieldset.U.grid.chunk_info[1:3]]
         dblocks = 1
@@ -470,7 +470,7 @@ def test_ofam_3D(mode, chunk_mode):
             ublocks += bsize
         matching_numblocks = ublocks == 2001 and vblocks == 601 and dblocks == 1
         matching_fields = fieldset.U.grid.chunk_info == fieldset.V.grid.chunk_info
-        matching_uniformblocks = len(fieldset.U.grid.load_chunk) == (
+        matching_uniformblocks = len(fieldset.U.grid._load_chunk) == (
             1
             * int(math.ceil(1.0 / 60.0))
             * int(math.ceil(601.0 / 50.0))
@@ -548,17 +548,17 @@ def test_mitgcm(mode, chunk_mode, using_add_field):
     )
     # MITgcm sample file dimensions: time=10, XG=400, YG=200
     if chunk_mode != "specific_different":
-        assert len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)
+        assert len(fieldset.U.grid._load_chunk) == len(fieldset.V.grid._load_chunk)
     if chunk_mode in [
         False,
     ]:
-        assert len(fieldset.U.grid.load_chunk) == 1
+        assert len(fieldset.U.grid._load_chunk) == 1
     elif chunk_mode in [
         "auto",
     ]:
-        assert len(fieldset.U.grid.load_chunk) != 1
+        assert len(fieldset.U.grid._load_chunk) != 1
     elif "specific" in chunk_mode:
-        assert len(fieldset.U.grid.load_chunk) == (
+        assert len(fieldset.U.grid._load_chunk) == (
             1 * int(math.ceil(400.0 / 50.0)) * int(math.ceil(200.0 / 100.0))
         )
     if chunk_mode == "specific_same":
@@ -593,7 +593,7 @@ def test_diff_entry_dimensions_chunks(mode):
     )
     compute_nemo_particle_advection(fieldset, mode)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
-    assert len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk)
+    assert len(fieldset.U.grid._load_chunk) == len(fieldset.V.grid._load_chunk)
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])

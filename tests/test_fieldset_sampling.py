@@ -262,7 +262,7 @@ def test_inversedistance_nearland(mode, withDepth, arrtype):
     success = False
     try:
         fieldset.U.interp_method = "linear_invdist_land_tracer"
-        fieldset.check_complete()
+        fieldset._check_complete()
     except NotImplementedError:
         success = True
     assert success
@@ -800,7 +800,7 @@ def test_multiple_grid_addlater_error():
     )
     fieldset = FieldSet(U, V)
 
-    pset = ParticleSet(fieldset, pclass=pclass("jit"), lon=[0.8], lat=[0.9])  # noqa ; to trigger fieldset.check_complete
+    pset = ParticleSet(fieldset, pclass=pclass("jit"), lon=[0.8], lat=[0.9])  # noqa ; to trigger fieldset._check_complete
 
     P = Field(
         "P",

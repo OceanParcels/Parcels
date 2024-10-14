@@ -1,4 +1,6 @@
 import os
+import tempfile
+from datetime import timedelta
 
 import cftime
 import numpy as np
@@ -6,9 +8,11 @@ import pytest
 import xarray as xr
 from zarr.storage import MemoryStore
 
+import parcels
 from parcels import (
     AdvectionRK4,
     Field,
+    FieldSet,
     JITParticle,
     ParticleSet,
     ScipyParticle,
@@ -344,3 +348,69 @@ def test_reset_dt(fieldset, mode, tmpdir):
     pset.execute(pset.Kernel(Update_lon), endtime=0.12, dt=0.02, output_file=ofile)
 
     assert np.allclose(pset.lon, 0.6)
+
+
+def setup_pset_execute(*, fieldset: FieldSet, outputdt: timedelta, execute_kwargs, particle_class=ScipyParticle):
+    npart = 10
+
+    if fieldset is None:
+        fieldset = create_fieldset_zeros_simple()
+
+    pset = ParticleSet(
+        fieldset,
+        pclass=particle_class,
+        lon=np.full(npart, fieldset.U.lon.mean()),
+        lat=np.full(npart, fieldset.U.lat.mean()),
+    )
+
+    with tempfile.TemporaryDirectory() as dir:
+        name = f"{dir}/test.zarr"
+        output_file = pset.ParticleFile(name=name, outputdt=outputdt)
+
+        pset.execute(DoNothing, output_file=output_file, **execute_kwargs)
+        ds = xr.open_zarr(name).load()
+
+    return ds
+
+
+def test_pset_execute_outputdt_forwards():
+    """Testing output data dt matches outputdt in forward time."""
+    outputdt = timedelta(hours=1)
+    runtime = timedelta(hours=5)
+    dt = timedelta(minutes=5)
+
+    ds = setup_pset_execute(
+        fieldset=create_fieldset_zeros_simple(), outputdt=outputdt, execute_kwargs=dict(runtime=runtime, dt=dt)
+    )
+
+    assert np.all(ds.isel(trajectory=0).time.diff(dim="obs").values == np.timedelta64(outputdt))
+
+
+def test_pset_execute_outputdt_backwards():
+    """Testing output data dt matches outputdt in backwards time."""
+    outputdt = timedelta(hours=1)
+    runtime = timedelta(days=2)
+    dt = -timedelta(minutes=5)
+
+    ds = setup_pset_execute(
+        fieldset=create_fieldset_zeros_simple(), outputdt=outputdt, execute_kwargs=dict(runtime=runtime, dt=dt)
+    )
+    file_outputdt = ds.isel(trajectory=0).time.diff(dim="obs").values
+    assert np.all(file_outputdt == np.timedelta64(-outputdt))
+
+
+def test_pset_execute_outputdt_backwards_fieldset_timevarying():
+    """test_pset_execute_outputdt_backwards() still passed despite #1722 as it doesn't account for time-varying fields,
+    which for some reason #1722
+    """
+    outputdt = timedelta(hours=1)
+    runtime = timedelta(days=2)
+    dt = -timedelta(minutes=5)
+
+    # TODO: Not ideal using the `download_example_dataset` here, but I'm struggling to recreate this error using the test suite fieldsets we have
+    example_dataset_folder = parcels.download_example_dataset("MovingEddies_data")
+    fieldset = parcels.FieldSet.from_parcels(f"{example_dataset_folder}/moving_eddies")
+
+    ds = setup_pset_execute(outputdt=outputdt, execute_kwargs=dict(runtime=runtime, dt=dt), fieldset=fieldset)
+    file_outputdt = ds.isel(trajectory=0).time.diff(dim="obs").values
+    assert np.all(file_outputdt == np.timedelta64(-outputdt)), (file_outputdt, np.timedelta64(-outputdt))

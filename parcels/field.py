@@ -12,7 +12,16 @@ import numpy as np
 import xarray as xr
 
 import parcels.tools.interpolation_utils as i_u
-from parcels._typing import GridIndexingType, InterpMethod, Mesh, TimePeriodic, VectorType
+from parcels._typing import (
+    GridIndexingType,
+    InterpMethod,
+    Mesh,
+    TimePeriodic,
+    VectorType,
+    assert_valid_gridindexingtype,
+    assert_valid_interp_method,
+)
+from parcels.tools._helpers import deprecated_made_private
 from parcels.tools.converters import (
     Geographic,
     GeographicPolar,
@@ -181,21 +190,15 @@ class Field:
                 raise ValueError(
                     "Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately"
                 )
-            self.grid = grid
+            self._grid = grid
         else:
             if (time is not None) and isinstance(time[0], np.datetime64):
                 time_origin = TimeConverter(time[0])
                 time = np.array([time_origin.reltime(t) for t in time])
             else:
                 time_origin = TimeConverter(0)
-            self.grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self._grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
-        # self.lon, self.lat, self.depth and self.time are not used any more in parcels.
-        # self.grid should be used instead.
-        # Those variables are still defined for backwards compatibility with users codes.
-        self.lon = self.grid.lon
-        self.lat = self.grid.lat
-        self.depth = self.grid.depth
         self.fieldtype = self.name if fieldtype is None else fieldtype
         self.to_write = to_write
         if self.grid.mesh == "flat" or (self.fieldtype not in unitconverters_map.keys()):
@@ -212,8 +215,9 @@ class Field:
                 raise RuntimeError(f"interp_method is a dictionary but {name} is not in it")
         else:
             self.interp_method = interp_method
-        self.gridindexingtype = gridindexingtype
-        if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"] and self.grid.gtype in [
+        assert_valid_gridindexingtype(gridindexingtype)
+        self._gridindexingtype = gridindexingtype
+        if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"] and self.grid._gtype in [
             GridType.RectilinearSGrid,
             GridType.CurvilinearSGrid,
         ]:
@@ -253,14 +257,14 @@ class Field:
 
         self.vmin = vmin
         self.vmax = vmax
-        self.cast_data_dtype = cast_data_dtype
+        self._cast_data_dtype = cast_data_dtype
         if self.cast_data_dtype == "float32":
-            self.cast_data_dtype = np.float32
+            self._cast_data_dtype = np.float32
         elif self.cast_data_dtype == "float64":
-            self.cast_data_dtype = np.float64
+            self._cast_data_dtype = np.float64
 
         if not self.grid.defer_load:
-            self.data = self.reshape(self.data, transpose)
+            self.data = self._reshape(self.data, transpose)
 
             # Hack around the fact that NaN and ridiculously large values
             # propagate in SciPy's interpolators
@@ -277,38 +281,121 @@ class Field:
         self._scaling_factor = None
 
         # Variable names in JIT code
-        self.dimensions = kwargs.pop("dimensions", None)
+        self._dimensions = kwargs.pop("dimensions", None)
         self.indices = kwargs.pop("indices", None)
-        self.dataFiles = kwargs.pop("dataFiles", None)
-        if self.grid._add_last_periodic_data_timestep and self.dataFiles is not None:
-            self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
+        self._dataFiles = kwargs.pop("dataFiles", None)
+        if self.grid._add_last_periodic_data_timestep and self._dataFiles is not None:
+            self._dataFiles = np.append(self._dataFiles, self._dataFiles[0])
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
-        self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        self.loaded_time_indices: Iterable[int] = []  # type: ignore
-        self.creation_log = kwargs.pop("creation_log", "")
+        self._netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
+        self._loaded_time_indices: Iterable[int] = []  # type: ignore
+        self._creation_log = kwargs.pop("creation_log", "")
         self.chunksize = kwargs.pop("chunksize", None)
         self.netcdf_chunkdims_name_map = kwargs.pop("chunkdims_name_map", None)
         self.grid.depth_field = kwargs.pop("depth_field", None)
 
         if self.grid.depth_field == "not_yet_set":
             assert (
-                self.grid.z4d
+                self.grid._z4d
             ), "Providing the depth dimensions from another field data is only available for 4d S grids"
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop("data_full_zdim", None)
-        self.data_chunks = []  # type: ignore # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
-        self.c_data_chunks: list[PointerType | None] = []  # C-pointers to the data_chunks array
+        self._data_chunks = []  # type: ignore # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
+        self._c_data_chunks: list[PointerType | None] = []  # C-pointers to the data_chunks array
         self.nchunks: tuple[int, ...] = ()
-        self.chunk_set: bool = False
+        self._chunk_set: bool = False
         self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
 
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def dataFiles(self):
+        return self._dataFiles
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def chunk_set(self):
+        return self._chunk_set
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def c_data_chunks(self):
+        return self._c_data_chunks
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def data_chunks(self):
+        return self._data_chunks
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def creation_log(self):
+        return self._creation_log
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def loaded_time_indices(self):
+        return self._loaded_time_indices
+
+    @property
+    def dimensions(self):
+        return self._dimensions
+
+    @property
+    def grid(self):
+        return self._grid
+
+    @property
+    def lon(self):
+        """Lon defined on the Grid object"""
+        return self.grid.lon
+
+    @property
+    def lat(self):
+        """Lat defined on the Grid object"""
+        return self.grid.lat
+
+    @property
+    def depth(self):
+        """Depth defined on the Grid object"""
+        return self.grid.depth
+
+    @property
+    def cell_edge_sizes(self):
+        return self.grid.cell_edge_sizes
+
+    @property
+    def interp_method(self):
+        return self._interp_method
+
+    @interp_method.setter
+    def interp_method(self, value):
+        assert_valid_interp_method(value)
+        self._interp_method = value
+
+    @property
+    def gridindexingtype(self):
+        return self._gridindexingtype
+
+    @property
+    def cast_data_dtype(self):
+        return self._cast_data_dtype
+
+    @property
+    def netcdf_engine(self):
+        return self._netcdf_engine
+
     @classmethod
-    def get_dim_filenames(cls, filenames, dim):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def get_dim_filenames(cls, *args, **kwargs):
+        return cls._get_dim_filenames(*args, **kwargs)
+
+    @classmethod
+    def _get_dim_filenames(cls, filenames, dim):
         if isinstance(filenames, str) or not isinstance(filenames, collections.abc.Iterable):
             return [filenames]
         elif isinstance(filenames, dict):
@@ -322,7 +409,12 @@ class Field:
             return filenames
 
     @staticmethod
-    def collect_timeslices(
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def collect_timeslices(*args, **kwargs):
+        return Field._collect_timeslices(*args, **kwargs)
+
+    @staticmethod
+    def _collect_timeslices(
         timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning=None
     ):
         if netcdf_decodewarning is not None:
@@ -471,17 +563,17 @@ class Field:
             len(variable) == 2
         ), "The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables"
 
-        data_filenames = cls.get_dim_filenames(filenames, "data")
-        lonlat_filename = cls.get_dim_filenames(filenames, "lon")
+        data_filenames = cls._get_dim_filenames(filenames, "data")
+        lonlat_filename = cls._get_dim_filenames(filenames, "lon")
         if isinstance(filenames, dict):
             assert len(lonlat_filename) == 1
-        if lonlat_filename != cls.get_dim_filenames(filenames, "lat"):
+        if lonlat_filename != cls._get_dim_filenames(filenames, "lat"):
             raise NotImplementedError(
                 "longitude and latitude dimensions are currently processed together from one single file"
             )
         lonlat_filename = lonlat_filename[0]
         if "depth" in dimensions:
-            depth_filename = cls.get_dim_filenames(filenames, "depth")
+            depth_filename = cls._get_dim_filenames(filenames, "depth")
             if isinstance(filenames, dict) and len(depth_filename) != 1:
                 raise NotImplementedError("Vertically adaptive meshes not implemented for from_netcdf()")
             depth_filename = depth_filename[0]
@@ -552,7 +644,7 @@ class Field:
         if grid is None:
             # Concatenate time variable to determine overall dimension
             # across multiple files
-            time, time_origin, timeslices, dataFiles = cls.collect_timeslices(
+            time, time_origin, timeslices, dataFiles = cls._collect_timeslices(
                 timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
             )
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
@@ -561,7 +653,7 @@ class Field:
         elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
-            _, _, _, dataFiles = cls.collect_timeslices(
+            _, _, _, dataFiles = cls._collect_timeslices(
                 timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
             )
             kwargs["dataFiles"] = dataFiles
@@ -634,8 +726,8 @@ class Field:
             lib = np if isinstance(data_list[0], np.ndarray) else da
             data = lib.concatenate(data_list, axis=0)
         else:
-            grid.defer_load = True
-            grid.ti = -1
+            grid._defer_load = True
+            grid._ti = -1
             data = DeferredArray()
             data.compute_shape(grid.xdim, grid.ydim, grid.zdim, grid.tdim, len(grid.timeslices))
 
@@ -717,7 +809,11 @@ class Field:
             **kwargs,
         )
 
-    def reshape(self, data, transpose=False):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def reshape(self, *args, **kwargs):
+        return self._reshape(*args, **kwargs)
+
+    def _reshape(self, data, transpose=False):
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray, da.core.Array)):
             data = np.array(data)
@@ -728,7 +824,7 @@ class Field:
         lib = np if isinstance(data, np.ndarray) else da
         if transpose:
             data = lib.transpose(data)
-        if self.grid.lat_flipped:
+        if self.grid._lat_flipped:
             data = lib.flip(data, axis=-2)
 
         if self.grid.xdim == 1 or self.grid.ydim == 1:
@@ -815,13 +911,17 @@ class Field:
         if self.grid != field.grid:
             field.grid.depth_field = field
 
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def calc_cell_edge_sizes(self):
+        return self._calc_cell_edge_sizes()
+
+    def _calc_cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method.
 
         Currently only works for Rectilinear Grids
         """
         if not self.grid.cell_edge_sizes:
-            if self.grid.gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):
+            if self.grid._gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):
                 self.grid.cell_edge_sizes["x"] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
                 self.grid.cell_edge_sizes["y"] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
 
@@ -831,10 +931,9 @@ class Field:
                     for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon), strict=False)):
                         self.grid.cell_edge_sizes["x"][y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
                         self.grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
-                self.cell_edge_sizes = self.grid.cell_edge_sizes
             else:
                 raise ValueError(
-                    f"Field.cell_edge_sizes() not implemented for {self.grid.gtype} grids. "
+                    f"Field.cell_edge_sizes() not implemented for {self.grid._gtype} grids. "
                     "You can provide Field.grid.cell_edge_sizes yourself by in, e.g., "
                     "NEMO using the e1u fields etc from the mesh_mask.nc file."
                 )
@@ -845,10 +944,14 @@ class Field:
         Currently only works for Rectilinear Grids
         """
         if not self.grid.cell_edge_sizes:
-            self.calc_cell_edge_sizes()
+            self._calc_cell_edge_sizes()
         return self.grid.cell_edge_sizes["x"] * self.grid.cell_edge_sizes["y"]
 
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def search_indices_vertical_z(self, z):
+        return self._search_indices_vertical_z(z)
+
+    def _search_indices_vertical_z(self, z):
         grid = self.grid
         z = np.float32(z)
         if grid.depth[-1] > grid.depth[0]:
@@ -881,7 +984,11 @@ class Field:
         zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
         return (zi, zeta)
 
-    def search_indices_vertical_s(
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def search_indices_vertical_s(self, *args, **kwargs):
+        return self._search_indices_vertical_s(*args, **kwargs)
+
+    def _search_indices_vertical_s(
         self, x: float, y: float, z: float, xi: int, yi: int, xsi: float, eta: float, ti: int, time: float
     ):
         grid = self.grid
@@ -890,7 +997,7 @@ class Field:
             eta = 1
         if time < grid.time[ti]:
             ti -= 1
-        if grid.z4d:
+        if grid._z4d:
             if ti == len(grid.time) - 1:
                 depth_vector = (
                     (1 - xsi) * (1 - eta) * grid.depth[-1, :, yi, xi]
@@ -940,7 +1047,11 @@ class Field:
         zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
         return (zi, zeta)
 
-    def reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def reconnect_bnd_indices(self, *args, **kwargs):
+        return self._reconnect_bnd_indices(*args, **kwargs)
+
+    def _reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
         if xi < 0:
             if sphere_mesh:
                 xi = xdim - 2
@@ -959,7 +1070,11 @@ class Field:
                 xi = xdim - xi
         return xi, yi
 
-    def search_indices_rectilinear(self, x: float, y: float, z: float, ti=-1, time=-1, particle=None, search2D=False):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def search_indices_rectilinear(self, *args, **kwargs):
+        return self._search_indices_rectilinear(*args, **kwargs)
+
+    def _search_indices_rectilinear(self, x: float, y: float, z: float, ti=-1, time=-1, particle=None, search2D=False):
         grid = self.grid
 
         if grid.xdim > 1 and (not grid.zonal_periodic):
@@ -1023,16 +1138,16 @@ class Field:
             yi, eta = -1, 0
 
         if grid.zdim > 1 and not search2D:
-            if grid.gtype == GridType.RectilinearZGrid:
+            if grid._gtype == GridType.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
                 try:
-                    (zi, zeta) = self.search_indices_vertical_z(z)
+                    (zi, zeta) = self._search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
                 except FieldOutOfBoundSurfaceError:
                     raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
-            elif grid.gtype == GridType.RectilinearSGrid:
-                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
+            elif grid._gtype == GridType.RectilinearSGrid:
+                (zi, zeta) = self._search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi, zeta = -1, 0
 
@@ -1046,7 +1161,11 @@ class Field:
 
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices_curvilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def search_indices_curvilinear(self, *args, **kwargs):
+        return self._search_indices_curvilinear(*args, **kwargs)
+
+    def _search_indices_curvilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
         if particle:
             xi = particle.xi[self.igrid]
             yi = particle.yi[self.igrid]
@@ -1105,7 +1224,7 @@ class Field:
                 yi -= 1
             elif eta > 1 + tol:
                 yi += 1
-            (xi, yi) = self.reconnect_bnd_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
+            (xi, yi) = self._reconnect_bnd_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
             it += 1
             if it > maxIterSearch:
                 print("Correct cell not found after %d iterations" % maxIterSearch)
@@ -1116,13 +1235,13 @@ class Field:
         eta = min(1.0, eta)
 
         if grid.zdim > 1 and not search2D:
-            if grid.gtype == GridType.CurvilinearZGrid:
+            if grid._gtype == GridType.CurvilinearZGrid:
                 try:
-                    (zi, zeta) = self.search_indices_vertical_z(z)
+                    (zi, zeta) = self._search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
-            elif grid.gtype == GridType.CurvilinearSGrid:
-                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
+            elif grid._gtype == GridType.CurvilinearSGrid:
+                (zi, zeta) = self._search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi = -1
             zeta = 0
@@ -1137,14 +1256,22 @@ class Field:
 
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
-        if self.grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
-            return self.search_indices_rectilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
-        else:
-            return self.search_indices_curvilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def search_indices(self, *args, **kwargs):
+        return self._search_indices(*args, **kwargs)
 
-    def interpolator2D(self, ti, z, y, x, particle=None):
-        (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, particle=particle)
+    def _search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+        if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
+            return self._search_indices_rectilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
+        else:
+            return self._search_indices_curvilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
+
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def interpolator2D(self, *args, **kwargs):
+        return self._interpolator2D(*args, **kwargs)
+
+    def _interpolator2D(self, ti, z, y, x, particle=None):
+        (xsi, eta, _, xi, yi, _) = self._search_indices(x, y, z, particle=particle)
         if self.interp_method == "nearest":
             xii = xi if xsi <= 0.5 else xi + 1
             yii = yi if eta <= 0.5 else yi + 1
@@ -1194,8 +1321,12 @@ class Field:
         else:
             raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
 
-    def interpolator3D(self, ti, z, y, x, time, particle=None):
-        (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, ti, time, particle=particle)
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def interpolator3D(self, *args, **kwargs):
+        return self._interpolator3D(*args, **kwargs)
+
+    def _interpolator3D(self, ti, z, y, x, time, particle=None):
+        (xsi, eta, zeta, xi, yi, zi) = self._search_indices(x, y, z, ti, time, particle=particle)
         if self.interp_method == "nearest":
             xii = xi if xsi <= 0.5 else xi + 1
             yii = yi if eta <= 0.5 else yi + 1
@@ -1304,12 +1435,16 @@ class Field:
             f1 = self.data[ti + 1, :]
             return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
-    def spatial_interpolation(self, ti, z, y, x, time, particle=None):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def spatial_interpolation(self, *args, **kwargs):
+        return self._spatial_interpolation(*args, **kwargs)
+
+    def _spatial_interpolation(self, ti, z, y, x, time, particle=None):
         """Interpolate horizontal field values using a SciPy interpolator."""
         if self.grid.zdim == 1:
-            val = self.interpolator2D(ti, z, y, x, particle=particle)
+            val = self._interpolator2D(ti, z, y, x, particle=particle)
         else:
-            val = self.interpolator3D(ti, z, y, x, time, particle=particle)
+            val = self._interpolator3D(ti, z, y, x, time, particle=particle)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldOutOfBoundError(x, y, z, field=self)
@@ -1318,7 +1453,11 @@ class Field:
                 val = val.compute()
             return val
 
-    def time_index(self, time):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def time_index(self, *args, **kwargs):
+        return self._time_index(*args, **kwargs)
+
+    def _time_index(self, time):
         """Find the index in the time array associated with a given time.
 
         Note that we normalize to either the first or the last index
@@ -1381,13 +1520,13 @@ class Field:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        (ti, periods) = self.time_index(time)
+        (ti, periods) = self._time_index(time)
         time -= periods * (self.grid.time_full[-1] - self.grid.time_full[0])
         if self.gridindexingtype == "croco" and self is not self.fieldset.H:
             z = z / self.fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
         if ti < self.grid.tdim - 1 and time > self.grid.time[ti]:
-            f0 = self.spatial_interpolation(ti, z, y, x, time, particle=particle)
-            f1 = self.spatial_interpolation(ti + 1, z, y, x, time, particle=particle)
+            f0 = self._spatial_interpolation(ti, z, y, x, time, particle=particle)
+            f1 = self._spatial_interpolation(ti + 1, z, y, x, time, particle=particle)
             t0 = self.grid.time[ti]
             t1 = self.grid.time[ti + 1]
             value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
@@ -1395,28 +1534,48 @@ class Field:
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # exact value in the time array.
-            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
+            value = self._spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
 
         if applyConversion:
             return self.units.to_target(value, x, y, z)
         else:
             return value
 
-    def ccode_eval(self, var, t, z, y, x):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def ccode_eval(self, *args, **kwargs):
+        return self._ccode_eval(*args, **kwargs)
+
+    def _ccode_eval(self, var, t, z, y, x):
         self._check_velocitysampling()
         ccode_str = f"temporal_interpolation({x}, {y}, {z}, {t}, {self.ccode_name}, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
         return ccode_str
 
-    def ccode_convert(self, _, z, y, x):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def ccode_convert(self, *args, **kwargs):
+        return self._ccode_convert(*args, **kwargs)
+
+    def _ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
 
-    def get_block_id(self, block):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def get_block_id(self, *args, **kwargs):
+        return self._get_block_id(*args, **kwargs)
+
+    def _get_block_id(self, block):
         return np.ravel_multi_index(block, self.nchunks)
 
-    def get_block(self, bid):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def get_block(self, *args, **kwargs):
+        return self._get_block(*args, **kwargs)
+
+    def _get_block(self, bid):
         return np.unravel_index(bid, self.nchunks[1:])
 
-    def chunk_setup(self):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def chunk_setup(self, *args, **kwargs):
+        return self._chunk_setup(*args, **kwargs)
+
+    def _chunk_setup(self):
         if isinstance(self.data, da.core.Array):
             chunks = self.data.chunks
             self.nchunks = self.data.numblocks
@@ -1433,9 +1592,9 @@ class Field:
         else:
             return
 
-        self.data_chunks = [None] * npartitions
-        self.c_data_chunks = [None] * npartitions
-        self.grid.load_chunk = np.zeros(npartitions, dtype=c_int, order="C")
+        self._data_chunks = [None] * npartitions
+        self._c_data_chunks = [None] * npartitions
+        self.grid._load_chunk = np.zeros(npartitions, dtype=c_int, order="C")
         # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #      chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
         self.grid.chunk_info = [
@@ -1444,35 +1603,41 @@ class Field:
             sum(list(list(ci) for ci in chunks[1:]), []),  # noqa: RUF017 # TODO: Perhaps avoid quadratic list summation here
         ]
         self.grid.chunk_info = sum(self.grid.chunk_info, [])  # noqa: RUF017
-        self.chunk_set = True
+        self._chunk_set = True
 
-    def chunk_data(self):
-        if not self.chunk_set:
-            self.chunk_setup()
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def chunk_data(self, *args, **kwargs):
+        return self._chunk_data(*args, **kwargs)
+
+    def _chunk_data(self):
+        if not self._chunk_set:
+            self._chunk_setup()
         g = self.grid
         if isinstance(self.data, da.core.Array):
-            for block_id in range(len(self.grid.load_chunk)):
+            for block_id in range(len(self.grid._load_chunk)):
                 if (
-                    g.load_chunk[block_id] == g.chunk_loading_requested
-                    or g.load_chunk[block_id] in g.chunk_loaded
-                    and self.data_chunks[block_id] is None
+                    g._load_chunk[block_id] == g._chunk_loading_requested
+                    or g._load_chunk[block_id] in g._chunk_loaded
+                    and self._data_chunks[block_id] is None
                 ):
-                    block = self.get_block(block_id)
-                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block], order="C")
-                elif g.load_chunk[block_id] == g.chunk_not_loaded:
-                    if isinstance(self.data_chunks, list):
-                        self.data_chunks[block_id] = None
+                    block = self._get_block(block_id)
+                    self._data_chunks[block_id] = np.array(
+                        self.data.blocks[(slice(self.grid.tdim),) + block], order="C"
+                    )
+                elif g._load_chunk[block_id] == g._chunk_not_loaded:
+                    if isinstance(self._data_chunks, list):
+                        self._data_chunks[block_id] = None
                     else:
-                        self.data_chunks[block_id, :] = None
-                    self.c_data_chunks[block_id] = None
+                        self._data_chunks[block_id, :] = None
+                    self._c_data_chunks[block_id] = None
         else:
-            if isinstance(self.data_chunks, list):
-                self.data_chunks[0] = None
+            if isinstance(self._data_chunks, list):
+                self._data_chunks[0] = None
             else:
-                self.data_chunks[0, :] = None
-            self.c_data_chunks[0] = None
-            self.grid.load_chunk[0] = g.chunk_loaded_touched
-            self.data_chunks[0] = np.array(self.data, order="C")
+                self._data_chunks[0, :] = None
+            self._c_data_chunks[0] = None
+            self.grid._load_chunk[0] = g._chunk_loaded_touched
+            self._data_chunks[0] = np.array(self.data, order="C")
 
     @property
     def ctypes_struct(self):
@@ -1495,17 +1660,17 @@ class Field:
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
-        for i in range(len(self.grid.load_chunk)):
-            if self.grid.load_chunk[i] == self.grid.chunk_loading_requested:
+        for i in range(len(self.grid._load_chunk)):
+            if self.grid._load_chunk[i] == self.grid._chunk_loading_requested:
                 raise ValueError(
-                    "data_chunks should have been loaded by now if requested. grid.load_chunk[bid] cannot be 1"
+                    "data_chunks should have been loaded by now if requested. grid._load_chunk[bid] cannot be 1"
                 )
-            if self.grid.load_chunk[i] in self.grid.chunk_loaded:
-                if not self.data_chunks[i].flags["C_CONTIGUOUS"]:
-                    self.data_chunks[i] = np.array(self.data_chunks[i], order="C")
-                self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
+            if self.grid._load_chunk[i] in self.grid._chunk_loaded:
+                if not self._data_chunks[i].flags["C_CONTIGUOUS"]:
+                    self._data_chunks[i] = np.array(self._data_chunks[i], order="C")
+                self._c_data_chunks[i] = self._data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
             else:
-                self.c_data_chunks[i] = None
+                self._c_data_chunks[i] = None
 
         cstruct = CField(
             self.grid.xdim,
@@ -1515,7 +1680,7 @@ class Field:
             self.igrid,
             allow_time_extrapolation,
             time_periodic,
-            (POINTER(POINTER(c_float)) * len(self.c_data_chunks))(*self.c_data_chunks),
+            (POINTER(POINTER(c_float)) * len(self._c_data_chunks))(*self._c_data_chunks),
             pointer(self.grid.ctypes_struct),
         )
         return cstruct
@@ -1555,8 +1720,6 @@ class Field:
                     (data[:, :, :, -halosize:], data, data[:, :, :, 0:halosize]), axis=len(data.shape) - 1
                 )
                 assert data.shape[3] == self.grid.xdim, "Fourth dim must be x."
-            self.lon = self.grid.lon
-            self.lat = self.grid.lat
         if meridional:
             if len(data.shape) == 3:
                 data = lib.concatenate((data[:, -halosize:, :], data, data[:, 0:halosize, :]), axis=len(data.shape) - 2)
@@ -1566,7 +1729,6 @@ class Field:
                     (data[:, :, -halosize:, :], data, data[:, :, 0:halosize, :]), axis=len(data.shape) - 2
                 )
                 assert data.shape[2] == self.grid.ydim, "Third dim must be y."
-            self.lat = self.grid.lat
         if dataNone:
             self.data = data
         else:
@@ -1589,7 +1751,7 @@ class Field:
         vname_depth = f"depth{self.name.lower()}"
 
         # Create DataArray objects for file I/O
-        if self.grid.gtype == GridType.RectilinearZGrid:
+        if self.grid._gtype == GridType.RectilinearZGrid:
             nav_lon = xr.DataArray(
                 self.grid.lon + np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32),
                 coords=[("y", self.grid.lat), ("x", self.grid.lon)],
@@ -1598,7 +1760,7 @@ class Field:
                 self.grid.lat.reshape(self.grid.ydim, 1) + np.zeros(self.grid.xdim, dtype=np.float32),
                 coords=[("y", self.grid.lat), ("x", self.grid.lon)],
             )
-        elif self.grid.gtype == GridType.CurvilinearZGrid:
+        elif self.grid._gtype == GridType.CurvilinearZGrid:
             nav_lon = xr.DataArray(self.grid.lon, coords=[("y", range(self.grid.ydim)), ("x", range(self.grid.xdim))])
             nav_lat = xr.DataArray(self.grid.lat, coords=[("y", range(self.grid.ydim)), ("x", range(self.grid.xdim))])
         else:
@@ -1619,7 +1781,11 @@ class Field:
         )
         dset.to_netcdf(filepath, unlimited_dims="time_counter")
 
-    def rescale_and_set_minmax(self, data):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def rescale_and_set_minmax(self, *args, **kwargs):
+        return self._rescale_and_set_minmax(*args, **kwargs)
+
+    def _rescale_and_set_minmax(self, data):
         data[np.isnan(data)] = 0
         if self._scaling_factor:
             data *= self._scaling_factor
@@ -1629,7 +1795,11 @@ class Field:
             data[data > self.vmax] = 0
         return data
 
-    def data_concatenate(self, data, data_to_concat, tindex):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def data_concatenate(self, *args, **kwargs):
+        return self._data_concatenate(*args, **kwargs)
+
+    def _data_concatenate(self, data, data_to_concat, tindex):
         if data[tindex] is not None:
             if isinstance(data, np.ndarray):
                 data[tindex] = None
@@ -1649,15 +1819,15 @@ class Field:
         timestamp = self.timestamps
         if timestamp is not None:
             summedlen = np.cumsum([len(ls) for ls in self.timestamps])
-            if g.ti + tindex >= summedlen[-1]:
-                ti = g.ti + tindex - summedlen[-1]
+            if g._ti + tindex >= summedlen[-1]:
+                ti = g._ti + tindex - summedlen[-1]
             else:
-                ti = g.ti + tindex
+                ti = g._ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
-        rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None
+        rechunk_callback_fields = self._chunk_setup if isinstance(tindex, list) else None
         filebuffer = self._field_fb_class(
-            self.dataFiles[g.ti + tindex],
+            self._dataFiles[g._ti + tindex],
             self.dimensions,
             self.indices,
             netcdf_engine=self.netcdf_engine,
@@ -1695,7 +1865,7 @@ class Field:
                     (),
                 ),
             )
-        data = self.data_concatenate(data, buffer_data, tindex)
+        data = self._data_concatenate(data, buffer_data, tindex)
         self.filebuffers[tindex] = filebuffer
         return data
 
@@ -1765,9 +1935,9 @@ class VectorField:
 
     def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         grid = self.U.grid
-        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
+        (xsi, eta, zeta, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
 
-        if grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
+        if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
             py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi + 1], grid.lat[yi + 1]])
         else:
@@ -1837,9 +2007,9 @@ class VectorField:
 
     def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time, particle=None):
         grid = self.U.grid
-        (xsi, eta, zet, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
+        (xsi, eta, zet, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
 
-        if grid.gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
+        if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
             py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi + 1], grid.lat[yi + 1]])
         else:
@@ -1856,7 +2026,7 @@ class VectorField:
 
         px = np.concatenate((px, px))
         py = np.concatenate((py, py))
-        if grid.z4d:
+        if grid._z4d:
             pz = np.array(
                 [
                     grid.depth[0, zi, yi, xi],
@@ -2056,7 +2226,7 @@ class VectorField:
         interpolating linearly V depending on the latitude coordinate.
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
-        if self.U.grid.gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
+        if self.U.grid._gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
             (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
         else:
             if self.gridindexingtype == "croco":
@@ -2080,7 +2250,7 @@ class VectorField:
                 return True
 
     def spatial_slip_interpolation(self, ti, z, y, x, time, particle=None, applyConversion=True):
-        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
+        (xsi, eta, zeta, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
         f_u, f_v, f_w = 1, 1, 1
@@ -2204,7 +2374,7 @@ class VectorField:
                 "freeslip": {"2D": self.spatial_slip_interpolation, "3D": self.spatial_slip_interpolation},
             }
             grid = self.U.grid
-            (ti, periods) = self.U.time_index(time)
+            (ti, periods) = self.U._time_index(time)
             time -= periods * (grid.time_full[-1] - grid.time_full[0])
             if ti < grid.tdim - 1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
@@ -2252,7 +2422,11 @@ class VectorField:
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
 
-    def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def ccode_eval(self, *args, **kwargs):
+        return self._ccode_eval(*args, **kwargs)
+
+    def _ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         ccode_str = ""
         if "3D" in self.vector_type:
             ccode_str = (

@@ -108,7 +108,7 @@ def test_nemo_3D_samegrid():
 
     fieldset = parcels.FieldSet.from_nemo(filenames, variables, dimensions)
 
-    assert fieldset.U.dataFiles is not fieldset.W.dataFiles
+    assert fieldset.U._dataFiles is not fieldset.W._dataFiles
 
 
 def main(args=None):

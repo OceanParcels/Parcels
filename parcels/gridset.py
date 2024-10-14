@@ -36,7 +36,7 @@ class GridSet:
 
             if sameGrid:
                 existing_grid = True
-                field.grid = g
+                field._grid = g  # TODO: Is this even necessary?
                 break
 
         if not existing_grid:
