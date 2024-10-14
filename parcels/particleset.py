@@ -1046,7 +1046,7 @@ class ParticleSet:
                 )
                 self._kernel.load_lib()
         if output_file:
-            output_file.add_metadata("parcels_kernels", self._kernel.name)
+            output_file.metadata["parcels_kernels"] = self._kernel.name
 
         # Set up the interaction kernel(s) if not set and given.
         if self._interaction_kernel is None and pyfunc_inter is not None:
