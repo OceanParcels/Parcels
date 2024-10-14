@@ -251,8 +251,12 @@ actions = [
     Action("ParticleFile",     "fname",                          "read_only"     ),
     Action("ParticleFile",     "vars_to_write",                  "read_only"     ),
     Action("ParticleFile",     "time_origin",                    "read_only"     ),
-
-
+    Action("ParticleFile",     "parcels_mesh",                   "make_private"  ),
+    Action("ParticleFile",     "maxids",                         "make_private"  ),
+    Action("ParticleFile",     "pids_written",                   "make_private"  ),
+    Action("ParticleFile",     "mpi_rank",                       "make_private"  ),
+    Action("ParticleFile",     "fill_value_map",                 "make_private"  ),
+    Action("ParticleFile",     "analytical",                     "make_private"  ),
 ]
 # fmt: on
 assert len({str(a) for a in actions}) == len(actions)  # Check that all actions are unique
