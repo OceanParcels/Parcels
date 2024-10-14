@@ -262,7 +262,6 @@ actions = [
     Action("Grid",             "lon_grid_to_source()",           "remove"        ),
     Action("Grid",             "lon_particle_to_target()",       "remove"        ),
     Action("Variable",         "name",                           "read_only"     ),
-    Action("Variable",         "to_write",                       "read_only"     ),
     ]
 # fmt: on
 assert len({str(a) for a in actions}) == len(actions)  # Check that all actions are unique
