@@ -2,6 +2,7 @@
 
 import os
 import warnings
+from datetime import timedelta
 
 import numpy as np
 import xarray as xr
@@ -252,7 +253,7 @@ class ParticleFile:
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
-    def write(self, pset, time, indices=None):
+    def write(self, pset, time: float | timedelta | np.timedelta64 | None, indices=None):
         """Write all data from one time step to the zarr file,
         before the particle locations are updated.
 
