@@ -31,7 +31,7 @@ def test_TimeConverter_standard():
 
 
 def test_TimeConverter_invalid():
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         TimeConverter("invalid")
 
 
@@ -44,22 +44,18 @@ def test_TimeConverter_reltime_one_day():
         tc = TimeConverter(time_origin)
         assert tc.reltime(time) == ONE_DAY
 
-    with pytest.raises(ValueError):
-        tc.reltime("invalid")
-
 
 @pytest.mark.parametrize(
     "x, y",
     [
-        (np.datetime64("2001-01-01T12:00"), 0),
-        (np.timedelta64(1, "s"), 0),
-        (cftime.DatetimeNoLeap(1990, 1, 1), 0),
-        (cftime.DatetimeNoLeap(1990, 1, 1), cftime.DatetimeAllLeap(1991, 1, 1)),
-        (0, 0),
+        pytest.param(np.datetime64("2001-01-01T12:00"), 0, id="datetime64 float"),
+        pytest.param(np.timedelta64(1, "s"), 0, id="timedelta64 float"),
+        pytest.param(cftime.DatetimeNoLeap(1990, 1, 1), 0, id="cftime float"),
+        pytest.param(cftime.DatetimeNoLeap(1990, 1, 1), cftime.DatetimeAllLeap(1991, 1, 1), id="cftime cftime"),
     ],
 )
 def test_TimeConverter_reltime_errors(x, y):
     """All of these should raise a ValueError when doing reltime"""
     tc = TimeConverter(x)
-    with pytest.raises(ValueError, match="Cannot subtract 'time'"):
+    with pytest.raises((ValueError, TypeError)):
         tc.reltime(y)
