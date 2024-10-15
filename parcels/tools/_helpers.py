@@ -3,6 +3,9 @@
 import functools
 import warnings
 from collections.abc import Callable
+from datetime import timedelta
+
+import numpy as np
 
 PACKAGE = "Parcels"
 
@@ -56,3 +59,12 @@ def deprecated_made_private(func: Callable) -> Callable:
 
 def patch_docstring(obj: Callable, extra: str) -> None:
     obj.__doc__ = f"{obj.__doc__ or ''}{extra}".strip()
+
+
+def timedelta_to_float(dt: float | timedelta | np.timedelta64) -> float:
+    """Convert a timedelta to a float in seconds."""
+    if isinstance(dt, timedelta):
+        return dt.total_seconds()
+    if isinstance(dt, np.timedelta64):
+        return float(dt / np.timedelta64(1, "s"))
+    return float(dt)

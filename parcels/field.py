@@ -1,5 +1,4 @@
 import collections
-import datetime
 import math
 import warnings
 from collections.abc import Iterable
@@ -21,7 +20,7 @@ from parcels._typing import (
     assert_valid_gridindexingtype,
     assert_valid_interp_method,
 )
-from parcels.tools._helpers import deprecated_made_private
+from parcels.tools._helpers import deprecated_made_private, timedelta_to_float
 from parcels.tools.converters import (
     Geographic,
     GeographicPolar,
@@ -247,8 +246,8 @@ class Field:
                 "Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.timedelta object."
             )
         if self.time_periodic is not False:
-            if isinstance(self.time_periodic, datetime.timedelta):
-                self.time_periodic = self.time_periodic.total_seconds()
+            self.time_periodic = timedelta_to_float(self.time_periodic)
+
             if not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
                 if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
                     raise ValueError("Time series provided is longer than the time_periodic parameter")
