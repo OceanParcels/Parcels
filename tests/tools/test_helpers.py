@@ -1,6 +1,9 @@
+from datetime import timedelta
+
+import numpy as np
 import pytest
 
-from parcels.tools._helpers import deprecated, deprecated_made_private
+from parcels.tools._helpers import deprecated, deprecated_made_private, timedelta_to_float
 
 
 def test_deprecated():
@@ -53,3 +56,20 @@ def test_deprecated_made_private():
         some_function(1, 2)
 
     assert "deprecated::" in some_function.__doc__
+
+
+@pytest.mark.parametrize(
+    "input, expected",
+    [
+        (timedelta(days=1), 24 * 60 * 60),
+        (np.timedelta64(1, "D"), 24 * 60 * 60),
+        (3600.0, 3600.0),
+    ],
+)
+def test_timedelta_to_float(input, expected):
+    assert timedelta_to_float(input) == expected
+
+
+def test_timedelta_to_float_exceptions():
+    with pytest.raises((ValueError, TypeError)):
+        timedelta_to_float("invalid_type")

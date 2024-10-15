@@ -2,7 +2,6 @@
 
 import os
 import warnings
-from datetime import timedelta
 
 import numpy as np
 import xarray as xr
@@ -10,7 +9,7 @@ import zarr
 
 import parcels
 from parcels._compat import MPI
-from parcels.tools._helpers import deprecated, deprecated_made_private
+from parcels.tools._helpers import deprecated, deprecated_made_private, timedelta_to_float
 from parcels.tools.warnings import FileWarning
 
 __all__ = ["ParticleFile"]
@@ -48,7 +47,7 @@ class ParticleFile:
     """
 
     def __init__(self, name, particleset, outputdt=np.inf, chunks=None, create_new_zarrfile=True):
-        self._outputdt = outputdt.total_seconds() if isinstance(outputdt, timedelta) else outputdt
+        self._outputdt = timedelta_to_float(outputdt)
         self._chunks = chunks
         self._particleset = particleset
         self._parcels_mesh = "spherical"
@@ -264,7 +263,7 @@ class ParticleFile:
         time :
             Time at which to write ParticleSet
         """
-        time = time.total_seconds() if isinstance(time, timedelta) else time
+        time = timedelta_to_float(time) if time is not None else None
 
         if pset.particledata._ncount == 0:
             warnings.warn(
