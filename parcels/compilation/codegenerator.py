@@ -426,7 +426,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.fieldset = fieldset
         self.ptype = ptype
         self.field_args = collections.OrderedDict()
-        if isinstance(fieldset.U, Field) and fieldset.U.gridindexingtype == "croco" and hasattr(fieldset, "H"):
+        if fieldset.U.gridindexingtype == "croco" and hasattr(fieldset, "H"):
             self.field_args["H"] = fieldset.H  # CROCO requires H field
         self.vector_field_args = collections.OrderedDict()
         self.const_args = collections.OrderedDict()
@@ -827,7 +827,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
         statements_croco = []
-        if "croco" in node.field.obj.gridindexingtype and node.field.obj.name != "H":  # TODO needs to be sigma
+        if "croco" in node.field.obj.gridindexingtype and node.field.obj.name != "H":
             statements_croco.append(
                 c.Assign(
                     "parcels_interp_state",

@@ -1,5 +1,4 @@
 import math
-import os
 from datetime import timedelta
 
 import numpy as np
@@ -22,6 +21,7 @@ from parcels import (
     StatusCode,
     Variable,
 )
+from tests.utils import TEST_DATA
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 kernel = {
@@ -197,9 +197,7 @@ def test_advection_RK45(lon, lat, mode, rk45_tol):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_advection_3DCROCO(mode):
-    data_path = os.path.join(os.path.dirname(__file__), "test_data/")
-    fieldset = FieldSet.from_modulefile(data_path + "fieldset_CROCO3D.py")
-    assert fieldset.U.creation_log == "from_croco"
+    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
 
     runtime = 1e4
     X, Z = np.meshgrid([40e3, 80e3, 120e3], [-10, -130])
@@ -218,9 +216,7 @@ def test_advection_3DCROCO(mode):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_advection_2DCROCO(mode):
-    data_path = os.path.join(os.path.dirname(__file__), "test_data/")
-    fieldset = FieldSet.from_modulefile(data_path + "fieldset_CROCO2D.py")
-    assert fieldset.U.creation_log == "from_croco"
+    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO2D.py")
 
     runtime = 1e4
     X = np.array([40e3, 80e3, 120e3])

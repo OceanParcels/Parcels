@@ -618,7 +618,7 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation):
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_sampling_3DCROCO(mode, npart=10):
+def test_sampling_3DCROCO(mode):
     data_path = os.path.join(os.path.dirname(__file__), "test_data/")
     fieldset = FieldSet.from_modulefile(data_path + "fieldset_CROCO3D.py")
 
