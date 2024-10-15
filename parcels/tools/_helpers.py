@@ -61,6 +61,7 @@ def patch_docstring(obj: Callable, extra: str) -> None:
     obj.__doc__ = f"{obj.__doc__ or ''}{extra}".strip()
 
 
+@np.vectorize
 def timedelta_to_float(dt: float | timedelta | np.timedelta64) -> float:
     """Convert a timedelta to a float in seconds."""
     if isinstance(dt, timedelta):
