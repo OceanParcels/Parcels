@@ -25,6 +25,8 @@ class _FileBuffer:
         timestamp=None,
         interp_method: InterpMethodOption = "linear",
         data_full_zdim=None,
+        cast_data_dtype=np.float32,
+        gridindexingtype="nemo",
         **kwargs,
     ):
         self.filename = filename
@@ -32,10 +34,10 @@ class _FileBuffer:
         self.indices = indices
         self.dataset = None
         self.timestamp = timestamp
-        self.cast_data_dtype = kwargs.pop("cast_data_dtype", np.float32)
+        self.cast_data_dtype = cast_data_dtype
         self.ti = None
         self.interp_method = interp_method
-        self.gridindexingtype = kwargs.pop("gridindexingtype", "nemo")
+        self.gridindexingtype = gridindexingtype
         self.data_full_zdim = data_full_zdim
         if ("lon" in self.indices) or ("lat" in self.indices):
             self.nolonlatindices = False
