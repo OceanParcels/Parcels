@@ -64,7 +64,7 @@ class ParticleFile:
                 self.vars_to_write[var.name] = var.dtype
         self._mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
         self.particleset.fieldset._particlefile = self
-        self._analytical = False  # Flag to indicate if ParticleFile is used for analytical trajectories
+        self._is_analytical = False  # Flag to indicate if ParticleFile is used for analytical trajectories
 
         # Reset obs_written of each particle, in case new ParticleFile created for a ParticleSet
         particleset.particledata.setallvardata("obs_written", 0)
@@ -172,7 +172,7 @@ class ParticleFile:
     @property
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def analytical(self):
-        return self._analytical
+        return self._is_analytical
 
     def _create_variables_attribute_dict(self):
         """Creates the dictionary with variable attributes.
