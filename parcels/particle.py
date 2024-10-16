@@ -29,10 +29,14 @@ class Variable:
     """
 
     def __init__(self, name, dtype=np.float32, initial=0, to_write: bool | Literal["once"] = True):
-        self.name = name
+        self._name = name
         self.dtype = dtype
         self.initial = initial
         self.to_write = to_write
+
+    @property
+    def name(self):
+        return self._name
 
     def __get__(self, instance, cls):
         if instance is None:

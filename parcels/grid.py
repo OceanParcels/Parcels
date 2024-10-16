@@ -279,19 +279,6 @@ class Grid:
             )
         return self._cstruct
 
-    def lon_grid_to_target(self):
-        if self.lon_remapping:
-            self._lon = self.lon_remapping.to_target(self.lon)
-
-    def lon_grid_to_source(self):
-        if self.lon_remapping:
-            self._lon = self.lon_remapping.to_source(self.lon)
-
-    def lon_particle_to_target(self, lon):
-        if self.lon_remapping:
-            return self.lon_remapping.particle_to_target(lon)
-        return lon
-
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def check_zonal_periodic(self, *args, **kwargs):
         return self._check_zonal_periodic(*args, **kwargs)
