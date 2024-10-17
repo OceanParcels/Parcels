@@ -736,8 +736,14 @@ class FieldSet:
             )
 
         dimsU = dimensions["U"] if "U" in dimensions else dimensions
-        if ("depth" in dimsU) and ("H" not in variables):
-            raise ValueError("FieldSet.from_croco() requires a field 'H' for the bathymetry")
+        if "depth" in dimsU:
+            warnings.warn(
+                "Note that it is unclear which vertical velocity ('w' or 'omega') to use in 3D CROCO fields.\nSee https://docs.oceanparcels.org/en/latest/examples/tutorial_croco_3D.html for more information",
+                FieldSetWarning,
+                stacklevel=2,
+            )
+            if "H" not in variables:
+                raise ValueError("FieldSet.from_croco() requires a field 'H' for the bathymetry")
 
         interp_method = {}
         for v in variables:
