@@ -339,10 +339,7 @@ class Field:
 
     @property
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def
-
-
-    (self):
+    def loaded_time_indices(self):
         return self._loaded_time_indices
 
     @property
