@@ -26,6 +26,7 @@ from parcels.kernel import Kernel
 from parcels.particle import JITParticle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
+from parcels.tools._helpers import deprecated_made_private
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
@@ -98,17 +99,17 @@ class ParticleSet:
         **kwargs,
     ):
         self.particledata = None
-        self.repeat_starttime = None
-        self.repeatlon = None
-        self.repeatlat = None
-        self.repeatdepth = None
-        self.repeatpclass = None
-        self.repeatkwargs = None
-        self.kernel = None
-        self.interaction_kernel = None
+        self._repeat_starttime = None
+        self._repeatlon = None
+        self._repeatlat = None
+        self._repeatdepth = None
+        self._repeatpclass = None
+        self._repeatkwargs = None
+        self._kernel = None
+        self._interaction_kernel = None
 
         self.fieldset = fieldset
-        self.fieldset.check_complete()
+        self.fieldset._check_complete()
         self.time_origin = fieldset.time_origin
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
@@ -192,9 +193,9 @@ class ParticleSet:
                 raise "Repeatdt should be > 0"
             if time[0] and not np.allclose(time, time[0]):
                 raise "All Particle.time should be the same when repeatdt is not None"
-            self.repeatpclass = pclass
-            self.repeatkwargs = kwargs
-            self.repeatkwargs.pop("partition_function", None)
+            self._repeatpclass = pclass
+            self._repeatkwargs = kwargs
+            self._repeatkwargs.pop("partition_function", None)
 
         ngrids = fieldset.gridset.size
 
@@ -257,27 +258,72 @@ class ParticleSet:
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:
-                self.repeat_starttime = time[0]
+                self._repeat_starttime = time[0]
             else:
                 if self.particledata.data["time"][0] and not np.allclose(
                     self.particledata.data["time"], self.particledata.data["time"][0]
                 ):
                     raise ValueError("All Particle.time should be the same when repeatdt is not None")
-                self.repeat_starttime = copy(self.particledata.data["time"][0])
-            self.repeatlon = copy(self.particledata.data["lon"])
-            self.repeatlat = copy(self.particledata.data["lat"])
-            self.repeatdepth = copy(self.particledata.data["depth"])
+                self._repeat_starttime = copy(self.particledata.data["time"][0])
+            self._repeatlon = copy(self.particledata.data["lon"])
+            self._repeatlat = copy(self.particledata.data["lat"])
+            self._repeatdepth = copy(self.particledata.data["depth"])
             for kwvar in kwargs:
                 if kwvar not in ["partition_function"]:
-                    self.repeatkwargs[kwvar] = copy(self.particledata.data[kwvar])
+                    self._repeatkwargs[kwvar] = copy(self.particledata.data[kwvar])
 
         if self.repeatdt:
             if MPI and self.particledata.pu_indicators is not None:
                 mpi_comm = MPI.COMM_WORLD
                 mpi_rank = mpi_comm.Get_rank()
-                self.repeatpid = pid_orig[self.particledata.pu_indicators == mpi_rank]
+                self._repeatpid = pid_orig[self.particledata.pu_indicators == mpi_rank]
 
-        self.kernel = None
+        self._kernel = None
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def repeat_starttime(self):
+        return self._repeat_starttime
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def repeatlon(self):
+        return self._repeatlon
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def repeatlat(self):
+        return self._repeatlat
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def repeatdepth(self):
+        return self._repeatdepth
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def repeatpclass(self):
+        return self._repeatpclass
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def repeatkwargs(self):
+        return self._repeatkwargs
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def kernel(self):
+        return self._kernel
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def interaction_kernel(self):
+        return self._interaction_kernel
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def repeatpid(self):
+        return self._repeatpid
 
     def __del__(self):
         if self.particledata is not None and isinstance(self.particledata, ParticleData):
@@ -402,15 +448,23 @@ class ParticleSet:
         self._dirty_neighbor = True
         self.remove_indices(np.where(indices)[0])
 
-    def active_particles_mask(self, time, dt):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def active_particles_mask(self, *args, **kwargs):
+        return self._active_particles_mask(*args, **kwargs)
+
+    def _active_particles_mask(self, time, dt):
         active_indices = (time - self.particledata.data["time"]) / dt >= 0
         non_err_indices = np.isin(self.particledata.data["state"], [StatusCode.Success, StatusCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
         self._active_particle_idx = np.where(active_indices)[0]
         return active_indices
 
-    def compute_neighbor_tree(self, time, dt):
-        active_mask = self.active_particles_mask(time, dt)
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def compute_neighbor_tree(self, *args, **kwargs):
+        return self._compute_neighbor_tree(*args, **kwargs)
+
+    def _compute_neighbor_tree(self, time, dt):
+        active_mask = self._active_particles_mask(time, dt)
 
         self._values = np.vstack(
             (
@@ -425,7 +479,11 @@ class ParticleSet:
         else:
             self._neighbor_tree.update_values(self._values, new_active_mask=active_mask)
 
-    def neighbors_by_index(self, particle_idx):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def neighbors_by_index(self, *args, **kwargs):
+        return self._neighbors_by_index(*args, **kwargs)
+
+    def _neighbors_by_index(self, particle_idx):
         neighbor_idx, distances = self._neighbor_tree.find_neighbors_by_idx(particle_idx)
         neighbor_idx = self._active_particle_idx[neighbor_idx]
         mask = neighbor_idx != particle_idx
@@ -435,7 +493,11 @@ class ParticleSet:
             self.particledata.data["horiz_dist"][neighbor_idx] = distances[1, mask]
         return ParticleDataIterator(self.particledata, subset=neighbor_idx)
 
-    def neighbors_by_coor(self, coor):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def neighbors_by_coor(self, *args, **kwargs):
+        return self._neighbors_by_coor(*args, **kwargs)
+
+    def _neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
         neighbor_ids = self.particledata.data["id"][neighbor_idx]
         return neighbor_ids
@@ -567,7 +629,12 @@ class ParticleSet:
         )
 
     @classmethod
-    def monte_carlo_sample(cls, start_field, size, mode="monte_carlo"):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def monte_carlo_sample(self, *args, **kwargs):
+        return self._monte_carlo_sample(*args, **kwargs)
+
+    @classmethod
+    def _monte_carlo_sample(cls, start_field, size, mode="monte_carlo"):
         """Converts a starting field into a monte-carlo sample of lons and lats.
 
         Parameters
@@ -604,7 +671,7 @@ class ParticleSet:
             j, i = np.unravel_index(inds, p_interior.shape)
             grid = start_field.grid
             lon, lat = ([], [])
-            if grid.gtype in [GridType.RectilinearZGrid, GridType.RectilinearSGrid]:
+            if grid._gtype in [GridType.RectilinearZGrid, GridType.RectilinearSGrid]:
                 lon = grid.lon[i] + xsi * (grid.lon[i + 1] - grid.lon[i])
                 lat = grid.lat[j] + eta * (grid.lat[j + 1] - grid.lat[j])
             else:
@@ -666,7 +733,7 @@ class ParticleSet:
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
             and np.float64 if the interpolation method is 'cgrid_velocity'
         """
-        lon, lat = cls.monte_carlo_sample(start_field, size, mode)
+        lon, lat = cls._monte_carlo_sample(start_field, size, mode)
 
         return cls(
             fieldset=fieldset,
@@ -862,7 +929,12 @@ class ParticleSet:
         return np.where(np.isin(self.particledata.data[variable_name], compare_values, invert=invert))[0]
 
     @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def error_particles(self):
+        return self._error_particles
+
+    @property
+    def _error_particles(self):
         """Get an iterator over all particles that are in an error state.
 
         Returns
@@ -874,7 +946,12 @@ class ParticleSet:
         return ParticleDataIterator(self.particledata, subset=error_indices)
 
     @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def num_error_particles(self):
+        return self._num_error_particles
+
+    @property
+    def _num_error_particles(self):
         """Get the number of particles that are in an error state.
 
         Returns
@@ -952,29 +1029,29 @@ class ParticleSet:
             return
 
         # check if pyfunc has changed since last compile. If so, recompile
-        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
+        if self._kernel is None or (self._kernel.pyfunc is not pyfunc and self._kernel is not pyfunc):
             # Generate and store Kernel
             if isinstance(pyfunc, Kernel):
-                self.kernel = pyfunc
+                self._kernel = pyfunc
             else:
-                self.kernel = self.Kernel(pyfunc, delete_cfiles=delete_cfiles)
+                self._kernel = self.Kernel(pyfunc, delete_cfiles=delete_cfiles)
             # Prepare JIT kernel execution
             if self.particledata.ptype.uses_jit:
-                self.kernel.remove_lib()
+                self._kernel.remove_lib()
                 cppargs = ["-DDOUBLE_COORD_VARIABLES"] if self.particledata.lonlatdepth_dtype else None
-                self.kernel.compile(
+                self._kernel.compile(
                     compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), "include"), "."])
                 )
-                self.kernel.load_lib()
+                self._kernel.load_lib()
         if output_file:
-            output_file.add_metadata("parcels_kernels", self.kernel.name)
+            output_file.add_metadata("parcels_kernels", self._kernel.name)
 
         # Set up the interaction kernel(s) if not set and given.
-        if self.interaction_kernel is None and pyfunc_inter is not None:
+        if self._interaction_kernel is None and pyfunc_inter is not None:
             if isinstance(pyfunc_inter, InteractionKernel):
-                self.interaction_kernel = pyfunc_inter
+                self._interaction_kernel = pyfunc_inter
             else:
-                self.interaction_kernel = self.InteractionKernel(pyfunc_inter, delete_cfiles=delete_cfiles)
+                self._interaction_kernel = self.InteractionKernel(pyfunc_inter, delete_cfiles=delete_cfiles)
 
         # Convert all time variables to seconds
         if isinstance(endtime, timedelta):
@@ -1020,8 +1097,8 @@ class ParticleSet:
 
         # Derive starttime and endtime from arguments or fieldset defaults
         starttime = min_rt if dt >= 0 else max_rt
-        if self.repeatdt is not None and self.repeat_starttime is None:
-            self.repeat_starttime = starttime
+        if self.repeatdt is not None and self._repeat_starttime is None:
+            self._repeat_starttime = starttime
         if runtime is not None:
             endtime = starttime + runtime * np.sign(dt)
         elif endtime is None:
@@ -1051,8 +1128,8 @@ class ParticleSet:
 
         # Set up variables for first iteration
         if self.repeatdt:
-            next_prelease = self.repeat_starttime + (
-                abs(starttime - self.repeat_starttime) // self.repeatdt + 1
+            next_prelease = self._repeat_starttime + (
+                abs(starttime - self._repeat_starttime) // self.repeatdt + 1
             ) * self.repeatdt * np.sign(dt)
         else:
             next_prelease = np.inf if dt > 0 else -np.inf
@@ -1060,7 +1137,7 @@ class ParticleSet:
             next_output = starttime + dt
         else:
             next_output = np.inf * np.sign(dt)
-        next_callback = starttime * np.sign(dt)
+        next_callback = starttime + callbackdt * np.sign(dt)
 
         tol = 1e-12
         time = starttime
@@ -1077,8 +1154,8 @@ class ParticleSet:
                 next_time = max(next_prelease, next_input, next_output, next_callback, endtime)
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
-            if self.interaction_kernel is None:
-                res = self.kernel.execute(self, endtime=next_time, dt=dt)
+            if self._interaction_kernel is None:
+                res = self._kernel.execute(self, endtime=next_time, dt=dt)
                 if res == StatusCode.StopAllExecution:
                     return StatusCode.StopAllExecution
             # Interaction: interleave the interaction and non-interaction kernel for each time step.
@@ -1090,8 +1167,8 @@ class ParticleSet:
                         cur_end_time = min(cur_time + dt, next_time)
                     else:
                         cur_end_time = max(cur_time + dt, next_time)
-                    self.kernel.execute(self, endtime=cur_end_time, dt=dt)
-                    self.interaction_kernel.execute(self, endtime=cur_end_time, dt=dt)
+                    self._kernel.execute(self, endtime=cur_end_time, dt=dt)
+                    self._interaction_kernel.execute(self, endtime=cur_end_time, dt=dt)
                     cur_time += dt
             # End of interaction specific code
             time = next_time
@@ -1127,14 +1204,14 @@ class ParticleSet:
                 pset_new = self.__class__(
                     fieldset=self.fieldset,
                     time=time,
-                    lon=self.repeatlon,
-                    lat=self.repeatlat,
-                    depth=self.repeatdepth,
-                    pclass=self.repeatpclass,
+                    lon=self._repeatlon,
+                    lat=self._repeatlat,
+                    depth=self._repeatdepth,
+                    pclass=self._repeatpclass,
                     lonlatdepth_dtype=self.particledata.lonlatdepth_dtype,
                     partition_function=False,
-                    pid_orig=self.repeatpid,
-                    **self.repeatkwargs,
+                    pid_orig=self._repeatpid,
+                    **self._repeatkwargs,
                 )
                 for p in pset_new:
                     p.dt = dt

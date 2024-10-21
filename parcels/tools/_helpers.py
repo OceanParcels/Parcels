@@ -37,7 +37,7 @@ def deprecated(msg: str = "") -> Callable:
                 f"`{func.__qualname__}` is deprecated and will be removed in a future release of {PACKAGE}.{msg}"
             )
 
-            warnings.warn(msg_formatted, category=DeprecationWarning, stacklevel=2)
+            warnings.warn(msg_formatted, category=DeprecationWarning, stacklevel=3)
             return func(*args, **kwargs)
 
         return wrapper
@@ -49,5 +49,5 @@ def deprecated_made_private(func: Callable) -> Callable:
     return deprecated(
         "It has moved to the internal API as it is not expected to be directly used by "
         "the end-user. If you feel that you use this code directly in your scripts, please "
-        "comment on our tracking issue at <>."  # TODO: Add tracking issue
+        "comment on our tracking issue at https://github.com/OceanParcels/Parcels/issues/1695.",
     )(func)

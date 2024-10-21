@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta
 from math import cos, pi
 
@@ -261,7 +262,7 @@ def test_inversedistance_nearland(mode, withDepth, arrtype):
     success = False
     try:
         fieldset.U.interp_method = "linear_invdist_land_tracer"
-        fieldset.check_complete()
+        fieldset._check_complete()
     except NotImplementedError:
         success = True
     assert success
@@ -616,6 +617,21 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation):
             pset.execute(SampleP, runtime=0.1, dt=0.1)
 
 
+@pytest.mark.parametrize("mode", ["scipy", "jit"])
+def test_sampling_3DCROCO(mode):
+    data_path = os.path.join(os.path.dirname(__file__), "test_data/")
+    fieldset = FieldSet.from_modulefile(data_path + "fieldset_CROCO3D.py")
+
+    SampleP = ptype[mode].add_variable("p", initial=0.0)
+
+    def SampleU(particle, fieldset, time):
+        particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon, particle]
+
+    pset = ParticleSet(fieldset, pclass=SampleP, lon=120e3, lat=50e3, depth=-0.4)
+    pset.execute(SampleU, endtime=1, dt=1)
+    assert np.isclose(pset.p, 1.0)
+
+
 @pytest.mark.parametrize("mode", ["jit", "scipy"])
 @pytest.mark.parametrize("npart", [1, 10])
 @pytest.mark.parametrize("chs", [False, "auto", {"lat": ("y", 10), "lon": ("x", 10)}])
@@ -784,7 +800,7 @@ def test_multiple_grid_addlater_error():
     )
     fieldset = FieldSet(U, V)
 
-    pset = ParticleSet(fieldset, pclass=pclass("jit"), lon=[0.8], lat=[0.9])  # noqa ; to trigger fieldset.check_complete
+    pset = ParticleSet(fieldset, pclass=pclass("jit"), lon=[0.8], lat=[0.9])  # noqa ; to trigger fieldset._check_complete
 
     P = Field(
         "P",

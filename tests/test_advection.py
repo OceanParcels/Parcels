@@ -19,7 +19,9 @@ from parcels import (
     ParticleSet,
     ScipyParticle,
     StatusCode,
+    Variable,
 )
+from tests.utils import TEST_DATA
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 kernel = {
@@ -71,7 +73,7 @@ def test_advection_zonal(lon, lat, depth, mode):
     }
     dimensions = {"lon": lon, "lat": lat}
     fieldset2D = FieldSet.from_data(data2D, dimensions, mesh="spherical", transpose=True)
-    assert fieldset2D.U.creation_log == "from_data"
+    assert fieldset2D.U._creation_log == "from_data"
 
     pset2D = ParticleSet(fieldset2D, pclass=ptype[mode], lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
     pset2D.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
@@ -191,6 +193,40 @@ def test_advection_RK45(lon, lat, mode, rk45_tol):
     assert (np.diff(pset.lon) > 1.0e-4).all()
     assert np.isclose(fieldset.RK45_tol, rk45_tol / (1852 * 60))
     print(fieldset.RK45_tol)
+
+
+@pytest.mark.parametrize("mode", ["scipy", "jit"])
+def test_advection_3DCROCO(mode):
+    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
+
+    runtime = 1e4
+    X, Z = np.meshgrid([40e3, 80e3, 120e3], [-10, -130])
+    Y = np.ones(X.size) * 100e3
+
+    pclass = ptype[mode].add_variable(Variable("w"))
+    pset = ParticleSet(fieldset=fieldset, pclass=pclass, lon=X, lat=Y, depth=Z)
+
+    def SampleW(particle, fieldset, time):
+        particle.w = fieldset.W[time, particle.depth, particle.lat, particle.lon]
+
+    pset.execute([AdvectionRK4_3D, SampleW], runtime=runtime, dt=100)
+    assert np.allclose(pset.depth, Z.flatten(), atol=5)  # TODO lower this atol
+    assert np.allclose(pset.lon_nextloop, [x + runtime for x in X.flatten()], atol=1e-3)
+
+
+@pytest.mark.parametrize("mode", ["scipy", "jit"])
+def test_advection_2DCROCO(mode):
+    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO2D.py")
+
+    runtime = 1e4
+    X = np.array([40e3, 80e3, 120e3])
+    Y = np.ones(X.size) * 100e3
+    Z = np.zeros(X.size)
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=X, lat=Y, depth=Z)
+
+    pset.execute([AdvectionRK4], runtime=runtime, dt=100)
+    assert np.allclose(pset.depth, Z.flatten(), atol=1e-3)
+    assert np.allclose(pset.lon_nextloop, [x + runtime for x in X], atol=1e-3)
 
 
 def create_periodic_fieldset(xdim, ydim, uvel, vvel):

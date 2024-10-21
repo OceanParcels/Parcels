@@ -69,7 +69,7 @@ class ParticleFile:
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
         self.mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
-        self.particleset.fieldset.particlefile = self
+        self.particleset.fieldset._particlefile = self
         self.analytical = False  # Flag to indicate if ParticleFile is used for analytical trajectories
 
         # Reset obs_written of each particle, in case new ParticleFile created for a ParticleSet
@@ -235,7 +235,7 @@ class ParticleFile:
             if self.create_new_zarrfile:
                 if self.chunks is None:
                     self.chunks = (len(ids), 1)
-                if pset.repeatpclass is not None and self.chunks[0] < 1e4:
+                if pset._repeatpclass is not None and self.chunks[0] < 1e4:
                     warnings.warn(
                         f"ParticleFile chunks are set to {self.chunks}, but this may lead to "
                         f"a significant slowdown in Parcels when many calls to repeatdt. "

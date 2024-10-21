@@ -14,6 +14,7 @@ from parcels.field import DeferredArray, Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.particlefile import ParticleFile
+from parcels.tools._helpers import deprecated_made_private
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import TimeExtrapolationError
@@ -38,8 +39,8 @@ class FieldSet:
 
     def __init__(self, U: Field | NestedField | None, V: Field | NestedField | None, fields=None):
         self.gridset = GridSet()
-        self.completed: bool = False
-        self.particlefile: ParticleFile | None = None
+        self._completed: bool = False
+        self._particlefile: ParticleFile | None = None
         if U:
             self.add_field(U, "U")
             # see #1663 for type-ignore reason
@@ -53,7 +54,16 @@ class FieldSet:
                 self.add_field(field, name)
 
         self.compute_on_defer = None
-        self.add_UVfield()
+        self._add_UVfield()
+
+    @property
+    def particlefile(self):
+        return self._particlefile
+
+    @property
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def completed(self):
+        return self._completed
 
     @staticmethod
     def checkvaliddimensionsdict(dims):
@@ -180,7 +190,7 @@ class FieldSet:
         * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
-        if self.completed:
+        if self._completed:
             raise RuntimeError(
                 "FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?"
             )
@@ -235,7 +245,11 @@ class FieldSet:
             for f in vfield:
                 f.fieldset = self
 
-    def add_UVfield(self):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def add_UVfield(self, *args, **kwargs):
+        return self._add_UVfield(*args, **kwargs)
+
+    def _add_UVfield(self):
         if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
             if isinstance(self.U, NestedField):
                 self.add_vector_field(NestedField("UV", self.U, self.V))
@@ -247,7 +261,11 @@ class FieldSet:
             else:
                 self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
 
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def check_complete(self):
+        return self._check_complete()
+
+    def _check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
         assert self.V, 'FieldSet does not have a Field named "V"'
         for attr, value in vars(self).items():
@@ -271,8 +289,8 @@ class FieldSet:
                         "C-grid velocities require longitude and latitude dimensions at least length 2"
                     )
 
-            if U.gridindexingtype not in ["nemo", "mitgcm", "mom5", "pop"]:
-                raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm', 'mom5' or 'pop'")
+            if U.gridindexingtype not in ["nemo", "mitgcm", "mom5", "pop", "croco"]:
+                raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm', 'mom5', 'pop' or 'croco'")
 
             if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
                 raise ValueError("Not all velocity Fields have the same gridindexingtype")
@@ -289,7 +307,7 @@ class FieldSet:
             check_velocityfields(self.U, self.V, W)
 
         for g in self.gridset.grids:
-            g.check_zonal_periodic()
+            g._check_zonal_periodic()
             if len(g.time) == 1:
                 continue
             assert isinstance(
@@ -298,8 +316,8 @@ class FieldSet:
             g.time = g.time + self.time_origin.reltime(g.time_origin)
             if g.defer_load:
                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
-            g.time_origin = self.time_origin
-        self.add_UVfield()
+            g._time_origin = self.time_origin
+        self._add_UVfield()
 
         ccode_fieldnames = []
         counter = 1
@@ -312,7 +330,7 @@ class FieldSet:
             ccode_fieldnames.append(fld.ccode_name)
 
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or f._dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
                 if f.grid.depth_field == "not_yet_set":
@@ -321,11 +339,16 @@ class FieldSet:
                     )
                 if not f.grid.defer_load:
                     depth_data = f.grid.depth_field.data
-                    f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
-        self.completed = True
+                    f.grid._depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
+        self._completed = True
 
     @classmethod
-    def parse_wildcards(cls, paths, filenames, var):
+    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
+    def parse_wildcards(self, *args, **kwargs):
+        return self._parse_wildcards(*args, **kwargs)
+
+    @classmethod
+    def _parse_wildcards(cls, paths, filenames, var):
         if not isinstance(paths, list):
             paths = sorted(glob(str(paths)))
         if len(paths) == 0:
@@ -409,7 +432,7 @@ class FieldSet:
             Method for interpolation. Options are 'linear' (default), 'nearest',
             'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
         gridindexingtype : str
-            The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
+            The type of gridindexing. Either 'nemo' (default), 'mitgcm', 'mom5', 'pop', or 'croco' are supported.
             See also the Grid indexing documentation on oceanparcels.org
         chunksize :
             size of the chunks in dask loading. Default is None (no chunking). Can be None or False (no chunking),
@@ -451,10 +474,10 @@ class FieldSet:
             # Resolve all matching paths for the current variable
             paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
             if type(paths) is not dict:
-                paths = cls.parse_wildcards(paths, filenames, var)
+                paths = cls._parse_wildcards(paths, filenames, var)
             else:
                 for dim, p in paths.items():
-                    paths[dim] = cls.parse_wildcards(p, filenames, var)
+                    paths[dim] = cls._parse_wildcards(p, filenames, var)
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
@@ -497,7 +520,7 @@ class FieldSet:
                     if processedGrid:
                         grid = fields[procvar].grid
                         if procpaths == nowpaths:
-                            dFiles = fields[procvar].dataFiles
+                            dFiles = fields[procvar]._dataFiles
                             break
             fields[var] = Field.from_netcdf(
                 paths,
@@ -682,6 +705,77 @@ class FieldSet:
         return fieldset
 
     @classmethod
+    def from_croco(
+        cls,
+        filenames,
+        variables,
+        dimensions,
+        indices=None,
+        mesh="spherical",
+        allow_time_extrapolation=None,
+        time_periodic=False,
+        tracer_interp_method="cgrid_tracer",
+        chunksize=None,
+        **kwargs,
+    ):
+        """Initialises FieldSet object from NetCDF files of CROCO fields.
+        All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
+        the vertical coordinate is scaled by the bathymetry (``h``) field from CROCO, in order to
+        account for the sigma-grid. The horizontal interpolation uses the MITgcm grid indexing
+        as described in FieldSet.from_mitgcm().
+
+        The sigma grid scaling means that FieldSet.from_croco() requires a variable ``H: h`` to work.
+
+        See `the CROCO 3D tutorial <../examples/tutorial_croco_3D.ipynb>`__ for more infomation.
+        """
+        if "creation_log" not in kwargs.keys():
+            kwargs["creation_log"] = "from_croco"
+        if kwargs.pop("gridindexingtype", "croco") != "croco":
+            raise ValueError(
+                "gridindexingtype must be 'croco' in FieldSet.from_croco(). Use FieldSet.from_c_grid_dataset otherwise"
+            )
+
+        dimsU = dimensions["U"] if "U" in dimensions else dimensions
+        if "depth" in dimsU:
+            warnings.warn(
+                "Note that it is unclear which vertical velocity ('w' or 'omega') to use in 3D CROCO fields.\nSee https://docs.oceanparcels.org/en/latest/examples/tutorial_croco_3D.html for more information",
+                FieldSetWarning,
+                stacklevel=2,
+            )
+            if "H" not in variables:
+                raise ValueError("FieldSet.from_croco() requires a field 'H' for the bathymetry")
+
+        interp_method = {}
+        for v in variables:
+            if v in ["U", "V"]:
+                interp_method[v] = "cgrid_velocity"
+            elif v in ["W", "H"]:
+                interp_method[v] = "linear"
+            else:
+                interp_method[v] = tracer_interp_method
+
+        # Suppress the warning about the velocity interpolation since it is ok for CROCO
+        warnings.filterwarnings(
+            "ignore",
+            "Sampling of velocities should normally be done using fieldset.UV or fieldset.UVW object; tread carefully",
+        )
+
+        fieldset = cls.from_netcdf(
+            filenames,
+            variables,
+            dimensions,
+            mesh=mesh,
+            indices=indices,
+            time_periodic=time_periodic,
+            allow_time_extrapolation=allow_time_extrapolation,
+            interp_method=interp_method,
+            chunksize=chunksize,
+            gridindexingtype="croco",
+            **kwargs,
+        )
+        return fieldset
+
+    @classmethod
     def from_c_grid_dataset(
         cls,
         filenames,
@@ -760,7 +854,7 @@ class FieldSet:
             Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
             Note that in the case of from_nemo() and from_c_grid_dataset(), the velocity fields are default to 'cgrid_velocity'
         gridindexingtype : str
-            The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo()
+            The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo(), 'mitgcm' in FieldSet.from_mitgcm() or 'croco' in FieldSet.from_croco().
             See also the Grid indexing documentation on oceanparcels.org (Default value = 'nemo')
         chunksize :
             size of the chunks in dask loading. (Default value = None)
@@ -1332,7 +1426,7 @@ class FieldSet:
             raise OSError(f"Module {filename}.{modulename} does not return a FieldSet object")
         return fieldset
 
-    def get_fields(self):
+    def get_fields(self) -> list[Field | VectorField]:
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
         objects associated with this FieldSet.
         """
@@ -1431,22 +1525,22 @@ class FieldSet:
         nextTime = np.inf if dt > 0 else -np.inf
 
         for g in self.gridset.grids:
-            g.update_status = "not_updated"
+            g._update_status = "not_updated"
         for f in self.get_fields():
             if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load:
                 continue
-            if f.grid.update_status == "not_updated":
-                nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
+            if f.grid._update_status == "not_updated":
+                nextTime_loc = f.grid._computeTimeChunk(f, time, signdt)
                 if time == nextTime_loc and signdt != 0:
                     raise TimeExtrapolationError(time, field=f, msg="In fset.computeTimeChunk")
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f._dataFiles is None:
                 continue
             f.loaded_time_indices = []  # reset loaded time indices
             g = f.grid
-            if g.update_status == "first_updated":  # First load of data
+            if g._update_status == "first_updated":  # First load of data
                 if f.data is not None and not isinstance(f.data, DeferredArray):
                     if not isinstance(f.data, list):
                         f.data = None
@@ -1462,27 +1556,27 @@ class FieldSet:
                 data = lib.empty(
                     (g.tdim, zd, g.ydim - 2 * g.meridional_halo, g.xdim - 2 * g.zonal_halo), dtype=np.float32
                 )
-                f.loaded_time_indices = range(2)
-                for tind in f.loaded_time_indices:
+                f._loaded_time_indices = range(2)
+                for tind in f._loaded_time_indices:
                     for fb in f.filebuffers:
                         if fb is not None:
                             fb.close()
                         fb = None
                     data = f.computeTimeChunk(data, tind)
-                data = f.rescale_and_set_minmax(data)
+                data = f._rescale_and_set_minmax(data)
 
                 if isinstance(f.data, DeferredArray):
                     f.data = DeferredArray()
-                f.data = f.reshape(data)
-                if not f.chunk_set:
-                    f.chunk_setup()
-                if len(g.load_chunk) > g.chunk_not_loaded:
-                    g.load_chunk = np.where(
-                        g.load_chunk == g.chunk_loaded_touched, g.chunk_loading_requested, g.load_chunk
+                f.data = f._reshape(data)
+                if not f._chunk_set:
+                    f._chunk_setup()
+                if len(g._load_chunk) > g._chunk_not_loaded:
+                    g._load_chunk = np.where(
+                        g._load_chunk == g._chunk_loaded_touched, g._chunk_loading_requested, g._load_chunk
                     )
-                    g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated, g.chunk_not_loaded, g.load_chunk)
+                    g._load_chunk = np.where(g._load_chunk == g._chunk_deprecated, g._chunk_not_loaded, g._load_chunk)
 
-            elif g.update_status == "updated":
+            elif g._update_status == "updated":
                 lib = np if isinstance(f.data, np.ndarray) else da
                 if f.gridindexingtype == "pop" and g.zdim > 1:
                     zd = g.zdim - 1
@@ -1492,22 +1586,22 @@ class FieldSet:
                     (g.tdim, zd, g.ydim - 2 * g.meridional_halo, g.xdim - 2 * g.zonal_halo), dtype=np.float32
                 )
                 if signdt >= 0:
-                    f.loaded_time_indices = [1]
+                    f._loaded_time_indices = [1]
                     if f.filebuffers[0] is not None:
                         f.filebuffers[0].close()
                         f.filebuffers[0] = None
                     f.filebuffers[0] = f.filebuffers[1]
                     data = f.computeTimeChunk(data, 1)
                 else:
-                    f.loaded_time_indices = [0]
+                    f._loaded_time_indices = [0]
                     if f.filebuffers[1] is not None:
                         f.filebuffers[1].close()
                         f.filebuffers[1] = None
                     f.filebuffers[1] = f.filebuffers[0]
                     data = f.computeTimeChunk(data, 0)
-                data = f.rescale_and_set_minmax(data)
+                data = f._rescale_and_set_minmax(data)
                 if signdt >= 0:
-                    data = f.reshape(data)[1, :]
+                    data = f._reshape(data)[1, :]
                     if lib is da:
                         f.data = lib.stack([f.data[1, :], data], axis=0)
                     else:
@@ -1519,7 +1613,7 @@ class FieldSet:
                         f.data[0, :] = f.data[1, :]
                         f.data[1, :] = data
                 else:
-                    data = f.reshape(data)[0, :]
+                    data = f._reshape(data)[0, :]
                     if lib is da:
                         f.data = lib.stack([data, f.data[0, :]], axis=0)
                     else:
@@ -1530,40 +1624,42 @@ class FieldSet:
                                 f.data[1, :] = None
                         f.data[1, :] = f.data[0, :]
                         f.data[0, :] = data
-                g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched, g.chunk_loading_requested, g.load_chunk)
-                g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated, g.chunk_not_loaded, g.load_chunk)
-                if isinstance(f.data, da.core.Array) and len(g.load_chunk) > 0:
+                g._load_chunk = np.where(
+                    g._load_chunk == g._chunk_loaded_touched, g._chunk_loading_requested, g._load_chunk
+                )
+                g._load_chunk = np.where(g._load_chunk == g._chunk_deprecated, g._chunk_not_loaded, g._load_chunk)
+                if isinstance(f.data, da.core.Array) and len(g._load_chunk) > 0:
                     if signdt >= 0:
-                        for block_id in range(len(g.load_chunk)):
-                            if g.load_chunk[block_id] == g.chunk_loaded_touched:
-                                if f.data_chunks[block_id] is None:
+                        for block_id in range(len(g._load_chunk)):
+                            if g._load_chunk[block_id] == g._chunk_loaded_touched:
+                                if f._data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break
                                 block = f.get_block(block_id)
-                                f.data_chunks[block_id][0] = None
-                                f.data_chunks[block_id][1] = np.array(f.data.blocks[(slice(2),) + block][1])
+                                f._data_chunks[block_id][0] = None
+                                f._data_chunks[block_id][1] = np.array(f.data.blocks[(slice(2),) + block][1])
                     else:
-                        for block_id in range(len(g.load_chunk)):
-                            if g.load_chunk[block_id] == g.chunk_loaded_touched:
-                                if f.data_chunks[block_id] is None:
+                        for block_id in range(len(g._load_chunk)):
+                            if g._load_chunk[block_id] == g._chunk_loaded_touched:
+                                if f._data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break
                                 block = f.get_block(block_id)
-                                f.data_chunks[block_id][1] = None
-                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(2),) + block][0])
+                                f._data_chunks[block_id][1] = None
+                                f._data_chunks[block_id][0] = np.array(f.data.blocks[(slice(2),) + block][0])
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)
 
         # update time varying grid depth
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f.dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f._dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
                 depth_data = f.grid.depth_field.data
-                f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
+                f.grid._depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
 
         if abs(nextTime) == np.inf or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime

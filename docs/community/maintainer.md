@@ -20,7 +20,7 @@
 ## Release checklist
 
 - Go to GitHub, draft new release. Enter name of version and "create new tag" if it doesn't already exist. Click "Generate Release Notes". Currate release notes as needed. Look at a previous version release to match the format (title, header, section organisation etc.)
-- Go to [conda-forge/parcels-feedstock](https://github.com/conda-forge/parcels-feedstock), create new issue with `@conda-forge-admin, please update version`. This will prompt a build, otherwise there can be a delay in the build.
+- Go to [conda-forge/parcels-feedstock](https://github.com/conda-forge/parcels-feedstock), create a new issue (select the "Bot Commands" issue from the menu) with title `@conda-forge-admin, please update version`. This will prompt a build, otherwise there can be a delay in the build.
   - Approve PR and merge on green
 - Update version in `CITATION.cff` file
 - Check "publish to PyPI" workflow succeeded
