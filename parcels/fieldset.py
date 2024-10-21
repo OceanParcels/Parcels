@@ -1444,6 +1444,7 @@ class FieldSet:
         for f in self.get_fields():
             if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f.dataFiles is None:
                 continue
+            f.loaded_time_indices = []  # reset loaded time indices
             g = f.grid
             if g.update_status == "first_updated":  # First load of data
                 if f.data is not None and not isinstance(f.data, DeferredArray):
