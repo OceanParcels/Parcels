@@ -51,3 +51,5 @@ def test_deprecated_made_private():
 
     with pytest.warns(DeprecationWarning):
         some_function(1, 2)
+
+    assert "deprecated::" in some_function.__doc__

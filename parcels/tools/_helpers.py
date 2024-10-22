@@ -40,6 +40,7 @@ def deprecated(msg: str = "") -> Callable:
             warnings.warn(msg_formatted, category=DeprecationWarning, stacklevel=3)
             return func(*args, **kwargs)
 
+        patch_docstring(wrapper, f"\n\n.. deprecated:: {msg}")
         return wrapper
 
     return decorator
@@ -51,3 +52,7 @@ def deprecated_made_private(func: Callable) -> Callable:
         "the end-user. If you feel that you use this code directly in your scripts, please "
         "comment on our tracking issue at https://github.com/OceanParcels/Parcels/issues/1695.",
     )(func)
+
+
+def patch_docstring(obj: Callable, extra: str) -> None:
+    obj.__doc__ = f"{obj.__doc__ or ''}{extra}".strip()
