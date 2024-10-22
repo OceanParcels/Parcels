@@ -208,6 +208,7 @@ class Field:
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.timestamps = timestamps
+        self._loaded_time_indices: Iterable[int] = []  # type: ignore
         if isinstance(interp_method, dict):
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
@@ -265,6 +266,7 @@ class Field:
 
         if not self.grid.defer_load:
             self.data = self._reshape(self.data, transpose)
+            self._loaded_time_indices = range(self.grid.tdim)
 
             # Hack around the fact that NaN and ridiculously large values
             # propagate in SciPy's interpolators
@@ -288,7 +290,6 @@ class Field:
             self._dataFiles = np.append(self._dataFiles, self._dataFiles[0])
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
         self._netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        self._loaded_time_indices: Iterable[int] = []  # type: ignore
         self._creation_log = kwargs.pop("creation_log", "")
         self.chunksize = kwargs.pop("chunksize", None)
         self.netcdf_chunkdims_name_map = kwargs.pop("chunkdims_name_map", None)
