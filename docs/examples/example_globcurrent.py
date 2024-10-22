@@ -219,23 +219,21 @@ def test__particles_init_time():
     assert pset[0].time - pset4[0].time == 0
 
 
-@pytest.mark.xfail(reason="Time extrapolation error expected to be thrown", strict=True)
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("use_xarray", [True, False])
 def test_globcurrent_time_extrapolation_error(mode, use_xarray):
     fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
-
     pset = parcels.ParticleSet(
         fieldset,
         pclass=ptype[mode],
         lon=[25],
         lat=[-35],
-        time=fieldset.U.time[0] - timedelta(days=1).total_seconds(),
+        time=fieldset.U.grid.time[0] - timedelta(days=1).total_seconds(),
     )
-
-    pset.execute(
-        parcels.AdvectionRK4, runtime=timedelta(days=1), dt=timedelta(minutes=5)
-    )
+    with pytest.raises(parcels.TimeExtrapolationError):
+        pset.execute(
+            parcels.AdvectionRK4, runtime=timedelta(days=1), dt=timedelta(minutes=5)
+        )
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
