@@ -1077,6 +1077,13 @@ class ParticleSet:
         outputdt = output_file.outputdt if output_file else np.inf
         if isinstance(outputdt, timedelta):
             outputdt = outputdt.total_seconds()
+        if outputdt and np.any([t / outputdt % 1 != 0 for t in self.particledata.data["time_nextloop"]]):
+            warnings.warn(
+                "Some of the particles have a start time that is not a multiple of outputdt. "
+                "This could cause the first output to be at a different time than expected.",
+                FileWarning,
+                stacklevel=2,
+            )
         if isinstance(callbackdt, timedelta):
             callbackdt = callbackdt.total_seconds()
 
