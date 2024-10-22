@@ -4,10 +4,12 @@ import numpy as np
 import pytest
 
 from parcels import (
+    AdvectionRK4,
     AdvectionRK4_3D,
     AdvectionRK45,
     FieldSet,
     FieldSetWarning,
+    FileWarning,
     KernelWarning,
     ParticleSet,
     ScipyParticle,
@@ -52,6 +54,17 @@ def test_fieldset_warnings():
     with pytest.warns(FieldSetWarning):
         # timestamps with time in file warning
         fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh="flat", timestamps=[0, 1, 2, 3])
+
+
+def test_file_warnings(tmpdir):
+    outfilepath = tmpdir.join("test_file_warnings.zarr")
+    fieldset = FieldSet.from_data(
+        data={"U": np.zeros((1, 1)), "V": np.zeros((1, 1))}, dimensions={"lon": [0], "lat": [0]}
+    )
+    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=[0, 0], lat=[0, 0], time=[0, 1])
+    pfile = pset.ParticleFile(name=outfilepath, outputdt=2)
+    with pytest.warns(FileWarning):
+        pset.execute(AdvectionRK4, runtime=3, dt=1, output_file=pfile)
 
 
 def test_kernel_warnings():
