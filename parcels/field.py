@@ -4,7 +4,7 @@ import warnings
 from collections.abc import Iterable
 from ctypes import POINTER, Structure, c_float, c_int, pointer
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
 import numpy as np
@@ -149,6 +149,8 @@ class Field:
     * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
     """
 
+    _cast_data_dtype: type[np.float32] | type[np.float64]
+
     def __init__(
         self,
         name: str | tuple[str, str],
@@ -161,16 +163,16 @@ class Field:
         mesh: Mesh = "flat",
         timestamps=None,
         fieldtype=None,
-        transpose=False,
-        vmin=None,
-        vmax=None,
-        cast_data_dtype="float32",
-        time_origin=None,
+        transpose: bool = False,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        cast_data_dtype: type[np.float32] | type[np.float64] | Literal["float32", "float64"] = "float32",
+        time_origin: TimeConverter | None = None,
         interp_method: InterpMethod = "linear",
         allow_time_extrapolation: bool | None = None,
         time_periodic: TimePeriodic = False,
         gridindexingtype: GridIndexingType = "nemo",
-        to_write=False,
+        to_write: bool = False,
         **kwargs,
     ):
         if kwargs.get("netcdf_decodewarning") is not None:
@@ -257,11 +259,19 @@ class Field:
 
         self.vmin = vmin
         self.vmax = vmax
-        self._cast_data_dtype = cast_data_dtype
-        if self.cast_data_dtype == "float32":
-            self._cast_data_dtype = np.float32
-        elif self.cast_data_dtype == "float64":
-            self._cast_data_dtype = np.float64
+
+        match cast_data_dtype:
+            case "float32":
+                self._cast_data_dtype = np.float32
+            case "float64":
+                self._cast_data_dtype = np.float64
+            case _:
+                self._cast_data_dtype = cast_data_dtype
+
+        if self.cast_data_dtype not in [np.float32, np.float64]:
+            raise ValueError(
+                f"Unsupported cast_data_dtype {self.cast_data_dtype!r}. Choose either: 'float32' or 'float64'"
+            )
 
         if not self.grid.defer_load:
             self.data = self._reshape(self.data, transpose)
