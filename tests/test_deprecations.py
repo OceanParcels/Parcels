@@ -4,7 +4,7 @@ from typing import Literal
 import numpy as np
 import pytest
 
-from parcels import Field, FieldSet, JITParticle, ParticleSet
+from parcels import Field, FieldSet, JITParticle, ParticleFile, ParticleSet, Variable
 from parcels.grid import (
     CurvilinearGrid,
     CurvilinearSGrid,
@@ -16,13 +16,28 @@ from parcels.grid import (
 )
 from tests.utils import create_fieldset_unit_mesh
 
+Classes = Literal[
+    "Field",
+    "FieldSet",
+    "ParticleSet",
+    "Grid",
+    "RectilinearGrid",
+    "RectilinearZGrid",
+    "RectilinearSGrid",
+    "CurvilinearGrid",
+    "CurvilinearZGrid",
+    "CurvilinearSGrid",
+    "ParticleData",
+    "ParticleFile",
+]
+
 
 class Action:
     """Utility class to help manage, document, and test deprecations."""
 
     def __init__(
         self,
-        class_: Literal["Field", "FieldSet"],
+        class_: Classes,
         name: str,
         type_: Literal["read_only", "make_private", "remove"],
         *,
@@ -168,6 +183,7 @@ actions = [
     Action("Grid",             "lat_flipped",                    "make_private"  ),
     Action("Grid",             "defer_load",                     "read_only"     ),
     Action("Grid",             "lonlat_minmax",                  "read_only"     ),
+    Action("RectilinearGrid",  "lonlat_minmax",                  "read_only"     ),
     Action("Grid",             "load_chunk",                     "make_private"  ),
     Action("Grid",             "cgrid",                          "make_private"  ),
     Action("Grid",             "child_ctypes_struct",            "make_private"  ),
@@ -222,7 +238,31 @@ actions = [
     Action("CurvilinearSGrid", "z4d",                            "make_private"  ),
     Action("CurvilinearSGrid", "xdim",                           "read_only"     ),
     Action("CurvilinearSGrid", "ydim",                           "read_only"     ),
-]
+
+    # 1727
+    Action("ParticleSet",      "iterator()",                     "remove"        ),
+    Action("ParticleData",     "iterator()",                     "remove"        ),
+    Action("ParticleFile",     "add_metadata()",                 "remove"        ),
+    Action("ParticleFile",     "write_once()",                   "make_private"  ),
+    Action("ParticleFile",     "create_new_zarrfile",            "read_only"     ),
+    Action("ParticleFile",     "outputdt",                       "read_only"     ),
+    Action("ParticleFile",     "chunks",                         "read_only"     ),
+    Action("ParticleFile",     "particleset",                    "read_only"     ),
+    Action("ParticleFile",     "fname",                          "read_only"     ),
+    Action("ParticleFile",     "vars_to_write",                  "read_only"     ),
+    Action("ParticleFile",     "time_origin",                    "read_only"     ),
+    Action("ParticleFile",     "parcels_mesh",                   "make_private"  ),
+    Action("ParticleFile",     "maxids",                         "make_private"  ),
+    Action("ParticleFile",     "pids_written",                   "make_private"  ),
+    Action("ParticleFile",     "mpi_rank",                       "make_private"  ),
+    Action("ParticleFile",     "fill_value_map",                 "make_private"  ),
+    Action("ParticleFile",     "analytical",                     "make_private"  , skip_reason = "Was also renamed"),
+    Action("Grid",             "lon_grid_to_target()",           "remove"        ),
+    Action("Grid",             "lon_remapping",                  "remove"        ),
+    Action("Grid",             "lon_grid_to_source()",           "remove"        ),
+    Action("Grid",             "lon_particle_to_target()",       "remove"        ),
+    Action("Variable",         "name",                           "read_only"     ),
+    ]
 # fmt: on
 assert len({str(a) for a in actions}) == len(actions)  # Check that all actions are unique
 
@@ -246,6 +286,8 @@ def create_test_data():
     lat_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
     grid = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
+
+    pfile = ParticleFile("test.zarr", pset, outputdt=1)
 
     return {
         "Field": {
@@ -287,6 +329,14 @@ def create_test_data():
         "CurvilinearSGrid": {
             "class": CurvilinearSGrid,
             "object": grid,  # not exactly right but good enough
+        },
+        "ParticleFile": {
+            "class": ParticleFile,
+            "object": pfile,
+        },
+        "Variable": {
+            "class": Variable,
+            "object": Variable("test"),
         },
     }
 

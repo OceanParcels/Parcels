@@ -26,7 +26,7 @@ from parcels.kernel import Kernel
 from parcels.particle import JITParticle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
-from parcels.tools._helpers import deprecated_made_private
+from parcels.tools._helpers import deprecated, deprecated_made_private
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
@@ -330,12 +330,14 @@ class ParticleSet:
             del self.particledata
         self.particledata = None
 
+    @deprecated(
+        "Use iter(pset) instead, or just use the object in an iterator context (e.g. for p in pset: ...)."
+    )  # TODO: Remove 6 months after v3.1.0 (or 9 months; doesn't contribute to code debt)
     def iterator(self):
-        return self.particledata.iterator()
+        return iter(self)
 
     def __iter__(self):
-        """Allows for more intuitive iteration over a particleset, while in reality iterating over the particles in the ParticleData instance."""
-        return self.iterator()
+        return iter(self.particledata)
 
     def __getattr__(self, name):
         """
@@ -1044,7 +1046,7 @@ class ParticleSet:
                 )
                 self._kernel.load_lib()
         if output_file:
-            output_file.add_metadata("parcels_kernels", self._kernel.name)
+            output_file.metadata["parcels_kernels"] = self._kernel.name
 
         # Set up the interaction kernel(s) if not set and given.
         if self._interaction_kernel is None and pyfunc_inter is not None:
@@ -1186,7 +1188,7 @@ class ParticleSet:
 
             if abs(time - next_output) < tol:
                 if output_file:
-                    if output_file.analytical:  # output analytical solution at later time
+                    if output_file._is_analytical:  # output analytical solution at later time
                         output_file.write_latest_locations(self, time)
                     else:
                         output_file.write(self, time_at_startofloop)
