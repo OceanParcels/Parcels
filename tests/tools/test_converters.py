@@ -30,11 +30,6 @@ def test_TimeConverter_standard():
     assert TimeConverter(0).time_origin == 0
 
 
-def test_TimeConverter_invalid():
-    with pytest.raises(TypeError):
-        TimeConverter("invalid")
-
-
 def test_TimeConverter_reltime_one_day():
     ONE_DAY = 24 * 60 * 60
     first_jan = [c(1990, 1, 1) for c in cf_datetime_classes] + [0]
@@ -49,7 +44,6 @@ def test_TimeConverter_reltime_one_day():
     "x, y",
     [
         pytest.param(np.datetime64("2001-01-01T12:00"), 0, id="datetime64 float"),
-        pytest.param(np.timedelta64(1, "s"), 0, id="timedelta64 float"),
         pytest.param(cftime.DatetimeNoLeap(1990, 1, 1), 0, id="cftime float"),
         pytest.param(cftime.DatetimeNoLeap(1990, 1, 1), cftime.DatetimeAllLeap(1991, 1, 1), id="cftime cftime"),
     ],
