@@ -77,7 +77,6 @@ class BaseKernel(abc.ABC):
         self.funccode = funccode
         self.py_ast = py_ast
         self.dyn_srcs = []
-        self.static_srcs = []
         self.src_file = None
         self.lib_file = None
         self.log_file = None
