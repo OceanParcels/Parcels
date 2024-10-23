@@ -561,9 +561,11 @@ class Kernel(BaseKernel):
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
         if lib_file is not None:
             if os.path.isfile(lib_file):  # and delete_cfiles
-                [os.remove(s) for s in [lib_file] if os.path is not None and os.path.exists(s)]
-            if delete_cfiles and len(all_files_array) > 0:
-                [os.remove(s) for s in all_files_array if os.path is not None and os.path.exists(s)]
+                os.remove(lib_file)
+            if delete_cfiles:
+                for s in all_files_array:
+                    if os.path.exists(s):
+                        os.remove(s)
 
     @staticmethod
     def cleanup_unload_lib(lib):
@@ -600,8 +602,7 @@ class Kernel(BaseKernel):
                     g._load_chunk == g._chunk_loading_requested, g._chunk_loaded_touched, g._load_chunk
                 )
                 if len(g._load_chunk) > g._chunk_not_loaded:  # not the case if a field in not called in the kernel
-                    if not g._load_chunk.flags["C_CONTIGUOUS"]:
-                        g._load_chunk = np.array(g._load_chunk, order="C")
+                    g._load_chunk = np.array(g._load_chunk, order="C")
                 if not g.depth.flags.c_contiguous:
                     g._depth = np.array(g.depth, order="C")
                 if not g.lon.flags.c_contiguous:
