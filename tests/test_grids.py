@@ -104,12 +104,12 @@ def test_multi_structured_grids(mode):
     assert np.all([np.isclose(p.temp0, p.temp1, atol=1e-3) for p in pset])
 
 
-@pytest.mark.xfail(reason="Grid cannot be computed using a time vector which is neither float nor int", strict=True)
 def test_time_format_in_grid():
     lon = np.linspace(0, 1, 2, dtype=np.float32)
     lat = np.linspace(0, 1, 2, dtype=np.float32)
     time = np.array([np.datetime64("2000-01-01")] * 2)
-    RectilinearZGrid(lon, lat, time=time)
+    with pytest.raises(AssertionError, match="Time vector"):
+        RectilinearZGrid(lon, lat, time=time)
 
 
 def test_avoid_repeated_grids():

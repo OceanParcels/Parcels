@@ -388,7 +388,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         self.chunk_mapping = None
 
     @classmethod
-    def add_to_dimension_name_map_global(self, name_map):
+    def add_to_dimension_name_map_global(cls, name_map):
         """
         [externally callable]
         This function adds entries to the name map from parcels_dim -> netcdf_dim. This is required if you want to
@@ -406,9 +406,9 @@ class DaskFileBuffer(NetcdfFileBuffer):
         for pcls_dim_name in name_map.keys():
             if isinstance(name_map[pcls_dim_name], list):
                 for nc_dim_name in name_map[pcls_dim_name]:
-                    self._static_name_maps[pcls_dim_name].append(nc_dim_name)
+                    cls._static_name_maps[pcls_dim_name].append(nc_dim_name)
             elif isinstance(name_map[pcls_dim_name], str):
-                self._static_name_maps[pcls_dim_name].append(name_map[pcls_dim_name])
+                cls._static_name_maps[pcls_dim_name].append(name_map[pcls_dim_name])
 
     def add_to_dimension_name_map(self, name_map):
         """

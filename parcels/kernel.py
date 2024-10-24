@@ -77,7 +77,6 @@ class BaseKernel(abc.ABC):
         self.funccode = funccode
         self.py_ast = py_ast
         self.dyn_srcs = []
-        self.static_srcs = []
         self.src_file = None
         self.lib_file = None
         self.log_file = None
@@ -562,9 +561,11 @@ class Kernel(BaseKernel):
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
         if lib_file is not None:
             if os.path.isfile(lib_file):  # and delete_cfiles
-                [os.remove(s) for s in [lib_file] if os.path is not None and os.path.exists(s)]
-            if delete_cfiles and len(all_files_array) > 0:
-                [os.remove(s) for s in all_files_array if os.path is not None and os.path.exists(s)]
+                os.remove(lib_file)
+            if delete_cfiles:
+                for s in all_files_array:
+                    if os.path.exists(s):
+                        os.remove(s)
 
     @staticmethod
     def cleanup_unload_lib(lib):

@@ -344,8 +344,8 @@ class FieldSet:
 
     @classmethod
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def parse_wildcards(self, *args, **kwargs):
-        return self._parse_wildcards(*args, **kwargs)
+    def parse_wildcards(cls, *args, **kwargs):
+        return cls._parse_wildcards(*args, **kwargs)
 
     @classmethod
     def _parse_wildcards(cls, paths, filenames, var):
