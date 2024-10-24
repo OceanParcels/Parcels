@@ -1,9 +1,15 @@
 """Internal helpers for Parcels."""
 
+from __future__ import annotations
+
 import functools
 import warnings
 from collections.abc import Callable
+from textwrap import dedent
+from typing import TYPE_CHECKING, Any
 
+if TYPE_CHECKING:
+    from parcels import Field
 PACKAGE = "Parcels"
 
 
@@ -56,3 +62,19 @@ def deprecated_made_private(func: Callable) -> Callable:
 
 def patch_docstring(obj: Callable, extra: str) -> None:
     obj.__doc__ = f"{obj.__doc__ or ''}{extra}".strip()
+
+
+def pretty_field(field: Field) -> str:
+    """Return a pretty repr for Field"""
+    out = f"""<{type(field).__name__}>
+                grid            : {field.grid!r                    }
+                extrapolate time: {field.allow_time_extrapolation!r}
+                time_periodic   : {field.time_periodic!r           }
+                gridindexingtype: {field.gridindexingtype!r        }
+                to_write        : {field.to_write!r                }
+            """
+    return dedent(out)
+
+
+def default_repr(obj: Any):
+    return object.__repr__(obj)
