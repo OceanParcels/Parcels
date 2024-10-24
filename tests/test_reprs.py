@@ -2,7 +2,7 @@ from typing import Any
 
 import numpy as np
 
-from parcels import Grid, TimeConverter
+from parcels import Grid, TimeConverter, Variable
 from parcels.grid import RectilinearGrid
 
 
@@ -23,6 +23,12 @@ def test_grid_repr():
         lon=np.array([1, 2, 3]), lat=np.array([4, 5, 6]), time=None, time_origin=TimeConverter(), mesh="spherical"
     )
     validate_simple_repr(Grid, kwargs)
+
+
+def test_variable_repr():
+    """Test arguments are in the repr of the Variable object."""
+    kwargs = dict(name="test", dtype=np.float32, initial=0, to_write=False)
+    validate_simple_repr(Variable, kwargs)
 
 
 def test_rectilineargrid_repr():

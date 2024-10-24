@@ -53,7 +53,7 @@ class Variable:
             setattr(instance, f"_{self.name}", value)
 
     def __repr__(self):
-        return f"PVar<{self.name}|{self.dtype}>"
+        return f"Variable(name={self._name}, dtype={self.dtype}, initial={self.initial}, to_write={self.to_write})"
 
     def is64bit(self):
         """Check whether variable is 64-bit."""
