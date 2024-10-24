@@ -67,29 +67,30 @@ def patch_docstring(obj: Callable, extra: str) -> None:
 def pretty_field(field: Field) -> str:
     """Return a pretty repr for Field"""
     out = f"""<{type(field).__name__}>
-                grid            : {field.grid!r                    }
-                extrapolate time: {field.allow_time_extrapolation!r}
-                time_periodic   : {field.time_periodic!r           }
-                gridindexingtype: {field.gridindexingtype!r        }
-                to_write        : {field.to_write!r                }
-            """
-    return dedent(out)
+    grid            : {field.grid!r                    }
+    extrapolate time: {field.allow_time_extrapolation!r}
+    time_periodic   : {field.time_periodic!r           }
+    gridindexingtype: {field.gridindexingtype!r        }
+    to_write        : {field.to_write!r                }
+"""
+    return dedent(out).strip()
 
 
 def pretty_particleset(pset: ParticleSet) -> str:
     """Return a pretty repr for ParticleSet"""
     if len(pset) < 10:
-        lst = [repr(p) for p in pset]
+        lst = list(pset)
     else:
-        lst = [repr(p) for p in pset[:7]] + ["..."]
+        lst = [p for p in pset[:7]] + ["..."]
 
     out = f"""<{type(pset).__name__}>
-                fieldset:    {pset.fieldset}
-                pclass:      {pset.pclass}
-                repeatdt:    {pset.repeatdt}
-                # particles: {len(pset)}
-                particles:   {lst}"""
-    return dedent(out)
+    fieldset   : {pset.fieldset}
+    pclass     : {pset.pclass}
+    repeatdt   : {pset.repeatdt}
+    # particles: {len(pset)}
+    particles  : {lst!r}
+"""
+    return dedent(out).strip()
 
 
 def default_repr(obj: Any):
