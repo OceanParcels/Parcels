@@ -9,7 +9,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from parcels import Field
+    from parcels import Field, ParticleSet
 PACKAGE = "Parcels"
 
 
@@ -73,6 +73,22 @@ def pretty_field(field: Field) -> str:
                 gridindexingtype: {field.gridindexingtype!r        }
                 to_write        : {field.to_write!r                }
             """
+    return dedent(out)
+
+
+def pretty_particleset(pset: ParticleSet) -> str:
+    """Return a pretty repr for ParticleSet"""
+    if len(pset) < 10:
+        lst = [repr(p) for p in pset]
+    else:
+        lst = [repr(p) for p in pset[:7]] + ["..."]
+
+    out = f"""<{type(pset).__name__}>
+                fieldset:    {pset.fieldset}
+                pclass:      {pset.pclass}
+                repeatdt:    {pset.repeatdt}
+                # particles: {len(pset)}
+                particles:   {lst}"""
     return dedent(out)
 
 

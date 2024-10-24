@@ -20,9 +20,12 @@ def validate_simple_repr(class_: type, kwargs: dict[str, Any]):
     assert class_.__name__ in obj_repr
 
 
-def valid_indentation(str) -> bool:
+def valid_indentation(s: str) -> bool:
     """Make sure that all lines in string is indented with a multiple of 4 spaces."""
-    lines = str.split("\n")
+    if s.startswith(" "):
+        return False
+
+    lines = s.split("\n")
     for line in lines:
         line = re.sub("^( {4})+", "", line)
         if line.startswith(" "):
@@ -82,6 +85,10 @@ def test_particlefile_repr():
 
 
 def test_field_repr():
-    """Simply that no errors arise"""
     field = create_fieldset_unit_mesh().U
     assert valid_indentation(repr(field))
+
+
+def test_particleset_repr():
+    pset = create_simple_pset()
+    valid_indentation(repr(pset))

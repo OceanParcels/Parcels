@@ -27,7 +27,7 @@ from parcels.kernel import Kernel
 from parcels.particle import JITParticle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
-from parcels.tools._helpers import deprecated, deprecated_made_private
+from parcels.tools._helpers import deprecated, deprecated_made_private, pretty_particleset
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
@@ -386,7 +386,7 @@ class ParticleSet:
         return len(self.particledata)
 
     def __repr__(self):
-        return "\n".join([str(p) for p in self])
+        return pretty_particleset(self)
 
     def __len__(self):
         return len(self.particledata)
