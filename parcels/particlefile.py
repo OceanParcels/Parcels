@@ -10,7 +10,7 @@ import zarr
 
 import parcels
 from parcels._compat import MPI
-from parcels.tools._helpers import deprecated, deprecated_made_private
+from parcels.tools._helpers import default_repr, deprecated, deprecated_made_private
 from parcels.tools.warnings import FileWarning
 
 __all__ = ["ParticleFile"]
@@ -115,6 +115,16 @@ class ParticleFile:
             else:
                 fname = name if extension in [".zarr"] else f"{name}.zarr"
         self._fname = fname
+
+    def __repr__(self) -> str:
+        return (
+            f"{type(self).__name__}("
+            f"name={self.fname!r}, "
+            f"particleset={default_repr(self.particleset)}, "
+            f"outputdt={self.outputdt!r}, "
+            f"chunks={self.chunks!r}, "
+            f"create_new_zarrfile={self.create_new_zarrfile!r})"
+        )
 
     @property
     def create_new_zarrfile(self):
