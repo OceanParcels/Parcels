@@ -79,16 +79,17 @@ def pretty_field(field: Field) -> str:
 def pretty_particleset(pset: ParticleSet) -> str:
     """Return a pretty repr for ParticleSet"""
     if len(pset) < 10:
-        lst = list(pset)
+        particles = repr(list(pset))
     else:
-        lst = [pset[i] for i in range(7)] + ["..."]
+        lst = [repr(pset[i]) for i in range(7)] + ["..."]
+        particles = f"[{', '.join(lst)}]"
 
     out = f"""<{type(pset).__name__}>
     fieldset   : {pset.fieldset}
     pclass     : {pset.pclass}
     repeatdt   : {pset.repeatdt}
     # particles: {len(pset)}
-    particles  : {lst!r}
+    particles  : {particles}
 """
     return dedent(out).strip()
 
