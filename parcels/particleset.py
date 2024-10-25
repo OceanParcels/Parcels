@@ -1078,7 +1078,7 @@ class ParticleSet:
         outputdt = output_file.outputdt if output_file else np.inf
         if isinstance(outputdt, timedelta):
             outputdt = outputdt.total_seconds()
-        if outputdt is not None:
+        if np.isfinite(outputdt) is not None:
             _warn_outputdt_release_desync(outputdt, self.particledata.data["time_nextloop"])
 
         if isinstance(callbackdt, timedelta):
@@ -1235,7 +1235,7 @@ class ParticleSet:
 
 def _warn_outputdt_release_desync(outputdt: float, release_times: Iterable[float]):
     """Gives the user a warning if the release time isn't a multiple of outputdt."""
-    if any(t % outputdt != 0 for t in release_times):
+    if any((np.isfinite(t) and t % outputdt != 0) for t in release_times):
         warnings.warn(
             "Some of the particles have a start time that is not a multiple of outputdt. "
             "This could cause the first output to be at a different time than expected.",
