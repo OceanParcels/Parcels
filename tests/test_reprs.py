@@ -92,3 +92,6 @@ def test_field_repr():
 def test_particleset_repr():
     pset = create_simple_pset()
     valid_indentation(repr(pset))
+
+    pset = create_simple_pset(n=15)
+    valid_indentation(repr(pset))

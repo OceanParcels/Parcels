@@ -48,9 +48,15 @@ def create_fieldset_zeros_conversion(mesh="spherical", xdim=200, ydim=100, mesh_
     return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
-def create_simple_pset():
+def create_simple_pset(n=1):
+    zeros = np.zeros(n)
     return parcels.ParticleSet(
-        fieldset=create_fieldset_unit_mesh(), pclass=parcels.ScipyParticle, lon=[0], lat=[0], depth=[0], time=[0]
+        fieldset=create_fieldset_unit_mesh(),
+        pclass=parcels.ScipyParticle,
+        lon=zeros,
+        lat=zeros,
+        depth=zeros,
+        time=zeros,
     )
 
 

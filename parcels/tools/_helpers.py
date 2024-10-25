@@ -81,7 +81,7 @@ def pretty_particleset(pset: ParticleSet) -> str:
     if len(pset) < 10:
         lst = list(pset)
     else:
-        lst = [p for p in pset[:7]] + ["..."]
+        lst = [pset[i] for i in range(7)] + ["..."]
 
     out = f"""<{type(pset).__name__}>
     fieldset   : {pset.fieldset}
