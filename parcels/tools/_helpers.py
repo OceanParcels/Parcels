@@ -116,7 +116,7 @@ def particleset_repr(pset: ParticleSet) -> str:
     pclass     : {pset.pclass}
     repeatdt   : {pset.repeatdt}
     # particles: {len(pset)}
-    particles  : {_format_list_items_multiline(particles)}
+    particles  : {_format_list_items_multiline(particles, level=2)}
 """
     return textwrap.dedent(out).strip()
 
