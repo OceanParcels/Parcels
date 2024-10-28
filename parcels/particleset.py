@@ -1083,7 +1083,7 @@ class ParticleSet:
 
         if outputdt is not None:
             _warn_outputdt_release_desync(outputdt, self.particledata.data["time_nextloop"])
-        
+
         if callbackdt is not None:
             callbackdt = timedelta_to_float(callbackdt)
 
