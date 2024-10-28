@@ -112,6 +112,7 @@ class ParticleSet:
         self.fieldset = fieldset
         self.fieldset._check_complete()
         self.time_origin = fieldset.time_origin
+        self._pclass = pclass
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -384,6 +385,10 @@ class ParticleSet:
     def size(self):
         # ==== to change at some point - len and size are different things ==== #
         return len(self.particledata)
+
+    @property
+    def pclass(self):
+        return self._pclass
 
     def __repr__(self):
         return particleset_repr(self)
