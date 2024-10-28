@@ -107,7 +107,7 @@ def _format_list_items_multiline(items: list[str], level: int = 1) -> str:
 def particleset_repr(pset: ParticleSet) -> str:
     """Return a pretty repr for ParticleSet"""
     if len(pset) < 10:
-        particles = [repr(p for p in pset)]
+        particles = [repr(p) for p in pset]
     else:
         particles = [repr(pset[i]) for i in range(7)] + ["..."]
 
