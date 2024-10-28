@@ -806,7 +806,7 @@ class Field:
         lat = da[dimensions["lat"]].values
 
         time_origin = TimeConverter(time[0])
-        time = time_origin.reltime(time)
+        time = time_origin.reltime(time)  # type: ignore[assignment]
 
         grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         kwargs["time_periodic"] = time_periodic

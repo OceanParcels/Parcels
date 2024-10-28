@@ -63,7 +63,7 @@ class TimeConverter:
         elif isinstance(time_origin, cftime.datetime):
             self.calendar = time_origin.calendar
 
-    def reltime(self, time: TimeConverter | np.datetime64 | np.timedelta64 | cftime.datetime) -> float:
+    def reltime(self, time: TimeConverter | np.datetime64 | np.timedelta64 | cftime.datetime) -> float | npt.NDArray:
         """Method to compute the difference, in seconds, between a time and the time_origin
         of the TimeConverter
 
@@ -80,11 +80,11 @@ class TimeConverter:
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar in ["np_datetime64", "np_timedelta64"]:
-            return (time - self.time_origin) / np.timedelta64(1, "s")
+            return (time - self.time_origin) / np.timedelta64(1, "s")  # type: ignore
         elif self.calendar in _get_cftime_calendars():
             if isinstance(time, (list, np.ndarray)):
                 try:
-                    return np.array([(t - self.time_origin).total_seconds() for t in time])
+                    return np.array([(t - self.time_origin).total_seconds() for t in time])  # type: ignore
                 except ValueError:
                     raise ValueError(
                         f"Cannot subtract 'time' (a {type(time)} object) from a {self.calendar} calendar.\n"
@@ -92,14 +92,14 @@ class TimeConverter:
                     )
             else:
                 try:
-                    return (time - self.time_origin).total_seconds()
+                    return (time - self.time_origin).total_seconds()  # type: ignore
                 except ValueError:
                     raise ValueError(
                         f"Cannot subtract 'time' (a {type(time)} object) from a {self.calendar} calendar.\n"
                         f"Provide 'time' as a {type(self.time_origin)} object?"
                     )
         elif self.calendar is None:
-            return time - self.time_origin
+            return time - self.time_origin  # type: ignore
         else:
             raise RuntimeError(f"Calendar {self.calendar} not implemented in TimeConverter")
 
