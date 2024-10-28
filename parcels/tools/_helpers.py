@@ -6,7 +6,10 @@ import functools
 import textwrap
 import warnings
 from collections.abc import Callable
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any
+
+import numpy as np
 
 if TYPE_CHECKING:
     from parcels import Field, FieldSet, ParticleSet
@@ -134,3 +137,12 @@ def fieldset_repr(fieldset: FieldSet) -> str:
 
 def default_repr(obj: Any):
     return object.__repr__(obj)
+
+
+def timedelta_to_float(dt: float | timedelta | np.timedelta64) -> float:
+    """Convert a timedelta to a float in seconds."""
+    if isinstance(dt, timedelta):
+        return dt.total_seconds()
+    if isinstance(dt, np.timedelta64):
+        return float(dt / np.timedelta64(1, "s"))
+    return float(dt)

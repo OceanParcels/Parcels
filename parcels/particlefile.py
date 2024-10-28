@@ -10,7 +10,7 @@ import zarr
 
 import parcels
 from parcels._compat import MPI
-from parcels.tools._helpers import default_repr, deprecated, deprecated_made_private
+from parcels.tools._helpers import default_repr, deprecated, deprecated_made_private, timedelta_to_float
 from parcels.tools.warnings import FileWarning
 
 __all__ = ["ParticleFile"]
@@ -48,7 +48,7 @@ class ParticleFile:
     """
 
     def __init__(self, name, particleset, outputdt=np.inf, chunks=None, create_new_zarrfile=True):
-        self._outputdt = outputdt.total_seconds() if isinstance(outputdt, timedelta) else outputdt
+        self._outputdt = timedelta_to_float(outputdt)
         self._chunks = chunks
         self._particleset = particleset
         self._parcels_mesh = "spherical"
@@ -263,7 +263,7 @@ class ParticleFile:
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
-    def write(self, pset, time, indices=None):
+    def write(self, pset, time: float | timedelta | np.timedelta64 | None, indices=None):
         """Write all data from one time step to the zarr file,
         before the particle locations are updated.
 
@@ -274,7 +274,7 @@ class ParticleFile:
         time :
             Time at which to write ParticleSet
         """
-        time = time.total_seconds() if isinstance(time, timedelta) else time
+        time = timedelta_to_float(time) if time is not None else None
 
         if pset.particledata._ncount == 0:
             warnings.warn(
@@ -305,7 +305,7 @@ class ParticleFile:
             if self.create_new_zarrfile:
                 if self.chunks is None:
                     self._chunks = (len(ids), 1)
-                if pset._repeatpclass is not None and self.chunks[0] < 1e4:
+                if pset._repeatpclass is not None and self.chunks[0] < 1e4:  # type: ignore[index]
                     warnings.warn(
                         f"ParticleFile chunks are set to {self.chunks}, but this may lead to "
                         f"a significant slowdown in Parcels when many calls to repeatdt. "
@@ -313,10 +313,10 @@ class ParticleFile:
                         FileWarning,
                         stacklevel=2,
                     )
-                if (self._maxids > len(ids)) or (self._maxids > self.chunks[0]):
-                    arrsize = (self._maxids, self.chunks[1])
+                if (self._maxids > len(ids)) or (self._maxids > self.chunks[0]):  # type: ignore[index]
+                    arrsize = (self._maxids, self.chunks[1])  # type: ignore[index]
                 else:
-                    arrsize = (len(ids), self.chunks[1])
+                    arrsize = (len(ids), self.chunks[1])  # type: ignore[index]
                 ds = xr.Dataset(
                     attrs=self.metadata,
                     coords={"trajectory": ("trajectory", pids), "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))},
@@ -341,7 +341,7 @@ class ParticleFile:
                             data[ids, 0] = pset.particledata.getvardata(var, indices_to_write)
                             dims = ["trajectory", "obs"]
                         ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
-                        ds[varout].encoding["chunks"] = self.chunks[0] if self._write_once(var) else self.chunks
+                        ds[varout].encoding["chunks"] = self.chunks[0] if self._write_once(var) else self.chunks  # type: ignore[index]
                 ds.to_zarr(self.fname, mode="w")
                 self._create_new_zarrfile = False
             else:
