@@ -99,8 +99,8 @@ def _format_list_items_multiline(items: list[str], level: int = 1) -> str:
     indentation_str = level * 4 * " "
     indentation_str_end = (level - 1) * 4 * " "
 
-    items = ",\n".join([textwrap.indent(i, indentation_str) for i in items])
-    return f"[\n{items}\n{indentation_str_end}]"
+    items_str = ",\n".join([textwrap.indent(i, indentation_str) for i in items])
+    return f"[\n{items_str}\n{indentation_str_end}]"
 
 
 def particleset_repr(pset: ParticleSet) -> str:

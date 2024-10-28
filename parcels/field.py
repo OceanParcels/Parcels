@@ -150,6 +150,9 @@ class Field:
     * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
     """
 
+    allow_time_extrapolation: bool
+    time_periodic: TimePeriodic
+
     def __init__(
         self,
         name: str | tuple[str, str],
