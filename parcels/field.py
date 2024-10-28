@@ -1913,11 +1913,12 @@ class VectorField:
                 assert self._check_grid_dimensions(U.grid, W.grid), "Dimensions of U and W are not the same."
 
     def __repr__(self):
+        w_repr = default_repr(self.W) if self.W is not None else repr(self.W)
         return f"""<{type(self).__name__}>
     name: {self.name!r}
     U: {default_repr(self.U)}
     V: {default_repr(self.V)}
-    W: {default_repr(self.W)}"""
+    W: {w_repr}"""
 
     @staticmethod
     def _check_grid_dimensions(grid1, grid2):
