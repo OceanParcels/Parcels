@@ -1,4 +1,5 @@
-# flake8: noqa: E999
+from __future__ import annotations
+
 import inspect
 from datetime import timedelta
 from math import cos, pi
@@ -32,14 +33,14 @@ def convert_to_flat_array(var: npt.ArrayLike) -> npt.NDArray:
     return np.array(var).flatten()
 
 
-def _get_cftime_datetimes():
+def _get_cftime_datetimes() -> list[str]:
     # Is there a more elegant way to parse these from cftime?
     cftime_calendars = tuple(x[1].__name__ for x in inspect.getmembers(cftime._cftime, inspect.isclass))
     cftime_datetime_names = [ca for ca in cftime_calendars if "Datetime" in ca]
     return cftime_datetime_names
 
 
-def _get_cftime_calendars():
+def _get_cftime_calendars() -> list[str]:
     return [getattr(cftime, cf_datetime)(1990, 1, 1).calendar for cf_datetime in _get_cftime_datetimes()]
 
 
@@ -48,22 +49,21 @@ class TimeConverter:
 
     Parameters
     ----------
-    time_origin : float, integer, numpy.datetime64 or netcdftime.DatetimeNoLeap
+    time_origin : float, integer, numpy.datetime64 or cftime.DatetimeNoLeap
         time origin of the class.
     """
 
-    def __init__(self, time_origin=0):
-        self.time_origin = 0 if time_origin is None else time_origin
+    def __init__(self, time_origin: float | np.datetime64 | np.timedelta64 | cftime.datetime = 0):
+        self.time_origin = time_origin
+        self.calendar: str | None = None
         if isinstance(time_origin, np.datetime64):
             self.calendar = "np_datetime64"
         elif isinstance(time_origin, np.timedelta64):
             self.calendar = "np_timedelta64"
-        elif isinstance(time_origin, cftime._cftime.datetime):
+        elif isinstance(time_origin, cftime.datetime):
             self.calendar = time_origin.calendar
-        else:
-            self.calendar = None
 
-    def reltime(self, time):
+    def reltime(self, time: TimeConverter | np.datetime64 | np.timedelta64 | cftime.datetime) -> float | npt.NDArray:
         """Method to compute the difference, in seconds, between a time and the time_origin
         of the TimeConverter
 
@@ -80,11 +80,11 @@ class TimeConverter:
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar in ["np_datetime64", "np_timedelta64"]:
-            return (time - self.time_origin) / np.timedelta64(1, "s")
+            return (time - self.time_origin) / np.timedelta64(1, "s")  # type: ignore
         elif self.calendar in _get_cftime_calendars():
             if isinstance(time, (list, np.ndarray)):
                 try:
-                    return np.array([(t - self.time_origin).total_seconds() for t in time])
+                    return np.array([(t - self.time_origin).total_seconds() for t in time])  # type: ignore
                 except ValueError:
                     raise ValueError(
                         f"Cannot subtract 'time' (a {type(time)} object) from a {self.calendar} calendar.\n"
@@ -92,14 +92,14 @@ class TimeConverter:
                     )
             else:
                 try:
-                    return (time - self.time_origin).total_seconds()
+                    return (time - self.time_origin).total_seconds()  # type: ignore
                 except ValueError:
                     raise ValueError(
                         f"Cannot subtract 'time' (a {type(time)} object) from a {self.calendar} calendar.\n"
                         f"Provide 'time' as a {type(self.time_origin)} object?"
                     )
         elif self.calendar is None:
-            return time - self.time_origin
+            return time - self.time_origin  # type: ignore
         else:
             raise RuntimeError(f"Calendar {self.calendar} not implemented in TimeConverter")
 
