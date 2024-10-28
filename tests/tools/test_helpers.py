@@ -3,7 +3,18 @@ from datetime import timedelta
 import numpy as np
 import pytest
 
+import parcels.tools._helpers as helpers
 from parcels.tools._helpers import deprecated, deprecated_made_private, timedelta_to_float
+
+
+def test_format_list_items_multiline():
+    expected = """[
+    item1,
+    item2,
+    item3
+]"""
+    assert helpers._format_list_items_multiline(["item1", "item2", "item3"], 1) == expected
+    assert helpers._format_list_items_multiline([], 1) == "[]"
 
 
 def test_deprecated():

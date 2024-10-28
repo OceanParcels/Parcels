@@ -27,7 +27,7 @@ from parcels.kernel import Kernel
 from parcels.particle import JITParticle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
-from parcels.tools._helpers import deprecated, deprecated_made_private, timedelta_to_float
+from parcels.tools._helpers import deprecated, deprecated_made_private, particleset_repr, timedelta_to_float
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
@@ -112,6 +112,7 @@ class ParticleSet:
         self.fieldset = fieldset
         self.fieldset._check_complete()
         self.time_origin = fieldset.time_origin
+        self._pclass = pclass
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -386,8 +387,12 @@ class ParticleSet:
         # ==== to change at some point - len and size are different things ==== #
         return len(self.particledata)
 
+    @property
+    def pclass(self):
+        return self._pclass
+
     def __repr__(self):
-        return "\n".join([str(p) for p in self])
+        return particleset_repr(self)
 
     def __len__(self):
         return len(self.particledata)

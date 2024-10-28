@@ -20,7 +20,7 @@ from parcels._typing import (
     assert_valid_gridindexingtype,
     assert_valid_interp_method,
 )
-from parcels.tools._helpers import deprecated_made_private, timedelta_to_float
+from parcels.tools._helpers import default_repr, deprecated_made_private, field_repr, timedelta_to_float
 from parcels.tools.converters import (
     Geographic,
     GeographicPolar,
@@ -149,6 +149,8 @@ class Field:
     * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
     """
 
+    allow_time_extrapolation: bool
+    time_periodic: TimePeriodic
     _cast_data_dtype: type[np.float32] | type[np.float64]
 
     def __init__(
@@ -320,6 +322,9 @@ class Field:
         self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
+
+    def __repr__(self) -> str:
+        return field_repr(self)
 
     @property
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
@@ -1914,6 +1919,14 @@ class VectorField:
             if W is not None and self.U.gridindexingtype != "croco":
                 assert W.interp_method == "cgrid_velocity", "Interpolation methods of U and W are not the same."
                 assert self._check_grid_dimensions(U.grid, W.grid), "Dimensions of U and W are not the same."
+
+    def __repr__(self):
+        w_repr = default_repr(self.W) if self.W is not None else repr(self.W)
+        return f"""<{type(self).__name__}>
+    name: {self.name!r}
+    U: {default_repr(self.U)}
+    V: {default_repr(self.V)}
+    W: {w_repr}"""
 
     @staticmethod
     def _check_grid_dimensions(grid1, grid2):

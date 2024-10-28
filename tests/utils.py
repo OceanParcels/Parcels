@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
+import parcels
 from parcels import FieldSet
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -45,6 +46,18 @@ def create_fieldset_zeros_conversion(mesh="spherical", xdim=200, ydim=100, mesh_
     dimensions = {"lon": lon, "lat": lat}
     data = {"U": np.zeros((ydim, xdim), dtype=np.float32), "V": np.zeros((ydim, xdim), dtype=np.float32)}
     return FieldSet.from_data(data, dimensions, mesh=mesh)
+
+
+def create_simple_pset(n=1):
+    zeros = np.zeros(n)
+    return parcels.ParticleSet(
+        fieldset=create_fieldset_unit_mesh(),
+        pclass=parcels.ScipyParticle,
+        lon=zeros,
+        lat=zeros,
+        depth=zeros,
+        time=zeros,
+    )
 
 
 def create_spherical_positions(n_particles, max_depth=100000):
