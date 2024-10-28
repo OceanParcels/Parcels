@@ -21,7 +21,7 @@ from parcels._typing import (
     assert_valid_gridindexingtype,
     assert_valid_interp_method,
 )
-from parcels.tools._helpers import deprecated_made_private, pretty_field
+from parcels.tools._helpers import deprecated_made_private, field_repr
 from parcels.tools.converters import (
     Geographic,
     GeographicPolar,
@@ -313,7 +313,7 @@ class Field:
             raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
 
     def __repr__(self) -> str:
-        return pretty_field(self)
+        return field_repr(self)
 
     @property
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0

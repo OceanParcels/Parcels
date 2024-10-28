@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import functools
+import textwrap
 import warnings
 from collections.abc import Callable
-from textwrap import dedent
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from parcels import Field, ParticleSet
+    from parcels import Field, FieldSet, ParticleSet
+
 PACKAGE = "Parcels"
 
 
@@ -64,34 +65,70 @@ def patch_docstring(obj: Callable, extra: str) -> None:
     obj.__doc__ = f"{obj.__doc__ or ''}{extra}".strip()
 
 
-def pretty_field(field: Field) -> str:
+def field_repr(field: Field) -> str:
     """Return a pretty repr for Field"""
     out = f"""<{type(field).__name__}>
-    grid            : {field.grid!r                    }
+    grid            : {field.grid!r}
     extrapolate time: {field.allow_time_extrapolation!r}
-    time_periodic   : {field.time_periodic!r           }
-    gridindexingtype: {field.gridindexingtype!r        }
-    to_write        : {field.to_write!r                }
+    time_periodic   : {field.time_periodic!r}
+    gridindexingtype: {field.gridindexingtype!r}
+    to_write        : {field.to_write!r}
 """
-    return dedent(out).strip()
+    return textwrap.dedent(out).strip()
 
 
-def pretty_particleset(pset: ParticleSet) -> str:
+def _format_list_items_multiline(items: list[str], level: int = 1) -> str:
+    """Given a list of strings, formats them across multiple lines.
+
+    Uses indentation levels of 4 spaces provided by ``level``.
+
+    Example
+    -------
+    >>> output = _format_list_items_multiline(["item1", "item2", "item3"], 4)
+    >>> f"my_items: {output}"
+    my_items: [
+        item1,
+        item2,
+        item3,
+    ]
+    """
+    if len(items) == 0:
+        return "[]"
+
+    assert level >= 1, "Indentation level >=1 supported"
+    indentation_str = level * 4 * " "
+    indentation_str_end = (level - 1) * 4 * " "
+
+    items = ",\n".join([textwrap.indent(i, indentation_str) for i in items])
+    return f"[\n{items}\n{indentation_str_end}]"
+
+
+def particleset_repr(pset: ParticleSet) -> str:
     """Return a pretty repr for ParticleSet"""
     if len(pset) < 10:
-        particles = repr(list(pset))
+        particles = [repr(p for p in pset)]
     else:
-        lst = [repr(pset[i]) for i in range(7)] + ["..."]
-        particles = f"[{', '.join(lst)}]"
+        particles = [repr(pset[i]) for i in range(7)] + ["..."]
 
     out = f"""<{type(pset).__name__}>
     fieldset   : {pset.fieldset}
     pclass     : {pset.pclass}
     repeatdt   : {pset.repeatdt}
     # particles: {len(pset)}
-    particles  : {particles}
+    particles  : {_format_list_items_multiline(particles)}
 """
-    return dedent(out).strip()
+    return textwrap.dedent(out).strip()
+
+
+def fieldset_repr(fieldset: FieldSet) -> str:
+    """Return a pretty repr for FieldSet"""
+    fields_repr = "\n".join([repr(f) for f in fieldset.get_fields()])
+
+    out = f"""<{type(fieldset).__name__}>
+    fields:
+{textwrap.indent(fields_repr, 8 * " ")}
+"""
+    return textwrap.dedent(out).strip()
 
 
 def default_repr(obj: Any):

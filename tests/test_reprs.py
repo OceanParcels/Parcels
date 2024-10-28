@@ -9,7 +9,7 @@ from parcels.grid import RectilinearGrid
 from tests.utils import create_fieldset_unit_mesh, create_simple_pset
 
 
-def validate_simple_repr(class_: type, kwargs: dict[str, Any]):
+def assert_simple_repr(class_: type, kwargs: dict[str, Any]):
     """Test that the repr of an object contains all the arguments. This only works for objects where the repr matches the calling signature."""
     obj = class_(**kwargs)
     obj_repr = repr(obj)
@@ -55,13 +55,13 @@ def test_grid_repr():
     kwargs = dict(
         lon=np.array([1, 2, 3]), lat=np.array([4, 5, 6]), time=None, time_origin=TimeConverter(), mesh="spherical"
     )
-    validate_simple_repr(Grid, kwargs)
+    assert_simple_repr(Grid, kwargs)
 
 
 def test_variable_repr():
     """Test arguments are in the repr of the Variable object."""
     kwargs = dict(name="test", dtype=np.float32, initial=0, to_write=False)
-    validate_simple_repr(Variable, kwargs)
+    assert_simple_repr(Variable, kwargs)
 
 
 def test_rectilineargrid_repr():
@@ -73,7 +73,7 @@ def test_rectilineargrid_repr():
     kwargs = dict(
         lon=np.array([1, 2, 3]), lat=np.array([4, 5, 6]), time=None, time_origin=TimeConverter(), mesh="spherical"
     )
-    validate_simple_repr(RectilinearGrid, kwargs)
+    assert_simple_repr(RectilinearGrid, kwargs)
 
 
 def test_particlefile_repr():
@@ -81,12 +81,17 @@ def test_particlefile_repr():
     kwargs = dict(
         name="file.zarr", particleset=pset, outputdt=timedelta(hours=1), chunks=None, create_new_zarrfile=False
     )
-    validate_simple_repr(ParticleFile, kwargs)
+    assert_simple_repr(ParticleFile, kwargs)
 
 
 def test_field_repr():
     field = create_fieldset_unit_mesh().U
     assert valid_indentation(repr(field))
+
+
+def test_fieldset_repr():
+    fieldset = create_fieldset_unit_mesh()
+    assert valid_indentation(repr(fieldset))
 
 
 def test_particleset_repr():
