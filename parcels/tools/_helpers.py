@@ -68,6 +68,7 @@ def patch_docstring(obj: Callable, extra: str) -> None:
 def field_repr(field: Field) -> str:
     """Return a pretty repr for Field"""
     out = f"""<{type(field).__name__}>
+    name            : {field.name!r}
     grid            : {field.grid!r}
     extrapolate time: {field.allow_time_extrapolation!r}
     time_periodic   : {field.time_periodic!r}
