@@ -27,7 +27,7 @@ from parcels.kernel import Kernel
 from parcels.particle import JITParticle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
-from parcels.tools._helpers import deprecated, deprecated_made_private
+from parcels.tools._helpers import deprecated, deprecated_made_private, timedelta_to_float
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
@@ -188,12 +188,13 @@ class ParticleSet:
                     lon.size == kwargs[kwvar].size
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
-        self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, timedelta) else repeatdt
+        self.repeatdt = timedelta_to_float(repeatdt) if repeatdt is not None else None
+
         if self.repeatdt:
             if self.repeatdt <= 0:
-                raise "Repeatdt should be > 0"
+                raise ValueError("Repeatdt should be > 0")
             if time[0] and not np.allclose(time, time[0]):
-                raise "All Particle.time should be the same when repeatdt is not None"
+                raise ValueError("All Particle.time should be the same when repeatdt is not None")
             self._repeatpclass = pclass
             self._repeatkwargs = kwargs
             self._repeatkwargs.pop("partition_function", None)
@@ -981,13 +982,13 @@ class ParticleSet:
         pyfunc=AdvectionRK4,
         pyfunc_inter=None,
         endtime=None,
-        runtime=None,
-        dt=1.0,
+        runtime: float | timedelta | np.timedelta64 | None = None,
+        dt: float | timedelta | np.timedelta64 = 1.0,
         output_file=None,
         verbose_progress=True,
         postIterationCallbacks=None,
-        callbackdt=None,
-        delete_cfiles=True,
+        callbackdt: float | timedelta | np.timedelta64 | None = None,
+        delete_cfiles: bool = True,
     ):
         """Execute a given kernel function over the particle set for multiple timesteps.
 
@@ -1067,22 +1068,23 @@ class ParticleSet:
             if self.time_origin.calendar is None:
                 raise NotImplementedError("If fieldset.time_origin is not a date, execution endtime must be a double")
             endtime = self.time_origin.reltime(endtime)
-        if isinstance(runtime, timedelta):
-            runtime = runtime.total_seconds()
-        if isinstance(dt, timedelta):
-            dt = dt.total_seconds()
+
+        if runtime is not None:
+            runtime = timedelta_to_float(runtime)
+
+        dt = timedelta_to_float(dt)
+
         if abs(dt) <= 1e-6:
             raise ValueError("Time step dt is too small")
         if (dt * 1e6) % 1 != 0:
             raise ValueError("Output interval should not have finer precision than 1e-6 s")
-        outputdt = output_file.outputdt if output_file else np.inf
-        if isinstance(outputdt, timedelta):
-            outputdt = outputdt.total_seconds()
+        outputdt = timedelta_to_float(output_file.outputdt) if output_file else np.inf
+
         if np.isfinite(outputdt):
             _warn_outputdt_release_desync(outputdt, self.particledata.data["time_nextloop"])
 
-        if isinstance(callbackdt, timedelta):
-            callbackdt = callbackdt.total_seconds()
+        if callbackdt is not None:
+            callbackdt = timedelta_to_float(callbackdt)
 
         assert runtime is None or runtime >= 0, "runtime must be positive"
         assert outputdt is None or outputdt >= 0, "outputdt must be positive"

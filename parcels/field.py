@@ -1,11 +1,10 @@
 import collections
-import datetime
 import math
 import warnings
 from collections.abc import Iterable
 from ctypes import POINTER, Structure, c_float, c_int, pointer
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
 import numpy as np
@@ -21,7 +20,7 @@ from parcels._typing import (
     assert_valid_gridindexingtype,
     assert_valid_interp_method,
 )
-from parcels.tools._helpers import deprecated_made_private
+from parcels.tools._helpers import deprecated_made_private, timedelta_to_float
 from parcels.tools.converters import (
     Geographic,
     GeographicPolar,
@@ -150,6 +149,8 @@ class Field:
     * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
     """
 
+    _cast_data_dtype: type[np.float32] | type[np.float64]
+
     def __init__(
         self,
         name: str | tuple[str, str],
@@ -162,16 +163,16 @@ class Field:
         mesh: Mesh = "flat",
         timestamps=None,
         fieldtype=None,
-        transpose=False,
-        vmin=None,
-        vmax=None,
-        cast_data_dtype="float32",
-        time_origin=None,
+        transpose: bool = False,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        cast_data_dtype: type[np.float32] | type[np.float64] | Literal["float32", "float64"] = "float32",
+        time_origin: TimeConverter | None = None,
         interp_method: InterpMethod = "linear",
         allow_time_extrapolation: bool | None = None,
         time_periodic: TimePeriodic = False,
         gridindexingtype: GridIndexingType = "nemo",
-        to_write=False,
+        to_write: bool = False,
         **kwargs,
     ):
         if kwargs.get("netcdf_decodewarning") is not None:
@@ -247,8 +248,8 @@ class Field:
                 "Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.timedelta object."
             )
         if self.time_periodic is not False:
-            if isinstance(self.time_periodic, datetime.timedelta):
-                self.time_periodic = self.time_periodic.total_seconds()
+            self.time_periodic = timedelta_to_float(self.time_periodic)
+
             if not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
                 if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
                     raise ValueError("Time series provided is longer than the time_periodic parameter")
@@ -258,11 +259,19 @@ class Field:
 
         self.vmin = vmin
         self.vmax = vmax
-        self._cast_data_dtype = cast_data_dtype
-        if self.cast_data_dtype == "float32":
-            self._cast_data_dtype = np.float32
-        elif self.cast_data_dtype == "float64":
-            self._cast_data_dtype = np.float64
+
+        match cast_data_dtype:
+            case "float32":
+                self._cast_data_dtype = np.float32
+            case "float64":
+                self._cast_data_dtype = np.float64
+            case _:
+                self._cast_data_dtype = cast_data_dtype
+
+        if self.cast_data_dtype not in [np.float32, np.float64]:
+            raise ValueError(
+                f"Unsupported cast_data_dtype {self.cast_data_dtype!r}. Choose either: 'float32' or 'float64'"
+            )
 
         if not self.grid.defer_load:
             self.data = self._reshape(self.data, transpose)
@@ -797,7 +806,7 @@ class Field:
         lat = da[dimensions["lat"]].values
 
         time_origin = TimeConverter(time[0])
-        time = time_origin.reltime(time)
+        time = time_origin.reltime(time)  # type: ignore[assignment]
 
         grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         kwargs["time_periodic"] = time_periodic
