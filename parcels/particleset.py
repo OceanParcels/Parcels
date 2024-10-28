@@ -1078,7 +1078,7 @@ class ParticleSet:
         outputdt = output_file.outputdt if output_file else np.inf
         if isinstance(outputdt, timedelta):
             outputdt = outputdt.total_seconds()
-        if np.isfinite(outputdt) is not None:
+        if np.isfinite(outputdt):
             _warn_outputdt_release_desync(outputdt, self.particledata.data["time_nextloop"])
 
         if isinstance(callbackdt, timedelta):
