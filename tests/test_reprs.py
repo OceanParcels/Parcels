@@ -4,6 +4,7 @@ from typing import Any
 
 import numpy as np
 
+import parcels
 from parcels import Grid, ParticleFile, TimeConverter, Variable
 from parcels.grid import RectilinearGrid
 from tests.utils import create_fieldset_unit_mesh, create_simple_pset
@@ -89,6 +90,12 @@ def test_field_repr():
     assert valid_indentation(repr(field))
 
 
+def test_vectorfield_repr():
+    field = create_fieldset_unit_mesh().UV
+    assert isinstance(field, parcels.VectorField)
+    assert valid_indentation(repr(field))
+
+
 def test_fieldset_repr():
     fieldset = create_fieldset_unit_mesh()
     assert valid_indentation(repr(fieldset))
@@ -100,3 +107,8 @@ def test_particleset_repr():
 
     pset = create_simple_pset(n=15)
     valid_indentation(repr(pset))
+
+
+def capture(s):
+    with open("file.txt", "a") as f:
+        f.write(s)

@@ -21,7 +21,7 @@ from parcels._typing import (
     assert_valid_gridindexingtype,
     assert_valid_interp_method,
 )
-from parcels.tools._helpers import deprecated_made_private, field_repr
+from parcels.tools._helpers import default_repr, deprecated_made_private, field_repr
 from parcels.tools.converters import (
     Geographic,
     GeographicPolar,
@@ -1911,6 +1911,13 @@ class VectorField:
             if W is not None and self.U.gridindexingtype != "croco":
                 assert W.interp_method == "cgrid_velocity", "Interpolation methods of U and W are not the same."
                 assert self._check_grid_dimensions(U.grid, W.grid), "Dimensions of U and W are not the same."
+
+    def __repr__(self):
+        return f"""<{type(self).__name__}>
+    name: {self.name!r}
+    U: {default_repr(self.U)}
+    V: {default_repr(self.V)}
+    W: {default_repr(self.W)}"""
 
     @staticmethod
     def _check_grid_dimensions(grid1, grid2):
