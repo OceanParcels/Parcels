@@ -1242,7 +1242,7 @@ class ParticleSet:
 
 def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_times: Iterable[float]):
     """Gives the user a warning if the release time isn't a multiple of outputdt."""
-    if any((np.isfinite(t) and (t-starttime) % outputdt != 0) for t in release_times):
+    if any((np.isfinite(t) and (t - starttime) % outputdt != 0) for t in release_times):
         warnings.warn(
             "Some of the particles have a start time difference that is not a multiple of outputdt. "
             "This could cause the first output of some of the particles that start later "
