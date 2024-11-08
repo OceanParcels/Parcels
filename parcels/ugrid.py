@@ -16,7 +16,6 @@ from parcels.basegrid import CGrid
 # Note :
 # For variable placement in FESOM - see https://fesom2.readthedocs.io/en/latest/geometry.html
 __all__ = [
-    "UGridType",
     "CGrid",
     "UGrid"
 ]
@@ -85,3 +84,22 @@ class UGrid(BaseGrid):
 
         
 
+    @staticmethod
+    def create_grid(
+        lon: npt.ArrayLike,
+        lat: npt.ArrayLike,
+        face_node_connectivity: npt.ArrayLike,
+        depth,
+        time,
+        time_origin,
+        mesh: Mesh,
+        **kwargs,
+    ):
+        lon = np.array(lon)
+        lat = np.array(lat)
+        face_node_connectivity = np.array(face_node_connectivity)
+
+        if depth is not None:
+            depth = np.array(depth)
+
+        return UGrid(lon, lat, face_node_connectivity, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
