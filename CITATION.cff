@@ -16,7 +16,7 @@ authors:
   - name: "The Parcels contributors"
     website: "https://github.com/OceanParcels/parcels/graphs/contributors"
 title: "Parcels"
-version: 2.4.2
-doi: 10.5281/zenodo.8010997
-date-released: 2023-06-06
+version: 3.1.0
+doi: 10.5281/zenodo.14001000
+date-released: 2024-10-28
 url: "https://github.com/OceanParcels/parcels"
