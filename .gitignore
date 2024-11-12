@@ -31,3 +31,4 @@ dist/parcels*.egg
 parcels/examples/particle*.png
 parcels/_version_setup.py
 /.pytest_cache/
+.asv
