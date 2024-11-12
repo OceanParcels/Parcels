@@ -5,6 +5,8 @@ policy on obsolete dependencies is being followed. Print a pretty report :)
 
 Adapted from xarray:
 https://github.com/pydata/xarray/blob/a04d857a03d1fb04317d636a7f23239cb9034491/ci/min_deps_check.py
+
+See licenses/XARRAY_LICENSE for license details.
 """
 
 from __future__ import annotations
