@@ -136,7 +136,13 @@ def fieldset_repr(fieldset: FieldSet) -> str:
 
 
 def default_repr(obj: Any):
+    if is_builtin_object(obj):
+        return repr(obj)
     return object.__repr__(obj)
+
+
+def is_builtin_object(obj):
+    return obj.__class__.__module__ == "builtins"
 
 
 def timedelta_to_float(dt: float | timedelta | np.timedelta64) -> float:
