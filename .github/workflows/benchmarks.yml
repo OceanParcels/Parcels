@@ -28,14 +28,16 @@ jobs:
       - name: Set up conda environment
         uses: mamba-org/setup-micromamba@v2
         with:
+          micromamba-version: "1.5.10-0"
           environment-file: ${{env.CONDA_ENV_FILE}}
-          environment-name: xarray-tests
+          environment-name: parcels-dev
           cache-environment: true
           cache-environment-key: "${{runner.os}}-${{runner.arch}}-py${{env.PYTHON_VERSION}}-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}-benchmark"
           # add "build" because of https://github.com/airspeed-velocity/asv/issues/1385
           create-args: >-
             python-build
-            mamba
+            asv
+            mamba<=1.5.10
 
       - name: Run benchmarks
         shell: bash -l {0}
