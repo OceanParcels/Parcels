@@ -14,9 +14,9 @@ Progress on compatibility of asv with libmambapy 2 is documented at [this issue]
 
 ## Running the benchmarks
 
-The benchmarks can be run locally using the following command:
+The benchmarks are located in the `asv_bench` folder can be run locally using the following commands:
 
 ```bash
+cd asv_bench
 asv run
-
 ```

@@ -77,6 +77,7 @@ From there:
 Here is a short overview of a few different commands that we use during development:
 
 .. code-block:: bash
+
    # Run unit-tests
    pytest
 
@@ -86,6 +87,8 @@ Here is a short overview of a few different commands that we use during developm
    # Build the documentation. This launches a server, automatically rebuilt when changes are made
    sphinx-autobuild --ignore "*.zip" docs docs/_build
 
+
+To run performance benchmarks, see the `the benchmarking page <benchmarking.md>`_.
 
 Code guidelines
 ~~~~~~~~~~~~~~~
