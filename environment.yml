@@ -2,7 +2,7 @@ name: parcels
 channels:
   - conda-forge
 dependencies:
-  - python=3.10
+  - python>=3.10
   - cgen
   - ffmpeg>=3.2.3
   - git
