@@ -483,7 +483,18 @@ def test_ofam_3D(mode, chunk_mode):
 
 @pytest.mark.parametrize("mode", ["jit"])
 @pytest.mark.parametrize(
-    "chunk_mode", [False, "auto", "specific_same", "specific_different"]
+    "chunk_mode",
+    [
+        False,
+        pytest.param(
+            "auto",
+            marks=pytest.mark.xfail(
+                reason="Dask v2024.11.0 caused auto chunking to fail. See #1762"
+            ),
+        ),
+        "specific_same",
+        "specific_different",
+    ],
 )
 @pytest.mark.parametrize("using_add_field", [False, True])
 def test_mitgcm(mode, chunk_mode, using_add_field):
