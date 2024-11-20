@@ -1,7 +1,6 @@
 name: Setup Conda and install parcels
 description: >
-  In-repo composite action to setup Conda and install parcels. Installation of parcels relies on
-  `setup.py` file being available in the root. For general setup of Anaconda environments, just use
+  In-repo composite action to setup micromamba and install parcels. For general setup of Anaconda environments, you can also use
   the `conda-incubator/setup-miniconda` action (setting C variables as required).
 inputs:
   environment-file:
@@ -13,20 +12,27 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set environment variables
+      shell: bash -l {0}
+      run: |
+        echo "TODAY=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
     - name: Configure pagefile # Windows compatability fix as per PR #1279
       if: ${{ runner.os == 'Windows' }}
       uses: al-cheb/configure-pagefile-action@v1.3
       with:
         minimum-size: 8GB
-    - name: Install miniconda (${{ inputs.environment-file }})
-      uses: conda-incubator/setup-miniconda@v3
+    - name: Setup micromamba
+      uses: mamba-org/setup-micromamba@v2
       with:
         environment-file: ${{ inputs.environment-file }}
-        python-version: ${{ inputs.python-version }}
-        channels: conda-forge
+        environment-name: parcels-dev
+        cache-environment: true
+        cache-environment-key: "${{runner.os}}-${{runner.arch}}-py${{inputs.python-version}}-${{env.TODAY}}-${{hashFiles(inputs.environment-file)}}"
+        create-args: >-
+          python=${{inputs.python-version}}
     - name: MPI support
       if: ${{ ! (runner.os == 'Windows') }}
-      run: conda install -c conda-forge mpich mpi4py
+      run: micromamba install -c conda-forge mpich mpi4py -y
       shell: bash -el {0}
     - name: Install parcels
       run: pip install .
