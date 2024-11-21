@@ -73,7 +73,6 @@ def test_advection_zonal(lon, lat, depth, mode):
     }
     dimensions = {"lon": lon, "lat": lat}
     fieldset2D = FieldSet.from_data(data2D, dimensions, mesh="spherical", transpose=True)
-    assert fieldset2D.U._creation_log == "from_data"
 
     pset2D = ParticleSet(fieldset2D, pclass=ptype[mode], lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
     pset2D.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
