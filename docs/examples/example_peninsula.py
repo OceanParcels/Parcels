@@ -59,22 +59,22 @@ def peninsula_fieldset(xdim, ydim, mesh="flat", grid_type="A"):
     x, y = np.meshgrid(La, Wa, sparse=True, indexing="xy")
     P = (u0 * R**2 * y / ((x - x0) ** 2 + y**2) - u0 * y) / 1e3
 
+    # Set land points to zero
+    landpoints = P >= 0.0
+    P[landpoints] = 0.0
+
     if grid_type == "A":
         U = u0 - u0 * R**2 * ((x - x0) ** 2 - y**2) / (((x - x0) ** 2 + y**2) ** 2)
         V = -2 * u0 * R**2 * ((x - x0) * y) / (((x - x0) ** 2 + y**2) ** 2)
+        U[landpoints] = 0.0
+        V[landpoints] = 0.0
     elif grid_type == "C":
         U = np.zeros(P.shape)
         V = np.zeros(P.shape)
-        V[:, 1:] = P[:, 1:] - P[:, :-1]
-        U[1:, :] = -(P[1:, :] - P[:-1, :])
+        V[:, 1:] = (P[:, 1:] - P[:, :-1]) / (La[1] - La[0]) * 1e3
+        U[1:, :] = -(P[1:, :] - P[:-1, :]) / (Wa[1] - Wa[0]) * 1e3
     else:
         raise RuntimeError(f"Grid_type {grid_type} is not a valid option")
-
-    # Set land points to NaN
-    landpoints = P >= 0.0
-    P[landpoints] = np.nan
-    U[landpoints] = np.nan
-    V[landpoints] = np.nan
 
     # Convert from m to lat/lon for spherical meshes
     lon = La / 1852.0 / 60.0 if mesh == "spherical" else La
