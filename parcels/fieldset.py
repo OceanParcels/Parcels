@@ -1446,21 +1446,24 @@ class FieldSet:
             raise OSError(f"Module {filename}.{modulename} does not return a FieldSet object")
         return fieldset
 
-    def get_fields(self) -> list[Field | VectorField]:
-        """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
+    def get_fields(self) -> list[Field | VectorField | NestedField]:
+        """Returns a list of all the :class:`parcels.field.Field`, :class:`parcels.field.VectorField`, and :class:`parcels.field.NestedField`
         objects associated with this FieldSet.
         """
         fields = []
-        for v in self.__dict__.values():
-            if type(v) in [Field, VectorField]:
-                if v not in fields:
-                    fields.append(v)
-            elif isinstance(v, NestedField):
-                if v not in fields:
-                    fields.append(v)
-                for v2 in v:
-                    if v2 not in fields:
-                        fields.append(v2)
+        for value in self.__dict__.values():
+            if not isinstance(value, (Field, VectorField, NestedField)):
+                continue
+
+            field = value
+
+            if field not in fields:
+                fields.append(field)
+
+            if isinstance(field, NestedField):
+                for f in field:
+                    if f not in fields:
+                        fields.append(f)
         return fields
 
     def add_constant(self, name, value):
