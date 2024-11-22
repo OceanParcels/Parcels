@@ -41,6 +41,8 @@ class FieldSet:
         self.gridset = GridSet()
         self._completed: bool = False
         self._particlefile: ParticleFile | None = None
+        self._constants: dict[str, float] = {}
+
         if U:
             self.add_field(U, "U")
             # see #1663 for type-ignore reason
@@ -55,6 +57,12 @@ class FieldSet:
 
         self.compute_on_defer = None
         self._add_UVfield()
+
+    def __getattr__(self, name) -> float:
+        try:
+            return self._constants[name]
+        except KeyError as e:
+            raise AttributeError(f"FieldSet has no attribute {name}") from e
 
     def __repr__(self):
         return fieldset_repr(self)
@@ -1486,7 +1494,7 @@ class FieldSet:
         `Diffusion <../examples/tutorial_diffusion.ipynb>`__
         `Periodic boundaries <../examples/tutorial_periodic_boundaries.ipynb>`__
         """
-        setattr(self, name, value)
+        self._constants[name] = value
 
     def add_periodic_halo(self, zonal=False, meridional=False, halosize=5):
         """Add a 'halo' to all :class:`parcels.field.Field` objects in a FieldSet,
