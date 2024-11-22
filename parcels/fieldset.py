@@ -208,14 +208,16 @@ class FieldSet:
         name = field.name if name is None else name
 
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
-            raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
+            raise ValueError(f"FieldSet already has a Field with name '{name}'")
+
+        setattr(self, name, field)
+
+        # Update references
         if isinstance(field, NestedField):
-            setattr(self, name, field)
             for fld in field:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
         else:
-            setattr(self, name, field)
             self.gridset.add_grid(field)
             field.fieldset = self
 
