@@ -42,6 +42,7 @@ class FieldSet:
         self._completed: bool = False
         self._particlefile: ParticleFile | None = None
         self._constants: dict[str, float] = {}
+        self._fields: dict[str, Field | VectorField | NestedField] = {}
 
         if U:
             self.add_field(U, "U")
@@ -60,9 +61,12 @@ class FieldSet:
 
     def __getattr__(self, name) -> float:
         try:
-            return self._constants[name]
-        except KeyError as e:
-            raise AttributeError(f"FieldSet has no attribute {name}") from e
+            return self._fields[name]
+        except KeyError:
+            try:
+                return self._constants[name]
+            except KeyError:
+                raise AttributeError(f"FieldSet has no attribute {name!r}")
 
     def __repr__(self):
         return fieldset_repr(self)
@@ -210,7 +214,7 @@ class FieldSet:
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
             raise ValueError(f"FieldSet already has a Field with name '{name}'")
 
-        setattr(self, name, field)
+        self._fields[name] = field
 
         # Update references
         if isinstance(field, NestedField):
@@ -249,7 +253,7 @@ class FieldSet:
         vfield : parcels.VectorField
             class:`parcels.field.VectorField` object to be added
         """
-        setattr(self, vfield.name, vfield)
+        self._fields[vfield.name] = vfield
         for v in vfield.__dict__.values():
             if isinstance(v, Field) and (v not in self.get_fields()):
                 self.add_field(v)
@@ -1461,12 +1465,7 @@ class FieldSet:
         objects associated with this FieldSet.
         """
         fields = []
-        for value in self.__dict__.values():
-            if not isinstance(value, (Field, VectorField, NestedField)):
-                continue
-
-            field = value
-
+        for field in self._fields.values():
             if field not in fields:
                 fields.append(field)
 
