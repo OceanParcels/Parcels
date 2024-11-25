@@ -37,7 +37,7 @@ from parcels.tools.statuscodes import (
 )
 from parcels.tools.warnings import FieldSetWarning, _deprecated_param_netcdf_decodewarning
 
-from .fieldfilebuffer import (
+from ._fieldfilebuffer import (
     DaskFileBuffer,
     DeferredDaskFileBuffer,
     DeferredNetcdfFileBuffer,

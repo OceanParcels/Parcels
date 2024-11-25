@@ -23,8 +23,8 @@ from parcels import (
     TimeExtrapolationError,
     Variable,
 )
+from parcels._fieldfilebuffer import DaskFileBuffer
 from parcels.field import Field, VectorField
-from parcels.fieldfilebuffer import DaskFileBuffer
 from parcels.tools.converters import (
     GeographicPolar,
     TimeConverter,
