@@ -63,6 +63,9 @@ jobs:
       matrix:
         os: [macos, ubuntu, windows]
         python-version: ["3.12"]
+        include:
+          - os: ubuntu
+            python-version: "3.10"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,7 +75,7 @@ jobs:
           environment-file: environment.yml
       - name: Integration test
         run: |
-          coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html docs/examples
+          coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html" --self-contained-html docs/examples
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v4.6.0
@@ -84,8 +87,8 @@ jobs:
         if: ${{ always() }} # Always run this step, even if tests fail
         uses: actions/upload-artifact@v4
         with:
-          name: Integration test report ${{ matrix.os }}
-          path: ${{ matrix.os }}_integration_test_report.html
+          name: Integration test report ${{ matrix.os }}-${{ matrix.python-version }}
+          path: ${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html
   merge-test-artifacts:
     runs-on: ubuntu-latest
     needs:
