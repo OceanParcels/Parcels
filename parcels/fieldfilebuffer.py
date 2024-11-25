@@ -188,7 +188,10 @@ class NetcdfFileBuffer(_FileBuffer):
         )
 
     def _apply_indices(self, data, ti):
-        if len(data.shape) == 2:
+        if len(data.shape) == 1:
+            if self.indices["depth"] is not None:
+                data = data[self.indices["depth"]]
+        elif len(data.shape) == 2:
             if self.nolonlatindices:
                 pass
             else:

@@ -76,6 +76,26 @@ def _deal_with_errors(error, key, vector_type: VectorType):
         return 0
 
 
+def _croco_from_z_to_sigma_scipy(fieldset, time, z, y, x, particle):
+    """Calculate local sigma level of the particle, by linearly interpolating the
+    scaling function that maps sigma to depth (using local ocean depth H,
+    sea-surface Zeta and stretching parameters Cs_w and hc).
+    See also https://croco-ocean.gitlabpages.inria.fr/croco_doc/model/model.grid.html#vertical-grid-parameters
+    """
+    h = fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
+    zeta = fieldset.Zeta.eval(time, 0, y, x, particle=particle, applyConversion=False)
+    sigma_levels = fieldset.U.grid.depth
+    z0 = fieldset.hc * sigma_levels + (h - fieldset.hc) * fieldset.Cs_w.data[0, :, 0, 0]
+    zvec = z0 + zeta * (1 + (z0 / h))
+    zinds = zvec <= z
+    if z >= zvec[-1]:
+        zi = len(zvec) - 2
+    else:
+        zi = zinds.argmin() - 1 if z >= zvec[0] else 0
+
+    return sigma_levels[zi] + (z - zvec[zi]) * (sigma_levels[zi + 1] - sigma_levels[zi]) / (zvec[zi + 1] - zvec[zi])
+
+
 class Field:
     """Class that encapsulates access to field data.
 
@@ -617,18 +637,23 @@ class Field:
 
         _grid_fb_class = NetcdfFileBuffer
 
-        with _grid_fb_class(
-            lonlat_filename,
-            dimensions,
-            indices,
-            netcdf_engine,
-            gridindexingtype=gridindexingtype,
-        ) as filebuffer:
-            lon, lat = filebuffer.lonlat
-            indices = filebuffer.indices
-            # Check if parcels_mesh has been explicitly set in file
-            if "parcels_mesh" in filebuffer.dataset.attrs:
-                mesh = filebuffer.dataset.attrs["parcels_mesh"]
+        if "lon" in dimensions and "lat" in dimensions:
+            with _grid_fb_class(
+                lonlat_filename,
+                dimensions,
+                indices,
+                netcdf_engine,
+                gridindexingtype=gridindexingtype,
+            ) as filebuffer:
+                lon, lat = filebuffer.lonlat
+                indices = filebuffer.indices
+                # Check if parcels_mesh has been explicitly set in file
+                if "parcels_mesh" in filebuffer.dataset.attrs:
+                    mesh = filebuffer.dataset.attrs["parcels_mesh"]
+        else:
+            lon = 0
+            lat = 0
+            mesh = "flat"
 
         if "depth" in dimensions:
             with _grid_fb_class(
@@ -1537,8 +1562,8 @@ class Field:
         """
         (ti, periods) = self._time_index(time)
         time -= periods * (self.grid.time_full[-1] - self.grid.time_full[0])
-        if self.gridindexingtype == "croco" and self is not self.fieldset.H:
-            z = z / self.fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
+        if self.gridindexingtype == "croco" and self not in [self.fieldset.H, self.fieldset.Zeta]:
+            z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
         if ti < self.grid.tdim - 1 and time > self.grid.time[ti]:
             f0 = self._spatial_interpolation(ti, z, y, x, time, particle=particle)
             f1 = self._spatial_interpolation(ti + 1, z, y, x, time, particle=particle)
@@ -2252,7 +2277,7 @@ class VectorField:
             (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
         else:
             if self.gridindexingtype == "croco":
-                z = z / self.fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
+                z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
             (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
