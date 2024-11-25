@@ -1,4 +1,6 @@
 from datetime import timedelta
+from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import parcels
@@ -7,7 +9,7 @@ import xarray as xr
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 
 
-def run_mitgcm_zonally_reentrant(mode):
+def run_mitgcm_zonally_reentrant(mode: Literal["scipy", "jit"], path: Path):
     """Function that shows how to load MITgcm data in a zonally periodic domain."""
     data_folder = parcels.download_example_dataset("MITgcm_example_data")
     filenames = {
@@ -41,7 +43,7 @@ def run_mitgcm_zonally_reentrant(mode):
         size=10,
     )
     pfile = parcels.ParticleFile(
-        "MIT_particles_" + str(mode) + ".zarr",
+        str(path),
         pset,
         outputdt=timedelta(days=1),
         chunks=(len(pset), 1),
@@ -52,12 +54,15 @@ def run_mitgcm_zonally_reentrant(mode):
     )
 
 
-def test_mitgcm_output_compare():
-    run_mitgcm_zonally_reentrant("scipy")
-    run_mitgcm_zonally_reentrant("jit")
+def test_mitgcm_output_compare(tmpdir):
+    def get_path(mode: Literal["scipy", "jit"]) -> Path:
+        return tmpdir / f"MIT_particles_{mode}.zarr"
 
-    ds_jit = xr.open_zarr("MIT_particles_jit.zarr")
-    ds_scipy = xr.open_zarr("MIT_particles_scipy.zarr")
+    for mode in ["scipy", "jit"]:
+        run_mitgcm_zonally_reentrant(mode, get_path(mode))
+
+    ds_jit = xr.open_zarr(get_path("jit"))
+    ds_scipy = xr.open_zarr(get_path("scipy"))
 
     np.testing.assert_allclose(ds_jit.lat.data, ds_scipy.lat.data)
     np.testing.assert_allclose(ds_jit.lon.data, ds_scipy.lon.data)
