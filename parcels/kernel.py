@@ -42,7 +42,7 @@ from parcels.tools.statuscodes import (
 )
 from parcels.tools.warnings import KernelWarning
 
-__all__ = ["Kernel", "BaseKernel"]
+__all__ = ["BaseKernel", "Kernel"]
 
 
 class BaseKernel(abc.ABC):

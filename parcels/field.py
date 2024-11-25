@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 
     from parcels.fieldset import FieldSet
 
-__all__ = ["Field", "VectorField", "NestedField"]
+__all__ = ["Field", "NestedField", "VectorField"]
 
 
 def _isParticle(key):
@@ -1630,10 +1630,8 @@ class Field:
         g = self.grid
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid._load_chunk)):
-                if (
-                    g._load_chunk[block_id] == g._chunk_loading_requested
-                    or g._load_chunk[block_id] in g._chunk_loaded
-                    and self._data_chunks[block_id] is None
+                if g._load_chunk[block_id] == g._chunk_loading_requested or (
+                    g._load_chunk[block_id] in g._chunk_loaded and self._data_chunks[block_id] is None
                 ):
                     block = self._get_block(block_id)
                     self._data_chunks[block_id] = np.array(

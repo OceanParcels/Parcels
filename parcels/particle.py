@@ -6,7 +6,7 @@ import numpy as np
 
 from parcels.tools.statuscodes import StatusCode
 
-__all__ = ["ScipyParticle", "JITParticle", "Variable", "ScipyInteractionParticle"]
+__all__ = ["JITParticle", "ScipyInteractionParticle", "ScipyParticle", "Variable"]
 
 indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 

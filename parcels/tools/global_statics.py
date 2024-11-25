@@ -15,7 +15,7 @@ except:
     USER_ID = "tmp"
 
 
-__all__ = ["cleanup_remove_files", "cleanup_unload_lib", "get_package_dir", "get_cache_dir"]
+__all__ = ["cleanup_remove_files", "cleanup_unload_lib", "get_cache_dir", "get_package_dir"]
 
 
 def cleanup_remove_files(lib_file, log_file):

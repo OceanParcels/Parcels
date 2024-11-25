@@ -12,14 +12,14 @@ from parcels.tools.converters import TimeConverter
 from parcels.tools.warnings import FieldSetWarning
 
 __all__ = [
-    "GridType",
-    "GridCode",
-    "RectilinearZGrid",
-    "RectilinearSGrid",
-    "CurvilinearZGrid",
-    "CurvilinearSGrid",
     "CGrid",
+    "CurvilinearSGrid",
+    "CurvilinearZGrid",
     "Grid",
+    "GridCode",
+    "GridType",
+    "RectilinearSGrid",
+    "RectilinearZGrid",
 ]
 
 

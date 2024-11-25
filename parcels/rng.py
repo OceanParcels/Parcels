@@ -10,7 +10,7 @@ from parcels.compilation.codecompiler import GNUCompiler
 from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools.loggers import logger
 
-__all__ = ["seed", "random", "uniform", "randint", "normalvariate", "expovariate", "vonmisesvariate"]
+__all__ = ["expovariate", "normalvariate", "randint", "random", "seed", "uniform", "vonmisesvariate"]
 
 
 class RandomC:
