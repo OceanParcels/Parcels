@@ -57,7 +57,7 @@ def peninsula_fieldset(xdim, ydim, mesh="flat", grid_type="A"):
 
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing="xy")
-    P = (u0 * R**2 * y / ((x - x0) ** 2 + y**2) - u0 * y)
+    P = u0 * R**2 * y / ((x - x0) ** 2 + y**2) - u0 * y
 
     # Set land points to zero
     landpoints = P >= 0.0
