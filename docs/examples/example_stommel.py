@@ -3,8 +3,9 @@ from argparse import ArgumentParser
 from datetime import timedelta
 
 import numpy as np
-import parcels
 import pytest
+
+import parcels
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 method = {
