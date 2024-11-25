@@ -57,24 +57,24 @@ def peninsula_fieldset(xdim, ydim, mesh="flat", grid_type="A"):
 
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing="xy")
-    P = (u0 * R**2 * y / ((x - x0) ** 2 + y**2) - u0 * y) / 1e3
+    P = u0 * R**2 * y / ((x - x0) ** 2 + y**2) - u0 * y
+
+    # Set land points to zero
+    landpoints = P >= 0.0
+    P[landpoints] = 0.0
 
     if grid_type == "A":
         U = u0 - u0 * R**2 * ((x - x0) ** 2 - y**2) / (((x - x0) ** 2 + y**2) ** 2)
         V = -2 * u0 * R**2 * ((x - x0) * y) / (((x - x0) ** 2 + y**2) ** 2)
+        U[landpoints] = 0.0
+        V[landpoints] = 0.0
     elif grid_type == "C":
         U = np.zeros(P.shape)
         V = np.zeros(P.shape)
-        V[:, 1:] = P[:, 1:] - P[:, :-1]
-        U[1:, :] = -(P[1:, :] - P[:-1, :])
+        V[:, 1:] = (P[:, 1:] - P[:, :-1]) / (La[1] - La[0])
+        U[1:, :] = -(P[1:, :] - P[:-1, :]) / (Wa[1] - Wa[0])
     else:
         raise RuntimeError(f"Grid_type {grid_type} is not a valid option")
-
-    # Set land points to NaN
-    landpoints = P >= 0.0
-    P[landpoints] = np.nan
-    U[landpoints] = np.nan
-    V[landpoints] = np.nan
 
     # Convert from m to lat/lon for spherical meshes
     lon = La / 1852.0 / 60.0 if mesh == "spherical" else La
@@ -185,7 +185,7 @@ def test_peninsula_fieldset(mode, mesh, tmpdir):
     pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.abs(pset.p_start - pset.p)
-    assert (err_adv <= 1.0e-3).all()
+    assert (err_adv <= 1.0).all()
     # Test Field sampling accuracy by comparing kernel against Field sampling
     err_smpl = np.array(
         [
@@ -196,7 +196,7 @@ def test_peninsula_fieldset(mode, mesh, tmpdir):
             for i in range(pset.size)
         ]
     )
-    assert (err_smpl <= 1.0e-3).all()
+    assert (err_smpl <= 1.0).all()
 
 
 @pytest.mark.parametrize(
@@ -213,7 +213,7 @@ def test_peninsula_fieldset_AnalyticalAdvection(mode, mesh, tmpdir):
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
 
-    tol = {"scipy": 3.0e-1, "jit": 1.0e-1}.get(mode)
+    tol = {"scipy": 3.0e2, "jit": 1.0e2}.get(mode)
     assert (err_adv <= tol).all()
 
 
@@ -239,7 +239,7 @@ def test_peninsula_file(mode, mesh, tmpdir):
     pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.abs(pset.p_start - pset.p)
-    assert (err_adv <= 1.0e-3).all()
+    assert (err_adv <= 1.0).all()
     # Test Field sampling accuracy by comparing kernel against Field sampling
     err_smpl = np.array(
         [
@@ -250,7 +250,7 @@ def test_peninsula_file(mode, mesh, tmpdir):
             for i in range(pset.size)
         ]
     )
-    assert (err_smpl <= 1.0e-3).all()
+    assert (err_smpl <= 1.0).all()
 
 
 def main(args=None):
