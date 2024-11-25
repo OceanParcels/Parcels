@@ -713,7 +713,7 @@ class FieldSet:
         filenames,
         variables,
         dimensions,
-        hc: float,
+        hc: float | None = None,
         indices=None,
         mesh="spherical",
         allow_time_extrapolation=None,
@@ -728,8 +728,8 @@ class FieldSet:
         fields from CROCO, in order to account for the sigma-grid.
         The horizontal interpolation uses the MITgcm grid indexing as described in FieldSet.from_mitgcm().
 
-        The sigma grid scaling means that FieldSet.from_croco() requires variables
-        ``H: h`` and ``Zeta: zeta``, as well as he ``hc`` parameter to work.
+        In 3D, when there is a ``depth`` dimension, the sigma grid scaling means that FieldSet.from_croco()
+        requires variables ``H: h`` and ``Zeta: zeta``, as well as he ``hc`` parameter to work.
 
         See `the CROCO 3D tutorial <../examples/tutorial_croco_3D.ipynb>`__ for more infomation.
         """
@@ -741,7 +741,9 @@ class FieldSet:
             )
 
         dimsU = dimensions["U"] if "U" in dimensions else dimensions
-        if "depth" in dimsU:
+        croco3D = True if "depth" in dimsU else False
+
+        if croco3D:
             if "W" in variables and variables["W"] == "omega":
                 warnings.warn(
                     "Note that Parcels expects 'w' for vertical velicites in 3D CROCO fields.\nSee https://docs.oceanparcels.org/en/latest/examples/tutorial_croco_3D.html for more information",
@@ -749,9 +751,9 @@ class FieldSet:
                     stacklevel=2,
                 )
             if "H" not in variables:
-                raise ValueError("FieldSet.from_croco() requires a field 'H' for the bathymetry")
+                raise ValueError("FieldSet.from_croco() requires a bathymetry field 'H' for 3D CROCO fields")
             if "Zeta" not in variables:
-                raise ValueError("FieldSet.from_croco() requires a field 'Zeta' for the free_surface")
+                raise ValueError("FieldSet.from_croco() requires a free-surface field 'Zeta' for 3D CROCO fields")
 
         interp_method = {}
         for v in variables:
@@ -781,7 +783,10 @@ class FieldSet:
             gridindexingtype="croco",
             **kwargs,
         )
-        fieldset.add_constant("hc", hc)
+        if croco3D:
+            if hc is None:
+                raise ValueError("FieldSet.from_croco() requires the hc parameter for 3D CROCO fields")
+            fieldset.add_constant("hc", hc)
         return fieldset
 
     @classmethod
