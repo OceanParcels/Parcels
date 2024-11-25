@@ -57,7 +57,7 @@ def peninsula_fieldset(xdim, ydim, mesh="flat", grid_type="A"):
 
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing="xy")
-    P = (u0 * R**2 * y / ((x - x0) ** 2 + y**2) - u0 * y) / 1e3
+    P = (u0 * R**2 * y / ((x - x0) ** 2 + y**2) - u0 * y)
 
     # Set land points to zero
     landpoints = P >= 0.0
@@ -71,8 +71,8 @@ def peninsula_fieldset(xdim, ydim, mesh="flat", grid_type="A"):
     elif grid_type == "C":
         U = np.zeros(P.shape)
         V = np.zeros(P.shape)
-        V[:, 1:] = (P[:, 1:] - P[:, :-1]) / (La[1] - La[0]) * 1e3
-        U[1:, :] = -(P[1:, :] - P[:-1, :]) / (Wa[1] - Wa[0]) * 1e3
+        V[:, 1:] = (P[:, 1:] - P[:, :-1]) / (La[1] - La[0])
+        U[1:, :] = -(P[1:, :] - P[:-1, :]) / (Wa[1] - Wa[0])
     else:
         raise RuntimeError(f"Grid_type {grid_type} is not a valid option")
 
