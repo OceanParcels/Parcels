@@ -78,7 +78,7 @@ def _deal_with_errors(error, key, vector_type: VectorType):
     else:
         return 0
     
-class UField:
+class UField(BaseField):
     """Class that encapsulates access to field data.
 
     Parameters
@@ -93,11 +93,28 @@ class UField:
         2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
            use the flag transpose=False
         3. If data has any other shape, you first need to reorder it
+    lon : np.ndarray or list
+        Longitude coordinates (numpy vector or array) of the field (only if grid is None)
+    lat : np.ndarray or list
+        Latitude coordinates (numpy vector or array) of the field (only if grid is None)
+    face_node_connectivity: np.ndarray or list dimensioned [nfaces, max_nodes_per_face]
+        Connectivity array between faces and nodes (only if grid is None)
+    depth : np.ndarray or list
+        Depth coordinates (numpy vector or array) of the field (only if grid is None)
+    time : np.ndarray
+        Time coordinates (numpy vector) of the field (only if grid is None)
+    mesh : str
+        String indicating the type of mesh coordinates and
+        units used during velocity interpolation: (only if grid is None)
+
+        1. spherical: Lat and lon in degree, with a
+           correction for zonal velocity U near the poles.
+        2. flat (default): No conversion, lat/lon are assumed to be in m.
     timestamps : np.ndarray
         A numpy array containing the timestamps for each of the files in filenames, for loading
         from netCDF files only. Default is None if the netCDF dimensions dictionary includes time.
-    grid : parcels.ugrid.UGrid
-        :class:`parcels.ugrid.UGrid` object containing all the lon, lat depth, time
+    grid : parcels.grid.Grid
+        :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
         mesh and time_origin information. Can be constructed from any of the Grid objects
     fieldtype : str
         Type of Field to be used for UnitConverter (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
@@ -134,126 +151,112 @@ class UField:
 
     """
 
-    def __init__(
-        self,
-        name: str | tuple[str, str],
-        data,
-        grid,
-        timestamps=None,
-        fieldtype=None,
-        transpose=False,
-        vmin=None,
-        vmax=None,
-        cast_data_dtype="float32",
-        time_origin=None,
-        interp_method: InterpMethod = "linear",
-        allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
-        gridindexingtype: GridIndexingType = "fesom2",
-        to_write=False,
-        **kwargs,
-    ):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+
+    @property
+    def face_node_connectivity(self):
+        return self.grid.face_node_connectivity
     
-        if kwargs.get("netcdf_decodewarning") is not None:
-                _deprecated_param_netcdf_decodewarning()
-                kwargs.pop("netcdf_decodewarning")
+    # To do
+    #@classmethod
+    #def from_netcdf()
+    # Likely want to use uxarray for this
 
-        if not isinstance(name, tuple):
-            self.name = name
-            self.filebuffername = name
-        else:
-            self.name = name[0]
-            self.filebuffername = name[1]
-        self.data = data
+    # To do
+    #@classmethod
+    #def from_uxarray()
 
-        # 11/8/2024 - joe@fluidnumerics.com
-        # This conditional block is commented out since the UGrid class currently does
-        # not have a create_grid method.
-        #if grid:
-        if grid.defer_load and isinstance(data, np.ndarray):
-            raise ValueError(
-                "Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately"
-            )
-        self._grid = grid
-        #else:
-        #   if (time is not None) and isinstance(time[0], np.datetime64):
-        #     time_origin = TimeConverter(time[0])
-        #     time = np.array([time_origin.reltime(t) for t in time])
-        # else:
-        #     time_origin = TimeConverter(0)
-        # self._grid = Grid.create_grid(lon, lat, face_node_connectivity, depth, time, time_origin=time_origin, mesh=mesh)
+    # def _reshape(self, data, transpose=False):
 
-        self.igrid = -1
-        self.fieldtype = self.name if fieldtype is None else fieldtype
-        self.to_write = to_write
-        if self.grid.mesh == "flat" or (self.fieldtype not in unitconverters_map.keys()):
-            self.units = UnitConverter()
-        elif self.grid.mesh == "spherical":
-            self.units = unitconverters_map[self.fieldtype]
-        else:
-            raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
-        self.timestamps = timestamps
+    # def set_scaling_factor(self, factor):
+    #     """Scales the field data by some constant factor.
 
-        if isinstance(interp_method, dict):
-            if self.name in interp_method:
-                self.interp_method = interp_method[self.name]
-            else:
-                raise RuntimeError(f"interp_method is a dictionary but {name} is not in it")
-        else:
-            self.interp_method = interp_method
-        assert_valid_gridindexingtype(gridindexingtype)
-        self._gridindexingtype = gridindexingtype
+    #     Parameters
+    #     ----------
+    #     factor :
+    #         scaling factor
 
 
-        self.fieldset: FieldSet | None = None
-        if allow_time_extrapolation is None:
-            self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
-        else:
-            self.allow_time_extrapolation = allow_time_extrapolation\
-        
-        self.time_periodic = time_periodic
-        if self.time_periodic is not False and self.allow_time_extrapolation:
-            warnings.warn(
-                "allow_time_extrapolation and time_periodic cannot be used together. allow_time_extrapolation is set to False",
-                FieldSetWarning,
-                stacklevel=2,
-            )
-            self.allow_time_extrapolation = False
-        if self.time_periodic is True:
-            raise ValueError(
-                "Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.timedelta object."
-            )
-        if self.time_periodic is not False:
-            if isinstance(self.time_periodic, datetime.timedelta):
-                self.time_periodic = self.time_periodic.total_seconds()
-            if not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
-                if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
-                    raise ValueError("Time series provided is longer than the time_periodic parameter")
-                self.grid._add_last_periodic_data_timestep = True
-                self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
-                self.grid.time_full = self.grid.time
+    #     Examples
+    #     --------
+    #     For usage examples see the following tutorial:
 
-        self.vmin = vmin
-        self.vmax = vmax
-        self._cast_data_dtype = cast_data_dtype
-        if self.cast_data_dtype == "float32":
-            self._cast_data_dtype = np.float32
-        elif self.cast_data_dtype == "float64":
-            self._cast_data_dtype = np.float64
+    #     * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__
+    #     """
 
-        if not self.grid.defer_load:
-            self.data = self._reshape(self.data, transpose)
 
-            # Hack around the fact that NaN and ridiculously large values
-            # propagate in SciPy's interpolators
-            lib = np if isinstance(self.data, np.ndarray) else da
-            self.data[lib.isnan(self.data)] = 0.0
-            if self.vmin is not None:
-                self.data[self.data < self.vmin] = 0.0
-            if self.vmax is not None:
-                self.data[self.data > self.vmax] = 0.0
+    # def set_depth_from_field(self, field):
+    #     """Define the depth dimensions from another (time-varying) field.
 
-            if self.grid._add_last_periodic_data_timestep:
-                self.data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
+    #     Notes
+    #     -----
+    #     See `this tutorial <../examples/tutorial_timevaryingdepthdimensions.ipynb>`__
+    #     for a detailed explanation on how to set up time-evolving depth dimensions.
 
-        self._scaling_factor = None
+    #     """
+    #     self.grid.depth_field = field
+    #     if self.grid != field.grid:
+    #         field.grid.depth_field = field
+
+    # def _calc_cell_edge_sizes(self):
+    #     """Method to calculate cell sizes based on numpy.gradient method.
+
+    #     Currently only works for Rectilinear Grids
+    #     """
+
+    # def cell_areas(self):
+    #     """Method to calculate cell sizes based on cell_edge_sizes.
+
+    #     Currently only works for Rectilinear Grids
+    #     """
+
+    # def _search_indices_vertical_s(
+    #     self, x: float, y: float, z: float, xi: int, yi: int, xsi: float, eta: float, ti: int, time: float
+    # ):
+
+    # def _reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
+
+    # def _search_indices_curvilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+
+    # def _search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+
+        # Do hash table search based on x,y location
+        # Get list of elements to check
+        # Loop over elements, check if particle is in element (barycentric coordinate calc)
+        #
+        #  (l1,l2,l3, inside_element) = self.barycentric_coordinates(x, y)
+        #
+        # return barycentric coordinates (2d)
+        #        vertical interpolation weight
+        #        element index
+        #        nearest vertical layer index *above* particle (lower k bound); particle is between layer k and k+1
+
+    #def _interpolator2D(self, ti, z, y, x, particle=None):
+    #   """Interpolation method for 2D UField. The UField.data is assumed to 
+    #      be provided at the ugrid vertices. The method uses either nearest
+    #      neighbor or linear (barycentric) interpolation """
+
+        # (bc, _, ei, _) = self._search_indices(x, y, z, ti, particle=particle)
+
+        # if self.interp_method == "nearest"
+        #   idxs = self.face_node_connectivity[ei]
+        #   vi = idxs[np.argmax(bc)]
+        #   return self.data[ti,vi]
+        #
+        #  Do nearest neighbour interpolation using vertex with largest barycentric coordinate
+        # elif self.interp_method == "linear"
+        #  Do barycentric interpolation
+
+    # def _interpolator3D(self, ti, z, y, x, time, particle=None):
+        # (bc, zeta, ei, zi) = self._search_indices(x, y, z, ti, particle=particle)
+
+        # if self.interp_method == "nearest"
+        #   idxs = self.face_node_connectivity[ei]
+        #   vi = idxs[np.argmax(bc)]
+        #   zii = zi if zeta <= 0.5 else zi + 1
+        #   return self.data[ti,zi,vi]
+        #
+        #  Do nearest neighbour interpolation using vertex with largest barycentric coordinate
+        # elif self.interp_method == "linear"
+        #  Do barycentric interpolation
