@@ -257,11 +257,6 @@ class NetcdfFileBuffer(_FileBuffer):
         return time
 
 
-class DeferredNetcdfFileBuffer(NetcdfFileBuffer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
 class DaskFileBuffer(NetcdfFileBuffer):
     _static_name_maps = {
         "time": ["time", "time_count", "time_counter", "timer_count", "t"],
@@ -853,8 +848,3 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 self.chunking_finalized = True
 
         return data.astype(self.cast_data_dtype)
-
-
-class DeferredDaskFileBuffer(DaskFileBuffer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)

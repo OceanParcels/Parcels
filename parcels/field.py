@@ -39,8 +39,6 @@ from parcels.tools.warnings import FieldSetWarning, _deprecated_param_netcdf_dec
 
 from .fieldfilebuffer import (
     DaskFileBuffer,
-    DeferredDaskFileBuffer,
-    DeferredNetcdfFileBuffer,
     NetcdfFileBuffer,
 )
 from .grid import CGrid, Grid, GridType
@@ -152,6 +150,7 @@ class Field:
     allow_time_extrapolation: bool
     time_periodic: TimePeriodic
     _cast_data_dtype: type[np.float32] | type[np.float64]
+    _field_fb_class: type[DaskFileBuffer | NetcdfFileBuffer] | None
 
     def __init__(
         self,
@@ -684,14 +683,9 @@ class Field:
         if grid.time.size <= 2:
             deferred_load = False
 
-        _field_fb_class: type[DeferredDaskFileBuffer | DaskFileBuffer | DeferredNetcdfFileBuffer | NetcdfFileBuffer]
+        _field_fb_class: type[DaskFileBuffer | NetcdfFileBuffer]
         if chunksize not in [False, None]:
-            if deferred_load:
-                _field_fb_class = DeferredDaskFileBuffer
-            else:
-                _field_fb_class = DaskFileBuffer
-        elif deferred_load:
-            _field_fb_class = DeferredNetcdfFileBuffer
+            _field_fb_class = DaskFileBuffer
         else:
             _field_fb_class = NetcdfFileBuffer
         kwargs["FieldFileBuffer"] = _field_fb_class
