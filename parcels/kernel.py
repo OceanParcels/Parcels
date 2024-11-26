@@ -460,12 +460,8 @@ class Kernel(BaseKernel):
         src_file_or_files = None
 
         assert isinstance(basename, str)
-        if isinstance(basename, (list, dict, tuple, ndarray)):
-            src_file_or_files = [""] * len(basename)
-            for i, src_file in enumerate(basename):
-                src_file_or_files[i] = f"{os.path.join(dyn_dir, src_file)}.c"
-        else:
-            src_file_or_files = f"{os.path.join(dyn_dir, basename)}.c"
+
+        src_file_or_files = f"{os.path.join(dyn_dir, basename)}.c"
         lib_file = f"{os.path.join(dyn_dir, lib_path)}.{'dll' if sys.platform == 'win32' else 'so'}"
         log_file = f"{os.path.join(dyn_dir, basename)}.log"
         return src_file_or_files, lib_file, log_file
