@@ -7,6 +7,7 @@ import inspect
 import math  # noqa: F401
 import os
 import random  # noqa: F401
+import shutil
 import sys
 import textwrap
 import types
@@ -531,14 +532,22 @@ class Kernel(BaseKernel):
         return functools.reduce(lambda x, y: x + y, pyfunc_list)
 
     @staticmethod
-    def cleanup_remove_files(lib_file, all_files: list[str], delete_cfiles) -> None:
-        if lib_file is not None:
-            if os.path.isfile(lib_file):  # and delete_cfiles
-                os.remove(lib_file)
-            if delete_cfiles:
-                for s in all_files:
-                    if os.path.exists(s):
-                        os.remove(s)
+    def cleanup_remove_files(lib_file: str | None, all_files: list[str], delete_cfiles: bool) -> None:
+        if lib_file is None:
+            return
+
+        # Remove compiled files
+        if os.path.isfile(lib_file):
+            os.remove(lib_file)
+
+        macos_debugging_files = f"{lib_file}.dSYM"
+        if os.path.isdir(macos_debugging_files):
+            shutil.rmtree(macos_debugging_files)
+
+        if delete_cfiles:
+            for s in all_files:
+                if os.path.exists(s):
+                    os.remove(s)
 
     @staticmethod
     def cleanup_unload_lib(lib):
