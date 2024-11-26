@@ -276,7 +276,7 @@ def test_print(fieldset_unit_mesh, mode, capfd):
     def kernel(particle, fieldset, time):
         particle.p = 1e-3
         tmp = 5
-        print("%d %f %f" % (particle.id, particle.p, tmp))
+        print(f"{particle.id} {particle.p:f} {tmp:f}")
 
     pset.execute(kernel, endtime=1.0, dt=1.0, verbose_progress=False)
     out, err = capfd.readouterr()

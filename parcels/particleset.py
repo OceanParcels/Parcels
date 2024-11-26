@@ -1193,7 +1193,7 @@ class ParticleSet:
                             raise RuntimeError(
                                 "Field writing during execution only works for Fields with one snapshot in time"
                             )
-                        fldfilename = str(output_file.fname).replace(".zarr", "_%.4d" % fld.to_write)
+                        fldfilename = str(output_file.fname).replace(".zarr", f"_{fld.to_write:04d}")
                         fld.write(fldfilename)
                         fld.to_write += 1
 

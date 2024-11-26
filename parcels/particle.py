@@ -201,7 +201,7 @@ class ScipyParticle:
 
     def __repr__(self):
         time_string = "not_yet_set" if self.time is None or np.isnan(self.time) else f"{self.time:f}"
-        p_string = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
+        p_string = f"P[{self.id}](lon={self.lon:f}, lat={self.lat:f}, depth={self.depth:f}, "
         for var in vars(type(self)):
             if var in ["lon_nextloop", "lat_nextloop", "depth_nextloop", "time_nextloop"]:
                 continue

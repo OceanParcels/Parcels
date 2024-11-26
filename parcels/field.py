@@ -1242,7 +1242,7 @@ class Field:
             (xi, yi) = self._reconnect_bnd_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
             it += 1
             if it > maxIterSearch:
-                print("Correct cell not found after %d iterations" % maxIterSearch)
+                print(f"Correct cell not found after {maxIterSearch} iterations")
                 raise FieldOutOfBoundError(x, y, 0, field=self)
         xsi = max(0.0, xsi)
         eta = max(0.0, eta)
@@ -2532,13 +2532,13 @@ class NestedField(list):
                 assert isinstance(Fi, Field) and isinstance(
                     Vi, Field
                 ), "F, and V components of a NestedField must be Field"
-                self.append(VectorField(name + "_%d" % i, Fi, Vi))
+                self.append(VectorField(f"{name}_{i}", Fi, Vi))
         else:
             for i, Fi, Vi, Wi in zip(range(len(F)), F, V, W, strict=True):
                 assert (
                     isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field)
                 ), "F, V and W components of a NestedField must be Field"
-                self.append(VectorField(name + "_%d" % i, Fi, Vi, Wi))
+                self.append(VectorField(f"{name}_{i}", Fi, Vi, Wi))
         self.name = name
 
     def __getitem__(self, key):
