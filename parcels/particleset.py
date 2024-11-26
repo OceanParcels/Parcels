@@ -1085,9 +1085,6 @@ class ParticleSet:
             raise ValueError("Output interval should not have finer precision than 1e-6 s")
         outputdt = timedelta_to_float(output_file.outputdt) if output_file else np.inf
 
-        if np.isfinite(outputdt):
-            _warn_outputdt_release_desync(outputdt, self.particledata.data["time_nextloop"])
-
         if callbackdt is not None:
             callbackdt = timedelta_to_float(callbackdt)
 
@@ -1123,6 +1120,9 @@ class ParticleSet:
                 "dt and runtime are zero, or endtime is equal to Particle.time. "
                 "ParticleSet.execute() will not do anything."
             )
+
+        if np.isfinite(outputdt):
+            _warn_outputdt_release_desync(outputdt, starttime, self.particledata.data["time_nextloop"])
 
         self.particledata._data["dt"][:] = dt
 
@@ -1240,12 +1240,13 @@ class ParticleSet:
             pbar.close()
 
 
-def _warn_outputdt_release_desync(outputdt: float, release_times: Iterable[float]):
+def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_times: Iterable[float]):
     """Gives the user a warning if the release time isn't a multiple of outputdt."""
-    if any((np.isfinite(t) and t % outputdt != 0) for t in release_times):
+    if any((np.isfinite(t) and (t - starttime) % outputdt != 0) for t in release_times):
         warnings.warn(
-            "Some of the particles have a start time that is not a multiple of outputdt. "
-            "This could cause the first output to be at a different time than expected.",
+            "Some of the particles have a start time difference that is not a multiple of outputdt. "
+            "This could cause the first output of some of the particles that start later "
+            "in the simulation to be at a different time than expected.",
             FileWarning,
             stacklevel=2,
         )
