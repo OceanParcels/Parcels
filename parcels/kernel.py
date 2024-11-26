@@ -4,9 +4,9 @@ import ast
 import functools
 import hashlib
 import inspect
-import math  # noqa
+import math  # noqa: F401
 import os
-import random  # noqa
+import random  # noqa: F401
 import sys
 import textwrap
 import types
@@ -19,8 +19,8 @@ import numpy as np
 import numpy.ctypeslib as npct
 from numpy import ndarray
 
-import parcels.rng as ParcelsRandom  # noqa
-from parcels import rng  # noqa
+import parcels.rng as ParcelsRandom  # noqa: F401
+from parcels import rng  # noqa: F401
 from parcels._compat import MPI
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
