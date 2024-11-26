@@ -139,7 +139,10 @@ class BaseKernel(abc.ABC):
         pset.remove_indices(indices)
 
     @abc.abstractmethod
-    def get_kernel_compile_files(self): ...
+    def get_kernel_compile_files(self) -> tuple[str, str, str]: ...
+
+    @abc.abstractmethod
+    def remove_lib(self) -> None: ...
 
 
 class Kernel(BaseKernel):
@@ -330,9 +333,9 @@ class Kernel(BaseKernel):
             particle.time = particle.time_nextloop
 
         def Updatecoords(particle, fieldset, time):
-            particle.lon_nextloop = particle.lon + particle_dlon  # noqa
-            particle.lat_nextloop = particle.lat + particle_dlat  # noqa
-            particle.depth_nextloop = particle.depth + particle_ddepth  # noqa
+            particle.lon_nextloop = particle.lon + particle_dlon  # type: ignore[name-defined] # noqa
+            particle.lat_nextloop = particle.lat + particle_dlat  # type: ignore[name-defined] # noqa
+            particle.depth_nextloop = particle.depth + particle_ddepth  # type: ignore[name-defined] # noqa
             particle.time_nextloop = particle.time + particle.dt
 
         self._pyfunc = (Setcoords + self + Updatecoords)._pyfunc
@@ -412,17 +415,17 @@ class Kernel(BaseKernel):
             del self._lib
             self._lib = None
 
-        all_files_array = []
+        all_files: list[str] = []
         if self.src_file is None:
             if self.dyn_srcs is not None:
-                [all_files_array.append(fpath) for fpath in self.dyn_srcs]
+                [all_files.append(fpath) for fpath in self.dyn_srcs]
         else:
             if self.src_file is not None:
-                all_files_array.append(self.src_file)
+                all_files.append(self.src_file)
         if self.log_file is not None:
-            all_files_array.append(self.log_file)
-        if self.lib_file is not None and all_files_array is not None and self.delete_cfiles is not None:
-            self.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
+            all_files.append(self.log_file)
+        if self.lib_file is not None and all_files is not None and self.delete_cfiles is not None:
+            self.cleanup_remove_files(self.lib_file, all_files, self.delete_cfiles)
 
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
@@ -435,6 +438,7 @@ class Kernel(BaseKernel):
 
     def get_kernel_compile_files(self):
         """Returns the correct src_file, lib_file, log_file for this kernel."""
+        basename: str
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -454,7 +458,9 @@ class Kernel(BaseKernel):
             basename = f"{cache_name}_0"
         lib_path = "lib" + basename
         src_file_or_files = None
-        if type(basename) in (list, dict, tuple, ndarray):
+
+        assert isinstance(basename, str)
+        if isinstance(basename, (list, dict, tuple, ndarray)):
             src_file_or_files = [""] * len(basename)
             for i, src_file in enumerate(basename):
                 src_file_or_files[i] = f"{os.path.join(dyn_dir, src_file)}.c"
@@ -558,12 +564,12 @@ class Kernel(BaseKernel):
         return functools.reduce(lambda x, y: x + y, pyfunc_list)
 
     @staticmethod
-    def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
+    def cleanup_remove_files(lib_file, all_files: list[str], delete_cfiles) -> None:
         if lib_file is not None:
             if os.path.isfile(lib_file):  # and delete_cfiles
                 os.remove(lib_file)
             if delete_cfiles:
-                for s in all_files_array:
+                for s in all_files:
                     if os.path.exists(s):
                         os.remove(s)
 
