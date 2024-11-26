@@ -51,6 +51,11 @@ test
     assert not valid_indentation(invalid)
 
 
+def test_particletype_repr():
+    kwargs = dict(pclass=parcels.JITParticle)
+    assert_simple_repr(parcels.particle.ParticleType, kwargs)
+
+
 def test_grid_repr():
     """Test arguments are in the repr of a Grid object"""
     kwargs = dict(

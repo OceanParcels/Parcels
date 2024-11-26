@@ -3,7 +3,6 @@ import collections
 import math
 import random
 import warnings
-from abc import ABC
 from copy import copy
 
 import cgen as c
@@ -412,7 +411,7 @@ class TupleSplitter(ast.NodeTransformer):
         return node
 
 
-class KernelGenerator(ABC, ast.NodeVisitor):
+class KernelGenerator(ast.NodeVisitor):
     """Code generator class that translates simple Python kernel functions into C functions.
 
     Works by populating and accessing the `ccode` attribute on nodes in the Python AST.

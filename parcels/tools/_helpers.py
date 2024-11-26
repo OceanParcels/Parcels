@@ -115,7 +115,8 @@ def particleset_repr(pset: ParticleSet) -> str:
         particles = [repr(pset[i]) for i in range(7)] + ["..."]
 
     out = f"""<{type(pset).__name__}>
-    fieldset   : {pset.fieldset}
+    fieldset   :
+{textwrap.indent(repr(pset.fieldset), " " * 8)}
     pclass     : {pset.pclass}
     repeatdt   : {pset.repeatdt}
     # particles: {len(pset)}
@@ -136,7 +137,13 @@ def fieldset_repr(fieldset: FieldSet) -> str:
 
 
 def default_repr(obj: Any):
+    if is_builtin_object(obj):
+        return repr(obj)
     return object.__repr__(obj)
+
+
+def is_builtin_object(obj):
+    return obj.__class__.__module__ == "builtins"
 
 
 def timedelta_to_float(dt: float | timedelta | np.timedelta64) -> float:

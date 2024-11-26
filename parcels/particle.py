@@ -96,7 +96,7 @@ class ParticleType:
         self.variables = [v for v in self.variables if v.is64bit()] + [v for v in self.variables if not v.is64bit()]
 
     def __repr__(self):
-        return f"PType<{self.name}>::{self.variables}"
+        return f"{type(self).__name__}(pclass={self.name})"
 
     def __getitem__(self, item):
         for v in self.variables:
