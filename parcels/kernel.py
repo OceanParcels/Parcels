@@ -439,14 +439,13 @@ class Kernel(BaseKernel):
             dyn_dir = get_cache_dir()
             basename = f"{cache_name}_0"
         lib_path = "lib" + basename
-        src_file_or_files = None
 
         assert isinstance(basename, str)
 
-        src_file_or_files = f"{os.path.join(dyn_dir, basename)}.c"
+        src_file = f"{os.path.join(dyn_dir, basename)}.c"
         lib_file = f"{os.path.join(dyn_dir, lib_path)}.{'dll' if sys.platform == 'win32' else 'so'}"
         log_file = f"{os.path.join(dyn_dir, basename)}.log"
-        return src_file_or_files, lib_file, log_file
+        return src_file, lib_file, log_file
 
     def compile(self, compiler):
         """Writes kernel code to file and compiles it."""
