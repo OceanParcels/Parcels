@@ -32,13 +32,14 @@ class _FileBuffer:
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
-        self.dataset = None
         self.timestamp = timestamp
-        self.cast_data_dtype = cast_data_dtype
-        self.ti = None
         self.interp_method = interp_method
-        self.gridindexingtype = gridindexingtype
+        self.dataset = None
         self.data_full_zdim = data_full_zdim
+        self.cast_data_dtype = cast_data_dtype
+        self.gridindexingtype = gridindexingtype
+
+        self.ti = None
         if ("lon" in self.indices) or ("lat" in self.indices):
             self.nolonlatindices = False
         else:
@@ -46,9 +47,11 @@ class _FileBuffer:
 
 
 class NetcdfFileBuffer(_FileBuffer):
+    lib = np
+
     def __init__(self, *args, **kwargs):
-        self.lib = np
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
+
         super().__init__(*args, **kwargs)
 
     def __enter__(self):
@@ -288,8 +291,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         "lon": ["lon", "nav_lon", "x", "longitude", "lo", "ln", "i", "XC", "XG"],
     }
     _min_dim_chunksize = 16
-
-    """ Class that encapsulates and manages deferred access to file data. """
+    lib = da
 
     def __init__(self, *args, **kwargs):
         """
@@ -297,11 +299,11 @@ class DaskFileBuffer(NetcdfFileBuffer):
         The chunksize parameter is popped from the argument list, as well as the locking-parameter and the
         rechunk callback function. Also chunking-related variables are initialized.
         """
-        self.lib = da
         self.chunksize = kwargs.pop("chunksize", "auto")
         self.lock_file = kwargs.pop("lock_file", True)
-        self.chunk_mapping = None
         self.rechunk_callback_fields = kwargs.pop("rechunk_callback_fields", None)
+
+        self.chunk_mapping = None
         self.chunking_finalized = False
         self.autochunkingfailed = False
         super().__init__(*args, **kwargs)
