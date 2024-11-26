@@ -17,7 +17,6 @@ from time import time as ostime
 
 import numpy as np
 import numpy.ctypeslib as npct
-from numpy import ndarray
 
 import parcels.rng as ParcelsRandom  # noqa: F401
 from parcels import rng  # noqa: F401
@@ -76,19 +75,14 @@ class BaseKernel(abc.ABC):
         self.funcvars = funcvars
         self.funccode = funccode
         self.py_ast = py_ast
-        self.dyn_srcs = []
-        self.src_file = None
-        self.lib_file = None
-        self.log_file = None
+        self.src_file: str | None = None
+        self.lib_file: str | None = None
+        self.log_file: str | None = None
         self.scipy_positionupdate_kernels_added = False
 
         # Generate the kernel function and add the outer loop
         if self._ptype.uses_jit:
-            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            if type(src_file_or_files) in (list, dict, tuple, ndarray):
-                self.dyn_srcs = src_file_or_files
-            else:
-                self.src_file = src_file_or_files
+            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -275,11 +269,7 @@ class Kernel(BaseKernel):
                 c_include_str = self._c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args, kernel_ccode, c_include_str)
 
-            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
-                self.dyn_srcs = src_file_or_files
-            else:
-                self.src_file = src_file_or_files
+            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -416,12 +406,8 @@ class Kernel(BaseKernel):
             self._lib = None
 
         all_files: list[str] = []
-        if self.src_file is None:
-            if self.dyn_srcs is not None:
-                [all_files.append(fpath) for fpath in self.dyn_srcs]
-        else:
-            if self.src_file is not None:
-                all_files.append(self.src_file)
+        if self.src_file is not None:
+            all_files.append(self.src_file)
         if self.log_file is not None:
             all_files.append(self.log_file)
         if self.lib_file is not None and all_files is not None and self.delete_cfiles is not None:
@@ -430,11 +416,7 @@ class Kernel(BaseKernel):
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if self._ptype.uses_jit:
-            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            if type(src_file_or_files) in (list, dict, tuple, ndarray):
-                self.dyn_srcs = src_file_or_files
-            else:
-                self.src_file = src_file_or_files
+            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
 
     def get_kernel_compile_files(self):
         """Returns the correct src_file, lib_file, log_file for this kernel."""
@@ -468,26 +450,16 @@ class Kernel(BaseKernel):
 
     def compile(self, compiler):
         """Writes kernel code to file and compiles it."""
-        all_files_array = []
         if self.src_file is None:
-            if self.dyn_srcs is not None:
-                for dyn_src in self.dyn_srcs:
-                    with open(dyn_src, "w") as f:
-                        f.write(self.ccode)
-                    all_files_array.append(dyn_src)
-                compiler.compile(self.dyn_srcs, self.lib_file, self.log_file)
-        else:
-            if self.src_file is not None:
-                with open(self.src_file, "w") as f:
-                    f.write(self.ccode)
-                if self.src_file is not None:
-                    all_files_array.append(self.src_file)
-                compiler.compile(self.src_file, self.lib_file, self.log_file)
-        if len(all_files_array) > 0:
-            if self.delete_cfiles is False:
-                logger.info(f"Compiled {self.name} ==> {self.src_file}")
-            if self.log_file is not None:
-                all_files_array.append(self.log_file)
+            return
+
+        with open(self.src_file, "w") as f:
+            f.write(self.ccode)
+
+        compiler.compile(self.src_file, self.lib_file, self.log_file)
+
+        if self.delete_cfiles is False:
+            logger.info(f"Compiled {self.name} ==> {self.src_file}")
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, ".")
