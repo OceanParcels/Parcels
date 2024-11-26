@@ -68,8 +68,6 @@ filterwarnings = [
 line-length = 120
 
 [tool.ruff.lint]
-exclude = ["*.ipynb"]
-
 select = [
     "D",  # pydocstyle
     "E",  # Error
@@ -131,6 +129,9 @@ ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.isort]
+known-first-party = ["parcels"]
 
 [tool.mypy]
 files = [

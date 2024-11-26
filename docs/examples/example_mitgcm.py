@@ -3,8 +3,9 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
-import parcels
 import xarray as xr
+
+import parcels
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 
