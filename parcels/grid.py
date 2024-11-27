@@ -114,7 +114,7 @@ class Grid:
     def depth(self):
         return self._depth
 
-    def negate_depth(self):
+    def negate_depth(self) -> None:
         self._depth = -self._depth
 
     @property
