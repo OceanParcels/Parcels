@@ -114,7 +114,7 @@ class Grid:
     def depth(self):
         return self._depth
 
-    def negate_depth(self) -> None:
+    def negate_depth(self):
         """Method to flip the sign of the depth dimension of a Grid.
         Note that this method does _not_ change the direction of the vertical velocity;
         for that users need to add a fieldset.W.set_scaling_factor(-1.0)
