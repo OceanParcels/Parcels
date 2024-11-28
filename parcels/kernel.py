@@ -272,20 +272,6 @@ class Kernel(BaseKernel):
 
             self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
 
-    def __del__(self):
-        # Clean-up the in-memory dynamic linked libraries.
-        # This is not really necessary, as these programs are not that large, but with the new random
-        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
-        try:
-            self.remove_lib()
-        except:
-            pass
-        self._fieldset = None
-        self.field_args = None
-        self.const_args = None
-        self.funcvars = None
-        self.funccode = None
-
     @property
     def ptype(self):
         return self._ptype
@@ -411,7 +397,7 @@ class Kernel(BaseKernel):
             all_files.append(self.src_file)
         if self.log_file is not None:
             all_files.append(self.log_file)
-        if self.lib_file is not None and all_files is not None and self.delete_cfiles is not None:
+        if self.lib_file is not None:
             self.cleanup_remove_files(self.lib_file, all_files, self.delete_cfiles)
 
         # If file already exists, pull new names. This is necessary on a Windows machine, because
