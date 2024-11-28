@@ -112,6 +112,16 @@ def test_time_format_in_grid():
         RectilinearZGrid(lon, lat, time=time)
 
 
+def test_negate_depth():
+    depth = np.linspace(0, 5, 10, dtype=np.float32)
+    fieldset = FieldSet.from_data(
+        {"U": np.zeros((10, 1, 1)), "V": np.zeros((10, 1, 1))}, {"lon": [0], "lat": [0], "depth": depth}
+    )
+    assert np.all(fieldset.gridset.grids[0].depth == depth)
+    fieldset.U.grid.negate_depth()
+    assert np.all(fieldset.gridset.grids[0].depth == -depth)
+
+
 def test_avoid_repeated_grids():
     lon_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
