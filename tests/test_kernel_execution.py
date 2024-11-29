@@ -1,5 +1,7 @@
 import os
 import sys
+import uuid
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -15,9 +17,21 @@ from parcels import (
     StatusCode,
 )
 from tests.common_kernels import DeleteParticle, DoNothing, MoveEast, MoveNorth
-from tests.utils import create_fieldset_unit_mesh
+from tests.utils import assert_empty_folder, create_fieldset_unit_mesh, create_fieldset_zeros_simple
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
+
+
+@pytest.fixture()
+def parcels_cache(monkeypatch, tmp_path_factory):
+    """Dedicated folder parcels used to store cached Kernel C code/libraries and log files."""
+    tmp_path = tmp_path_factory.mktemp(f"c-code-{uuid.uuid4()}")
+
+    def fake_get_cache_dir():
+        return tmp_path
+
+    monkeypatch.setattr(parcels.kernel, "get_cache_dir", fake_get_cache_dir)
+    yield tmp_path
 
 
 @pytest.fixture
@@ -427,3 +441,16 @@ def test_outdated_kernel(fieldset_unit_mesh):
         pset.execute(outdated_kernel, endtime=1.0, dt=1.0)
 
     assert "Since Parcels v2.0" in str(e.value)
+
+
+def test_kernel_file_cleanup(parcels_cache):
+    pset = ParticleSet(create_fieldset_zeros_simple(), pclass=JITParticle, lon=[0.0], lat=[0.0])
+
+    pset.execute(
+        [parcels.AdvectionRK4],
+        runtime=timedelta(minutes=10),
+        dt=timedelta(minutes=5),
+    )
+    del pset  # cleans up compiled C files on deletion
+
+    assert_empty_folder(parcels_cache)
