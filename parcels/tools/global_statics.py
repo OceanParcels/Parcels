@@ -3,13 +3,16 @@ import os
 import sys
 from pathlib import Path
 from tempfile import gettempdir
+from typing import Literal
 
+USER_ID: int | Literal["tmp"]
 try:
     from os import getuid
+
+    USER_ID = getuid()
 except:
-    # Windows does not have getuid(), so define to simply return 'tmp'
-    def getuid():  # type: ignore
-        return "tmp"
+    # Windows does not have getuid()
+    USER_ID = "tmp"
 
 
 __all__ = ["cleanup_remove_files", "cleanup_unload_lib", "get_package_dir", "get_cache_dir"]
@@ -34,6 +37,6 @@ def get_package_dir():
 
 
 def get_cache_dir():
-    directory = os.path.join(gettempdir(), f"parcels-{getuid()}")
+    directory = os.path.join(gettempdir(), f"parcels-{USER_ID}")
     Path(directory).mkdir(exist_ok=True)
     return directory

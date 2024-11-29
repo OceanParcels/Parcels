@@ -2,7 +2,7 @@ from ._version import version
 
 __version__ = version
 
-import parcels.rng as ParcelsRandom  # noqa
+import parcels.rng as ParcelsRandom  # noqa: F401
 from parcels.application_kernels import *
 from parcels.field import *
 from parcels.fieldset import *

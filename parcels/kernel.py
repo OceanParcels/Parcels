@@ -4,9 +4,10 @@ import ast
 import functools
 import hashlib
 import inspect
-import math  # noqa
+import math  # noqa: F401
 import os
-import random  # noqa
+import random  # noqa: F401
+import shutil
 import sys
 import textwrap
 import types
@@ -17,10 +18,9 @@ from time import time as ostime
 
 import numpy as np
 import numpy.ctypeslib as npct
-from numpy import ndarray
 
-import parcels.rng as ParcelsRandom  # noqa
-from parcels import rng  # noqa
+import parcels.rng as ParcelsRandom  # noqa: F401
+from parcels import rng  # noqa: F401
 from parcels._compat import MPI
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
@@ -76,19 +76,14 @@ class BaseKernel(abc.ABC):
         self.funcvars = funcvars
         self.funccode = funccode
         self.py_ast = py_ast
-        self.dyn_srcs = []
-        self.src_file = None
-        self.lib_file = None
-        self.log_file = None
+        self.src_file: str | None = None
+        self.lib_file: str | None = None
+        self.log_file: str | None = None
         self.scipy_positionupdate_kernels_added = False
 
         # Generate the kernel function and add the outer loop
         if self._ptype.uses_jit:
-            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            if type(src_file_or_files) in (list, dict, tuple, ndarray):
-                self.dyn_srcs = src_file_or_files
-            else:
-                self.src_file = src_file_or_files
+            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -139,7 +134,10 @@ class BaseKernel(abc.ABC):
         pset.remove_indices(indices)
 
     @abc.abstractmethod
-    def get_kernel_compile_files(self): ...
+    def get_kernel_compile_files(self) -> tuple[str, str, str]: ...
+
+    @abc.abstractmethod
+    def remove_lib(self) -> None: ...
 
 
 class Kernel(BaseKernel):
@@ -272,25 +270,7 @@ class Kernel(BaseKernel):
                 c_include_str = self._c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args, kernel_ccode, c_include_str)
 
-            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
-                self.dyn_srcs = src_file_or_files
-            else:
-                self.src_file = src_file_or_files
-
-    def __del__(self):
-        # Clean-up the in-memory dynamic linked libraries.
-        # This is not really necessary, as these programs are not that large, but with the new random
-        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
-        try:
-            self.remove_lib()
-        except:
-            pass
-        self._fieldset = None
-        self.field_args = None
-        self.const_args = None
-        self.funcvars = None
-        self.funccode = None
+            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
 
     @property
     def ptype(self):
@@ -330,9 +310,9 @@ class Kernel(BaseKernel):
             particle.time = particle.time_nextloop
 
         def Updatecoords(particle, fieldset, time):
-            particle.lon_nextloop = particle.lon + particle_dlon  # noqa
-            particle.lat_nextloop = particle.lat + particle_dlat  # noqa
-            particle.depth_nextloop = particle.depth + particle_ddepth  # noqa
+            particle.lon_nextloop = particle.lon + particle_dlon  # type: ignore[name-defined] # noqa
+            particle.lat_nextloop = particle.lat + particle_dlat  # type: ignore[name-defined] # noqa
+            particle.depth_nextloop = particle.depth + particle_ddepth  # type: ignore[name-defined] # noqa
             particle.time_nextloop = particle.time + particle.dt
 
         self._pyfunc = (Setcoords + self + Updatecoords)._pyfunc
@@ -412,29 +392,22 @@ class Kernel(BaseKernel):
             del self._lib
             self._lib = None
 
-        all_files_array = []
-        if self.src_file is None:
-            if self.dyn_srcs is not None:
-                [all_files_array.append(fpath) for fpath in self.dyn_srcs]
-        else:
-            if self.src_file is not None:
-                all_files_array.append(self.src_file)
+        all_files: list[str] = []
+        if self.src_file is not None:
+            all_files.append(self.src_file)
         if self.log_file is not None:
-            all_files_array.append(self.log_file)
-        if self.lib_file is not None and all_files_array is not None and self.delete_cfiles is not None:
-            self.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
+            all_files.append(self.log_file)
+        if self.lib_file is not None:
+            self.cleanup_remove_files(self.lib_file, all_files, self.delete_cfiles)
 
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if self._ptype.uses_jit:
-            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            if type(src_file_or_files) in (list, dict, tuple, ndarray):
-                self.dyn_srcs = src_file_or_files
-            else:
-                self.src_file = src_file_or_files
+            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
 
     def get_kernel_compile_files(self):
         """Returns the correct src_file, lib_file, log_file for this kernel."""
+        basename: str
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -453,39 +426,26 @@ class Kernel(BaseKernel):
             dyn_dir = get_cache_dir()
             basename = f"{cache_name}_0"
         lib_path = "lib" + basename
-        src_file_or_files = None
-        if type(basename) in (list, dict, tuple, ndarray):
-            src_file_or_files = [""] * len(basename)
-            for i, src_file in enumerate(basename):
-                src_file_or_files[i] = f"{os.path.join(dyn_dir, src_file)}.c"
-        else:
-            src_file_or_files = f"{os.path.join(dyn_dir, basename)}.c"
+
+        assert isinstance(basename, str)
+
+        src_file = f"{os.path.join(dyn_dir, basename)}.c"
         lib_file = f"{os.path.join(dyn_dir, lib_path)}.{'dll' if sys.platform == 'win32' else 'so'}"
         log_file = f"{os.path.join(dyn_dir, basename)}.log"
-        return src_file_or_files, lib_file, log_file
+        return src_file, lib_file, log_file
 
     def compile(self, compiler):
         """Writes kernel code to file and compiles it."""
-        all_files_array = []
         if self.src_file is None:
-            if self.dyn_srcs is not None:
-                for dyn_src in self.dyn_srcs:
-                    with open(dyn_src, "w") as f:
-                        f.write(self.ccode)
-                    all_files_array.append(dyn_src)
-                compiler.compile(self.dyn_srcs, self.lib_file, self.log_file)
-        else:
-            if self.src_file is not None:
-                with open(self.src_file, "w") as f:
-                    f.write(self.ccode)
-                if self.src_file is not None:
-                    all_files_array.append(self.src_file)
-                compiler.compile(self.src_file, self.lib_file, self.log_file)
-        if len(all_files_array) > 0:
-            if self.delete_cfiles is False:
-                logger.info(f"Compiled {self.name} ==> {self.src_file}")
-            if self.log_file is not None:
-                all_files_array.append(self.log_file)
+            return
+
+        with open(self.src_file, "w") as f:
+            f.write(self.ccode)
+
+        compiler.compile(self.src_file, self.lib_file, self.log_file)
+
+        if self.delete_cfiles is False:
+            logger.info(f"Compiled {self.name} ==> {self.src_file}")
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, ".")
@@ -558,14 +518,22 @@ class Kernel(BaseKernel):
         return functools.reduce(lambda x, y: x + y, pyfunc_list)
 
     @staticmethod
-    def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
-        if lib_file is not None:
-            if os.path.isfile(lib_file):  # and delete_cfiles
-                os.remove(lib_file)
-            if delete_cfiles:
-                for s in all_files_array:
-                    if os.path.exists(s):
-                        os.remove(s)
+    def cleanup_remove_files(lib_file: str | None, all_files: list[str], delete_cfiles: bool) -> None:
+        if lib_file is None:
+            return
+
+        # Remove compiled files
+        if os.path.isfile(lib_file):
+            os.remove(lib_file)
+
+        macos_debugging_files = f"{lib_file}.dSYM"
+        if os.path.isdir(macos_debugging_files):
+            shutil.rmtree(macos_debugging_files)
+
+        if delete_cfiles:
+            for s in all_files:
+                if os.path.exists(s):
+                    os.remove(s)
 
     @staticmethod
     def cleanup_unload_lib(lib):
