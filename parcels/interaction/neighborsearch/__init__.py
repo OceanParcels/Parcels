@@ -11,9 +11,9 @@ from parcels.interaction.neighborsearch.kdtreeflat import (
 )
 
 __all__ = [
-    "HashFlatNeighborSearch",
-    "HashSphericalNeighborSearch",
     "BruteFlatNeighborSearch",
     "BruteSphericalNeighborSearch",
+    "HashFlatNeighborSearch",
+    "HashSphericalNeighborSearch",
     "KDTreeFlatNeighborSearch",
 ]

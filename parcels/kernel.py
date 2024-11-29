@@ -42,7 +42,7 @@ from parcels.tools.statuscodes import (
 )
 from parcels.tools.warnings import KernelWarning
 
-__all__ = ["Kernel", "BaseKernel"]
+__all__ = ["BaseKernel", "Kernel"]
 
 
 class BaseKernel(abc.ABC):
@@ -418,7 +418,7 @@ class Kernel(BaseKernel):
             dyn_dir = mpi_comm.bcast(dyn_dir, root=0)
             basename = cache_name if mpi_rank == 0 else None
             basename = mpi_comm.bcast(basename, root=0)
-            basename = basename + "_%d" % mpi_rank
+            basename = f"{basename}_{mpi_rank}"
         else:
             cache_name = (
                 self._cache_key

@@ -4,7 +4,7 @@ import numpy as np
 
 from parcels.tools.statuscodes import StatusCode
 
-__all__ = ["AsymmetricAttraction", "NearestNeighborWithinRange", "MergeWithNearestNeighbor"]
+__all__ = ["AsymmetricAttraction", "MergeWithNearestNeighbor", "NearestNeighborWithinRange"]
 
 
 def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):

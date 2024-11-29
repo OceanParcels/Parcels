@@ -1,12 +1,12 @@
 """Handling of Errors and particle status codes"""
 
 __all__ = [
-    "StatusCode",
-    "FieldSamplingError",
-    "FieldOutOfBoundError",
-    "TimeExtrapolationError",
-    "KernelError",
     "AllParcelsErrorCodes",
+    "FieldOutOfBoundError",
+    "FieldSamplingError",
+    "KernelError",
+    "StatusCode",
+    "TimeExtrapolationError",
 ]
 
 

@@ -168,7 +168,7 @@ def peninsula_example(
     out = (
         pset.ParticleFile(name=outfile, outputdt=timedelta(hours=1)) if output else None
     )
-    print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
+    print(f"Peninsula: Advecting {npart} particles for {time}")
     pset.execute(k_adv + k_p, runtime=time, dt=dt, output_file=out)
 
     if verbose:
