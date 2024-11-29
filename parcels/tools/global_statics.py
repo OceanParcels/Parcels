@@ -3,7 +3,9 @@ import os
 import sys
 from pathlib import Path
 from tempfile import gettempdir
+from typing import Literal
 
+USER_ID: int | Literal["tmp"]
 try:
     from os import getuid
 
