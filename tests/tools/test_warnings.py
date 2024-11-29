@@ -56,14 +56,13 @@ def test_fieldset_warnings():
         fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh="flat", timestamps=[0, 1, 2, 3])
 
 
-def test_file_warnings(tmpdir):
-    outfilepath = tmpdir.join("test_file_warnings.zarr")
+def test_file_warnings(tmp_zarr):
     fieldset = FieldSet.from_data(
         data={"U": np.zeros((1, 1)), "V": np.zeros((1, 1))}, dimensions={"lon": [0], "lat": [0]}
     )
     pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=[0, 0], lat=[0, 0], time=[0, 1])
-    pfile = pset.ParticleFile(name=outfilepath, outputdt=2)
-    with pytest.warns(FileWarning):
+    pfile = pset.ParticleFile(name=tmp_zarr, outputdt=2)
+    with pytest.warns(FileWarning, match="Some of the particles have a start time difference.*"):
         pset.execute(AdvectionRK4, runtime=3, dt=1, output_file=pfile)
 
 

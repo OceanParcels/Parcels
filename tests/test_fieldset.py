@@ -655,8 +655,7 @@ def test_add_second_vector_field(mode):
     assert abs(pset.lat[0] - 0.5) < 1e-9
 
 
-def test_fieldset_write(tmpdir):
-    filepath = tmpdir.join("fieldset_write.zarr")
+def test_fieldset_write(tmp_zarr):
     xdim, ydim = 3, 4
     lon = np.linspace(0.0, 10.0, xdim, dtype=np.float32)
     lat = np.linspace(0.0, 10.0, ydim, dtype=np.float32)
@@ -674,12 +673,12 @@ def test_fieldset_write(tmpdir):
         fieldset.U.grid.time[0] = time
 
     pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=5, lat=5)
-    ofile = pset.ParticleFile(name=filepath, outputdt=2.0)
+    ofile = pset.ParticleFile(name=tmp_zarr, outputdt=2.0)
     pset.execute(UpdateU, dt=1, runtime=10, output_file=ofile)
 
     assert fieldset.U.data[0, 1, 0] == 11
 
-    da = xr.open_dataset(str(filepath).replace(".zarr", "_0005U.nc"))
+    da = xr.open_dataset(str(tmp_zarr).replace(".zarr", "_0005U.nc"))
     assert np.allclose(fieldset.U.data, da["U"].values, atol=1.0)
 
 
