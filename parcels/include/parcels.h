@@ -1242,6 +1242,33 @@ static inline StatusCode temporal_interpolationUVW(type_coord x, type_coord y, t
   return SUCCESS;
 }
 
+
+static inline double croco_from_z_to_sigma(CField *U, CField *H, CField *Zeta,
+                                           type_coord x, type_coord y, type_coord z, double time,
+                                           int *xi, int *yi, int *zi, int *ti, double hc, float *cs_w)
+{
+  float local_h, local_zeta, z0;
+  int status, zii;
+  CStructuredGrid *grid = U->grid->grid;
+  float *sigma_levels = grid->depth;
+  int zdim = grid->zdim;
+  float zvec[zdim];
+  status = temporal_interpolation(x, y, 0, time, H, xi, yi, zi, ti, &local_h, LINEAR, CROCO);
+  status = temporal_interpolation(x, y, 0, time, Zeta, xi, yi, zi, ti, &local_zeta, LINEAR, CROCO);
+  for (zii = 0; zii < zdim; zii++)  {
+    z0 = hc*sigma_levels[zii] + (local_h - hc) *cs_w[zii];
+    zvec[zii] = z0 + local_zeta * (1 + z0 / local_h);
+  }
+  if (z >= zvec[zdim-1])
+    zii = zdim - 2;
+  else
+    for (zii = 0; zii < zdim-1; zii++)
+      if ((z >= zvec[zii])  && (z < zvec[zii+1]))
+        break;
+
+  return sigma_levels[zii] + (z - zvec[zii]) * (sigma_levels[zii + 1] - sigma_levels[zii]) / (zvec[zii + 1] - zvec[zii]);
+}
+
 #ifdef __cplusplus
 }
 #endif

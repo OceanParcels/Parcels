@@ -832,47 +832,9 @@ class KernelGenerator(ast.NodeVisitor):
             # Get Cs_w values directly from fieldset (since they are 1D in vertical only)
             Cs_w = [self.fieldset.Cs_w.data[0][zi][0][0] for zi in range(self.fieldset.Cs_w.data.shape[1])]
             statements_croco = [
-                c.Value("float", "local_h"),
-                c.Value("float", "local_zeta"),
-                c.Assign(
-                    "parcels_interp_state",
-                    f"temporal_interpolation({args[3]}, {args[2]}, 0, time, H, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &local_h, LINEAR, {node.field.obj.gridindexingtype.upper()})",
-                ),
-                c.Assign(
-                    "parcels_interp_state",
-                    f"temporal_interpolation({args[3]}, {args[2]}, 0, time, Zeta, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &local_zeta, LINEAR, {node.field.obj.gridindexingtype.upper()})",
-                ),
-                c.Assign("CStructuredGrid *grid", "U->grid->grid"),
-                c.Assign("float *sigma_levels", "grid->depth"),
-                c.Assign("int zdim", "grid->zdim"),
-                c.Value("float", "zvec[zdim]"),
-                c.Value("float", "z0"),
-                c.Value("int", "zi"),
                 c.Statement(f"float cs_w[] = {*Cs_w, }".replace("(", "{").replace(")", "}")),
-                c.For(
-                    "zi = 0",
-                    "zi < zdim",
-                    "zi++",
-                    c.Block(
-                        [
-                            c.Assign("z0", "hc*sigma_levels[zi] + (local_h - hc) *cs_w[zi]"),
-                            c.Assign("zvec[zi]", "z0 + local_zeta * (1 + z0 / local_h)"),
-                        ]
-                    ),
-                ),
-                c.Assign("double z", f"{args[1]}"),
-                c.If(
-                    "z >= zvec[zdim-1]",
-                    c.Assign("zi", "zdim - 2"),
-                    c.For(
-                        "zi = 0",
-                        "zi < zdim-1",
-                        "zi++",
-                        c.Block([c.If("(z >= zvec[zi])  && (z < zvec[zi+1])", c.Statement("break"))]),
-                    ),
-                ),
                 c.Statement(
-                    f"{node.var} = sigma_levels[zi] + (z - zvec[zi]) * (sigma_levels[zi + 1] - sigma_levels[zi]) / (zvec[zi + 1] - zvec[zi])"
+                    f"{node.var} = croco_from_z_to_sigma(U, H, Zeta, {args[3]}, {args[2]}, {args[1]}, time, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], hc, &cs_w)"
                 ),
             ]
             args = (args[0], node.var, args[2], args[3])
