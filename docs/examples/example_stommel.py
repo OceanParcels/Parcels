@@ -160,7 +160,7 @@ def stommel_example(
 
     maxage = runtime.total_seconds() if maxage is None else maxage
     fieldset.add_constant("maxage", maxage)
-    print("Stommel: Advecting %d particles for %s" % (npart, runtime))
+    print(f"Stommel: Advecting {npart} particles for {runtime}")
     parcels.timer.psetinit.stop()
     parcels.timer.psetrun = parcels.timer.Timer("Pset_run", parent=parcels.timer.pset)
     pset.execute(

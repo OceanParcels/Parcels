@@ -5,12 +5,12 @@ import math
 from parcels.tools.statuscodes import StatusCode
 
 __all__ = [
-    "AdvectionRK4",
-    "AdvectionEE",
-    "AdvectionRK45",
-    "AdvectionRK4_3D",
     "AdvectionAnalytical",
+    "AdvectionEE",
+    "AdvectionRK4",
+    "AdvectionRK4_3D",
     "AdvectionRK4_3D_CROCO",
+    "AdvectionRK45",
 ]
 
 

@@ -226,7 +226,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def get_tmp(self):
         """Create a new temporary variable name."""
-        tmp = "parcels_tmpvar%d" % self._tmp_counter
+        tmp = f"parcels_tmpvar{self._tmp_counter:d}"
         self._tmp_counter += 1
         self.tmp_vars += [tmp]
         return tmp
