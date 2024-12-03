@@ -1253,8 +1253,8 @@ static inline double croco_from_z_to_sigma(CField *U, CField *H, CField *Zeta,
   float *sigma_levels = grid->depth;
   int zdim = grid->zdim;
   float zvec[zdim];
-  status = temporal_interpolation(x, y, 0, time, H, xi, yi, zi, ti, &local_h, LINEAR, CROCO);
-  status = temporal_interpolation(x, y, 0, time, Zeta, xi, yi, zi, ti, &local_zeta, LINEAR, CROCO);
+  status = temporal_interpolation(x, y, 0, time, H, xi, yi, zi, ti, &local_h, LINEAR, CROCO); CHECKSTATUS(status);
+  status = temporal_interpolation(x, y, 0, time, Zeta, xi, yi, zi, ti, &local_zeta, LINEAR, CROCO); CHECKSTATUS(status);
   for (zii = 0; zii < zdim; zii++)  {
     z0 = hc*sigma_levels[zii] + (local_h - hc) *cs_w[zii];
     zvec[zii] = z0 + local_zeta * (1 + z0 / local_h);

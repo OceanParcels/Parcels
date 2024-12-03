@@ -830,7 +830,9 @@ class KernelGenerator(ast.NodeVisitor):
         args = self._check_FieldSamplingArguments(node.args.ccode)
         if "croco" in node.field.obj.gridindexingtype and node.field.obj.name != "H" and node.field.obj.name != "Zeta":
             # Get Cs_w values directly from fieldset (since they are 1D in vertical only)
-            Cs_w = [self.fieldset.Cs_w.data[0][zi][0][0] for zi in range(self.fieldset.Cs_w.data.shape[1])]
+            Cs_w = [
+                self.fieldset.Cs_w.data[0][zi][0][0].astype(float) for zi in range(self.fieldset.Cs_w.data.shape[1])
+            ]
             statements_croco = [
                 c.Statement(f"float cs_w[] = {*Cs_w, }".replace("(", "{").replace(")", "}")),
                 c.Statement(
