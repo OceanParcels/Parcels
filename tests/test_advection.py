@@ -605,7 +605,7 @@ def test_analyticalAgrid(mode):
 @pytest.mark.parametrize("v", [1, -0.3, 0, -1])
 @pytest.mark.parametrize("w", [None, 1, -0.3, 0, -1])
 @pytest.mark.parametrize("direction", [1, -1])
-def test_uniform_analytical(mode, u, v, w, direction, tmp_zarr):
+def test_uniform_analytical(mode, u, v, w, direction, tmp_zarrfile):
     lon = np.arange(0, 15, dtype=np.float32)
     lat = np.arange(0, 15, dtype=np.float32)
     if w is not None:
@@ -625,14 +625,14 @@ def test_uniform_analytical(mode, u, v, w, direction, tmp_zarr):
     x0, y0, z0 = 6.1, 6.2, 20
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
 
-    outfile = pset.ParticleFile(name=tmp_zarr, outputdt=1, chunks=(1, 1))
+    outfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=1, chunks=(1, 1))
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction, output_file=outfile)
     assert np.abs(pset.lon - x0 - pset.time * u) < 1e-6
     assert np.abs(pset.lat - y0 - pset.time * v) < 1e-6
     if w is not None:
         assert np.abs(pset.depth - z0 - pset.time * w) < 1e-4
 
-    ds = xr.open_zarr(tmp_zarr)
+    ds = xr.open_zarr(tmp_zarrfile)
     times = (direction * ds["time"][:]).values.astype("timedelta64[s]")[0]
     timeref = np.arange(1, 5).astype("timedelta64[s]")
     assert np.allclose(times, timeref, atol=np.timedelta64(1, "ms"))

@@ -891,7 +891,7 @@ def test_nestedfields(mode):
 
 
 @pytest.mark.parametrize("mode", ["jit", "scipy"])
-def test_fieldset_sampling_updating_order(mode, tmp_zarr):
+def test_fieldset_sampling_updating_order(mode, tmp_zarrfile):
     def calc_p(t, y, x):
         return 10 * t + x + 0.2 * y
 
@@ -923,10 +923,10 @@ def test_fieldset_sampling_updating_order(mode, tmp_zarr):
 
     kernels = [AdvectionRK4, SampleP]
 
-    pfile = pset.ParticleFile(tmp_zarr, outputdt=1)
+    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
     pset.execute(kernels, endtime=1, dt=1, output_file=pfile)
 
-    ds = xr.open_zarr(tmp_zarr)
+    ds = xr.open_zarr(tmp_zarrfile)
     for t in range(len(ds["obs"])):
         for i in range(len(ds["trajectory"])):
             assert np.isclose(
