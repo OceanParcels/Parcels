@@ -2,6 +2,7 @@ import math
 import warnings
 from collections.abc import Iterable
 from ctypes import POINTER, Structure, c_float, c_int, pointer
+from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -543,6 +544,8 @@ class Field:
         * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
 
         """
+        filenames = _sanitize_field_filenames(filenames)
+
         if kwargs.get("netcdf_decodewarning") is not None:
             _deprecated_param_netcdf_decodewarning()
             kwargs.pop("netcdf_decodewarning")
@@ -2572,6 +2575,7 @@ class NestedField(list):
 
 
 def _get_dim_filenames(filenames: str | Path | Any | dict[str, str | Any], dim: str) -> Any:
+    """Get's the relevant filenames for a given dimension."""
     if isinstance(filenames, str) or not isinstance(filenames, Iterable):
         return [filenames]
     elif isinstance(filenames, dict):
@@ -2583,3 +2587,56 @@ def _get_dim_filenames(filenames: str | Path | Any | dict[str, str | Any], dim: 
             return filename
 
     raise ValueError("Filenames must be a string, pathlib.Path, or a dictionary")
+
+
+def _sanitize_field_filenames(filenames, *, recursed=False):
+    """The Field initializer can take `filenames` to be of various formats including:
+
+    1. a string or Path object. String can be a glob expression.
+    2. a list of (a)
+    3. a dictionary mapping with keys 'lon', 'lat', 'depth', 'data' and values of (1) or (2)
+
+    This function sanitizes the inputs such that it returns, in the case of:
+    1. A sorted list of strings with the expanded glob expression
+    2. A sorted list of strings with the expanded glob expressions
+    3. A dictionary with same keys but values as in (1) or (2).
+
+    See tests for examples.
+    """
+    allowed_dimension_keys = ("lon", "lat", "depth", "data")
+
+    if isinstance(filenames, str) or not isinstance(filenames, Iterable):
+        return sorted(_expand_filename(filenames))
+
+    if isinstance(filenames, list):
+        files = []
+        for f in filenames:
+            files.extend(_expand_filename(f))
+        return sorted(files)
+
+    if isinstance(filenames, dict):
+        if recursed:
+            raise ValueError("Invalid filenames format. Nested dictionary not allowed in dimension dictionary")
+
+        for key in filenames:
+            if key not in allowed_dimension_keys:
+                raise ValueError(
+                    f"Invalid key in filenames dimension dictionary. Must be one of {allowed_dimension_keys}"
+                )
+            filenames[key] = _sanitize_field_filenames(filenames[key], recursed=True)
+
+        return filenames
+
+    raise ValueError("Filenames must be a string, pathlib.Path, list, or a dictionary")
+
+
+def _expand_filename(filename: str | Path) -> list[str]:
+    """
+    Converts a filename to a list of filenames if it is a glob expression.
+
+    If a file is explicitly provided (i.e., not via glob), existence is only checked later.
+    """
+    filename = str(filename)
+    if "*" in filename:
+        return glob(filename)
+    return [filename]
