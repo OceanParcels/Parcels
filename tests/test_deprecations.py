@@ -148,7 +148,7 @@ actions = [
     Action("FieldSet",        "particlefile",                    "read_only"     ),
     Action("FieldSet",        "add_UVfield()",                   "make_private"  ),
     Action("FieldSet",        "check_complete()",                "make_private"  ),
-    Action("FieldSet",        "parse_wildcards()",               "make_private"  ),
+    Action("FieldSet",        "parse_wildcards()",               "make_private"  , skip_reason="Moved underlying function."),
 
     # 1713
     Action("ParticleSet",      "repeat_starttime",               "make_private"  ),
