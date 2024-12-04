@@ -2576,15 +2576,11 @@ class NestedField(list):
 
 def _get_dim_filenames(filenames: str | Path | Any | dict[str, str | Any], dim: str) -> Any:
     """Get's the relevant filenames for a given dimension."""
-    if isinstance(filenames, str) or not isinstance(filenames, Iterable):
-        return [filenames]
-    elif isinstance(filenames, dict):
-        assert dim in filenames.keys(), "filename dimension keys must be lon, lat, depth or data"
-        filename = filenames[dim]
-        if not isinstance(filename, Iterable):
-            return [filename]
-        else:
-            return filename
+    if isinstance(filenames, list):
+        return filenames
+
+    if isinstance(filenames, dict):
+        return filenames[dim]
 
     raise ValueError("Filenames must be a string, pathlib.Path, or a dictionary")
 
