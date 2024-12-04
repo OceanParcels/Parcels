@@ -2577,7 +2577,7 @@ def _get_dim_filenames(filenames: str | Path | Any | dict[str, str | Any], dim: 
     elif isinstance(filenames, dict):
         assert dim in filenames.keys(), "filename dimension keys must be lon, lat, depth or data"
         filename = filenames[dim]
-        if isinstance(filename, str):
+        if not isinstance(filename, Iterable):
             return [filename]
         else:
             return filename
