@@ -958,8 +958,7 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail):
 
 @pytest.mark.parametrize("zdim", [2, 8])
 @pytest.mark.parametrize("scale_fac", [0.2, 4, 1])
-def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir):
-    filepath = tmpdir.join("test_parcels_defer_loading")
+def test_fieldset_defer_loading_function(zdim, scale_fac, tmp_path):
     data0, dims0 = generate_fieldset_data(3, 3, zdim, 10)
     data0["U"][:, 0, :, :] = (
         np.nan
@@ -967,9 +966,9 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir):
     dims0["time"] = np.arange(0, 10, 1) * 3600
     dims0["depth"] = np.arange(0, zdim, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
-    fieldset_out.write(filepath)
+    fieldset_out.write(tmp_path)
     fieldset = FieldSet.from_parcels(
-        filepath, chunksize={"time": ("time_counter", 1), "depth": ("depthu", 1), "lat": ("y", 2), "lon": ("x", 2)}
+        tmp_path, chunksize={"time": ("time_counter", 1), "depth": ("depthu", 1), "lat": ("y", 2), "lon": ("x", 2)}
     )
 
     # testing for combination of deferred-loaded and numpy Fields
