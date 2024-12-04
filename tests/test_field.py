@@ -51,6 +51,25 @@ def test_field_from_netcdf(with_timestamps):
 
 
 @pytest.mark.parametrize(
+    "f",
+    [
+        pytest.param(lambda x: x, id="Path"),
+        pytest.param(lambda x: str(x), id="str"),
+    ],
+)
+def test_from_netcdf_path_object(f):
+    filenames = {
+        "lon": f(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+        "lat": f(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+        "data": f(TEST_DATA / "Uu_eastward_nemo_cross_180lon.nc"),
+    }
+    variable = "U"
+    dimensions = {"lon": "glamf", "lat": "gphif"}
+
+    Field.from_netcdf(filenames, variable, dimensions, interp_method="cgrid_velocity")
+
+
+@pytest.mark.parametrize(
     "calendar, cftime_datetime", zip(_get_cftime_calendars(), _get_cftime_datetimes(), strict=True)
 )
 def test_field_nonstandardtime(calendar, cftime_datetime, tmpdir):
