@@ -52,7 +52,8 @@ if TYPE_CHECKING:
 
     from parcels.fieldset import FieldSet
 
-    T_SanitizedFilenames = list[str] | dict[str, list[str]]
+    T_Dimensions = Literal["lon", "lat", "depth", "data"]
+    T_SanitizedFilenames = list[str] | dict[T_Dimensions, list[str]]
 
 __all__ = ["Field", "NestedField", "VectorField"]
 
@@ -600,10 +601,10 @@ class Field:
             )
         lonlat_filename = lonlat_filename_lst[0]
         if "depth" in dimensions:
-            depth_filename = _get_dim_filenames(filenames, "depth")
-            if isinstance(filenames, dict) and len(depth_filename) != 1:
+            depth_filename_lst = _get_dim_filenames(filenames, "depth")
+            if isinstance(filenames, dict) and len(depth_filename_lst) != 1:
                 raise NotImplementedError("Vertically adaptive meshes not implemented for from_netcdf()")
-            depth_filename = depth_filename[0]
+            depth_filename = depth_filename_lst[0]
 
         netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         gridindexingtype = kwargs.get("gridindexingtype", "nemo")
@@ -2578,7 +2579,7 @@ class NestedField(list):
             return val
 
 
-def _get_dim_filenames(filenames: T_SanitizedFilenames, dim: str) -> list[str]:
+def _get_dim_filenames(filenames: T_SanitizedFilenames, dim: T_Dimensions) -> list[str]:
     """Get's the relevant filenames for a given dimension."""
     if isinstance(filenames, list):
         return filenames
