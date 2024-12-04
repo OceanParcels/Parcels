@@ -1,10 +1,9 @@
-import collections
 import math
 import warnings
 from collections.abc import Iterable
 from ctypes import POINTER, Structure, c_float, c_int, pointer
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import dask.array as da
 import numpy as np
@@ -2572,8 +2571,8 @@ class NestedField(list):
             return val
 
 
-def _get_dim_filenames(filenames, dim):
-    if isinstance(filenames, str) or not isinstance(filenames, collections.abc.Iterable):
+def _get_dim_filenames(filenames: str | Path | Any | dict[str, str | Any], dim: str) -> Any:
+    if isinstance(filenames, str) or not isinstance(filenames, Iterable):
         return [filenames]
     elif isinstance(filenames, dict):
         assert dim in filenames.keys(), "filename dimension keys must be lon, lat, depth or data"
@@ -2582,5 +2581,5 @@ def _get_dim_filenames(filenames, dim):
             return [filename]
         else:
             return filename
-    else:
-        raise ValueError("Filenames must be a string, pathlib.Path, a list or a dictionary")
+
+    raise ValueError("Filenames must be a string, pathlib.Path, or a dictionary")
