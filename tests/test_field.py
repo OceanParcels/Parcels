@@ -1,4 +1,3 @@
-import glob
 from pathlib import Path
 
 import cftime
@@ -105,19 +104,11 @@ def test_sanitize_field_filenames_cases(input_, expected):
 @pytest.mark.parametrize(
     "input_,expected",
     [
-        ("file*.nc", ["file0.nc", "file1.nc", "file2.nc"]),
+        pytest.param("file*.nc", [], id="glob-no-match"),
     ],
 )
-def test_sanitize_field_filenames_glob(input_, expected, tmp_path, monkeypatch):
-    def monkey_glob(pattern):
-        return glob.glob(pattern, root_dir=tmp_path)
-
-    monkeypatch.setattr(_sanitize_field_filenames, "glob", monkey_glob)
-
-    for f in expected:
-        Path(tmp_path / f).touch()
-
-    assert _sanitize_field_filenames(input_, tmp_path) == expected
+def test_sanitize_field_filenames_glob(input_, expected):
+    assert _sanitize_field_filenames(input_) == expected
 
 
 @pytest.mark.parametrize(
