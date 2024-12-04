@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import math
 import warnings
 from collections.abc import Iterable
 from ctypes import POINTER, Structure, c_float, c_int, pointer
 from glob import glob
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
 import numpy as np
@@ -49,6 +51,8 @@ if TYPE_CHECKING:
     from ctypes import _Pointer as PointerType
 
     from parcels.fieldset import FieldSet
+
+    T_SanitizedFilenames = list[str] | dict[str, list[str]]
 
 __all__ = ["Field", "NestedField", "VectorField"]
 
@@ -484,7 +488,7 @@ class Field:
         time_periodic: TimePeriodic = False,
         deferred_load: bool = True,
         **kwargs,
-    ) -> "Field":
+    ) -> Field:
         """Create field from netCDF file.
 
         Parameters
@@ -587,14 +591,14 @@ class Field:
         ), "The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables"
 
         data_filenames = _get_dim_filenames(filenames, "data")
-        lonlat_filename = _get_dim_filenames(filenames, "lon")
+        lonlat_filename_lst = _get_dim_filenames(filenames, "lon")
         if isinstance(filenames, dict):
-            assert len(lonlat_filename) == 1
-        if lonlat_filename != _get_dim_filenames(filenames, "lat"):
+            assert len(lonlat_filename_lst) == 1
+        if lonlat_filename_lst != _get_dim_filenames(filenames, "lat"):
             raise NotImplementedError(
                 "longitude and latitude dimensions are currently processed together from one single file"
             )
-        lonlat_filename = lonlat_filename[0]
+        lonlat_filename = lonlat_filename_lst[0]
         if "depth" in dimensions:
             depth_filename = _get_dim_filenames(filenames, "depth")
             if isinstance(filenames, dict) and len(depth_filename) != 1:
@@ -2574,7 +2578,7 @@ class NestedField(list):
             return val
 
 
-def _get_dim_filenames(filenames: str | Path | Any | dict[str, str | Any], dim: str) -> Any:
+def _get_dim_filenames(filenames: T_SanitizedFilenames, dim: str) -> list[str]:
     """Get's the relevant filenames for a given dimension."""
     if isinstance(filenames, list):
         return filenames
@@ -2585,7 +2589,7 @@ def _get_dim_filenames(filenames: str | Path | Any | dict[str, str | Any], dim: 
     raise ValueError("Filenames must be a string, pathlib.Path, or a dictionary")
 
 
-def _sanitize_field_filenames(filenames, *, recursed=False):
+def _sanitize_field_filenames(filenames, *, recursed=False) -> T_SanitizedFilenames:
     """The Field initializer can take `filenames` to be of various formats including:
 
     1. a string or Path object. String can be a glob expression.
