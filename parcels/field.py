@@ -426,22 +426,8 @@ class Field:
 
     @classmethod
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def get_dim_filenames(cls, *args, **kwargs):
-        return cls._get_dim_filenames(*args, **kwargs)
-
-    @classmethod
-    def _get_dim_filenames(cls, filenames, dim):
-        if isinstance(filenames, str) or not isinstance(filenames, collections.abc.Iterable):
-            return [filenames]
-        elif isinstance(filenames, dict):
-            assert dim in filenames.keys(), "filename dimension keys must be lon, lat, depth or data"
-            filename = filenames[dim]
-            if isinstance(filename, str):
-                return [filename]
-            else:
-                return filename
-        else:
-            return filenames
+    def get_dim_filenames(*args, **kwargs):
+        return _get_dim_filenames(*args, **kwargs)
 
     @staticmethod
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
@@ -598,17 +584,17 @@ class Field:
             len(variable) == 2
         ), "The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables"
 
-        data_filenames = cls._get_dim_filenames(filenames, "data")
-        lonlat_filename = cls._get_dim_filenames(filenames, "lon")
+        data_filenames = _get_dim_filenames(filenames, "data")
+        lonlat_filename = _get_dim_filenames(filenames, "lon")
         if isinstance(filenames, dict):
             assert len(lonlat_filename) == 1
-        if lonlat_filename != cls._get_dim_filenames(filenames, "lat"):
+        if lonlat_filename != _get_dim_filenames(filenames, "lat"):
             raise NotImplementedError(
                 "longitude and latitude dimensions are currently processed together from one single file"
             )
         lonlat_filename = lonlat_filename[0]
         if "depth" in dimensions:
-            depth_filename = cls._get_dim_filenames(filenames, "depth")
+            depth_filename = _get_dim_filenames(filenames, "depth")
             if isinstance(filenames, dict) and len(depth_filename) != 1:
                 raise NotImplementedError("Vertically adaptive meshes not implemented for from_netcdf()")
             depth_filename = depth_filename[0]
@@ -2584,3 +2570,17 @@ class NestedField(list):
                     else:
                         pass
             return val
+
+
+def _get_dim_filenames(filenames, dim):
+    if isinstance(filenames, str) or not isinstance(filenames, collections.abc.Iterable):
+        return [filenames]
+    elif isinstance(filenames, dict):
+        assert dim in filenames.keys(), "filename dimension keys must be lon, lat, depth or data"
+        filename = filenames[dim]
+        if isinstance(filename, str):
+            return [filename]
+        else:
+            return filename
+    else:
+        raise ValueError("Filenames must be a string, pathlib.Path, a list or a dictionary")

@@ -122,7 +122,7 @@ actions = [
     Action("Field",           "c_data_chunks",                   "make_private"  ),
     Action("Field",           "chunk_set",                       "make_private"  ),
     Action("Field",           "cell_edge_sizes",                 "read_only"     ),
-    Action("Field",           "get_dim_filenames()",             "make_private"  ),
+    Action("Field",           "get_dim_filenames()",             "make_private"  , skip_reason="Moved underlying function."),
     Action("Field",           "collect_timeslices()",            "make_private"  ),
     Action("Field",           "reshape()",                       "make_private"  ),
     Action("Field",           "calc_cell_edge_sizes()",          "make_private"  ),
