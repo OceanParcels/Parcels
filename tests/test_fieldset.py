@@ -1092,6 +1092,25 @@ def test_fieldset_frompop(mode):
     pset.execute(AdvectionRK4, runtime=3, dt=1)
 
 
+@pytest.mark.parametrize(
+    "f",
+    [
+        pytest.param(lambda x: x, id="pathlib.Path"),
+        pytest.param(lambda x: str(x), id="str"),
+    ],
+)
+def test_fieldset_from_netcdf_path_type(f):
+    filenames = {
+        "lon": f(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+        "lat": f(TEST_DATA / "mask_nemo_cross_180lon.nc"),
+        "data": f(TEST_DATA / "Uu_eastward_nemo_cross_180lon.nc"),
+    }
+    variable = "U"
+    dimensions = {"lon": "glamf", "lat": "gphif"}
+
+    Field.from_netcdf(filenames, variable, dimensions, interp_method="cgrid_velocity")
+
+
 def test_fieldset_from_data_gridtypes():
     """Simple test for fieldset initialisation from data."""
     xdim, ydim, zdim = 20, 10, 4
