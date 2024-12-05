@@ -4,8 +4,9 @@ from argparse import ArgumentParser
 from datetime import timedelta
 
 import numpy as np
-import parcels
 import pytest
+
+import parcels
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 method = {
@@ -145,7 +146,7 @@ def moving_eddies_example(
 
     # Execute for 1 week, with 1 hour timesteps and hourly output
     runtime = timedelta(days=7)
-    print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
+    print(f"MovingEddies: Advecting {npart} particles for {runtime}")
     pset.execute(
         method,
         runtime=runtime,
@@ -176,7 +177,7 @@ def test_moving_eddies_fwdbwd(mode, mesh, tmpdir, npart=2):
     runtime = timedelta(days=1)
     dt = timedelta(minutes=5)
     outputdt = timedelta(hours=1)
-    print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
+    print(f"MovingEddies: Advecting {npart} particles for {runtime}")
     outfile = tmpdir.join("EddyParticlefwd")
     pset.execute(
         method,

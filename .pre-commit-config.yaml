@@ -10,18 +10,20 @@ repos:
         types: [text]
         files: \.(json|ipynb)$
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.4
+    rev: v0.8.1
     hooks:
       - id: ruff
+        name: ruff lint (.py)
         args: [--fix, --show-fixes]
+        types_or: [python]
       - id: ruff
-        name: ruff (isort jupyter)
+        name: ruff isort (.ipynb)
         args: [--select, I, --fix]
         types_or: [jupyter]
       - id: ruff-format
         types_or: [python, jupyter]
   - repo: https://github.com/rbubley/mirrors-prettier # Update mirror as official mirror is deprecated
-    rev: v3.3.3
+    rev: v3.4.1
     hooks:
       - id: prettier
 

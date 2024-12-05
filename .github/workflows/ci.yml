@@ -24,12 +24,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos, ubuntu, windows]
-        python-version: ["3.12"]
+        python-version: ["3.13"]
         include:
           - os: ubuntu
             python-version: "3.10"
           - os: ubuntu
             python-version: "3.11"
+          - os: ubuntu
+            python-version: "3.12"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,10 +45,10 @@ jobs:
           coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html tests
           coverage xml
       - name: Codecov
-        uses: codecov/codecov-action@v4.6.0
+        uses: codecov/codecov-action@v5.0.7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.13'
         with:
           flags: unit-tests
       - name: Upload test results
@@ -62,7 +64,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos, ubuntu, windows]
-        python-version: ["3.12"]
+        python-version: ["3.13"]
+        include:
+          - os: ubuntu
+            python-version: "3.10"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,10 +77,10 @@ jobs:
           environment-file: environment.yml
       - name: Integration test
         run: |
-          coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_integration_test_report.html" --self-contained-html docs/examples
+          coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html" --self-contained-html docs/examples
           coverage xml
       - name: Codecov
-        uses: codecov/codecov-action@v4.6.0
+        uses: codecov/codecov-action@v5.0.7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -84,8 +89,8 @@ jobs:
         if: ${{ always() }} # Always run this step, even if tests fail
         uses: actions/upload-artifact@v4
         with:
-          name: Integration test report ${{ matrix.os }}
-          path: ${{ matrix.os }}_integration_test_report.html
+          name: Integration test report ${{ matrix.os }}-${{ matrix.python-version }}
+          path: ${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html
   merge-test-artifacts:
     runs-on: ubuntu-latest
     needs:
@@ -112,7 +117,7 @@ jobs:
         run: |
           mypy --install-types --non-interactive parcels --cobertura-xml-report mypy_report
       - name: Upload mypy coverage to Codecov
-        uses: codecov/codecov-action@v4.6.0
+        uses: codecov/codecov-action@v5.0.7
         if: ${{ always() }} # Upload even on error of mypy
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

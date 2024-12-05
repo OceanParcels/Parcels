@@ -10,15 +10,15 @@ import numpy.typing as npt
 import xarray as xr
 
 __all__ = [
-    "UnitConverter",
     "Geographic",
     "GeographicPolar",
-    "GeographicSquare",
     "GeographicPolarSquare",
-    "unitconverters_map",
+    "GeographicSquare",
     "TimeConverter",
-    "convert_xarray_time_units",
+    "UnitConverter",
     "convert_to_flat_array",
+    "convert_xarray_time_units",
+    "unitconverters_map",
 ]
 
 

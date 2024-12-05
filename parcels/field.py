@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 
     from parcels.fieldset import FieldSet
 
-__all__ = ["Field", "VectorField", "NestedField"]
+__all__ = ["Field", "NestedField", "VectorField"]
 
 
 def _isParticle(key):
@@ -74,6 +74,26 @@ def _deal_with_errors(error, key, vector_type: VectorType):
         return (0, 0)
     else:
         return 0
+
+
+def _croco_from_z_to_sigma_scipy(fieldset, time, z, y, x, particle):
+    """Calculate local sigma level of the particle, by linearly interpolating the
+    scaling function that maps sigma to depth (using local ocean depth H,
+    sea-surface Zeta and stretching parameters Cs_w and hc).
+    See also https://croco-ocean.gitlabpages.inria.fr/croco_doc/model/model.grid.html#vertical-grid-parameters
+    """
+    h = fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
+    zeta = fieldset.Zeta.eval(time, 0, y, x, particle=particle, applyConversion=False)
+    sigma_levels = fieldset.U.grid.depth
+    z0 = fieldset.hc * sigma_levels + (h - fieldset.hc) * fieldset.Cs_w.data[0, :, 0, 0]
+    zvec = z0 + zeta * (1 + (z0 / h))
+    zinds = zvec <= z
+    if z >= zvec[-1]:
+        zi = len(zvec) - 2
+    else:
+        zi = zinds.argmin() - 1 if z >= zvec[0] else 0
+
+    return sigma_levels[zi] + (z - zvec[zi]) * (sigma_levels[zi + 1] - sigma_levels[zi]) / (zvec[zi + 1] - zvec[zi])
 
 
 class Field:
@@ -617,18 +637,23 @@ class Field:
 
         _grid_fb_class = NetcdfFileBuffer
 
-        with _grid_fb_class(
-            lonlat_filename,
-            dimensions,
-            indices,
-            netcdf_engine,
-            gridindexingtype=gridindexingtype,
-        ) as filebuffer:
-            lon, lat = filebuffer.lonlat
-            indices = filebuffer.indices
-            # Check if parcels_mesh has been explicitly set in file
-            if "parcels_mesh" in filebuffer.dataset.attrs:
-                mesh = filebuffer.dataset.attrs["parcels_mesh"]
+        if "lon" in dimensions and "lat" in dimensions:
+            with _grid_fb_class(
+                lonlat_filename,
+                dimensions,
+                indices,
+                netcdf_engine,
+                gridindexingtype=gridindexingtype,
+            ) as filebuffer:
+                lon, lat = filebuffer.lonlat
+                indices = filebuffer.indices
+                # Check if parcels_mesh has been explicitly set in file
+                if "parcels_mesh" in filebuffer.dataset.attrs:
+                    mesh = filebuffer.dataset.attrs["parcels_mesh"]
+        else:
+            lon = 0
+            lat = 0
+            mesh = "flat"
 
         if "depth" in dimensions:
             with _grid_fb_class(
@@ -1242,7 +1267,7 @@ class Field:
             (xi, yi) = self._reconnect_bnd_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
             it += 1
             if it > maxIterSearch:
-                print("Correct cell not found after %d iterations" % maxIterSearch)
+                print(f"Correct cell not found after {maxIterSearch} iterations")
                 raise FieldOutOfBoundError(x, y, 0, field=self)
         xsi = max(0.0, xsi)
         eta = max(0.0, eta)
@@ -1537,8 +1562,8 @@ class Field:
         """
         (ti, periods) = self._time_index(time)
         time -= periods * (self.grid.time_full[-1] - self.grid.time_full[0])
-        if self.gridindexingtype == "croco" and self is not self.fieldset.H:
-            z = z / self.fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
+        if self.gridindexingtype == "croco" and self not in [self.fieldset.H, self.fieldset.Zeta]:
+            z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
         if ti < self.grid.tdim - 1 and time > self.grid.time[ti]:
             f0 = self._spatial_interpolation(ti, z, y, x, time, particle=particle)
             f1 = self._spatial_interpolation(ti + 1, z, y, x, time, particle=particle)
@@ -1630,10 +1655,8 @@ class Field:
         g = self.grid
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid._load_chunk)):
-                if (
-                    g._load_chunk[block_id] == g._chunk_loading_requested
-                    or g._load_chunk[block_id] in g._chunk_loaded
-                    and self._data_chunks[block_id] is None
+                if g._load_chunk[block_id] == g._chunk_loading_requested or (
+                    g._load_chunk[block_id] in g._chunk_loaded and self._data_chunks[block_id] is None
                 ):
                     block = self._get_block(block_id)
                     self._data_chunks[block_id] = np.array(
@@ -2252,7 +2275,7 @@ class VectorField:
             (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
         else:
             if self.gridindexingtype == "croco":
-                z = z / self.fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
+                z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
             (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
@@ -2534,13 +2557,13 @@ class NestedField(list):
                 assert isinstance(Fi, Field) and isinstance(
                     Vi, Field
                 ), "F, and V components of a NestedField must be Field"
-                self.append(VectorField(name + "_%d" % i, Fi, Vi))
+                self.append(VectorField(f"{name}_{i}", Fi, Vi))
         else:
             for i, Fi, Vi, Wi in zip(range(len(F)), F, V, W, strict=True):
                 assert (
                     isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field)
                 ), "F, V and W components of a NestedField must be Field"
-                self.append(VectorField(name + "_%d" % i, Fi, Vi, Wi))
+                self.append(VectorField(f"{name}_{i}", Fi, Vi, Wi))
         self.name = name
 
     def __getitem__(self, key):

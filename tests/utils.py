@@ -81,3 +81,7 @@ def create_fieldset_zeros_simple(xdim=40, ydim=100):
     data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
     dimensions = {"lat": lat, "lon": lon, "depth": depth}
     return FieldSet.from_data(data, dimensions)
+
+
+def assert_empty_folder(path: Path):
+    assert [p.name for p in path.iterdir()] == []

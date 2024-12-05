@@ -5,8 +5,9 @@ from datetime import timedelta
 from glob import glob
 
 import numpy as np
-import parcels
 import pytest
+
+import parcels
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 advection = {"RK4": parcels.AdvectionRK4, "AA": parcels.AdvectionAnalytical}

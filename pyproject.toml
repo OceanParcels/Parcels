@@ -15,6 +15,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Operating System :: OS Independent",
   "Topic :: Scientific/Engineering",
   "Intended Audience :: Science/Research",
@@ -68,8 +69,6 @@ filterwarnings = [
 line-length = 120
 
 [tool.ruff.lint]
-exclude = ["*.ipynb"]
-
 select = [
     "D",  # pydocstyle
     "E",  # Error
@@ -131,6 +130,9 @@ ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.isort]
+known-first-party = ["parcels"]
 
 [tool.mypy]
 files = [
