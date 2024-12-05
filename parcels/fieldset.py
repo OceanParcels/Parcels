@@ -724,12 +724,14 @@ class FieldSet:
     ):
         """Initialises FieldSet object from NetCDF files of CROCO fields.
         All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
-        the vertical coordinate is scaled by the bathymetry (``h``) and sea-surface height (``zeta``)
-        fields from CROCO, in order to account for the sigma-grid.
+        in order to scale the vertical coordinate in CROCO, the following fields are required:
+        the bathymetry (``h``), the sea-surface height (``zeta``), the S-coordinate stretching curves
+        at W-points (``Cs_w``), and the stretching parameter (``hc``).
         The horizontal interpolation uses the MITgcm grid indexing as described in FieldSet.from_mitgcm().
 
         In 3D, when there is a ``depth`` dimension, the sigma grid scaling means that FieldSet.from_croco()
-        requires variables ``H: h`` and ``Zeta: zeta``, as well as he ``hc`` parameter to work.
+        requires variables ``H: h`` and ``Zeta: zeta``, ``Cs_w: Cs_w``, as well as the stretching parameter ``hc``
+        (as an extra input) parameter to work.
 
         See `the CROCO 3D tutorial <../examples/tutorial_croco_3D.ipynb>`__ for more infomation.
         """
@@ -754,6 +756,10 @@ class FieldSet:
                 raise ValueError("FieldSet.from_croco() requires a bathymetry field 'H' for 3D CROCO fields")
             if "Zeta" not in variables:
                 raise ValueError("FieldSet.from_croco() requires a free-surface field 'Zeta' for 3D CROCO fields")
+            if "Cs_w" not in variables:
+                raise ValueError(
+                    "FieldSet.from_croco() requires the S-coordinate stretching curves at W-points 'Cs_w' for 3D CROCO fields"
+                )
 
         interp_method = {}
         for v in variables:
