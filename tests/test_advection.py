@@ -199,10 +199,12 @@ def test_conversion_3DCROCO():
     """Test of the (SciPy) version of the conversion from depth to sigma in CROCO
 
     Values below are retrieved using xroms and hardcoded in the method (to avoid dependency on xroms):
-    # x, y = 10, 20
-    # s_xroms = ds.s_w.values
-    # z_xroms = ds.z_w.isel(time=0).isel(eta_rho=y).isel(xi_rho=x).values
-    # lat, lon = ds.y_rho.values[y, x], ds.x_rho.values[y, x]
+    ```py
+    x, y = 10, 20
+    s_xroms = ds.s_w.values
+    z_xroms = ds.z_w.isel(time=0).isel(eta_rho=y).isel(xi_rho=x).values
+    lat, lon = ds.y_rho.values[y, x], ds.x_rho.values[y, x]
+    ```
     """
     fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
 
