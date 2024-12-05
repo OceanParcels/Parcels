@@ -713,6 +713,7 @@ class FieldSet:
         filenames,
         variables,
         dimensions,
+        hc: float | None = None,
         indices=None,
         mesh="spherical",
         allow_time_extrapolation=None,
@@ -723,11 +724,14 @@ class FieldSet:
     ):
         """Initialises FieldSet object from NetCDF files of CROCO fields.
         All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
-        the vertical coordinate is scaled by the bathymetry (``h``) field from CROCO, in order to
-        account for the sigma-grid. The horizontal interpolation uses the MITgcm grid indexing
-        as described in FieldSet.from_mitgcm().
+        in order to scale the vertical coordinate in CROCO, the following fields are required:
+        the bathymetry (``h``), the sea-surface height (``zeta``), the S-coordinate stretching curves
+        at W-points (``Cs_w``), and the stretching parameter (``hc``).
+        The horizontal interpolation uses the MITgcm grid indexing as described in FieldSet.from_mitgcm().
 
-        The sigma grid scaling means that FieldSet.from_croco() requires a variable ``H: h`` to work.
+        In 3D, when there is a ``depth`` dimension, the sigma grid scaling means that FieldSet.from_croco()
+        requires variables ``H: h`` and ``Zeta: zeta``, ``Cs_w: Cs_w``, as well as the stretching parameter ``hc``
+        (as an extra input) parameter to work.
 
         See `the CROCO 3D tutorial <../examples/tutorial_croco_3D.ipynb>`__ for more infomation.
         """
@@ -739,14 +743,23 @@ class FieldSet:
             )
 
         dimsU = dimensions["U"] if "U" in dimensions else dimensions
-        if "depth" in dimsU:
-            warnings.warn(
-                "Note that it is unclear which vertical velocity ('w' or 'omega') to use in 3D CROCO fields.\nSee https://docs.oceanparcels.org/en/latest/examples/tutorial_croco_3D.html for more information",
-                FieldSetWarning,
-                stacklevel=2,
-            )
+        croco3D = True if "depth" in dimsU else False
+
+        if croco3D:
+            if "W" in variables and variables["W"] == "omega":
+                warnings.warn(
+                    "Note that Parcels expects 'w' for vertical velicites in 3D CROCO fields.\nSee https://docs.oceanparcels.org/en/latest/examples/tutorial_croco_3D.html for more information",
+                    FieldSetWarning,
+                    stacklevel=2,
+                )
             if "H" not in variables:
-                raise ValueError("FieldSet.from_croco() requires a field 'H' for the bathymetry")
+                raise ValueError("FieldSet.from_croco() requires a bathymetry field 'H' for 3D CROCO fields")
+            if "Zeta" not in variables:
+                raise ValueError("FieldSet.from_croco() requires a free-surface field 'Zeta' for 3D CROCO fields")
+            if "Cs_w" not in variables:
+                raise ValueError(
+                    "FieldSet.from_croco() requires the S-coordinate stretching curves at W-points 'Cs_w' for 3D CROCO fields"
+                )
 
         interp_method = {}
         for v in variables:
@@ -776,6 +789,10 @@ class FieldSet:
             gridindexingtype="croco",
             **kwargs,
         )
+        if croco3D:
+            if hc is None:
+                raise ValueError("FieldSet.from_croco() requires the hc parameter for 3D CROCO fields")
+            fieldset.add_constant("hc", hc)
         return fieldset
 
     @classmethod

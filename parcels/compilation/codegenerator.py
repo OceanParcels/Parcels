@@ -425,10 +425,13 @@ class KernelGenerator(ast.NodeVisitor):
         self.fieldset = fieldset
         self.ptype = ptype
         self.field_args = collections.OrderedDict()
-        if isinstance(fieldset.U, Field) and fieldset.U.gridindexingtype == "croco" and hasattr(fieldset, "H"):
-            self.field_args["H"] = fieldset.H  # CROCO requires H field
         self.vector_field_args = collections.OrderedDict()
         self.const_args = collections.OrderedDict()
+        if isinstance(fieldset.U, Field) and fieldset.U.gridindexingtype == "croco" and hasattr(fieldset, "H"):
+            self.field_args["H"] = fieldset.H  # CROCO requires H field
+            self.field_args["Zeta"] = fieldset.Zeta  # CROCO requires Zeta field
+            self.field_args["Cs_w"] = fieldset.Cs_w  # CROCO requires CS_w field
+            self.const_args["hc"] = fieldset.hc  # CROCO requires hc constant
 
     def generate(self, py_ast, funcvars: list[str]):
         # Replace occurrences of intrinsic objects in Python AST
@@ -825,16 +828,18 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        statements_croco = []
-        if "croco" in node.field.obj.gridindexingtype and node.field.obj.name != "H":
-            statements_croco.append(
-                c.Assign(
-                    "parcels_interp_state",
-                    f"temporal_interpolation({args[3]}, {args[2]}, 0, time, H, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{node.var}, LINEAR, {node.field.obj.gridindexingtype.upper()})",
-                )
-            )
-            statements_croco.append(c.Statement(f"{node.var} = {args[1]}/{node.var}"))
+        if "croco" in node.field.obj.gridindexingtype and node.field.obj.name != "H" and node.field.obj.name != "Zeta":
+            # Get Cs_w values directly from fieldset (since they are 1D in vertical only)
+            Cs_w = [float(self.fieldset.Cs_w.data[0][zi][0][0]) for zi in range(self.fieldset.Cs_w.data.shape[1])]
+            statements_croco = [
+                c.Statement(f"float cs_w[] = {*Cs_w, }".replace("(", "{").replace(")", "}")),
+                c.Statement(
+                    f"{node.var} = croco_from_z_to_sigma(U, H, Zeta, {args[3]}, {args[2]}, {args[1]}, time, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], hc, &cs_w)"
+                ),
+            ]
             args = (args[0], node.var, args[2], args[3])
+        else:
+            statements_croco = []
         ccode_eval = node.field.obj._ccode_eval(node.var, *args)
         stmts = [
             c.Assign("parcels_interp_state", ccode_eval),
@@ -852,16 +857,18 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        statements_croco = []
         if "3DSigma" in node.field.obj.vector_type:
-            statements_croco.append(
-                c.Assign(
-                    "parcels_interp_state",
-                    f"temporal_interpolation({args[3]}, {args[2]}, 0, time, H, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{node.var}, LINEAR, {node.field.obj.U.gridindexingtype.upper()})",
-                )
-            )
-            statements_croco.append(c.Statement(f"{node.var4} = {args[1]}/{node.var}"))
+            # Get Cs_w values directly from fieldset (since they are 1D in vertical only)
+            Cs_w = [float(self.fieldset.Cs_w.data[0][zi][0][0]) for zi in range(self.fieldset.Cs_w.data.shape[1])]
+            statements_croco = [
+                c.Statement(f"float cs_w[] = {*Cs_w, }".replace("(", "{").replace(")", "}")),
+                c.Statement(
+                    f"{node.var4} = croco_from_z_to_sigma(U, H, Zeta, {args[3]}, {args[2]}, {args[1]}, time, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], hc, &cs_w)"
+                ),
+            ]
             args = (args[0], node.var4, args[2], args[3])
+        else:
+            statements_croco = []
         ccode_eval = node.field.obj._ccode_eval(
             node.var, node.var2, node.var3, node.field.obj.U, node.field.obj.V, node.field.obj.W, *args
         )
