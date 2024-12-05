@@ -55,6 +55,7 @@ Parcels has several documentation and tutorial Jupyter notebooks and scripts whi
    :caption: Other tutorials
    :name: tutorial-other
 
+   ../examples/tutorial_peninsula_AvsCgrid.ipynb
    ../examples/documentation_MPI.ipynb
    ../examples/documentation_stuck_particles.ipynb
    ../examples/documentation_unstuck_Agrid.ipynb
