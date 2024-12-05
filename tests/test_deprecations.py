@@ -122,7 +122,7 @@ actions = [
     Action("Field",           "c_data_chunks",                   "make_private"  ),
     Action("Field",           "chunk_set",                       "make_private"  ),
     Action("Field",           "cell_edge_sizes",                 "read_only"     ),
-    Action("Field",           "get_dim_filenames()",             "make_private"  ),
+    Action("Field",           "get_dim_filenames()",             "make_private"  , skip_reason="Moved underlying function."),
     Action("Field",           "collect_timeslices()",            "make_private"  ),
     Action("Field",           "reshape()",                       "make_private"  ),
     Action("Field",           "calc_cell_edge_sizes()",          "make_private"  ),
@@ -148,7 +148,7 @@ actions = [
     Action("FieldSet",        "particlefile",                    "read_only"     ),
     Action("FieldSet",        "add_UVfield()",                   "make_private"  ),
     Action("FieldSet",        "check_complete()",                "make_private"  ),
-    Action("FieldSet",        "parse_wildcards()",               "make_private"  ),
+    Action("FieldSet",        "parse_wildcards()",               "make_private"  , skip_reason="Moved underlying function."),
 
     # 1713
     Action("ParticleSet",      "repeat_starttime",               "make_private"  ),
