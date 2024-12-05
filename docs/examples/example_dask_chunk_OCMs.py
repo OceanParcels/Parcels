@@ -4,8 +4,9 @@ from glob import glob
 
 import dask
 import numpy as np
-import parcels
 import pytest
+
+import parcels
 from parcels.tools.statuscodes import DaskChunkingError
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
@@ -246,7 +247,7 @@ def test_pop(mode, chunk_mode):
     filenames = str(data_folder / "t.x1_SAMOC_flux.1690*.nc")
     variables = {"U": "UVEL", "V": "VVEL", "W": "WVEL"}
     timestamps = np.expand_dims(
-        np.array([np.datetime64("2000-%.2d-01" % m) for m in range(1, 7)]), axis=1
+        np.array([np.datetime64(f"2000-{m:02d}-01") for m in range(1, 7)]), axis=1
     )
     dimensions = {"lon": "ULON", "lat": "ULAT", "depth": "w_dep"}
     chs = False

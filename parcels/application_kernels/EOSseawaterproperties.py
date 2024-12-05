@@ -2,7 +2,7 @@
 
 import math
 
-__all__ = ["PressureFromLatDepth", "AdiabticTemperatureGradient", "PtempFromTemp", "TempFromPtemp", "UNESCODensity"]
+__all__ = ["AdiabticTemperatureGradient", "PressureFromLatDepth", "PtempFromTemp", "TempFromPtemp", "UNESCODensity"]
 
 
 def PressureFromLatDepth(particle, fieldset, time):

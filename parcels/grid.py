@@ -12,14 +12,14 @@ from parcels.tools.converters import TimeConverter
 from parcels.tools.warnings import FieldSetWarning
 
 __all__ = [
-    "GridType",
-    "GridCode",
-    "RectilinearZGrid",
-    "RectilinearSGrid",
-    "CurvilinearZGrid",
-    "CurvilinearSGrid",
     "CGrid",
+    "CurvilinearSGrid",
+    "CurvilinearZGrid",
     "Grid",
+    "GridCode",
+    "GridType",
+    "RectilinearSGrid",
+    "RectilinearZGrid",
 ]
 
 
@@ -113,6 +113,13 @@ class Grid:
     @property
     def depth(self):
         return self._depth
+
+    def negate_depth(self):
+        """Method to flip the sign of the depth dimension of a Grid.
+        Note that this method does _not_ change the direction of the vertical velocity;
+        for that users need to add a fieldset.W.set_scaling_factor(-1.0)
+        """
+        self._depth = -self._depth
 
     @property
     def mesh(self):

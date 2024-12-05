@@ -3,8 +3,9 @@ from argparse import ArgumentParser
 from datetime import timedelta
 
 import numpy as np
-import parcels
 import pytest
+
+import parcels
 
 ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 method = {
@@ -159,7 +160,7 @@ def stommel_example(
 
     maxage = runtime.total_seconds() if maxage is None else maxage
     fieldset.add_constant("maxage", maxage)
-    print("Stommel: Advecting %d particles for %s" % (npart, runtime))
+    print(f"Stommel: Advecting {npart} particles for {runtime}")
     parcels.timer.psetinit.stop()
     parcels.timer.psetrun = parcels.timer.Timer("Pset_run", parent=parcels.timer.pset)
     pset.execute(
