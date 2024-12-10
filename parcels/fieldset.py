@@ -3,7 +3,6 @@ import os
 import sys
 import warnings
 from copy import deepcopy
-from glob import glob
 
 import dask.array as da
 import numpy as np
@@ -348,19 +347,9 @@ class FieldSet:
     @classmethod
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def parse_wildcards(cls, *args, **kwargs):
-        return cls._parse_wildcards(*args, **kwargs)
-
-    @classmethod
-    def _parse_wildcards(cls, paths, filenames, var):
-        if not isinstance(paths, list):
-            paths = sorted(glob(str(paths)))
-        if len(paths) == 0:
-            notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-            raise OSError(f"FieldSet files not found for variable {var}: {notfound_paths}")
-        for fp in paths:
-            if not os.path.exists(fp):
-                raise OSError(f"FieldSet file not found: {fp}")
-        return paths
+        raise NotImplementedError(
+            "parse_wildcards was removed as a function as the internal implementation was no longer used."
+        )
 
     @classmethod
     def from_netcdf(
@@ -474,13 +463,11 @@ class FieldSet:
         if "creation_log" not in kwargs.keys():
             kwargs["creation_log"] = "from_netcdf"
         for var, name in variables.items():
-            # Resolve all matching paths for the current variable
-            paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
-            if type(paths) is not dict:
-                paths = cls._parse_wildcards(paths, filenames, var)
+            paths: list[str]
+            if isinstance(filenames, dict) and var in filenames:
+                paths = filenames[var]
             else:
-                for dim, p in paths.items():
-                    paths[dim] = cls._parse_wildcards(p, filenames, var)
+                paths = filenames
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
