@@ -26,7 +26,6 @@ InterpMethodOption = Literal[
     "bgrid_w_velocity",
     "cgrid_velocity",
     "linear_invdist_land_tracer",
-    "nearest",
     "bgrid_tracer",
     "cgrid_tracer",
 ]  # corresponds with `tracer_interp_method`
