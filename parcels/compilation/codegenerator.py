@@ -834,7 +834,7 @@ class KernelGenerator(ast.NodeVisitor):
             statements_croco = [
                 c.Statement(f"float cs_w[] = {*Cs_w, }".replace("(", "{").replace(")", "}")),
                 c.Statement(
-                    f"{node.var} = croco_from_z_to_sigma(U, H, Zeta, {args[3]}, {args[2]}, {args[1]}, time, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], hc, &cs_w)"
+                    f"{node.var} = croco_from_z_to_sigma(time, {args[1]}, {args[2]}, {args[3]}, U, H, Zeta, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], hc, &cs_w)"
                 ),
             ]
             args = (args[0], node.var, args[2], args[3])
@@ -863,7 +863,7 @@ class KernelGenerator(ast.NodeVisitor):
             statements_croco = [
                 c.Statement(f"float cs_w[] = {*Cs_w, }".replace("(", "{").replace(")", "}")),
                 c.Statement(
-                    f"{node.var4} = croco_from_z_to_sigma(U, H, Zeta, {args[3]}, {args[2]}, {args[1]}, time, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], hc, &cs_w)"
+                    f"{node.var4} = croco_from_z_to_sigma(time, {args[1]}, {args[2]}, {args[3]}, U, H, Zeta, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], hc, &cs_w)"
                 ),
             ]
             args = (args[0], node.var4, args[2], args[3])
