@@ -2000,10 +2000,10 @@ class VectorField:
             px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
         xx = (1 - xsi) * (1 - eta) * px[0] + xsi * (1 - eta) * px[1] + xsi * eta * px[2] + (1 - xsi) * eta * px[3]
         assert abs(xx - x) < 1e-4
-        c1 = self.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 0.0), py))
-        c2 = self.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1.0, eta), py))
-        c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.0), py))
-        c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0.0, eta), py))
+        c1 = self.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
+        c2 = self.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
+        c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
+        c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
         if grid.zdim == 1:
             if self.gridindexingtype == "nemo":
                 U0 = self.U.data[ti, yi + 1, xi] * c4
@@ -2247,7 +2247,7 @@ class VectorField:
         detadt = i_u.interpolate(i_u.phi1D_quad, [V0, V05, V1], eta) / jac
         dzetdt = i_u.interpolate(i_u.phi1D_quad, [W0, W05, W1], zeta) / jac
 
-        dphidxsi, dphideta, dphidzet = i_u.dphidxsi3D_lin(xsi, eta, zeta)
+        dphidxsi, dphideta, dphidzet = i_u.dphidxsi3D_lin(zeta, eta, xsi)
 
         u = np.dot(dphidxsi, px) * dxsidt + np.dot(dphideta, px) * detadt + np.dot(dphidzet, px) * dzetdt
         v = np.dot(dphidxsi, py) * dxsidt + np.dot(dphideta, py) * detadt + np.dot(dphidzet, py) * dzetdt

@@ -603,13 +603,13 @@ static inline StatusCode spatial_interpolation_UV_c_grid(double eta, double xsi,
 
 
   double phi[4];
-  phi2D_lin(0., eta, phi);
+  phi2D_lin(eta, 0.,phi);
   double U0 = dataU[1][0] * dist(xgrid_loc[3], xgrid_loc[0], ygrid_loc[3], ygrid_loc[0], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
-  phi2D_lin(1., eta, phi);
+  phi2D_lin(eta, 1., phi);
   double U1 = dataU[1][1] * dist(xgrid_loc[1], xgrid_loc[2], ygrid_loc[1], ygrid_loc[2], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
-  phi2D_lin(xsi, 0., phi);
+  phi2D_lin(0., xsi, phi);
   double V0 = dataV[0][1] * dist(xgrid_loc[0], xgrid_loc[1], ygrid_loc[0], ygrid_loc[1], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
-  phi2D_lin(xsi, 1., phi);
+  phi2D_lin(1., xsi, phi);
   double V1 = dataV[1][1] * dist(xgrid_loc[2], xgrid_loc[3], ygrid_loc[2], ygrid_loc[3], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
   double U = (1-xsi) * U0 + xsi * U1;
   double V = (1-eta) * V0 + eta * V1;
@@ -629,7 +629,7 @@ static inline StatusCode spatial_interpolation_UV_c_grid(double eta, double xsi,
   if (grid->sphere_mesh == 1){
     double deg2m = 1852 * 60.;
     double rad = M_PI / 180.;
-    phi2D_lin(xsi, eta, phi);
+    phi2D_lin(eta, xsi, phi);
     double lat = dot_prod(phi, ygrid_loc, 4);
     meshJac = deg2m * deg2m * cos(rad * lat);
   }
@@ -861,12 +861,12 @@ static inline StatusCode spatial_interpolation_UVW_c_grid(double zeta, double et
   double wvec[3] = {W0, W05, W1};
   double dzetdt = dot_prod(phi, wvec, 3) / jac;
 
-  double dphidxsi[8], dphideta[8], dphidzet[8];
-  dphidxsi3D_lin(xsi, eta, zeta, dphidxsi, dphideta, dphidzet);
+  double dphidxsi[8], dphideta[8], dphidzeta[8];
+  dphidxsi3D_lin(zeta, eta, xsi, dphidzeta, dphideta, dphidxsi);
 
-  *u = dot_prod(dphidxsi, px, 8) * dxsidt + dot_prod(dphideta, px, 8) * detadt + dot_prod(dphidzet, px, 8) * dzetdt;
-  *v = dot_prod(dphidxsi, py, 8) * dxsidt + dot_prod(dphideta, py, 8) * detadt + dot_prod(dphidzet, py, 8) * dzetdt;
-  *w = dot_prod(dphidxsi, pz, 8) * dxsidt + dot_prod(dphideta, pz, 8) * detadt + dot_prod(dphidzet, pz, 8) * dzetdt;
+  *u = dot_prod(dphidxsi, px, 8) * dxsidt + dot_prod(dphideta, px, 8) * detadt + dot_prod(dphidzeta, px, 8) * dzetdt;
+  *v = dot_prod(dphidxsi, py, 8) * dxsidt + dot_prod(dphideta, py, 8) * detadt + dot_prod(dphidzeta, py, 8) * dzetdt;
+  *w = dot_prod(dphidxsi, pz, 8) * dxsidt + dot_prod(dphideta, pz, 8) * detadt + dot_prod(dphidzeta, pz, 8) * dzetdt;
 
   return SUCCESS;
 }

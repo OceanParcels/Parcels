@@ -22,8 +22,7 @@ def phi1D_quad(xsi: float) -> list[float]:
     return phi
 
 
-
-def phi2D_lin(xsi: float, eta: float) -> list[float]:
+def phi2D_lin(eta: float, xsi: float) -> list[float]:
     phi = [(1-xsi) * (1-eta),
               xsi  * (1-eta),
               xsi  *    eta ,
@@ -32,7 +31,7 @@ def phi2D_lin(xsi: float, eta: float) -> list[float]:
     return phi
 
 
-def dphidxsi3D_lin(xsi: float, eta: float, zeta: float) -> tuple[list[float], list[float], list[float]]:
+def dphidxsi3D_lin(zeta: float, eta: float, xsi: float) -> tuple[list[float], list[float], list[float]]:
     dphidxsi = [ - (1-eta) * (1-zeta),
                    (1-eta) * (1-zeta),
                    (  eta) * (1-zeta),
@@ -62,9 +61,9 @@ def dphidxsi3D_lin(xsi: float, eta: float, zeta: float) -> tuple[list[float], li
 
 
 def dxdxsi3D_lin(
-    hexa_x: list[float], hexa_y: list[float], hexa_z: list[float], xsi: float, eta: float, zeta: float, mesh: Mesh
+    hexa_z: list[float], hexa_y: list[float], hexa_x: list[float], zeta: float, eta: float, xsi: float, mesh: Mesh
 ) -> tuple[float, float, float, float, float, float, float, float, float]:
-    dphidxsi, dphideta, dphidzet = dphidxsi3D_lin(xsi, eta, zeta)
+    dphidxsi, dphideta, dphidzet = dphidxsi3D_lin(zeta, eta, xsi)
 
     if mesh == 'spherical':
         deg2m = 1852 * 60.
@@ -95,7 +94,7 @@ def dxdxsi3D_lin(
 def jacobian3D_lin(
     hexa_x: list[float], hexa_y: list[float], hexa_z: list[float], xsi: float, eta: float, zeta: float, mesh: Mesh
 ) -> float:
-    dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zeta, mesh)
+    dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_z, hexa_y, hexa_x, zeta, eta, xsi, mesh)
 
     jac = (
         dxdxsi * (dydeta * dzdzet - dzdeta * dydzet)
@@ -115,7 +114,7 @@ def jacobian3D_lin_face(
     orientation: Literal["zonal", "meridional", "vertical"],
     mesh: Mesh,
 ) -> float:
-    dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zeta, mesh)
+    dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_z, hexa_y, hexa_x, zeta, eta, xsi, mesh)
 
     if orientation == 'zonal':
         j = [dydeta*dzdzet-dydzet*dzdeta,
