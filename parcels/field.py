@@ -1029,7 +1029,7 @@ class Field:
         return self._search_indices_vertical_s(*args, **kwargs)
 
     def _search_indices_vertical_s(
-        self, x: float, y: float, z: float, xi: int, yi: int, xsi: float, eta: float, ti: int, time: float
+        self, time: float, z: float, y: float, x: float, ti: int, yi: int, xi: int, eta: float, xsi: float
     ):
         grid = self.grid
         if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"]:
@@ -1114,7 +1114,9 @@ class Field:
     def search_indices_rectilinear(self, *args, **kwargs):
         return self._search_indices_rectilinear(*args, **kwargs)
 
-    def _search_indices_rectilinear(self, x: float, y: float, z: float, ti=-1, time=-1, particle=None, search2D=False):
+    def _search_indices_rectilinear(
+        self, time: float, z: float, y: float, x: float, ti=-1, particle=None, search2D=False
+    ):
         grid = self.grid
 
         if grid.xdim > 1 and (not grid.zonal_periodic):
@@ -1187,7 +1189,7 @@ class Field:
                 except FieldOutOfBoundSurfaceError:
                     raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
             elif grid._gtype == GridType.RectilinearSGrid:
-                (zi, zeta) = self._search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
+                (zi, zeta) = self._search_indices_vertical_s(time, z, y, x, ti, yi, xi, eta, xsi)
         else:
             zi, zeta = -1, 0
 
@@ -1199,13 +1201,13 @@ class Field:
             particle.yi[self.igrid] = yi
             particle.zi[self.igrid] = zi
 
-        return (xsi, eta, zeta, xi, yi, zi)
+        return (zeta, eta, xsi, zi, yi, xi)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def search_indices_curvilinear(self, *args, **kwargs):
         return self._search_indices_curvilinear(*args, **kwargs)
 
-    def _search_indices_curvilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+    def _search_indices_curvilinear(self, time, z, y, x, ti=-1, particle=None, search2D=False):
         if particle:
             xi = particle.xi[self.igrid]
             yi = particle.yi[self.igrid]
@@ -1281,7 +1283,7 @@ class Field:
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
             elif grid._gtype == GridType.CurvilinearSGrid:
-                (zi, zeta) = self._search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
+                (zi, zeta) = self._search_indices_vertical_s(time, z, y, x, ti, yi, xi, eta, xsi)
         else:
             zi = -1
             zeta = 0
@@ -1294,24 +1296,24 @@ class Field:
             particle.yi[self.igrid] = yi
             particle.zi[self.igrid] = zi
 
-        return (xsi, eta, zeta, xi, yi, zi)
+        return (zeta, eta, xsi, zi, yi, xi)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def search_indices(self, *args, **kwargs):
         return self._search_indices(*args, **kwargs)
 
-    def _search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+    def _search_indices(self, time, z, y, x, ti=-1, particle=None, search2D=False):
         if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
-            return self._search_indices_rectilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
+            return self._search_indices_rectilinear(time, z, y, x, ti, particle=particle, search2D=search2D)
         else:
-            return self._search_indices_curvilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
+            return self._search_indices_curvilinear(time, z, y, x, ti, particle=particle, search2D=search2D)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def interpolator2D(self, *args, **kwargs):
         return self._interpolator2D(*args, **kwargs)
 
     def _interpolator2D(self, ti, z, y, x, particle=None):
-        (xsi, eta, _, xi, yi, _) = self._search_indices(x, y, z, particle=particle)
+        (_, eta, xsi, _, yi, xi) = self._search_indices(-1, z, y, x, particle=particle)
         if self.interp_method == "nearest":
             xii = xi if xsi <= 0.5 else xi + 1
             yii = yi if eta <= 0.5 else yi + 1
@@ -1366,7 +1368,7 @@ class Field:
         return self._interpolator3D(*args, **kwargs)
 
     def _interpolator3D(self, ti, z, y, x, time, particle=None):
-        (xsi, eta, zeta, xi, yi, zi) = self._search_indices(x, y, z, ti, time, particle=particle)
+        (zeta, eta, xsi, zi, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
         if self.interp_method == "nearest":
             xii = xi if xsi <= 0.5 else xi + 1
             yii = yi if eta <= 0.5 else yi + 1
@@ -1984,7 +1986,7 @@ class VectorField:
 
     def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         grid = self.U.grid
-        (xsi, eta, zeta, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
+        (zeta, eta, xsi, zi, yi, xi) = self.U._search_indices(time, z, y, x, ti, particle=particle)
 
         if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
@@ -2056,7 +2058,7 @@ class VectorField:
 
     def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time, particle=None):
         grid = self.U.grid
-        (xsi, eta, zeta, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
+        (zeta, eta, xsi, zi, yi, xi) = self.U._search_indices(time, z, y, x, ti, particle=particle)
 
         if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
@@ -2299,7 +2301,7 @@ class VectorField:
                 return True
 
     def spatial_slip_interpolation(self, ti, z, y, x, time, particle=None, applyConversion=True):
-        (xsi, eta, zeta, xi, yi, zi) = self.U._search_indices(x, y, z, ti, time, particle=particle)
+        (zeta, eta, xsi, zi, yi, xi) = self.U._search_indices(time, z, y, x, ti, particle=particle)
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
         f_u, f_v, f_w = 1, 1, 1

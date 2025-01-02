@@ -184,8 +184,8 @@ def AdvectionAnalytical(particle, fieldset, time):
         time_i = np.linspace(0, fieldset.U.grid.time[ti + 1] - fieldset.U.grid.time[ti], I_s)
         ds_t = min(ds_t, time_i[np.where(time - fieldset.U.grid.time[ti] < time_i)[0][0]])
 
-    xsi, eta, zeta, xi, yi, zi = fieldset.U._search_indices(
-        particle.lon, particle.lat, particle.depth, particle=particle
+    zeta, eta, xsi, zi, yi, xi = fieldset.U._search_indices(
+        -1, particle.depth, particle.lat, particle.lon, particle=particle
     )
     if withW:
         if abs(xsi - 1) < tol:
