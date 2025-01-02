@@ -109,17 +109,6 @@ def parse_particletime(time, fieldset):
     return time
 
 
-class InterpolationError(KernelError):
-    """Particle kernel error for interpolation error."""
-
-    def __init__(self, particle, fieldset=None, depth=None, lat=None, lon=None):
-        if lon and lat:
-            message = f"Field interpolation error at (depth={depth}, lat={lat}, lon={lon})"
-        else:
-            message = f"Field interpolation error for particle at (depth={particle.depth}, lat={particle.lat}, lon={particle.lon})"
-        super().__init__(particle, fieldset=fieldset, msg=message)
-
-
 AllParcelsErrorCodes = {
     FieldSamplingError: StatusCode.Error,
     FieldOutOfBoundError: StatusCode.ErrorOutOfBounds,
