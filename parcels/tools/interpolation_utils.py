@@ -32,19 +32,6 @@ def phi2D_lin(xsi: float, eta: float) -> list[float]:
     return phi
 
 
-def phi3D_lin(xsi: float, eta: float, zeta: float) -> list[float]:
-    phi = [(1-xsi) * (1-eta) * (1-zeta),
-              xsi  * (1-eta) * (1-zeta),
-              xsi  *    eta  * (1-zeta),
-           (1-xsi) *    eta  * (1-zeta),
-           (1-xsi) * (1-eta) *    zeta ,
-              xsi  * (1-eta) *    zeta ,
-              xsi  *    eta  *    zeta ,
-           (1-xsi) *    eta  *    zeta ]
-
-    return phi
-
-
 def dphidxsi3D_lin(xsi: float, eta: float, zeta: float) -> tuple[list[float], list[float], list[float]]:
     dphidxsi = [ - (1-eta) * (1-zeta),
                    (1-eta) * (1-zeta),
