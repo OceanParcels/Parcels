@@ -1587,7 +1587,11 @@ class Field:
 
     def _ccode_eval(self, var, t, z, y, x):
         self._check_velocitysampling()
-        ccode_str = f"temporal_interpolation({t}, {z}, {y}, {x}, {self.ccode_name}, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
+        ccode_str = (
+            f"temporal_interpolation({t}, {z}, {y}, {x}, {self.ccode_name}, "
+            + "&particles->ti[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->xi[pnum*ngrid], "
+            + f"&{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
+        )
         return ccode_str
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
@@ -2476,13 +2480,13 @@ class VectorField:
         if "3D" in self.vector_type:
             ccode_str = (
                 f"temporal_interpolationUVW({t}, {z}, {y}, {x}, {U.ccode_name}, {V.ccode_name}, {W.ccode_name}, "
-                + "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid],"
+                + "&particles->ti[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->xi[pnum*ngrid],"
                 + f"&{varU}, &{varV}, &{varW}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
             )
         else:
             ccode_str = (
                 f"temporal_interpolationUV({t}, {z}, {y}, {x}, {U.ccode_name}, {V.ccode_name}, "
-                + "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid],"
+                + "&particles->ti[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->xi[pnum*ngrid],"
                 + f" &{varU}, &{varV}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
             )
         return ccode_str
