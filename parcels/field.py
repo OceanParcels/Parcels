@@ -1000,12 +1000,12 @@ class Field:
                 if self.gridindexingtype == "mom5" and z > 2 * grid.depth[0] - grid.depth[1]:
                     return (-1, z / grid.depth[0])
                 else:
-                    raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+                    raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
             elif z > grid.depth[-1]:
                 # In case of CROCO, allow particles in last (uppermost) layer using depth[-1]
                 if self.gridindexingtype in ["croco"] and z < 0:
                     return (-2, 1)
-                raise FieldOutOfBoundError(0, 0, z, field=self)
+                raise FieldOutOfBoundError(z, 0, 0, field=self)
             depth_indices = grid.depth <= z
             if z >= grid.depth[-1]:
                 zi = len(grid.depth) - 2
@@ -1013,9 +1013,9 @@ class Field:
                 zi = depth_indices.argmin() - 1 if z >= grid.depth[0] else 0
         else:
             if z > grid.depth[0]:
-                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
             elif z < grid.depth[-1]:
-                raise FieldOutOfBoundError(0, 0, z, field=self)
+                raise FieldOutOfBoundError(z, 0, 0, field=self)
             depth_indices = grid.depth >= z
             if z <= grid.depth[-1]:
                 zi = len(grid.depth) - 2
@@ -1071,9 +1071,9 @@ class Field:
             else:
                 zi = depth_indices.argmin() - 1 if z >= depth_vector[0] else 0
             if z < depth_vector[zi]:
-                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
             elif z > depth_vector[zi + 1]:
-                raise FieldOutOfBoundError(x, y, z, field=self)
+                raise FieldOutOfBoundError(z, y, x, field=self)
         else:
             depth_indices = depth_vector >= z
             if z <= depth_vector[-1]:
@@ -1081,9 +1081,9 @@ class Field:
             else:
                 zi = depth_indices.argmin() - 1 if z <= depth_vector[0] else 0
             if z > depth_vector[zi]:
-                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
             elif z < depth_vector[zi + 1]:
-                raise FieldOutOfBoundError(x, y, z, field=self)
+                raise FieldOutOfBoundError(z, y, x, field=self)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
         return (zi, zeta)
 
@@ -1121,9 +1121,9 @@ class Field:
 
         if grid.xdim > 1 and (not grid.zonal_periodic):
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
-                raise FieldOutOfBoundError(x, y, z, field=self)
+                raise FieldOutOfBoundError(z, y, x, field=self)
         if grid.ydim > 1 and (y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]):
-            raise FieldOutOfBoundError(x, y, z, field=self)
+            raise FieldOutOfBoundError(z, y, x, field=self)
 
         if grid.xdim > 1:
             if grid.mesh != "spherical":
@@ -1185,16 +1185,16 @@ class Field:
                 try:
                     (zi, zeta) = self._search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
-                    raise FieldOutOfBoundError(x, y, z, field=self)
+                    raise FieldOutOfBoundError(z, y, x, field=self)
                 except FieldOutOfBoundSurfaceError:
-                    raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
+                    raise FieldOutOfBoundSurfaceError(z, y, x, field=self)
             elif grid._gtype == GridType.RectilinearSGrid:
                 (zi, zeta) = self._search_indices_vertical_s(time, z, y, x, ti, yi, xi, eta, xsi)
         else:
             zi, zeta = -1, 0
 
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-            raise FieldSamplingError(x, y, z, field=self)
+            raise FieldSamplingError(z, y, x, field=self)
 
         if particle:
             particle.xi[self.igrid] = xi
@@ -1223,11 +1223,11 @@ class Field:
         if not grid.zonal_periodic:
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
                 if grid.lon[0, 0] < grid.lon[0, -1]:
-                    raise FieldOutOfBoundError(x, y, z, field=self)
+                    raise FieldOutOfBoundError(z, y, x, field=self)
                 elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
-                    raise FieldOutOfBoundError(x, y, z, field=self)
+                    raise FieldOutOfBoundError(z, y, x, field=self)
         if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
-            raise FieldOutOfBoundError(x, y, z, field=self)
+            raise FieldOutOfBoundError(z, y, x, field=self)
 
         while xsi < -tol or xsi > 1 + tol or eta < -tol or eta > 1 + tol:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
@@ -1255,9 +1255,9 @@ class Field:
             else:
                 xsi = (x - a[0] - a[2] * eta) / (a[1] + a[3] * eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
-                raise FieldOutOfBoundError(x, y, 0, field=self)
+                raise FieldOutOfBoundError(0, y, x, field=self)
             if xsi > 1 and eta > 1 and xi == grid.xdim - 1 and yi == grid.ydim - 1:
-                raise FieldOutOfBoundError(x, y, 0, field=self)
+                raise FieldOutOfBoundError(0, y, x, field=self)
             if xsi < -tol:
                 xi -= 1
             elif xsi > 1 + tol:
@@ -1270,7 +1270,7 @@ class Field:
             it += 1
             if it > maxIterSearch:
                 print(f"Correct cell not found after {maxIterSearch} iterations")
-                raise FieldOutOfBoundError(x, y, 0, field=self)
+                raise FieldOutOfBoundError(0, y, x, field=self)
         xsi = max(0.0, xsi)
         eta = max(0.0, eta)
         xsi = min(1.0, xsi)
@@ -1281,7 +1281,7 @@ class Field:
                 try:
                     (zi, zeta) = self._search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
-                    raise FieldOutOfBoundError(x, y, z, field=self)
+                    raise FieldOutOfBoundError(z, y, x, field=self)
             elif grid._gtype == GridType.CurvilinearSGrid:
                 (zi, zeta) = self._search_indices_vertical_s(time, z, y, x, ti, yi, xi, eta, xsi)
         else:
@@ -1289,7 +1289,7 @@ class Field:
             zeta = 0
 
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-            raise FieldSamplingError(x, y, z, field=self)
+            raise FieldSamplingError(z, y, x, field=self)
 
         if particle:
             particle.xi[self.igrid] = xi
@@ -1489,7 +1489,7 @@ class Field:
             val = self._interpolator3D(ti, z, y, x, time, particle=particle)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
-            raise FieldOutOfBoundError(x, y, z, field=self)
+            raise FieldOutOfBoundError(z, y, x, field=self)
         else:
             if isinstance(val, da.core.Array):
                 val = val.compute()
