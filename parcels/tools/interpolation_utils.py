@@ -169,12 +169,6 @@ def jacobian2D_lin(quad_y, quad_x, eta: float, xsi: float):
     return jac
 
 
-def length2d_lin_edge(quad_x, quad_y, ids):
-    xe = [quad_x[ids[0]], quad_x[ids[1]]]
-    ye = [quad_y[ids[0]], quad_y[ids[1]]]
-    return np.sqrt((xe[1] - xe[0]) ** 2 + (ye[1] - ye[0]) ** 2)
-
-
 def interpolate(phi: Callable[[float], list[float]], f: list[float], xsi: float) -> float:
     return np.dot(phi(xsi), f)
 
