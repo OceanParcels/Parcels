@@ -92,7 +92,7 @@ def dxdxsi3D_lin(
 
 
 def jacobian3D_lin(
-    hexa_x: list[float], hexa_y: list[float], hexa_z: list[float], xsi: float, eta: float, zeta: float, mesh: Mesh
+    hexa_z: list[float], hexa_y: list[float], hexa_x: list[float], zeta: float, eta: float, xsi: float, mesh: Mesh
 ) -> float:
     dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_z, hexa_y, hexa_x, zeta, eta, xsi, mesh)
 
@@ -105,12 +105,12 @@ def jacobian3D_lin(
 
 
 def jacobian3D_lin_face(
-    hexa_x: list[float],
-    hexa_y: list[float],
     hexa_z: list[float],
-    xsi: float,
-    eta: float,
+    hexa_y: list[float],
+    hexa_x: list[float],
     zeta: float,
+    eta: float,
+    xsi: float,
     orientation: Literal["zonal", "meridional", "vertical"],
     mesh: Mesh,
 ) -> float:
@@ -133,7 +133,7 @@ def jacobian3D_lin_face(
     return jac
 
 
-def dphidxsi2D_lin(xsi: float, eta: float) -> tuple[list[float], list[float]]:
+def dphidxsi2D_lin(eta: float, xsi: float) -> tuple[list[float], list[float]]:
     dphidxsi = [-(1-eta),
                   1-eta,
                     eta,
@@ -143,16 +143,16 @@ def dphidxsi2D_lin(xsi: float, eta: float) -> tuple[list[float], list[float]]:
                     xsi,
                   1-xsi]
 
-    return dphidxsi, dphideta
+    return dphideta, dphidxsi
 
 
 def dxdxsi2D_lin(
-    quad_x,
     quad_y,
-    xsi: float,
+    quad_x,
     eta: float,
+    xsi: float,
 ):
-    dphidxsi, dphideta = dphidxsi2D_lin(xsi, eta)
+    dphideta, dphidxsi = dphidxsi2D_lin(eta, xsi)
 
     dxdxsi = np.dot(quad_x, dphidxsi)
     dxdeta = np.dot(quad_x, dphideta)
@@ -162,8 +162,8 @@ def dxdxsi2D_lin(
     return dxdxsi, dxdeta, dydxsi, dydeta
 
 
-def jacobian2D_lin(quad_x, quad_y, xsi: float, eta: float):
-    dxdxsi, dxdeta, dydxsi, dydeta = dxdxsi2D_lin(quad_x, quad_y, xsi, eta)
+def jacobian2D_lin(quad_y, quad_x, eta: float, xsi: float):
+    dxdxsi, dxdeta, dydxsi, dydeta = dxdxsi2D_lin(quad_y, quad_x, eta, xsi)
 
     jac = dxdxsi * dydeta - dxdeta * dydxsi
     return jac

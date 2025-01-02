@@ -239,7 +239,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     rad = np.pi / 180.0
     deg2m = 1852 * 60.0
     meshJac = (deg2m * deg2m * math.cos(rad * particle.lat)) if grid.mesh == "spherical" else 1
-    dxdy = fieldset.UV.jacobian(xsi, eta, px, py) * meshJac
+    dxdy = fieldset.UV.jacobian(py, px, eta, xsi) * meshJac
 
     if withW:
         U0 = direction * fieldset.U.data[ti, zi + 1, yi + 1, xi] * c4 * dz

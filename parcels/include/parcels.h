@@ -797,59 +797,59 @@ static inline StatusCode spatial_interpolation_UVW_c_grid(double zeta, double et
     }
   }
 
-  double U0 = u0 * jacobian3D_lin_face(px, py, pz, 0, eta, zeta, ZONAL, grid->sphere_mesh);
-  double U1 = u1 * jacobian3D_lin_face(px, py, pz, 1, eta, zeta, ZONAL, grid->sphere_mesh);
-  double V0 = v0 * jacobian3D_lin_face(px, py, pz, xsi, 0, zeta, MERIDIONAL, grid->sphere_mesh);
-  double V1 = v1 * jacobian3D_lin_face(px, py, pz, xsi, 1, zeta, MERIDIONAL, grid->sphere_mesh);
-  double W0 = w0 * jacobian3D_lin_face(px, py, pz, xsi, eta, 0, VERTICAL, grid->sphere_mesh);
-  double W1 = w1 * jacobian3D_lin_face(px, py, pz, xsi, eta, 1, VERTICAL, grid->sphere_mesh);
+  double U0 = u0 * jacobian3D_lin_face(pz, py, px, zeta, eta, 0, ZONAL, grid->sphere_mesh);
+  double U1 = u1 * jacobian3D_lin_face(pz, py, px, zeta, eta, 1, ZONAL, grid->sphere_mesh);
+  double V0 = v0 * jacobian3D_lin_face(pz, py, px, zeta, 0, xsi, MERIDIONAL, grid->sphere_mesh);
+  double V1 = v1 * jacobian3D_lin_face(pz, py, px, zeta, 1, xsi, MERIDIONAL, grid->sphere_mesh);
+  double W0 = w0 * jacobian3D_lin_face(pz, py, px, 0, eta, xsi, VERTICAL, grid->sphere_mesh);
+  double W1 = w1 * jacobian3D_lin_face(pz, py, px, 1, eta, xsi, VERTICAL, grid->sphere_mesh);
 
   // Computing fluxes in half left hexahedron -> flux_u05
   double xxu[8] = {px[0], (px[0]+px[1])/2, (px[2]+px[3])/2, px[3], px[4], (px[4]+px[5])/2, (px[6]+px[7])/2, px[7]};
   double yyu[8] = {py[0], (py[0]+py[1])/2, (py[2]+py[3])/2, py[3], py[4], (py[4]+py[5])/2, (py[6]+py[7])/2, py[7]};
   double zzu[8] = {pz[0], (pz[0]+pz[1])/2, (pz[2]+pz[3])/2, pz[3], pz[4], (pz[4]+pz[5])/2, (pz[6]+pz[7])/2, pz[7]};
-  double flux_u0 = u0 * jacobian3D_lin_face(xxu, yyu, zzu, 0, .5, .5, ZONAL, grid->sphere_mesh);
-  double flux_v0_halfx = v0 * jacobian3D_lin_face(xxu, yyu, zzu, .5, 0, .5, MERIDIONAL, grid->sphere_mesh);
-  double flux_v1_halfx = v1 * jacobian3D_lin_face(xxu, yyu, zzu, .5, 1, .5, MERIDIONAL, grid->sphere_mesh);
-  double flux_w0_halfx = w0 * jacobian3D_lin_face(xxu, yyu, zzu, .5, .5, 0, VERTICAL, grid->sphere_mesh);
-  double flux_w1_halfx = w1 * jacobian3D_lin_face(xxu, yyu, zzu, .5, .5, 1, VERTICAL, grid->sphere_mesh);
+  double flux_u0 = u0 * jacobian3D_lin_face(zzu, yyu, xxu, .5, .5, 0, ZONAL, grid->sphere_mesh);
+  double flux_v0_halfx = v0 * jacobian3D_lin_face(zzu, yyu, xxu, .5, 0, .5, MERIDIONAL, grid->sphere_mesh);
+  double flux_v1_halfx = v1 * jacobian3D_lin_face(zzu, yyu, xxu, .5, 1, .5, MERIDIONAL, grid->sphere_mesh);
+  double flux_w0_halfx = w0 * jacobian3D_lin_face(zzu, yyu, xxu, 0, .5, .5, VERTICAL, grid->sphere_mesh);
+  double flux_w1_halfx = w1 * jacobian3D_lin_face(zzu, yyu, xxu, 1, .5, .5, VERTICAL, grid->sphere_mesh);
   double flux_u05 = flux_u0 + flux_v0_halfx - flux_v1_halfx + flux_w0_halfx - flux_w1_halfx;
 
   // Computing fluxes in half front hexahedron -> flux_v05
   double xxv[8] = {px[0], px[1], (px[1]+px[2])/2, (px[0]+px[3])/2, px[4], px[5], (px[5]+px[6])/2, (px[4]+px[7])/2};
   double yyv[8] = {py[0], py[1], (py[1]+py[2])/2, (py[0]+py[3])/2, py[4], py[5], (py[5]+py[6])/2, (py[4]+py[7])/2};
   double zzv[8] = {pz[0], pz[1], (pz[1]+pz[2])/2, (pz[0]+pz[3])/2, pz[4], pz[5], (pz[5]+pz[6])/2, (pz[4]+pz[7])/2};
-  double flux_u0_halfy = u0 * jacobian3D_lin_face(xxv, yyv, zzv, 0, .5, .5, ZONAL, grid->sphere_mesh);
-  double flux_u1_halfy = u1 * jacobian3D_lin_face(xxv, yyv, zzv, 1, .5, .5, ZONAL, grid->sphere_mesh);
-  double flux_v0 = v0 * jacobian3D_lin_face(xxv, yyv, zzv, .5, 0, .5, MERIDIONAL, grid->sphere_mesh);
-  double flux_w0_halfy = w0 * jacobian3D_lin_face(xxv, yyv, zzv, .5, .5, 0, VERTICAL, grid->sphere_mesh);
-  double flux_w1_halfy = w1 * jacobian3D_lin_face(xxv, yyv, zzv, .5, .5, 1, VERTICAL, grid->sphere_mesh);
+  double flux_u0_halfy = u0 * jacobian3D_lin_face(zzv, yyv, xxv, .5, .5, 0, ZONAL, grid->sphere_mesh);
+  double flux_u1_halfy = u1 * jacobian3D_lin_face(zzv, yyv, xxv, .5, .5, 1, ZONAL, grid->sphere_mesh);
+  double flux_v0 = v0 * jacobian3D_lin_face(zzv, yyv, xxv, .5, 0, .5, MERIDIONAL, grid->sphere_mesh);
+  double flux_w0_halfy = w0 * jacobian3D_lin_face(zzv, yyv, xxv, 0, .5, .5, VERTICAL, grid->sphere_mesh);
+  double flux_w1_halfy = w1 * jacobian3D_lin_face(zzv, yyv, xxv, 1, .5, .5, VERTICAL, grid->sphere_mesh);
   double flux_v05 = flux_u0_halfy - flux_u1_halfy + flux_v0 + flux_w0_halfy - flux_w1_halfy;
 
   // Computing fluxes in half lower hexahedron -> flux_w05
   double xx[8] = {px[0], px[1], px[2], px[3], (px[0]+px[4])/2, (px[1]+px[5])/2, (px[2]+px[6])/2, (px[3]+px[7])/2};
   double yy[8] = {py[0], py[1], py[2], py[3], (py[0]+py[4])/2, (py[1]+py[5])/2, (py[2]+py[6])/2, (py[3]+py[7])/2};
   double zz[8] = {pz[0], pz[1], pz[2], pz[3], (pz[0]+pz[4])/2, (pz[1]+pz[5])/2, (pz[2]+pz[6])/2, (pz[3]+pz[7])/2};
-  double flux_u0_halfz = u0 * jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, ZONAL, grid->sphere_mesh);
-  double flux_u1_halfz = u1 * jacobian3D_lin_face(xx, yy, zz, 1, .5, .5, ZONAL, grid->sphere_mesh);
-  double flux_v0_halfz = v0 * jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, MERIDIONAL, grid->sphere_mesh);
-  double flux_v1_halfz = v1 * jacobian3D_lin_face(xx, yy, zz, .5, 1, .5, MERIDIONAL, grid->sphere_mesh);
-  double flux_w0 = w0 * jacobian3D_lin_face(xx, yy, zz, .5, .5, 0, VERTICAL, grid->sphere_mesh);
+  double flux_u0_halfz = u0 * jacobian3D_lin_face(zz, yy, xx, .5, .5, 0, ZONAL, grid->sphere_mesh);
+  double flux_u1_halfz = u1 * jacobian3D_lin_face(zz, yy, xx, .5, .5, 1, ZONAL, grid->sphere_mesh);
+  double flux_v0_halfz = v0 * jacobian3D_lin_face(zz, yy, xx, .5, 0, .5, MERIDIONAL, grid->sphere_mesh);
+  double flux_v1_halfz = v1 * jacobian3D_lin_face(zz, yy, xx, .5, 1, .5, MERIDIONAL, grid->sphere_mesh);
+  double flux_w0 = w0 * jacobian3D_lin_face(zz, yy, xx, 0, .5, .5, VERTICAL, grid->sphere_mesh);
   double flux_w05 = flux_u0_halfz - flux_u1_halfz + flux_v0_halfz - flux_v1_halfz + flux_w0;
 
-  double surf_u05 = jacobian3D_lin_face(px, py, pz, .5, .5, .5, ZONAL, grid->sphere_mesh);
-  double jac_u05 = jacobian3D_lin_face(px, py, pz, .5, eta, zeta, ZONAL, grid->sphere_mesh);
+  double surf_u05 = jacobian3D_lin_face(pz, py, px, .5, .5, .5, ZONAL, grid->sphere_mesh);
+  double jac_u05 = jacobian3D_lin_face(pz, py, px, zeta, eta, .5, ZONAL, grid->sphere_mesh);
   double U05 = flux_u05 / surf_u05 * jac_u05;
 
-  double surf_v05 = jacobian3D_lin_face(px, py, pz, .5, .5, .5, MERIDIONAL, grid->sphere_mesh);
-  double jac_v05 = jacobian3D_lin_face(px, py, pz, xsi, .5, zeta, MERIDIONAL, grid->sphere_mesh);
+  double surf_v05 = jacobian3D_lin_face(pz, py, px, .5, .5, .5, MERIDIONAL, grid->sphere_mesh);
+  double jac_v05 = jacobian3D_lin_face(pz, py, px, zeta, .5, xsi, MERIDIONAL, grid->sphere_mesh);
   double V05 = flux_v05 / surf_v05 * jac_v05;
 
-  double surf_w05 = jacobian3D_lin_face(px, py, pz, .5, .5, .5, VERTICAL, grid->sphere_mesh);
-  double jac_w05 = jacobian3D_lin_face(px, py, pz, xsi, eta, .5, VERTICAL, grid->sphere_mesh);
+  double surf_w05 = jacobian3D_lin_face(pz, py, px, .5, .5, .5, VERTICAL, grid->sphere_mesh);
+  double jac_w05 = jacobian3D_lin_face(pz, py, px, .5, eta, xsi, VERTICAL, grid->sphere_mesh);
   double W05 = flux_w05 / surf_w05 * jac_w05;
 
-  double jac = jacobian3D_lin(px, py, pz, xsi, eta, zeta, grid->sphere_mesh);
+  double jac = jacobian3D_lin(pz, py, px, zeta, eta, xsi, grid->sphere_mesh);
 
   double phi[3];
   phi1D_quad(xsi, phi);

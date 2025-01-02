@@ -86,7 +86,9 @@ static inline void dxdxsi3D_lin(double *pz, double *py, double *px, double zeta,
   }
 }
 
-static inline double jacobian3D_lin_face(double *px, double *py, double *pz, double xsi, double eta, double zeta, Orientation orientation, int sphere_mesh)
+static inline double jacobian3D_lin_face(double *pz, double *py, double *px,
+                                         double zeta, double eta, double xsi,
+                                         Orientation orientation, int sphere_mesh)
 {
   double jacM[9];
   dxdxsi3D_lin(pz, py, px, zeta, eta, xsi, jacM, sphere_mesh);
@@ -112,7 +114,9 @@ static inline double jacobian3D_lin_face(double *px, double *py, double *pz, dou
   return sqrt(j[0]*j[0]+j[1]*j[1]+j[2]*j[2]);
 }
 
-static inline double jacobian3D_lin(double *px, double *py, double *pz, double xsi, double eta, double zeta, int sphere_mesh)
+static inline double jacobian3D_lin(double *pz, double *py, double *px,
+                                    double zeta, double eta, double xsi,
+                                    int sphere_mesh)
 {
   double jacM[9];
   dxdxsi3D_lin(pz, py, px, zeta, eta, xsi, jacM, sphere_mesh);

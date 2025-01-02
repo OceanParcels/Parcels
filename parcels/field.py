@@ -1973,7 +1973,7 @@ class VectorField:
         else:
             return np.sqrt((lon2 - lon1) ** 2 + (lat2 - lat1) ** 2)
 
-    def jacobian(self, xsi: float, eta: float, px: np.ndarray, py: np.ndarray):
+    def jacobian(self, py: np.ndarray, px: np.ndarray, eta: float, xsi: float):
         dphidxsi = [eta - 1, 1 - eta, eta, -eta]
         dphideta = [xsi - 1, -xsi, xsi, 1 - xsi]
 
@@ -2037,7 +2037,7 @@ class VectorField:
         else:
             meshJac = deg2m if grid.mesh == "spherical" else 1
 
-        jac = self.jacobian(xsi, eta, px, py) * meshJac
+        jac = self.jacobian(py, px, eta, xsi) * meshJac
 
         u = (
             (-(1 - eta) * U - (1 - xsi) * V) * px[0]
@@ -2111,12 +2111,12 @@ class VectorField:
         w0 = self.W.data[ti, zi, yi + 1, xi + 1]
         w1 = self.W.data[ti, zi + 1, yi + 1, xi + 1]
 
-        U0 = u0 * i_u.jacobian3D_lin_face(px, py, pz, 0, eta, zeta, "zonal", grid.mesh)
-        U1 = u1 * i_u.jacobian3D_lin_face(px, py, pz, 1, eta, zeta, "zonal", grid.mesh)
-        V0 = v0 * i_u.jacobian3D_lin_face(px, py, pz, xsi, 0, zeta, "meridional", grid.mesh)
-        V1 = v1 * i_u.jacobian3D_lin_face(px, py, pz, xsi, 1, zeta, "meridional", grid.mesh)
-        W0 = w0 * i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, 0, "vertical", grid.mesh)
-        W1 = w1 * i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, 1, "vertical", grid.mesh)
+        U0 = u0 * i_u.jacobian3D_lin_face(pz, py, px, zeta, eta, 0, "zonal", grid.mesh)
+        U1 = u1 * i_u.jacobian3D_lin_face(pz, py, px, zeta, eta, 1, "zonal", grid.mesh)
+        V0 = v0 * i_u.jacobian3D_lin_face(pz, py, px, zeta, 0, xsi, "meridional", grid.mesh)
+        V1 = v1 * i_u.jacobian3D_lin_face(pz, py, px, zeta, 1, xsi, "meridional", grid.mesh)
+        W0 = w0 * i_u.jacobian3D_lin_face(pz, py, px, 0, eta, xsi, "vertical", grid.mesh)
+        W1 = w1 * i_u.jacobian3D_lin_face(pz, py, px, 1, eta, xsi, "vertical", grid.mesh)
 
         # Computing fluxes in half left hexahedron -> flux_u05
         xx = [
@@ -2149,11 +2149,11 @@ class VectorField:
             (pz[6] + pz[7]) / 2,
             pz[7],
         ]
-        flux_u0 = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, 0.5, 0.5, "zonal", grid.mesh)
-        flux_v0_halfx = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0.5, 0, 0.5, "meridional", grid.mesh)
-        flux_v1_halfx = v1 * i_u.jacobian3D_lin_face(xx, yy, zz, 0.5, 1, 0.5, "meridional", grid.mesh)
-        flux_w0_halfx = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0.5, 0.5, 0, "vertical", grid.mesh)
-        flux_w1_halfx = w1 * i_u.jacobian3D_lin_face(xx, yy, zz, 0.5, 0.5, 1, "vertical", grid.mesh)
+        flux_u0 = u0 * i_u.jacobian3D_lin_face(zz, yy, xx, 0.5, 0.5, 0, "zonal", grid.mesh)
+        flux_v0_halfx = v0 * i_u.jacobian3D_lin_face(zz, yy, xx, 0.5, 0, 0.5, "meridional", grid.mesh)
+        flux_v1_halfx = v1 * i_u.jacobian3D_lin_face(zz, yy, xx, 0.5, 1, 0.5, "meridional", grid.mesh)
+        flux_w0_halfx = w0 * i_u.jacobian3D_lin_face(zz, yy, xx, 0, 0.5, 0.5, "vertical", grid.mesh)
+        flux_w1_halfx = w1 * i_u.jacobian3D_lin_face(zz, yy, xx, 1, 0.5, 0.5, "vertical", grid.mesh)
         flux_u05 = flux_u0 + flux_v0_halfx - flux_v1_halfx + flux_w0_halfx - flux_w1_halfx
 
         # Computing fluxes in half front hexahedron -> flux_v05
@@ -2187,11 +2187,11 @@ class VectorField:
             (pz[5] + pz[6]) / 2,
             (pz[4] + pz[7]) / 2,
         ]
-        flux_u0_halfy = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, 0.5, 0.5, "zonal", grid.mesh)
-        flux_u1_halfy = u1 * i_u.jacobian3D_lin_face(xx, yy, zz, 1, 0.5, 0.5, "zonal", grid.mesh)
-        flux_v0 = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0.5, 0, 0.5, "meridional", grid.mesh)
-        flux_w0_halfy = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0.5, 0.5, 0, "vertical", grid.mesh)
-        flux_w1_halfy = w1 * i_u.jacobian3D_lin_face(xx, yy, zz, 0.5, 0.5, 1, "vertical", grid.mesh)
+        flux_u0_halfy = u0 * i_u.jacobian3D_lin_face(zz, yy, xx, 0.5, 0.5, 0, "zonal", grid.mesh)
+        flux_u1_halfy = u1 * i_u.jacobian3D_lin_face(zz, yy, xx, 0.5, 0.5, 1, "zonal", grid.mesh)
+        flux_v0 = v0 * i_u.jacobian3D_lin_face(zz, yy, xx, 0.5, 0, 0.5, "meridional", grid.mesh)
+        flux_w0_halfy = w0 * i_u.jacobian3D_lin_face(zz, yy, xx, 0, 0.5, 0.5, "vertical", grid.mesh)
+        flux_w1_halfy = w1 * i_u.jacobian3D_lin_face(zz, yy, xx, 1, 0.5, 0.5, "vertical", grid.mesh)
         flux_v05 = flux_u0_halfy - flux_u1_halfy + flux_v0 + flux_w0_halfy - flux_w1_halfy
 
         # Computing fluxes in half lower hexahedron -> flux_w05
@@ -2225,26 +2225,26 @@ class VectorField:
             (pz[2] + pz[6]) / 2,
             (pz[3] + pz[7]) / 2,
         ]
-        flux_u0_halfz = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, 0.5, 0.5, "zonal", grid.mesh)
-        flux_u1_halfz = u1 * i_u.jacobian3D_lin_face(xx, yy, zz, 1, 0.5, 0.5, "zonal", grid.mesh)
-        flux_v0_halfz = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0.5, 0, 0.5, "meridional", grid.mesh)
-        flux_v1_halfz = v1 * i_u.jacobian3D_lin_face(xx, yy, zz, 0.5, 1, 0.5, "meridional", grid.mesh)
-        flux_w0 = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0.5, 0.5, 0, "vertical", grid.mesh)
+        flux_u0_halfz = u0 * i_u.jacobian3D_lin_face(zz, yy, xx, 0.5, 0.5, 0, "zonal", grid.mesh)
+        flux_u1_halfz = u1 * i_u.jacobian3D_lin_face(zz, yy, xx, 0.5, 0.5, 1, "zonal", grid.mesh)
+        flux_v0_halfz = v0 * i_u.jacobian3D_lin_face(zz, yy, xx, 0.5, 0, 0.5, "meridional", grid.mesh)
+        flux_v1_halfz = v1 * i_u.jacobian3D_lin_face(zz, yy, xx, 0.5, 1, 0.5, "meridional", grid.mesh)
+        flux_w0 = w0 * i_u.jacobian3D_lin_face(zz, yy, xx, 0, 0.5, 0.5, "vertical", grid.mesh)
         flux_w05 = flux_u0_halfz - flux_u1_halfz + flux_v0_halfz - flux_v1_halfz + flux_w0
 
-        surf_u05 = i_u.jacobian3D_lin_face(px, py, pz, 0.5, 0.5, 0.5, "zonal", grid.mesh)
-        jac_u05 = i_u.jacobian3D_lin_face(px, py, pz, 0.5, eta, zeta, "zonal", grid.mesh)
+        surf_u05 = i_u.jacobian3D_lin_face(pz, py, px, 0.5, 0.5, 0.5, "zonal", grid.mesh)
+        jac_u05 = i_u.jacobian3D_lin_face(pz, py, px, zeta, eta, 0.5, "zonal", grid.mesh)
         U05 = flux_u05 / surf_u05 * jac_u05
 
-        surf_v05 = i_u.jacobian3D_lin_face(px, py, pz, 0.5, 0.5, 0.5, "meridional", grid.mesh)
-        jac_v05 = i_u.jacobian3D_lin_face(px, py, pz, xsi, 0.5, zeta, "meridional", grid.mesh)
+        surf_v05 = i_u.jacobian3D_lin_face(pz, py, px, 0.5, 0.5, 0.5, "meridional", grid.mesh)
+        jac_v05 = i_u.jacobian3D_lin_face(pz, py, px, zeta, 0.5, xsi, "meridional", grid.mesh)
         V05 = flux_v05 / surf_v05 * jac_v05
 
-        surf_w05 = i_u.jacobian3D_lin_face(px, py, pz, 0.5, 0.5, 0.5, "vertical", grid.mesh)
-        jac_w05 = i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, 0.5, "vertical", grid.mesh)
+        surf_w05 = i_u.jacobian3D_lin_face(pz, py, px, 0.5, 0.5, 0.5, "vertical", grid.mesh)
+        jac_w05 = i_u.jacobian3D_lin_face(pz, py, px, 0.5, eta, xsi, "vertical", grid.mesh)
         W05 = flux_w05 / surf_w05 * jac_w05
 
-        jac = i_u.jacobian3D_lin(px, py, pz, xsi, eta, zeta, grid.mesh)
+        jac = i_u.jacobian3D_lin(pz, py, px, zeta, eta, xsi, grid.mesh)
         dxsidt = i_u.interpolate(i_u.phi1D_quad, [U0, U05, U1], xsi) / jac
         detadt = i_u.interpolate(i_u.phi1D_quad, [V0, V05, V1], eta) / jac
         dzetdt = i_u.interpolate(i_u.phi1D_quad, [W0, W05, W1], zeta) / jac
