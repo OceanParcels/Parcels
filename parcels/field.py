@@ -1965,7 +1965,7 @@ class VectorField:
             and np.allclose(grid1.time_full, grid2.time_full)
         )
 
-    def dist(self, lon1: float, lon2: float, lat1: float, lat2: float, mesh: Mesh, lat: float):
+    def dist(self, lat1: float, lat2: float, lon1: float, lon2: float, mesh: Mesh, lat: float):
         if mesh == "spherical":
             rad = np.pi / 180.0
             deg2m = 1852 * 60.0
@@ -2002,10 +2002,10 @@ class VectorField:
             px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
         xx = (1 - xsi) * (1 - eta) * px[0] + xsi * (1 - eta) * px[1] + xsi * eta * px[2] + (1 - xsi) * eta * px[3]
         assert abs(xx - x) < 1e-4
-        c1 = self.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
-        c2 = self.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
-        c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
-        c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
+        c1 = self.dist(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
+        c2 = self.dist(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
+        c3 = self.dist(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
+        c4 = self.dist(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
         if grid.zdim == 1:
             if self.gridindexingtype == "nemo":
                 U0 = self.U.data[ti, yi + 1, xi] * c4

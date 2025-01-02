@@ -555,7 +555,7 @@ static inline StatusCode temporal_interpolation_structured_grid(double time, typ
 #undef INTERP
 }
 
-static double dist(double lon1, double lon2, double lat1, double lat2, int sphere_mesh, double lat)
+static double dist(double lat1, double lat2, double lon1, double lon2, int sphere_mesh, double lat)
 {
   if (sphere_mesh == 1){
     double rad = M_PI / 180.;
@@ -605,13 +605,13 @@ static inline StatusCode spatial_interpolation_UV_c_grid(double eta, double xsi,
 
   double phi[4];
   phi2D_lin(eta, 0.,phi);
-  double U0 = dataU[1][0] * dist(xgrid_loc[3], xgrid_loc[0], ygrid_loc[3], ygrid_loc[0], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double U0 = dataU[1][0] * dist(ygrid_loc[3], ygrid_loc[0], xgrid_loc[3], xgrid_loc[0], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
   phi2D_lin(eta, 1., phi);
-  double U1 = dataU[1][1] * dist(xgrid_loc[1], xgrid_loc[2], ygrid_loc[1], ygrid_loc[2], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double U1 = dataU[1][1] * dist(ygrid_loc[1], ygrid_loc[2], xgrid_loc[1], xgrid_loc[2], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
   phi2D_lin(0., xsi, phi);
-  double V0 = dataV[0][1] * dist(xgrid_loc[0], xgrid_loc[1], ygrid_loc[0], ygrid_loc[1], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double V0 = dataV[0][1] * dist(ygrid_loc[0], ygrid_loc[1], xgrid_loc[0], xgrid_loc[1], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
   phi2D_lin(1., xsi, phi);
-  double V1 = dataV[1][1] * dist(xgrid_loc[2], xgrid_loc[3], ygrid_loc[2], ygrid_loc[3], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double V1 = dataV[1][1] * dist(ygrid_loc[2], ygrid_loc[3], xgrid_loc[2], xgrid_loc[3], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
   double U = (1-xsi) * U0 + xsi * U1;
   double V = (1-eta) * V0 + eta * V1;
 
