@@ -185,7 +185,7 @@ static inline StatusCode search_indices_vertical_s(double time, type_coord z,
   return SUCCESS;
 }
 
-static inline void reconnect_bnd_indices(int *xi, int *yi, int xdim, int ydim, int onlyX, int sphere_mesh)
+static inline void reconnect_bnd_indices(int *yi, int *xi, int ydim, int xdim, int onlyX, int sphere_mesh)
 {
   if (*xi < 0){
     if (sphere_mesh)
@@ -263,7 +263,7 @@ static inline StatusCode search_indices_rectilinear(double time, type_coord z, t
         ++(*xi);
       else if (xvalsi > x)
         --(*xi);
-      reconnect_bnd_indices(xi, yi, xdim, ydim, 1, 1);
+      reconnect_bnd_indices(yi, xi, ydim, xdim, 1, 1);
       xvalsi = xvals[*xi];
       if (xvalsi < x - 225) xvalsi += 360;
       if (xvalsi > x + 225) xvalsi -= 360;
@@ -411,7 +411,7 @@ static inline StatusCode search_indices_curvilinear(double time, type_coord z, t
       (*yi)--;
     if (*eta > 1+tol)
       (*yi)++;
-    reconnect_bnd_indices(xi, yi, xdim, ydim, 0, sphere_mesh);
+    reconnect_bnd_indices(yi, xi, ydim, xdim, 0, sphere_mesh);
     it++;
     if ( it > maxIterSearch){
       printf("Correct cell not found for (%f, %f) after %d iterations\n", x, y, maxIterSearch);

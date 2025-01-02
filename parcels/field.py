@@ -1091,7 +1091,7 @@ class Field:
     def reconnect_bnd_indices(self, *args, **kwargs):
         return self._reconnect_bnd_indices(*args, **kwargs)
 
-    def _reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
+    def _reconnect_bnd_indices(self, yi, xi, ydim, xdim, sphere_mesh):
         if xi < 0:
             if sphere_mesh:
                 xi = xdim - 2
@@ -1108,7 +1108,7 @@ class Field:
             yi = ydim - 2
             if sphere_mesh:
                 xi = xdim - xi
-        return xi, yi
+        return yi, xi
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def search_indices_rectilinear(self, *args, **kwargs):
@@ -1266,7 +1266,7 @@ class Field:
                 yi -= 1
             elif eta > 1 + tol:
                 yi += 1
-            (xi, yi) = self._reconnect_bnd_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
+            (yi, xi) = self._reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid.mesh)
             it += 1
             if it > maxIterSearch:
                 print(f"Correct cell not found after {maxIterSearch} iterations")
