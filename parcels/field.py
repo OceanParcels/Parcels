@@ -1579,7 +1579,7 @@ class Field:
             value = self._spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
 
         if applyConversion:
-            return self.units.to_target(value, x, y, z)
+            return self.units.to_target(value, z, y, x)
         else:
             return value
 
@@ -1601,7 +1601,7 @@ class Field:
         return self._ccode_convert(*args, **kwargs)
 
     def _ccode_convert(self, _, z, y, x):
-        return self.units.ccode_to_target(x, y, z)
+        return self.units.ccode_to_target(z, y, x)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def get_block_id(self, *args, **kwargs):
@@ -2285,7 +2285,7 @@ class VectorField:
             (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
-                w = self.W.units.to_target(w, x, y, z)
+                w = self.W.units.to_target(w, z, y, x)
         return (u, v, w)
 
     def _is_land2D(self, di, yi, xi):
@@ -2406,12 +2406,12 @@ class VectorField:
             u = self.U.eval(time, z, y, x, particle=particle, applyConversion=False)
             v = self.V.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
-                u = self.U.units.to_target(u, x, y, z)
-                v = self.V.units.to_target(v, x, y, z)
+                u = self.U.units.to_target(u, z, y, x)
+                v = self.V.units.to_target(v, z, y, x)
             if "3D" in self.vector_type:
                 w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
                 if applyConversion:
-                    w = self.W.units.to_target(w, x, y, z)
+                    w = self.W.units.to_target(w, z, y, x)
                 return (u, v, w)
             else:
                 return (u, v)
