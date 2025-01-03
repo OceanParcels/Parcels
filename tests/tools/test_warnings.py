@@ -9,9 +9,9 @@ from parcels import (
     AdvectionRK45,
     FieldSet,
     FieldSetWarning,
-    FileWarning,
     KernelWarning,
     ParticleSet,
+    ParticleSetWarning,
     ScipyParticle,
 )
 from tests.utils import TEST_DATA
@@ -62,7 +62,7 @@ def test_file_warnings(tmp_zarrfile):
     )
     pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=[0, 0], lat=[0, 0], time=[0, 1])
     pfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=2)
-    with pytest.warns(FileWarning, match="Some of the particles have a start time difference.*"):
+    with pytest.warns(ParticleSetWarning, match="Some of the particles have a start time difference.*"):
         pset.execute(AdvectionRK4, runtime=3, dt=1, output_file=pfile)
 
 

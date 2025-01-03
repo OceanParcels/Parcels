@@ -1,6 +1,6 @@
 import warnings
 
-__all__ = ["FieldSetWarning", "FileWarning", "KernelWarning"]
+__all__ = ["FieldSetWarning", "FileWarning", "KernelWarning", "ParticleSetWarning"]
 
 
 class FieldSetWarning(UserWarning):
@@ -9,6 +9,12 @@ class FieldSetWarning(UserWarning):
     These warnings are often caused by issues in the input data dimensions
     or options selected when loading data into a FieldSet.
     """
+
+    pass
+
+
+class ParticleSetWarning(UserWarning):
+    """Warning that is raised when there are issues in the construction of the ParticleSet."""
 
     pass
 

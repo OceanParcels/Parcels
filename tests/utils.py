@@ -72,15 +72,24 @@ def create_flat_positions(n_particle):
     return np.random.rand(n_particle * 3).reshape(3, n_particle)
 
 
-def create_fieldset_zeros_simple(xdim=40, ydim=100):
-    U = np.zeros((ydim, xdim), dtype=np.float32)
-    V = np.zeros((ydim, xdim), dtype=np.float32)
+def create_fieldset_zeros_simple(xdim=40, ydim=100, withtime=False):
     lon = np.linspace(0, 1, xdim, dtype=np.float32)
     lat = np.linspace(-60, 60, ydim, dtype=np.float32)
     depth = np.zeros(1, dtype=np.float32)
-    data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
     dimensions = {"lat": lat, "lon": lon, "depth": depth}
-    return FieldSet.from_data(data, dimensions)
+    if withtime:
+        tdim = 10
+        time = np.linspace(0, 86400, tdim, dtype=np.float64)
+        dimensions["time"] = time
+        datadims = (tdim, ydim, xdim)
+        allow_time_extrapolation = False
+    else:
+        datadims = (ydim, xdim)
+        allow_time_extrapolation = True
+    U = np.zeros(datadims, dtype=np.float32)
+    V = np.zeros(datadims, dtype=np.float32)
+    data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
+    return FieldSet.from_data(data, dimensions, allow_time_extrapolation=allow_time_extrapolation)
 
 
 def assert_empty_folder(path: Path):

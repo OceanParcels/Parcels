@@ -7,6 +7,7 @@ from parcels import (
     FieldSet,
     JITParticle,
     ParticleSet,
+    ParticleSetWarning,
     ScipyParticle,
     StatusCode,
     Variable,
@@ -173,6 +174,14 @@ def test_pset_create_with_time(fieldset, mode):
     assert np.allclose([p.time for p in pset], time, rtol=1e-12)
     pset = ParticleSet.from_line(fieldset, size=npart, start=(0, 1), finish=(1, 0), pclass=ptype[mode], time=time)
     assert np.allclose([p.time for p in pset], time, rtol=1e-12)
+
+
+@pytest.mark.parametrize("mode", ["scipy", "jit"])
+def test_pset_create_outside_time(mode):
+    fieldset = create_fieldset_zeros_simple(withtime=True)
+    time = [-1, 0, 1, 20 * 86400]
+    with pytest.warns(ParticleSetWarning, match="Some particles are set to be released*"):
+        ParticleSet(fieldset, pclass=ptype[mode], lon=[0] * len(time), lat=[0] * len(time), time=time)
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
