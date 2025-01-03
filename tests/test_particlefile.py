@@ -334,6 +334,24 @@ def test_reset_dt(fieldset, mode, tmp_zarrfile):
     assert np.allclose(pset.lon, 0.6)
 
 
+@pytest.mark.parametrize("mode", ["scipy", "jit"])
+def test_correct_misaligned_outputdt_dt(fieldset, mode, tmp_zarrfile):
+    """Testing that outputdt does not need to be a multiple of dt."""
+
+    def Update_lon(particle, fieldset, time):
+        particle_dlon += particle.dt  # noqa
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
+    ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=3)
+    pset.execute(pset.Kernel(Update_lon), endtime=11, dt=2, output_file=ofile)
+
+    ds = xr.open_zarr(tmp_zarrfile)
+    assert np.allclose(ds.lon.values, [0, 3, 6, 9])
+    assert np.allclose(
+        ds.time.values[0, :], [np.timedelta64(t, "s") for t in [0, 3, 6, 9]], atol=np.timedelta64(1, "ns")
+    )
+
+
 def setup_pset_execute(*, fieldset: FieldSet, outputdt: timedelta, execute_kwargs, particle_class=ScipyParticle):
     npart = 10
 
