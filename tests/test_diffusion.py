@@ -68,7 +68,7 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel):
     for x in range(xdim):
         Kh[:, x] = np.tanh(fieldset.U.lon[x] / fieldset.U.lon[-1] * 10.0) * xdim / 2.0 + xdim / 2.0 + 100.0
 
-    grid = RectilinearZGrid(lon=fieldset.U.lon, lat=fieldset.U.lat, mesh=mesh)
+    grid = RectilinearZGrid(time=None, depth=None, lat=fieldset.U.lat, lon=fieldset.U.lon, mesh=mesh)
     fieldset.add_field(Field("Kh_zonal", Kh, grid=grid))
     fieldset.add_field(Field("Kh_meridional", Kh, grid=grid))
     fieldset.add_constant("dres", fieldset.U.lon[1] - fieldset.U.lon[0])

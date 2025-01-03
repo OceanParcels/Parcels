@@ -944,7 +944,7 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail):
         Wtime_origin = TimeConverter(np.datetime64("2018-04-22"))
     else:
         Wtime_origin = TimeConverter(np.datetime64("2018-04-18"))
-    gridW = RectilinearZGrid(dims1["lon"], dims1["lat"], dims1["depth"], dims1["time"], time_origin=Wtime_origin)
+    gridW = RectilinearZGrid(dims1["time"], dims1["depth"], dims1["lat"], dims1["lon"], time_origin=Wtime_origin)
     fieldW = Field("W", np.zeros(data1["U"].shape), grid=gridW)
     fieldset_out.add_field(fieldW)
     fieldset_out.write(filepath)

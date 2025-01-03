@@ -40,7 +40,7 @@ def test_multi_structured_grids(mode):
     lon_g0 = np.linspace(0, a, xdim_g0, dtype=np.float32)
     lat_g0 = np.linspace(0, b, ydim_g0, dtype=np.float32)
     time_g0 = np.linspace(0.0, 1000.0, 2, dtype=np.float64)
-    grid_0 = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
+    grid_0 = RectilinearZGrid(time_g0, None, lat_g0, lon_g0)
 
     # Grid 1
     xdim_g1 = 51
@@ -49,7 +49,7 @@ def test_multi_structured_grids(mode):
     lon_g1 = np.linspace(0, a, xdim_g1, dtype=np.float32)
     lat_g1 = np.linspace(0, b, ydim_g1, dtype=np.float32)
     time_g1 = np.linspace(0.0, 1000.0, 2, dtype=np.float64)
-    grid_1 = RectilinearZGrid(lon_g1, lat_g1, time=time_g1)
+    grid_1 = RectilinearZGrid(time_g1, None, lat_g1, lon_g1)
 
     u_data = np.ones((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
     u_data = 2 * u_data
@@ -109,7 +109,7 @@ def test_time_format_in_grid():
     lat = np.linspace(0, 1, 2, dtype=np.float32)
     time = np.array([np.datetime64("2000-01-01")] * 2)
     with pytest.raises(AssertionError, match="Time vector"):
-        RectilinearZGrid(lon, lat, time=time)
+        RectilinearZGrid(time, None, lat, lon)
 
 
 def test_negate_depth():
@@ -126,12 +126,12 @@ def test_avoid_repeated_grids():
     lon_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
-    grid_0 = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
+    grid_0 = RectilinearZGrid(time_g0, None, lat_g0, lon_g0)
 
     lon_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
     lat_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
     time_g1 = np.linspace(0, 1000, 2, dtype=np.float64)
-    grid_1 = RectilinearZGrid(lon_g1, lat_g1, time=time_g1)
+    grid_1 = RectilinearZGrid(time_g1, None, lat_g1, lon_g1)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
     u_field = Field("U", u_data, grid=grid_0, transpose=True)
@@ -166,8 +166,8 @@ def test_multigrids_pointer(mode):
         for k in range(zdim):
             depth_g0[k, :, i] = bath[i] * k / (zdim - 1)
 
-    grid_0 = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
-    grid_1 = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
+    grid_0 = RectilinearSGrid(None, depth_g0, lat_g0, lon_g0)
+    grid_1 = RectilinearSGrid(None, depth_g0, lat_g0, lon_g0)
 
     u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
     v_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
@@ -216,7 +216,7 @@ def test_rectilinear_s_grid_sampling(mode, z4d):
             else:
                 depth_g0[k, :, i] = bath[i] * k / (zdim - 1)
 
-    grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0, time=time_g0)
+    grid = RectilinearSGrid(time_g0, depth_g0, lat_g0, lon_g0)
 
     u_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
     v_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
@@ -262,7 +262,7 @@ def test_rectilinear_s_grids_advect1(mode):
             depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2] - 1)
     depth_g0 = depth_g0.transpose()  # we don't change it on purpose, to check if the transpose op if fixed in jit
 
-    grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
+    grid = RectilinearSGrid(None, depth_g0, lat_g0, lon_g0)
 
     zdim = depth_g0.shape[0]
     u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
@@ -306,7 +306,7 @@ def test_rectilinear_s_grids_advect2(mode):
         for k in range(zdim):
             depth_g0[k, :, i] = bath[i] * k / (zdim - 1)
 
-    grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
+    grid = RectilinearSGrid(None, depth_g0, lat_g0, lon_g0)
 
     u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
     v_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
@@ -347,7 +347,7 @@ def test_curvilinear_grids(mode):
     lon = r * np.cos(theta)
     lat = r * np.sin(theta)
     time = np.array([0, 86400], dtype=np.float64)
-    grid = CurvilinearZGrid(lon, lat, time=time)
+    grid = CurvilinearZGrid(time, None, lat, lon)
 
     u_data = np.ones((2, y.size, x.size), dtype=np.float32)
     v_data = np.zeros((2, y.size, x.size), dtype=np.float32)

@@ -130,12 +130,12 @@ class Field:
         A numpy array containing the timestamps for each of the files in filenames, for loading
         from netCDF files only. Default is None if the netCDF dimensions dictionary includes time.
     grid : parcels.grid.Grid
-        :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
+        :class:`parcels.grid.Grid` object containing all the time, depth, lat, lon,
         mesh and time_origin information. Can be constructed from any of the Grid objects
     fieldtype : str
         Type of Field to be used for UnitConverter (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
     transpose : bool
-        Transpose data to required (lon, lat) layout
+        Transpose data to required (time, depth, lat, lon) layout
     vmin : float
         Minimum allowed value on the field. Data below this value are set to zero
     vmax : float
@@ -211,7 +211,7 @@ class Field:
         if grid:
             if grid.defer_load and isinstance(data, np.ndarray):
                 raise ValueError(
-                    "Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately"
+                    "Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify time, depth, lat and lon dimensions separately"
                 )
             self._grid = grid
         else:
@@ -220,7 +220,7 @@ class Field:
                 time = np.array([time_origin.reltime(t) for t in time])
             else:
                 time_origin = TimeConverter(0)
-            self._grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self._grid = Grid.create_grid(time, depth, lat, lon, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
         self.fieldtype = self.name if fieldtype is None else fieldtype
         self.to_write = to_write
@@ -687,7 +687,7 @@ class Field:
             time, time_origin, timeslices, dataFiles = cls._collect_timeslices(
                 timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
             )
-            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            grid = Grid.create_grid(time, depth, lat, lon, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             kwargs["dataFiles"] = dataFiles
         elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
@@ -838,7 +838,7 @@ class Field:
         time_origin = TimeConverter(time[0])
         time = time_origin.reltime(time)  # type: ignore[assignment]
 
-        grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        grid = Grid.create_grid(time, depth, lat, lon, time_origin=time_origin, mesh=mesh)
         kwargs["time_periodic"] = time_periodic
         return cls(
             name,

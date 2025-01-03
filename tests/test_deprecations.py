@@ -285,7 +285,7 @@ def create_test_data():
     lon_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
-    grid = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
+    grid = RectilinearZGrid(time_g0, None, lat_g0, lon_g0)
 
     pfile = ParticleFile("test.zarr", pset, outputdt=1)
 

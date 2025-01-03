@@ -139,7 +139,7 @@ def test_pset_create_field_curvi():
 
     x = -1 + r * np.cos(theta)
     y = -1 + r * np.sin(theta)
-    grid = CurvilinearZGrid(x, y)
+    grid = CurvilinearZGrid(time=None, depth=None, lat=y, lon=x)
 
     u = np.ones(x.shape)
     v = np.where(np.logical_and(theta > np.pi / 4, theta < np.pi / 3), 1, 0)

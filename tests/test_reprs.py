@@ -59,7 +59,12 @@ def test_particletype_repr():
 def test_grid_repr():
     """Test arguments are in the repr of a Grid object"""
     kwargs = dict(
-        lon=np.array([1, 2, 3]), lat=np.array([4, 5, 6]), time=None, time_origin=TimeConverter(), mesh="spherical"
+        lon=np.array([1, 2, 3]),
+        lat=np.array([4, 5, 6]),
+        time=None,
+        depth=None,
+        time_origin=TimeConverter(),
+        mesh="spherical",
     )
     assert_simple_repr(Grid, kwargs)
 
@@ -77,7 +82,12 @@ def test_rectilineargrid_repr():
     Mainly to test inherited repr is correct.
     """
     kwargs = dict(
-        lon=np.array([1, 2, 3]), lat=np.array([4, 5, 6]), time=None, time_origin=TimeConverter(), mesh="spherical"
+        lon=np.array([1, 2, 3]),
+        lat=np.array([4, 5, 6]),
+        time=None,
+        depth=[7, 8],
+        time_origin=TimeConverter(),
+        mesh="spherical",
     )
     assert_simple_repr(RectilinearGrid, kwargs)
 
