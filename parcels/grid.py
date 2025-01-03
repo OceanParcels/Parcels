@@ -694,53 +694,7 @@ class CurvilinearGrid(Grid):
         halosize : int
             size of the halo (in grid points). Default is 5 grid points
         """
-        if zonal:
-            lonshift = self.lon[:, -1] - 2 * self.lon[:, 0] + self.lon[:, 1]
-            if not np.allclose(self.lon[:, 1] - self.lon[:, 0], self.lon[:, -1] - self.lon[:, -2]):
-                warnings.warn(
-                    "The zonal halo is located at the east and west of current grid, "
-                    "with a dx = lon[1]-lon[0] between the last nodes of the original grid and the first ones of the halo. "
-                    "In your grid, lon[1]-lon[0] != lon[-1]-lon[-2]. Is the halo computed as you expect?",
-                    FieldSetWarning,
-                    stacklevel=2,
-                )
-            self._lon = np.concatenate(
-                (
-                    self.lon[:, -halosize:] - lonshift[:, np.newaxis],
-                    self.lon,
-                    self.lon[:, 0:halosize] + lonshift[:, np.newaxis],
-                ),
-                axis=len(self.lon.shape) - 1,
-            )
-            self._lat = np.concatenate(
-                (self.lat[:, -halosize:], self.lat, self.lat[:, 0:halosize]), axis=len(self.lat.shape) - 1
-            )
-            self._zonal_periodic = True
-            self._zonal_halo = halosize
-        if meridional:
-            if not np.allclose(self.lat[1, :] - self.lat[0, :], self.lat[-1, :] - self.lat[-2, :]):
-                warnings.warn(
-                    "The meridional halo is located at the north and south of current grid, "
-                    "with a dy = lat[1]-lat[0] between the last nodes of the original grid and the first ones of the halo. "
-                    "In your grid, lat[1]-lat[0] != lat[-1]-lat[-2]. Is the halo computed as you expect?",
-                    FieldSetWarning,
-                    stacklevel=2,
-                )
-            latshift = self.lat[-1, :] - 2 * self.lat[0, :] + self.lat[1, :]
-            self._lat = np.concatenate(
-                (
-                    self.lat[-halosize:, :] - latshift[np.newaxis, :],
-                    self.lat,
-                    self.lat[0:halosize, :] + latshift[np.newaxis, :],
-                ),
-                axis=len(self.lat.shape) - 2,
-            )
-            self._lon = np.concatenate(
-                (self.lon[-halosize:, :], self.lon, self.lon[0:halosize, :]), axis=len(self.lon.shape) - 2
-            )
-            self._meridional_halo = halosize
-        if isinstance(self, CurvilinearSGrid):
-            self._add_Sdepth_periodic_halo(zonal, meridional, halosize)
+        raise NotImplementedError("CurvilinearGrid does not support add_periodic_halo")
 
 
 class CurvilinearZGrid(CurvilinearGrid):
