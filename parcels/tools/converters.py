@@ -54,14 +54,18 @@ class TimeConverter:
     """
 
     def __init__(self, time_origin: float | np.datetime64 | np.timedelta64 | cftime.datetime = 0):
-        self.time_origin = time_origin
         self.calendar: str | None = None
         if isinstance(time_origin, np.datetime64):
+            self.time_origin = time_origin
             self.calendar = "np_datetime64"
         elif isinstance(time_origin, np.timedelta64):
+            self.time_origin = time_origin.astype("timedelta64[s]")
             self.calendar = "np_timedelta64"
         elif isinstance(time_origin, cftime.datetime):
+            self.time_origin = time_origin
             self.calendar = time_origin.calendar
+        else:
+            self.time_origin = time_origin
 
     def reltime(self, time: TimeConverter | np.datetime64 | np.timedelta64 | cftime.datetime) -> float | npt.NDArray:
         """Method to compute the difference, in seconds, between a time and the time_origin
