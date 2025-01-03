@@ -645,7 +645,7 @@ class Field:
                 netcdf_engine,
                 gridindexingtype=gridindexingtype,
             ) as filebuffer:
-                lon, lat = filebuffer.lonlat
+                lat, lon = filebuffer.latlon
                 indices = filebuffer.indices
                 # Check if parcels_mesh has been explicitly set in file
                 if "parcels_mesh" in filebuffer.dataset.attrs:
@@ -969,8 +969,8 @@ class Field:
                 y_conv = Geographic() if self.grid.mesh == "spherical" else UnitConverter()
                 for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat), strict=False)):
                     for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon), strict=False)):
-                        self.grid.cell_edge_sizes["x"][y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
-                        self.grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
+                        self.grid.cell_edge_sizes["x"][y, x] = x_conv.to_source(dx, self.grid.depth[0], lat, lon)
+                        self.grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, self.grid.depth[0], lat, lon)
             else:
                 raise ValueError(
                     f"Field.cell_edge_sizes() not implemented for {self.grid._gtype} grids. "

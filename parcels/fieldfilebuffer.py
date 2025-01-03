@@ -92,7 +92,7 @@ class NetcdfFileBuffer(_FileBuffer):
         return name
 
     @property
-    def lonlat(self):
+    def latlon(self):
         lon = self.dataset[self.dimensions["lon"]]
         lat = self.dataset[self.dimensions["lat"]]
         if self.nolonlatindices and self.gridindexingtype not in ["croco"]:
@@ -141,7 +141,7 @@ class NetcdfFileBuffer(_FileBuffer):
             if rectilinear:
                 lon_subset = lon_subset[0, :]
                 lat_subset = lat_subset[:, 0]
-        return lon_subset, lat_subset
+        return lat_subset, lon_subset
 
     @property
     def depth(self):

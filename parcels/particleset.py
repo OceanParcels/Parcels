@@ -700,7 +700,7 @@ class ParticleSet:
                     + xsi * eta * grid.lat[j + 1, i + 1]
                     + (1 - xsi) * eta * grid.lat[j + 1, i]
                 )
-            return list(lon), list(lat)
+            return list(lat), list(lon)
         else:
             raise NotImplementedError(f'Mode {mode} not implemented. Please use "monte carlo" algorithm instead.')
 
@@ -742,7 +742,7 @@ class ParticleSet:
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
             and np.float64 if the interpolation method is 'cgrid_velocity'
         """
-        lon, lat = cls._monte_carlo_sample(start_field, size, mode)
+        lat, lon = cls._monte_carlo_sample(start_field, size, mode)
 
         return cls(
             fieldset=fieldset,

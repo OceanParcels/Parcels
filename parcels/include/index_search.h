@@ -414,20 +414,20 @@ static inline StatusCode search_indices_curvilinear(double time, type_coord z, t
     reconnect_bnd_indices(yi, xi, ydim, xdim, 0, sphere_mesh);
     it++;
     if ( it > maxIterSearch){
-      printf("Correct cell not found for (%f, %f) after %d iterations\n", x, y, maxIterSearch);
+      printf("Correct cell not found for (lat, lon) = (%f, %f) after %d iterations\n", y, x, maxIterSearch);
       printf("Debug info: old particle indices: (yi, xi) %d %d\n", yi_old, xi_old);
       printf("            new particle indices: (yi, xi) %d %d\n", *yi, *xi);
       printf("            Mesh 2d shape:  %d %d\n", ydim, xdim);
-      printf("            Relative particle position:  (xsi, eta) %1.16e %1.16e\n", *xsi, *eta);
+      printf("            Relative particle position:  (eta, xsi) %1.16e %1.16e\n", *eta, *xsi);
       return ERROROUTOFBOUNDS;
     }
   }
   if ( (*xsi != *xsi) || (*eta != *eta) ){  // check if nan
-      printf("Correct cell not found for (%f, %f))\n", x, y);
+      printf("Correct cell not found for (lat, lon) = (%f, %f))\n", y, x);
       printf("Debug info: old particle indices: (yi, xi) %d %d\n", yi_old, xi_old);
       printf("            new particle indices: (yi, xi) %d %d\n", *yi, *xi);
       printf("            Mesh 2d shape:  %d %d\n", ydim, xdim);
-      printf("            Relative particle position:  (xsi, eta) %1.16e %1.16e\n", *xsi, *eta);
+      printf("            Relative particle position:  (eta, xsi) %1.16e %1.16e\n", *eta, *xsi);
       return ERROROUTOFBOUNDS;
   }
   if (*xsi < 0) *xsi = 0;

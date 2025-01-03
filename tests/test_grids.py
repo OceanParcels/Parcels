@@ -399,8 +399,8 @@ def test_nemo_grid(mode):
     latp = 81.5
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=[lonp], lat=[latp])
     pset.execute(pset.Kernel(sampleVel), runtime=1)
-    u = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
-    v = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
+    u = fieldset.U.units.to_source(pset.zonal[0], 0, latp, lonp)
+    v = fieldset.V.units.to_source(pset.meridional[0], 0, latp, lonp)
     assert abs(u - 1) < 1e-4
     assert abs(v) < 1e-4
 
@@ -577,8 +577,8 @@ def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
     latp = 81.35
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=lonp, lat=latp, depth=0.2)
     pset.execute(pset.Kernel(sampleVel), runtime=1)
-    pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
-    pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
+    pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], 0, latp, lonp)
+    pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], 0, latp, lonp)
     assert abs(pset[0].zonal - 1) < 1e-3
     assert abs(pset[0].meridional) < 1e-3
     assert abs(pset[0].vertical - 1) < 1e-3
