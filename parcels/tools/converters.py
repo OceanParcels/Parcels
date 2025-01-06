@@ -82,8 +82,10 @@ class TimeConverter:
 
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.calendar in ["np_datetime64", "np_timedelta64"]:
+        if self.calendar in ["np_datetime64"]:
             return (time - self.time_origin) / np.timedelta64(1, "s")  # type: ignore
+        elif self.calendar in ["np_timedelta64"]:
+            return (time - self.time_origin) / np.timedelta64(1, "ns")  # type: ignore
         elif self.calendar in _get_cftime_calendars():
             if isinstance(time, (list, np.ndarray)):
                 try:
