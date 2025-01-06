@@ -35,7 +35,7 @@ def fieldset():
 def test_metadata(fieldset, mode, tmp_zarrfile):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
 
-    pset.execute(DoNothing, runtime=1, output_file=pset.ParticleFile(tmp_zarrfile))
+    pset.execute(DoNothing, runtime=1, output_file=pset.ParticleFile(tmp_zarrfile, outputdt=1))
 
     ds = xr.open_zarr(tmp_zarrfile)
     assert ds.attrs["parcels_kernels"].lower() == f"{mode}ParticleDoNothing".lower()
@@ -47,7 +47,7 @@ def test_pfile_array_write_zarr_memorystore(fieldset, mode):
     npart = 10
     zarr_store = MemoryStore()
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
-    pfile = pset.ParticleFile(zarr_store)
+    pfile = pset.ParticleFile(zarr_store, outputdt=1)
     pfile.write(pset, 0)
 
     ds = xr.open_zarr(zarr_store)
@@ -59,7 +59,7 @@ def test_pfile_array_write_zarr_memorystore(fieldset, mode):
 def test_pfile_array_remove_particles(fieldset, mode, tmp_zarrfile):
     npart = 10
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
-    pfile = pset.ParticleFile(tmp_zarrfile)
+    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
     pfile.write(pset, 0)
     pset.remove_indices(3)
     for p in pset:
@@ -102,7 +102,7 @@ def test_pfile_array_remove_all_particles(fieldset, mode, chunks_obs, tmp_zarrfi
     npart = 10
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
     chunks = (npart, chunks_obs) if chunks_obs else None
-    pfile = pset.ParticleFile(tmp_zarrfile, chunks=chunks)
+    pfile = pset.ParticleFile(tmp_zarrfile, chunks=chunks, outputdt=1)
     pfile.write(pset, 0)
     for _ in range(npart):
         pset.remove_indices(-1)
