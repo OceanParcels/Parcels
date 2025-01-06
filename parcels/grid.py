@@ -44,8 +44,8 @@ class Grid:
 
     def __init__(
         self,
-        time: npt.NDArray,
-        depth: npt.NDArray,
+        time: npt.NDArray | None,
+        depth: npt.NDArray | None,
         lat: npt.NDArray,
         lon: npt.NDArray,
         time_origin: TimeConverter | None,
@@ -197,10 +197,10 @@ class Grid:
 
     @staticmethod
     def create_grid(
-        time: npt.ArrayLike,
-        depth: npt.ArrayLike,
-        lat: npt.ArrayLike,
-        lon: npt.ArrayLike,
+        time: npt.NDArray | None,
+        depth: npt.NDArray | None,
+        lat: npt.NDArray,
+        lon: npt.NDArray,
         time_origin,
         mesh: Mesh,
         **kwargs,
@@ -612,8 +612,8 @@ class RectilinearSGrid(RectilinearGrid):
 
     def __init__(
         self,
-        time: npt.NDArray,
-        depth: npt.NDArray,
+        time: npt.NDArray | None,
+        depth: npt.NDArray | None,
         lat: npt.NDArray,
         lon: npt.NDArray,
         time_origin: TimeConverter | None = None,
@@ -658,8 +658,8 @@ class RectilinearSGrid(RectilinearGrid):
 class CurvilinearGrid(Grid):
     def __init__(
         self,
-        time: npt.NDArray,
-        depth: npt.NDArray,
+        time: npt.NDArray | None,
+        depth: npt.NDArray | None,
         lat: npt.NDArray,
         lon: npt.NDArray,
         time_origin: TimeConverter | None = None,
@@ -773,8 +773,8 @@ class CurvilinearZGrid(CurvilinearGrid):
 
     def __init__(
         self,
-        time: npt.NDArray,
-        depth: npt.NDArray,
+        time: npt.NDArray | None,
+        depth: npt.NDArray | None,
         lat: npt.NDArray,
         lon: npt.NDArray,
         time_origin: TimeConverter | None = None,
@@ -829,8 +829,8 @@ class CurvilinearSGrid(CurvilinearGrid):
 
     def __init__(
         self,
-        time: npt.NDArray,
-        depth: npt.NDArray,
+        time: npt.NDArray | None,
+        depth: npt.NDArray | None,
         lat: npt.NDArray,
         lon: npt.NDArray,
         time_origin: TimeConverter | None = None,
