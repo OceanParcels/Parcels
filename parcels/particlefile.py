@@ -47,7 +47,7 @@ class ParticleFile:
         ParticleFile object that can be used to write particle data to file
     """
 
-    def __init__(self, name, particleset, outputdt=np.inf, chunks=None, create_new_zarrfile=True):
+    def __init__(self, name, particleset, outputdt, chunks=None, create_new_zarrfile=True):
         self._outputdt = timedelta_to_float(outputdt)
         self._chunks = chunks
         self._particleset = particleset
