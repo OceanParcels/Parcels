@@ -322,7 +322,7 @@ class ParticleFile:
                     coords={"trajectory": ("trajectory", pids), "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))},
                 )
                 attrs = self._create_variables_attribute_dict()
-                obs = np.zeros((self._maxids), dtype=np.int32)
+                obs: list[int] = np.zeros((self._maxids), dtype=np.int32)
                 for var in self.vars_to_write:
                     varout = self._convert_varout_name(var)
                     if varout not in ["trajectory"]:  # because 'trajectory' is written as coordinate
@@ -351,7 +351,7 @@ class ParticleFile:
                 else:
                     store = zarr.DirectoryStore(self.fname)
                 Z = zarr.group(store=store, overwrite=False)
-                obs: list[int] = pset.particledata.getvardata("obs_written", indices_to_write)
+                obs = pset.particledata.getvardata("obs_written", indices_to_write)
                 for var in self.vars_to_write:
                     varout = self._convert_varout_name(var)
                     if self._maxids > Z[varout].shape[0]:
