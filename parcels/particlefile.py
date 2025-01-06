@@ -351,7 +351,7 @@ class ParticleFile:
                 else:
                     store = zarr.DirectoryStore(self.fname)
                 Z = zarr.group(store=store, overwrite=False)
-                obs = pset.particledata.getvardata("obs_written", indices_to_write)
+                obs: list[int] = pset.particledata.getvardata("obs_written", indices_to_write)
                 for var in self.vars_to_write:
                     varout = self._convert_varout_name(var)
                     if self._maxids > Z[varout].shape[0]:
