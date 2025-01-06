@@ -47,7 +47,7 @@ class ParticleFile:
         ParticleFile object that can be used to write particle data to file
     """
 
-    def __init__(self, name, particleset, outputdt=np.inf, chunks=None, create_new_zarrfile=True):
+    def __init__(self, name, particleset, outputdt, chunks=None, create_new_zarrfile=True):
         self._outputdt = timedelta_to_float(outputdt)
         self._chunks = chunks
         self._particleset = particleset
@@ -360,7 +360,7 @@ class ParticleFile:
                         if len(once_ids) > 0:
                             Z[varout].vindex[ids_once] = pset.particledata.getvardata(var, indices_to_write_once)
                     else:
-                        if max(obs) >= Z[varout].shape[1]:
+                        if max(obs) >= Z[varout].shape[1]:  # type: ignore[type-var]
                             self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
                         Z[varout].vindex[ids, obs] = pset.particledata.getvardata(var, indices_to_write)
 
