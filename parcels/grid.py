@@ -694,7 +694,9 @@ class CurvilinearGrid(Grid):
         halosize : int
             size of the halo (in grid points). Default is 5 grid points
         """
-        raise NotImplementedError("CurvilinearGrid does not support add_periodic_halo. See https://github.com/OceanParcels/Parcels/pull/1811")
+        raise NotImplementedError(
+            "CurvilinearGrid does not support add_periodic_halo. See https://github.com/OceanParcels/Parcels/pull/1811"
+        )
 
 
 class CurvilinearZGrid(CurvilinearGrid):
