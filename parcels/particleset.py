@@ -1256,13 +1256,13 @@ def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_tim
 
 def _warn_particle_times_outside_fieldset_time_bounds(time: np.ndarray, fieldset: FieldSet):
     if np.any(time):
-        if np.any(time < fieldset.U.grid.time_full[0]) and not fieldset.U.allow_time_extrapolation:
+        if np.any(time < fieldset.U.grid.time_full[0]) and not fieldset.U.allow_time_extrapolation:  # type: ignore[attr-defined]
             warnings.warn(
                 "Some particles are set to be released before the fieldset's first time and allow_time_extrapolation is set to False.",
                 ParticleSetWarning,
                 stacklevel=2,
             )
-        if np.any(time > fieldset.U.grid.time_full[-1]) and not fieldset.U.allow_time_extrapolation:
+        if np.any(time > fieldset.U.grid.time_full[-1]) and not fieldset.U.allow_time_extrapolation:  # type: ignore[attr-defined]
             warnings.warn(
                 "Some particles are set to be released after the fieldset's last time and allow_time_extrapolation is set to False.",
                 ParticleSetWarning,
