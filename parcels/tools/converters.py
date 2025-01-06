@@ -60,7 +60,7 @@ class TimeConverter:
             self.time_origin = time_origin
             self.calendar = "np_datetime64"
         elif isinstance(time_origin, np.timedelta64):
-            self.time_origin = time_origin.astype("timedelta64[s]")
+            self.time_origin = time_origin.astype("timedelta64[ns]")
             self.calendar = "np_timedelta64"
         elif isinstance(time_origin, cftime.datetime):
             self.time_origin = time_origin
