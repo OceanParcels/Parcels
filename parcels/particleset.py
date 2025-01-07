@@ -15,7 +15,6 @@ from parcels._compat import MPI
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
-from parcels.fieldset import FieldSet
 from parcels.grid import CurvilinearGrid, GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.interaction.neighborsearch import (
@@ -175,7 +174,8 @@ class ParticleSet:
             raise NotImplementedError("If fieldset.time_origin is not a date, time of a particle must be a double")
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
-        _warn_particle_times_outside_fieldset_time_bounds(time, fieldset)
+        if not fieldset.U.allow_time_extrapolation:
+            _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.U.grid.time_full)
 
         if lonlatdepth_dtype is None:
             lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
@@ -1254,15 +1254,15 @@ def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_tim
         )
 
 
-def _warn_particle_times_outside_fieldset_time_bounds(time: np.ndarray, fieldset: FieldSet):
-    if np.any(time):
-        if np.any(time < fieldset.U.grid.time_full[0]) and not fieldset.U.allow_time_extrapolation:  # type: ignore[attr-defined]
+def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray, time_full: np.ndarray):
+    if np.any(release_times):
+        if np.any(release_times < time_full[0]):
             warnings.warn(
                 "Some particles are set to be released before the fieldset's first time and allow_time_extrapolation is set to False.",
                 ParticleSetWarning,
                 stacklevel=2,
             )
-        if np.any(time > fieldset.U.grid.time_full[-1]) and not fieldset.U.allow_time_extrapolation:  # type: ignore[attr-defined]
+        if np.any(release_times > time_full[-1]):
             warnings.warn(
                 "Some particles are set to be released after the fieldset's last time and allow_time_extrapolation is set to False.",
                 ParticleSetWarning,
