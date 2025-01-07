@@ -35,6 +35,7 @@ from parcels.tools.statuscodes import (
     FieldSamplingError,
     TimeExtrapolationError,
     _raise_out_of_bound_error,
+    _raise_out_of_bound_surface_error,
 )
 from parcels.tools.warnings import FieldSetWarning, _deprecated_param_netcdf_decodewarning
 
@@ -1001,7 +1002,7 @@ class Field:
                 if self.gridindexingtype == "mom5" and z > 2 * grid.depth[0] - grid.depth[1]:
                     return (-1, z / grid.depth[0])
                 else:
-                    raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
+                    _raise_out_of_bound_surface_error(z, 0, 0, field=self)
             elif z > grid.depth[-1]:
                 # In case of CROCO, allow particles in last (uppermost) layer using depth[-1]
                 if self.gridindexingtype in ["croco"] and z < 0:
@@ -1014,7 +1015,7 @@ class Field:
                 zi = depth_indices.argmin() - 1 if z >= grid.depth[0] else 0
         else:
             if z > grid.depth[0]:
-                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
+                _raise_out_of_bound_surface_error(z, 0, 0, field=self)
             elif z < grid.depth[-1]:
                 _raise_out_of_bound_error(z, 0, 0, field=self)
             depth_indices = grid.depth >= z
@@ -1072,7 +1073,7 @@ class Field:
             else:
                 zi = depth_indices.argmin() - 1 if z >= depth_vector[0] else 0
             if z < depth_vector[zi]:
-                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
+                _raise_out_of_bound_surface_error(z, 0, 0, field=self)
             elif z > depth_vector[zi + 1]:
                 _raise_out_of_bound_error(z, y, x, field=self)
         else:
@@ -1082,7 +1083,7 @@ class Field:
             else:
                 zi = depth_indices.argmin() - 1 if z <= depth_vector[0] else 0
             if z > depth_vector[zi]:
-                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
+                _raise_out_of_bound_surface_error(z, 0, 0, field=self)
             elif z < depth_vector[zi + 1]:
                 _raise_out_of_bound_error(z, y, x, field=self)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
@@ -1188,7 +1189,7 @@ class Field:
                 except FieldOutOfBoundError:
                     _raise_out_of_bound_error(z, y, x, field=self)
                 except FieldOutOfBoundSurfaceError:
-                    raise FieldOutOfBoundSurfaceError(z, y, x, field=self)
+                    _raise_out_of_bound_surface_error(z, y, x, field=self)
             elif grid._gtype == GridType.RectilinearSGrid:
                 (zi, zeta) = self._search_indices_vertical_s(time, z, y, x, ti, yi, xi, eta, xsi)
         else:
