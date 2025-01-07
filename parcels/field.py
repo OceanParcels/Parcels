@@ -13,6 +13,10 @@ import xarray as xr
 import parcels.tools.interpolation_utils as i_u
 from parcels._compat import add_note
 from parcels._indexing import search_indices_vertical_s, search_indices_vertical_z
+from parcels._interpolation import (
+    InterpolationContext2D,
+    interpolator_registry_2d,
+)
 from parcels._typing import (
     GridIndexingType,
     InterpMethod,
@@ -1230,61 +1234,26 @@ class Field:
         raise NotImplementedError
 
     def _interpolator2D(self, ti, z, y, x, particle=None):
+        """Impelement 2D interpolation with coordinate transformations as seen in Delandmeter, P. and van Sebille, E (2019)."""
         (_, eta, xsi, _, yi, xi) = self._search_indices(-1, z, y, x, particle=particle)
-        if self.interp_method == "nearest":
-            xii = xi if xsi <= 0.5 else xi + 1
-            yii = yi if eta <= 0.5 else yi + 1
-            return self.data[ti, yii, xii]
-        elif self.interp_method in ["linear", "bgrid_velocity", "partialslip", "freeslip"]:
-            val = (
-                (1 - xsi) * (1 - eta) * self.data[ti, yi, xi]
-                + xsi * (1 - eta) * self.data[ti, yi, xi + 1]
-                + xsi * eta * self.data[ti, yi + 1, xi + 1]
-                + (1 - xsi) * eta * self.data[ti, yi + 1, xi]
-            )
-            return val
-        elif self.interp_method == "linear_invdist_land_tracer":
-            land = np.isclose(self.data[ti, yi : yi + 2, xi : xi + 2], 0.0)
-            nb_land = np.sum(land)
-            if nb_land == 4:
-                return 0
-            elif nb_land > 0:
-                val = 0
-                w_sum = 0
-                for j in range(2):
-                    for i in range(2):
-                        distance = pow((eta - j), 2) + pow((xsi - i), 2)
-                        if np.isclose(distance, 0):
-                            if land[j][i] == 1:  # index search led us directly onto land
-                                return 0
-                            else:
-                                return self.data[ti, yi + j, xi + i]
-                        elif land[j][i] == 0:
-                            val += self.data[ti, yi + j, xi + i] / distance
-                            w_sum += 1 / distance
-                return val / w_sum
-            else:
-                val = (
-                    (1 - xsi) * (1 - eta) * self.data[ti, yi, xi]
-                    + xsi * (1 - eta) * self.data[ti, yi, xi + 1]
-                    + xsi * eta * self.data[ti, yi + 1, xi + 1]
-                    + (1 - xsi) * eta * self.data[ti, yi + 1, xi]
+        ctx = InterpolationContext2D(self.data, eta, xsi, ti, yi, xi)
+
+        try:
+            return interpolator_registry_2d[self.interp_method](ctx)
+        except KeyError:
+            if self.interp_method == "cgrid_velocity":
+                raise RuntimeError(
+                    f"{self.name} is a scalar field. cgrid_velocity interpolation method should be used for vector fields (e.g. FieldSet.UV)"
                 )
-                return val
-        elif self.interp_method in ["cgrid_tracer", "bgrid_tracer"]:
-            return self.data[ti, yi + 1, xi + 1]
-        elif self.interp_method == "cgrid_velocity":
-            raise RuntimeError(
-                f"{self.name} is a scalar field. cgrid_velocity interpolation method should be used for vector fields (e.g. FieldSet.UV)"
-            )
-        else:
-            raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
+            else:
+                raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def interpolator3D(self, *_):
         raise NotImplementedError
 
     def _interpolator3D(self, ti, z, y, x, time, particle=None):
+        """Impelement 3D interpolation with coordinate transformations as seen in Delandmeter, P. and van Sebille, E (2019)."""
         (zeta, eta, xsi, zi, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
         if self.interp_method == "nearest":
             xii = xi if xsi <= 0.5 else xi + 1
