@@ -990,8 +990,8 @@ class Field:
         return self.grid.cell_edge_sizes["x"] * self.grid.cell_edge_sizes["y"]
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices_vertical_z(self, z):
-        return self._search_indices_vertical_z(z)
+    def search_indices_vertical_z(self, *_):
+        raise NotImplementedError
 
     def _search_indices_vertical_z(self, z):
         grid = self.grid
@@ -1028,7 +1028,7 @@ class Field:
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def search_indices_vertical_s(self, *args, **kwargs):
-        return self._search_indices_vertical_s(*args, **kwargs)
+        raise NotImplementedError
 
     def _search_indices_vertical_s(
         self, time: float, z: float, y: float, x: float, ti: int, yi: int, xi: int, eta: float, xsi: float
@@ -1113,8 +1113,8 @@ class Field:
         return yi, xi
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices_rectilinear(self, *args, **kwargs):
-        return self._search_indices_rectilinear(*args, **kwargs)
+    def search_indices_rectilinear(self, *_):
+        raise NotImplementedError
 
     def _search_indices_rectilinear(
         self, time: float, z: float, y: float, x: float, ti=-1, particle=None, search2D=False
@@ -1206,8 +1206,8 @@ class Field:
         return (zeta, eta, xsi, zi, yi, xi)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices_curvilinear(self, *args, **kwargs):
-        return self._search_indices_curvilinear(*args, **kwargs)
+    def search_indices_curvilinear(self, *_):
+        raise NotImplementedError
 
     def _search_indices_curvilinear(self, time, z, y, x, ti=-1, particle=None, search2D=False):
         if particle:
@@ -1301,8 +1301,8 @@ class Field:
         return (zeta, eta, xsi, zi, yi, xi)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices(self, *args, **kwargs):
-        return self._search_indices(*args, **kwargs)
+    def search_indices(self, *_):
+        raise NotImplementedError
 
     def _search_indices(self, time, z, y, x, ti=-1, particle=None, search2D=False):
         if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
@@ -1311,8 +1311,8 @@ class Field:
             return self._search_indices_curvilinear(time, z, y, x, ti, particle=particle, search2D=search2D)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def interpolator2D(self, *args, **kwargs):
-        return self._interpolator2D(*args, **kwargs)
+    def interpolator2D(self, *_):
+        raise NotImplementedError
 
     def _interpolator2D(self, ti, z, y, x, particle=None):
         (_, eta, xsi, _, yi, xi) = self._search_indices(-1, z, y, x, particle=particle)
@@ -1366,8 +1366,8 @@ class Field:
             raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def interpolator3D(self, *args, **kwargs):
-        return self._interpolator3D(*args, **kwargs)
+    def interpolator3D(self, *_):
+        raise NotImplementedError
 
     def _interpolator3D(self, ti, z, y, x, time, particle=None):
         (zeta, eta, xsi, zi, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
@@ -1498,8 +1498,8 @@ class Field:
             return val
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def time_index(self, *args, **kwargs):
-        return self._time_index(*args, **kwargs)
+    def time_index(self, *_):
+        raise NotImplementedError
 
     def _time_index(self, time):
         """Find the index in the time array associated with a given time.
