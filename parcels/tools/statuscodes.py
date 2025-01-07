@@ -37,38 +37,38 @@ class DaskChunkingError(RuntimeError):
 class FieldSamplingError(RuntimeError):
     """Utility error class to propagate erroneous field sampling."""
 
-    def __init__(self, x, y, z, field=None):
+    def __init__(self, z, y, x, field=None):
         self.field = field
         self.x = x
         self.y = y
         self.z = z
-        message = f"{field.name if field else 'Field'} sampled at ({self.x}, {self.y}, {self.z})"
+        message = f"{field.name if field else 'Field'} sampled at (depth={self.z}, lat={self.y}, lon={self.x})"
         super().__init__(message)
 
 
 class FieldOutOfBoundError(RuntimeError):
     """Utility error class to propagate out-of-bound field sampling."""
 
-    def __init__(self, x, y, z, field=None):
+    def __init__(self, z, y, x, field=None):
         self.field = field
         self.x = x
         self.y = y
         self.z = z
-        message = f"{field.name if field else 'Field'} sampled out-of-bound, at ({self.x}, {self.y}, {self.z})"
+        message = (
+            f"{field.name if field else 'Field'} sampled out-of-bound, at (depth={self.z}, lat={self.y}, lon={self.x})"
+        )
         super().__init__(message)
 
 
 class FieldOutOfBoundSurfaceError(RuntimeError):
     """Utility error class to propagate out-of-bound field sampling at the surface."""
 
-    def __init__(self, x, y, z, field=None):
+    def __init__(self, z, y, x, field=None):
         self.field = field
         self.x = x
         self.y = y
         self.z = z
-        message = (
-            f"{field.name if field else 'Field'} sampled out-of-bound at the surface, at ({self.x}, {self.y}, {self.z})"
-        )
+        message = f"{field.name if field else 'Field'} sampled out-of-bound at the surface, at (depth={self.z}, lat={self.y}, lon={self.x})"
         super().__init__(message)
 
 
@@ -107,17 +107,6 @@ def parse_particletime(time, fieldset):
     if fieldset is not None and fieldset.time_origin:
         time = fieldset.time_origin.fulltime(time)
     return time
-
-
-class InterpolationError(KernelError):
-    """Particle kernel error for interpolation error."""
-
-    def __init__(self, particle, fieldset=None, lon=None, lat=None, depth=None):
-        if lon and lat:
-            message = f"Field interpolation error at ({lon}, {lat}, {depth})"
-        else:
-            message = f"Field interpolation error for particle at ({particle.lon}, {particle.lat}, {particle.depth})"
-        super().__init__(particle, fieldset=fieldset, msg=message)
 
 
 AllParcelsErrorCodes = {

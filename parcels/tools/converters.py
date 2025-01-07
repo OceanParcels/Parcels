@@ -171,16 +171,16 @@ class UnitConverter:
     source_unit: str | None = None
     target_unit: str | None = None
 
-    def to_target(self, value, x, y, z):
+    def to_target(self, value, z, y, x):
         return value
 
-    def ccode_to_target(self, x, y, z):
+    def ccode_to_target(self, z, y, x):
         return "1.0"
 
-    def to_source(self, value, x, y, z):
+    def to_source(self, value, z, y, x):
         return value
 
-    def ccode_to_source(self, x, y, z):
+    def ccode_to_source(self, z, y, x):
         return "1.0"
 
 
@@ -190,16 +190,16 @@ class Geographic(UnitConverter):
     source_unit = "m"
     target_unit = "degree"
 
-    def to_target(self, value, x, y, z):
+    def to_target(self, value, z, y, x):
         return value / 1000.0 / 1.852 / 60.0
 
-    def to_source(self, value, x, y, z):
+    def to_source(self, value, z, y, x):
         return value * 1000.0 * 1.852 * 60.0
 
-    def ccode_to_target(self, x, y, z):
+    def ccode_to_target(self, z, y, x):
         return "(1.0 / (1000.0 * 1.852 * 60.0))"
 
-    def ccode_to_source(self, x, y, z):
+    def ccode_to_source(self, z, y, x):
         return "(1000.0 * 1.852 * 60.0)"
 
 
@@ -211,16 +211,16 @@ class GeographicPolar(UnitConverter):
     source_unit = "m"
     target_unit = "degree"
 
-    def to_target(self, value, x, y, z):
+    def to_target(self, value, z, y, x):
         return value / 1000.0 / 1.852 / 60.0 / cos(y * pi / 180)
 
-    def to_source(self, value, x, y, z):
+    def to_source(self, value, z, y, x):
         return value * 1000.0 * 1.852 * 60.0 * cos(y * pi / 180)
 
-    def ccode_to_target(self, x, y, z):
+    def ccode_to_target(self, z, y, x):
         return f"(1.0 / (1000. * 1.852 * 60. * cos({y} * M_PI / 180)))"
 
-    def ccode_to_source(self, x, y, z):
+    def ccode_to_source(self, z, y, x):
         return f"(1000. * 1.852 * 60. * cos({y} * M_PI / 180))"
 
 
@@ -230,16 +230,16 @@ class GeographicSquare(UnitConverter):
     source_unit = "m2"
     target_unit = "degree2"
 
-    def to_target(self, value, x, y, z):
+    def to_target(self, value, z, y, x):
         return value / pow(1000.0 * 1.852 * 60.0, 2)
 
-    def to_source(self, value, x, y, z):
+    def to_source(self, value, z, y, x):
         return value * pow(1000.0 * 1.852 * 60.0, 2)
 
-    def ccode_to_target(self, x, y, z):
+    def ccode_to_target(self, z, y, x):
         return "pow(1.0 / (1000.0 * 1.852 * 60.0), 2)"
 
-    def ccode_to_source(self, x, y, z):
+    def ccode_to_source(self, z, y, x):
         return "pow((1000.0 * 1.852 * 60.0), 2)"
 
 
@@ -251,16 +251,16 @@ class GeographicPolarSquare(UnitConverter):
     source_unit = "m2"
     target_unit = "degree2"
 
-    def to_target(self, value, x, y, z):
+    def to_target(self, value, z, y, x):
         return value / pow(1000.0 * 1.852 * 60.0 * cos(y * pi / 180), 2)
 
-    def to_source(self, value, x, y, z):
+    def to_source(self, value, z, y, x):
         return value * pow(1000.0 * 1.852 * 60.0 * cos(y * pi / 180), 2)
 
-    def ccode_to_target(self, x, y, z):
+    def ccode_to_target(self, z, y, x):
         return f"pow(1.0 / (1000. * 1.852 * 60. * cos({y} * M_PI / 180)), 2)"
 
-    def ccode_to_source(self, x, y, z):
+    def ccode_to_source(self, z, y, x):
         return f"pow((1000. * 1.852 * 60. * cos({y} * M_PI / 180)), 2)"
 
 

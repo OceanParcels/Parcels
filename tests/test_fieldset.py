@@ -565,7 +565,8 @@ def test_curv_fieldset_add_periodic_halo():
     dimensions = {"dx": {"lon": "glamu", "lat": "gphiu"}, "dy": {"lon": "glamu", "lat": "gphiu"}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
 
-    fieldset.add_periodic_halo(zonal=3, meridional=2)
+    with pytest.raises(NotImplementedError):
+        fieldset.add_periodic_halo(zonal=3, meridional=2)
 
 
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
