@@ -648,11 +648,11 @@ class Kernel(BaseKernel):
                 elif p.state == StatusCode.ErrorTimeExtrapolation:
                     raise TimeExtrapolationError(p.time)
                 elif p.state == StatusCode.ErrorOutOfBounds:
-                    raise FieldOutOfBoundError(p.lon, p.lat, p.depth)
+                    raise FieldOutOfBoundError(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.ErrorThroughSurface:
-                    raise FieldOutOfBoundSurfaceError(p.lon, p.lat, p.depth)
+                    raise FieldOutOfBoundSurfaceError(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.Error:
-                    raise FieldSamplingError(p.lon, p.lat, p.depth)
+                    raise FieldSamplingError(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.Delete:
                     pass
                 else:
