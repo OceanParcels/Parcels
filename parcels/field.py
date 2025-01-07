@@ -11,6 +11,7 @@ import numpy as np
 import xarray as xr
 
 import parcels.tools.interpolation_utils as i_u
+from parcels._compat import add_note
 from parcels._interpolate import search_indices_vertical_s, search_indices_vertical_z
 from parcels._typing import (
     GridIndexingType,
@@ -33,6 +34,7 @@ from parcels.tools.statuscodes import (
     AllParcelsErrorCodes,
     FieldOutOfBoundError,
     FieldOutOfBoundSurfaceError,
+    FieldSamplingError,
     TimeExtrapolationError,
     _raise_field_out_of_bound_error,
     _raise_field_out_of_bound_surface_error,
@@ -1032,9 +1034,9 @@ class Field:
 
         if grid.xdim > 1 and (not grid.zonal_periodic):
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
-                _raise_field_out_of_bound_error(z, y, x, field=self)
+                _raise_field_out_of_bound_error(z, y, x)
         if grid.ydim > 1 and (y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]):
-            _raise_field_out_of_bound_error(z, y, x, field=self)
+            _raise_field_out_of_bound_error(z, y, x)
 
         if grid.xdim > 1:
             if grid.mesh != "spherical":
@@ -1096,16 +1098,16 @@ class Field:
                 try:
                     (zi, zeta) = search_indices_vertical_z(self, z)
                 except FieldOutOfBoundError:
-                    _raise_field_out_of_bound_error(z, y, x, field=self)
+                    _raise_field_out_of_bound_error(z, y, x)
                 except FieldOutOfBoundSurfaceError:
-                    _raise_field_out_of_bound_surface_error(z, y, x, field=self)
+                    _raise_field_out_of_bound_surface_error(z, y, x)
             elif grid._gtype == GridType.RectilinearSGrid:
                 (zi, zeta) = search_indices_vertical_s(self, time, z, y, x, ti, yi, xi, eta, xsi)
         else:
             zi, zeta = -1, 0
 
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-            _raise_field_sampling_error(z, y, x, field=self)
+            _raise_field_sampling_error(z, y, x)
 
         if particle:
             particle.xi[self.igrid] = xi
@@ -1134,11 +1136,11 @@ class Field:
         if not grid.zonal_periodic:
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
                 if grid.lon[0, 0] < grid.lon[0, -1]:
-                    _raise_field_out_of_bound_error(z, y, x, field=self)
+                    _raise_field_out_of_bound_error(z, y, x)
                 elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
-                    _raise_field_out_of_bound_error(z, y, x, field=self)
+                    _raise_field_out_of_bound_error(z, y, x)
         if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
-            _raise_field_out_of_bound_error(z, y, x, field=self)
+            _raise_field_out_of_bound_error(z, y, x)
 
         while xsi < -tol or xsi > 1 + tol or eta < -tol or eta > 1 + tol:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
@@ -1166,9 +1168,9 @@ class Field:
             else:
                 xsi = (x - a[0] - a[2] * eta) / (a[1] + a[3] * eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
-                _raise_field_out_of_bound_error(0, y, x, field=self)
+                _raise_field_out_of_bound_error(0, y, x)
             if xsi > 1 and eta > 1 and xi == grid.xdim - 1 and yi == grid.ydim - 1:
-                _raise_field_out_of_bound_error(0, y, x, field=self)
+                _raise_field_out_of_bound_error(0, y, x)
             if xsi < -tol:
                 xi -= 1
             elif xsi > 1 + tol:
@@ -1181,7 +1183,7 @@ class Field:
             it += 1
             if it > maxIterSearch:
                 print(f"Correct cell not found after {maxIterSearch} iterations")
-                _raise_field_out_of_bound_error(0, y, x, field=self)
+                _raise_field_out_of_bound_error(0, y, x)
         xsi = max(0.0, xsi)
         eta = max(0.0, eta)
         xsi = min(1.0, xsi)
@@ -1192,7 +1194,7 @@ class Field:
                 try:
                     (zi, zeta) = search_indices_vertical_z(self, z)
                 except FieldOutOfBoundError:
-                    _raise_field_out_of_bound_error(z, y, x, field=self)
+                    _raise_field_out_of_bound_error(z, y, x)
             elif grid._gtype == GridType.CurvilinearSGrid:
                 (zi, zeta) = search_indices_vertical_s(self, time, z, y, x, ti, yi, xi, eta, xsi)
         else:
@@ -1200,7 +1202,7 @@ class Field:
             zeta = 0
 
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-            _raise_field_sampling_error(z, y, x, field=self)
+            _raise_field_sampling_error(z, y, x)
 
         if particle:
             particle.xi[self.igrid] = xi
@@ -1394,17 +1396,23 @@ class Field:
 
     def _spatial_interpolation(self, ti, z, y, x, time, particle=None):
         """Interpolate horizontal field values using a SciPy interpolator."""
-        if self.grid.zdim == 1:
-            val = self._interpolator2D(ti, z, y, x, particle=particle)
-        else:
-            val = self._interpolator3D(ti, z, y, x, time, particle=particle)
-        if np.isnan(val):
-            # Detect Out-of-bounds sampling and raise exception
-            _raise_field_out_of_bound_error(z, y, x, field=self)
-        else:
-            if isinstance(val, da.core.Array):
-                val = val.compute()
-            return val
+        try:
+            if self.grid.zdim == 1:
+                val = self._interpolator2D(ti, z, y, x, particle=particle)
+            else:
+                val = self._interpolator3D(ti, z, y, x, time, particle=particle)
+
+            if np.isnan(val):
+                # Detect Out-of-bounds sampling and raise exception
+                _raise_field_out_of_bound_error(z, y, x)
+            else:
+                if isinstance(val, da.core.Array):
+                    val = val.compute()
+                return val
+
+        except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
+            e = add_note(e, f"Error interpolating field '{self.name}'.", before=True)
+            raise e
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def time_index(self, *_):

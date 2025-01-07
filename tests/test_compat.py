@@ -1,6 +1,6 @@
 import pytest
 
-from parcels._compat import _add_note
+from parcels._compat import add_note
 
 
 def test_add_note_and_raise_value_error():
@@ -8,7 +8,7 @@ def test_add_note_and_raise_value_error():
         try:
             raise ValueError("original message")
         except ValueError as e:
-            e = _add_note(e, "additional note")
+            e = add_note(e, "additional note")
             raise e
     assert "additional note" in str(excinfo.value)
     assert "original message" in str(excinfo.value)

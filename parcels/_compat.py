@@ -19,7 +19,7 @@ except ModuleNotFoundError:
     pass
 
 
-def _add_note(e: Exception, note: str, *, before=False) -> Exception:  # TODO: Remove once py3.10 support is dropped
+def add_note(e: Exception, note: str, *, before=False) -> Exception:  # TODO: Remove once py3.10 support is dropped
     """Implements something similar to PEP 678 but for python <3.11.
 
     https://stackoverflow.com/a/75549200/15545258
