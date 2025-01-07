@@ -7,6 +7,9 @@ __all__ = [
     "KernelError",
     "StatusCode",
     "TimeExtrapolationError",
+    "_raise_field_sampling_error",
+    "_raise_out_of_bound_error",
+    "_raise_out_of_bound_surface_error",
 ]
 
 
@@ -29,47 +32,41 @@ class StatusCode:
 class DaskChunkingError(RuntimeError):
     """Error indicating to the user that something with setting up Dask and chunked fieldsets went wrong."""
 
-    def __init__(self, src_class_type, message):
-        msg = f"[{src_class_type}]: {message}"
-        super().__init__(msg)
+    pass
 
 
 class FieldSamplingError(RuntimeError):
     """Utility error class to propagate erroneous field sampling."""
 
-    def __init__(self, z, y, x, field=None):
-        self.field = field
-        self.x = x
-        self.y = y
-        self.z = z
-        message = f"{field.name if field else 'Field'} sampled at (depth={self.z}, lat={self.y}, lon={self.x})"
-        super().__init__(message)
+    pass
 
 
 class FieldOutOfBoundError(RuntimeError):
     """Utility error class to propagate out-of-bound field sampling."""
 
-    def __init__(self, z, y, x, field=None):
-        self.field = field
-        self.x = x
-        self.y = y
-        self.z = z
-        message = (
-            f"{field.name if field else 'Field'} sampled out-of-bound, at (depth={self.z}, lat={self.y}, lon={self.x})"
-        )
-        super().__init__(message)
+    pass
 
 
 class FieldOutOfBoundSurfaceError(RuntimeError):
     """Utility error class to propagate out-of-bound field sampling at the surface."""
 
-    def __init__(self, z, y, x, field=None):
-        self.field = field
-        self.x = x
-        self.y = y
-        self.z = z
-        message = f"{field.name if field else 'Field'} sampled out-of-bound at the surface, at (depth={self.z}, lat={self.y}, lon={self.x})"
-        super().__init__(message)
+    pass
+
+
+def _raise_field_sampling_error(z, y, x, field=None):
+    raise FieldSamplingError(f"{field.name if field else 'Field'} sampled at (depth={z}, lat={y}, lon={x})")
+
+
+def _raise_out_of_bound_error(z, y, x, field=None):
+    raise FieldOutOfBoundError(
+        f"{field.name if field else 'Field'} sampled out-of-bound, at (depth={z}, lat={y}, lon={x})"
+    )
+
+
+def _raise_out_of_bound_surface_error(z, y, x, field=None):
+    raise FieldOutOfBoundSurfaceError(
+        f"{field.name if field else 'Field'} sampled out-of-bound at the surface, at (depth={z}, lat={y}, lon={x})"
+    )
 
 
 class TimeExtrapolationError(RuntimeError):
