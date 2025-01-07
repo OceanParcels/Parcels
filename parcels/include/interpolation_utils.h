@@ -8,7 +8,7 @@ typedef enum
   } Orientation;
 
 
-static inline void phi2D_lin(double xsi, double eta, double *phi)
+static inline void phi2D_lin(double eta, double xsi, double *phi)
 {
     phi[0] = (1-xsi) * (1-eta);
     phi[1] =    xsi  * (1-eta);
@@ -25,40 +25,40 @@ static inline void phi1D_quad(double xsi, double *phi)
 }
 
 
-static inline void dphidxsi3D_lin(double xsi, double eta, double zet, double *dphidxsi, double *dphideta, double *dphidzet)
+static inline void dphidxsi3D_lin(double zeta, double eta, double xsi, double *dphidzeta, double *dphideta, double *dphidxsi)
 {
-  dphidxsi[0] = - (1-eta) * (1-zet);
-  dphidxsi[1] =   (1-eta) * (1-zet);
-  dphidxsi[2] =   (  eta) * (1-zet);
-  dphidxsi[3] = - (  eta) * (1-zet);
-  dphidxsi[4] = - (1-eta) * (  zet);
-  dphidxsi[5] =   (1-eta) * (  zet);
-  dphidxsi[6] =   (  eta) * (  zet);
-  dphidxsi[7] = - (  eta) * (  zet);
+  dphidxsi[0] = - (1-eta) * (1-zeta);
+  dphidxsi[1] =   (1-eta) * (1-zeta);
+  dphidxsi[2] =   (  eta) * (1-zeta);
+  dphidxsi[3] = - (  eta) * (1-zeta);
+  dphidxsi[4] = - (1-eta) * (  zeta);
+  dphidxsi[5] =   (1-eta) * (  zeta);
+  dphidxsi[6] =   (  eta) * (  zeta);
+  dphidxsi[7] = - (  eta) * (  zeta);
 
-  dphideta[0] = - (1-xsi) * (1-zet);
-  dphideta[1] = - (  xsi) * (1-zet);
-  dphideta[2] =   (  xsi) * (1-zet);
-  dphideta[3] =   (1-xsi) * (1-zet);
-  dphideta[4] = - (1-xsi) * (  zet);
-  dphideta[5] = - (  xsi) * (  zet);
-  dphideta[6] =   (  xsi) * (  zet);
-  dphideta[7] =   (1-xsi) * (  zet);
+  dphideta[0] = - (1-xsi) * (1-zeta);
+  dphideta[1] = - (  xsi) * (1-zeta);
+  dphideta[2] =   (  xsi) * (1-zeta);
+  dphideta[3] =   (1-xsi) * (1-zeta);
+  dphideta[4] = - (1-xsi) * (  zeta);
+  dphideta[5] = - (  xsi) * (  zeta);
+  dphideta[6] =   (  xsi) * (  zeta);
+  dphideta[7] =   (1-xsi) * (  zeta);
 
-  dphidzet[0] = - (1-xsi) * (1-eta);
-  dphidzet[1] = - (  xsi) * (1-eta);
-  dphidzet[2] = - (  xsi) * (  eta);
-  dphidzet[3] = - (1-xsi) * (  eta);
-  dphidzet[4] =   (1-xsi) * (1-eta);
-  dphidzet[5] =   (  xsi) * (1-eta);
-  dphidzet[6] =   (  xsi) * (  eta);
-  dphidzet[7] =   (1-xsi) * (  eta);
+  dphidzeta[0] = - (1-xsi) * (1-eta);
+  dphidzeta[1] = - (  xsi) * (1-eta);
+  dphidzeta[2] = - (  xsi) * (  eta);
+  dphidzeta[3] = - (1-xsi) * (  eta);
+  dphidzeta[4] =   (1-xsi) * (1-eta);
+  dphidzeta[5] =   (  xsi) * (1-eta);
+  dphidzeta[6] =   (  xsi) * (  eta);
+  dphidzeta[7] =   (1-xsi) * (  eta);
 }
 
-static inline void dxdxsi3D_lin(double *px, double *py, double *pz, double xsi, double eta, double zet, double *jacM, int sphere_mesh)
+static inline void dxdxsi3D_lin(double *pz, double *py, double *px, double zeta, double eta, double xsi, double *jacM, int sphere_mesh)
 {
-  double dphidxsi[8], dphideta[8], dphidzet[8];
-  dphidxsi3D_lin(xsi, eta, zet, dphidxsi, dphideta, dphidzet);
+  double dphidxsi[8], dphideta[8], dphidzeta[8];
+  dphidxsi3D_lin(zeta, eta, xsi, dphidzeta, dphideta, dphidxsi);
 
   int i;
   for(i=0; i<9; ++i)
@@ -76,20 +76,22 @@ static inline void dxdxsi3D_lin(double *px, double *py, double *pz, double xsi, 
   for(i=0; i<8; ++i){
     jacM[3*0+0] += px[i] * dphidxsi[i] * jac_lon; // dxdxsi
     jacM[3*0+1] += px[i] * dphideta[i] * jac_lon; // dxdeta
-    jacM[3*0+2] += px[i] * dphidzet[i] * jac_lon; // dxdzet
+    jacM[3*0+2] += px[i] * dphidzeta[i] * jac_lon; // dxdzeta
     jacM[3*1+0] += py[i] * dphidxsi[i] * jac_lat; // dydxsi
     jacM[3*1+1] += py[i] * dphideta[i] * jac_lat; // dydeta
-    jacM[3*1+2] += py[i] * dphidzet[i] * jac_lat; // dydzet
+    jacM[3*1+2] += py[i] * dphidzeta[i] * jac_lat; // dydzeta
     jacM[3*2+0] += pz[i] * dphidxsi[i];           // dzdxsi
     jacM[3*2+1] += pz[i] * dphideta[i];           // dzdeta
-    jacM[3*2+2] += pz[i] * dphidzet[i];           // dzdzet
+    jacM[3*2+2] += pz[i] * dphidzeta[i];           // dzdzeta
   }
 }
 
-static inline double jacobian3D_lin_face(double *px, double *py, double *pz, double xsi, double eta, double zet, Orientation orientation, int sphere_mesh)
+static inline double jacobian3D_lin_face(double *pz, double *py, double *px,
+                                         double zeta, double eta, double xsi,
+                                         Orientation orientation, int sphere_mesh)
 {
   double jacM[9];
-  dxdxsi3D_lin(px, py, pz, xsi, eta, zet, jacM, sphere_mesh);
+  dxdxsi3D_lin(pz, py, px, zeta, eta, xsi, jacM, sphere_mesh);
 
   double j[3];
 
@@ -112,10 +114,12 @@ static inline double jacobian3D_lin_face(double *px, double *py, double *pz, dou
   return sqrt(j[0]*j[0]+j[1]*j[1]+j[2]*j[2]);
 }
 
-static inline double jacobian3D_lin(double *px, double *py, double *pz, double xsi, double eta, double zet, int sphere_mesh)
+static inline double jacobian3D_lin(double *pz, double *py, double *px,
+                                    double zeta, double eta, double xsi,
+                                    int sphere_mesh)
 {
   double jacM[9];
-  dxdxsi3D_lin(px, py, pz, xsi, eta, zet, jacM, sphere_mesh);
+  dxdxsi3D_lin(pz, py, px, zeta, eta, xsi, jacM, sphere_mesh);
 
   double jac = jacM[3*0+0] * (jacM[3*1+1]*jacM[3*2+2] - jacM[3*2+1]*jacM[3*1+2])
              - jacM[3*0+1] * (jacM[3*1+0]*jacM[3*2+2] - jacM[3*2+0]*jacM[3*1+2])
