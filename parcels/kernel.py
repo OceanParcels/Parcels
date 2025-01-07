@@ -34,9 +34,9 @@ from parcels.grid import GridType
 from parcels.tools.global_statics import get_cache_dir
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
-    FieldSamplingError,
     StatusCode,
     TimeExtrapolationError,
+    _raise_field_sampling_error,
     _raise_out_of_bound_error,
     _raise_out_of_bound_surface_error,
 )
@@ -652,7 +652,7 @@ class Kernel(BaseKernel):
                 elif p.state == StatusCode.ErrorThroughSurface:
                     _raise_out_of_bound_surface_error(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.Error:
-                    raise FieldSamplingError(p.depth, p.lat, p.lon)
+                    _raise_field_sampling_error(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.Delete:
                     pass
                 else:

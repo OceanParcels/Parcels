@@ -32,8 +32,8 @@ from parcels.tools.statuscodes import (
     AllParcelsErrorCodes,
     FieldOutOfBoundError,
     FieldOutOfBoundSurfaceError,
-    FieldSamplingError,
     TimeExtrapolationError,
+    _raise_field_sampling_error,
     _raise_out_of_bound_error,
     _raise_out_of_bound_surface_error,
 )
@@ -1196,7 +1196,7 @@ class Field:
             zi, zeta = -1, 0
 
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-            raise FieldSamplingError(z, y, x, field=self)
+            _raise_field_sampling_error(z, y, x, field=self)
 
         if particle:
             particle.xi[self.igrid] = xi
@@ -1291,7 +1291,7 @@ class Field:
             zeta = 0
 
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-            raise FieldSamplingError(z, y, x, field=self)
+            _raise_field_sampling_error(z, y, x, field=self)
 
         if particle:
             particle.xi[self.igrid] = xi
