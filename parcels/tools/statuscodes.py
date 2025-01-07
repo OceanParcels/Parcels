@@ -7,9 +7,9 @@ __all__ = [
     "KernelError",
     "StatusCode",
     "TimeExtrapolationError",
+    "_raise_field_out_of_bound_error",
+    "_raise_field_out_of_bound_surface_error",
     "_raise_field_sampling_error",
-    "_raise_out_of_bound_error",
-    "_raise_out_of_bound_surface_error",
 ]
 
 
@@ -57,13 +57,13 @@ def _raise_field_sampling_error(z, y, x, field=None):
     raise FieldSamplingError(f"{field.name if field else 'Field'} sampled at (depth={z}, lat={y}, lon={x})")
 
 
-def _raise_out_of_bound_error(z, y, x, field=None):
+def _raise_field_out_of_bound_error(z, y, x, field=None):
     raise FieldOutOfBoundError(
         f"{field.name if field else 'Field'} sampled out-of-bound, at (depth={z}, lat={y}, lon={x})"
     )
 
 
-def _raise_out_of_bound_surface_error(z, y, x, field=None):
+def _raise_field_out_of_bound_surface_error(z, y, x, field=None):
     raise FieldOutOfBoundSurfaceError(
         f"{field.name if field else 'Field'} sampled out-of-bound at the surface, at (depth={z}, lat={y}, lon={x})"
     )
