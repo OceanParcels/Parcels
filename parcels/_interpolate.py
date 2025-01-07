@@ -4,28 +4,28 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from parcels._typing import GridIndexingType, InterpMethodOption
 from parcels.tools.statuscodes import (
     _raise_field_out_of_bound_error,
     _raise_field_out_of_bound_surface_error,
 )
 
 if TYPE_CHECKING:
-    from parcels.field import Field
+    from parcels.grid import Grid
 
 
-def search_indices_vertical_z(field: Field, z):
-    grid = field.grid
+def search_indices_vertical_z(grid: Grid, gridindexingtype: GridIndexingType, z: float):
     z = np.float32(z)
     if grid.depth[-1] > grid.depth[0]:
         if z < grid.depth[0]:
             # Since MOM5 is indexed at cell bottom, allow z at depth[0] - dz where dz = (depth[1] - depth[0])
-            if field.gridindexingtype == "mom5" and z > 2 * grid.depth[0] - grid.depth[1]:
+            if gridindexingtype == "mom5" and z > 2 * grid.depth[0] - grid.depth[1]:
                 return (-1, z / grid.depth[0])
             else:
                 _raise_field_out_of_bound_surface_error(z, 0, 0)
         elif z > grid.depth[-1]:
             # In case of CROCO, allow particles in last (uppermost) layer using depth[-1]
-            if field.gridindexingtype in ["croco"] and z < 0:
+            if gridindexingtype in ["croco"] and z < 0:
                 return (-2, 1)
             _raise_field_out_of_bound_error(z, 0, 0)
         depth_indices = grid.depth <= z
@@ -48,10 +48,19 @@ def search_indices_vertical_z(field: Field, z):
 
 
 def search_indices_vertical_s(
-    field: Field, time: float, z: float, y: float, x: float, ti: int, yi: int, xi: int, eta: float, xsi: float
+    grid: Grid,
+    interp_method: InterpMethodOption,
+    time: float,
+    z: float,
+    y: float,
+    x: float,
+    ti: int,
+    yi: int,
+    xi: int,
+    eta: float,
+    xsi: float,
 ):
-    grid = field.grid
-    if field.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"]:
+    if interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"]:
         xsi = 1
         eta = 1
     if time < grid.time[ti]:

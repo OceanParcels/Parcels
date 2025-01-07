@@ -1096,13 +1096,15 @@ class Field:
             if grid._gtype == GridType.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
                 try:
-                    (zi, zeta) = search_indices_vertical_z(self, z)
+                    (zi, zeta) = search_indices_vertical_z(self.grid, self.gridindexingtype, z)
                 except FieldOutOfBoundError:
                     _raise_field_out_of_bound_error(z, y, x)
                 except FieldOutOfBoundSurfaceError:
                     _raise_field_out_of_bound_surface_error(z, y, x)
             elif grid._gtype == GridType.RectilinearSGrid:
-                (zi, zeta) = search_indices_vertical_s(self, time, z, y, x, ti, yi, xi, eta, xsi)
+                (zi, zeta) = search_indices_vertical_s(
+                    self.grid, self.interp_method, time, z, y, x, ti, yi, xi, eta, xsi
+                )
         else:
             zi, zeta = -1, 0
 
@@ -1192,11 +1194,13 @@ class Field:
         if grid.zdim > 1 and not search2D:
             if grid._gtype == GridType.CurvilinearZGrid:
                 try:
-                    (zi, zeta) = search_indices_vertical_z(self, z)
+                    (zi, zeta) = search_indices_vertical_z(self.grid, self.gridindexingtype, z)
                 except FieldOutOfBoundError:
                     _raise_field_out_of_bound_error(z, y, x)
             elif grid._gtype == GridType.CurvilinearSGrid:
-                (zi, zeta) = search_indices_vertical_s(self, time, z, y, x, ti, yi, xi, eta, xsi)
+                (zi, zeta) = search_indices_vertical_s(
+                    self.grid, self.interp_method, time, z, y, x, ti, yi, xi, eta, xsi
+                )
         else:
             zi = -1
             zeta = 0
