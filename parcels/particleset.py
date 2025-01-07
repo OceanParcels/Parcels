@@ -14,7 +14,7 @@ from tqdm import tqdm
 from parcels._compat import MPI
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.compilation.codecompiler import GNUCompiler
-from parcels.field import NestedField
+from parcels.field import Field, NestedField
 from parcels.grid import CurvilinearGrid, GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.interaction.neighborsearch import (
@@ -174,7 +174,7 @@ class ParticleSet:
             raise NotImplementedError("If fieldset.time_origin is not a date, time of a particle must be a double")
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
-        if not fieldset.U.allow_time_extrapolation:
+        if isinstance(fieldset.U, Field) and (not fieldset.U.allow_time_extrapolation):
             _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.U.grid.time_full)
 
         if lonlatdepth_dtype is None:
