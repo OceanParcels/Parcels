@@ -15,7 +15,9 @@ from parcels._compat import add_note
 from parcels._indexing import search_indices_vertical_s, search_indices_vertical_z
 from parcels._interpolation import (
     InterpolationContext2D,
+    InterpolationContext3D,
     interpolator_registry_2d,
+    interpolator_registry_3d,
 )
 from parcels._typing import (
     GridIndexingType,
@@ -1255,91 +1257,11 @@ class Field:
     def _interpolator3D(self, ti, z, y, x, time, particle=None):
         """Impelement 3D interpolation with coordinate transformations as seen in Delandmeter, P. and van Sebille, E (2019)."""
         (zeta, eta, xsi, zi, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
-        if self.interp_method == "nearest":
-            xii = xi if xsi <= 0.5 else xi + 1
-            yii = yi if eta <= 0.5 else yi + 1
-            zii = zi if zeta <= 0.5 else zi + 1
-            return self.data[ti, zii, yii, xii]
-        elif self.interp_method == "cgrid_velocity":
-            # evaluating W velocity in c_grid
-            if self.gridindexingtype == "nemo":
-                f0 = self.data[ti, zi, yi + 1, xi + 1]
-                f1 = self.data[ti, zi + 1, yi + 1, xi + 1]
-            elif self.gridindexingtype in ["mitgcm", "croco"]:
-                f0 = self.data[ti, zi, yi, xi]
-                f1 = self.data[ti, zi + 1, yi, xi]
-            return (1 - zeta) * f0 + zeta * f1
-        elif self.interp_method == "linear_invdist_land_tracer":
-            land = np.isclose(self.data[ti, zi : zi + 2, yi : yi + 2, xi : xi + 2], 0.0)
-            nb_land = np.sum(land)
-            if nb_land == 8:
-                return 0
-            elif nb_land > 0:
-                val = 0
-                w_sum = 0
-                for k in range(2):
-                    for j in range(2):
-                        for i in range(2):
-                            distance = pow((zeta - k), 2) + pow((eta - j), 2) + pow((xsi - i), 2)
-                            if np.isclose(distance, 0):
-                                if land[k][j][i] == 1:  # index search led us directly onto land
-                                    return 0
-                                else:
-                                    return self.data[ti, zi + k, yi + j, xi + i]
-                            elif land[k][j][i] == 0:
-                                val += self.data[ti, zi + k, yi + j, xi + i] / distance
-                                w_sum += 1 / distance
-                return val / w_sum
-            else:
-                data = self.data[ti, zi, :, :]
-                f0 = (
-                    (1 - xsi) * (1 - eta) * data[yi, xi]
-                    + xsi * (1 - eta) * data[yi, xi + 1]
-                    + xsi * eta * data[yi + 1, xi + 1]
-                    + (1 - xsi) * eta * data[yi + 1, xi]
-                )
-                data = self.data[ti, zi + 1, :, :]
-                f1 = (
-                    (1 - xsi) * (1 - eta) * data[yi, xi]
-                    + xsi * (1 - eta) * data[yi, xi + 1]
-                    + xsi * eta * data[yi + 1, xi + 1]
-                    + (1 - xsi) * eta * data[yi + 1, xi]
-                )
-                return (1 - zeta) * f0 + zeta * f1
-        elif self.interp_method in ["linear", "bgrid_velocity", "bgrid_w_velocity", "partialslip", "freeslip"]:
-            if self.interp_method == "bgrid_velocity":
-                if self.gridindexingtype == "mom5":
-                    zeta = 1.0
-                else:
-                    zeta = 0.0
-            elif self.interp_method == "bgrid_w_velocity":
-                eta = 1.0
-                xsi = 1.0
-            data = self.data[ti, zi, :, :]
-            f0 = (
-                (1 - xsi) * (1 - eta) * data[yi, xi]
-                + xsi * (1 - eta) * data[yi, xi + 1]
-                + xsi * eta * data[yi + 1, xi + 1]
-                + (1 - xsi) * eta * data[yi + 1, xi]
-            )
-            if self.gridindexingtype == "pop" and zi >= self.grid.zdim - 2:
-                # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
-                return (1 - zeta) * f0
-            data = self.data[ti, zi + 1, :, :]
-            f1 = (
-                (1 - xsi) * (1 - eta) * data[yi, xi]
-                + xsi * (1 - eta) * data[yi, xi + 1]
-                + xsi * eta * data[yi + 1, xi + 1]
-                + (1 - xsi) * eta * data[yi + 1, xi]
-            )
-            if self.interp_method == "bgrid_w_velocity" and self.gridindexingtype == "mom5" and zi == -1:
-                # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in uppermost cell
-                return zeta * f1
-            else:
-                return (1 - zeta) * f0 + zeta * f1
-        elif self.interp_method in ["cgrid_tracer", "bgrid_tracer"]:
-            return self.data[ti, zi, yi + 1, xi + 1]
-        else:
+        ctx = InterpolationContext3D(self.data, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
+
+        try:
+            return interpolator_registry_3d[self.interp_method](ctx)
+        except KeyError:
             raise RuntimeError(self.interp_method + " is not implemented for 3D grids")
 
     def temporal_interpolate_fullfield(self, ti, time):
