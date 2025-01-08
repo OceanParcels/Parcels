@@ -1241,7 +1241,7 @@ class Field:
         ctx = InterpolationContext2D(self.data, eta, xsi, ti, yi, xi)
 
         try:
-            return interpolator_registry_2d[self.interp_method](ctx)
+            f = interpolator_registry_2d[self.interp_method]
         except KeyError:
             if self.interp_method == "cgrid_velocity":
                 raise RuntimeError(
@@ -1249,6 +1249,7 @@ class Field:
                 )
             else:
                 raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
+        return f(ctx)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def interpolator3D(self, *_):
@@ -1260,9 +1261,10 @@ class Field:
         ctx = InterpolationContext3D(self.data, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
 
         try:
-            return interpolator_registry_3d[self.interp_method](ctx)
+            f = interpolator_registry_3d[self.interp_method]
         except KeyError:
             raise RuntimeError(self.interp_method + " is not implemented for 3D grids")
+        return f(ctx)
 
     def temporal_interpolate_fullfield(self, ti, time):
         """Calculate the data of a field between two snapshots using linear interpolation.
