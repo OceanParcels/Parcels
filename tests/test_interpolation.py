@@ -5,8 +5,6 @@ import xarray as xr
 import parcels._interpolation as interpolation
 
 
-
-
 @pytest.fixture
 def tmp_interpolator_registry():
     """Resets the interpolator registry after the test. Vital when testing manipulating the registry."""
@@ -29,6 +27,7 @@ def test_interpolation_registry(tmp_interpolator_registry):
     f = interpolation.interpolator_registry_2d["test"]
     g = interpolation.interpolator_registry_3d["test"]
     assert f() == g() == "test"
+
 
 def create_interpolation_data():
     """Reference data used for testing interpolation.
@@ -60,7 +59,6 @@ def data_3d():
     return create_interpolation_data().values
 
 
-
 class TestInterpolationMethods:
     ti = 0
     zi, yi, xi = 1, 1, 1
@@ -75,7 +73,6 @@ class TestInterpolationMethods:
             pytest.param(interpolation._tracer_2d, None, None, 6.0, id="tracer_2d"),
             # pytest.param(interpolation._linear_2d, ...),
             # pytest.param(interpolation._linear_invdist_land_tracer_2d, ...),
-            
         ],
     )
     def test_2d(self, data_2d, func, eta, xi, expected):
