@@ -230,7 +230,7 @@ def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:
 @register_3d_interpolator("bgrid_w_velocity")
 @register_3d_interpolator("partialslip")
 @register_3d_interpolator("freeslip")
-def _linear_3d(ctx: InterpolationContext3D) -> float:
+def _linear_3d_old(ctx: InterpolationContext3D) -> float:
     zeta = ctx.zeta
     eta = ctx.eta
     xsi = ctx.xsi

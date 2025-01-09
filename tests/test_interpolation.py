@@ -64,7 +64,7 @@ class TestInterpolationMethods:
     zi, yi, xi = 1, 1, 1
 
     @pytest.mark.parametrize(
-        "func, eta, xi, expected",
+        "func, eta, xsi, expected",
         [
             pytest.param(interpolation._nearest_2d, 0.49, 0.49, 3.0, id="nearest_2d-1"),
             pytest.param(interpolation._nearest_2d, 0.49, 0.51, 4.0, id="nearest_2d-2"),
@@ -75,12 +75,12 @@ class TestInterpolationMethods:
             # pytest.param(interpolation._linear_invdist_land_tracer_2d, ...),
         ],
     )
-    def test_2d(self, data_2d, func, eta, xi, expected):
-        ctx = interpolation.InterpolationContext2D(data_2d, eta, xi, self.ti, self.yi, self.xi)
+    def test_2d(self, data_2d, func, eta, xsi, expected):
+        ctx = interpolation.InterpolationContext2D(data_2d, eta, xsi, self.ti, self.yi, self.xi)
         assert func(ctx) == expected
 
     @pytest.mark.parametrize(
-        "func, eta, xi, expected",
+        "func, eta, xsi, expected",
         [
             # pytest.param(interpolation._nearest_3d, ...),
             # pytest.param(interpolation._cgrid_velocity_3d, ...),
@@ -89,6 +89,43 @@ class TestInterpolationMethods:
             # pytest.param(interpolation._tracer_3d, ...),
         ],
     )
-    def test_3d(self, data_3d, func, zeta, eta, xi, expected):
-        ctx = interpolation.InterpolationContext3D(data_2d, zeta, eta, xi, self.ti, self.zi, self.yi, self.xi)
+    def test_3d(self, data_3d, func, zeta, eta, xsi, expected):
+        ctx = interpolation.InterpolationContext3D(data_3d, zeta, eta, xsi, self.ti, self.zi, self.yi, self.xi)
         assert func(ctx) == expected
+
+
+@pytest.mark.parametrize("zeta", np.linspace(0, 1, 5))
+@pytest.mark.parametrize("eta", np.linspace(0, 1, 5))
+@pytest.mark.parametrize("xsi", np.linspace(0, 1, 5))
+@pytest.mark.parametrize(
+    "interp_method",
+    [
+        "linear",
+        "bgrid_velocity",
+        "bgrid_w_velocity",
+        "partialslip",
+        "freeslip",
+    ],
+)
+@pytest.mark.parametrize(
+    "gridindexingtype",
+    [
+        "mom5",
+        "pop",
+    ],
+)
+def test_interpolation_3d_refactor(data_3d, zeta, eta, xsi, interp_method, gridindexingtype):
+    # fmt: off
+    f_old, f_new = {
+        "linear":           (interpolation._linear_3d_old, interpolation._linear_3d_old),
+        "bgrid_velocity":   (interpolation._linear_3d_old, interpolation._linear_3d_old),
+        "bgrid_w_velocity": (interpolation._linear_3d_old, interpolation._linear_3d_old),
+        "partialslip":      (interpolation._linear_3d_old, interpolation._linear_3d_old),
+        "freeslip":         (interpolation._linear_3d_old, interpolation._linear_3d_old),
+    }[interp_method]
+    # fmt: on
+
+    ti, zi, yi, xi = 1, 1, 1, 1
+
+    ctx = interpolation.InterpolationContext3D(data_3d, zeta, eta, xsi, ti, zi, yi, xi, interp_method, gridindexingtype)
+    assert np.isclose(f_old(ctx), f_new(ctx))
