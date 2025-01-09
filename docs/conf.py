@@ -212,7 +212,7 @@ html_theme_options = {
 html_context = {
     "github_user": "OceanParcels",
     "github_repo": "parcels",
-    "github_version": "master",
+    "github_version": "main",
     "doc_path": "docs",
 }
 
@@ -295,7 +295,9 @@ def linkcode_resolve(domain, info):
     fn = os.path.relpath(fn, start=os.path.dirname(parcels.__file__))
 
     if "-" in parcels.__version__:
-        return f"https://github.com/OceanParcels/parcels/blob/master/parcels/{fn}{linespec}"
+        return (
+            f"https://github.com/OceanParcels/parcels/blob/main/parcels/{fn}{linespec}"
+        )
     else:
         return (
             f"https://github.com/OceanParcels/parcels/blob/"
