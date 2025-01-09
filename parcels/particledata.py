@@ -54,17 +54,24 @@ class ParticleData:
         self._latlondepth_dtype = np.float32
         self._data = None
 
-        assert pid_orig is not None, "particle IDs are None - incompatible with the ParticleData class. Invalid state."
+        if depth is None:
+            raise ValueError(
+                "particle's initial depth is None - incompatible with the ParticleData class. Invalid state."
+            )
+
+        if not (lon.size == lat.size == depth.size):
+            raise ValueError("lon, lat, depth don't all have the same lenghts.")
+
+        if lon.size != time.size:
+            raise ValueError("time and positions (lon, lat, depth) don't have the same lengths.")
+
+        if pid_orig is None:
+            raise ValueError("pid_orig cannot be None")
+
+        pid_orig = np.array(pid_orig, dtype=int)
         pid = pid_orig + pclass.lastID
 
         self._sorted = np.all(np.diff(pid) >= 0)
-
-        assert (
-            depth is not None
-        ), "particle's initial depth is None - incompatible with the ParticleData class. Invalid state."
-        assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts."
-
-        assert lon.size == time.size, "time and positions (lon, lat, depth) don't have the same lengths."
 
         # If a partitioning function for MPI runs has been passed into the
         # particle creation with the "partition_function" kwarg, retrieve it here.
@@ -76,7 +83,7 @@ class ParticleData:
                 lon.size == kwargs[kwvar].size
             ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
-        offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
+        offset = np.max(pid) if len(pid) > 0 else -1
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -130,60 +137,57 @@ class ParticleData:
             else:
                 self._data[v.name] = np.empty(self._ncount, dtype=v.dtype)
 
-        if lon is not None and lat is not None:
-            # Initialise from lists of lon/lat coordinates
-            assert self._ncount == len(lon) and self._ncount == len(
-                lat
-            ), "Size of ParticleSet does not match length of lon and lat."
+        # Initialise from lists of lon/lat coordinates
+        assert self._ncount == len(lon) and self._ncount == len(
+            lat
+        ), "Size of ParticleSet does not match length of lon and lat."
 
-            # mimic the variables that get initialised in the constructor
-            self._data["lat"][:] = lat
-            self._data["lat_nextloop"][:] = lat
-            self._data["lon"][:] = lon
-            self._data["lon_nextloop"][:] = lon
-            self._data["depth"][:] = depth
-            self._data["depth_nextloop"][:] = depth
-            self._data["time"][:] = time
-            self._data["time_nextloop"][:] = time
-            self._data["id"][:] = pid
-            self._data["obs_written"][:] = 0
+        # mimic the variables that get initialised in the constructor
+        self._data["lat"][:] = lat
+        self._data["lat_nextloop"][:] = lat
+        self._data["lon"][:] = lon
+        self._data["lon_nextloop"][:] = lon
+        self._data["depth"][:] = depth
+        self._data["depth_nextloop"][:] = depth
+        self._data["time"][:] = time
+        self._data["time_nextloop"][:] = time
+        self._data["id"][:] = pid
+        self._data["obs_written"][:] = 0
 
-            # special case for exceptions which can only be handled from scipy
-            self._data["exception"] = np.empty(self._ncount, dtype=object)
+        # special case for exceptions which can only be handled from scipy
+        self._data["exception"] = np.empty(self._ncount, dtype=object)
 
-            initialised |= {
-                "lat",
-                "lat_nextloop",
-                "lon",
-                "lon_nextloop",
-                "depth",
-                "depth_nextloop",
-                "time",
-                "time_nextloop",
-                "id",
-                "obs_written",
-            }
+        initialised |= {
+            "lat",
+            "lat_nextloop",
+            "lon",
+            "lon_nextloop",
+            "depth",
+            "depth_nextloop",
+            "time",
+            "time_nextloop",
+            "id",
+            "obs_written",
+        }
 
-            # any fields that were provided on the command line
-            for kwvar, kwval in kwargs.items():
-                if not hasattr(pclass, kwvar):
-                    raise RuntimeError(f"Particle class does not have Variable {kwvar}")
-                self._data[kwvar][:] = kwval
-                initialised.add(kwvar)
+        # any fields that were provided on the command line
+        for kwvar, kwval in kwargs.items():
+            if not hasattr(pclass, kwvar):
+                raise RuntimeError(f"Particle class does not have Variable {kwvar}")
+            self._data[kwvar][:] = kwval
+            initialised.add(kwvar)
 
-            # initialise the rest to their default values
-            for v in self.ptype.variables:
-                if v.name in initialised:
-                    continue
+        # initialise the rest to their default values
+        for v in self.ptype.variables:
+            if v.name in initialised:
+                continue
 
-                if isinstance(v.initial, attrgetter):
-                    self._data[v.name][:] = v.initial(self)
-                else:
-                    self._data[v.name][:] = v.initial
+            if isinstance(v.initial, attrgetter):
+                self._data[v.name][:] = v.initial(self)
+            else:
+                self._data[v.name][:] = v.initial
 
-                initialised.add(v.name)
-        else:
-            raise ValueError("Latitude and longitude required for generating ParticleSet")
+            initialised.add(v.name)
 
     def __del__(self):
         pass
@@ -268,10 +272,8 @@ class ParticleData:
 
     def add_same(self, same_class):
         """Add another ParticleData instance to this ParticleData instance. This is done by concatenating both instances."""
-        assert (
-            same_class is not None
-        ), f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
-        assert type(same_class) is type(self)
+        if type(same_class) is not type(self):
+            raise NotImplementedError(f"Addition not defined for objects of type {type(same_class)}.")
 
         if same_class._ncount == 0:
             return
@@ -300,35 +302,20 @@ class ParticleData:
 
     def remove_single_by_index(self, index):
         """Remove a particle from the ParticleData instance based on its index."""
-        assert type(index) in [
-            int,
-            np.int32,
-            np.intp,
-        ], f"Trying to remove a particle by index, but index {index} is not a 32-bit integer - invalid operation."
-
-        for d in self._data:
-            self._data[d] = np.delete(self._data[d], index, axis=0)
-
-        self._ncount -= 1
+        return self.remove_multi_by_indices([index])
 
     def remove_multi_by_indices(self, indices):
-        """Remove particles from the ParticleData instance based on their indices."""
-        assert (
-            indices is not None
-        ), "Trying to remove particles by their ParticleData instance indices, but the index list is None - invalid operation."
-        assert (
-            type(indices) in [list, dict, np.ndarray]
-        ), "Trying to remove particles by their indices, but the index container is not a valid Python-collection - invalid operation."
-        if type(indices) is not dict:
-            assert (
-                len(indices) == 0 or type(indices[0]) in [int, np.int32, np.intp]
-            ), "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
-        else:
-            assert (
-                len(list(indices.values())) == 0 or type(list(indices.values())[0]) in [int, np.int32, np.intp]
-            ), "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
-        if type(indices) is dict:
+        """Remove particles from the ParticleData instance based on their indices.
+
+        Supported types of indices are: dict and array-like
+        """
+        if indices is None:
+            raise ValueError("indices cannot be None.")
+
+        if isinstance(indices, dict):
             indices = list(indices.values())
+
+        indices = np.array(indices, dtype=np.int32)
 
         for d in self._data:
             self._data[d] = np.delete(self._data[d], indices, axis=0)
