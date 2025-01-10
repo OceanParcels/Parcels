@@ -25,7 +25,7 @@ What is open source?
 
 Open source is a category of software that is open to the public, meaning that anyone is able to look at, modify, and improve the software. Compare this to closed source software (e.g., Microsoft Word, or Gmail) where only those working for the company on the product are able to look at the source code, or make improvements.
 
-Software being open source allows bugs in the code to be quickly identified and fixed, as well as fosters communities of people involved on projects. Most open source software have permissible licenses making them free to modify, and use even in commercial settings. Parcels, for example, is open source and `licensed under the MIT License <https://github.com/OceanParcels/parcels/blob/master/LICENSE.md>`_.
+Software being open source allows bugs in the code to be quickly identified and fixed, as well as fosters communities of people involved on projects. Most open source software have permissible licenses making them free to modify, and use even in commercial settings. Parcels, for example, is open source and `licensed under the MIT License <https://github.com/OceanParcels/parcels/blob/main/LICENSE.md>`_.
 
 This visibility of the codebase results in a higher quality, as well as a more transparent and stable product. This is important in research for reproducibility, as well as in industry where stability is crucial. Open source is not some niche category of software, but in fact `forms the backbone of modern computing and computing infrastructure <https://www.newstatesman.com/science-tech/2016/08/how-linux-conquered-world-without-anyone-noticing>`_ and is used widely in industry. A lot of the digital services that you use (paid, or free) depend on open source code in one way or another.
 
@@ -72,7 +72,7 @@ Now you have a cloned repo that you have full control over, and a conda environm
 From there:
 
 - create a git branch, implement, commit, and push your changes
-- `create a pull request <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork>`_ (PR) into ``master`` of the original repo making sure to link to the issue that you are working on. Not yet finished with your feature but still want feedback on how you're going? Then mark it as "draft" and ``@ping`` a maintainer. See our `maintainer notes <maintainer.md>`_ to see our PR review workflow.
+- `create a pull request <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork>`_ (PR) into ``main`` of the original repo making sure to link to the issue that you are working on. Not yet finished with your feature but still want feedback on how you're going? Then mark it as "draft" and ``@ping`` a maintainer. See our `maintainer notes <maintainer.md>`_ to see our PR review workflow.
 
 If you made changes to the documentation, and want to render a local version, you can run the command ``sphinx-autobuild --ignore "*.zip" docs docs/_build`` to create a server to automatically rebuild the documentation when you make changes.
 

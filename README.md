@@ -5,13 +5,13 @@
 [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.823561.svg)](https://doi.org/10.5281/zenodo.823561)
 [![Code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/format.json)](https://github.com/astral-sh/ruff)
 [![unit-tests](https://github.com/OceanParcels/parcels/actions/workflows/ci.yml/badge.svg)](https://github.com/OceanParcels/parcels/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/OceanParcels/parcels/branch/master/graph/badge.svg)](https://codecov.io/gh/OceanParcels/parcels)
+[![codecov](https://codecov.io/gh/OceanParcels/parcels/branch/main/graph/badge.svg)](https://codecov.io/gh/OceanParcels/parcels)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5353/badge)](https://bestpractices.coreinfrastructure.org/projects/5353)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels/master?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels/main?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
 
 **Parcels** (**P**robably **A** **R**eally **C**omputationally **E**fficient **L**agrangian **S**imulator) is a set of Python classes and methods to create customisable particle tracking simulations using output from Ocean Circulation models. Parcels can be used to track passive and active particulates such as water, plankton, [plastic](http://www.topios.org/) and [fish](https://github.com/Jacketless/IKAMOANA).
 
-![Arctic-SO-medusaParticles](https://github.com/OceanParcels/oceanparcels_website/blob/master/images/homepage.gif)
+![Arctic-SO-medusaParticles](https://github.com/OceanParcels/oceanparcels_website/blob/main/images/homepage.gif)
 
 _Animation of virtual particles carried by ocean surface flow in the global oceans. The particles are advected with [Parcels](http://oceanparcels.org/) in data from the [NEMO Ocean Model](https://www.nemo-ocean.eu/)._
 
