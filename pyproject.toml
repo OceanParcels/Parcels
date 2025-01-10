@@ -149,7 +149,7 @@ module = [
     "mpi4py",
     "scipy.spatial",
     "sklearn.cluster",
-    "zarr",
+    "zarr>=2.11.0,!=2.18.0,<3",
     "cftime",
     "pykdtree.kdtree",
     "netCDF4",
