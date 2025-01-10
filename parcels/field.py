@@ -1,8 +1,10 @@
-import collections
+from __future__ import annotations
+
 import math
 import warnings
 from collections.abc import Iterable
 from ctypes import POINTER, Structure, c_float, c_int, pointer
+from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -49,6 +51,9 @@ if TYPE_CHECKING:
     from ctypes import _Pointer as PointerType
 
     from parcels.fieldset import FieldSet
+
+    T_Dimensions = Literal["lon", "lat", "depth", "data"]
+    T_SanitizedFilenames = list[str] | dict[T_Dimensions, list[str]]
 
 __all__ = ["Field", "NestedField", "VectorField"]
 
@@ -426,22 +431,8 @@ class Field:
 
     @classmethod
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def get_dim_filenames(cls, *args, **kwargs):
-        return cls._get_dim_filenames(*args, **kwargs)
-
-    @classmethod
-    def _get_dim_filenames(cls, filenames, dim):
-        if isinstance(filenames, str) or not isinstance(filenames, collections.abc.Iterable):
-            return [filenames]
-        elif isinstance(filenames, dict):
-            assert dim in filenames.keys(), "filename dimension keys must be lon, lat, depth or data"
-            filename = filenames[dim]
-            if isinstance(filename, str):
-                return [filename]
-            else:
-                return filename
-        else:
-            return filenames
+    def get_dim_filenames(*args, **kwargs):
+        return _get_dim_filenames(*args, **kwargs)
 
     @staticmethod
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
@@ -498,7 +489,7 @@ class Field:
         time_periodic: TimePeriodic = False,
         deferred_load: bool = True,
         **kwargs,
-    ) -> "Field":
+    ) -> Field:
         """Create field from netCDF file.
 
         Parameters
@@ -558,6 +549,8 @@ class Field:
         * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
 
         """
+        filenames = _sanitize_field_filenames(filenames)
+
         if kwargs.get("netcdf_decodewarning") is not None:
             _deprecated_param_netcdf_decodewarning()
             kwargs.pop("netcdf_decodewarning")
@@ -598,20 +591,20 @@ class Field:
             len(variable) == 2
         ), "The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables"
 
-        data_filenames = cls._get_dim_filenames(filenames, "data")
-        lonlat_filename = cls._get_dim_filenames(filenames, "lon")
+        data_filenames = _get_dim_filenames(filenames, "data")
+        lonlat_filename_lst = _get_dim_filenames(filenames, "lon")
         if isinstance(filenames, dict):
-            assert len(lonlat_filename) == 1
-        if lonlat_filename != cls._get_dim_filenames(filenames, "lat"):
+            assert len(lonlat_filename_lst) == 1
+        if lonlat_filename_lst != _get_dim_filenames(filenames, "lat"):
             raise NotImplementedError(
                 "longitude and latitude dimensions are currently processed together from one single file"
             )
-        lonlat_filename = lonlat_filename[0]
+        lonlat_filename = lonlat_filename_lst[0]
         if "depth" in dimensions:
-            depth_filename = cls._get_dim_filenames(filenames, "depth")
-            if isinstance(filenames, dict) and len(depth_filename) != 1:
+            depth_filename_lst = _get_dim_filenames(filenames, "depth")
+            if isinstance(filenames, dict) and len(depth_filename_lst) != 1:
                 raise NotImplementedError("Vertically adaptive meshes not implemented for from_netcdf()")
-            depth_filename = depth_filename[0]
+            depth_filename = depth_filename_lst[0]
 
         netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         gridindexingtype = kwargs.get("gridindexingtype", "nemo")
@@ -2590,3 +2583,67 @@ class NestedField(list):
                     else:
                         pass
             return val
+
+
+def _get_dim_filenames(filenames: T_SanitizedFilenames, dim: T_Dimensions) -> list[str]:
+    """Get's the relevant filenames for a given dimension."""
+    if isinstance(filenames, list):
+        return filenames
+
+    if isinstance(filenames, dict):
+        return filenames[dim]
+
+    raise ValueError("Filenames must be a string, pathlib.Path, or a dictionary")
+
+
+def _sanitize_field_filenames(filenames, *, recursed=False) -> T_SanitizedFilenames:
+    """The Field initializer can take `filenames` to be of various formats including:
+
+    1. a string or Path object. String can be a glob expression.
+    2. a list of (a)
+    3. a dictionary mapping with keys 'lon', 'lat', 'depth', 'data' and values of (1) or (2)
+
+    This function sanitizes the inputs such that it returns, in the case of:
+    1. A sorted list of strings with the expanded glob expression
+    2. A sorted list of strings with the expanded glob expressions
+    3. A dictionary with same keys but values as in (1) or (2).
+
+    See tests for examples.
+    """
+    allowed_dimension_keys = ("lon", "lat", "depth", "data")
+
+    if isinstance(filenames, str) or not isinstance(filenames, Iterable):
+        return sorted(_expand_filename(filenames))
+
+    if isinstance(filenames, list):
+        files = []
+        for f in filenames:
+            files.extend(_expand_filename(f))
+        return sorted(files)
+
+    if isinstance(filenames, dict):
+        if recursed:
+            raise ValueError("Invalid filenames format. Nested dictionary not allowed in dimension dictionary")
+
+        for key in filenames:
+            if key not in allowed_dimension_keys:
+                raise ValueError(
+                    f"Invalid key in filenames dimension dictionary. Must be one of {allowed_dimension_keys}"
+                )
+            filenames[key] = _sanitize_field_filenames(filenames[key], recursed=True)
+
+        return filenames
+
+    raise ValueError("Filenames must be a string, pathlib.Path, list, or a dictionary")
+
+
+def _expand_filename(filename: str | Path) -> list[str]:
+    """
+    Converts a filename to a list of filenames if it is a glob expression.
+
+    If a file is explicitly provided (i.e., not via glob), existence is only checked later.
+    """
+    filename = str(filename)
+    if "*" in filename:
+        return glob(filename)
+    return [filename]
