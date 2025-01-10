@@ -15,7 +15,8 @@ def tmp_interpolator_registry():
     interpolation.interpolator_registry_3d = old_3d
 
 
-def test_interpolation_registry(tmp_interpolator_registry):
+@pytest.mark.usefixtures("tmp_interpolator_registry")
+def test_interpolation_registry():
     @interpolation.register_3d_interpolator("test")
     @interpolation.register_2d_interpolator("test")
     def some_function():
