@@ -3,6 +3,7 @@ import pytest
 import xarray as xr
 
 import parcels._interpolation as interpolation
+from tests.utils import create_fieldset_3d
 
 
 @pytest.fixture
@@ -130,3 +131,31 @@ def test_interpolation_3d_refactor(data_3d, zeta, eta, xsi, interp_method, gridi
 
     ctx = interpolation.InterpolationContext3D(data_3d, zeta, eta, xsi, ti, zi, yi, xi, interp_method, gridindexingtype)
     assert np.isclose(f_old(ctx), f_new(ctx))
+
+
+@pytest.mark.usefixtures("tmp_interpolator_registry")
+def test_full_depth_provided_to_interpolators():
+    """The full depth needs to be provided to the interpolation schemes as some interpolators
+    need to know whether they are at the surface or bottom of the water column.
+
+    https://github.com/OceanParcels/Parcels/pull/1816#discussion_r1908840408
+    """
+    xdim, ydim, zdim = 10, 11, 12
+    fieldset = create_fieldset_3d(xdim=xdim, ydim=ydim, zdim=zdim)
+
+    # Check that interpolator override works as expected
+    @interpolation.register_3d_interpolator("linear")
+    def test_interpolator(ctx: interpolation.InterpolationContext3D):
+        raise NotImplementedError
+
+    with pytest.raises(NotImplementedError):
+        fieldset.U[0, 0.5, 0.5, 0.5]
+
+    # Override interpolator with zdim check
+    @interpolation.register_3d_interpolator("linear")
+    def test_interpolator2(ctx: interpolation.InterpolationContext3D):
+        assert ctx.data.shape[1] == zdim
+        # Works!!
+        return 0
+
+    fieldset.U[0.5, 0.5, 0.5, 0.5]

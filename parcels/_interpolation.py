@@ -42,7 +42,9 @@ class InterpolationContext3D:
     Attributes
     ----------
     data: np.ndarray
-        field data of shape (time, z, y, x)
+        field data of shape (time, z, y, x). This needs to be complete in the vertical
+        direction as some interpolation methods need to know whether they are at the
+        surface or bottom.
     zeta: float
         vertical interpolation coordinate in unit cube
     eta: float

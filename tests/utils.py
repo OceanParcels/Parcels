@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import numpy as np
+import xarray as xr
 
 import parcels
 from parcels import FieldSet
@@ -20,6 +21,27 @@ def create_fieldset_unit_mesh(xdim=20, ydim=20, mesh="flat", transpose=False) ->
     data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
     dimensions = {"lat": lat, "lon": lon}
     return FieldSet.from_data(data, dimensions, mesh=mesh, transpose=transpose)
+
+
+def create_fieldset_3d(zdim=5, ydim=10, xdim=10):
+    """3d fieldset with U, V, and W equivalent to longitude, latitude, and depth."""
+    tdim = 20
+    ds = xr.Dataset(
+        {
+            "U": (("time", "depth", "lat", "lon"), np.zeros((tdim, zdim, ydim, xdim))),
+            "V": (("time", "depth", "lat", "lon"), np.zeros((tdim, zdim, ydim, xdim))),
+            "W": (("time", "depth", "lat", "lon"), np.zeros((tdim, zdim, ydim, xdim))),
+        },
+        coords={
+            "time": np.linspace(0, tdim - 1, tdim),
+            "depth": np.linspace(0, 1, zdim),
+            "lat": np.linspace(0, 1, ydim),
+            "lon": np.linspace(0, 1, xdim),
+        },
+    )
+    variables = {"U": "U", "V": "V", "W": "W"}
+    dimensions = {"time": "time", "lon": "lon", "lat": "lat", "depth": "depth"}
+    return FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh="flat")
 
 
 def create_fieldset_zeros_unit_mesh(xdim=100, ydim=100):
