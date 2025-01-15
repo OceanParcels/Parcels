@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
 import numpy as np
@@ -76,13 +76,24 @@ class InterpolationContext3D:
     interp_method: InterpMethodOption  # TODO: Remove during refactoring
 
 
-interpolator_registry_2d: dict[str, Callable[[InterpolationContext2D], float]] = {}
-interpolator_registry_3d: dict[str, Callable[[InterpolationContext3D], float]] = {}
+_interpolator_registry_2d: dict[str, Callable[[InterpolationContext2D], float]] = {}
+_interpolator_registry_3d: dict[str, Callable[[InterpolationContext3D], float]] = {}
+
+
+def get_2d_interpolator_registry() -> Mapping[str, Callable[[InterpolationContext2D], float]]:
+    # See Discussion on Python Discord for more context (function prevents re-alias of global variable)
+    # _interpolator_registry_2d etc shouldn't be imported directly
+    # https://discord.com/channels/267624335836053506/1329136004459794483
+    return _interpolator_registry_2d
+
+
+def get_3d_interpolator_registry() -> Mapping[str, Callable[[InterpolationContext3D], float]]:
+    return _interpolator_registry_3d
 
 
 def register_2d_interpolator(name: str):
     def decorator(interpolator: Callable[[InterpolationContext2D], float]):
-        interpolator_registry_2d[name] = interpolator
+        _interpolator_registry_2d[name] = interpolator
         return interpolator
 
     return decorator
@@ -90,7 +101,7 @@ def register_2d_interpolator(name: str):
 
 def register_3d_interpolator(name: str):
     def decorator(interpolator: Callable[[InterpolationContext3D], float]):
-        interpolator_registry_3d[name] = interpolator
+        _interpolator_registry_3d[name] = interpolator
         return interpolator
 
     return decorator

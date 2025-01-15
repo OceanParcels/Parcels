@@ -9,11 +9,11 @@ from tests.utils import create_fieldset_3d
 @pytest.fixture
 def tmp_interpolator_registry():
     """Resets the interpolator registry after the test. Vital when testing manipulating the registry."""
-    old_2d = interpolation.interpolator_registry_2d.copy()
-    old_3d = interpolation.interpolator_registry_3d.copy()
+    old_2d = interpolation._interpolator_registry_2d.copy()
+    old_3d = interpolation._interpolator_registry_3d.copy()
     yield
-    interpolation.interpolator_registry_2d = old_2d
-    interpolation.interpolator_registry_3d = old_3d
+    interpolation._interpolator_registry_2d = old_2d
+    interpolation._interpolator_registry_3d = old_3d
 
 
 @pytest.mark.usefixtures("tmp_interpolator_registry")
@@ -23,11 +23,11 @@ def test_interpolation_registry():
     def some_function():
         return "test"
 
-    assert "test" in interpolation.interpolator_registry_2d
-    assert "test" in interpolation.interpolator_registry_3d
+    assert "test" in interpolation.get_2d_interpolator_registry()
+    assert "test" in interpolation.get_3d_interpolator_registry()
 
-    f = interpolation.interpolator_registry_2d["test"]
-    g = interpolation.interpolator_registry_3d["test"]
+    f = interpolation.get_2d_interpolator_registry()["test"]
+    g = interpolation.get_3d_interpolator_registry()["test"]
     assert f() == g() == "test"
 
 

@@ -16,8 +16,8 @@ from parcels._indexing import search_indices_vertical_s, search_indices_vertical
 from parcels._interpolation import (
     InterpolationContext2D,
     InterpolationContext3D,
-    interpolator_registry_2d,
-    interpolator_registry_3d,
+    get_2d_interpolator_registry,
+    get_3d_interpolator_registry,
 )
 from parcels._typing import (
     GridIndexingType,
@@ -1241,7 +1241,7 @@ class Field:
         ctx = InterpolationContext2D(self.data, eta, xsi, ti, yi, xi)
 
         try:
-            f = interpolator_registry_2d[self.interp_method]
+            f = get_2d_interpolator_registry()[self.interp_method]
         except KeyError:
             if self.interp_method == "cgrid_velocity":
                 raise RuntimeError(
@@ -1263,7 +1263,7 @@ class Field:
         )
 
         try:
-            f = interpolator_registry_3d[self.interp_method]
+            f = get_3d_interpolator_registry()[self.interp_method]
         except KeyError:
             raise RuntimeError(self.interp_method + " is not implemented for 3D grids")
         return f(ctx)
