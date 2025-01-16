@@ -1258,9 +1258,7 @@ class Field:
     def _interpolator3D(self, ti, z, y, x, time, particle=None):
         """Impelement 3D interpolation with coordinate transformations as seen in Delandmeter, P. and van Sebille, E (2019)."""
         (zeta, eta, xsi, zi, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
-        ctx = InterpolationContext3D(
-            self.data, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype, self.interp_method
-        )
+        ctx = InterpolationContext3D(self.data, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
 
         try:
             f = get_3d_interpolator_registry()[self.interp_method]
