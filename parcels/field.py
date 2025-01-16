@@ -12,7 +12,7 @@ import xarray as xr
 
 import parcels.tools.interpolation_utils as i_u
 from parcels._compat import add_note
-from parcels._indexing import search_indices_vertical_s, search_indices_vertical_z
+from parcels._index_search import search_indices_vertical_s, search_indices_vertical_z
 from parcels._interpolation import (
     InterpolationContext2D,
     InterpolationContext3D,
