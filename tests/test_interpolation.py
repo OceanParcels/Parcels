@@ -107,6 +107,9 @@ class TestInterpolationMethods:
         "bgrid_w_velocity",
         "partialslip",
         "freeslip",
+        "linear_invdist_land_tracer",
+        "bgrid_tracer",
+        "cgrid_tracer",
     ],
 )
 @pytest.mark.parametrize(
@@ -124,6 +127,9 @@ def test_interpolation_3d_refactor(data_3d, zeta, eta, xsi, interp_method, gridi
         "bgrid_w_velocity": (interpolation._linear_3d_old, interpolation._linear_3d_old),
         "partialslip":      (interpolation._linear_3d_old, interpolation._linear_3d_old),
         "freeslip":         (interpolation._linear_3d_old, interpolation._linear_3d_old),
+        "linear_invdist_land_tracer": (interpolation._linear_invdist_land_tracer_3d, interpolation._linear_invdist_land_tracer_3d),
+        "bgrid_tracer":     (interpolation._tracer_3d, interpolation._tracer_3d),
+        "cgrid_tracer":     (interpolation._tracer_3d, interpolation._tracer_3d),
     }[interp_method]
     # fmt: on
 
@@ -155,7 +161,7 @@ def test_full_depth_provided_to_interpolators():
     @interpolation.register_3d_interpolator("linear")
     def test_interpolator2(ctx: interpolation.InterpolationContext3D):
         assert ctx.data.shape[1] == zdim
-        # Works!!
+        # The array z dimension is the same as the fieldset z dimension
         return 0
 
     fieldset.U[0.5, 0.5, 0.5, 0.5]

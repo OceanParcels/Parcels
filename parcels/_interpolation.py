@@ -251,6 +251,7 @@ def _linear_3d_old(ctx: InterpolationContext3D) -> float:
     zi = ctx.zi
     xi = ctx.xi
     yi = ctx.yi
+    zdim = ctx.data.shape[1]
     if ctx.interp_method == "bgrid_velocity":
         if ctx.gridindexingtype == "mom5":
             zeta = 1.0
@@ -266,7 +267,7 @@ def _linear_3d_old(ctx: InterpolationContext3D) -> float:
         + xsi * eta * data[yi + 1, xi + 1]
         + (1 - xsi) * eta * data[yi + 1, xi]
     )
-    if ctx.gridindexingtype == "pop" and zi >= ctx.grid.zdim - 2:
+    if ctx.gridindexingtype == "pop" and zi >= zdim - 2:
         # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
         return (1 - zeta) * f0
     data = ctx.data[ti, zi + 1, :, :]
