@@ -114,7 +114,7 @@ def _nearest_2d(ctx: InterpolationContext2D) -> float:
     return ctx.data[ctx.ti, yii, xii]
 
 
-def unit_square_to_target(xsi: float, eta: float, data: np.ndarray, yi: int, xi: int) -> float:
+def unit_square_to_target(eta: float, xsi: float, data: np.ndarray, yi: int, xi: int) -> float:
     """Interpolation on a unit square. See Delandmeter and Sebille 2019."""
     return (
         (1 - xsi) * (1 - eta) * data[yi, xi]
@@ -135,7 +135,7 @@ def _linear_2d(ctx: InterpolationContext2D) -> float:
     yi = ctx.yi
     xi = ctx.xi
     ti = ctx.ti
-    val = unit_square_to_target(xsi, eta, data[ti, :, :], yi, xi)
+    val = unit_square_to_target(eta, xsi, data[ti, :, :], yi, xi)
     return val
 
 
@@ -168,7 +168,7 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
                     w_sum += 1 / distance
         return val / w_sum
     else:
-        val = unit_square_to_target(xsi, eta, data[ti, :, :], yi, xi)
+        val = unit_square_to_target(eta, xsi, data[ti, :, :], yi, xi)
         return val
 
 
@@ -222,10 +222,10 @@ def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:
         return val / w_sum
     else:
         data = ctx.data[ctx.ti, ctx.zi, :, :]
-        f0 = unit_square_to_target(ctx.xsi, ctx.eta, data, ctx.yi, ctx.xi)
+        f0 = unit_square_to_target(ctx.eta, ctx.xsi, data, ctx.yi, ctx.xi)
 
         data = ctx.data[ctx.ti, ctx.zi + 1, :, :]
-        f1 = unit_square_to_target(ctx.xsi, ctx.eta, data, ctx.yi, ctx.xi)
+        f1 = unit_square_to_target(ctx.eta, ctx.xsi, data, ctx.yi, ctx.xi)
 
         return (1 - ctx.zeta) * f0 + ctx.zeta * f1
 
@@ -253,13 +253,13 @@ def _linear_3d_old(ctx: InterpolationContext3D) -> float:
         eta = 1.0
         xsi = 1.0
     data = ctx.data[ti, zi, :, :]
-    f0 = unit_square_to_target(xsi, eta, data, yi, xi)
+    f0 = unit_square_to_target(eta, xsi, data, yi, xi)
 
     if ctx.gridindexingtype == "pop" and zi >= zdim - 2:
         # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
         return (1 - zeta) * f0
     data = ctx.data[ti, zi + 1, :, :]
-    f1 = unit_square_to_target(xsi, eta, data, yi, xi)
+    f1 = unit_square_to_target(eta, xsi, data, yi, xi)
     if ctx.interp_method == "bgrid_w_velocity" and ctx.gridindexingtype == "mom5" and zi == -1:
         # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in uppermost cell
         return zeta * f1
