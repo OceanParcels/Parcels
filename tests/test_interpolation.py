@@ -97,6 +97,18 @@ class TestInterpolationMethods:
 
 
 @pytest.mark.usefixtures("tmp_interpolator_registry")
+def test_interpolator_override():
+    fieldset = create_fieldset_3d()
+
+    @interpolation.register_3d_interpolator("linear")
+    def test_interpolator(ctx: interpolation.InterpolationContext3D):
+        raise NotImplementedError
+
+    with pytest.raises(NotImplementedError):
+        fieldset.U[0, 0.5, 0.5, 0.5]
+
+
+@pytest.mark.usefixtures("tmp_interpolator_registry")
 def test_full_depth_provided_to_interpolators():
     """The full depth needs to be provided to the interpolation schemes as some interpolators
     need to know whether they are at the surface or bottom of the water column.
@@ -106,15 +118,6 @@ def test_full_depth_provided_to_interpolators():
     xdim, ydim, zdim = 10, 11, 12
     fieldset = create_fieldset_3d(xdim=xdim, ydim=ydim, zdim=zdim)
 
-    # Check that interpolator override works as expected
-    @interpolation.register_3d_interpolator("linear")
-    def test_interpolator(ctx: interpolation.InterpolationContext3D):
-        raise NotImplementedError
-
-    with pytest.raises(NotImplementedError):
-        fieldset.U[0, 0.5, 0.5, 0.5]
-
-    # Override interpolator with zdim check
     @interpolation.register_3d_interpolator("linear")
     def test_interpolator2(ctx: interpolation.InterpolationContext3D):
         assert ctx.data.shape[1] == zdim
