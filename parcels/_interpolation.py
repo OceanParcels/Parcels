@@ -229,18 +229,26 @@ def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:
         return (1 - ctx.zeta) * f0 + ctx.zeta * f1
 
 
-def _get_3d_f0_f1(*, eta: float, xsi: float, data: np.ndarray, zi: int, yi: int, xi: int):
+def _get_3d_f0_f1(*, eta: float, xsi: float, data: np.ndarray, zi: int, yi: int, xi: int) -> tuple[float, float | None]:
     data_2d = data[zi, :, :]
     f0 = _unit_square_to_target(eta=eta, xsi=xsi, data=data_2d, yi=yi, xi=xi)
-    data_2d = data[zi + 1, :, :]
-    f1 = _unit_square_to_target(eta=eta, xsi=xsi, data=data_2d, yi=yi, xi=xi)
+    try:
+        data_2d = data[zi + 1, :, :]
+    except IndexError:
+        f1 = None  # POP indexing at edge of domain
+    else:
+        f1 = _unit_square_to_target(eta=eta, xsi=xsi, data=data_2d, yi=yi, xi=xi)
+
     return f0, f1
 
 
-def _z_layer_interp(*, zeta: float, f0: float, f1: float, zi: int, zdim: int, gridindexingtype: GridIndexingType):
+def _z_layer_interp(
+    *, zeta: float, f0: float, f1: float | None, zi: int, zdim: int, gridindexingtype: GridIndexingType
+):
     if gridindexingtype == "pop" and zi >= zdim - 2:
         # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
         return (1 - zeta) * f0
+    assert f1 is not None, "f1 should not be None for gridindexingtype != 'pop'"
     if gridindexingtype == "mom5" and zi == -1:
         # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in uppermost cell
         return zeta * f1
