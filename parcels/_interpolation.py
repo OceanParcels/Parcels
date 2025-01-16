@@ -230,6 +230,14 @@ def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:
         return (1 - ctx.zeta) * f0 + ctx.zeta * f1
 
 
+def get_3d_f0_f1(eta: float, xsi: float, data: np.ndarray, zi: int, yi: int, xi: int):
+    data_2d = data[zi, :, :]
+    f0 = unit_square_to_target(eta, xsi, data_2d, yi, xi)
+    data_2d = data[zi + 1, :, :]
+    f1 = unit_square_to_target(eta, xsi, data_2d, yi, xi)
+    return f0, f1
+
+
 @register_3d_interpolator("linear")
 @register_3d_interpolator("bgrid_velocity")
 @register_3d_interpolator("bgrid_w_velocity")
@@ -239,10 +247,6 @@ def _linear_3d_old(ctx: InterpolationContext3D) -> float:
     zeta = ctx.zeta
     eta = ctx.eta
     xsi = ctx.xsi
-    ti = ctx.ti
-    zi = ctx.zi
-    xi = ctx.xi
-    yi = ctx.yi
     zdim = ctx.data.shape[1]
     if ctx.interp_method == "bgrid_velocity":
         if ctx.gridindexingtype == "mom5":
@@ -252,15 +256,13 @@ def _linear_3d_old(ctx: InterpolationContext3D) -> float:
     elif ctx.interp_method == "bgrid_w_velocity":
         eta = 1.0
         xsi = 1.0
-    data = ctx.data[ti, zi, :, :]
-    f0 = unit_square_to_target(eta, xsi, data, yi, xi)
+    data_3d = ctx.data[ctx.ti, :, :, :]
+    f0, f1 = get_3d_f0_f1(eta, xsi, data_3d, ctx.zi, ctx.yi, ctx.xi)
 
-    if ctx.gridindexingtype == "pop" and zi >= zdim - 2:
+    if ctx.gridindexingtype == "pop" and ctx.zi >= zdim - 2:
         # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
         return (1 - zeta) * f0
-    data = ctx.data[ti, zi + 1, :, :]
-    f1 = unit_square_to_target(eta, xsi, data, yi, xi)
-    if ctx.interp_method == "bgrid_w_velocity" and ctx.gridindexingtype == "mom5" and zi == -1:
+    if ctx.interp_method == "bgrid_w_velocity" and ctx.gridindexingtype == "mom5" and ctx.zi == -1:
         # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in uppermost cell
         return zeta * f1
     else:
