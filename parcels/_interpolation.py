@@ -72,7 +72,7 @@ class InterpolationContext3D:
     zi: int
     yi: int
     xi: int
-    gridindexingtype: GridIndexingType  #! Needed in 2d as well??
+    gridindexingtype: GridIndexingType  # included in 3D as z-face is indexed differently with MOM5 and POP
 
 
 _interpolator_registry_2d: dict[str, Callable[[InterpolationContext2D], float]] = {}
