@@ -238,6 +238,16 @@ def get_3d_f0_f1(*, eta: float, xsi: float, data: np.ndarray, zi: int, yi: int, 
     return f0, f1
 
 
+def z_layer_interp(*, zeta: float, f0: float, f1: float, zi: int, zdim: int, gridindexingtype: GridIndexingType):
+    if gridindexingtype == "pop" and zi >= zdim - 2:
+        # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
+        return (1 - zeta) * f0
+    if gridindexingtype == "mom5" and zi == -1:
+        # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in uppermost cell
+        return zeta * f1
+    return (1 - zeta) * f0 + zeta * f1
+
+
 @register_3d_interpolator("linear")
 @register_3d_interpolator("bgrid_velocity")
 @register_3d_interpolator("bgrid_w_velocity")
@@ -280,10 +290,7 @@ def _linear_3d(ctx: InterpolationContext3D) -> float:
     data_3d = ctx.data[ctx.ti, :, :, :]
     f0, f1 = get_3d_f0_f1(eta=eta, xsi=xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
 
-    if ctx.gridindexingtype == "pop" and ctx.zi >= zdim - 2:
-        # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
-        return (1 - zeta) * f0
-    return (1 - zeta) * f0 + zeta * f1
+    return z_layer_interp(zeta=zeta, f0=f0, f1=f1, zi=ctx.zi, zdim=zdim, gridindexingtype=ctx.gridindexingtype)
 
 
 @register_3d_interpolator("bgrid_velocity")
@@ -298,10 +305,7 @@ def _linear_3d_bgrid_velocity(ctx: InterpolationContext3D) -> float:
     data_3d = ctx.data[ctx.ti, :, :, :]
     f0, f1 = get_3d_f0_f1(eta=eta, xsi=xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
 
-    if ctx.gridindexingtype == "pop" and ctx.zi >= zdim - 2:
-        # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
-        return (1 - zeta) * f0
-    return (1 - zeta) * f0 + zeta * f1
+    return z_layer_interp(zeta=zeta, f0=f0, f1=f1, zi=ctx.zi, zdim=zdim, gridindexingtype=ctx.gridindexingtype)
 
 
 @register_3d_interpolator("bgrid_w_velocity")
@@ -313,13 +317,7 @@ def _linear_3d_bgrid_w_velocity(ctx: InterpolationContext3D) -> float:
     data_3d = ctx.data[ctx.ti, :, :, :]
     f0, f1 = get_3d_f0_f1(eta=eta, xsi=xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
 
-    if ctx.gridindexingtype == "pop" and ctx.zi >= zdim - 2:
-        # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
-        return (1 - zeta) * f0
-    if ctx.gridindexingtype == "mom5" and ctx.zi == -1:
-        # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in uppermost cell
-        return zeta * f1
-    return (1 - zeta) * f0 + zeta * f1
+    return z_layer_interp(zeta=zeta, f0=f0, f1=f1, zi=ctx.zi, zdim=zdim, gridindexingtype=ctx.gridindexingtype)
 
 
 @register_3d_interpolator("bgrid_tracer")
