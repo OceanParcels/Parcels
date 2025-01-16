@@ -113,7 +113,7 @@ def _nearest_2d(ctx: InterpolationContext2D) -> float:
     return ctx.data[ctx.ti, yii, xii]
 
 
-def unit_square_to_target(*, eta: float, xsi: float, data: np.ndarray, yi: int, xi: int) -> float:
+def _unit_square_to_target(*, eta: float, xsi: float, data: np.ndarray, yi: int, xi: int) -> float:
     """Interpolation on a unit square. See Delandmeter and Sebille 2019."""
     return (
         (1 - xsi) * (1 - eta) * data[yi, xi]
@@ -134,7 +134,7 @@ def _linear_2d(ctx: InterpolationContext2D) -> float:
     yi = ctx.yi
     xi = ctx.xi
     ti = ctx.ti
-    val = unit_square_to_target(eta=eta, xsi=xsi, data=data[ti, :, :], yi=yi, xi=xi)
+    val = _unit_square_to_target(eta=eta, xsi=xsi, data=data[ti, :, :], yi=yi, xi=xi)
     return val
 
 
@@ -167,7 +167,7 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
                     w_sum += 1 / distance
         return val / w_sum
     else:
-        val = unit_square_to_target(eta=eta, xsi=xsi, data=data[ti, :, :], yi=yi, xi=xi)
+        val = _unit_square_to_target(eta=eta, xsi=xsi, data=data[ti, :, :], yi=yi, xi=xi)
         return val
 
 
@@ -221,23 +221,23 @@ def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:
         return val / w_sum
     else:
         data = ctx.data[ctx.ti, ctx.zi, :, :]
-        f0 = unit_square_to_target(eta=ctx.eta, xsi=ctx.xsi, data=data, yi=ctx.yi, xi=ctx.xi)
+        f0 = _unit_square_to_target(eta=ctx.eta, xsi=ctx.xsi, data=data, yi=ctx.yi, xi=ctx.xi)
 
         data = ctx.data[ctx.ti, ctx.zi + 1, :, :]
-        f1 = unit_square_to_target(eta=ctx.eta, xsi=ctx.xsi, data=data, yi=ctx.yi, xi=ctx.xi)
+        f1 = _unit_square_to_target(eta=ctx.eta, xsi=ctx.xsi, data=data, yi=ctx.yi, xi=ctx.xi)
 
         return (1 - ctx.zeta) * f0 + ctx.zeta * f1
 
 
-def get_3d_f0_f1(*, eta: float, xsi: float, data: np.ndarray, zi: int, yi: int, xi: int):
+def _get_3d_f0_f1(*, eta: float, xsi: float, data: np.ndarray, zi: int, yi: int, xi: int):
     data_2d = data[zi, :, :]
-    f0 = unit_square_to_target(eta=eta, xsi=xsi, data=data_2d, yi=yi, xi=xi)
+    f0 = _unit_square_to_target(eta=eta, xsi=xsi, data=data_2d, yi=yi, xi=xi)
     data_2d = data[zi + 1, :, :]
-    f1 = unit_square_to_target(eta=eta, xsi=xsi, data=data_2d, yi=yi, xi=xi)
+    f1 = _unit_square_to_target(eta=eta, xsi=xsi, data=data_2d, yi=yi, xi=xi)
     return f0, f1
 
 
-def z_layer_interp(*, zeta: float, f0: float, f1: float, zi: int, zdim: int, gridindexingtype: GridIndexingType):
+def _z_layer_interp(*, zeta: float, f0: float, f1: float, zi: int, zdim: int, gridindexingtype: GridIndexingType):
     if gridindexingtype == "pop" and zi >= zdim - 2:
         # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
         return (1 - zeta) * f0
@@ -256,9 +256,9 @@ def _linear_3d(ctx: InterpolationContext3D) -> float:
     xsi = ctx.xsi
     zdim = ctx.data.shape[1]
     data_3d = ctx.data[ctx.ti, :, :, :]
-    f0, f1 = get_3d_f0_f1(eta=eta, xsi=xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
+    f0, f1 = _get_3d_f0_f1(eta=eta, xsi=xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
 
-    return z_layer_interp(zeta=zeta, f0=f0, f1=f1, zi=ctx.zi, zdim=zdim, gridindexingtype=ctx.gridindexingtype)
+    return _z_layer_interp(zeta=zeta, f0=f0, f1=f1, zi=ctx.zi, zdim=zdim, gridindexingtype=ctx.gridindexingtype)
 
 
 @register_3d_interpolator("bgrid_velocity")
