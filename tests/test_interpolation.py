@@ -122,11 +122,11 @@ class TestInterpolationMethods:
 def test_interpolation_3d_refactor(data_3d, zeta, eta, xsi, interp_method, gridindexingtype):
     # fmt: off
     f_old, f_new = {
-        "linear":           (interpolation._linear_3d_old, interpolation._linear_3d_old),
-        "bgrid_velocity":   (interpolation._linear_3d_old, interpolation._linear_3d_old),
+        "linear":           (interpolation._linear_3d_old, interpolation._linear_3d),
+        "bgrid_velocity":   (interpolation._linear_3d_old, interpolation._linear_3d_bgrid_velocity),
         "bgrid_w_velocity": (interpolation._linear_3d_old, interpolation._linear_3d_old),
-        "partialslip":      (interpolation._linear_3d_old, interpolation._linear_3d_old),
-        "freeslip":         (interpolation._linear_3d_old, interpolation._linear_3d_old),
+        "partialslip":      (interpolation._linear_3d_old, interpolation._linear_3d),
+        "freeslip":         (interpolation._linear_3d_old, interpolation._linear_3d),
         "linear_invdist_land_tracer": (interpolation._linear_invdist_land_tracer_3d, interpolation._linear_invdist_land_tracer_3d),
         "bgrid_tracer":     (interpolation._tracer_3d, interpolation._tracer_3d),
         "cgrid_tracer":     (interpolation._tracer_3d, interpolation._tracer_3d),
@@ -135,7 +135,7 @@ def test_interpolation_3d_refactor(data_3d, zeta, eta, xsi, interp_method, gridi
 
     ti, zi, yi, xi = 1, 1, 1, 1
 
-    ctx = interpolation.InterpolationContext3D(data_3d, zeta, eta, xsi, ti, zi, yi, xi, interp_method, gridindexingtype)
+    ctx = interpolation.InterpolationContext3D(data_3d, zeta, eta, xsi, ti, zi, yi, xi, gridindexingtype, interp_method)
     assert np.isclose(f_old(ctx), f_new(ctx))
 
 

@@ -269,6 +269,59 @@ def _linear_3d_old(ctx: InterpolationContext3D) -> float:
         return (1 - zeta) * f0 + zeta * f1
 
 
+@register_3d_interpolator("linear")
+@register_3d_interpolator("partialslip")
+@register_3d_interpolator("freeslip")
+def _linear_3d(ctx: InterpolationContext3D) -> float:
+    zeta = ctx.zeta
+    eta = ctx.eta
+    xsi = ctx.xsi
+    zdim = ctx.data.shape[1]
+    data_3d = ctx.data[ctx.ti, :, :, :]
+    f0, f1 = get_3d_f0_f1(eta, xsi, data_3d, ctx.zi, ctx.yi, ctx.xi)
+
+    if ctx.gridindexingtype == "pop" and ctx.zi >= zdim - 2:
+        # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
+        return (1 - zeta) * f0
+    return (1 - zeta) * f0 + zeta * f1
+
+
+@register_3d_interpolator("bgrid_velocity")
+def _linear_3d_bgrid_velocity(ctx: InterpolationContext3D) -> float:
+    if ctx.gridindexingtype == "mom5":
+        zeta = 1.0
+    else:
+        zeta = 0.0
+    eta = ctx.eta
+    xsi = ctx.xsi
+    zdim = ctx.data.shape[1]
+    data_3d = ctx.data[ctx.ti, :, :, :]
+    f0, f1 = get_3d_f0_f1(eta, xsi, data_3d, ctx.zi, ctx.yi, ctx.xi)
+
+    if ctx.gridindexingtype == "pop" and ctx.zi >= zdim - 2:
+        # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
+        return (1 - zeta) * f0
+    return (1 - zeta) * f0 + zeta * f1
+
+
+@register_3d_interpolator("bgrid_w_velocity")
+def _linear_3d_bgrid_w_velocity(ctx: InterpolationContext3D) -> float:
+    zeta = ctx.zeta
+    eta = 1.0
+    xsi = 1.0
+    zdim = ctx.data.shape[1]
+    data_3d = ctx.data[ctx.ti, :, :, :]
+    f0, f1 = get_3d_f0_f1(eta, xsi, data_3d, ctx.zi, ctx.yi, ctx.xi)
+
+    if ctx.gridindexingtype == "pop" and ctx.zi >= zdim - 2:
+        # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
+        return (1 - zeta) * f0
+    if ctx.gridindexingtype == "mom5" and ctx.zi == -1:
+        # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in uppermost cell
+        return zeta * f1
+    return (1 - zeta) * f0 + zeta * f1
+
+
 @register_3d_interpolator("bgrid_tracer")
 @register_3d_interpolator("cgrid_tracer")
 def _tracer_3d(ctx: InterpolationContext3D) -> float:
