@@ -124,7 +124,7 @@ def test_interpolation_3d_refactor(data_3d, zeta, eta, xsi, interp_method, gridi
     f_old, f_new = {
         "linear":           (interpolation._linear_3d_old, interpolation._linear_3d),
         "bgrid_velocity":   (interpolation._linear_3d_old, interpolation._linear_3d_bgrid_velocity),
-        "bgrid_w_velocity": (interpolation._linear_3d_old, interpolation._linear_3d_old),
+        "bgrid_w_velocity": (interpolation._linear_3d_old, interpolation._linear_3d_bgrid_w_velocity),
         "partialslip":      (interpolation._linear_3d_old, interpolation._linear_3d),
         "freeslip":         (interpolation._linear_3d_old, interpolation._linear_3d),
         "linear_invdist_land_tracer": (interpolation._linear_invdist_land_tracer_3d, interpolation._linear_invdist_land_tracer_3d),
@@ -137,6 +137,65 @@ def test_interpolation_3d_refactor(data_3d, zeta, eta, xsi, interp_method, gridi
 
     ctx = interpolation.InterpolationContext3D(data_3d, zeta, eta, xsi, ti, zi, yi, xi, gridindexingtype, interp_method)
     assert np.isclose(f_old(ctx), f_new(ctx))
+
+
+@pytest.mark.parametrize("zeta", np.linspace(0, 1, 4))
+@pytest.mark.parametrize("eta", np.linspace(0, 1, 4))
+@pytest.mark.parametrize("xsi", np.linspace(0, 1, 4))
+@pytest.mark.parametrize(
+    "interp_method",
+    [
+        "linear",
+        "bgrid_velocity",
+        "bgrid_w_velocity",
+        "partialslip",
+        "freeslip",
+        "linear_invdist_land_tracer",
+        "bgrid_tracer",
+        "cgrid_tracer",
+    ],
+)
+@pytest.mark.parametrize(
+    "gridindexingtype",
+    [
+        "mom5",
+        "pop",
+    ],
+)
+@pytest.mark.parametrize("zi", np.arange(create_interpolation_data().values.shape[0]))
+@pytest.mark.parametrize("yi", np.arange(create_interpolation_data().values.shape[1]))
+@pytest.mark.parametrize("xi", np.arange(create_interpolation_data().values.shape[2]))
+def test_interpolation_3d_refactor_xi_yi_zi(data_3d, zeta, eta, xsi, interp_method, gridindexingtype, zi, yi, xi):
+    # fmt: off
+    f_old, f_new = {
+        "linear":           (interpolation._linear_3d_old, interpolation._linear_3d),
+        "bgrid_velocity":   (interpolation._linear_3d_old, interpolation._linear_3d_bgrid_velocity),
+        "bgrid_w_velocity": (interpolation._linear_3d_old, interpolation._linear_3d_bgrid_w_velocity),
+        "partialslip":      (interpolation._linear_3d_old, interpolation._linear_3d),
+        "freeslip":         (interpolation._linear_3d_old, interpolation._linear_3d),
+        "linear_invdist_land_tracer": (interpolation._linear_invdist_land_tracer_3d, interpolation._linear_invdist_land_tracer_3d),
+        "bgrid_tracer":     (interpolation._tracer_3d, interpolation._tracer_3d),
+        "cgrid_tracer":     (interpolation._tracer_3d, interpolation._tracer_3d),
+    }[interp_method]
+    # fmt: on
+
+    ti = 1
+
+    ctx = interpolation.InterpolationContext3D(data_3d, zeta, eta, xsi, ti, zi, yi, xi, gridindexingtype, interp_method)
+
+    try:
+        old_value = f_old(ctx)
+    except Exception as e:
+        old_value = e
+    try:
+        new_value = f_new(ctx)
+    except Exception as e:
+        new_value = e
+
+    if isinstance(old_value, Exception):
+        assert type(old_value) is type(new_value)
+    else:
+        assert np.isclose(f_old(ctx), f_new(ctx))
 
 
 @pytest.mark.usefixtures("tmp_interpolator_registry")
