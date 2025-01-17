@@ -3,7 +3,7 @@ import pytest
 import xarray as xr
 
 import parcels._interpolation as interpolation
-from tests.utils import create_fieldset_3d
+from tests.utils import create_fieldset_zeros_3d
 
 
 @pytest.fixture
@@ -98,7 +98,7 @@ class TestInterpolationMethods:
 
 @pytest.mark.usefixtures("tmp_interpolator_registry")
 def test_interpolator_override():
-    fieldset = create_fieldset_3d()
+    fieldset = create_fieldset_zeros_3d()
 
     @interpolation.register_3d_interpolator("linear")
     def test_interpolator(ctx: interpolation.InterpolationContext3D):
@@ -116,7 +116,7 @@ def test_full_depth_provided_to_interpolators():
     https://github.com/OceanParcels/Parcels/pull/1816#discussion_r1908840408
     """
     xdim, ydim, zdim = 10, 11, 12
-    fieldset = create_fieldset_3d(xdim=xdim, ydim=ydim, zdim=zdim)
+    fieldset = create_fieldset_zeros_3d(xdim=xdim, ydim=ydim, zdim=zdim)
 
     @interpolation.register_3d_interpolator("linear")
     def test_interpolator2(ctx: interpolation.InterpolationContext3D):

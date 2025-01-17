@@ -23,7 +23,7 @@ def create_fieldset_unit_mesh(xdim=20, ydim=20, mesh="flat", transpose=False) ->
     return FieldSet.from_data(data, dimensions, mesh=mesh, transpose=transpose)
 
 
-def create_fieldset_3d(zdim=5, ydim=10, xdim=10):
+def create_fieldset_zeros_3d(zdim=5, ydim=10, xdim=10):
     """3d fieldset with U, V, and W equivalent to longitude, latitude, and depth."""
     tdim = 20
     ds = xr.Dataset(
