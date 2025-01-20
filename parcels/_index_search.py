@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 
 
 def search_indices_vertical_z(grid: Grid, gridindexingtype: GridIndexingType, z: float):
-    z = np.float32(z)
     if grid.depth[-1] > grid.depth[0]:
         if z < grid.depth[0]:
             # Since MOM5 is indexed at cell bottom, allow z at depth[0] - dz where dz = (depth[1] - depth[0])
@@ -99,7 +98,6 @@ def search_indices_vertical_s(
             + xsi * eta * grid.depth[:, yi + 1, xi + 1]
             + (1 - xsi) * eta * grid.depth[:, yi + 1, xi]
         )
-    z = np.float32(z)  # type: ignore # TODO: remove type ignore once we migrate to float64
 
     if depth_vector[-1] > depth_vector[0]:
         depth_indices = depth_vector <= z
