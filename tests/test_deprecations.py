@@ -125,7 +125,7 @@ actions = [
     Action("Field",           "get_dim_filenames()",             "make_private"  ),
     Action("Field",           "collect_timeslices()",            "make_private"  ),
     Action("Field",           "reshape()",                       "make_private"  ),
-    Action("Field",           "calc_cell_edge_sizes()",          "make_private"  ),
+    Action("Field",           "calc_cell_edge_sizes()",          "make_private"  , skip_reason = "Moved to Grid"),
     Action("Field",           "search_indices_vertical_z()",     "make_private"  , skip_reason = "Removed implementation"),
     Action("Field",           "search_indices_vertical_s()",     "make_private"  , skip_reason = "Removed implementation"),
     Action("Field",           "reconnect_bnd_indices()",         "make_private"  ),

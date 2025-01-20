@@ -30,8 +30,6 @@ from parcels._typing import (
 )
 from parcels.tools._helpers import default_repr, deprecated_made_private, field_repr, timedelta_to_float
 from parcels.tools.converters import (
-    Geographic,
-    GeographicPolar,
     TimeConverter,
     UnitConverter,
     unitconverters_map,
@@ -54,7 +52,7 @@ from .fieldfilebuffer import (
     DeferredNetcdfFileBuffer,
     NetcdfFileBuffer,
 )
-from .grid import CGrid, Grid, GridType
+from .grid import CGrid, Grid, GridType, _calc_cell_areas, _calc_cell_edge_sizes
 
 if TYPE_CHECKING:
     from ctypes import _Pointer as PointerType
@@ -964,39 +962,14 @@ class Field:
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def calc_cell_edge_sizes(self):
-        return self._calc_cell_edge_sizes()
-
-    def _calc_cell_edge_sizes(self):
-        """Method to calculate cell sizes based on numpy.gradient method.
-
-        Currently only works for Rectilinear Grids
-        """
-        if not self.grid.cell_edge_sizes:
-            if self.grid._gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):
-                self.grid.cell_edge_sizes["x"] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
-                self.grid.cell_edge_sizes["y"] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
-
-                x_conv = GeographicPolar() if self.grid.mesh == "spherical" else UnitConverter()
-                y_conv = Geographic() if self.grid.mesh == "spherical" else UnitConverter()
-                for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat), strict=False)):
-                    for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon), strict=False)):
-                        self.grid.cell_edge_sizes["x"][y, x] = x_conv.to_source(dx, self.grid.depth[0], lat, lon)
-                        self.grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, self.grid.depth[0], lat, lon)
-            else:
-                raise ValueError(
-                    f"Field.cell_edge_sizes() not implemented for {self.grid._gtype} grids. "
-                    "You can provide Field.grid.cell_edge_sizes yourself by in, e.g., "
-                    "NEMO using the e1u fields etc from the mesh_mask.nc file."
-                )
+        _calc_cell_edge_sizes(self.grid)
 
     def cell_areas(self):
         """Method to calculate cell sizes based on cell_edge_sizes.
 
-        Currently only works for Rectilinear Grids
+        Only works for Rectilinear Grids
         """
-        if not self.grid.cell_edge_sizes:
-            self._calc_cell_edge_sizes()
-        return self.grid.cell_edge_sizes["x"] * self.grid.cell_edge_sizes["y"]
+        return _calc_cell_areas(self.grid)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def search_indices_vertical_z(self, *_):
