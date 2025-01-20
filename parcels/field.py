@@ -1048,7 +1048,7 @@ class Field:
         if time == t0:
             return self.data[ti, :]
         elif ti + 1 >= len(self.grid.time):
-            raise TimeExtrapolationError(time, field=self, msg="show_time")
+            raise TimeExtrapolationError(time, field=self)
         else:
             t1 = self.grid.time[ti + 1]
             f0 = self.data[ti, :]
