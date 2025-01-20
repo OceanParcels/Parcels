@@ -8,7 +8,7 @@ from parcels._typing import GridIndexingType
 
 @dataclass
 class InterpolationContext2D:
-    """Information provided by Parcels during 2D spatial interpolation. See Delandmeter, P. and van Sebille, E (2019) for more info.
+    """Information provided by Parcels during 2D spatial interpolation. See Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019 for more info.
 
     Attributes
     ----------
@@ -37,7 +37,7 @@ class InterpolationContext2D:
 
 @dataclass
 class InterpolationContext3D:
-    """Information provided by Parcels during 3D spatial interpolation. See Delandmeter, P. and van Sebille, E (2019) for more info.
+    """Information provided by Parcels during 3D spatial interpolation. See Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019 for more info.
 
     Attributes
     ----------
