@@ -979,26 +979,7 @@ class Field:
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def reconnect_bnd_indices(self, *args, **kwargs):
-        return self._reconnect_bnd_indices(*args, **kwargs)
-
-    def _reconnect_bnd_indices(self, yi, xi, ydim, xdim, sphere_mesh):
-        if xi < 0:
-            if sphere_mesh:
-                xi = xdim - 2
-            else:
-                xi = 0
-        if xi > xdim - 2:
-            if sphere_mesh:
-                xi = 0
-            else:
-                xi = xdim - 2
-        if yi < 0:
-            yi = 0
-        if yi > ydim - 2:
-            yi = ydim - 2
-            if sphere_mesh:
-                xi = xdim - xi
-        return yi, xi
+        raise NotImplementedError
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def search_indices_rectilinear(self, *_):

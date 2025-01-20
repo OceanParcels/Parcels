@@ -128,7 +128,7 @@ actions = [
     Action("Field",           "calc_cell_edge_sizes()",          "make_private"  , skip_reason = "Moved to Grid"),
     Action("Field",           "search_indices_vertical_z()",     "make_private"  , skip_reason = "Removed implementation"),
     Action("Field",           "search_indices_vertical_s()",     "make_private"  , skip_reason = "Removed implementation"),
-    Action("Field",           "reconnect_bnd_indices()",         "make_private"  ),
+    Action("Field",           "reconnect_bnd_indices()",         "make_private"  , skip_reason = "Moved to grid"),
     Action("Field",           "search_indices_rectilinear()",    "make_private"  , skip_reason = "Removed implementation"),
     Action("Field",           "search_indices_curvilinear()",    "make_private"  , skip_reason = "Removed implementation"),
     Action("Field",           "search_indices()",                "make_private"  , skip_reason = "Removed implementation"),

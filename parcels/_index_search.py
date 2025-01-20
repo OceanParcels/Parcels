@@ -274,7 +274,7 @@ def _search_indices_curvilinear(field: Field, time, z, y, x, ti=-1, particle=Non
             yi -= 1
         elif eta > 1 + tol:
             yi += 1
-        (yi, xi) = field._reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid.mesh)
+        (yi, xi) = _reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid.mesh)
         it += 1
         if it > maxIterSearch:
             print(f"Correct cell not found after {maxIterSearch} iterations")
@@ -305,3 +305,23 @@ def _search_indices_curvilinear(field: Field, time, z, y, x, ti=-1, particle=Non
         particle.zi[field.igrid] = zi
 
     return (zeta, eta, xsi, zi, yi, xi)
+
+
+def _reconnect_bnd_indices(yi: int, xi: int, ydim: int, xdim: int, sphere_mesh: bool):
+    if xi < 0:
+        if sphere_mesh:
+            xi = xdim - 2
+        else:
+            xi = 0
+    if xi > xdim - 2:
+        if sphere_mesh:
+            xi = 0
+        else:
+            xi = xdim - 2
+    if yi < 0:
+        yi = 0
+    if yi > ydim - 2:
+        yi = ydim - 2
+        if sphere_mesh:
+            xi = xdim - xi
+    return yi, xi
