@@ -44,7 +44,7 @@ class GridSet:
         field.igrid = self.grids.index(field.grid)
 
     def dimrange(self, dim):
-        """Returns maximum value of a dimension (lon, lat, depth or time)
+        """Returns maximum value of a dimension (time, depth, lat or lon)
         on 'left' side and minimum value on 'right' side for all grids
         in a gridset. Useful for finding e.g. longitude range that
         overlaps on all grids in a gridset.

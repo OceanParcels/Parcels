@@ -64,7 +64,7 @@ class ParticleData:
         ), "particle's initial depth is None - incompatible with the ParticleData class. Invalid state."
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts."
 
-        assert lon.size == time.size, "time and positions (lon, lat, depth) don't have the same lengths."
+        assert lon.size == time.size, "time and positions (depth, lat, lon) don't have the same lengths."
 
         # If a partitioning function for MPI runs has been passed into the
         # particle creation with the "partition_function" kwarg, retrieve it here.
@@ -74,7 +74,7 @@ class ParticleData:
         for kwvar in kwargs:
             assert (
                 lon.size == kwargs[kwvar].size
-            ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
+            ), f"{kwvar} and positions (depth, lat, lon) don't have the same lengths."
 
         offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
         if MPI:
