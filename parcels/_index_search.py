@@ -190,7 +190,6 @@ def _search_indices_rectilinear(
 
     if grid.zdim > 1 and not search2D:
         if grid._gtype == GridType.RectilinearZGrid:
-            # Never passes here, because in this case, we work with scipy
             try:
                 (zi, zeta) = search_indices_vertical_z(field.grid, field.gridindexingtype, z)
             except FieldOutOfBoundError:

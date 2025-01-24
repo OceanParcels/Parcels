@@ -128,8 +128,7 @@ def _interp_on_unit_square(*, eta: float, xsi: float, data: np.ndarray, yi: int,
 @register_2d_interpolator("partialslip")
 @register_2d_interpolator("freeslip")
 def _linear_2d(ctx: InterpolationContext2D) -> float:
-    val = _interp_on_unit_square(eta=ctx.eta, xsi=ctx.xsi, data=ctx.data[ctx.ti, :, :], yi=ctx.yi, xi=ctx.xi)
-    return val
+    return _interp_on_unit_square(eta=ctx.eta, xsi=ctx.xsi, data=ctx.data[ctx.ti, :, :], yi=ctx.yi, xi=ctx.xi)
 
 
 @register_2d_interpolator("linear_invdist_land_tracer")
@@ -161,8 +160,7 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
                     w_sum += 1 / distance
         return val / w_sum
     else:
-        val = _interp_on_unit_square(eta=eta, xsi=xsi, data=data[ti, :, :], yi=yi, xi=xi)
-        return val
+        return _interp_on_unit_square(eta=eta, xsi=xsi, data=data[ti, :, :], yi=yi, xi=xi)
 
 
 @register_2d_interpolator("cgrid_tracer")

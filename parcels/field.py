@@ -1004,7 +1004,7 @@ class Field:
         raise NotImplementedError
 
     def _interpolator2D(self, ti, z, y, x, particle=None):
-        """Impelement 2D interpolation with coordinate transformations as seen in Delandmeter, P. and van Sebille, E (2019)."""
+        """Impelement 2D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
         (_, eta, xsi, _, yi, xi) = self._search_indices(-1, z, y, x, particle=particle)
         ctx = InterpolationContext2D(self.data, eta, xsi, ti, yi, xi)
 
@@ -1024,7 +1024,7 @@ class Field:
         raise NotImplementedError
 
     def _interpolator3D(self, ti, z, y, x, time, particle=None):
-        """Impelement 3D interpolation with coordinate transformations as seen in Delandmeter, P. and van Sebille, E (2019)."""
+        """Impelement 3D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
         (zeta, eta, xsi, zi, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
         ctx = InterpolationContext3D(self.data, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
 
