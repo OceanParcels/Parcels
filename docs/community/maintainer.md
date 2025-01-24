@@ -29,3 +29,4 @@
   - Check feature tiles
   - Check for broken links on oceanparcels using [this tracking issue](https://github.com/OceanParcels/oceanparcels_website/issues/85)
 - (once package is available on conda) Re-build the Binder
+- Ask for the shared parcels environment on [Lorenz](https://github.com/IMAU-oceans/Lorenz) to be updated
