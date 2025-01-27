@@ -3,6 +3,7 @@ import pytest
 import xarray as xr
 
 import parcels._interpolation as interpolation
+from parcels import AdvectionRK4_3D, JITParticle, ParticleSet, ScipyParticle
 from tests.utils import create_fieldset_zeros_3d
 
 
@@ -125,3 +126,39 @@ def test_full_depth_provided_to_interpolators():
         return 0
 
     fieldset.U[0.5, 0.5, 0.5, 0.5]
+
+
+@pytest.mark.parametrize("interp_method", ["linear", "freeslip", "nearest", "cgrid_velocity"])
+def test_scipy_vs_jit(interp_method):
+    """Test that the scipy and JIT versions of the interpolation are the same."""
+    fieldset = create_fieldset_zeros_3d()
+    # Randomize the field data and set the interpolation method
+    rng = np.random.default_rng(1636)
+    for field in [fieldset.U, fieldset.V, fieldset.W]:
+        field.data = rng.random(fieldset.U.data.shape, dtype=np.float32)
+        field.data[:, 3, 2, 5] = 0.0  # Set a land point (for testing freeslip)
+        field.interp_method = interp_method
+
+    x, y, z = np.meshgrid(np.linspace(0, 1, 7), np.linspace(0, 1, 13), np.linspace(0, 1, 5))
+
+    TestP = ScipyParticle.add_variable("pid", dtype=np.int32, initial=0)
+    pset_scipy = ParticleSet(fieldset, pclass=TestP, lon=x, lat=y, depth=z, pid=np.arange(x.size))
+    pset_jit = ParticleSet(fieldset, pclass=JITParticle, lon=x, lat=y, depth=z)
+
+    def DeleteParticle(particle, fieldset, time):
+        if particle.state >= 50:
+            particle.delete()
+
+    for pset in [pset_scipy, pset_jit]:
+        pset.execute([AdvectionRK4_3D, DeleteParticle], runtime=4e-3, dt=1e-3)
+
+    tol = 1e-8
+    for i in range(len(pset_scipy)):
+        # Check that the Scipy and JIT particles are at the same location
+        assert np.isclose(pset_scipy[i].lon, pset_jit[i].lon, atol=tol)
+        assert np.isclose(pset_scipy[i].lat, pset_jit[i].lat, atol=tol)
+        assert np.isclose(pset_scipy[i].depth, pset_jit[i].depth, atol=tol)
+        # Check that the Scipy and JIT particles have moved
+        assert not np.isclose(pset_scipy[i].lon, x.flatten()[pset_scipy.pid[i]], atol=tol)
+        assert not np.isclose(pset_scipy[i].lat, y.flatten()[pset_scipy.pid[i]], atol=tol)
+        assert not np.isclose(pset_scipy[i].depth, z.flatten()[pset_scipy.pid[i]], atol=tol)
