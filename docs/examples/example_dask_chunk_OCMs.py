@@ -377,13 +377,13 @@ def test_swash(mode, chunk_mode):
     if chunk_mode not in [
         "failsafe",
     ]:
-        assert len(fieldset.U.grid._load_chunk) == len(
-            fieldset.V.grid._load_chunk
-        ), f"U {fieldset.U.grid.chunk_info} vs V {fieldset.V.grid.chunk_info}"
+        assert len(fieldset.U.grid._load_chunk) == len(fieldset.V.grid._load_chunk), (
+            f"U {fieldset.U.grid.chunk_info} vs V {fieldset.V.grid.chunk_info}"
+        )
     if chunk_mode not in ["failsafe", "auto"]:
-        assert len(fieldset.U.grid._load_chunk) == len(
-            fieldset.W.grid._load_chunk
-        ), f"U {fieldset.U.grid.chunk_info} vs W {fieldset.W.grid.chunk_info}"
+        assert len(fieldset.U.grid._load_chunk) == len(fieldset.W.grid._load_chunk), (
+            f"U {fieldset.U.grid.chunk_info} vs W {fieldset.W.grid.chunk_info}"
+        )
     if chunk_mode is False:
         assert len(fieldset.U.grid._load_chunk) == 1
     else:
