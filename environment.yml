@@ -14,12 +14,14 @@ dependencies:
   - pymbolic
   - scipy>=0.16.0
   - tqdm
-  - trajan
   - xarray>=0.10.8
   - cftime>=1.3.1
   - dask>=2.0
   - scikit-learn
   - zarr>=2.11.0,!=2.18.0,<3
+
+  # Notebooks
+  - trajan
 
   # Testing
   - nbval
