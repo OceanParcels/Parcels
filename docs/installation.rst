@@ -11,12 +11,12 @@ The steps below are the installation instructions for Linux, macOS and Windows.
 
 **Step 1:** Install Anaconda's Miniconda following the steps at https://docs.anaconda.com/miniconda/. If you're on Linux /macOS, the following assumes that you installed Miniconda to your home directory.
 
-**Step 2:** Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the ``base`` environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, and the nice-to-have cartopy and jupyter packages:
+**Step 2:** Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the ``base`` environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, ``trajan`` (a trajectory plotting dependency used in the notebooks) and the nice-to-have cartopy and jupyter packages:
 
 .. code-block:: bash
 
     conda activate base
-    conda create -n parcels -c conda-forge parcels cartopy jupyter
+    conda create -n parcels -c conda-forge parcels trajan cartopy jupyter
 
 .. note::
 
