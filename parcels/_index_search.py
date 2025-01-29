@@ -30,7 +30,7 @@ def search_indices_vertical_z(grid: Grid, gridindexingtype: GridIndexingType, z:
             if gridindexingtype == "mom5" and z > 2 * grid.depth[0] - grid.depth[1]:
                 return (-1, z / grid.depth[0])
             else:
-                _raise_field_out_of_bound_surface_error(z, 0, 0)
+                _raise_field_out_of_bound_surface_error(z, None, None)
         elif z > grid.depth[-1]:
             # In case of CROCO, allow particles in last (uppermost) layer using depth[-1]
             if gridindexingtype in ["croco"] and z < 0:
@@ -43,7 +43,7 @@ def search_indices_vertical_z(grid: Grid, gridindexingtype: GridIndexingType, z:
             zi = depth_indices.argmin() - 1 if z >= grid.depth[0] else 0
     else:
         if z > grid.depth[0]:
-            _raise_field_out_of_bound_surface_error(z, 0, 0)
+            _raise_field_out_of_bound_surface_error(z, None, None)
         elif z < grid.depth[-1]:
             _raise_field_out_of_bound_error(z, 0, 0)
         depth_indices = grid.depth >= z
@@ -106,7 +106,7 @@ def search_indices_vertical_s(
         else:
             zi = depth_indices.argmin() - 1 if z >= depth_vector[0] else 0
         if z < depth_vector[zi]:
-            _raise_field_out_of_bound_surface_error(z, 0, 0)
+            _raise_field_out_of_bound_surface_error(z, None, None)
         elif z > depth_vector[zi + 1]:
             _raise_field_out_of_bound_error(z, y, x)
     else:
@@ -116,7 +116,7 @@ def search_indices_vertical_s(
         else:
             zi = depth_indices.argmin() - 1 if z <= depth_vector[0] else 0
         if z > depth_vector[zi]:
-            _raise_field_out_of_bound_surface_error(z, 0, 0)
+            _raise_field_out_of_bound_surface_error(z, None, None)
         elif z < depth_vector[zi + 1]:
             _raise_field_out_of_bound_error(z, y, x)
     zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])

@@ -61,8 +61,13 @@ def _raise_field_out_of_bound_error(z, y, x):
     raise FieldOutOfBoundError(f"Field sampled out-of-bound, at (depth={z}, lat={y}, lon={x})")
 
 
-def _raise_field_out_of_bound_surface_error(z, y, x):
-    raise FieldOutOfBoundSurfaceError(f"Field sampled out-of-bound at the surface, at (depth={z}, lat={y}, lon={x})")
+def _raise_field_out_of_bound_surface_error(z: float | None, y: float | None, x: float | None) -> None:
+    def format_out(val):
+        return "unknown" if val is None else val
+
+    raise FieldOutOfBoundSurfaceError(
+        f"Field sampled out-of-bound at the surface, at (depth={format_out(z)}, lat={format_out(y)}, lon={format_out(x)})"
+    )
 
 
 class TimeExtrapolationError(RuntimeError):
