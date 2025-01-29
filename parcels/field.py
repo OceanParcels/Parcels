@@ -1091,6 +1091,12 @@ class Field:
             else:
                 zi = depth_indices.argmin() - 1 if z < depth_vector[0] else 0
         zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
+        while zeta > 1:
+            zi += 1
+            zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
+        while zeta < 0:
+            zi -= 1
+            zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
         return (zi, zeta)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
