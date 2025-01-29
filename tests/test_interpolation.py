@@ -79,45 +79,25 @@ def data_2d():
     return create_interpolation_data().isel(depth=0).values
 
 
-@pytest.fixture
-def data_3d():
-    """Reference data used for testing interpolation."""
-    return create_interpolation_data().values
+@pytest.mark.parametrize(
+    "func, eta, xsi, expected",
+    [
+        pytest.param(interpolation._nearest_2d, 0.49, 0.49, 3.0, id="nearest_2d-1"),
+        pytest.param(interpolation._nearest_2d, 0.49, 0.51, 4.0, id="nearest_2d-2"),
+        pytest.param(interpolation._nearest_2d, 0.51, 0.49, 5.0, id="nearest_2d-3"),
+        pytest.param(interpolation._nearest_2d, 0.51, 0.51, 6.0, id="nearest_2d-4"),
+        pytest.param(interpolation._tracer_2d, None, None, 6.0, id="tracer_2d"),
+    ],
+)
+def test_raw_2d_interpolation(data_2d, func, eta, xsi, expected):
+    """Test the 2D interpolation functions on the raw arrays.
 
-
-class TestInterpolationMethods:
+    Interpolation via the other interpolation methods are tested in `test_scipy_vs_jit`.
+    """
     ti = 0
-    zi, yi, xi = 1, 1, 1
-
-    @pytest.mark.parametrize(
-        "func, eta, xsi, expected",
-        [
-            pytest.param(interpolation._nearest_2d, 0.49, 0.49, 3.0, id="nearest_2d-1"),
-            pytest.param(interpolation._nearest_2d, 0.49, 0.51, 4.0, id="nearest_2d-2"),
-            pytest.param(interpolation._nearest_2d, 0.51, 0.49, 5.0, id="nearest_2d-3"),
-            pytest.param(interpolation._nearest_2d, 0.51, 0.51, 6.0, id="nearest_2d-4"),
-            pytest.param(interpolation._tracer_2d, None, None, 6.0, id="tracer_2d"),
-            # pytest.param(interpolation._linear_2d, ...),
-            # pytest.param(interpolation._linear_invdist_land_tracer_2d, ...),
-        ],
-    )
-    def test_2d(self, data_2d, func, eta, xsi, expected):
-        ctx = interpolation.InterpolationContext2D(data_2d, eta, xsi, self.ti, self.yi, self.xi)
-        assert func(ctx) == expected
-
-    @pytest.mark.parametrize(
-        "func, eta, xsi, expected",
-        [
-            # pytest.param(interpolation._nearest_3d, ...),
-            # pytest.param(interpolation._cgrid_velocity_3d, ...),
-            # pytest.param(interpolation._linear_invdist_land_tracer_3d, ...),
-            # pytest.param(interpolation._linear_3d, ...),
-            # pytest.param(interpolation._tracer_3d, ...),
-        ],
-    )
-    def test_3d(self, data_3d, func, zeta, eta, xsi, expected):
-        ctx = interpolation.InterpolationContext3D(data_3d, zeta, eta, xsi, self.ti, self.zi, self.yi, self.xi)
-        assert func(ctx) == expected
+    yi, xi = 1, 1
+    ctx = interpolation.InterpolationContext2D(data_2d, eta, xsi, ti, yi, xi)
+    assert func(ctx) == expected
 
 
 @pytest.mark.usefixtures("tmp_interpolator_registry")
