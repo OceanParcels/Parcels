@@ -1006,22 +1006,28 @@ class Field:
                 if self.gridindexingtype in ["croco"] and z < 0:
                     return (-2, 1)
                 raise FieldOutOfBoundError(z, 0, 0, field=self)
-            depth_indices = grid.depth <= z
+            depth_indices = grid.depth < z
             if z >= grid.depth[-1]:
                 zi = len(grid.depth) - 2
             else:
-                zi = depth_indices.argmin() - 1 if z >= grid.depth[0] else 0
+                zi = depth_indices.argmin() - 1 if z > grid.depth[0] else 0
         else:
             if z > grid.depth[0]:
                 raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
             elif z < grid.depth[-1]:
                 raise FieldOutOfBoundError(z, 0, 0, field=self)
-            depth_indices = grid.depth >= z
+            depth_indices = grid.depth > z
             if z <= grid.depth[-1]:
                 zi = len(grid.depth) - 2
             else:
-                zi = depth_indices.argmin() - 1 if z <= grid.depth[0] else 0
+                zi = depth_indices.argmin() - 1 if z < grid.depth[0] else 0
         zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
+        while zeta > 1:
+            zi += 1
+            zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
+        while zeta < 0:
+            zi -= 1
+            zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
         return (zi, zeta)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
@@ -1065,25 +1071,25 @@ class Field:
         z = np.float32(z)  # type: ignore # TODO: remove type ignore once we migrate to float64
 
         if depth_vector[-1] > depth_vector[0]:
-            depth_indices = depth_vector <= z
+            if z < depth_vector[0]:
+                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
+            elif z > depth_vector[-1]:
+                raise FieldOutOfBoundError(z, y, x, field=self)
+            depth_indices = depth_vector < z
             if z >= depth_vector[-1]:
                 zi = len(depth_vector) - 2
             else:
-                zi = depth_indices.argmin() - 1 if z >= depth_vector[0] else 0
-            if z < depth_vector[zi]:
-                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
-            elif z > depth_vector[zi + 1]:
-                raise FieldOutOfBoundError(z, y, x, field=self)
+                zi = depth_indices.argmin() - 1 if z > depth_vector[0] else 0
         else:
-            depth_indices = depth_vector >= z
+            if z > depth_vector[0]:
+                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
+            elif z < depth_vector[-1]:
+                raise FieldOutOfBoundError(z, y, x, field=self)
+            depth_indices = depth_vector > z
             if z <= depth_vector[-1]:
                 zi = len(depth_vector) - 2
             else:
-                zi = depth_indices.argmin() - 1 if z <= depth_vector[0] else 0
-            if z > depth_vector[zi]:
-                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
-            elif z < depth_vector[zi + 1]:
-                raise FieldOutOfBoundError(z, y, x, field=self)
+                zi = depth_indices.argmin() - 1 if z < depth_vector[0] else 0
         zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
         return (zi, zeta)
 
