@@ -131,7 +131,17 @@ def test_full_depth_provided_to_interpolators():
     fieldset.U[0.5, 0.5, 0.5, 0.5]
 
 
-@pytest.mark.parametrize("interp_method", ["linear", "freeslip", "nearest", "cgrid_velocity"])
+@pytest.mark.parametrize(
+    "interp_method",
+    [
+        "linear",
+        "freeslip",
+        "nearest",
+        pytest.param(
+            "cgrid_velocity", marks=pytest.mark.xfail(reason="https://github.com/OceanParcels/Parcels/pull/1834")
+        ),
+    ],
+)
 def test_scipy_vs_jit(interp_method):
     """Test that the scipy and JIT versions of the interpolation are the same."""
     variables = {"U": "U", "V": "V", "W": "W"}
