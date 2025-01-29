@@ -1977,28 +1977,17 @@ class VectorField:
             and np.allclose(grid1.time_full, grid2.time_full)
         )
 
-    def dist(self, lat1: float, lat2: float, lon1: float, lon2: float, mesh: Mesh, lat: float):
-        if mesh == "spherical":
-            rad = np.pi / 180.0
-            deg2m = 1852 * 60.0
-            return np.sqrt(((lon2 - lon1) * deg2m * math.cos(rad * lat)) ** 2 + ((lat2 - lat1) * deg2m) ** 2)
-        else:
-            return np.sqrt((lon2 - lon1) ** 2 + (lat2 - lat1) ** 2)
+    @deprecated_made_private  # TODO: Remove 6 months after v3.2.0
+    def dist(self, *args, **kwargs):
+        raise NotImplementedError
 
-    def jacobian(self, py: np.ndarray, px: np.ndarray, eta: float, xsi: float):
-        dphidxsi = [eta - 1, 1 - eta, eta, -eta]
-        dphideta = [xsi - 1, -xsi, xsi, 1 - xsi]
-
-        dxdxsi = np.dot(px, dphidxsi)
-        dxdeta = np.dot(px, dphideta)
-        dydxsi = np.dot(py, dphidxsi)
-        dydeta = np.dot(py, dphideta)
-        jac = dxdxsi * dydeta - dxdeta * dydxsi
-        return jac
+    @deprecated_made_private  # TODO: Remove 6 months after v3.2.0
+    def jacobian(self, *args, **kwargs):
+        raise NotImplementedError
 
     def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         grid = self.U.grid
-        (zeta, eta, xsi, zi, yi, xi) = self.U._search_indices(time, z, y, x, ti, particle=particle)
+        (_, eta, xsi, zi, yi, xi) = self.U._search_indices(time, z, y, x, ti, particle=particle)
 
         if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
@@ -2014,10 +2003,10 @@ class VectorField:
             px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
         xx = (1 - xsi) * (1 - eta) * px[0] + xsi * (1 - eta) * px[1] + xsi * eta * px[2] + (1 - xsi) * eta * px[3]
         assert abs(xx - x) < 1e-4
-        c1 = self.dist(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
-        c2 = self.dist(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
-        c3 = self.dist(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
-        c4 = self.dist(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
+        c1 = i_u.geodesic_distance(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
+        c2 = i_u.geodesic_distance(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
+        c3 = i_u.geodesic_distance(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
+        c4 = i_u.geodesic_distance(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
         if grid.zdim == 1:
             if self.gridindexingtype == "nemo":
                 U0 = self.U.data[ti, yi + 1, xi] * c4
@@ -2049,7 +2038,7 @@ class VectorField:
         else:
             meshJac = deg2m if grid.mesh == "spherical" else 1
 
-        jac = self.jacobian(py, px, eta, xsi) * meshJac
+        jac = i_u.compute_jacobian_determinant(py, px, eta, xsi) * meshJac
 
         u = (
             (-(1 - eta) * U - (1 - xsi) * V) * px[0]

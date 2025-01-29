@@ -232,14 +232,14 @@ def AdvectionAnalytical(particle, fieldset, time):
     else:
         dz = 1.0
 
-    c1 = fieldset.UV.dist(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
-    c2 = fieldset.UV.dist(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
-    c3 = fieldset.UV.dist(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
-    c4 = fieldset.UV.dist(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
+    c1 = i_u.geodesic_distance(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
+    c2 = i_u.geodesic_distance(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
+    c3 = i_u.geodesic_distance(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
+    c4 = i_u.geodesic_distance(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
     rad = np.pi / 180.0
     deg2m = 1852 * 60.0
     meshJac = (deg2m * deg2m * math.cos(rad * particle.lat)) if grid.mesh == "spherical" else 1
-    dxdy = fieldset.UV.jacobian(py, px, eta, xsi) * meshJac
+    dxdy = i_u.compute_jacobian_determinant(py, px, eta, xsi) * meshJac
 
     if withW:
         U0 = direction * fieldset.U.data[ti, zi + 1, yi + 1, xi] * c4 * dz
