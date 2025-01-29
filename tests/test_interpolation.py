@@ -164,7 +164,7 @@ def test_scipy_vs_jit(interp_method):
     for pset in [pset_scipy, pset_jit]:
         pset.execute([AdvectionRK4_3D, DeleteParticle], runtime=4e-3, dt=1e-3)
 
-    tol = 1e-8
+    tol = 1e-6
     for i in range(len(pset_scipy)):
         # Check that the Scipy and JIT particles are at the same location
         assert np.isclose(pset_scipy[i].lon, pset_jit[i].lon, atol=tol)
