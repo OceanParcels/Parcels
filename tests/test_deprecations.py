@@ -411,3 +411,13 @@ def test_removed_attrib(removed_attribute_action: Action):
 
     with pytest.raises(AttributeError):
         getattr(obj, action.public_name)
+
+
+def test_private_fieldfilebuffer():
+    with pytest.warns(DeprecationWarning):
+        from parcels.fieldfilebuffer import (  # noqa: F401
+            DaskFileBuffer,
+            DeferredDaskFileBuffer,
+            NetcdfFileBuffer,
+            _FileBuffer,
+        )
