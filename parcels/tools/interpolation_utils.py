@@ -175,7 +175,7 @@ def interpolate(phi: Callable[[float], list[float]], f: list[float], xsi: float)
     return np.dot(phi(xsi), f)
 
 
-def geodesic_distance(lat1: float, lat2: float, lon1: float, lon2: float, mesh: Mesh, lat: float) -> float:
+def _geodetic_distance(lat1: float, lat2: float, lon1: float, lon2: float, mesh: Mesh, lat: float) -> float:
     if mesh == "spherical":
         rad = np.pi / 180.0
         deg2m = 1852 * 60.0
@@ -184,7 +184,7 @@ def geodesic_distance(lat1: float, lat2: float, lon1: float, lon2: float, mesh: 
         return np.sqrt((lon2 - lon1) ** 2 + (lat2 - lat1) ** 2)
 
 
-def compute_jacobian_determinant(py: np.ndarray, px: np.ndarray, eta: float, xsi: float) -> float:
+def _compute_jacobian_determinant(py: np.ndarray, px: np.ndarray, eta: float, xsi: float) -> float:
     dphidxsi = [eta - 1, 1 - eta, eta, -eta]
     dphideta = [xsi - 1, -xsi, xsi, 1 - xsi]
 

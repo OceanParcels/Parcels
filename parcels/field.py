@@ -2003,10 +2003,10 @@ class VectorField:
             px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
         xx = (1 - xsi) * (1 - eta) * px[0] + xsi * (1 - eta) * px[1] + xsi * eta * px[2] + (1 - xsi) * eta * px[3]
         assert abs(xx - x) < 1e-4
-        c1 = i_u.geodesic_distance(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
-        c2 = i_u.geodesic_distance(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
-        c3 = i_u.geodesic_distance(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
-        c4 = i_u.geodesic_distance(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
+        c1 = i_u._geodetic_distance(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
+        c2 = i_u._geodetic_distance(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
+        c3 = i_u._geodetic_distance(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
+        c4 = i_u._geodetic_distance(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
         if grid.zdim == 1:
             if self.gridindexingtype == "nemo":
                 U0 = self.U.data[ti, yi + 1, xi] * c4
@@ -2038,7 +2038,7 @@ class VectorField:
         else:
             meshJac = deg2m if grid.mesh == "spherical" else 1
 
-        jac = i_u.compute_jacobian_determinant(py, px, eta, xsi) * meshJac
+        jac = i_u._compute_jacobian_determinant(py, px, eta, xsi) * meshJac
 
         u = (
             (-(1 - eta) * U - (1 - xsi) * V) * px[0]
