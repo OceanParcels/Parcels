@@ -109,7 +109,7 @@ def test_pfile_array_remove_all_particles(fieldset, mode, chunks_obs, tmp_zarrfi
     pfile.write(pset, 1)
     pfile.write(pset, 2)
 
-    ds = xr.open_zarr(tmp_zarrfile)
+    ds = xr.open_zarr(tmp_zarrfile).load()
     assert np.allclose(ds["time"][:, 0], np.timedelta64(0, "s"), atol=np.timedelta64(1, "ms"))
     if chunks_obs is not None:
         assert ds["time"][:].shape == chunks
