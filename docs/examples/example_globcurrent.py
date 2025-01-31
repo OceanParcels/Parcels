@@ -129,7 +129,7 @@ def test_globcurrent_time_periodic(mode, rundays):
             fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0]
         )
 
-        def SampleU(particle, fieldset, time):
+        def SampleU(particle, fieldset, time):  # pragma: no cover
             u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
             particle.sample_var += u
 
@@ -255,7 +255,7 @@ def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime
 
     MyParticle = ptype[mode].add_variable("sample_var", initial=0.0)
 
-    def SampleP(particle, fieldset, time):
+    def SampleP(particle, fieldset, time):  # pragma: no cover
         particle.sample_var += fieldset.P[
             time, particle.depth, particle.lat, particle.lon
         ]
@@ -288,7 +288,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
     fieldset = set_globcurrent_fieldset()
     time0 = fieldset.U.grid.time[0]
 
-    def DeleteP0(particle, fieldset, time):
+    def DeleteP0(particle, fieldset, time):  # pragma: no cover
         if particle.id == 0:
             particle.delete()
 
@@ -353,7 +353,7 @@ def test_error_outputdt_not_multiple_dt(mode, tmpdir):
     pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0])
     ofile = pset.ParticleFile(name=filepath, outputdt=timedelta(days=1))
 
-    def DoNothing(particle, fieldset, time):
+    def DoNothing(particle, fieldset, time):  # pragma: no cover
         pass
 
     with pytest.raises(ValueError):

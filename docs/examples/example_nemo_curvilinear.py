@@ -47,7 +47,7 @@ def run_nemo_curvilinear(mode, outfile, advtype="RK4"):
         latp = np.linspace(-70, 70, npart)
         runtime = timedelta(days=15)
 
-    def periodicBC(particle, fieldSet, time):
+    def periodicBC(particle, fieldSet, time):  # pragma: no cover
         if particle.lon > 180:
             particle_dlon -= 360  # noqa
 

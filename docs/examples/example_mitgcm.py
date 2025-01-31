@@ -29,7 +29,7 @@ def run_mitgcm_zonally_reentrant(mode: Literal["scipy", "jit"], path: Path):
     fieldset.add_periodic_halo(zonal=True)
     fieldset.add_constant("domain_width", 1000000)
 
-    def periodicBC(particle, fieldset, time):
+    def periodicBC(particle, fieldset, time):  # pragma: no cover
         if particle.lon < 0:
             particle_dlon += fieldset.domain_width  # noqa
         elif particle.lon > fieldset.domain_width:

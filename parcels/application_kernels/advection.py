@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 
-def AdvectionRK4(particle, fieldset, time):
+def AdvectionRK4(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration."""
     (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1 * 0.5 * particle.dt, particle.lat + v1 * 0.5 * particle.dt)
@@ -27,7 +27,7 @@ def AdvectionRK4(particle, fieldset, time):
     particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6.0 * particle.dt  # noqa
 
 
-def AdvectionRK4_3D(particle, fieldset, time):
+def AdvectionRK4_3D(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity."""
     (u1, v1, w1) = fieldset.UVW[particle]
     lon1 = particle.lon + u1 * 0.5 * particle.dt
@@ -47,7 +47,7 @@ def AdvectionRK4_3D(particle, fieldset, time):
     particle_ddepth += (w1 + 2 * w2 + 2 * w3 + w4) / 6 * particle.dt  # noqa
 
 
-def AdvectionRK4_3D_CROCO(particle, fieldset, time):
+def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
     This kernel assumes the vertical velocity is the 'w' field from CROCO output and works on sigma-layers.
     """
@@ -92,14 +92,14 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):
     ) / 6
 
 
-def AdvectionEE(particle, fieldset, time):
+def AdvectionEE(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using Explicit Euler (aka Euler Forward) integration."""
     (u1, v1) = fieldset.UV[particle]
     particle_dlon += u1 * particle.dt  # noqa
     particle_dlat += v1 * particle.dt  # noqa
 
 
-def AdvectionRK45(particle, fieldset, time):
+def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using adaptive Runge-Kutta 4/5 integration.
 
     Note that this kernel requires a Particle Class that has an extra Variable 'next_dt'
@@ -161,7 +161,7 @@ def AdvectionRK45(particle, fieldset, time):
         return StatusCode.Repeat
 
 
-def AdvectionAnalytical(particle, fieldset, time):
+def AdvectionAnalytical(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using 'analytical advection' integration.
 
     Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017).
