@@ -35,23 +35,29 @@ def search_indices_vertical_z(grid: Grid, gridindexingtype: GridIndexingType, z:
             # In case of CROCO, allow particles in last (uppermost) layer using depth[-1]
             if gridindexingtype in ["croco"] and z < 0:
                 return (-2, 1)
-            _raise_field_out_of_bound_error(z, 0, 0)
-        depth_indices = grid.depth <= z
+            _raise_field_out_of_bound_error(z, None, None)
+        depth_indices = grid.depth < z
         if z >= grid.depth[-1]:
             zi = len(grid.depth) - 2
         else:
-            zi = depth_indices.argmin() - 1 if z >= grid.depth[0] else 0
+            zi = depth_indices.argmin() - 1 if z > grid.depth[0] else 0
     else:
         if z > grid.depth[0]:
             _raise_field_out_of_bound_surface_error(z, None, None)
         elif z < grid.depth[-1]:
-            _raise_field_out_of_bound_error(z, 0, 0)
-        depth_indices = grid.depth >= z
+            _raise_field_out_of_bound_error(z, None, None)
+        depth_indices = grid.depth > z
         if z <= grid.depth[-1]:
             zi = len(grid.depth) - 2
         else:
-            zi = depth_indices.argmin() - 1 if z <= grid.depth[0] else 0
+            zi = depth_indices.argmin() - 1 if z < grid.depth[0] else 0
     zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
+    while zeta > 1:
+        zi += 1
+        zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
+    while zeta < 0:
+        zi -= 1
+        zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
     return (zi, zeta)
 
 
@@ -98,28 +104,35 @@ def search_indices_vertical_s(
             + xsi * eta * grid.depth[:, yi + 1, xi + 1]
             + (1 - xsi) * eta * grid.depth[:, yi + 1, xi]
         )
+    z = np.float32(z)  # type: ignore # TODO: remove type ignore once we migrate to float64
 
     if depth_vector[-1] > depth_vector[0]:
-        depth_indices = depth_vector <= z
+        if z < depth_vector[0]:
+            _raise_field_out_of_bound_error(z, None, None)
+        elif z > depth_vector[-1]:
+            _raise_field_out_of_bound_error(z, None, None)
+        depth_indices = depth_vector < z
         if z >= depth_vector[-1]:
             zi = len(depth_vector) - 2
         else:
-            zi = depth_indices.argmin() - 1 if z >= depth_vector[0] else 0
-        if z < depth_vector[zi]:
-            _raise_field_out_of_bound_surface_error(z, None, None)
-        elif z > depth_vector[zi + 1]:
-            _raise_field_out_of_bound_error(z, y, x)
+            zi = depth_indices.argmin() - 1 if z > depth_vector[0] else 0
     else:
-        depth_indices = depth_vector >= z
+        if z > depth_vector[0]:
+            _raise_field_out_of_bound_error(z, None, None)
+        elif z < depth_vector[-1]:
+            _raise_field_out_of_bound_error(z, None, None)
+        depth_indices = depth_vector > z
         if z <= depth_vector[-1]:
             zi = len(depth_vector) - 2
         else:
-            zi = depth_indices.argmin() - 1 if z <= depth_vector[0] else 0
-        if z > depth_vector[zi]:
-            _raise_field_out_of_bound_surface_error(z, None, None)
-        elif z < depth_vector[zi + 1]:
-            _raise_field_out_of_bound_error(z, y, x)
+            zi = depth_indices.argmin() - 1 if z < depth_vector[0] else 0
     zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
+    while zeta > 1:
+        zi += 1
+        zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
+    while zeta < 0:
+        zi -= 1
+        zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
     return (zi, zeta)
 
 
