@@ -269,7 +269,7 @@ def test_periodic_and_computeTimeChunk_eddies(mode):
         fieldset=fieldset, pclass=ptype[mode], lon=[3.3, 3.3], lat=[46.0, 47.8]
     )
 
-    def periodicBC(particle, fieldset, time):
+    def periodicBC(particle, fieldset, time):  # pragma: no cover
         if particle.lon < fieldset.halo_west:
             particle_dlon += fieldset.halo_east - fieldset.halo_west  # noqa
         elif particle.lon > fieldset.halo_east:
@@ -279,7 +279,7 @@ def test_periodic_and_computeTimeChunk_eddies(mode):
         elif particle.lat > fieldset.halo_north:
             particle_dlat -= fieldset.halo_north - fieldset.halo_south
 
-    def slowlySouthWestward(particle, fieldset, time):
+    def slowlySouthWestward(particle, fieldset, time):  # pragma: no cover
         particle_dlon -= 5 * particle.dt / 1e5  # noqa
         particle_dlat -= 3 * particle.dt / 1e5  # noqa
 

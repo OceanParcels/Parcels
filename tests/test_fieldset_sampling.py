@@ -30,15 +30,15 @@ def pclass(mode):
     )
 
 
-def SampleUV(particle, fieldset, time):
+def SampleUV(particle, fieldset, time):  # pragma: no cover
     (particle.u, particle.v) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
 
-def SampleUVNoConvert(particle, fieldset, time):
+def SampleUVNoConvert(particle, fieldset, time):  # pragma: no cover
     (particle.u, particle.v) = fieldset.UV.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
 
 
-def SampleP(particle, fieldset, time):
+def SampleP(particle, fieldset, time):  # pragma: no cover
     particle.p = fieldset.P[particle]
 
 
@@ -624,7 +624,7 @@ def test_sampling_3DCROCO(mode):
 
     SampleP = ptype[mode].add_variable("p", initial=0.0)
 
-    def SampleU(particle, fieldset, time):
+    def SampleU(particle, fieldset, time):  # pragma: no cover
         particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon, particle]
 
     pset = ParticleSet(fieldset, pclass=SampleP, lon=120e3, lat=50e3, depth=-0.4)
@@ -684,7 +684,7 @@ def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs)
 
     pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
 
-    def test_sample(particle, fieldset, time):
+    def test_sample(particle, fieldset, time):  # pragma: no cover
         particle.sample_var += fieldset.B[time, fieldset.sample_depth, particle.lat, particle.lon]
 
     kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
@@ -736,7 +736,7 @@ def test_sampling_multigrids_non_vectorfield(mode, npart):
 
     pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
 
-    def test_sample(particle, fieldset, time):
+    def test_sample(particle, fieldset, time):  # pragma: no cover
         particle.sample_var += fieldset.B[time, fieldset.sample_depth, particle.lat, particle.lon]
 
     kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
@@ -865,7 +865,7 @@ def test_nestedfields(mode):
     P = NestedField("P", [P1, P2])
     fieldset.add_field(P)
 
-    def Recover(particle, fieldset, time):
+    def Recover(particle, fieldset, time):  # pragma: no cover
         if particle.state == StatusCode.ErrorOutOfBounds:
             particle_dlon = 0  # noqa
             particle_dlat = 0  # noqa
@@ -918,7 +918,7 @@ def test_fieldset_sampling_updating_order(mode, tmp_zarrfile):
     xv, yv = np.meshgrid(np.arange(0, 1, 0.5), np.arange(0, 1, 0.5))
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten())
 
-    def SampleP(particle, fieldset, time):
+    def SampleP(particle, fieldset, time):  # pragma: no cover
         particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
     kernels = [AdvectionRK4, SampleP]

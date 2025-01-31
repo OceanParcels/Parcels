@@ -46,13 +46,13 @@ def test_execution_order(mode, kernel_type):
         {"U": [[0, 1], [2, 3]], "V": np.ones((2, 2))}, {"lon": [0, 2], "lat": [0, 2]}, mesh="flat"
     )
 
-    def MoveLon_Update_Lon(particle, fieldset, time):
+    def MoveLon_Update_Lon(particle, fieldset, time):  # pragma: no cover
         particle.lon += 0.2
 
-    def MoveLon_Update_dlon(particle, fieldset, time):
+    def MoveLon_Update_dlon(particle, fieldset, time):  # pragma: no cover
         particle_dlon += 0.2  # noqa
 
-    def SampleP(particle, fieldset, time):
+    def SampleP(particle, fieldset, time):  # pragma: no cover
         particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon]
 
     SampleParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0.0)
@@ -125,7 +125,7 @@ def test_execution_runtime(fieldset_unit_mesh, mode, start, end, substeps, dt):
 def test_execution_fail_python_exception(fieldset_unit_mesh, mode):
     npart = 10
 
-    def PythonFail(particle, fieldset, time):
+    def PythonFail(particle, fieldset, time):  # pragma: no cover
         if particle.time >= 10.0:
             raise RuntimeError("Enough is enough!")
         else:
@@ -145,7 +145,7 @@ def test_execution_fail_python_exception(fieldset_unit_mesh, mode):
 def test_execution_fail_out_of_bounds(fieldset_unit_mesh, mode):
     npart = 10
 
-    def MoveRight(particle, fieldset, time):
+    def MoveRight(particle, fieldset, time):  # pragma: no cover
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
 
@@ -162,11 +162,11 @@ def test_execution_fail_out_of_bounds(fieldset_unit_mesh, mode):
 def test_execution_recover_out_of_bounds(fieldset_unit_mesh, mode):
     npart = 2
 
-    def MoveRight(particle, fieldset, time):
+    def MoveRight(particle, fieldset, time):  # pragma: no cover
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
 
-    def MoveLeft(particle, fieldset, time):
+    def MoveLeft(particle, fieldset, time):  # pragma: no cover
         if particle.state == StatusCode.ErrorOutOfBounds:
             particle_dlon -= 1.0  # noqa
             particle.state = StatusCode.Success
@@ -182,10 +182,10 @@ def test_execution_recover_out_of_bounds(fieldset_unit_mesh, mode):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_execution_check_all_errors(fieldset_unit_mesh, mode):
-    def MoveRight(particle, fieldset, time):
+    def MoveRight(particle, fieldset, time):  # pragma: no cover
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon, particle]
 
-    def RecoverAllErrors(particle, fieldset, time):
+    def RecoverAllErrors(particle, fieldset, time):  # pragma: no cover
         if particle.state > 4:
             particle.state = StatusCode.Delete
 
@@ -196,7 +196,7 @@ def test_execution_check_all_errors(fieldset_unit_mesh, mode):
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_execution_check_stopallexecution(fieldset_unit_mesh, mode):
-    def addoneLon(particle, fieldset, time):
+    def addoneLon(particle, fieldset, time):  # pragma: no cover
         particle_dlon += 1  # noqa
 
         if particle.lon + particle_dlon >= 10:
@@ -214,7 +214,7 @@ def test_execution_check_stopallexecution(fieldset_unit_mesh, mode):
 def test_execution_delete_out_of_bounds(fieldset_unit_mesh, mode):
     npart = 10
 
-    def MoveRight(particle, fieldset, time):
+    def MoveRight(particle, fieldset, time):  # pragma: no cover
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
 
@@ -237,11 +237,11 @@ def test_kernel_add_no_new_variables(fieldset_unit_mesh, mode):
 def test_multi_kernel_duplicate_varnames(fieldset_unit_mesh, mode):
     # Testing for merging of two Kernels with the same variable declared
     # Should throw a warning, but go ahead regardless
-    def Kernel1(particle, fieldset, time):
+    def Kernel1(particle, fieldset, time):  # pragma: no cover
         add_lon = 0.1
         particle_dlon += add_lon  # noqa
 
-    def Kernel2(particle, fieldset, time):
+    def Kernel2(particle, fieldset, time):  # pragma: no cover
         add_lon = -0.3
         particle_dlon += add_lon  # noqa
 
@@ -254,11 +254,11 @@ def test_multi_kernel_duplicate_varnames(fieldset_unit_mesh, mode):
 def test_multi_kernel_reuse_varnames(fieldset_unit_mesh, mode):
     # Testing for merging of two Kernels with the same variable declared
     # Should throw a warning, but go ahead regardless
-    def MoveEast1(particle, fieldset, time):
+    def MoveEast1(particle, fieldset, time):  # pragma: no cover
         add_lon = 0.2
         particle_dlon += add_lon  # noqa
 
-    def MoveEast2(particle, fieldset, time):
+    def MoveEast2(particle, fieldset, time):  # pragma: no cover
         particle_dlon += add_lon  # noqa
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=ptype[mode], lon=[0.5], lat=[0.5])
@@ -274,10 +274,10 @@ def test_combined_kernel_from_list(fieldset_unit_mesh):
     mixed functions and kernel objects.
     """
 
-    def MoveEast(particle, fieldset, time):
+    def MoveEast(particle, fieldset, time):  # pragma: no cover
         particle_dlon += 0.1  # noqa
 
-    def MoveNorth(particle, fieldset, time):
+    def MoveNorth(particle, fieldset, time):  # pragma: no cover
         particle_dlat += 0.1  # noqa
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=JITParticle, lon=[0.5], lat=[0.5])
@@ -315,11 +315,11 @@ def test_combined_kernel_from_list_error_checking(fieldset_unit_mesh):
 def test_update_kernel_in_script(fieldset_unit_mesh, mode):
     # Testing what happens when kernels are updated during runtime of a script
     # Should throw a warning, but go ahead regardless
-    def MoveEast(particle, fieldset, time):
+    def MoveEast(particle, fieldset, time):  # pragma: no cover
         add_lon = 0.1
         particle_dlon += add_lon  # noqa
 
-    def MoveWest(particle, fieldset, time):
+    def MoveWest(particle, fieldset, time):  # pragma: no cover
         add_lon = -0.3
         particle_dlon += add_lon  # noqa
 
@@ -366,7 +366,7 @@ def test_explicit_ParcelsRandom(fieldset_unit_mesh, mode):
     """Testing `from parcels import ParcelsRandom` in kernel code"""
     from parcels import ParcelsRandom
 
-    def nudge_kernel(particle, fieldset, time):
+    def nudge_kernel(particle, fieldset, time):  # pragma: no cover
         dlat = ParcelsRandom.uniform(2, 3)
         particle_dlat += dlat  # noqa
 
@@ -379,7 +379,7 @@ def test_explicit_ParcelsRandom(fieldset_unit_mesh, mode):
 def test_parcels_dot_ParcelsRandom(fieldset_unit_mesh, mode):
     """Testing `parcels.ParcelsRandom` in kernel code"""
 
-    def nudge_kernel(particle, fieldset, time):
+    def nudge_kernel(particle, fieldset, time):  # pragma: no cover
         particle_dlat += parcels.ParcelsRandom.uniform(2, 3)  # noqa
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=ptype[mode], lon=[0.5], lat=[0.5])
@@ -391,7 +391,7 @@ def test_parcels_dot_ParcelsRandom(fieldset_unit_mesh, mode):
 def test_parcels_dot_rng(fieldset_unit_mesh, mode):
     """Testing `parcels.rng` in kernel code."""
 
-    def nudge_kernel(particle, fieldset, time):
+    def nudge_kernel(particle, fieldset, time):  # pragma: no cover
         dlat = parcels.rng.uniform(2, 3)
         particle_dlat += dlat  # noqa
 
@@ -405,7 +405,7 @@ def test_custom_ParcelsRandom_alias(fieldset_unit_mesh, mode):
     """Testing aliasing ParcelsRandom to another name."""
     from parcels import ParcelsRandom as my_custom_name
 
-    def nudge_kernel(particle, fieldset, time):
+    def nudge_kernel(particle, fieldset, time):  # pragma: no cover
         particle_dlat += my_custom_name.uniform(2, 3)  # noqa
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=ptype[mode], lon=[0.5], lat=[0.5])
@@ -429,7 +429,7 @@ def test_outdated_kernel(fieldset_unit_mesh):
     """
     pset = ParticleSet(fieldset_unit_mesh, pclass=JITParticle, lon=[0.5], lat=[0.5])
 
-    def outdated_kernel(particle, fieldset, time, dt):
+    def outdated_kernel(particle, fieldset, time, dt):  # pragma: no cover
         particle.lon += 0.1
 
     with pytest.raises(ValueError) as e:

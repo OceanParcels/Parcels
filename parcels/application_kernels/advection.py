@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 
-def AdvectionRK4(particle, fieldset, time):
+def AdvectionRK4(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration."""
     (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1 * 0.5 * particle.dt, particle.lat + v1 * 0.5 * particle.dt)
@@ -27,7 +27,7 @@ def AdvectionRK4(particle, fieldset, time):
     particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6.0 * particle.dt  # noqa
 
 
-def AdvectionRK4_3D(particle, fieldset, time):
+def AdvectionRK4_3D(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity."""
     (u1, v1, w1) = fieldset.UVW[particle]
     lon1 = particle.lon + u1 * 0.5 * particle.dt
@@ -47,7 +47,7 @@ def AdvectionRK4_3D(particle, fieldset, time):
     particle_ddepth += (w1 + 2 * w2 + 2 * w3 + w4) / 6 * particle.dt  # noqa
 
 
-def AdvectionRK4_3D_CROCO(particle, fieldset, time):
+def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
     This kernel assumes the vertical velocity is the 'w' field from CROCO output and works on sigma-layers.
     """
@@ -92,14 +92,14 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):
     ) / 6
 
 
-def AdvectionEE(particle, fieldset, time):
+def AdvectionEE(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using Explicit Euler (aka Euler Forward) integration."""
     (u1, v1) = fieldset.UV[particle]
     particle_dlon += u1 * particle.dt  # noqa
     particle_dlat += v1 * particle.dt  # noqa
 
 
-def AdvectionRK45(particle, fieldset, time):
+def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using adaptive Runge-Kutta 4/5 integration.
 
     Note that this kernel requires a Particle Class that has an extra Variable 'next_dt'
@@ -161,7 +161,7 @@ def AdvectionRK45(particle, fieldset, time):
         return StatusCode.Repeat
 
 
-def AdvectionAnalytical(particle, fieldset, time):
+def AdvectionAnalytical(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using 'analytical advection' integration.
 
     Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017).
@@ -232,14 +232,14 @@ def AdvectionAnalytical(particle, fieldset, time):
     else:
         dz = 1.0
 
-    c1 = fieldset.UV.dist(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
-    c2 = fieldset.UV.dist(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
-    c3 = fieldset.UV.dist(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
-    c4 = fieldset.UV.dist(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
+    c1 = i_u._geodetic_distance(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
+    c2 = i_u._geodetic_distance(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
+    c3 = i_u._geodetic_distance(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
+    c4 = i_u._geodetic_distance(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
     rad = np.pi / 180.0
     deg2m = 1852 * 60.0
     meshJac = (deg2m * deg2m * math.cos(rad * particle.lat)) if grid.mesh == "spherical" else 1
-    dxdy = fieldset.UV.jacobian(py, px, eta, xsi) * meshJac
+    dxdy = i_u._compute_jacobian_determinant(py, px, eta, xsi) * meshJac
 
     if withW:
         U0 = direction * fieldset.U.data[ti, zi + 1, yi + 1, xi] * c4 * dz

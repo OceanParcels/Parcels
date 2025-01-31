@@ -17,7 +17,7 @@ def compute_nemo_particle_advection(fieldset, mode):
     lonp = 2.5 * np.ones(npart)
     latp = [i for i in 52.0 + (-1e-3 + np.random.rand(npart) * 2.0 * 1e-3)]
 
-    def periodicBC(particle, fieldSet, time):
+    def periodicBC(particle, fieldSet, time):  # pragma: no cover
         if particle.lon > 15.0:
             particle_dlon -= 15.0  # noqa
         if particle.lon < 0:
@@ -652,7 +652,7 @@ def test_3d_2dfield_sampling(mode):
 
     pset = parcels.ParticleSet(fieldset, pclass=MyParticle, lon=2.5, lat=52)
 
-    def Sample2D(particle, fieldset, time):
+    def Sample2D(particle, fieldset, time):  # pragma: no cover
         particle.sample_var_curvilinear += fieldset.nav_lon[
             time, particle.depth, particle.lat, particle.lon
         ]
