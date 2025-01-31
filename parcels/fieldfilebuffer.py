@@ -784,8 +784,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if len(init_chunk_dict) == 0 and self.chunksize not in [False, None, "auto"]:
             self.autochunkingfailed = True
             raise DaskChunkingError(
-                self.__class__.__name__,
-                "No correct mapping found between Parcels- and NetCDF dimensions! Please correct the 'FieldSet(..., chunksize={...})' parameter and try again.",
+                f"[{self.__class__.__name__}]: No correct mapping found between Parcels- and NetCDF dimensions! Please correct the 'FieldSet(..., chunksize=...)' parameter and try again.",
             )
         else:
             self.autochunkingfailed = False

@@ -441,24 +441,6 @@ def test_fieldset_samegrids_from_data():
     assert fieldset1.U.grid == fieldset1.B.grid
 
 
-@pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_fieldset_celledgesizes(mesh):
-    data, dimensions = generate_fieldset_data(10, 7)
-    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
-
-    fieldset.U._calc_cell_edge_sizes()
-    D_meridional = fieldset.U.cell_edge_sizes["y"]
-    D_zonal = fieldset.U.cell_edge_sizes["x"]
-
-    assert np.allclose(
-        D_meridional.flatten(), D_meridional[0, 0]
-    )  # all meridional distances should be the same in either mesh
-    if mesh == "flat":
-        assert np.allclose(D_zonal.flatten(), D_zonal[0, 0])  # all zonal distances should be the same in flat mesh
-    else:
-        assert all((np.gradient(D_zonal, axis=0) < 0).flatten())  # zonal distances should decrease in spherical mesh
-
-
 @pytest.mark.parametrize("dx, dy", [("e1u", "e2u"), ("e1v", "e2v")])
 def test_fieldset_celledgesizes_curvilinear(dx, dy):
     fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")

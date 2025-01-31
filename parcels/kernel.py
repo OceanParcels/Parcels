@@ -34,11 +34,11 @@ from parcels.grid import GridType
 from parcels.tools.global_statics import get_cache_dir
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
-    FieldOutOfBoundError,
-    FieldOutOfBoundSurfaceError,
-    FieldSamplingError,
     StatusCode,
     TimeExtrapolationError,
+    _raise_field_out_of_bound_error,
+    _raise_field_out_of_bound_surface_error,
+    _raise_field_sampling_error,
 )
 from parcels.tools.warnings import KernelWarning
 
@@ -648,11 +648,11 @@ class Kernel(BaseKernel):
                 elif p.state == StatusCode.ErrorTimeExtrapolation:
                     raise TimeExtrapolationError(p.time)
                 elif p.state == StatusCode.ErrorOutOfBounds:
-                    raise FieldOutOfBoundError(p.depth, p.lat, p.lon)
+                    _raise_field_out_of_bound_error(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.ErrorThroughSurface:
-                    raise FieldOutOfBoundSurfaceError(p.depth, p.lat, p.lon)
+                    _raise_field_out_of_bound_surface_error(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.Error:
-                    raise FieldSamplingError(p.depth, p.lat, p.lon)
+                    _raise_field_sampling_error(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.Delete:
                     pass
                 else:
