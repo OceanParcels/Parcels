@@ -77,13 +77,13 @@ def stommel_fieldset(xdim=200, ydim=200, grid_type="A"):
     return fieldset
 
 
-def UpdateP(particle, fieldset, time):
+def UpdateP(particle, fieldset, time):  # pragma: no cover
     if time == 0:
         particle.p_start = fieldset.P[time, particle.depth, particle.lat, particle.lon]
     particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
-def AgeP(particle, fieldset, time):
+def AgeP(particle, fieldset, time):  # pragma: no cover
     particle.age += particle.dt
     if particle.age > fieldset.maxage:
         particle.delete()

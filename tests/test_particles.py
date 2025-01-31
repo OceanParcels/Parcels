@@ -39,7 +39,7 @@ def test_variable_init(fieldset, mode):
     TestParticle = TestParticle.add_variable("p_int", np.int32, initial=12.0)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
 
-    def addOne(particle, fieldset, time):
+    def addOne(particle, fieldset, time):  # pragma: no cover
         particle.p_float += 1.0
         particle.p_double += 1.0
         particle.p_int += 1

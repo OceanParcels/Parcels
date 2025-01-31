@@ -300,7 +300,7 @@ class Kernel(BaseKernel):
 
     def add_scipy_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
-        def Setcoords(particle, fieldset, time):
+        def Setcoords(particle, fieldset, time):  # pragma: no cover
             particle_dlon = 0  # noqa
             particle_dlat = 0  # noqa
             particle_ddepth = 0  # noqa
@@ -309,7 +309,7 @@ class Kernel(BaseKernel):
             particle.depth = particle.depth_nextloop
             particle.time = particle.time_nextloop
 
-        def Updatecoords(particle, fieldset, time):
+        def Updatecoords(particle, fieldset, time):  # pragma: no cover
             particle.lon_nextloop = particle.lon + particle_dlon  # type: ignore[name-defined] # noqa
             particle.lat_nextloop = particle.lat + particle_dlat  # type: ignore[name-defined] # noqa
             particle.depth_nextloop = particle.depth + particle_ddepth  # type: ignore[name-defined] # noqa
