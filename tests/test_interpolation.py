@@ -54,9 +54,9 @@ def create_interpolation_data_random(*, with_land_point: bool) -> xr.Dataset:
     tdim, zdim, ydim, xdim = 20, 5, 10, 10
     ds = xr.Dataset(
         {
-            "U": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim))),
-            "V": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim))),
-            "W": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim))),
+            "U": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim)) / 1e3),
+            "V": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim)) / 1e3),
+            "W": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim)) / 1e3),
         },
         coords={
             "time": np.linspace(0, tdim - 1, tdim),
