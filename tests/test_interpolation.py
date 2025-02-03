@@ -50,7 +50,7 @@ def create_interpolation_data():
     return xr.DataArray([spatial_data, spatial_data, spatial_data], dims=("time", "depth", "lat", "lon"))
 
 
-def create_interpolation_data_with_land():
+def create_interpolation_data_random(*, with_land_point: bool) -> xr.Dataset:
     tdim, zdim, ydim, xdim = 20, 5, 10, 10
     ds = xr.Dataset(
         {
@@ -66,9 +66,10 @@ def create_interpolation_data_with_land():
         },
     )
     # Set a land point (for testing freeslip)
-    ds["U"][:, :, 2, 5] = 0.0
-    ds["V"][:, :, 2, 5] = 0.0
-    ds["W"][:, :, 2, 5] = 0.0
+    if with_land_point:
+        ds["U"][:, :, 2, 5] = 0.0
+        ds["V"][:, :, 2, 5] = 0.0
+        ds["W"][:, :, 2, 5] = 0.0
 
     return ds
 
@@ -137,16 +138,19 @@ def test_full_depth_provided_to_interpolators():
         "linear",
         "freeslip",
         "nearest",
-        pytest.param(
-            "cgrid_velocity", marks=pytest.mark.xfail(reason="https://github.com/OceanParcels/Parcels/pull/1834")
-        ),
+        "cgrid_velocity",
     ],
 )
 def test_scipy_vs_jit(interp_method):
     """Test that the scipy and JIT versions of the interpolation are the same."""
     variables = {"U": "U", "V": "V", "W": "W"}
     dimensions = {"time": "time", "lon": "lon", "lat": "lat", "depth": "depth"}
-    fieldset = FieldSet.from_xarray_dataset(create_interpolation_data_with_land(), variables, dimensions, mesh="flat")
+    fieldset = FieldSet.from_xarray_dataset(
+        create_interpolation_data_random(with_land_point=interp_method == "freeslip"),
+        variables,
+        dimensions,
+        mesh="flat",
+    )
 
     for field in [fieldset.U, fieldset.V, fieldset.W]:  # Set a land point (for testing freeslip)
         field.interp_method = interp_method
