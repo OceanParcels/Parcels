@@ -166,7 +166,7 @@ def test_scipy_vs_jit(interp_method):
             particle.delete()
 
     for pset in [pset_scipy, pset_jit]:
-        pset.execute([AdvectionRK4_3D, DeleteParticle], runtime=4e-3, dt=1e-3)
+        pset.execute([AdvectionRK4_3D, DeleteParticle], runtime=4, dt=1)
 
     tol = 1e-6
     for i in range(len(pset_scipy)):
