@@ -130,7 +130,7 @@ def test_while_if_break(mode):
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=[0], lat=[0])
 
-    def kernel(particle, fieldset, time):
+    def kernel(particle, fieldset, time):  # pragma: no cover
         while particle.p < 30:
             if particle.p > 9:
                 break
@@ -150,7 +150,7 @@ def test_nested_if(mode):
     )
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=0, lat=0)
 
-    def kernel(particle, fieldset, time):
+    def kernel(particle, fieldset, time):  # pragma: no cover
         if particle.p1 >= particle.p0:
             var = particle.p0
             if var + 1 < particle.p1:
@@ -166,7 +166,7 @@ def test_pass(mode):
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=0, lat=0)
 
-    def kernel(particle, fieldset, time):
+    def kernel(particle, fieldset, time):  # pragma: no cover
         particle.p = -1
         pass
 
@@ -178,7 +178,7 @@ def test_pass(mode):
 def test_dt_as_variable_in_kernel(mode):
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=ptype[mode], lon=0, lat=0)
 
-    def kernel(particle, fieldset, time):
+    def kernel(particle, fieldset, time):  # pragma: no cover
         dt = 1.0  # noqa
 
     pset.execute(kernel, endtime=10, dt=1.0)
@@ -188,10 +188,10 @@ def test_parcels_tmpvar_in_kernel():
     """Tests for error thrown if variable with 'tmp' defined in custom kernel."""
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=JITParticle, lon=0, lat=0)
 
-    def kernel_tmpvar(particle, fieldset, time):
+    def kernel_tmpvar(particle, fieldset, time):  # pragma: no cover
         parcels_tmpvar0 = 0  # noqa
 
-    def kernel_pnum(particle, fieldset, time):
+    def kernel_pnum(particle, fieldset, time):  # pragma: no cover
         pnum = 0  # noqa
 
     for kernel in [kernel_tmpvar, kernel_pnum]:
@@ -207,13 +207,13 @@ def test_varname_as_fieldname():
     Particle = JITParticle.add_variable("speed")
     pset = ParticleSet(fset, pclass=Particle, lon=0, lat=0)
 
-    def kernel_particlename(particle, fieldset, time):
+    def kernel_particlename(particle, fieldset, time):  # pragma: no cover
         particle.speed = fieldset.speed[particle]
 
     pset.execute(kernel_particlename, endtime=1, dt=1.0)
     assert pset[0].speed == 10
 
-    def kernel_varname(particle, fieldset, time):
+    def kernel_varname(particle, fieldset, time):  # pragma: no cover
         vertical_speed = fieldset.vertical_speed  # noqa
 
     with pytest.raises(NotImplementedError):
@@ -224,7 +224,7 @@ def test_abs():
     """Tests for error thrown if using abs in kernel."""
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=JITParticle, lon=0, lat=0)
 
-    def kernel_abs(particle, fieldset, time):
+    def kernel_abs(particle, fieldset, time):  # pragma: no cover
         particle.lon = abs(3.1)
 
     with pytest.raises(NotImplementedError):
@@ -237,7 +237,7 @@ def test_if_withfield(fieldset_unit_mesh, mode):
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset_unit_mesh, pclass=TestParticle, lon=[0], lat=[0])
 
-    def kernel(particle, fieldset, time):
+    def kernel(particle, fieldset, time):  # pragma: no cover
         u, v = fieldset.UV[time, 0, 0, 1.0]
         particle.p = 0
         if fieldset.U[time, 0, 0, 1.0] == u:
@@ -273,7 +273,7 @@ def test_print(fieldset_unit_mesh, mode, capfd):
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset_unit_mesh, pclass=TestParticle, lon=[0.5], lat=[0.5])
 
-    def kernel(particle, fieldset, time):
+    def kernel(particle, fieldset, time):  # pragma: no cover
         particle.p = 1e-3
         tmp = 5
         print(f"{particle.id} {particle.p:f} {tmp:f}")
@@ -286,7 +286,7 @@ def test_print(fieldset_unit_mesh, mode, capfd):
         abs(float(lst[0]) - pset.id[0]) < tol and abs(float(lst[1]) - pset.p[0]) < tol and abs(float(lst[2]) - 5) < tol
     )
 
-    def kernel2(particle, fieldset, time):
+    def kernel2(particle, fieldset, time):  # pragma: no cover
         tmp = 3
         print(f"{tmp:f}")
 
@@ -302,7 +302,7 @@ def test_print(fieldset_unit_mesh, mode, capfd):
 def test_fieldset_access(fieldset_unit_mesh, expectation, mode):
     pset = ParticleSet(fieldset_unit_mesh, pclass=ptype[mode], lon=0, lat=0)
 
-    def kernel(particle, fieldset, time):
+    def kernel(particle, fieldset, time):  # pragma: no cover
         particle.lon = fieldset.U.grid.lon[2]
 
     with expectation:
@@ -352,10 +352,10 @@ def test_random_kernel_concat(fieldset_unit_mesh, mode, concat):
     TestParticle = ptype[mode].add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset_unit_mesh, pclass=TestParticle, lon=0, lat=0)
 
-    def RandomKernel(particle, fieldset, time):
+    def RandomKernel(particle, fieldset, time):  # pragma: no cover
         particle.p += ParcelsRandom.uniform(0, 1)
 
-    def AddOne(particle, fieldset, time):
+    def AddOne(particle, fieldset, time):  # pragma: no cover
         particle.p += 1.0
 
     kernels = [RandomKernel, AddOne] if concat else RandomKernel
@@ -389,7 +389,7 @@ def test_c_kernel(fieldset_unit_mesh, mode, c_inc):
     else:
         c_include = os.path.join(os.path.dirname(__file__), "customed_header.h")
 
-    def ckernel(particle, fieldset, time):
+    def ckernel(particle, fieldset, time):  # pragma: no cover
         func("parcels_customed_Cfunc_pointer_args", fieldset.U, particle_dlon, particle.dt)  # noqa
 
     kernel = pset.Kernel(ckernel, c_include=c_include)
@@ -402,7 +402,7 @@ def test_dt_modif_by_kernel(mode):
     TestParticle = ptype[mode].add_variable("age", dtype=np.float32, initial=0)
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=[0.5], lat=[0])
 
-    def modif_dt(particle, fieldset, time):
+    def modif_dt(particle, fieldset, time):  # pragma: no cover
         particle.age += particle.dt
         particle.dt = 2
 
