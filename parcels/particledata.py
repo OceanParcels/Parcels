@@ -59,9 +59,9 @@ class ParticleData:
 
         self._sorted = np.all(np.diff(pid) >= 0)
 
-        assert (
-            depth is not None
-        ), "particle's initial depth is None - incompatible with the ParticleData class. Invalid state."
+        assert depth is not None, (
+            "particle's initial depth is None - incompatible with the ParticleData class. Invalid state."
+        )
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts."
 
         assert lon.size == time.size, "time and positions (lon, lat, depth) don't have the same lengths."
@@ -72,9 +72,9 @@ class ParticleData:
         partition_function = kwargs.pop("partition_function", partitionParticlesMPI_default)
 
         for kwvar in kwargs:
-            assert (
-                lon.size == kwargs[kwvar].size
-            ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
+            assert lon.size == kwargs[kwvar].size, (
+                f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
+            )
 
         offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
         if MPI:
@@ -132,9 +132,9 @@ class ParticleData:
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
-            assert self._ncount == len(lon) and self._ncount == len(
-                lat
-            ), "Size of ParticleSet does not match length of lon and lat."
+            assert self._ncount == len(lon) and self._ncount == len(lat), (
+                "Size of ParticleSet does not match length of lon and lat."
+            )
 
             # mimic the variables that get initialised in the constructor
             self._data["lat"][:] = lat
@@ -268,9 +268,9 @@ class ParticleData:
 
     def add_same(self, same_class):
         """Add another ParticleData instance to this ParticleData instance. This is done by concatenating both instances."""
-        assert (
-            same_class is not None
-        ), f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
+        assert same_class is not None, (
+            f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
+        )
         assert type(same_class) is type(self)
 
         if same_class._ncount == 0:
@@ -313,20 +313,20 @@ class ParticleData:
 
     def remove_multi_by_indices(self, indices):
         """Remove particles from the ParticleData instance based on their indices."""
-        assert (
-            indices is not None
-        ), "Trying to remove particles by their ParticleData instance indices, but the index list is None - invalid operation."
-        assert (
-            type(indices) in [list, dict, np.ndarray]
-        ), "Trying to remove particles by their indices, but the index container is not a valid Python-collection - invalid operation."
+        assert indices is not None, (
+            "Trying to remove particles by their ParticleData instance indices, but the index list is None - invalid operation."
+        )
+        assert type(indices) in [list, dict, np.ndarray], (
+            "Trying to remove particles by their indices, but the index container is not a valid Python-collection - invalid operation."
+        )
         if type(indices) is not dict:
-            assert (
-                len(indices) == 0 or type(indices[0]) in [int, np.int32, np.intp]
-            ), "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+            assert len(indices) == 0 or type(indices[0]) in [int, np.int32, np.intp], (
+                "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+            )
         else:
-            assert (
-                len(list(indices.values())) == 0 or type(list(indices.values())[0]) in [int, np.int32, np.intp]
-            ), "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+            assert len(list(indices.values())) == 0 or type(list(indices.values())[0]) in [int, np.int32, np.intp], (
+                "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+            )
         if type(indices) is dict:
             indices = list(indices.values())
 
