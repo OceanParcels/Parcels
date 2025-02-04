@@ -20,6 +20,8 @@ from parcels import (
     UnitConverter,
     Variable,
 )
+from parcels.grid import Grid, _calc_cell_edge_sizes
+from parcels.tools.converters import TimeConverter
 from tests.utils import TEST_DATA
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
@@ -989,3 +991,27 @@ def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
                 assert np.allclose(pset.Wvel[0], 0, atol=1e-9)
             else:
                 assert np.allclose(pset.Wvel[0], -w * convfactor)
+
+
+@pytest.mark.parametrize(
+    "lon, lat",
+    [
+        (np.arange(0.0, 20.0, 1.0), np.arange(0.0, 10.0, 1.0)),
+    ],
+)
+@pytest.mark.parametrize("mesh", ["flat", "spherical"])
+def test_grid_celledgesizes(lon, lat, mesh):
+    grid = Grid.create_grid(
+        lon=lon, lat=lat, depth=np.array([0]), time=np.array([0]), time_origin=TimeConverter(0), mesh=mesh
+    )
+
+    _calc_cell_edge_sizes(grid)
+    D_meridional = grid.cell_edge_sizes["y"]
+    D_zonal = grid.cell_edge_sizes["x"]
+    assert np.allclose(
+        D_meridional.flatten(), D_meridional[0, 0]
+    )  # all meridional distances should be the same in either mesh
+    if mesh == "flat":
+        assert np.allclose(D_zonal.flatten(), D_zonal[0, 0])  # all zonal distances should be the same in flat mesh
+    else:
+        assert all((np.gradient(D_zonal, axis=0) < 0).flatten())  # zonal distances should decrease in spherical mesh
