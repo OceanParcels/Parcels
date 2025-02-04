@@ -91,7 +91,7 @@ def test_pset_create_fromparticlefile(fieldset, mode, restart, tmp_zarrfile):
     pset = ParticleSet(fieldset, lon=lon, lat=lat, depth=[4] * len(lon), pclass=TestParticle, p3=np.arange(len(lon)))
     pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
 
-    def Kernel(particle, fieldset, time):
+    def Kernel(particle, fieldset, time):  # pragma: no cover
         particle.p = 2.0
         if particle.lon == 1.0:
             particle.delete()
@@ -189,7 +189,7 @@ def test_pset_not_multipldt_time(fieldset, mode):
     times = [0, 1.1]
     pset = ParticleSet(fieldset, lon=[0] * 2, lat=[0] * 2, pclass=ptype[mode], time=times)
 
-    def Addlon(particle, fieldset, time):
+    def Addlon(particle, fieldset, time):  # pragma: no cover
         particle_dlon += particle.dt  # noqa
 
     pset.execute(Addlon, dt=1, runtime=2)
@@ -203,7 +203,7 @@ def test_pset_repeated_release(fieldset, mode):
     pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart), pclass=ptype[mode], time=time)
     assert np.allclose([p.time for p in pset], time)
 
-    def IncrLon(particle, fieldset, time):
+    def IncrLon(particle, fieldset, time):  # pragma: no cover
         particle_dlon += 1.0  # noqa
 
     pset.execute(IncrLon, dt=1.0, runtime=npart + 1)
@@ -213,7 +213,7 @@ def test_pset_repeated_release(fieldset, mode):
 def test_pset_repeatdt_check_dt(fieldset):
     pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5)
 
-    def IncrLon(particle, fieldset, time):
+    def IncrLon(particle, fieldset, time):  # pragma: no cover
         particle.lon = 1.0
 
     pset.execute(IncrLon, dt=2, runtime=21)
@@ -234,7 +234,7 @@ def test_pset_repeatdt_custominit(fieldset, mode):
 def test_pset_stop_simulation(fieldset, mode):
     pset = ParticleSet(fieldset, lon=0, lat=0, pclass=ptype[mode])
 
-    def Delete(particle, fieldset, time):
+    def Delete(particle, fieldset, time):  # pragma: no cover
         if time == 4:
             return StatusCode.StopExecution
 
@@ -299,7 +299,7 @@ def test_pset_add_shorthand(fieldset, mode):
 def test_pset_add_execute(fieldset, mode):
     npart = 10
 
-    def AddLat(particle, fieldset, time):
+    def AddLat(particle, fieldset, time):  # pragma: no cover
         particle_dlat += 0.1  # noqa
 
     pset = ParticleSet(fieldset, lon=[], lat=[], pclass=ptype[mode])
@@ -364,7 +364,7 @@ def test_pset_remove_particle(fieldset, mode):
 def test_pset_remove_kernel(fieldset, mode):
     npart = 100
 
-    def DeleteKernel(particle, fieldset, time):
+    def DeleteKernel(particle, fieldset, time):  # pragma: no cover
         if particle.lon >= 0.4:
             particle.delete()
 
@@ -378,7 +378,7 @@ def test_pset_multi_execute(fieldset, mode):
     npart = 10
     n = 5
 
-    def AddLat(particle, fieldset, time):
+    def AddLat(particle, fieldset, time):  # pragma: no cover
         particle_dlat += 0.1  # noqa
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
@@ -393,7 +393,7 @@ def test_pset_multi_execute_delete(fieldset, mode):
     npart = 10
     n = 5
 
-    def AddLat(particle, fieldset, time):
+    def AddLat(particle, fieldset, time):  # pragma: no cover
         particle_dlat += 0.1  # noqa
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
@@ -442,7 +442,7 @@ def test_from_field_exact_val(staggered_grid):
 
     SampleParticle = ptype["scipy"].add_variable("mask", initial=0)
 
-    def SampleMask(particle, fieldset, time):
+    def SampleMask(particle, fieldset, time):  # pragma: no cover
         particle.mask = fieldset.mask[particle]
 
     pset = ParticleSet.from_field(fieldset, size=400, pclass=SampleParticle, start_field=FMask, time=0)

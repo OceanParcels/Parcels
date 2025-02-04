@@ -145,11 +145,11 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
     }
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
 
-    def DeleteParticle(particle, fieldset, time):
+    def DeleteParticle(particle, fieldset, time):  # pragma: no cover
         if particle.state == StatusCode.ErrorOutOfBounds or particle.state == StatusCode.ErrorThroughSurface:
             particle.delete()
 
-    def SubmergeParticle(particle, fieldset, time):
+    def SubmergeParticle(particle, fieldset, time):  # pragma: no cover
         if particle.state == StatusCode.ErrorThroughSurface:
             (u, v) = fieldset.UV[particle]
             particle_dlon = u * particle.dt  # noqa
@@ -246,7 +246,7 @@ def test_advection_3DCROCO(mode):
     pclass = ptype[mode].add_variable(Variable("w"))
     pset = ParticleSet(fieldset=fieldset, pclass=pclass, lon=X, lat=Y, depth=Z)
 
-    def SampleW(particle, fieldset, time):
+    def SampleW(particle, fieldset, time):  # pragma: no cover
         particle.w = fieldset.W[time, particle.depth, particle.lat, particle.lon]
 
     pset.execute([AdvectionRK4_3D, SampleW], runtime=runtime, dt=100)
@@ -279,7 +279,7 @@ def create_periodic_fieldset(xdim, ydim, uvel, vvel):
     return FieldSet.from_data(data, dimensions, mesh="spherical", transpose=True)
 
 
-def periodicBC(particle, fieldset, time):
+def periodicBC(particle, fieldset, time):  # pragma: no cover
     particle.lon = math.fmod(particle.lon, 1)
     particle.lat = math.fmod(particle.lat, 1)
 
