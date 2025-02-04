@@ -40,6 +40,18 @@ def test_TimeConverter_reltime_one_day():
         assert tc.reltime(time) == ONE_DAY
 
 
+def test_TimeConverter_timedelta64_float():
+    ONE_DAY = 24 * 60 * 60
+    tc = TimeConverter(np.timedelta64(0, "s"))
+    assert tc.reltime(1 * ONE_DAY) == 1 * ONE_DAY
+
+    tc = TimeConverter(np.timedelta64(0, "D"))
+    assert tc.reltime(1 * ONE_DAY) == 1 * ONE_DAY
+
+    tc = TimeConverter(np.timedelta64(0, "ns"))
+    assert tc.reltime(1 * ONE_DAY) == 1 * ONE_DAY
+
+
 @pytest.mark.parametrize(
     "x, y",
     [
