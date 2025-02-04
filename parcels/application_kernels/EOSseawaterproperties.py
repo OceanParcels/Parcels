@@ -5,7 +5,7 @@ import math
 __all__ = ["AdiabticTemperatureGradient", "PressureFromLatDepth", "PtempFromTemp", "TempFromPtemp", "UNESCODensity"]
 
 
-def PressureFromLatDepth(particle, fieldset, time):
+def PressureFromLatDepth(particle, fieldset, time):  # pragma: no cover
     """
     Calculates pressure in dbars from depth in meters and latitude.
 
@@ -28,7 +28,7 @@ def PressureFromLatDepth(particle, fieldset, time):
     particle.pressure = ((1 - C1) - math.pow(((math.pow((1 - C1), 2)) - (8.84e-6 * particle.depth)), 0.5)) / 4.42e-6
 
 
-def AdiabticTemperatureGradient(particle, fieldset, time):
+def AdiabticTemperatureGradient(particle, fieldset, time):  # pragma: no cover
     """Calculates adiabatic temperature gradient as per UNESCO 1983 routines.
 
 
@@ -81,7 +81,7 @@ def AdiabticTemperatureGradient(particle, fieldset, time):
     )
 
 
-def PtempFromTemp(particle, fieldset, time):
+def PtempFromTemp(particle, fieldset, time):  # pragma: no cover
     """
     Calculates potential temperature as per UNESCO 1983 report.
 
@@ -188,7 +188,7 @@ def PtempFromTemp(particle, fieldset, time):
     particle.potemp = (th + (del_th - 2 * q) / 6) / 1.00024
 
 
-def TempFromPtemp(particle, fieldset, time):
+def TempFromPtemp(particle, fieldset, time):  # pragma: no cover
     """
     Calculates temperature from potential temperature at the reference
     pressure PR and in situ pressure P.
@@ -295,7 +295,7 @@ def TempFromPtemp(particle, fieldset, time):
     particle.temp = (th + (del_th - 2 * q) / 6) / 1.00024
 
 
-def UNESCODensity(particle, fieldset, time):
+def UNESCODensity(particle, fieldset, time):  # pragma: no cover
     # This is a kernel which calculates the UNESCO density
     # (https://link.springer.com/content/pdf/bbm%3A978-3-319-18908-6%2F1.pdf),
     # from pressure, temperature and salinity.

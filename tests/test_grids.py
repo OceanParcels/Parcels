@@ -20,6 +20,8 @@ from parcels import (
     UnitConverter,
     Variable,
 )
+from parcels.grid import Grid, _calc_cell_edge_sizes
+from parcels.tools.converters import TimeConverter
 from tests.utils import TEST_DATA
 
 ptype = {"scipy": ScipyParticle, "jit": JITParticle}
@@ -76,7 +78,7 @@ def test_multi_structured_grids(mode):
 
     fieldset = FieldSet(u_field, v_field, fields=other_fields)
 
-    def sampleTemp(particle, fieldset, time):
+    def sampleTemp(particle, fieldset, time):  # pragma: no cover
         # Note that fieldset.temp is interpolated at time=time+dt.
         # Indeed, sampleTemp is called at time=time, but the result is written
         # at time=time+dt, after the Kernel update
@@ -231,7 +233,7 @@ def test_rectilinear_s_grid_sampling(mode, z4d):
     other_fields["temp"] = temp_field
     fieldset = FieldSet(u_field, v_field, fields=other_fields)
 
-    def sampleTemp(particle, fieldset, time):
+    def sampleTemp(particle, fieldset, time):  # pragma: no cover
         particle.temp = fieldset.temp[time, particle.depth, particle.lat, particle.lon]
 
     MyParticle = ptype[mode].add_variable("temp", dtype=np.float32, initial=20.0)
@@ -321,7 +323,7 @@ def test_rectilinear_s_grids_advect2(mode):
 
     MyParticle = ptype[mode].add_variable("relDepth", dtype=np.float32, initial=20.0)
 
-    def moveEast(particle, fieldset, time):
+    def moveEast(particle, fieldset, time):  # pragma: no cover
         particle_dlon += 5 * particle.dt  # noqa
         particle.relDepth = fieldset.relDepth[time, particle.depth, particle.lat, particle.lon]
 
@@ -356,7 +358,7 @@ def test_curvilinear_grids(mode):
     v_field = Field("V", v_data, grid=grid, transpose=False)
     fieldset = FieldSet(u_field, v_field)
 
-    def sampleSpeed(particle, fieldset, time):
+    def sampleSpeed(particle, fieldset, time):  # pragma: no cover
         u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
         particle.speed = math.sqrt(u * u + v * v)
 
@@ -388,7 +390,7 @@ def test_nemo_grid(mode):
     # test ParticleSet.from_field on curvilinear grids
     ParticleSet.from_field(fieldset, ptype[mode], start_field=fieldset.U, size=5)
 
-    def sampleVel(particle, fieldset, time):
+    def sampleVel(particle, fieldset, time):  # pragma: no cover
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
     MyParticle = ptype[mode].add_variables(
@@ -449,7 +451,7 @@ def test_cgrid_uniform_2dvel(mode, time):
     fieldset.U.interp_method = "cgrid_velocity"
     fieldset.V.interp_method = "cgrid_velocity"
 
-    def sampleVel(particle, fieldset, time):
+    def sampleVel(particle, fieldset, time):  # pragma: no cover
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
     MyParticle = ptype[mode].add_variables(
@@ -502,7 +504,7 @@ def test_cgrid_uniform_3dvel(mode, vert_mode, time):
     fieldset.V.interp_method = "cgrid_velocity"
     fieldset.W.interp_method = "cgrid_velocity"
 
-    def sampleVel(particle, fieldset, time):
+    def sampleVel(particle, fieldset, time):  # pragma: no cover
         (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[
             time, particle.depth, particle.lat, particle.lon
         ]
@@ -560,7 +562,7 @@ def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
     fieldset.V.interp_method = "cgrid_velocity"
     fieldset.W.interp_method = "cgrid_velocity"
 
-    def sampleVel(particle, fieldset, time):
+    def sampleVel(particle, fieldset, time):  # pragma: no cover
         (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[
             time, particle.depth, particle.lat, particle.lon
         ]
@@ -601,11 +603,11 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
 
     fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh="flat", deferred_load=deferred_load)
 
-    def sampleVel(particle, fieldset, time):
+    def sampleVel(particle, fieldset, time):  # pragma: no cover
         (particle.zonal, particle.meridional, particle.vert) = fieldset.UVW[particle]
         particle.tracer = fieldset.T[particle]
 
-    def OutBoundsError(particle, fieldset, time):
+    def OutBoundsError(particle, fieldset, time):  # pragma: no cover
         if particle.state == StatusCode.ErrorOutOfBounds:
             particle.out_of_bounds = 1
             particle_ddepth -= 3  # noqa
@@ -712,7 +714,7 @@ def test_cgrid_indexing(mode, gridindexingtype, coordtype):
     fieldset.U.interp_method = "cgrid_velocity"
     fieldset.V.interp_method = "cgrid_velocity"
 
-    def UpdateR(particle, fieldset, time):
+    def UpdateR(particle, fieldset, time):  # pragma: no cover
         if time == 0:
             particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
@@ -789,7 +791,7 @@ def test_cgrid_indexing_3D(mode, gridindexingtype, withtime):
     fieldset.V.interp_method = "cgrid_velocity"
     fieldset.W.interp_method = "cgrid_velocity"
 
-    def UpdateR(particle, fieldset, time):
+    def UpdateR(particle, fieldset, time):  # pragma: no cover
         if time == 0:
             particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
@@ -867,7 +869,7 @@ def test_bgrid_indexing_3D(mode, gridindexingtype, withtime):
     fieldset.V.interp_method = "bgrid_velocity"
     fieldset.W.interp_method = "bgrid_w_velocity"
 
-    def UpdateR(particle, fieldset, time):
+    def UpdateR(particle, fieldset, time):  # pragma: no cover
         if time == 0:
             particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
@@ -940,7 +942,7 @@ def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
     fieldset.U.units = UnitConverter()
     fieldset.V.units = UnitConverter()
 
-    def VelocityInterpolator(particle, fieldset, time):
+    def VelocityInterpolator(particle, fieldset, time):  # pragma: no cover
         particle.Uvel = fieldset.U[time, particle.depth, particle.lat, particle.lon]
         particle.Vvel = fieldset.V[time, particle.depth, particle.lat, particle.lon]
         particle.Wvel = fieldset.W[time, particle.depth, particle.lat, particle.lon]
@@ -989,3 +991,27 @@ def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
                 assert np.allclose(pset.Wvel[0], 0, atol=1e-9)
             else:
                 assert np.allclose(pset.Wvel[0], -w * convfactor)
+
+
+@pytest.mark.parametrize(
+    "lon, lat",
+    [
+        (np.arange(0.0, 20.0, 1.0), np.arange(0.0, 10.0, 1.0)),
+    ],
+)
+@pytest.mark.parametrize("mesh", ["flat", "spherical"])
+def test_grid_celledgesizes(lon, lat, mesh):
+    grid = Grid.create_grid(
+        lon=lon, lat=lat, depth=np.array([0]), time=np.array([0]), time_origin=TimeConverter(0), mesh=mesh
+    )
+
+    _calc_cell_edge_sizes(grid)
+    D_meridional = grid.cell_edge_sizes["y"]
+    D_zonal = grid.cell_edge_sizes["x"]
+    assert np.allclose(
+        D_meridional.flatten(), D_meridional[0, 0]
+    )  # all meridional distances should be the same in either mesh
+    if mesh == "flat":
+        assert np.allclose(D_zonal.flatten(), D_zonal[0, 0])  # all zonal distances should be the same in flat mesh
+    else:
+        assert all((np.gradient(D_zonal, axis=0) < 0).flatten())  # zonal distances should decrease in spherical mesh

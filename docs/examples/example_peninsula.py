@@ -91,7 +91,7 @@ def peninsula_fieldset(xdim, ydim, mesh="flat", grid_type="A"):
     return fieldset
 
 
-def UpdateP(particle, fieldset, time):
+def UpdateP(particle, fieldset, time):  # pragma: no cover
     if time == 0:
         particle.p_start = fieldset.P[time, particle.depth, particle.lat, particle.lon]
     particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
