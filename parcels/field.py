@@ -684,7 +684,7 @@ class Field:
         if grid is None:
             # Concatenate time variable to determine overall dimension
             # across multiple files
-            if "time" in dimensions:
+            if "time" in dimensions or timestamps is not None:
                 time, time_origin, timeslices, dataFiles = cls._collect_timeslices(
                     timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
                 )
