@@ -34,11 +34,11 @@ from parcels.grid import GridType
 from parcels.tools.global_statics import get_cache_dir
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import (
-    FieldOutOfBoundError,
-    FieldOutOfBoundSurfaceError,
-    FieldSamplingError,
     StatusCode,
     TimeExtrapolationError,
+    _raise_field_out_of_bound_error,
+    _raise_field_out_of_bound_surface_error,
+    _raise_field_sampling_error,
 )
 from parcels.tools.warnings import KernelWarning
 
@@ -300,7 +300,7 @@ class Kernel(BaseKernel):
 
     def add_scipy_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
-        def Setcoords(particle, fieldset, time):
+        def Setcoords(particle, fieldset, time):  # pragma: no cover
             particle_dlon = 0  # noqa
             particle_dlat = 0  # noqa
             particle_ddepth = 0  # noqa
@@ -309,7 +309,7 @@ class Kernel(BaseKernel):
             particle.depth = particle.depth_nextloop
             particle.time = particle.time_nextloop
 
-        def Updatecoords(particle, fieldset, time):
+        def Updatecoords(particle, fieldset, time):  # pragma: no cover
             particle.lon_nextloop = particle.lon + particle_dlon  # type: ignore[name-defined] # noqa
             particle.lat_nextloop = particle.lat + particle_dlat  # type: ignore[name-defined] # noqa
             particle.depth_nextloop = particle.depth + particle_ddepth  # type: ignore[name-defined] # noqa
@@ -648,11 +648,11 @@ class Kernel(BaseKernel):
                 elif p.state == StatusCode.ErrorTimeExtrapolation:
                     raise TimeExtrapolationError(p.time)
                 elif p.state == StatusCode.ErrorOutOfBounds:
-                    raise FieldOutOfBoundError(p.depth, p.lat, p.lon)
+                    _raise_field_out_of_bound_error(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.ErrorThroughSurface:
-                    raise FieldOutOfBoundSurfaceError(p.depth, p.lat, p.lon)
+                    _raise_field_out_of_bound_surface_error(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.Error:
-                    raise FieldSamplingError(p.depth, p.lat, p.lon)
+                    _raise_field_sampling_error(p.depth, p.lat, p.lon)
                 elif p.state == StatusCode.Delete:
                     pass
                 else:
