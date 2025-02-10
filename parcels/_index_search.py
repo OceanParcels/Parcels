@@ -79,7 +79,7 @@ def search_indices_vertical_s(
         eta = 1
     if time < grid.time[ti]:
         ti -= 1
-    if grid._z4d:
+    if grid._z4d:  # type: ignore[attr-defined]
         if ti == len(grid.time) - 1:
             depth_vector = (
                 (1 - xsi) * (1 - eta) * grid.depth[-1, :, yi, xi]
@@ -232,7 +232,7 @@ def _search_indices_curvilinear(field: Field, time, z, y, x, ti=-1, particle=Non
     else:
         xi = int(field.grid.xdim / 2) - 1
         yi = int(field.grid.ydim / 2) - 1
-    xsi = eta = -1
+    xsi = eta = -1.0
     grid = field.grid
     invA = np.array([[1, 0, 0, 0], [-1, 1, 0, 0], [-1, 0, 0, 1], [1, -1, 1, -1]])
     maxIterSearch = 1e6

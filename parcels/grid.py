@@ -830,7 +830,7 @@ def _calc_cell_edge_sizes(grid: RectilinearGrid) -> None:
     attribute to the grid.
     """
     if not grid.cell_edge_sizes:
-        if grid._gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):
+        if grid._gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):  # type: ignore[attr-defined]
             grid.cell_edge_sizes["x"] = np.zeros((grid.ydim, grid.xdim), dtype=np.float32)
             grid.cell_edge_sizes["y"] = np.zeros((grid.ydim, grid.xdim), dtype=np.float32)
 
@@ -842,7 +842,7 @@ def _calc_cell_edge_sizes(grid: RectilinearGrid) -> None:
                     grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, grid.depth[0], lat, lon)
         else:
             raise ValueError(
-                f"_cell_edge_sizes() not implemented for {grid._gtype} grids. "
+                f"_cell_edge_sizes() not implemented for {grid._gtype} grids. "  # type: ignore[attr-defined]
                 "You can provide Field.grid.cell_edge_sizes yourself by in, e.g., "
                 "NEMO using the e1u fields etc from the mesh_mask.nc file."
             )
