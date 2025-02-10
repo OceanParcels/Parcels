@@ -8,13 +8,14 @@ description = "Framework for Lagrangian tracking of virtual ocean particles in t
 readme = "README.md"
 dynamic = ["version"]
 authors = [{name = "oceanparcels.org team"}]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {file = "LICENSE.md"}
 classifiers = [
   "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Operating System :: OS Independent",
   "Topic :: Scientific/Engineering",
   "Intended Audience :: Science/Research",
@@ -24,7 +25,6 @@ dependencies = [
   "cftime",
   "numpy",
   "dask",
-  "cftime",
   "psutil",
   "netCDF4",
   "zarr",
@@ -50,20 +50,53 @@ parcels = ["parcels/include/*"]
 write_to = "parcels/_version_setup.py"
 local_scheme = "no-local-version"
 
-[tool.isort]
-profile = "black"
-skip_gitignore = true
-
 [tool.pytest.ini_options]
+addopts = ["--strict-config", "--strict-markers"]
+testpaths = ["tests", "docs/examples"]
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
+minversion = "7"
+markers = [ # can be skipped by doing `pytest -m "not slow"` etc.
+  "flaky: flaky tests",
+  "slow: slow tests",
+]
 
-[tool.pydocstyle]
+filterwarnings = [
+  "error:.*removed in a future release of Parcels.*:DeprecationWarning", # Have Parcels DeprecationWarnings fail CI (prevents deprecated items being used in internal code)
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "D",  # pydocstyle
+    "E",  # Error
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # Bugbear
+    "UP", # pyupgrade
+    "LOG", # logging
+    "ICN", # import conventions
+    "G", # logging-format
+    "RUF", # ruff
+    "ISC001", # single-line-implicit-string-concatenation
+]
+
 ignore = [
-    # Numpy docstring format http://www.pydocstyle.org/en/latest/error_codes.html#default-conventions
-    "D107", "D203", "D212", "D213", "D402", "D413", "D415", "D416", "D417",
+    # line too long (82 > 79 characters)
+    "E501",
+    # ‘from module import *’ used; unable to detect undefined names
+    "F403",
+    # Mutable class attributes should be annotated with `typing.ClassVar`
+    "RUF012",
+    # Consider `(slice(2), *block)` instead of concatenation
+    "RUF005",
+    # Prefer `next(iter(variable.items()))` over single element slice
+    "RUF015",
+    # Use `X | Y` in `isinstance` (see https://github.com/home-assistant/core/issues/123850)
+    "UP038",
 
-    # TODO: once vvv is fixed, replace `ignore = ` section with `convention = numpy`
-    # IGNORE FOR NOW (requires more work)
+    # TODO: ignore for now (requires more work). Remove ignore once fixed
     # Missing docstring in public module
     "D100",
     # Missing docstring in public class
@@ -84,4 +117,42 @@ ignore = [
     "D404",
     # 1 blank line required between summary line and description (requires writing of summaries)
     "D205",
+    # do not use bare except, specify exception instead
+    "E722",
+
+
+    # TODO: These bugbear issues are to be resolved
+    "B011", # Do not `assert False`
+    "B016", # Cannot raise a literal. Did you intend to return it or raise an Exception?
+    "B904", # Within an `except` clause, raise exceptions
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.isort]
+known-first-party = ["parcels"]
+
+[tool.mypy]
+files = [
+  "parcels/compilation/codegenerator.py",
+  "parcels/_typing.py",
+  "parcels/tools/*.py",
+  "parcels/grid.py",
+  "parcels/field.py",
+  "parcels/fieldset.py",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "parcels._version_setup",
+    "mpi4py",
+    "scipy.spatial",
+    "sklearn.cluster",
+    "zarr",
+    "cftime",
+    "pykdtree.kdtree",
+    "netCDF4",
+    "cgen"
+]
+ignore_missing_imports = true

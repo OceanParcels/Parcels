@@ -1,7 +1,6 @@
 build/*
 docs/_build/*
 docs/_downloads
-gh-pages/*
 lib/
 bin/
 parcels_examples
@@ -18,15 +17,14 @@ out-*
 **/*.zarr/*
 .DS_store
 
-.idea/*
+.vscode
 .env
 Profile.prof
 **/.ipynb_checkpoints/*
 .cache/*
-.pytest_cache/*
 .eggs/*
 parcels.egg-info/*
 dist/parcels*.egg
-parcels/examples/particle*.png
 parcels/_version_setup.py
-/.pytest_cache/
+.pytest_cache
+.coverage

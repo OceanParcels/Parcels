@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -9,26 +9,33 @@ repos:
       - id: check-json
         types: [text]
         files: \.(json|ipynb)$
-  - repo: https://github.com/pycqa/flake8
-    rev: "7.1.0"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
     hooks:
-      - id: flake8
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0 # pick a git hash / tag to point to
-    hooks:
-      - id: pydocstyle
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.8.5
-    hooks:
-      - id: nbqa-black
-      - id: nbqa-check-ast
-      - id: nbqa-isort
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        name: isort (python)
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v4.0.0-alpha.8"
+      - id: ruff
+        name: ruff lint (.py)
+        args: [--fix, --show-fixes]
+        types_or: [python]
+      - id: ruff
+        name: ruff isort (.ipynb)
+        args: [--select, I, --fix]
+        types_or: [jupyter]
+      - id: ruff-format
+        types_or: [python, jupyter]
+  - repo: https://github.com/rbubley/mirrors-prettier # Update mirror as official mirror is deprecated
+    rev: v3.4.2
     hooks:
       - id: prettier
+
+  # Ruff doesn't have full coverage of pydoclint https://github.com/astral-sh/ruff/issues/12434
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        name: pydoclint
+        files: "none"
+        # files: parcels/fieldset.py # put here instead of in config file due to https://github.com/pre-commit/pre-commit-hooks/issues/112#issuecomment-215613842
+        args:
+          - --select=DOC103 # TODO: Expand coverage to other codes
+        additional_dependencies:
+          - pydoclint[flake8]

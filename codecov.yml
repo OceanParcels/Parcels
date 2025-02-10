@@ -6,7 +6,16 @@ coverage:
     patch:
       default:
         informational: true
-comment: false # Only on PR when theres a change in coverage
-
+comment:
+  false
+  # # Wait until all builds that upload coverage report have completed before commenting on
+  # # the PR with the coverage report.
+  # after_n_builds: 6
+  # layout: " diff, flags, files"
+  # behavior: default
+  # require_changes: true
+  # require_base: false
+  # require_head: true
+  # hide_project_coverage: true
 # When modifying this file, please validate using
 # curl -X POST --data-binary @codecov.yml https://codecov.io/validate

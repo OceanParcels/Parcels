@@ -2,10 +2,9 @@ import os
 import subprocess
 from struct import calcsize
 
-try:
-    from mpi4py import MPI
-except ModuleNotFoundError:
-    MPI = None
+from parcels._compat import MPI
+
+_tmp_dir = os.getcwd()
 
 
 class Compiler_parameters:
@@ -79,36 +78,36 @@ class GNU_parameters(Compiler_parameters):
 
         Iflags = []
         if isinstance(incdirs, list):
-            for i, dir in enumerate(incdirs):
-                Iflags.append("-I"+dir)
+            for dir in incdirs:
+                Iflags.append("-I" + dir)
         Lflags = []
         if isinstance(libdirs, list):
-            for i, dir in enumerate(libdirs):
-                Lflags.append("-L"+dir)
+            for dir in libdirs:
+                Lflags.append("-L" + dir)
         lflags = []
         if isinstance(libs, list):
-            for i, lib in enumerate(libs):
+            for lib in libs:
                 lflags.append("-l" + lib)
 
-        cc_env = os.getenv('CC')
+        cc_env = os.getenv("CC")
         mpicc = None
         if MPI:
-            mpicc_env = os.getenv('MPICC')
+            mpicc_env = os.getenv("MPICC")
             mpicc = mpicc_env
             mpicc = "mpicc" if mpicc is None and os._exists("mpicc") else None
             mpicc = "mpiCC" if mpicc is None and os._exists("mpiCC") else None
         self._compiler = mpicc if MPI and mpicc is not None else cc_env if cc_env is not None else "gcc"
-        opt_flags = ['-g', '-O3']
-        arch_flag = ['-m64' if calcsize("P") == 8 else '-m32']
-        self._cppargs = ['-Wall', '-fPIC', '-std=gnu11']
+        opt_flags = ["-g", "-O3"]
+        arch_flag = ["-m64" if calcsize("P") == 8 else "-m32"]
+        self._cppargs = ["-Wall", "-fPIC", "-std=gnu11"]
         self._cppargs += Iflags
         self._cppargs += opt_flags + cppargs + arch_flag
-        self._ldargs = ['-shared']
+        self._ldargs = ["-shared"]
         self._ldargs += Lflags
         self._ldargs += lflags
         self._ldargs += ldargs
         if len(Lflags) > 0:
-            self._ldargs += ['-Wl, -rpath=%s' % (":".join(libdirs))]
+            self._ldargs += [f"-Wl, -rpath={':'.join(libdirs)}"]
         self._ldargs += arch_flag
         self._incdirs = incdirs
         self._libdirs = libdirs
@@ -207,13 +206,15 @@ class CCompiler:
         A list of arguments to the linker (optional).
     """
 
-    def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
+    def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=None):
+        if tmp_dir is None:
+            tmp_dir = _tmp_dir
         if cppargs is None:
             cppargs = []
         if ldargs is None:
             ldargs = []
 
-        self._cc = os.getenv('CC') if cc is None else cc
+        self._cc = os.getenv("CC") if cc is None else cc
         self._cppargs = cppargs
         self._ldargs = ldargs
         self._dynlib_ext = ""
@@ -229,28 +230,32 @@ class CCompiler:
         pass
 
     def _create_compile_process_(self, cmd, src, log):
-        with open(log, 'w') as logfile:
+        with open(log, "w") as logfile:
             try:
                 subprocess.check_call(cmd, stdout=logfile, stderr=logfile)
             except OSError:
                 raise RuntimeError(f"OSError during compilation. Please check if compiler exists: {self._cc}")
             except subprocess.CalledProcessError:
                 with open(log) as logfile2:
-                    raise RuntimeError(f"Error during compilation:\n"
-                                       f"Compilation command: {cmd}\n"
-                                       f"Source/Destination file: {src}\n"
-                                       f"Log file: {logfile.name}\n"
-                                       f"Log output: {logfile2.read()}\n"
-                                       f"\n"
-                                       f"If you are on macOS, it might help to type 'export CC=gcc'")
+                    raise RuntimeError(
+                        f"Error during compilation:\n"
+                        f"Compilation command: {cmd}\n"
+                        f"Source/Destination file: {src}\n"
+                        f"Log file: {logfile.name}\n"
+                        f"Log output: {logfile2.read()}\n"
+                        f"\n"
+                        f"If you are on macOS, it might help to type 'export CC=gcc'"
+                    )
         return True
 
 
 class CCompiler_SS(CCompiler):
     """Single-stage C-compiler; used for a SINGLE source file."""
 
-    def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
-        super().__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
+    def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=None):
+        super().__init__(
+            cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir
+        )
 
     def __str__(self):
         output = "[CCompiler_SS]: "
@@ -264,8 +269,8 @@ class CCompiler_SS(CCompiler):
         return output
 
     def compile(self, src, obj, log):
-        cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
-        with open(log, 'w') as logfile:
+        cc = [self._cc] + self._cppargs + ["-o", obj, src] + self._ldargs
+        with open(log, "w") as logfile:
             logfile.write(f"Compiling: {cc}\n")
         self._create_compile_process_(cc, src, log)
 
@@ -282,9 +287,17 @@ class GNUCompiler_SS(CCompiler_SS):
         A list of arguments to pass to the linker (optional).
     """
 
-    def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
+    def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=None):
         c_params = GNU_parameters(cppargs, ldargs, incdirs, libdirs, libs)
-        super().__init__(c_params.compiler, cppargs=c_params.cppargs, ldargs=c_params.ldargs, incdirs=c_params.incdirs, libdirs=c_params.libdirs, libs=c_params.libs, tmp_dir=tmp_dir)
+        super().__init__(
+            c_params.compiler,
+            cppargs=c_params.cppargs,
+            ldargs=c_params.ldargs,
+            incdirs=c_params.incdirs,
+            libdirs=c_params.libdirs,
+            libs=c_params.libs,
+            tmp_dir=tmp_dir,
+        )
         self._dynlib_ext = c_params.dynlib_ext
         self._stclib_ext = c_params.stclib_ext
         self._obj_ext = c_params.obj_ext

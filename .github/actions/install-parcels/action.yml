@@ -7,6 +7,9 @@ inputs:
   environment-file:
     description: Conda environment file to use.
     default: environment.yml
+  python-version:
+    description: Python version to use.
+    default: ""
 runs:
   using: "composite"
   steps:
@@ -19,9 +22,8 @@ runs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         environment-file: ${{ inputs.environment-file }}
+        python-version: ${{ inputs.python-version }}
         channels: conda-forge
-        cache-environment: true
-        cache-downloads: true
     - name: MPI support
       if: ${{ ! (runner.os == 'Windows') }}
       run: conda install -c conda-forge mpich mpi4py

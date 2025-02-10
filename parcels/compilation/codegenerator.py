@@ -2,7 +2,7 @@ import ast
 import collections
 import math
 import random
-from abc import ABC
+import warnings
 from copy import copy
 
 import cgen as c
@@ -10,8 +10,8 @@ import cgen as c
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.particle import JITParticle
-from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
+from parcels.tools.warnings import KernelWarning
 
 
 class IntrinsicNode(ast.AST):
@@ -23,32 +23,26 @@ class IntrinsicNode(ast.AST):
 class FieldSetNode(IntrinsicNode):
     def __getattr__(self, attr):
         if isinstance(getattr(self.obj, attr), Field):
-            return FieldNode(getattr(self.obj, attr),
-                             ccode=f"{self.ccode}->{attr}")
+            return FieldNode(getattr(self.obj, attr), ccode=f"{self.ccode}->{attr}")
         elif isinstance(getattr(self.obj, attr), NestedField):
             if isinstance(getattr(self.obj, attr)[0], VectorField):
-                return NestedVectorFieldNode(getattr(self.obj, attr),
-                                             ccode=f"{self.ccode}->{attr}")
+                return NestedVectorFieldNode(getattr(self.obj, attr), ccode=f"{self.ccode}->{attr}")
             else:
-                return NestedFieldNode(getattr(self.obj, attr),
-                                       ccode=f"{self.ccode}->{attr}")
+                return NestedFieldNode(getattr(self.obj, attr), ccode=f"{self.ccode}->{attr}")
         elif isinstance(getattr(self.obj, attr), VectorField):
-            return VectorFieldNode(getattr(self.obj, attr),
-                                   ccode=f"{self.ccode}->{attr}")
+            return VectorFieldNode(getattr(self.obj, attr), ccode=f"{self.ccode}->{attr}")
         else:
-            return ConstNode(getattr(self.obj, attr),
-                             ccode="%s" % (attr))
+            return ConstNode(getattr(self.obj, attr), ccode=f"{attr}")
 
 
 class FieldNode(IntrinsicNode):
     def __getattr__(self, attr):
         if isinstance(getattr(self.obj, attr), Grid):
-            return GridNode(getattr(self.obj, attr),
-                            ccode=f"{self.ccode}->{attr}")
+            return GridNode(getattr(self.obj, attr), ccode=f"{self.ccode}->{attr}")
         elif attr == "eval":
             return FieldEvalCallNode(self)
         else:
-            raise NotImplementedError('Access to Field attributes are not (yet) implemented in JIT mode')
+            raise NotImplementedError("Access to Field attributes are not (yet) implemented in JIT mode")
 
 
 class FieldEvalCallNode(IntrinsicNode):
@@ -71,7 +65,7 @@ class VectorFieldNode(IntrinsicNode):
         if attr == "eval":
             return VectorFieldEvalCallNode(self)
         else:
-            raise NotImplementedError('Access to VectorField attributes are not (yet) implemented in JIT mode')
+            raise NotImplementedError("Access to VectorField attributes are not (yet) implemented in JIT mode")
 
     def __getitem__(self, attr):
         return VectorFieldEvalNode(self.obj, attr)
@@ -85,12 +79,13 @@ class VectorFieldEvalCallNode(IntrinsicNode):
 
 
 class VectorFieldEvalNode(IntrinsicNode):
-    def __init__(self, field, args, var, var2, var3, convert=True):
+    def __init__(self, field, args, var, var2, var3, var4, convert=True):
         self.field = field
         self.args = args
         self.var = var  # the variable in which the interpolated field is written
         self.var2 = var2  # second variable for UV interpolation
         self.var3 = var3  # third variable for UVW interpolation
+        self.var4 = var4  # extra variable for sigma-scaling for croco
         self.convert = convert  # whether to convert the result (like field.applyConversion)
 
 
@@ -112,17 +107,18 @@ class NestedVectorFieldNode(IntrinsicNode):
 
 
 class NestedVectorFieldEvalNode(IntrinsicNode):
-    def __init__(self, fields, args, var, var2, var3):
+    def __init__(self, fields, args, var, var2, var3, var4):
         self.fields = fields
         self.args = args
         self.var = var  # the variable in which the interpolated field is written
         self.var2 = var2  # second variable for UV interpolation
         self.var3 = var3  # third variable for UVW interpolation
+        self.var4 = var4  # extra variable for sigma-scaling for croco
 
 
 class GridNode(IntrinsicNode):
     def __getattr__(self, attr):
-        raise NotImplementedError('Access to Grids is not (yet) implemented in JIT mode')
+        raise NotImplementedError("Access to Grids is not (yet) implemented in JIT mode")
 
 
 class ConstNode(IntrinsicNode):
@@ -131,7 +127,7 @@ class ConstNode(IntrinsicNode):
 
 
 class MathNode(IntrinsicNode):
-    symbol_map = {'pi': 'M_PI', 'e': 'M_E', 'nan': 'NAN'}
+    symbol_map = {"pi": "M_PI", "e": "M_E", "nan": "NAN"}
 
     def __getattr__(self, attr):
         if hasattr(math, attr):
@@ -143,13 +139,15 @@ class MathNode(IntrinsicNode):
 
 
 class RandomNode(IntrinsicNode):
-    symbol_map = {'random': 'parcels_random',
-                  'uniform': 'parcels_uniform',
-                  'randint': 'parcels_randint',
-                  'normalvariate': 'parcels_normalvariate',
-                  'expovariate': 'parcels_expovariate',
-                  'vonmisesvariate': 'parcels_vonmisesvariate',
-                  'seed': 'parcels_seed'}
+    symbol_map = {
+        "random": "parcels_random",
+        "uniform": "parcels_uniform",
+        "randint": "parcels_randint",
+        "normalvariate": "parcels_normalvariate",
+        "expovariate": "parcels_expovariate",
+        "vonmisesvariate": "parcels_vonmisesvariate",
+        "seed": "parcels_seed",
+    }
 
     def __getattr__(self, attr):
         if hasattr(random, attr):
@@ -162,7 +160,7 @@ class RandomNode(IntrinsicNode):
 
 class StatusCodeNode(IntrinsicNode):
     def __getattr__(self, attr):
-        statuscodes = [c for c in vars(StatusCode) if not c.startswith('_')]
+        statuscodes = [c for c in vars(StatusCode) if not c.startswith("_")]
         if attr in statuscodes:
             return IntrinsicNode(None, ccode=attr.upper())
         else:
@@ -171,7 +169,7 @@ class StatusCodeNode(IntrinsicNode):
 
 class PrintNode(IntrinsicNode):
     def __init__(self):
-        self.obj = 'print'
+        self.obj = "print"
 
 
 class ParticleAttributeNode(IntrinsicNode):
@@ -182,27 +180,32 @@ class ParticleAttributeNode(IntrinsicNode):
 
 class ParticleXiYiZiTiAttributeNode(IntrinsicNode):
     def __init__(self, obj, attr):
-        logger.warning_once(f"Be careful when sampling particle.{attr}, as this is updated in the kernel loop. "
-                            "Best to place the sampling statement before advection.")
+        warnings.warn(
+            f"Be careful when sampling particle.{attr}, as this is updated in the kernel loop. "
+            "Best to place the sampling statement before advection.",
+            KernelWarning,
+            stacklevel=2,
+        )
         self.obj = obj.ccode
         self.attr = attr
 
 
 class ParticleNode(IntrinsicNode):
-
     def __init__(self, obj):
-        super().__init__(obj, ccode='particles')
+        super().__init__(obj, ccode="particles")
 
     def __getattr__(self, attr):
-        if attr in ['xi', 'yi', 'zi', 'ti']:
+        if attr in ["xi", "yi", "zi", "ti"]:
             return ParticleXiYiZiTiAttributeNode(self, attr)
         if attr in [v.name for v in self.obj.variables]:
             return ParticleAttributeNode(self, attr)
-        elif attr in ['delete']:
-            return ParticleAttributeNode(self, 'state')
+        elif attr in ["delete"]:
+            return ParticleAttributeNode(self, "state")
         else:
-            raise AttributeError(f"Particle type {self.obj.name} does not define attribute '{attr}. "
-                                 f"Please add '{attr}' as a Variable in {self.obj.name}.")
+            raise AttributeError(
+                f"Particle type {self.obj.name} does not define attribute '{attr}. "
+                f"Please add '{attr}' as a Variable in {self.obj.name}."
+            )
 
 
 class IntrinsicTransformer(ast.NodeTransformer):
@@ -223,28 +226,28 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def get_tmp(self):
         """Create a new temporary variable name."""
-        tmp = "parcels_tmpvar%d" % self._tmp_counter
+        tmp = f"parcels_tmpvar{self._tmp_counter:d}"
         self._tmp_counter += 1
         self.tmp_vars += [tmp]
         return tmp
 
     def visit_Name(self, node):
         """Inject IntrinsicNode objects into the tree according to keyword."""
-        if node.id == 'fieldset' and self.fieldset is not None:
-            node = FieldSetNode(self.fieldset, ccode='fset')
-        elif node.id == 'particle':
+        if node.id == "fieldset" and self.fieldset is not None:
+            node = FieldSetNode(self.fieldset, ccode="fset")
+        elif node.id == "particle":
             node = ParticleNode(self.ptype)
-        elif node.id in ['StatusCode']:
-            node = StatusCodeNode(math, ccode='')
-        elif node.id == 'math':
-            node = MathNode(math, ccode='')
-        elif node.id == 'ParcelsRandom':
-            node = RandomNode(math, ccode='')
-        elif node.id == 'print':
+        elif node.id in ["StatusCode"]:
+            node = StatusCodeNode(math, ccode="")
+        elif node.id == "math":
+            node = MathNode(math, ccode="")
+        elif node.id in ["ParcelsRandom", "rng"]:
+            node = RandomNode(math, ccode="")
+        elif node.id == "print":
             node = PrintNode()
-        elif (node.id == 'pnum') or ('parcels_tmpvar' in node.id):
+        elif (node.id == "pnum") or ("parcels_tmpvar" in node.id):
             raise NotImplementedError(f"Custom Kernels cannot contain string {node.id}; please change your kernel")
-        elif node.id == 'abs':
+        elif node.id == "abs":
             raise NotImplementedError("abs() does not work in JIT Kernels. Use math.fabs() instead")
         return node
 
@@ -253,14 +256,18 @@ class IntrinsicTransformer(ast.NodeTransformer):
         if isinstance(node.value, IntrinsicNode):
             return getattr(node.value, node.attr)
         else:
-            if node.value.id in ['np', 'numpy']:
-                raise NotImplementedError("Cannot convert numpy functions in kernels to C-code.\n"
-                                          "Either use functions from the math library or run Parcels in Scipy mode.\n"
-                                          "For more information, see https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernels")
-            elif node.value.id in ['random']:
-                raise NotImplementedError("Cannot convert random functions in kernels to C-code.\n"
-                                          "Use `import parcels.rng as ParcelsRandom` and then ParcelsRandom.random(), ParcelsRandom.uniform() etc.\n"
-                                          "For more information, see https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernels")
+            if node.value.id in ["np", "numpy"]:
+                raise NotImplementedError(
+                    "Cannot convert numpy functions in kernels to C-code.\n"
+                    "Either use functions from the math library or run Parcels in Scipy mode.\n"
+                    "For more information, see https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernels"
+                )
+            elif node.value.id in ["random"]:
+                raise NotImplementedError(
+                    "Cannot convert random functions in kernels to C-code.\n"
+                    "Use `import parcels.rng as ParcelsRandom` and then ParcelsRandom.random(), ParcelsRandom.uniform() etc.\n"
+                    "For more information, see https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernels"
+                )
             else:
                 raise NotImplementedError(f"Cannot convert '{node.value.id}' used in kernel to C-code")
 
@@ -279,9 +286,10 @@ class IntrinsicTransformer(ast.NodeTransformer):
         elif isinstance(node.value, VectorFieldNode):
             tmp = self.get_tmp()
             tmp2 = self.get_tmp()
-            tmp3 = self.get_tmp() if node.value.obj.vector_type == '3D' else None
+            tmp3 = self.get_tmp() if "3D" in node.value.obj.vector_type else None
+            tmp4 = self.get_tmp() if "3DSigma" in node.value.obj.vector_type else None
             # Insert placeholder node for field eval ...
-            self.stmt_stack += [VectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
+            self.stmt_stack += [VectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3, tmp4)]
             # .. and return the name of the temporary that will be populated
             if tmp3:
                 return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2), ast.Name(id=tmp3)], ast.Load())
@@ -294,8 +302,9 @@ class IntrinsicTransformer(ast.NodeTransformer):
         elif isinstance(node.value, NestedVectorFieldNode):
             tmp = self.get_tmp()
             tmp2 = self.get_tmp()
-            tmp3 = self.get_tmp() if list.__getitem__(node.value.obj, 0).vector_type == '3D' else None
-            self.stmt_stack += [NestedVectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
+            tmp3 = self.get_tmp() if "3D" in list.__getitem__(node.value.obj, 0).vector_type else None
+            tmp4 = self.get_tmp() if "3DSigma" in list.__getitem__(node.value.obj, 0).vector_type else None
+            self.stmt_stack += [NestedVectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3, tmp4)]
             if tmp3:
                 return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2), ast.Name(id=tmp3)], ast.Load())
             else:
@@ -305,8 +314,12 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def visit_AugAssign(self, node):
         node.target = self.visit(node.target)
-        if isinstance(node.target, ParticleAttributeNode) and node.target.attr in ['lon', 'lat', 'depth', 'time']:
-            logger.warning_once("Don't change the location of a particle directly in a Kernel. Use particle_dlon, particle_dlat, etc.")
+        if isinstance(node.target, ParticleAttributeNode) and node.target.attr in ["lon", "lat", "depth", "time"]:
+            warnings.warn(
+                "Don't change the location of a particle directly in a Kernel. Use particle_dlon, particle_dlat, etc.",
+                KernelWarning,
+                stacklevel=2,
+            )
         node.op = self.visit(node.op)
         node.value = self.visit(node.value)
         stmts = [node]
@@ -322,7 +335,9 @@ class IntrinsicTransformer(ast.NodeTransformer):
         node.value = self.visit(node.value)
         if isinstance(node.value, ConstNode) and len(node.targets) > 0 and isinstance(node.targets[0], ast.Name):
             if node.targets[0].id == node.value.ccode:
-                raise NotImplementedError(f"Assignment of fieldset.{node.value.ccode} to a local variable {node.targets[0].id} with same name in kernel. This is not allowed.")
+                raise NotImplementedError(
+                    f"Assignment of fieldset.{node.value.ccode} to a local variable {node.targets[0].id} with same name in kernel. This is not allowed."
+                )
         stmts = [node]
 
         # Inject statements from the stack
@@ -336,7 +351,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         node.args = [self.visit(a) for a in node.args]
         node.keywords = {kw.arg: self.visit(kw.value) for kw in node.keywords}
 
-        if isinstance(node.func, ParticleAttributeNode) and node.func.attr == 'state':
+        if isinstance(node.func, ParticleAttributeNode) and node.func.attr == "state":
             node = IntrinsicNode(node, "particles->state[pnum] = DELETE")
 
         elif isinstance(node.func, FieldEvalCallNode):
@@ -359,7 +374,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             # get a temporary value to assign result to
             tmp1 = self.get_tmp()
             tmp2 = self.get_tmp()
-            tmp3 = self.get_tmp() if node.func.field.obj.vector_type == '3D' else None
+            tmp3 = self.get_tmp() if "3D" in node.func.field.obj.vector_type else None
+            tmp4 = self.get_tmp() if "3DSigma" in node.func.field.obj.vector_type else None
             # whether to convert
             convert = True
             if "applyConversion" in node.keywords:
@@ -370,7 +386,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
             # convert args to Index(Tuple(*args))
             args = ast.Index(value=ast.Tuple(node.args, ast.Load()))
 
-            self.stmt_stack += [VectorFieldEvalNode(node.func.field, args, tmp1, tmp2, tmp3, convert)]
+            self.stmt_stack += [VectorFieldEvalNode(node.func.field, args, tmp1, tmp2, tmp3, tmp4, convert)]
             if tmp3:
                 return ast.Tuple([ast.Name(id=tmp1), ast.Name(id=tmp2), ast.Name(id=tmp3)], ast.Load())
             else:
@@ -383,28 +399,27 @@ class TupleSplitter(ast.NodeTransformer):
     """AST transformer that detects and splits Pythonic tuple assignments into multiple statements for conversion to C."""
 
     def visit_Assign(self, node):
-        if isinstance(node.targets[0], ast.Tuple) \
-           and isinstance(node.value, ast.Tuple):
+        if isinstance(node.targets[0], ast.Tuple) and isinstance(node.value, ast.Tuple):
             t_elts = node.targets[0].elts
             v_elts = node.value.elts
             if len(t_elts) != len(v_elts):
                 raise AttributeError("Tuple lengths in assignment do not agree")
             node = [ast.Assign() for _ in t_elts]
-            for n, t, v in zip(node, t_elts, v_elts):
+            for n, t, v in zip(node, t_elts, v_elts, strict=True):
                 n.targets = [t]
                 n.value = v
         return node
 
 
-class KernelGenerator(ABC, ast.NodeVisitor):
+class KernelGenerator(ast.NodeVisitor):
     """Code generator class that translates simple Python kernel functions into C functions.
 
     Works by populating and accessing the `ccode` attribute on nodes in the Python AST.
     """
 
     # Intrinsic variables that appear as function arguments
-    kernel_vars = ['particle', 'fieldset', 'time', 'output_time', 'tol']
-    array_vars = []
+    kernel_vars = ["particle", "fieldset", "time", "output_time", "tol"]
+    array_vars: list[str] = []
 
     def __init__(self, fieldset=None, ptype=JITParticle):
         self.fieldset = fieldset
@@ -412,8 +427,13 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.field_args = collections.OrderedDict()
         self.vector_field_args = collections.OrderedDict()
         self.const_args = collections.OrderedDict()
+        if isinstance(fieldset.U, Field) and fieldset.U.gridindexingtype == "croco" and hasattr(fieldset, "H"):
+            self.field_args["H"] = fieldset.H  # CROCO requires H field
+            self.field_args["Zeta"] = fieldset.Zeta  # CROCO requires Zeta field
+            self.field_args["Cs_w"] = fieldset.Cs_w  # CROCO requires CS_w field
+            self.const_args["hc"] = fieldset.hc  # CROCO requires hc constant
 
-    def generate(self, py_ast, funcvars):
+    def generate(self, py_ast, funcvars: list[str]):
         # Replace occurrences of intrinsic objects in Python AST
         transformer = IntrinsicTransformer(self.fieldset, self.ptype)
         py_ast = transformer.visit(py_ast)
@@ -428,12 +448,16 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         # Insert variable declarations for non-intrinsic variables
         # Make sure that repeated variables are not declared more than
         # once. If variables occur in multiple Kernels, give a warning
-        used_vars = []
+        used_vars: list[str] = []
         funcvars_copy = copy(funcvars)  # editing a list while looping over it is dangerous
         for kvar in funcvars:
-            if kvar in used_vars + ['particle_dlon', 'particle_dlat', 'particle_ddepth']:
-                if kvar not in ['particle', 'fieldset', 'time', 'particle_dlon', 'particle_dlat', 'particle_ddepth']:
-                    logger.warning(kvar+" declared in multiple Kernels")
+            if kvar in used_vars + ["particle_dlon", "particle_dlat", "particle_ddepth"]:
+                if kvar not in ["particle", "fieldset", "time", "particle_dlon", "particle_dlat", "particle_ddepth"]:
+                    warnings.warn(
+                        kvar + " declared in multiple Kernels",
+                        KernelWarning,
+                        stacklevel=2,
+                    )
                 funcvars_copy.remove(kvar)
             else:
                 used_vars.append(kvar)
@@ -441,6 +465,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
+        self.ccode.body.insert(0, c.Statement("int parcels_interp_state = 0"))
         if len(funcvars) > 0:
             for f in funcvars:
                 self.ccode.body.insert(0, c.Statement(f"type_coord {f} = 0"))
@@ -452,9 +477,9 @@ class KernelGenerator(ABC, ast.NodeVisitor):
 
     @staticmethod
     def _check_FieldSamplingArguments(ccode):
-        if ccode == 'particles':
-            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
-        elif ccode[-1] == 'particles':
+        if ccode == "particles":
+            args = ("time", "particles->depth[pnum]", "particles->lat[pnum]", "particles->lon[pnum]")
+        elif ccode[-1] == "particles":
             args = ccode[:-1]
         else:
             args = ccode
@@ -466,18 +491,20 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             self.visit(stmt)
 
         # Create function declaration and argument list
-        decl = c.Static(c.DeclSpecifier(c.Value("StatusCode", node.name), spec='inline'))
-        args = [c.Pointer(c.Value(self.ptype.name + 'p', "particles")),
-                c.Value("int", "pnum"),
-                c.Value("double", "time")]
+        decl = c.Static(c.DeclSpecifier(c.Value("StatusCode", node.name), spec="inline"))
+        args = [
+            c.Pointer(c.Value(self.ptype.name + "p", "particles")),
+            c.Value("int", "pnum"),
+            c.Value("double", "time"),
+        ]
         for field in self.field_args.values():
-            args += [c.Pointer(c.Value("CField", "%s" % field.ccode_name))]
+            args += [c.Pointer(c.Value("CField", f"{field.ccode_name}"))]
         for field in self.vector_field_args.values():
-            for fcomponent in ['U', 'V', 'W']:
+            for fcomponent in ["U", "V", "W"]:
                 try:
                     f = getattr(field, fcomponent)
                     if f.ccode_name not in self.field_args:
-                        args += [c.Pointer(c.Value("CField", "%s" % f.ccode_name))]
+                        args += [c.Pointer(c.Value("CField", f"{f.ccode_name}"))]
                         self.field_args[f.ccode_name] = f
                 except:
                     pass  # field.W does not always exist
@@ -486,14 +513,14 @@ class KernelGenerator(ABC, ast.NodeVisitor):
 
         # Create function body as C-code object
         body = []
-        for coord in ['lon', 'lat', 'depth']:
+        for coord in ["lon", "lat", "depth"]:
             body += [c.Statement(f"type_coord particle_d{coord} = 0")]
             body += [c.Statement(f"particles->{coord}[pnum] = particles->{coord}_nextloop[pnum]")]
         body += [c.Statement("particles->time[pnum] = particles->time_nextloop[pnum]")]
 
         body += [stmt.ccode for stmt in node.body]
 
-        for coord in ['lon', 'lat', 'depth']:
+        for coord in ["lon", "lat", "depth"]:
             body += [c.Statement(f"particles->{coord}_nextloop[pnum] = particles->{coord}[pnum] + particle_d{coord}")]
         body += [c.Statement("particles->time_nextloop[pnum] = particles->time[pnum] + particles->dt[pnum]")]
         body += [c.Statement("return particles->state[pnum]")]
@@ -510,29 +537,29 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         if isinstance(node.func, PrintNode):
             # Write our own Print parser because Python3-AST does not seem to have one
             if isinstance(node.args[0], ast.Str):
-                node.ccode = str(c.Statement('printf("%s\\n")' % (node.args[0].s)))
+                node.ccode = str(c.Statement(f'printf("{node.args[0].s}\\n")'))
             elif isinstance(node.args[0], ast.Name):
-                node.ccode = str(c.Statement('printf("%%f\\n", %s)' % (node.args[0].id)))
+                node.ccode = str(c.Statement(f'printf("%f\\n", {node.args[0].id})'))
             elif isinstance(node.args[0], ast.BinOp):
-                if hasattr(node.args[0].right, 'ccode'):
+                if hasattr(node.args[0].right, "ccode"):
                     args = node.args[0].right.ccode
-                elif hasattr(node.args[0].right, 'id'):
+                elif hasattr(node.args[0].right, "id"):
                     args = node.args[0].right.id
-                elif hasattr(node.args[0].right, 'elts'):
+                elif hasattr(node.args[0].right, "elts"):
                     args = []
                     for a in node.args[0].right.elts:
-                        if hasattr(a, 'ccode'):
+                        if hasattr(a, "ccode"):
                             args.append(a.ccode)
-                        elif hasattr(a, 'id'):
+                        elif hasattr(a, "id"):
                             args.append(a.id)
                 else:
                     args = []
-                s = 'printf("%s\\n"' % node.args[0].left.s
+                s = f'printf("{node.args[0].left.s}\\n"'
                 if isinstance(args, str):
-                    s = s + (", %s)" % args)
+                    s = s + f", {args})"
                 else:
                     for arg in args:
-                        s = s + (", %s" % arg)
+                        s = s + (f", {arg}")
                     s = s + ")"
                 node.ccode = str(c.Statement(s))
             else:
@@ -540,37 +567,48 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         else:
             for a in node.args:
                 self.visit(a)
-                if a.ccode == 'parcels_customed_Cfunc_pointer_args':
+                if a.ccode == "parcels_customed_Cfunc_pointer_args":
                     pointer_args = True
                     parcels_customed_Cfunc = True
-                elif a.ccode == 'parcels_customed_Cfunc':
+                elif a.ccode == "parcels_customed_Cfunc":
                     parcels_customed_Cfunc = True
                 elif isinstance(a, FieldNode) or isinstance(a, VectorFieldNode):
                     a.ccode = a.obj.ccode_name
                 elif isinstance(a, ParticleNode):
                     continue
                 elif pointer_args:
-                    a.ccode = "&%s" % a.ccode
+                    a.ccode = f"&{a.ccode}"
             ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
             try:
                 if isinstance(node.func, str):
-                    node.ccode = node.func + '(' + ccode_args + ')'
+                    node.ccode = node.func + "(" + ccode_args + ")"
                 else:
                     self.visit(node.func)
                     rhs = f"{node.func.ccode}({ccode_args})"
                     if parcels_customed_Cfunc:
-                        node.ccode = str(c.Block([c.Assign("particles->state[pnum]", rhs),
-                                                  c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")]))
+                        node.ccode = str(
+                            c.Block(
+                                [
+                                    c.Assign("parcels_interp_state", rhs),
+                                    c.Assign(
+                                        "particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"
+                                    ),
+                                    c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)"),
+                                ]
+                            )
+                        )
                     else:
                         node.ccode = rhs
             except:
-                raise RuntimeError("Error in converting Kernel to C. See https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernel-execution for hints and tips")
+                raise RuntimeError(
+                    "Error in converting Kernel to C. See https://docs.oceanparcels.org/en/latest/examples/tutorial_parcels_structure.html#3.-Kernel-execution for hints and tips"
+                )
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names such as 'particle' or 'fieldset' and inserts our placeholder objects."""
-        if node.id == 'True':
+        if node.id == "True":
             node.id = "1"
-        if node.id == 'False':
+        if node.id == "False":
             node.id = "0"
         node.ccode = node.id
 
@@ -590,7 +628,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         if isinstance(node.value, ast.List):
             # Detect in-place initialisation of multi-dimensional arrays
             tmp_node = node.value
-            decl = c.Value('float', node.targets[0].id)
+            decl = c.Value("float", node.targets[0].id)
             while isinstance(tmp_node, ast.List):
                 decl = c.ArrayOf(decl, len(tmp_node.elts))
                 if isinstance(tmp_node.elts[0], ast.List):
@@ -603,8 +641,9 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             node.ccode = c.Initializer(decl, node.value.ccode)
             self.array_vars += [node.targets[0].id]
         elif isinstance(node.value, ParticleXiYiZiTiAttributeNode):
-            raise RuntimeError(f"Add index of the grid when using particle.{node.value.attr} "
-                               f"(e.g. particle.{node.value.attr}[0]).")
+            raise RuntimeError(
+                f"Add index of the grid when using particle.{node.value.attr} (e.g. particle.{node.value.attr}[0])."
+            )
         else:
             node.ccode = c.Assign(node.targets[0].ccode, node.value.ccode)
 
@@ -622,7 +661,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
             self.visit(b)
         # field evals are replaced by a tmp variable is added to the stack.
         # Here it means field evals passes from node.test to node.body. We take it out manually
-        fieldInTestCount = node.test.ccode.count('parcels_tmpvar')
+        fieldInTestCount = node.test.ccode.count("parcels_tmpvar")
         body0 = c.Block([b.ccode for b in node.body[:fieldInTestCount]])
         body = c.Block([b.ccode for b in node.body[fieldInTestCount:]])
         orelse = c.Block([b.ccode for b in node.orelse]) if len(node.orelse) > 0 else None
@@ -631,9 +670,9 @@ class KernelGenerator(ABC, ast.NodeVisitor):
 
     def visit_Compare(self, node):
         self.visit(node.left)
-        assert (len(node.ops) == 1)
+        assert len(node.ops) == 1
         self.visit(node.ops[0])
-        assert (len(node.comparators) == 1)
+        assert len(node.comparators) == 1
         self.visit(node.comparators[0])
         node.ccode = f"{node.left.ccode} {node.ops[0].ccode} {node.comparators[0].ccode}"
 
@@ -674,9 +713,11 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.op)
         self.visit(node.right)
         if isinstance(node.op, ast.BitXor):
-            raise RuntimeError("JIT kernels do not support the '^' operator.\n"
-                               "Did you intend to use the exponential/power operator? In that case, please use '**'")
-        elif node.op.ccode == 'pow':  # catching '**' pow statements
+            raise RuntimeError(
+                "JIT kernels do not support the '^' operator.\n"
+                "Did you intend to use the exponential/power operator? In that case, please use '**'"
+            )
+        elif node.op.ccode == "pow":  # catching '**' pow statements
             node.ccode = f"pow({node.left.ccode}, {node.right.ccode})"
         else:
             node.ccode = f"({node.left.ccode} {node.op.ccode} {node.right.ccode})"
@@ -710,7 +751,7 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         self.visit(node.op)
         for v in node.values:
             self.visit(v)
-        op_str = " %s " % node.op.ccode
+        op_str = f" {node.op.ccode} "
         node.ccode = op_str.join([v.ccode for v in node.values])
 
     def visit_Eq(self, node):
@@ -781,41 +822,75 @@ class KernelGenerator(ABC, ast.NodeVisitor):
 
     def visit_Return(self, node):
         self.visit(node.value)
-        node.ccode = c.Statement('return %s' % node.value.ccode)
+        node.ccode = c.Statement(f"return {node.value.ccode}")
 
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval(node.var, *args)
-        stmts = [c.Assign("particles->state[pnum]", ccode_eval)]
+        if "croco" in node.field.obj.gridindexingtype and node.field.obj.name != "H" and node.field.obj.name != "Zeta":
+            # Get Cs_w values directly from fieldset (since they are 1D in vertical only)
+            Cs_w = [float(self.fieldset.Cs_w.data[0][zi][0][0]) for zi in range(self.fieldset.Cs_w.data.shape[1])]
+            statements_croco = [
+                c.Statement(f"float cs_w[] = {*Cs_w, }".replace("(", "{").replace(")", "}")),
+                c.Statement(
+                    f"{node.var} = croco_from_z_to_sigma(time, {args[1]}, {args[2]}, {args[3]}, U, H, Zeta, &particles->ti[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->xi[pnum*ngrid], hc, &cs_w)"
+                ),
+            ]
+            args = (args[0], node.var, args[2], args[3])
+        else:
+            statements_croco = []
+        ccode_eval = node.field.obj._ccode_eval(node.var, *args)
+        stmts = [
+            c.Assign("parcels_interp_state", ccode_eval),
+            c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
+        ]
 
         if node.convert:
-            ccode_conv = node.field.obj.ccode_convert(*args)
+            ccode_conv = node.field.obj._ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
             stmts += [conv_stat]
 
-        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
+        node.ccode = c.Block(statements_croco + stmts + [c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)")])
 
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
-                                               node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
-        if node.convert and node.field.obj.U.interp_method != 'cgrid_velocity':
-            ccode_conv1 = node.field.obj.U.ccode_convert(*args)
-            ccode_conv2 = node.field.obj.V.ccode_convert(*args)
-            statements = [c.Statement(f"{node.var} *= {ccode_conv1}"),
-                          c.Statement(f"{node.var2} *= {ccode_conv2}")]
+        if "3DSigma" in node.field.obj.vector_type:
+            # Get Cs_w values directly from fieldset (since they are 1D in vertical only)
+            Cs_w = [float(self.fieldset.Cs_w.data[0][zi][0][0]) for zi in range(self.fieldset.Cs_w.data.shape[1])]
+            statements_croco = [
+                c.Statement(f"float cs_w[] = {*Cs_w, }".replace("(", "{").replace(")", "}")),
+                c.Statement(
+                    f"{node.var4} = croco_from_z_to_sigma(time, {args[1]}, {args[2]}, {args[3]}, U, H, Zeta, &particles->ti[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->xi[pnum*ngrid], hc, &cs_w)"
+                ),
+            ]
+            args = (args[0], node.var4, args[2], args[3])
+        else:
+            statements_croco = []
+        ccode_eval = node.field.obj._ccode_eval(
+            node.var, node.var2, node.var3, node.field.obj.U, node.field.obj.V, node.field.obj.W, *args
+        )
+        if node.convert and node.field.obj.U.interp_method != "cgrid_velocity":
+            ccode_conv1 = node.field.obj.U._ccode_convert(*args)
+            ccode_conv2 = node.field.obj.V._ccode_convert(*args)
+            statements = [c.Statement(f"{node.var} *= {ccode_conv1}"), c.Statement(f"{node.var2} *= {ccode_conv2}")]
         else:
             statements = []
-        if node.convert and node.field.obj.vector_type == '3D':
-            ccode_conv3 = node.field.obj.W.ccode_convert(*args)
+        if node.convert and "3D" in node.field.obj.vector_type:
+            ccode_conv3 = node.field.obj.W._ccode_convert(*args)
             statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
         conv_stat = c.Block(statements)
-        node.ccode = c.Block([c.Assign("particles->state[pnum]", ccode_eval),
-                              conv_stat, c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])")])
+        node.ccode = c.Block(
+            [
+                c.Block(statements_croco),
+                c.Assign("parcels_interp_state", ccode_eval),
+                c.Assign("particles->state[pnum]", "max(particles->state[pnum], parcels_interp_state)"),
+                conv_stat,
+                c.Statement("CHECKSTATUS_KERNELLOOP(parcels_interp_state)"),
+            ]
+        )
 
     def visit_NestedFieldEvalNode(self, node):
         self.visit(node.fields)
@@ -823,12 +898,17 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval(node.var, *args)
-            ccode_conv = fld.ccode_convert(*args)
+            ccode_eval = fld._ccode_eval(node.var, *args)
+            ccode_conv = fld._ccode_convert(*args)
             conv_stat = c.Statement(f"{node.var} *= {ccode_conv}")
-            cstat += [c.Assign("particles->state[pnum]", ccode_eval),
-                      conv_stat,
-                      c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
+            cstat += [
+                c.Assign("particles->state[pnum]", ccode_eval),
+                conv_stat,
+                c.If(
+                    "particles->state[pnum] != ERROROUTOFBOUNDS ",
+                    c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]),
+                ),
+            ]
         cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
@@ -838,50 +918,54 @@ class KernelGenerator(ABC, ast.NodeVisitor):
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *args)
-            if fld.U.interp_method != 'cgrid_velocity':
-                ccode_conv1 = fld.U.ccode_convert(*args)
-                ccode_conv2 = fld.V.ccode_convert(*args)
-                statements = [c.Statement(f"{node.var} *= {ccode_conv1}"),
-                              c.Statement(f"{node.var2} *= {ccode_conv2}")]
+            ccode_eval = fld._ccode_eval(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *args)
+            if fld.U.interp_method != "cgrid_velocity":
+                ccode_conv1 = fld.U._ccode_convert(*args)
+                ccode_conv2 = fld.V._ccode_convert(*args)
+                statements = [c.Statement(f"{node.var} *= {ccode_conv1}"), c.Statement(f"{node.var2} *= {ccode_conv2}")]
             else:
                 statements = []
-            if fld.vector_type == '3D':
-                ccode_conv3 = fld.W.ccode_convert(*args)
+            if "3D" in fld.vector_type:
+                ccode_conv3 = fld.W._ccode_convert(*args)
                 statements.append(c.Statement(f"{node.var3} *= {ccode_conv3}"))
-            cstat += [c.Assign("particles->state[pnum]", ccode_eval),
-                      c.Block(statements),
-                      c.If("particles->state[pnum] != ERROROUTOFBOUNDS ", c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]))]
+            cstat += [
+                c.Assign("particles->state[pnum]", ccode_eval),
+                c.Block(statements),
+                c.If(
+                    "particles->state[pnum] != ERROROUTOFBOUNDS ",
+                    c.Block([c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]),
+                ),
+            ]
         cstat += [c.Statement("CHECKSTATUS_KERNELLOOP(particles->state[pnum])"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
     def visit_Print(self, node):
         for n in node.values:
             self.visit(n)
-        if hasattr(node.values[0], 's'):
-            node.ccode = c.Statement('printf("%s\\n")' % (n.ccode))
+        if hasattr(node.values[0], "s"):
+            node.ccode = c.Statement(f'printf("{n.ccode}\\n")')
             return
-        if hasattr(node.values[0], 's_print'):
+        if hasattr(node.values[0], "s_print"):
             args = node.values[0].right.ccode
-            s = ('printf("%s\\n"' % node.values[0].left.ccode)
+            s = f'printf("{node.values[0].left.ccode}\\n"'
             if isinstance(args, str):
-                s = s + (", %s)" % args)
+                s = s + f", {args})"
             else:
                 for arg in args:
-                    s = s + (", %s" % arg)
+                    s = s + (f", {arg}")
                 s = s + ")"
             node.ccode = c.Statement(s)
             return
-        vars = ', '.join([n.ccode for n in node.values])
-        int_vars = ['particle->id', 'particle->xi', 'particle->yi', 'particle->zi']
-        stat = ', '.join(["%d" if n.ccode in int_vars else "%f" for n in node.values])
+        vars = ", ".join([n.ccode for n in node.values])
+        int_vars = ["particle->id", "particle->xi", "particle->yi", "particle->zi"]
+        stat = ", ".join(["%d" if n.ccode in int_vars else "%f" for n in node.values])
         node.ccode = c.Statement(f'printf("{stat}\\n", {vars})')
 
     def visit_Constant(self, node):
-        if node.value == 'parcels_customed_Cfunc_pointer_args':
+        if node.value == "parcels_customed_Cfunc_pointer_args":
             node.ccode = node.value
         elif isinstance(node.value, str):
-            node.ccode = ''  # skip strings from docstrings or comments
+            node.ccode = ""  # skip strings from docstrings or comments
         elif isinstance(node.value, bool):
             node.ccode = "1" if node.value is True else "0"
         else:
@@ -898,12 +982,12 @@ class LoopGenerator:
     def generate(self, funcname, field_args, const_args, kernel_ast, c_include):
         ccode = []
 
-        pname = self.ptype.name + 'p'
+        pname = self.ptype.name + "p"
 
         # ==== Add include for Parcels and math header ==== #
         ccode += [str(c.Include("parcels.h", system=False))]
         ccode += [str(c.Include("math.h", system=False))]
-        ccode += [str(c.Assign('const int ngrid', str(self.fieldset.gridset.size if self.fieldset is not None else 1)))]
+        ccode += [str(c.Assign("const int ngrid", str(self.fieldset.gridset.size if self.fieldset is not None else 1)))]
 
         # ==== Generate type definition for particle type ==== #
         vdeclp = [c.Pointer(c.POD(v.dtype, v.name)) for v in self.ptype.variables]
@@ -916,15 +1000,17 @@ class LoopGenerator:
         ccode += [str(kernel_ast)]
 
         # Generate outer loop for repeated kernel invocation
-        args = [c.Value("int", "num_particles"),
-                c.Pointer(c.Value(pname, "particles")),
-                c.Value("double", "endtime"), c.Value("double", "dt")]
+        args = [
+            c.Value("int", "num_particles"),
+            c.Pointer(c.Value(pname, "particles")),
+            c.Value("double", "endtime"),
+            c.Value("double", "dt"),
+        ]
         for field, _ in field_args.items():
-            args += [c.Pointer(c.Value("CField", "%s" % field))]
+            args += [c.Pointer(c.Value("CField", f"{field}"))]
         for const, _ in const_args.items():
             args += [c.Value("double", const)]  # are we SURE those const's are double's ?
-        fargs_str = ", ".join(['particles->time_nextloop[pnum]'] + list(field_args.keys())
-                              + list(const_args.keys()))
+        fargs_str = ", ".join(["particles->time_nextloop[pnum]"] + list(field_args.keys()) + list(const_args.keys()))
         # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
 
@@ -936,25 +1022,46 @@ class LoopGenerator:
         body += [c.Value("double", "pre_dt")]
         body += [c.Statement("pre_dt = particles->dt[pnum]")]
         body += [c.If("sign_dt*particles->time_nextloop[pnum] >= sign_dt*(endtime)", c.Statement("break"))]
-        body += [c.If(f"fabs(endtime - particles->time_nextloop[pnum]) < fabs(particles->{dtname}[pnum])-1e-6",
-                      c.Statement(f"particles->{dtname}[pnum] = fabs(endtime - particles->time_nextloop[pnum]) * sign_dt"))]
+        body += [
+            c.If(
+                f"fabs(endtime - particles->time_nextloop[pnum]) < fabs(particles->{dtname}[pnum])-1e-6",
+                c.Statement(f"particles->{dtname}[pnum] = fabs(endtime - particles->time_nextloop[pnum]) * sign_dt"),
+            )
+        ]
         body += [c.Assign("particles->state[pnum]", f"{funcname}(particles, pnum, {fargs_str})")]
-        body += [c.If("particles->state[pnum] == SUCCESS",
-                      c.Block([c.If("sign_dt*particles->time[pnum] < sign_dt*endtime",
-                                    c.Block([c.Assign("particles->state[pnum]", "EVALUATE")]),
-                                    c.Block([c.Assign("particles->state[pnum]", "SUCCESS")]))
-                               ]))]
+        body += [
+            c.If(
+                "particles->state[pnum] == SUCCESS",
+                c.Block(
+                    [
+                        c.If(
+                            "sign_dt*particles->time[pnum] < sign_dt*endtime",
+                            c.Block([c.Assign("particles->state[pnum]", "EVALUATE")]),
+                            c.Block([c.Assign("particles->state[pnum]", "SUCCESS")]),
+                        )
+                    ]
+                ),
+            )
+        ]
         body += [c.If("particles->state[pnum] == STOPALLEXECUTION", c.Statement("return"))]
         body += [c.Statement("particles->dt[pnum] = pre_dt")]
-        body += [c.If("(particles->state[pnum] == REPEAT || particles->state[pnum] == DELETE)", c.Block([c.Statement('break')]))]
+        body += [
+            c.If(
+                "(particles->state[pnum] == REPEAT || particles->state[pnum] == DELETE)",
+                c.Block([c.Statement("break")]),
+            )
+        ]
 
         time_loop = c.While("(particles->state[pnum] == EVALUATE || particles->state[pnum] == REPEAT)", c.Block(body))
-        part_loop = c.For("pnum = 0", "pnum < num_particles", "++pnum",
-                          c.Block([time_loop]))
-        fbody = c.Block([c.Value("int", "pnum"),
-                         c.Value("double", "sign_dt"),
-                         sign_dt, part_loop,
-                         ])
+        part_loop = c.For("pnum = 0", "pnum < num_particles", "++pnum", c.Block([time_loop]))
+        fbody = c.Block(
+            [
+                c.Value("int", "pnum"),
+                c.Value("double", "sign_dt"),
+                sign_dt,
+                part_loop,
+            ]
+        )
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)

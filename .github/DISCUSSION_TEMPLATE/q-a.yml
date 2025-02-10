@@ -1,0 +1,22 @@
+body:
+  - type: textarea
+    id: improvements
+    attributes:
+      label: Question
+      description: "Type in the form below your question to the Parcels community. Make sure to detail any relevant context including what you have tried, as well as any relevant code or error messages."
+      value: |
+        ## Question
+
+
+        ## Supporting code/error messages
+
+        ```python
+        # Paste your code within this block
+        ```
+
+
+        ```text
+        # Paste your error message within this block
+        ```
+    validations:
+      required: true

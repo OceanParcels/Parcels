@@ -1,6 +1,6 @@
 name: parcels_binder
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - parcels
+  - trajan

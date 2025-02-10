@@ -1,16 +1,16 @@
+import _ctypes
+import os
+import sys
 import uuid
 from ctypes import c_float, c_int
-from os import path, remove
-from sys import platform
 
-import _ctypes
 import numpy.ctypeslib as npct
 
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools.loggers import logger
 
-__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', 'vonmisesvariate']
+__all__ = ["expovariate", "normalvariate", "randint", "random", "seed", "uniform", "vonmisesvariate"]
 
 
 class RandomC:
@@ -78,37 +78,37 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
     def unload_lib(self):
         # Unload the currently loaded dynamic linked library to be secure
         if self._lib is not None and self._loaded and _ctypes is not None:
-            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
+            _ctypes.FreeLibrary(self._lib._handle) if sys.platform == "win32" else _ctypes.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
             self._loaded = False
 
     def load_lib(self):
-        self._lib = npct.load_library(self.lib_file, '.')
+        self._lib = npct.load_library(self.lib_file, ".")
         self._loaded = True
 
     def remove_lib(self):
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
-        if self._lib is not None and self._loaded and _ctypes is not None and path.isfile(self.lib_file):
-            [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
+        if self._lib is not None and self._loaded and _ctypes is not None and os.path.isfile(self.lib_file):
+            [os.remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
 
     def compile(self, compiler=None):
         if self.src_file is None or self.lib_file is None or self.log_file is None:
-            basename = 'parcels_random_%s' % uuid.uuid4()
+            basename = f"parcels_random_{uuid.uuid4()}"
             lib_filename = "lib" + basename
-            basepath = path.join(get_cache_dir(), f"{basename}")
-            libpath = path.join(get_cache_dir(), f"{lib_filename}")
+            basepath = os.path.join(get_cache_dir(), f"{basename}")
+            libpath = os.path.join(get_cache_dir(), f"{lib_filename}")
             self.src_file = f"{basepath}.c"
             self.lib_file = f"{libpath}.so"
             self.log_file = f"{basepath}.log"
         ccompiler = compiler
         if ccompiler is None:
             cppargs = []
-            incdirs = [path.join(get_package_dir(), 'include'), ]
+            incdirs = [os.path.join(get_package_dir(), "include")]
             ccompiler = GNUCompiler(cppargs=cppargs, incdirs=incdirs)
         if self._lib is None:
-            with open(self.src_file, 'w+') as f:
+            with open(self.src_file, "w+") as f:
                 f.write(self.ccode)
             ccompiler.compile(self.src_file, self.lib_file, self.log_file)
             logger.info(f"Compiled ParcelsRandom ==> {self.src_file}")

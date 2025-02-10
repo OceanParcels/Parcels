@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'OceanParcels/parcels'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
-          python-version: 3.8
+          python-version: "3.10"
 
       - name: Install dependencies
         run: |
@@ -42,7 +42,7 @@ jobs:
           else
             echo "✅ Looks good"
           fi
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: releases
           path: dist
@@ -51,11 +51,11 @@ jobs:
     needs: build-artifacts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
-          python-version: 3.8
-      - uses: actions/download-artifact@v3
+          python-version: "3.10"
+      - uses: actions/download-artifact@v4
         with:
           name: releases
           path: dist
@@ -72,7 +72,7 @@ jobs:
 
       - name: Publish package to TestPyPI
         if: github.event_name == 'push'
-        uses: pypa/gh-action-pypi-publish@v1.5.0
+        uses: pypa/gh-action-pypi-publish@v1.12.3
         with:
           user: __token__
           password: ${{ secrets.PARCELS_PYPI_TEST_TOKEN }}
@@ -84,12 +84,12 @@ jobs:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: releases
           path: dist
       - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.5.0
+        uses: pypa/gh-action-pypi-publish@v1.12.3
         with:
           user: __token__
           password: ${{ secrets.PARCELS_PYPI_PROD_TOKEN }}
@@ -102,9 +102,9 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: parcels
-          python-version: 3.8
+          python-version: "3.10"
           channels: conda-forge
       - run: conda install -c conda-forge c-compiler pip
       - run: pip install parcels --no-cache
-      - run: curl https://raw.githubusercontent.com/OceanParcels/parcels/master/docs/examples/example_peninsula.py > example_peninsula.py
+      - run: curl https://raw.githubusercontent.com/OceanParcels/parcels/main/docs/examples/example_peninsula.py > example_peninsula.py
       - run: python example_peninsula.py

@@ -1,0 +1,25 @@
+name: xarray-tests
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  # MINIMUM VERSIONS POLICY: keep track of minimum versions
+  # for core packages. Dev and conda release builds should use this as reference.
+  # Run ci/min_deps_check.py to verify that this file respects the policy.
+  - python=3.10
+  - cftime=1.6
+  - cgen=2020.1
+  - dask=2022.8
+  - matplotlib-base=3.5
+  # netcdf follows a 1.major.minor[.patch] convention
+  # (see https://github.com/Unidata/netcdf4-python/issues/1090)
+  - netcdf4=1.6
+  - numpy=1.23
+  - platformdirs=2.5
+  - psutil=5.9
+  - pymbolic=2022.1
+  - pytest=7.1
+  - scipy=1.9
+  - tqdm=4.64
+  - xarray=2022.6
+  - zarr=2.12

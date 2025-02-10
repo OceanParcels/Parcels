@@ -1,7 +1,7 @@
 Basic installation
 ==================
 
-The simplest way to install the Parcels code is to use Anaconda and the `Parcels conda-forge package <https://anaconda.org/conda-forge/parcels>`_ with the latest release of Parcels. This package will automatically install all the requirements for a fully functional installation of Parcels. This is the “batteries-included” solution probably suitable for most users.
+The simplest way to install the Parcels code is to use Anaconda and the `Parcels conda-forge package <https://anaconda.org/conda-forge/parcels>`_ with the latest release of Parcels. This package will automatically install all the requirements for a fully functional installation of Parcels. This is the “batteries-included” solution probably suitable for most users. Note that we support Python 3.10 and higher.
 
 If you want to install the latest development version of Parcels and work with features that have not yet been officially released, you can follow the instructions for a `developer installation <#installation-for-developers>`_.
 
@@ -9,14 +9,14 @@ The steps below are the installation instructions for Linux, macOS and Windows.
 
 .. _step 1 above:
 
-**Step 1:** Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/, making sure to select the Python-3 version. If you're on Linux /macOS, the following assumes that you installed Miniconda to your home directory.
+**Step 1:** Install Anaconda's Miniconda following the steps at https://docs.anaconda.com/miniconda/. If you're on Linux /macOS, the following assumes that you installed Miniconda to your home directory.
 
-**Step 2:** Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the ``base`` environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, and the nice-to-have cartopy and jupyter packages:
+**Step 2:** Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the ``base`` environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, ``trajan`` (a trajectory plotting dependency used in the notebooks) and the nice-to-have cartopy and jupyter packages:
 
 .. code-block:: bash
 
     conda activate base
-    conda create -n parcels -c conda-forge parcels cartopy jupyter
+    conda create -n parcels -c conda-forge parcels trajan cartopy jupyter
 
 .. note::
 
@@ -53,6 +53,7 @@ The steps below are the installation instructions for Linux, macOS and Windows.
   .. code-block:: bash
 
     conda activate parcels
+
 
 
 Installation for developers

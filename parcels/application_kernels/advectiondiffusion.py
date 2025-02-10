@@ -2,14 +2,15 @@
 
 See `this tutorial <../examples/tutorial_diffusion.ipynb>`__ for a detailed explanation.
 """
+
 import math
 
-import parcels.rng as ParcelsRandom
+import parcels
 
-__all__ = ['DiffusionUniformKh', 'AdvectionDiffusionM1', 'AdvectionDiffusionEM', ]
+__all__ = ["AdvectionDiffusionEM", "AdvectionDiffusionM1", "DiffusionUniformKh"]
 
 
-def AdvectionDiffusionM1(particle, fieldset, time):
+def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     """Kernel for 2D advection-diffusion, solved using the Milstein scheme at first order (M1).
 
     Assumes that fieldset has fields `Kh_zonal` and `Kh_meridional`
@@ -25,8 +26,8 @@ def AdvectionDiffusionM1(particle, fieldset, time):
     mean and a standard deviation of sqrt(dt).
     """
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-    dWy = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWx = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWy = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
 
     Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
@@ -46,7 +47,7 @@ def AdvectionDiffusionM1(particle, fieldset, time):
     particle_dlat += v * particle.dt + 0.5 * dKdy * (dWy**2 + particle.dt) + by * dWy  # noqa
 
 
-def AdvectionDiffusionEM(particle, fieldset, time):
+def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     """Kernel for 2D advection-diffusion, solved using the Euler-Maruyama scheme (EM).
 
     Assumes that fieldset has fields `Kh_zonal` and `Kh_meridional`
@@ -60,8 +61,8 @@ def AdvectionDiffusionEM(particle, fieldset, time):
     mean and a standard deviation of sqrt(dt).
     """
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-    dWy = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWx = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWy = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
 
     u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
@@ -82,7 +83,7 @@ def AdvectionDiffusionEM(particle, fieldset, time):
     particle_dlat += ay * particle.dt + by * dWy  # noqa
 
 
-def DiffusionUniformKh(particle, fieldset, time):
+def DiffusionUniformKh(particle, fieldset, time):  # pragma: no cover
     """Kernel for simple 2D diffusion where diffusivity (Kh) is assumed uniform.
 
     Assumes that fieldset has constant fields `Kh_zonal` and `Kh_meridional`.
@@ -101,8 +102,8 @@ def DiffusionUniformKh(particle, fieldset, time):
     mean and a standard deviation of sqrt(dt).
     """
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-    dWy = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWx = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWy = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
 
     bx = math.sqrt(2 * fieldset.Kh_zonal[particle])
     by = math.sqrt(2 * fieldset.Kh_meridional[particle])

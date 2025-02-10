@@ -14,8 +14,7 @@ class BaseNeighborSearch(ABC):
     structure.
     """
 
-    def __init__(self, inter_dist_vert, inter_dist_horiz,
-                 max_depth=100000, periodic_domain_zonal=None):
+    def __init__(self, inter_dist_vert, inter_dist_horiz, max_depth=100000, periodic_domain_zonal=None):
         """Initialize neighbor search
 
 
@@ -30,9 +29,7 @@ class BaseNeighborSearch(ABC):
         """
         self.inter_dist_vert = inter_dist_vert
         self.inter_dist_horiz = inter_dist_horiz
-        self.inter_dist = np.array(
-            [inter_dist_vert, inter_dist_horiz, inter_dist_horiz]
-        ).reshape(3, 1)
+        self.inter_dist = np.array([inter_dist_vert, inter_dist_horiz, inter_dist_horiz]).reshape(3, 1)
         self.max_depth = max_depth  # Maximum depth of particles.
         self._values = None  # Coordinates of the particles.
 
@@ -163,12 +160,12 @@ class BaseNeighborSearch(ABC):
 
         """
         vert_distance, horiz_distance = self._distance(coor, subset_idx)
-        rel_distances = np.sqrt((horiz_distance/self.inter_dist_horiz)**2
-                                + (vert_distance/self.inter_dist_vert)**2)
+        rel_distances = np.sqrt(
+            (horiz_distance / self.inter_dist_horiz) ** 2 + (vert_distance / self.inter_dist_vert) ** 2
+        )
         rel_neighbor_idx = np.where(rel_distances < 1)[0]
         neighbor_idx = subset_idx[rel_neighbor_idx]
-        distances = np.vstack((vert_distance[rel_neighbor_idx],
-                               horiz_distance[rel_neighbor_idx]))
+        distances = np.vstack((vert_distance[rel_neighbor_idx], horiz_distance[rel_neighbor_idx]))
         return neighbor_idx, distances
 
 
@@ -177,21 +174,15 @@ class BaseFlatNeighborSearch(BaseNeighborSearch):
 
     def _distance(self, coor, subset_idx):
         coor = coor.reshape(3, 1)
-        horiz_distance = np.sqrt(np.sum((
-            self._values[1:, subset_idx] - coor[1:])**2,
-            axis=0))
+        horiz_distance = np.sqrt(np.sum((self._values[1:, subset_idx] - coor[1:]) ** 2, axis=0))
         if self.periodic_domain_zonal:
             # If zonal periodic boundaries
             coor[2, 0] -= self.periodic_domain_zonal
             # distance through Western boundary
-            hd2 = np.sqrt(np.sum((
-                self._values[1:, subset_idx] - coor[1:])**2,
-                axis=0))
-            coor[2, 0] += 2*self.periodic_domain_zonal
+            hd2 = np.sqrt(np.sum((self._values[1:, subset_idx] - coor[1:]) ** 2, axis=0))
+            coor[2, 0] += 2 * self.periodic_domain_zonal
             # distance through Eastern boundary
-            hd3 = np.sqrt(np.sum((
-                self._values[1:, subset_idx] - coor[1:])**2,
-                axis=0))
+            hd3 = np.sqrt(np.sum((self._values[1:, subset_idx] - coor[1:]) ** 2, axis=0))
             coor[2, 0] -= self.periodic_domain_zonal
         else:
             hd2 = np.full(len(horiz_distance), np.inf)
@@ -199,7 +190,7 @@ class BaseFlatNeighborSearch(BaseNeighborSearch):
 
         horiz_distance = np.column_stack((horiz_distance, hd2, hd3))
         horiz_distance = np.min(horiz_distance, axis=1)
-        vert_distance = np.abs(self._values[0, subset_idx]-coor[0])
+        vert_distance = np.abs(self._values[0, subset_idx] - coor[0])
         return (vert_distance, horiz_distance)
 
 
@@ -219,17 +210,13 @@ class BaseSphericalNeighborSearch(BaseNeighborSearch):
             coor[2, 0] -= self.periodic_domain_zonal
             # distance through Western boundary
             hd2 = spherical_distance(
-                *coor,
-                self._values[0, subset_idx],
-                self._values[1, subset_idx],
-                self._values[2, subset_idx])[1]
-            coor[2, 0] += 2*self.periodic_domain_zonal
+                *coor, self._values[0, subset_idx], self._values[1, subset_idx], self._values[2, subset_idx]
+            )[1]
+            coor[2, 0] += 2 * self.periodic_domain_zonal
             # distance through Eastern boundary
             hd3 = spherical_distance(
-                *coor,
-                self._values[0, subset_idx],
-                self._values[1, subset_idx],
-                self._values[2, subset_idx])[1]
+                *coor, self._values[0, subset_idx], self._values[1, subset_idx], self._values[2, subset_idx]
+            )[1]
             coor[2, 0] -= self.periodic_domain_zonal
         else:
             hd2 = np.full(len(horiz_distances), np.inf)
