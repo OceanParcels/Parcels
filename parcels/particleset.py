@@ -187,9 +187,9 @@ class ParticleSet:
         for kwvar in kwargs:
             if kwvar not in ["partition_function"]:
                 kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
-                assert (
-                    lon.size == kwargs[kwvar].size
-                ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
+                assert lon.size == kwargs[kwvar].size, (
+                    f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
+                )
 
         self.repeatdt = timedelta_to_float(repeatdt) if repeatdt is not None else None
 

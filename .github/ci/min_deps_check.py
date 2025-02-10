@@ -193,7 +193,7 @@ def main() -> None:
         print("\nErrors:")
         print("-------")
         for i, e in enumerate(errors):
-            print(f"{i+1}. {e}")
+            print(f"{i + 1}. {e}")
         sys.exit(1)
 
 
