@@ -348,7 +348,7 @@ class ParticleFile:
             self._create_new_zarrfile = False
         else:
             # Either use the store that was provided directly or create a DirectoryStore:
-            if issubclass(type(self.fname), zarr.storage.Store):
+            if isinstance(self.fname, zarr.storage.Store):
                 store = self.fname
             else:
                 store = zarr.DirectoryStore(self.fname)
