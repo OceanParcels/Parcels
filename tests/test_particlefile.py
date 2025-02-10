@@ -80,7 +80,7 @@ def test_pfile_set_towrite_False(fieldset, mode, tmp_zarrfile):
     pset.set_variable_write_status("lat", False)
     pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
 
-    def Update_lon(particle, fieldset, time):
+    def Update_lon(particle, fieldset, time):  # pragma: no cover
         particle_dlon += 0.1  # noqa
 
     pset.execute(Update_lon, runtime=10, output_file=pfile)
@@ -109,7 +109,7 @@ def test_pfile_array_remove_all_particles(fieldset, mode, chunks_obs, tmp_zarrfi
     pfile.write(pset, 1)
     pfile.write(pset, 2)
 
-    ds = xr.open_zarr(tmp_zarrfile)
+    ds = xr.open_zarr(tmp_zarrfile).load()
     assert np.allclose(ds["time"][:, 0], np.timedelta64(0, "s"), atol=np.timedelta64(1, "ms"))
     if chunks_obs is not None:
         assert ds["time"][:].shape == chunks
@@ -121,7 +121,7 @@ def test_pfile_array_remove_all_particles(fieldset, mode, chunks_obs, tmp_zarrfi
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_variable_write_double(fieldset, mode, tmp_zarrfile):
-    def Update_lon(particle, fieldset, time):
+    def Update_lon(particle, fieldset, time):  # pragma: no cover
         particle_dlon += 0.1  # noqa
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
@@ -157,7 +157,7 @@ def test_write_dtypes_pfile(fieldset, mode, tmp_zarrfile):
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("npart", [1, 2, 5])
 def test_variable_written_once(fieldset, mode, tmp_zarrfile, npart):
-    def Update_v(particle, fieldset, time):
+    def Update_v(particle, fieldset, time):  # pragma: no cover
         particle.v_once += 1.0
         particle.age += particle.dt
 
@@ -203,7 +203,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
         )
     pfile = pset.ParticleFile(tmp_zarrfile, outputdt=abs(dt), chunks=(1, 1))
 
-    def IncrLon(particle, fieldset, time):
+    def IncrLon(particle, fieldset, time):  # pragma: no cover
         particle.sample_var += 1.0
         if particle.sample_var > fieldset.maxvar:
             particle.delete()
@@ -237,7 +237,7 @@ def test_pfile_chunks_repeatedrelease(fieldset, mode, repeatdt, nump, tmp_zarrfi
     chunks = (20, 10)
     pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1, chunks=chunks)
 
-    def DoNothing(particle, fieldset, time):
+    def DoNothing(particle, fieldset, time):  # pragma: no cover
         pass
 
     pset.execute(DoNothing, dt=1, runtime=runtime, output_file=pfile)
@@ -247,7 +247,7 @@ def test_pfile_chunks_repeatedrelease(fieldset, mode, repeatdt, nump, tmp_zarrfi
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
 def test_write_timebackward(fieldset, mode, tmp_zarrfile):
-    def Update_lon(particle, fieldset, time):
+    def Update_lon(particle, fieldset, time):  # pragma: no cover
         particle_dlon -= 0.1 * particle.dt  # noqa
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lat=np.linspace(0, 1, 3), lon=[0, 0, 0], time=[1, 2, 3])
@@ -274,7 +274,7 @@ def test_write_xiyi(fieldset, mode, tmp_zarrfile):
         ]
     )
 
-    def Get_XiYi(particle, fieldset, time):
+    def Get_XiYi(particle, fieldset, time):  # pragma: no cover
         """Kernel to sample the grid indices of the particle.
         Note that this sampling should be done _before_ the advection kernel
         and that the first outputted value is zero.
@@ -284,7 +284,7 @@ def test_write_xiyi(fieldset, mode, tmp_zarrfile):
         particle.pxi1 = particle.xi[1]
         particle.pyi = particle.yi[0]
 
-    def SampleP(particle, fieldset, time):
+    def SampleP(particle, fieldset, time):  # pragma: no cover
         if time > 5 * 3600:
             _ = fieldset.P[particle]  # To trigger sampling of the P field
 
@@ -324,7 +324,7 @@ def test_reset_dt(fieldset, mode, tmp_zarrfile):
     # Assert that p.dt gets reset when a write_time is not a multiple of dt
     # for p.dt=0.02 to reach outputdt=0.05 and endtime=0.1, the steps should be [0.2, 0.2, 0.1, 0.2, 0.2, 0.1], resulting in 6 kernel executions
 
-    def Update_lon(particle, fieldset, time):
+    def Update_lon(particle, fieldset, time):  # pragma: no cover
         particle_dlon += 0.1  # noqa
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
@@ -338,7 +338,7 @@ def test_reset_dt(fieldset, mode, tmp_zarrfile):
 def test_correct_misaligned_outputdt_dt(fieldset, mode, tmp_zarrfile):
     """Testing that outputdt does not need to be a multiple of dt."""
 
-    def Update_lon(particle, fieldset, time):
+    def Update_lon(particle, fieldset, time):  # pragma: no cover
         particle_dlon += particle.dt  # noqa
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)

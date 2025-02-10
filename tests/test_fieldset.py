@@ -441,24 +441,6 @@ def test_fieldset_samegrids_from_data():
     assert fieldset1.U.grid == fieldset1.B.grid
 
 
-@pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_fieldset_celledgesizes(mesh):
-    data, dimensions = generate_fieldset_data(10, 7)
-    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
-
-    fieldset.U._calc_cell_edge_sizes()
-    D_meridional = fieldset.U.cell_edge_sizes["y"]
-    D_zonal = fieldset.U.cell_edge_sizes["x"]
-
-    assert np.allclose(
-        D_meridional.flatten(), D_meridional[0, 0]
-    )  # all meridional distances should be the same in either mesh
-    if mesh == "flat":
-        assert np.allclose(D_zonal.flatten(), D_zonal[0, 0])  # all zonal distances should be the same in flat mesh
-    else:
-        assert all((np.gradient(D_zonal, axis=0) < 0).flatten())  # zonal distances should decrease in spherical mesh
-
-
 @pytest.mark.parametrize("dx, dy", [("e1u", "e2u"), ("e1v", "e2v")])
 def test_fieldset_celledgesizes_curvilinear(dx, dy):
     fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")
@@ -523,7 +505,7 @@ def test_fieldset_cellareas(mesh):
             assert np.allclose(cell_areas[y, :], cell_areas[y, 0], rtol=1e-3)
 
 
-def addConst(particle, fieldset, time):
+def addConst(particle, fieldset, time):  # pragma: no cover
     particle.lon = particle.lon + fieldset.movewest + fieldset.moveeast
 
 
@@ -583,7 +565,7 @@ def test_add_second_vector_field(mode):
     UV2 = VectorField("UV2", fieldset2.U2, fieldset2.V2)
     fieldset.add_vector_field(UV2)
 
-    def SampleUV2(particle, fieldset, time):
+    def SampleUV2(particle, fieldset, time):  # pragma: no cover
         u, v = fieldset.UV2[time, particle.depth, particle.lat, particle.lon]
         particle_dlon += u * particle.dt  # noqa
         particle_dlat += v * particle.dt  # noqa
@@ -607,7 +589,7 @@ def test_fieldset_write(tmp_zarrfile):
 
     fieldset.U.to_write = True
 
-    def UpdateU(particle, fieldset, time):
+    def UpdateU(particle, fieldset, time):  # pragma: no cover
         tmp1, tmp2 = fieldset.UV[particle]
         fieldset.U.data[particle.ti, particle.yi, particle.xi] += 1
         fieldset.U.grid.time[0] = time
@@ -653,7 +635,7 @@ def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with
     def perIterGC():
         gc.collect()
 
-    def periodicBoundaryConditions(particle, fieldset, time):
+    def periodicBoundaryConditions(particle, fieldset, time):  # pragma: no cover
         while particle.lon > 180.0:
             particle_dlon -= 360.0  # noqa
         while particle.lon < -180.0:
@@ -830,7 +812,7 @@ def test_periodic(mode, use_xarray, time_periodic, dt_sign):
             data, dimensions, mesh="flat", time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True
         )
 
-    def sampleTemp(particle, fieldset, time):
+    def sampleTemp(particle, fieldset, time):  # pragma: no cover
         particle.temp = fieldset.temp[time, particle.depth, particle.lat, particle.lon]
         # test if we can interpolate UV and UVW together
         (particle.u1, particle.v1) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
@@ -955,7 +937,7 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir):
         filepath, chunksize={"time": ("time_counter", 1), "depth": ("depthu", 1), "lat": ("y", 2), "lon": ("x", 2)}
     )
 
-    def SampleField(particle, fieldset, time):
+    def SampleField(particle, fieldset, time):  # pragma: no cover
         particle.u_kernel, particle.v_kernel = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
     SampleParticle = JITParticle.add_variables(
@@ -1114,7 +1096,7 @@ def test_deferredload_simplefield(mode, direction, time_extrapolation, tmpdir):
     SamplingParticle = ptype[mode].add_variable("p")
     pset = ParticleSet(fieldset, SamplingParticle, lon=0.5, lat=0.5)
 
-    def SampleU(particle, fieldset, time):
+    def SampleU(particle, fieldset, time):  # pragma: no cover
         particle.p, tmp = fieldset.UV[particle]
 
     runtime = tdim * 2 if time_extrapolation else None

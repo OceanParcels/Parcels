@@ -11,6 +11,13 @@ import numpy as np
 import xarray as xr
 
 import parcels.tools.interpolation_utils as i_u
+from parcels._compat import add_note
+from parcels._interpolation import (
+    InterpolationContext2D,
+    InterpolationContext3D,
+    get_2d_interpolator_registry,
+    get_3d_interpolator_registry,
+)
 from parcels._typing import (
     GridIndexingType,
     InterpMethod,
@@ -22,8 +29,6 @@ from parcels._typing import (
 )
 from parcels.tools._helpers import default_repr, deprecated_made_private, field_repr, timedelta_to_float
 from parcels.tools.converters import (
-    Geographic,
-    GeographicPolar,
     TimeConverter,
     UnitConverter,
     unitconverters_map,
@@ -34,16 +39,18 @@ from parcels.tools.statuscodes import (
     FieldOutOfBoundSurfaceError,
     FieldSamplingError,
     TimeExtrapolationError,
+    _raise_field_out_of_bound_error,
 )
 from parcels.tools.warnings import FieldSetWarning, _deprecated_param_netcdf_decodewarning
 
+from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear
 from .fieldfilebuffer import (
     DaskFileBuffer,
     DeferredDaskFileBuffer,
     DeferredNetcdfFileBuffer,
     NetcdfFileBuffer,
 )
-from .grid import CGrid, Grid, GridType
+from .grid import CGrid, Grid, GridType, _calc_cell_areas, _calc_cell_edge_sizes
 
 if TYPE_CHECKING:
     from ctypes import _Pointer as PointerType
@@ -684,12 +691,17 @@ class Field:
         if grid is None:
             # Concatenate time variable to determine overall dimension
             # across multiple files
-            time, time_origin, timeslices, dataFiles = cls._collect_timeslices(
-                timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
-            )
-            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-            grid.timeslices = timeslices
-            kwargs["dataFiles"] = dataFiles
+            if "time" in dimensions or timestamps is not None:
+                time, time_origin, timeslices, dataFiles = cls._collect_timeslices(
+                    timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
+                )
+                grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid.timeslices = timeslices
+                kwargs["dataFiles"] = dataFiles
+            else:  # e.g. for the CROCO CS_w field, see https://github.com/OceanParcels/Parcels/issues/1831
+                grid = Grid.create_grid(lon, lat, depth, np.array([0.0]), time_origin=TimeConverter(0.0), mesh=mesh)
+                grid.timeslices = [[0]]
+                data_filenames = [data_filenames[0]]
         elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
@@ -953,520 +965,79 @@ class Field:
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def calc_cell_edge_sizes(self):
-        return self._calc_cell_edge_sizes()
-
-    def _calc_cell_edge_sizes(self):
-        """Method to calculate cell sizes based on numpy.gradient method.
-
-        Currently only works for Rectilinear Grids
-        """
-        if not self.grid.cell_edge_sizes:
-            if self.grid._gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):
-                self.grid.cell_edge_sizes["x"] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
-                self.grid.cell_edge_sizes["y"] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
-
-                x_conv = GeographicPolar() if self.grid.mesh == "spherical" else UnitConverter()
-                y_conv = Geographic() if self.grid.mesh == "spherical" else UnitConverter()
-                for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat), strict=False)):
-                    for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon), strict=False)):
-                        self.grid.cell_edge_sizes["x"][y, x] = x_conv.to_source(dx, self.grid.depth[0], lat, lon)
-                        self.grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, self.grid.depth[0], lat, lon)
-            else:
-                raise ValueError(
-                    f"Field.cell_edge_sizes() not implemented for {self.grid._gtype} grids. "
-                    "You can provide Field.grid.cell_edge_sizes yourself by in, e.g., "
-                    "NEMO using the e1u fields etc from the mesh_mask.nc file."
-                )
+        _calc_cell_edge_sizes(self.grid)
 
     def cell_areas(self):
         """Method to calculate cell sizes based on cell_edge_sizes.
 
-        Currently only works for Rectilinear Grids
+        Only works for Rectilinear Grids
         """
-        if not self.grid.cell_edge_sizes:
-            self._calc_cell_edge_sizes()
-        return self.grid.cell_edge_sizes["x"] * self.grid.cell_edge_sizes["y"]
+        return _calc_cell_areas(self.grid)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices_vertical_z(self, z):
-        return self._search_indices_vertical_z(z)
-
-    def _search_indices_vertical_z(self, z):
-        grid = self.grid
-        z = np.float32(z)
-        if grid.depth[-1] > grid.depth[0]:
-            if z < grid.depth[0]:
-                # Since MOM5 is indexed at cell bottom, allow z at depth[0] - dz where dz = (depth[1] - depth[0])
-                if self.gridindexingtype == "mom5" and z > 2 * grid.depth[0] - grid.depth[1]:
-                    return (-1, z / grid.depth[0])
-                else:
-                    raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
-            elif z > grid.depth[-1]:
-                # In case of CROCO, allow particles in last (uppermost) layer using depth[-1]
-                if self.gridindexingtype in ["croco"] and z < 0:
-                    return (-2, 1)
-                raise FieldOutOfBoundError(z, 0, 0, field=self)
-            depth_indices = grid.depth < z
-            if z >= grid.depth[-1]:
-                zi = len(grid.depth) - 2
-            else:
-                zi = depth_indices.argmin() - 1 if z > grid.depth[0] else 0
-        else:
-            if z > grid.depth[0]:
-                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
-            elif z < grid.depth[-1]:
-                raise FieldOutOfBoundError(z, 0, 0, field=self)
-            depth_indices = grid.depth > z
-            if z <= grid.depth[-1]:
-                zi = len(grid.depth) - 2
-            else:
-                zi = depth_indices.argmin() - 1 if z < grid.depth[0] else 0
-        zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
-        while zeta > 1:
-            zi += 1
-            zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
-        while zeta < 0:
-            zi -= 1
-            zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
-        return (zi, zeta)
+    def search_indices_vertical_z(self, *_):
+        raise NotImplementedError
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def search_indices_vertical_s(self, *args, **kwargs):
-        return self._search_indices_vertical_s(*args, **kwargs)
-
-    def _search_indices_vertical_s(
-        self, time: float, z: float, y: float, x: float, ti: int, yi: int, xi: int, eta: float, xsi: float
-    ):
-        grid = self.grid
-        if self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"]:
-            xsi = 1
-            eta = 1
-        if time < grid.time[ti]:
-            ti -= 1
-        if grid._z4d:
-            if ti == len(grid.time) - 1:
-                depth_vector = (
-                    (1 - xsi) * (1 - eta) * grid.depth[-1, :, yi, xi]
-                    + xsi * (1 - eta) * grid.depth[-1, :, yi, xi + 1]
-                    + xsi * eta * grid.depth[-1, :, yi + 1, xi + 1]
-                    + (1 - xsi) * eta * grid.depth[-1, :, yi + 1, xi]
-                )
-            else:
-                dv2 = (
-                    (1 - xsi) * (1 - eta) * grid.depth[ti : ti + 2, :, yi, xi]
-                    + xsi * (1 - eta) * grid.depth[ti : ti + 2, :, yi, xi + 1]
-                    + xsi * eta * grid.depth[ti : ti + 2, :, yi + 1, xi + 1]
-                    + (1 - xsi) * eta * grid.depth[ti : ti + 2, :, yi + 1, xi]
-                )
-                tt = (time - grid.time[ti]) / (grid.time[ti + 1] - grid.time[ti])
-                assert tt >= 0 and tt <= 1, "Vertical s grid is being wrongly interpolated in time"
-                depth_vector = dv2[0, :] * (1 - tt) + dv2[1, :] * tt
-        else:
-            depth_vector = (
-                (1 - xsi) * (1 - eta) * grid.depth[:, yi, xi]
-                + xsi * (1 - eta) * grid.depth[:, yi, xi + 1]
-                + xsi * eta * grid.depth[:, yi + 1, xi + 1]
-                + (1 - xsi) * eta * grid.depth[:, yi + 1, xi]
-            )
-        z = np.float32(z)  # type: ignore # TODO: remove type ignore once we migrate to float64
-
-        if depth_vector[-1] > depth_vector[0]:
-            if z < depth_vector[0]:
-                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
-            elif z > depth_vector[-1]:
-                raise FieldOutOfBoundError(z, y, x, field=self)
-            depth_indices = depth_vector < z
-            if z >= depth_vector[-1]:
-                zi = len(depth_vector) - 2
-            else:
-                zi = depth_indices.argmin() - 1 if z > depth_vector[0] else 0
-        else:
-            if z > depth_vector[0]:
-                raise FieldOutOfBoundSurfaceError(z, 0, 0, field=self)
-            elif z < depth_vector[-1]:
-                raise FieldOutOfBoundError(z, y, x, field=self)
-            depth_indices = depth_vector > z
-            if z <= depth_vector[-1]:
-                zi = len(depth_vector) - 2
-            else:
-                zi = depth_indices.argmin() - 1 if z < depth_vector[0] else 0
-        zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
-        while zeta > 1:
-            zi += 1
-            zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
-        while zeta < 0:
-            zi -= 1
-            zeta = (z - depth_vector[zi]) / (depth_vector[zi + 1] - depth_vector[zi])
-        return (zi, zeta)
+        raise NotImplementedError
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def reconnect_bnd_indices(self, *args, **kwargs):
-        return self._reconnect_bnd_indices(*args, **kwargs)
-
-    def _reconnect_bnd_indices(self, yi, xi, ydim, xdim, sphere_mesh):
-        if xi < 0:
-            if sphere_mesh:
-                xi = xdim - 2
-            else:
-                xi = 0
-        if xi > xdim - 2:
-            if sphere_mesh:
-                xi = 0
-            else:
-                xi = xdim - 2
-        if yi < 0:
-            yi = 0
-        if yi > ydim - 2:
-            yi = ydim - 2
-            if sphere_mesh:
-                xi = xdim - xi
-        return yi, xi
+        raise NotImplementedError
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices_rectilinear(self, *args, **kwargs):
-        return self._search_indices_rectilinear(*args, **kwargs)
-
-    def _search_indices_rectilinear(
-        self, time: float, z: float, y: float, x: float, ti=-1, particle=None, search2D=False
-    ):
-        grid = self.grid
-
-        if grid.xdim > 1 and (not grid.zonal_periodic):
-            if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
-                raise FieldOutOfBoundError(z, y, x, field=self)
-        if grid.ydim > 1 and (y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]):
-            raise FieldOutOfBoundError(z, y, x, field=self)
-
-        if grid.xdim > 1:
-            if grid.mesh != "spherical":
-                lon_index = grid.lon < x
-                if lon_index.all():
-                    xi = len(grid.lon) - 2
-                else:
-                    xi = lon_index.argmin() - 1 if lon_index.any() else 0
-                xsi = (x - grid.lon[xi]) / (grid.lon[xi + 1] - grid.lon[xi])
-                if xsi < 0:
-                    xi -= 1
-                    xsi = (x - grid.lon[xi]) / (grid.lon[xi + 1] - grid.lon[xi])
-                elif xsi > 1:
-                    xi += 1
-                    xsi = (x - grid.lon[xi]) / (grid.lon[xi + 1] - grid.lon[xi])
-            else:
-                lon_fixed = grid.lon.copy()
-                indices = lon_fixed >= lon_fixed[0]
-                if not indices.all():
-                    lon_fixed[indices.argmin() :] += 360
-                if x < lon_fixed[0]:
-                    lon_fixed -= 360
-
-                lon_index = lon_fixed < x
-                if lon_index.all():
-                    xi = len(lon_fixed) - 2
-                else:
-                    xi = lon_index.argmin() - 1 if lon_index.any() else 0
-                xsi = (x - lon_fixed[xi]) / (lon_fixed[xi + 1] - lon_fixed[xi])
-                if xsi < 0:
-                    xi -= 1
-                    xsi = (x - lon_fixed[xi]) / (lon_fixed[xi + 1] - lon_fixed[xi])
-                elif xsi > 1:
-                    xi += 1
-                    xsi = (x - lon_fixed[xi]) / (lon_fixed[xi + 1] - lon_fixed[xi])
-        else:
-            xi, xsi = -1, 0
-
-        if grid.ydim > 1:
-            lat_index = grid.lat < y
-            if lat_index.all():
-                yi = len(grid.lat) - 2
-            else:
-                yi = lat_index.argmin() - 1 if lat_index.any() else 0
-
-            eta = (y - grid.lat[yi]) / (grid.lat[yi + 1] - grid.lat[yi])
-            if eta < 0:
-                yi -= 1
-                eta = (y - grid.lat[yi]) / (grid.lat[yi + 1] - grid.lat[yi])
-            elif eta > 1:
-                yi += 1
-                eta = (y - grid.lat[yi]) / (grid.lat[yi + 1] - grid.lat[yi])
-        else:
-            yi, eta = -1, 0
-
-        if grid.zdim > 1 and not search2D:
-            if grid._gtype == GridType.RectilinearZGrid:
-                # Never passes here, because in this case, we work with scipy
-                try:
-                    (zi, zeta) = self._search_indices_vertical_z(z)
-                except FieldOutOfBoundError:
-                    raise FieldOutOfBoundError(z, y, x, field=self)
-                except FieldOutOfBoundSurfaceError:
-                    raise FieldOutOfBoundSurfaceError(z, y, x, field=self)
-            elif grid._gtype == GridType.RectilinearSGrid:
-                (zi, zeta) = self._search_indices_vertical_s(time, z, y, x, ti, yi, xi, eta, xsi)
-        else:
-            zi, zeta = -1, 0
-
-        if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-            raise FieldSamplingError(z, y, x, field=self)
-
-        if particle:
-            particle.xi[self.igrid] = xi
-            particle.yi[self.igrid] = yi
-            particle.zi[self.igrid] = zi
-
-        return (zeta, eta, xsi, zi, yi, xi)
+    def search_indices_rectilinear(self, *_):
+        raise NotImplementedError
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices_curvilinear(self, *args, **kwargs):
-        return self._search_indices_curvilinear(*args, **kwargs)
-
-    def _search_indices_curvilinear(self, time, z, y, x, ti=-1, particle=None, search2D=False):
-        if particle:
-            xi = particle.xi[self.igrid]
-            yi = particle.yi[self.igrid]
-        else:
-            xi = int(self.grid.xdim / 2) - 1
-            yi = int(self.grid.ydim / 2) - 1
-        xsi = eta = -1
-        grid = self.grid
-        invA = np.array([[1, 0, 0, 0], [-1, 1, 0, 0], [-1, 0, 0, 1], [1, -1, 1, -1]])
-        maxIterSearch = 1e6
-        it = 0
-        tol = 1.0e-10
-        if not grid.zonal_periodic:
-            if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
-                if grid.lon[0, 0] < grid.lon[0, -1]:
-                    raise FieldOutOfBoundError(z, y, x, field=self)
-                elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
-                    raise FieldOutOfBoundError(z, y, x, field=self)
-        if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
-            raise FieldOutOfBoundError(z, y, x, field=self)
-
-        while xsi < -tol or xsi > 1 + tol or eta < -tol or eta > 1 + tol:
-            px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
-            if grid.mesh == "spherical":
-                px[0] = px[0] + 360 if px[0] < x - 225 else px[0]
-                px[0] = px[0] - 360 if px[0] > x + 225 else px[0]
-                px[1:] = np.where(px[1:] - px[0] > 180, px[1:] - 360, px[1:])
-                px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
-            py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
-            a = np.dot(invA, px)
-            b = np.dot(invA, py)
-
-            aa = a[3] * b[2] - a[2] * b[3]
-            bb = a[3] * b[0] - a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + x * b[3] - y * a[3]
-            cc = a[1] * b[0] - a[0] * b[1] + x * b[1] - y * a[1]
-            if abs(aa) < 1e-12:  # Rectilinear cell, or quasi
-                eta = -cc / bb
-            else:
-                det2 = bb * bb - 4 * aa * cc
-                if det2 > 0:  # so, if det is nan we keep the xsi, eta from previous iter
-                    det = np.sqrt(det2)
-                    eta = (-bb + det) / (2 * aa)
-            if abs(a[1] + a[3] * eta) < 1e-12:  # this happens when recti cell rotated of 90deg
-                xsi = ((y - py[0]) / (py[1] - py[0]) + (y - py[3]) / (py[2] - py[3])) * 0.5
-            else:
-                xsi = (x - a[0] - a[2] * eta) / (a[1] + a[3] * eta)
-            if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
-                raise FieldOutOfBoundError(0, y, x, field=self)
-            if xsi > 1 and eta > 1 and xi == grid.xdim - 1 and yi == grid.ydim - 1:
-                raise FieldOutOfBoundError(0, y, x, field=self)
-            if xsi < -tol:
-                xi -= 1
-            elif xsi > 1 + tol:
-                xi += 1
-            if eta < -tol:
-                yi -= 1
-            elif eta > 1 + tol:
-                yi += 1
-            (yi, xi) = self._reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid.mesh)
-            it += 1
-            if it > maxIterSearch:
-                print(f"Correct cell not found after {maxIterSearch} iterations")
-                raise FieldOutOfBoundError(0, y, x, field=self)
-        xsi = max(0.0, xsi)
-        eta = max(0.0, eta)
-        xsi = min(1.0, xsi)
-        eta = min(1.0, eta)
-
-        if grid.zdim > 1 and not search2D:
-            if grid._gtype == GridType.CurvilinearZGrid:
-                try:
-                    (zi, zeta) = self._search_indices_vertical_z(z)
-                except FieldOutOfBoundError:
-                    raise FieldOutOfBoundError(z, y, x, field=self)
-            elif grid._gtype == GridType.CurvilinearSGrid:
-                (zi, zeta) = self._search_indices_vertical_s(time, z, y, x, ti, yi, xi, eta, xsi)
-        else:
-            zi = -1
-            zeta = 0
-
-        if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-            raise FieldSamplingError(z, y, x, field=self)
-
-        if particle:
-            particle.xi[self.igrid] = xi
-            particle.yi[self.igrid] = yi
-            particle.zi[self.igrid] = zi
-
-        return (zeta, eta, xsi, zi, yi, xi)
+    def search_indices_curvilinear(self, *_):
+        raise NotImplementedError
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices(self, *args, **kwargs):
-        return self._search_indices(*args, **kwargs)
+    def search_indices(self, *_):
+        raise NotImplementedError
 
     def _search_indices(self, time, z, y, x, ti=-1, particle=None, search2D=False):
         if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
-            return self._search_indices_rectilinear(time, z, y, x, ti, particle=particle, search2D=search2D)
+            return _search_indices_rectilinear(self, time, z, y, x, ti, particle=particle, search2D=search2D)
         else:
-            return self._search_indices_curvilinear(time, z, y, x, ti, particle=particle, search2D=search2D)
+            return _search_indices_curvilinear(self, time, z, y, x, ti, particle=particle, search2D=search2D)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def interpolator2D(self, *args, **kwargs):
-        return self._interpolator2D(*args, **kwargs)
+    def interpolator2D(self, *_):
+        raise NotImplementedError
 
     def _interpolator2D(self, ti, z, y, x, particle=None):
+        """Impelement 2D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
         (_, eta, xsi, _, yi, xi) = self._search_indices(-1, z, y, x, particle=particle)
-        if self.interp_method == "nearest":
-            xii = xi if xsi <= 0.5 else xi + 1
-            yii = yi if eta <= 0.5 else yi + 1
-            return self.data[ti, yii, xii]
-        elif self.interp_method in ["linear", "bgrid_velocity", "partialslip", "freeslip"]:
-            val = (
-                (1 - xsi) * (1 - eta) * self.data[ti, yi, xi]
-                + xsi * (1 - eta) * self.data[ti, yi, xi + 1]
-                + xsi * eta * self.data[ti, yi + 1, xi + 1]
-                + (1 - xsi) * eta * self.data[ti, yi + 1, xi]
-            )
-            return val
-        elif self.interp_method == "linear_invdist_land_tracer":
-            land = np.isclose(self.data[ti, yi : yi + 2, xi : xi + 2], 0.0)
-            nb_land = np.sum(land)
-            if nb_land == 4:
-                return 0
-            elif nb_land > 0:
-                val = 0
-                w_sum = 0
-                for j in range(2):
-                    for i in range(2):
-                        distance = pow((eta - j), 2) + pow((xsi - i), 2)
-                        if np.isclose(distance, 0):
-                            if land[j][i] == 1:  # index search led us directly onto land
-                                return 0
-                            else:
-                                return self.data[ti, yi + j, xi + i]
-                        elif land[j][i] == 0:
-                            val += self.data[ti, yi + j, xi + i] / distance
-                            w_sum += 1 / distance
-                return val / w_sum
-            else:
-                val = (
-                    (1 - xsi) * (1 - eta) * self.data[ti, yi, xi]
-                    + xsi * (1 - eta) * self.data[ti, yi, xi + 1]
-                    + xsi * eta * self.data[ti, yi + 1, xi + 1]
-                    + (1 - xsi) * eta * self.data[ti, yi + 1, xi]
+        ctx = InterpolationContext2D(self.data, eta, xsi, ti, yi, xi)
+
+        try:
+            f = get_2d_interpolator_registry()[self.interp_method]
+        except KeyError:
+            if self.interp_method == "cgrid_velocity":
+                raise RuntimeError(
+                    f"{self.name} is a scalar field. cgrid_velocity interpolation method should be used for vector fields (e.g. FieldSet.UV)"
                 )
-                return val
-        elif self.interp_method in ["cgrid_tracer", "bgrid_tracer"]:
-            return self.data[ti, yi + 1, xi + 1]
-        elif self.interp_method == "cgrid_velocity":
-            raise RuntimeError(
-                f"{self.name} is a scalar field. cgrid_velocity interpolation method should be used for vector fields (e.g. FieldSet.UV)"
-            )
-        else:
-            raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
+            else:
+                raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
+        return f(ctx)
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def interpolator3D(self, *args, **kwargs):
-        return self._interpolator3D(*args, **kwargs)
+    def interpolator3D(self, *_):
+        raise NotImplementedError
 
     def _interpolator3D(self, ti, z, y, x, time, particle=None):
+        """Impelement 3D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
         (zeta, eta, xsi, zi, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
-        if self.interp_method == "nearest":
-            xii = xi if xsi <= 0.5 else xi + 1
-            yii = yi if eta <= 0.5 else yi + 1
-            zii = zi if zeta <= 0.5 else zi + 1
-            return self.data[ti, zii, yii, xii]
-        elif self.interp_method == "cgrid_velocity":
-            # evaluating W velocity in c_grid
-            if self.gridindexingtype == "nemo":
-                f0 = self.data[ti, zi, yi + 1, xi + 1]
-                f1 = self.data[ti, zi + 1, yi + 1, xi + 1]
-            elif self.gridindexingtype in ["mitgcm", "croco"]:
-                f0 = self.data[ti, zi, yi, xi]
-                f1 = self.data[ti, zi + 1, yi, xi]
-            return (1 - zeta) * f0 + zeta * f1
-        elif self.interp_method == "linear_invdist_land_tracer":
-            land = np.isclose(self.data[ti, zi : zi + 2, yi : yi + 2, xi : xi + 2], 0.0)
-            nb_land = np.sum(land)
-            if nb_land == 8:
-                return 0
-            elif nb_land > 0:
-                val = 0
-                w_sum = 0
-                for k in range(2):
-                    for j in range(2):
-                        for i in range(2):
-                            distance = pow((zeta - k), 2) + pow((eta - j), 2) + pow((xsi - i), 2)
-                            if np.isclose(distance, 0):
-                                if land[k][j][i] == 1:  # index search led us directly onto land
-                                    return 0
-                                else:
-                                    return self.data[ti, zi + k, yi + j, xi + i]
-                            elif land[k][j][i] == 0:
-                                val += self.data[ti, zi + k, yi + j, xi + i] / distance
-                                w_sum += 1 / distance
-                return val / w_sum
-            else:
-                data = self.data[ti, zi, :, :]
-                f0 = (
-                    (1 - xsi) * (1 - eta) * data[yi, xi]
-                    + xsi * (1 - eta) * data[yi, xi + 1]
-                    + xsi * eta * data[yi + 1, xi + 1]
-                    + (1 - xsi) * eta * data[yi + 1, xi]
-                )
-                data = self.data[ti, zi + 1, :, :]
-                f1 = (
-                    (1 - xsi) * (1 - eta) * data[yi, xi]
-                    + xsi * (1 - eta) * data[yi, xi + 1]
-                    + xsi * eta * data[yi + 1, xi + 1]
-                    + (1 - xsi) * eta * data[yi + 1, xi]
-                )
-                return (1 - zeta) * f0 + zeta * f1
-        elif self.interp_method in ["linear", "bgrid_velocity", "bgrid_w_velocity", "partialslip", "freeslip"]:
-            if self.interp_method == "bgrid_velocity":
-                if self.gridindexingtype == "mom5":
-                    zeta = 1.0
-                else:
-                    zeta = 0.0
-            elif self.interp_method == "bgrid_w_velocity":
-                eta = 1.0
-                xsi = 1.0
-            data = self.data[ti, zi, :, :]
-            f0 = (
-                (1 - xsi) * (1 - eta) * data[yi, xi]
-                + xsi * (1 - eta) * data[yi, xi + 1]
-                + xsi * eta * data[yi + 1, xi + 1]
-                + (1 - xsi) * eta * data[yi + 1, xi]
-            )
-            if self.gridindexingtype == "pop" and zi >= self.grid.zdim - 2:
-                # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
-                return (1 - zeta) * f0
-            data = self.data[ti, zi + 1, :, :]
-            f1 = (
-                (1 - xsi) * (1 - eta) * data[yi, xi]
-                + xsi * (1 - eta) * data[yi, xi + 1]
-                + xsi * eta * data[yi + 1, xi + 1]
-                + (1 - xsi) * eta * data[yi + 1, xi]
-            )
-            if self.interp_method == "bgrid_w_velocity" and self.gridindexingtype == "mom5" and zi == -1:
-                # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in uppermost cell
-                return zeta * f1
-            else:
-                return (1 - zeta) * f0 + zeta * f1
-        elif self.interp_method in ["cgrid_tracer", "bgrid_tracer"]:
-            return self.data[ti, zi, yi + 1, xi + 1]
-        else:
+        ctx = InterpolationContext3D(self.data, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
+
+        try:
+            f = get_3d_interpolator_registry()[self.interp_method]
+        except KeyError:
             raise RuntimeError(self.interp_method + " is not implemented for 3D grids")
+        return f(ctx)
 
     def temporal_interpolate_fullfield(self, ti, time):
         """Calculate the data of a field between two snapshots using linear interpolation.
@@ -1482,7 +1053,7 @@ class Field:
         if time == t0:
             return self.data[ti, :]
         elif ti + 1 >= len(self.grid.time):
-            raise TimeExtrapolationError(time, field=self, msg="show_time")
+            raise TimeExtrapolationError(time, field=self)
         else:
             t1 = self.grid.time[ti + 1]
             f0 = self.data[ti, :]
@@ -1495,21 +1066,27 @@ class Field:
 
     def _spatial_interpolation(self, ti, z, y, x, time, particle=None):
         """Interpolate horizontal field values using a SciPy interpolator."""
-        if self.grid.zdim == 1:
-            val = self._interpolator2D(ti, z, y, x, particle=particle)
-        else:
-            val = self._interpolator3D(ti, z, y, x, time, particle=particle)
-        if np.isnan(val):
-            # Detect Out-of-bounds sampling and raise exception
-            raise FieldOutOfBoundError(z, y, x, field=self)
-        else:
-            if isinstance(val, da.core.Array):
-                val = val.compute()
-            return val
+        try:
+            if self.grid.zdim == 1:
+                val = self._interpolator2D(ti, z, y, x, particle=particle)
+            else:
+                val = self._interpolator3D(ti, z, y, x, time, particle=particle)
+
+            if np.isnan(val):
+                # Detect Out-of-bounds sampling and raise exception
+                _raise_field_out_of_bound_error(z, y, x)
+            else:
+                if isinstance(val, da.core.Array):
+                    val = val.compute()
+                return val
+
+        except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
+            e = add_note(e, f"Error interpolating field '{self.name}'.", before=True)
+            raise e
 
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def time_index(self, *args, **kwargs):
-        return self._time_index(*args, **kwargs)
+    def time_index(self, *_):
+        raise NotImplementedError
 
     def _time_index(self, time):
         """Find the index in the time array associated with a given time.
@@ -1977,28 +1554,17 @@ class VectorField:
             and np.allclose(grid1.time_full, grid2.time_full)
         )
 
-    def dist(self, lat1: float, lat2: float, lon1: float, lon2: float, mesh: Mesh, lat: float):
-        if mesh == "spherical":
-            rad = np.pi / 180.0
-            deg2m = 1852 * 60.0
-            return np.sqrt(((lon2 - lon1) * deg2m * math.cos(rad * lat)) ** 2 + ((lat2 - lat1) * deg2m) ** 2)
-        else:
-            return np.sqrt((lon2 - lon1) ** 2 + (lat2 - lat1) ** 2)
+    @deprecated_made_private  # TODO: Remove 6 months after v3.2.0
+    def dist(self, *args, **kwargs):
+        raise NotImplementedError
 
-    def jacobian(self, py: np.ndarray, px: np.ndarray, eta: float, xsi: float):
-        dphidxsi = [eta - 1, 1 - eta, eta, -eta]
-        dphideta = [xsi - 1, -xsi, xsi, 1 - xsi]
-
-        dxdxsi = np.dot(px, dphidxsi)
-        dxdeta = np.dot(px, dphideta)
-        dydxsi = np.dot(py, dphidxsi)
-        dydeta = np.dot(py, dphideta)
-        jac = dxdxsi * dydeta - dxdeta * dydxsi
-        return jac
+    @deprecated_made_private  # TODO: Remove 6 months after v3.2.0
+    def jacobian(self, *args, **kwargs):
+        raise NotImplementedError
 
     def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         grid = self.U.grid
-        (zeta, eta, xsi, zi, yi, xi) = self.U._search_indices(time, z, y, x, ti, particle=particle)
+        (_, eta, xsi, zi, yi, xi) = self.U._search_indices(time, z, y, x, ti, particle=particle)
 
         if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
@@ -2014,10 +1580,10 @@ class VectorField:
             px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
         xx = (1 - xsi) * (1 - eta) * px[0] + xsi * (1 - eta) * px[1] + xsi * eta * px[2] + (1 - xsi) * eta * px[3]
         assert abs(xx - x) < 1e-4
-        c1 = self.dist(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
-        c2 = self.dist(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
-        c3 = self.dist(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
-        c4 = self.dist(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
+        c1 = i_u._geodetic_distance(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
+        c2 = i_u._geodetic_distance(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
+        c3 = i_u._geodetic_distance(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
+        c4 = i_u._geodetic_distance(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
         if grid.zdim == 1:
             if self.gridindexingtype == "nemo":
                 U0 = self.U.data[ti, yi + 1, xi] * c4
@@ -2049,7 +1615,7 @@ class VectorField:
         else:
             meshJac = deg2m if grid.mesh == "spherical" else 1
 
-        jac = self.jacobian(py, px, eta, xsi) * meshJac
+        jac = i_u._compute_jacobian_determinant(py, px, eta, xsi) * meshJac
 
         u = (
             (-(1 - eta) * U - (1 - xsi) * V) * px[0]

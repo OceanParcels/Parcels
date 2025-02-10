@@ -1,3 +1,4 @@
+import math
 from collections.abc import Callable
 from typing import Literal
 
@@ -144,6 +145,7 @@ def dphidxsi2D_lin(eta: float, xsi: float) -> tuple[list[float], list[float]]:
                   1-xsi]
 
     return dphideta, dphidxsi
+# fmt: on
 
 
 def dxdxsi2D_lin(
@@ -173,4 +175,22 @@ def interpolate(phi: Callable[[float], list[float]], f: list[float], xsi: float)
     return np.dot(phi(xsi), f)
 
 
-# fmt: on
+def _geodetic_distance(lat1: float, lat2: float, lon1: float, lon2: float, mesh: Mesh, lat: float) -> float:
+    if mesh == "spherical":
+        rad = np.pi / 180.0
+        deg2m = 1852 * 60.0
+        return np.sqrt(((lon2 - lon1) * deg2m * math.cos(rad * lat)) ** 2 + ((lat2 - lat1) * deg2m) ** 2)
+    else:
+        return np.sqrt((lon2 - lon1) ** 2 + (lat2 - lat1) ** 2)
+
+
+def _compute_jacobian_determinant(py: np.ndarray, px: np.ndarray, eta: float, xsi: float) -> float:
+    dphidxsi = [eta - 1, 1 - eta, eta, -eta]
+    dphideta = [xsi - 1, -xsi, xsi, 1 - xsi]
+
+    dxdxsi = np.dot(px, dphidxsi)
+    dxdeta = np.dot(px, dphideta)
+    dydxsi = np.dot(py, dphidxsi)
+    dydeta = np.dot(py, dphideta)
+    jac = dxdxsi * dydeta - dxdeta * dydxsi
+    return jac

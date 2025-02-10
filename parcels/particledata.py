@@ -350,8 +350,9 @@ class ParticleData:
         cstruct = CParticles(*cdata)
         return cstruct
 
-    def _to_write_particles(self, pd, time):
+    def _to_write_particles(self, time):
         """Return the Particles that need to be written at time: if particle.time is between time-dt/2 and time+dt (/2)"""
+        pd = self._data
         return np.where(
             (
                 np.less_equal(time - np.abs(pd["dt"] / 2), pd["time"], where=np.isfinite(pd["time"]))

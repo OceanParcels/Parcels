@@ -104,7 +104,7 @@ def test_randomexponential(mode, lambd):
         fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart)
     )
 
-    def vertical_randomexponential(particle, fieldset, time):
+    def vertical_randomexponential(particle, fieldset, time):  # pragma: no cover
         # Kernel for random exponential variable in depth direction
         particle.depth = ParcelsRandom.expovariate(fieldset.lambd)
 
@@ -134,7 +134,7 @@ def test_randomvonmises(mode, mu, kappa):
         fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart)
     )
 
-    def vonmises(particle, fieldset, time):
+    def vonmises(particle, fieldset, time):  # pragma: no cover
         particle.angle = ParcelsRandom.vonmisesvariate(fieldset.mu, fieldset.kappa)
 
     pset.execute(vonmises, runtime=1, dt=1)
