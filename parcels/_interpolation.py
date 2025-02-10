@@ -146,7 +146,7 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
         return 0
     elif nb_land > 0:
         val = 0
-        w_sum = 0
+        w_sum = 0.0
         for j in range(2):
             for i in range(2):
                 distance = pow((eta - j), 2) + pow((xsi - i), 2)
@@ -196,8 +196,8 @@ def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:
     if nb_land == 8:
         return 0
     elif nb_land > 0:
-        val = 0
-        w_sum = 0
+        val = 0.0
+        w_sum = 0.0
         for k in range(2):
             for j in range(2):
                 for i in range(2):
