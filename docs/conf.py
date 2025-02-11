@@ -207,6 +207,7 @@ html_theme_options = {
             "type": "fontawesome",
         }
     ],
+    "announcement": "WARNING: This documentation is built for v4 of Parcels, which is unreleased and in active development. Use the version switcher in the bottom right to select your version of Parcels, or see <a href='https://docs.oceanparcels.org/'>stable docs</a>.",
 }
 
 html_context = {
