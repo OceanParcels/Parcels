@@ -31,8 +31,8 @@ def xarray_dask_fieldset():
 
         gridset = GridSet()
 
-        V = ZeroField(grid=Grid(), ndims=1)
-        U = RandomField(grid=Grid(), ndims=1, scale=1e-3)
+        V = ZeroField(grid=Grid(), ndims=1)  # never called (I hope)
+        U = ZeroField(grid=Grid(), ndims=1)  # never called (I hope
         UV = UVXarrayField(
             ds=xr.Dataset(
                 {
@@ -85,8 +85,8 @@ def xarray_fieldset():
 
         gridset = GridSet()
 
-        V = ZeroField(grid=Grid(), ndims=1)
-        U = RandomField(grid=Grid(), ndims=1, scale=1e-3)
+        V = ZeroField(grid=Grid(), ndims=1)  # never called (I hope)
+        U = ZeroField(grid=Grid(), ndims=1)  # never called (I hope
         UV = UVXarrayField(
             ds=xr.Dataset(
                 {
@@ -132,8 +132,8 @@ def random_fieldset():
 
         gridset = GridSet()
 
-        V = ZeroField(grid=Grid(), ndims=1)
-        U = RandomField(grid=Grid(), ndims=1, scale=1e-3)
+        V = ZeroField(grid=Grid(), ndims=1)  # never called (I hope)
+        U = ZeroField(grid=Grid(), ndims=1)  # never called (I hope
         UV = RandomField(grid=Grid(), ndims=2, scale=1e-3)
 
         def _check_complete(self):
