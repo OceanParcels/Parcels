@@ -4,9 +4,11 @@
 # TODO: Write some benchmarks for parcels
 
 
-import numpy as np
-from parcels import FieldSet, ParticleSet, AdvectionRK4, ScipyParticle
 from datetime import timedelta
+
+import numpy as np
+
+from parcels import AdvectionRK4, FieldSet, ParticleSet, ScipyParticle
 
 
 class Advection3D:
