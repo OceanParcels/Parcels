@@ -33,7 +33,9 @@ class CGrid(Structure):
     _fields_ = [("gtype", c_int), ("grid", c_void_p)]
 
 
-class Grid: ...
+class Grid:
+    def __init__(self, time_full=None):
+        self.time_full = time_full
 
 
 class RectilinearGrid(Grid): ...
@@ -62,15 +64,27 @@ def _calc_cell_edge_sizes(grid: RectilinearGrid) -> None:
     """
     if not grid.cell_edge_sizes:
         if grid._gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):
-            grid.cell_edge_sizes["x"] = np.zeros((grid.ydim, grid.xdim), dtype=np.float32)
-            grid.cell_edge_sizes["y"] = np.zeros((grid.ydim, grid.xdim), dtype=np.float32)
+            grid.cell_edge_sizes["x"] = np.zeros(
+                (grid.ydim, grid.xdim), dtype=np.float32
+            )
+            grid.cell_edge_sizes["y"] = np.zeros(
+                (grid.ydim, grid.xdim), dtype=np.float32
+            )
 
             x_conv = GeographicPolar() if grid.mesh == "spherical" else UnitConverter()
             y_conv = Geographic() if grid.mesh == "spherical" else UnitConverter()
-            for y, (lat, dy) in enumerate(zip(grid.lat, np.gradient(grid.lat), strict=False)):
-                for x, (lon, dx) in enumerate(zip(grid.lon, np.gradient(grid.lon), strict=False)):
-                    grid.cell_edge_sizes["x"][y, x] = x_conv.to_source(dx, grid.depth[0], lat, lon)
-                    grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, grid.depth[0], lat, lon)
+            for y, (lat, dy) in enumerate(
+                zip(grid.lat, np.gradient(grid.lat), strict=False)
+            ):
+                for x, (lon, dx) in enumerate(
+                    zip(grid.lon, np.gradient(grid.lon), strict=False)
+                ):
+                    grid.cell_edge_sizes["x"][y, x] = x_conv.to_source(
+                        dx, grid.depth[0], lat, lon
+                    )
+                    grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(
+                        dy, grid.depth[0], lat, lon
+                    )
         else:
             raise ValueError(
                 f"_cell_edge_sizes() not implemented for {grid._gtype} grids. "
