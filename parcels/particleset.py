@@ -27,7 +27,7 @@ from parcels.kernel import Kernel
 from parcels.particle import JITParticle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
-from parcels.tools._helpers import deprecated, deprecated_made_private, particleset_repr, timedelta_to_float
+from parcels.tools._helpers import particleset_repr, timedelta_to_float
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
@@ -285,61 +285,10 @@ class ParticleSet:
 
         self._kernel = None
 
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def repeat_starttime(self):
-        return self._repeat_starttime
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def repeatlon(self):
-        return self._repeatlon
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def repeatlat(self):
-        return self._repeatlat
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def repeatdepth(self):
-        return self._repeatdepth
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def repeatpclass(self):
-        return self._repeatpclass
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def repeatkwargs(self):
-        return self._repeatkwargs
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def kernel(self):
-        return self._kernel
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def interaction_kernel(self):
-        return self._interaction_kernel
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def repeatpid(self):
-        return self._repeatpid
-
     def __del__(self):
         if self.particledata is not None and isinstance(self.particledata, ParticleData):
             del self.particledata
         self.particledata = None
-
-    @deprecated(
-        "Use iter(pset) instead, or just use the object in an iterator context (e.g. for p in pset: ...)."
-    )  # TODO: Remove 6 months after v3.1.0 (or 9 months; doesn't contribute to code debt)
-    def iterator(self):
-        return iter(self)
 
     def __iter__(self):
         return iter(self.particledata)
@@ -459,20 +408,12 @@ class ParticleSet:
         self._dirty_neighbor = True
         self.remove_indices(np.where(indices)[0])
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def active_particles_mask(self, *args, **kwargs):
-        return self._active_particles_mask(*args, **kwargs)
-
     def _active_particles_mask(self, time, dt):
         active_indices = (time - self.particledata.data["time"]) / dt >= 0
         non_err_indices = np.isin(self.particledata.data["state"], [StatusCode.Success, StatusCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
         self._active_particle_idx = np.where(active_indices)[0]
         return active_indices
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def compute_neighbor_tree(self, *args, **kwargs):
-        return self._compute_neighbor_tree(*args, **kwargs)
 
     def _compute_neighbor_tree(self, time, dt):
         active_mask = self._active_particles_mask(time, dt)
@@ -490,10 +431,6 @@ class ParticleSet:
         else:
             self._neighbor_tree.update_values(self._values, new_active_mask=active_mask)
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def neighbors_by_index(self, *args, **kwargs):
-        return self._neighbors_by_index(*args, **kwargs)
-
     def _neighbors_by_index(self, particle_idx):
         neighbor_idx, distances = self._neighbor_tree.find_neighbors_by_idx(particle_idx)
         neighbor_idx = self._active_particle_idx[neighbor_idx]
@@ -503,10 +440,6 @@ class ParticleSet:
             self.particledata.data["vert_dist"][neighbor_idx] = distances[0, mask]
             self.particledata.data["horiz_dist"][neighbor_idx] = distances[1, mask]
         return ParticleDataIterator(self.particledata, subset=neighbor_idx)
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def neighbors_by_coor(self, *args, **kwargs):
-        return self._neighbors_by_coor(*args, **kwargs)
 
     def _neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
@@ -638,11 +571,6 @@ class ParticleSet:
             lonlatdepth_dtype=lonlatdepth_dtype,
             **kwargs,
         )
-
-    @classmethod
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def monte_carlo_sample(self, *args, **kwargs):
-        return self._monte_carlo_sample(*args, **kwargs)
 
     @classmethod
     def _monte_carlo_sample(cls, start_field, size, mode="monte_carlo"):
@@ -940,11 +868,6 @@ class ParticleSet:
         return np.where(np.isin(self.particledata.data[variable_name], compare_values, invert=invert))[0]
 
     @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def error_particles(self):
-        return self._error_particles
-
-    @property
     def _error_particles(self):
         """Get an iterator over all particles that are in an error state.
 
@@ -955,11 +878,6 @@ class ParticleSet:
         """
         error_indices = self.data_indices("state", [StatusCode.Success, StatusCode.Evaluate], invert=True)
         return ParticleDataIterator(self.particledata, subset=error_indices)
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def num_error_particles(self):
-        return self._num_error_particles
 
     @property
     def _num_error_particles(self):
