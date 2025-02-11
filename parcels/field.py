@@ -74,7 +74,12 @@ class Field:
         pass
 
     def __getitem__(self, key):
-        return self.eval()
+        if _isParticle(key):
+            return self.eval(
+                time=key.time, depth=key.depth, lat=key.lat, lon=key.lon, particle=key
+            )
+        else:
+            return self.eval(*key)
 
 
 class ZeroField(Field):
@@ -89,6 +94,30 @@ class RandomField(Field):
 
     def eval(self, *args, **kwargs):
         return [self.scale * np.random.normal() for n in range(self.ndims)]
+
+
+class UVXarrayField(Field):
+    def __init__(self, ds=None, *args, **kwargs):
+        self.ds = ds
+        super(UVXarrayField, self).__init__(ndims=len(ds.sizes), *args, **kwargs)
+
+    def eval(self, time, depth, lat, lon, particle=None):
+        return (
+            self.ds.sel(
+                time=time,
+                depth=depth,
+                lat=lat,
+                lon=lon,
+                method="nearest",
+            ).U.data[()],
+            self.ds.sel(
+                time=time,
+                depth=depth,
+                lat=lat,
+                lon=lon,
+                method="nearest",
+            ).V.data[()],
+        )
 
 
 class VectorField: ...
