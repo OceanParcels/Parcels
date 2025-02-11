@@ -15,7 +15,6 @@ from parcels import (
     AdvectionRK45,
     Field,
     FieldSet,
-    JITParticle,
     ParticleSet,
     ScipyParticle,
     StatusCode,
@@ -23,7 +22,6 @@ from parcels import (
 )
 from tests.utils import TEST_DATA
 
-ptype = {"scipy": ScipyParticle, "jit": JITParticle}
 kernel = {
     "EE": AdvectionEE,
     "RK4": AdvectionRK4,
@@ -59,8 +57,7 @@ def depth():
     return np.linspace(0, 30, zdim, dtype=np.float32)
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_zonal(lon, lat, depth, mode):
+def test_advection_zonal(lon, lat, depth):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     npart = 10
     data2D = {
@@ -74,7 +71,7 @@ def test_advection_zonal(lon, lat, depth, mode):
     dimensions = {"lon": lon, "lat": lat}
     fieldset2D = FieldSet.from_data(data2D, dimensions, mesh="spherical", transpose=True)
 
-    pset2D = ParticleSet(fieldset2D, pclass=ptype[mode], lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
+    pset2D = ParticleSet(fieldset2D, pclass=ScipyParticle, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
     pset2D.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
     assert (np.diff(pset2D.lon) > 1.0e-4).all()
 
@@ -82,7 +79,7 @@ def test_advection_zonal(lon, lat, depth, mode):
     fieldset3D = FieldSet.from_data(data3D, dimensions, mesh="spherical", transpose=True)
     pset3D = ParticleSet(
         fieldset3D,
-        pclass=ptype[mode],
+        pclass=ScipyParticle,
         lon=np.zeros(npart) + 20.0,
         lat=np.linspace(0, 80, npart),
         depth=np.zeros(npart) + 10.0,
@@ -91,22 +88,20 @@ def test_advection_zonal(lon, lat, depth, mode):
     assert (np.diff(pset3D.lon) > 1.0e-4).all()
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_meridional(lon, lat, mode):
+def test_advection_meridional(lon, lat):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     npart = 10
     data = {"U": np.zeros((lon.size, lat.size), dtype=np.float32), "V": np.ones((lon.size, lat.size), dtype=np.float32)}
     dimensions = {"lon": lon, "lat": lat}
     fieldset = FieldSet.from_data(data, dimensions, mesh="spherical", transpose=True)
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart))
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart))
     delta_lat = np.diff(pset.lat)
     pset.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
     assert np.allclose(np.diff(pset.lat), delta_lat, rtol=1.0e-4)
 
 
-@pytest.mark.parametrize("mode", ["jit", "scipy"])
-def test_advection_3D(mode):
+def test_advection_3D():
     """Flat 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
     xdim = ydim = zdim = 2
     npart = 11
@@ -120,17 +115,16 @@ def test_advection_3D(mode):
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
     pset = ParticleSet(
-        fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart) + 1e2, depth=np.linspace(0, 1, npart)
+        fieldset, pclass=ScipyParticle, lon=np.zeros(npart), lat=np.zeros(npart) + 1e2, depth=np.linspace(0, 1, npart)
     )
     time = timedelta(hours=2).total_seconds()
     pset.execute(AdvectionRK4, runtime=time, dt=timedelta(seconds=30))
     assert np.allclose(pset.depth * pset.time, pset.lon, atol=1.0e-1)
 
 
-@pytest.mark.parametrize("mode", ["jit", "scipy"])
 @pytest.mark.parametrize("direction", ["up", "down"])
 @pytest.mark.parametrize("wErrorThroughSurface", [True, False])
-def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
+def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
     xdim = ydim = zdim = 2
     dimensions = {
         "lon": np.linspace(0.0, 1, xdim, dtype=np.float32),
@@ -163,7 +157,7 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
         kernels.append(SubmergeParticle)
     kernels.append(DeleteParticle)
 
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
+    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=0.5, lat=0.5, depth=0.9)
     pset.execute(kernels, runtime=11.0, dt=1)
 
     if direction == "up" and wErrorThroughSurface:
@@ -173,9 +167,8 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
         assert len(pset) == 0
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("rk45_tol", [10, 100])
-def test_advection_RK45(lon, lat, mode, rk45_tol):
+def test_advection_RK45(lon, lat, rk45_tol):
     npart = 10
     data2D = {
         "U": np.ones((lon.size, lat.size), dtype=np.float32),
@@ -186,7 +179,7 @@ def test_advection_RK45(lon, lat, mode, rk45_tol):
     fieldset.add_constant("RK45_tol", rk45_tol)
 
     dt = timedelta(seconds=30).total_seconds()
-    RK45Particles = ptype[mode].add_variable("next_dt", dtype=np.float32, initial=dt)
+    RK45Particles = ScipyParticle.add_variable("next_dt", dtype=np.float32, initial=dt)
     pset = ParticleSet(fieldset, pclass=RK45Particles, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
     pset.execute(AdvectionRK45, runtime=timedelta(hours=2), dt=dt)
     assert (np.diff(pset.lon) > 1.0e-4).all()
@@ -235,15 +228,14 @@ def test_conversion_3DCROCO():
     assert np.allclose(sigma, s_xroms, atol=1e-3)
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_3DCROCO(mode):
+def test_advection_3DCROCO():
     fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
 
     runtime = 1e4
     X, Z = np.meshgrid([40e3, 80e3, 120e3], [-10, -130])
     Y = np.ones(X.size) * 100e3
 
-    pclass = ptype[mode].add_variable(Variable("w"))
+    pclass = ScipyParticle.add_variable(Variable("w"))
     pset = ParticleSet(fieldset=fieldset, pclass=pclass, lon=X, lat=Y, depth=Z)
 
     def SampleW(particle, fieldset, time):  # pragma: no cover
@@ -254,15 +246,14 @@ def test_advection_3DCROCO(mode):
     assert np.allclose(pset.lon_nextloop, [x + runtime for x in X.flatten()], atol=1e-3)
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_2DCROCO(mode):
+def test_advection_2DCROCO():
     fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO2D.py")
 
     runtime = 1e4
     X = np.array([40e3, 80e3, 120e3])
     Y = np.ones(X.size) * 100e3
     Z = np.zeros(X.size)
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=X, lat=Y, depth=Z)
+    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=X, lat=Y, depth=Z)
 
     pset.execute([AdvectionRK4], runtime=runtime, dt=100)
     assert np.allclose(pset.depth, Z.flatten(), atol=1e-3)
@@ -284,32 +275,29 @@ def periodicBC(particle, fieldset, time):  # pragma: no cover
     particle.lat = math.fmod(particle.lat, 1)
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_periodic_zonal(mode):
+def test_advection_periodic_zonal():
     xdim, ydim, halosize = 100, 100, 3
     fieldset = create_periodic_fieldset(xdim, ydim, uvel=1.0, vvel=0.0)
     fieldset.add_periodic_halo(zonal=True, halosize=halosize)
     assert len(fieldset.U.lon) == xdim + 2 * halosize
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
     assert abs(pset.lon[0] - 0.15) < 0.1
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_periodic_meridional(mode):
+def test_advection_periodic_meridional():
     xdim, ydim = 100, 100
     fieldset = create_periodic_fieldset(xdim, ydim, uvel=0.0, vvel=1.0)
     fieldset.add_periodic_halo(meridional=True)
     assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
     assert abs(pset.lat[0] - 0.15) < 0.1
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_advection_periodic_zonal_meridional(mode):
+def test_advection_periodic_zonal_meridional():
     xdim, ydim = 100, 100
     fieldset = create_periodic_fieldset(xdim, ydim, uvel=1.0, vvel=1.0)
     fieldset.add_periodic_halo(zonal=True, meridional=True)
@@ -318,17 +306,16 @@ def test_advection_periodic_zonal_meridional(mode):
     assert np.allclose(np.diff(fieldset.U.lat), fieldset.U.lat[1] - fieldset.U.lat[0], rtol=0.001)
     assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1] - fieldset.U.lon[0], rtol=0.001)
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0.4], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
     assert abs(pset.lon[0] - 0.05) < 0.1
     assert abs(pset.lat[0] - 0.15) < 0.1
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("u", [-0.3, np.array(0.2)])
 @pytest.mark.parametrize("v", [0.2, np.array(1)])
 @pytest.mark.parametrize("w", [None, -0.2, np.array(0.7)])
-def test_length1dimensions(mode, u, v, w):
+def test_length1dimensions(u, v, w):
     (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (0, 1)
     (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (-4, 1)
     (depth, zdim) = (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (3, 1)
@@ -355,7 +342,7 @@ def test_length1dimensions(mode, u, v, w):
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
 
     x0, y0, z0 = 2, 8, -4
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=x0, lat=y0, depth=z0)
     pfunc = AdvectionRK4 if w is None else AdvectionRK4_3D
     kernel = pset.Kernel(pfunc)
     pset.execute(kernel, runtime=5, dt=1)
@@ -402,7 +389,6 @@ def fieldset_stationary():
     return create_fieldset_stationary()
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize(
     "method, rtol, diffField",
     [
@@ -413,7 +399,7 @@ def fieldset_stationary():
         ("RK45", 1e-5, False),
     ],
 )
-def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField):
+def test_stationary_eddy(fieldset_stationary, method, rtol, diffField):
     npart = 1
     fieldset = fieldset_stationary
     if diffField:
@@ -425,9 +411,9 @@ def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField):
     dt = timedelta(minutes=3).total_seconds()
     endtime = timedelta(hours=6).total_seconds()
 
-    RK45Particles = ptype[mode].add_variable("next_dt", dtype=np.float32, initial=dt)
+    RK45Particles = ScipyParticle.add_variable("next_dt", dtype=np.float32, initial=dt)
 
-    pclass = RK45Particles if method == "RK45" else ptype[mode]
+    pclass = RK45Particles if method == "RK45" else ScipyParticle
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
@@ -437,8 +423,7 @@ def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField):
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_stationary_eddy_vertical(mode):
+def test_stationary_eddy_vertical():
     npart = 1
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(10000, 20000, npart)
@@ -458,7 +443,7 @@ def test_stationary_eddy_vertical(mode):
     data = {"U": fld1, "V": fldzero, "W": fld2}
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=lon, lat=lat, depth=depth)
     pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
     exp_lon = [truth_stationary(x, z, pset[0].time)[0] for x, z in zip(lon, depth, strict=True)]
     exp_depth = [truth_stationary(x, z, pset[0].time)[1] for x, z in zip(lon, depth, strict=True)]
@@ -470,7 +455,7 @@ def test_stationary_eddy_vertical(mode):
     data = {"U": fldzero, "V": fld2, "W": fld1}
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=lon, lat=lat, depth=depth)
     pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
     exp_depth = [truth_stationary(z, y, pset[0].time)[0] for z, y in zip(depth, lat, strict=True)]
     exp_lat = [truth_stationary(z, y, pset[0].time)[1] for z, y in zip(depth, lat, strict=True)]
@@ -509,7 +494,6 @@ def fieldset_moving():
     return create_fieldset_moving()
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize(
     "method, rtol, diffField",
     [
@@ -520,7 +504,7 @@ def fieldset_moving():
         ("RK45", 1e-5, False),
     ],
 )
-def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField):
+def test_moving_eddy(fieldset_moving, method, rtol, diffField):
     npart = 1
     fieldset = fieldset_moving
     if diffField:
@@ -532,9 +516,9 @@ def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField):
     dt = timedelta(minutes=3).total_seconds()
     endtime = timedelta(hours=6).total_seconds()
 
-    RK45Particles = ptype[mode].add_variable("next_dt", dtype=np.float32, initial=dt)
+    RK45Particles = ScipyParticle.add_variable("next_dt", dtype=np.float32, initial=dt)
 
-    pclass = RK45Particles if method == "RK45" else ptype[mode]
+    pclass = RK45Particles if method == "RK45" else ScipyParticle
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
@@ -583,7 +567,6 @@ def fieldset_decaying():
     return create_fieldset_decaying()
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize(
     "method, rtol, diffField",
     [
@@ -595,16 +578,13 @@ def fieldset_decaying():
         ("AA", 1e-3, False),
     ],
 )
-def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField):
+def test_decaying_eddy(fieldset_decaying, method, rtol, diffField):
     npart = 1
     fieldset = fieldset_decaying
     if method == "AA":
-        if mode == "jit":
-            return  # AnalyticalAdvection not implemented in JIT
-        else:
-            # needed for AnalyticalAdvection to work, but comes at expense of accuracy
-            fieldset.U.interp_method = "cgrid_velocity"
-            fieldset.V.interp_method = "cgrid_velocity"
+        # needed for AnalyticalAdvection to work, but comes at expense of accuracy
+        fieldset.U.interp_method = "cgrid_velocity"
+        fieldset.V.interp_method = "cgrid_velocity"
 
     if diffField:
         fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
@@ -615,9 +595,9 @@ def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField):
     dt = timedelta(minutes=3).total_seconds()
     endtime = timedelta(hours=6).total_seconds()
 
-    RK45Particles = ptype[mode].add_variable("next_dt", dtype=np.float32, initial=dt)
+    RK45Particles = ScipyParticle.add_variable("next_dt", dtype=np.float32, initial=dt)
 
-    pclass = RK45Particles if method == "RK45" else ptype[mode]
+    pclass = RK45Particles if method == "RK45" else ScipyParticle
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
@@ -627,25 +607,23 @@ def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField):
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_analyticalAgrid(mode):
+def test_analyticalAgrid():
     lon = np.arange(0, 15, dtype=np.float32)
     lat = np.arange(0, 15, dtype=np.float32)
     U = np.ones((lat.size, lon.size), dtype=np.float32)
     V = np.ones((lat.size, lon.size), dtype=np.float32)
     fieldset = FieldSet.from_data({"U": U, "V": V}, {"lon": lon, "lat": lat}, mesh="flat")
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=1, lat=1)
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=1, lat=1)
 
     with pytest.raises(NotImplementedError):
         pset.execute(AdvectionAnalytical, runtime=1)
 
 
-@pytest.mark.parametrize("mode", ["scipy"])  # JIT not implemented
 @pytest.mark.parametrize("u", [1, -0.2, -0.3, 0])
 @pytest.mark.parametrize("v", [1, -0.3, 0, -1])
 @pytest.mark.parametrize("w", [None, 1, -0.3, 0, -1])
 @pytest.mark.parametrize("direction", [1, -1])
-def test_uniform_analytical(mode, u, v, w, direction, tmp_zarrfile):
+def test_uniform_analytical(u, v, w, direction, tmp_zarrfile):
     lon = np.arange(0, 15, dtype=np.float32)
     lat = np.arange(0, 15, dtype=np.float32)
     if w is not None:
@@ -663,7 +641,7 @@ def test_uniform_analytical(mode, u, v, w, direction, tmp_zarrfile):
     fieldset.V.interp_method = "cgrid_velocity"
 
     x0, y0, z0 = 6.1, 6.2, 20
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=x0, lat=y0, depth=z0)
 
     outfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=1, chunks=(1, 1))
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction, output_file=outfile)
