@@ -10,7 +10,7 @@ import zarr
 
 import parcels
 from parcels._compat import MPI
-from parcels.tools._helpers import default_repr, deprecated, deprecated_made_private, timedelta_to_float
+from parcels.tools._helpers import default_repr, timedelta_to_float
 from parcels.tools.warnings import FileWarning
 
 __all__ = ["ParticleFile"]
@@ -154,36 +154,6 @@ class ParticleFile:
     def time_origin(self):
         return self.particleset.time_origin
 
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def parcels_mesh(self):
-        return self._parcels_mesh
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def maxids(self):
-        return self._maxids
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def pids_written(self):
-        return self._pids_written
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def mpi_rank(self):
-        return self._mpi_rank
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def fill_value_map(self):
-        return self._fill_value_map
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def analytical(self):
-        return self._is_analytical
-
     def _create_variables_attribute_dict(self):
         """Creates the dictionary with variable attributes.
 
@@ -218,21 +188,6 @@ class ParticleFile:
 
         return attrs
 
-    @deprecated(
-        "ParticleFile.metadata is a dictionary. Use `ParticleFile.metadata['key'] = ...` or other dictionary methods instead."
-    )  # TODO: Remove 6 months after v3.1.0
-    def add_metadata(self, name, message):
-        """Add metadata to :class:`parcels.particleset.ParticleSet`.
-
-        Parameters
-        ----------
-        name : str
-            Name of the metadata variable
-        message : str
-            message to be written
-        """
-        self.metadata[name] = message
-
     def _convert_varout_name(self, var):
         if var == "depth":
             return "z"
@@ -240,10 +195,6 @@ class ParticleFile:
             return "trajectory"
         else:
             return var
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def write_once(self, *args, **kwargs):
-        return self._write_once(*args, **kwargs)
 
     def _write_once(self, var):
         return self.particleset.particledata.ptype[var].to_write == "once"

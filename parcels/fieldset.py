@@ -14,7 +14,7 @@ from parcels.field import DeferredArray, Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.particlefile import ParticleFile
-from parcels.tools._helpers import deprecated_made_private, fieldset_repr
+from parcels.tools._helpers import fieldset_repr
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import TimeExtrapolationError
@@ -62,11 +62,6 @@ class FieldSet:
     @property
     def particlefile(self):
         return self._particlefile
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def completed(self):
-        return self._completed
 
     @staticmethod
     def checkvaliddimensionsdict(dims):
@@ -248,10 +243,6 @@ class FieldSet:
             for f in vfield:
                 f.fieldset = self
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def add_UVfield(self, *args, **kwargs):
-        return self._add_UVfield(*args, **kwargs)
-
     def _add_UVfield(self):
         if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
             if isinstance(self.U, NestedField):
@@ -263,10 +254,6 @@ class FieldSet:
                 self.add_vector_field(NestedField("UVW", self.U, self.V, self.W))
             else:
                 self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def check_complete(self):
-        return self._check_complete()
 
     def _check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
@@ -344,11 +331,6 @@ class FieldSet:
                     depth_data = f.grid.depth_field.data
                     f.grid._depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
         self._completed = True
-
-    @classmethod
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def parse_wildcards(cls, *args, **kwargs):
-        return cls._parse_wildcards(*args, **kwargs)
 
     @classmethod
     def _parse_wildcards(cls, paths, filenames, var):

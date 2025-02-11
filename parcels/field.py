@@ -27,7 +27,7 @@ from parcels._typing import (
     assert_valid_gridindexingtype,
     assert_valid_interp_method,
 )
-from parcels.tools._helpers import default_repr, deprecated_made_private, field_repr, timedelta_to_float
+from parcels.tools._helpers import default_repr, field_repr, timedelta_to_float
 from parcels.tools.converters import (
     TimeConverter,
     UnitConverter,
@@ -50,7 +50,7 @@ from .fieldfilebuffer import (
     DeferredNetcdfFileBuffer,
     NetcdfFileBuffer,
 )
-from .grid import CGrid, Grid, GridType, _calc_cell_areas, _calc_cell_edge_sizes
+from .grid import CGrid, Grid, GridType, _calc_cell_areas
 
 if TYPE_CHECKING:
     from ctypes import _Pointer as PointerType
@@ -354,36 +354,6 @@ class Field:
         return field_repr(self)
 
     @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def dataFiles(self):
-        return self._dataFiles
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def chunk_set(self):
-        return self._chunk_set
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def c_data_chunks(self):
-        return self._c_data_chunks
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def data_chunks(self):
-        return self._data_chunks
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def creation_log(self):
-        return self._creation_log
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def loaded_time_indices(self):
-        return self._loaded_time_indices
-
-    @property
     def dimensions(self):
         return self._dimensions
 
@@ -432,11 +402,6 @@ class Field:
         return self._netcdf_engine
 
     @classmethod
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def get_dim_filenames(cls, *args, **kwargs):
-        return cls._get_dim_filenames(*args, **kwargs)
-
-    @classmethod
     def _get_dim_filenames(cls, filenames, dim):
         if isinstance(filenames, str) or not isinstance(filenames, collections.abc.Iterable):
             return [filenames]
@@ -449,11 +414,6 @@ class Field:
                 return filename
         else:
             return filenames
-
-    @staticmethod
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def collect_timeslices(*args, **kwargs):
-        return Field._collect_timeslices(*args, **kwargs)
 
     @staticmethod
     def _collect_timeslices(
@@ -861,10 +821,6 @@ class Field:
             **kwargs,
         )
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def reshape(self, *args, **kwargs):
-        return self._reshape(*args, **kwargs)
-
     def _reshape(self, data, transpose=False):
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray, da.core.Array)):
@@ -963,10 +919,6 @@ class Field:
         if self.grid != field.grid:
             field.grid.depth_field = field
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def calc_cell_edge_sizes(self):
-        _calc_cell_edge_sizes(self.grid)
-
     def cell_areas(self):
         """Method to calculate cell sizes based on cell_edge_sizes.
 
@@ -974,39 +926,11 @@ class Field:
         """
         return _calc_cell_areas(self.grid)
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices_vertical_z(self, *_):
-        raise NotImplementedError
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices_vertical_s(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def reconnect_bnd_indices(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices_rectilinear(self, *_):
-        raise NotImplementedError
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices_curvilinear(self, *_):
-        raise NotImplementedError
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def search_indices(self, *_):
-        raise NotImplementedError
-
     def _search_indices(self, time, z, y, x, ti=-1, particle=None, search2D=False):
         if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             return _search_indices_rectilinear(self, time, z, y, x, ti, particle=particle, search2D=search2D)
         else:
             return _search_indices_curvilinear(self, time, z, y, x, ti, particle=particle, search2D=search2D)
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def interpolator2D(self, *_):
-        raise NotImplementedError
 
     def _interpolator2D(self, ti, z, y, x, particle=None):
         """Impelement 2D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
@@ -1023,10 +947,6 @@ class Field:
             else:
                 raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
         return f(ctx)
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def interpolator3D(self, *_):
-        raise NotImplementedError
 
     def _interpolator3D(self, ti, z, y, x, time, particle=None):
         """Impelement 3D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
@@ -1060,10 +980,6 @@ class Field:
             f1 = self.data[ti + 1, :]
             return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def spatial_interpolation(self, *args, **kwargs):
-        return self._spatial_interpolation(*args, **kwargs)
-
     def _spatial_interpolation(self, ti, z, y, x, time, particle=None):
         """Interpolate horizontal field values using a SciPy interpolator."""
         try:
@@ -1083,10 +999,6 @@ class Field:
         except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
             e = add_note(e, f"Error interpolating field '{self.name}'.", before=True)
             raise e
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def time_index(self, *_):
-        raise NotImplementedError
 
     def _time_index(self, time):
         """Find the index in the time array associated with a given time.
@@ -1172,10 +1084,6 @@ class Field:
         else:
             return value
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def ccode_eval(self, *args, **kwargs):
-        return self._ccode_eval(*args, **kwargs)
-
     def _ccode_eval(self, var, t, z, y, x):
         self._check_velocitysampling()
         ccode_str = (
@@ -1185,30 +1093,14 @@ class Field:
         )
         return ccode_str
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def ccode_convert(self, *args, **kwargs):
-        return self._ccode_convert(*args, **kwargs)
-
     def _ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(z, y, x)
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def get_block_id(self, *args, **kwargs):
-        return self._get_block_id(*args, **kwargs)
 
     def _get_block_id(self, block):
         return np.ravel_multi_index(block, self.nchunks)
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def get_block(self, *args, **kwargs):
-        return self._get_block(*args, **kwargs)
-
     def _get_block(self, bid):
         return np.unravel_index(bid, self.nchunks[1:])
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def chunk_setup(self, *args, **kwargs):
-        return self._chunk_setup(*args, **kwargs)
 
     def _chunk_setup(self):
         if isinstance(self.data, da.core.Array):
@@ -1239,10 +1131,6 @@ class Field:
         ]
         self.grid.chunk_info = sum(self.grid.chunk_info, [])  # noqa: RUF017
         self._chunk_set = True
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def chunk_data(self, *args, **kwargs):
-        return self._chunk_data(*args, **kwargs)
 
     def _chunk_data(self):
         if not self._chunk_set:
@@ -1414,10 +1302,6 @@ class Field:
         )
         dset.to_netcdf(filepath, unlimited_dims="time_counter")
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def rescale_and_set_minmax(self, *args, **kwargs):
-        return self._rescale_and_set_minmax(*args, **kwargs)
-
     def _rescale_and_set_minmax(self, data):
         data[np.isnan(data)] = 0
         if self._scaling_factor:
@@ -1427,10 +1311,6 @@ class Field:
         if self.vmax is not None:
             data[data > self.vmax] = 0
         return data
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def data_concatenate(self, *args, **kwargs):
-        return self._data_concatenate(*args, **kwargs)
 
     def _data_concatenate(self, data, data_to_concat, tindex):
         if data[tindex] is not None:
@@ -1553,14 +1433,6 @@ class VectorField:
             and np.allclose(grid1.depth, grid2.depth)
             and np.allclose(grid1.time_full, grid2.time_full)
         )
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.2.0
-    def dist(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.2.0
-    def jacobian(self, *args, **kwargs):
-        raise NotImplementedError
 
     def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         grid = self.U.grid
@@ -2050,10 +1922,6 @@ class VectorField:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def ccode_eval(self, *args, **kwargs):
-        return self._ccode_eval(*args, **kwargs)
 
     def _ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         ccode_str = ""

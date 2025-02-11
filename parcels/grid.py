@@ -7,7 +7,6 @@ import numpy as np
 import numpy.typing as npt
 
 from parcels._typing import Mesh, UpdateStatus, assert_valid_mesh
-from parcels.tools._helpers import deprecated_made_private
 from parcels.tools.converters import Geographic, GeographicPolar, TimeConverter, UnitConverter
 from parcels.tools.warnings import FieldSetWarning
 
@@ -153,46 +152,6 @@ class Grid:
     def cell_edge_sizes(self):
         return self._cell_edge_sizes
 
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def ti(self):
-        return self._ti
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def cstruct(self):
-        return self._cstruct
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def lat_flipped(self):
-        return self._lat_flipped
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def cgrid(self):
-        return self._cgrid
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def gtype(self):
-        return self._gtype
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def z4d(self):
-        return self._z4d
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def update_status(self):
-        return self._update_status
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def load_chunk(self):
-        return self._load_chunk
-
     @staticmethod
     def create_grid(
         lon: npt.ArrayLike,
@@ -226,11 +185,6 @@ class Grid:
         self._cgrid = cast(pointer(self._child_ctypes_struct), c_void_p)
         cstruct = CGrid(self._gtype, self._cgrid.value)
         return cstruct
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def child_ctypes_struct(self):
-        return self._child_ctypes_struct
 
     @property
     def _child_ctypes_struct(self):
@@ -286,10 +240,6 @@ class Grid:
             )
         return self._cstruct
 
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def check_zonal_periodic(self, *args, **kwargs):
-        return self._check_zonal_periodic(*args, **kwargs)
-
     def _check_zonal_periodic(self):
         if self.zonal_periodic or self.mesh == "flat" or self.lon.size == 1:
             return
@@ -297,10 +247,6 @@ class Grid:
         dx = np.where(dx < -180, dx + 360, dx)
         dx = np.where(dx > 180, dx - 360, dx)
         self._zonal_periodic = sum(dx) > 359.9
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def add_Sdepth_periodic_halo(self, *args, **kwargs):
-        return self._add_Sdepth_periodic_halo(*args, **kwargs)
 
     def _add_Sdepth_periodic_halo(self, zonal, meridional, halosize):
         if zonal:
@@ -329,10 +275,6 @@ class Grid:
                     axis=len(self.depth.shape) - 2,
                 )
                 assert self.depth.shape[2] == self.ydim, "Third dim must be y."
-
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def computeTimeChunk(self, *args, **kwargs):
-        return self._computeTimeChunk(*args, **kwargs)
 
     def _computeTimeChunk(self, f, time, signdt):
         nextTime_loc = np.inf if signdt >= 0 else -np.inf
@@ -409,45 +351,20 @@ class Grid:
         return nextTime_loc
 
     @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def chunk_not_loaded(self):
-        return self._chunk_not_loaded
-
-    @property
     def _chunk_not_loaded(self):
         return 0
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def chunk_loading_requested(self):
-        return self._chunk_loading_requested
 
     @property
     def _chunk_loading_requested(self):
         return 1
 
     @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def chunk_loaded_touched(self):
-        return self._chunk_loaded_touched
-
-    @property
     def _chunk_loaded_touched(self):
         return 2
 
     @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def chunk_deprecated(self):
-        return self._chunk_deprecated
-
-    @property
     def _chunk_deprecated(self):
         return 3
-
-    @property
-    @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
-    def chunk_loaded(self):
-        return self._chunk_loaded
 
     @property
     def _chunk_loaded(self):

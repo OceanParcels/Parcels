@@ -5,7 +5,6 @@ from operator import attrgetter
 import numpy as np
 
 from parcels._compat import MPI, KMeans
-from parcels.tools._helpers import deprecated
 from parcels.tools.statuscodes import StatusCode
 
 
@@ -228,12 +227,6 @@ class ParticleData:
     def __len__(self):
         """Return the length, in terms of 'number of elements, of a ParticleData instance."""
         return self._ncount
-
-    @deprecated(
-        "Use iter(...) instead, or just use the object in an iterator context (e.g. for p in particledata: ...)."
-    )  # TODO: Remove 6 months after v3.1.0 (or 9 months; doesn't contribute to code debt)
-    def iterator(self):
-        return iter(self)
 
     def __iter__(self):
         """Return an Iterator that allows for forward iteration over the elements in the ParticleData (e.g. `for p in pset:`)."""
