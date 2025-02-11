@@ -1,4 +1,5 @@
 import numpy as np
+from dask import array as darr
 import pytest
 import xarray as xr
 
@@ -15,7 +16,59 @@ from parcels import (
 )
 from parcels.field import RandomField, ZeroField, UVXarrayField
 
-# from tests.utils import create_fieldset_zeros_simple
+
+@pytest.fixture
+def xarray_dask_fieldset():
+    class GridSet:
+        size = 1
+        grids = []
+
+        def dimrange(self, *args, **kwargs):
+            return (0, np.inf)
+
+    class FieldSet:
+        time_origin = TimeConverter()
+
+        gridset = GridSet()
+
+        V = ZeroField(grid=Grid(), ndims=1)
+        U = RandomField(grid=Grid(), ndims=1, scale=1e-3)
+        UV = UVXarrayField(
+            ds=xr.Dataset(
+                {
+                    "U": (
+                        ("time", "depth", "lat", "lon"),
+                        1e-3
+                        * darr.random.normal(
+                            size=(1, 1, 181, 360), chunks=(1, 1, 181, 10)
+                        )
+                        + 2e-3,
+                    ),
+                    "V": (
+                        ("time", "depth", "lat", "lon"),
+                        darr.zeros((1, 1, 181, 360), chunks=(1, 1, 181, 10)),
+                    ),
+                },
+                coords={
+                    "time": [0],
+                    "depth": [0],
+                    "lat": np.linspace(-90, 90, 181),
+                    "lon": np.linspace(-180, 180, 361)[:-1],
+                },
+            ),
+            grid=Grid(),
+        )
+
+        def _check_complete(self):
+            return True
+
+        def computeTimeChunk(self, *args, **kwargs):
+            return np.inf
+
+        def get_fields(self, *args, **kwargs):
+            return []
+
+    return FieldSet()
 
 
 @pytest.fixture
@@ -44,12 +97,8 @@ def xarray_fieldset():
                     "V": (("time", "depth", "lat", "lon"), np.zeros((1, 1, 181, 360))),
                 },
                 coords={
-                    "time": [
-                        0,
-                    ],
-                    "depth": [
-                        0,
-                    ],
+                    "time": [0],
+                    "depth": [0],
                     "lat": np.linspace(-90, 90, 181),
                     "lon": np.linspace(-180, 180, 361)[:-1],
                 },
@@ -132,6 +181,18 @@ def test_advection_xarray(xarray_fieldset):
     npart = 10
     pset = ParticleSet.from_line(
         xarray_fieldset,
+        size=npart,
+        start=(0, 1),
+        finish=(1, 0),
+        pclass=ScipyParticle,
+    )
+    pset.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
+
+
+def test_advection_xarray_dask(xarray_dask_fieldset):
+    npart = 10
+    pset = ParticleSet.from_line(
+        xarray_dask_fieldset,
         size=npart,
         start=(0, 1),
         finish=(1, 0),

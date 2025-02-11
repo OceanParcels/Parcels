@@ -109,14 +109,18 @@ class UVXarrayField(Field):
                 lat=lat,
                 lon=lon,
                 method="nearest",
-            ).U.data[()],
+            )
+            .U.compute()
+            .data[()],
             self.ds.sel(
                 time=time,
                 depth=depth,
                 lat=lat,
                 lon=lon,
                 method="nearest",
-            ).V.data[()],
+            )
+            .V.compute()
+            .data[()],
         )
 
 
