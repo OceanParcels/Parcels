@@ -149,12 +149,12 @@ def test_globcurrent_xarray_vs_netcdf(dt):
     lonstart, latstart, runtime = (25, -35, timedelta(days=7))
 
     psetN = parcels.ParticleSet(
-        fieldsetNetcdf, pclass=parcels.JITParticle, lon=lonstart, lat=latstart
+        fieldsetNetcdf, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
     )
     psetN.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
 
     psetX = parcels.ParticleSet(
-        fieldsetxarray, pclass=parcels.JITParticle, lon=lonstart, lat=latstart
+        fieldsetxarray, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
     )
     psetX.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
 
@@ -170,12 +170,12 @@ def test_globcurrent_netcdf_timestamps(dt):
     lonstart, latstart, runtime = (25, -35, timedelta(days=7))
 
     psetN = parcels.ParticleSet(
-        fieldsetNetcdf, pclass=parcels.JITParticle, lon=lonstart, lat=latstart
+        fieldsetNetcdf, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
     )
     psetN.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
 
     psetT = parcels.ParticleSet(
-        fieldsetTimestamps, pclass=parcels.JITParticle, lon=lonstart, lat=latstart
+        fieldsetTimestamps, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
     )
     psetT.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
 
@@ -192,28 +192,28 @@ def test__particles_init_time():
     # tests the different ways of initialising the time of a particle
     pset = parcels.ParticleSet(
         fieldset,
-        pclass=parcels.JITParticle,
+        pclass=parcels.ScipyParticle,
         lon=lonstart,
         lat=latstart,
         time=np.datetime64("2002-01-15"),
     )
     pset2 = parcels.ParticleSet(
         fieldset,
-        pclass=parcels.JITParticle,
+        pclass=parcels.ScipyParticle,
         lon=lonstart,
         lat=latstart,
         time=14 * 86400,
     )
     pset3 = parcels.ParticleSet(
         fieldset,
-        pclass=parcels.JITParticle,
+        pclass=parcels.ScipyParticle,
         lon=lonstart,
         lat=latstart,
         time=np.array([np.datetime64("2002-01-15")]),
     )
     pset4 = parcels.ParticleSet(
         fieldset,
-        pclass=parcels.JITParticle,
+        pclass=parcels.ScipyParticle,
         lon=lonstart,
         lat=latstart,
         time=[np.datetime64("2002-01-15")],
