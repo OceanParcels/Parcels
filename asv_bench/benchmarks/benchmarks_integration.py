@@ -1,6 +1,8 @@
-from parcels import AdvectionRK4, FieldSet, ParticleSet, ScipyParticle
-import numpy as np
 from datetime import timedelta
+
+import numpy as np
+
+from parcels import AdvectionRK4, FieldSet, ParticleSet, ScipyParticle
 
 
 def time_advection2d():
