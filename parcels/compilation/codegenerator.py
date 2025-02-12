@@ -9,7 +9,7 @@ import cgen as c
 
 from parcels.field import Field, NestedField, VectorField
 from parcels.grid import Grid
-from parcels.particle import JITParticle
+from parcels.particle import ScipyParticle
 from parcels.tools.statuscodes import StatusCode
 from parcels.tools.warnings import KernelWarning
 
@@ -214,7 +214,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
     and propagates attribute access.
     """
 
-    def __init__(self, fieldset=None, ptype=JITParticle):
+    def __init__(self, fieldset=None, ptype=ScipyParticle):
         self.fieldset = fieldset
         self.ptype = ptype
 
@@ -421,7 +421,7 @@ class KernelGenerator(ast.NodeVisitor):
     kernel_vars = ["particle", "fieldset", "time", "output_time", "tol"]
     array_vars: list[str] = []
 
-    def __init__(self, fieldset=None, ptype=JITParticle):
+    def __init__(self, fieldset=None, ptype=ScipyParticle):
         self.fieldset = fieldset
         self.ptype = ptype
         self.field_args = collections.OrderedDict()

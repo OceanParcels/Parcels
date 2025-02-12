@@ -1,4 +1,3 @@
-from ctypes import c_void_p
 from operator import attrgetter
 from typing import Literal
 
@@ -6,9 +5,7 @@ import numpy as np
 
 from parcels.tools.statuscodes import StatusCode
 
-__all__ = ["JITParticle", "ScipyInteractionParticle", "ScipyParticle", "Variable"]
-
-indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
+__all__ = ["ScipyInteractionParticle", "ScipyParticle", "Variable"]
 
 
 class Variable:
@@ -41,23 +38,13 @@ class Variable:
     def __get__(self, instance, cls):
         if instance is None:
             return self
-        if issubclass(cls, JITParticle):
-            return instance._cptr.__getitem__(self.name)
-        else:
-            return getattr(instance, f"_{self.name}", self.initial)
+        return getattr(instance, f"_{self.name}", self.initial)
 
     def __set__(self, instance, value):
-        if isinstance(instance, JITParticle):
-            instance._cptr.__setitem__(self.name, value)
-        else:
-            setattr(instance, f"_{self.name}", value)
+        setattr(instance, f"_{self.name}", value)
 
     def __repr__(self):
         return f"Variable(name={self._name}, dtype={self.dtype}, initial={self.initial}, to_write={self.to_write})"
-
-    def is64bit(self):
-        """Check whether variable is 64-bit."""
-        return True if self.dtype in indicators_64bit else False
 
 
 class ParticleType:
@@ -75,7 +62,7 @@ class ParticleType:
         if not issubclass(pclass, ScipyParticle):
             raise TypeError("Class object does not inherit from parcels.ScipyParticle")
         self.name = pclass.__name__
-        self.uses_jit = issubclass(pclass, JITParticle)
+        self.uses_jit = False  # TODO v4: remove this attribute
         # Pick Variable objects out of __dict__.
         self.variables = [v for v in pclass.__dict__.values() if isinstance(v, Variable)]
         for cls in pclass.__bases__:
@@ -92,8 +79,6 @@ class ParticleType:
                             "Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile"
                         )
                 self.variables = ptype.variables + self.variables
-        # Sort variables with all the 64-bit first so that they are aligned for the JIT cptr
-        self.variables = [v for v in self.variables if v.is64bit()] + [v for v in self.variables if not v.is64bit()]
 
     def __repr__(self):
         return f"{type(self).__name__}(pclass={self.name})"
@@ -102,35 +87,6 @@ class ParticleType:
         for v in self.variables:
             if v.name == item:
                 return v
-
-    @property
-    def _cache_key(self):
-        return "-".join([f"{v.name}:{v.dtype}" for v in self.variables])
-
-    @property
-    def dtype(self):
-        """Numpy.dtype object that defines the C struct."""
-        type_list = [(v.name, v.dtype) for v in self.variables]
-        for v in self.variables:
-            if v.dtype not in self.supported_dtypes:
-                raise RuntimeError(str(v.dtype) + " variables are not implemented in JIT mode")
-        if self.size % 8 > 0:
-            # Add padding to be 64-bit aligned
-            type_list += [("pad", np.float32)]
-        return np.dtype(type_list)
-
-    @property
-    def size(self):
-        """Size of the underlying particle struct in bytes."""
-        return sum([8 if v.is64bit() else 4 for v in self.variables])
-
-    @property
-    def supported_dtypes(self):
-        """List of all supported numpy dtypes. All others are not supported."""
-        # Developer note: other dtypes (mostly 2-byte ones) are not supported now
-        # because implementing and aligning them in cgen.GenerableStruct is a
-        # major headache. Perhaps in a later stage
-        return [np.int32, np.uint32, np.int64, np.uint64, np.float32, np.double, np.float64, c_void_p]
 
 
 class ScipyParticle:
@@ -192,9 +148,7 @@ class ScipyParticle:
                 initial = v.initial(self)
             else:
                 initial = v.initial
-            # Enforce type of initial value
-            if v.dtype != c_void_p:
-                setattr(self, v.name, v.dtype(initial))
+            setattr(self, v.name, v.dtype(initial))
 
     def __del__(self):
         pass  # superclass is 'object', and object itself has no destructor, hence 'pass'
@@ -267,7 +221,7 @@ class ScipyParticle:
         cls.depth_nextloop.dtype = dtype
 
     @classmethod
-    def setLastID(cls, offset):
+    def setLastID(cls, offset):  # TODO v4: check if we can implement this in another way
         ScipyParticle.lastID = offset
 
 
@@ -277,36 +231,5 @@ ScipyInteractionParticle = ScipyParticle.add_variables(
 
 
 class JITParticle(ScipyParticle):
-    """Particle class for JIT-based (Just-In-Time) Particle objects.
-
-    Parameters
-    ----------
-    lon : float
-        Initial longitude of particle
-    lat : float
-        Initial latitude of particle
-    fieldset : parcels.fieldset.FieldSet
-        mod:`parcels.fieldset.FieldSet` object to track this particle on
-    dt :
-        Execution timestep for this particle
-    time :
-        Current time of the particle
-
-
-    Notes
-    -----
-    Additional Variables can be added via the :Class Variable: objects
-
-    Users should use JITParticles for faster advection computation.
-    """
-
     def __init__(self, *args, **kwargs):
-        self._cptr = kwargs.pop("cptr", None)
-        if self._cptr is None:
-            # Allocate data for a single particle
-            ptype = self.getPType()
-            self._cptr = np.empty(1, dtype=ptype.dtype)[0]
-        super().__init__(*args, **kwargs)
-
-    def __del__(self):
-        super().__del__()
+        raise NotImplementedError("JITParticle has been deprecated in Parcels v4. Use ScipyParticle instead.")

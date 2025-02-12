@@ -680,7 +680,7 @@ class Kernel(BaseKernel):
         Parameters
         ----------
         p :
-            object of (sub-)type (ScipyParticle, JITParticle)
+            object of (sub-)type ScipyParticle
         endtime :
             endtime of this overall kernel evaluation step
         dt :
