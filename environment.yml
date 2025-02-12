@@ -46,3 +46,4 @@ dependencies:
   - pydata-sphinx-theme
   - sphinx-autobuild
   - myst-parser
+  - sphinxcontrib-mermaid
