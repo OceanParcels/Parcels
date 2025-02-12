@@ -5,16 +5,13 @@ import pytest
 
 import parcels
 
-ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
-
 
 def mesh_conversion(mesh):
     return (1852.0 * 60) if mesh == "spherical" else 1.0
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_brownian_example(mode, mesh, npart=3000):
+def test_brownian_example(mesh, npart=3000):
     fieldset = parcels.FieldSet.from_data(
         {"U": 0, "V": 0}, {"lon": 0, "lat": 0}, mesh=mesh
     )
@@ -36,7 +33,10 @@ def test_brownian_example(mode, mesh, npart=3000):
 
     parcels.ParcelsRandom.seed(1234)
     pset = parcels.ParticleSet(
-        fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart)
+        fieldset=fieldset,
+        pclass=parcels.ScipyParticle,
+        lon=np.zeros(npart),
+        lat=np.zeros(npart),
     )
     pset.execute(
         pset.Kernel(parcels.DiffusionUniformKh), runtime=runtime, dt=timedelta(hours=1)
@@ -58,4 +58,4 @@ def test_brownian_example(mode, mesh, npart=3000):
 
 
 if __name__ == "__main__":
-    test_brownian_example("jit", "spherical", npart=2000)
+    test_brownian_example("spherical", npart=2000)

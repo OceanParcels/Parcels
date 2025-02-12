@@ -1,11 +1,8 @@
 from datetime import timedelta
 
 import numpy as np
-import pytest
 
 import parcels
-
-ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 
 # Define some constants.
 u_g = 0.04  # Geostrophic current
@@ -70,11 +67,9 @@ def true_values(
     return np.array([x, y])
 
 
-def decaying_moving_example(
-    fieldset, outfile, mode="scipy", method=parcels.AdvectionRK4
-):
+def decaying_moving_example(fieldset, outfile, method=parcels.AdvectionRK4):
     pset = parcels.ParticleSet(
-        fieldset, pclass=ptype[mode], lon=start_lon, lat=start_lat
+        fieldset, pclass=parcels.ScipyParticle, lon=start_lon, lat=start_lat
     )
 
     dt = timedelta(minutes=5)
@@ -91,11 +86,10 @@ def decaying_moving_example(
     return pset
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_rotation_example(mode, tmpdir):
+def test_rotation_example(tmpdir):
     outfile = tmpdir.join("DecayingMovingParticle.zarr")
     fieldset = decaying_moving_eddy_fieldset()
-    pset = decaying_moving_example(fieldset, outfile, mode=mode)
+    pset = decaying_moving_example(fieldset, outfile)
     vals = true_values(
         pset[0].time, start_lon, start_lat
     )  # Calculate values for the particle.
