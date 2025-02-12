@@ -7,7 +7,6 @@ import pytest
 
 import parcels
 
-ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 method = {
     "RK4": parcels.AdvectionRK4,
     "EE": parcels.AdvectionEE,
@@ -96,7 +95,6 @@ def simple_partition_function(coords, mpi_size=1):
 
 def stommel_example(
     npart=1,
-    mode="jit",
     verbose=False,
     method=parcels.AdvectionRK4,
     grid_type="A",
@@ -115,10 +113,8 @@ def stommel_example(
         fieldset.write(filename)
     parcels.timer.fieldset.stop()
 
-    # Determine particle class according to mode
     parcels.timer.pset = parcels.timer.Timer("Pset", parent=parcels.timer.stommel)
     parcels.timer.psetinit = parcels.timer.Timer("Pset_init", parent=parcels.timer.pset)
-    ParticleClass = parcels.JITParticle if mode == "jit" else parcels.ScipyParticle
 
     # Execute for 600 days, with 1-hour timesteps and 5-day output
     runtime = timedelta(days=600)
@@ -131,7 +127,7 @@ def stommel_example(
         parcels.Variable("next_dt", dtype=np.float64, initial=dt.total_seconds()),
         parcels.Variable("age", dtype=np.float32, initial=0.0),
     ]
-    MyParticle = ParticleClass.add_variables(extra_vars)
+    MyParticle = parcels.ScipyParticle.add_variables(extra_vars)
 
     if custom_partition_function:
         pset = parcels.ParticleSet.from_line(
@@ -179,14 +175,12 @@ def stommel_example(
 
 
 @pytest.mark.parametrize("grid_type", ["A", "C"])
-@pytest.mark.parametrize("mode", ["jit", "scipy"])
-def test_stommel_fieldset(mode, grid_type, tmpdir):
+def test_stommel_fieldset(grid_type, tmpdir):
     parcels.timer.root = parcels.timer.Timer("Main")
     parcels.timer.stommel = parcels.timer.Timer("Stommel", parent=parcels.timer.root)
     outfile = tmpdir.join("StommelParticle")
     psetRK4 = stommel_example(
         1,
-        mode=mode,
         method=method["RK4"],
         grid_type=grid_type,
         outfile=outfile,
@@ -194,7 +188,6 @@ def test_stommel_fieldset(mode, grid_type, tmpdir):
     )
     psetRK45 = stommel_example(
         1,
-        mode=mode,
         method=method["RK45"],
         grid_type=grid_type,
         outfile=outfile,
@@ -227,13 +220,6 @@ def main(args=None):
     p = ArgumentParser(
         description="""
 Example of particle advection in the steady-state solution of the Stommel equation"""
-    )
-    p.add_argument(
-        "mode",
-        choices=("scipy", "jit"),
-        nargs="?",
-        default="jit",
-        help="Execution mode for performing computation",
     )
     p.add_argument(
         "-p", "--particles", type=int, default=1, help="Number of particles to advect"
@@ -283,7 +269,6 @@ Example of particle advection in the steady-state solution of the Stommel equati
     parcels.timer.stommel = parcels.timer.Timer("Stommel", parent=parcels.timer.root)
     stommel_example(
         args.particles,
-        mode=args.mode,
         verbose=args.verbose,
         method=method[args.method],
         outfile=args.outfile,

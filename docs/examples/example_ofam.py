@@ -7,8 +7,6 @@ import xarray as xr
 
 import parcels
 
-ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
-
 
 def set_ofam_fieldset(deferred_load=True, use_xarray=False):
     data_folder = parcels.download_example_dataset("OFAM_example_data")
@@ -67,8 +65,7 @@ def test_ofam_xarray_vs_netcdf(dt):
 
 
 @pytest.mark.parametrize("use_xarray", [True, False])
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_ofam_particles(mode, use_xarray):
+def test_ofam_particles(use_xarray):
     gc.collect()
     fieldset = set_ofam_fieldset(use_xarray=use_xarray)
 
@@ -77,7 +74,11 @@ def test_ofam_particles(mode, use_xarray):
     depstart = [2.5]  # the depth of the first layer in OFAM
 
     pset = parcels.ParticleSet(
-        fieldset, pclass=ptype[mode], lon=lonstart, lat=latstart, depth=depstart
+        fieldset,
+        pclass=parcels.ScipyParticle,
+        lon=lonstart,
+        lat=latstart,
+        depth=depstart,
     )
 
     pset.execute(

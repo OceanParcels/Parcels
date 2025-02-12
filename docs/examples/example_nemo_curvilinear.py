@@ -1,19 +1,16 @@
 """Example script that runs a set of particles in a NEMO curvilinear grid."""
 
-from argparse import ArgumentParser
 from datetime import timedelta
 from glob import glob
 
 import numpy as np
-import pytest
 
 import parcels
 
-ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 advection = {"RK4": parcels.AdvectionRK4, "AA": parcels.AdvectionAnalytical}
 
 
-def run_nemo_curvilinear(mode, outfile, advtype="RK4"):
+def run_nemo_curvilinear(outfile, advtype="RK4"):
     """Run parcels on the NEMO curvilinear grid."""
     data_folder = parcels.download_example_dataset("NemoCurvilinear_data")
 
@@ -51,24 +48,25 @@ def run_nemo_curvilinear(mode, outfile, advtype="RK4"):
         if particle.lon > 180:
             particle_dlon -= 360  # noqa
 
-    pset = parcels.ParticleSet.from_list(fieldset, ptype[mode], lon=lonp, lat=latp)
+    pset = parcels.ParticleSet.from_list(
+        fieldset, parcels.ScipyParticle, lon=lonp, lat=latp
+    )
     pfile = parcels.ParticleFile(outfile, pset, outputdt=timedelta(days=1))
     kernels = pset.Kernel(advection[advtype]) + periodicBC
     pset.execute(kernels, runtime=runtime, dt=timedelta(hours=6), output_file=pfile)
     assert np.allclose(pset.lat - latp, 0, atol=2e-2)
 
 
-@pytest.mark.parametrize("mode", ["jit"])  # Only testing jit as scipy is very slow
-def test_nemo_curvilinear(mode, tmpdir):
+def test_nemo_curvilinear(tmpdir):
     """Test the NEMO curvilinear example."""
     outfile = tmpdir.join("nemo_particles")
-    run_nemo_curvilinear(mode, outfile)
+    run_nemo_curvilinear(outfile)
 
 
 def test_nemo_curvilinear_AA(tmpdir):
     """Test the NEMO curvilinear example with analytical advection."""
     outfile = tmpdir.join("nemo_particlesAA")
-    run_nemo_curvilinear("scipy", outfile, "AA")
+    run_nemo_curvilinear(outfile, "AA")
 
 
 def test_nemo_3D_samegrid():
@@ -112,21 +110,8 @@ def test_nemo_3D_samegrid():
     assert fieldset.U._dataFiles is not fieldset.W._dataFiles
 
 
-def main(args=None):
-    """Run the example with given arguments."""
-    p = ArgumentParser(description="""Chose the mode using mode option""")
-    p.add_argument(
-        "mode",
-        choices=("scipy", "jit"),
-        nargs="?",
-        default="jit",
-        help="Execution mode for performing computation",
-    )
-    args = p.parse_args(args)
-
-    outfile = "nemo_particles"
-
-    run_nemo_curvilinear(args.mode, outfile)
+def main():
+    run_nemo_curvilinear("nemo_particles")
 
 
 if __name__ == "__main__":

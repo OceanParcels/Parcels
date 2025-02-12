@@ -7,8 +7,6 @@ import xarray as xr
 
 import parcels
 
-ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
-
 
 def set_globcurrent_fieldset(
     filename=None,
@@ -65,26 +63,31 @@ def test_globcurrent_fieldset(use_xarray):
         assert np.allclose(fieldsetsub.V.lat, fieldset.V.lat[indices["lat"]])
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize(
     "dt, lonstart, latstart", [(3600.0, 25, -35), (-3600.0, 20, -39)]
 )
 @pytest.mark.parametrize("use_xarray", [True, False])
-def test_globcurrent_fieldset_advancetime(mode, dt, lonstart, latstart, use_xarray):
+def test_globcurrent_fieldset_advancetime(dt, lonstart, latstart, use_xarray):
     data_folder = parcels.download_example_dataset("GlobCurrent_example_data")
     basepath = str(data_folder / "20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc")
     files = sorted(glob(str(basepath)))
 
     fieldsetsub = set_globcurrent_fieldset(files[0:10], use_xarray=use_xarray)
     psetsub = parcels.ParticleSet.from_list(
-        fieldset=fieldsetsub, pclass=ptype[mode], lon=[lonstart], lat=[latstart]
+        fieldset=fieldsetsub,
+        pclass=parcels.ScipyParticle,
+        lon=[lonstart],
+        lat=[latstart],
     )
 
     fieldsetall = set_globcurrent_fieldset(
         files[0:10], deferred_load=False, use_xarray=use_xarray
     )
     psetall = parcels.ParticleSet.from_list(
-        fieldset=fieldsetall, pclass=ptype[mode], lon=[lonstart], lat=[latstart]
+        fieldset=fieldsetall,
+        pclass=parcels.ScipyParticle,
+        lon=[lonstart],
+        lat=[latstart],
     )
     if dt < 0:
         psetsub[0].time_nextloop = fieldsetsub.U.grid.time[-1]
@@ -96,15 +99,16 @@ def test_globcurrent_fieldset_advancetime(mode, dt, lonstart, latstart, use_xarr
     assert abs(psetsub[0].lon - psetall[0].lon) < 1e-4
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("use_xarray", [True, False])
-def test_globcurrent_particles(mode, use_xarray):
+def test_globcurrent_particles(use_xarray):
     fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
 
     lonstart = [25]
     latstart = [-35]
 
-    pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=lonstart, lat=latstart)
+    pset = parcels.ParticleSet(
+        fieldset, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
+    )
 
     pset.execute(
         parcels.AdvectionRK4, runtime=timedelta(days=1), dt=timedelta(minutes=5)
@@ -114,16 +118,15 @@ def test_globcurrent_particles(mode, use_xarray):
     assert abs(pset[0].lat - -35.3) < 1
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("rundays", [300, 900])
-def test_globcurrent_time_periodic(mode, rundays):
+def test_globcurrent_time_periodic(rundays):
     sample_var = []
     for deferred_load in [True, False]:
         fieldset = set_globcurrent_fieldset(
             time_periodic=timedelta(days=365), deferred_load=deferred_load
         )
 
-        MyParticle = ptype[mode].add_variable("sample_var", initial=0.0)
+        MyParticle = parcels.ScipyParticle.add_variable("sample_var", initial=0.0)
 
         pset = parcels.ParticleSet(
             fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0]
@@ -220,13 +223,12 @@ def test__particles_init_time():
     assert pset[0].time - pset4[0].time == 0
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("use_xarray", [True, False])
-def test_globcurrent_time_extrapolation_error(mode, use_xarray):
+def test_globcurrent_time_extrapolation_error(use_xarray):
     fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
     pset = parcels.ParticleSet(
         fieldset,
-        pclass=ptype[mode],
+        pclass=parcels.ScipyParticle,
         lon=[25],
         lat=[-35],
         time=fieldset.U.grid.time[0] - timedelta(days=1).total_seconds(),
@@ -237,10 +239,9 @@ def test_globcurrent_time_extrapolation_error(mode, use_xarray):
         )
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("dt", [-300, 300])
 @pytest.mark.parametrize("with_starttime", [True, False])
-def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime):
+def test_globcurrent_startparticles_between_time_arrays(dt, with_starttime):
     fieldset = set_globcurrent_fieldset()
 
     data_folder = parcels.download_example_dataset("GlobCurrent_example_data")
@@ -253,7 +254,7 @@ def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime
         )
     )
 
-    MyParticle = ptype[mode].add_variable("sample_var", initial=0.0)
+    MyParticle = parcels.ScipyParticle.add_variable("sample_var", initial=0.0)
 
     def SampleP(particle, fieldset, time):  # pragma: no cover
         particle.sample_var += fieldset.P[
@@ -283,8 +284,7 @@ def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime
         )
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_globcurrent_particle_independence(mode, rundays=5):
+def test_globcurrent_particle_independence(rundays=5):
     fieldset = set_globcurrent_fieldset()
     time0 = fieldset.U.grid.time[0]
 
@@ -293,7 +293,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
             particle.delete()
 
     pset0 = parcels.ParticleSet(
-        fieldset, pclass=ptype[mode], lon=[25, 25], lat=[-35, -35], time=time0
+        fieldset, pclass=parcels.ScipyParticle, lon=[25, 25], lat=[-35, -35], time=time0
     )
 
     pset0.execute(
@@ -303,7 +303,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
     )
 
     pset1 = parcels.ParticleSet(
-        fieldset, pclass=ptype[mode], lon=[25, 25], lat=[-35, -35], time=time0
+        fieldset, pclass=parcels.ScipyParticle, lon=[25, 25], lat=[-35, -35], time=time0
     )
 
     pset1.execute(
@@ -313,15 +313,14 @@ def test_globcurrent_particle_independence(mode, rundays=5):
     assert np.allclose([pset0[-1].lon, pset0[-1].lat], [pset1[-1].lon, pset1[-1].lat])
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("dt", [-300, 300])
 @pytest.mark.parametrize("pid_offset", [0, 20])
-def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
+def test_globcurrent_pset_fromfile(dt, pid_offset, tmpdir):
     filename = tmpdir.join("pset_fromparticlefile.zarr")
     fieldset = set_globcurrent_fieldset()
 
-    ptype[mode].setLastID(pid_offset)
-    pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
+    parcels.ScipyParticle.setLastID(pid_offset)
+    pset = parcels.ParticleSet(fieldset, pclass=parcels.ScipyParticle, lon=25, lat=-35)
     pfile = pset.ParticleFile(filename, outputdt=timedelta(hours=6))
     pset.execute(
         parcels.AdvectionRK4, runtime=timedelta(days=1), dt=dt, output_file=pfile
@@ -330,7 +329,10 @@ def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
 
     restarttime = np.nanmax if dt > 0 else np.nanmin
     pset_new = parcels.ParticleSet.from_particlefile(
-        fieldset, pclass=ptype[mode], filename=filename, restarttime=restarttime
+        fieldset,
+        pclass=parcels.ScipyParticle,
+        filename=filename,
+        restarttime=restarttime,
     )
     pset.execute(parcels.AdvectionRK4, runtime=timedelta(days=1), dt=dt)
     pset_new.execute(parcels.AdvectionRK4, runtime=timedelta(days=1), dt=dt)
@@ -341,8 +343,7 @@ def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
         )
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_error_outputdt_not_multiple_dt(mode, tmpdir):
+def test_error_outputdt_not_multiple_dt(tmpdir):
     # Test that outputdt is a multiple of dt
     fieldset = set_globcurrent_fieldset()
 
@@ -350,7 +351,7 @@ def test_error_outputdt_not_multiple_dt(mode, tmpdir):
 
     dt = 81.2584344538292  # number for which output writing fails
 
-    pset = parcels.ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0])
+    pset = parcels.ParticleSet(fieldset, pclass=parcels.ScipyParticle, lon=[0], lat=[0])
     ofile = pset.ParticleFile(name=filepath, outputdt=timedelta(days=1))
 
     def DoNothing(particle, fieldset, time):  # pragma: no cover
