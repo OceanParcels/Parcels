@@ -9,5 +9,6 @@ Collaboration on v4 development is happening on the [Parcels v4 Project Board](h
 ```{toctree}
 
 api
+nojit
 Parcels v4 Project Board <https://github.com/orgs/OceanParcels/projects/5>
 ```
