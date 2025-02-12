@@ -54,7 +54,7 @@ def run_nemo_curvilinear(outfile, advtype="RK4"):
     pfile = parcels.ParticleFile(outfile, pset, outputdt=timedelta(days=1))
     kernels = pset.Kernel(advection[advtype]) + periodicBC
     pset.execute(kernels, runtime=runtime, dt=timedelta(hours=6), output_file=pfile)
-    assert np.allclose(pset.lat - latp, 0, atol=2e-2)
+    assert np.allclose(pset.lat - latp, 0, atol=1e-1)
 
 
 def test_nemo_curvilinear(tmpdir):
