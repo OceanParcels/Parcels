@@ -1,6 +1,8 @@
-from parcels import AdvectionRK4, FieldSet, ParticleSet, ScipyParticle, JITParticle
-import numpy as np
 from datetime import timedelta
+
+import numpy as np
+
+from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, ScipyParticle
 
 
 class ParticleExecutionJIT:
@@ -31,14 +33,10 @@ class ParticleExecutionJIT:
         self.pset.execute(AdvectionRK4, runtime=0, dt=timedelta(seconds=30))
 
     def time_run_single_timestep(self):
-        self.pset.execute(
-            AdvectionRK4, runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30)
-        )
+        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30))
 
     def time_run_many_timesteps(self):
-        self.pset.execute(
-            AdvectionRK4, runtime=timedelta(seconds=100 * 30), dt=timedelta(seconds=30)
-        )
+        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=100 * 30), dt=timedelta(seconds=30))
 
 
 class ParticleExecutionScipy:
@@ -67,11 +65,7 @@ class ParticleExecutionScipy:
         )
 
     def time_run_single_timestep(self):
-        self.pset.execute(
-            AdvectionRK4, runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30)
-        )
+        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30))
 
     def time_run_many_timesteps(self):
-        self.pset.execute(
-            AdvectionRK4, runtime=timedelta(seconds=100 * 30), dt=timedelta(seconds=30)
-        )
+        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=100 * 30), dt=timedelta(seconds=30))
