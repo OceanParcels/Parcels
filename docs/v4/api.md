@@ -14,12 +14,12 @@ classDiagram
         +xr.Dataset|xr.DataArray|ux.Dataset|ux.DataArray data
         +parcels.Grid|ux.Grid grid
         +Interpolator interpolator
-        +eval(x,y,z,t,particle)
+        +eval(t, z, y, x, particle=None, applyConversion=True)
     }
 
     class Interpolator{
         +assert_is_compatible(Field)
-        +interpolate(Field, rid, x, y, z, t)
+        +interpolate(Field, rid, t, z, y, x )
     }
 
 
@@ -40,4 +40,4 @@ Here, important things to note are:
 
 - The `grid` object, in the case of unstructured grids, will be the `Grid` class from UXarray. For structured `Grid`s, it will be an object similar to that of `xgcm.Grid` (note that it will be very different from the v3 `Grid` object hierarchy).
 
-- The `Field.eval` method takes as input the x,y,z,t spatio-temporal position as required arguments; the `particle` is optional. Initially, we will calculate the element index for a particle. As a future optimization, we could pass via the `particle` object a "cached" index value that could be used to bypass an index search. This will effectively provide `(xi,yi,zi,ti)` on a structured grid and `(fi,zi,ti)` on an unstructured grid (where `fi` is the lateral face id); within `eval` these indices will be `ravel`'ed to a single index that can be `unravel`'ed in the `interpolate` method. The `ravel`'ed index is referred to as `rid` in the `Field.Interpolator.interpolate` method. In the `interpolate` method, we envision that a user will benefit from knowing the nearest cell/index from the `ravel`'ed index (which can be `unravel`'ed) in addition the exact coordinate that we want to interpolate onto. This can permit calculation of interpolation weights using points in the neighborhood of `(x,y,z,t)`.
+- The `Field.eval` method takes as input the t,z,y,x spatio-temporal position as required arguments; the `particle` is optional and defaults to `None` and the `applyConversion` argument is optional and defaults to `True`. Initially, we will calculate the element index for a particle. As a future optimization, we could pass via the `particle` object a "cached" index value that could be used to bypass an index search. This will effectively provide `(xi,yi,zi,ti)` on a structured grid and `(fi,zi,ti)` on an unstructured grid (where `fi` is the lateral face id); within `eval` these indices will be `ravel`'ed to a single index that can be `unravel`'ed in the `interpolate` method. The `ravel`'ed index is referred to as `rid` in the `Field.Interpolator.interpolate` method. In the `interpolate` method, we envision that a user will benefit from knowing the nearest cell/index from the `ravel`'ed index (which can be `unravel`'ed) in addition the exact coordinate that we want to interpolate onto. This can permit calculation of interpolation weights using points in the neighborhood of `(x,y,z,t)`.
