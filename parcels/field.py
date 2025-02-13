@@ -149,7 +149,6 @@ class Field:
         Maximum allowed value on the field. Data above this value are set to zero
     cast_data_dtype : str
         Cast Field data to dtype. Supported dtypes are "float32" (np.float32 (default)) and "float64 (np.float64).
-        Note that dtype can only be "float32" in JIT mode
     time_origin : parcels.tools.converters.TimeConverter
         Time origin of the time axis (only if grid is None)
     interp_method : str

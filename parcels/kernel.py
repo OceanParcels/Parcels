@@ -94,7 +94,7 @@ class Kernel(BaseKernel):
 
     Notes
     -----
-    A Kernel is either created from a compiled <function ...> object
+    A Kernel is either created from a <function ...> object
     or the necessary information (funcname, funccode, funcvars) is provided.
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
@@ -159,7 +159,7 @@ class Kernel(BaseKernel):
                 user_ctx = globals()
             finally:
                 del stack  # Remove cyclic references
-            # Compile and generate Python function from AST
+            # Generate Python function from AST
             py_mod = ast.parse("")
             py_mod.body = [self.py_ast]
             exec(compile(py_mod, "<ast>", "exec"), user_ctx)
