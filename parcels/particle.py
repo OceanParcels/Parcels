@@ -62,7 +62,6 @@ class ParticleType:
         if not issubclass(pclass, ScipyParticle):
             raise TypeError("Class object does not inherit from parcels.ScipyParticle")
         self.name = pclass.__name__
-        self.uses_jit = False  # TODO v4: remove this attribute
         # Pick Variable objects out of __dict__.
         self.variables = [v for v in pclass.__dict__.values() if isinstance(v, Variable)]
         for cls in pclass.__bases__:
