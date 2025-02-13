@@ -451,8 +451,6 @@ def test_fieldset_sample_geographic_polar(fieldset_geometric_polar):
 
     pset = ParticleSet(fieldset, pclass=pclass(), lat=lat, lon=np.zeros(npart) - 45.0)
     pset.execute(pset.Kernel(SampleUV), endtime=1.0, dt=1.0)
-    # Note: 1.e-2 is a very low rtol, so there seems to be a rather
-    # large sampling error for the JIT correction.
     assert np.allclose(pset.u, lat, rtol=1e-2)
 
 
