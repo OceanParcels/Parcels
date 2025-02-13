@@ -1,13 +1,6 @@
 Miscellaneous
 =============
 
-parcels.rng module
-------------------
-
-.. automodule:: parcels.rng
-    :members:
-    :undoc-members:
-
 parcels.tools.statuscodes module
 --------------------------------
 

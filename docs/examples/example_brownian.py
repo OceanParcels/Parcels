@@ -1,3 +1,4 @@
+import random
 from datetime import timedelta
 
 import numpy as np
@@ -27,11 +28,11 @@ def test_brownian_example(mesh, npart=3000):
     )
 
     # Set random seed
-    parcels.ParcelsRandom.seed(123456)
+    random.seed(123456)
 
     runtime = timedelta(days=1)
 
-    parcels.ParcelsRandom.seed(1234)
+    random.seed(1234)
     pset = parcels.ParticleSet(
         fieldset=fieldset,
         pclass=parcels.ScipyParticle,

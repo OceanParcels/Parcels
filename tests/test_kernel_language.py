@@ -1,4 +1,4 @@
-import random as py_random
+import random
 from contextlib import nullcontext as does_not_raise
 
 import numpy as np
@@ -8,7 +8,6 @@ from parcels import (
     Field,
     FieldSet,
     Kernel,
-    ParcelsRandom,
     ParticleSet,
     ScipyParticle,
     Variable,
@@ -263,48 +262,13 @@ def test_fieldset_access(fieldset_unit_mesh):
     assert pset.lon[0] == fieldset_unit_mesh.U.grid.lon[2]
 
 
-def random_series(npart, rngfunc, rngargs):
-    random = py_random
-    random.seed(1234)
-    func = getattr(random, rngfunc)
-    series = [func(*rngargs) for _ in range(npart)]
-    random.seed(1234)  # Reset the RNG seed
-    del random
-    return series
-
-
-@pytest.mark.parametrize(
-    "rngfunc, rngargs",
-    [
-        ("random", []),
-        ("uniform", [0.0, 20.0]),
-        ("randint", [0, 20]),
-    ],
-)
-def test_random_float(rngfunc, rngargs):
-    """Test basic random number generation."""
-    npart = 10
-    TestParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0)
-    pset = ParticleSet(
-        create_fieldset_unit_mesh(mesh="spherical"),
-        pclass=TestParticle,
-        lon=np.linspace(0.0, 1.0, npart),
-        lat=np.zeros(npart) + 0.5,
-    )
-    series = random_series(npart, rngfunc, rngargs)
-    rnglib = "random"
-    kernel = expr_kernel(f"TestRandom_{rngfunc}", pset, f"{rnglib}.{rngfunc}({', '.join([str(a) for a in rngargs])})")
-    pset.execute(kernel, endtime=1.0, dt=1.0)
-    assert np.allclose(pset.p, series, atol=1e-9)
-
-
 @pytest.mark.parametrize("concat", [False, True])
 def test_random_kernel_concat(fieldset_unit_mesh, concat):
     TestParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset_unit_mesh, pclass=TestParticle, lon=0, lat=0)
 
     def RandomKernel(particle, fieldset, time):  # pragma: no cover
-        particle.p += ParcelsRandom.uniform(0, 1)
+        particle.p += random.uniform(0, 1)
 
     def AddOne(particle, fieldset, time):  # pragma: no cover
         particle.p += 1.0

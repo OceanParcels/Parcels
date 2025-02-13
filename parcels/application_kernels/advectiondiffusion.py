@@ -4,8 +4,7 @@ See `this tutorial <../examples/tutorial_diffusion.ipynb>`__ for a detailed expl
 """
 
 import math
-
-import parcels
+import random
 
 __all__ = ["AdvectionDiffusionEM", "AdvectionDiffusionM1", "DiffusionUniformKh"]
 
@@ -26,8 +25,8 @@ def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     mean and a standard deviation of sqrt(dt).
     """
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-    dWy = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWx = random.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWy = random.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
 
     Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
@@ -61,8 +60,8 @@ def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     mean and a standard deviation of sqrt(dt).
     """
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-    dWy = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWx = random.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWy = random.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
 
     u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
@@ -102,8 +101,8 @@ def DiffusionUniformKh(particle, fieldset, time):  # pragma: no cover
     mean and a standard deviation of sqrt(dt).
     """
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-    dWy = parcels.rng.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWx = random.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWy = random.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
 
     bx = math.sqrt(2 * fieldset.Kh_zonal[particle])
     by = math.sqrt(2 * fieldset.Kh_meridional[particle])
