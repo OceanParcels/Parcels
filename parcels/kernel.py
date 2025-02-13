@@ -55,7 +55,7 @@ class BaseKernel(abc.ABC):  # noqa # TODO v4: check if we need this BaseKernel c
         self.funcvars = funcvars
         self.funccode = funccode
         self.py_ast = py_ast  # TODO v4: check if this is needed
-        self.scipy_positionupdate_kernels_added = False
+        self._positionupdate_kernels_added = False
 
     @property
     def ptype(self):
@@ -181,7 +181,7 @@ class Kernel(BaseKernel):
     def fieldset(self):
         return self._fieldset
 
-    def add_scipy_positionupdate_kernels(self):
+    def add_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
         def Setcoords(particle, fieldset, time):  # pragma: no cover
             particle_dlon = 0  # noqa
@@ -324,23 +324,6 @@ class Kernel(BaseKernel):
         pyfunc_list[0] = cls(fieldset, ptype, pyfunc_list[0], *args, **kwargs)
         return functools.reduce(lambda x, y: x + y, pyfunc_list)
 
-    def execute_python(self, pset, endtime, dt):
-        """Performs the core update loop via Python."""
-        if self.fieldset is not None:
-            for f in self.fieldset.get_fields():
-                if isinstance(f, (VectorField, NestedField)):
-                    continue
-                f.data = np.array(f.data)
-
-        if not self.scipy_positionupdate_kernels_added:
-            self.add_scipy_positionupdate_kernels()
-            self.scipy_positionupdate_kernels_added = True
-
-        for p in pset:
-            self.evaluate_particle(p, endtime)
-            if p.state == StatusCode.StopAllExecution:
-                return StatusCode.StopAllExecution
-
     def execute(self, pset, endtime, dt):
         """Execute this Kernel over a ParticleSet for several timesteps."""
         pset.particledata.state[:] = StatusCode.Evaluate
@@ -359,7 +342,19 @@ class Kernel(BaseKernel):
                         g._load_chunk == g._chunk_loaded_touched, g._chunk_deprecated, g._load_chunk
                     )
 
-        self.execute_python(pset, endtime, dt)
+            for f in self.fieldset.get_fields():
+                if isinstance(f, (VectorField, NestedField)):
+                    continue
+                f.data = np.array(f.data)
+
+        if not self._positionupdate_kernels_added:
+            self.add_positionupdate_kernels()
+            self._positionupdate_kernels_added = True
+
+        for p in pset:
+            self.evaluate_particle(p, endtime)
+            if p.state == StatusCode.StopAllExecution:
+                return StatusCode.StopAllExecution
 
         # Remove all particles that signalled deletion
         self.remove_deleted(pset)

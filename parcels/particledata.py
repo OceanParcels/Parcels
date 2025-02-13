@@ -147,7 +147,7 @@ class ParticleData:
             self._data["id"][:] = pid
             self._data["obs_written"][:] = 0
 
-            # special case for exceptions which can only be handled from scipy
+            # special case for exceptions which can only be handled from scipy  # TODO v4: check if this can be removed now that JIT is dropped
             self._data["exception"] = np.empty(self._ncount, dtype=object)
 
             initialised |= {
