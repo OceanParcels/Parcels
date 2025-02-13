@@ -393,7 +393,9 @@ class Kernel(BaseKernel):
             # Remove all particles that signalled deletion
             self.remove_deleted(pset)  # Generalizable version!
 
-            self.execute_python(pset, endtime, dt)
+            # Re-execute Kernels to retry particles with StatusCode.Repeat
+            for p in pset:
+                self.evaluate_particle(p, endtime)
 
             n_error = pset._num_error_particles
 
