@@ -10,8 +10,6 @@ import warnings
 
 import numpy as np
 
-import parcels.rng as ParcelsRandom  # noqa: F401
-from parcels import rng  # noqa: F401
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
     AdvectionRK4_3D,
@@ -137,9 +135,7 @@ class Kernel(BaseKernel):
             self.funcvars = None
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
         self.funccode = (  # Remove parcels. prefix (see #1608)
-            self.funccode.replace("parcels.rng", "rng")
-            .replace("parcels.ParcelsRandom", "ParcelsRandom")
-            .replace("parcels.StatusCode", "StatusCode")
+            self.funccode.replace("parcels.StatusCode", "StatusCode")
         )
 
         # Parse AST if it is not provided explicitly
@@ -152,8 +148,6 @@ class Kernel(BaseKernel):
             try:
                 user_ctx = stack[-1][0].f_globals
                 user_ctx["math"] = globals()["math"]
-                user_ctx["ParcelsRandom"] = globals()["ParcelsRandom"]
-                user_ctx["rng"] = globals()["rng"]
                 user_ctx["random"] = globals()["random"]
                 user_ctx["StatusCode"] = globals()["StatusCode"]
             except:
