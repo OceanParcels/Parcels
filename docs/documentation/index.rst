@@ -32,7 +32,6 @@ Parcels has several documentation and tutorial Jupyter notebooks and scripts whi
    :caption: Creating ParticleSets
    :name: tutorial-particlesets
 
-   ../examples/tutorial_jit_vs_scipy.ipynb
    ../examples/tutorial_delaystart.ipynb
 
 

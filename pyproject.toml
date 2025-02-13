@@ -135,7 +135,6 @@ known-first-party = ["parcels"]
 
 [tool.mypy]
 files = [
-  "parcels/compilation/codegenerator.py",
   "parcels/_typing.py",
   "parcels/tools/*.py",
   "parcels/grid.py",

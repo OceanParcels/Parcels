@@ -104,7 +104,7 @@ jobs:
           activate-environment: parcels
           python-version: "3.10"
           channels: conda-forge
-      - run: conda install -c conda-forge c-compiler pip
+      - run: conda install -c conda-forge pip
       - run: pip install parcels --no-cache
       - run: curl https://raw.githubusercontent.com/OceanParcels/parcels/main/docs/examples/example_peninsula.py > example_peninsula.py
       - run: python example_peninsula.py

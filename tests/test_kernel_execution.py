@@ -308,17 +308,3 @@ def test_update_kernel_in_script(fieldset_unit_mesh):
     pset.execute(pset.Kernel(MoveEast), endtime=1.0, dt=1.0)
     pset.execute(pset.Kernel(MoveWest), endtime=3.0, dt=1.0)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)  # should be 0.5 + 0.1 - 0.3 = 0.3
-
-
-def test_compilers():
-    from parcels.compilation.codecompiler import (
-        CCompiler_SS,
-        Clang_parameters,
-        MinGW_parameters,
-        VS_parameters,
-    )
-
-    for param_class in [Clang_parameters, MinGW_parameters, VS_parameters]:
-        params = param_class()  # noqa
-
-    print(CCompiler_SS())
