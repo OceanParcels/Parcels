@@ -1447,8 +1447,7 @@ class FieldSet:
 
     def add_constant(self, name, value):
         """Add a constant to the FieldSet. Note that all constants are
-        stored as 32-bit floats. While constants can be updated during
-        execution in SciPy mode, they can not be updated in JIT mode.
+        stored as 32-bit floats.
 
         Parameters
         ----------

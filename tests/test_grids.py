@@ -255,7 +255,7 @@ def test_rectilinear_s_grids_advect1():
     for i in range(depth_g0.shape[0]):
         for k in range(depth_g0.shape[2]):
             depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2] - 1)
-    depth_g0 = depth_g0.transpose()  # we don't change it on purpose, to check if the transpose op if fixed in jit
+    depth_g0 = depth_g0.transpose()
 
     grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
 

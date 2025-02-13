@@ -932,13 +932,13 @@ class ParticleSet:
 
         Notes
         -----
-        ``ParticleSet.execute()`` acts as the main entrypoint for simulations, and provides the simulation time-loop. This method encapsulates the logic controlling the switching between kernel execution (where control in handed to C in JIT mode), output file writing, reading in fields for new timesteps, adding new particles to the simulation domain, stopping the simulation, and executing custom functions (``postIterationCallbacks`` provided by the user).
+        ``ParticleSet.execute()`` acts as the main entrypoint for simulations, and provides the simulation time-loop. This method encapsulates the logic controlling the switching between kernel execution, output file writing, reading in fields for new timesteps, adding new particles to the simulation domain, stopping the simulation, and executing custom functions (``postIterationCallbacks`` provided by the user).
         """
         # check if particleset is empty. If so, return immediately
         if len(self) == 0:
             return
 
-        # check if pyfunc has changed since last compile. If so, recompile
+        # check if pyfunc has changed since last generation. If so, regenerate
         if self._kernel is None or (self._kernel.pyfunc is not pyfunc and self._kernel is not pyfunc):
             # Generate and store Kernel
             if isinstance(pyfunc, Kernel):
