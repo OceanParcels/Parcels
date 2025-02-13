@@ -30,8 +30,6 @@ class InteractionKernel(BaseKernel):
         funccode=None,
         py_ast=None,
         funcvars=None,
-        c_include="",
-        delete_cfiles: bool = True,
     ):
         if MPI is not None and MPI.COMM_WORLD.Get_size() > 1:
             raise NotImplementedError(
@@ -57,8 +55,6 @@ class InteractionKernel(BaseKernel):
             funccode=funccode,
             py_ast=py_ast,
             funcvars=funcvars,
-            c_include=c_include,
-            delete_cfiles=delete_cfiles,
         )
 
         if pyfunc is not None:
@@ -73,11 +69,6 @@ class InteractionKernel(BaseKernel):
             else:
                 self._pyfunc = [pyfunc]
 
-        if self._ptype.uses_jit:
-            raise NotImplementedError(
-                "JIT mode is not supported for InteractionKernels. Please run your simulation in SciPy mode."
-            )
-
         for func in self._pyfunc:
             self.check_fieldsets_in_kernels(func)
 
@@ -86,13 +77,6 @@ class InteractionKernel(BaseKernel):
         assert numkernelargs[0] == 5 and numkernelargs.count(numkernelargs[0]) == len(
             numkernelargs
         ), "Interactionkernels take exactly 5 arguments: particle, fieldset, time, neighbors, mutator"
-
-        # At this time, JIT mode is not supported for InteractionKernels,
-        # so there is no need for any further "processing" of pyfunc's.
-
-    @property
-    def _cache_key(self):
-        raise NotImplementedError
 
     def check_fieldsets_in_kernels(self, pyfunc):
         # Currently, the implemented interaction kernels do not impose
@@ -111,24 +95,9 @@ class InteractionKernel(BaseKernel):
                 numkernelargs.append(len(inspect.getfullargspec(func).args))
         return numkernelargs
 
-    def remove_lib(self):
-        # Currently, no libs are generated/linked, so nothing has to be
-        # removed
-        pass
-
-    def get_kernel_compile_files(self):
-        raise NotImplementedError
-
-    def compile(self, compiler):
-        raise NotImplementedError
-
-    def load_lib(self):
-        raise NotImplementedError
-
     def merge(self, kernel, kclass):
         assert self.__class__ == kernel.__class__
         funcname = self.funcname + kernel.funcname
-        # delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
         pyfunc = self._pyfunc + kernel._pyfunc
         return kclass(self._fieldset, self._ptype, pyfunc=pyfunc, funcname=funcname)
 
@@ -147,19 +116,6 @@ class InteractionKernel(BaseKernel):
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
         super().__del__()
-
-    @staticmethod
-    def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
-        raise NotImplementedError
-
-    @staticmethod
-    def cleanup_unload_lib(lib):
-        raise NotImplementedError
-
-    def execute_jit(self, pset, endtime, dt):
-        raise NotImplementedError(
-            "JIT mode is not supported for InteractionKernels. Please run your simulation in SciPy mode."
-        )
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python.
@@ -242,13 +198,7 @@ class InteractionKernel(BaseKernel):
                         g._load_chunk == g._chunk_loaded_touched, g._chunk_deprecated, g._load_chunk
                     )
 
-        # Execute the kernel over the particle set
-        if self.ptype.uses_jit:
-            # This should never happen, as it is already checked in the
-            # initialization.
-            self.execute_jit(pset, endtime, dt)
-        else:
-            self.execute_python(pset, endtime, dt)
+        self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
         self.remove_deleted(pset)  # Generalizable version!
@@ -278,9 +228,6 @@ class InteractionKernel(BaseKernel):
             self.remove_deleted(pset)  # Generalizable version!
 
             # Execute core loop again to continue interrupted particles
-            if self.ptype.uses_jit:
-                self.execute_jit(pset, endtime, dt)
-            else:
-                self.execute_python(pset, endtime, dt)
+            self.execute_python(pset, endtime, dt)
 
             n_error = pset._num_error_particles
