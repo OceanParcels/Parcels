@@ -8,7 +8,6 @@ import pytest
 
 import parcels
 
-ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 method = {
     "RK4": parcels.AdvectionRK4,
     "EE": parcels.AdvectionEE,
@@ -101,7 +100,6 @@ def peninsula_example(
     fieldset,
     outfile,
     npart,
-    mode="jit",
     degree=1,
     verbose=False,
     output=True,
@@ -117,8 +115,6 @@ def peninsula_example(
         Basename of the input fieldset.
     npart : int
         Number of particles to intialise.
-    mode :
-         (Default value = 'jit')
     degree :
          (Default value = 1)
     verbose :
@@ -131,8 +127,7 @@ def peninsula_example(
     """
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p.
-    # We determine the particle base class according to mode.
-    MyParticle = ptype[mode].add_variable(
+    MyParticle = parcels.ScipyParticle.add_variable(
         [
             parcels.Variable("p", dtype=np.float32, initial=0.0),
             parcels.Variable("p_start", dtype=np.float32, initial=0),
@@ -177,13 +172,12 @@ def peninsula_example(
     return pset
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_peninsula_fieldset(mode, mesh, tmpdir):
+def test_peninsula_fieldset(mesh, tmpdir):
     """Execute peninsula test from fieldset generated in memory."""
     fieldset = peninsula_fieldset(100, 50, mesh)
     outfile = tmpdir.join("Peninsula")
-    pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
+    pset = peninsula_example(fieldset, outfile, 5, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.abs(pset.p_start - pset.p)
     assert (err_adv <= 1.0).all()
@@ -200,22 +194,18 @@ def test_peninsula_fieldset(mode, mesh, tmpdir):
     assert (err_smpl <= 1.0).all()
 
 
-@pytest.mark.parametrize(
-    "mode", ["scipy"]
-)  # Analytical Advection only implemented in Scipy mode
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_peninsula_fieldset_AnalyticalAdvection(mode, mesh, tmpdir):
+def test_peninsula_fieldset_AnalyticalAdvection(mesh, tmpdir):
     """Execute peninsula test using Analytical Advection on C grid."""
     fieldset = peninsula_fieldset(101, 51, "flat", grid_type="C")
     outfile = tmpdir.join("PeninsulaAA")
     pset = peninsula_example(
-        fieldset, outfile, npart=10, mode=mode, method=parcels.AdvectionAnalytical
+        fieldset, outfile, npart=10, method=parcels.AdvectionAnalytical
     )
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
 
-    tol = {"scipy": 3.0e2, "jit": 1.0e2}.get(mode)
-    assert (err_adv <= tol).all()
+    assert (err_adv <= 3.0e2).all()
 
 
 def fieldsetfile(mesh, tmpdir):
@@ -226,9 +216,8 @@ def fieldsetfile(mesh, tmpdir):
     return filename
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_peninsula_file(mode, mesh, tmpdir):
+def test_peninsula_file(mesh, tmpdir):
     """Open fieldset files and execute."""
     gc.collect()
     fieldset = parcels.FieldSet.from_parcels(
@@ -237,7 +226,7 @@ def test_peninsula_file(mode, mesh, tmpdir):
         allow_time_extrapolation=True,
     )
     outfile = tmpdir.join("Peninsula")
-    pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
+    pset = peninsula_example(fieldset, outfile, 5, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.abs(pset.p_start - pset.p)
     assert (err_adv <= 1.0).all()
@@ -258,13 +247,6 @@ def main(args=None):
     p = ArgumentParser(
         description="""
 Example of particle advection around an idealised peninsula"""
-    )
-    p.add_argument(
-        "mode",
-        choices=("scipy", "jit"),
-        nargs="?",
-        default="jit",
-        help="Execution mode for performing RK4 computation",
     )
     p.add_argument(
         "-p", "--particles", type=int, default=20, help="Number of particles to advect"
@@ -327,7 +309,7 @@ Example of particle advection around an idealised peninsula"""
         from pstats import Stats
 
         runctx(
-            "peninsula_example(fieldset, outfile, args.particles, mode=args.mode,\
+            "peninsula_example(fieldset, outfile, args.particles,\
                                    degree=args.degree, verbose=args.verbose,\
                                    output=not args.nooutput, method=method[args.method])",
             globals(),
@@ -340,7 +322,6 @@ Example of particle advection around an idealised peninsula"""
             fieldset,
             outfile,
             args.particles,
-            mode=args.mode,
             degree=args.degree,
             verbose=args.verbose,
             output=not args.nooutput,

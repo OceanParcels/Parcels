@@ -2,11 +2,8 @@ import math
 from datetime import timedelta
 
 import numpy as np
-import pytest
 
 import parcels
-
-ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 
 
 def radial_rotation_fieldset(
@@ -50,12 +47,12 @@ def true_values(age):  # Calculate the expected values for particle 2 at the end
     return [x, y]
 
 
-def rotation_example(fieldset, outfile, mode="jit", method=parcels.AdvectionRK4):
+def rotation_example(fieldset, outfile, method=parcels.AdvectionRK4):
     npart = 2  # Test two particles on the rotating fieldset.
     pset = parcels.ParticleSet.from_line(
         fieldset,
         size=npart,
-        pclass=ptype[mode],
+        pclass=parcels.ScipyParticle,
         start=(30.0, 30.0),
         finish=(30.0, 50.0),
     )  # One particle in centre, one on periphery of Field.
@@ -74,11 +71,10 @@ def rotation_example(fieldset, outfile, mode="jit", method=parcels.AdvectionRK4)
     return pset
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_rotation_example(mode, tmpdir):
+def test_rotation_example(tmpdir):
     fieldset = radial_rotation_fieldset()
     outfile = tmpdir.join("RadialParticle")
-    pset = rotation_example(fieldset, outfile, mode=mode)
+    pset = rotation_example(fieldset, outfile)
     assert (
         pset[0].lon == 30.0 and pset[0].lat == 30.0
     )  # Particle at centre of Field remains stationary.
