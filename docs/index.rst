@@ -1,11 +1,6 @@
 Parcels documentation
 =====================
 
-.. danger::
-
-   This documentation is built for v4 of Parcels, which is unreleased
-   and in active development. Use the version switcher in the bottom
-   right to select your version of Parcels.
 
 Welcome to the documentation of Parcels. **Parcels** (Probably A Really Computationally Efficient Lagrangian Simulator) is a set of Python classes and methods to create customisable particle tracking simulations using output from Ocean Circulation models. Parcels can be used to track passive and active particulates such as water, plankton, `plastic <http://www.topios.org/>`_ and `fish <https://github.com/Jacketless/IKAMOANA>`_.
 
@@ -22,6 +17,7 @@ If you need more help with Parcels, try the `Discussions page on GitHub <https:/
    :hidden:
 
    Home <self>
+   v4 <v4/index>
    Installation <installation>
    Tutorials & Documentation <documentation/index>
    API reference <reference>
