@@ -309,16 +309,6 @@ class FieldSet:
             g._time_origin = self.time_origin
         self._add_UVfield()
 
-        ccode_fieldnames = []
-        counter = 1
-        for fld in self.get_fields():
-            if fld.name not in ccode_fieldnames:
-                fld.ccode_name = fld.name
-            else:
-                fld.ccode_name = fld.name + str(counter)
-                counter += 1
-            ccode_fieldnames.append(fld.ccode_name)
-
         for f in self.get_fields():
             if isinstance(f, (VectorField, NestedField)) or f._dataFiles is None:
                 continue

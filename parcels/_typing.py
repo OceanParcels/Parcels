@@ -6,16 +6,10 @@ used for runtime parameter validation (to ensure users are only using the right 
 
 """
 
-import ast
 import datetime
 import os
 from collections.abc import Callable
 from typing import Any, Literal, get_args
-
-
-class ParcelsAST(ast.AST):
-    ccode: str
-
 
 InterpMethodOption = Literal[
     "linear",
