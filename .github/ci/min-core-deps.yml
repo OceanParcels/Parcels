@@ -8,7 +8,6 @@ dependencies:
   # Run ci/min_deps_check.py to verify that this file respects the policy.
   - python=3.10
   - cftime=1.6
-  - cgen=2020.1
   - dask=2022.8
   - matplotlib-base=3.5
   # netcdf follows a 1.major.minor[.patch] convention

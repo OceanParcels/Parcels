@@ -90,10 +90,7 @@ def data_2d():
     ],
 )
 def test_raw_2d_interpolation(data_2d, func, eta, xsi, expected):
-    """Test the 2D interpolation functions on the raw arrays.
-
-    Interpolation via the other interpolation methods are tested in `test_scipy_vs_jit`.
-    """
+    """Test the 2D interpolation functions on the raw arrays."""
     ti = 0
     yi, xi = 1, 1
     ctx = interpolation.InterpolationContext2D(data_2d, eta, xsi, ti, yi, xi)

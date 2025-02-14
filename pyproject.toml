@@ -21,7 +21,6 @@ classifiers = [
   "Intended Audience :: Science/Research",
 ]
 dependencies = [
-  "cgen",
   "cftime",
   "numpy",
   "dask",
@@ -152,6 +151,5 @@ module = [
     "cftime",
     "pykdtree.kdtree",
     "netCDF4",
-    "cgen"
 ]
 ignore_missing_imports = true
