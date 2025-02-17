@@ -9,7 +9,6 @@ from parcels import (
     AdvectionDiffusionM1,
     DiffusionUniformKh,
     Field,
-    JITParticle,
     ParcelsRandom,
     ParticleSet,
     RectilinearZGrid,
@@ -17,12 +16,9 @@ from parcels import (
 )
 from tests.utils import create_fieldset_zeros_conversion
 
-ptype = {"scipy": ScipyParticle, "jit": JITParticle}
-
 
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_fieldKh_Brownian(mesh, mode):
+def test_fieldKh_Brownian(mesh):
     xdim = 200
     ydim = 100
     kh_zonal = 100
@@ -38,7 +34,7 @@ def test_fieldKh_Brownian(mesh, mode):
     runtime = timedelta(days=1)
 
     ParcelsRandom.seed(1234)
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart))
+    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(DiffusionUniformKh), runtime=runtime, dt=timedelta(hours=1))
 
     expected_std_lon = np.sqrt(2 * kh_zonal * mesh_conversion**2 * runtime.total_seconds())
@@ -55,9 +51,8 @@ def test_fieldKh_Brownian(mesh, mode):
 
 
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("kernel", [AdvectionDiffusionM1, AdvectionDiffusionEM])
-def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel):
+def test_fieldKh_SpatiallyVaryingDiffusion(mesh, kernel):
     """Test advection-diffusion kernels on a non-uniform diffusivity field with a linear gradient in one direction."""
     xdim = 200
     ydim = 100
@@ -77,7 +72,7 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel):
     runtime = timedelta(days=1)
 
     ParcelsRandom.seed(1636)
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart))
+    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(kernel), runtime=runtime, dt=timedelta(hours=1))
 
     lats = pset.lat
@@ -88,9 +83,8 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel):
     assert stats.skew(lons) > stats.skew(lats)
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("lambd", [1, 5])
-def test_randomexponential(mode, lambd):
+def test_randomexponential(lambd):
     fieldset = create_fieldset_zeros_conversion()
     npart = 1000
 
@@ -101,7 +95,7 @@ def test_randomexponential(mode, lambd):
     ParcelsRandom.seed(1234)
 
     pset = ParticleSet(
-        fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart)
+        fieldset=fieldset, pclass=ScipyParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart)
     )
 
     def vertical_randomexponential(particle, fieldset, time):  # pragma: no cover
@@ -115,10 +109,9 @@ def test_randomexponential(mode, lambd):
     assert np.allclose(np.mean(depth), expected_mean, rtol=0.1)
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("mu", [0.8 * np.pi, np.pi])
 @pytest.mark.parametrize("kappa", [2, 4])
-def test_randomvonmises(mode, mu, kappa):
+def test_randomvonmises(mu, kappa):
     npart = 10000
     fieldset = create_fieldset_zeros_conversion()
 
@@ -129,7 +122,7 @@ def test_randomvonmises(mode, mu, kappa):
     # Set random seed
     ParcelsRandom.seed(1234)
 
-    AngleParticle = ptype[mode].add_variable("angle")
+    AngleParticle = ScipyParticle.add_variable("angle")
     pset = ParticleSet(
         fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart)
     )

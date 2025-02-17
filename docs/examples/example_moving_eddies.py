@@ -8,7 +8,6 @@ import pytest
 
 import parcels
 
-ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 method = {
     "RK4": parcels.AdvectionRK4,
     "EE": parcels.AdvectionEE,
@@ -114,7 +113,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh="flat"):
 
 
 def moving_eddies_example(
-    fieldset, outfile, npart=2, mode="jit", verbose=False, method=parcels.AdvectionRK4
+    fieldset, outfile, npart=2, verbose=False, method=parcels.AdvectionRK4
 ):
     """Configuration of a particle set that follows two moving eddies.
 
@@ -127,18 +126,19 @@ def moving_eddies_example(
 
     npart :
          Number of particles to initialise. (Default value = 2)
-    mode :
-         (Default value = 'jit')
     verbose :
          (Default value = False)
     method :
          (Default value = AdvectionRK4)
     """
-    # Determine particle class according to mode
     start = (3.3, 46.0) if fieldset.U.grid.mesh == "spherical" else (3.3e5, 1e5)
     finish = (3.3, 47.8) if fieldset.U.grid.mesh == "spherical" else (3.3e5, 2.8e5)
     pset = parcels.ParticleSet.from_line(
-        fieldset=fieldset, size=npart, pclass=ptype[mode], start=start, finish=finish
+        fieldset=fieldset,
+        size=npart,
+        pclass=parcels.ScipyParticle,
+        start=start,
+        finish=finish,
     )
 
     if verbose:
@@ -160,17 +160,15 @@ def moving_eddies_example(
     return pset
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_moving_eddies_fwdbwd(mode, mesh, tmpdir, npart=2):
+def test_moving_eddies_fwdbwd(mesh, tmpdir, npart=2):
     method = parcels.AdvectionRK4
     fieldset = moving_eddies_fieldset(mesh=mesh)
 
-    # Determine particle class according to mode
     lons = [3.3, 3.3] if fieldset.U.grid.mesh == "spherical" else [3.3e5, 3.3e5]
     lats = [46.0, 47.8] if fieldset.U.grid.mesh == "spherical" else [1e5, 2.8e5]
     pset = parcels.ParticleSet(
-        fieldset=fieldset, pclass=ptype[mode], lon=lons, lat=lats
+        fieldset=fieldset, pclass=parcels.ScipyParticle, lon=lons, lat=lats
     )
 
     # Execte for 14 days, with 30sec timesteps and hourly output
@@ -205,12 +203,11 @@ def test_moving_eddies_fwdbwd(mode, mesh, tmpdir, npart=2):
     assert np.allclose(pset.lat, lats)
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_moving_eddies_fieldset(mode, mesh, tmpdir):
+def test_moving_eddies_fieldset(mesh, tmpdir):
     fieldset = moving_eddies_fieldset(mesh=mesh)
     outfile = tmpdir.join("EddyParticle")
-    pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
+    pset = moving_eddies_example(fieldset, outfile, 2)
     # Also include last timestep
     for var in ["lon", "lat", "depth", "time"]:
         pset.particledata.setallvardata(
@@ -232,15 +229,14 @@ def fieldsetfile(mesh, tmpdir):
     return filename
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_moving_eddies_file(mode, mesh, tmpdir):
+def test_moving_eddies_file(mesh, tmpdir):
     gc.collect()
     fieldset = parcels.FieldSet.from_parcels(
         fieldsetfile(mesh, tmpdir), extra_fields={"P": "P"}
     )
     outfile = tmpdir.join("EddyParticle")
-    pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
+    pset = moving_eddies_example(fieldset, outfile, 2)
     # Also include last timestep
     for var in ["lon", "lat", "depth", "time"]:
         pset.particledata.setallvardata(
@@ -254,8 +250,7 @@ def test_moving_eddies_file(mode, mesh, tmpdir):
         assert pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85
 
 
-@pytest.mark.parametrize("mode", ["scipy", "jit"])
-def test_periodic_and_computeTimeChunk_eddies(mode):
+def test_periodic_and_computeTimeChunk_eddies():
     data_folder = parcels.download_example_dataset("MovingEddies_data")
     filename = str(data_folder / "moving_eddies")
 
@@ -266,7 +261,10 @@ def test_periodic_and_computeTimeChunk_eddies(mode):
     fieldset.add_constant("halo_north", fieldset.U.grid.lat[-1])
     fieldset.add_periodic_halo(zonal=True, meridional=True)
     pset = parcels.ParticleSet.from_list(
-        fieldset=fieldset, pclass=ptype[mode], lon=[3.3, 3.3], lat=[46.0, 47.8]
+        fieldset=fieldset,
+        pclass=parcels.ScipyParticle,
+        lon=[3.3, 3.3],
+        lat=[46.0, 47.8],
     )
 
     def periodicBC(particle, fieldset, time):  # pragma: no cover
@@ -291,13 +289,6 @@ def main(args=None):
     p = ArgumentParser(
         description="""
 Example of particle advection around an idealised peninsula"""
-    )
-    p.add_argument(
-        "mode",
-        choices=("scipy", "jit"),
-        nargs="?",
-        default="jit",
-        help="Execution mode for performing RK4 computation",
     )
     p.add_argument(
         "-p", "--particles", type=int, default=2, help="Number of particles to advect"
@@ -348,7 +339,7 @@ Example of particle advection around an idealised peninsula"""
         from pstats import Stats
 
         runctx(
-            "moving_eddies_example(fieldset, outfile, args.particles, mode=args.mode, \
+            "moving_eddies_example(fieldset, outfile, args.particles, \
                               verbose=args.verbose, method=method[args.method])",
             globals(),
             locals(),
@@ -360,7 +351,6 @@ Example of particle advection around an idealised peninsula"""
             fieldset,
             outfile,
             args.particles,
-            mode=args.mode,
             verbose=args.verbose,
             method=method[args.method],
         )

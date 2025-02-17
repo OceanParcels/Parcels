@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from parcels import Field, FieldSet, JITParticle, ParticleSet
+from parcels import Field, FieldSet, ParticleSet
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.application_kernels.interaction import (
     AsymmetricAttraction,
@@ -16,11 +16,9 @@ from parcels.interaction.neighborsearch import (
     KDTreeFlatNeighborSearch,
 )
 from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
-from parcels.particle import ScipyInteractionParticle, ScipyParticle, Variable
+from parcels.particle import ScipyInteractionParticle, Variable
 from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_unit_mesh, create_flat_positions, create_spherical_positions
-
-ptype = {"scipy": ScipyInteractionParticle, "jit": JITParticle}
 
 
 def DummyMoveNeighbor(particle, fieldset, time, neighbors, mutator):
@@ -45,29 +43,31 @@ def fieldset_unit_mesh():
     return create_fieldset_unit_mesh(mesh="spherical")
 
 
-@pytest.mark.parametrize("mode", ["scipy"])
-def test_simple_interaction_kernel(fieldset_unit_mesh, mode):
+def test_simple_interaction_kernel(fieldset_unit_mesh):
     lons = [0.0, 0.1, 0.25, 0.44]
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000 * 0.2 * np.pi / 180
     pset = ParticleSet(
-        fieldset_unit_mesh, pclass=ptype[mode], lon=lons, lat=lats, interaction_distance=interaction_distance
+        fieldset_unit_mesh,
+        pclass=ScipyInteractionParticle,
+        lon=lons,
+        lat=lats,
+        interaction_distance=interaction_distance,
     )
     pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=2.0, dt=1.0)
     assert np.allclose(pset.lat, [0.1, 0.2, 0.1, 0.0], rtol=1e-5)
 
 
-@pytest.mark.parametrize("mode", ["scipy"])
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
 @pytest.mark.parametrize("periodic_domain_zonal", [False, True])
-def test_zonal_periodic_distance(mode, mesh, periodic_domain_zonal):
+def test_zonal_periodic_distance(mesh, periodic_domain_zonal):
     fset = create_fieldset_unit_mesh(mesh=mesh)
     interaction_distance = 0.2 if mesh == "flat" else 6371000 * 0.2 * np.pi / 180
     lons = [0.05, 0.4, 0.95]
     pset = ParticleSet(
         fset,
-        pclass=ptype[mode],
+        pclass=ScipyInteractionParticle,
         lon=lons,
         lat=[0.5] * len(lons),
         interaction_distance=interaction_distance,
@@ -81,15 +81,18 @@ def test_zonal_periodic_distance(mode, mesh, periodic_domain_zonal):
         assert np.allclose([p.lat for p in pset], 0.5)
 
 
-@pytest.mark.parametrize("mode", ["scipy"])
-def test_concatenate_interaction_kernels(fieldset_unit_mesh, mode):
+def test_concatenate_interaction_kernels(fieldset_unit_mesh):
     lons = [0.0, 0.1, 0.25, 0.44]
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000 * 0.2 * np.pi / 180
 
     pset = ParticleSet(
-        fieldset_unit_mesh, pclass=ptype[mode], lon=lons, lat=lats, interaction_distance=interaction_distance
+        fieldset_unit_mesh,
+        pclass=ScipyInteractionParticle,
+        lon=lons,
+        lat=lats,
+        interaction_distance=interaction_distance,
     )
     pset.execute(
         DoNothing,
@@ -103,15 +106,18 @@ def test_concatenate_interaction_kernels(fieldset_unit_mesh, mode):
     assert np.allclose(pset.lat, [0.2, 0.4, 0.2, 0.0], rtol=1e-5)
 
 
-@pytest.mark.parametrize("mode", ["scipy"])
-def test_concatenate_interaction_kernels_as_pyfunc(fieldset_unit_mesh, mode):
+def test_concatenate_interaction_kernels_as_pyfunc(fieldset_unit_mesh):
     lons = [0.0, 0.1, 0.25, 0.44]
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000 * 0.2 * np.pi / 180
 
     pset = ParticleSet(
-        fieldset_unit_mesh, pclass=ptype[mode], lon=lons, lat=lats, interaction_distance=interaction_distance
+        fieldset_unit_mesh,
+        pclass=ScipyInteractionParticle,
+        lon=lons,
+        lat=lats,
+        interaction_distance=interaction_distance,
     )
     pset.execute(
         DoNothing, pyfunc_inter=pset.InteractionKernel(DummyMoveNeighbor) + DummyMoveNeighbor, endtime=2.0, dt=1.0
@@ -140,8 +146,7 @@ def test_neighbor_merge(fieldset_unit_mesh):
     assert len(pset) == 1
 
 
-@pytest.mark.parametrize("mode", ["scipy"])
-def test_asymmetric_attraction(fieldset_unit_mesh, mode):
+def test_asymmetric_attraction(fieldset_unit_mesh):
     lons = [0.0, 0.1, 0.2]
     lats = [0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
@@ -185,7 +190,7 @@ def test_pseudo_interaction(runtime, dt):
     fieldset = FieldSet(Uflow, Vflow)
 
     # Execute the advection kernel only
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[2], lat=[2])
+    pset = ParticleSet(fieldset, pclass=ScipyInteractionParticle, lon=[2], lat=[2])
     pset.execute(AdvectionRK4, runtime=runtime, dt=dt)
 
     # Execute both the advection and interaction kernel.
