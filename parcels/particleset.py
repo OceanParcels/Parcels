@@ -1,4 +1,3 @@
-import os
 import sys
 import warnings
 from collections.abc import Iterable
@@ -13,7 +12,6 @@ from tqdm import tqdm
 
 from parcels._compat import MPI
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import Field, NestedField
 from parcels.grid import CurvilinearGrid, GridType
 from parcels.interaction.interactionkernel import InteractionKernel
@@ -29,7 +27,6 @@ from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
 from parcels.tools._helpers import particleset_repr, timedelta_to_float
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
-from parcels.tools.global_statics import get_package_dir
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
 from parcels.tools.warnings import ParticleSetWarning
@@ -797,7 +794,7 @@ class ParticleSet:
             **kwargs,
         )
 
-    def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
+    def Kernel(self, pyfunc):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object.
 
         Conversion is based on `fieldset` and `ptype` of the ParticleSet.
@@ -807,35 +804,23 @@ class ParticleSet:
         pyfunc : function or list of functions
             Python function to convert into kernel. If a list of functions is provided,
             the functions will be converted to kernels and combined into a single kernel.
-        delete_cfiles : bool
-            Whether to delete the C-files after compilation in JIT mode (default is True)
-        pyfunc :
-
-        c_include :
-             (Default value = "")
         """
         if isinstance(pyfunc, list):
             return Kernel.from_list(
                 self.fieldset,
                 self.particledata.ptype,
                 pyfunc,
-                c_include=c_include,
-                delete_cfiles=delete_cfiles,
             )
         return Kernel(
             self.fieldset,
             self.particledata.ptype,
             pyfunc=pyfunc,
-            c_include=c_include,
-            delete_cfiles=delete_cfiles,
         )
 
-    def InteractionKernel(self, pyfunc_inter, delete_cfiles=True):
+    def InteractionKernel(self, pyfunc_inter):
         if pyfunc_inter is None:
             return None
-        return InteractionKernel(
-            self.fieldset, self.particledata.ptype, pyfunc=pyfunc_inter, delete_cfiles=delete_cfiles
-        )
+        return InteractionKernel(self.fieldset, self.particledata.ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
@@ -912,7 +897,6 @@ class ParticleSet:
         verbose_progress=True,
         postIterationCallbacks=None,
         callbackdt: float | timedelta | np.timedelta64 | None = None,
-        delete_cfiles: bool = True,
     ):
         """Execute a given kernel function over the particle set for multiple timesteps.
 
@@ -945,8 +929,6 @@ class ParticleSet:
             Optional, in conjecture with 'postIterationCallbacks', timestep interval to (latest) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks' (Default value = None)
         pyfunc_inter :
             (Default value = None)
-        delete_cfiles : bool
-            Whether to delete the C-files after compilation in JIT mode (default is True)
 
         Notes
         -----
@@ -962,15 +944,7 @@ class ParticleSet:
             if isinstance(pyfunc, Kernel):
                 self._kernel = pyfunc
             else:
-                self._kernel = self.Kernel(pyfunc, delete_cfiles=delete_cfiles)
-            # Prepare JIT kernel execution
-            if self.particledata.ptype.uses_jit:
-                self._kernel.remove_lib()
-                cppargs = ["-DDOUBLE_COORD_VARIABLES"] if self.particledata.lonlatdepth_dtype else None
-                self._kernel.compile(
-                    compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), "include"), "."])
-                )
-                self._kernel.load_lib()
+                self._kernel = self.Kernel(pyfunc)
         if output_file:
             output_file.metadata["parcels_kernels"] = self._kernel.name
 
@@ -979,7 +953,7 @@ class ParticleSet:
             if isinstance(pyfunc_inter, InteractionKernel):
                 self._interaction_kernel = pyfunc_inter
             else:
-                self._interaction_kernel = self.InteractionKernel(pyfunc_inter, delete_cfiles=delete_cfiles)
+                self._interaction_kernel = self.InteractionKernel(pyfunc_inter)
 
         # Convert all time variables to seconds
         if isinstance(endtime, timedelta):
