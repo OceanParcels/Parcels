@@ -374,7 +374,6 @@ htmlhelp_basename = "parcelsdoc"
 nbsphinx_thumbnails = {
     "examples/tutorial_parcels_structure": "_images/parcels_user_diagram.png",
     "examples/tutorial_timestamps": "_static/calendar-icon.jpg",
-    "examples/tutorial_jit_vs_scipy": "_static/clock-icon.png",
     "examples/documentation_homepage_animation": "_images/homepage.gif",
     "examples/tutorial_interaction": "_static/pulled_particles_twoatractors_line.gif",
     "examples/documentation_LargeRunsOutput": "_static/harddrive.png",

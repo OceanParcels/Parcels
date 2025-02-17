@@ -36,9 +36,6 @@ The steps below are the installation instructions for Linux, macOS and Windows.
 
   python example_peninsula.py --fieldset 100 100
 
-.. note::
-  If you are on macOS and get a compilation error, you may need to accept the Apple xcode license ``xcode-select --install``. If this does not solve the compilation error, you may want to try running ``export CC=gcc``. If the compilation error remains, you may want to check `this solution <https://stackoverflow.com/a/58323411/5172570>`_.
-
 *Optionally:* if you want to run all the examples and tutorials, start Jupyter and open the tutorial notebooks:
 
 .. code-block:: bash
