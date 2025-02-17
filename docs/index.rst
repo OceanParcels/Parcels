@@ -16,6 +16,7 @@ If you need more help with Parcels, try the `Discussions page on GitHub <https:/
    :hidden:
 
    Home <self>
+   v4 <https://docs.oceanparcels.org/en/latest/v4>
    Installation <installation>
    Tutorials & Documentation <documentation/index>
    API reference <reference>
