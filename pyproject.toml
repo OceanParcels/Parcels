@@ -58,6 +58,9 @@ minversion = "7"
 markers = [ # can be skipped by doing `pytest -m "not slow"` etc.
   "flaky: flaky tests",
   "slow: slow tests",
+  "v4alpha: failing tests that should work for v4alpha",
+  "v4future: failing tests that should work for a future release of v4",
+  "v4remove: failing tests that should probably be removed later",
 ]
 
 filterwarnings = [
