@@ -47,7 +47,7 @@ def test_variable_init(fieldset):
 
 @pytest.mark.parametrize("type", ["np.int8", "mp.float", "np.int16"])
 def test_variable_unsupported_dtypes(fieldset, type):
-    """Test that checks errors thrown for unsupported dtypes in JIT mode."""
+    """Test that checks errors thrown for unsupported dtypes."""
     TestParticle = ScipyParticle.add_variable("p", dtype=type, initial=10.0)
     with pytest.raises((RuntimeError, TypeError)):
         ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])

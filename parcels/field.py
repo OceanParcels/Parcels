@@ -149,7 +149,6 @@ class Field:
         Maximum allowed value on the field. Data above this value are set to zero
     cast_data_dtype : str
         Cast Field data to dtype. Supported dtypes are "float32" (np.float32 (default)) and "float64 (np.float64).
-        Note that dtype can only be "float32" in JIT mode
     time_origin : parcels.tools.converters.TimeConverter
         Time origin of the time axis (only if grid is None)
     interp_method : str
@@ -320,7 +319,6 @@ class Field:
 
         self._scaling_factor = None
 
-        # Variable names in JIT code
         self._dimensions = kwargs.pop("dimensions", None)
         self.indices = kwargs.pop("indices", None)
         self._dataFiles = kwargs.pop("dataFiles", None)
@@ -1083,18 +1081,6 @@ class Field:
             return self.units.to_target(value, z, y, x)
         else:
             return value
-
-    def _ccode_eval(self, var, t, z, y, x):
-        self._check_velocitysampling()
-        ccode_str = (
-            f"temporal_interpolation({t}, {z}, {y}, {x}, {self.ccode_name}, "
-            + "&particles->ti[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->xi[pnum*ngrid], "
-            + f"&{var}, {self.interp_method.upper()}, {self.gridindexingtype.upper()})"
-        )
-        return ccode_str
-
-    def _ccode_convert(self, _, z, y, x):
-        return self.units.ccode_to_target(z, y, x)
 
     def _get_block_id(self, block):
         return np.ravel_multi_index(block, self.nchunks)
@@ -1922,22 +1908,6 @@ class VectorField:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
-
-    def _ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
-        ccode_str = ""
-        if "3D" in self.vector_type:
-            ccode_str = (
-                f"temporal_interpolationUVW({t}, {z}, {y}, {x}, {U.ccode_name}, {V.ccode_name}, {W.ccode_name}, "
-                + "&particles->ti[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->xi[pnum*ngrid],"
-                + f"&{varU}, &{varV}, &{varW}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
-            )
-        else:
-            ccode_str = (
-                f"temporal_interpolationUV({t}, {z}, {y}, {x}, {U.ccode_name}, {V.ccode_name}, "
-                + "&particles->ti[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->xi[pnum*ngrid],"
-                + f" &{varU}, &{varV}, {U.interp_method.upper()}, {U.gridindexingtype.upper()})"
-            )
-        return ccode_str
 
 
 class DeferredArray:

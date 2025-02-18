@@ -231,4 +231,6 @@ ScipyInteractionParticle = ScipyParticle.add_variables(
 
 class JITParticle(ScipyParticle):
     def __init__(self, *args, **kwargs):
-        raise NotImplementedError("JITParticle has been deprecated in Parcels v4. Use ScipyParticle instead.")
+        raise NotImplementedError(
+            "JITParticle has been deprecated in Parcels v4. Use ScipyParticle instead."
+        )  # TODO v4: link to migration guide
