@@ -4,9 +4,10 @@ from datetime import timedelta
 
 import numpy as np
 
-from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, ScipyParticle, StatusCode, Variable
+from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, StatusCode, Variable
 
-def  ArgoVerticalMovement(particle, fieldset, time):
+
+def ArgoVerticalMovement(particle, fieldset, time):
     driftdepth = 1000  # maximum depth in m
     maxdepth = 2000  # maximum depth in m
     vertical_speed = 0.10  # sink and rise speed in m/s
@@ -52,6 +53,7 @@ def  ArgoVerticalMovement(particle, fieldset, time):
     if particle.state == StatusCode.Evaluate:
         particle.cycle_age += particle.dt  # update cycle_age
 
+
 class ArgoFloatJIT:
     def setup(self):
         xdim = ydim = zdim = 2
@@ -86,19 +88,10 @@ class ArgoFloatJIT:
             ]
         )
 
-        self.pset=ParticleSet(
-            fieldset=fieldset, 
-            pclass=ArgoParticle, 
-            lon=[0], 
-            lat=[0], 
-            depth=[0]
-            )
+        self.pset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=[0], lat=[0], depth=[0])
 
         # combine Argo vertical movement kernel with built-in Advection kernel
         self.kernels = [ArgoVerticalMovement, AdvectionRK4]
-    
+
     def time_run_single_timestep(self):
         self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30))
-
-
-        
