@@ -54,9 +54,9 @@ def create_interpolation_data_random(*, with_land_point: bool) -> xr.Dataset:
     tdim, zdim, ydim, xdim = 20, 5, 10, 10
     ds = xr.Dataset(
         {
-            "U": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim)) / 1e3),
-            "V": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim)) / 1e3),
-            "W": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim)) / 1e3),
+            "U": (("time", "depth", "lat", "lon"), (np.random.random((tdim, zdim, ydim, xdim)) / 1e2)),
+            "V": (("time", "depth", "lat", "lon"), (np.random.random((tdim, zdim, ydim, xdim)) / 1e2)),
+            "W": (("time", "depth", "lat", "lon"), (np.random.random((tdim, zdim, ydim, xdim)) / 1e2)),
         },
         coords={
             "time": np.linspace(0, tdim - 1, tdim),
@@ -165,8 +165,9 @@ def test_scipy_vs_jit(interp_method):
         if particle.state >= 50:
             particle.delete()
 
-    for pset in [pset_scipy, pset_jit]:
-        pset.execute([AdvectionRK4_3D, DeleteParticle], runtime=4, dt=1)
+    for pset, ptype in [(pset_scipy, "scipy"), (pset_jit, "jit")]:
+        outfile = pset.ParticleFile(f"test_interpolation_{ptype}_{interp_method}", outputdt=1)
+        pset.execute([AdvectionRK4_3D, DeleteParticle], runtime=4, dt=1, output_file=outfile)
 
     tol = 1e-6
     for i in range(len(pset_scipy)):

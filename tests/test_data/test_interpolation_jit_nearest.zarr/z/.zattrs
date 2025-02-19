@@ -1,0 +1,10 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "trajectory",
+        "obs"
+    ],
+    "long_name": "",
+    "positive": "down",
+    "standard_name": "depth",
+    "units": "m"
+}
