@@ -1,0 +1,8 @@
+{
+    "Conventions": "CF-1.6/CF-1.7",
+    "feature_type": "trajectory",
+    "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
+    "parcels_kernels": "JITParticleAdvectionRK4_3DDeleteParticle",
+    "parcels_mesh": "flat",
+    "parcels_version": "v3.1.2-12-gee4dd32a"
+}
