@@ -4,7 +4,7 @@ import xarray as xr
 
 import parcels._interpolation as interpolation
 from parcels import AdvectionRK4_3D, FieldSet, JITParticle, ParticleSet, ScipyParticle
-from tests.utils import create_fieldset_zeros_3d
+from tests.utils import TEST_DATA, create_fieldset_zeros_3d
 
 
 @pytest.fixture
@@ -52,11 +52,12 @@ def create_interpolation_data():
 
 def create_interpolation_data_random(*, with_land_point: bool) -> xr.Dataset:
     tdim, zdim, ydim, xdim = 20, 5, 10, 10
+    np.random.seed(1636)
     ds = xr.Dataset(
         {
-            "U": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim)) / 1e3),
-            "V": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim)) / 1e3),
-            "W": (("time", "depth", "lat", "lon"), np.random.random((tdim, zdim, ydim, xdim)) / 1e3),
+            "U": (("time", "depth", "lat", "lon"), (np.random.random((tdim, zdim, ydim, xdim)) / 1e2)),
+            "V": (("time", "depth", "lat", "lon"), (np.random.random((tdim, zdim, ydim, xdim)) / 1e2)),
+            "W": (("time", "depth", "lat", "lon"), (np.random.random((tdim, zdim, ydim, xdim)) / 1e2)),
         },
         coords={
             "time": np.linspace(0, tdim - 1, tdim),
@@ -145,8 +146,10 @@ def test_scipy_vs_jit(interp_method):
     """Test that the scipy and JIT versions of the interpolation are the same."""
     variables = {"U": "U", "V": "V", "W": "W"}
     dimensions = {"time": "time", "lon": "lon", "lat": "lat", "depth": "depth"}
+    ds = create_interpolation_data_random(with_land_point=interp_method == "freeslip")
+    ds.to_netcdf(str(TEST_DATA / f"test_interpolation_data_random_{interp_method}.nc"))
     fieldset = FieldSet.from_xarray_dataset(
-        create_interpolation_data_random(with_land_point=interp_method == "freeslip"),
+        ds,
         variables,
         dimensions,
         mesh="flat",
@@ -165,8 +168,9 @@ def test_scipy_vs_jit(interp_method):
         if particle.state >= 50:
             particle.delete()
 
-    for pset in [pset_scipy, pset_jit]:
-        pset.execute([AdvectionRK4_3D, DeleteParticle], runtime=4, dt=1)
+    for pset, ptype in [(pset_scipy, "scipy"), (pset_jit, "jit")]:
+        outfile = pset.ParticleFile(f"test_interpolation_{ptype}_{interp_method}", outputdt=1)
+        pset.execute([AdvectionRK4_3D, DeleteParticle], runtime=4, dt=1, output_file=outfile)
 
     tol = 1e-6
     for i in range(len(pset_scipy)):
