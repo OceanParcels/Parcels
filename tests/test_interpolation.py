@@ -4,7 +4,7 @@ import xarray as xr
 
 import parcels._interpolation as interpolation
 from parcels import AdvectionRK4_3D, FieldSet, JITParticle, ParticleSet, ScipyParticle
-from tests.utils import create_fieldset_zeros_3d
+from tests.utils import TEST_DATA, create_fieldset_zeros_3d
 
 
 @pytest.fixture
@@ -52,6 +52,7 @@ def create_interpolation_data():
 
 def create_interpolation_data_random(*, with_land_point: bool) -> xr.Dataset:
     tdim, zdim, ydim, xdim = 20, 5, 10, 10
+    np.random.seed(1636)
     ds = xr.Dataset(
         {
             "U": (("time", "depth", "lat", "lon"), (np.random.random((tdim, zdim, ydim, xdim)) / 1e2)),
@@ -145,8 +146,10 @@ def test_scipy_vs_jit(interp_method):
     """Test that the scipy and JIT versions of the interpolation are the same."""
     variables = {"U": "U", "V": "V", "W": "W"}
     dimensions = {"time": "time", "lon": "lon", "lat": "lat", "depth": "depth"}
+    ds = create_interpolation_data_random(with_land_point=interp_method == "freeslip")
+    ds.to_netcdf(str(TEST_DATA / f"test_interpolation_data_random_{interp_method}.nc"))
     fieldset = FieldSet.from_xarray_dataset(
-        create_interpolation_data_random(with_land_point=interp_method == "freeslip"),
+        ds,
         variables,
         dimensions,
         mesh="flat",
