@@ -570,7 +570,8 @@ def test_fieldset_write(tmp_zarrfile):
 
     def UpdateU(particle, fieldset, time):  # pragma: no cover
         tmp1, tmp2 = fieldset.UV[particle]
-        fieldset.U.data[particle.ti, particle.yi, particle.xi] += 1
+        _, yi, xi = fieldset.U.unravel_index(particle.ei)
+        fieldset.U.data[particle.ti, yi, xi] += 1
         fieldset.U.grid.time[0] = time
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=5, lat=5)

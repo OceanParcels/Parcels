@@ -92,6 +92,12 @@ def test_multi_structured_grids():
     # check if particle xi and yi are different for the two grids
     # assert np.all([pset.xi[i, 0] != pset.xi[i, 1] for i in range(3)])
     # assert np.all([pset.yi[i, 0] != pset.yi[i, 1] for i in range(3)])
+    yi = []
+    xi = []
+    for p in pset:
+        for e in p.ei:
+            k,j,i = p.fieldset.U.unravel_index(p.ei)
+
     assert np.all([pset[i].xi[0] != pset[i].xi[1] for i in range(3)])
     assert np.all([pset[i].yi[0] != pset[i].yi[1] for i in range(3)])
 

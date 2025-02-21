@@ -131,7 +131,8 @@ def test_verticalsampling(zdir):
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     pset = ParticleSet(fieldset, pclass=Particle, lon=0, lat=0, depth=0.7 * zdir)
     pset.execute(AdvectionRK4, dt=1.0, runtime=1.0)
-    assert pset[0].zi == [2]
+    zi,yi,xi = fieldset.U.unravel_index(pset[0].ei)
+    assert zi == [2]
 
 
 def test_pset_from_field():
