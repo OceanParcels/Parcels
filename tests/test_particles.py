@@ -6,7 +6,7 @@ import pytest
 from parcels import (
     AdvectionRK4,
     ParticleSet,
-    ScipyParticle,
+    Particle,
     Variable,
 )
 from tests.utils import create_fieldset_zeros_unit_mesh
@@ -18,7 +18,7 @@ def fieldset():
 
 
 def test_print(fieldset):
-    TestParticle = ScipyParticle.add_variable("p", to_write=True)
+    TestParticle = Particle.add_variable("p", to_write=True)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0, 1], lat=[0, 1])
     print(pset)
 
@@ -30,7 +30,7 @@ def test_variable_init(fieldset):
         Variable("p_float", dtype=np.float32, initial=10.0),
         Variable("p_double", dtype=np.float64, initial=11.0),
     ]
-    TestParticle = ScipyParticle.add_variables(extra_vars)
+    TestParticle = Particle.add_variables(extra_vars)
     TestParticle = TestParticle.add_variable("p_int", np.int32, initial=12.0)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
 
@@ -48,7 +48,7 @@ def test_variable_init(fieldset):
 @pytest.mark.parametrize("type", ["np.int8", "mp.float", "np.int16"])
 def test_variable_unsupported_dtypes(fieldset, type):
     """Test that checks errors thrown for unsupported dtypes."""
-    TestParticle = ScipyParticle.add_variable("p", dtype=type, initial=10.0)
+    TestParticle = Particle.add_variable("p", dtype=type, initial=10.0)
     with pytest.raises((RuntimeError, TypeError)):
         ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
 
@@ -56,7 +56,7 @@ def test_variable_unsupported_dtypes(fieldset, type):
 def test_variable_special_names(fieldset):
     """Test that checks errors thrown for special names."""
     for vars in ["z", "lon"]:
-        TestParticle = ScipyParticle.add_variable(vars, dtype=np.float32, initial=10.0)
+        TestParticle = Particle.add_variable(vars, dtype=np.float32, initial=10.0)
         with pytest.raises(AttributeError):
             ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
 
@@ -67,7 +67,7 @@ def test_variable_init_relative(fieldset, coord_type):
     npart = 10
     lonlat_type = np.float64 if coord_type == "double" else np.float32
 
-    TestParticle = ScipyParticle.add_variables(
+    TestParticle = Particle.add_variables(
         [
             Variable("p_base", dtype=lonlat_type, initial=10.0),
             Variable("p_relative", dtype=lonlat_type, initial=attrgetter("p_base")),

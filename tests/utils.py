@@ -74,7 +74,7 @@ def create_simple_pset(n=1):
     zeros = np.zeros(n)
     return parcels.ParticleSet(
         fieldset=create_fieldset_unit_mesh(),
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=zeros,
         lat=zeros,
         depth=zeros,

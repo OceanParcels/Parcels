@@ -405,7 +405,7 @@ class Kernel(BaseKernel):
         Parameters
         ----------
         p :
-            object of (sub-)type ScipyParticle
+            object of (sub-)type Particle
         endtime :
             endtime of this overall kernel evaluation step
         dt :

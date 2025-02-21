@@ -35,7 +35,7 @@ def test_brownian_example(mesh, npart=3000):
     random.seed(1234)
     pset = parcels.ParticleSet(
         fieldset=fieldset,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=np.zeros(npart),
         lat=np.zeros(npart),
     )

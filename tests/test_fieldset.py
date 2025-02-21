@@ -9,7 +9,7 @@ from parcels import (
     AdvectionRK4_3D,
     FieldSet,
     ParticleSet,
-    ScipyParticle,
+    Particle,
     Variable,
 )
 from parcels.field import Field, VectorField
@@ -207,7 +207,7 @@ def test_fieldset_float64(cast_data_dtype, tmpdir):
         assert fieldset.U.data.dtype == np.float32
     else:
         assert fieldset.U.data.dtype == np.float64
-    pset = ParticleSet(fieldset, ScipyParticle, lon=1, lat=2)
+    pset = ParticleSet(fieldset, Particle, lon=1, lat=2)
 
     failed = False
     try:
@@ -300,7 +300,7 @@ def test_add_duplicate_field(dupobject):
 def test_add_field_after_pset(fieldtype):
     data, dimensions = generate_fieldset_data(100, 100)
     fieldset = FieldSet.from_data(data, dimensions)
-    pset = ParticleSet(fieldset, ScipyParticle, lon=0, lat=0)  # noqa ; to trigger fieldset._check_complete
+    pset = ParticleSet(fieldset, Particle, lon=0, lat=0)  # noqa ; to trigger fieldset._check_complete
     field1 = Field("field1", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     field2 = Field("field2", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     vfield = VectorField("vfield", field1, field2)
@@ -500,7 +500,7 @@ def test_fieldset_constant():
     fieldset.add_constant("moveeast", eastval)
     assert fieldset.movewest == westval
 
-    pset = ParticleSet.from_line(fieldset, size=1, pclass=ScipyParticle, start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset = ParticleSet.from_line(fieldset, size=1, pclass=Particle, start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
     assert abs(pset.lon[0] - (0.5 + westval + eastval)) < 1e-4
 
@@ -518,7 +518,7 @@ def test_vector_fields(swapUV):
         UV = VectorField("UV", fieldset.V, fieldset.U)
         fieldset.add_vector_field(UV)
 
-    pset = ParticleSet.from_line(fieldset, size=1, pclass=ScipyParticle, start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset = ParticleSet.from_line(fieldset, size=1, pclass=Particle, start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(AdvectionRK4, dt=1, runtime=2)
     if swapUV:
         assert abs(pset.lon[0] - 0.5) < 1e-9
@@ -549,7 +549,7 @@ def test_add_second_vector_field():
         particle_dlon += u * particle.dt  # noqa
         particle_dlat += v * particle.dt  # noqa
 
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=0.5, lat=0.5)
+    pset = ParticleSet(fieldset, pclass=Particle, lon=0.5, lat=0.5)
     pset.execute(AdvectionRK4 + pset.Kernel(SampleUV2), dt=1, runtime=2)
 
     assert abs(pset.lon[0] - 2.5) < 1e-9
@@ -573,7 +573,7 @@ def test_fieldset_write(tmp_zarrfile):
         fieldset.U.data[particle.ti, particle.yi, particle.xi] += 1
         fieldset.U.grid.time[0] = time
 
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=5, lat=5)
+    pset = ParticleSet(fieldset, pclass=Particle, lon=5, lat=5)
     ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=2.0)
     pset.execute(UpdateU, dt=1, runtime=10, output_file=ofile)
 
@@ -615,7 +615,7 @@ def test_from_netcdf_chunking(time_periodic, chunksize, deferLoad):
         allow_time_extrapolation=True if time_periodic in [False, None] else False,
         chunksize=chunksize,
     )
-    pset = ParticleSet.from_line(fieldset, size=1, pclass=ScipyParticle, start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset = ParticleSet.from_line(fieldset, size=1, pclass=Particle, start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(AdvectionRK4, dt=1, runtime=1)
 
 
@@ -710,7 +710,7 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
         # test if we can sample a non-timevarying field too
         particle.d = fieldset.D[0, 0, particle.lat, particle.lon]
 
-    MyParticle = ScipyParticle.add_variables(
+    MyParticle = Particle.add_variables(
         [
             Variable("temp", dtype=np.float32, initial=20.0),
             Variable("u1", dtype=np.float32, initial=0.0),
@@ -773,7 +773,7 @@ def test_fieldset_from_xarray(tdim):
     fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh="flat")
     assert fieldset.U._creation_log == "from_xarray_dataset"
 
-    pset = ParticleSet(fieldset, ScipyParticle, 0, 0, depth=20)
+    pset = ParticleSet(fieldset, Particle, 0, 0, depth=20)
 
     pset.execute(AdvectionRK4, dt=1, runtime=10)
     if tdim == 10:
@@ -788,7 +788,7 @@ def test_fieldset_frompop():
     dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
 
     fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh="flat")
-    pset = ParticleSet.from_list(fieldset, ScipyParticle, lon=[3, 5, 1], lat=[3, 5, 1])
+    pset = ParticleSet.from_list(fieldset, Particle, lon=[3, 5, 1], lat=[3, 5, 1])
     pset.execute(AdvectionRK4, runtime=3, dt=1)
 
 
@@ -811,7 +811,7 @@ def test_fieldset_from_data_gridtypes():
 
     # Rectilinear Z grid
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, 0.4])
+    pset = ParticleSet(fieldset, Particle, [0, 0], [0, 0], [0, 0.4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
     plon = pset.lon
     plat = pset.lat
@@ -822,7 +822,7 @@ def test_fieldset_from_data_gridtypes():
     # Rectilinear S grid
     dimensions["depth"] = depth_s
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, 0.4])
+    pset = ParticleSet(fieldset, Particle, [0, 0], [0, 0], [0, 0.4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
     assert np.allclose(plon, pset.lon)
     assert np.allclose(plat, pset.lat)
@@ -832,7 +832,7 @@ def test_fieldset_from_data_gridtypes():
     dimensions["lat"] = latm
     dimensions["depth"] = depth
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, 0.4])
+    pset = ParticleSet(fieldset, Particle, [0, 0], [0, 0], [0, 0.4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
     assert np.allclose(plon, pset.lon)
     assert np.allclose(plat, pset.lat)
@@ -840,7 +840,7 @@ def test_fieldset_from_data_gridtypes():
     # Curvilinear S grid
     dimensions["depth"] = depth_s
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, 0.4])
+    pset = ParticleSet(fieldset, Particle, [0, 0], [0, 0], [0, 0.4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
     assert np.allclose(plon, pset.lon)
     assert np.allclose(plat, pset.lat)
@@ -869,7 +869,7 @@ def test_deferredload_simplefield(direction, time_extrapolation, tmpdir):
         allow_time_extrapolation=time_extrapolation,
     )
 
-    SamplingParticle = ScipyParticle.add_variable("p")
+    SamplingParticle = Particle.add_variable("p")
     pset = ParticleSet(fieldset, SamplingParticle, lon=0.5, lat=0.5)
 
     def SampleU(particle, fieldset, time):  # pragma: no cover

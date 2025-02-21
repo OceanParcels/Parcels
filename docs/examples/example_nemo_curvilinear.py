@@ -49,7 +49,7 @@ def run_nemo_curvilinear(outfile, advtype="RK4"):
             particle_dlon -= 360  # noqa
 
     pset = parcels.ParticleSet.from_list(
-        fieldset, parcels.ScipyParticle, lon=lonp, lat=latp
+        fieldset, parcels.Particle, lon=lonp, lat=latp
     )
     pfile = parcels.ParticleFile(outfile, pset, outputdt=timedelta(days=1))
     kernels = pset.Kernel(advection[advtype]) + periodicBC

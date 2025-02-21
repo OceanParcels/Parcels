@@ -12,7 +12,7 @@ from parcels import (
     Field,
     ParticleSet,
     RectilinearZGrid,
-    ScipyParticle,
+    Particle,
 )
 from tests.utils import create_fieldset_zeros_conversion
 
@@ -34,7 +34,7 @@ def test_fieldKh_Brownian(mesh):
     runtime = timedelta(days=1)
 
     random.seed(1234)
-    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=np.zeros(npart), lat=np.zeros(npart))
+    pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(DiffusionUniformKh), runtime=runtime, dt=timedelta(hours=1))
 
     expected_std_lon = np.sqrt(2 * kh_zonal * mesh_conversion**2 * runtime.total_seconds())
@@ -72,7 +72,7 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, kernel):
     runtime = timedelta(days=1)
 
     random.seed(1636)
-    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=np.zeros(npart), lat=np.zeros(npart))
+    pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(kernel), runtime=runtime, dt=timedelta(hours=1))
 
     lats = pset.lat
@@ -95,7 +95,7 @@ def test_randomexponential(lambd):
     random.seed(1234)
 
     pset = ParticleSet(
-        fieldset=fieldset, pclass=ScipyParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart)
+        fieldset=fieldset, pclass=Particle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart)
     )
 
     def vertical_randomexponential(particle, fieldset, time):  # pragma: no cover
@@ -122,7 +122,7 @@ def test_randomvonmises(mu, kappa):
     # Set random seed
     random.seed(1234)
 
-    AngleParticle = ScipyParticle.add_variable("angle")
+    AngleParticle = Particle.add_variable("angle")
     pset = ParticleSet(
         fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart)
     )

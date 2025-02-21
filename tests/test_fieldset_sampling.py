@@ -14,7 +14,7 @@ from parcels import (
     Geographic,
     NestedField,
     ParticleSet,
-    ScipyParticle,
+    Particle,
     StatusCode,
     Variable,
 )
@@ -22,7 +22,7 @@ from tests.utils import create_fieldset_global
 
 
 def pclass():
-    return ScipyParticle.add_variables(
+    return Particle.add_variables(
         [Variable("u", dtype=np.float32), Variable("v", dtype=np.float32), Variable("p", dtype=np.float32)]
     )
 
@@ -129,7 +129,7 @@ def test_verticalsampling(zdir):
     }
     data = {"U": np.zeros(dims, dtype=np.float32), "V": np.zeros(dims, dtype=np.float32)}
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=0, lat=0, depth=0.7 * zdir)
+    pset = ParticleSet(fieldset, pclass=Particle, lon=0, lat=0, depth=0.7 * zdir)
     pset.execute(AdvectionRK4, dt=1.0, runtime=1.0)
     assert pset[0].zi == [2]
 
@@ -163,7 +163,7 @@ def test_pset_from_field():
     )
 
     fieldset.add_field(densfield)
-    pset = ParticleSet.from_field(fieldset, size=npart, pclass=ScipyParticle, start_field=fieldset.start)
+    pset = ParticleSet.from_field(fieldset, size=npart, pclass=Particle, start_field=fieldset.start)
     pdens = np.histogram2d(pset.lon, pset.lat, bins=[np.linspace(0.0, 1.0, xdim + 1), np.linspace(0.0, 1.0, ydim + 1)])[
         0
     ]
@@ -292,7 +292,7 @@ def test_partialslip_nearland_zonal(boundaryslip, withW, withT):
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", interp_method=boundaryslip)
 
     pset = ParticleSet(
-        fieldset, pclass=ScipyParticle, lon=np.zeros(npart), lat=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart)
+        fieldset, pclass=Particle, lon=np.zeros(npart), lat=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart)
     )
     kernel = AdvectionRK4_3D if withW else AdvectionRK4
     pset.execute(kernel, endtime=2, dt=1)
@@ -334,7 +334,7 @@ def test_partialslip_nearland_meridional(boundaryslip, withW):
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", interp_method=interp_method)
 
     pset = ParticleSet(
-        fieldset, pclass=ScipyParticle, lat=np.zeros(npart), lon=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart)
+        fieldset, pclass=Particle, lat=np.zeros(npart), lon=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart)
     )
     kernel = AdvectionRK4_3D if withW else AdvectionRK4
     pset.execute(kernel, endtime=2, dt=1)
@@ -367,7 +367,7 @@ def test_partialslip_nearland_vertical(boundaryslip):
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", interp_method={"U": boundaryslip, "V": boundaryslip})
 
     pset = ParticleSet(
-        fieldset, pclass=ScipyParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.linspace(0.1, 3.9, npart)
+        fieldset, pclass=Particle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.linspace(0.1, 3.9, npart)
     )
     pset.execute(AdvectionRK4, endtime=2, dt=1)
     if boundaryslip == "partialslip":
@@ -474,7 +474,7 @@ def test_meridionalflow_spherical():
     lonstart = [0, 45]
     latstart = [0, 45]
     runtime = timedelta(hours=24)
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=lonstart, lat=latstart)
+    pset = ParticleSet(fieldset, pclass=Particle, lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4), runtime=runtime, dt=timedelta(hours=1))
 
     assert pset.lat[0] - (latstart[0] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4
@@ -594,7 +594,7 @@ def test_sampling_3DCROCO():
     data_path = os.path.join(os.path.dirname(__file__), "test_data/")
     fieldset = FieldSet.from_modulefile(data_path + "fieldset_CROCO3D.py")
 
-    SampleP = ScipyParticle.add_variable("p", initial=0.0)
+    SampleP = Particle.add_variable("p", initial=0.0)
 
     def SampleU(particle, fieldset, time):  # pragma: no cover
         particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon, particle]
@@ -651,7 +651,7 @@ def test_sampling_multigrids_non_vectorfield_from_file(npart, tmpdir, chs):
         assert fieldset.U.grid is fieldset.V.grid
     assert fieldset.U.grid is not fieldset.B.grid
 
-    TestParticle = ScipyParticle.add_variable("sample_var", initial=0.0)
+    TestParticle = Particle.add_variable("sample_var", initial=0.0)
 
     pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
 
@@ -690,7 +690,7 @@ def test_sampling_multigrids_non_vectorfield(npart):
     assert fieldset.U.grid is fieldset.V.grid
     assert fieldset.U.grid is not fieldset.B.grid
 
-    TestParticle = ScipyParticle.add_variable("sample_var", initial=0.0)
+    TestParticle = Particle.add_variable("sample_var", initial=0.0)
 
     pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
 
@@ -718,7 +718,7 @@ def test_sampling_multiple_grid_sizes(ugridfactor):
         lat=np.linspace(0.0, 1.0, ydim, dtype=np.float32),
     )
     fieldset = FieldSet(U, V)
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0.8], lat=[0.9])
+    pset = ParticleSet(fieldset, pclass=Particle, lon=[0.8], lat=[0.9])
 
     if ugridfactor > 1:
         assert fieldset.U.grid is not fieldset.V.grid
@@ -745,7 +745,7 @@ def test_multiple_grid_addlater_error():
     )
     fieldset = FieldSet(U, V)
 
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0.8], lat=[0.9])  # noqa ; to trigger fieldset._check_complete
+    pset = ParticleSet(fieldset, pclass=Particle, lon=[0.8], lat=[0.9])  # noqa ; to trigger fieldset._check_complete
 
     P = Field(
         "P",

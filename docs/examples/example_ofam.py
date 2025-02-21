@@ -51,12 +51,12 @@ def test_ofam_xarray_vs_netcdf(dt):
     lonstart, latstart, runtime = (180, 10, timedelta(days=7))
 
     psetN = parcels.ParticleSet(
-        fieldsetNetcdf, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
+        fieldsetNetcdf, pclass=parcels.Particle, lon=lonstart, lat=latstart
     )
     psetN.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
 
     psetX = parcels.ParticleSet(
-        fieldsetxarray, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
+        fieldsetxarray, pclass=parcels.Particle, lon=lonstart, lat=latstart
     )
     psetX.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
 
@@ -75,7 +75,7 @@ def test_ofam_particles(use_xarray):
 
     pset = parcels.ParticleSet(
         fieldset,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=lonstart,
         lat=latstart,
         depth=depstart,

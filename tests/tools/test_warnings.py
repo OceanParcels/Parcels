@@ -12,7 +12,7 @@ from parcels import (
     KernelWarning,
     ParticleSet,
     ParticleSetWarning,
-    ScipyParticle,
+    Particle,
 )
 from tests.utils import TEST_DATA
 
@@ -60,7 +60,7 @@ def test_file_warnings(tmp_zarrfile):
     fieldset = FieldSet.from_data(
         data={"U": np.zeros((1, 1)), "V": np.zeros((1, 1))}, dimensions={"lon": [0], "lat": [0]}
     )
-    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=[0, 0], lat=[0, 0], time=[0, 1])
+    pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=[0, 0], lat=[0, 0], time=[0, 1])
     pfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=2)
     with pytest.warns(ParticleSetWarning, match="Some of the particles have a start time difference.*"):
         pset.execute(AdvectionRK4, runtime=3, dt=1, output_file=pfile)
@@ -76,7 +76,7 @@ def test_kernel_warnings():
         warnings.simplefilter("ignore", FieldSetWarning)
         fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh="flat")
         fieldset.W._scaling_factor = 0.01
-        pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=[0], lat=[0], depth=[0], time=[0])
+        pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=[0], lat=[0], depth=[0], time=[0])
         with pytest.warns(KernelWarning):
             pset.execute(AdvectionRK4_3D, runtime=1, dt=1)
 
@@ -88,7 +88,7 @@ def test_kernel_warnings():
     fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat}, transpose=True)
     pset = ParticleSet(
         fieldset=fieldset,
-        pclass=ScipyParticle.add_variable("next_dt", dtype=np.float32, initial=1),
+        pclass=Particle.add_variable("next_dt", dtype=np.float32, initial=1),
         lon=[0],
         lat=[0],
         depth=[0],
