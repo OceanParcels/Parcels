@@ -13,8 +13,8 @@ from parcels import (
     AdvectionRK4,
     Field,
     FieldSet,
-    ParticleSet,
     Particle,
+    ParticleSet,
     Variable,
 )
 from parcels.particlefile import _set_calendar
@@ -228,9 +228,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, repeatdt,
 @pytest.mark.parametrize("nump", [1, 10])
 def test_pfile_chunks_repeatedrelease(fieldset, repeatdt, nump, tmp_zarrfile):
     runtime = 8
-    pset = ParticleSet(
-        fieldset, pclass=Particle, lon=np.zeros((nump, 1)), lat=np.zeros((nump, 1)), repeatdt=repeatdt
-    )
+    pset = ParticleSet(fieldset, pclass=Particle, lon=np.zeros((nump, 1)), lat=np.zeros((nump, 1)), repeatdt=repeatdt)
     chunks = (20, 10)
     pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1, chunks=chunks)
 

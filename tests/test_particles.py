@@ -5,8 +5,8 @@ import pytest
 
 from parcels import (
     AdvectionRK4,
-    ParticleSet,
     Particle,
+    ParticleSet,
     Variable,
 )
 from tests.utils import create_fieldset_zeros_unit_mesh
