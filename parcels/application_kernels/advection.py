@@ -210,9 +210,7 @@ def AdvectionAnalytical(particle, fieldset, time):  # pragma: no cover
                 yi += 1
                 eta = 0
 
-    particle.xi[:] = xi
-    particle.yi[:] = yi
-    particle.zi[:] = zi
+    particle.ei[:] = fieldset.U.ravel_index(xi,yi,zi)
 
     grid = fieldset.U.grid
     if grid._gtype < 2:
