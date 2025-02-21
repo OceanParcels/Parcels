@@ -127,7 +127,7 @@ def stommel_example(
         parcels.Variable("next_dt", dtype=np.float64, initial=dt.total_seconds()),
         parcels.Variable("age", dtype=np.float32, initial=0.0),
     ]
-    MyParticle = parcels.ScipyParticle.add_variables(extra_vars)
+    MyParticle = parcels.Particle.add_variables(extra_vars)
 
     if custom_partition_function:
         pset = parcels.ParticleSet.from_line(

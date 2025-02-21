@@ -69,7 +69,7 @@ def true_values(
 
 def decaying_moving_example(fieldset, outfile, method=parcels.AdvectionRK4):
     pset = parcels.ParticleSet(
-        fieldset, pclass=parcels.ScipyParticle, lon=start_lon, lat=start_lat
+        fieldset, pclass=parcels.Particle, lon=start_lon, lat=start_lat
     )
 
     dt = timedelta(minutes=5)

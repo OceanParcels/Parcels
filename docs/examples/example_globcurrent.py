@@ -75,7 +75,7 @@ def test_globcurrent_fieldset_advancetime(dt, lonstart, latstart, use_xarray):
     fieldsetsub = set_globcurrent_fieldset(files[0:10], use_xarray=use_xarray)
     psetsub = parcels.ParticleSet.from_list(
         fieldset=fieldsetsub,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=[lonstart],
         lat=[latstart],
     )
@@ -85,7 +85,7 @@ def test_globcurrent_fieldset_advancetime(dt, lonstart, latstart, use_xarray):
     )
     psetall = parcels.ParticleSet.from_list(
         fieldset=fieldsetall,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=[lonstart],
         lat=[latstart],
     )
@@ -107,7 +107,7 @@ def test_globcurrent_particles(use_xarray):
     latstart = [-35]
 
     pset = parcels.ParticleSet(
-        fieldset, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
+        fieldset, pclass=parcels.Particle, lon=lonstart, lat=latstart
     )
 
     pset.execute(
@@ -126,7 +126,7 @@ def test_globcurrent_time_periodic(rundays):
             time_periodic=timedelta(days=365), deferred_load=deferred_load
         )
 
-        MyParticle = parcels.ScipyParticle.add_variable("sample_var", initial=0.0)
+        MyParticle = parcels.Particle.add_variable("sample_var", initial=0.0)
 
         pset = parcels.ParticleSet(
             fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0]
@@ -149,12 +149,12 @@ def test_globcurrent_xarray_vs_netcdf(dt):
     lonstart, latstart, runtime = (25, -35, timedelta(days=7))
 
     psetN = parcels.ParticleSet(
-        fieldsetNetcdf, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
+        fieldsetNetcdf, pclass=parcels.Particle, lon=lonstart, lat=latstart
     )
     psetN.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
 
     psetX = parcels.ParticleSet(
-        fieldsetxarray, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
+        fieldsetxarray, pclass=parcels.Particle, lon=lonstart, lat=latstart
     )
     psetX.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
 
@@ -170,12 +170,12 @@ def test_globcurrent_netcdf_timestamps(dt):
     lonstart, latstart, runtime = (25, -35, timedelta(days=7))
 
     psetN = parcels.ParticleSet(
-        fieldsetNetcdf, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
+        fieldsetNetcdf, pclass=parcels.Particle, lon=lonstart, lat=latstart
     )
     psetN.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
 
     psetT = parcels.ParticleSet(
-        fieldsetTimestamps, pclass=parcels.ScipyParticle, lon=lonstart, lat=latstart
+        fieldsetTimestamps, pclass=parcels.Particle, lon=lonstart, lat=latstart
     )
     psetT.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
 
@@ -192,28 +192,28 @@ def test__particles_init_time():
     # tests the different ways of initialising the time of a particle
     pset = parcels.ParticleSet(
         fieldset,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=lonstart,
         lat=latstart,
         time=np.datetime64("2002-01-15"),
     )
     pset2 = parcels.ParticleSet(
         fieldset,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=lonstart,
         lat=latstart,
         time=14 * 86400,
     )
     pset3 = parcels.ParticleSet(
         fieldset,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=lonstart,
         lat=latstart,
         time=np.array([np.datetime64("2002-01-15")]),
     )
     pset4 = parcels.ParticleSet(
         fieldset,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=lonstart,
         lat=latstart,
         time=[np.datetime64("2002-01-15")],
@@ -228,7 +228,7 @@ def test_globcurrent_time_extrapolation_error(use_xarray):
     fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
     pset = parcels.ParticleSet(
         fieldset,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=[25],
         lat=[-35],
         time=fieldset.U.grid.time[0] - timedelta(days=1).total_seconds(),
@@ -254,7 +254,7 @@ def test_globcurrent_startparticles_between_time_arrays(dt, with_starttime):
         )
     )
 
-    MyParticle = parcels.ScipyParticle.add_variable("sample_var", initial=0.0)
+    MyParticle = parcels.Particle.add_variable("sample_var", initial=0.0)
 
     def SampleP(particle, fieldset, time):  # pragma: no cover
         particle.sample_var += fieldset.P[
@@ -293,7 +293,7 @@ def test_globcurrent_particle_independence(rundays=5):
             particle.delete()
 
     pset0 = parcels.ParticleSet(
-        fieldset, pclass=parcels.ScipyParticle, lon=[25, 25], lat=[-35, -35], time=time0
+        fieldset, pclass=parcels.Particle, lon=[25, 25], lat=[-35, -35], time=time0
     )
 
     pset0.execute(
@@ -303,7 +303,7 @@ def test_globcurrent_particle_independence(rundays=5):
     )
 
     pset1 = parcels.ParticleSet(
-        fieldset, pclass=parcels.ScipyParticle, lon=[25, 25], lat=[-35, -35], time=time0
+        fieldset, pclass=parcels.Particle, lon=[25, 25], lat=[-35, -35], time=time0
     )
 
     pset1.execute(
@@ -319,8 +319,8 @@ def test_globcurrent_pset_fromfile(dt, pid_offset, tmpdir):
     filename = tmpdir.join("pset_fromparticlefile.zarr")
     fieldset = set_globcurrent_fieldset()
 
-    parcels.ScipyParticle.setLastID(pid_offset)
-    pset = parcels.ParticleSet(fieldset, pclass=parcels.ScipyParticle, lon=25, lat=-35)
+    parcels.Particle.setLastID(pid_offset)
+    pset = parcels.ParticleSet(fieldset, pclass=parcels.Particle, lon=25, lat=-35)
     pfile = pset.ParticleFile(filename, outputdt=timedelta(hours=6))
     pset.execute(
         parcels.AdvectionRK4, runtime=timedelta(days=1), dt=dt, output_file=pfile
@@ -330,7 +330,7 @@ def test_globcurrent_pset_fromfile(dt, pid_offset, tmpdir):
     restarttime = np.nanmax if dt > 0 else np.nanmin
     pset_new = parcels.ParticleSet.from_particlefile(
         fieldset,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         filename=filename,
         restarttime=restarttime,
     )
@@ -351,7 +351,7 @@ def test_error_outputdt_not_multiple_dt(tmpdir):
 
     dt = 81.2584344538292  # number for which output writing fails
 
-    pset = parcels.ParticleSet(fieldset, pclass=parcels.ScipyParticle, lon=[0], lat=[0])
+    pset = parcels.ParticleSet(fieldset, pclass=parcels.Particle, lon=[0], lat=[0])
     ofile = pset.ParticleFile(name=filepath, outputdt=timedelta(days=1))
 
     def DoNothing(particle, fieldset, time):  # pragma: no cover

@@ -15,8 +15,8 @@ from parcels import (
     AdvectionRK45,
     Field,
     FieldSet,
+    Particle,
     ParticleSet,
-    ScipyParticle,
     StatusCode,
     Variable,
 )
@@ -71,7 +71,7 @@ def test_advection_zonal(lon, lat, depth):
     dimensions = {"lon": lon, "lat": lat}
     fieldset2D = FieldSet.from_data(data2D, dimensions, mesh="spherical", transpose=True)
 
-    pset2D = ParticleSet(fieldset2D, pclass=ScipyParticle, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
+    pset2D = ParticleSet(fieldset2D, pclass=Particle, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
     pset2D.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
     assert (np.diff(pset2D.lon) > 1.0e-4).all()
 
@@ -79,7 +79,7 @@ def test_advection_zonal(lon, lat, depth):
     fieldset3D = FieldSet.from_data(data3D, dimensions, mesh="spherical", transpose=True)
     pset3D = ParticleSet(
         fieldset3D,
-        pclass=ScipyParticle,
+        pclass=Particle,
         lon=np.zeros(npart) + 20.0,
         lat=np.linspace(0, 80, npart),
         depth=np.zeros(npart) + 10.0,
@@ -95,7 +95,7 @@ def test_advection_meridional(lon, lat):
     dimensions = {"lon": lon, "lat": lat}
     fieldset = FieldSet.from_data(data, dimensions, mesh="spherical", transpose=True)
 
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart))
+    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart))
     delta_lat = np.diff(pset.lat)
     pset.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
     assert np.allclose(np.diff(pset.lat), delta_lat, rtol=1.0e-4)
@@ -115,7 +115,7 @@ def test_advection_3D():
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
     pset = ParticleSet(
-        fieldset, pclass=ScipyParticle, lon=np.zeros(npart), lat=np.zeros(npart) + 1e2, depth=np.linspace(0, 1, npart)
+        fieldset, pclass=Particle, lon=np.zeros(npart), lat=np.zeros(npart) + 1e2, depth=np.linspace(0, 1, npart)
     )
     time = timedelta(hours=2).total_seconds()
     pset.execute(AdvectionRK4, runtime=time, dt=timedelta(seconds=30))
@@ -157,7 +157,7 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
         kernels.append(SubmergeParticle)
     kernels.append(DeleteParticle)
 
-    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=0.5, lat=0.5, depth=0.9)
+    pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=0.5, lat=0.5, depth=0.9)
     pset.execute(kernels, runtime=11.0, dt=1)
 
     if direction == "up" and wErrorThroughSurface:
@@ -179,7 +179,7 @@ def test_advection_RK45(lon, lat, rk45_tol):
     fieldset.add_constant("RK45_tol", rk45_tol)
 
     dt = timedelta(seconds=30).total_seconds()
-    RK45Particles = ScipyParticle.add_variable("next_dt", dtype=np.float32, initial=dt)
+    RK45Particles = Particle.add_variable("next_dt", dtype=np.float32, initial=dt)
     pset = ParticleSet(fieldset, pclass=RK45Particles, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
     pset.execute(AdvectionRK45, runtime=timedelta(hours=2), dt=dt)
     assert (np.diff(pset.lon) > 1.0e-4).all()
@@ -235,7 +235,7 @@ def test_advection_3DCROCO():
     X, Z = np.meshgrid([40e3, 80e3, 120e3], [-10, -130])
     Y = np.ones(X.size) * 100e3
 
-    pclass = ScipyParticle.add_variable(Variable("w"))
+    pclass = Particle.add_variable(Variable("w"))
     pset = ParticleSet(fieldset=fieldset, pclass=pclass, lon=X, lat=Y, depth=Z)
 
     def SampleW(particle, fieldset, time):  # pragma: no cover
@@ -253,7 +253,7 @@ def test_advection_2DCROCO():
     X = np.array([40e3, 80e3, 120e3])
     Y = np.ones(X.size) * 100e3
     Z = np.zeros(X.size)
-    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=X, lat=Y, depth=Z)
+    pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=X, lat=Y, depth=Z)
 
     pset.execute([AdvectionRK4], runtime=runtime, dt=100)
     assert np.allclose(pset.depth, Z.flatten(), atol=1e-3)
@@ -281,7 +281,7 @@ def test_advection_periodic_zonal():
     fieldset.add_periodic_halo(zonal=True, halosize=halosize)
     assert len(fieldset.U.lon) == xdim + 2 * halosize
 
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
     assert abs(pset.lon[0] - 0.15) < 0.1
 
@@ -292,7 +292,7 @@ def test_advection_periodic_meridional():
     fieldset.add_periodic_halo(meridional=True)
     assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
 
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
     assert abs(pset.lat[0] - 0.15) < 0.1
 
@@ -306,7 +306,7 @@ def test_advection_periodic_zonal_meridional():
     assert np.allclose(np.diff(fieldset.U.lat), fieldset.U.lat[1] - fieldset.U.lat[0], rtol=0.001)
     assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1] - fieldset.U.lon[0], rtol=0.001)
 
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0.4], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=Particle, lon=[0.4], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
     assert abs(pset.lon[0] - 0.05) < 0.1
     assert abs(pset.lat[0] - 0.15) < 0.1
@@ -342,7 +342,7 @@ def test_length1dimensions(u, v, w):
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
 
     x0, y0, z0 = 2, 8, -4
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=x0, lat=y0, depth=z0)
+    pset = ParticleSet(fieldset, pclass=Particle, lon=x0, lat=y0, depth=z0)
     pfunc = AdvectionRK4 if w is None else AdvectionRK4_3D
     kernel = pset.Kernel(pfunc)
     pset.execute(kernel, runtime=5, dt=1)
@@ -411,9 +411,9 @@ def test_stationary_eddy(fieldset_stationary, method, rtol, diffField):
     dt = timedelta(minutes=3).total_seconds()
     endtime = timedelta(hours=6).total_seconds()
 
-    RK45Particles = ScipyParticle.add_variable("next_dt", dtype=np.float32, initial=dt)
+    RK45Particles = Particle.add_variable("next_dt", dtype=np.float32, initial=dt)
 
-    pclass = RK45Particles if method == "RK45" else ScipyParticle
+    pclass = RK45Particles if method == "RK45" else Particle
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
@@ -443,7 +443,7 @@ def test_stationary_eddy_vertical():
     data = {"U": fld1, "V": fldzero, "W": fld2}
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=lon, lat=lat, depth=depth)
+    pset = ParticleSet(fieldset, pclass=Particle, lon=lon, lat=lat, depth=depth)
     pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
     exp_lon = [truth_stationary(x, z, pset[0].time)[0] for x, z in zip(lon, depth, strict=True)]
     exp_depth = [truth_stationary(x, z, pset[0].time)[1] for x, z in zip(lon, depth, strict=True)]
@@ -455,7 +455,7 @@ def test_stationary_eddy_vertical():
     data = {"U": fldzero, "V": fld2, "W": fld1}
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
 
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=lon, lat=lat, depth=depth)
+    pset = ParticleSet(fieldset, pclass=Particle, lon=lon, lat=lat, depth=depth)
     pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
     exp_depth = [truth_stationary(z, y, pset[0].time)[0] for z, y in zip(depth, lat, strict=True)]
     exp_lat = [truth_stationary(z, y, pset[0].time)[1] for z, y in zip(depth, lat, strict=True)]
@@ -516,9 +516,9 @@ def test_moving_eddy(fieldset_moving, method, rtol, diffField):
     dt = timedelta(minutes=3).total_seconds()
     endtime = timedelta(hours=6).total_seconds()
 
-    RK45Particles = ScipyParticle.add_variable("next_dt", dtype=np.float32, initial=dt)
+    RK45Particles = Particle.add_variable("next_dt", dtype=np.float32, initial=dt)
 
-    pclass = RK45Particles if method == "RK45" else ScipyParticle
+    pclass = RK45Particles if method == "RK45" else Particle
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
@@ -595,9 +595,9 @@ def test_decaying_eddy(fieldset_decaying, method, rtol, diffField):
     dt = timedelta(minutes=3).total_seconds()
     endtime = timedelta(hours=6).total_seconds()
 
-    RK45Particles = ScipyParticle.add_variable("next_dt", dtype=np.float32, initial=dt)
+    RK45Particles = Particle.add_variable("next_dt", dtype=np.float32, initial=dt)
 
-    pclass = RK45Particles if method == "RK45" else ScipyParticle
+    pclass = RK45Particles if method == "RK45" else Particle
     pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
     pset.execute(kernel[method], dt=dt, endtime=endtime)
 
@@ -613,7 +613,7 @@ def test_analyticalAgrid():
     U = np.ones((lat.size, lon.size), dtype=np.float32)
     V = np.ones((lat.size, lon.size), dtype=np.float32)
     fieldset = FieldSet.from_data({"U": U, "V": V}, {"lon": lon, "lat": lat}, mesh="flat")
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=1, lat=1)
+    pset = ParticleSet(fieldset, pclass=Particle, lon=1, lat=1)
 
     with pytest.raises(NotImplementedError):
         pset.execute(AdvectionAnalytical, runtime=1)
@@ -641,7 +641,7 @@ def test_uniform_analytical(u, v, w, direction, tmp_zarrfile):
     fieldset.V.interp_method = "cgrid_velocity"
 
     x0, y0, z0 = 6.1, 6.2, 20
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=x0, lat=y0, depth=z0)
+    pset = ParticleSet(fieldset, pclass=Particle, lon=x0, lat=y0, depth=z0)
 
     outfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=1, chunks=(1, 1))
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction, output_file=outfile)

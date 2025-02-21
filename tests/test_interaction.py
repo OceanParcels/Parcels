@@ -16,7 +16,7 @@ from parcels.interaction.neighborsearch import (
     KDTreeFlatNeighborSearch,
 )
 from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
-from parcels.particle import ScipyInteractionParticle, Variable
+from parcels.particle import InteractionParticle, Variable
 from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_unit_mesh, create_flat_positions, create_spherical_positions
 
@@ -50,7 +50,7 @@ def test_simple_interaction_kernel(fieldset_unit_mesh):
     interaction_distance = 6371000 * 0.2 * np.pi / 180
     pset = ParticleSet(
         fieldset_unit_mesh,
-        pclass=ScipyInteractionParticle,
+        pclass=InteractionParticle,
         lon=lons,
         lat=lats,
         interaction_distance=interaction_distance,
@@ -67,7 +67,7 @@ def test_zonal_periodic_distance(mesh, periodic_domain_zonal):
     lons = [0.05, 0.4, 0.95]
     pset = ParticleSet(
         fset,
-        pclass=ScipyInteractionParticle,
+        pclass=InteractionParticle,
         lon=lons,
         lat=[0.5] * len(lons),
         interaction_distance=interaction_distance,
@@ -89,7 +89,7 @@ def test_concatenate_interaction_kernels(fieldset_unit_mesh):
 
     pset = ParticleSet(
         fieldset_unit_mesh,
-        pclass=ScipyInteractionParticle,
+        pclass=InteractionParticle,
         lon=lons,
         lat=lats,
         interaction_distance=interaction_distance,
@@ -114,7 +114,7 @@ def test_concatenate_interaction_kernels_as_pyfunc(fieldset_unit_mesh):
 
     pset = ParticleSet(
         fieldset_unit_mesh,
-        pclass=ScipyInteractionParticle,
+        pclass=InteractionParticle,
         lon=lons,
         lat=lats,
         interaction_distance=interaction_distance,
@@ -133,7 +133,7 @@ def test_neighbor_merge(fieldset_unit_mesh):
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000 * 5.5 * np.pi / 180
-    MergeParticle = ScipyInteractionParticle.add_variables(
+    MergeParticle = InteractionParticle.add_variables(
         [Variable("nearest_neighbor", dtype=np.int64, to_write=False), Variable("mass", initial=1, dtype=np.float32)]
     )
     pset = ParticleSet(
@@ -151,7 +151,7 @@ def test_asymmetric_attraction(fieldset_unit_mesh):
     lats = [0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000 * 5.5 * np.pi / 180
-    AttractingParticle = ScipyInteractionParticle.add_variable("attractor", dtype=np.bool_, to_write="once")
+    AttractingParticle = InteractionParticle.add_variable("attractor", dtype=np.bool_, to_write="once")
     pset = ParticleSet(
         fieldset_unit_mesh,
         pclass=AttractingParticle,
@@ -190,11 +190,11 @@ def test_pseudo_interaction(runtime, dt):
     fieldset = FieldSet(Uflow, Vflow)
 
     # Execute the advection kernel only
-    pset = ParticleSet(fieldset, pclass=ScipyInteractionParticle, lon=[2], lat=[2])
+    pset = ParticleSet(fieldset, pclass=InteractionParticle, lon=[2], lat=[2])
     pset.execute(AdvectionRK4, runtime=runtime, dt=dt)
 
     # Execute both the advection and interaction kernel.
-    pset2 = ParticleSet(fieldset, pclass=ScipyInteractionParticle, lon=[2], lat=[2], interaction_distance=1)
+    pset2 = ParticleSet(fieldset, pclass=InteractionParticle, lon=[2], lat=[2], interaction_distance=1)
     pyfunc_inter = pset2.InteractionKernel(ConstantMoveInteraction)
     pset2.execute(AdvectionRK4, pyfunc_inter=pyfunc_inter, runtime=runtime, dt=dt)
 

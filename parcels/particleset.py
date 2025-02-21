@@ -22,7 +22,7 @@ from parcels.interaction.neighborsearch import (
     KDTreeFlatNeighborSearch,
 )
 from parcels.kernel import Kernel
-from parcels.particle import ScipyParticle, Variable
+from parcels.particle import Particle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
 from parcels.tools._helpers import particleset_repr, timedelta_to_float
@@ -53,8 +53,8 @@ class ParticleSet:
     ----------
     fieldset :
         mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
-    pclass : parcels.particle.ScipyParticle
-        Optional object that inherits from :mod:`parcels.particle.ScipyParticle` object that defines custom particle
+    pclass : parcels.particle.Particle
+        Optional object that inherits from :mod:`parcels.particle.Particle` object that defines custom particle
     lon :
         List of initial longitude values for particles
     lat :
@@ -83,7 +83,7 @@ class ParticleSet:
     def __init__(
         self,
         fieldset,
-        pclass=ScipyParticle,
+        pclass=Particle,
         lon=None,
         lat=None,
         depth=None,
@@ -478,7 +478,7 @@ class ParticleSet:
         fieldset :
             mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         pclass :
-            Particle class. May be a parcels.particle.ScipyParticle class as defined in parcels, or a subclass defining a custom particle.
+            Particle class. May be a parcels.particle.Particle class as defined in parcels, or a subclass defining a custom particle.
         lon :
             List of initial longitude values for particles
         lat :
@@ -534,7 +534,7 @@ class ParticleSet:
         fieldset :
             mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         pclass :
-            Particle class. May be a parcels.particle.ScipyParticle as defined in parcels, or a subclass defining a custom particle.
+            Particle class. May be a parcels.particle.Particle as defined in parcels, or a subclass defining a custom particle.
         start :
             Start point (longitude, latitude) for initialisation of particles on a straight line.
         finish :
@@ -650,7 +650,7 @@ class ParticleSet:
         fieldset : parcels.fieldset.FieldSet
             mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         pclass :
-            Particle class. May be a parcels.particle.ScipyParticle class as defined in parcels, or a subclass defining a custom particle.
+            Particle class. May be a parcels.particle.Particle class as defined in parcels, or a subclass defining a custom particle.
         start_field : parcels.field.Field
             Field for initialising particles stochastically (horizontally)  according to the presented density field.
         size :
@@ -694,7 +694,7 @@ class ParticleSet:
         fieldset : parcels.fieldset.FieldSet
             mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         pclass :
-            Particle class. May be a parcels.particle.ScipyParticle class as defined in parcels, or a subclass defining a custom particle.
+            Particle class. May be a parcels.particle.Particle class as defined in parcels, or a subclass defining a custom particle.
         filename : str
             Name of the particlefile from which to read initial conditions
         restart : bool

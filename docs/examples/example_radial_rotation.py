@@ -52,7 +52,7 @@ def rotation_example(fieldset, outfile, method=parcels.AdvectionRK4):
     pset = parcels.ParticleSet.from_line(
         fieldset,
         size=npart,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         start=(30.0, 30.0),
         finish=(30.0, 50.0),
     )  # One particle in centre, one on periphery of Field.

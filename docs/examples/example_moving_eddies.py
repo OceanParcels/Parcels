@@ -136,7 +136,7 @@ def moving_eddies_example(
     pset = parcels.ParticleSet.from_line(
         fieldset=fieldset,
         size=npart,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         start=start,
         finish=finish,
     )
@@ -168,7 +168,7 @@ def test_moving_eddies_fwdbwd(mesh, tmpdir, npart=2):
     lons = [3.3, 3.3] if fieldset.U.grid.mesh == "spherical" else [3.3e5, 3.3e5]
     lats = [46.0, 47.8] if fieldset.U.grid.mesh == "spherical" else [1e5, 2.8e5]
     pset = parcels.ParticleSet(
-        fieldset=fieldset, pclass=parcels.ScipyParticle, lon=lons, lat=lats
+        fieldset=fieldset, pclass=parcels.Particle, lon=lons, lat=lats
     )
 
     # Execte for 14 days, with 30sec timesteps and hourly output
@@ -262,7 +262,7 @@ def test_periodic_and_computeTimeChunk_eddies():
     fieldset.add_periodic_halo(zonal=True, meridional=True)
     pset = parcels.ParticleSet.from_list(
         fieldset=fieldset,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         lon=[3.3, 3.3],
         lat=[46.0, 47.8],
     )

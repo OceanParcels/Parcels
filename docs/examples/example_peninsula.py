@@ -127,7 +127,7 @@ def peninsula_example(
     """
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p.
-    MyParticle = parcels.ScipyParticle.add_variable(
+    MyParticle = parcels.Particle.add_variable(
         [
             parcels.Variable("p", dtype=np.float32, initial=0.0),
             parcels.Variable("p_start", dtype=np.float32, initial=0),

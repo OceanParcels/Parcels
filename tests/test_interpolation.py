@@ -3,7 +3,7 @@ import pytest
 import xarray as xr
 
 import parcels._interpolation as interpolation
-from parcels import AdvectionRK4_3D, FieldSet, ParticleSet, ScipyParticle
+from parcels import AdvectionRK4_3D, FieldSet, Particle, ParticleSet
 from tests.utils import TEST_DATA, create_fieldset_zeros_3d
 
 
@@ -131,7 +131,7 @@ def test_interp_regression_v3(interp_method):
 
     x, y, z = np.meshgrid(np.linspace(0, 1, 7), np.linspace(0, 1, 13), np.linspace(0, 1, 5))
 
-    TestP = ScipyParticle.add_variable("pid", dtype=np.int32, initial=0)
+    TestP = Particle.add_variable("pid", dtype=np.int32, initial=0)
     pset = ParticleSet(fieldset, pclass=TestP, lon=x, lat=y, depth=z, pid=np.arange(x.size))
 
     def DeleteParticle(particle, fieldset, time):

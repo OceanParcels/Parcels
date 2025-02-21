@@ -8,8 +8,8 @@ from parcels import (
     AdvectionRK4,
     FieldOutOfBoundError,
     FieldSet,
+    Particle,
     ParticleSet,
-    ScipyParticle,
     StatusCode,
 )
 from tests.common_kernels import DeleteParticle, DoNothing, MoveEast, MoveNorth
@@ -48,7 +48,7 @@ def test_execution_order(kernel_type):
     def SampleP(particle, fieldset, time):  # pragma: no cover
         particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon]
 
-    SampleParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0.0)
+    SampleParticle = Particle.add_variable("p", dtype=np.float32, initial=0.0)
 
     MoveLon = MoveLon_Update_dlon if kernel_type == "update_dlon" else MoveLon_Update_Lon
 
@@ -84,7 +84,7 @@ def test_execution_order(kernel_type):
 def test_execution_endtime(fieldset_unit_mesh, start, end, substeps, dt):
     npart = 10
     pset = ParticleSet(
-        fieldset_unit_mesh, pclass=ScipyParticle, time=start, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
+        fieldset_unit_mesh, pclass=Particle, time=start, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
     )
     pset.execute(DoNothing, endtime=end, dt=dt)
     assert np.allclose(pset.time_nextloop, end)
@@ -104,7 +104,7 @@ def test_execution_endtime(fieldset_unit_mesh, start, end, substeps, dt):
 def test_execution_runtime(fieldset_unit_mesh, start, end, substeps, dt):
     npart = 10
     pset = ParticleSet(
-        fieldset_unit_mesh, pclass=ScipyParticle, time=start, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
+        fieldset_unit_mesh, pclass=Particle, time=start, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
     )
     t_step = abs(end - start) / substeps
     for _ in range(substeps):
@@ -121,9 +121,7 @@ def test_execution_fail_python_exception(fieldset_unit_mesh):
         else:
             pass
 
-    pset = ParticleSet(
-        fieldset_unit_mesh, pclass=ScipyParticle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
-    )
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
     with pytest.raises(RuntimeError):
         pset.execute(PythonFail, endtime=20.0, dt=2.0)
     assert len(pset) == npart
@@ -138,9 +136,7 @@ def test_execution_fail_out_of_bounds(fieldset_unit_mesh):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
 
-    pset = ParticleSet(
-        fieldset_unit_mesh, pclass=ScipyParticle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
-    )
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
     with pytest.raises(FieldOutOfBoundError):
         pset.execute(MoveRight, endtime=10.0, dt=1.0)
     assert len(pset) == npart
@@ -161,7 +157,7 @@ def test_execution_recover_out_of_bounds(fieldset_unit_mesh):
 
     lon = np.linspace(0.05, 0.95, npart)
     lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=lon, lat=lat)
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=lon, lat=lat)
     pset.execute([MoveRight, MoveLeft], endtime=11.0, dt=1.0)
     assert len(pset) == npart
     assert np.allclose(pset.lon, lon, rtol=1e-5)
@@ -176,7 +172,7 @@ def test_execution_check_all_errors(fieldset_unit_mesh):
         if particle.state > 4:
             particle.state = StatusCode.Delete
 
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=10, lat=0)
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=10, lat=0)
     pset.execute([MoveRight, RecoverAllErrors], endtime=11.0, dt=1.0)
     assert len(pset) == 0
 
@@ -188,7 +184,7 @@ def test_execution_check_stopallexecution(fieldset_unit_mesh):
         if particle.lon + particle_dlon >= 10:
             particle.state = StatusCode.StopAllExecution
 
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=[0, 1], lat=[0, 0])
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0, 1], lat=[0, 0])
     pset.execute(addoneLon, endtime=20.0, dt=1.0)
     assert pset[0].lon == 9
     assert pset[0].time == 9
@@ -205,13 +201,13 @@ def test_execution_delete_out_of_bounds(fieldset_unit_mesh):
 
     lon = np.linspace(0.05, 0.95, npart)
     lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=lon, lat=lat)
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=lon, lat=lat)
     pset.execute([MoveRight, DeleteParticle], endtime=10.0, dt=1.0)
     assert len(pset) == 0
 
 
 def test_kernel_add_no_new_variables(fieldset_unit_mesh):
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveNorth), endtime=2.0, dt=1.0)
     assert np.allclose(pset.lon, 0.6, rtol=1e-5)
     assert np.allclose(pset.lat, 0.6, rtol=1e-5)
@@ -228,7 +224,7 @@ def test_multi_kernel_duplicate_varnames(fieldset_unit_mesh):
         add_lon = -0.3
         particle_dlon += add_lon  # noqa
 
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute([Kernel1, Kernel2], endtime=2.0, dt=1.0)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)
 
@@ -243,7 +239,7 @@ def test_multi_kernel_reuse_varnames(fieldset_unit_mesh):
     def MoveEast2(particle, fieldset, time):  # pragma: no cover
         particle_dlon += add_lon  # noqa
 
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast1) + pset.Kernel(MoveEast2), endtime=2.0, dt=1.0)
     assert np.allclose(pset.lon, [0.9], rtol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
 
@@ -262,7 +258,7 @@ def test_combined_kernel_from_list(fieldset_unit_mesh):
     def MoveNorth(particle, fieldset, time):  # pragma: no cover
         particle_dlat += 0.1  # noqa
 
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     kernels_single = pset.Kernel([AdvectionRK4])
     kernels_functions = pset.Kernel([AdvectionRK4, MoveEast, MoveNorth])
 
@@ -277,7 +273,7 @@ def test_combined_kernel_from_list_error_checking(fieldset_unit_mesh):
 
     Tests that various error cases raise appropriate messages.
     """
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
 
     # Test that list has to be non-empty
     with pytest.raises(ValueError):
@@ -304,7 +300,7 @@ def test_update_kernel_in_script(fieldset_unit_mesh):
         add_lon = -0.3
         particle_dlon += add_lon  # noqa
 
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast), endtime=1.0, dt=1.0)
     pset.execute(pset.Kernel(MoveWest), endtime=3.0, dt=1.0)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)  # should be 0.5 + 0.1 - 0.3 = 0.3
