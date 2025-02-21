@@ -8,8 +8,8 @@ from parcels import (
     AdvectionRK4,
     AdvectionRK4_3D,
     FieldSet,
-    ParticleSet,
     Particle,
+    ParticleSet,
     Variable,
 )
 from parcels.field import Field, VectorField

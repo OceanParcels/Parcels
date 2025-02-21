@@ -10,9 +10,9 @@ from parcels import (
     FieldSet,
     FieldSetWarning,
     KernelWarning,
+    Particle,
     ParticleSet,
     ParticleSetWarning,
-    Particle,
 )
 from tests.utils import TEST_DATA
 

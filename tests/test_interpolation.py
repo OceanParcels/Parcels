@@ -3,7 +3,7 @@ import pytest
 import xarray as xr
 
 import parcels._interpolation as interpolation
-from parcels import AdvectionRK4_3D, FieldSet, ParticleSet, Particle
+from parcels import AdvectionRK4_3D, FieldSet, Particle, ParticleSet
 from tests.utils import TEST_DATA, create_fieldset_zeros_3d
 
 

@@ -48,9 +48,7 @@ def run_nemo_curvilinear(outfile, advtype="RK4"):
         if particle.lon > 180:
             particle_dlon -= 360  # noqa
 
-    pset = parcels.ParticleSet.from_list(
-        fieldset, parcels.Particle, lon=lonp, lat=latp
-    )
+    pset = parcels.ParticleSet.from_list(fieldset, parcels.Particle, lon=lonp, lat=latp)
     pfile = parcels.ParticleFile(outfile, pset, outputdt=timedelta(days=1))
     kernels = pset.Kernel(advection[advtype]) + periodicBC
     pset.execute(kernels, runtime=runtime, dt=timedelta(hours=6), output_file=pfile)

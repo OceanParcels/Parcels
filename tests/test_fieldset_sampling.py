@@ -13,8 +13,8 @@ from parcels import (
     FieldSet,
     Geographic,
     NestedField,
-    ParticleSet,
     Particle,
+    ParticleSet,
     StatusCode,
     Variable,
 )

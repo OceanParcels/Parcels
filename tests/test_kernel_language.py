@@ -8,8 +8,8 @@ from parcels import (
     Field,
     FieldSet,
     Kernel,
-    ParticleSet,
     Particle,
+    ParticleSet,
     Variable,
 )
 from parcels.application_kernels.EOSseawaterproperties import (

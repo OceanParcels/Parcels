@@ -5,9 +5,9 @@ from parcels import (
     CurvilinearZGrid,
     Field,
     FieldSet,
+    Particle,
     ParticleSet,
     ParticleSetWarning,
-    Particle,
     StatusCode,
     Variable,
 )
@@ -239,9 +239,7 @@ def test_pset_access(fieldset):
 
 def test_pset_custom_ptype(fieldset):
     npart = 100
-    TestParticle = Particle.add_variable(
-        [Variable("p", np.float32, initial=0.33), Variable("n", np.int32, initial=2)]
-    )
+    TestParticle = Particle.add_variable([Variable("p", np.float32, initial=0.33), Variable("n", np.int32, initial=2)])
 
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
     assert pset.size == npart
@@ -255,9 +253,7 @@ def test_pset_add_explicit(fieldset):
     lat = np.linspace(1, 0, npart)
     pset = ParticleSet(fieldset, lon=[], lat=[], pclass=Particle, lonlatdepth_dtype=np.float64)
     for i in range(npart):
-        particle = ParticleSet(
-            pclass=Particle, lon=lon[i], lat=lat[i], fieldset=fieldset, lonlatdepth_dtype=np.float64
-        )
+        particle = ParticleSet(pclass=Particle, lon=lon[i], lat=lat[i], fieldset=fieldset, lonlatdepth_dtype=np.float64)
         pset.add(particle)
     assert pset.size == npart
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
