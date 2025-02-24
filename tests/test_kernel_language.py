@@ -8,8 +8,8 @@ from parcels import (
     Field,
     FieldSet,
     Kernel,
+    Particle,
     ParticleSet,
-    ScipyParticle,
     Variable,
 )
 from parcels.application_kernels.EOSseawaterproperties import (
@@ -48,7 +48,7 @@ def fieldset_unit_mesh():
 def test_expression_int(name, expr, result):
     """Test basic arithmetic expressions."""
     npart = 10
-    TestParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0)
+    TestParticle = Particle.add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
         create_fieldset_unit_mesh(mesh="spherical"),
         pclass=TestParticle,
@@ -72,7 +72,7 @@ def test_expression_int(name, expr, result):
 def test_expression_float(name, expr, result):
     """Test basic arithmetic expressions."""
     npart = 10
-    TestParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0)
+    TestParticle = Particle.add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
         create_fieldset_unit_mesh(mesh="spherical"),
         pclass=TestParticle,
@@ -102,7 +102,7 @@ def test_expression_float(name, expr, result):
 def test_expression_bool(name, expr, result):
     """Test basic arithmetic expressions."""
     npart = 10
-    TestParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0)
+    TestParticle = Particle.add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(
         create_fieldset_unit_mesh(mesh="spherical"),
         pclass=TestParticle,
@@ -115,7 +115,7 @@ def test_expression_bool(name, expr, result):
 
 def test_while_if_break():
     """Test while, if and break commands."""
-    TestParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0)
+    TestParticle = Particle.add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=[0], lat=[0])
 
     def kernel(particle, fieldset, time):  # pragma: no cover
@@ -132,7 +132,7 @@ def test_while_if_break():
 
 def test_nested_if():
     """Test nested if commands."""
-    TestParticle = ScipyParticle.add_variables(
+    TestParticle = Particle.add_variables(
         [Variable("p0", dtype=np.int32, initial=0), Variable("p1", dtype=np.int32, initial=1)]
     )
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=0, lat=0)
@@ -149,7 +149,7 @@ def test_nested_if():
 
 def test_pass():
     """Test pass commands."""
-    TestParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0)
+    TestParticle = Particle.add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=0, lat=0)
 
     def kernel(particle, fieldset, time):  # pragma: no cover
@@ -161,7 +161,7 @@ def test_pass():
 
 
 def test_dt_as_variable_in_kernel():
-    pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=ScipyParticle, lon=0, lat=0)
+    pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=Particle, lon=0, lat=0)
 
     def kernel(particle, fieldset, time):  # pragma: no cover
         dt = 1.0  # noqa
@@ -174,8 +174,8 @@ def test_varname_as_fieldname():
     fset = create_fieldset_unit_mesh(mesh="spherical")
     fset.add_field(Field("speed", 10, lon=0, lat=0))
     fset.add_constant("vertical_speed", 0.1)
-    Particle = ScipyParticle.add_variable("speed")
-    pset = ParticleSet(fset, pclass=Particle, lon=0, lat=0)
+    particle = Particle.add_variable("speed")
+    pset = ParticleSet(fset, pclass=particle, lon=0, lat=0)
 
     def kernel_particlename(particle, fieldset, time):  # pragma: no cover
         particle.speed = fieldset.speed[particle]
@@ -191,7 +191,7 @@ def test_varname_as_fieldname():
 
 def test_if_withfield(fieldset_unit_mesh):
     """Test combination of if and Field sampling commands."""
-    TestParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0)
+    TestParticle = Particle.add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset_unit_mesh, pclass=TestParticle, lon=[0], lat=[0])
 
     def kernel(particle, fieldset, time):  # pragma: no cover
@@ -226,7 +226,7 @@ def test_if_withfield(fieldset_unit_mesh):
 
 def test_print(fieldset_unit_mesh, capfd):
     """Test print statements."""
-    TestParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0)
+    TestParticle = Particle.add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset_unit_mesh, pclass=TestParticle, lon=[0.5], lat=[0.5])
 
     def kernel(particle, fieldset, time):  # pragma: no cover
@@ -253,7 +253,7 @@ def test_print(fieldset_unit_mesh, capfd):
 
 
 def test_fieldset_access(fieldset_unit_mesh):
-    pset = ParticleSet(fieldset_unit_mesh, pclass=ScipyParticle, lon=0, lat=0)
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=0, lat=0)
 
     def kernel(particle, fieldset, time):  # pragma: no cover
         particle.lon = fieldset.U.grid.lon[2]
@@ -264,7 +264,7 @@ def test_fieldset_access(fieldset_unit_mesh):
 
 @pytest.mark.parametrize("concat", [False, True])
 def test_random_kernel_concat(fieldset_unit_mesh, concat):
-    TestParticle = ScipyParticle.add_variable("p", dtype=np.float32, initial=0)
+    TestParticle = Particle.add_variable("p", dtype=np.float32, initial=0)
     pset = ParticleSet(fieldset_unit_mesh, pclass=TestParticle, lon=0, lat=0)
 
     def RandomKernel(particle, fieldset, time):  # pragma: no cover
@@ -279,7 +279,7 @@ def test_random_kernel_concat(fieldset_unit_mesh, concat):
 
 
 def test_dt_modif_by_kernel():
-    TestParticle = ScipyParticle.add_variable("age", dtype=np.float32, initial=0)
+    TestParticle = Particle.add_variable("age", dtype=np.float32, initial=0)
     pset = ParticleSet(create_fieldset_unit_mesh(mesh="spherical"), pclass=TestParticle, lon=[0.5], lat=[0])
 
     def modif_dt(particle, fieldset, time):  # pragma: no cover
@@ -298,7 +298,7 @@ def test_small_dt(dt, expectation):
     npart = 10
     pset = ParticleSet(
         create_fieldset_unit_mesh(mesh="spherical"),
-        pclass=ScipyParticle,
+        pclass=Particle,
         lon=np.zeros(npart),
         lat=np.zeros(npart),
         time=np.arange(0, npart) * dt * 10,
@@ -331,7 +331,7 @@ def test_TEOSdensity_kernels():
     data, dimensions = generate_fieldset()
     fieldset = FieldSet.from_data(data, dimensions)
 
-    DensParticle = ScipyParticle.add_variable("density", dtype=np.float32)
+    DensParticle = Particle.add_variable("density", dtype=np.float32)
 
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 
@@ -346,14 +346,14 @@ def test_EOSseawaterproperties_kernels():
     )
     fieldset.add_constant("refpressure", float(0))
 
-    PoTempParticle = ScipyParticle.add_variables(
+    PoTempParticle = Particle.add_variables(
         [Variable("potemp", dtype=np.float32), Variable("pressure", dtype=np.float32, initial=10000)]
     )
     pset = ParticleSet(fieldset, pclass=PoTempParticle, lon=5, lat=5, depth=1000)
     pset.execute(PtempFromTemp, runtime=1)
     assert np.allclose(pset[0].potemp, 36.89073)
 
-    TempParticle = ScipyParticle.add_variables(
+    TempParticle = Particle.add_variables(
         [Variable("temp", dtype=np.float32), Variable("pressure", dtype=np.float32, initial=10000)]
     )
     pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=5, depth=1000)
@@ -390,7 +390,7 @@ def test_UNESCOdensity_kernel(pressure):
     data, dimensions = generate_fieldset(pressure)
     fieldset = FieldSet.from_data(data, dimensions)
 
-    DensParticle = ScipyParticle.add_variable("density", dtype=np.float32)
+    DensParticle = Particle.add_variable("density", dtype=np.float32)
 
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 

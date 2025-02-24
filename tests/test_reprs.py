@@ -52,7 +52,7 @@ test
 
 
 def test_particletype_repr():
-    kwargs = dict(pclass=parcels.ScipyParticle)
+    kwargs = dict(pclass=parcels.Particle)
     assert_simple_repr(parcels.particle.ParticleType, kwargs)
 
 

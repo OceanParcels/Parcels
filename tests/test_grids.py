@@ -11,10 +11,10 @@ from parcels import (
     CurvilinearZGrid,
     Field,
     FieldSet,
+    Particle,
     ParticleSet,
     RectilinearSGrid,
     RectilinearZGrid,
-    ScipyParticle,
     StatusCode,
     UnitConverter,
     Variable,
@@ -81,7 +81,7 @@ def test_multi_structured_grids():
         particle.temp0 = fieldset.temp0[time + particle.dt, particle.depth, particle.lat, particle.lon]
         particle.temp1 = fieldset.temp1[time + particle.dt, particle.depth, particle.lat, particle.lon]
 
-    MyParticle = ScipyParticle.add_variables(
+    MyParticle = Particle.add_variables(
         [Variable("temp0", dtype=np.float32, initial=20.0), Variable("temp1", dtype=np.float32, initial=20.0)]
     )
 
@@ -180,7 +180,7 @@ def test_multigrids_pointer():
     assert u_field.grid == v_field.grid
     assert u_field.grid == w_field.grid  # w_field.grid is now supposed to be grid_1
 
-    pset = ParticleSet.from_list(fieldset, ScipyParticle, lon=[0], lat=[0], depth=[1])
+    pset = ParticleSet.from_list(fieldset, Particle, lon=[0], lat=[0], depth=[1])
 
     for _ in range(10):
         pset.execute(AdvectionRK4_3D, runtime=1000, dt=500)
@@ -230,7 +230,7 @@ def test_rectilinear_s_grid_sampling(z4d):
     def sampleTemp(particle, fieldset, time):  # pragma: no cover
         particle.temp = fieldset.temp[time, particle.depth, particle.lat, particle.lon]
 
-    MyParticle = ScipyParticle.add_variable("temp", dtype=np.float32, initial=20.0)
+    MyParticle = Particle.add_variable("temp", dtype=np.float32, initial=20.0)
 
     lon = 400
     lat = 0
@@ -278,7 +278,7 @@ def test_rectilinear_s_grids_advect1():
     lat = np.zeros(11)
     ratio = [min(i / 10.0, 0.99) for i in range(11)]
     depth = bath_func(lon) * ratio
-    pset = ParticleSet.from_list(fieldset, ScipyParticle, lon=lon, lat=lat, depth=depth)
+    pset = ParticleSet.from_list(fieldset, Particle, lon=lon, lat=lat, depth=depth)
 
     pset.execute(AdvectionRK4_3D, runtime=10000, dt=500)
     assert np.allclose(pset.depth / bath_func(pset.lon), ratio)
@@ -313,7 +313,7 @@ def test_rectilinear_s_grids_advect2():
     rel_depth_field = Field("relDepth", rel_depth_data, grid=grid)
     fieldset = FieldSet(u_field, v_field, fields={"relDepth": rel_depth_field})
 
-    MyParticle = ScipyParticle.add_variable("relDepth", dtype=np.float32, initial=20.0)
+    MyParticle = Particle.add_variable("relDepth", dtype=np.float32, initial=20.0)
 
     def moveEast(particle, fieldset, time):  # pragma: no cover
         particle_dlon += 5 * particle.dt  # noqa
@@ -353,7 +353,7 @@ def test_curvilinear_grids():
         u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
         particle.speed = math.sqrt(u * u + v * v)
 
-    MyParticle = ScipyParticle.add_variable("speed", dtype=np.float32, initial=0.0)
+    MyParticle = Particle.add_variable("speed", dtype=np.float32, initial=0.0)
 
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=[400, -200], lat=[600, 600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=1)
@@ -378,12 +378,12 @@ def test_nemo_grid():
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
 
     # test ParticleSet.from_field on curvilinear grids
-    ParticleSet.from_field(fieldset, ScipyParticle, start_field=fieldset.U, size=5)
+    ParticleSet.from_field(fieldset, Particle, start_field=fieldset.U, size=5)
 
     def sampleVel(particle, fieldset, time):  # pragma: no cover
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
-    MyParticle = ScipyParticle.add_variables(
+    MyParticle = Particle.add_variables(
         [Variable("zonal", dtype=np.float32, initial=0.0), Variable("meridional", dtype=np.float32, initial=0.0)]
     )
 
@@ -416,7 +416,7 @@ def test_advect_nemo():
 
     lonp = 175.5
     latp = 81.5
-    pset = ParticleSet.from_list(fieldset, ScipyParticle, lon=[lonp], lat=[latp])
+    pset = ParticleSet.from_list(fieldset, Particle, lon=[lonp], lat=[latp])
     pset.execute(AdvectionRK4, runtime=timedelta(days=2), dt=timedelta(hours=6))
     assert abs(pset.lat[0] - latp) < 1e-3
 
@@ -442,7 +442,7 @@ def test_cgrid_uniform_2dvel(time):
     def sampleVel(particle, fieldset, time):  # pragma: no cover
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
-    MyParticle = ScipyParticle.add_variables(
+    MyParticle = Particle.add_variables(
         [Variable("zonal", dtype=np.float32, initial=0.0), Variable("meridional", dtype=np.float32, initial=0.0)]
     )
 
@@ -496,7 +496,7 @@ def test_cgrid_uniform_3dvel(vert_mode, time):
             time, particle.depth, particle.lat, particle.lon
         ]
 
-    MyParticle = ScipyParticle.add_variables(
+    MyParticle = Particle.add_variables(
         [
             Variable("zonal", dtype=np.float32, initial=0.0),
             Variable("meridional", dtype=np.float32, initial=0.0),
@@ -553,7 +553,7 @@ def test_cgrid_uniform_3dvel_spherical(vert_mode, time):
             time, particle.depth, particle.lat, particle.lon
         ]
 
-    MyParticle = ScipyParticle.add_variables(
+    MyParticle = Particle.add_variables(
         [
             Variable("zonal", dtype=np.float32, initial=0.0),
             Variable("meridional", dtype=np.float32, initial=0.0),
@@ -598,7 +598,7 @@ def test_popgrid(vert_discretisation, deferred_load):
             particle_ddepth -= 3  # noqa
             particle.state = StatusCode.Success
 
-    MyParticle = ScipyParticle.add_variables(
+    MyParticle = Particle.add_variables(
         [
             Variable("zonal", dtype=np.float32, initial=0.0),
             Variable("meridional", dtype=np.float32, initial=0.0),
@@ -703,7 +703,7 @@ def test_cgrid_indexing(gridindexingtype, coordtype):
             particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
 
-    MyParticle = ScipyParticle.add_variables(
+    MyParticle = Particle.add_variables(
         [Variable("radius", dtype=np.float32, initial=0.0), Variable("radius_start", dtype=np.float32, initial=0.0)]
     )
 
@@ -779,7 +779,7 @@ def test_cgrid_indexing_3D(gridindexingtype, withtime):
             particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
 
-    MyParticle = ScipyParticle.add_variables(
+    MyParticle = Particle.add_variables(
         [Variable("radius", dtype=np.float32, initial=0.0), Variable("radius_start", dtype=np.float32, initial=0.0)]
     )
 
@@ -856,7 +856,7 @@ def test_bgrid_indexing_3D(gridindexingtype, withtime):
             particle.radius_start = fieldset.R[time, particle.depth, particle.lat, particle.lon]
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
 
-    MyParticle = ScipyParticle.add_variables(
+    MyParticle = Particle.add_variables(
         [Variable("radius", dtype=np.float32, initial=0.0), Variable("radius_start", dtype=np.float32, initial=0.0)]
     )
 
@@ -928,7 +928,7 @@ def test_bgrid_interpolation(gridindexingtype, extrapolation):
         particle.Vvel = fieldset.V[time, particle.depth, particle.lat, particle.lon]
         particle.Wvel = fieldset.W[time, particle.depth, particle.lat, particle.lon]
 
-    myParticle = ScipyParticle.add_variables(
+    myParticle = Particle.add_variables(
         [
             Variable("Uvel", dtype=np.float32, initial=0.0),
             Variable("Vvel", dtype=np.float32, initial=0.0),

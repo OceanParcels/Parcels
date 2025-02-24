@@ -32,7 +32,7 @@ def run_mitgcm_zonally_reentrant(path: Path):
     # Release particles 5 cells away from the Eastern boundary
     pset = parcels.ParticleSet.from_line(
         fieldset,
-        pclass=parcels.ScipyParticle,
+        pclass=parcels.Particle,
         start=(fieldset.U.grid.lon[-5], fieldset.U.grid.lat[5]),
         finish=(fieldset.U.grid.lon[-5], fieldset.U.grid.lat[-5]),
         size=10,

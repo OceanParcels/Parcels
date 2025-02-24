@@ -5,7 +5,7 @@ import numpy as np
 
 from parcels.tools.statuscodes import StatusCode
 
-__all__ = ["ScipyInteractionParticle", "ScipyParticle", "Variable"]
+__all__ = ["InteractionParticle", "Particle", "Variable"]
 
 
 class Variable:
@@ -59,13 +59,13 @@ class ParticleType:
     def __init__(self, pclass):
         if not isinstance(pclass, type):
             raise TypeError("Class object required to derive ParticleType")
-        if not issubclass(pclass, ScipyParticle):
-            raise TypeError("Class object does not inherit from parcels.ScipyParticle")
+        if not issubclass(pclass, Particle):
+            raise TypeError("Class object does not inherit from parcels.Particle")
         self.name = pclass.__name__
         # Pick Variable objects out of __dict__.
         self.variables = [v for v in pclass.__dict__.values() if isinstance(v, Variable)]
         for cls in pclass.__bases__:
-            if issubclass(cls, ScipyParticle):
+            if issubclass(cls, Particle):
                 # Add inherited particle variables
                 ptype = cls.getPType()
                 for v in self.variables:
@@ -88,7 +88,7 @@ class ParticleType:
                 return v
 
 
-class ScipyParticle:
+class Particle:
     """Class encapsulating the basic attributes of a particle, to be executed in SciPy mode.
 
     Parameters
@@ -221,16 +221,16 @@ class ScipyParticle:
 
     @classmethod
     def setLastID(cls, offset):  # TODO v4: check if we can implement this in another way
-        ScipyParticle.lastID = offset
+        Particle.lastID = offset
 
 
-ScipyInteractionParticle = ScipyParticle.add_variables(
+InteractionParticle = Particle.add_variables(
     [Variable("vert_dist", dtype=np.float32), Variable("horiz_dist", dtype=np.float32)]
 )
 
 
-class JITParticle(ScipyParticle):
+class JITParticle(Particle):
     def __init__(self, *args, **kwargs):
         raise NotImplementedError(
-            "JITParticle has been deprecated in Parcels v4. Use ScipyParticle instead."
+            "JITParticle has been deprecated in Parcels v4. Use Particle instead."
         )  # TODO v4: link to migration guide
