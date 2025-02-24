@@ -1,6 +1,6 @@
 import functools
 import warnings
-from ctypes import POINTER, Structure, c_double, c_float, c_int, c_void_p, cast, pointer
+from ctypes import c_int
 from enum import IntEnum
 
 import numpy as np
@@ -11,7 +11,6 @@ from parcels.tools.converters import Geographic, GeographicPolar, TimeConverter,
 from parcels.tools.warnings import FieldSetWarning
 
 __all__ = [
-    "CGrid",
     "CurvilinearSGrid",
     "CurvilinearZGrid",
     "Grid",
@@ -32,10 +31,6 @@ class GridType(IntEnum):
 # GridCode has been renamed to GridType for consistency.
 # TODO: Remove alias in Parcels v4
 GridCode = GridType
-
-
-class CGrid(Structure):
-    _fields_ = [("gtype", c_int), ("grid", c_void_p)]
 
 
 class Grid:
@@ -73,7 +68,6 @@ class Grid:
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
         assert_valid_mesh(mesh)
         self._mesh = mesh
-        self._cstruct = None
         self._cell_edge_sizes: dict[str, npt.NDArray] = {}
         self._zonal_periodic = False
         self._zonal_halo = 0
@@ -175,67 +169,6 @@ class Grid:
                 return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
             else:
                 return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
-
-    @property
-    def ctypes_struct(self):
-        # This is unnecessary for the moment, but it could be useful when going will fully unstructured grids
-        self._cgrid = cast(pointer(self._child_ctypes_struct), c_void_p)
-        cstruct = CGrid(self._gtype, self._cgrid.value)
-        return cstruct
-
-    @property
-    def _child_ctypes_struct(self):
-        """Returns a ctypes struct object containing all relevant
-        pointers and sizes for this grid.
-        """
-
-        class CStructuredGrid(Structure):
-            # z4d is only to have same cstruct as RectilinearSGrid
-            _fields_ = [
-                ("xdim", c_int),
-                ("ydim", c_int),
-                ("zdim", c_int),
-                ("tdim", c_int),
-                ("z4d", c_int),
-                ("mesh_spherical", c_int),
-                ("zonal_periodic", c_int),
-                ("chunk_info", POINTER(c_int)),
-                ("load_chunk", POINTER(c_int)),
-                ("tfull_min", c_double),
-                ("tfull_max", c_double),
-                ("periods", POINTER(c_int)),
-                ("lonlat_minmax", POINTER(c_float)),
-                ("lon", POINTER(c_float)),
-                ("lat", POINTER(c_float)),
-                ("depth", POINTER(c_float)),
-                ("time", POINTER(c_double)),
-            ]
-
-        # Create and populate the c-struct object
-        if not self._cstruct:  # Not to point to the same grid various times if grid in various fields
-            if not isinstance(self.periods, c_int):
-                self.periods = c_int()
-                self.periods.value = 0
-            self._cstruct = CStructuredGrid(
-                self.xdim,
-                self.ydim,
-                self.zdim,
-                self.tdim,
-                self._z4d,
-                int(self.mesh == "spherical"),
-                int(self.zonal_periodic),
-                (c_int * len(self.chunk_info))(*self.chunk_info),
-                self._load_chunk.ctypes.data_as(POINTER(c_int)),
-                self.time_full[0],
-                self.time_full[-1],
-                pointer(self.periods),
-                self.lonlat_minmax.ctypes.data_as(POINTER(c_float)),
-                self.lon.ctypes.data_as(POINTER(c_float)),
-                self.lat.ctypes.data_as(POINTER(c_float)),
-                self.depth.ctypes.data_as(POINTER(c_float)),
-                self.time.ctypes.data_as(POINTER(c_double)),
-            )
-        return self._cstruct
 
     def _check_zonal_periodic(self):
         if self.zonal_periodic or self.mesh == "flat" or self.lon.size == 1:

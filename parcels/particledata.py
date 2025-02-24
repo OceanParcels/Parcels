@@ -1,5 +1,4 @@
 import warnings
-from ctypes import POINTER, Structure
 from operator import attrgetter
 
 import numpy as np
@@ -327,21 +326,6 @@ class ParticleData:
             self._data[d] = np.delete(self._data[d], indices, axis=0)
 
         self._ncount -= len(indices)
-
-    def cstruct(self):
-        """Return the ctypes mapping of the particle data."""
-
-        class CParticles(Structure):
-            _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self._ptype.variables]
-
-        def flatten_dense_data_array(vname):
-            data_flat = self._data[vname].view()
-            data_flat.shape = -1
-            return np.ctypeslib.as_ctypes(data_flat)
-
-        cdata = [flatten_dense_data_array(v.name) for v in self._ptype.variables]
-        cstruct = CParticles(*cdata)
-        return cstruct
 
     def _to_write_particles(self, time):
         """Return the Particles that need to be written at time: if particle.time is between time-dt/2 and time+dt (/2)"""

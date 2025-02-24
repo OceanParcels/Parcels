@@ -321,14 +321,6 @@ class ParticleSet:
                 return np.float64
         return np.float32
 
-    def cstruct(self):
-        cstruct = self.particledata.cstruct()
-        return cstruct
-
-    @property
-    def ctypes_struct(self):
-        return self.cstruct()
-
     @property
     def size(self):
         # ==== to change at some point - len and size are different things ==== #
