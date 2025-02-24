@@ -8,8 +8,8 @@ from parcels import (
     AdvectionRK4,
     FieldOutOfBoundError,
     FieldSet,
-    ParticleSet,
     Particle,
+    ParticleSet,
     StatusCode,
 )
 from tests.common_kernels import DeleteParticle, DoNothing, MoveEast, MoveNorth
@@ -121,9 +121,7 @@ def test_execution_fail_python_exception(fieldset_unit_mesh):
         else:
             pass
 
-    pset = ParticleSet(
-        fieldset_unit_mesh, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
-    )
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
     with pytest.raises(RuntimeError):
         pset.execute(PythonFail, endtime=20.0, dt=2.0)
     assert len(pset) == npart
@@ -138,9 +136,7 @@ def test_execution_fail_out_of_bounds(fieldset_unit_mesh):
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
         particle_dlon += 0.1  # noqa
 
-    pset = ParticleSet(
-        fieldset_unit_mesh, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
-    )
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
     with pytest.raises(FieldOutOfBoundError):
         pset.execute(MoveRight, endtime=10.0, dt=1.0)
     assert len(pset) == npart

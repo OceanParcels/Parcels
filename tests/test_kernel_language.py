@@ -8,8 +8,8 @@ from parcels import (
     Field,
     FieldSet,
     Kernel,
-    ParticleSet,
     Particle,
+    ParticleSet,
     Variable,
 )
 from parcels.application_kernels.EOSseawaterproperties import (
@@ -174,8 +174,8 @@ def test_varname_as_fieldname():
     fset = create_fieldset_unit_mesh(mesh="spherical")
     fset.add_field(Field("speed", 10, lon=0, lat=0))
     fset.add_constant("vertical_speed", 0.1)
-    Particle = Particle.add_variable("speed")
-    pset = ParticleSet(fset, pclass=Particle, lon=0, lat=0)
+    particle = Particle.add_variable("speed")
+    pset = ParticleSet(fset, pclass=particle, lon=0, lat=0)
 
     def kernel_particlename(particle, fieldset, time):  # pragma: no cover
         particle.speed = fieldset.speed[particle]

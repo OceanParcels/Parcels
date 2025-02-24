@@ -15,8 +15,8 @@ from parcels import (
     AdvectionRK45,
     Field,
     FieldSet,
-    ParticleSet,
     Particle,
+    ParticleSet,
     StatusCode,
     Variable,
 )

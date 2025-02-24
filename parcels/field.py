@@ -2,7 +2,7 @@ import collections
 import math
 import warnings
 from collections.abc import Iterable
-from ctypes import POINTER, Structure, c_float, c_int, pointer
+from ctypes import c_int
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -50,11 +50,9 @@ from .fieldfilebuffer import (
     DeferredNetcdfFileBuffer,
     NetcdfFileBuffer,
 )
-from .grid import CGrid, Grid, GridType, _calc_cell_areas
+from .grid import Grid, GridType, _calc_cell_areas
 
 if TYPE_CHECKING:
-    from ctypes import _Pointer as PointerType
-
     from parcels.fieldset import FieldSet
 
 __all__ = ["Field", "NestedField", "VectorField"]
@@ -341,7 +339,6 @@ class Field:
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop("data_full_zdim", None)
         self._data_chunks = []  # type: ignore # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
-        self._c_data_chunks: list[PointerType | None] = []  # C-pointers to the data_chunks array
         self.nchunks: tuple[int, ...] = ()
         self._chunk_set: bool = False
         self.filebuffers = [None] * 2
@@ -1016,10 +1013,7 @@ class Field:
                 periods = int(
                     math.floor((time - self.grid.time_full[0]) / (self.grid.time_full[-1] - self.grid.time_full[0]))
                 )
-                if isinstance(self.grid.periods, c_int):
-                    self.grid.periods.value = periods
-                else:
-                    self.grid.periods = periods
+                self.grid.periods = periods
                 time -= periods * (self.grid.time_full[-1] - self.grid.time_full[0])
                 time_index = self.grid.time <= time
                 ti = time_index.argmin() - 1 if time_index.any() else 0
@@ -1106,7 +1100,6 @@ class Field:
             return
 
         self._data_chunks = [None] * npartitions
-        self._c_data_chunks = [None] * npartitions
         self.grid._load_chunk = np.zeros(npartitions, dtype=c_int, order="C")
         # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #      chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
@@ -1136,61 +1129,13 @@ class Field:
                         self._data_chunks[block_id] = None
                     else:
                         self._data_chunks[block_id, :] = None
-                    self._c_data_chunks[block_id] = None
         else:
             if isinstance(self._data_chunks, list):
                 self._data_chunks[0] = None
             else:
                 self._data_chunks[0, :] = None
-            self._c_data_chunks[0] = None
             self.grid._load_chunk[0] = g._chunk_loaded_touched
             self._data_chunks[0] = np.array(self.data, order="C")
-
-    @property
-    def ctypes_struct(self):
-        """Returns a ctypes struct object containing all relevant pointers and sizes for this field."""
-
-        # Ctypes struct corresponding to the type definition in parcels.h
-        class CField(Structure):
-            _fields_ = [
-                ("xdim", c_int),
-                ("ydim", c_int),
-                ("zdim", c_int),
-                ("tdim", c_int),
-                ("igrid", c_int),
-                ("allow_time_extrapolation", c_int),
-                ("time_periodic", c_int),
-                ("data_chunks", POINTER(POINTER(POINTER(c_float)))),
-                ("grid", POINTER(CGrid)),
-            ]
-
-        # Create and populate the c-struct object
-        allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
-        time_periodic = 1 if self.time_periodic else 0
-        for i in range(len(self.grid._load_chunk)):
-            if self.grid._load_chunk[i] == self.grid._chunk_loading_requested:
-                raise ValueError(
-                    "data_chunks should have been loaded by now if requested. grid._load_chunk[bid] cannot be 1"
-                )
-            if self.grid._load_chunk[i] in self.grid._chunk_loaded:
-                if not self._data_chunks[i].flags["C_CONTIGUOUS"]:
-                    self._data_chunks[i] = np.array(self._data_chunks[i], order="C")
-                self._c_data_chunks[i] = self._data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
-            else:
-                self._c_data_chunks[i] = None
-
-        cstruct = CField(
-            self.grid.xdim,
-            self.grid.ydim,
-            self.grid.zdim,
-            self.grid.tdim,
-            self.igrid,
-            allow_time_extrapolation,
-            time_periodic,
-            (POINTER(POINTER(c_float)) * len(self._c_data_chunks))(*self._c_data_chunks),
-            pointer(self.grid.ctypes_struct),
-        )
-        return cstruct
 
     def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
         """Add a 'halo' to all Fields in a FieldSet.

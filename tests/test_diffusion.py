@@ -10,9 +10,9 @@ from parcels import (
     AdvectionDiffusionM1,
     DiffusionUniformKh,
     Field,
+    Particle,
     ParticleSet,
     RectilinearZGrid,
-    Particle,
 )
 from tests.utils import create_fieldset_zeros_conversion
 
