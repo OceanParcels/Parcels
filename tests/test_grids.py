@@ -20,7 +20,6 @@ from parcels import (
     Variable,
 )
 from parcels.grid import Grid, _calc_cell_edge_sizes
-from parcels.tools.converters import TimeConverter
 from tests.utils import TEST_DATA
 
 
@@ -982,9 +981,7 @@ def test_bgrid_interpolation(gridindexingtype, extrapolation):
 )
 @pytest.mark.parametrize("mesh", ["flat", "spherical"])
 def test_grid_celledgesizes(lon, lat, mesh):
-    grid = Grid.create_grid(
-        lon=lon, lat=lat, depth=np.array([0]), time=np.array([0]), time_origin=TimeConverter(0), mesh=mesh
-    )
+    grid = Grid.create_grid(lon=lon, lat=lat, depth=np.array([0]), time=np.array([0]), mesh=mesh)
 
     _calc_cell_edge_sizes(grid)
     D_meridional = grid.cell_edge_sizes["y"]

@@ -150,10 +150,6 @@ class ParticleFile:
     def vars_to_write(self):
         return self._vars_to_write
 
-    @property
-    def time_origin(self):
-        return self.particleset.time_origin
-
     def _create_variables_attribute_dict(self):
         """Creates the dictionary with variable attributes.
 
@@ -173,9 +169,8 @@ class ParticleFile:
             "lat": {"long_name": "", "standard_name": "latitude", "units": "degrees_north", "axis": "Y"},
         }
 
-        if self.time_origin.calendar is not None:
-            attrs["time"]["units"] = "seconds since " + str(self.time_origin)
-            attrs["time"]["calendar"] = _set_calendar(self.time_origin.calendar)
+        # attrs["time"]["units"] = "seconds since ")  # TODO v4: fix calendar units
+        # attrs["time"]["calendar"] = _set_calendar()  # TODO v4: fix calendar units
 
         for vname in self.vars_to_write:
             if vname not in ["time", "lat", "lon", "depth", "id"]:

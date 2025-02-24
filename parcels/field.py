@@ -29,7 +29,6 @@ from parcels._typing import (
 )
 from parcels.tools._helpers import default_repr, field_repr, timedelta_to_float
 from parcels.tools.converters import (
-    TimeConverter,
     UnitConverter,
     unitconverters_map,
 )
@@ -137,8 +136,8 @@ class Field:
         A numpy array containing the timestamps for each of the files in filenames, for loading
         from netCDF files only. Default is None if the netCDF dimensions dictionary includes time.
     grid : parcels.grid.Grid
-        :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
-        mesh and time_origin information. Can be constructed from any of the Grid objects
+        :class:`parcels.grid.Grid` object containing all the lon, lat depth, time and mesh information.
+        Can be constructed from any of the Grid objects
     fieldtype : str
         Type of Field to be used for UnitConverter (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
     transpose : bool
@@ -149,8 +148,6 @@ class Field:
         Maximum allowed value on the field. Data above this value are set to zero
     cast_data_dtype : str
         Cast Field data to dtype. Supported dtypes are "float32" (np.float32 (default)) and "float64 (np.float64).
-    time_origin : parcels.tools.converters.TimeConverter
-        Time origin of the time axis (only if grid is None)
     interp_method : str
         Method for interpolation. Options are 'linear' (default), 'nearest',
         'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
@@ -195,7 +192,6 @@ class Field:
         vmin: float | None = None,
         vmax: float | None = None,
         cast_data_dtype: type[np.float32] | type[np.float64] | Literal["float32", "float64"] = "float32",
-        time_origin: TimeConverter | None = None,
         interp_method: InterpMethod = "linear",
         allow_time_extrapolation: bool | None = None,
         time_periodic: TimePeriodic = False,
@@ -221,12 +217,7 @@ class Field:
                 )
             self._grid = grid
         else:
-            if (time is not None) and isinstance(time[0], np.datetime64):
-                time_origin = TimeConverter(time[0])
-                time = np.array([time_origin.reltime(t) for t in time])
-            else:
-                time_origin = TimeConverter(0)
-            self._grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self._grid = Grid.create_grid(lon, lat, depth, time, mesh=mesh)
         self.igrid = -1
         self.fieldtype = self.name if fieldtype is None else fieldtype
         self.to_write = to_write
@@ -439,15 +430,13 @@ class Field:
             dataFiles = np.concatenate(dataFiles).ravel()
         if time.size == 1 and time[0] is None:
             time[0] = 0
-        time_origin = TimeConverter(time[0])
-        time = time_origin.reltime(time)
 
         if not np.all((time[1:] - time[:-1]) > 0):
             id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
             raise AssertionError(
                 f"Please make sure your netCDF files are ordered in time. First pair of non-ordered files: {dataFiles[id_not_ordered]}, {dataFiles[id_not_ordered + 1]}"
             )
-        return time, time_origin, timeslices, dataFiles
+        return time, timeslices, dataFiles
 
     @classmethod
     def from_netcdf(
@@ -650,14 +639,14 @@ class Field:
             # Concatenate time variable to determine overall dimension
             # across multiple files
             if "time" in dimensions or timestamps is not None:
-                time, time_origin, timeslices, dataFiles = cls._collect_timeslices(
+                time, timeslices, dataFiles = cls._collect_timeslices(
                     timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
                 )
-                grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = Grid.create_grid(lon, lat, depth, time, mesh=mesh)
                 grid.timeslices = timeslices
                 kwargs["dataFiles"] = dataFiles
             else:  # e.g. for the CROCO CS_w field, see https://github.com/OceanParcels/Parcels/issues/1831
-                grid = Grid.create_grid(lon, lat, depth, np.array([0.0]), time_origin=TimeConverter(0.0), mesh=mesh)
+                grid = Grid.create_grid(lon, lat, depth, np.array([0.0]), mesh=mesh)
                 grid.timeslices = [[0]]
                 data_filenames = [data_filenames[0]]
         elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
@@ -805,10 +794,7 @@ class Field:
         lon = da[dimensions["lon"]].values
         lat = da[dimensions["lat"]].values
 
-        time_origin = TimeConverter(time[0])
-        time = time_origin.reltime(time)  # type: ignore[assignment]
-
-        grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        grid = Grid.create_grid(lon, lat, depth, time, mesh=mesh)
         kwargs["time_periodic"] = time_periodic
         return cls(
             name,
@@ -1273,7 +1259,7 @@ class Field:
         else:
             raise NotImplementedError("Field.write only implemented for RectilinearZGrid and CurvilinearZGrid")
 
-        attrs = {"units": "seconds since " + str(self.grid.time_origin)} if self.grid.time_origin.calendar else {}
+        attrs = {}  # TODO v4: fix units here
         time_counter = xr.DataArray(self.grid.time, dims=["time_counter"], attrs=attrs)
         vardata = xr.DataArray(
             self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)),
@@ -1340,7 +1326,6 @@ class Field:
         )
         filebuffer.__enter__()
         time_data = filebuffer.time
-        time_data = g.time_origin.reltime(time_data)
         filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
         if self.netcdf_engine != "xarray":
             filebuffer.name = filebuffer.parse_name(self.filebuffername)

@@ -126,6 +126,10 @@ class ParticleData:
         for v in self.ptype.variables:
             if v.name in ["xi", "yi", "zi", "ti"]:
                 self._data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
+            elif v.name in ["time", "time_nextloop"]:  # use dtype from input time
+                self._data[v.name] = np.empty(len(lon), dtype=time.dtype)
+            elif v.name in ["dt"]:
+                self._data[v.name] = np.empty(len(lon), dtype="timedelta64[s]")  # HACK to allow for np.timedelta64
             else:
                 self._data[v.name] = np.empty(self._ncount, dtype=v.dtype)
 

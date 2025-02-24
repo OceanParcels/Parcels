@@ -76,7 +76,7 @@ def test_fieldset_from_data_timedims(ttype, tdim):
         dimensions["time"] = [np.datetime64("2018-01-01") + np.timedelta64(t, "D") for t in range(tdim)]
     fieldset = FieldSet.from_data(data, dimensions)
     for i, dtime in enumerate(dimensions["time"]):
-        assert fieldset.U.grid.time_origin.fulltime(fieldset.U.grid.time[i]) == dtime
+        assert fieldset.U.grid.time[i] == dtime
 
 
 @pytest.mark.parametrize("xdim", [100, 200])

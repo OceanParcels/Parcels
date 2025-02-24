@@ -4,7 +4,6 @@ from collections.abc import Iterable
 from copy import copy
 from datetime import date, datetime, timedelta
 
-import cftime
 import numpy as np
 import xarray as xr
 from scipy.spatial import KDTree
@@ -26,19 +25,12 @@ from parcels.particle import Particle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
 from parcels.tools._helpers import particleset_repr, timedelta_to_float
-from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
+from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
 from parcels.tools.warnings import ParticleSetWarning
 
 __all__ = ["ParticleSet"]
-
-
-def _convert_to_reltime(time):
-    """Check to determine if the value of the time parameter needs to be converted to a relative value (relative to the time_origin)."""
-    if isinstance(time, np.datetime64) or (hasattr(time, "calendar") and time.calendar in _get_cftime_calendars()):
-        return True
-    return False
 
 
 class ParticleSet:
@@ -105,9 +97,10 @@ class ParticleSet:
         self._kernel = None
         self._interaction_kernel = None
 
+        time = np.datetime64("NaT") if time is None else time
+
         self.fieldset = fieldset
         self.fieldset._check_complete()
-        self.time_origin = fieldset.time_origin
         self._pclass = pclass
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
@@ -166,9 +159,6 @@ class ParticleSet:
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
-        if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
-            raise NotImplementedError("If fieldset.time_origin is not a date, time of a particle must be a double")
-        time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
         if isinstance(fieldset.U, Field) and (not fieldset.U.allow_time_extrapolation):
             _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.U.grid.time_full)
@@ -955,24 +945,10 @@ class ParticleSet:
             else:
                 self._interaction_kernel = self.InteractionKernel(pyfunc_inter)
 
-        # Convert all time variables to seconds
-        if isinstance(endtime, timedelta):
-            raise TypeError("endtime must be either a datetime or a double")
-        if isinstance(endtime, datetime):
-            endtime = np.datetime64(endtime)
-        elif isinstance(endtime, cftime.datetime):
-            endtime = self.time_origin.reltime(endtime)
-        if isinstance(endtime, np.datetime64):
-            if self.time_origin.calendar is None:
-                raise NotImplementedError("If fieldset.time_origin is not a date, execution endtime must be a double")
-            endtime = self.time_origin.reltime(endtime)
-
         if runtime is not None:
             runtime = timedelta_to_float(runtime)
 
-        dt = timedelta_to_float(dt)
-
-        if abs(dt) <= 1e-6:
+        if abs(dt) <= np.datetime64(1, "ms"):
             raise ValueError("Time step dt is too small")
         if (dt * 1e6) % 1 != 0:
             raise ValueError("Output interval should not have finer precision than 1e-6 s")
@@ -1008,12 +984,11 @@ class ParticleSet:
             mintime, maxtime = self.fieldset.gridset.dimrange("time_full")
             endtime = maxtime if dt >= 0 else mintime
 
-        if (abs(endtime - starttime) < 1e-5 or runtime == 0) and dt == 0:
+        if ((endtime - starttime) < np.timedelta(1, "ms") or runtime == 0) and dt == 0:
             raise RuntimeError(
                 "dt and runtime are zero, or endtime is equal to Particle.time. "
                 "ParticleSet.execute() will not do anything."
             )
-
         if np.isfinite(outputdt):
             _warn_outputdt_release_desync(outputdt, starttime, self.particledata.data["time_nextloop"])
 
@@ -1038,14 +1013,14 @@ class ParticleSet:
                 abs(starttime - self._repeat_starttime) // self.repeatdt + 1
             ) * self.repeatdt * np.sign(dt)
         else:
-            next_prelease = np.inf if dt > 0 else -np.inf
+            next_prelease = np.datetime64("NaT") if dt > 0 else -np.datetime64("NaT")
         if output_file:
             next_output = starttime + dt
         else:
-            next_output = np.inf * np.sign(dt)
+            next_output = np.datetime64("NaT")
         next_callback = starttime + callbackdt * np.sign(dt)
 
-        tol = 1e-12
+        tol = np.timedelta64(1, "ms")
         time = starttime
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0):
@@ -1057,13 +1032,13 @@ class ParticleSet:
 
             time_at_startofloop = time
 
-            next_input = self.fieldset.computeTimeChunk(time, dt)
+            next_input = np.datetime64("NaT")  # self.fieldset.computeTimeChunk(time, dt)  # HACK for computeTimeChunk
 
             # Define next_time (the timestamp when the execution needs to be handed back to python)
-            if dt > 0:
-                next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
-            else:
-                next_time = max(next_prelease, next_input, next_output, next_callback, endtime)
+            next_time_arr = [
+                nt for nt in [next_prelease, next_input, next_output, next_callback, endtime] if not np.isnat(nt)
+            ]
+            next_time = np.nanmin(next_time_arr) if dt > 0 else np.nanmax(next_time_arr)
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self._interaction_kernel is None:
