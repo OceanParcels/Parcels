@@ -95,3 +95,64 @@ class ArgoFloatJIT:
 
     def time_run_single_timestep(self):
         self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30))
+<<<<<<< HEAD
+=======
+
+    def time_run_many_timesteps(self):
+        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=100 * 30), dt=timedelta(seconds=30))
+        
+
+class ArgoFloatScipy:
+    def setup(self):
+        xdim = ydim = zdim = 2
+
+        dimensions = {
+            "lon": "lon",
+            "lat": "lat",
+            "depth": "depth",
+        }
+        data = {
+            "U": np.ones((xdim, ydim, zdim), dtype=np.float32),
+            "V": np.zeros((xdim, ydim, zdim), dtype=np.float32),
+        }
+        data["U"][:, :, 0] = 0.0
+        fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+        fieldset.mindepth = fieldset.U.depth[0]
+
+        # Define a new Particle type including extra Variables
+        ArgoParticle = ScipyParticle.add_variables(
+            [
+                # Phase of cycle:
+                # init_descend=0,
+                # drift=1,
+                # profile_descend=2,
+                # profile_ascend=3,
+                # transmit=4
+                Variable("cycle_phase", dtype=np.int32, initial=0.0),
+                Variable("cycle_age", dtype=np.float32, initial=0.0),
+                Variable("drift_age", dtype=np.float32, initial=0.0),
+                # if fieldset has temperature
+                # Variable('temp', dtype=np.float32, initial=np.nan),
+            ]
+        )
+
+        self.pset=ParticleSet(
+            fieldset=fieldset, 
+            pclass=ArgoParticle, 
+            lon=[0], 
+            lat=[0], 
+            depth=[0]
+            )
+
+        # combine Argo vertical movement kernel with built-in Advection kernel
+        self.kernels = [ArgoVerticalMovement, AdvectionRK4]
+    
+    def time_run_single_timestep(self):
+        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=10 * 86400), dt=timedelta(seconds=30))
+
+    def time_run_many_timesteps(self):
+        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=100 * 86400), dt=timedelta(seconds=30))
+
+
+        
+>>>>>>> 396ca883 (Argo_update)
