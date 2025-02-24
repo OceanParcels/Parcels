@@ -1,6 +1,5 @@
 import functools
 import warnings
-from ctypes import POINTER, Structure, c_double, c_float, c_int, c_void_p, cast, pointer
 from enum import IntEnum
 
 import numpy as np
@@ -11,7 +10,6 @@ from parcels.tools.converters import Geographic, GeographicPolar, TimeConverter,
 from parcels.tools.warnings import FieldSetWarning
 
 __all__ = [
-    "CGrid",
     "CurvilinearSGrid",
     "CurvilinearZGrid",
     "Grid",
@@ -34,10 +32,6 @@ class GridType(IntEnum):
 GridCode = GridType
 
 
-class CGrid(Structure):
-    _fields_ = [("gtype", c_int), ("grid", c_void_p)]
-
-
 class Grid:
     """Grid class that defines a (spatial and temporal) grid on which Fields are defined."""
 
@@ -51,13 +45,10 @@ class Grid:
     ):
         self._ti = -1
         self._update_status: UpdateStatus | None = None
-        if not lon.flags["C_CONTIGUOUS"]:
-            lon = np.array(lon, order="C")
-        if not lat.flags["C_CONTIGUOUS"]:
-            lat = np.array(lat, order="C")
+        lon = np.array(lon)
+        lat = np.array(lat)
         time = np.zeros(1, dtype=np.float64) if time is None else time
-        if not time.flags["C_CONTIGUOUS"]:
-            time = np.array(time, order="C")
+        time = np.array(time)
         if not lon.dtype == np.float32:
             lon = lon.astype(np.float32)
         if not lat.dtype == np.float32:
@@ -76,7 +67,6 @@ class Grid:
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
         assert_valid_mesh(mesh)
         self._mesh = mesh
-        self._cstruct = None
         self._cell_edge_sizes: dict[str, npt.NDArray] = {}
         self._zonal_periodic = False
         self._zonal_halo = 0
@@ -179,67 +169,6 @@ class Grid:
             else:
                 return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
 
-    @property
-    def ctypes_struct(self):
-        # This is unnecessary for the moment, but it could be useful when going will fully unstructured grids
-        self._cgrid = cast(pointer(self._child_ctypes_struct), c_void_p)
-        cstruct = CGrid(self._gtype, self._cgrid.value)
-        return cstruct
-
-    @property
-    def _child_ctypes_struct(self):
-        """Returns a ctypes struct object containing all relevant
-        pointers and sizes for this grid.
-        """
-
-        class CStructuredGrid(Structure):
-            # z4d is only to have same cstruct as RectilinearSGrid
-            _fields_ = [
-                ("xdim", c_int),
-                ("ydim", c_int),
-                ("zdim", c_int),
-                ("tdim", c_int),
-                ("z4d", c_int),
-                ("mesh_spherical", c_int),
-                ("zonal_periodic", c_int),
-                ("chunk_info", POINTER(c_int)),
-                ("load_chunk", POINTER(c_int)),
-                ("tfull_min", c_double),
-                ("tfull_max", c_double),
-                ("periods", POINTER(c_int)),
-                ("lonlat_minmax", POINTER(c_float)),
-                ("lon", POINTER(c_float)),
-                ("lat", POINTER(c_float)),
-                ("depth", POINTER(c_float)),
-                ("time", POINTER(c_double)),
-            ]
-
-        # Create and populate the c-struct object
-        if not self._cstruct:  # Not to point to the same grid various times if grid in various fields
-            if not isinstance(self.periods, c_int):
-                self.periods = c_int()
-                self.periods.value = 0
-            self._cstruct = CStructuredGrid(
-                self.xdim,
-                self.ydim,
-                self.zdim,
-                self.tdim,
-                self._z4d,
-                int(self.mesh == "spherical"),
-                int(self.zonal_periodic),
-                (c_int * len(self.chunk_info))(*self.chunk_info),
-                self._load_chunk.ctypes.data_as(POINTER(c_int)),
-                self.time_full[0],
-                self.time_full[-1],
-                pointer(self.periods),
-                self.lonlat_minmax.ctypes.data_as(POINTER(c_float)),
-                self.lon.ctypes.data_as(POINTER(c_float)),
-                self.lat.ctypes.data_as(POINTER(c_float)),
-                self.depth.ctypes.data_as(POINTER(c_float)),
-                self.time.ctypes.data_as(POINTER(c_double)),
-            )
-        return self._cstruct
-
     def _check_zonal_periodic(self):
         if self.zonal_periodic or self.mesh == "flat" or self.lon.size == 1:
             return
@@ -278,7 +207,7 @@ class Grid:
 
     def _computeTimeChunk(self, f, time, signdt):
         nextTime_loc = np.inf if signdt >= 0 else -np.inf
-        periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
+        periods = self.periods
         prev_time_indices = self.time
         if self._update_status == "not_updated":
             if self._ti >= 0:
@@ -316,7 +245,7 @@ class Grid:
             if self._ti == -1:
                 self.time = self.time_full
                 self._ti, _ = f._time_index(time)
-                periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
+                periods = self.periods
                 if (
                     signdt == -1
                     and self._ti == 0
@@ -483,8 +412,7 @@ class RectilinearZGrid(RectilinearGrid):
 
         self._gtype = GridType.RectilinearZGrid
         self._depth = np.zeros(1, dtype=np.float32) if depth is None else depth
-        if not self.depth.flags["C_CONTIGUOUS"]:
-            self._depth = np.array(self.depth, order="C")
+        self._depth = np.array(self.depth)
         self._z4d = -1  # only used in RectilinearSGrid
         if not self.depth.dtype == np.float32:
             self._depth = self.depth.astype(np.float32)
@@ -539,8 +467,7 @@ class RectilinearSGrid(RectilinearGrid):
 
         self._gtype = GridType.RectilinearSGrid
         self._depth = depth
-        if not self.depth.flags["C_CONTIGUOUS"]:
-            self._depth = np.array(self.depth, order="C")
+        self._depth = np.array(self.depth)
         self._z4d = 1 if len(self.depth.shape) == 4 else 0
         if self._z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
@@ -656,8 +583,6 @@ class CurvilinearZGrid(CurvilinearGrid):
 
         self._gtype = GridType.CurvilinearZGrid
         self._depth = np.zeros(1, dtype=np.float32) if depth is None else depth
-        if not self.depth.flags["C_CONTIGUOUS"]:
-            self._depth = np.array(self.depth, order="C")
         self._z4d = -1  # only for SGrid
         if not self.depth.dtype == np.float32:
             self._depth = self.depth.astype(np.float32)
@@ -710,9 +635,7 @@ class CurvilinearSGrid(CurvilinearGrid):
         assert isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4], "depth is not a 4D numpy array"
 
         self._gtype = GridType.CurvilinearSGrid
-        self._depth = depth  # should be a C-contiguous array of floats
-        if not self.depth.flags["C_CONTIGUOUS"]:
-            self._depth = np.array(self.depth, order="C")
+        self._depth = depth
         self._z4d = 1 if len(self.depth.shape) == 4 else 0
         if self._z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
