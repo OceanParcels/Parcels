@@ -1,6 +1,5 @@
 import functools
 import warnings
-from ctypes import c_int
 from enum import IntEnum
 
 import numpy as np
@@ -208,7 +207,7 @@ class Grid:
 
     def _computeTimeChunk(self, f, time, signdt):
         nextTime_loc = np.inf if signdt >= 0 else -np.inf
-        periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
+        periods = self.periods
         prev_time_indices = self.time
         if self._update_status == "not_updated":
             if self._ti >= 0:
@@ -246,7 +245,7 @@ class Grid:
             if self._ti == -1:
                 self.time = self.time_full
                 self._ti, _ = f._time_index(time)
-                periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
+                periods = self.periods
                 if (
                     signdt == -1
                     and self._ti == 0

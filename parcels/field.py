@@ -1015,10 +1015,7 @@ class Field:
                 periods = int(
                     math.floor((time - self.grid.time_full[0]) / (self.grid.time_full[-1] - self.grid.time_full[0]))
                 )
-                if isinstance(self.grid.periods, c_int):
-                    self.grid.periods.value = periods
-                else:
-                    self.grid.periods = periods
+                self.grid.periods = periods
                 time -= periods * (self.grid.time_full[-1] - self.grid.time_full[0])
                 time_index = self.grid.time <= time
                 ti = time_index.argmin() - 1 if time_index.any() else 0

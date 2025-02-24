@@ -41,8 +41,7 @@ class ParticleData:
         Parameters
         ----------
         ngrid :
-            number of grids in the fieldset of the overarching ParticleSet - required for initialising the
-            field references of the ctypes-link of particles that are allocated
+            number of grids in the fieldset of the overarching ParticleSet.
         """
         self._ncount = -1
         self._pu_indicators = None
