@@ -273,9 +273,9 @@ def test_write_xiyi(fieldset, tmp_zarrfile):
         and that the first outputted value is zero.
         Be careful when using multiple grids, as the index may be different for the grids.
         """
-        particle.pxi0 = particle.xi[0]
-        particle.pxi1 = particle.xi[1]
-        particle.pyi = particle.yi[0]
+        particle.pxi0 = fieldset.U.unravel_index(particle.ei[0])[2]
+        particle.pxi1 = fieldset.U.unravel_index(particle.ei[1])[2]
+        particle.pyi = fieldset.U.unravel_index(particle.ei[0])[1]
 
     def SampleP(particle, fieldset, time):  # pragma: no cover
         if time > 5 * 3600:
