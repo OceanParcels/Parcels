@@ -51,13 +51,10 @@ class Grid:
     ):
         self._ti = -1
         self._update_status: UpdateStatus | None = None
-        if not lon.flags["C_CONTIGUOUS"]:
-            lon = np.array(lon, order="C")
-        if not lat.flags["C_CONTIGUOUS"]:
-            lat = np.array(lat, order="C")
+        lon = np.array(lon)
+        lat = np.array(lat)
         time = np.zeros(1, dtype=np.float64) if time is None else time
-        if not time.flags["C_CONTIGUOUS"]:
-            time = np.array(time, order="C")
+        time = np.array(time)
         if not lon.dtype == np.float32:
             lon = lon.astype(np.float32)
         if not lat.dtype == np.float32:
@@ -483,8 +480,7 @@ class RectilinearZGrid(RectilinearGrid):
 
         self._gtype = GridType.RectilinearZGrid
         self._depth = np.zeros(1, dtype=np.float32) if depth is None else depth
-        if not self.depth.flags["C_CONTIGUOUS"]:
-            self._depth = np.array(self.depth, order="C")
+        self._depth = np.array(self.depth)
         self._z4d = -1  # only used in RectilinearSGrid
         if not self.depth.dtype == np.float32:
             self._depth = self.depth.astype(np.float32)
@@ -539,8 +535,7 @@ class RectilinearSGrid(RectilinearGrid):
 
         self._gtype = GridType.RectilinearSGrid
         self._depth = depth
-        if not self.depth.flags["C_CONTIGUOUS"]:
-            self._depth = np.array(self.depth, order="C")
+        self._depth = np.array(self.depth)
         self._z4d = 1 if len(self.depth.shape) == 4 else 0
         if self._z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
@@ -656,8 +651,6 @@ class CurvilinearZGrid(CurvilinearGrid):
 
         self._gtype = GridType.CurvilinearZGrid
         self._depth = np.zeros(1, dtype=np.float32) if depth is None else depth
-        if not self.depth.flags["C_CONTIGUOUS"]:
-            self._depth = np.array(self.depth, order="C")
         self._z4d = -1  # only for SGrid
         if not self.depth.dtype == np.float32:
             self._depth = self.depth.astype(np.float32)
@@ -710,9 +703,7 @@ class CurvilinearSGrid(CurvilinearGrid):
         assert isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4], "depth is not a 4D numpy array"
 
         self._gtype = GridType.CurvilinearSGrid
-        self._depth = depth  # should be a C-contiguous array of floats
-        if not self.depth.flags["C_CONTIGUOUS"]:
-            self._depth = np.array(self.depth, order="C")
+        self._depth = depth
         self._z4d = 1 if len(self.depth.shape) == 4 else 0
         if self._z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
