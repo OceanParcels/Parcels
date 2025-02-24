@@ -53,8 +53,6 @@ from .fieldfilebuffer import (
 from .grid import Grid, GridType, _calc_cell_areas
 
 if TYPE_CHECKING:
-    from ctypes import _Pointer as PointerType
-
     from parcels.fieldset import FieldSet
 
 __all__ = ["Field", "NestedField", "VectorField"]
@@ -343,7 +341,6 @@ class Field:
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop("data_full_zdim", None)
         self._data_chunks = []  # type: ignore # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
-        self._c_data_chunks: list[PointerType | None] = []  # C-pointers to the data_chunks array
         self.nchunks: tuple[int, ...] = ()
         self._chunk_set: bool = False
         self.filebuffers = [None] * 2
@@ -1120,7 +1117,6 @@ class Field:
             return
 
         self._data_chunks = [None] * npartitions
-        self._c_data_chunks = [None] * npartitions
         self.grid._load_chunk = np.zeros(npartitions, dtype=c_int, order="C")
         # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #      chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
@@ -1150,13 +1146,11 @@ class Field:
                         self._data_chunks[block_id] = None
                     else:
                         self._data_chunks[block_id, :] = None
-                    self._c_data_chunks[block_id] = None
         else:
             if isinstance(self._data_chunks, list):
                 self._data_chunks[0] = None
             else:
                 self._data_chunks[0, :] = None
-            self._c_data_chunks[0] = None
             self.grid._load_chunk[0] = g._chunk_loaded_touched
             self._data_chunks[0] = np.array(self.data, order="C")
 
