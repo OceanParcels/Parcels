@@ -120,7 +120,7 @@ class Particle:
     time_nextloop = Variable("time_nextloop", dtype=np.float64, to_write=False)
     id = Variable("id", dtype=np.int64, to_write="once")
     obs_written = Variable("obs_written", dtype=np.int32, initial=0, to_write=False)
-    dt = Variable("dt", dtype=np.float64, to_write=False)
+    dt = Variable("dt", dtype=np.timedelta64, to_write=False)
     state = Variable("state", dtype=np.int32, initial=StatusCode.Evaluate, to_write=False)
 
     lastID = 0  # class-level variable keeping track of last Particle ID used
@@ -138,7 +138,7 @@ class Particle:
         type(self).id.initial = pid
         type(self).lastID = max(type(self).lastID, pid)
         type(self).obs_written.initial = 0
-        type(self).dt.initial = None
+        type(self).dt.initial = np.timedelta64(1, "s")
 
         ptype = self.getPType()
         # Explicit initialisation of all particle variables

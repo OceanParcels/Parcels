@@ -19,9 +19,7 @@ class GridSet:
                 existing_grid = True
                 break
             sameGrid = True
-            if grid.time_origin != g.time_origin:
-                continue
-            for attr in ["lon", "lat", "depth", "time"]:
+            for attr in ["lon", "lat", "depth"]:  # HACK removed time because of np.datetime64 support
                 gattr = getattr(g, attr)
                 gridattr = getattr(grid, attr)
                 if gattr.shape != gridattr.shape or not np.allclose(gattr, gridattr):

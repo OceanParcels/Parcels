@@ -15,7 +15,7 @@ from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.particlefile import ParticleFile
 from parcels.tools._helpers import fieldset_repr
-from parcels.tools.converters import TimeConverter, convert_xarray_time_units
+from parcels.tools.converters import convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.warnings import FieldSetWarning
@@ -43,8 +43,6 @@ class FieldSet:
         self._particlefile: ParticleFile | None = None
         if U:
             self.add_field(U, "U")
-            # see #1663 for type-ignore reason
-            self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin  # type: ignore
         if V:
             self.add_field(V, "V")
 
@@ -143,14 +141,8 @@ class FieldSet:
             lon = dims["lon"]
             lat = dims["lat"]
             depth = np.zeros(1, dtype=np.float32) if "depth" not in dims else dims["depth"]
-            time = np.zeros(1, dtype=np.float64) if "time" not in dims else dims["time"]
-            time = np.array(time)
-            if isinstance(time[0], np.datetime64):
-                time_origin = TimeConverter(time[0])
-                time = np.array([time_origin.reltime(t) for t in time])
-            else:
-                time_origin = kwargs.pop("time_origin", TimeConverter(0))
-            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            time = np.zeros(1, dtype=np.datetime64) if "time" not in dims else np.array(dims["time"])
+            grid = Grid.create_grid(lon, lat, depth, time, mesh=mesh)
             if "creation_log" not in kwargs.keys():
                 kwargs["creation_log"] = "from_data"
 
@@ -298,15 +290,6 @@ class FieldSet:
 
         for g in self.gridset.grids:
             g._check_zonal_periodic()
-            if len(g.time) == 1:
-                continue
-            assert isinstance(
-                g.time_origin.time_origin, type(self.time_origin.time_origin)
-            ), "time origins of different grids must be have the same type"
-            g.time = g.time + self.time_origin.reltime(g.time_origin)
-            if g.defer_load:
-                g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
-            g._time_origin = self.time_origin
         self._add_UVfield()
 
         for f in self.get_fields():
@@ -1506,7 +1489,6 @@ class FieldSet:
         ----------
         time :
             Time around which the FieldSet chunks are to be loaded.
-            Time is provided as a double, relatively to Fieldset.time_origin.
             Default is 0.
         dt :
             time step of the integration scheme, needed to set the direction of time chunk loading.

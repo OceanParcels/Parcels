@@ -104,7 +104,7 @@ def write_simple_2Dt(field, filename, varname=None):
     else:
         raise NotImplementedError("Field.write only implemented for RectilinearZGrid and CurvilinearZGrid")
 
-    attrs = {"units": "seconds since " + str(field.grid.time_origin)} if field.grid.time_origin.calendar else {}
+    attrs = {}
     time_counter = xr.DataArray(field.grid.time, dims=["time_counter"], attrs=attrs)
     vardata = xr.DataArray(
         field.data.reshape((field.grid.tdim, field.grid.ydim, field.grid.xdim)), dims=["time_counter", "y", "x"]

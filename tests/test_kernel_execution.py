@@ -206,6 +206,14 @@ def test_execution_delete_out_of_bounds(fieldset_unit_mesh):
     assert len(pset) == 0
 
 
+def test_execution_pure_datetime64(fieldset_unit_mesh):
+    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0, 1], lat=[0, 0], time=np.datetime64("2000-01-01"))
+
+    pset.execute(DoNothing, endtime=np.datetime64("2000-02-01"), dt=np.timedelta64(1, "D"), verbose_progress=False)
+    for p in pset:
+        assert p.time == np.datetime64("2000-01-31")
+
+
 def test_kernel_add_no_new_variables(fieldset_unit_mesh):
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveNorth), endtime=2.0, dt=1.0)

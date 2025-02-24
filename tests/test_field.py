@@ -1,13 +1,7 @@
-import cftime
 import numpy as np
 import pytest
-import xarray as xr
 
 from parcels import Field
-from parcels.tools.converters import (
-    _get_cftime_calendars,
-    _get_cftime_datetimes,
-)
 from tests.utils import TEST_DATA
 
 
@@ -45,26 +39,3 @@ def test_field_from_netcdf(with_timestamps):
             Field.from_netcdf(filenames, variable, dimensions, interp_method="cgrid_velocity", timestamps=timestamps)
     else:
         Field.from_netcdf(filenames, variable, dimensions, interp_method="cgrid_velocity")
-
-
-@pytest.mark.parametrize(
-    "calendar, cftime_datetime", zip(_get_cftime_calendars(), _get_cftime_datetimes(), strict=True)
-)
-def test_field_nonstandardtime(calendar, cftime_datetime, tmpdir):
-    xdim = 4
-    ydim = 6
-    filepath = tmpdir.join("test_nonstandardtime.nc")
-    dates = [getattr(cftime, cftime_datetime)(1, m, 1) for m in range(1, 13)]
-    da = xr.DataArray(
-        np.random.rand(12, xdim, ydim), coords=[dates, range(xdim), range(ydim)], dims=["time", "lon", "lat"], name="U"
-    )
-    da.to_netcdf(str(filepath))
-
-    dims = {"lon": "lon", "lat": "lat", "time": "time"}
-    try:
-        field = Field.from_netcdf(filepath, "U", dims)
-    except NotImplementedError:
-        field = None
-
-    if field is not None:
-        assert field.grid.time_origin.calendar == calendar

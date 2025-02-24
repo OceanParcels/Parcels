@@ -328,13 +328,6 @@ class Kernel(BaseKernel):
         """Execute this Kernel over a ParticleSet for several timesteps."""
         pset.particledata.state[:] = StatusCode.Evaluate
 
-        if abs(dt) < 1e-6:
-            warnings.warn(
-                "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
                 if len(g._load_chunk) > g._chunk_not_loaded:  # not the case if a field in not called in the kernel
@@ -414,20 +407,22 @@ class Kernel(BaseKernel):
         while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
             pre_dt = p.dt
 
-            sign_dt = np.sign(p.dt)
-            if sign_dt * p.time_nextloop >= sign_dt * endtime:
+            sign_dt = 1 if p.dt > 0 else -1
+            if (p.dt > 0 and p.time_nextloop >= endtime) or (p.dt < 0 and p.time_nextloop <= endtime):
                 return p
 
             try:  # Use next_dt from AdvectionRK45 if it is set
-                if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
+                if abs(endtime - p.time_nextloop) < abs(p.next_dt):
                     p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
             except KeyError:
-                if abs(endtime - p.time_nextloop) < abs(p.dt) - 1e-6:
+                if abs(endtime - p.time_nextloop) < abs(p.dt):
                     p.dt = abs(endtime - p.time_nextloop) * sign_dt
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:
-                if sign_dt * p.time < sign_dt * endtime and p.state == StatusCode.Success:
+                if (
+                    (p.dt > 0 and p.time < endtime) or (p.dt < 0 and p.time > endtime)
+                ) and p.state == StatusCode.Success:
                     p.state = StatusCode.Evaluate
             else:
                 p.state = res

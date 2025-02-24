@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 
 import parcels
-from parcels import Grid, ParticleFile, TimeConverter, Variable
+from parcels import Grid, ParticleFile, Variable
 from parcels.grid import RectilinearGrid
 from tests.utils import create_fieldset_unit_mesh, create_simple_pset
 
@@ -58,9 +58,7 @@ def test_particletype_repr():
 
 def test_grid_repr():
     """Test arguments are in the repr of a Grid object"""
-    kwargs = dict(
-        lon=np.array([1, 2, 3]), lat=np.array([4, 5, 6]), time=None, time_origin=TimeConverter(), mesh="spherical"
-    )
+    kwargs = dict(lon=np.array([1, 2, 3]), lat=np.array([4, 5, 6]), time=None, mesh="spherical")
     assert_simple_repr(Grid, kwargs)
 
 
@@ -76,9 +74,7 @@ def test_rectilineargrid_repr():
 
     Mainly to test inherited repr is correct.
     """
-    kwargs = dict(
-        lon=np.array([1, 2, 3]), lat=np.array([4, 5, 6]), time=None, time_origin=TimeConverter(), mesh="spherical"
-    )
+    kwargs = dict(lon=np.array([1, 2, 3]), lat=np.array([4, 5, 6]), time=None, mesh="spherical")
     assert_simple_repr(RectilinearGrid, kwargs)
 
 
