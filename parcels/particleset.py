@@ -127,8 +127,8 @@ class ParticleSet:
                     type(self).ngrids.initial = numgrids
                 self.ngrids = type(self).ngrids.initial
                 if self.ngrids >= 0:
-                    setattr(self, "ei", np.zeros(self.ngrids, dtype=np.int32))
-                    setattr(self, "ti", -1 * np.ones(self.ngrids, dtype=np.int32))
+                    self.ei = np.zeros(self.ngrids, dtype=np.int32)
+                    self.ti = -1 * np.ones(self.ngrids, dtype=np.int32)
                 super(type(self), self).__init__(*args, **kwargs)
 
             array_class_vdict = {
@@ -450,7 +450,7 @@ class ParticleSet:
 
             idx = np.where(IN)[0][idx_nan]
 
-            self.particledata.data["ei"][:, i] = idx # assumes that we are in the surface layer (zi=0)
+            self.particledata.data["ei"][:, i] = idx  # assumes that we are in the surface layer (zi=0)
 
     @classmethod
     def from_list(

@@ -1312,7 +1312,7 @@ class Field:
         data = self._data_concatenate(data, buffer_data, tindex)
         self.filebuffers[tindex] = filebuffer
         return data
-    
+
     def ravel_index(self, xi, yi, zi):
         """Return the flat index of the given grid points.
 
@@ -1330,8 +1330,8 @@ class Field:
         int
             flat index
         """
-        return xi + self.grid.xdim*(yi + self.grid.ydim*zi)
-    
+        return xi + self.grid.xdim * (yi + self.grid.ydim * zi)
+
     def unravel_index(self, ei):
         """Return the xi, yi, zi indices for a given flat index.
 
@@ -1349,13 +1349,11 @@ class Field:
         zi : int
             The z index.
         """
-
         zi = ei // (self.grid.xdim * self.grid.ydim)
         ei = ei % (self.grid.xdim * self.grid.ydim)
         yi = ei // self.grid.xdim
         xi = ei % self.grid.xdim
         return zi, yi, xi
-    
 
 
 class VectorField:
