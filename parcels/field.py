@@ -22,12 +22,11 @@ from parcels._typing import (
     GridIndexingType,
     InterpMethod,
     Mesh,
-    TimePeriodic,
     VectorType,
     assert_valid_gridindexingtype,
     assert_valid_interp_method,
 )
-from parcels.tools._helpers import default_repr, field_repr, timedelta_to_float
+from parcels.tools._helpers import default_repr, field_repr
 from parcels.tools.converters import (
     TimeConverter,
     UnitConverter,
@@ -155,10 +154,6 @@ class Field:
     allow_time_extrapolation : bool
         boolean whether to allow for extrapolation in time
         (i.e. beyond the last available time snapshot)
-    time_periodic : bool, float or datetime.timedelta
-        To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
-        The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
-        This flag overrides the allow_time_extrapolation and sets it to False
     chunkdims_name_map : str, optional
         Gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
         required only if currently incompatible OCM field is loaded and chunking is used by 'chunksize' (which is the default)
@@ -174,7 +169,6 @@ class Field:
     """
 
     allow_time_extrapolation: bool
-    time_periodic: TimePeriodic
     _cast_data_dtype: type[np.float32] | type[np.float64]
 
     def __init__(
@@ -196,7 +190,6 @@ class Field:
         time_origin: TimeConverter | None = None,
         interp_method: InterpMethod = "linear",
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         gridindexingtype: GridIndexingType = "nemo",
         to_write: bool = False,
         **kwargs,
@@ -260,28 +253,6 @@ class Field:
             self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
-
-        self.time_periodic = time_periodic
-        if self.time_periodic is not False and self.allow_time_extrapolation:
-            warnings.warn(
-                "allow_time_extrapolation and time_periodic cannot be used together. allow_time_extrapolation is set to False",
-                FieldSetWarning,
-                stacklevel=2,
-            )
-            self.allow_time_extrapolation = False
-        if self.time_periodic is True:
-            raise ValueError(
-                "Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.timedelta object."
-            )
-        if self.time_periodic is not False:
-            self.time_periodic = timedelta_to_float(self.time_periodic)
-
-            if not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
-                if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
-                    raise ValueError("Time series provided is longer than the time_periodic parameter")
-                self.grid._add_last_periodic_data_timestep = True
-                self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
-                self.grid.time_full = self.grid.time
 
         self.vmin = vmin
         self.vmax = vmax
@@ -457,7 +428,6 @@ class Field:
         mesh: Mesh = "spherical",
         timestamps=None,
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         deferred_load: bool = True,
         **kwargs,
     ) -> "Field":
@@ -491,9 +461,6 @@ class Field:
             boolean whether to allow for extrapolation in time
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic : bool, float or datetime.timedelta
-            boolean whether to loop periodically over the time component of the FieldSet
-            This flag overrides the allow_time_extrapolation and sets it to False (Default value = False)
         deferred_load : bool
             boolean whether to only pre-load data (in deferred mode) or
             fully load them (default: True). It is advised to deferred load the data, since in
@@ -743,7 +710,6 @@ class Field:
 
         kwargs["dimensions"] = dimensions.copy()
         kwargs["indices"] = indices
-        kwargs["time_periodic"] = time_periodic
         kwargs["netcdf_engine"] = netcdf_engine
 
         return cls(
@@ -764,7 +730,6 @@ class Field:
         dimensions,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         **kwargs,
     ):
         """Create field from xarray Variable.
@@ -788,9 +753,6 @@ class Field:
             boolean whether to allow for extrapolation in time
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic : bool, float or datetime.timedelta
-            boolean whether to loop periodically over the time component of the FieldSet
-            This flag overrides the allow_time_extrapolation and sets it to False (Default value = False)
         **kwargs :
             Keyword arguments passed to the :class:`Field` constructor.
         """
@@ -806,7 +768,6 @@ class Field:
         time = time_origin.reltime(time)  # type: ignore[assignment]
 
         grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-        kwargs["time_periodic"] = time_periodic
         return cls(
             name,
             data,
@@ -1001,24 +962,10 @@ class Field:
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
         """
-        if (
-            not self.time_periodic
-            and not self.allow_time_extrapolation
-            and (time < self.grid.time[0] or time > self.grid.time[-1])
-        ):
+        if not self.allow_time_extrapolation and (time < self.grid.time[0] or time > self.grid.time[-1]):
             raise TimeExtrapolationError(time, field=self)
         time_index = self.grid.time <= time
-        if self.time_periodic:
-            if time_index.all() or np.logical_not(time_index).all():
-                periods = int(
-                    math.floor((time - self.grid.time_full[0]) / (self.grid.time_full[-1] - self.grid.time_full[0]))
-                )
-                self.grid.periods = periods
-                time -= periods * (self.grid.time_full[-1] - self.grid.time_full[0])
-                time_index = self.grid.time <= time
-                ti = time_index.argmin() - 1 if time_index.any() else 0
-                return (ti, periods)
-            return (time_index.argmin() - 1 if time_index.any() else 0, 0)
+
         if time_index.all():
             # If given time > last known field time, use
             # the last field frame without interpolation
