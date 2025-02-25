@@ -76,7 +76,6 @@ class Grid:
         self._lonlat_minmax = np.array(
             [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32
         )
-        self.periods = 0
         self._load_chunk: npt.NDArray = np.array([])
         self.chunk_info = None
         self.chunksize = None
@@ -207,45 +206,26 @@ class Grid:
 
     def _computeTimeChunk(self, f, time, signdt):
         nextTime_loc = np.inf if signdt >= 0 else -np.inf
-        periods = self.periods
         prev_time_indices = self.time
         if self._update_status == "not_updated":
             if self._ti >= 0:
-                if (
-                    time - periods * (self.time_full[-1] - self.time_full[0]) < self.time[0]
-                    or time - periods * (self.time_full[-1] - self.time_full[0]) > self.time[1]
-                ):
+                if time < self.time[0] or time > self.time[1]:
                     self._ti = -1  # reset
-                elif signdt >= 0 and (
-                    time - periods * (self.time_full[-1] - self.time_full[0]) < self.time_full[0]
-                    or time - periods * (self.time_full[-1] - self.time_full[0]) >= self.time_full[-1]
-                ):
+                elif signdt >= 0 and (time < self.time_full[0] or time >= self.time_full[-1]):
                     self._ti = -1  # reset
-                elif signdt < 0 and (
-                    time - periods * (self.time_full[-1] - self.time_full[0]) <= self.time_full[0]
-                    or time - periods * (self.time_full[-1] - self.time_full[0]) > self.time_full[-1]
-                ):
+                elif signdt < 0 and (time <= self.time_full[0] or time > self.time_full[-1]):
                     self._ti = -1  # reset
-                elif (
-                    signdt >= 0
-                    and time - periods * (self.time_full[-1] - self.time_full[0]) >= self.time[1]
-                    and self._ti < len(self.time_full) - 2
-                ):
+                elif signdt >= 0 and time >= self.time[1] and self._ti < len(self.time_full) - 2:
                     self._ti += 1
                     self.time = self.time_full[self._ti : self._ti + 2]
                     self._update_status = "updated"
-                elif (
-                    signdt < 0
-                    and time - periods * (self.time_full[-1] - self.time_full[0]) <= self.time[0]
-                    and self._ti > 0
-                ):
+                elif signdt < 0 and time <= self.time[0] and self._ti > 0:
                     self._ti -= 1
                     self.time = self.time_full[self._ti : self._ti + 2]
                     self._update_status = "updated"
             if self._ti == -1:
                 self.time = self.time_full
                 self._ti, _ = f._time_index(time)
-                periods = self.periods
 
                 if signdt == -1 and self._ti > 0 and self.time_full[self._ti] == time:
                     self._ti -= 1
@@ -267,9 +247,9 @@ class Grid:
                 else:
                     self._update_status = "first_updated"
             if signdt >= 0 and (self._ti < len(self.time_full) - 2 or not f.allow_time_extrapolation):
-                nextTime_loc = self.time[1] + periods * (self.time_full[-1] - self.time_full[0])
+                nextTime_loc = self.time[1]
             elif signdt < 0 and (self._ti > 0 or not f.allow_time_extrapolation):
-                nextTime_loc = self.time[0] + periods * (self.time_full[-1] - self.time_full[0])
+                nextTime_loc = self.time[0]
         return nextTime_loc
 
     @property
