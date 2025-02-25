@@ -225,7 +225,7 @@ def _search_indices_rectilinear(
 
 def _search_indices_curvilinear(field: Field, time, z, y, x, ti=-1, particle=None, search2D=False):
     if particle:
-        zi, yi, xi = field.unravel_index(particle.ei[field.igrid])
+        zi, yi, xi = field.unravel_index(particle.ei)
     else:
         xi = int(field.grid.xdim / 2) - 1
         yi = int(field.grid.ydim / 2) - 1

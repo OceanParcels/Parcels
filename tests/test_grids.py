@@ -92,11 +92,11 @@ def test_multi_structured_grids():
     # check if particle xi and yi are different for the two grids
     # xi check from unraveled index
     assert np.all(
-        [fieldset.U.unravel_index(pset[i].ei)[2][0] != fieldset.U.unravel_index(pset[i].ei)[2][1] for i in range(3)]
+        [fieldset.U.unravel_index(pset[i].ei)[2] != fieldset.V.unravel_index(pset[i].ei)[2] for i in range(3)]
     )
     # yi check from unraveled index
     assert np.all(
-        [fieldset.U.unravel_index(pset[i].ei)[1][0] != fieldset.U.unravel_index(pset[i].ei)[1][1] for i in range(3)]
+        [fieldset.U.unravel_index(pset[i].ei)[1] != fieldset.V.unravel_index(pset[i].ei)[1] for i in range(3)]
     )
     # advect without updating temperature to test particle deletion
     pset.remove_indices(np.array([1]))
