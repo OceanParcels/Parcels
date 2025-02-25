@@ -583,7 +583,6 @@ def test_fieldset_write(tmp_zarrfile):
     assert np.allclose(fieldset.U.data, da["U"].values, atol=1.0)
 
 
-@pytest.mark.parametrize("time_periodic", [4 * 86400.0, False])
 @pytest.mark.parametrize(
     "chunksize",
     [
@@ -594,7 +593,7 @@ def test_fieldset_write(tmp_zarrfile):
     ],
 )
 @pytest.mark.parametrize("deferLoad", [True, False])
-def test_from_netcdf_chunking(time_periodic, chunksize, deferLoad):
+def test_from_netcdf_chunking(chunksize, deferLoad):
     fnameU = str(TEST_DATA / "perlinfieldsU.nc")
     fnameV = str(TEST_DATA / "perlinfieldsV.nc")
     ufiles = [fnameU] * 4
@@ -610,9 +609,8 @@ def test_from_netcdf_chunking(time_periodic, chunksize, deferLoad):
         variables,
         dimensions,
         timestamps=timestamps,
-        time_periodic=time_periodic,
         deferred_load=deferLoad,
-        allow_time_extrapolation=True if time_periodic in [False, None] else False,
+        allow_time_extrapolation=True,
         chunksize=chunksize,
     )
     pset = ParticleSet.from_line(fieldset, size=1, pclass=Particle, start=(0.5, 0.5), finish=(0.5, 0.5))
@@ -638,17 +636,19 @@ def test_timestamps(datetype, tmpdir):
     fieldset2.U.data[0, :, :] = 0.0
     fieldset2.write(tmpdir.join("file2"))
 
-    fieldset3 = FieldSet.from_parcels(tmpdir.join("file*"), time_periodic=timedelta(days=14))
+    fieldset3 = FieldSet.from_parcels(tmpdir.join("file*"))
     timestamps = [dims1["time"], dims2["time"]]
-    fieldset4 = FieldSet.from_parcels(tmpdir.join("file*"), timestamps=timestamps, time_periodic=timedelta(days=14))
+    fieldset4 = FieldSet.from_parcels(tmpdir.join("file*"), timestamps=timestamps)
     assert np.allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
 
-    for d in [0, 8, 10, 13]:
+    for d in [0, 8, 10, 12]:
         fieldset3.computeTimeChunk(d * 86400.0, 1.0)
         fieldset4.computeTimeChunk(d * 86400.0, 1.0)
         assert np.allclose(fieldset3.U.data, fieldset4.U.data)
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="time_periodic removed in v4")
 @pytest.mark.parametrize("use_xarray", [True, False])
 @pytest.mark.parametrize("time_periodic", [86400.0, False])
 @pytest.mark.parametrize("dt_sign", [-1, 1])

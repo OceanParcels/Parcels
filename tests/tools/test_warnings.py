@@ -35,16 +35,6 @@ def test_fieldset_warnings():
     with pytest.warns(FieldSetWarning):
         fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat}, transpose=True)
 
-    with pytest.warns(FieldSetWarning):
-        # allow_time_extrapolation with time_periodic warning
-        fieldset = FieldSet.from_data(
-            data={"U": u, "V": v},
-            dimensions={"lon": lon, "lat": lat},
-            transpose=True,
-            allow_time_extrapolation=True,
-            time_periodic=1,
-        )
-
     filenames = str(TEST_DATA / "POPtestdata_time.nc")
     variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
     dimensions = {"lon": "lon", "lat": "lat", "depth": "w_deps", "time": "time"}
