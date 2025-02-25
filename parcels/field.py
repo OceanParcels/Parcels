@@ -1349,7 +1349,6 @@ class Field:
         xi : int
             The z index.
         """
-
         _ei = ei[self.igrid]
         zi = _ei // (self.grid.xdim * self.grid.ydim)
         _ei = _ei % (self.grid.xdim * self.grid.ydim)
