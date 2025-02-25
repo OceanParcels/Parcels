@@ -9,7 +9,7 @@ import dask.array as da
 import numpy as np
 
 from parcels._compat import MPI
-from parcels._typing import GridIndexingType, InterpMethodOption, Mesh, TimePeriodic
+from parcels._typing import GridIndexingType, InterpMethodOption, Mesh
 from parcels.field import DeferredArray, Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
@@ -77,7 +77,6 @@ class FieldSet:
         transpose=False,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         **kwargs,
     ):
         """Initialise FieldSet object from raw data.
@@ -113,9 +112,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic : bool, float or datetime.timedelta
-            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-            This flag overrides the allow_time_extrapolation and sets it to False
         **kwargs :
             Keyword arguments passed to the :class:`Field` constructor.
 
@@ -160,7 +156,6 @@ class FieldSet:
                 grid=grid,
                 transpose=transpose,
                 allow_time_extrapolation=allow_time_extrapolation,
-                time_periodic=time_periodic,
                 **kwargs,
             )
         u = fields.pop("U", None)
@@ -345,7 +340,6 @@ class FieldSet:
         mesh: Mesh = "spherical",
         timestamps=None,
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         deferred_load=True,
         chunksize=None,
         **kwargs,
@@ -395,9 +389,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic : bool, float or datetime.timedelta
-            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-            This flag overrides the allow_time_extrapolation and sets it to False
         deferred_load : bool
             boolean whether to only pre-load data (in deferred mode) or
             fully load them (default: True). It is advised to deferred load the data, since in
@@ -506,7 +497,6 @@ class FieldSet:
                 mesh=mesh,
                 timestamps=timestamps,
                 allow_time_extrapolation=allow_time_extrapolation,
-                time_periodic=time_periodic,
                 deferred_load=deferred_load,
                 fieldtype=fieldtype,
                 chunksize=varchunksize,
@@ -527,7 +517,6 @@ class FieldSet:
         indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         tracer_interp_method: InterpMethodOption = "cgrid_tracer",
         chunksize=None,
         **kwargs,
@@ -594,9 +583,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic : bool, float or datetime.timedelta
-            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-            This flag overrides the allow_time_extrapolation and sets it to False
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
             Note that in the case of from_nemo() and from_c_grid_dataset(), the velocity fields are default to 'cgrid_velocity'
@@ -618,7 +604,6 @@ class FieldSet:
             dimensions,
             mesh=mesh,
             indices=indices,
-            time_periodic=time_periodic,
             allow_time_extrapolation=allow_time_extrapolation,
             tracer_interp_method=tracer_interp_method,
             chunksize=chunksize,
@@ -638,7 +623,6 @@ class FieldSet:
         indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         tracer_interp_method: InterpMethodOption = "cgrid_tracer",
         chunksize=None,
         **kwargs,
@@ -670,7 +654,6 @@ class FieldSet:
             dimensions,
             mesh=mesh,
             indices=indices,
-            time_periodic=time_periodic,
             allow_time_extrapolation=allow_time_extrapolation,
             tracer_interp_method=tracer_interp_method,
             chunksize=chunksize,
@@ -689,7 +672,6 @@ class FieldSet:
         indices=None,
         mesh="spherical",
         allow_time_extrapolation=None,
-        time_periodic=False,
         tracer_interp_method="cgrid_tracer",
         chunksize=None,
         **kwargs,
@@ -754,7 +736,6 @@ class FieldSet:
             dimensions,
             mesh=mesh,
             indices=indices,
-            time_periodic=time_periodic,
             allow_time_extrapolation=allow_time_extrapolation,
             interp_method=interp_method,
             chunksize=chunksize,
@@ -776,7 +757,6 @@ class FieldSet:
         indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         tracer_interp_method: InterpMethodOption = "cgrid_tracer",
         gridindexingtype: GridIndexingType = "nemo",
         chunksize=None,
@@ -839,9 +819,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic : bool, float or datetime.timedelta
-            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-            This flag overrides the allow_time_extrapolation and sets it to False
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
             Note that in the case of from_nemo() and from_c_grid_dataset(), the velocity fields are default to 'cgrid_velocity'
@@ -881,7 +858,6 @@ class FieldSet:
             dimensions,
             mesh=mesh,
             indices=indices,
-            time_periodic=time_periodic,
             allow_time_extrapolation=allow_time_extrapolation,
             interp_method=interp_method,
             chunksize=chunksize,
@@ -898,7 +874,6 @@ class FieldSet:
         indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         tracer_interp_method: InterpMethodOption = "bgrid_tracer",
         chunksize=None,
         depth_units="m",
@@ -964,9 +939,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic : bool, float or datetime.timedelta
-            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-            This flag overrides the allow_time_extrapolation and sets it to False
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
             Note that in the case of from_pop() and from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
@@ -987,7 +959,6 @@ class FieldSet:
             dimensions,
             mesh=mesh,
             indices=indices,
-            time_periodic=time_periodic,
             allow_time_extrapolation=allow_time_extrapolation,
             tracer_interp_method=tracer_interp_method,
             chunksize=chunksize,
@@ -1021,7 +992,6 @@ class FieldSet:
         indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         tracer_interp_method: InterpMethodOption = "bgrid_tracer",
         chunksize=None,
         **kwargs,
@@ -1083,9 +1053,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic:
-            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-            This flag overrides the allow_time_extrapolation and sets it to False
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
             Note that in the case of from_mom5() and from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
@@ -1102,7 +1069,6 @@ class FieldSet:
             dimensions,
             mesh=mesh,
             indices=indices,
-            time_periodic=time_periodic,
             allow_time_extrapolation=allow_time_extrapolation,
             tracer_interp_method=tracer_interp_method,
             chunksize=chunksize,
@@ -1145,7 +1111,6 @@ class FieldSet:
         indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         tracer_interp_method: InterpMethodOption = "bgrid_tracer",
         chunksize=None,
         **kwargs,
@@ -1206,9 +1171,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic : bool, float or datetime.timedelta
-            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-            This flag overrides the allow_time_extrapolation and sets it to False
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
             Note that in the case of from_pop() and from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
@@ -1245,7 +1207,6 @@ class FieldSet:
             dimensions,
             mesh=mesh,
             indices=indices,
-            time_periodic=time_periodic,
             allow_time_extrapolation=allow_time_extrapolation,
             interp_method=interp_method,
             chunksize=chunksize,
@@ -1261,7 +1222,6 @@ class FieldSet:
         indices=None,
         extra_fields=None,
         allow_time_extrapolation: bool | None = None,
-        time_periodic: TimePeriodic = False,
         deferred_load=True,
         chunksize=None,
         **kwargs,
@@ -1287,9 +1247,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic : bool, float or datetime.timedelta
-            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-            This flag overrides the allow_time_extrapolation and sets it to False
         deferred_load : bool
             boolean whether to only pre-load data (in deferred mode) or
             fully load them (default: True). It is advised to deferred load the data, since in
@@ -1322,16 +1279,13 @@ class FieldSet:
             variables=extra_fields,
             dimensions=dimensions,
             allow_time_extrapolation=allow_time_extrapolation,
-            time_periodic=time_periodic,
             deferred_load=deferred_load,
             chunksize=chunksize,
             **kwargs,
         )
 
     @classmethod
-    def from_xarray_dataset(
-        cls, ds, variables, dimensions, mesh="spherical", allow_time_extrapolation=None, time_periodic=False, **kwargs
-    ):
+    def from_xarray_dataset(cls, ds, variables, dimensions, mesh="spherical", allow_time_extrapolation=None, **kwargs):
         """Initialises FieldSet data from xarray Datasets.
 
         Parameters
@@ -1361,9 +1315,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        time_periodic : bool, float or datetime.timedelta
-            To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
-            This flag overrides the allow_time_extrapolation and sets it to False
         **kwargs :
             Keyword arguments passed to the :func:`Field.from_xarray` constructor.
         """
@@ -1385,7 +1336,6 @@ class FieldSet:
                 dims,
                 mesh=mesh,
                 allow_time_extrapolation=allow_time_extrapolation,
-                time_periodic=time_periodic,
                 **kwargs,
             )
         u = fields.pop("U", None)
