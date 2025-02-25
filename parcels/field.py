@@ -283,16 +283,11 @@ class Field:
             if self.vmax is not None:
                 self.data[self.data > self.vmax] = 0.0
 
-            if self.grid._add_last_periodic_data_timestep:
-                self.data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
-
         self._scaling_factor = None
 
         self._dimensions = kwargs.pop("dimensions", None)
         self.indices = kwargs.pop("indices", None)
         self._dataFiles = kwargs.pop("dataFiles", None)
-        if self.grid._add_last_periodic_data_timestep and self._dataFiles is not None:
-            self._dataFiles = np.append(self._dataFiles, self._dataFiles[0])
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
         self._netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         self._creation_log = kwargs.pop("creation_log", "")

@@ -79,7 +79,6 @@ class Grid:
         self._load_chunk: npt.NDArray = np.array([])
         self.chunk_info = None
         self.chunksize = None
-        self._add_last_periodic_data_timestep = False
         self.depth_field = None
 
     def __repr__(self):
