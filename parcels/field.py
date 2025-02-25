@@ -1313,16 +1313,16 @@ class Field:
         self.filebuffers[tindex] = filebuffer
         return data
     
-    def ravel_index(self, xi, yi, zi):
+    def ravel_index(self, zi, yi, xi):
         """Return the flat index of the given grid points.
 
         Parameters
         ----------
-        xi : int
+        zi : int
             x index
         yi : int
             y index
-        zi : int
+        xi : int
             z index
 
         Returns
@@ -1333,7 +1333,7 @@ class Field:
         return xi + self.grid.xdim*(yi + self.grid.ydim*zi)
     
     def unravel_index(self, ei):
-        """Return the xi, yi, zi indices for a given flat index.
+        """Return the zi, yi, xi indices for a given flat index.
 
         Parameters
         ----------
@@ -1342,11 +1342,11 @@ class Field:
 
         Returns
         -------
-        xi : int
+        zi : int
             The x index.
         yi : int
             The y index.
-        zi : int
+        xi : int
             The z index.
         """
 
