@@ -246,14 +246,7 @@ class Grid:
                 self.time = self.time_full
                 self._ti, _ = f._time_index(time)
                 periods = self.periods
-                if (
-                    signdt == -1
-                    and self._ti == 0
-                    and (time - periods * (self.time_full[-1] - self.time_full[0])) == self.time[0]
-                    and f.time_periodic
-                ):
-                    self._ti = len(self.time) - 1
-                    periods -= 1
+
                 if signdt == -1 and self._ti > 0 and self.time_full[self._ti] == time:
                     self._ti -= 1
                 if self._ti >= len(self.time_full) - 1:

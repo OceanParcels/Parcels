@@ -74,7 +74,6 @@ def field_repr(field: Field) -> str:
     name            : {field.name!r}
     grid            : {field.grid!r}
     extrapolate time: {field.allow_time_extrapolation!r}
-    time_periodic   : {field.time_periodic!r}
     gridindexingtype: {field.gridindexingtype!r}
     to_write        : {field.to_write!r}
 """

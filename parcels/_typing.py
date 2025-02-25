@@ -6,7 +6,6 @@ used for runtime parameter validation (to ensure users are only using the right 
 
 """
 
-import datetime
 import os
 from collections.abc import Callable
 from typing import Any, Literal, get_args
@@ -32,7 +31,6 @@ VectorType = Literal["3D", "3DSigma", "2D"] | None  # corresponds with `vector_t
 ChunkMode = Literal["auto", "specific", "failsafe"]  # corresponds with `chunk_mode`
 GridIndexingType = Literal["pop", "mom5", "mitgcm", "nemo", "croco"]  # corresponds with `gridindexingtype`
 UpdateStatus = Literal["not_updated", "first_updated", "updated"]  # corresponds with `_update_status`
-TimePeriodic = float | datetime.timedelta | Literal[False]  # corresponds with `time_periodic`
 NetcdfEngine = Literal["netcdf4", "xarray", "scipy"]
 
 
