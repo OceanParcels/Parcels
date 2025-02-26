@@ -1297,7 +1297,7 @@ class Field:
         """
         _ei = ei[self.igrid]
         ti = _ei // (self.grid.xdim * self.grid.ydim * self.grid.zdim)
-        _ei = _ei % (self.grid.xdim * self.grid.ydim * self.grid.zdim)
+        _ei = abs(_ei) % (self.grid.xdim * self.grid.ydim * self.grid.zdim)
         zi = _ei // (self.grid.xdim * self.grid.ydim)
         _ei = _ei % (self.grid.xdim * self.grid.ydim)
         yi = _ei // self.grid.xdim
