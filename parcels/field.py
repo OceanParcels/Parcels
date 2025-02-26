@@ -1319,11 +1319,11 @@ class Field:
         Parameters
         ----------
         zi : int
-            x index
+            z index
         yi : int
             y index
         xi : int
-            z index
+            x index
 
         Returns
         -------
@@ -1343,11 +1343,11 @@ class Field:
         Returns
         -------
         zi : int
-            The x index.
+            The z index.
         yi : int
             The y index.
         xi : int
-            The z index.
+            The x index.
         """
         _ei = ei[self.igrid]
         zi = _ei // (self.grid.xdim * self.grid.ydim)
