@@ -3,5 +3,4 @@ class NemoCurvilinear:
         pass
 
     def time_run_experiment(self):
-        pass 
-    
+        pass
