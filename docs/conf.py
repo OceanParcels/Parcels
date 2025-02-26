@@ -381,6 +381,7 @@ nbsphinx_thumbnails = {
     "examples/documentation_geospatial": "_images/tutorial_geospatial_google_earth.png",
     "examples/tutorial_kernelloop": "_static/loop-icon.jpeg",
 }
+nbsphinx_execute = "never"
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {

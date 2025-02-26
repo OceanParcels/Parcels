@@ -39,3 +39,7 @@ repos:
           - --select=DOC103 # TODO: Expand coverage to other codes
         additional_dependencies:
           - pydoclint[flake8]
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
