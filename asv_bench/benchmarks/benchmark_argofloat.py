@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, StatusCode, Variable
+from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, StatusCode, Variable, ScipyParticle
 
 
 def ArgoVerticalMovement(particle, fieldset, time):
@@ -55,8 +55,11 @@ def ArgoVerticalMovement(particle, fieldset, time):
 
 
 class ArgoFloatJIT:
+    particle_type = JITParticle
+
     def setup(self):
-        time = pd.date_range(start="2025-01-01", end="2025-02-16", freq="D")
+        self.runtime_days = 45
+        time = np.datetime64("2025-01-01") + np.arange(self.runtime_days + 1) * np.timedelta64(1, "D")  
         lon = np.linspace(-180, 180, 120)
         lat = np.linspace(-90, 90, 100)
 
@@ -109,7 +112,9 @@ class ArgoFloatJIT:
         # uppermost layer in the hydrodynamic data
         fieldset.mindepth = fieldset.U.depth[0]
         # Define a new Particle type including extra Variables
-        ArgoParticle = JITParticle.add_variables(
+        
+
+        ArgoParticle = self.particle_type.add_variables(
             [
                 Variable("cycle_phase", dtype=np.int32, initial=0.0),
                 Variable("cycle_age", dtype=np.float32, initial=0.0),
@@ -121,5 +126,9 @@ class ArgoFloatJIT:
 
     def time_run_many_timesteps(self):
         self.pset.execute(
-            [ArgoVerticalMovement, AdvectionRK4], runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30)
+            [ArgoVerticalMovement, AdvectionRK4], runtime=timedelta(days=self.runtime_days), dt=timedelta(seconds=30)
         )
+
+# How do we derive benchmarks ? 
+# class ArgoFloatScipy(ArgoFloatJIT):
+#     particle_type = ScipyParticle
