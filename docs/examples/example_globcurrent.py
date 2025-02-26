@@ -13,7 +13,6 @@ def set_globcurrent_fieldset(
     indices=None,
     deferred_load=True,
     use_xarray=False,
-    time_periodic=False,
     timestamps=None,
 ):
     if filename is None:
@@ -32,7 +31,9 @@ def set_globcurrent_fieldset(
     if use_xarray:
         ds = xr.open_mfdataset(filename, combine="by_coords")
         return parcels.FieldSet.from_xarray_dataset(
-            ds, variables, dimensions, time_periodic=time_periodic
+            ds,
+            variables,
+            dimensions,
         )
     else:
         return parcels.FieldSet.from_netcdf(
@@ -41,7 +42,6 @@ def set_globcurrent_fieldset(
             dimensions,
             indices,
             deferred_load=deferred_load,
-            time_periodic=time_periodic,
             timestamps=timestamps,
         )
 
@@ -118,6 +118,8 @@ def test_globcurrent_particles(use_xarray):
     assert abs(pset[0].lat - -35.3) < 1
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="time_periodic removed in v4")
 @pytest.mark.parametrize("rundays", [300, 900])
 def test_globcurrent_time_periodic(rundays):
     sample_var = []
