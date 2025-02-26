@@ -90,11 +90,14 @@ def test_multi_structured_grids():
     pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=3, dt=1)
 
     # check if particle xi and yi are different for the two grids
-    # assert np.all([pset.xi[i, 0] != pset.xi[i, 1] for i in range(3)])
-    # assert np.all([pset.yi[i, 0] != pset.yi[i, 1] for i in range(3)])
-    assert np.all([pset[i].xi[0] != pset[i].xi[1] for i in range(3)])
-    assert np.all([pset[i].yi[0] != pset[i].yi[1] for i in range(3)])
-
+    # xi check from unraveled index
+    assert np.all(
+        [fieldset.U.unravel_index(pset[i].ei)[2] != fieldset.V.unravel_index(pset[i].ei)[2] for i in range(3)]
+    )
+    # yi check from unraveled index
+    assert np.all(
+        [fieldset.U.unravel_index(pset[i].ei)[1] != fieldset.V.unravel_index(pset[i].ei)[1] for i in range(3)]
+    )
     # advect without updating temperature to test particle deletion
     pset.remove_indices(np.array([1]))
     pset.execute(AdvectionRK4, runtime=1, dt=1)

@@ -1255,6 +1255,49 @@ class Field:
         self.filebuffers[tindex] = filebuffer
         return data
 
+    def ravel_index(self, zi, yi, xi):
+        """Return the flat index of the given grid points.
+
+        Parameters
+        ----------
+        zi : int
+            z index
+        yi : int
+            y index
+        xi : int
+            x index
+
+        Returns
+        -------
+        int
+            flat index
+        """
+        return xi + self.grid.xdim * (yi + self.grid.ydim * zi)
+
+    def unravel_index(self, ei):
+        """Return the zi, yi, xi indices for a given flat index.
+
+        Parameters
+        ----------
+        ei : int
+            The flat index to be unraveled.
+
+        Returns
+        -------
+        zi : int
+            The z index.
+        yi : int
+            The y index.
+        xi : int
+            The x index.
+        """
+        _ei = ei[self.igrid]
+        zi = _ei // (self.grid.xdim * self.grid.ydim)
+        _ei = _ei % (self.grid.xdim * self.grid.ydim)
+        yi = _ei // self.grid.xdim
+        xi = _ei % self.grid.xdim
+        return zi, yi, xi
+
 
 class VectorField:
     """Class VectorField stores 2 or 3 fields which defines together a vector field.

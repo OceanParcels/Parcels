@@ -127,18 +127,13 @@ class ParticleSet:
                     type(self).ngrids.initial = numgrids
                 self.ngrids = type(self).ngrids.initial
                 if self.ngrids >= 0:
-                    for index in ["xi", "yi", "zi", "ti"]:
-                        if index != "ti":
-                            setattr(self, index, np.zeros(self.ngrids, dtype=np.int32))
-                        else:
-                            setattr(self, index, -1 * np.ones(self.ngrids, dtype=np.int32))
+                    self.ei = np.zeros(self.ngrids, dtype=np.int32)
+                    self.ti = -1 * np.ones(self.ngrids, dtype=np.int32)
                 super(type(self), self).__init__(*args, **kwargs)
 
             array_class_vdict = {
                 "ngrids": Variable("ngrids", dtype=np.int32, to_write=False, initial=-1),
-                "xi": Variable("xi", dtype=np.int32, to_write=False),
-                "yi": Variable("yi", dtype=np.int32, to_write=False),
-                "zi": Variable("zi", dtype=np.int32, to_write=False),
+                "ei": Variable("ei", dtype=np.int32, to_write=False),
                 "ti": Variable("ti", dtype=np.int32, to_write=False, initial=-1),
                 "__init__": ArrayClass_init,
             }
@@ -436,7 +431,7 @@ class ParticleSet:
 
     # TODO: This method is only tested in tutorial notebook. Add unit test?
     def populate_indices(self):
-        """Pre-populate guesses of particle xi/yi indices using a kdtree.
+        """Pre-populate guesses of particle ei (element id) indices using a kdtree.
 
         This is only intended for curvilinear grids, where the initial index search
         may be quite expensive.
@@ -454,10 +449,8 @@ class ParticleSet:
             _, idx_nan = tree.query(pts.astype(tree_data.dtype))
 
             idx = np.where(IN)[0][idx_nan]
-            yi, xi = np.unravel_index(idx, grid.lon.shape)
 
-            self.particledata.data["xi"][:, i] = xi
-            self.particledata.data["yi"][:, i] = yi
+            self.particledata.data["ei"][:, i] = idx  # assumes that we are in the surface layer (zi=0)
 
     @classmethod
     def from_list(
@@ -725,9 +718,7 @@ class ParticleSet:
             elif (
                 v.name
                 not in [
-                    "xi",
-                    "yi",
-                    "zi",
+                    "ei",
                     "ti",
                     "dt",
                     "depth",

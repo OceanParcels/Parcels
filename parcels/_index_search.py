@@ -218,17 +218,14 @@ def _search_indices_rectilinear(
         _raise_field_sampling_error(z, y, x)
 
     if particle:
-        particle.xi[field.igrid] = xi
-        particle.yi[field.igrid] = yi
-        particle.zi[field.igrid] = zi
+        particle.ei[field.igrid] = field.ravel_index(zi, yi, xi)
 
     return (zeta, eta, xsi, zi, yi, xi)
 
 
 def _search_indices_curvilinear(field: Field, time, z, y, x, ti=-1, particle=None, search2D=False):
     if particle:
-        xi = particle.xi[field.igrid]
-        yi = particle.yi[field.igrid]
+        zi, yi, xi = field.unravel_index(particle.ei)
     else:
         xi = int(field.grid.xdim / 2) - 1
         yi = int(field.grid.ydim / 2) - 1
@@ -310,9 +307,7 @@ def _search_indices_curvilinear(field: Field, time, z, y, x, ti=-1, particle=Non
         _raise_field_sampling_error(z, y, x)
 
     if particle:
-        particle.xi[field.igrid] = xi
-        particle.yi[field.igrid] = yi
-        particle.zi[field.igrid] = zi
+        particle.ei[field.igrid] = field.ravel_index(zi, yi, xi)
 
     return (zeta, eta, xsi, zi, yi, xi)
 
