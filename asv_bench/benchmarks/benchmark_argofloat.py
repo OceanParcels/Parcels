@@ -3,6 +3,7 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 import xarray as xr
+
 from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, StatusCode, Variable
 
 
@@ -56,10 +57,10 @@ def ArgoVerticalMovement(particle, fieldset, time):
 class ArgoFloatJIT:
     def setup(self):
         time = pd.date_range(start="2025-01-01", end="2025-02-16", freq="D")
-        lon = np.linspace(-180,180,120)
-        lat = np.linspace(-90,90,100)
+        lon = np.linspace(-180, 180, 120)
+        lat = np.linspace(-90, 90, 100)
 
-        Lon,Lat = np.meshgrid(lon,lat)
+        Lon, Lat = np.meshgrid(lon, lat)
 
         # Create large-scale gyre flow
         U_gyre = np.cos(np.radians(Lat)) * np.sin(np.radians(Lon))  # Zonal flow
@@ -78,28 +79,32 @@ class ArgoFloatJIT:
         U_final = U_coriolis + U_noise
         V_final = V_coriolis + V_noise
 
-        depth = np.linspace(0,2000,100)
-    
-        U_val = np.tile(U_final[None,None, :, :], (len(time), len(depth),1, 1))  # Repeat for each time step
-        V_val = np.tile(V_final[None,None, :, :], (len(time), len(depth),1, 1))
+        depth = np.linspace(0, 2000, 100)
 
-        U = xr.DataArray(U_val, 
-                        dims = ['time','depth','lat','lon'],
-                        coords = {'time':time, 'depth':depth,'lat':lat, 'lon':lon},
-                        name='U_velocity')
+        U_val = np.tile(U_final[None, None, :, :], (len(time), len(depth), 1, 1))  # Repeat for each time step
+        V_val = np.tile(V_final[None, None, :, :], (len(time), len(depth), 1, 1))
 
-        V = xr.DataArray(V_val, 
-                        dims = ['time','depth','lat','lon'],
-                        coords = {'time':time, 'depth':depth,'lat':lat, 'lon':lon},
-                        name='V_velocity')
+        U = xr.DataArray(
+            U_val,
+            dims=["time", "depth", "lat", "lon"],
+            coords={"time": time, "depth": depth, "lat": lat, "lon": lon},
+            name="U_velocity",
+        )
 
-        ds = xr.Dataset({"U":U, "V":V})
+        V = xr.DataArray(
+            V_val,
+            dims=["time", "depth", "lat", "lon"],
+            coords={"time": time, "depth": depth, "lat": lat, "lon": lon},
+            name="V_velocity",
+        )
+
+        ds = xr.Dataset({"U": U, "V": V})
 
         variables = {
             "U": "U",
             "V": "V",
         }
-        dimensions = {"lat": "lat", "lon": "lon", "time": "time", "depth":"depth"}
+        dimensions = {"lat": "lat", "lon": "lon", "time": "time", "depth": "depth"}
         fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions)
         # uppermost layer in the hydrodynamic data
         fieldset.mindepth = fieldset.U.depth[0]
@@ -114,8 +119,7 @@ class ArgoFloatJIT:
 
         self.pset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=[32], lat=[-31], depth=[0])
 
-    
     def time_run_many_timesteps(self):
-        self.pset.execute([ArgoVerticalMovement, AdvectionRK4], runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30))
-
-        
+        self.pset.execute(
+            [ArgoVerticalMovement, AdvectionRK4], runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30)
+        )
