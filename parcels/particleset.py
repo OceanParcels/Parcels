@@ -128,13 +128,11 @@ class ParticleSet:
                 self.ngrids = type(self).ngrids.initial
                 if self.ngrids >= 0:
                     self.ei = np.zeros(self.ngrids, dtype=np.int32)
-                    self.ti = -1 * np.ones(self.ngrids, dtype=np.int32)
                 super(type(self), self).__init__(*args, **kwargs)
 
             array_class_vdict = {
                 "ngrids": Variable("ngrids", dtype=np.int32, to_write=False, initial=-1),
                 "ei": Variable("ei", dtype=np.int32, to_write=False),
-                "ti": Variable("ti", dtype=np.int32, to_write=False, initial=-1),
                 "__init__": ArrayClass_init,
             }
             array_class = type(class_name, (pclass,), array_class_vdict)
@@ -719,7 +717,6 @@ class ParticleSet:
                 v.name
                 not in [
                     "ei",
-                    "ti",
                     "dt",
                     "depth",
                     "id",

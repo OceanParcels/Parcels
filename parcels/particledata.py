@@ -122,7 +122,7 @@ class ParticleData:
         self._ncount = len(lon)
 
         for v in self.ptype.variables:
-            if v.name in ["ei", "ti"]:
+            if v.name == "ei":
                 self._data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
             else:
                 self._data[v.name] = np.empty(self._ncount, dtype=v.dtype)
