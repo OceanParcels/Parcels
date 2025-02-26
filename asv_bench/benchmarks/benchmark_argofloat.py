@@ -1,9 +1,8 @@
-## Argo float benchmark
-
 from datetime import timedelta
 
 import numpy as np
-
+import pandas as pd
+import xarray as xr
 from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, StatusCode, Variable
 
 
@@ -56,42 +55,67 @@ def ArgoVerticalMovement(particle, fieldset, time):
 
 class ArgoFloatJIT:
     def setup(self):
-        xdim = ydim = zdim = 2
+        time = pd.date_range(start="2025-01-01", end="2025-02-16", freq="D")
+        lon = np.linspace(-180,180,120)
+        lat = np.linspace(-90,90,100)
 
-        dimensions = {
-            "lon": "lon",
-            "lat": "lat",
-            "depth": "depth",
+        Lon,Lat = np.meshgrid(lon,lat)
+
+        # Create large-scale gyre flow
+        U_gyre = np.cos(np.radians(Lat)) * np.sin(np.radians(Lon))  # Zonal flow
+        V_gyre = -np.sin(np.radians(Lat)) * np.cos(np.radians(Lon))  # Meridional flow
+
+        f = 2 * 7.2921e-5 * np.sin(np.radians(Lat))
+
+        U_coriolis = U_gyre * (1 - 0.5 * np.abs(f))
+        V_coriolis = V_gyre * (1 - 0.5 * np.abs(f))
+
+        noise_level = 0.1  # Adjust for more or less variability
+        U_noise = noise_level * np.random.randn(*U_coriolis.shape)
+        V_noise = noise_level * np.random.randn(*V_coriolis.shape)
+
+        # Final realistic U and V velocity fields
+        U_final = U_coriolis + U_noise
+        V_final = V_coriolis + V_noise
+
+        depth = np.linspace(0,2000,100)
+    
+        U_val = np.tile(U_final[None,None, :, :], (len(time), len(depth),1, 1))  # Repeat for each time step
+        V_val = np.tile(V_final[None,None, :, :], (len(time), len(depth),1, 1))
+
+        U = xr.DataArray(U_val, 
+                        dims = ['time','depth','lat','lon'],
+                        coords = {'time':time, 'depth':depth,'lat':lat, 'lon':lon},
+                        name='U_velocity')
+
+        V = xr.DataArray(V_val, 
+                        dims = ['time','depth','lat','lon'],
+                        coords = {'time':time, 'depth':depth,'lat':lat, 'lon':lon},
+                        name='V_velocity')
+
+        ds = xr.Dataset({"U":U, "V":V})
+
+        variables = {
+            "U": "U",
+            "V": "V",
         }
-        data = {
-            "U": np.ones((xdim, ydim, zdim), dtype=np.float32),
-            "V": np.zeros((xdim, ydim, zdim), dtype=np.float32),
-        }
-        data["U"][:, :, 0] = 0.0
-        fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+        dimensions = {"lat": "lat", "lon": "lon", "time": "time", "depth":"depth"}
+        fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions)
+        # uppermost layer in the hydrodynamic data
         fieldset.mindepth = fieldset.U.depth[0]
-
         # Define a new Particle type including extra Variables
-        self.ArgoParticle = JITParticle.add_variables(
+        ArgoParticle = JITParticle.add_variables(
             [
-                # Phase of cycle:
-                # init_descend=0,
-                # drift=1,
-                # profile_descend=2,
-                # profile_ascend=3,
-                # transmit=4
                 Variable("cycle_phase", dtype=np.int32, initial=0.0),
                 Variable("cycle_age", dtype=np.float32, initial=0.0),
                 Variable("drift_age", dtype=np.float32, initial=0.0),
-                # if fieldset has temperature
-                # Variable('temp', dtype=np.float32, initial=np.nan),
             ]
         )
 
-        self.pset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=[0], lat=[0], depth=[0])
+        self.pset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=[32], lat=[-31], depth=[0])
 
-        # combine Argo vertical movement kernel with built-in Advection kernel
-        self.kernels = [ArgoVerticalMovement, AdvectionRK4]
+    
+    def time_run_many_timesteps(self):
+        self.pset.execute([ArgoVerticalMovement, AdvectionRK4], runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30))
 
-    def time_run_single_timestep(self):
-        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30))
+        
