@@ -49,7 +49,7 @@ from .fieldfilebuffer import (
     DeferredNetcdfFileBuffer,
     NetcdfFileBuffer,
 )
-from .grid import Grid, GridType, _calc_cell_areas
+from .grid import Grid, GridType
 
 if TYPE_CHECKING:
     from parcels.fieldset import FieldSet
@@ -336,10 +336,6 @@ class Field:
     def depth(self):
         """Depth defined on the Grid object"""
         return self.grid.depth
-
-    @property
-    def cell_edge_sizes(self):
-        return self.grid.cell_edge_sizes
 
     @property
     def interp_method(self):
@@ -869,13 +865,6 @@ class Field:
         self.grid.depth_field = field
         if self.grid != field.grid:
             field.grid.depth_field = field
-
-    def cell_areas(self):
-        """Method to calculate cell sizes based on cell_edge_sizes.
-
-        Only works for Rectilinear Grids
-        """
-        return _calc_cell_areas(self.grid)
 
     def _search_indices(self, time, z, y, x, ti, particle=None, search2D=False):
         if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
