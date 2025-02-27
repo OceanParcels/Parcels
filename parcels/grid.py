@@ -224,7 +224,7 @@ class Grid:
                     self._update_status = "updated"
             if self._ti == -1:
                 self.time = self.time_full
-                self._ti = f._time_index(time)
+                _, self._ti = f._time_index(time)
 
                 if signdt == -1 and self._ti > 0 and self.time_full[self._ti] == time:
                     self._ti -= 1
