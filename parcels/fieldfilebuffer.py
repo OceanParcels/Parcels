@@ -1,5 +1,6 @@
 import datetime
 import warnings
+from pathlib import Path
 
 import numpy as np
 import xarray as xr
@@ -39,25 +40,7 @@ class NetcdfFileBuffer:
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
 
     def __enter__(self):
-        try:
-            # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
-            # (which we would rather want to have being auto-managed).
-            # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
-            self.dataset["decoded"] = True
-        except:
-            warnings.warn(
-                f"File {self.filename} could not be decoded properly by xarray (version {xr.__version__}). "
-                "It will be opened with no decoding. Filling values might be wrongly parsed.",
-                FileWarning,
-                stacklevel=2,
-            )
-
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
-            self.dataset["decoded"] = False
-        for inds in self.indices.values():
-            if type(inds) not in [list, range]:
-                raise RuntimeError("Indices for field subsetting need to be a list")
+        self.dataset = open_xarray_dataset(self.filename, self.netcdf_engine)
         return self
 
     def __exit__(self, type, value, traceback):
@@ -245,3 +228,23 @@ class NetcdfFileBuffer:
                 "Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page."
             )
         return time
+
+
+def open_xarray_dataset(filename: Path | str, netcdf_engine: str) -> xr.Dataset:
+    try:
+        # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
+        # (which we would rather want to have being auto-managed).
+        # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
+        ds = xr.open_dataset(filename, decode_cf=True, engine=netcdf_engine)
+        ds["decoded"] = True
+    except:
+        warnings.warn(  # TODO: Is this warning necessary? What cases does this except block get triggered - is it to do with the bare except???
+            f"File {filename} could not be decoded properly by xarray (version {xr.__version__}). "
+            "It will be opened with no decoding. Filling values might be wrongly parsed.",
+            FileWarning,
+            stacklevel=2,
+        )
+
+        ds = xr.open_dataset(filename, decode_cf=False, engine=netcdf_engine)
+        ds["decoded"] = False
+    return ds
