@@ -149,9 +149,6 @@ class Particle:
                 initial = v.initial
             setattr(self, v.name, v.dtype(initial))
 
-    def __del__(self):
-        pass  # superclass is 'object', and object itself has no destructor, hence 'pass'
-
     def __repr__(self):
         time_string = "not_yet_set" if self.time is None or np.isnan(self.time) else f"{self.time:f}"
         p_string = f"P[{self.id}](lon={self.lon:f}, lat={self.lat:f}, depth={self.depth:f}, "

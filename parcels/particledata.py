@@ -182,9 +182,6 @@ class ParticleData:
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
-    def __del__(self):
-        pass
-
     @property
     def pu_indicators(self):
         """
