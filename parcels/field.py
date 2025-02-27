@@ -3,7 +3,7 @@ import math
 import warnings
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import dask.array as da
 import numpy as np
@@ -20,6 +20,7 @@ from parcels._interpolation import (
 from parcels._typing import (
     GridIndexingType,
     InterpMethod,
+    InterpMethodOption,
     Mesh,
     VectorType,
     assert_valid_gridindexingtype,
@@ -501,6 +502,7 @@ class Field:
                 interp_method = interp_method[variable[0]]
             else:
                 raise RuntimeError(f"interp_method is a dictionary but {variable[0]} is not in it")
+        interp_method = cast(InterpMethodOption, interp_method)
 
         if "lon" in dimensions and "lat" in dimensions:
             with NetcdfFileBuffer(
