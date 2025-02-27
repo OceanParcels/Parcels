@@ -910,27 +910,6 @@ class Field:
             raise RuntimeError(self.interp_method + " is not implemented for 3D grids")
         return f(ctx)
 
-    def temporal_interpolate_fullfield(self, ti, time):
-        """Calculate the data of a field between two snapshots using linear interpolation.
-
-        Parameters
-        ----------
-        ti :
-            Index in time array associated with time (via :func:`time_index`)
-        time :
-            Time to interpolate to
-        """
-        t0 = self.grid.time[ti]
-        if time == t0:
-            return self.data[ti, :]
-        elif ti + 1 >= len(self.grid.time):
-            raise TimeExtrapolationError(time, field=self)
-        else:
-            t1 = self.grid.time[ti + 1]
-            f0 = self.data[ti, :]
-            f1 = self.data[ti + 1, :]
-            return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
-
     def _spatial_interpolation(self, ti, z, y, x, time, particle=None):
         """Interpolate horizontal field values using a SciPy interpolator."""
         try:
