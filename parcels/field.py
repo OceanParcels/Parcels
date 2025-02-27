@@ -270,8 +270,7 @@ class Field:
 
             # Hack around the fact that NaN and ridiculously large values
             # propagate in SciPy's interpolators
-            lib = np if isinstance(self.data, np.ndarray) else da
-            self.data[lib.isnan(self.data)] = 0.0
+            self.data[np.isnan(self.data)] = 0.0
             if self.vmin is not None:
                 self.data[self.data < self.vmin] = 0.0
             if self.vmax is not None:
@@ -662,16 +661,15 @@ class Field:
                         if len(filebuffer.indices["depth"]) > 1:
                             data_list.append(buffer_data.reshape(sum(((1,), buffer_data.shape), ())))
                         else:
-                            if type(tslice) not in [list, np.ndarray, da.Array, xr.DataArray]:
+                            if type(tslice) not in [list, np.ndarray, xr.DataArray]:
                                 tslice = [tslice]
                             data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape[1:]), ())))
                     else:
                         data_list.append(buffer_data)
-                    if type(tslice) not in [list, np.ndarray, da.Array, xr.DataArray]:
+                    if type(tslice) not in [list, np.ndarray, xr.DataArray]:
                         tslice = [tslice]
                 ti += len(tslice)
-            lib = np if isinstance(data_list[0], np.ndarray) else da
-            data = lib.concatenate(data_list, axis=0)
+            data = np.concatenate(data_list, axis=0)
         else:
             grid._defer_load = True
             grid._ti = -1
@@ -752,24 +750,23 @@ class Field:
 
     def _reshape(self, data, transpose=False):
         # Ensure that field data is the right data type
-        if not isinstance(data, (np.ndarray, da.core.Array)):
+        if not isinstance(data, (np.ndarray)):
             data = np.array(data)
         if (self.cast_data_dtype == np.float32) and (data.dtype != np.float32):
             data = data.astype(np.float32)
         elif (self.cast_data_dtype == np.float64) and (data.dtype != np.float64):
             data = data.astype(np.float64)
-        lib = np if isinstance(data, np.ndarray) else da
         if transpose:
-            data = lib.transpose(data)
+            data = np.transpose(data)
         if self.grid._lat_flipped:
-            data = lib.flip(data, axis=-2)
+            data = np.flip(data, axis=-2)
 
         if self.grid.xdim == 1 or self.grid.ydim == 1:
-            data = lib.squeeze(data)  # First remove all length-1 dimensions in data, so that we can add them below
+            data = np.squeeze(data)  # First remove all length-1 dimensions in data, so that we can add them below
         if self.grid.xdim == 1 and len(data.shape) < 4:
-            data = lib.expand_dims(data, axis=-1)
+            data = np.expand_dims(data, axis=-1)
         if self.grid.ydim == 1 and len(data.shape) < 4:
-            data = lib.expand_dims(data, axis=-2)
+            data = np.expand_dims(data, axis=-2)
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
                 data = data.reshape(sum(((1,), data.shape), ()))
@@ -913,8 +910,6 @@ class Field:
                 # Detect Out-of-bounds sampling and raise exception
                 _raise_field_out_of_bound_error(z, y, x)
             else:
-                if isinstance(val, da.core.Array):
-                    val = val.compute()
                 return val
 
         except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
@@ -1008,26 +1003,25 @@ class Field:
         data :
             if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned (Default value = None)
         """
-        dataNone = not isinstance(data, (np.ndarray, da.core.Array))
+        dataNone = not isinstance(data, np.ndarray)
         if self.grid.defer_load and dataNone:
             return
         data = self.data if dataNone else data
-        lib = np if isinstance(data, np.ndarray) else da
         if zonal:
             if len(data.shape) == 3:
-                data = lib.concatenate((data[:, :, -halosize:], data, data[:, :, 0:halosize]), axis=len(data.shape) - 1)
+                data = np.concatenate((data[:, :, -halosize:], data, data[:, :, 0:halosize]), axis=len(data.shape) - 1)
                 assert data.shape[2] == self.grid.xdim, "Third dim must be x."
             else:
-                data = lib.concatenate(
+                data = np.concatenate(
                     (data[:, :, :, -halosize:], data, data[:, :, :, 0:halosize]), axis=len(data.shape) - 1
                 )
                 assert data.shape[3] == self.grid.xdim, "Fourth dim must be x."
         if meridional:
             if len(data.shape) == 3:
-                data = lib.concatenate((data[:, -halosize:, :], data, data[:, 0:halosize, :]), axis=len(data.shape) - 2)
+                data = np.concatenate((data[:, -halosize:, :], data, data[:, 0:halosize, :]), axis=len(data.shape) - 2)
                 assert data.shape[1] == self.grid.ydim, "Second dim must be y."
             else:
-                data = lib.concatenate(
+                data = np.concatenate(
                     (data[:, :, -halosize:, :], data, data[:, :, 0:halosize, :]), axis=len(data.shape) - 2
                 )
                 assert data.shape[2] == self.grid.ydim, "Third dim must be y."
@@ -1099,11 +1093,10 @@ class Field:
                 data[tindex] = None
             elif isinstance(data, list):
                 del data[tindex]
-        lib = np if isinstance(data, np.ndarray) else da
         if tindex == 0:
-            data = lib.concatenate([data_to_concat, data[tindex + 1 :, :]], axis=0)
+            data = np.concatenate([data_to_concat, data[tindex + 1 :, :]], axis=0)
         elif tindex == 1:
-            data = lib.concatenate([data[:tindex, :], data_to_concat], axis=0)
+            data = np.concatenate([data[:tindex, :], data_to_concat], axis=0)
         else:
             raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1]")
         return data
@@ -1136,13 +1129,12 @@ class Field:
         if self.netcdf_engine != "xarray":
             filebuffer.name = filebuffer.parse_name(self.filebuffername)
         buffer_data = filebuffer.data
-        lib = np if isinstance(buffer_data, np.ndarray) else da
         if len(buffer_data.shape) == 2:
-            buffer_data = lib.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
+            buffer_data = np.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
         elif len(buffer_data.shape) == 3 and g.zdim > 1:
-            buffer_data = lib.reshape(buffer_data, sum(((1,), buffer_data.shape), ()))
+            buffer_data = np.reshape(buffer_data, sum(((1,), buffer_data.shape), ()))
         elif len(buffer_data.shape) == 3:
-            buffer_data = lib.reshape(
+            buffer_data = np.reshape(
                 buffer_data,
                 sum(
                     (

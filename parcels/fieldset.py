@@ -5,7 +5,6 @@ import warnings
 from copy import deepcopy
 from glob import glob
 
-import dask.array as da
 import numpy as np
 
 from parcels._compat import MPI
@@ -1445,12 +1444,11 @@ class FieldSet:
                         for i in range(len(f.data)):
                             del f.data[i, :]
 
-                lib = np
                 if f.gridindexingtype == "pop" and g.zdim > 1:
                     zd = g.zdim - 1
                 else:
                     zd = g.zdim
-                data = lib.empty(
+                data = np.empty(
                     (g.tdim, zd, g.ydim - 2 * g.meridional_halo, g.xdim - 2 * g.zonal_halo), dtype=np.float32
                 )
                 f._loaded_time_indices = range(2)
@@ -1467,12 +1465,11 @@ class FieldSet:
                 f.data = f._reshape(data)
 
             elif g._update_status == "updated":
-                lib = np if isinstance(f.data, np.ndarray) else da
                 if f.gridindexingtype == "pop" and g.zdim > 1:
                     zd = g.zdim - 1
                 else:
                     zd = g.zdim
-                data = lib.empty(
+                data = np.empty(
                     (g.tdim, zd, g.ydim - 2 * g.meridional_halo, g.xdim - 2 * g.zonal_halo), dtype=np.float32
                 )
                 if signdt >= 0:
@@ -1492,28 +1489,22 @@ class FieldSet:
                 data = f._rescale_and_set_minmax(data)
                 if signdt >= 0:
                     data = f._reshape(data)[1, :]
-                    if lib is da:
-                        f.data = lib.stack([f.data[1, :], data], axis=0)
-                    else:
-                        if not isinstance(f.data, DeferredArray):
-                            if isinstance(f.data, list):
-                                del f.data[0, :]
-                            else:
-                                f.data[0, :] = None
-                        f.data[0, :] = f.data[1, :]
-                        f.data[1, :] = data
+                    if not isinstance(f.data, DeferredArray):
+                        if isinstance(f.data, list):
+                            del f.data[0, :]
+                        else:
+                            f.data[0, :] = None
+                    f.data[0, :] = f.data[1, :]
+                    f.data[1, :] = data
                 else:
                     data = f._reshape(data)[0, :]
-                    if lib is da:
-                        f.data = lib.stack([data, f.data[0, :]], axis=0)
-                    else:
-                        if not isinstance(f.data, DeferredArray):
-                            if isinstance(f.data, list):
-                                del f.data[1, :]
-                            else:
-                                f.data[1, :] = None
-                        f.data[1, :] = f.data[0, :]
-                        f.data[0, :] = data
+                    if not isinstance(f.data, DeferredArray):
+                        if isinstance(f.data, list):
+                            del f.data[1, :]
+                        else:
+                            f.data[1, :] = None
+                    f.data[1, :] = f.data[0, :]
+                    f.data[0, :] = data
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)
