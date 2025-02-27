@@ -568,7 +568,7 @@ class Field:
                 interp_method=interp_method,
                 gridindexingtype=gridindexingtype,
             ) as filebuffer:
-                filebuffer.name = filebuffer.parse_name(variable[1])
+                filebuffer.name = variable[1]
                 if dimensions["depth"] == "not_yet_set":
                     depth = filebuffer.depth_dimensions
                     kwargs["depth_field"] = "not_yet_set"
@@ -628,7 +628,7 @@ class Field:
                 ) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = filebuffer.parse_name(variable[1])
+                    filebuffer.name = variable[1]
                     buffer_data = filebuffer.data
                     if len(buffer_data.shape) == 4:
                         errormessage = (
@@ -1112,7 +1112,7 @@ class Field:
         time_data = g.time_origin.reltime(time_data)
         filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
         if self.netcdf_engine != "xarray":
-            filebuffer.name = filebuffer.parse_name(self.filebuffername)
+            filebuffer.name = self.filebuffername
         buffer_data = filebuffer.data
         if len(buffer_data.shape) == 2:
             buffer_data = np.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))

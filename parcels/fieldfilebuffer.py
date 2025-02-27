@@ -51,16 +51,6 @@ class NetcdfFileBuffer:
             self.dataset.close()
             self.dataset = None
 
-    def parse_name(self, name):
-        if isinstance(name, list):
-            for nm in name:
-                if hasattr(self.dataset, nm):
-                    name = nm
-                    break
-        if isinstance(name, list):
-            raise OSError("None of variables in list found in file")
-        return name
-
     @property
     def latlon(self):
         lon = self.dataset[self.dimensions["lon"]]
