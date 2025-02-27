@@ -964,13 +964,13 @@ class Field:
         if time_index.all():
             # If given time > last known field time, use
             # the last field frame without interpolation
-            return (len(self.grid.time) - 1, 0)
+            return len(self.grid.time) - 1
         elif np.logical_not(time_index).all():
             # If given time < any time in the field, use
             # the first field frame without interpolation
-            return (0, 0)
+            return 0
         else:
-            return (time_index.argmin() - 1 if time_index.any() else 0, 0)
+            return time_index.argmin() - 1 if time_index.any() else 0
 
     def _check_velocitysampling(self):
         if self.name in ["U", "V", "W"]:
@@ -997,8 +997,7 @@ class Field:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        (ti, periods) = self._time_index(time)
-        time -= periods * (self.grid.time_full[-1] - self.grid.time_full[0])
+        ti = self._time_index(time)
         if self.gridindexingtype == "croco" and self not in [self.fieldset.H, self.fieldset.Zeta]:
             z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
         if ti < self.grid.tdim - 1 and time > self.grid.time[ti]:
@@ -1791,8 +1790,7 @@ class VectorField:
                 "freeslip": {"2D": self.spatial_slip_interpolation, "3D": self.spatial_slip_interpolation},
             }
             grid = self.U.grid
-            (ti, periods) = self.U._time_index(time)
-            time -= periods * (grid.time_full[-1] - grid.time_full[0])
+            ti = self.U._time_index(time)
             if ti < grid.tdim - 1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
