@@ -686,7 +686,11 @@ class Field:
         kwargs["data_full_zdim"] = data_full_zdim
 
         if len(data_filenames) > 1 and "time" not in dimensions and timestamps is None:
-            raise RuntimeError("Multiple files given but no time dimension specified")
+            warnings.warn(
+                "Multiple files given but no time dimension specified. See https://github.com/OceanParcels/Parcels/issues/1831 for more info.",
+                FieldSetWarning,
+                stacklevel=2,
+            )
 
         if grid is None:
             # Concatenate time variable to determine overall dimension
