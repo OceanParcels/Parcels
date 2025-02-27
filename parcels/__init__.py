@@ -5,6 +5,7 @@ __version__ = version
 from parcels.application_kernels import *
 from parcels.field import *
 from parcels.fieldset import *
+from parcels.uxfieldset import *
 from parcels.grid import *
 from parcels.gridset import *
 from parcels.interaction import *
