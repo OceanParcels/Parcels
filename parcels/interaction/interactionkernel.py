@@ -111,12 +111,6 @@ class InteractionKernel(BaseKernel):
             kernel = InteractionKernel(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self, InteractionKernel)
 
-    def __del__(self):
-        # Clean-up the in-memory dynamic linked libraries.
-        # This is not really necessary, as these programs are not that large, but with the new random
-        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
-        super().__del__()
-
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python.
 
