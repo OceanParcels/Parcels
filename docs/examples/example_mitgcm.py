@@ -41,7 +41,6 @@ def run_mitgcm_zonally_reentrant(path: Path):
         str(path),
         pset,
         outputdt=timedelta(days=1),
-        chunks=(len(pset), 1),
     )
     kernels = parcels.AdvectionRK4 + pset.Kernel(periodicBC)
     pset.execute(

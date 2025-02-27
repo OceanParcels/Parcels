@@ -2,7 +2,6 @@ import collections
 import math
 import warnings
 from collections.abc import Iterable
-from ctypes import c_int
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -154,9 +153,6 @@ class Field:
     allow_time_extrapolation : bool
         boolean whether to allow for extrapolation in time
         (i.e. beyond the last available time snapshot)
-    chunkdims_name_map : str, optional
-        Gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
-        required only if currently incompatible OCM field is loaded and chunking is used by 'chunksize' (which is the default)
     to_write : bool
         Write the Field in NetCDF format at the same frequency as the ParticleFile outputdt,
         using a filenaming scheme based on the ParticleFile name
@@ -291,8 +287,6 @@ class Field:
         self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
         self._netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         self._creation_log = kwargs.pop("creation_log", "")
-        self.chunksize = kwargs.pop("chunksize", None)
-        self.netcdf_chunkdims_name_map = kwargs.pop("chunkdims_name_map", None)
         self.grid.depth_field = kwargs.pop("depth_field", None)
 
         if self.grid.depth_field == "not_yet_set":
@@ -304,9 +298,6 @@ class Field:
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop("data_full_zdim", None)
-        self._data_chunks = []  # type: ignore # the data buffer of the FileBuffer raw loaded data - shall be a list of C-contiguous arrays
-        self.nchunks: tuple[int, ...] = ()
-        self._chunk_set: bool = False
         self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
@@ -464,8 +455,6 @@ class Field:
         gridindexingtype : str
             The type of gridindexing. Either 'nemo' (default), 'mitgcm', 'mom5', 'pop', or 'croco' are supported.
             See also the Grid indexing documentation on oceanparcels.org
-        chunksize :
-            size of the chunks in dask loading
         netcdf_decodewarning : bool
             (DEPRECATED - v3.1.0) Whether to show a warning if there is a problem decoding the netcdf files.
             Default is True, but in some cases where these warnings are expected, it may be useful to silence them
@@ -627,9 +616,6 @@ class Field:
             )
             kwargs["dataFiles"] = dataFiles
 
-        chunksize: bool | None = kwargs.get("chunksize", None)
-        grid.chunksize = chunksize
-
         if "time" in indices:
             warnings.warn(
                 "time dimension in indices is not necessary anymore. It is then ignored.", FieldSetWarning, stacklevel=2
@@ -639,12 +625,7 @@ class Field:
             deferred_load = False
 
         _field_fb_class: type[DeferredDaskFileBuffer | DaskFileBuffer | DeferredNetcdfFileBuffer | NetcdfFileBuffer]
-        if chunksize not in [False, None]:
-            if deferred_load:
-                _field_fb_class = DeferredDaskFileBuffer
-            else:
-                _field_fb_class = DaskFileBuffer
-        elif deferred_load:
+        if deferred_load:
             _field_fb_class = DeferredNetcdfFileBuffer
         else:
             _field_fb_class = NetcdfFileBuffer
@@ -662,7 +643,6 @@ class Field:
                     netcdf_engine,
                     interp_method=interp_method,
                     data_full_zdim=data_full_zdim,
-                    chunksize=chunksize,
                 ) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
@@ -789,16 +769,8 @@ class Field:
         if self.grid.xdim == 1 or self.grid.ydim == 1:
             data = lib.squeeze(data)  # First remove all length-1 dimensions in data, so that we can add them below
         if self.grid.xdim == 1 and len(data.shape) < 4:
-            if lib == da:
-                raise NotImplementedError(
-                    "Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use chunksize=None"
-                )
             data = lib.expand_dims(data, axis=-1)
         if self.grid.ydim == 1 and len(data.shape) < 4:
-            if lib == da:
-                raise NotImplementedError(
-                    "Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use chunksize=None"
-                )
             data = lib.expand_dims(data, axis=-2)
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
@@ -1017,67 +989,6 @@ class Field:
         else:
             return value
 
-    def _get_block_id(self, block):
-        return np.ravel_multi_index(block, self.nchunks)
-
-    def _get_block(self, bid):
-        return np.unravel_index(bid, self.nchunks[1:])
-
-    def _chunk_setup(self):
-        if isinstance(self.data, da.core.Array):
-            chunks = self.data.chunks
-            self.nchunks = self.data.numblocks
-            npartitions = 1
-            for n in self.nchunks[1:]:
-                npartitions *= n
-        elif isinstance(self.data, np.ndarray):
-            chunks = tuple((t,) for t in self.data.shape)
-            self.nchunks = (1,) * len(self.data.shape)
-            npartitions = 1
-        elif isinstance(self.data, DeferredArray):
-            self.nchunks = (1,) * len(self.data.data_shape)
-            return
-        else:
-            return
-
-        self._data_chunks = [None] * npartitions
-        self.grid._load_chunk = np.zeros(npartitions, dtype=c_int, order="C")
-        # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
-        #      chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
-        self.grid.chunk_info = [
-            [len(self.nchunks) - 1],
-            list(self.nchunks[1:]),
-            sum(list(list(ci) for ci in chunks[1:]), []),  # noqa: RUF017 # TODO: Perhaps avoid quadratic list summation here
-        ]
-        self.grid.chunk_info = sum(self.grid.chunk_info, [])  # noqa: RUF017
-        self._chunk_set = True
-
-    def _chunk_data(self):
-        if not self._chunk_set:
-            self._chunk_setup()
-        g = self.grid
-        if isinstance(self.data, da.core.Array):
-            for block_id in range(len(self.grid._load_chunk)):
-                if g._load_chunk[block_id] == g._chunk_loading_requested or (
-                    g._load_chunk[block_id] in g._chunk_loaded and self._data_chunks[block_id] is None
-                ):
-                    block = self._get_block(block_id)
-                    self._data_chunks[block_id] = np.array(
-                        self.data.blocks[(slice(self.grid.tdim),) + block], order="C"
-                    )
-                elif g._load_chunk[block_id] == g._chunk_not_loaded:
-                    if isinstance(self._data_chunks, list):
-                        self._data_chunks[block_id] = None
-                    else:
-                        self._data_chunks[block_id, :] = None
-        else:
-            if isinstance(self._data_chunks, list):
-                self._data_chunks[0] = None
-            else:
-                self._data_chunks[0, :] = None
-            self.grid._load_chunk[0] = g._chunk_loaded_touched
-            self._data_chunks[0] = np.array(self.data, order="C")
-
     def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
         """Add a 'halo' to all Fields in a FieldSet.
 
@@ -1210,7 +1121,6 @@ class Field:
                 ti = g._ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
-        rechunk_callback_fields = self._chunk_setup if isinstance(tindex, list) else None
         filebuffer = self._field_fb_class(
             self._dataFiles[g._ti + tindex],
             self.dimensions,
@@ -1219,10 +1129,7 @@ class Field:
             timestamp=timestamp,
             interp_method=self.interp_method,
             data_full_zdim=self.data_full_zdim,
-            chunksize=self.chunksize,
             cast_data_dtype=self.cast_data_dtype,
-            rechunk_callback_fields=rechunk_callback_fields,
-            chunkdims_name_map=self.netcdf_chunkdims_name_map,
         )
         filebuffer.__enter__()
         time_data = filebuffer.time

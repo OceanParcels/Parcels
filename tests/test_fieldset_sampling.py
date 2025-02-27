@@ -606,8 +606,7 @@ def test_sampling_3DCROCO():
 
 
 @pytest.mark.parametrize("npart", [1, 10])
-@pytest.mark.parametrize("chs", [False, "auto", {"lat": ("y", 10), "lon": ("x", 10)}])
-def test_sampling_multigrids_non_vectorfield_from_file(npart, tmpdir, chs):
+def test_sampling_multigrids_non_vectorfield_from_file(npart, tmpdir):
     xdim, ydim = 100, 200
     filepath = tmpdir.join("test_subsets")
     U = Field(
@@ -641,15 +640,10 @@ def test_sampling_multigrids_non_vectorfield_from_file(npart, tmpdir, chs):
     files = {"U": ufiles, "V": vfiles, "B": bfiles}
     variables = {"U": "vozocrtx", "V": "vomecrty", "B": "B"}
     dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
-    fieldset = FieldSet.from_netcdf(
-        files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, chunksize=chs
-    )
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
 
     fieldset.add_constant("sample_depth", 2.5)
-    if chs == "auto":
-        assert fieldset.U.grid != fieldset.V.grid
-    else:
-        assert fieldset.U.grid is fieldset.V.grid
+    assert fieldset.U.grid is fieldset.V.grid
     assert fieldset.U.grid is not fieldset.B.grid
 
     TestParticle = Particle.add_variable("sample_var", initial=0.0)

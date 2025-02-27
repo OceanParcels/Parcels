@@ -28,11 +28,7 @@ def run_nemo_curvilinear(outfile, advtype="RK4"):
     }
     variables = {"U": "U", "V": "V"}
     dimensions = {"lon": "glamf", "lat": "gphif"}
-    chunksize = {"lat": ("y", 256), "lon": ("x", 512)}
-    fieldset = parcels.FieldSet.from_nemo(
-        filenames, variables, dimensions, chunksize=chunksize
-    )
-    assert fieldset.U.chunksize == chunksize
+    fieldset = parcels.FieldSet.from_nemo(filenames, variables, dimensions)
 
     # Now run particles as normal
     npart = 20
