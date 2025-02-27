@@ -43,8 +43,6 @@ from parcels.tools.warnings import FieldSetWarning, _deprecated_param_netcdf_dec
 
 from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear
 from .fieldfilebuffer import (
-    DaskFileBuffer,
-    DeferredDaskFileBuffer,
     DeferredNetcdfFileBuffer,
     NetcdfFileBuffer,
 )
@@ -624,7 +622,7 @@ class Field:
         if grid.time.size <= 2:
             deferred_load = False
 
-        _field_fb_class: type[DeferredDaskFileBuffer | DaskFileBuffer | DeferredNetcdfFileBuffer | NetcdfFileBuffer]
+        _field_fb_class: type[DeferredNetcdfFileBuffer | NetcdfFileBuffer]
         if deferred_load:
             _field_fb_class = DeferredNetcdfFileBuffer
         else:
