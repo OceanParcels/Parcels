@@ -43,7 +43,6 @@ from parcels.tools.warnings import FieldSetWarning, _deprecated_param_netcdf_dec
 
 from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear
 from .fieldfilebuffer import (
-    DeferredNetcdfFileBuffer,
     NetcdfFileBuffer,
 )
 from .grid import Grid, GridType, _calc_cell_areas
@@ -281,7 +280,6 @@ class Field:
         self._dimensions = kwargs.pop("dimensions", None)
         self.indices = kwargs.pop("indices", None)
         self._dataFiles = kwargs.pop("dataFiles", None)
-        self._field_fb_class = kwargs.pop("FieldFileBuffer", None)
         self._netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         self._creation_log = kwargs.pop("creation_log", "")
         self.grid.depth_field = kwargs.pop("depth_field", None)
@@ -365,9 +363,7 @@ class Field:
             return filenames
 
     @staticmethod
-    def _collect_timeslices(
-        timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine, netcdf_decodewarning=None
-    ):
+    def _collect_timeslices(timestamps, data_filenames, dimensions, indices, netcdf_engine, netcdf_decodewarning=None):
         if netcdf_decodewarning is not None:
             _deprecated_param_netcdf_decodewarning()
         if timestamps is not None:
@@ -382,7 +378,7 @@ class Field:
             timeslices = []
             dataFiles = []
             for fname in data_filenames:
-                with _grid_fb_class(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
+                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
                     ftime = filebuffer.time
                     timeslices.append(ftime)
                     dataFiles.append([fname] * len(ftime))
@@ -545,10 +541,8 @@ class Field:
             else:
                 raise RuntimeError(f"interp_method is a dictionary but {variable[0]} is not in it")
 
-        _grid_fb_class = NetcdfFileBuffer
-
         if "lon" in dimensions and "lat" in dimensions:
-            with _grid_fb_class(
+            with NetcdfFileBuffer(
                 lonlat_filename,
                 dimensions,
                 indices,
@@ -566,7 +560,7 @@ class Field:
             mesh = "flat"
 
         if "depth" in dimensions:
-            with _grid_fb_class(
+            with NetcdfFileBuffer(
                 depth_filename,
                 dimensions,
                 indices,
@@ -596,7 +590,7 @@ class Field:
             # across multiple files
             if "time" in dimensions or timestamps is not None:
                 time, time_origin, timeslices, dataFiles = cls._collect_timeslices(
-                    timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
+                    timestamps, data_filenames, dimensions, indices, netcdf_engine
                 )
                 grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
                 grid.timeslices = timeslices
@@ -608,9 +602,7 @@ class Field:
         elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
-            _, _, _, dataFiles = cls._collect_timeslices(
-                timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine
-            )
+            _, _, _, dataFiles = cls._collect_timeslices(timestamps, data_filenames, dimensions, indices, netcdf_engine)
             kwargs["dataFiles"] = dataFiles
 
         if "time" in indices:
@@ -621,19 +613,12 @@ class Field:
         if grid.time.size <= 2:
             deferred_load = False
 
-        _field_fb_class: type[DeferredNetcdfFileBuffer | NetcdfFileBuffer]
-        if deferred_load:
-            _field_fb_class = DeferredNetcdfFileBuffer
-        else:
-            _field_fb_class = NetcdfFileBuffer
-        kwargs["FieldFileBuffer"] = _field_fb_class
-
         if not deferred_load:
             # Pre-allocate data before reading files into buffer
             data_list = []
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames, strict=True):
-                with _field_fb_class(  # type: ignore[operator]
+                with NetcdfFileBuffer(  # type: ignore[operator]
                     fname,
                     dimensions,
                     indices,
@@ -1112,7 +1097,7 @@ class Field:
                 ti = g._ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
-        filebuffer = self._field_fb_class(
+        filebuffer = NetcdfFileBuffer(
             self._dataFiles[g._ti + tindex],
             self.dimensions,
             self.indices,

@@ -9,7 +9,7 @@ from parcels.tools.converters import convert_xarray_time_units
 from parcels.tools.warnings import FileWarning
 
 
-class _FileBuffer:
+class NetcdfFileBuffer:
     def __init__(
         self,
         filename,
@@ -36,13 +36,7 @@ class _FileBuffer:
             self.nolonlatindices = False
         else:
             self.nolonlatindices = True
-
-
-class NetcdfFileBuffer(_FileBuffer):
-    def __init__(self, *args, **kwargs):
-        self.lib = np
         self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
-        super().__init__(*args, **kwargs)
 
     def __enter__(self):
         try:
@@ -251,8 +245,3 @@ class NetcdfFileBuffer(_FileBuffer):
                 "Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page."
             )
         return time
-
-
-class DeferredNetcdfFileBuffer(NetcdfFileBuffer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
