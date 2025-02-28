@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 from parcels._typing import Mesh, UpdateStatus, assert_valid_mesh
-from parcels.tools.converters import Geographic, GeographicPolar, TimeConverter, UnitConverter
+from parcels.tools.converters import TimeConverter
 from parcels.tools.warnings import FieldSetWarning
 
 __all__ = [
@@ -67,7 +67,6 @@ class Grid:
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
         assert_valid_mesh(mesh)
         self._mesh = mesh
-        self._cell_edge_sizes: dict[str, npt.NDArray] = {}
         self._zonal_periodic = False
         self._zonal_halo = 0
         self._meridional_halo = 0
@@ -132,10 +131,6 @@ class Grid:
     @property
     def defer_load(self):
         return self._defer_load
-
-    @property
-    def cell_edge_sizes(self):
-        return self._cell_edge_sizes
 
     @staticmethod
     def create_grid(
@@ -610,34 +605,3 @@ class CurvilinearSGrid(CurvilinearGrid):
     @property
     def zdim(self):
         return self.depth.shape[-3]
-
-
-def _calc_cell_edge_sizes(grid: RectilinearGrid) -> None:
-    """Method to calculate cell sizes based on numpy.gradient method.
-
-    Currently only works for Rectilinear Grids. Operates in place adding a `cell_edge_sizes`
-    attribute to the grid.
-    """
-    if not grid.cell_edge_sizes:
-        if grid._gtype in (GridType.RectilinearZGrid, GridType.RectilinearSGrid):  # type: ignore[attr-defined]
-            grid.cell_edge_sizes["x"] = np.zeros((grid.ydim, grid.xdim), dtype=np.float32)
-            grid.cell_edge_sizes["y"] = np.zeros((grid.ydim, grid.xdim), dtype=np.float32)
-
-            x_conv = GeographicPolar() if grid.mesh == "spherical" else UnitConverter()
-            y_conv = Geographic() if grid.mesh == "spherical" else UnitConverter()
-            for y, (lat, dy) in enumerate(zip(grid.lat, np.gradient(grid.lat), strict=False)):
-                for x, (lon, dx) in enumerate(zip(grid.lon, np.gradient(grid.lon), strict=False)):
-                    grid.cell_edge_sizes["x"][y, x] = x_conv.to_source(dx, grid.depth[0], lat, lon)
-                    grid.cell_edge_sizes["y"][y, x] = y_conv.to_source(dy, grid.depth[0], lat, lon)
-        else:
-            raise ValueError(
-                f"_cell_edge_sizes() not implemented for {grid._gtype} grids. "  # type: ignore[attr-defined]
-                "You can provide Field.grid.cell_edge_sizes yourself by in, e.g., "
-                "NEMO using the e1u fields etc from the mesh_mask.nc file."
-            )
-
-
-def _calc_cell_areas(grid: RectilinearGrid) -> np.ndarray:
-    if not grid.cell_edge_sizes:
-        _calc_cell_edge_sizes(grid)
-    return grid.cell_edge_sizes["x"] * grid.cell_edge_sizes["y"]
