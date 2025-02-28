@@ -3,7 +3,7 @@ import math
 import warnings
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, cast
 
 import dask.array as da
 import numpy as np
@@ -20,6 +20,7 @@ from parcels._interpolation import (
 from parcels._typing import (
     GridIndexingType,
     InterpMethod,
+    InterpMethodOption,
     Mesh,
     VectorType,
     assert_valid_gridindexingtype,
@@ -39,7 +40,7 @@ from parcels.tools.statuscodes import (
     TimeExtrapolationError,
     _raise_field_out_of_bound_error,
 )
-from parcels.tools.warnings import FieldSetWarning, _deprecated_param_netcdf_decodewarning
+from parcels.tools.warnings import FieldSetWarning
 
 from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear
 from .fieldfilebuffer import (
@@ -132,8 +133,6 @@ class Field:
         Minimum allowed value on the field. Data below this value are set to zero
     vmax : float
         Maximum allowed value on the field. Data above this value are set to zero
-    cast_data_dtype : str
-        Cast Field data to dtype. Supported dtypes are "float32" (np.float32 (default)) and "float64 (np.float64).
     time_origin : parcels.tools.converters.TimeConverter
         Time origin of the time axis (only if grid is None)
     interp_method : str
@@ -154,7 +153,6 @@ class Field:
     """
 
     allow_time_extrapolation: bool
-    _cast_data_dtype: type[np.float32] | type[np.float64]
 
     def __init__(
         self,
@@ -170,7 +168,6 @@ class Field:
         fieldtype=None,
         vmin: float | None = None,
         vmax: float | None = None,
-        cast_data_dtype: type[np.float32] | type[np.float64] | Literal["float32", "float64"] = "float32",
         time_origin: TimeConverter | None = None,
         interp_method: InterpMethod = "linear",
         allow_time_extrapolation: bool | None = None,
@@ -178,10 +175,6 @@ class Field:
         to_write: bool = False,
         **kwargs,
     ):
-        if kwargs.get("netcdf_decodewarning") is not None:
-            _deprecated_param_netcdf_decodewarning()
-            kwargs.pop("netcdf_decodewarning")
-
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
@@ -240,19 +233,6 @@ class Field:
 
         self.vmin = vmin
         self.vmax = vmax
-
-        match cast_data_dtype:
-            case "float32":
-                self._cast_data_dtype = np.float32
-            case "float64":
-                self._cast_data_dtype = np.float64
-            case _:
-                self._cast_data_dtype = cast_data_dtype
-
-        if self.cast_data_dtype not in [np.float32, np.float64]:
-            raise ValueError(
-                f"Unsupported cast_data_dtype {self.cast_data_dtype!r}. Choose either: 'float32' or 'float64'"
-            )
 
         if not self.grid.defer_load:
             self.data = self._reshape(self.data)
@@ -328,10 +308,6 @@ class Field:
         return self._gridindexingtype
 
     @property
-    def cast_data_dtype(self):
-        return self._cast_data_dtype
-
-    @property
     def netcdf_engine(self):
         return self._netcdf_engine
 
@@ -350,9 +326,7 @@ class Field:
             return filenames
 
     @staticmethod
-    def _collect_timeslices(timestamps, data_filenames, dimensions, indices, netcdf_engine, netcdf_decodewarning=None):
-        if netcdf_decodewarning is not None:
-            _deprecated_param_netcdf_decodewarning()
+    def _collect_timeslices(timestamps, data_filenames, dimensions, indices, netcdf_engine):
         if timestamps is not None:
             dataFiles = []
             for findex in range(len(data_filenames)):
@@ -435,10 +409,6 @@ class Field:
         gridindexingtype : str
             The type of gridindexing. Either 'nemo' (default), 'mitgcm', 'mom5', 'pop', or 'croco' are supported.
             See also the Grid indexing documentation on oceanparcels.org
-        netcdf_decodewarning : bool
-            (DEPRECATED - v3.1.0) Whether to show a warning if there is a problem decoding the netcdf files.
-            Default is True, but in some cases where these warnings are expected, it may be useful to silence them
-            by setting netcdf_decodewarning=False.
         grid :
              (Default value = None)
         **kwargs :
@@ -451,10 +421,6 @@ class Field:
         * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
 
         """
-        if kwargs.get("netcdf_decodewarning") is not None:
-            _deprecated_param_netcdf_decodewarning()
-            kwargs.pop("netcdf_decodewarning")
-
         # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
             if isinstance(filenames, list):
@@ -527,6 +493,7 @@ class Field:
                 interp_method = interp_method[variable[0]]
             else:
                 raise RuntimeError(f"interp_method is a dictionary but {variable[0]} is not in it")
+        interp_method = cast(InterpMethodOption, interp_method)
 
         if "lon" in dimensions and "lat" in dimensions:
             with NetcdfFileBuffer(
@@ -724,10 +691,6 @@ class Field:
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray)):
             data = np.array(data)
-        if (self.cast_data_dtype == np.float32) and (data.dtype != np.float32):
-            data = data.astype(np.float32)
-        elif (self.cast_data_dtype == np.float64) and (data.dtype != np.float64):
-            data = data.astype(np.float64)
         if self.grid._lat_flipped:
             data = np.flip(data, axis=-2)
 
@@ -1002,7 +965,6 @@ class Field:
             timestamp=timestamp,
             interp_method=self.interp_method,
             data_full_zdim=self.data_full_zdim,
-            cast_data_dtype=self.cast_data_dtype,
         )
         filebuffer.__enter__()
         time_data = filebuffer.time
