@@ -105,13 +105,7 @@ class Field:
     name : str
         Name of the field
     data : np.ndarray
-        2D, 3D or 4D numpy array of field data.
-
-        1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
-           whichever is relevant for the dataset, use the flag transpose=True
-        2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
-           use the flag transpose=False
-        3. If data has any other shape, you first need to reorder it
+        2D, 3D or 4D numpy array of field data with shape [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
     lon : np.ndarray or list
         Longitude coordinates (numpy vector or array) of the field (only if grid is None)
     lat : np.ndarray or list
@@ -135,8 +129,6 @@ class Field:
         mesh and time_origin information. Can be constructed from any of the Grid objects
     fieldtype : str
         Type of Field to be used for UnitConverter (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-    transpose : bool
-        Transpose data to required (lon, lat) layout
     vmin : float
         Minimum allowed value on the field. Data below this value are set to zero
     vmax : float
@@ -174,7 +166,6 @@ class Field:
         mesh: Mesh = "flat",
         timestamps=None,
         fieldtype=None,
-        transpose: bool = False,
         vmin: float | None = None,
         vmax: float | None = None,
         time_origin: TimeConverter | None = None,
@@ -244,7 +235,7 @@ class Field:
         self.vmax = vmax
 
         if not self.grid.defer_load:
-            self.data = self._reshape(self.data, transpose)
+            self.data = self._reshape(self.data)
             self._loaded_time_indices = range(self.grid.tdim)
 
             # Hack around the fact that NaN and ridiculously large values
@@ -597,7 +588,7 @@ class Field:
                         errormessage = (
                             f"Field {filebuffer.name} expecting a data shape of [tdim={grid.tdim}, zdim={grid.zdim}, "
                             f"ydim={grid.ydim}, xdim={grid.xdim }] "
-                            f"but got shape {buffer_data.shape}. Flag transpose=True could help to reorder the data."
+                            f"but got shape {buffer_data.shape}."
                         )
                         assert buffer_data.shape[0] == grid.tdim, errormessage
                         assert buffer_data.shape[2] == grid.ydim, errormessage
@@ -696,12 +687,10 @@ class Field:
             **kwargs,
         )
 
-    def _reshape(self, data, transpose=False):
+    def _reshape(self, data):
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray)):
             data = np.array(data)
-        if transpose:
-            data = np.transpose(data)
         if self.grid._lat_flipped:
             data = np.flip(data, axis=-2)
 
@@ -718,10 +707,7 @@ class Field:
             if len(data.shape) == 4:
                 data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
         if len(data.shape) == 4:
-            errormessage = (
-                f"Field {self.name} expecting a data shape of [tdim, zdim, ydim, xdim]. "
-                "Flag transpose=True could help to reorder the data."
-            )
+            errormessage = f"Field {self.name} expecting a data shape of [tdim, zdim, ydim, xdim]. "
             assert data.shape[0] == self.grid.tdim, errormessage
             assert data.shape[2] == self.grid.ydim, errormessage
             assert data.shape[3] == self.grid.xdim, errormessage
@@ -734,10 +720,7 @@ class Field:
                 self.grid.tdim,
                 self.grid.ydim,
                 self.grid.xdim,
-            ), (
-                f"Field {self.name} expecting a data shape of [tdim, ydim, xdim]. "
-                "Flag transpose=True could help to reorder the data."
-            )
+            ), f"Field {self.name} expecting a data shape of [tdim, ydim, xdim]. "
 
         return data
 

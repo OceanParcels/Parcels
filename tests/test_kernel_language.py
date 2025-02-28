@@ -33,7 +33,7 @@ def expr_kernel(name, pset, expr):
 
 @pytest.fixture
 def fieldset_unit_mesh():
-    return create_fieldset_unit_mesh(transpose=True)
+    return create_fieldset_unit_mesh()
 
 
 @pytest.mark.parametrize(

@@ -73,7 +73,6 @@ class FieldSet:
         cls,
         data,
         dimensions,
-        transpose=False,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         **kwargs,
@@ -85,21 +84,14 @@ class FieldSet:
         data :
             Dictionary mapping field names to numpy arrays.
             Note that at least a 'U' and 'V' numpy array need to be given, and that
-            the built-in Advection kernels assume that U and V are in m/s
-
-            1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
-               whichever is relevant for the dataset, use the flag transpose=True
-            2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
-               use the flag transpose=False (default value)
-            3. If data has any other shape, you first need to reorder it
+            the built-in Advection kernels assume that U and V are in m/s.
+            Data shape is either [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
         dimensions : dict
             Dictionary mapping field dimensions (lon,
             lat, depth, time) to numpy arrays.
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable
             (e.g. dimensions['U'], dimensions['V'], etc).
-        transpose : bool
-            Whether to transpose data on read-in (Default value = False)
         mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
@@ -153,7 +145,6 @@ class FieldSet:
                 name,
                 datafld,
                 grid=grid,
-                transpose=transpose,
                 allow_time_extrapolation=allow_time_extrapolation,
                 **kwargs,
             )

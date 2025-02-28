@@ -29,12 +29,12 @@ def generate_testfieldset(xdim, ydim, zdim, tdim):
     lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
     depth = np.linspace(0.0, 0.5, zdim, dtype=np.float32)
     time = np.linspace(0.0, tdim, tdim, dtype=np.float64)
-    U = np.ones((xdim, ydim, zdim, tdim), dtype=np.float32)
-    V = np.zeros((xdim, ydim, zdim, tdim), dtype=np.float32)
-    P = 2.0 * np.ones((xdim, ydim, zdim, tdim), dtype=np.float32)
+    U = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
+    V = np.zeros((tdim, zdim, ydim, xdim), dtype=np.float32)
+    P = 2.0 * np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
     data = {"U": U, "V": V, "P": P}
     dimensions = {"lon": lon, "lat": lat, "depth": depth, "time": time}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     fieldset.write("testfields")
 
 
@@ -66,7 +66,7 @@ def generate_perlin_testfield():
     if asizeof is not None:
         print(f"Perlin U-field requires {U.size * U.itemsize} bytes of memory.")
         print(f"Perlin V-field requires {V.size * V.itemsize} bytes of memory.")
-    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical", transpose=False)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical")
     # fieldset.write("perlinfields")  # can also be used, but then has a ghost depth dimension
     write_simple_2Dt(fieldset.U, os.path.join(os.path.dirname(__file__), "perlinfields"), varname="vozocrtx")
     write_simple_2Dt(fieldset.V, os.path.join(os.path.dirname(__file__), "perlinfields"), varname="vomecrty")
