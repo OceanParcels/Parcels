@@ -137,7 +137,7 @@ def search_indices_vertical_s(
 
 
 def _search_indices_rectilinear(
-    field: Field, time: float, z: float, y: float, x: float, ti=-1, particle=None, search2D=False
+    field: Field, time: float, z: float, y: float, x: float, ti: int, particle=None, search2D=False
 ):
     grid = field.grid
 
@@ -223,7 +223,7 @@ def _search_indices_rectilinear(
     return (zeta, eta, xsi, zi, yi, xi)
 
 
-def _search_indices_curvilinear(field: Field, time, z, y, x, ti=-1, particle=None, search2D=False):
+def _search_indices_curvilinear(field: Field, time, z, y, x, ti, particle=None, search2D=False):
     if particle:
         zi, yi, xi = field.unravel_index(particle.ei)
     else:

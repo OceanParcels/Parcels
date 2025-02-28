@@ -407,22 +407,6 @@ def test_fieldset_samegrids_from_data():
     assert fieldset1.U.grid == fieldset1.B.grid
 
 
-@pytest.mark.parametrize("dx, dy", [("e1u", "e2u"), ("e1v", "e2v")])
-def test_fieldset_celledgesizes_curvilinear(dx, dy):
-    fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")
-    filenames = {"dx": fname, "dy": fname, "mesh_mask": fname}
-    variables = {"dx": dx, "dy": dy}
-    dimensions = {"dx": {"lon": "glamu", "lat": "gphiu"}, "dy": {"lon": "glamu", "lat": "gphiu"}}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
-
-    # explicitly setting cell_edge_sizes from e1u and e2u etc
-    fieldset.dx.grid.cell_edge_sizes["x"] = fieldset.dx.data
-    fieldset.dx.grid.cell_edge_sizes["y"] = fieldset.dy.data
-
-    A = fieldset.dx.cell_areas()
-    assert np.allclose(A, fieldset.dx.data * fieldset.dy.data)
-
-
 def test_fieldset_write_curvilinear(tmpdir):
     fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")
     filenames = {"dx": fname, "mesh_mask": fname}
@@ -454,21 +438,6 @@ def test_curv_fieldset_add_periodic_halo():
 
     with pytest.raises(NotImplementedError):
         fieldset.add_periodic_halo(zonal=3, meridional=2)
-
-
-@pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_fieldset_cellareas(mesh):
-    data, dimensions = generate_fieldset_data(10, 7)
-    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
-    cell_areas = fieldset.V.cell_areas()
-    if mesh == "flat":
-        assert np.allclose(cell_areas.flatten(), cell_areas[0, 0], rtol=1e-3)
-    else:
-        assert all(
-            (np.gradient(cell_areas, axis=0) < 0).flatten()
-        )  # areas should decrease with latitude in spherical mesh
-        for y in range(cell_areas.shape[0]):
-            assert np.allclose(cell_areas[y, :], cell_areas[y, 0], rtol=1e-3)
 
 
 def addConst(particle, fieldset, time):  # pragma: no cover
@@ -555,7 +524,8 @@ def test_fieldset_write(tmp_zarrfile):
     def UpdateU(particle, fieldset, time):  # pragma: no cover
         tmp1, tmp2 = fieldset.UV[particle]
         _, yi, xi = fieldset.U.unravel_index(particle.ei)
-        fieldset.U.data[particle.ti, yi, xi] += 1
+        ti = fieldset.U._time_index(time)
+        fieldset.U.data[ti, yi, xi] += 1
         fieldset.U.grid.time[0] = time
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=5, lat=5)

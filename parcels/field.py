@@ -45,7 +45,7 @@ from ._index_search import _search_indices_curvilinear, _search_indices_rectilin
 from .fieldfilebuffer import (
     NetcdfFileBuffer,
 )
-from .grid import Grid, GridType, _calc_cell_areas
+from .grid import Grid, GridType
 
 if TYPE_CHECKING:
     from parcels.fieldset import FieldSet
@@ -322,10 +322,6 @@ class Field:
     def depth(self):
         """Depth defined on the Grid object"""
         return self.grid.depth
-
-    @property
-    def cell_edge_sizes(self):
-        return self.grid.cell_edge_sizes
 
     @property
     def interp_method(self):
@@ -822,22 +818,15 @@ class Field:
         if self.grid != field.grid:
             field.grid.depth_field = field
 
-    def cell_areas(self):
-        """Method to calculate cell sizes based on cell_edge_sizes.
-
-        Only works for Rectilinear Grids
-        """
-        return _calc_cell_areas(self.grid)
-
-    def _search_indices(self, time, z, y, x, ti=-1, particle=None, search2D=False):
+    def _search_indices(self, time, z, y, x, ti, particle=None, search2D=False):
         if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             return _search_indices_rectilinear(self, time, z, y, x, ti, particle=particle, search2D=search2D)
         else:
             return _search_indices_curvilinear(self, time, z, y, x, ti, particle=particle, search2D=search2D)
 
-    def _interpolator2D(self, ti, z, y, x, particle=None):
+    def _interpolator2D(self, time, z, y, x, ti, particle=None):
         """Impelement 2D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
-        (_, eta, xsi, _, yi, xi) = self._search_indices(-1, z, y, x, particle=particle)
+        (_, eta, xsi, _, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
         ctx = InterpolationContext2D(self.data, eta, xsi, ti, yi, xi)
 
         try:
@@ -851,7 +840,7 @@ class Field:
                 raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
         return f(ctx)
 
-    def _interpolator3D(self, ti, z, y, x, time, particle=None):
+    def _interpolator3D(self, time, z, y, x, ti, particle=None):
         """Impelement 3D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
         (zeta, eta, xsi, zi, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
         ctx = InterpolationContext3D(self.data, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
@@ -862,34 +851,13 @@ class Field:
             raise RuntimeError(self.interp_method + " is not implemented for 3D grids")
         return f(ctx)
 
-    def temporal_interpolate_fullfield(self, ti, time):
-        """Calculate the data of a field between two snapshots using linear interpolation.
-
-        Parameters
-        ----------
-        ti :
-            Index in time array associated with time (via :func:`time_index`)
-        time :
-            Time to interpolate to
-        """
-        t0 = self.grid.time[ti]
-        if time == t0:
-            return self.data[ti, :]
-        elif ti + 1 >= len(self.grid.time):
-            raise TimeExtrapolationError(time, field=self)
-        else:
-            t1 = self.grid.time[ti + 1]
-            f0 = self.data[ti, :]
-            f1 = self.data[ti + 1, :]
-            return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
-
-    def _spatial_interpolation(self, ti, z, y, x, time, particle=None):
-        """Interpolate horizontal field values using a SciPy interpolator."""
+    def _spatial_interpolation(self, time, z, y, x, ti, particle=None):
+        """Interpolate spatial field values."""
         try:
             if self.grid.zdim == 1:
-                val = self._interpolator2D(ti, z, y, x, particle=particle)
+                val = self._interpolator2D(time, z, y, x, ti, particle=particle)
             else:
-                val = self._interpolator3D(ti, z, y, x, time, particle=particle)
+                val = self._interpolator3D(time, z, y, x, ti, particle=particle)
 
             if np.isnan(val):
                 # Detect Out-of-bounds sampling and raise exception
@@ -951,8 +919,8 @@ class Field:
         if self.gridindexingtype == "croco" and self not in [self.fieldset.H, self.fieldset.Zeta]:
             z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
         if ti < self.grid.tdim - 1 and time > self.grid.time[ti]:
-            f0 = self._spatial_interpolation(ti, z, y, x, time, particle=particle)
-            f1 = self._spatial_interpolation(ti + 1, z, y, x, time, particle=particle)
+            f0 = self._spatial_interpolation(time, z, y, x, ti, particle=particle)
+            f1 = self._spatial_interpolation(time, z, y, x, ti + 1, particle=particle)
             t0 = self.grid.time[ti]
             t1 = self.grid.time[ti + 1]
             value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
@@ -960,7 +928,7 @@ class Field:
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # exact value in the time array.
-            value = self._spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
+            value = self._spatial_interpolation(self.grid.time[ti], z, y, x, ti, particle=particle)
 
         if applyConversion:
             return self.units.to_target(value, z, y, x)
