@@ -590,9 +590,6 @@ def test_sampling_out_of_bounds_time(allow_time_extrapolation):
             pset.execute(SampleP, runtime=0.1, dt=0.1)
 
 
-test_sampling_out_of_bounds_time(True)
-
-
 def test_sampling_3DCROCO():
     data_path = os.path.join(os.path.dirname(__file__), "test_data/")
     fieldset = FieldSet.from_modulefile(data_path + "fieldset_CROCO3D.py")
