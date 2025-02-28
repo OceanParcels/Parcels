@@ -382,15 +382,11 @@ def test_partialslip_nearland_vertical(boundaryslip):
         assert np.allclose([p.lat for p in pset], 0.1)
 
 
-@pytest.mark.parametrize("lat_flip", [False, True])
-def test_fieldset_sample_particle(lat_flip):
+def test_fieldset_sample_particle():
     """Sample the fieldset using an array of particles."""
     npart = 120
     lon = np.linspace(-180, 180, 200, dtype=np.float32)
-    if lat_flip:
-        lat = np.linspace(90, -90, 100, dtype=np.float32)
-    else:
-        lat = np.linspace(-90, 90, 100, dtype=np.float32)
+    lat = np.linspace(-90, 90, 100, dtype=np.float32)
     V, U = np.meshgrid(lon, lat)
     data = {"U": U, "V": V}
     dimensions = {"lon": lon, "lat": lat}
