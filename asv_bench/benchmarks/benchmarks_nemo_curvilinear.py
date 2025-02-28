@@ -46,6 +46,7 @@ class NemoCurvilinearJIT:
        
 
     def time_run_experiment(self):
+
          self.pset.execute(
             parcels.AdvectionRK4,
             runtime=timedelta(days=30),
@@ -55,3 +56,4 @@ class NemoCurvilinearJIT:
 
 class NemoCurvilinearScipy(NemoCurvilinearJIT):
     particle_type = parcels.ScipyParticle
+
