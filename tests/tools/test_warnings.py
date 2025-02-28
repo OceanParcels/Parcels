@@ -17,33 +17,35 @@ from parcels import (
 from tests.utils import TEST_DATA
 
 
-def test_fieldset_warnings():
-    # halo with inconsistent boundaries
-    lat = [0, 1, 5, 10]
-    lon = [0, 1, 5, 10]
-    u = [[1, 1, 1, 1] for _ in range(4)]
-    v = [[1, 1, 1, 1] for _ in range(4)]
-    fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat})
-    with pytest.warns(FieldSetWarning):
-        fieldset.add_periodic_halo(meridional=True, zonal=True)
-
+def test_fieldset_warning_latflipped():
     # flipping lats warning
     lat = [0, 1, 5, -5]
     lon = [0, 1, 5, 10]
     u = [[1, 1, 1, 1] for _ in range(4)]
     v = [[1, 1, 1, 1] for _ in range(4)]
-    with pytest.warns(FieldSetWarning):
-        fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat})
+    with pytest.warns(FieldSetWarning, match="Flipping lat data from North-South to South-North.*"):
+        FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat})
 
+
+def test_fieldset_warning_pop():
     filenames = str(TEST_DATA / "POPtestdata_time.nc")
     variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
     dimensions = {"lon": "lon", "lat": "lat", "depth": "w_deps", "time": "time"}
-    with pytest.warns(FieldSetWarning):
+    with pytest.warns(FieldSetWarning, match="General s-levels are not supported in B-grid.*"):
         # b-grid with s-levels and POP output in meters warning
-        fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh="flat")
-    with pytest.warns(FieldSetWarning):
+        FieldSet.from_pop(filenames, variables, dimensions, mesh="flat")
+
+
+@pytest.mark.xfail(reason="Incorrect warning message being raised")
+def test_fieldset_warning_timestamps():
+    filenames = str(TEST_DATA / "POPtestdata_time.nc")
+    variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
+    dimensions = {"lon": "lon", "lat": "lat", "depth": "w_deps", "time": "time"}
+    with pytest.warns(
+        FieldSetWarning, match="something"
+    ):  # TODO: Fix warning message. Shouldn't be "General s-levels are not supported"
         # timestamps with time in file warning
-        fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh="flat", timestamps=[0, 1, 2, 3])
+        FieldSet.from_pop(filenames, variables, dimensions, mesh="flat", timestamps=[0, 1, 2, 3])
 
 
 def test_file_warnings(tmp_zarrfile):

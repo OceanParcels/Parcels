@@ -29,12 +29,6 @@ class StatusCode:
     ErrorTimeExtrapolation = 70
 
 
-class DaskChunkingError(RuntimeError):
-    """Error indicating to the user that something with setting up Dask and chunked fieldsets went wrong."""
-
-    pass
-
-
 class FieldSamplingError(RuntimeError):
     """Utility error class to propagate erroneous field sampling."""
 

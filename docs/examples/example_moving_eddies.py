@@ -250,6 +250,10 @@ def test_moving_eddies_file(mesh, tmpdir):
         assert pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(
+    reason="Calls fieldset.add_periodic_halo(). In v4, interpolation should work without adding halo."
+)
 def test_periodic_and_computeTimeChunk_eddies():
     data_folder = parcels.download_example_dataset("MovingEddies_data")
     filename = str(data_folder / "moving_eddies")

@@ -13,7 +13,6 @@ from parcels import (
     Variable,
 )
 from parcels.field import Field, VectorField
-from parcels.fieldfilebuffer import DaskFileBuffer
 from parcels.tools.converters import (
     GeographicPolar,
     UnitConverter,
@@ -235,7 +234,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir):
     fieldsetfull.write(filepath)
     indices = {"lon": indslon, "lat": indslat}
     indices_back = indices.copy()
-    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices, chunksize=None)
+    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices)
     assert indices == indices_back
     assert np.allclose(fieldsetsub.U.lon, fieldsetfull.U.grid.lon[indices["lon"]])
     assert np.allclose(fieldsetsub.U.lat, fieldsetfull.U.grid.lat[indices["lat"]])
@@ -311,8 +310,7 @@ def test_add_field_after_pset(fieldtype):
             fieldset.add_vector_field(vfield)
 
 
-@pytest.mark.parametrize("chunksize", ["auto", None])
-def test_fieldset_samegrids_from_file(tmpdir, chunksize):
+def test_fieldset_samegrids_from_file(tmpdir):
     """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset_data(100, 100)
     filepath1 = tmpdir.join("test_subsets_1")
@@ -326,17 +324,10 @@ def test_fieldset_samegrids_from_file(tmpdir, chunksize):
     files = {"U": ufiles, "V": vfiles}
     variables = {"U": "vozocrtx", "V": "vomecrty"}
     dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
-    fieldset = FieldSet.from_netcdf(
-        files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, chunksize=chunksize
-    )
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
 
-    if chunksize == "auto":
-        assert fieldset.gridset.size == 2
-        assert fieldset.U.grid != fieldset.V.grid
-    else:
-        assert fieldset.gridset.size == 1
-        assert fieldset.U.grid == fieldset.V.grid
-        assert fieldset.U.chunksize == fieldset.V.chunksize
+    assert fieldset.gridset.size == 1
+    assert fieldset.U.grid == fieldset.V.grid
 
 
 @pytest.mark.parametrize("gridtype", ["A", "C"])
@@ -353,8 +344,7 @@ def test_fieldset_dimlength1_cgrid(gridtype):
     assert success
 
 
-@pytest.mark.parametrize("chunksize", ["auto", None])
-def test_fieldset_diffgrids_from_file(tmpdir, chunksize):
+def test_fieldset_diffgrids_from_file(tmpdir):
     """Test for subsetting fieldset from file using indices dict."""
     filename = "test_subsets"
     data, dimensions = generate_fieldset_data(100, 100)
@@ -374,15 +364,12 @@ def test_fieldset_diffgrids_from_file(tmpdir, chunksize):
     variables = {"U": "vozocrtx", "V": "vomecrty"}
     dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
 
-    fieldset = FieldSet.from_netcdf(
-        files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, chunksize=chunksize
-    )
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
     assert fieldset.gridset.size == 2
     assert fieldset.U.grid != fieldset.V.grid
 
 
-@pytest.mark.parametrize("chunksize", ["auto", None])
-def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize):
+def test_fieldset_diffgrids_from_file_data(tmpdir):
     """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset_data(100, 100)
     filepath = tmpdir.join("test_subsets")
@@ -399,16 +386,13 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize):
     variables = {"U": "vozocrtx", "V": "vomecrty"}
     dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
     fieldset_file = FieldSet.from_netcdf(
-        files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, chunksize=chunksize
+        files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True
     )
 
     fieldset_file.add_field(field_data, "B")
     fields = [f for f in fieldset_file.get_fields() if isinstance(f, Field)]
     assert len(fields) == 3
-    if chunksize == "auto":
-        assert fieldset_file.gridset.size == 3
-    else:
-        assert fieldset_file.gridset.size == 2
+    assert fieldset_file.gridset.size == 2
     assert fieldset_file.U.grid != fieldset_file.B.grid
 
 
@@ -443,17 +427,6 @@ def test_fieldset_write_curvilinear(tmpdir):
 
     for var in ["lon", "lat", "data"]:
         assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
-
-
-def test_curv_fieldset_add_periodic_halo():
-    fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")
-    filenames = {"dx": fname, "dy": fname, "mesh_mask": fname}
-    variables = {"dx": "e1u", "dy": "e1v"}
-    dimensions = {"dx": {"lon": "glamu", "lat": "gphiu"}, "dy": {"lon": "glamu", "lat": "gphiu"}}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
-
-    with pytest.raises(NotImplementedError):
-        fieldset.add_periodic_halo(zonal=3, meridional=2)
 
 
 def addConst(particle, fieldset, time):  # pragma: no cover
@@ -552,40 +525,6 @@ def test_fieldset_write(tmp_zarrfile):
 
     da = xr.open_dataset(str(tmp_zarrfile).replace(".zarr", "_0005U.nc"))
     assert np.allclose(fieldset.U.data, da["U"].values, atol=1.0)
-
-
-@pytest.mark.parametrize(
-    "chunksize",
-    [
-        False,
-        "auto",
-        {"lat": ("y", 32), "lon": ("x", 32)},
-        {"time": ("time_counter", 1), "lat": ("y", 32), "lon": ("x", 32)},
-    ],
-)
-@pytest.mark.parametrize("deferLoad", [True, False])
-def test_from_netcdf_chunking(chunksize, deferLoad):
-    fnameU = str(TEST_DATA / "perlinfieldsU.nc")
-    fnameV = str(TEST_DATA / "perlinfieldsV.nc")
-    ufiles = [fnameU] * 4
-    vfiles = [fnameV] * 4
-    timestamps = np.arange(0, 4, 1) * 86400.0
-    timestamps = np.expand_dims(timestamps, 1)
-    files = {"U": ufiles, "V": vfiles}
-    variables = {"U": "vozocrtx", "V": "vomecrty"}
-    dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
-
-    fieldset = FieldSet.from_netcdf(
-        files,
-        variables,
-        dimensions,
-        timestamps=timestamps,
-        deferred_load=deferLoad,
-        allow_time_extrapolation=True,
-        chunksize=chunksize,
-    )
-    pset = ParticleSet.from_line(fieldset, size=1, pclass=Particle, start=(0.5, 0.5), finish=(0.5, 0.5))
-    pset.execute(AdvectionRK4, dt=1, runtime=1)
 
 
 @pytest.mark.parametrize("datetype", ["float", "datetime64"])
@@ -848,17 +787,3 @@ def test_deferredload_simplefield(direction, time_extrapolation, tmpdir):
     runtime = tdim * 2 if time_extrapolation else None
     pset.execute(SampleU, dt=direction, runtime=runtime)
     assert pset.p == tdim - 1 if time_extrapolation else tdim - 2
-
-
-def test_daskfieldfilebuffer_dimnames():
-    DaskFileBuffer.add_to_dimension_name_map_global({"lat": "nydim", "lon": "nxdim"})
-    fnameU = str(TEST_DATA / "perlinfieldsU.nc")
-    dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
-    fb = DaskFileBuffer(fnameU, dimensions, indices={})
-    assert ("nxdim" in fb._static_name_maps["lon"]) and ("ntdim" not in fb._static_name_maps["time"])
-    fb.add_to_dimension_name_map({"time": "ntdim", "depth": "nddim"})
-    assert ("nxdim" in fb._static_name_maps["lon"]) and ("ntdim" in fb._static_name_maps["time"])
-    assert fb._get_available_dims_indices_by_request() == {"time": None, "depth": None, "lat": 0, "lon": 1}
-    assert fb._get_available_dims_indices_by_namemap() == {"time": 0, "depth": 1, "lat": 2, "lon": 3}
-    assert fb._is_dimension_chunked("lon") is False
-    assert fb._is_dimension_in_chunksize_request("lon") == (-1, "", 0)

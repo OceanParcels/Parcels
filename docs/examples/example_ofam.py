@@ -33,7 +33,6 @@ def set_ofam_fieldset(deferred_load=True, use_xarray=False):
             dimensions,
             allow_time_extrapolation=True,
             deferred_load=deferred_load,
-            chunksize=False,
         )
 
 

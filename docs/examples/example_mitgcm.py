@@ -1,6 +1,8 @@
 from datetime import timedelta
 from pathlib import Path
 
+import pytest
+
 import parcels
 
 
@@ -49,6 +51,8 @@ def run_mitgcm_zonally_reentrant(path: Path):
     )
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="Test uses add_periodic_halo(). Update to not use it.")
 def test_mitgcm_output(tmpdir):
     def get_path() -> Path:
         return tmpdir / "MIT_particles.zarr"

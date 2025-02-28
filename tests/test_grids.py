@@ -149,6 +149,8 @@ def test_avoid_repeated_grids():
     assert fieldset.V.grid is not fieldset.U.grid
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="Calls fieldset.add_periodic_halo(). Should adapt this test case.")
 def test_multigrids_pointer():
     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)

@@ -13,8 +13,6 @@ class GridSet:
         grid = field.grid
         existing_grid = False
         for g in self.grids:
-            if field.chunksize == "auto":
-                break
             if g == grid:
                 existing_grid = True
                 break
@@ -27,12 +25,6 @@ class GridSet:
                 if gattr.shape != gridattr.shape or not np.allclose(gattr, gridattr):
                     sameGrid = False
                     break
-
-            if (g.chunksize != grid.chunksize) and (grid.chunksize not in [False, None]):
-                for dim in grid.chunksize:
-                    if grid.chunksize[dim][1] != g.chunksize[dim][1]:
-                        sameGrid &= False
-                        break
 
             if sameGrid:
                 existing_grid = True
