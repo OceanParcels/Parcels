@@ -9,6 +9,7 @@ import numpy as np
 import xarray as xr
 from scipy.spatial import KDTree
 from tqdm import tqdm
+import uxarray as ux
 
 from parcels._compat import MPI
 from parcels.application_kernels.advection import AdvectionRK4
@@ -30,7 +31,7 @@ from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_arra
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
 from parcels.tools.warnings import ParticleSetWarning
-
+from parcels.uxfieldset import UXFieldSet
 __all__ = ["ParticleSet"]
 
 
@@ -148,7 +149,10 @@ class ParticleSet:
             pid_orig = np.arange(lon.size)
 
         if depth is None:
-            mindepth = self.fieldset.gridset.dimrange("depth")[0]
+            if type(self.fieldset) == UXFieldSet:
+                mindepth = 0  # TO DO :  get the min depth from the fieldset.uxgrid
+            else:
+                mindepth = self.fieldset.gridset.dimrange("depth")[0]
             depth = np.ones(lon.size) * mindepth
         else:
             depth = convert_to_flat_array(depth)
@@ -163,11 +167,16 @@ class ParticleSet:
             raise NotImplementedError("If fieldset.time_origin is not a date, time of a particle must be a double")
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
-        if isinstance(fieldset.U, Field) and (not fieldset.U.allow_time_extrapolation):
-            _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.U.grid.time_full)
 
-        if lonlatdepth_dtype is None:
-            lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+        if type(fieldset) == UXFieldSet:
+            lonlatdepth_dtype = np.float32 # To do : get precision from fieldset
+        else:
+            if isinstance(fieldset.U, Field) and (not fieldset.U.allow_time_extrapolation):
+                _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.U.grid.time_full)
+
+            if lonlatdepth_dtype is None:
+                lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+
         assert lonlatdepth_dtype in [
             np.float32,
             np.float64,
@@ -191,7 +200,10 @@ class ParticleSet:
             self._repeatkwargs = kwargs
             self._repeatkwargs.pop("partition_function", None)
 
-        ngrids = fieldset.gridset.size
+        if type(fieldset) == UXFieldSet:
+            ngrids = 1
+        else:
+            ngrids = fieldset.gridset.size
 
         # Variables used for interaction kernels.
         inter_dist_horiz = None
