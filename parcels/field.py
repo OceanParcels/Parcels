@@ -893,15 +893,9 @@ class Field:
 
         (tau, _, eta, xsi, ti, _, yi, xi) = self._search_indices(time, z, y, x, particle=particle)
 
-        ctx = InterpolationContext2D(self.data, eta, xsi, ti, yi, xi)
-        f0 = f(ctx)
-
-        if ti < self.grid.tdim - 1 and time > self.grid.time[ti]:
-            ctx = InterpolationContext2D(self.data, eta, xsi, ti + 1, yi, xi)
-            f1 = f(ctx)
-            return f0 * (1 - tau) + f1 * tau
-        else:
-            return f0
+        interptime = True if (ti < self.grid.tdim - 1 and tau > 0) else False
+        ctx = InterpolationContext2D(self.data, tau, eta, xsi, ti, yi, xi, interptime=interptime)
+        return f(ctx)
 
     def _interpolator3D(self, time, z, y, x, particle=None):
         """Impelement 3D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
@@ -912,15 +906,11 @@ class Field:
 
         (tau, zeta, eta, xsi, ti, zi, yi, xi) = self._search_indices(time, z, y, x, particle=particle)
 
-        ctx = InterpolationContext3D(self.data, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
-        f0 = f(ctx)
-
-        if ti < self.grid.tdim - 1 and time > self.grid.time[ti]:
-            ctx = InterpolationContext3D(self.data, zeta, eta, xsi, ti + 1, zi, yi, xi, self.gridindexingtype)
-            f1 = f(ctx)
-            return f0 * (1 - tau) + f1 * tau
-        else:
-            return f0
+        interptime = True if (ti < self.grid.tdim - 1 and tau > 0) else False
+        ctx = InterpolationContext3D(
+            self.data, tau, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype, interptime=interptime
+        )
+        return f(ctx)
 
     def _spatial_interpolation(self, time, z, y, x, particle=None):
         """Interpolate spatial field values."""
