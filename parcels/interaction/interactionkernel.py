@@ -185,13 +185,6 @@ class InteractionKernel(BaseKernel):
                 stacklevel=2,
             )
 
-        if pset.fieldset is not None:
-            for g in pset.fieldset.gridset.grids:
-                if len(g._load_chunk) > g._chunk_not_loaded:  # not the case if a field in not called in the kernel
-                    g._load_chunk = np.where(
-                        g._load_chunk == g._chunk_loaded_touched, g._chunk_deprecated, g._load_chunk
-                    )
-
         self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion

@@ -75,9 +75,6 @@ class Grid:
         self._lonlat_minmax = np.array(
             [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32
         )
-        self._load_chunk: npt.NDArray = np.array([])
-        self.chunk_info = None
-        self.chunksize = None
         self.depth_field = None
 
     def __repr__(self):
@@ -245,26 +242,6 @@ class Grid:
             elif signdt < 0 and (self._ti > 0 or not f.allow_time_extrapolation):
                 nextTime_loc = self.time[0]
         return nextTime_loc
-
-    @property
-    def _chunk_not_loaded(self):
-        return 0
-
-    @property
-    def _chunk_loading_requested(self):
-        return 1
-
-    @property
-    def _chunk_loaded_touched(self):
-        return 2
-
-    @property
-    def _chunk_deprecated(self):
-        return 3
-
-    @property
-    def _chunk_loaded(self):
-        return [2, 3]
 
 
 class RectilinearGrid(Grid):
