@@ -88,9 +88,9 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim):
     lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
     depth = np.zeros(zdim, dtype=np.float32)
     time = np.zeros(tdim, dtype=np.float64)
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.ones((xdim, ydim), dtype=np.float32)
-    P = 2 * np.ones((int(xdim / 2), int(ydim / 2), zdim, tdim), dtype=np.float32)
+    U = np.zeros((ydim, xdim), dtype=np.float32)
+    V = np.ones((ydim, xdim), dtype=np.float32)
+    P = 2 * np.ones((tdim, zdim, int(ydim / 2), int(xdim / 2)), dtype=np.float32)
     data = {"U": U, "V": V, "P": P}
     dimensions = {
         "U": {"lat": lat, "lon": lon},
@@ -98,7 +98,7 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim):
         "P": {"lat": lat[0::2], "lon": lon[0::2], "depth": depth, "time": time},
     }
 
-    fieldset = FieldSet.from_data(data, dimensions, transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions)
     assert len(fieldset.U.data.shape) == 3
     assert len(fieldset.V.data.shape) == 3
     assert len(fieldset.P.data.shape) == 4
@@ -636,11 +636,11 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
 
     temp_vec = temp_func(time)
 
-    U = np.zeros((2, 2, 2, tsize), dtype=np.float32)
-    V = np.zeros((2, 2, 2, tsize), dtype=np.float32)
-    V[0, 0, 0, :] = 1e-5
-    W = np.zeros((2, 2, 2, tsize), dtype=np.float32)
-    temp = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    U = np.zeros((tsize, 2, 2, 2), dtype=np.float32)
+    V = np.zeros((tsize, 2, 2, 2), dtype=np.float32)
+    V[:, 0, 0, 0] = 1e-5
+    W = np.zeros((tsize, 2, 2, 2), dtype=np.float32)
+    temp = np.zeros((tsize, 2, 2, 2), dtype=np.float32)
     temp[:, :, :, :] = temp_vec
     D = np.ones((2, 2), dtype=np.float32)  # adding non-timevarying field
 
@@ -652,11 +652,11 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
         dimnames = {"lon": "lon", "lat": "lat", "depth": "depth", "time": "time"}
         ds = xr.Dataset(
             {
-                "Uxr": xr.DataArray(U, coords=coords, dims=("lon", "lat", "depth", "time")),
-                "Vxr": xr.DataArray(V, coords=coords, dims=("lon", "lat", "depth", "time")),
-                "Wxr": xr.DataArray(W, coords=coords, dims=("lon", "lat", "depth", "time")),
-                "Txr": xr.DataArray(temp, coords=coords, dims=("lon", "lat", "depth", "time")),
-                "Dxr": xr.DataArray(D, coords={"lat": lat, "lon": lon}, dims=("lon", "lat")),
+                "Uxr": xr.DataArray(U, coords=coords, dims=("time", "depth", "lat", "lon")),
+                "Vxr": xr.DataArray(V, coords=coords, dims=("time", "depth", "lat", "lon")),
+                "Wxr": xr.DataArray(W, coords=coords, dims=("time", "depth", "lat", "lon")),
+                "Txr": xr.DataArray(temp, coords=coords, dims=("time", "depth", "lat", "lon")),
+                "Dxr": xr.DataArray(D, coords={"lat": lat, "lon": lon}, dims=("lat", "lon")),
             }
         )
         fieldset = FieldSet.from_xarray_dataset(
@@ -664,13 +664,12 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
             variables,
             {"U": dimnames, "V": dimnames, "W": dimnames, "temp": dimnames, "D": {"lon": "lon", "lat": "lat"}},
             time_periodic=time_periodic,
-            transpose=True,
             allow_time_extrapolation=True,
         )
     else:
         data = {"U": U, "V": V, "W": W, "temp": temp, "D": D}
         fieldset = FieldSet.from_data(
-            data, dimensions, mesh="flat", time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True
+            data, dimensions, mesh="flat", time_periodic=time_periodic, allow_time_extrapolation=True
         )
 
     def sampleTemp(particle, fieldset, time):  # pragma: no cover

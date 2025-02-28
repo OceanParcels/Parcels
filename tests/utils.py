@@ -13,14 +13,14 @@ TEST_ROOT = PROJECT_ROOT / "tests"
 TEST_DATA = TEST_ROOT / "test_data"
 
 
-def create_fieldset_unit_mesh(xdim=20, ydim=20, mesh="flat", transpose=False) -> FieldSet:
+def create_fieldset_unit_mesh(xdim=20, ydim=20, mesh="flat") -> FieldSet:
     """Standard unit mesh fieldset with U and V equivalent to longitude and latitude."""
     lon = np.linspace(0.0, 1.0, xdim, dtype=np.float32)
     lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)
     data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
     dimensions = {"lat": lat, "lon": lon}
-    return FieldSet.from_data(data, dimensions, mesh=mesh, transpose=transpose)
+    return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
 def create_fieldset_zeros_3d(zdim=5, ydim=10, xdim=10):
@@ -58,7 +58,7 @@ def create_fieldset_global(xdim=200, ydim=100):
     U, V = np.meshgrid(lat, lon)
     data = {"U": U, "V": V}
     dimensions = {"lon": lon, "lat": lat}
-    return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    return FieldSet.from_data(data, dimensions, mesh="flat")
 
 
 def create_fieldset_zeros_conversion(mesh="spherical", xdim=200, ydim=100, mesh_conversion=1) -> FieldSet:

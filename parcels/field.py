@@ -108,13 +108,7 @@ class Field:
     name : str
         Name of the field
     data : np.ndarray
-        2D, 3D or 4D numpy array of field data.
-
-        1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
-           whichever is relevant for the dataset, use the flag transpose=True
-        2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
-           use the flag transpose=False
-        3. If data has any other shape, you first need to reorder it
+        2D, 3D or 4D numpy array of field data with shape [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
     lon : np.ndarray or list
         Longitude coordinates (numpy vector or array) of the field (only if grid is None)
     lat : np.ndarray or list
@@ -138,8 +132,6 @@ class Field:
         mesh and time_origin information. Can be constructed from any of the Grid objects
     fieldtype : str
         Type of Field to be used for UnitConverter (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-    transpose : bool
-        Transpose data to required (lon, lat) layout
     vmin : float
         Minimum allowed value on the field. Data below this value are set to zero
     vmax : float
@@ -183,7 +175,6 @@ class Field:
         mesh: Mesh = "flat",
         timestamps=None,
         fieldtype=None,
-        transpose: bool = False,
         vmin: float | None = None,
         vmax: float | None = None,
         cast_data_dtype: type[np.float32] | type[np.float64] | Literal["float32", "float64"] = "float32",
@@ -271,7 +262,7 @@ class Field:
             )
 
         if not self.grid.defer_load:
-            self.data = self._reshape(self.data, transpose)
+            self.data = self._reshape(self.data)
             self._loaded_time_indices = range(self.grid.tdim)
 
             # Hack around the fact that NaN and ridiculously large values
@@ -668,7 +659,7 @@ class Field:
                         errormessage = (
                             f"Field {filebuffer.name} expecting a data shape of [tdim={grid.tdim}, zdim={grid.zdim}, "
                             f"ydim={grid.ydim - 2 * grid.meridional_halo}, xdim={grid.xdim - 2 * grid.zonal_halo}] "
-                            f"but got shape {buffer_data.shape}. Flag transpose=True could help to reorder the data."
+                            f"but got shape {buffer_data.shape}."
                         )
                         assert buffer_data.shape[0] == grid.tdim, errormessage
                         assert buffer_data.shape[2] == grid.ydim - 2 * grid.meridional_halo, errormessage
@@ -768,7 +759,7 @@ class Field:
             **kwargs,
         )
 
-    def _reshape(self, data, transpose=False):
+    def _reshape(self, data):
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray, da.core.Array)):
             data = np.array(data)
@@ -777,8 +768,6 @@ class Field:
         elif (self.cast_data_dtype == np.float64) and (data.dtype != np.float64):
             data = data.astype(np.float64)
         lib = np if isinstance(data, np.ndarray) else da
-        if transpose:
-            data = lib.transpose(data)
         if self.grid._lat_flipped:
             data = lib.flip(data, axis=-2)
 
@@ -803,10 +792,7 @@ class Field:
             if len(data.shape) == 4:
                 data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
         if len(data.shape) == 4:
-            errormessage = (
-                f"Field {self.name} expecting a data shape of [tdim, zdim, ydim, xdim]. "
-                "Flag transpose=True could help to reorder the data."
-            )
+            errormessage = f"Field {self.name} expecting a data shape of [tdim, zdim, ydim, xdim]. "
             assert data.shape[0] == self.grid.tdim, errormessage
             assert data.shape[2] == self.grid.ydim - 2 * self.grid.meridional_halo, errormessage
             assert data.shape[3] == self.grid.xdim - 2 * self.grid.zonal_halo, errormessage
@@ -819,10 +805,7 @@ class Field:
                 self.grid.tdim,
                 self.grid.ydim - 2 * self.grid.meridional_halo,
                 self.grid.xdim - 2 * self.grid.zonal_halo,
-            ), (
-                f"Field {self.name} expecting a data shape of [tdim, ydim, xdim]. "
-                "Flag transpose=True could help to reorder the data."
-            )
+            ), f"Field {self.name} expecting a data shape of [tdim, ydim, xdim]. "
         if self.grid.meridional_halo > 0 or self.grid.zonal_halo > 0:
             data = self.add_periodic_halo(
                 zonal=self.grid.zonal_halo > 0,

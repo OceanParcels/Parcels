@@ -53,7 +53,7 @@ def create_fieldset_geometric(xdim=200, ydim=100):
     V *= 1000.0 * 1.852 * 60.0
     data = {"U": U, "V": V}
     dimensions = {"lon": lon, "lat": lat}
-    fieldset = FieldSet.from_data(data, dimensions, transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions)
     fieldset.U.units = Geographic()
     fieldset.V.units = Geographic()
     return fieldset
@@ -78,7 +78,7 @@ def create_fieldset_geometric_polar(xdim=200, ydim=100):
     V *= 1000.0 * 1.852 * 60.0
     data = {"U": U, "V": V}
     dimensions = {"lon": lon, "lat": lat}
-    return FieldSet.from_data(data, dimensions, mesh="spherical", transpose=True)
+    return FieldSet.from_data(data, dimensions, mesh="spherical")
 
 
 @pytest.fixture
@@ -149,18 +149,17 @@ def test_pset_from_field():
     for x in range(xdim):
         startfield[x, :] = x
     data = {
-        "U": np.zeros((xdim, ydim), dtype=np.float32),
-        "V": np.zeros((xdim, ydim), dtype=np.float32),
+        "U": np.zeros((ydim, xdim), dtype=np.float32),
+        "V": np.zeros((ydim, xdim), dtype=np.float32),
         "start": startfield,
     }
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
 
     densfield = Field(
         name="densfield",
-        data=np.zeros((xdim + 1, ydim + 1), dtype=np.float32),
+        data=np.zeros((ydim + 1, xdim + 1), dtype=np.float32),
         lon=np.linspace(-1.0 / (xdim * 2), 1.0 + 1.0 / (xdim * 2), xdim + 1, dtype=np.float32),
         lat=np.linspace(-1.0 / (ydim * 2), 1.0 + 1.0 / (ydim * 2), ydim + 1, dtype=np.float32),
-        transpose=True,
     )
 
     fieldset.add_field(densfield)
@@ -175,8 +174,8 @@ def test_nearest_neighbor_interpolation2D():
     npart = 81
     dims = (2, 2)
     dimensions = {
-        "lon": np.linspace(0.0, 1.0, dims[0], dtype=np.float32),
-        "lat": np.linspace(0.0, 1.0, dims[1], dtype=np.float32),
+        "lon": np.linspace(0.0, 1.0, dims[1], dtype=np.float32),
+        "lat": np.linspace(0.0, 1.0, dims[0], dtype=np.float32),
     }
     data = {
         "U": np.zeros(dims, dtype=np.float32),
@@ -184,7 +183,7 @@ def test_nearest_neighbor_interpolation2D():
         "P": np.zeros(dims, dtype=np.float32),
     }
     data["P"][0, 1] = 1.0
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     fieldset.P.interp_method = "nearest"
     xv, yv = np.meshgrid(np.linspace(0.0, 1.0, int(np.sqrt(npart))), np.linspace(0.0, 1.0, int(np.sqrt(npart))))
     pset = ParticleSet(fieldset, pclass=pclass(), lon=xv.flatten(), lat=yv.flatten())
@@ -197,9 +196,9 @@ def test_nearest_neighbor_interpolation3D():
     npart = 81
     dims = (2, 2, 2)
     dimensions = {
-        "lon": np.linspace(0.0, 1.0, dims[0], dtype=np.float32),
+        "lon": np.linspace(0.0, 1.0, dims[2], dtype=np.float32),
         "lat": np.linspace(0.0, 1.0, dims[1], dtype=np.float32),
-        "depth": np.linspace(0.0, 1.0, dims[2], dtype=np.float32),
+        "depth": np.linspace(0.0, 1.0, dims[0], dtype=np.float32),
     }
     data = {
         "U": np.zeros(dims, dtype=np.float32),
@@ -207,7 +206,7 @@ def test_nearest_neighbor_interpolation3D():
         "P": np.zeros(dims, dtype=np.float32),
     }
     data["P"][0, 1, 1] = 1.0
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     fieldset.P.interp_method = "nearest"
     xv, yv = np.meshgrid(np.linspace(0, 1.0, int(np.sqrt(npart))), np.linspace(0, 1.0, int(np.sqrt(npart))))
     # combine a pset at 0m with pset at 1m, as meshgrid does not do 3D
@@ -394,7 +393,7 @@ def test_fieldset_sample_particle(lat_flip):
     data = {"U": U, "V": V}
     dimensions = {"lon": lon, "lat": lat}
 
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
 
     lon = np.linspace(-170, 170, npart)
     lat = np.linspace(-80, 80, npart)
@@ -468,9 +467,9 @@ def test_meridionalflow_spherical():
         "lon": np.linspace(-180, 180, xdim, dtype=np.float32),
         "lat": np.linspace(-90, 90, ydim, dtype=np.float32),
     }
-    data = {"U": np.zeros([xdim, ydim]), "V": maxvel * np.ones([xdim, ydim])}
+    data = {"U": np.zeros([ydim, xdim]), "V": maxvel * np.ones([ydim, xdim])}
 
-    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical")
 
     lonstart = [0, 45]
     latstart = [0, 45]
@@ -498,9 +497,9 @@ def test_zonalflow_spherical():
         "lon": np.linspace(-180, 180, xdim, dtype=np.float32),
         "lat": np.linspace(-90, 90, ydim, dtype=np.float32),
     }
-    data = {"U": maxvel * np.ones([xdim, ydim]), "V": np.zeros([xdim, ydim]), "P": p_fld * np.ones([xdim, ydim])}
+    data = {"U": maxvel * np.ones([ydim, xdim]), "V": np.zeros([ydim, xdim]), "P": p_fld * np.ones([ydim, xdim])}
 
-    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical")
 
     lonstart = [0, 45]
     latstart = [0, 45]
@@ -531,13 +530,13 @@ def test_random_field():
         "lat": np.linspace(0.0, 1.0, ydim, dtype=np.float32),
     }
     data = {
-        "U": np.zeros((xdim, ydim), dtype=np.float32),
-        "V": np.zeros((xdim, ydim), dtype=np.float32),
-        "P": np.random.uniform(0, 1.0, size=(xdim, ydim)),
-        "start": np.ones((xdim, ydim), dtype=np.float32),
+        "U": np.zeros((ydim, xdim), dtype=np.float32),
+        "V": np.zeros((ydim, xdim), dtype=np.float32),
+        "P": np.random.uniform(0, 1.0, size=(ydim, xdim)),
+        "start": np.ones((ydim, xdim), dtype=np.float32),
     }
 
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=pclass(), start_field=fieldset.start)
     pset.execute(SampleP, endtime=1.0, dt=1.0)
     sampled = pset.p
@@ -554,14 +553,12 @@ def test_sampling_out_of_bounds_time(allow_time_extrapolation):
         "time": np.linspace(0.0, 1.0, tdim, dtype=np.float64),
     }
     data = {
-        "U": np.zeros((xdim, ydim, tdim), dtype=np.float32),
-        "V": np.zeros((xdim, ydim, tdim), dtype=np.float32),
-        "P": np.ones((xdim, ydim, 1), dtype=np.float32) * dimensions["time"],
+        "U": np.zeros((tdim, ydim, xdim), dtype=np.float32),
+        "V": np.zeros((tdim, ydim, xdim), dtype=np.float32),
+        "P": np.ones((1, ydim, xdim), dtype=np.float32) * dimensions["time"],
     }
 
-    fieldset = FieldSet.from_data(
-        data, dimensions, mesh="flat", allow_time_extrapolation=allow_time_extrapolation, transpose=True
-    )
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", allow_time_extrapolation=allow_time_extrapolation)
     pset = ParticleSet(fieldset, pclass=pclass(), lon=[0.5], lat=[0.5], time=-1.0)
     if allow_time_extrapolation:
         pset.execute(SampleP, endtime=-0.9, dt=0.1)

@@ -23,7 +23,7 @@ def test_fieldset_warnings():
     lon = [0, 1, 5, 10]
     u = [[1, 1, 1, 1] for _ in range(4)]
     v = [[1, 1, 1, 1] for _ in range(4)]
-    fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat}, transpose=True)
+    fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat})
     with pytest.warns(FieldSetWarning):
         fieldset.add_periodic_halo(meridional=True, zonal=True)
 
@@ -33,7 +33,7 @@ def test_fieldset_warnings():
     u = [[1, 1, 1, 1] for _ in range(4)]
     v = [[1, 1, 1, 1] for _ in range(4)]
     with pytest.warns(FieldSetWarning):
-        fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat}, transpose=True)
+        fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat})
 
     filenames = str(TEST_DATA / "POPtestdata_time.nc")
     variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
@@ -75,7 +75,7 @@ def test_kernel_warnings():
     lon = [0, 1, 5, 10]
     u = [[1, 1, 1, 1] for _ in range(4)]
     v = [[1, 1, 1, 1] for _ in range(4)]
-    fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat}, transpose=True)
+    fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat})
     pset = ParticleSet(
         fieldset=fieldset,
         pclass=Particle.add_variable("next_dt", dtype=np.float32, initial=1),

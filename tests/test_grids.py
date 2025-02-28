@@ -47,24 +47,24 @@ def test_multi_structured_grids():
     time_g1 = np.linspace(0.0, 1000.0, 2, dtype=np.float64)
     grid_1 = RectilinearZGrid(lon_g1, lat_g1, time=time_g1)
 
-    u_data = np.ones((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
+    u_data = np.ones((time_g0.size, lat_g0.size, lon_g0.size), dtype=np.float32)
     u_data = 2 * u_data
-    u_field = Field("U", u_data, grid=grid_0, transpose=True)
+    u_field = Field("U", u_data, grid=grid_0)
 
-    temp0_data = np.empty((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
+    temp0_data = np.empty((time_g0.size, lat_g0.size, lon_g0.size), dtype=np.float32)
     for i in range(lon_g0.size):
         for j in range(lat_g0.size):
-            temp0_data[i, j, :] = temp_func(lon_g0[i], lat_g0[j])
-    temp0_field = Field("temp0", temp0_data, grid=grid_0, transpose=True)
+            temp0_data[:, j, i] = temp_func(lon_g0[i], lat_g0[j])
+    temp0_field = Field("temp0", temp0_data, grid=grid_0)
 
-    v_data = np.zeros((lon_g1.size, lat_g1.size, time_g1.size), dtype=np.float32)
-    v_field = Field("V", v_data, grid=grid_1, transpose=True)
+    v_data = np.zeros((time_g1.size, lat_g1.size, lon_g1.size), dtype=np.float32)
+    v_field = Field("V", v_data, grid=grid_1)
 
-    temp1_data = np.empty((lon_g1.size, lat_g1.size, time_g1.size), dtype=np.float32)
+    temp1_data = np.empty((time_g1.size, lat_g1.size, lon_g1.size), dtype=np.float32)
     for i in range(lon_g1.size):
         for j in range(lat_g1.size):
             temp1_data[i, j, :] = temp_func(lon_g1[i], lat_g1[j])
-    temp1_field = Field("temp1", temp1_data, grid=grid_1, transpose=True)
+    temp1_field = Field("temp1", temp1_data, grid=grid_1)
 
     other_fields = {}
     other_fields["temp0"] = temp0_field
@@ -132,13 +132,13 @@ def test_avoid_repeated_grids():
     time_g1 = np.linspace(0, 1000, 2, dtype=np.float64)
     grid_1 = RectilinearZGrid(lon_g1, lat_g1, time=time_g1)
 
-    u_data = np.zeros((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
-    u_field = Field("U", u_data, grid=grid_0, transpose=True)
+    u_data = np.zeros((time_g0.size, lat_g0.size, lon_g0.size), dtype=np.float32)
+    u_field = Field("U", u_data, grid=grid_0)
 
-    v_data = np.zeros((lon_g1.size, lat_g1.size, time_g1.size), dtype=np.float32)
-    v_field = Field("V", v_data, grid=grid_1, transpose=True)
+    v_data = np.zeros((time_g1.size, lat_g1.size, lon_g1.size), dtype=np.float32)
+    v_field = Field("V", v_data, grid=grid_1)
 
-    temp0_field = Field("temp", u_data, lon=lon_g0, lat=lat_g0, time=time_g0, transpose=True)
+    temp0_field = Field("temp", u_data, lon=lon_g0, lat=lat_g0, time=time_g0)
 
     other_fields = {}
     other_fields["temp"] = temp0_field
@@ -345,9 +345,9 @@ def test_curvilinear_grids():
 
     u_data = np.ones((2, y.size, x.size), dtype=np.float32)
     v_data = np.zeros((2, y.size, x.size), dtype=np.float32)
-    u_data[0, :, :] = lon[:, :] + lat[:, :]
-    u_field = Field("U", u_data, grid=grid, transpose=False)
-    v_field = Field("V", v_data, grid=grid, transpose=False)
+    u_data[:, :, 0] = lon[:, :] + lat[:, :]
+    u_field = Field("U", u_data, grid=grid)
+    v_field = Field("V", v_data, grid=grid)
     fieldset = FieldSet(u_field, v_field)
 
     def sampleSpeed(particle, fieldset, time):  # pragma: no cover
