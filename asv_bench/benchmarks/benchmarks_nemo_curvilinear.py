@@ -8,7 +8,8 @@ import parcels
 
 # ptype = {"scipy": parcels.ScipyParticle, "jit": parcels.JITParticle}
 # advection = {"RK4": parcels.AdvectionRK4, "AA": parcels.AdvectionAnalytical}
-path_nemo = "~/Documents/PhD/projects/2025-02_parcels_benchmarking/NemoCurvilinear_data"
+# path_nemo = "~/Documents/PhD/projects/2025-02_parcels_benchmarking/NemoCurvilinear_data"
+path_nemo = parcels.download_example_dataset("NemoCurvilinear_data")
 
 class NemoCurvilinearJIT:
     particle_type = parcels.JITParticle
