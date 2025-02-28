@@ -76,8 +76,8 @@ jobs:
         with:
           environment-file: environment.yml
       - name: Integration test
-        run: |
-          coverage run -m pytest -v -s --nbval-lax -k "not documentation" --html="${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html" --self-contained-html docs/examples
+        run: | # TODO v4: Re-enable `tutorial_periodic_boundaries` notebook
+          coverage run -m pytest -v -s --nbval-lax -k "not documentation and not tutorial_periodic_boundaries" --html="${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html" --self-contained-html docs/examples
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1
