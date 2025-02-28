@@ -397,17 +397,6 @@ def test_fieldset_write_curvilinear(tmpdir):
         assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
 
 
-def test_curv_fieldset_add_periodic_halo():
-    fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")
-    filenames = {"dx": fname, "dy": fname, "mesh_mask": fname}
-    variables = {"dx": "e1u", "dy": "e1v"}
-    dimensions = {"dx": {"lon": "glamu", "lat": "gphiu"}, "dy": {"lon": "glamu", "lat": "gphiu"}}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
-
-    with pytest.raises(NotImplementedError):
-        fieldset.add_periodic_halo(zonal=3, meridional=2)
-
-
 def addConst(particle, fieldset, time):  # pragma: no cover
     particle.lon = particle.lon + fieldset.movewest + fieldset.moveeast
 

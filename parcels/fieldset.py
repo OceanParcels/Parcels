@@ -1358,26 +1358,6 @@ class FieldSet:
         """
         setattr(self, name, value)
 
-    def add_periodic_halo(self, zonal=False, meridional=False, halosize=5):
-        """Add a 'halo' to all :class:`parcels.field.Field` objects in a FieldSet,
-        through extending the Field (and lon/lat) by copying a small portion
-        of the field on one side of the domain to the other.
-
-        Parameters
-        ----------
-        zonal : bool
-            Create a halo in zonal direction (Default value = False)
-        meridional : bool
-            Create a halo in meridional direction (Default value = False)
-        halosize : int
-            size of the halo (in grid points). Default is 5 grid points
-        """
-        for grid in self.gridset.grids:
-            grid.add_periodic_halo(zonal, meridional, halosize)
-        for value in self.__dict__.values():
-            if isinstance(value, Field):
-                value.add_periodic_halo(zonal, meridional, halosize)
-
     def write(self, filename):
         """Write FieldSet to NetCDF file using NEMO convention.
 
@@ -1445,9 +1425,7 @@ class FieldSet:
                     zd = g.zdim - 1
                 else:
                     zd = g.zdim
-                data = np.empty(
-                    (g.tdim, zd, g.ydim - 2 * g.meridional_halo, g.xdim - 2 * g.zonal_halo), dtype=np.float32
-                )
+                data = np.empty((g.tdim, zd, g.ydim, g.xdim), dtype=np.float32)
                 f._loaded_time_indices = range(2)
                 for tind in f._loaded_time_indices:
                     for fb in f.filebuffers:
@@ -1466,9 +1444,7 @@ class FieldSet:
                     zd = g.zdim - 1
                 else:
                     zd = g.zdim
-                data = np.empty(
-                    (g.tdim, zd, g.ydim - 2 * g.meridional_halo, g.xdim - 2 * g.zonal_halo), dtype=np.float32
-                )
+                data = np.empty((g.tdim, zd, g.ydim, g.xdim), dtype=np.float32)
                 if signdt >= 0:
                     f._loaded_time_indices = [1]
                     if f.filebuffers[0] is not None:

@@ -17,17 +17,6 @@ from parcels import (
 from tests.utils import TEST_DATA
 
 
-def test_fieldset_warning_halo():
-    # halo with inconsistent boundaries
-    lat = [0, 1, 5, 10]
-    lon = [0, 1, 5, 10]
-    u = [[1, 1, 1, 1] for _ in range(4)]
-    v = [[1, 1, 1, 1] for _ in range(4)]
-    fieldset = FieldSet.from_data(data={"U": u, "V": v}, dimensions={"lon": lon, "lat": lat}, transpose=True)
-    with pytest.warns(FieldSetWarning, match="The zonal halo is located at the east and west of current grid.*"):
-        fieldset.add_periodic_halo(meridional=True, zonal=True)
-
-
 def test_fieldset_warning_latflipped():
     # flipping lats warning
     lat = [0, 1, 5, -5]
