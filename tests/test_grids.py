@@ -63,7 +63,7 @@ def test_multi_structured_grids():
     temp1_data = np.empty((time_g1.size, lat_g1.size, lon_g1.size), dtype=np.float32)
     for i in range(lon_g1.size):
         for j in range(lat_g1.size):
-            temp1_data[i, j, :] = temp_func(lon_g1[i], lat_g1[j])
+            temp1_data[:, j, i] = temp_func(lon_g1[i], lat_g1[j])
     temp1_field = Field("temp1", temp1_data, grid=grid_1)
 
     other_fields = {}
@@ -347,7 +347,7 @@ def test_curvilinear_grids():
 
     u_data = np.ones((2, y.size, x.size), dtype=np.float32)
     v_data = np.zeros((2, y.size, x.size), dtype=np.float32)
-    u_data[:, :, 0] = lon[:, :] + lat[:, :]
+    u_data[0, :, :] = lon[:, :] + lat[:, :]
     u_field = Field("U", u_data, grid=grid)
     v_field = Field("V", v_data, grid=grid)
     fieldset = FieldSet(u_field, v_field)
