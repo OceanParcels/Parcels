@@ -19,7 +19,6 @@ class NetcdfFileBuffer:
         timestamp=None,
         interp_method: InterpMethodOption = "linear",
         data_full_zdim=None,
-        cast_data_dtype=np.float32,
         gridindexingtype="nemo",
         **kwargs,
     ):
@@ -28,7 +27,6 @@ class NetcdfFileBuffer:
         self.indices = indices
         self.dataset = None
         self.timestamp = timestamp
-        self.cast_data_dtype = cast_data_dtype
         self.ti = None
         self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
@@ -140,10 +138,10 @@ class NetcdfFileBuffer:
             else:
                 return np.empty((0, len(self.indices["depth"]), len(self.indices["lat"]), len(self.indices["lon"])))
 
-    def _check_extend_depth(self, data, di):
+    def _check_extend_depth(self, data, dim):
         return (
             self.indices["depth"][-1] == self.data_full_zdim - 1
-            and data.shape[di] == self.data_full_zdim - 1
+            and data.shape[dim] == self.data_full_zdim - 1
             and self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"]
         )
 
@@ -192,8 +190,7 @@ class NetcdfFileBuffer:
     def data_access(self):
         data = self.dataset[self.name]
         ti = range(data.shape[0]) if self.ti is None else self.ti
-        data = self._apply_indices(data, ti)
-        return np.array(data, dtype=self.cast_data_dtype)
+        return np.array(self._apply_indices(data, ti))
 
     @property
     def time(self):
