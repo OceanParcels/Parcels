@@ -48,7 +48,7 @@ def create_fieldset_geometric(xdim=200, ydim=100):
     """Standard earth fieldset with U and V equivalent to lon/lat in m."""
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
-    U, V = np.meshgrid(lat, lon)
+    V, U = np.meshgrid(lon, lat)
     U *= 1000.0 * 1.852 * 60.0
     V *= 1000.0 * 1.852 * 60.0
     data = {"U": U, "V": V}
@@ -70,10 +70,10 @@ def create_fieldset_geometric_polar(xdim=200, ydim=100):
     """
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
-    U, V = np.meshgrid(lat, lon)
+    V, U = np.meshgrid(lon, lat)
     # Apply inverse of pole correction to U
     for i, y in enumerate(lat):
-        U[:, i] *= cos(y * pi / 180)
+        U[i, :] *= cos(y * pi / 180)
     U *= 1000.0 * 1.852 * 60.0
     V *= 1000.0 * 1.852 * 60.0
     data = {"U": U, "V": V}
@@ -147,9 +147,9 @@ def test_pset_from_field():
         "lon": np.linspace(0.0, 1.0, xdim, dtype=np.float32),
         "lat": np.linspace(0.0, 1.0, ydim, dtype=np.float32),
     }
-    startfield = np.ones((xdim, ydim), dtype=np.float32)
+    startfield = np.ones((ydim, xdim), dtype=np.float32)
     for x in range(xdim):
-        startfield[x, :] = x
+        startfield[:, x] = x
     data = {
         "U": np.zeros((ydim, xdim), dtype=np.float32),
         "V": np.zeros((ydim, xdim), dtype=np.float32),
@@ -166,7 +166,7 @@ def test_pset_from_field():
 
     fieldset.add_field(densfield)
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=Particle, start_field=fieldset.start)
-    pdens = np.histogram2d(pset.lon, pset.lat, bins=[np.linspace(0.0, 1.0, xdim + 1), np.linspace(0.0, 1.0, ydim + 1)])[
+    pdens = np.histogram2d(pset.lat, pset.lon, bins=[np.linspace(0.0, 1.0, ydim + 1), np.linspace(0.0, 1.0, xdim + 1)])[
         0
     ]
     assert np.allclose(pdens / sum(pdens.flatten()), startfield / sum(startfield.flatten()), atol=1e-2)
@@ -184,7 +184,7 @@ def test_nearest_neighbor_interpolation2D():
         "V": np.zeros(dims, dtype=np.float32),
         "P": np.zeros(dims, dtype=np.float32),
     }
-    data["P"][0, 1] = 1.0
+    data["P"][1, 0] = 1.0
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     fieldset.P.interp_method = "nearest"
     xv, yv = np.meshgrid(np.linspace(0.0, 1.0, int(np.sqrt(npart))), np.linspace(0.0, 1.0, int(np.sqrt(npart))))
@@ -207,7 +207,7 @@ def test_nearest_neighbor_interpolation3D():
         "V": np.zeros(dims, dtype=np.float32),
         "P": np.zeros(dims, dtype=np.float32),
     }
-    data["P"][0, 1, 1] = 1.0
+    data["P"][1, 1, 0] = 1.0
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     fieldset.P.interp_method = "nearest"
     xv, yv = np.meshgrid(np.linspace(0, 1.0, int(np.sqrt(npart))), np.linspace(0, 1.0, int(np.sqrt(npart))))
@@ -391,7 +391,7 @@ def test_fieldset_sample_particle(lat_flip):
         lat = np.linspace(90, -90, 100, dtype=np.float32)
     else:
         lat = np.linspace(-90, 90, 100, dtype=np.float32)
-    U, V = np.meshgrid(lat, lon)
+    V, U = np.meshgrid(lon, lat)
     data = {"U": U, "V": V}
     dimensions = {"lon": lon, "lat": lat}
 
@@ -557,7 +557,7 @@ def test_sampling_out_of_bounds_time(allow_time_extrapolation):
     data = {
         "U": np.zeros((tdim, ydim, xdim), dtype=np.float32),
         "V": np.zeros((tdim, ydim, xdim), dtype=np.float32),
-        "P": np.ones((1, ydim, xdim), dtype=np.float32) * dimensions["time"],
+        "P": np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * dimensions["time"]),
     }
 
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", allow_time_extrapolation=allow_time_extrapolation)
@@ -588,6 +588,9 @@ def test_sampling_out_of_bounds_time(allow_time_extrapolation):
     else:
         with pytest.raises(RuntimeError):
             pset.execute(SampleP, runtime=0.1, dt=0.1)
+
+
+test_sampling_out_of_bounds_time(True)
 
 
 def test_sampling_3DCROCO():

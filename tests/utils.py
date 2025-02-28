@@ -17,7 +17,7 @@ def create_fieldset_unit_mesh(xdim=20, ydim=20, mesh="flat") -> FieldSet:
     """Standard unit mesh fieldset with U and V equivalent to longitude and latitude."""
     lon = np.linspace(0.0, 1.0, xdim, dtype=np.float32)
     lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
-    U, V = np.meshgrid(lat, lon)
+    V, U = np.meshgrid(lon, lat)
     data = {"U": np.array(U, dtype=np.float32), "V": np.array(V, dtype=np.float32)}
     dimensions = {"lat": lat, "lon": lon}
     return FieldSet.from_data(data, dimensions, mesh=mesh)
@@ -55,7 +55,7 @@ def create_fieldset_global(xdim=200, ydim=100):
     """Standard fieldset spanning the earth's coordinates with U and V equivalent to longitude and latitude in deg."""
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
-    U, V = np.meshgrid(lat, lon)
+    V, U = np.meshgrid(lon, lat)
     data = {"U": U, "V": V}
     dimensions = {"lon": lon, "lat": lat}
     return FieldSet.from_data(data, dimensions, mesh="flat")
