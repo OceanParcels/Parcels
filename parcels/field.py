@@ -39,7 +39,7 @@ from parcels.tools.statuscodes import (
     TimeExtrapolationError,
     _raise_field_out_of_bound_error,
 )
-from parcels.tools.warnings import FieldSetWarning, _deprecated_param_netcdf_decodewarning
+from parcels.tools.warnings import FieldSetWarning
 
 from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear
 from .fieldfilebuffer import (
@@ -187,10 +187,6 @@ class Field:
         to_write: bool = False,
         **kwargs,
     ):
-        if kwargs.get("netcdf_decodewarning") is not None:
-            _deprecated_param_netcdf_decodewarning()
-            kwargs.pop("netcdf_decodewarning")
-
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
@@ -359,9 +355,7 @@ class Field:
             return filenames
 
     @staticmethod
-    def _collect_timeslices(timestamps, data_filenames, dimensions, indices, netcdf_engine, netcdf_decodewarning=None):
-        if netcdf_decodewarning is not None:
-            _deprecated_param_netcdf_decodewarning()
+    def _collect_timeslices(timestamps, data_filenames, dimensions, indices, netcdf_engine):
         if timestamps is not None:
             dataFiles = []
             for findex in range(len(data_filenames)):
@@ -444,10 +438,6 @@ class Field:
         gridindexingtype : str
             The type of gridindexing. Either 'nemo' (default), 'mitgcm', 'mom5', 'pop', or 'croco' are supported.
             See also the Grid indexing documentation on oceanparcels.org
-        netcdf_decodewarning : bool
-            (DEPRECATED - v3.1.0) Whether to show a warning if there is a problem decoding the netcdf files.
-            Default is True, but in some cases where these warnings are expected, it may be useful to silence them
-            by setting netcdf_decodewarning=False.
         grid :
              (Default value = None)
         **kwargs :
@@ -460,10 +450,6 @@ class Field:
         * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
 
         """
-        if kwargs.get("netcdf_decodewarning") is not None:
-            _deprecated_param_netcdf_decodewarning()
-            kwargs.pop("netcdf_decodewarning")
-
         # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
             if isinstance(filenames, list):
