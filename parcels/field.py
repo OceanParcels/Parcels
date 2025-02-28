@@ -629,12 +629,12 @@ class Field:
                     if len(buffer_data.shape) == 4:
                         errormessage = (
                             f"Field {filebuffer.name} expecting a data shape of [tdim={grid.tdim}, zdim={grid.zdim}, "
-                            f"ydim={grid.ydim - 2 * grid.meridional_halo}, xdim={grid.xdim - 2 * grid.zonal_halo}] "
+                            f"ydim={grid.ydim}, xdim={grid.xdim }] "
                             f"but got shape {buffer_data.shape}. Flag transpose=True could help to reorder the data."
                         )
                         assert buffer_data.shape[0] == grid.tdim, errormessage
-                        assert buffer_data.shape[2] == grid.ydim - 2 * grid.meridional_halo, errormessage
-                        assert buffer_data.shape[3] == grid.xdim - 2 * grid.zonal_halo, errormessage
+                        assert buffer_data.shape[2] == grid.ydim, errormessage
+                        assert buffer_data.shape[3] == grid.xdim, errormessage
 
                     if len(buffer_data.shape) == 2:
                         data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape), ())))
@@ -760,8 +760,8 @@ class Field:
                 "Flag transpose=True could help to reorder the data."
             )
             assert data.shape[0] == self.grid.tdim, errormessage
-            assert data.shape[2] == self.grid.ydim - 2 * self.grid.meridional_halo, errormessage
-            assert data.shape[3] == self.grid.xdim - 2 * self.grid.zonal_halo, errormessage
+            assert data.shape[2] == self.grid.ydim, errormessage
+            assert data.shape[3] == self.grid.xdim, errormessage
             if self.gridindexingtype == "pop":
                 assert data.shape[1] == self.grid.zdim or data.shape[1] == self.grid.zdim - 1, errormessage
             else:
@@ -769,19 +769,13 @@ class Field:
         else:
             assert data.shape == (
                 self.grid.tdim,
-                self.grid.ydim - 2 * self.grid.meridional_halo,
-                self.grid.xdim - 2 * self.grid.zonal_halo,
+                self.grid.ydim,
+                self.grid.xdim,
             ), (
                 f"Field {self.name} expecting a data shape of [tdim, ydim, xdim]. "
                 "Flag transpose=True could help to reorder the data."
             )
-        if self.grid.meridional_halo > 0 or self.grid.zonal_halo > 0:
-            data = self.add_periodic_halo(
-                zonal=self.grid.zonal_halo > 0,
-                meridional=self.grid.meridional_halo > 0,
-                halosize=max(self.grid.meridional_halo, self.grid.zonal_halo),
-                data=data,
-            )
+
         return data
 
     def set_scaling_factor(self, factor):
@@ -934,54 +928,6 @@ class Field:
             return self.units.to_target(value, z, y, x)
         else:
             return value
-
-    def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
-        """Add a 'halo' to all Fields in a FieldSet.
-
-        Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
-        by copying a small portion of the field on one side of the domain to the other.
-        Before adding a periodic halo to the Field, it has to be added to the Grid on which the Field depends
-
-        See `this tutorial <../examples/tutorial_periodic_boundaries.ipynb>`__
-        for a detailed explanation on how to set up periodic boundaries
-
-        Parameters
-        ----------
-        zonal : bool
-            Create a halo in zonal direction.
-        meridional : bool
-            Create a halo in meridional direction.
-        halosize : int
-            Size of the halo (in grid points). Default is 5 grid points
-        data :
-            if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned (Default value = None)
-        """
-        dataNone = not isinstance(data, np.ndarray)
-        if self.grid.defer_load and dataNone:
-            return
-        data = self.data if dataNone else data
-        if zonal:
-            if len(data.shape) == 3:
-                data = np.concatenate((data[:, :, -halosize:], data, data[:, :, 0:halosize]), axis=len(data.shape) - 1)
-                assert data.shape[2] == self.grid.xdim, "Third dim must be x."
-            else:
-                data = np.concatenate(
-                    (data[:, :, :, -halosize:], data, data[:, :, :, 0:halosize]), axis=len(data.shape) - 1
-                )
-                assert data.shape[3] == self.grid.xdim, "Fourth dim must be x."
-        if meridional:
-            if len(data.shape) == 3:
-                data = np.concatenate((data[:, -halosize:, :], data, data[:, 0:halosize, :]), axis=len(data.shape) - 2)
-                assert data.shape[1] == self.grid.ydim, "Second dim must be y."
-            else:
-                data = np.concatenate(
-                    (data[:, :, -halosize:, :], data, data[:, :, 0:halosize, :]), axis=len(data.shape) - 2
-                )
-                assert data.shape[2] == self.grid.ydim, "Third dim must be y."
-        if dataNone:
-            self.data = data
-        else:
-            return data
 
     def write(self, filename, varname=None):
         """Write a :class:`Field` to a netcdf file.

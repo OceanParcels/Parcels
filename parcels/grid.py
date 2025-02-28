@@ -68,8 +68,6 @@ class Grid:
         assert_valid_mesh(mesh)
         self._mesh = mesh
         self._zonal_periodic = False
-        self._zonal_halo = 0
-        self._meridional_halo = 0
         self._lat_flipped = False
         self._defer_load = False
         self._lonlat_minmax = np.array(
@@ -109,10 +107,6 @@ class Grid:
         return self._mesh
 
     @property
-    def meridional_halo(self):
-        return self._meridional_halo
-
-    @property
     def lonlat_minmax(self):
         return self._lonlat_minmax
 
@@ -123,10 +117,6 @@ class Grid:
     @property
     def zonal_periodic(self):
         return self._zonal_periodic
-
-    @property
-    def zonal_halo(self):
-        return self._zonal_halo
 
     @property
     def defer_load(self):
@@ -279,50 +269,6 @@ class RectilinearGrid(Grid):
     def ydim(self):
         return self.lat.size
 
-    def add_periodic_halo(self, zonal: bool, meridional: bool, halosize: int = 5):
-        """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
-        similarly to the halo created for the Fields
-
-        Parameters
-        ----------
-        zonal : bool
-            Create a halo in zonal direction
-        meridional : bool
-            Create a halo in meridional direction
-        halosize : int
-            size of the halo (in grid points). Default is 5 grid points
-        """
-        if zonal:
-            lonshift = self.lon[-1] - 2 * self.lon[0] + self.lon[1]
-            if not np.allclose(self.lon[1] - self.lon[0], self.lon[-1] - self.lon[-2]):
-                warnings.warn(
-                    "The zonal halo is located at the east and west of current grid, "
-                    "with a dx = lon[1]-lon[0] between the last nodes of the original grid and the first ones of the halo. "
-                    "In your grid, lon[1]-lon[0] != lon[-1]-lon[-2]. Is the halo computed as you expect?",
-                    FieldSetWarning,
-                    stacklevel=2,
-                )
-            self._lon = np.concatenate((self.lon[-halosize:] - lonshift, self.lon, self.lon[0:halosize] + lonshift))
-            self._zonal_periodic = True
-            self._zonal_halo = halosize
-        if meridional:
-            if not np.allclose(self.lat[1] - self.lat[0], self.lat[-1] - self.lat[-2]):
-                warnings.warn(
-                    "The meridional halo is located at the north and south of current grid, "
-                    "with a dy = lat[1]-lat[0] between the last nodes of the original grid and the first ones of the halo. "
-                    "In your grid, lat[1]-lat[0] != lat[-1]-lat[-2]. Is the halo computed as you expect?",
-                    FieldSetWarning,
-                    stacklevel=2,
-                )
-            latshift = self.lat[-1] - 2 * self.lat[0] + self.lat[1]
-            self._lat = np.concatenate((self.lat[-halosize:] - latshift, self.lat, self.lat[0:halosize] + latshift))
-            self._meridional_halo = halosize
-        self._lonlat_minmax = np.array(
-            [np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32
-        )
-        if isinstance(self, RectilinearSGrid):
-            self._add_Sdepth_periodic_halo(zonal, meridional, halosize)
-
 
 class RectilinearZGrid(RectilinearGrid):
     """Rectilinear Z Grid.
@@ -468,23 +414,6 @@ class CurvilinearGrid(Grid):
     @property
     def ydim(self):
         return self.lon.shape[0]
-
-    def add_periodic_halo(self, zonal, meridional, halosize=5):
-        """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
-        similarly to the halo created for the Fields
-
-        Parameters
-        ----------
-        zonal : bool
-            Create a halo in zonal direction
-        meridional : bool
-            Create a halo in meridional direction
-        halosize : int
-            size of the halo (in grid points). Default is 5 grid points
-        """
-        raise NotImplementedError(
-            "CurvilinearGrid does not support add_periodic_halo. See https://github.com/OceanParcels/Parcels/pull/1811"
-        )
 
 
 class CurvilinearZGrid(CurvilinearGrid):

@@ -112,6 +112,8 @@ def test_fieldset_sample_eval(fieldset):
     assert np.allclose(u_s, lat, rtol=1e-5)
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="Test is directly testing adding the halo. This test should either be adapted or removed.")
 def test_fieldset_polar_with_halo(fieldset_geometric_polar):
     fieldset_geometric_polar.add_periodic_halo(zonal=5)
     pset = ParticleSet(fieldset_geometric_polar, pclass=pclass(), lon=0, lat=0)
