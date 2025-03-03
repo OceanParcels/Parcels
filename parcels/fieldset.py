@@ -326,7 +326,6 @@ class FieldSet:
         mesh: Mesh = "spherical",
         timestamps=None,
         allow_time_extrapolation: bool | None = None,
-        deferred_load=True,
         **kwargs,
     ):
         """Initialises FieldSet object from NetCDF files.
@@ -463,7 +462,6 @@ class FieldSet:
                 mesh=mesh,
                 timestamps=timestamps,
                 allow_time_extrapolation=allow_time_extrapolation,
-                deferred_load=deferred_load,
                 fieldtype=fieldtype,
                 dataFiles=dFiles,
                 **kwargs,
@@ -1163,7 +1161,6 @@ class FieldSet:
         indices=None,
         extra_fields=None,
         allow_time_extrapolation: bool | None = None,
-        deferred_load=True,
         **kwargs,
     ):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
@@ -1212,7 +1209,6 @@ class FieldSet:
             variables=extra_fields,
             dimensions=dimensions,
             allow_time_extrapolation=allow_time_extrapolation,
-            deferred_load=deferred_load,
             **kwargs,
         )
 
