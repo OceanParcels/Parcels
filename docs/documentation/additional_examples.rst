@@ -8,13 +8,6 @@ example_brownian.py
    :language: python
    :linenos:
 
-example_dask_chunk_OCMs.py
---------------------------
-
-.. literalinclude:: ../examples/example_dask_chunk_OCMs.py
-   :language: python
-   :linenos:
-
 example_decaying_moving_eddy.py
 -------------------------------
 

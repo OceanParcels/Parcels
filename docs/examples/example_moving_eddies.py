@@ -65,9 +65,9 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh="flat"):
     dy = (lat[1] - lat[0]) * 1852 * 60 if mesh == "spherical" else lat[1] - lat[0]
 
     # Define arrays U (zonal), V (meridional), and P (sea surface height) on A-grid
-    U = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
-    V = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
-    P = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
+    U = np.zeros((time.size, lat.size, lon.size), dtype=np.float32)
+    V = np.zeros((time.size, lat.size, lon.size), dtype=np.float32)
+    P = np.zeros((time.size, lat.size, lon.size), dtype=np.float32)
 
     # Some constants
     corio_0 = 1.0e-4  # Coriolis parameter
@@ -78,32 +78,32 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh="flat"):
     dX = eddyspeed * 86400 / dx  # Grid cell movement of eddy max each day
     dY = eddyspeed * 86400 / dy  # Grid cell movement of eddy max each day
 
-    [x, y] = np.mgrid[: lon.size, : lat.size]
+    [y, x] = np.mgrid[: lat.size, : lon.size]
     for t in range(time.size):
         hymax_1 = lat.size / 7.0
         hxmax_1 = 0.75 * lon.size - dX * t
         hymax_2 = 3.0 * lat.size / 7.0 + dY * t
         hxmax_2 = 0.75 * lon.size - dX * t
 
-        P[:, :, t] = h0 * np.exp(
+        P[t, :, :] = h0 * np.exp(
             -((x - hxmax_1) ** 2) / (sig * lon.size / 4.0) ** 2
             - (y - hymax_1) ** 2 / (sig * lat.size / 7.0) ** 2
         )
-        P[:, :, t] += h0 * np.exp(
+        P[t, :, :] += h0 * np.exp(
             -((x - hxmax_2) ** 2) / (sig * lon.size / 4.0) ** 2
             - (y - hymax_2) ** 2 / (sig * lat.size / 7.0) ** 2
         )
 
-        V[:-1, :, t] = -np.diff(P[:, :, t], axis=0) / dx / corio_0 * g
-        V[-1, :, t] = V[-2, :, t]  # Fill in the last column
+        V[t, :, :-1] = -np.diff(P[t, :, :], axis=1) / dx / corio_0 * g
+        V[t, :, -1] = V[t, :, -2]  # Fill in the last column
 
-        U[:, :-1, t] = np.diff(P[:, :, t], axis=1) / dy / corio_0 * g
-        U[:, -1, t] = U[:, -2, t]  # Fill in the last row
+        U[t, :-1, :] = np.diff(P[t, :, :], axis=0) / dy / corio_0 * g
+        U[t, -1, :] = U[t, -2, :]  # Fill in the last row
 
     data = {"U": U, "V": V, "P": P}
     dimensions = {"lon": lon, "lat": lat, "time": time}
 
-    fieldset = parcels.FieldSet.from_data(data, dimensions, transpose=True, mesh=mesh)
+    fieldset = parcels.FieldSet.from_data(data, dimensions, mesh=mesh)
 
     # setting some constants for AdvectionRK45 kernel
     fieldset.RK45_min_dt = 1e-3
@@ -250,6 +250,10 @@ def test_moving_eddies_file(mesh, tmpdir):
         assert pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(
+    reason="Calls fieldset.add_periodic_halo(). In v4, interpolation should work without adding halo."
+)
 def test_periodic_and_computeTimeChunk_eddies():
     data_folder = parcels.download_example_dataset("MovingEddies_data")
     filename = str(data_folder / "moving_eddies")

@@ -61,22 +61,22 @@ def test_advection_zonal(lon, lat, depth):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     npart = 10
     data2D = {
-        "U": np.ones((lon.size, lat.size), dtype=np.float32),
-        "V": np.zeros((lon.size, lat.size), dtype=np.float32),
+        "U": np.ones((lat.size, lon.size), dtype=np.float32),
+        "V": np.zeros((lat.size, lon.size), dtype=np.float32),
     }
     data3D = {
-        "U": np.ones((lon.size, lat.size, depth.size), dtype=np.float32),
-        "V": np.zeros((lon.size, lat.size, depth.size), dtype=np.float32),
+        "U": np.ones((depth.size, lat.size, lon.size), dtype=np.float32),
+        "V": np.zeros((depth.size, lat.size, lon.size), dtype=np.float32),
     }
     dimensions = {"lon": lon, "lat": lat}
-    fieldset2D = FieldSet.from_data(data2D, dimensions, mesh="spherical", transpose=True)
+    fieldset2D = FieldSet.from_data(data2D, dimensions, mesh="spherical")
 
     pset2D = ParticleSet(fieldset2D, pclass=Particle, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
     pset2D.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
     assert (np.diff(pset2D.lon) > 1.0e-4).all()
 
     dimensions["depth"] = depth
-    fieldset3D = FieldSet.from_data(data3D, dimensions, mesh="spherical", transpose=True)
+    fieldset3D = FieldSet.from_data(data3D, dimensions, mesh="spherical")
     pset3D = ParticleSet(
         fieldset3D,
         pclass=Particle,
@@ -91,9 +91,9 @@ def test_advection_zonal(lon, lat, depth):
 def test_advection_meridional(lon, lat):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     npart = 10
-    data = {"U": np.zeros((lon.size, lat.size), dtype=np.float32), "V": np.ones((lon.size, lat.size), dtype=np.float32)}
+    data = {"U": np.zeros((lat.size, lon.size), dtype=np.float32), "V": np.ones((lat.size, lon.size), dtype=np.float32)}
     dimensions = {"lon": lon, "lat": lat}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical")
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart))
     delta_lat = np.diff(pset.lat)
@@ -110,9 +110,9 @@ def test_advection_3D():
         "lat": np.linspace(0.0, 1e4, ydim, dtype=np.float32),
         "depth": np.linspace(0.0, 1.0, zdim, dtype=np.float32),
     }
-    data = {"U": np.ones((xdim, ydim, zdim), dtype=np.float32), "V": np.zeros((xdim, ydim, zdim), dtype=np.float32)}
-    data["U"][:, :, 0] = 0.0
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    data = {"U": np.ones((zdim, ydim, xdim), dtype=np.float32), "V": np.zeros((zdim, ydim, xdim), dtype=np.float32)}
+    data["U"][0, :, :] = 0.0
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
 
     pset = ParticleSet(
         fieldset, pclass=Particle, lon=np.zeros(npart), lat=np.zeros(npart) + 1e2, depth=np.linspace(0, 1, npart)
@@ -171,11 +171,11 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
 def test_advection_RK45(lon, lat, rk45_tol):
     npart = 10
     data2D = {
-        "U": np.ones((lon.size, lat.size), dtype=np.float32),
-        "V": np.zeros((lon.size, lat.size), dtype=np.float32),
+        "U": np.ones((lat.size, lon.size), dtype=np.float32),
+        "V": np.zeros((lat.size, lon.size), dtype=np.float32),
     }
     dimensions = {"lon": lon, "lat": lat}
-    fieldset = FieldSet.from_data(data2D, dimensions, mesh="spherical", transpose=True)
+    fieldset = FieldSet.from_data(data2D, dimensions, mesh="spherical")
     fieldset.add_constant("RK45_tol", rk45_tol)
 
     dt = timedelta(seconds=30).total_seconds()
@@ -266,8 +266,8 @@ def create_periodic_fieldset(xdim, ydim, uvel, vvel):
         "lat": np.linspace(0.0, 1.0, ydim + 1, dtype=np.float32)[1:],
     }
 
-    data = {"U": uvel * np.ones((xdim, ydim), dtype=np.float32), "V": vvel * np.ones((xdim, ydim), dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh="spherical", transpose=True)
+    data = {"U": uvel * np.ones((ydim, xdim), dtype=np.float32), "V": vvel * np.ones((ydim, xdim), dtype=np.float32)}
+    return FieldSet.from_data(data, dimensions, mesh="spherical")
 
 
 def periodicBC(particle, fieldset, time):  # pragma: no cover
@@ -275,6 +275,8 @@ def periodicBC(particle, fieldset, time):  # pragma: no cover
     particle.lat = math.fmod(particle.lat, 1)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="Calls fieldset.add_periodic_halo(). In v4, interpolation should work without adding halo.")
 def test_advection_periodic_zonal():
     xdim, ydim, halosize = 100, 100, 3
     fieldset = create_periodic_fieldset(xdim, ydim, uvel=1.0, vvel=0.0)
@@ -286,6 +288,8 @@ def test_advection_periodic_zonal():
     assert abs(pset.lon[0] - 0.15) < 0.1
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="Calls fieldset.add_periodic_halo(). In v4, interpolation should work without adding halo.")
 def test_advection_periodic_meridional():
     xdim, ydim = 100, 100
     fieldset = create_periodic_fieldset(xdim, ydim, uvel=0.0, vvel=1.0)
@@ -297,6 +301,8 @@ def test_advection_periodic_meridional():
     assert abs(pset.lat[0] - 0.15) < 0.1
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="Calls fieldset.add_periodic_halo(). In v4, interpolation should work without adding halo.")
 def test_advection_periodic_zonal_meridional():
     xdim, ydim = 100, 100
     fieldset = create_periodic_fieldset(xdim, ydim, uvel=1.0, vvel=1.0)
@@ -373,10 +379,10 @@ def create_fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         "time": time,
     }
     data = {
-        "U": np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time),
-        "V": np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time),
+        "U": np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time)),
+        "V": np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)),
     }
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     # setting some constants for AdvectionRK45 kernel
     fieldset.RK45_min_dt = 1e-3
     fieldset.RK45_max_dt = 1e2
@@ -435,13 +441,13 @@ def test_stationary_eddy_vertical():
     lon_data = np.linspace(0, 25000, xdim, dtype=np.float32)
     lat_data = np.linspace(0, 25000, ydim, dtype=np.float32)
     time_data = np.arange(0.0, 6 * 3600 + 1e-5, 60.0, dtype=np.float64)
-    fld1 = np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time_data)
-    fld2 = np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time_data)
-    fldzero = np.zeros((xdim, ydim, 1), dtype=np.float32) * time_data
+    fld1 = np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time_data))
+    fld2 = np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time_data))
+    fldzero = np.transpose(np.zeros((xdim, ydim, 1), dtype=np.float32) * time_data)
 
     dimensions = {"lon": lon_data, "lat": lat_data, "time": time_data}
     data = {"U": fld1, "V": fldzero, "W": fld2}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=lon, lat=lat, depth=depth)
     pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
@@ -453,7 +459,7 @@ def test_stationary_eddy_vertical():
     assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
 
     data = {"U": fldzero, "V": fld2, "W": fld1}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=lon, lat=lat, depth=depth)
     pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
@@ -483,10 +489,10 @@ def create_fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         "time": time,
     }
     data = {
-        "U": np.ones((xdim, ydim, 1), dtype=np.float32) * u_g + (u_0 - u_g) * np.cos(f * time),
-        "V": np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.sin(f * time),
+        "U": np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * u_g + (u_0 - u_g) * np.cos(f * time)),
+        "V": np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.sin(f * time)),
     }
-    return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    return FieldSet.from_data(data, dimensions, mesh="flat")
 
 
 @pytest.fixture
@@ -555,11 +561,15 @@ def create_fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
         "time": time,
     }
     data = {
-        "U": np.ones((xdim, ydim, 1), dtype=np.float32) * u_g * np.exp(-gamma_g * time)
-        + (u_0 - u_g) * np.exp(-gamma * time) * np.cos(f * time),
-        "V": np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.exp(-gamma * time) * np.sin(f * time),
+        "U": np.transpose(
+            np.ones((xdim, ydim, 1), dtype=np.float32) * u_g * np.exp(-gamma_g * time)
+            + (u_0 - u_g) * np.exp(-gamma * time) * np.cos(f * time)
+        ),
+        "V": np.transpose(
+            np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.exp(-gamma * time) * np.sin(f * time)
+        ),
     }
-    return FieldSet.from_data(data, dimensions, mesh="flat", transpose=True)
+    return FieldSet.from_data(data, dimensions, mesh="flat")
 
 
 @pytest.fixture

@@ -108,8 +108,8 @@ def test_pset_create_fromparticlefile(fieldset, restart, tmp_zarrfile):
 def test_pset_create_field(fieldset, lonlatdepth_dtype):
     npart = 100
     np.random.seed(123456)
-    shape = (fieldset.U.lon.size, fieldset.U.lat.size)
-    K = Field("K", lon=fieldset.U.lon, lat=fieldset.U.lat, data=np.ones(shape, dtype=np.float32), transpose=True)
+    shape = (fieldset.U.lat.size, fieldset.U.lon.size)
+    K = Field("K", lon=fieldset.U.lon, lat=fieldset.U.lat, data=np.ones(shape, dtype=np.float32))
     pset = ParticleSet.from_field(
         fieldset, size=npart, pclass=Particle, start_field=K, lonlatdepth_dtype=lonlatdepth_dtype
     )
