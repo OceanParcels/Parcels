@@ -355,7 +355,6 @@ class Field:
         mesh: Mesh = "spherical",
         timestamps=None,
         allow_time_extrapolation: bool | None = None,
-        deferred_load: bool = True,
         **kwargs,
     ) -> "Field":
         """Create field from netCDF file.
@@ -546,56 +545,47 @@ class Field:
                 "time dimension in indices is not necessary anymore. It is then ignored.", FieldSetWarning, stacklevel=2
             )
 
-        if grid.time.size <= 2:
-            deferred_load = False
+        # Pre-allocate data before reading files into buffer
+        data_list = []
+        ti = 0
+        for tslice, fname in zip(grid.timeslices, data_filenames, strict=True):
+            with NetcdfFileBuffer(  # type: ignore[operator]
+                fname,
+                dimensions,
+                indices,
+                netcdf_engine,
+                interp_method=interp_method,
+                data_full_zdim=data_full_zdim,
+            ) as filebuffer:
+                # If Field.from_netcdf is called directly, it may not have a 'data' dimension
+                # In that case, assume that 'name' is the data dimension
+                filebuffer.name = variable[1]
+                buffer_data = filebuffer.data
+                if len(buffer_data.shape) == 4:
+                    errormessage = (
+                        f"Field {filebuffer.name} expecting a data shape of [tdim={grid.tdim}, zdim={grid.zdim}, "
+                        f"ydim={grid.ydim}, xdim={grid.xdim }] "
+                        f"but got shape {buffer_data.shape}."
+                    )
+                    assert buffer_data.shape[0] == grid.tdim, errormessage
+                    assert buffer_data.shape[2] == grid.ydim, errormessage
+                    assert buffer_data.shape[3] == grid.xdim, errormessage
 
-        if not deferred_load:
-            # Pre-allocate data before reading files into buffer
-            data_list = []
-            ti = 0
-            for tslice, fname in zip(grid.timeslices, data_filenames, strict=True):
-                with NetcdfFileBuffer(  # type: ignore[operator]
-                    fname,
-                    dimensions,
-                    indices,
-                    netcdf_engine,
-                    interp_method=interp_method,
-                    data_full_zdim=data_full_zdim,
-                ) as filebuffer:
-                    # If Field.from_netcdf is called directly, it may not have a 'data' dimension
-                    # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = variable[1]
-                    buffer_data = filebuffer.data
-                    if len(buffer_data.shape) == 4:
-                        errormessage = (
-                            f"Field {filebuffer.name} expecting a data shape of [tdim={grid.tdim}, zdim={grid.zdim}, "
-                            f"ydim={grid.ydim}, xdim={grid.xdim }] "
-                            f"but got shape {buffer_data.shape}."
-                        )
-                        assert buffer_data.shape[0] == grid.tdim, errormessage
-                        assert buffer_data.shape[2] == grid.ydim, errormessage
-                        assert buffer_data.shape[3] == grid.xdim, errormessage
-
-                    if len(buffer_data.shape) == 2:
-                        data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape), ())))
-                    elif len(buffer_data.shape) == 3:
-                        if len(filebuffer.indices["depth"]) > 1:
-                            data_list.append(buffer_data.reshape(sum(((1,), buffer_data.shape), ())))
-                        else:
-                            if type(tslice) not in [list, np.ndarray, xr.DataArray]:
-                                tslice = [tslice]
-                            data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape[1:]), ())))
+                if len(buffer_data.shape) == 2:
+                    data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape), ())))
+                elif len(buffer_data.shape) == 3:
+                    if len(filebuffer.indices["depth"]) > 1:
+                        data_list.append(buffer_data.reshape(sum(((1,), buffer_data.shape), ())))
                     else:
-                        data_list.append(buffer_data)
-                    if type(tslice) not in [list, np.ndarray, xr.DataArray]:
-                        tslice = [tslice]
-                ti += len(tslice)
-            data = np.concatenate(data_list, axis=0)
-        else:
-            grid._defer_load = True
-            grid._ti = -1
-            data = DeferredArray()
-            data.compute_shape(grid.xdim, grid.ydim, grid.zdim, grid.tdim, len(grid.timeslices))
+                        if type(tslice) not in [list, np.ndarray, xr.DataArray]:
+                            tslice = [tslice]
+                        data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape[1:]), ())))
+                else:
+                    data_list.append(buffer_data)
+                if type(tslice) not in [list, np.ndarray, xr.DataArray]:
+                    tslice = [tslice]
+            ti += len(tslice)
+        data = np.concatenate(data_list, axis=0)
 
         if allow_time_extrapolation is None:
             allow_time_extrapolation = False if "time" in dimensions else True
