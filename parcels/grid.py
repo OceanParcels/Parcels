@@ -66,7 +66,6 @@ class Grid:
         assert_valid_mesh(mesh)
         self._mesh = mesh
         self._zonal_periodic = False
-        self._defer_load = False
         self._lonlat_minmax = np.array(
             [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32
         )
@@ -114,10 +113,6 @@ class Grid:
     @property
     def zonal_periodic(self):
         return self._zonal_periodic
-
-    @property
-    def defer_load(self):
-        return self._defer_load
 
     @staticmethod
     def create_grid(

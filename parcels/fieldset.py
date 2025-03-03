@@ -285,7 +285,7 @@ class FieldSet:
                 g.time_origin.time_origin, type(self.time_origin.time_origin)
             ), "time origins of different grids must be have the same type"
             g.time = g.time + self.time_origin.reltime(g.time_origin)
-            if g.defer_load:
+            if False:
                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
             g._time_origin = self.time_origin
         self._add_UVfield()
@@ -298,7 +298,7 @@ class FieldSet:
                     raise ValueError(
                         "If depth dimension is set at 'not_yet_set', it must be added later using Field.set_depth_from_field(field)"
                     )
-                if not f.grid.defer_load:
+                if True:
                     depth_data = f.grid.depth_field.data
                     f.grid._depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
         self._completed = True
@@ -1376,7 +1376,7 @@ class FieldSet:
         for g in self.gridset.grids:
             g._update_status = "not_updated"
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load:
+            if isinstance(f, (VectorField, NestedField)) or True:
                 continue
             if f.grid._update_status == "not_updated":
                 nextTime_loc = f.grid._computeTimeChunk(f, time, signdt)
@@ -1385,7 +1385,7 @@ class FieldSet:
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f._dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or True or f._dataFiles is None:
                 continue
             f._loaded_time_indices = []  # reset loaded time indices
             g = f.grid
@@ -1457,7 +1457,7 @@ class FieldSet:
 
         # update time varying grid depth
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or not f.grid.defer_load or f._dataFiles is None:
+            if isinstance(f, (VectorField, NestedField)) or True or f._dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
                 depth_data = f.grid.depth_field.data

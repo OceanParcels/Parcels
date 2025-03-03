@@ -177,7 +177,7 @@ class Field:
             self.filebuffername = name[1]
         self.data = data
         if grid:
-            if grid.defer_load and isinstance(data, np.ndarray):
+            if False and isinstance(data, np.ndarray):
                 raise ValueError(
                     "Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately"
                 )
@@ -225,7 +225,7 @@ class Field:
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
 
-        if not self.grid.defer_load:
+        if True:
             self.data = self._reshape(self.data)
             self._loaded_time_indices = range(self.grid.tdim)
 
@@ -712,7 +712,7 @@ class Field:
         if self._scaling_factor:
             raise NotImplementedError(f"Scaling factor for field {self.name} already defined.")
         self._scaling_factor = factor
-        if not self.grid.defer_load:
+        if True:
             self.data *= factor
 
     def set_depth_from_field(self, field):
