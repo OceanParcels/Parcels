@@ -37,6 +37,27 @@ def generate_fieldset_data(xdim, ydim, zdim=1, tdim=1):
     return (data, dimensions)
 
 
+def to_xarray_dataset(data: dict[str, np.array], dimensions: dict[str, np.array]) -> xr.Dataset:
+    assert len(dimensions) in [2, 4], "this function only deals with output from generate_fieldset_data()"
+
+    if len(dimensions) == 4:
+        return xr.Dataset(
+            {
+                "U": (["time", "depth", "lat", "lon"], data["U"]),
+                "V": (["time", "depth", "lat", "lon"], data["V"]),
+            },
+            coords=dimensions,
+        )
+
+    return xr.Dataset(
+        {
+            "U": (["lat", "lon"], data["U"]),
+            "V": (["lat", "lon"], data["V"]),
+        },
+        coords=dimensions,
+    )
+
+
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 200])
 def test_fieldset_from_data(xdim, ydim):
@@ -314,52 +335,70 @@ def test_fieldset_dimlength1_cgrid(gridtype):
     assert success
 
 
-def test_fieldset_diffgrids_from_file(tmpdir):
-    """Test for subsetting fieldset from file using indices dict."""
-    filename = "test_subsets"
-    data, dimensions = generate_fieldset_data(100, 100)
-    filepath1 = tmpdir.join(filename + "_1")
-    fieldset1 = FieldSet.from_data(data, dimensions)
-    fieldset1.write(filepath1)
-    data, dimensions = generate_fieldset_data(50, 50)
-    filepath2 = tmpdir.join(filename + "_2")
-    fieldset2 = FieldSet.from_data(data, dimensions)
-    fieldset2.write(filepath2)
+def assign_dataset_timestamp_dim(ds, timestamp):
+    """Expand dim to 'time' and assign timestamp."""
+    ds.expand_dims("time")
+    ds["time"] = timestamp
+    return ds
 
-    ufiles = [filepath1 + "U.nc"] * 4
-    vfiles = [filepath2 + "V.nc"] * 4
+
+def test_fieldset_diffgrids_from_file(tmp_path):
+    """Test for subsetting fieldset from file using indices dict."""
+    stem = "test_subsets"
+
     timestamps = np.arange(0, 4, 1) * 86400.0
     timestamps = np.expand_dims(timestamps, 1)
-    files = {"U": ufiles, "V": vfiles}
-    variables = {"U": "vozocrtx", "V": "vomecrty"}
-    dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
+
+    ufiles = []
+    vfiles = []
+    for index, timestamp in enumerate(timestamps):
+        # U files
+        data, dimensions = generate_fieldset_data(100, 100)
+        path = tmp_path / f"{stem}_U_{index}.nc"
+        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
+        ufiles.append(path)
+
+        data, dimensions = generate_fieldset_data(50, 50)
+        path = tmp_path / f"{stem}_V_{index}.nc"
+        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
+        vfiles.append(path)
+
+    files = {"U": [str(f) for f in ufiles], "V": [str(f) for f in vfiles]}
+    variables = {"U": "U", "V": "V"}
+    dimensions = {"lon": "lon", "lat": "lat"}
 
     fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
     assert fieldset.gridset.size == 2
     assert fieldset.U.grid != fieldset.V.grid
 
 
-def test_fieldset_diffgrids_from_file_data(tmpdir):
+def test_fieldset_diffgrids_from_file_data(tmp_path):
     """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset_data(100, 100)
-    filepath = tmpdir.join("test_subsets")
-    fieldset_data = FieldSet.from_data(data, dimensions)
-    fieldset_data.write(filepath)
-    field_data = fieldset_data.U
-    field_data.name = "B"
+    stem = "test_subsets"
 
-    ufiles = [filepath + "U.nc"] * 4
-    vfiles = [filepath + "V.nc"] * 4
     timestamps = np.arange(0, 4, 1) * 86400.0
     timestamps = np.expand_dims(timestamps, 1)
+
+    ufiles = []
+    vfiles = []
+    for index, timestamp in enumerate(timestamps):
+        data, dimensions = generate_fieldset_data(100, 100)
+        path = tmp_path / f"{stem}_{index}.nc"
+        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
+        ufiles.append(path)
+        vfiles.append(path)
+
+    field_U = FieldSet.from_data(data, dimensions).U
+    field_U.name = "B"
+
     files = {"U": ufiles, "V": vfiles}
-    variables = {"U": "vozocrtx", "V": "vomecrty"}
-    dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
+    variables = {"U": "U", "V": "V"}
+    dimensions = {"lon": "lon", "lat": "lat"}
     fieldset_file = FieldSet.from_netcdf(
         files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True
     )
 
-    fieldset_file.add_field(field_data, "B")
+    fieldset_file.add_field(field_U, "B")
     fields = [f for f in fieldset_file.get_fields() if isinstance(f, Field)]
     assert len(fields) == 3
     assert fieldset_file.gridset.size == 2
