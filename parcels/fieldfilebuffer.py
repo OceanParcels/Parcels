@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
-from parcels._typing import InterpMethodOption
+from parcels._typing import InterpMethodOption, PathLike
 from parcels.tools.converters import convert_xarray_time_units
 from parcels.tools.warnings import FileWarning
 
@@ -22,7 +22,7 @@ class NetcdfFileBuffer:
         gridindexingtype="nemo",
         **kwargs,
     ):
-        self.filename = filename
+        self.filename: PathLike | list[PathLike] = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
         self.dataset = None
@@ -222,7 +222,7 @@ def open_xarray_dataset(filename: Path | str, netcdf_engine: str) -> xr.Dataset:
         # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
         # (which we would rather want to have being auto-managed).
         # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
-        ds = xr.open_dataset(filename, decode_cf=True, engine=netcdf_engine)
+        ds = xr.open_mfdataset(filename, decode_cf=True, engine=netcdf_engine)
         ds["decoded"] = True
     except:
         warnings.warn(  # TODO: Is this warning necessary? What cases does this except block get triggered - is it to do with the bare except???
@@ -232,6 +232,6 @@ def open_xarray_dataset(filename: Path | str, netcdf_engine: str) -> xr.Dataset:
             stacklevel=2,
         )
 
-        ds = xr.open_dataset(filename, decode_cf=False, engine=netcdf_engine)
+        ds = xr.open_mfdataset(filename, decode_cf=False, engine=netcdf_engine)
         ds["decoded"] = False
     return ds
