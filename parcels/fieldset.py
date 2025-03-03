@@ -52,7 +52,6 @@ class FieldSet:
             for name, field in fields.items():
                 self.add_field(field, name)
 
-        self.compute_on_defer = None
         self._add_UVfield()
 
     def __repr__(self):
@@ -1469,9 +1468,6 @@ class FieldSet:
                             f.data[1, :] = None
                     f.data[1, :] = f.data[0, :]
                     f.data[0, :] = data
-        # do user-defined computations on fieldset data
-        if self.compute_on_defer:
-            self.compute_on_defer(self)
 
         # update time varying grid depth
         for f in self.get_fields():
