@@ -9,14 +9,13 @@ import numpy as np
 
 from parcels._compat import MPI
 from parcels._typing import GridIndexingType, InterpMethodOption, Mesh
-from parcels.field import DeferredArray, Field, NestedField, VectorField
+from parcels.field import Field, NestedField, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.particlefile import ParticleFile
 from parcels.tools._helpers import fieldset_repr
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.loggers import logger
-from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.warnings import FieldSetWarning
 
 __all__ = ["FieldSet"]
@@ -285,8 +284,6 @@ class FieldSet:
                 g.time_origin.time_origin, type(self.time_origin.time_origin)
             ), "time origins of different grids must be have the same type"
             g.time = g.time + self.time_origin.reltime(g.time_origin)
-            if False:
-                g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
             g._time_origin = self.time_origin
         self._add_UVfield()
 
@@ -298,9 +295,8 @@ class FieldSet:
                     raise ValueError(
                         "If depth dimension is set at 'not_yet_set', it must be added later using Field.set_depth_from_field(field)"
                     )
-                if True:
-                    depth_data = f.grid.depth_field.data
-                    f.grid._depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
+                depth_data = f.grid.depth_field.data
+                f.grid._depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
         self._completed = True
 
     @classmethod
@@ -1370,98 +1366,10 @@ class FieldSet:
             time step of the integration scheme, needed to set the direction of time chunk loading.
             Default is 1.
         """
-        signdt = np.sign(dt)
         nextTime = np.inf if dt > 0 else -np.inf
 
         for g in self.gridset.grids:
             g._update_status = "not_updated"
-        for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or True:
-                continue
-            if f.grid._update_status == "not_updated":
-                nextTime_loc = f.grid._computeTimeChunk(f, time, signdt)
-                if time == nextTime_loc and signdt != 0:
-                    raise TimeExtrapolationError(time, field=f)
-            nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
-
-        for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or True or f._dataFiles is None:
-                continue
-            f._loaded_time_indices = []  # reset loaded time indices
-            g = f.grid
-            if g._update_status == "first_updated":  # First load of data
-                if f.data is not None and not isinstance(f.data, DeferredArray):
-                    if not isinstance(f.data, list):
-                        f.data = None
-                    else:
-                        for i in range(len(f.data)):
-                            del f.data[i, :]
-
-                if f.gridindexingtype == "pop" and g.zdim > 1:
-                    zd = g.zdim - 1
-                else:
-                    zd = g.zdim
-                data = np.empty((g.tdim, zd, g.ydim, g.xdim), dtype=np.float32)
-                f._loaded_time_indices = range(2)
-                for tind in f._loaded_time_indices:
-                    for fb in f.filebuffers:
-                        if fb is not None:
-                            fb.close()
-                        fb = None
-                    data = f.computeTimeChunk(data, tind)
-                data = f._rescale_and_set_minmax(data)
-
-                if isinstance(f.data, DeferredArray):
-                    f.data = DeferredArray()
-                f.data = f._reshape(data)
-
-            elif g._update_status == "updated":
-                if f.gridindexingtype == "pop" and g.zdim > 1:
-                    zd = g.zdim - 1
-                else:
-                    zd = g.zdim
-                data = np.empty((g.tdim, zd, g.ydim, g.xdim), dtype=np.float32)
-                if signdt >= 0:
-                    f._loaded_time_indices = [1]
-                    if f.filebuffers[0] is not None:
-                        f.filebuffers[0].close()
-                        f.filebuffers[0] = None
-                    f.filebuffers[0] = f.filebuffers[1]
-                    data = f.computeTimeChunk(data, 1)
-                else:
-                    f._loaded_time_indices = [0]
-                    if f.filebuffers[1] is not None:
-                        f.filebuffers[1].close()
-                        f.filebuffers[1] = None
-                    f.filebuffers[1] = f.filebuffers[0]
-                    data = f.computeTimeChunk(data, 0)
-                data = f._rescale_and_set_minmax(data)
-                if signdt >= 0:
-                    data = f._reshape(data)[1, :]
-                    if not isinstance(f.data, DeferredArray):
-                        if isinstance(f.data, list):
-                            del f.data[0, :]
-                        else:
-                            f.data[0, :] = None
-                    f.data[0, :] = f.data[1, :]
-                    f.data[1, :] = data
-                else:
-                    data = f._reshape(data)[0, :]
-                    if not isinstance(f.data, DeferredArray):
-                        if isinstance(f.data, list):
-                            del f.data[1, :]
-                        else:
-                            f.data[1, :] = None
-                    f.data[1, :] = f.data[0, :]
-                    f.data[0, :] = data
-
-        # update time varying grid depth
-        for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or True or f._dataFiles is None:
-                continue
-            if f.grid.depth_field is not None:
-                depth_data = f.grid.depth_field.data
-                f.grid._depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
 
         if abs(nextTime) == np.inf or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime

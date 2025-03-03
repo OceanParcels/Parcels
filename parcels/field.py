@@ -177,10 +177,6 @@ class Field:
             self.filebuffername = name[1]
         self.data = data
         if grid:
-            if False and isinstance(data, np.ndarray):
-                raise ValueError(
-                    "Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately"
-                )
             self._grid = grid
         else:
             if (time is not None) and isinstance(time[0], np.datetime64):
@@ -225,14 +221,12 @@ class Field:
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
 
-        if True:
-            self.data = self._reshape(self.data)
-            self._loaded_time_indices = range(self.grid.tdim)
+        self.data = self._reshape(self.data)
+        self._loaded_time_indices = range(self.grid.tdim)
 
-            # Hack around the fact that NaN and ridiculously large values
-            # propagate in SciPy's interpolators
-            self.data[np.isnan(self.data)] = 0.0
-
+        # Hack around the fact that NaN and ridiculously large values
+        # propagate in SciPy's interpolators
+        self.data[np.isnan(self.data)] = 0.0
         self._scaling_factor = None
 
         self._dimensions = kwargs.pop("dimensions", None)
@@ -712,8 +706,7 @@ class Field:
         if self._scaling_factor:
             raise NotImplementedError(f"Scaling factor for field {self.name} already defined.")
         self._scaling_factor = factor
-        if True:
-            self.data *= factor
+        self.data *= factor
 
     def set_depth_from_field(self, field):
         """Define the depth dimensions from another (time-varying) field.
