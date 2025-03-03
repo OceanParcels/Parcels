@@ -886,69 +886,6 @@ class Field:
             data *= self._scaling_factor
         return data
 
-    def _data_concatenate(self, data, data_to_concat, tindex):
-        if data[tindex] is not None:
-            if isinstance(data, np.ndarray):
-                data[tindex] = None
-            elif isinstance(data, list):
-                del data[tindex]
-        if tindex == 0:
-            data = np.concatenate([data_to_concat, data[tindex + 1 :, :]], axis=0)
-        elif tindex == 1:
-            data = np.concatenate([data[:tindex, :], data_to_concat], axis=0)
-        else:
-            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1]")
-        return data
-
-    def computeTimeChunk(self, data, tindex):
-        g = self.grid
-        timestamp = self.timestamps
-        if timestamp is not None:
-            summedlen = np.cumsum([len(ls) for ls in self.timestamps])
-            if g._ti + tindex >= summedlen[-1]:
-                ti = g._ti + tindex - summedlen[-1]
-            else:
-                ti = g._ti + tindex
-            timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
-
-        filebuffer = NetcdfFileBuffer(
-            self._dataFiles[g._ti + tindex],
-            self.dimensions,
-            self.indices,
-            netcdf_engine=self.netcdf_engine,
-            timestamp=timestamp,
-            interp_method=self.interp_method,
-            data_full_zdim=self.data_full_zdim,
-        )
-        filebuffer.__enter__()
-        time_data = filebuffer.time
-        time_data = g.time_origin.reltime(time_data)
-        filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
-        if self.netcdf_engine != "xarray":
-            filebuffer.name = self.filebuffername
-        buffer_data = filebuffer.data
-        if len(buffer_data.shape) == 2:
-            buffer_data = np.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
-        elif len(buffer_data.shape) == 3 and g.zdim > 1:
-            buffer_data = np.reshape(buffer_data, sum(((1,), buffer_data.shape), ()))
-        elif len(buffer_data.shape) == 3:
-            buffer_data = np.reshape(
-                buffer_data,
-                sum(
-                    (
-                        (
-                            buffer_data.shape[0],
-                            1,
-                        ),
-                        buffer_data.shape[1:],
-                    ),
-                    (),
-                ),
-            )
-        data = self._data_concatenate(data, buffer_data, tindex)
-        self.filebuffers[tindex] = filebuffer
-        return data
-
     def ravel_index(self, zi, yi, xi):
         """Return the flat index of the given grid points.
 
