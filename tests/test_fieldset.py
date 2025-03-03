@@ -723,37 +723,3 @@ def test_fieldset_from_data_gridtypes():
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
     assert np.allclose(plon, pset.lon)
     assert np.allclose(plat, pset.lat)
-
-
-@pytest.mark.parametrize("direction", [1, -1])
-@pytest.mark.parametrize("time_extrapolation", [True, False])
-def test_deferredload_simplefield(direction, time_extrapolation, tmpdir):
-    tdim = 10
-    filename = tmpdir.join("simplefield_deferredload.nc")
-    data = np.zeros((tdim, 2, 2))
-    for ti in range(tdim):
-        data[ti, :, :] = ti if direction == 1 else tdim - ti - 1
-    ds = xr.Dataset(
-        {"U": (("t", "y", "x"), data), "V": (("t", "y", "x"), data)},
-        coords={"x": [0, 1], "y": [0, 1], "t": np.arange(tdim)},
-    )
-    ds.to_netcdf(filename)
-
-    fieldset = FieldSet.from_netcdf(
-        filename,
-        {"U": "U", "V": "V"},
-        {"lon": "x", "lat": "y", "time": "t"},
-        deferred_load=True,
-        mesh="flat",
-        allow_time_extrapolation=time_extrapolation,
-    )
-
-    SamplingParticle = Particle.add_variable("p")
-    pset = ParticleSet(fieldset, SamplingParticle, lon=0.5, lat=0.5)
-
-    def SampleU(particle, fieldset, time):  # pragma: no cover
-        particle.p, tmp = fieldset.UV[particle]
-
-    runtime = tdim * 2 if time_extrapolation else None
-    pset.execute(SampleU, dt=direction, runtime=runtime)
-    assert pset.p == tdim - 1 if time_extrapolation else tdim - 2

@@ -8,7 +8,7 @@ import xarray as xr
 import parcels
 
 
-def set_ofam_fieldset(deferred_load=True, use_xarray=False):
+def set_ofam_fieldset(use_xarray=False):
     data_folder = parcels.download_example_dataset("OFAM_example_data")
     filenames = {
         "U": f"{data_folder}/OFAM_simple_U.nc",
@@ -32,13 +32,12 @@ def set_ofam_fieldset(deferred_load=True, use_xarray=False):
             variables,
             dimensions,
             allow_time_extrapolation=True,
-            deferred_load=deferred_load,
         )
 
 
 @pytest.mark.parametrize("use_xarray", [True, False])
 def test_ofam_fieldset_fillvalues(use_xarray):
-    fieldset = set_ofam_fieldset(deferred_load=False, use_xarray=use_xarray)
+    fieldset = set_ofam_fieldset(use_xarray=use_xarray)
     # V.data[0, 0, 150] is a landpoint, that makes NetCDF4 generate a masked array, instead of an ndarray
     assert fieldset.V.data[0, 0, 150] == 0
 
