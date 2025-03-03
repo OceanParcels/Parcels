@@ -1533,32 +1533,6 @@ class VectorField:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
 
 
-class DeferredArray:
-    """Class used for throwing error when Field.data is not read in deferred loading mode."""
-
-    data_shape = ()
-
-    def __init__(self):
-        self.data_shape = (1,)
-
-    def compute_shape(self, xdim, ydim, zdim, tdim, tslices):
-        if zdim == 1 and tdim == 1:
-            self.data_shape = (tslices, 1, ydim, xdim)
-        elif zdim > 1 or tdim > 1:
-            if zdim > 1:
-                self.data_shape = (1, zdim, ydim, xdim)
-            else:
-                self.data_shape = (max(tdim, tslices), 1, ydim, xdim)
-        else:
-            self.data_shape = (tdim, zdim, ydim, xdim)
-        return self.data_shape
-
-    def __getitem__(self, key):
-        raise RuntimeError(
-            "Field is in deferred_load mode, so can't be accessed. Use .computeTimeChunk() method to force loading of data"
-        )
-
-
 class NestedField(list):
     """NestedField is a class that allows for interpolation of fields on different grids of potentially varying resolution.
 
