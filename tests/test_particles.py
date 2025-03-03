@@ -2,6 +2,7 @@ from operator import attrgetter
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 from parcels import (
     AdvectionRK4,
@@ -40,9 +41,9 @@ def test_variable_init(fieldset):
         particle.p_int += 1
 
     pset.execute(pset.Kernel(AdvectionRK4) + addOne, runtime=1.0, dt=1.0)
-    assert np.allclose([p.p_float for p in pset], 11.0, rtol=1e-12)
-    assert np.allclose([p.p_double for p in pset], 12.0, rtol=1e-12)
-    assert np.allclose([p.p_int for p in pset], 13, rtol=1e-12)
+    assert_allclose([p.p_float for p in pset], 11.0, rtol=1e-12)
+    assert_allclose([p.p_double for p in pset], 12.0, rtol=1e-12)
+    assert_allclose([p.p_int for p in pset], 13, rtol=1e-12)
 
 
 @pytest.mark.parametrize("type", ["np.int8", "mp.float", "np.int16"])
@@ -82,7 +83,7 @@ def test_variable_init_relative(fieldset, coord_type):
     # Adjust base variable to test for aliasing effects
     for p in pset:
         p.p_base += 3.0
-    assert np.allclose([p.p_base for p in pset], 13.0, rtol=1e-12)
-    assert np.allclose([p.p_relative for p in pset], 10.0, rtol=1e-12)
-    assert np.allclose([p.p_lon for p in pset], lon, rtol=1e-12)
-    assert np.allclose([p.p_lat for p in pset], lat, rtol=1e-12)
+    assert_allclose([p.p_base for p in pset], 13.0, rtol=1e-12)
+    assert_allclose([p.p_relative for p in pset], 10.0, rtol=1e-12)
+    assert_allclose([p.p_lon for p in pset], lon, rtol=1e-12)
+    assert_allclose([p.p_lat for p in pset], lat, rtol=1e-12)

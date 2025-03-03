@@ -1,9 +1,9 @@
 import os
 from glob import glob
 
-import numpy as np
 import pytest
 import xarray as xr
+from numpy.testing import assert_allclose
 
 from parcels._compat import MPI
 from tests.utils import PROJECT_ROOT
@@ -35,7 +35,7 @@ def test_mpi_run(tmpdir, repeatdt, maxage, nump):
         for v in ds2.variables.keys():
             if v == "time":
                 continue  # skip because np.allclose does not work well on np.datetime64
-            assert np.allclose(ds1.variables[v][:], ds2.variables[v][:], equal_nan=True)
+            assert_allclose(ds1.variables[v][:], ds2.variables[v][:], equal_nan=True)
 
         for a in ds2.attrs:
             if a != "parcels_version":

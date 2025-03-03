@@ -2,6 +2,7 @@ import uuid
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 import parcels
 from parcels import (
@@ -64,10 +65,10 @@ def test_execution_order(kernel_type):
     if kernel_type == "update_dlon":
         assert np.isclose(lons[0], lons[1])
         assert np.isclose(ps[0], ps[1])
-        assert np.allclose(lons[0], 0)
+        assert_allclose(lons[0], 0)
     else:
         assert np.isclose(ps[0] - ps[1], 0.1)
-        assert np.allclose(lons[0], 0.2)
+        assert_allclose(lons[0], 0.2)
 
 
 @pytest.mark.parametrize(
@@ -87,7 +88,7 @@ def test_execution_endtime(fieldset_unit_mesh, start, end, substeps, dt):
         fieldset_unit_mesh, pclass=Particle, time=start, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
     )
     pset.execute(DoNothing, endtime=end, dt=dt)
-    assert np.allclose(pset.time_nextloop, end)
+    assert_allclose(pset.time_nextloop, end)
 
 
 @pytest.mark.parametrize(
@@ -109,7 +110,7 @@ def test_execution_runtime(fieldset_unit_mesh, start, end, substeps, dt):
     t_step = abs(end - start) / substeps
     for _ in range(substeps):
         pset.execute(DoNothing, runtime=t_step, dt=dt)
-    assert np.allclose(pset.time_nextloop, end)
+    assert_allclose(pset.time_nextloop, end)
 
 
 def test_execution_fail_python_exception(fieldset_unit_mesh):
@@ -126,7 +127,7 @@ def test_execution_fail_python_exception(fieldset_unit_mesh):
         pset.execute(PythonFail, endtime=20.0, dt=2.0)
     assert len(pset) == npart
     assert np.isclose(pset.time[0], 10)
-    assert np.allclose(pset.time[1:], 0.0)
+    assert_allclose(pset.time[1:], 0.0)
 
 
 def test_execution_fail_out_of_bounds(fieldset_unit_mesh):
@@ -160,8 +161,8 @@ def test_execution_recover_out_of_bounds(fieldset_unit_mesh):
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=lon, lat=lat)
     pset.execute([MoveRight, MoveLeft], endtime=11.0, dt=1.0)
     assert len(pset) == npart
-    assert np.allclose(pset.lon, lon, rtol=1e-5)
-    assert np.allclose(pset.lat, lat, rtol=1e-5)
+    assert_allclose(pset.lon, lon, rtol=1e-5)
+    assert_allclose(pset.lat, lat, rtol=1e-5)
 
 
 def test_execution_check_all_errors(fieldset_unit_mesh):
@@ -209,8 +210,8 @@ def test_execution_delete_out_of_bounds(fieldset_unit_mesh):
 def test_kernel_add_no_new_variables(fieldset_unit_mesh):
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveNorth), endtime=2.0, dt=1.0)
-    assert np.allclose(pset.lon, 0.6, rtol=1e-5)
-    assert np.allclose(pset.lat, 0.6, rtol=1e-5)
+    assert_allclose(pset.lon, 0.6, rtol=1e-5)
+    assert_allclose(pset.lat, 0.6, rtol=1e-5)
 
 
 def test_multi_kernel_duplicate_varnames(fieldset_unit_mesh):
@@ -226,7 +227,7 @@ def test_multi_kernel_duplicate_varnames(fieldset_unit_mesh):
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute([Kernel1, Kernel2], endtime=2.0, dt=1.0)
-    assert np.allclose(pset.lon, 0.3, rtol=1e-5)
+    assert_allclose(pset.lon, 0.3, rtol=1e-5)
 
 
 def test_multi_kernel_reuse_varnames(fieldset_unit_mesh):
@@ -241,7 +242,7 @@ def test_multi_kernel_reuse_varnames(fieldset_unit_mesh):
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast1) + pset.Kernel(MoveEast2), endtime=2.0, dt=1.0)
-    assert np.allclose(pset.lon, [0.9], rtol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
+    assert_allclose(pset.lon, [0.9], rtol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
 
 
 def test_combined_kernel_from_list(fieldset_unit_mesh):
@@ -303,4 +304,4 @@ def test_update_kernel_in_script(fieldset_unit_mesh):
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast), endtime=1.0, dt=1.0)
     pset.execute(pset.Kernel(MoveWest), endtime=3.0, dt=1.0)
-    assert np.allclose(pset.lon, 0.3, rtol=1e-5)  # should be 0.5 + 0.1 - 0.3 = 0.3
+    assert_allclose(pset.lon, 0.3, rtol=1e-5)  # should be 0.5 + 0.1 - 0.3 = 0.3

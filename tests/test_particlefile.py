@@ -6,6 +6,7 @@ import cftime
 import numpy as np
 import pytest
 import xarray as xr
+from numpy.testing import assert_allclose
 from zarr.storage import MemoryStore
 
 import parcels
@@ -102,7 +103,7 @@ def test_pfile_array_remove_all_particles(fieldset, chunks_obs, tmp_zarrfile):
     pfile.write(pset, 2)
 
     ds = xr.open_zarr(tmp_zarrfile).load()
-    assert np.allclose(ds["time"][:, 0], np.timedelta64(0, "s"), atol=np.timedelta64(1, "ms"))
+    assert_allclose(ds["time"][:, 0], np.timedelta64(0, "s"), atol=np.timedelta64(1, "ms"))
     if chunks_obs is not None:
         assert ds["time"][:].shape == chunks
     else:
@@ -173,7 +174,7 @@ def test_variable_written_once(fieldset, tmp_zarrfile, npart):
     ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=0.1)
     pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, output_file=ofile)
 
-    assert np.allclose(pset.v_once - time - pset.age * 10, 1, atol=1e-5)
+    assert_allclose(pset.v_once - time - pset.age * 10, 1, atol=1e-5)
     ds = xr.open_zarr(tmp_zarrfile)
     vfile = np.ma.filled(ds["v_once"][:], np.nan)
     assert vfile.shape == (npart,)
@@ -213,12 +214,12 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, repeatdt,
     samplevar = ds["sample_var"][:]
     if type == "repeatdt":
         assert samplevar.shape == (runtime // repeatdt, min(maxvar + 1, runtime))
-        assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
+        assert_allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
     elif type == "timearr":
         assert samplevar.shape == (runtime, min(maxvar + 1, runtime))
     # test whether samplevar[:, k] = k
     for k in range(samplevar.shape[1]):
-        assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k + 1)
+        assert_allclose([p for p in samplevar[:, k] if np.isfinite(p)], k + 1)
     filesize = os.path.getsize(str(tmp_zarrfile))
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
     ds.close()
@@ -323,7 +324,7 @@ def test_reset_dt(fieldset, tmp_zarrfile):
     ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=0.05)
     pset.execute(pset.Kernel(Update_lon), endtime=0.12, dt=0.02, output_file=ofile)
 
-    assert np.allclose(pset.lon, 0.6)
+    assert_allclose(pset.lon, 0.6)
 
 
 def test_correct_misaligned_outputdt_dt(fieldset, tmp_zarrfile):
@@ -337,10 +338,8 @@ def test_correct_misaligned_outputdt_dt(fieldset, tmp_zarrfile):
     pset.execute(pset.Kernel(Update_lon), endtime=11, dt=2, output_file=ofile)
 
     ds = xr.open_zarr(tmp_zarrfile)
-    assert np.allclose(ds.lon.values, [0, 3, 6, 9])
-    assert np.allclose(
-        ds.time.values[0, :], [np.timedelta64(t, "s") for t in [0, 3, 6, 9]], atol=np.timedelta64(1, "ns")
-    )
+    assert_allclose(ds.lon.values, [0, 3, 6, 9])
+    assert_allclose(ds.time.values[0, :], [np.timedelta64(t, "s") for t in [0, 3, 6, 9]], atol=np.timedelta64(1, "ns"))
 
 
 def setup_pset_execute(*, fieldset: FieldSet, outputdt: timedelta, execute_kwargs, particle_class=Particle):
