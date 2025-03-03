@@ -388,11 +388,6 @@ class Field:
             boolean whether to allow for extrapolation in time
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        deferred_load : bool
-            boolean whether to only pre-load data (in deferred mode) or
-            fully load them (default: True). It is advised to deferred load the data, since in
-            that case Parcels deals with a better memory management during particle set execution.
-            deferred_load=False is however sometimes necessary for plotting the fields.
         gridindexingtype : str
             The type of gridindexing. Either 'nemo' (default), 'mitgcm', 'mom5', 'pop', or 'croco' are supported.
             See also the Grid indexing documentation on oceanparcels.org

@@ -374,11 +374,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        deferred_load : bool
-            boolean whether to only pre-load data (in deferred mode) or
-            fully load them (default: True). It is advised to deferred load the data, since in
-            that case Parcels deals with a better memory management during particle set execution.
-            deferred_load=False is however sometimes necessary for plotting the fields.
         interp_method : str
             Method for interpolation. Options are 'linear' (default), 'nearest',
             'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
@@ -1192,11 +1187,6 @@ class FieldSet:
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        deferred_load : bool
-            boolean whether to only pre-load data (in deferred mode) or
-            fully load them (default: True). It is advised to deferred load the data, since in
-            that case Parcels deals with a better memory management during particle set execution.
-            deferred_load=False is however sometimes necessary for plotting the fields.
         uvar :
              (Default value = 'vozocrtx')
         vvar :
