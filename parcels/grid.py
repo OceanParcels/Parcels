@@ -3,7 +3,7 @@ from enum import IntEnum
 import numpy as np
 import numpy.typing as npt
 
-from parcels._typing import Mesh, UpdateStatus, assert_valid_mesh
+from parcels._typing import Mesh, assert_valid_mesh
 from parcels.tools.converters import TimeConverter
 
 __all__ = [
@@ -41,7 +41,6 @@ class Grid:
         mesh: Mesh,
     ):
         self._ti = -1
-        self._update_status: UpdateStatus | None = None
         lon = np.array(lon)
         lat = np.array(lat)
         time = np.zeros(1, dtype=np.float64) if time is None else time

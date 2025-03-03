@@ -1368,9 +1368,6 @@ class FieldSet:
         """
         nextTime = np.inf if dt > 0 else -np.inf
 
-        for g in self.gridset.grids:
-            g._update_status = "not_updated"
-
         if abs(nextTime) == np.inf or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime
         else:
