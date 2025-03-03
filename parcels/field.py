@@ -893,8 +893,7 @@ class Field:
 
         (tau, _, eta, xsi, ti, _, yi, xi) = self._search_indices(time, z, y, x, particle=particle)
 
-        interptime = True if (ti < self.grid.tdim - 1 and tau > 0) else False
-        ctx = InterpolationContext2D(self.data, tau, eta, xsi, ti, yi, xi, interptime=interptime)
+        ctx = InterpolationContext2D(self.data, tau, eta, xsi, ti, yi, xi)
         return f(ctx)
 
     def _interpolator3D(self, time, z, y, x, particle=None):
@@ -906,10 +905,7 @@ class Field:
 
         (tau, zeta, eta, xsi, ti, zi, yi, xi) = self._search_indices(time, z, y, x, particle=particle)
 
-        interptime = True if (ti < self.grid.tdim - 1 and tau > 0) else False
-        ctx = InterpolationContext3D(
-            self.data, tau, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype, interptime=interptime
-        )
+        ctx = InterpolationContext3D(self.data, tau, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
         return f(ctx)
 
     def _spatial_interpolation(self, time, z, y, x, particle=None):

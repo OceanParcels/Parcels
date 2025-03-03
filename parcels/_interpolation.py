@@ -5,6 +5,8 @@ import numpy as np
 
 from parcels._typing import GridIndexingType
 
+EPS = np.finfo(float).eps
+
 
 @dataclass
 class InterpolationContext2D:
@@ -26,8 +28,6 @@ class InterpolationContext2D:
         y index of cell containing particle
     xi: int
         x index of cell containing particle
-    interptime: bool = True
-        whether to interpolate in time
 
     """
 
@@ -38,7 +38,6 @@ class InterpolationContext2D:
     ti: int
     yi: int
     xi: int
-    interptime: bool = True
 
 
 @dataclass
@@ -69,8 +68,6 @@ class InterpolationContext3D:
         x index of cell containing particle
     gridindexingtype: GridIndexingType
         grid indexing type
-    interptime: bool = True
-        whether to interpolate in time
 
     """
 
@@ -84,7 +81,6 @@ class InterpolationContext3D:
     yi: int
     xi: int
     gridindexingtype: GridIndexingType  # included in 3D as z-face is indexed differently with MOM5 and POP
-    interptime: bool = True
 
 
 _interpolator_registry_2d: dict[str, Callable[[InterpolationContext2D], float]] = {}
@@ -123,10 +119,10 @@ def _nearest_2d(ctx: InterpolationContext2D) -> float:
     xii = ctx.xi if ctx.xsi <= 0.5 else ctx.xi + 1
     yii = ctx.yi if ctx.eta <= 0.5 else ctx.yi + 1
     ft0 = ctx.data[ctx.ti, yii, xii]
-    if ctx.interptime:
-        ft1 = ctx.data[ctx.ti + 1, yii, xii]
-        return (1 - ctx.tau) * ft0 + ctx.tau * ft1
-    return ft0
+    if ctx.tau < EPS or ctx.ti >= ctx.data.shape[0] - 1:
+        return ft0
+    ft1 = ctx.data[ctx.ti + 1, yii, xii]
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
 def _interp_on_unit_square(*, eta: float, xsi: float, data: np.ndarray, yi: int, xi: int) -> float:
@@ -145,10 +141,10 @@ def _interp_on_unit_square(*, eta: float, xsi: float, data: np.ndarray, yi: int,
 @register_2d_interpolator("freeslip")
 def _linear_2d(ctx: InterpolationContext2D) -> float:
     ft0 = _interp_on_unit_square(eta=ctx.eta, xsi=ctx.xsi, data=ctx.data[ctx.ti, :, :], yi=ctx.yi, xi=ctx.xi)
-    if ctx.interptime:
-        ft1 = _interp_on_unit_square(eta=ctx.eta, xsi=ctx.xsi, data=ctx.data[ctx.ti + 1, :, :], yi=ctx.yi, xi=ctx.xi)
-        return (1 - ctx.tau) * ft0 + ctx.tau * ft1
-    return ft0
+    if ctx.tau < EPS or ctx.ti >= ctx.data.shape[0] - 1:
+        return ft0
+    ft1 = _interp_on_unit_square(eta=ctx.eta, xsi=ctx.xsi, data=ctx.data[ctx.ti + 1, :, :], yi=ctx.yi, xi=ctx.xi)
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
 @register_2d_interpolator("linear_invdist_land_tracer")
@@ -187,10 +183,10 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:  # TOD
 @register_2d_interpolator("bgrid_tracer")
 def _tracer_2d(ctx: InterpolationContext2D) -> float:
     ft0 = ctx.data[ctx.ti, ctx.yi + 1, ctx.xi + 1]
-    if ctx.interptime:
-        ft1 = ctx.data[ctx.ti + 1, ctx.yi + 1, ctx.xi + 1]
-        return (1 - ctx.tau) * ft0 + ctx.tau * ft1
-    return ft0
+    if ctx.tau < EPS or ctx.ti >= ctx.data.shape[0] - 1:
+        return ft0
+    ft1 = ctx.data[ctx.ti + 1, ctx.yi + 1, ctx.xi + 1]
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
 @register_3d_interpolator("nearest")
@@ -199,10 +195,10 @@ def _nearest_3d(ctx: InterpolationContext3D) -> float:
     yii = ctx.yi if ctx.eta <= 0.5 else ctx.yi + 1
     zii = ctx.zi if ctx.zeta <= 0.5 else ctx.zi + 1
     ft0 = ctx.data[ctx.ti, zii, yii, xii]
-    if ctx.interptime:
-        ft1 = ctx.data[ctx.ti + 1, zii, yii, xii]
-        return (1 - ctx.tau) * ft0 + ctx.tau * ft1
-    return ft0
+    if ctx.tau < EPS or ctx.ti == ctx.data.shape[0] - 1:
+        return ft0
+    ft1 = ctx.data[ctx.ti + 1, zii, yii, xii]
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
 @register_3d_interpolator("cgrid_velocity")
@@ -306,7 +302,7 @@ def _linear_3d_bgrid_w_velocity(ctx: InterpolationContext3D) -> float:
 @register_3d_interpolator("cgrid_tracer")
 def _tracer_3d(ctx: InterpolationContext3D) -> float:
     ft0 = ctx.data[ctx.ti, ctx.zi, ctx.yi + 1, ctx.xi + 1]
-    if ctx.interptime:
-        ft1 = ctx.data[ctx.ti + 1, ctx.zi, ctx.yi + 1, ctx.xi + 1]
-        return (1 - ctx.tau) * ft0 + ctx.tau * ft1
-    return ft0
+    if ctx.tau < EPS or ctx.ti >= ctx.data.shape[0] - 1:
+        return ft0
+    ft1 = ctx.data[ctx.ti + 1, ctx.zi, ctx.yi + 1, ctx.xi + 1]
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
