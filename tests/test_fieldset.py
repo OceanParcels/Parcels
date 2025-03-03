@@ -58,6 +58,28 @@ def to_xarray_dataset(data: dict[str, np.array], dimensions: dict[str, np.array]
     )
 
 
+@pytest.fixture
+def multifile_fieldset(tmp_path):
+    stem = "test_subsets"
+
+    timestamps = np.arange(0, 4, 1) * 86400.0
+    timestamps = np.expand_dims(timestamps, 1)
+
+    ufiles = []
+    vfiles = []
+    for index, timestamp in enumerate(timestamps):
+        data, dimensions = generate_fieldset_data(100, 100)
+        path = tmp_path / f"{stem}_{index}.nc"
+        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
+        ufiles.append(path)
+        vfiles.append(path)
+
+    files = {"U": ufiles, "V": vfiles}
+    variables = {"U": "U", "V": "V"}
+    dimensions = {"lon": "lon", "lat": "lat"}
+    return FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
+
+
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 200])
 def test_fieldset_from_data(xdim, ydim):
@@ -301,24 +323,10 @@ def test_add_field_after_pset(fieldtype):
             fieldset.add_vector_field(vfield)
 
 
-def test_fieldset_samegrids_from_file(tmpdir):
+def test_fieldset_samegrids_from_file(multifile_fieldset):
     """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset_data(100, 100)
-    filepath1 = tmpdir.join("test_subsets_1")
-    fieldset1 = FieldSet.from_data(data, dimensions)
-    fieldset1.write(filepath1)
-
-    ufiles = [filepath1 + "U.nc"] * 4
-    vfiles = [filepath1 + "V.nc"] * 4
-    timestamps = np.arange(0, 4, 1) * 86400.0
-    timestamps = np.expand_dims(timestamps, 1)
-    files = {"U": ufiles, "V": vfiles}
-    variables = {"U": "vozocrtx", "V": "vomecrty"}
-    dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
-
-    assert fieldset.gridset.size == 1
-    assert fieldset.U.grid == fieldset.V.grid
+    assert multifile_fieldset.gridset.size == 1
+    assert multifile_fieldset.U.grid == multifile_fieldset.V.grid
 
 
 @pytest.mark.parametrize("gridtype", ["A", "C"])
@@ -372,37 +380,17 @@ def test_fieldset_diffgrids_from_file(tmp_path):
     assert fieldset.U.grid != fieldset.V.grid
 
 
-def test_fieldset_diffgrids_from_file_data(tmp_path):
+def test_fieldset_diffgrids_from_file_data(multifile_fieldset):
     """Test for subsetting fieldset from file using indices dict."""
-    stem = "test_subsets"
-
-    timestamps = np.arange(0, 4, 1) * 86400.0
-    timestamps = np.expand_dims(timestamps, 1)
-
-    ufiles = []
-    vfiles = []
-    for index, timestamp in enumerate(timestamps):
-        data, dimensions = generate_fieldset_data(100, 100)
-        path = tmp_path / f"{stem}_{index}.nc"
-        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
-        ufiles.append(path)
-        vfiles.append(path)
-
+    data, dimensions = generate_fieldset_data(100, 100)
     field_U = FieldSet.from_data(data, dimensions).U
     field_U.name = "B"
 
-    files = {"U": ufiles, "V": vfiles}
-    variables = {"U": "U", "V": "V"}
-    dimensions = {"lon": "lon", "lat": "lat"}
-    fieldset_file = FieldSet.from_netcdf(
-        files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True
-    )
-
-    fieldset_file.add_field(field_U, "B")
-    fields = [f for f in fieldset_file.get_fields() if isinstance(f, Field)]
+    multifile_fieldset.add_field(field_U, "B")
+    fields = [f for f in multifile_fieldset.get_fields() if isinstance(f, Field)]
     assert len(fields) == 3
-    assert fieldset_file.gridset.size == 2
-    assert fieldset_file.U.grid != fieldset_file.B.grid
+    assert multifile_fieldset.gridset.size == 2
+    assert multifile_fieldset.U.grid != multifile_fieldset.B.grid
 
 
 def test_fieldset_samegrids_from_data():
