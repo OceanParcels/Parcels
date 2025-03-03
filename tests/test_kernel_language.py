@@ -3,6 +3,7 @@ from contextlib import nullcontext as does_not_raise
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 from parcels import (
     Field,
@@ -127,7 +128,7 @@ def test_while_if_break():
             particle.p *= 2.0
 
     pset.execute(kernel, endtime=1.0, dt=1.0)
-    assert np.allclose(pset.p, 20.0, rtol=1e-12)
+    assert_allclose(pset.p, 20.0, rtol=1e-12)
 
 
 def test_nested_if():
@@ -144,7 +145,7 @@ def test_nested_if():
                 particle.p1 = -1
 
     pset.execute(kernel, endtime=10, dt=1.0)
-    assert np.allclose([pset.p0[0], pset.p1[0]], [0, 1])
+    assert_allclose([pset.p0[0], pset.p1[0]], [0, 1])
 
 
 def test_pass():
@@ -157,7 +158,7 @@ def test_pass():
         pass
 
     pset.execute(kernel, endtime=10, dt=1.0)
-    assert np.allclose(pset[0].p, -1)
+    assert_allclose(pset[0].p, -1)
 
 
 def test_dt_as_variable_in_kernel():
@@ -220,7 +221,7 @@ def test_if_withfield(fieldset_unit_mesh):
             particle.p += 1
 
     pset.execute(kernel, endtime=1.0, dt=1.0)
-    assert np.allclose(pset.p, 7.0, rtol=1e-12)
+    assert_allclose(pset.p, 7.0, rtol=1e-12)
     return
 
 
@@ -306,7 +307,7 @@ def test_small_dt(dt, expectation):
 
     with expectation:
         pset.execute(DoNothing, dt=dt, runtime=dt * 101)
-        assert np.allclose([p.time for p in pset], dt * 100)
+        assert_allclose([p.time for p in pset], dt * 100)
 
 
 def test_TEOSdensity_kernels():
@@ -336,7 +337,7 @@ def test_TEOSdensity_kernels():
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 
     pset.execute(PolyTEOS10_bsq, runtime=1)
-    assert np.allclose(pset[0].density, 1022.85377)
+    assert_allclose(pset[0].density, 1022.85377)
 
 
 def test_EOSseawaterproperties_kernels():
@@ -351,18 +352,18 @@ def test_EOSseawaterproperties_kernels():
     )
     pset = ParticleSet(fieldset, pclass=PoTempParticle, lon=5, lat=5, depth=1000)
     pset.execute(PtempFromTemp, runtime=1)
-    assert np.allclose(pset[0].potemp, 36.89073)
+    assert_allclose(pset[0].potemp, 36.89073)
 
     TempParticle = Particle.add_variables(
         [Variable("temp", dtype=np.float32), Variable("pressure", dtype=np.float32, initial=10000)]
     )
     pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=5, depth=1000)
     pset.execute(TempFromPtemp, runtime=1)
-    assert np.allclose(pset[0].temp, 40)
+    assert_allclose(pset[0].temp, 40)
 
     pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=30, depth=7321.45)
     pset.execute(PressureFromLatDepth, runtime=1)
-    assert np.allclose(pset[0].pressure, 7500, atol=1e-2)
+    assert_allclose(pset[0].pressure, 7500, atol=1e-2)
 
 
 @pytest.mark.parametrize("pressure", [0, 10])
@@ -397,6 +398,6 @@ def test_UNESCOdensity_kernel(pressure):
     pset.execute(UNESCODensity, runtime=1)
 
     if pressure == 0:
-        assert np.allclose(pset[0].density, 1005.9465)
+        assert_allclose(pset[0].density, 1005.9465)
     elif pressure == 10:
-        assert np.allclose(pset[0].density, 1006.4179)
+        assert_allclose(pset[0].density, 1006.4179)

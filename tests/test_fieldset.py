@@ -3,6 +3,7 @@ from datetime import timedelta
 import numpy as np
 import pytest
 import xarray as xr
+from numpy.testing import assert_allclose
 
 from parcels import (
     AdvectionRK4,
@@ -89,8 +90,8 @@ def test_fieldset_from_data(xdim, ydim):
     assert fieldset.U._creation_log == "from_data"
     assert len(fieldset.U.data.shape) == 3
     assert len(fieldset.V.data.shape) == 3
-    assert np.allclose(fieldset.U.data[0, :], data["U"], rtol=1e-12)
-    assert np.allclose(fieldset.V.data[0, :], data["V"], rtol=1e-12)
+    assert_allclose(fieldset.U.data[0, :], data["U"], rtol=1e-12)
+    assert_allclose(fieldset.V.data[0, :], data["V"], rtol=1e-12)
 
 
 def test_fieldset_extra_syntax():
@@ -147,9 +148,9 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim):
     assert len(fieldset.V.data.shape) == 3
     assert len(fieldset.P.data.shape) == 4
     assert fieldset.P.data.shape == (tdim, zdim, ydim / 2, xdim / 2)
-    assert np.allclose(fieldset.U.data, 0.0, rtol=1e-12)
-    assert np.allclose(fieldset.V.data, 1.0, rtol=1e-12)
-    assert np.allclose(fieldset.P.data, 2.0, rtol=1e-12)
+    assert_allclose(fieldset.U.data, 0.0, rtol=1e-12)
+    assert_allclose(fieldset.V.data, 1.0, rtol=1e-12)
+    assert_allclose(fieldset.P.data, 2.0, rtol=1e-12)
 
 
 @pytest.mark.parametrize("xdim", [100, 200])
@@ -163,8 +164,8 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir):
     fieldset = FieldSet.from_parcels(filepath)
     assert len(fieldset.U.data.shape) == 3  # Will be 4 once we use depth
     assert len(fieldset.V.data.shape) == 3
-    assert np.allclose(fieldset.U.data[0, :], data["U"], rtol=1e-12)
-    assert np.allclose(fieldset.V.data[0, :], data["V"], rtol=1e-12)
+    assert_allclose(fieldset.U.data[0, :], data["U"], rtol=1e-12)
+    assert_allclose(fieldset.V.data[0, :], data["V"], rtol=1e-12)
 
 
 def test_fieldset_from_modulefile():
@@ -392,7 +393,7 @@ def test_fieldset_write_curvilinear(tmpdir):
     assert fieldset2.dx._creation_log == "from_netcdf"
 
     for var in ["lon", "lat", "data"]:
-        assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
+        assert_allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
 
 
 def addConst(particle, fieldset, time):  # pragma: no cover
@@ -490,7 +491,7 @@ def test_fieldset_write(tmp_zarrfile):
     assert fieldset.U.data[0, 1, 0] == 11
 
     da = xr.open_dataset(str(tmp_zarrfile).replace(".zarr", "_0005U.nc"))
-    assert np.allclose(fieldset.U.data, da["U"].values, atol=1.0)
+    assert_allclose(fieldset.U.data, da["U"].values, atol=1.0)
 
 
 @pytest.mark.v4remove
@@ -517,12 +518,12 @@ def test_timestamps(datetype, tmpdir):
     fieldset3 = FieldSet.from_parcels(tmpdir.join("file*"))
     timestamps = [dims1["time"], dims2["time"]]
     fieldset4 = FieldSet.from_parcels(tmpdir.join("file*"), timestamps=timestamps)
-    assert np.allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
+    assert_allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
 
     for d in [0, 8, 10, 12]:
         fieldset3.computeTimeChunk(d * 86400.0, 1.0)
         fieldset4.computeTimeChunk(d * 86400.0, 1.0)
-        assert np.allclose(fieldset3.U.data, fieldset4.U.data)
+        assert_allclose(fieldset3.U.data, fieldset4.U.data)
 
 
 @pytest.mark.v4remove
@@ -610,10 +611,10 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
         temp_theo = temp_vec[-1]
     elif dt_sign == -1:
         temp_theo = temp_vec[0]
-    assert np.allclose(temp_theo, pset.temp[0], atol=1e-5)
-    assert np.allclose(pset.u1[0], pset.u2[0])
-    assert np.allclose(pset.v1[0], pset.v2[0])
-    assert np.allclose(pset.d[0], 1.0)
+    assert_allclose(temp_theo, pset.temp[0], atol=1e-5)
+    assert_allclose(pset.u1[0], pset.u2[0])
+    assert_allclose(pset.v1[0], pset.v2[0])
+    assert_allclose(pset.d[0], 1.0)
 
 
 @pytest.mark.parametrize("tdim", [10, None])
@@ -654,9 +655,9 @@ def test_fieldset_from_xarray(tdim):
 
     pset.execute(AdvectionRK4, dt=1, runtime=10)
     if tdim == 10:
-        assert np.allclose(pset.lon_nextloop[0], 4.5) and np.allclose(pset.lat_nextloop[0], 10)
+        assert_allclose(pset.lon_nextloop[0], 4.5) and np.allclose(pset.lat_nextloop[0], 10)
     else:
-        assert np.allclose(pset.lon_nextloop[0], 5.0) and np.allclose(pset.lat_nextloop[0], 10)
+        assert_allclose(pset.lon_nextloop[0], 5.0) and np.allclose(pset.lat_nextloop[0], 10)
 
 
 @pytest.mark.v4alpha
@@ -695,16 +696,16 @@ def test_fieldset_from_data_gridtypes():
     plon = pset.lon
     plat = pset.lat
     # sol of  dx/dt = (init_depth+1)*x+0.1; x(0)=0
-    assert np.allclose(plon, [0.17173462592827032, 0.2177736932123214])
-    assert np.allclose(plat, [1, 1])
+    assert_allclose(plon, [0.17173462592827032, 0.2177736932123214])
+    assert_allclose(plat, [1, 1])
 
     # Rectilinear S grid
     dimensions["depth"] = depth_s
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     pset = ParticleSet(fieldset, Particle, [0, 0], [0, 0], [0, 0.4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
-    assert np.allclose(plon, pset.lon)
-    assert np.allclose(plat, pset.lat)
+    assert_allclose(plon, pset.lon)
+    assert_allclose(plat, pset.lat)
 
     # Curvilinear Z grid
     dimensions["lon"] = lonm
@@ -713,8 +714,8 @@ def test_fieldset_from_data_gridtypes():
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     pset = ParticleSet(fieldset, Particle, [0, 0], [0, 0], [0, 0.4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
-    assert np.allclose(plon, pset.lon)
-    assert np.allclose(plat, pset.lat)
+    assert_allclose(plon, pset.lon)
+    assert_allclose(plat, pset.lat)
 
     # Curvilinear S grid
     dimensions["depth"] = depth_s

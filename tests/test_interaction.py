@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 from parcels import Field, FieldSet, ParticleSet
 from parcels.application_kernels.advection import AdvectionRK4
@@ -56,7 +57,7 @@ def test_simple_interaction_kernel(fieldset_unit_mesh):
         interaction_distance=interaction_distance,
     )
     pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=2.0, dt=1.0)
-    assert np.allclose(pset.lat, [0.1, 0.2, 0.1, 0.0], rtol=1e-5)
+    assert_allclose(pset.lat, [0.1, 0.2, 0.1, 0.0], rtol=1e-5)
 
 
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
@@ -75,10 +76,10 @@ def test_zonal_periodic_distance(mesh, periodic_domain_zonal):
     )
     pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=2.0, dt=1.0)
     if periodic_domain_zonal:
-        assert np.allclose([pset[0].lat, pset[2].lat], 0.6)
-        assert np.allclose(pset[1].lat, 0.5)
+        assert_allclose([pset[0].lat, pset[2].lat], 0.6)
+        assert_allclose(pset[1].lat, 0.5)
     else:
-        assert np.allclose([p.lat for p in pset], 0.5)
+        assert_allclose([p.lat for p in pset], 0.5)
 
 
 def test_concatenate_interaction_kernels(fieldset_unit_mesh):
@@ -103,7 +104,7 @@ def test_concatenate_interaction_kernels(fieldset_unit_mesh):
     # The kernel results are only applied after all interactionkernels
     # have been executed, so we expect the result to be double the
     # movement from executing the kernel once.
-    assert np.allclose(pset.lat, [0.2, 0.4, 0.2, 0.0], rtol=1e-5)
+    assert_allclose(pset.lat, [0.2, 0.4, 0.2, 0.0], rtol=1e-5)
 
 
 def test_concatenate_interaction_kernels_as_pyfunc(fieldset_unit_mesh):
@@ -125,7 +126,7 @@ def test_concatenate_interaction_kernels_as_pyfunc(fieldset_unit_mesh):
     # The kernel results are only applied after all interactionkernels
     # have been executed, so we expect the result to be double the
     # movement from executing the kernel once.
-    assert np.allclose(pset.lat, [0.2, 0.4, 0.2, 0.0], rtol=1e-5)
+    assert_allclose(pset.lat, [0.2, 0.4, 0.2, 0.0], rtol=1e-5)
 
 
 def test_neighbor_merge(fieldset_unit_mesh):
@@ -216,7 +217,7 @@ def compare_results_by_idx(instance, particle_idx, ref_result, active_idx=None):
         assert neigh in active_idx
     assert set(cur_neigh) <= set(active_idx)
     neigh_by_coor, _ = instance.find_neighbors_by_coor(instance._values[:, particle_idx])
-    assert np.allclose(cur_neigh, neigh_by_coor)
+    assert_allclose(cur_neigh, neigh_by_coor)
 
     assert isinstance(cur_neigh, np.ndarray)
     assert set(ref_result) == set(cur_neigh)

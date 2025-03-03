@@ -2,6 +2,7 @@ import cftime
 import numpy as np
 import pytest
 import xarray as xr
+from numpy.testing import assert_allclose
 
 from parcels import Field
 from parcels.tools.converters import (
@@ -22,8 +23,8 @@ def test_field_from_netcdf_variables():
     variable = {"U": "vozocrtx"}
     f3 = Field.from_netcdf(filename, variable, dims)
 
-    assert np.allclose(f1.data, f2.data, atol=1e-12)
-    assert np.allclose(f1.data, f3.data, atol=1e-12)
+    assert_allclose(f1.data, f2.data, atol=1e-12)
+    assert_allclose(f1.data, f3.data, atol=1e-12)
 
     with pytest.raises(AssertionError):
         variable = {"U": "vozocrtx", "nav_lat": "nav_lat"}  # multiple variables will fail
