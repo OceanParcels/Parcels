@@ -282,7 +282,8 @@ def _linear_3d(ctx: InterpolationContext3D) -> float:
         data_3d = ctx.data[ctx.ti + 1, :, :, :]
         fz0_t1, fz1_t1 = _get_3d_f0_f1(eta=ctx.eta, xsi=ctx.xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
         fz0 = (1 - ctx.tau) * fz0 + ctx.tau * fz0_t1
-        fz1 = (1 - ctx.tau) * fz1 + ctx.tau * fz1_t1
+        if fz1_t1 is not None and fz1 is not None:
+            fz1 = (1 - ctx.tau) * fz1 + ctx.tau * fz1_t1
 
     return _z_layer_interp(zeta=ctx.zeta, f0=fz0, f1=fz1, zi=ctx.zi, zdim=zdim, gridindexingtype=ctx.gridindexingtype)
 
