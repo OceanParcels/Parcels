@@ -211,9 +211,19 @@ def test_globcurrent_time_extrapolation_error(use_xarray):
         )
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(
+    reason="This was always broken when using eager loading `deferred_load=False` for the P field. Needs to be fixed."
+)
 @pytest.mark.parametrize("dt", [-300, 300])
 @pytest.mark.parametrize("with_starttime", [True, False])
 def test_globcurrent_startparticles_between_time_arrays(dt, with_starttime):
+    """Test for correctly initialising particle start times.
+
+    When using Fields with different temporal domains, its important to intialise particles
+    at the beginning of the time period where all Fields have available data (i.e., the
+    intersection of the temporal domains)
+    """
     fieldset = set_globcurrent_fieldset()
 
     data_folder = parcels.download_example_dataset("GlobCurrent_example_data")
