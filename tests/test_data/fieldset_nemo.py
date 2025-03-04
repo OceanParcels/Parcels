@@ -3,7 +3,7 @@ import os
 import parcels
 
 
-def create_fieldset(indices=None):
+def create_fieldset():
     data_path = os.path.join(os.path.dirname(__file__))
 
     filenames = {
@@ -20,5 +20,4 @@ def create_fieldset(indices=None):
     }
     variables = {"U": "U", "V": "V"}
     dimensions = {"lon": "glamf", "lat": "gphif", "time": "time_counter"}
-    indices = indices or {}
-    return parcels.FieldSet.from_nemo(filenames, variables, dimensions, indices=indices)
+    return parcels.FieldSet.from_nemo(filenames, variables, dimensions)
