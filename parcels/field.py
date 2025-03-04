@@ -129,10 +129,6 @@ class Field:
         mesh and time_origin information. Can be constructed from any of the Grid objects
     fieldtype : str
         Type of Field to be used for UnitConverter (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-    vmin : float
-        Minimum allowed value on the field. Data below this value are set to zero
-    vmax : float
-        Maximum allowed value on the field. Data above this value are set to zero
     time_origin : parcels.tools.converters.TimeConverter
         Time origin of the time axis (only if grid is None)
     interp_method : str
@@ -166,8 +162,6 @@ class Field:
         mesh: Mesh = "flat",
         timestamps=None,
         fieldtype=None,
-        vmin: float | None = None,
-        vmax: float | None = None,
         time_origin: TimeConverter | None = None,
         interp_method: InterpMethod = "linear",
         allow_time_extrapolation: bool | None = None,
@@ -231,9 +225,6 @@ class Field:
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
 
-        self.vmin = vmin
-        self.vmax = vmax
-
         if not self.grid.defer_load:
             self.data = self._reshape(self.data)
             self._loaded_time_indices = range(self.grid.tdim)
@@ -241,10 +232,6 @@ class Field:
             # Hack around the fact that NaN and ridiculously large values
             # propagate in SciPy's interpolators
             self.data[np.isnan(self.data)] = 0.0
-            if self.vmin is not None:
-                self.data[self.data < self.vmin] = 0.0
-            if self.vmax is not None:
-                self.data[self.data > self.vmax] = 0.0
 
         self._scaling_factor = None
 
@@ -924,10 +911,6 @@ class Field:
         data[np.isnan(data)] = 0
         if self._scaling_factor:
             data *= self._scaling_factor
-        if self.vmin is not None:
-            data[data < self.vmin] = 0
-        if self.vmax is not None:
-            data[data > self.vmax] = 0
         return data
 
     def _data_concatenate(self, data, data_to_concat, tindex):
