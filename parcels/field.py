@@ -539,8 +539,6 @@ class Field:
                 "time dimension in indices is not necessary anymore. It is then ignored.", FieldSetWarning, stacklevel=2
             )
 
-        # Pre-allocate data before reading files into buffer
-        ti = 0
         with NetcdfFileBuffer(  # type: ignore[operator]
             data_filenames,
             dimensions,
@@ -563,17 +561,6 @@ class Field:
                 assert buffer_data.shape[2] == grid.ydim, errormessage
                 assert buffer_data.shape[3] == grid.xdim, errormessage
 
-            # if len(buffer_data.shape) == 2:
-            #     data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape), ())))
-            # elif len(buffer_data.shape) == 3:
-            #     if len(filebuffer.indices["depth"]) > 1:
-            #         data_list.append(buffer_data.reshape(sum(((1,), buffer_data.shape), ())))
-            #     else:
-            #         data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape[1:]), ())))
-            # else:
-            #     data_list.append(buffer_data)
-
-        ti += sum(np.array(slice_).size for slice_ in grid.timeslices)
         data = buffer_data
 
         if allow_time_extrapolation is None:

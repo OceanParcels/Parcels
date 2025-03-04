@@ -27,7 +27,6 @@ class NetcdfFileBuffer:
         self.indices = indices
         self.dataset = None
         self.timestamp = timestamp
-        self.ti = None
         self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
         self.data_full_zdim = data_full_zdim
@@ -189,7 +188,7 @@ class NetcdfFileBuffer:
 
     def data_access(self):
         data = self.dataset[self.name]
-        ti = range(data.shape[0]) if self.ti is None else self.ti
+        ti = range(data.shape[0])
         return np.array(self._apply_indices(data, ti))
 
     @property
