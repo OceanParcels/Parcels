@@ -435,7 +435,6 @@ class FieldSet:
                 paths,
                 (var, name),
                 dims,
-                None,
                 grid=grid,
                 mesh=mesh,
                 timestamps=timestamps,
