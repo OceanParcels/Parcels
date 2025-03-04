@@ -58,6 +58,8 @@ def test_fieldset_extra_syntax():
         FieldSet.from_data(data, dimensions, unknown_keyword=5)
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="vmin and vmax were removed as arguments")
 def test_fieldset_vmin_vmax():
     data, dimensions = generate_fieldset_data(11, 11)
     fieldset = FieldSet.from_data(data, dimensions, vmin=3, vmax=7)
