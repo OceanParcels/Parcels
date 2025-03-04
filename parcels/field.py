@@ -875,7 +875,6 @@ class Field:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        _, ti = self._time_index(time)
         if self.gridindexingtype == "croco" and self not in [self.fieldset.H, self.fieldset.Zeta]:
             z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
 
@@ -1548,20 +1547,28 @@ class VectorField:
             grid = self.U.grid
             tau, ti = self.U._time_index(time)
             if ti < grid.tdim - 1 and time > grid.time[ti]:
+                t0 = grid.time[ti]
+                t1 = grid.time[ti + 1]
                 if "3D" in self.vector_type:
                     (u0, v0, w0) = interp[self.U.interp_method]["3D"](
-                        ti, z, y, x, time, particle=particle, applyConversion=applyConversion
+                        ti,
+                        z,
+                        y,
+                        x,
+                        t0,
+                        particle=particle,
+                        applyConversion=applyConversion,  # TODO see if we can directly call time interpolation for W here
                     )
                     (u1, v1, w1) = interp[self.U.interp_method]["3D"](
-                        ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion
+                        ti + 1, z, y, x, t1, particle=particle, applyConversion=applyConversion
                     )
                     w = w0 * (1 - tau) + w1 * tau
                 else:
                     (u0, v0) = interp[self.U.interp_method]["2D"](
-                        ti, z, y, x, time, particle=particle, applyConversion=applyConversion
+                        ti, z, y, x, t0, particle=particle, applyConversion=applyConversion
                     )
                     (u1, v1) = interp[self.U.interp_method]["2D"](
-                        ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion
+                        ti + 1, z, y, x, t1, particle=particle, applyConversion=applyConversion
                     )
                 u = u0 * (1 - tau) + u1 * tau
                 v = v0 * (1 - tau) + v1 * tau
