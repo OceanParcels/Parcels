@@ -691,8 +691,6 @@ class Field:
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray)):
             data = np.array(data)
-        if self.grid._lat_flipped:
-            data = np.flip(data, axis=-2)
 
         if self.grid.xdim == 1 or self.grid.ydim == 1:
             data = np.squeeze(data)  # First remove all length-1 dimensions in data, so that we can add them below

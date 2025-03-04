@@ -1,5 +1,4 @@
 import functools
-import warnings
 from enum import IntEnum
 
 import numpy as np
@@ -7,7 +6,6 @@ import numpy.typing as npt
 
 from parcels._typing import Mesh, UpdateStatus, assert_valid_mesh
 from parcels.tools.converters import TimeConverter
-from parcels.tools.warnings import FieldSetWarning
 
 __all__ = [
     "CurvilinearSGrid",
@@ -68,7 +66,6 @@ class Grid:
         assert_valid_mesh(mesh)
         self._mesh = mesh
         self._zonal_periodic = False
-        self._lat_flipped = False
         self._defer_load = False
         self._lonlat_minmax = np.array(
             [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32
@@ -251,16 +248,6 @@ class RectilinearGrid(Grid):
         super().__init__(lon, lat, time, time_origin, mesh)
         self.tdim = self.time.size
 
-        if self.ydim > 1 and self.lat[-1] < self.lat[0]:
-            self._lat = np.flip(self.lat, axis=0)
-            self._lat_flipped = True
-            warnings.warn(
-                "Flipping lat data from North-South to South-North. "
-                "Note that this may lead to wrong sign for meridional velocity, so tread very carefully",
-                FieldSetWarning,
-                stacklevel=2,
-            )
-
     @property
     def xdim(self):
         return self.lon.size
@@ -379,8 +366,6 @@ class RectilinearSGrid(RectilinearGrid):
             ), "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
         if not self.depth.dtype == np.float32:
             self._depth = self.depth.astype(np.float32)
-        if self._lat_flipped:
-            self._depth = np.flip(self.depth, axis=-2)
 
     @property
     def zdim(self):
