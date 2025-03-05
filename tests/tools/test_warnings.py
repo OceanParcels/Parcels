@@ -48,6 +48,8 @@ def test_file_warnings(tmp_zarrfile):
         pset.execute(AdvectionRK4, runtime=3, dt=1, output_file=pfile)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="https://github.com/OceanParcels/Parcels/pull/1908#issuecomment-2698014941")
 def test_kernel_warnings():
     # positive scaling factor for W
     filenames = str(TEST_DATA / "POPtestdata_time.nc")

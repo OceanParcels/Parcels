@@ -1,10 +1,9 @@
-import functools
 from enum import IntEnum
 
 import numpy as np
 import numpy.typing as npt
 
-from parcels._typing import Mesh, UpdateStatus, assert_valid_mesh
+from parcels._typing import Mesh, assert_valid_mesh
 from parcels.tools.converters import TimeConverter
 
 __all__ = [
@@ -42,7 +41,6 @@ class Grid:
         mesh: Mesh,
     ):
         self._ti = -1
-        self._update_status: UpdateStatus | None = None
         lon = np.array(lon)
         lat = np.array(lat)
         time = np.zeros(1, dtype=np.float64) if time is None else time
@@ -66,7 +64,6 @@ class Grid:
         assert_valid_mesh(mesh)
         self._mesh = mesh
         self._zonal_periodic = False
-        self._defer_load = False
         self._lonlat_minmax = np.array(
             [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32
         )
@@ -114,10 +111,6 @@ class Grid:
     @property
     def zonal_periodic(self):
         return self._zonal_periodic
-
-    @property
-    def defer_load(self):
-        return self._defer_load
 
     @staticmethod
     def create_grid(
@@ -181,54 +174,6 @@ class Grid:
                     axis=len(self.depth.shape) - 2,
                 )
                 assert self.depth.shape[2] == self.ydim, "Third dim must be y."
-
-    def _computeTimeChunk(self, f, time, signdt):
-        nextTime_loc = np.inf if signdt >= 0 else -np.inf
-        prev_time_indices = self.time
-        if self._update_status == "not_updated":
-            if self._ti >= 0:
-                if time < self.time[0] or time > self.time[1]:
-                    self._ti = -1  # reset
-                elif signdt >= 0 and (time < self.time_full[0] or time >= self.time_full[-1]):
-                    self._ti = -1  # reset
-                elif signdt < 0 and (time <= self.time_full[0] or time > self.time_full[-1]):
-                    self._ti = -1  # reset
-                elif signdt >= 0 and time >= self.time[1] and self._ti < len(self.time_full) - 2:
-                    self._ti += 1
-                    self.time = self.time_full[self._ti : self._ti + 2]
-                    self._update_status = "updated"
-                elif signdt < 0 and time <= self.time[0] and self._ti > 0:
-                    self._ti -= 1
-                    self.time = self.time_full[self._ti : self._ti + 2]
-                    self._update_status = "updated"
-            if self._ti == -1:
-                self.time = self.time_full
-                self._ti = f._time_index(time)
-
-                if signdt == -1 and self._ti > 0 and self.time_full[self._ti] == time:
-                    self._ti -= 1
-                if self._ti >= len(self.time_full) - 1:
-                    self._ti = len(self.time_full) - 2
-
-                self.time = self.time_full[self._ti : self._ti + 2]
-                self.tdim = 2
-                if prev_time_indices is None or len(prev_time_indices) != 2 or len(prev_time_indices) != len(self.time):
-                    self._update_status = "first_updated"
-                elif functools.reduce(
-                    lambda i, j: i and j, map(lambda m, k: m == k, self.time, prev_time_indices), True
-                ) and len(prev_time_indices) == len(self.time):
-                    self._update_status = "not_updated"
-                elif functools.reduce(
-                    lambda i, j: i and j, map(lambda m, k: m == k, self.time[:1], prev_time_indices[:1]), True
-                ) and len(prev_time_indices) == len(self.time):
-                    self._update_status = "updated"
-                else:
-                    self._update_status = "first_updated"
-            if signdt >= 0 and (self._ti < len(self.time_full) - 2 or not f.allow_time_extrapolation):
-                nextTime_loc = self.time[1]
-            elif signdt < 0 and (self._ti > 0 or not f.allow_time_extrapolation):
-                nextTime_loc = self.time[0]
-        return nextTime_loc
 
 
 class RectilinearGrid(Grid):

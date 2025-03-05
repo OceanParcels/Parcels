@@ -177,10 +177,6 @@ class Field:
             self.filebuffername = name[1]
         self.data = data
         if grid:
-            if grid.defer_load and isinstance(data, np.ndarray):
-                raise ValueError(
-                    "Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately"
-                )
             self._grid = grid
         else:
             if (time is not None) and isinstance(time[0], np.datetime64):
@@ -225,14 +221,12 @@ class Field:
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
 
-        if not self.grid.defer_load:
-            self.data = self._reshape(self.data)
-            self._loaded_time_indices = range(self.grid.tdim)
+        self.data = self._reshape(self.data)
+        self._loaded_time_indices = range(self.grid.tdim)
 
-            # Hack around the fact that NaN and ridiculously large values
-            # propagate in SciPy's interpolators
-            self.data[np.isnan(self.data)] = 0.0
-
+        # Hack around the fact that NaN and ridiculously large values
+        # propagate in SciPy's interpolators
+        self.data[np.isnan(self.data)] = 0.0
         self._scaling_factor = None
 
         self._dimensions = kwargs.pop("dimensions", None)
@@ -355,7 +349,6 @@ class Field:
         mesh: Mesh = "spherical",
         timestamps=None,
         allow_time_extrapolation: bool | None = None,
-        deferred_load: bool = True,
         **kwargs,
     ) -> "Field":
         """Create field from netCDF file.
@@ -388,11 +381,6 @@ class Field:
             boolean whether to allow for extrapolation in time
             (i.e. beyond the last available time snapshot)
             Default is False if dimensions includes time, else True
-        deferred_load : bool
-            boolean whether to only pre-load data (in deferred mode) or
-            fully load them (default: True). It is advised to deferred load the data, since in
-            that case Parcels deals with a better memory management during particle set execution.
-            deferred_load=False is however sometimes necessary for plotting the fields.
         gridindexingtype : str
             The type of gridindexing. Either 'nemo' (default), 'mitgcm', 'mom5', 'pop', or 'croco' are supported.
             See also the Grid indexing documentation on oceanparcels.org
@@ -551,56 +539,29 @@ class Field:
                 "time dimension in indices is not necessary anymore. It is then ignored.", FieldSetWarning, stacklevel=2
             )
 
-        if grid.time.size <= 2:
-            deferred_load = False
+        with NetcdfFileBuffer(  # type: ignore[operator]
+            data_filenames,
+            dimensions,
+            indices,
+            netcdf_engine,
+            interp_method=interp_method,
+            data_full_zdim=data_full_zdim,
+        ) as filebuffer:
+            # If Field.from_netcdf is called directly, it may not have a 'data' dimension
+            # In that case, assume that 'name' is the data dimension
+            filebuffer.name = variable[1]
+            buffer_data = filebuffer.data
+            if len(buffer_data.shape) == 4:
+                errormessage = (
+                    f"Field {filebuffer.name} expecting a data shape of [tdim={grid.tdim}, zdim={grid.zdim}, "
+                    f"ydim={grid.ydim}, xdim={grid.xdim }] "
+                    f"but got shape {buffer_data.shape}."
+                )
+                assert buffer_data.shape[0] == grid.tdim, errormessage
+                assert buffer_data.shape[2] == grid.ydim, errormessage
+                assert buffer_data.shape[3] == grid.xdim, errormessage
 
-        if not deferred_load:
-            # Pre-allocate data before reading files into buffer
-            data_list = []
-            ti = 0
-            for tslice, fname in zip(grid.timeslices, data_filenames, strict=True):
-                with NetcdfFileBuffer(  # type: ignore[operator]
-                    fname,
-                    dimensions,
-                    indices,
-                    netcdf_engine,
-                    interp_method=interp_method,
-                    data_full_zdim=data_full_zdim,
-                ) as filebuffer:
-                    # If Field.from_netcdf is called directly, it may not have a 'data' dimension
-                    # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = variable[1]
-                    buffer_data = filebuffer.data
-                    if len(buffer_data.shape) == 4:
-                        errormessage = (
-                            f"Field {filebuffer.name} expecting a data shape of [tdim={grid.tdim}, zdim={grid.zdim}, "
-                            f"ydim={grid.ydim}, xdim={grid.xdim }] "
-                            f"but got shape {buffer_data.shape}."
-                        )
-                        assert buffer_data.shape[0] == grid.tdim, errormessage
-                        assert buffer_data.shape[2] == grid.ydim, errormessage
-                        assert buffer_data.shape[3] == grid.xdim, errormessage
-
-                    if len(buffer_data.shape) == 2:
-                        data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape), ())))
-                    elif len(buffer_data.shape) == 3:
-                        if len(filebuffer.indices["depth"]) > 1:
-                            data_list.append(buffer_data.reshape(sum(((1,), buffer_data.shape), ())))
-                        else:
-                            if type(tslice) not in [list, np.ndarray, xr.DataArray]:
-                                tslice = [tslice]
-                            data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape[1:]), ())))
-                    else:
-                        data_list.append(buffer_data)
-                    if type(tslice) not in [list, np.ndarray, xr.DataArray]:
-                        tslice = [tslice]
-                ti += len(tslice)
-            data = np.concatenate(data_list, axis=0)
-        else:
-            grid._defer_load = True
-            grid._ti = -1
-            data = DeferredArray()
-            data.compute_shape(grid.xdim, grid.ydim, grid.zdim, grid.tdim, len(grid.timeslices))
+        data = buffer_data
 
         if allow_time_extrapolation is None:
             allow_time_extrapolation = False if "time" in dimensions else True
@@ -727,8 +688,7 @@ class Field:
         if self._scaling_factor:
             raise NotImplementedError(f"Scaling factor for field {self.name} already defined.")
         self._scaling_factor = factor
-        if not self.grid.defer_load:
-            self.data *= factor
+        self.data *= factor
 
     def set_depth_from_field(self, field):
         """Define the depth dimensions from another (time-varying) field.
@@ -911,69 +871,6 @@ class Field:
         data[np.isnan(data)] = 0
         if self._scaling_factor:
             data *= self._scaling_factor
-        return data
-
-    def _data_concatenate(self, data, data_to_concat, tindex):
-        if data[tindex] is not None:
-            if isinstance(data, np.ndarray):
-                data[tindex] = None
-            elif isinstance(data, list):
-                del data[tindex]
-        if tindex == 0:
-            data = np.concatenate([data_to_concat, data[tindex + 1 :, :]], axis=0)
-        elif tindex == 1:
-            data = np.concatenate([data[:tindex, :], data_to_concat], axis=0)
-        else:
-            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1]")
-        return data
-
-    def computeTimeChunk(self, data, tindex):
-        g = self.grid
-        timestamp = self.timestamps
-        if timestamp is not None:
-            summedlen = np.cumsum([len(ls) for ls in self.timestamps])
-            if g._ti + tindex >= summedlen[-1]:
-                ti = g._ti + tindex - summedlen[-1]
-            else:
-                ti = g._ti + tindex
-            timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
-
-        filebuffer = NetcdfFileBuffer(
-            self._dataFiles[g._ti + tindex],
-            self.dimensions,
-            self.indices,
-            netcdf_engine=self.netcdf_engine,
-            timestamp=timestamp,
-            interp_method=self.interp_method,
-            data_full_zdim=self.data_full_zdim,
-        )
-        filebuffer.__enter__()
-        time_data = filebuffer.time
-        time_data = g.time_origin.reltime(time_data)
-        filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
-        if self.netcdf_engine != "xarray":
-            filebuffer.name = self.filebuffername
-        buffer_data = filebuffer.data
-        if len(buffer_data.shape) == 2:
-            buffer_data = np.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
-        elif len(buffer_data.shape) == 3 and g.zdim > 1:
-            buffer_data = np.reshape(buffer_data, sum(((1,), buffer_data.shape), ()))
-        elif len(buffer_data.shape) == 3:
-            buffer_data = np.reshape(
-                buffer_data,
-                sum(
-                    (
-                        (
-                            buffer_data.shape[0],
-                            1,
-                        ),
-                        buffer_data.shape[1:],
-                    ),
-                    (),
-                ),
-            )
-        data = self._data_concatenate(data, buffer_data, tindex)
-        self.filebuffers[tindex] = filebuffer
         return data
 
     def ravel_index(self, zi, yi, xi):
@@ -1558,32 +1455,6 @@ class VectorField:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
-
-
-class DeferredArray:
-    """Class used for throwing error when Field.data is not read in deferred loading mode."""
-
-    data_shape = ()
-
-    def __init__(self):
-        self.data_shape = (1,)
-
-    def compute_shape(self, xdim, ydim, zdim, tdim, tslices):
-        if zdim == 1 and tdim == 1:
-            self.data_shape = (tslices, 1, ydim, xdim)
-        elif zdim > 1 or tdim > 1:
-            if zdim > 1:
-                self.data_shape = (1, zdim, ydim, xdim)
-            else:
-                self.data_shape = (max(tdim, tslices), 1, ydim, xdim)
-        else:
-            self.data_shape = (tdim, zdim, ydim, xdim)
-        return self.data_shape
-
-    def __getitem__(self, key):
-        raise RuntimeError(
-            "Field is in deferred_load mode, so can't be accessed. Use .computeTimeChunk() method to force loading of data"
-        )
 
 
 class NestedField(list):
