@@ -67,7 +67,6 @@ class Grid:
         self._lonlat_minmax = np.array(
             [np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32
         )
-        self.depth_field = None
 
     def __repr__(self):
         with np.printoptions(threshold=5, suppress=True, linewidth=120, formatter={"float": "{: 0.2f}".format}):
