@@ -1526,66 +1526,25 @@ class VectorField:
             if applyConversion:
                 u = self.U.units.to_target(u, z, y, x)
                 v = self.V.units.to_target(v, z, y, x)
-            if "3D" in self.vector_type:
-                w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
-                if applyConversion:
-                    w = self.W.units.to_target(w, z, y, x)
-                return (u, v, w)
-            else:
-                return (u, v)
         else:
             interp = {
-                "cgrid_velocity": {
-                    "2D": self.spatial_c_grid_interpolation2D,
-                    "3D": self.spatial_c_grid_interpolation3D,
-                },
-                "partialslip": {"2D": self.spatial_slip_interpolation, "3D": self.spatial_slip_interpolation},
-                "freeslip": {"2D": self.spatial_slip_interpolation, "3D": self.spatial_slip_interpolation},
+                "cgrid_velocity": self.spatial_c_grid_interpolation2D,
+                "partialslip": self.spatial_slip_interpolation,
+                "freeslip": self.spatial_slip_interpolation,
             }
-            grid = self.U.grid
             tau, ti = self.U._time_index(time)
-            if ti < grid.tdim - 1 and time > grid.time[ti]:
-                t0 = grid.time[ti]
-                t1 = grid.time[ti + 1]
-                if "3D" in self.vector_type:
-                    (u0, v0, w0) = interp[self.U.interp_method]["3D"](
-                        ti,
-                        z,
-                        y,
-                        x,
-                        t0,
-                        particle=particle,
-                        applyConversion=applyConversion,  # TODO see if we can directly call time interpolation for W here
-                    )
-                    (u1, v1, w1) = interp[self.U.interp_method]["3D"](
-                        ti + 1, z, y, x, t1, particle=particle, applyConversion=applyConversion
-                    )
-                    w = w0 * (1 - tau) + w1 * tau
-                else:
-                    (u0, v0) = interp[self.U.interp_method]["2D"](
-                        ti, z, y, x, t0, particle=particle, applyConversion=applyConversion
-                    )
-                    (u1, v1) = interp[self.U.interp_method]["2D"](
-                        ti + 1, z, y, x, t1, particle=particle, applyConversion=applyConversion
-                    )
-                u = u0 * (1 - tau) + u1 * tau
-                v = v0 * (1 - tau) + v1 * tau
-                if "3D" in self.vector_type:
-                    return (u, v, w)
-                else:
-                    return (u, v)
-            else:
-                # Skip temporal interpolation if time is outside
-                # of the defined time range or if we have hit an
-                # exact value in the time array.
-                if "3D" in self.vector_type:
-                    return interp[self.U.interp_method]["3D"](
-                        ti, z, y, x, grid.time[ti], particle=particle, applyConversion=applyConversion
-                    )
-                else:
-                    return interp[self.U.interp_method]["2D"](
-                        ti, z, y, x, grid.time[ti], particle=particle, applyConversion=applyConversion
-                    )
+            (u, v) = interp[self.U.interp_method](ti, z, y, x, time, particle=particle, applyConversion=applyConversion)
+            if ti < self.U.grid.tdim - 1 and time > self.U.grid.time[ti]:
+                (u1, v1) = interp[self.U.interp_method](
+                    ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion
+                )
+                u = u * (1 - tau) + u1 * tau
+                v = v * (1 - tau) + v1 * tau
+        if "3D" in self.vector_type:
+            w = self.W.eval(time, z, y, x, particle=particle, applyConversion=applyConversion)
+            return (u, v, w)
+        else:
+            return (u, v)
 
     def __getitem__(self, key):
         try:

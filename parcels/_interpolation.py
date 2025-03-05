@@ -201,16 +201,31 @@ def _nearest_3d(ctx: InterpolationContext3D) -> float:
     return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
+def _get_cgrid_depth_point(*, zeta: float, data: np.ndarray, zi: int, yi: int, xi: int) -> tuple[float]:
+    f0 = data[zi, yi, xi]
+    f1 = data[zi + 1, yi, xi]
+    return (1 - zeta) * f0 + zeta * f1
+
+
 @register_3d_interpolator("cgrid_velocity")
-def _cgrid_velocity_3d(ctx: InterpolationContext3D) -> float:  # TODO make time-varying
+def _cgrid_W_velocity_3d(ctx: InterpolationContext3D) -> float:
     # evaluating W velocity in c_grid
     if ctx.gridindexingtype == "nemo":
-        f0 = ctx.data[ctx.ti, ctx.zi, ctx.yi + 1, ctx.xi + 1]
-        f1 = ctx.data[ctx.ti, ctx.zi + 1, ctx.yi + 1, ctx.xi + 1]
+        ft0 = _get_cgrid_depth_point(
+            zeta=ctx.zeta, data=ctx.data[ctx.ti, :, :, :], zi=ctx.zi, yi=ctx.yi + 1, xi=ctx.xi + 1
+        )
     elif ctx.gridindexingtype in ["mitgcm", "croco"]:
-        f0 = ctx.data[ctx.ti, ctx.zi, ctx.yi, ctx.xi]
-        f1 = ctx.data[ctx.ti, ctx.zi + 1, ctx.yi, ctx.xi]
-    return (1 - ctx.zeta) * f0 + ctx.zeta * f1
+        ft0 = _get_cgrid_depth_point(zeta=ctx.zeta, data=ctx.data[ctx.ti, :, :, :], zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
+    if ctx.tau < EPS or ctx.ti == ctx.data.shape[0] - 1:
+        return ft0
+
+    if ctx.gridindexingtype == "nemo":
+        ft1 = _get_cgrid_depth_point(
+            zeta=ctx.zeta, data=ctx.data[ctx.ti + 1, :, :, :], zi=ctx.zi, yi=ctx.yi + 1, xi=ctx.xi + 1
+        )
+    elif ctx.gridindexingtype in ["mitgcm", "croco"]:
+        ft1 = _get_cgrid_depth_point(zeta=ctx.zeta, data=ctx.data[ctx.ti + 1, :, :, :], zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
 @register_3d_interpolator("linear_invdist_land_tracer")
