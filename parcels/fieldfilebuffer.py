@@ -161,7 +161,7 @@ class NetcdfFileBuffer:
             and self.interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"]
         )
 
-    def _apply_indices(self, data):
+    def _apply_indices(self, data, ti):
         if len(data.shape) == 1:
             if self.indices["depth"] is not None:
                 data = data[self.indices["depth"]]
@@ -183,20 +183,20 @@ class NetcdfFileBuffer:
                     data = data[self.indices["depth"], self.indices["lat"], self.indices["lon"]]
             else:
                 if self.nolonlatindices:
-                    data = data[:, :, :]
+                    data = data[ti, :, :]
                 else:
-                    data = data[:, self.indices["lat"], self.indices["lon"]]
+                    data = data[ti, self.indices["lat"], self.indices["lon"]]
         else:
             if self._check_extend_depth(data, 1):
                 if self.nolonlatindices:
-                    data = data[:, self.indices["depth"][:-1], :, :]
+                    data = data[ti, self.indices["depth"][:-1], :, :]
                 else:
-                    data = data[:, self.indices["depth"][:-1], self.indices["lat"], self.indices["lon"]]
+                    data = data[ti, self.indices["depth"][:-1], self.indices["lat"], self.indices["lon"]]
             else:
                 if self.nolonlatindices:
-                    data = data[:, self.indices["depth"], :, :]
+                    data = data[ti, self.indices["depth"], :, :]
                 else:
-                    data = data[:, self.indices["depth"], self.indices["lat"], self.indices["lon"]]
+                    data = data[ti, self.indices["depth"], self.indices["lat"], self.indices["lon"]]
         return data
 
     @property
@@ -206,8 +206,7 @@ class NetcdfFileBuffer:
     def data_access(self):
         data = self.dataset[self.name]
         ti = range(data.shape[0])
-        data = self._apply_indices(data)
-        return data[ti, ...]
+        return np.array(self._apply_indices(data, ti))
 
     @property
     def time(self):
