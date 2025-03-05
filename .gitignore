@@ -32,4 +32,6 @@ parcels/_version_setup.py
 # pixi environments
 .pixi
 *.egg-info
+
+# Ignore pixi.lock file for now as Vecko is the only one using pixi for development. This should be checked into VCS if it becomes a more common tool.
 pixi.lock
