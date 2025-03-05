@@ -201,7 +201,7 @@ def _nearest_3d(ctx: InterpolationContext3D) -> float:
     return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
-def _get_cgrid_depth_point(*, zeta: float, data: np.ndarray, zi: int, yi: int, xi: int) -> tuple[float]:
+def _get_cgrid_depth_point(*, zeta: float, data: np.ndarray, zi: int, yi: int, xi: int) -> float:
     f0 = data[zi, yi, xi]
     f1 = data[zi + 1, yi, xi]
     return (1 - zeta) * f0 + zeta * f1
