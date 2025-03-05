@@ -5,6 +5,8 @@ import numpy as np
 
 from parcels._typing import GridIndexingType
 
+EPS = np.finfo(float).eps
+
 
 @dataclass
 class InterpolationContext2D:
@@ -14,6 +16,8 @@ class InterpolationContext2D:
     ----------
     data: np.ndarray
         field data of shape (time, y, x)
+    tau: float
+        time interpolation coordinate in unit length
     eta: float
         y-direction interpolation coordinate in unit cube (between 0 and 1)
     xsi: float
@@ -28,6 +32,7 @@ class InterpolationContext2D:
     """
 
     data: np.ndarray
+    tau: float
     eta: float
     xsi: float
     ti: int
@@ -45,6 +50,8 @@ class InterpolationContext3D:
         field data of shape (time, z, y, x). This needs to be complete in the vertical
         direction as some interpolation methods need to know whether they are at the
         surface or bottom.
+    tau: float
+        time interpolation coordinate in unit length
     zeta: float
         vertical interpolation coordinate in unit cube
     eta: float
@@ -65,6 +72,7 @@ class InterpolationContext3D:
     """
 
     data: np.ndarray
+    tau: float
     zeta: float
     eta: float
     xsi: float
@@ -110,7 +118,11 @@ def register_3d_interpolator(name: str):
 def _nearest_2d(ctx: InterpolationContext2D) -> float:
     xii = ctx.xi if ctx.xsi <= 0.5 else ctx.xi + 1
     yii = ctx.yi if ctx.eta <= 0.5 else ctx.yi + 1
-    return ctx.data[ctx.ti, yii, xii]
+    ft0 = ctx.data[ctx.ti, yii, xii]
+    if ctx.tau < EPS or ctx.ti >= ctx.data.shape[0] - 1:
+        return ft0
+    ft1 = ctx.data[ctx.ti + 1, yii, xii]
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
 def _interp_on_unit_square(*, eta: float, xsi: float, data: np.ndarray, yi: int, xi: int) -> float:
@@ -128,11 +140,15 @@ def _interp_on_unit_square(*, eta: float, xsi: float, data: np.ndarray, yi: int,
 @register_2d_interpolator("partialslip")
 @register_2d_interpolator("freeslip")
 def _linear_2d(ctx: InterpolationContext2D) -> float:
-    return _interp_on_unit_square(eta=ctx.eta, xsi=ctx.xsi, data=ctx.data[ctx.ti, :, :], yi=ctx.yi, xi=ctx.xi)
+    ft0 = _interp_on_unit_square(eta=ctx.eta, xsi=ctx.xsi, data=ctx.data[ctx.ti, :, :], yi=ctx.yi, xi=ctx.xi)
+    if ctx.tau < EPS or ctx.ti >= ctx.data.shape[0] - 1:
+        return ft0
+    ft1 = _interp_on_unit_square(eta=ctx.eta, xsi=ctx.xsi, data=ctx.data[ctx.ti + 1, :, :], yi=ctx.yi, xi=ctx.xi)
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
 @register_2d_interpolator("linear_invdist_land_tracer")
-def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
+def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:  # TODO make time-varying
     xsi = ctx.xsi
     eta = ctx.eta
     data = ctx.data
@@ -166,7 +182,11 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
 @register_2d_interpolator("cgrid_tracer")
 @register_2d_interpolator("bgrid_tracer")
 def _tracer_2d(ctx: InterpolationContext2D) -> float:
-    return ctx.data[ctx.ti, ctx.yi + 1, ctx.xi + 1]
+    ft0 = ctx.data[ctx.ti, ctx.yi + 1, ctx.xi + 1]
+    if ctx.tau < EPS or ctx.ti >= ctx.data.shape[0] - 1:
+        return ft0
+    ft1 = ctx.data[ctx.ti + 1, ctx.yi + 1, ctx.xi + 1]
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
 @register_3d_interpolator("nearest")
@@ -174,23 +194,42 @@ def _nearest_3d(ctx: InterpolationContext3D) -> float:
     xii = ctx.xi if ctx.xsi <= 0.5 else ctx.xi + 1
     yii = ctx.yi if ctx.eta <= 0.5 else ctx.yi + 1
     zii = ctx.zi if ctx.zeta <= 0.5 else ctx.zi + 1
-    return ctx.data[ctx.ti, zii, yii, xii]
+    ft0 = ctx.data[ctx.ti, zii, yii, xii]
+    if ctx.tau < EPS or ctx.ti == ctx.data.shape[0] - 1:
+        return ft0
+    ft1 = ctx.data[ctx.ti + 1, zii, yii, xii]
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
+
+
+def _get_cgrid_depth_point(*, zeta: float, data: np.ndarray, zi: int, yi: int, xi: int) -> float:
+    f0 = data[zi, yi, xi]
+    f1 = data[zi + 1, yi, xi]
+    return (1 - zeta) * f0 + zeta * f1
 
 
 @register_3d_interpolator("cgrid_velocity")
-def _cgrid_velocity_3d(ctx: InterpolationContext3D) -> float:
+def _cgrid_W_velocity_3d(ctx: InterpolationContext3D) -> float:
     # evaluating W velocity in c_grid
     if ctx.gridindexingtype == "nemo":
-        f0 = ctx.data[ctx.ti, ctx.zi, ctx.yi + 1, ctx.xi + 1]
-        f1 = ctx.data[ctx.ti, ctx.zi + 1, ctx.yi + 1, ctx.xi + 1]
+        ft0 = _get_cgrid_depth_point(
+            zeta=ctx.zeta, data=ctx.data[ctx.ti, :, :, :], zi=ctx.zi, yi=ctx.yi + 1, xi=ctx.xi + 1
+        )
     elif ctx.gridindexingtype in ["mitgcm", "croco"]:
-        f0 = ctx.data[ctx.ti, ctx.zi, ctx.yi, ctx.xi]
-        f1 = ctx.data[ctx.ti, ctx.zi + 1, ctx.yi, ctx.xi]
-    return (1 - ctx.zeta) * f0 + ctx.zeta * f1
+        ft0 = _get_cgrid_depth_point(zeta=ctx.zeta, data=ctx.data[ctx.ti, :, :, :], zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
+    if ctx.tau < EPS or ctx.ti == ctx.data.shape[0] - 1:
+        return ft0
+
+    if ctx.gridindexingtype == "nemo":
+        ft1 = _get_cgrid_depth_point(
+            zeta=ctx.zeta, data=ctx.data[ctx.ti + 1, :, :, :], zi=ctx.zi, yi=ctx.yi + 1, xi=ctx.xi + 1
+        )
+    elif ctx.gridindexingtype in ["mitgcm", "croco"]:
+        ft1 = _get_cgrid_depth_point(zeta=ctx.zeta, data=ctx.data[ctx.ti + 1, :, :, :], zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
 
 
 @register_3d_interpolator("linear_invdist_land_tracer")
-def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:
+def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:  # TODO make time-varying
     land = np.isclose(ctx.data[ctx.ti, ctx.zi : ctx.zi + 2, ctx.yi : ctx.yi + 2, ctx.xi : ctx.xi + 2], 0.0)
     nb_land = np.sum(land)
     if nb_land == 8:
@@ -253,9 +292,15 @@ def _z_layer_interp(
 def _linear_3d(ctx: InterpolationContext3D) -> float:
     zdim = ctx.data.shape[1]
     data_3d = ctx.data[ctx.ti, :, :, :]
-    f0, f1 = _get_3d_f0_f1(eta=ctx.eta, xsi=ctx.xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
+    fz0, fz1 = _get_3d_f0_f1(eta=ctx.eta, xsi=ctx.xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
+    if ctx.tau > EPS and ctx.ti < ctx.data.shape[0] - 1:
+        data_3d = ctx.data[ctx.ti + 1, :, :, :]
+        fz0_t1, fz1_t1 = _get_3d_f0_f1(eta=ctx.eta, xsi=ctx.xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
+        fz0 = (1 - ctx.tau) * fz0 + ctx.tau * fz0_t1
+        if fz1_t1 is not None and fz1 is not None:
+            fz1 = (1 - ctx.tau) * fz1 + ctx.tau * fz1_t1
 
-    return _z_layer_interp(zeta=ctx.zeta, f0=f0, f1=f1, zi=ctx.zi, zdim=zdim, gridindexingtype=ctx.gridindexingtype)
+    return _z_layer_interp(zeta=ctx.zeta, f0=fz0, f1=fz1, zi=ctx.zi, zdim=zdim, gridindexingtype=ctx.gridindexingtype)
 
 
 @register_3d_interpolator("bgrid_velocity")
@@ -277,4 +322,8 @@ def _linear_3d_bgrid_w_velocity(ctx: InterpolationContext3D) -> float:
 @register_3d_interpolator("bgrid_tracer")
 @register_3d_interpolator("cgrid_tracer")
 def _tracer_3d(ctx: InterpolationContext3D) -> float:
-    return ctx.data[ctx.ti, ctx.zi, ctx.yi + 1, ctx.xi + 1]
+    ft0 = ctx.data[ctx.ti, ctx.zi, ctx.yi + 1, ctx.xi + 1]
+    if ctx.tau < EPS or ctx.ti >= ctx.data.shape[0] - 1:
+        return ft0
+    ft1 = ctx.data[ctx.ti + 1, ctx.zi, ctx.yi + 1, ctx.xi + 1]
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
