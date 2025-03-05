@@ -29,10 +29,6 @@ class NetcdfFileBuffer:
         self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
         self.data_full_zdim = data_full_zdim
-        if ("lon" in self.indices) or ("lat" in self.indices):
-            self.nolonlatindices = False
-        else:
-            self.nolonlatindices = True
         self.netcdf_engine = netcdf_engine
 
     def __enter__(self):
@@ -75,16 +71,7 @@ class NetcdfFileBuffer:
     def latlon(self):
         lon = self.dataset[self.dimensions["lon"]]
         lat = self.dataset[self.dimensions["lat"]]
-        if self.nolonlatindices and self.gridindexingtype not in ["croco"]:
-            if len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-                lon = lon[0, :, :]
-                lat = lat[0, :, :]
-            elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
-                lon = lon[0, 0, :, :]
-                lat = lat[0, 0, :, :]
-        else:
-            self.indices["lon"] = range(self.xdim)
-            self.indices["lat"] = range(self.ydim)
+        if self.gridindexingtype not in ["croco"]:
             if len(lon.shape) == 3:  # some lon, lat have a time dimension 1
                 lon = lon[0, :, :]
                 lat = lat[0, :, :]
@@ -115,11 +102,8 @@ class NetcdfFileBuffer:
             data = self.dataset[self.name]
             depthsize = data.shape[-3]
             self.data_full_zdim = depthsize
-            self.indices["depth"] = self.indices["depth"] if "depth" in self.indices else range(depthsize)
-            if self.nolonlatindices:
-                return np.empty((0, self.zdim) + data.shape[-2:])
-            else:
-                return np.empty((0, self.zdim, self.ydim, self.xdim))
+            self.indices["depth"] = range(depthsize)
+            return np.empty((0, self.zdim) + data.shape[-2:])
 
     def _check_extend_depth(self, data, dim):
         return (
@@ -132,38 +116,18 @@ class NetcdfFileBuffer:
         if len(data.shape) == 1:
             if self.indices["depth"] is not None:
                 data = data[self.indices["depth"]]
-        elif len(data.shape) == 2:
-            if self.nolonlatindices:
-                pass
-            else:
-                data = data[self.indices["lat"], self.indices["lon"]]
         elif len(data.shape) == 3:
             if self._check_extend_depth(data, 0):
-                if self.nolonlatindices:
-                    data = data[self.indices["depth"][:-1], :, :]
-                else:
-                    data = data[self.indices["depth"][:-1], self.indices["lat"], self.indices["lon"]]
+                data = data[self.indices["depth"][:-1], :, :]
             elif len(self.indices["depth"]) > 1:
-                if self.nolonlatindices:
-                    data = data[self.indices["depth"], :, :]
-                else:
-                    data = data[self.indices["depth"], self.indices["lat"], self.indices["lon"]]
+                data = data[self.indices["depth"], :, :]
             else:
-                if self.nolonlatindices:
-                    data = data[ti, :, :]
-                else:
-                    data = data[ti, self.indices["lat"], self.indices["lon"]]
+                data = data[ti, :, :]
         else:
             if self._check_extend_depth(data, 1):
-                if self.nolonlatindices:
-                    data = data[ti, self.indices["depth"][:-1], :, :]
-                else:
-                    data = data[ti, self.indices["depth"][:-1], self.indices["lat"], self.indices["lon"]]
+                data = data[ti, self.indices["depth"][:-1], :, :]
             else:
-                if self.nolonlatindices:
-                    data = data[ti, self.indices["depth"], :, :]
-                else:
-                    data = data[ti, self.indices["depth"], self.indices["lat"], self.indices["lon"]]
+                data = data[ti, self.indices["depth"], :, :]
         return data
 
     @property
