@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 from scipy import stats
 
 from parcels import (
@@ -44,10 +45,10 @@ def test_fieldKh_Brownian(mesh):
     lons = pset.lon
 
     tol = 500 * mesh_conversion  # effectively 500 m errors
-    assert np.allclose(np.std(lats), expected_std_lat, atol=tol)
-    assert np.allclose(np.std(lons), expected_std_lon, atol=tol)
-    assert np.allclose(np.mean(lons), 0, atol=tol)
-    assert np.allclose(np.mean(lats), 0, atol=tol)
+    assert_allclose(np.std(lats), expected_std_lat, atol=tol)
+    assert_allclose(np.std(lons), expected_std_lon, atol=tol)
+    assert_allclose(np.mean(lons), 0, atol=tol)
+    assert_allclose(np.mean(lats), 0, atol=tol)
 
 
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
@@ -78,8 +79,8 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, kernel):
     lats = pset.lat
     lons = pset.lon
     tol = 2000 * mesh_conversion  # effectively 2000 m errors (because of low numbers of particles)
-    assert np.allclose(np.mean(lons), 0, atol=tol)
-    assert np.allclose(np.mean(lats), 0, atol=tol)
+    assert_allclose(np.mean(lons), 0, atol=tol)
+    assert_allclose(np.mean(lats), 0, atol=tol)
     assert stats.skew(lons) > stats.skew(lats)
 
 
@@ -106,7 +107,7 @@ def test_randomexponential(lambd):
 
     depth = pset.depth
     expected_mean = 1.0 / fieldset.lambd
-    assert np.allclose(np.mean(depth), expected_mean, rtol=0.1)
+    assert_allclose(np.mean(depth), expected_mean, rtol=0.1)
 
 
 @pytest.mark.parametrize("mu", [0.8 * np.pi, np.pi])
@@ -134,8 +135,8 @@ def test_randomvonmises(mu, kappa):
 
     angles = np.array([p.angle for p in pset])
 
-    assert np.allclose(np.mean(angles), mu, atol=0.1)
+    assert_allclose(np.mean(angles), mu, atol=0.1)
     vonmises_mean = stats.vonmises.mean(kappa=kappa, loc=mu)
-    assert np.allclose(np.mean(angles), vonmises_mean, atol=0.1)
+    assert_allclose(np.mean(angles), vonmises_mean, atol=0.1)
     vonmises_var = stats.vonmises.var(kappa=kappa, loc=mu)
-    assert np.allclose(np.var(angles), vonmises_var, atol=0.1)
+    assert_allclose(np.var(angles), vonmises_var, atol=0.1)
