@@ -119,19 +119,8 @@ class NetcdfFileBuffer:
                 lon_subset = lon[0, 0, self._lat_slice, self._lon_slice]
                 lat_subset = lat[0, 0, self._lat_slice, self._lon_slice]
 
-        if len(lon.shape) > 1:  # Tests if lon, lat are rectilinear but were stored in arrays
-            rectilinear = True
-            # test if all columns and rows are the same for lon and lat (in which case grid is rectilinear)
-            for xi in range(1, lon_subset.shape[0]):
-                if not np.allclose(lon_subset[0, :], lon_subset[xi, :]):
-                    rectilinear = False
-                    break
-            if rectilinear:
-                for yi in range(1, lat_subset.shape[1]):
-                    if not np.allclose(lat_subset[:, 0], lat_subset[:, yi]):
-                        rectilinear = False
-                        break
-            if rectilinear:
+        if len(lon.shape) > 1:
+            if is_rectilinear(lon_subset, lat_subset):
                 lon_subset = lon_subset[0, :]
                 lat_subset = lat_subset[:, 0]
         return lat_subset, lon_subset
@@ -258,3 +247,16 @@ def open_xarray_dataset(filename: Path | str, netcdf_engine: str) -> xr.Dataset:
         ds = xr.open_mfdataset(filename, decode_cf=False, engine=netcdf_engine)
         ds["decoded"] = False
     return ds
+
+
+def is_rectilinear(lon_subset: np.ndarray[float], lat_subset: np.ndarray[float]) -> bool:
+    """Test if all columns and rows are the same for lon and lat (in which case grid is rectilinear)"""
+    for xi in range(1, lon_subset.shape[0]):
+        if not np.allclose(lon_subset[0, :], lon_subset[xi, :]):
+            return False
+
+    for yi in range(1, lat_subset.shape[1]):
+        if not np.allclose(lat_subset[:, 0], lat_subset[:, yi]):
+            return False
+
+    return True
