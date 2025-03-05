@@ -117,6 +117,7 @@ local_scheme = "no-local-version"
 
 [tool.pytest.ini_options]
 addopts = ["--strict-config", "--strict-markers"]
+xfail_strict = true
 testpaths = ["tests", "docs/examples"]
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
 minversion = "7"
