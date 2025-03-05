@@ -77,7 +77,7 @@ def multifile_fieldset(tmp_path):
     files = {"U": ufiles, "V": vfiles}
     variables = {"U": "U", "V": "V"}
     dimensions = {"lon": "lon", "lat": "lat"}
-    return FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
+    return FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps)
 
 
 @pytest.mark.parametrize("xdim", [100, 200])
