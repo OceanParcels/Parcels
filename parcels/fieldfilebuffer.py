@@ -48,6 +48,24 @@ class NetcdfFileBuffer:
             self.dataset = None
 
     @property
+    def _lon_slice(self):
+        return self._croco_slice
+
+    @property
+    def _lat_slice(self):
+        return self._croco_slice
+
+    @property
+    def _depth_slice(self):
+        return self._croco_slice
+
+    @property
+    def _croco_slice(self):
+        if self.gridindexingtype in ["croco"]:
+            return slice(None, -1)
+        return slice(None)
+
+    @property
     def latlon(self):
         lon = self.dataset[self.dimensions["lon"]]
         lat = self.dataset[self.dimensions["lat"]]
@@ -67,20 +85,20 @@ class NetcdfFileBuffer:
             if self.gridindexingtype in ["croco"]:
                 xdim -= 1
                 ydim -= 1
-            self.indices["lon"] = self.indices["lon"] if "lon" in self.indices else range(xdim)
-            self.indices["lat"] = self.indices["lat"] if "lat" in self.indices else range(ydim)
+            self.indices["lon"] = range(xdim)
+            self.indices["lat"] = range(ydim)
             if len(lon.shape) == 1:
-                lon_subset = np.array(lon[self.indices["lon"]])
-                lat_subset = np.array(lat[self.indices["lat"]])
+                lon_subset = np.array(lon[self._lon_slice])
+                lat_subset = np.array(lat[self._lat_slice])
             elif len(lon.shape) == 2:
-                lon_subset = np.array(lon[self.indices["lat"], self.indices["lon"]])
-                lat_subset = np.array(lat[self.indices["lat"], self.indices["lon"]])
+                lon_subset = np.array(lon[self._lat_slice, self._lon_slice])
+                lat_subset = np.array(lat[self._lat_slice, self._lon_slice])
             elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-                lon_subset = np.array(lon[0, self.indices["lat"], self.indices["lon"]])
-                lat_subset = np.array(lat[0, self.indices["lat"], self.indices["lon"]])
+                lon_subset = np.array(lon[0, self._lat_slice, self._lon_slice])
+                lat_subset = np.array(lat[0, self._lat_slice, self._lon_slice])
             elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
-                lon_subset = np.array(lon[0, 0, self.indices["lat"], self.indices["lon"]])
-                lat_subset = np.array(lat[0, 0, self.indices["lat"], self.indices["lon"]])
+                lon_subset = np.array(lon[0, 0, self._lat_slice, self._lon_slice])
+                lat_subset = np.array(lat[0, 0, self._lat_slice, self._lon_slice])
 
         if len(lon.shape) > 1:  # Tests if lon, lat are rectilinear but were stored in arrays
             rectilinear = True
@@ -107,19 +125,19 @@ class NetcdfFileBuffer:
             if self.gridindexingtype in ["croco"]:
                 depthsize -= 1
             self.data_full_zdim = depthsize
-            self.indices["depth"] = self.indices["depth"] if "depth" in self.indices else range(depthsize)
+            self.indices["depth"] = range(depthsize)
             if len(depth.shape) == 1:
-                return np.array(depth[self.indices["depth"]])
+                return np.array(depth[self._depth_slice])
             elif len(depth.shape) == 3:
                 if self.nolonlatindices:
-                    return np.array(depth[self.indices["depth"], :, :])
+                    return np.array(depth[self._depth_slice, :, :])
                 else:
-                    return np.array(depth[self.indices["depth"], self.indices["lat"], self.indices["lon"]])
+                    return np.array(depth[self._depth_slice, self._lat_slice, self._lon_slice])
             elif len(depth.shape) == 4:
                 if self.nolonlatindices:
-                    return np.array(depth[:, self.indices["depth"], :, :])
+                    return np.array(depth[:, self._depth_slice, :, :])
                 else:
-                    return np.array(depth[:, self.indices["depth"], self.indices["lat"], self.indices["lon"]])
+                    return np.array(depth[:, self._depth_slice, self._lat_slice, self._lon_slice])
         else:
             self.indices["depth"] = [0]
             return np.zeros(1)
