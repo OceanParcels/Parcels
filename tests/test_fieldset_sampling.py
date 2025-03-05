@@ -600,6 +600,10 @@ def test_sampling_3DCROCO():
     assert np.isclose(pset.p, 1.0)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(
+    reason="Now timestamps has been removed, and filebuffer expects different files. This needs to be rewritten/removed."
+)
 @pytest.mark.parametrize("npart", [1, 10])
 def test_sampling_multigrids_non_vectorfield_from_file(npart, tmpdir):
     xdim, ydim = 100, 200

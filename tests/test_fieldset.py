@@ -37,6 +37,49 @@ def generate_fieldset_data(xdim, ydim, zdim=1, tdim=1):
     return (data, dimensions)
 
 
+def to_xarray_dataset(data: dict[str, np.array], dimensions: dict[str, np.array]) -> xr.Dataset:
+    assert len(dimensions) in [2, 4], "this function only deals with output from generate_fieldset_data()"
+
+    if len(dimensions) == 4:
+        return xr.Dataset(
+            {
+                "U": (["time", "depth", "lat", "lon"], data["U"]),
+                "V": (["time", "depth", "lat", "lon"], data["V"]),
+            },
+            coords=dimensions,
+        )
+
+    return xr.Dataset(
+        {
+            "U": (["lat", "lon"], data["U"]),
+            "V": (["lat", "lon"], data["V"]),
+        },
+        coords=dimensions,
+    )
+
+
+@pytest.fixture
+def multifile_fieldset(tmp_path):
+    stem = "test_subsets"
+
+    timestamps = np.arange(0, 4, 1) * 86400.0
+    timestamps = np.expand_dims(timestamps, 1)
+
+    ufiles = []
+    vfiles = []
+    for index, timestamp in enumerate(timestamps):
+        data, dimensions = generate_fieldset_data(100, 100)
+        path = tmp_path / f"{stem}_{index}.nc"
+        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
+        ufiles.append(path)
+        vfiles.append(path)
+
+    files = {"U": ufiles, "V": vfiles}
+    variables = {"U": "U", "V": "V"}
+    dimensions = {"lon": "lon", "lat": "lat"}
+    return FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps)
+
+
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 200])
 def test_fieldset_from_data(xdim, ydim):
@@ -58,6 +101,8 @@ def test_fieldset_extra_syntax():
         FieldSet.from_data(data, dimensions, unknown_keyword=5)
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="vmin and vmax were removed as arguments")
 def test_fieldset_vmin_vmax():
     data, dimensions = generate_fieldset_data(11, 11)
     fieldset = FieldSet.from_data(data, dimensions, vmin=3, vmax=7)
@@ -278,24 +323,10 @@ def test_add_field_after_pset(fieldtype):
             fieldset.add_vector_field(vfield)
 
 
-def test_fieldset_samegrids_from_file(tmpdir):
+def test_fieldset_samegrids_from_file(multifile_fieldset):
     """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset_data(100, 100)
-    filepath1 = tmpdir.join("test_subsets_1")
-    fieldset1 = FieldSet.from_data(data, dimensions)
-    fieldset1.write(filepath1)
-
-    ufiles = [filepath1 + "U.nc"] * 4
-    vfiles = [filepath1 + "V.nc"] * 4
-    timestamps = np.arange(0, 4, 1) * 86400.0
-    timestamps = np.expand_dims(timestamps, 1)
-    files = {"U": ufiles, "V": vfiles}
-    variables = {"U": "vozocrtx", "V": "vomecrty"}
-    dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
-
-    assert fieldset.gridset.size == 1
-    assert fieldset.U.grid == fieldset.V.grid
+    assert multifile_fieldset.gridset.size == 1
+    assert multifile_fieldset.U.grid == multifile_fieldset.V.grid
 
 
 @pytest.mark.parametrize("gridtype", ["A", "C"])
@@ -312,56 +343,54 @@ def test_fieldset_dimlength1_cgrid(gridtype):
     assert success
 
 
-def test_fieldset_diffgrids_from_file(tmpdir):
-    """Test for subsetting fieldset from file using indices dict."""
-    filename = "test_subsets"
-    data, dimensions = generate_fieldset_data(100, 100)
-    filepath1 = tmpdir.join(filename + "_1")
-    fieldset1 = FieldSet.from_data(data, dimensions)
-    fieldset1.write(filepath1)
-    data, dimensions = generate_fieldset_data(50, 50)
-    filepath2 = tmpdir.join(filename + "_2")
-    fieldset2 = FieldSet.from_data(data, dimensions)
-    fieldset2.write(filepath2)
+def assign_dataset_timestamp_dim(ds, timestamp):
+    """Expand dim to 'time' and assign timestamp."""
+    ds.expand_dims("time")
+    ds["time"] = timestamp
+    return ds
 
-    ufiles = [filepath1 + "U.nc"] * 4
-    vfiles = [filepath2 + "V.nc"] * 4
+
+def test_fieldset_diffgrids_from_file(tmp_path):
+    """Test for subsetting fieldset from file using indices dict."""
+    stem = "test_subsets"
+
     timestamps = np.arange(0, 4, 1) * 86400.0
     timestamps = np.expand_dims(timestamps, 1)
-    files = {"U": ufiles, "V": vfiles}
-    variables = {"U": "vozocrtx", "V": "vomecrty"}
-    dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
+
+    ufiles = []
+    vfiles = []
+    for index, timestamp in enumerate(timestamps):
+        # U files
+        data, dimensions = generate_fieldset_data(100, 100)
+        path = tmp_path / f"{stem}_U_{index}.nc"
+        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
+        ufiles.append(path)
+
+        data, dimensions = generate_fieldset_data(50, 50)
+        path = tmp_path / f"{stem}_V_{index}.nc"
+        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
+        vfiles.append(path)
+
+    files = {"U": [str(f) for f in ufiles], "V": [str(f) for f in vfiles]}
+    variables = {"U": "U", "V": "V"}
+    dimensions = {"lon": "lon", "lat": "lat"}
 
     fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
     assert fieldset.gridset.size == 2
     assert fieldset.U.grid != fieldset.V.grid
 
 
-def test_fieldset_diffgrids_from_file_data(tmpdir):
+def test_fieldset_diffgrids_from_file_data(multifile_fieldset):
     """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset_data(100, 100)
-    filepath = tmpdir.join("test_subsets")
-    fieldset_data = FieldSet.from_data(data, dimensions)
-    fieldset_data.write(filepath)
-    field_data = fieldset_data.U
-    field_data.name = "B"
+    field_U = FieldSet.from_data(data, dimensions).U
+    field_U.name = "B"
 
-    ufiles = [filepath + "U.nc"] * 4
-    vfiles = [filepath + "V.nc"] * 4
-    timestamps = np.arange(0, 4, 1) * 86400.0
-    timestamps = np.expand_dims(timestamps, 1)
-    files = {"U": ufiles, "V": vfiles}
-    variables = {"U": "vozocrtx", "V": "vomecrty"}
-    dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
-    fieldset_file = FieldSet.from_netcdf(
-        files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True
-    )
-
-    fieldset_file.add_field(field_data, "B")
-    fields = [f for f in fieldset_file.get_fields() if isinstance(f, Field)]
+    multifile_fieldset.add_field(field_U, "B")
+    fields = [f for f in multifile_fieldset.get_fields() if isinstance(f, Field)]
     assert len(fields) == 3
-    assert fieldset_file.gridset.size == 2
-    assert fieldset_file.U.grid != fieldset_file.B.grid
+    assert multifile_fieldset.gridset.size == 2
+    assert multifile_fieldset.U.grid != multifile_fieldset.B.grid
 
 
 def test_fieldset_samegrids_from_data():
@@ -721,37 +750,3 @@ def test_fieldset_from_data_gridtypes():
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
     assert np.allclose(plon, pset.lon)
     assert np.allclose(plat, pset.lat)
-
-
-@pytest.mark.parametrize("direction", [1, -1])
-@pytest.mark.parametrize("time_extrapolation", [True, False])
-def test_deferredload_simplefield(direction, time_extrapolation, tmpdir):
-    tdim = 10
-    filename = tmpdir.join("simplefield_deferredload.nc")
-    data = np.zeros((tdim, 2, 2))
-    for ti in range(tdim):
-        data[ti, :, :] = ti if direction == 1 else tdim - ti - 1
-    ds = xr.Dataset(
-        {"U": (("t", "y", "x"), data), "V": (("t", "y", "x"), data)},
-        coords={"x": [0, 1], "y": [0, 1], "t": np.arange(tdim)},
-    )
-    ds.to_netcdf(filename)
-
-    fieldset = FieldSet.from_netcdf(
-        filename,
-        {"U": "U", "V": "V"},
-        {"lon": "x", "lat": "y", "time": "t"},
-        deferred_load=True,
-        mesh="flat",
-        allow_time_extrapolation=time_extrapolation,
-    )
-
-    SamplingParticle = Particle.add_variable("p")
-    pset = ParticleSet(fieldset, SamplingParticle, lon=0.5, lat=0.5)
-
-    def SampleU(particle, fieldset, time):  # pragma: no cover
-        particle.p, tmp = fieldset.UV[particle]
-
-    runtime = tdim * 2 if time_extrapolation else None
-    pset.execute(SampleU, dt=direction, runtime=runtime)
-    assert pset.p == tdim - 1 if time_extrapolation else tdim - 2

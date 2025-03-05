@@ -56,7 +56,7 @@ def test_field_nonstandardtime(calendar, cftime_datetime, tmpdir):
     filepath = tmpdir.join("test_nonstandardtime.nc")
     dates = [getattr(cftime, cftime_datetime)(1, m, 1) for m in range(1, 13)]
     da = xr.DataArray(
-        np.random.rand(12, xdim, ydim), coords=[dates, range(xdim), range(ydim)], dims=["time", "lon", "lat"], name="U"
+        np.random.rand(12, ydim, xdim), coords=[dates, range(ydim), range(xdim)], dims=["time", "lat", "lon"], name="U"
     )
     da.to_netcdf(str(filepath))
 

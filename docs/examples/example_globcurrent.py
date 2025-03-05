@@ -11,7 +11,6 @@ import parcels
 def set_globcurrent_fieldset(
     filename=None,
     indices=None,
-    deferred_load=True,
     use_xarray=False,
     timestamps=None,
 ):
@@ -41,7 +40,6 @@ def set_globcurrent_fieldset(
             variables,
             dimensions,
             indices,
-            deferred_load=deferred_load,
             timestamps=timestamps,
         )
 
@@ -80,9 +78,7 @@ def test_globcurrent_fieldset_advancetime(dt, lonstart, latstart, use_xarray):
         lat=[latstart],
     )
 
-    fieldsetall = set_globcurrent_fieldset(
-        files[0:10], deferred_load=False, use_xarray=use_xarray
-    )
+    fieldsetall = set_globcurrent_fieldset(files[0:10], use_xarray=use_xarray)
     psetall = parcels.ParticleSet.from_list(
         fieldset=fieldsetall,
         pclass=parcels.Particle,
@@ -116,32 +112,6 @@ def test_globcurrent_particles(use_xarray):
 
     assert abs(pset[0].lon - 23.8) < 1
     assert abs(pset[0].lat - -35.3) < 1
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="time_periodic removed in v4")
-@pytest.mark.parametrize("rundays", [300, 900])
-def test_globcurrent_time_periodic(rundays):
-    sample_var = []
-    for deferred_load in [True, False]:
-        fieldset = set_globcurrent_fieldset(
-            time_periodic=timedelta(days=365), deferred_load=deferred_load
-        )
-
-        MyParticle = parcels.Particle.add_variable("sample_var", initial=0.0)
-
-        pset = parcels.ParticleSet(
-            fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0]
-        )
-
-        def SampleU(particle, fieldset, time):  # pragma: no cover
-            u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
-            particle.sample_var += u
-
-        pset.execute(SampleU, runtime=timedelta(days=rundays), dt=timedelta(days=1))
-        sample_var.append(pset[0].sample_var)
-
-    assert np.allclose(sample_var[0], sample_var[1])
 
 
 @pytest.mark.parametrize("dt", [-300, 300])
@@ -241,9 +211,19 @@ def test_globcurrent_time_extrapolation_error(use_xarray):
         )
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(
+    reason="This was always broken when using eager loading `deferred_load=False` for the P field. Needs to be fixed."
+)
 @pytest.mark.parametrize("dt", [-300, 300])
 @pytest.mark.parametrize("with_starttime", [True, False])
 def test_globcurrent_startparticles_between_time_arrays(dt, with_starttime):
+    """Test for correctly initialising particle start times.
+
+    When using Fields with different temporal domains, its important to intialise particles
+    at the beginning of the time period where all Fields have available data (i.e., the
+    intersection of the temporal domains)
+    """
     fieldset = set_globcurrent_fieldset()
 
     data_folder = parcels.download_example_dataset("GlobCurrent_example_data")

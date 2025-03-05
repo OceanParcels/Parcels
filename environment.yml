@@ -1,7 +1,7 @@
 name: parcels
 channels:
   - conda-forge
-dependencies:
+dependencies: #! Keep in sync with [tool.pixi.dependencies] in pyproject.toml
   - python>=3.10
   - ffmpeg>=3.2.3
   - jupyter
