@@ -16,17 +16,16 @@ class NetcdfFileBuffer:
         filename,
         dimensions,
         indices,
-        timestamp=None,
+        *,
         interp_method: InterpMethodOption = "linear",
         data_full_zdim=None,
         gridindexingtype="nemo",
-        **kwargs,
+        netcdf_engine="netcdf4",
     ):
         self.filename: PathLike | list[PathLike] = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
         self.dataset = None
-        self.timestamp = timestamp
         self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
         self.data_full_zdim = data_full_zdim
@@ -34,7 +33,7 @@ class NetcdfFileBuffer:
             self.nolonlatindices = False
         else:
             self.nolonlatindices = True
-        self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
+        self.netcdf_engine = netcdf_engine
 
     def __enter__(self):
         self.dataset = open_xarray_dataset(self.filename, self.netcdf_engine)
@@ -196,9 +195,6 @@ class NetcdfFileBuffer:
         return self.time_access()
 
     def time_access(self):
-        if self.timestamp is not None:
-            return self.timestamp
-
         if "time" not in self.dimensions:
             return np.array([None])
 

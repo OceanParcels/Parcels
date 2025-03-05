@@ -453,7 +453,6 @@ class Field:
                 lonlat_filename,
                 dimensions,
                 indices,
-                netcdf_engine,
                 gridindexingtype=gridindexingtype,
             ) as filebuffer:
                 lat, lon = filebuffer.latlon
@@ -471,7 +470,6 @@ class Field:
                 depth_filename,
                 dimensions,
                 indices,
-                netcdf_engine,
                 interp_method=interp_method,
                 gridindexingtype=gridindexingtype,
             ) as filebuffer:
@@ -517,7 +515,6 @@ class Field:
             data_filenames,
             dimensions,
             indices,
-            netcdf_engine,
             interp_method=interp_method,
             data_full_zdim=data_full_zdim,
         ) as filebuffer:
