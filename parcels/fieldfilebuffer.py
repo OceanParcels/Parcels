@@ -129,15 +129,9 @@ class NetcdfFileBuffer:
             if len(depth.shape) == 1:
                 return depth[self._depth_slice]
             elif len(depth.shape) == 3:
-                if self.nolonlatindices:
-                    return depth[self._depth_slice, :, :]
-                else:
-                    return depth[self._depth_slice, self._lat_slice, self._lon_slice]
+                return depth[self._depth_slice, self._lat_slice, self._lon_slice]
             elif len(depth.shape) == 4:
-                if self.nolonlatindices:
-                    return depth[:, self._depth_slice, :, :]
-                else:
-                    return depth[:, self._depth_slice, self._lat_slice, self._lon_slice]
+                return depth[:, self._depth_slice, self._lat_slice, self._lon_slice]
         else:
             self.indices["depth"] = [0]
             return np.zeros(1)
