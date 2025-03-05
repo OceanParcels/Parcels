@@ -1296,8 +1296,8 @@ class VectorField:
             else:
                 return True
 
-    def spatial_slip_interpolation(self, ti, z, y, x, time, particle=None, applyConversion=True):
-        (_, zeta, eta, xsi, _, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
+    def spatial_slip_interpolation(self, time, z, y, x, particle=None, applyConversion=True):
+        (_, zeta, eta, xsi, ti, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
         f_u, f_v, f_w = 1, 1, 1
