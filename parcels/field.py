@@ -1417,9 +1417,7 @@ class VectorField:
                 return True
 
     def spatial_slip_interpolation(self, ti, z, y, x, time, particle=None, applyConversion=True):
-        (_, zeta, eta, xsi, _, zi, yi, xi) = self.U._search_indices(
-            time, z, y, x, particle=particle
-        )  # TOFO use tau here too
+        (_, zeta, eta, xsi, _, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
         f_u, f_v, f_w = 1, 1, 1
@@ -1520,22 +1518,22 @@ class VectorField:
             return u, v
 
     def eval(self, time, z, y, x, particle=None, applyConversion=True):
+        if self.U.interp_method in ["partialslip", "freeslip"]:
+            return self.spatial_slip_interpolation(time, z, y, x, particle=particle, applyConversion=applyConversion)
+
         if self.U.interp_method not in ["cgrid_velocity", "partialslip", "freeslip"]:
             u = self.U.eval(time, z, y, x, particle=particle, applyConversion=False)
             v = self.V.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
                 u = self.U.units.to_target(u, z, y, x)
                 v = self.V.units.to_target(v, z, y, x)
-        else:
-            interp = {
-                "cgrid_velocity": self.spatial_c_grid_interpolation2D,
-                "partialslip": self.spatial_slip_interpolation,
-                "freeslip": self.spatial_slip_interpolation,
-            }
+        elif self.U.interp_method == "cgrid_velocity":
             tau, ti = self.U._time_index(time)
-            (u, v) = interp[self.U.interp_method](ti, z, y, x, time, particle=particle, applyConversion=applyConversion)
+            (u, v) = self.spatial_c_grid_interpolation2D(
+                ti, z, y, x, time, particle=particle, applyConversion=applyConversion
+            )
             if ti < self.U.grid.tdim - 1 and time > self.U.grid.time[ti]:
-                (u1, v1) = interp[self.U.interp_method](
+                (u1, v1) = self.spatial_c_grid_interpolation2D(
                     ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion
                 )
                 u = u * (1 - tau) + u1 * tau
