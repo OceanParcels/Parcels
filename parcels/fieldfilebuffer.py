@@ -72,58 +72,31 @@ class NetcdfFileBuffer:
         return zdim
 
     @property
-    def _lon_slice(self):
-        return self._croco_slice
-
-    @property
-    def _lat_slice(self):
-        return self._croco_slice
-
-    @property
-    def _depth_slice(self):
-        return self._croco_slice
-
-    @property
-    def _croco_slice(self):
-        if self.gridindexingtype in ["croco"]:
-            return slice(None, -1)
-        return slice(None)
-
-    @property
     def latlon(self):
         lon = self.dataset[self.dimensions["lon"]]
         lat = self.dataset[self.dimensions["lat"]]
         if self.nolonlatindices and self.gridindexingtype not in ["croco"]:
-            if len(lon.shape) < 3:
-                lon_subset = lon
-                lat_subset = lat
-            elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-                lon_subset = lon[0, :, :]
-                lat_subset = lat[0, :, :]
+            if len(lon.shape) == 3:  # some lon, lat have a time dimension 1
+                lon = lon[0, :, :]
+                lat = lat[0, :, :]
             elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
-                lon_subset = lon[0, 0, :, :]
-                lat_subset = lat[0, 0, :, :]
+                lon = lon[0, 0, :, :]
+                lat = lat[0, 0, :, :]
         else:
             self.indices["lon"] = range(self.xdim)
             self.indices["lat"] = range(self.ydim)
-            if len(lon.shape) == 1:
-                lon_subset = lon[self._lon_slice]
-                lat_subset = lat[self._lat_slice]
-            elif len(lon.shape) == 2:
-                lon_subset = lon[self._lat_slice, self._lon_slice]
-                lat_subset = lat[self._lat_slice, self._lon_slice]
-            elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-                lon_subset = lon[0, self._lat_slice, self._lon_slice]
-                lat_subset = lat[0, self._lat_slice, self._lon_slice]
+            if len(lon.shape) == 3:  # some lon, lat have a time dimension 1
+                lon = lon[0, :, :]
+                lat = lat[0, :, :]
             elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
-                lon_subset = lon[0, 0, self._lat_slice, self._lon_slice]
-                lat_subset = lat[0, 0, self._lat_slice, self._lon_slice]
+                lon = lon[0, 0, :, :]
+                lat = lat[0, 0, :, :]
 
         if len(lon.shape) > 1:
-            if is_rectilinear(lon_subset, lat_subset):
-                lon_subset = lon_subset[0, :]
-                lat_subset = lat_subset[:, 0]
-        return lat_subset, lon_subset
+            if is_rectilinear(lon, lat):
+                lon = lon[0, :]
+                lat = lat[:, 0]
+        return lat, lon
 
     @property
     def depth(self):
@@ -131,12 +104,7 @@ class NetcdfFileBuffer:
             depth = self.dataset[self.dimensions["depth"]]
             self.data_full_zdim = self.zdim
             self.indices["depth"] = range(self.zdim)
-            if len(depth.shape) == 1:
-                return depth[self._depth_slice]
-            elif len(depth.shape) == 3:
-                return depth[self._depth_slice, self._lat_slice, self._lon_slice]
-            elif len(depth.shape) == 4:
-                return depth[:, self._depth_slice, self._lat_slice, self._lon_slice]
+            return depth
         else:
             self.indices["depth"] = [0]
             return np.zeros(1)
