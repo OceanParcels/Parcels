@@ -28,3 +28,8 @@ dist/parcels*.egg
 parcels/_version_setup.py
 .pytest_cache
 .coverage
+
+# pixi environments
+.pixi
+*.egg-info
+pixi.lock
