@@ -48,6 +48,30 @@ class NetcdfFileBuffer:
             self.dataset = None
 
     @property
+    def xdim(self):
+        lon = self.dataset[self.dimensions["lon"]]
+        xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        if self.gridindexingtype in ["croco"]:
+            xdim -= 1
+        return xdim
+
+    @property
+    def ydim(self):
+        lat = self.dataset[self.dimensions["lat"]]
+        ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        if self.gridindexingtype in ["croco"]:
+            ydim -= 1
+        return ydim
+
+    @property
+    def zdim(self):
+        depth = self.dataset[self.dimensions["depth"]]
+        zdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+        if self.gridindexingtype in ["croco"]:
+            zdim -= 1
+        return zdim
+
+    @property
     def _lon_slice(self):
         return self._croco_slice
 
@@ -80,13 +104,8 @@ class NetcdfFileBuffer:
                 lon_subset = lon[0, 0, :, :]
                 lat_subset = lat[0, 0, :, :]
         else:
-            xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-            ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-            if self.gridindexingtype in ["croco"]:
-                xdim -= 1
-                ydim -= 1
-            self.indices["lon"] = range(xdim)
-            self.indices["lat"] = range(ydim)
+            self.indices["lon"] = range(self.xdim)
+            self.indices["lat"] = range(self.ydim)
             if len(lon.shape) == 1:
                 lon_subset = lon[self._lon_slice]
                 lat_subset = lat[self._lat_slice]
@@ -121,11 +140,8 @@ class NetcdfFileBuffer:
     def depth(self):
         if "depth" in self.dimensions:
             depth = self.dataset[self.dimensions["depth"]]
-            depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-            if self.gridindexingtype in ["croco"]:
-                depthsize -= 1
-            self.data_full_zdim = depthsize
-            self.indices["depth"] = range(depthsize)
+            self.data_full_zdim = self.zdim
+            self.indices["depth"] = range(self.zdim)
             if len(depth.shape) == 1:
                 return depth[self._depth_slice]
             elif len(depth.shape) == 3:
@@ -144,9 +160,9 @@ class NetcdfFileBuffer:
             self.data_full_zdim = depthsize
             self.indices["depth"] = self.indices["depth"] if "depth" in self.indices else range(depthsize)
             if self.nolonlatindices:
-                return np.empty((0, len(self.indices["depth"])) + data.shape[-2:])
+                return np.empty((0, self.zdim) + data.shape[-2:])
             else:
-                return np.empty((0, len(self.indices["depth"]), len(self.indices["lat"]), len(self.indices["lon"])))
+                return np.empty((0, self.zdim, self.ydim, self.xdim))
 
     def _check_extend_depth(self, data, dim):
         return (
