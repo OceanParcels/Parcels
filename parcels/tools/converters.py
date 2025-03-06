@@ -7,7 +7,6 @@ from math import cos, pi
 import cftime
 import numpy as np
 import numpy.typing as npt
-import xarray as xr
 
 __all__ = [
     "Geographic",
@@ -17,7 +16,6 @@ __all__ = [
     "TimeConverter",
     "UnitConverter",
     "convert_to_flat_array",
-    "convert_xarray_time_units",
     "unitconverters_map",
 ]
 
@@ -235,16 +233,3 @@ unitconverters_map = {
     "Kh_zonal": GeographicPolarSquare(),
     "Kh_meridional": GeographicSquare(),
 }
-
-
-def convert_xarray_time_units(ds, time):
-    """Fixes DataArrays that have time.Unit instead of expected time.units"""
-    da = ds[time] if isinstance(ds, xr.Dataset) else ds
-    if "units" not in da.attrs and "Unit" in da.attrs:
-        da.attrs["units"] = da.attrs["Unit"]
-    da2 = xr.Dataset({time: da})
-    try:
-        da2 = xr.decode_cf(da2)
-    except ValueError:
-        raise RuntimeError("Xarray could not convert the calendar.")
-    ds[time] = da2[time]

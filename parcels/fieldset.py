@@ -14,7 +14,7 @@ from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.particlefile import ParticleFile
 from parcels.tools._helpers import fieldset_repr
-from parcels.tools.converters import TimeConverter, convert_xarray_time_units
+from parcels.tools.converters import TimeConverter
 from parcels.tools.loggers import logger
 from parcels.tools.warnings import FieldSetWarning
 
@@ -1162,10 +1162,6 @@ class FieldSet:
         fields = {}
         if "creation_log" not in kwargs.keys():
             kwargs["creation_log"] = "from_xarray_dataset"
-        if "time" in dimensions:
-            if "units" not in ds[dimensions["time"]].attrs and "Unit" in ds[dimensions["time"]].attrs:
-                # Fix DataArrays that have time.Unit instead of expected time.units
-                convert_xarray_time_units(ds, dimensions["time"])
 
         for var, name in variables.items():
             dims = dimensions[var] if var in dimensions else dimensions
