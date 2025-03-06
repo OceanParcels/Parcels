@@ -76,8 +76,8 @@ def multifile_fieldset(tmp_path):
 
     files = {"U": ufiles, "V": vfiles}
     variables = {"U": "U", "V": "V"}
-    dimensions = {"lon": "lon", "lat": "lat"}
-    return FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps)
+    dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
+    return FieldSet.from_netcdf(files, variables, dimensions)
 
 
 @pytest.mark.parametrize("xdim", [100, 200])
@@ -342,9 +342,9 @@ def test_fieldset_diffgrids_from_file(tmp_path):
 
     files = {"U": [str(f) for f in ufiles], "V": [str(f) for f in vfiles]}
     variables = {"U": "U", "V": "V"}
-    dimensions = {"lon": "lon", "lat": "lat"}
+    dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
 
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, allow_time_extrapolation=True)
     assert fieldset.gridset.size == 2
     assert fieldset.U.grid != fieldset.V.grid
 
@@ -493,6 +493,8 @@ def test_fieldset_write(tmp_zarrfile):
     assert np.allclose(fieldset.U.data, da["U"].values, atol=1.0)
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1918")
 @pytest.mark.parametrize("datetype", ["float", "datetime64"])
 def test_timestamps(datetype, tmpdir):
     data1, dims1 = generate_fieldset_data(10, 10, 1, 10)

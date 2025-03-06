@@ -12,7 +12,6 @@ def set_globcurrent_fieldset(
     filename=None,
     indices=None,
     use_xarray=False,
-    timestamps=None,
 ):
     if filename is None:
         data_folder = parcels.download_example_dataset("GlobCurrent_example_data")
@@ -23,10 +22,7 @@ def set_globcurrent_fieldset(
         "U": "eastward_eulerian_current_velocity",
         "V": "northward_eulerian_current_velocity",
     }
-    if timestamps is None:
-        dimensions = {"lat": "lat", "lon": "lon", "time": "time"}
-    else:
-        dimensions = {"lat": "lat", "lon": "lon"}
+    dimensions = {"lat": "lat", "lon": "lon", "time": "time"}
     if use_xarray:
         ds = xr.open_mfdataset(filename, combine="by_coords")
         return parcels.FieldSet.from_xarray_dataset(
@@ -40,7 +36,6 @@ def set_globcurrent_fieldset(
             variables,
             dimensions,
             indices,
-            timestamps=timestamps,
         )
 
 
