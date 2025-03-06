@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from datetime import timedelta
 from glob import glob
 
@@ -8,10 +9,21 @@ import xarray as xr
 import parcels
 
 
+def Unit_to_units(d: dict) -> dict:
+    if "Unit" in d:
+        d["units"] = d.pop("Unit")
+    return d
+
+
+def xarray_patch_metadata(ds: xr.Dataset, f: Callable[[dict], dict]) -> xr.Dataset:
+    """Convert attrs"""
+    for var in ds.variables:
+        ds[var].attrs = f(ds[var].attrs)
+    return ds
+
+
 def set_globcurrent_fieldset(
     filename=None,
-    indices=None,
-    use_xarray=False,
 ):
     if filename is None:
         data_folder = parcels.download_example_dataset("GlobCurrent_example_data")
@@ -23,20 +35,17 @@ def set_globcurrent_fieldset(
         "V": "northward_eulerian_current_velocity",
     }
     dimensions = {"lat": "lat", "lon": "lon", "time": "time"}
-    if use_xarray:
-        ds = xr.open_mfdataset(filename, combine="by_coords")
-        return parcels.FieldSet.from_xarray_dataset(
-            ds,
-            variables,
-            dimensions,
-        )
-    else:
-        return parcels.FieldSet.from_netcdf(
-            filename,
-            variables,
-            dimensions,
-            indices,
-        )
+    ds = (
+        xr.open_mfdataset(filename, combine="by_coords")
+        .pipe(xarray_patch_metadata, Unit_to_units)
+        .pipe(xr.decode_cf)
+    )
+
+    return parcels.FieldSet.from_xarray_dataset(
+        ds,
+        variables,
+        dimensions,
+    )
 
 
 @pytest.mark.v4remove(
@@ -46,7 +55,7 @@ def set_globcurrent_fieldset(
     "use_xarray", [True, pytest.param(False, marks=pytest.mark.xfail)]
 )
 def test_globcurrent_fieldset(use_xarray):
-    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
+    fieldset = set_globcurrent_fieldset()
     assert fieldset.U.lon.size == 81
     assert fieldset.U.lat.size == 41
     assert fieldset.V.lon.size == 81
@@ -54,7 +63,7 @@ def test_globcurrent_fieldset(use_xarray):
 
     if not use_xarray:
         indices = {"lon": [5], "lat": range(20, 30)}
-        fieldsetsub = set_globcurrent_fieldset(indices=indices, use_xarray=use_xarray)
+        fieldsetsub = set_globcurrent_fieldset(indices=indices)
         assert np.allclose(fieldsetsub.U.lon, fieldset.U.lon[indices["lon"]])
         assert np.allclose(fieldsetsub.U.lat, fieldset.U.lat[indices["lat"]])
         assert np.allclose(fieldsetsub.V.lon, fieldset.V.lon[indices["lon"]])
@@ -64,13 +73,12 @@ def test_globcurrent_fieldset(use_xarray):
 @pytest.mark.parametrize(
     "dt, lonstart, latstart", [(3600.0, 25, -35), (-3600.0, 20, -39)]
 )
-@pytest.mark.parametrize("use_xarray", [True, False])
-def test_globcurrent_fieldset_advancetime(dt, lonstart, latstart, use_xarray):
+def test_globcurrent_fieldset_advancetime(dt, lonstart, latstart):
     data_folder = parcels.download_example_dataset("GlobCurrent_example_data")
     basepath = str(data_folder / "20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc")
     files = sorted(glob(str(basepath)))
 
-    fieldsetsub = set_globcurrent_fieldset(files[0:10], use_xarray=use_xarray)
+    fieldsetsub = set_globcurrent_fieldset(files[0:10])
     psetsub = parcels.ParticleSet.from_list(
         fieldset=fieldsetsub,
         pclass=parcels.Particle,
@@ -78,7 +86,7 @@ def test_globcurrent_fieldset_advancetime(dt, lonstart, latstart, use_xarray):
         lat=[latstart],
     )
 
-    fieldsetall = set_globcurrent_fieldset(files[0:10], use_xarray=use_xarray)
+    fieldsetall = set_globcurrent_fieldset(files[0:10])
     psetall = parcels.ParticleSet.from_list(
         fieldset=fieldsetall,
         pclass=parcels.Particle,
@@ -95,9 +103,8 @@ def test_globcurrent_fieldset_advancetime(dt, lonstart, latstart, use_xarray):
     assert abs(psetsub[0].lon - psetall[0].lon) < 1e-4
 
 
-@pytest.mark.parametrize("use_xarray", [True, False])
-def test_globcurrent_particles(use_xarray):
-    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
+def test_globcurrent_particles():
+    fieldset = set_globcurrent_fieldset()
 
     lonstart = [25]
     latstart = [-35]
@@ -114,6 +121,10 @@ def test_globcurrent_particles(use_xarray):
     assert abs(pset[0].lat - -35.3) < 1
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(
+    reason="Can't patch metadata without using xarray. v4 will natively use xarray anyway. GH1919."
+)
 @pytest.mark.parametrize("dt", [-300, 300])
 def test_globcurrent_xarray_vs_netcdf(dt):
     fieldsetNetcdf = set_globcurrent_fieldset(use_xarray=False)
@@ -199,9 +210,8 @@ def test__particles_init_time():
     assert pset[0].time - pset4[0].time == 0
 
 
-@pytest.mark.parametrize("use_xarray", [True, False])
-def test_globcurrent_time_extrapolation_error(use_xarray):
-    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
+def test_globcurrent_time_extrapolation_error():
+    fieldset = set_globcurrent_fieldset()
     pset = parcels.ParticleSet(
         fieldset,
         pclass=parcels.Particle,
