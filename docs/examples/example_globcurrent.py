@@ -139,6 +139,10 @@ def test_globcurrent_xarray_vs_netcdf(dt):
     assert np.allclose(psetN[0].lat, psetX[0].lat)
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(
+    reason="Timeslices will be removed in v4, as users will be able to use xarray directly."
+)
 @pytest.mark.parametrize("dt", [-300, 300])
 def test_globcurrent_netcdf_timestamps(dt):
     fieldsetNetcdf = set_globcurrent_fieldset()

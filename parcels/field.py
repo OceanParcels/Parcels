@@ -496,11 +496,9 @@ class Field:
                     timestamps, data_filenames, dimensions, indices, netcdf_engine
                 )
                 grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-                grid.timeslices = timeslices
                 kwargs["dataFiles"] = dataFiles
             else:  # e.g. for the CROCO CS_w field, see https://github.com/OceanParcels/Parcels/issues/1831
                 grid = Grid.create_grid(lon, lat, depth, np.array([0.0]), time_origin=TimeConverter(0.0), mesh=mesh)
-                grid.timeslices = [[0]]
                 data_filenames = [data_filenames[0]]
         elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
