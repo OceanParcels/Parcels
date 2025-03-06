@@ -19,7 +19,6 @@ class NetcdfFileBuffer:
         interp_method: InterpMethodOption = "linear",
         data_full_zdim=None,
         gridindexingtype="nemo",
-        netcdf_engine="netcdf4",
     ):
         self.filename: PathLike | list[PathLike] = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
@@ -28,10 +27,9 @@ class NetcdfFileBuffer:
         self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
         self.data_full_zdim = data_full_zdim
-        self.netcdf_engine = netcdf_engine
 
     def __enter__(self):
-        self.dataset = open_xarray_dataset(self.filename, self.netcdf_engine)
+        self.dataset = open_xarray_dataset(self.filename)
         return self
 
     def __exit__(self, type, value, traceback):
@@ -159,12 +157,12 @@ class NetcdfFileBuffer:
         return time
 
 
-def open_xarray_dataset(filename: Path | str, netcdf_engine: str) -> xr.Dataset:
+def open_xarray_dataset(filename: Path | str) -> xr.Dataset:
     try:
         # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
         # (which we would rather want to have being auto-managed).
         # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
-        ds = xr.open_mfdataset(filename, decode_cf=True, engine=netcdf_engine)
+        ds = xr.open_mfdataset(filename, decode_cf=True)
         ds["decoded"] = True
     except:
         warnings.warn(  # TODO: Is this warning necessary? What cases does this except block get triggered - is it to do with the bare except???
@@ -174,7 +172,7 @@ def open_xarray_dataset(filename: Path | str, netcdf_engine: str) -> xr.Dataset:
             stacklevel=2,
         )
 
-        ds = xr.open_mfdataset(filename, decode_cf=False, engine=netcdf_engine)
+        ds = xr.open_mfdataset(filename, decode_cf=False)
         ds["decoded"] = False
     return ds
 

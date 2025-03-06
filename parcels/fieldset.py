@@ -356,9 +356,6 @@ class FieldSet:
         gridindexingtype : str
             The type of gridindexing. Either 'nemo' (default), 'mitgcm', 'mom5', 'pop', or 'croco' are supported.
             See also the Grid indexing documentation on oceanparcels.org
-        netcdf_engine :
-            engine to use for netcdf reading in xarray. Default is 'netcdf',
-            but in cases where this doesn't work, setting netcdf_engine='scipy' could help. Accepted options are the same as the ``engine`` parameter in ``xarray.open_dataset()``.
         **kwargs :
             Keyword arguments passed to the :class:`parcels.Field` constructor.
 
