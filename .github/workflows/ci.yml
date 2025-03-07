@@ -76,9 +76,9 @@ jobs:
         with:
           environment-file: environment.yml
       - name: Integration test
-        # TODO v4: Re-enable `tutorial_periodic_boundaries`, `tutorial_timevaryingdepthdimensions` and `tutorial_croco_3D` notebooks. Remove tutorial_timestamps
+        # TODO v4: Re-enable `tutorial_periodic_boundaries`, `tutorial_timevaryingdepthdimensions` and `tutorial_croco_3D` notebooks
         run: |
-          coverage run -m pytest -v -s --nbval-lax -k "not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_croco_3D and not tutorial_timestamps" --html="${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html" --self-contained-html docs/examples
+          coverage run -m pytest -v -s --nbval-lax -k "not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_croco_3D" --html="${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html" --self-contained-html docs/examples
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1

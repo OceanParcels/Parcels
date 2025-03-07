@@ -46,7 +46,7 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 
 [tool.pixi.tasks]
 tests = "pytest"
-tests-notebooks = "pytest -v -s --nbval-lax -k 'not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_croco_3D and not tutorial_timestamps'" # TODO v4: Re-enable `tutorial_periodic_boundaries`, `tutorial_timevaryingdepthdimensions`, and `tutorial_croco_3D` notebooks. Remove tutorial_timestamps
+tests-notebooks = "pytest -v -s --nbval-lax -k 'not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_croco_3D'" # TODO v4: Re-enable `tutorial_periodic_boundaries`, `tutorial_timevaryingdepthdimensions`, and `tutorial_croco_3D` notebooks
 coverage = "coverage run -m pytest && coverage html"
 typing = "mypy parcels"
 pre-commit = "pre-commit run --all-files"

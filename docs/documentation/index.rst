@@ -25,7 +25,6 @@ Parcels has several documentation and tutorial Jupyter notebooks and scripts whi
    ../examples/tutorial_periodic_boundaries.ipynb
    ../examples/tutorial_interpolation.ipynb
    ../examples/tutorial_unitconverters.ipynb
-   ../examples/tutorial_timestamps.ipynb
 
 
 .. nbgallery::
