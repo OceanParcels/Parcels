@@ -384,7 +384,7 @@ class Field:
 
         gridindexingtype = kwargs.get("gridindexingtype", "nemo")
 
-        indices: dict[str, npt.NDArray] = {}  # TODO Nick: Cleanup
+        indices: dict[str, npt.NDArray] = {}
 
         interp_method: InterpMethod = kwargs.pop("interp_method", "linear")
         if type(interp_method) is dict:

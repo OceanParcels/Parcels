@@ -383,7 +383,7 @@ class FieldSet:
                 for dim, p in paths.items():
                     paths[dim] = cls._parse_wildcards(p, filenames, var)
 
-            # Use dimensions[var] if its a dict of dicts
+            # Use dimensions[var] if it's a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
             fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
