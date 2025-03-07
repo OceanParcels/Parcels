@@ -148,7 +148,7 @@ def _linear_2d(ctx: InterpolationContext2D) -> float:
 
 
 @register_2d_interpolator("linear_invdist_land_tracer")
-def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:  # TODO make time-varying
+def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
     xsi = ctx.xsi
     eta = ctx.eta
     data = ctx.data
@@ -157,6 +157,13 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:  # TOD
     ti = ctx.ti
     land = np.isclose(data[ti, yi : yi + 2, xi : xi + 2], 0.0)
     nb_land = np.sum(land)
+
+    def _get_data_temporalinterp(ti, yi, xi):
+        dt0 = data[ti, yi, xi]
+        if ctx.tau < EPS or ctx.ti >= ctx.data.shape[0] - 1:
+            return dt0
+        dt1 = data[ti + 1, yi, xi]
+        return (1 - ctx.tau) * dt0 + ctx.tau * dt1
 
     if nb_land == 4:
         return 0
@@ -170,9 +177,9 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:  # TOD
                     if land[j][i] == 1:  # index search led us directly onto land
                         return 0
                     else:
-                        return data[ti, yi + j, xi + i]
+                        return _get_data_temporalinterp(ti, yi + 1, xi + 1)
                 elif land[j][i] == 0:
-                    val += data[ti, yi + j, xi + i] / distance
+                    val += _get_data_temporalinterp(ti, yi + 1, xi + 1) / distance
                     w_sum += 1 / distance
         return val / w_sum
     else:
@@ -229,9 +236,17 @@ def _cgrid_W_velocity_3d(ctx: InterpolationContext3D) -> float:
 
 
 @register_3d_interpolator("linear_invdist_land_tracer")
-def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:  # TODO make time-varying
+def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:
     land = np.isclose(ctx.data[ctx.ti, ctx.zi : ctx.zi + 2, ctx.yi : ctx.yi + 2, ctx.xi : ctx.xi + 2], 0.0)
     nb_land = np.sum(land)
+
+    def _get_data_temporalinterp(ti, zi, yi, xi):
+        dt0 = ctx.data[ti, zi, yi, xi]
+        if ctx.tau < EPS or ctx.ti >= ctx.data.shape[0] - 1:
+            return dt0
+        dt1 = data[ti + 1, zi, yi, xi]
+        return (1 - ctx.tau) * dt0 + ctx.tau * dt1
+
     if nb_land == 8:
         return 0
     elif nb_land > 0:
@@ -245,9 +260,9 @@ def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:  # TOD
                         if land[k][j][i] == 1:  # index search led us directly onto land
                             return 0
                         else:
-                            return ctx.data[ctx.ti, ctx.zi + k, ctx.yi + j, ctx.xi + i]
+                            return _get_data_temporalinterp(ctx.ti, ctx.zi + k, ctx.yi + j, ctx.xi + i)
                     elif land[k][j][i] == 0:
-                        val += ctx.data[ctx.ti, ctx.zi + k, ctx.yi + j, ctx.xi + i] / distance
+                        val += _get_data_temporalinterp(ctx.ti, ctx.zi + k, ctx.yi + j, ctx.xi + i) / distance
                         w_sum += 1 / distance
         return val / w_sum
     else:
