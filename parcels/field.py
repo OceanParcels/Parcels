@@ -285,27 +285,19 @@ class Field:
             return filenames
 
     @staticmethod
-    def _collect_timeslices(data_filenames, dimensions, indices):
-        timeslices = []
-        dataFiles = []
+    def _collect_time(data_filenames, dimensions, indices):
+        time = []
         for fname in data_filenames:
             with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                 ftime = filebuffer.time
-                timeslices.append(ftime)
-                dataFiles.append([fname] * len(ftime))
-        time = np.concatenate(timeslices).ravel()
-        dataFiles = np.concatenate(dataFiles).ravel()
+                time.append(ftime)
+        time = np.concatenate(time).ravel()
         if time.size == 1 and time[0] is None:
             time[0] = 0
         time_origin = TimeConverter(time[0])
         time = time_origin.reltime(time)
 
-        if not np.all((time[1:] - time[:-1]) > 0):
-            id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
-            raise AssertionError(
-                f"Please make sure your netCDF files are ordered in time. First pair of non-ordered files: {dataFiles[id_not_ordered]}, {dataFiles[id_not_ordered + 1]}"
-            )
-        return time, time_origin, timeslices, dataFiles
+        return time, time_origin
 
     @classmethod
     def from_netcdf(
@@ -429,7 +421,7 @@ class Field:
             # Concatenate time variable to determine overall dimension
             # across multiple files
             if "time" in dimensions:
-                time, time_origin, _, _ = cls._collect_timeslices(data_filenames, dimensions, indices)
+                time, time_origin = cls._collect_time(data_filenames, dimensions, indices)
                 grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:  # e.g. for the CROCO CS_w field, see https://github.com/OceanParcels/Parcels/issues/1831
                 grid = Grid.create_grid(lon, lat, depth, np.array([0.0]), time_origin=TimeConverter(0.0), mesh=mesh)
