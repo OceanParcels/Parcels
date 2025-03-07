@@ -118,7 +118,7 @@ def _nearest_2d(ctx: InterpolationContext2D) -> float:
     xii = ctx.xi if ctx.xsi <= 0.5 else ctx.xi + 1
     yii = ctx.yi if ctx.eta <= 0.5 else ctx.yi + 1
     ft0 = ctx.data[ctx.ti, yii, xii]
-    if calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
+    if not calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
         return ft0
     ft1 = ctx.data[ctx.ti + 1, yii, xii]
     return (1 - ctx.tau) * ft0 + ctx.tau * ft1
@@ -176,9 +176,9 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
                     if land[j][i] == 1:  # index search led us directly onto land
                         return 0
                     else:
-                        return _get_data_temporalinterp(ti, yi + 1, xi + 1)
+                        return _get_data_temporalinterp(ti, yi + j, xi + i)
                 elif land[j][i] == 0:
-                    val += _get_data_temporalinterp(ti, yi + 1, xi + 1) / distance
+                    val += _get_data_temporalinterp(ti, yi + j, xi + i) / distance
                     w_sum += 1 / distance
         return val / w_sum
     else:
@@ -339,6 +339,5 @@ def _tracer_3d(ctx: InterpolationContext3D) -> float:
     ft0 = ctx.data[ctx.ti, ctx.zi, ctx.yi + 1, ctx.xi + 1]
     if not calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
         return ft0
-    else:
-        ft1 = ctx.data[ctx.ti + 1, ctx.zi, ctx.yi + 1, ctx.xi + 1]
-        return (1 - ctx.tau) * ft0 + ctx.tau * ft1
+    ft1 = ctx.data[ctx.ti + 1, ctx.zi, ctx.yi + 1, ctx.xi + 1]
+    return (1 - ctx.tau) * ft0 + ctx.tau * ft1
