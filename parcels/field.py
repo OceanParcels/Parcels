@@ -49,6 +49,8 @@ from .fieldfilebuffer import (
 from .grid import Grid, GridType
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from parcels.fieldset import FieldSet
 
 __all__ = ["Field", "NestedField", "VectorField"]
@@ -438,7 +440,7 @@ class Field:
         netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         gridindexingtype = kwargs.get("gridindexingtype", "nemo")
 
-        indices = {}  # TODO Nick: Cleanup
+        indices: dict[str, npt.NDArray] = {}  # TODO Nick: Cleanup
 
         interp_method: InterpMethod = kwargs.pop("interp_method", "linear")
         if type(interp_method) is dict:

@@ -181,8 +181,11 @@ def open_xarray_dataset(filename: Path | str, netcdf_engine: str) -> xr.Dataset:
     return ds
 
 
-def is_rectilinear(lon_subset: np.ndarray[float], lat_subset: np.ndarray[float]) -> bool:
-    """Test if all columns and rows are the same for lon and lat (in which case grid is rectilinear)"""
+def is_rectilinear(lon_subset, lat_subset) -> bool:
+    """Test if all columns and rows are the same for lon and lat (in which case grid is rectilinear).
+
+    lon_subset and lat_subset are 2D numpy arrays
+    """
     for xi in range(1, lon_subset.shape[0]):
         if not np.allclose(lon_subset[0, :], lon_subset[xi, :]):
             return False
