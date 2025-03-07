@@ -26,7 +26,8 @@ def test_fieldset_warning_pop():
         FieldSet.from_pop(filenames, variables, dimensions, mesh="flat")
 
 
-@pytest.mark.xfail(reason="Incorrect warning message being raised")
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="Incorrect warning message being raised (and GH1918)")
 def test_fieldset_warning_timestamps():
     filenames = str(TEST_DATA / "POPtestdata_time.nc")
     variables = {"U": "U", "V": "V", "W": "W", "T": "T"}

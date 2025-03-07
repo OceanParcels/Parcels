@@ -14,7 +14,7 @@ from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.particlefile import ParticleFile
 from parcels.tools._helpers import fieldset_repr
-from parcels.tools.converters import TimeConverter, convert_xarray_time_units
+from parcels.tools.converters import TimeConverter
 from parcels.tools.loggers import logger
 from parcels.tools.warnings import FieldSetWarning
 
@@ -312,7 +312,6 @@ class FieldSet:
         dimensions,
         fieldtype=None,
         mesh: Mesh = "spherical",
-        timestamps=None,
         allow_time_extrapolation: bool | None = None,
         **kwargs,
     ):
@@ -347,11 +346,6 @@ class FieldSet:
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
-        timestamps :
-            list of lists or array of arrays containing the timestamps for
-            each of the files in filenames. Outer list/array corresponds to files, inner
-            array corresponds to indices within files.
-            Default is None if dimensions includes time.
         allow_time_extrapolation : bool
             boolean whether to allow for extrapolation
             (i.e. beyond the last available time snapshot)
@@ -377,20 +371,9 @@ class FieldSet:
 
         * `Argo floats <../examples/tutorial_Argofloats.ipynb>`__
 
-        * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
-
         * `Time-evolving depth dimensions <../examples/tutorial_timevaryingdepthdimensions.ipynb>`__
 
         """
-        # Ensure that times are not provided both in netcdf file and in 'timestamps'.
-        if timestamps is not None and "time" in dimensions:
-            warnings.warn(
-                "Time already provided, defaulting to dimensions['time'] over timestamps.",
-                FieldSetWarning,
-                stacklevel=2,
-            )
-            timestamps = None
-
         fields: dict[str, Field] = {}
         if "creation_log" not in kwargs.keys():
             kwargs["creation_log"] = "from_netcdf"
@@ -437,7 +420,6 @@ class FieldSet:
                 dims,
                 grid=grid,
                 mesh=mesh,
-                timestamps=timestamps,
                 allow_time_extrapolation=allow_time_extrapolation,
                 fieldtype=fieldtype,
                 dataFiles=dFiles,
@@ -1180,10 +1162,6 @@ class FieldSet:
         fields = {}
         if "creation_log" not in kwargs.keys():
             kwargs["creation_log"] = "from_xarray_dataset"
-        if "time" in dimensions:
-            if "units" not in ds[dimensions["time"]].attrs and "Unit" in ds[dimensions["time"]].attrs:
-                # Fix DataArrays that have time.Unit instead of expected time.units
-                convert_xarray_time_units(ds, dimensions["time"])
 
         for var, name in variables.items():
             dims = dimensions[var] if var in dimensions else dimensions

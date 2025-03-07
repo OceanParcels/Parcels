@@ -6,7 +6,6 @@ import numpy as np
 import xarray as xr
 
 from parcels._typing import InterpMethodOption, PathLike
-from parcels.tools.converters import convert_xarray_time_units
 from parcels.tools.warnings import FileWarning
 
 
@@ -148,7 +147,6 @@ class NetcdfFileBuffer:
             return np.array([None])
 
         time_da = self.dataset[self.dimensions["time"]]
-        convert_xarray_time_units(time_da, self.dimensions["time"])
         time = (
             np.array([time_da[self.dimensions["time"]].data])
             if len(time_da.shape) == 0

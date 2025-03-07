@@ -123,9 +123,6 @@ class Field:
         1. spherical: Lat and lon in degree, with a
            correction for zonal velocity U near the poles.
         2. flat (default): No conversion, lat/lon are assumed to be in m.
-    timestamps : np.ndarray
-        A numpy array containing the timestamps for each of the files in filenames, for loading
-        from netCDF files only. Default is None if the netCDF dimensions dictionary includes time.
     grid : parcels.grid.Grid
         :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
         mesh and time_origin information. Can be constructed from any of the Grid objects
@@ -162,7 +159,6 @@ class Field:
         time=None,
         grid=None,
         mesh: Mesh = "flat",
-        timestamps=None,
         fieldtype=None,
         time_origin: TimeConverter | None = None,
         interp_method: InterpMethod = "linear",
@@ -196,7 +192,6 @@ class Field:
             self.units = unitconverters_map[self.fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
-        self.timestamps = timestamps
         self._loaded_time_indices: Iterable[int] = []  # type: ignore
         if isinstance(interp_method, dict):
             if self.name in interp_method:
@@ -302,25 +297,16 @@ class Field:
             return filenames
 
     @staticmethod
-    def _collect_timeslices(timestamps, data_filenames, dimensions, indices, netcdf_engine):
-        if timestamps is not None:
-            dataFiles = []
-            for findex in range(len(data_filenames)):
-                stamps_in_file = 1 if isinstance(timestamps[findex], (int, np.datetime64)) else len(timestamps[findex])
-                for f in [data_filenames[findex]] * stamps_in_file:
-                    dataFiles.append(f)
-            timeslices = np.array([stamp for file in timestamps for stamp in file])
-            time = timeslices
-        else:
-            timeslices = []
-            dataFiles = []
-            for fname in data_filenames:
-                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
-                    ftime = filebuffer.time
-                    timeslices.append(ftime)
-                    dataFiles.append([fname] * len(ftime))
-            time = np.concatenate(timeslices).ravel()
-            dataFiles = np.concatenate(dataFiles).ravel()
+    def _collect_timeslices(data_filenames, dimensions, indices, netcdf_engine):
+        timeslices = []
+        dataFiles = []
+        for fname in data_filenames:
+            with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
+                ftime = filebuffer.time
+                timeslices.append(ftime)
+                dataFiles.append([fname] * len(ftime))
+        time = np.concatenate(timeslices).ravel()
+        dataFiles = np.concatenate(dataFiles).ravel()
         if time.size == 1 and time[0] is None:
             time[0] = 0
         time_origin = TimeConverter(time[0])
@@ -341,7 +327,6 @@ class Field:
         dimensions,
         grid=None,
         mesh: Mesh = "spherical",
-        timestamps=None,
         allow_time_extrapolation: bool | None = None,
         **kwargs,
     ) -> "Field":
@@ -364,9 +349,6 @@ class Field:
             1. spherical (default): Lat and lon in degree, with a
                correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
-        timestamps :
-            A numpy array of datetime64 objects containing the timestamps for each of the files in filenames.
-            Default is None if dimensions includes time.
         allow_time_extrapolation : bool
             boolean whether to allow for extrapolation in time
             (i.e. beyond the last available time snapshot)
@@ -378,39 +360,7 @@ class Field:
              (Default value = None)
         **kwargs :
             Keyword arguments passed to the :class:`Field` constructor.
-
-        Examples
-        --------
-        For usage examples see the following tutorial:
-
-        * `Timestamps <../examples/tutorial_timestamps.ipynb>`__
-
         """
-        # Ensure the timestamps array is compatible with the user-provided datafiles.
-        if timestamps is not None:
-            if isinstance(filenames, list):
-                assert len(filenames) == len(
-                    timestamps
-                ), "Outer dimension of timestamps should correspond to number of files."
-            elif isinstance(filenames, dict):
-                for k in filenames.keys():
-                    if k not in ["lat", "lon", "depth", "time"]:
-                        if isinstance(filenames[k], list):
-                            assert len(filenames[k]) == len(
-                                timestamps
-                            ), "Outer dimension of timestamps should correspond to number of files."
-                        else:
-                            assert (
-                                len(timestamps) == 1
-                            ), "Outer dimension of timestamps should correspond to number of files."
-                        for t in timestamps:
-                            assert isinstance(t, (list, np.ndarray)), "timestamps should be a list for each file"
-
-            else:
-                raise TypeError(
-                    "Filenames type is inconsistent with manual timestamp provision." + "Should be dict or list"
-                )
-
         if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
             variable = (variable, variable)
         elif isinstance(variable, dict):
@@ -485,27 +435,25 @@ class Field:
 
         kwargs["data_full_zdim"] = data_full_zdim
 
-        if len(data_filenames) > 1 and "time" not in dimensions and timestamps is None:
+        if len(data_filenames) > 1 and "time" not in dimensions:
             raise RuntimeError("Multiple files given but no time dimension specified")
 
         if grid is None:
             # Concatenate time variable to determine overall dimension
             # across multiple files
-            if "time" in dimensions or timestamps is not None:
+            if "time" in dimensions:
                 time, time_origin, timeslices, dataFiles = cls._collect_timeslices(
-                    timestamps, data_filenames, dimensions, indices, netcdf_engine
+                    data_filenames, dimensions, indices, netcdf_engine
                 )
                 grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-                grid.timeslices = timeslices
                 kwargs["dataFiles"] = dataFiles
             else:  # e.g. for the CROCO CS_w field, see https://github.com/OceanParcels/Parcels/issues/1831
                 grid = Grid.create_grid(lon, lat, depth, np.array([0.0]), time_origin=TimeConverter(0.0), mesh=mesh)
-                grid.timeslices = [[0]]
                 data_filenames = [data_filenames[0]]
         elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
-            _, _, _, dataFiles = cls._collect_timeslices(timestamps, data_filenames, dimensions, indices, netcdf_engine)
+            _, _, _, dataFiles = cls._collect_timeslices(data_filenames, dimensions, indices, netcdf_engine)
             kwargs["dataFiles"] = dataFiles
 
         if "time" in indices:
@@ -546,7 +494,6 @@ class Field:
             variable,
             data,
             grid=grid,
-            timestamps=timestamps,
             allow_time_extrapolation=allow_time_extrapolation,
             interp_method=interp_method,
             **kwargs,
