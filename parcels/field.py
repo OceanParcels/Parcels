@@ -234,12 +234,6 @@ class Field:
         self._dataFiles = kwargs.pop("dataFiles", None)
         self._netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         self._creation_log = kwargs.pop("creation_log", "")
-        self.grid.depth_field = kwargs.pop("depth_field", None)
-
-        if self.grid.depth_field == "not_yet_set":
-            assert (
-                self.grid._z4d
-            ), "Providing the depth dimensions from another field data is only available for 4d S grids"
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
@@ -498,11 +492,7 @@ class Field:
                 gridindexingtype=gridindexingtype,
             ) as filebuffer:
                 filebuffer.name = variable[1]
-                if dimensions["depth"] == "not_yet_set":
-                    depth = filebuffer.depth_dimensions
-                    kwargs["depth_field"] = "not_yet_set"
-                else:
-                    depth = filebuffer.depth
+                depth = filebuffer.depth
                 data_full_zdim = filebuffer.data_full_zdim
         else:
             indices["depth"] = [0]
@@ -689,19 +679,6 @@ class Field:
             raise NotImplementedError(f"Scaling factor for field {self.name} already defined.")
         self._scaling_factor = factor
         self.data *= factor
-
-    def set_depth_from_field(self, field):
-        """Define the depth dimensions from another (time-varying) field.
-
-        Notes
-        -----
-        See `this tutorial <../examples/tutorial_timevaryingdepthdimensions.ipynb>`__
-        for a detailed explanation on how to set up time-evolving depth dimensions.
-
-        """
-        self.grid.depth_field = field
-        if self.grid != field.grid:
-            field.grid.depth_field = field
 
     def _search_indices(self, time, z, y, x, particle=None, search2D=False):
         tau, ti = self._time_index(time)
