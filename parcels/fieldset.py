@@ -266,9 +266,6 @@ class FieldSet:
             g._time_origin = self.time_origin
         self._add_UVfield()
 
-        for f in self.get_fields():
-            if isinstance(f, VectorField) or f._dataFiles is None:
-                continue
         self._completed = True
 
     @classmethod
@@ -368,28 +365,7 @@ class FieldSet:
             fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
 
             grid = None
-            dFiles = None
-            # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
-            for procvar, _ in fields.items():
-                procdims = dimensions[procvar] if procvar in dimensions else dimensions
-                nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-                if procdims == dims:
-                    possibly_samegrid = True
-                    if not possibly_samegrid:
-                        break
-                    processedGrid = False
-                    if (not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]:
-                        processedGrid = True
-                    elif isinstance(filenames[procvar], dict):
-                        processedGrid = True
-                        for dim in ["lon", "lat", "depth"]:
-                            if dim in dimensions:
-                                processedGrid *= filenames[procvar][dim] == filenames[var][dim]
-                    if processedGrid:
-                        grid = fields[procvar].grid
-                        if filenames == nowpaths:
-                            dFiles = fields[procvar]._dataFiles
-                            break
+
             fields[var] = Field.from_netcdf(
                 paths,
                 (var, name),
@@ -398,7 +374,6 @@ class FieldSet:
                 mesh=mesh,
                 allow_time_extrapolation=allow_time_extrapolation,
                 fieldtype=fieldtype,
-                dataFiles=dFiles,
                 **kwargs,
             )
 

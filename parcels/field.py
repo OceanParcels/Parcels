@@ -221,7 +221,6 @@ class Field:
         self.data[np.isnan(self.data)] = 0.0
 
         self._dimensions = kwargs.pop("dimensions", None)
-        self._dataFiles = kwargs.pop("dataFiles", None)
         self._creation_log = kwargs.pop("creation_log", "")
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
@@ -430,17 +429,11 @@ class Field:
             # Concatenate time variable to determine overall dimension
             # across multiple files
             if "time" in dimensions:
-                time, time_origin, timeslices, dataFiles = cls._collect_timeslices(data_filenames, dimensions, indices)
+                time, time_origin, _, _ = cls._collect_timeslices(data_filenames, dimensions, indices)
                 grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-                kwargs["dataFiles"] = dataFiles
             else:  # e.g. for the CROCO CS_w field, see https://github.com/OceanParcels/Parcels/issues/1831
                 grid = Grid.create_grid(lon, lat, depth, np.array([0.0]), time_origin=TimeConverter(0.0), mesh=mesh)
                 data_filenames = [data_filenames[0]]
-        elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
-            # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
-            # ==== correct file time series again.
-            _, _, _, dataFiles = cls._collect_timeslices(data_filenames, dimensions, indices)
-            kwargs["dataFiles"] = dataFiles
 
         if "time" in indices:
             warnings.warn(
