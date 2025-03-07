@@ -49,6 +49,8 @@ from .fieldfilebuffer import (
 from .grid import Grid, GridType
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from parcels.fieldset import FieldSet
 
 __all__ = ["Field", "NestedField", "VectorField"]
@@ -230,7 +232,6 @@ class Field:
         self._scaling_factor = None
 
         self._dimensions = kwargs.pop("dimensions", None)
-        self.indices = kwargs.pop("indices", None)
         self._dataFiles = kwargs.pop("dataFiles", None)
         self._netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         self._creation_log = kwargs.pop("creation_log", "")
@@ -338,7 +339,6 @@ class Field:
         filenames,
         variable,
         dimensions,
-        indices=None,
         grid=None,
         mesh: Mesh = "spherical",
         timestamps=None,
@@ -357,10 +357,6 @@ class Field:
             Dict or tuple mapping field name to variable name in the NetCDF file.
         dimensions : dict
             Dictionary mapping variable names for the relevant dimensions in the NetCDF file
-        indices :
-            dictionary mapping indices for each dimension to read from file.
-            This can be used for reading in only a subregion of the NetCDF file.
-            Note that negative indices are not allowed. (Default value = None)
         mesh :
             String indicating the type of mesh coordinates and
             units used during velocity interpolation:
@@ -444,17 +440,7 @@ class Field:
         netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         gridindexingtype = kwargs.get("gridindexingtype", "nemo")
 
-        indices = {} if indices is None else indices.copy()
-        for ind in indices:
-            if len(indices[ind]) == 0:
-                raise RuntimeError(f"Indices for {ind} can not be empty")
-            assert np.min(indices[ind]) >= 0, (
-                "Negative indices are currently not allowed in Parcels. "
-                + "This is related to the non-increasing dimension it could generate "
-                + "if the domain goes from lon[-4] to lon[6] for example. "
-                + "Please raise an issue on https://github.com/OceanParcels/parcels/issues "
-                + "if you would need such feature implemented."
-            )
+        indices: dict[str, npt.NDArray] = {}  # TODO Nick: Cleanup
 
         interp_method: InterpMethod = kwargs.pop("interp_method", "linear")
         if type(interp_method) is dict:
@@ -469,7 +455,6 @@ class Field:
                 lonlat_filename,
                 dimensions,
                 indices,
-                netcdf_engine,
                 gridindexingtype=gridindexingtype,
             ) as filebuffer:
                 lat, lon = filebuffer.latlon
@@ -487,7 +472,6 @@ class Field:
                 depth_filename,
                 dimensions,
                 indices,
-                netcdf_engine,
                 interp_method=interp_method,
                 gridindexingtype=gridindexingtype,
             ) as filebuffer:
@@ -533,7 +517,6 @@ class Field:
             data_filenames,
             dimensions,
             indices,
-            netcdf_engine,
             interp_method=interp_method,
             data_full_zdim=data_full_zdim,
         ) as filebuffer:
@@ -557,7 +540,6 @@ class Field:
             allow_time_extrapolation = False if "time" in dimensions else True
 
         kwargs["dimensions"] = dimensions.copy()
-        kwargs["indices"] = indices
         kwargs["netcdf_engine"] = netcdf_engine
 
         return cls(

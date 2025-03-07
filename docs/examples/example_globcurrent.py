@@ -44,7 +44,12 @@ def set_globcurrent_fieldset(
         )
 
 
-@pytest.mark.parametrize("use_xarray", [True, False])
+@pytest.mark.v4remove(
+    reason="indices keryword is not supported in v4. Subsetting should be done on xarray level."
+)
+@pytest.mark.parametrize(
+    "use_xarray", [True, pytest.param(False, marks=pytest.mark.xfail)]
+)
 def test_globcurrent_fieldset(use_xarray):
     fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
     assert fieldset.U.lon.size == 81

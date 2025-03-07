@@ -310,7 +310,6 @@ class FieldSet:
         filenames,
         variables,
         dimensions,
-        indices=None,
         fieldtype=None,
         mesh: Mesh = "spherical",
         timestamps=None,
@@ -338,11 +337,6 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable
             (e.g. dimensions['U'], dimensions['V'], etc).
-        indices :
-            Optional dictionary of indices for each dimension
-            to read from file(s), to allow for reading of subset of data.
-            Default is to read the full extent of each dimension.
-            Note that negative indices are not allowed.
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None) (Default value = None)
@@ -409,10 +403,9 @@ class FieldSet:
                 for dim, p in paths.items():
                     paths[dim] = cls._parse_wildcards(p, filenames, var)
 
-            # Use dimensions[var] and indices[var] if either of them is a dict of dicts
+            # Use dimensions[var] if its a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
-            inds = indices[var] if (indices and var in indices) else indices
             fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
 
             grid = None
@@ -420,10 +413,8 @@ class FieldSet:
             # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
-                procinds = indices[procvar] if (indices and procvar in indices) else indices
-                procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-                if procdims == dims and procinds == inds:
+                if procdims == dims:
                     possibly_samegrid = True
                     if not possibly_samegrid:
                         break
@@ -437,14 +428,13 @@ class FieldSet:
                                 processedGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if processedGrid:
                         grid = fields[procvar].grid
-                        if procpaths == nowpaths:
+                        if filenames == nowpaths:
                             dFiles = fields[procvar]._dataFiles
                             break
             fields[var] = Field.from_netcdf(
                 paths,
                 (var, name),
                 dims,
-                inds,
                 grid=grid,
                 mesh=mesh,
                 timestamps=timestamps,
@@ -464,7 +454,6 @@ class FieldSet:
         filenames,
         variables,
         dimensions,
-        indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         tracer_interp_method: InterpMethodOption = "cgrid_tracer",
@@ -513,11 +502,6 @@ class FieldSet:
             (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
             In 3D, the depth is the one corresponding to W nodes
             The gridindexingtype is set to 'nemo'. See also the Grid indexing documentation on oceanparcels.org
-        indices :
-            Optional dictionary of indices for each dimension
-            to read from file(s), to allow for reading of subset of data.
-            Default is to read the full extent of each dimension.
-            Note that negative indices are not allowed.
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
@@ -550,7 +534,6 @@ class FieldSet:
             variables,
             dimensions,
             mesh=mesh,
-            indices=indices,
             allow_time_extrapolation=allow_time_extrapolation,
             tracer_interp_method=tracer_interp_method,
             gridindexingtype="nemo",
@@ -566,7 +549,6 @@ class FieldSet:
         filenames,
         variables,
         dimensions,
-        indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         tracer_interp_method: InterpMethodOption = "cgrid_tracer",
@@ -598,7 +580,6 @@ class FieldSet:
             variables,
             dimensions,
             mesh=mesh,
-            indices=indices,
             allow_time_extrapolation=allow_time_extrapolation,
             tracer_interp_method=tracer_interp_method,
             gridindexingtype="mitgcm",
@@ -613,7 +594,6 @@ class FieldSet:
         variables,
         dimensions,
         hc: float | None = None,
-        indices=None,
         mesh="spherical",
         allow_time_extrapolation=None,
         tracer_interp_method="cgrid_tracer",
@@ -678,7 +658,6 @@ class FieldSet:
             variables,
             dimensions,
             mesh=mesh,
-            indices=indices,
             allow_time_extrapolation=allow_time_extrapolation,
             interp_method=interp_method,
             gridindexingtype="croco",
@@ -696,7 +675,6 @@ class FieldSet:
         filenames,
         variables,
         dimensions,
-        indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         tracer_interp_method: InterpMethodOption = "cgrid_tracer",
@@ -741,11 +719,6 @@ class FieldSet:
             which are located on the corners of the cells.
             (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
             In 3D, the depth is the one corresponding to W nodes.
-        indices :
-            Optional dictionary of indices for each dimension
-            to read from file(s), to allow for reading of subset of data.
-            Default is to read the full extent of each dimension.
-            Note that negative indices are not allowed.
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
@@ -796,7 +769,6 @@ class FieldSet:
             variables,
             dimensions,
             mesh=mesh,
-            indices=indices,
             allow_time_extrapolation=allow_time_extrapolation,
             interp_method=interp_method,
             gridindexingtype=gridindexingtype,
@@ -809,7 +781,6 @@ class FieldSet:
         filenames,
         variables,
         dimensions,
-        indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         tracer_interp_method: InterpMethodOption = "bgrid_tracer",
@@ -857,11 +828,6 @@ class FieldSet:
             T node is at the cell centre, and constant per cell.
             Note that Parcels assumes that the length of the depth dimension (at the W-points)
             is one larger than the size of the velocity and tracer fields in the depth dimension.
-        indices :
-            Optional dictionary of indices for each dimension
-            to read from file(s), to allow for reading of subset of data.
-            Default is to read the full extent of each dimension.
-            Note that negative indices are not allowed.
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
@@ -893,7 +859,6 @@ class FieldSet:
             variables,
             dimensions,
             mesh=mesh,
-            indices=indices,
             allow_time_extrapolation=allow_time_extrapolation,
             tracer_interp_method=tracer_interp_method,
             gridindexingtype="pop",
@@ -923,7 +888,6 @@ class FieldSet:
         filenames,
         variables,
         dimensions,
-        indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         tracer_interp_method: InterpMethodOption = "bgrid_tracer",
@@ -967,11 +931,6 @@ class FieldSet:
             Note that W is normally directed upward in MOM5, but Parcels requires W
             in the positive z-direction (downward) so W is multiplied by -1.
             T node is at the cell centre, and constant per cell.
-        indices :
-            Optional dictionary of indices for each dimension
-            to read from file(s), to allow for reading of subset of data.
-            Default is to read the full extent of each dimension.
-            Note that negative indices are not allowed.
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
@@ -999,7 +958,6 @@ class FieldSet:
             variables,
             dimensions,
             mesh=mesh,
-            indices=indices,
             allow_time_extrapolation=allow_time_extrapolation,
             tracer_interp_method=tracer_interp_method,
             gridindexingtype="mom5",
@@ -1038,7 +996,6 @@ class FieldSet:
         filenames,
         variables,
         dimensions,
-        indices=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         tracer_interp_method: InterpMethodOption = "bgrid_tracer",
@@ -1081,11 +1038,6 @@ class FieldSet:
             W nodes are at the centre of the horizontal interfaces.
             They are interpolated linearly (as a function of z) in the cell.
             T node is at the cell centre, and constant per cell.
-        indices :
-            Optional dictionary of indices for each dimension
-            to read from file(s), to allow for reading of subset of data.
-            Default is to read the full extent of each dimension.
-            Note that negative indices are not allowed.
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
@@ -1133,7 +1085,6 @@ class FieldSet:
             variables,
             dimensions,
             mesh=mesh,
-            indices=indices,
             allow_time_extrapolation=allow_time_extrapolation,
             interp_method=interp_method,
             **kwargs,
@@ -1145,7 +1096,6 @@ class FieldSet:
         basename,
         uvar="vozocrtx",
         vvar="vomecrty",
-        indices=None,
         extra_fields=None,
         allow_time_extrapolation: bool | None = None,
         **kwargs,
@@ -1157,11 +1107,6 @@ class FieldSet:
         basename : str
             Base name of the file(s); may contain
             wildcards to indicate multiple files.
-        indices :
-            Optional dictionary of indices for each dimension
-            to read from file(s), to allow for reading of subset of data.
-            Default is to read the full extent of each dimension.
-            Note that negative indices are not allowed.
         fieldtype :
             Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
             (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
@@ -1192,7 +1137,6 @@ class FieldSet:
         filenames = {v: str(f"{basename}{v}.nc") for v in extra_fields.keys()}
         return cls.from_netcdf(
             filenames,
-            indices=indices,
             variables=extra_fields,
             dimensions=dimensions,
             allow_time_extrapolation=allow_time_extrapolation,

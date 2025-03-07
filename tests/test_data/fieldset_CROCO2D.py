@@ -3,7 +3,7 @@ import os
 import parcels
 
 
-def create_fieldset(indices=None):
+def create_fieldset():
     example_dataset_folder = parcels.download_example_dataset("CROCOidealized_data")
     file = os.path.join(example_dataset_folder, "CROCO_idealized.nc")
 
@@ -18,7 +18,6 @@ def create_fieldset(indices=None):
         dimensions,
         allow_time_extrapolation=True,
         mesh="flat",
-        indices=indices,
     )
 
     return fieldset

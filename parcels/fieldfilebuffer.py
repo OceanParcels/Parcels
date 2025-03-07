@@ -16,25 +16,20 @@ class NetcdfFileBuffer:
         filename,
         dimensions,
         indices,
-        timestamp=None,
+        *,
         interp_method: InterpMethodOption = "linear",
         data_full_zdim=None,
         gridindexingtype="nemo",
-        **kwargs,
+        netcdf_engine="netcdf4",
     ):
         self.filename: PathLike | list[PathLike] = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
         self.dataset = None
-        self.timestamp = timestamp
         self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
         self.data_full_zdim = data_full_zdim
-        if ("lon" in self.indices) or ("lat" in self.indices):
-            self.nolonlatindices = False
-        else:
-            self.nolonlatindices = True
-        self.netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
+        self.netcdf_engine = netcdf_engine
 
     def __enter__(self):
         self.dataset = open_xarray_dataset(self.filename, self.netcdf_engine)
@@ -49,78 +44,54 @@ class NetcdfFileBuffer:
             self.dataset = None
 
     @property
+    def xdim(self):
+        lon = self.dataset[self.dimensions["lon"]]
+        xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        if self.gridindexingtype in ["croco"]:
+            xdim -= 1
+        return xdim
+
+    @property
+    def ydim(self):
+        lat = self.dataset[self.dimensions["lat"]]
+        ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        if self.gridindexingtype in ["croco"]:
+            ydim -= 1
+        return ydim
+
+    @property
+    def zdim(self):
+        depth = self.dataset[self.dimensions["depth"]]
+        zdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+        if self.gridindexingtype in ["croco"]:
+            zdim -= 1
+        return zdim
+
+    @property
     def latlon(self):
         lon = self.dataset[self.dimensions["lon"]]
         lat = self.dataset[self.dimensions["lat"]]
-        if self.nolonlatindices and self.gridindexingtype not in ["croco"]:
-            if len(lon.shape) < 3:
-                lon_subset = np.array(lon)
-                lat_subset = np.array(lat)
-            elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-                lon_subset = np.array(lon[0, :, :])
-                lat_subset = np.array(lat[0, :, :])
+        if self.gridindexingtype not in ["croco"]:
+            if len(lon.shape) == 3:  # some lon, lat have a time dimension 1
+                lon = lon[0, :, :]
+                lat = lat[0, :, :]
             elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
-                lon_subset = np.array(lon[0, 0, :, :])
-                lat_subset = np.array(lat[0, 0, :, :])
-        else:
-            xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-            ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-            if self.gridindexingtype in ["croco"]:
-                xdim -= 1
-                ydim -= 1
-            self.indices["lon"] = self.indices["lon"] if "lon" in self.indices else range(xdim)
-            self.indices["lat"] = self.indices["lat"] if "lat" in self.indices else range(ydim)
-            if len(lon.shape) == 1:
-                lon_subset = np.array(lon[self.indices["lon"]])
-                lat_subset = np.array(lat[self.indices["lat"]])
-            elif len(lon.shape) == 2:
-                lon_subset = np.array(lon[self.indices["lat"], self.indices["lon"]])
-                lat_subset = np.array(lat[self.indices["lat"], self.indices["lon"]])
-            elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-                lon_subset = np.array(lon[0, self.indices["lat"], self.indices["lon"]])
-                lat_subset = np.array(lat[0, self.indices["lat"], self.indices["lon"]])
-            elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
-                lon_subset = np.array(lon[0, 0, self.indices["lat"], self.indices["lon"]])
-                lat_subset = np.array(lat[0, 0, self.indices["lat"], self.indices["lon"]])
+                lon = lon[0, 0, :, :]
+                lat = lat[0, 0, :, :]
 
-        if len(lon.shape) > 1:  # Tests if lon, lat are rectilinear but were stored in arrays
-            rectilinear = True
-            # test if all columns and rows are the same for lon and lat (in which case grid is rectilinear)
-            for xi in range(1, lon_subset.shape[0]):
-                if not np.allclose(lon_subset[0, :], lon_subset[xi, :]):
-                    rectilinear = False
-                    break
-            if rectilinear:
-                for yi in range(1, lat_subset.shape[1]):
-                    if not np.allclose(lat_subset[:, 0], lat_subset[:, yi]):
-                        rectilinear = False
-                        break
-            if rectilinear:
-                lon_subset = lon_subset[0, :]
-                lat_subset = lat_subset[:, 0]
-        return lat_subset, lon_subset
+        if len(lon.shape) > 1:
+            if is_rectilinear(lon, lat):
+                lon = lon[0, :]
+                lat = lat[:, 0]
+        return lat, lon
 
     @property
     def depth(self):
         if "depth" in self.dimensions:
             depth = self.dataset[self.dimensions["depth"]]
-            depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-            if self.gridindexingtype in ["croco"]:
-                depthsize -= 1
-            self.data_full_zdim = depthsize
-            self.indices["depth"] = self.indices["depth"] if "depth" in self.indices else range(depthsize)
-            if len(depth.shape) == 1:
-                return np.array(depth[self.indices["depth"]])
-            elif len(depth.shape) == 3:
-                if self.nolonlatindices:
-                    return np.array(depth[self.indices["depth"], :, :])
-                else:
-                    return np.array(depth[self.indices["depth"], self.indices["lat"], self.indices["lon"]])
-            elif len(depth.shape) == 4:
-                if self.nolonlatindices:
-                    return np.array(depth[:, self.indices["depth"], :, :])
-                else:
-                    return np.array(depth[:, self.indices["depth"], self.indices["lat"], self.indices["lon"]])
+            self.data_full_zdim = self.zdim
+            self.indices["depth"] = range(self.zdim)
+            return depth
         else:
             self.indices["depth"] = [0]
             return np.zeros(1)
@@ -131,11 +102,8 @@ class NetcdfFileBuffer:
             data = self.dataset[self.name]
             depthsize = data.shape[-3]
             self.data_full_zdim = depthsize
-            self.indices["depth"] = self.indices["depth"] if "depth" in self.indices else range(depthsize)
-            if self.nolonlatindices:
-                return np.empty((0, len(self.indices["depth"])) + data.shape[-2:])
-            else:
-                return np.empty((0, len(self.indices["depth"]), len(self.indices["lat"]), len(self.indices["lon"])))
+            self.indices["depth"] = range(depthsize)
+            return np.empty((0, self.zdim) + data.shape[-2:])
 
     def _check_extend_depth(self, data, dim):
         return (
@@ -148,38 +116,18 @@ class NetcdfFileBuffer:
         if len(data.shape) == 1:
             if self.indices["depth"] is not None:
                 data = data[self.indices["depth"]]
-        elif len(data.shape) == 2:
-            if self.nolonlatindices:
-                pass
-            else:
-                data = data[self.indices["lat"], self.indices["lon"]]
         elif len(data.shape) == 3:
             if self._check_extend_depth(data, 0):
-                if self.nolonlatindices:
-                    data = data[self.indices["depth"][:-1], :, :]
-                else:
-                    data = data[self.indices["depth"][:-1], self.indices["lat"], self.indices["lon"]]
+                data = data[self.indices["depth"][:-1], :, :]
             elif len(self.indices["depth"]) > 1:
-                if self.nolonlatindices:
-                    data = data[self.indices["depth"], :, :]
-                else:
-                    data = data[self.indices["depth"], self.indices["lat"], self.indices["lon"]]
+                data = data[self.indices["depth"], :, :]
             else:
-                if self.nolonlatindices:
-                    data = data[ti, :, :]
-                else:
-                    data = data[ti, self.indices["lat"], self.indices["lon"]]
+                data = data[ti, :, :]
         else:
             if self._check_extend_depth(data, 1):
-                if self.nolonlatindices:
-                    data = data[ti, self.indices["depth"][:-1], :, :]
-                else:
-                    data = data[ti, self.indices["depth"][:-1], self.indices["lat"], self.indices["lon"]]
+                data = data[ti, self.indices["depth"][:-1], :, :]
             else:
-                if self.nolonlatindices:
-                    data = data[ti, self.indices["depth"], :, :]
-                else:
-                    data = data[ti, self.indices["depth"], self.indices["lat"], self.indices["lon"]]
+                data = data[ti, self.indices["depth"], :, :]
         return data
 
     @property
@@ -196,9 +144,6 @@ class NetcdfFileBuffer:
         return self.time_access()
 
     def time_access(self):
-        if self.timestamp is not None:
-            return self.timestamp
-
         if "time" not in self.dimensions:
             return np.array([None])
 
@@ -234,3 +179,19 @@ def open_xarray_dataset(filename: Path | str, netcdf_engine: str) -> xr.Dataset:
         ds = xr.open_mfdataset(filename, decode_cf=False, engine=netcdf_engine)
         ds["decoded"] = False
     return ds
+
+
+def is_rectilinear(lon_subset, lat_subset) -> bool:
+    """Test if all columns and rows are the same for lon and lat (in which case grid is rectilinear).
+
+    lon_subset and lat_subset are 2D numpy arrays
+    """
+    for xi in range(1, lon_subset.shape[0]):
+        if not np.allclose(lon_subset[0, :], lon_subset[xi, :]):
+            return False
+
+    for yi in range(1, lat_subset.shape[1]):
+        if not np.allclose(lat_subset[:, 0], lat_subset[:, yi]):
+            return False
+
+    return True
