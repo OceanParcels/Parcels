@@ -30,16 +30,7 @@ def test_field_from_netcdf_variables():
         f3 = Field.from_netcdf(filename, variable, dims)
 
 
-@pytest.mark.parametrize(
-    "with_timestamps",
-    [
-        pytest.param(
-            True, marks=[pytest.mark.v4remove, pytest.mark.xfail(reason="GH1918. This test should be rewritten.")]
-        ),
-        False,
-    ],
-)
-def test_field_from_netcdf(with_timestamps):
+def test_field_from_netcdf():
     filenames = {
         "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
         "lat": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
@@ -47,12 +38,7 @@ def test_field_from_netcdf(with_timestamps):
     }
     variable = "U"
     dimensions = {"lon": "glamf", "lat": "gphif"}
-    if with_timestamps:
-        timestamp_types = [[[2]], [[np.datetime64("2000-01-01")]]]
-        for timestamps in timestamp_types:
-            Field.from_netcdf(filenames, variable, dimensions, interp_method="cgrid_velocity", timestamps=timestamps)
-    else:
-        Field.from_netcdf(filenames, variable, dimensions, interp_method="cgrid_velocity")
+    Field.from_netcdf(filenames, variable, dimensions, interp_method="cgrid_velocity")
 
 
 @pytest.mark.parametrize(
