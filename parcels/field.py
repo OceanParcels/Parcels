@@ -26,7 +26,7 @@ from parcels._typing import (
     assert_valid_gridindexingtype,
     assert_valid_interp_method,
 )
-from parcels.tools._helpers import default_repr, field_repr
+from parcels.tools._helpers import calculate_next_ti, default_repr, field_repr
 from parcels.tools.converters import (
     TimeConverter,
     UnitConverter,
@@ -1030,17 +1030,15 @@ class VectorField:
             return (u, v)
 
         u, v = _calc_UV(ti, yi, xi)
-        if ti < self.U.grid.tdim - 1 and time > self.U.grid.time[ti]:
+        if calculate_next_ti(ti, tau, self.U.grid.tdim):
             ut1, vt1 = _calc_UV(ti + 1, yi, xi)
             u = (1 - tau) * u + tau * ut1
             v = (1 - tau) * v + tau * vt1
         return (u, v)
 
-    def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time, particle=None):
+    def spatial_c_grid_interpolation3D_full(self, time, z, y, x, particle=None):
         grid = self.U.grid
-        (_, zeta, eta, xsi, _, zi, yi, xi) = self.U._search_indices(
-            time, z, y, x, particle=particle
-        )  # TODO use tau here too
+        (tau, zeta, eta, xsi, ti, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
 
         if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
@@ -1092,6 +1090,14 @@ class VectorField:
         v1 = self.V.data[ti, zi, yi + 1, xi + 1]
         w0 = self.W.data[ti, zi, yi + 1, xi + 1]
         w1 = self.W.data[ti, zi + 1, yi + 1, xi + 1]
+
+        if calculate_next_ti(ti, tau, self.U.grid.tdim):
+            u0 = (1 - tau) * u0 + tau * self.U.data[ti + 1, zi, yi + 1, xi]
+            u1 = (1 - tau) * u1 + tau * self.U.data[ti + 1, zi, yi + 1, xi + 1]
+            v0 = (1 - tau) * v0 + tau * self.V.data[ti + 1, zi, yi, xi + 1]
+            v1 = (1 - tau) * v1 + tau * self.V.data[ti + 1, zi, yi + 1, xi + 1]
+            w0 = (1 - tau) * w0 + tau * self.W.data[ti + 1, zi, yi + 1, xi + 1]
+            w1 = (1 - tau) * w1 + tau * self.W.data[ti + 1, zi + 1, yi + 1, xi + 1]
 
         U0 = u0 * i_u.jacobian3D_lin_face(pz, py, px, zeta, eta, 0, "zonal", grid.mesh)
         U1 = u1 * i_u.jacobian3D_lin_face(pz, py, px, zeta, eta, 1, "zonal", grid.mesh)
@@ -1260,7 +1266,7 @@ class VectorField:
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
         if self.U.grid._gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
-            (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
+            (u, v, w) = self.spatial_c_grid_interpolation3D_full(time, z, y, x, particle=particle)
         else:
             if self.gridindexingtype == "croco":
                 z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
