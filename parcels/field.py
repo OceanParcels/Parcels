@@ -423,7 +423,7 @@ class Field:
                 depth = filebuffer.depth
                 data_full_zdim = filebuffer.data_full_zdim
         else:
-            indices["depth"] = [0]
+            indices["depth"] = np.array([0])
             depth = np.zeros(1)
             data_full_zdim = 1
 
