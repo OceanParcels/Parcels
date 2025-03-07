@@ -180,7 +180,6 @@ class FieldSet:
         else:
             setattr(self, name, field)
             self.gridset.add_grid(field)
-            field.fieldset = self
 
     def add_constant_field(self, name: str, value: float, mesh: Mesh = "flat"):
         """Wrapper function to add a Field that is constant in space,
@@ -214,7 +213,6 @@ class FieldSet:
         for v in vfield.__dict__.values():
             if isinstance(v, Field) and (v not in self.get_fields()):
                 self.add_field(v)
-        vfield.fieldset = self
 
     def _add_UVfield(self):
         if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
