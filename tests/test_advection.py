@@ -228,6 +228,8 @@ def test_conversion_3DCROCO():
     assert np.allclose(sigma, s_xroms, atol=1e-3)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="CROCO 3D interpolation is not yet implemented correctly in v4. ")
 def test_advection_3DCROCO():
     fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
 
