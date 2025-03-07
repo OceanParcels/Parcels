@@ -4,6 +4,9 @@ from pathlib import Path
 from urllib.request import urlretrieve
 
 import platformdirs
+import xarray as xr
+
+from parcels.tools._v3to4 import patch_dataset_v4_compat
 
 __all__ = ["download_example_dataset", "get_data_home", "list_example_datasets"]
 
@@ -146,5 +149,10 @@ def download_example_dataset(dataset: str, data_home=None):
         if not filepath.exists():
             url = f"{example_data_url}/{dataset}/{filename}"
             urlretrieve(url, str(filepath))
+
+            should_patch = dataset == "GlobCurrent_example_data"
+
+            if should_patch:
+                xr.load_dataset(filepath).pipe(patch_dataset_v4_compat).to_netcdf(filepath)
 
     return dataset_folder

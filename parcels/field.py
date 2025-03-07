@@ -228,7 +228,6 @@ class Field:
 
         self._dimensions = kwargs.pop("dimensions", None)
         self._dataFiles = kwargs.pop("dataFiles", None)
-        self._netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         self._creation_log = kwargs.pop("creation_log", "")
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
@@ -278,10 +277,6 @@ class Field:
     def gridindexingtype(self):
         return self._gridindexingtype
 
-    @property
-    def netcdf_engine(self):
-        return self._netcdf_engine
-
     @classmethod
     def _get_dim_filenames(cls, filenames, dim):
         if isinstance(filenames, str) or not isinstance(filenames, collections.abc.Iterable):
@@ -297,11 +292,11 @@ class Field:
             return filenames
 
     @staticmethod
-    def _collect_timeslices(data_filenames, dimensions, indices, netcdf_engine):
+    def _collect_timeslices(data_filenames, dimensions, indices):
         timeslices = []
         dataFiles = []
         for fname in data_filenames:
-            with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
+            with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                 ftime = filebuffer.time
                 timeslices.append(ftime)
                 dataFiles.append([fname] * len(ftime))
@@ -387,10 +382,9 @@ class Field:
                 raise NotImplementedError("Vertically adaptive meshes not implemented for from_netcdf()")
             depth_filename = depth_filename[0]
 
-        netcdf_engine = kwargs.pop("netcdf_engine", "netcdf4")
         gridindexingtype = kwargs.get("gridindexingtype", "nemo")
 
-        indices: dict[str, npt.NDArray] = {}  # TODO Nick: Cleanup
+        indices: dict[str, npt.NDArray] = {}
 
         interp_method: InterpMethod = kwargs.pop("interp_method", "linear")
         if type(interp_method) is dict:
@@ -429,7 +423,7 @@ class Field:
                 depth = filebuffer.depth
                 data_full_zdim = filebuffer.data_full_zdim
         else:
-            indices["depth"] = [0]
+            indices["depth"] = np.array([0])
             depth = np.zeros(1)
             data_full_zdim = 1
 
@@ -442,9 +436,7 @@ class Field:
             # Concatenate time variable to determine overall dimension
             # across multiple files
             if "time" in dimensions:
-                time, time_origin, timeslices, dataFiles = cls._collect_timeslices(
-                    data_filenames, dimensions, indices, netcdf_engine
-                )
+                time, time_origin, timeslices, dataFiles = cls._collect_timeslices(data_filenames, dimensions, indices)
                 grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
                 kwargs["dataFiles"] = dataFiles
             else:  # e.g. for the CROCO CS_w field, see https://github.com/OceanParcels/Parcels/issues/1831
@@ -453,7 +445,7 @@ class Field:
         elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
-            _, _, _, dataFiles = cls._collect_timeslices(data_filenames, dimensions, indices, netcdf_engine)
+            _, _, _, dataFiles = cls._collect_timeslices(data_filenames, dimensions, indices)
             kwargs["dataFiles"] = dataFiles
 
         if "time" in indices:
@@ -488,7 +480,6 @@ class Field:
             allow_time_extrapolation = False if "time" in dimensions else True
 
         kwargs["dimensions"] = dimensions.copy()
-        kwargs["netcdf_engine"] = netcdf_engine
 
         return cls(
             variable,

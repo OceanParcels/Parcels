@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from datetime import timedelta
 from glob import glob
 
@@ -7,19 +6,6 @@ import pytest
 import xarray as xr
 
 import parcels
-
-
-def Unit_to_units(d: dict) -> dict:
-    if "Unit" in d:
-        d["units"] = d.pop("Unit")
-    return d
-
-
-def xarray_patch_metadata(ds: xr.Dataset, f: Callable[[dict], dict]) -> xr.Dataset:
-    """Convert attrs"""
-    for var in ds.variables:
-        ds[var].attrs = f(ds[var].attrs)
-    return ds
 
 
 def set_globcurrent_fieldset(
@@ -35,11 +21,7 @@ def set_globcurrent_fieldset(
         "V": "northward_eulerian_current_velocity",
     }
     dimensions = {"lat": "lat", "lon": "lon", "time": "time"}
-    ds = (
-        xr.open_mfdataset(filename, combine="by_coords")
-        .pipe(xarray_patch_metadata, Unit_to_units)
-        .pipe(xr.decode_cf)
-    )
+    ds = xr.open_mfdataset(filename, combine="by_coords")
 
     return parcels.FieldSet.from_xarray_dataset(
         ds,
