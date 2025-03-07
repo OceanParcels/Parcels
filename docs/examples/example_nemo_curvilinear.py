@@ -4,6 +4,7 @@ from datetime import timedelta
 from glob import glob
 
 import numpy as np
+import pytest
 
 import parcels
 
@@ -63,6 +64,10 @@ def test_nemo_curvilinear_AA(tmpdir):
     run_nemo_curvilinear(outfile, "AA")
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(
+    reason="The method for checking whether fields are on the same grid is going to change in v4 (i.e., not by looking at the dataFiles attribute)."
+)
 def test_nemo_3D_samegrid():
     """Test that the same grid is used for U and V in 3D NEMO fields."""
     data_folder = parcels.download_example_dataset("NemoNorthSeaORCA025-N006_data")
