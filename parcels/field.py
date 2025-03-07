@@ -1,7 +1,6 @@
 import collections
 import math
 import warnings
-from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -185,7 +184,6 @@ class Field:
             self.units = unitconverters_map[self.fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
-        self._loaded_time_indices: Iterable[int] = []  # type: ignore
         if isinstance(interp_method, dict):
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
@@ -212,7 +210,6 @@ class Field:
             self.allow_time_extrapolation = allow_time_extrapolation
 
         self.data = self._reshape(self.data)
-        self._loaded_time_indices = range(self.grid.tdim)
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -225,7 +222,6 @@ class Field:
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop("data_full_zdim", None)
-        self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
 
