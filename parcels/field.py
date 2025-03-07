@@ -955,9 +955,9 @@ class VectorField:
             and np.allclose(grid1.time_full, grid2.time_full)
         )
 
-    def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None, applyConversion=True):
+    def spatial_c_grid_interpolation2D(self, time, z, y, x, particle=None, applyConversion=True):
         grid = self.U.grid
-        (_, _, eta, xsi, _, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
+        (tau, _, eta, xsi, ti, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
 
         if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
@@ -977,54 +977,63 @@ class VectorField:
         c2 = i_u._geodetic_distance(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
         c3 = i_u._geodetic_distance(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
         c4 = i_u._geodetic_distance(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
-        if grid.zdim == 1:
-            if self.gridindexingtype == "nemo":
-                U0 = self.U.data[ti, yi + 1, xi] * c4
-                U1 = self.U.data[ti, yi + 1, xi + 1] * c2
-                V0 = self.V.data[ti, yi, xi + 1] * c1
-                V1 = self.V.data[ti, yi + 1, xi + 1] * c3
-            elif self.gridindexingtype in ["mitgcm", "croco"]:
-                U0 = self.U.data[ti, yi, xi] * c4
-                U1 = self.U.data[ti, yi, xi + 1] * c2
-                V0 = self.V.data[ti, yi, xi] * c1
-                V1 = self.V.data[ti, yi + 1, xi] * c3
-        else:
-            if self.gridindexingtype == "nemo":
-                U0 = self.U.data[ti, zi, yi + 1, xi] * c4
-                U1 = self.U.data[ti, zi, yi + 1, xi + 1] * c2
-                V0 = self.V.data[ti, zi, yi, xi + 1] * c1
-                V1 = self.V.data[ti, zi, yi + 1, xi + 1] * c3
-            elif self.gridindexingtype in ["mitgcm", "croco"]:
-                U0 = self.U.data[ti, zi, yi, xi] * c4
-                U1 = self.U.data[ti, zi, yi, xi + 1] * c2
-                V0 = self.V.data[ti, zi, yi, xi] * c1
-                V1 = self.V.data[ti, zi, yi + 1, xi] * c3
-        U = (1 - xsi) * U0 + xsi * U1
-        V = (1 - eta) * V0 + eta * V1
-        rad = np.pi / 180.0
-        deg2m = 1852 * 60.0
-        if applyConversion:
-            meshJac = (deg2m * deg2m * math.cos(rad * y)) if grid.mesh == "spherical" else 1
-        else:
-            meshJac = deg2m if grid.mesh == "spherical" else 1
 
-        jac = i_u._compute_jacobian_determinant(py, px, eta, xsi) * meshJac
+        def _calc_UV(ti, yi, xi):
+            if grid.zdim == 1:
+                if self.gridindexingtype == "nemo":
+                    U0 = self.U.data[ti, yi + 1, xi] * c4
+                    U1 = self.U.data[ti, yi + 1, xi + 1] * c2
+                    V0 = self.V.data[ti, yi, xi + 1] * c1
+                    V1 = self.V.data[ti, yi + 1, xi + 1] * c3
+                elif self.gridindexingtype in ["mitgcm", "croco"]:
+                    U0 = self.U.data[ti, yi, xi] * c4
+                    U1 = self.U.data[ti, yi, xi + 1] * c2
+                    V0 = self.V.data[ti, yi, xi] * c1
+                    V1 = self.V.data[ti, yi + 1, xi] * c3
+            else:
+                if self.gridindexingtype == "nemo":
+                    U0 = self.U.data[ti, zi, yi + 1, xi] * c4
+                    U1 = self.U.data[ti, zi, yi + 1, xi + 1] * c2
+                    V0 = self.V.data[ti, zi, yi, xi + 1] * c1
+                    V1 = self.V.data[ti, zi, yi + 1, xi + 1] * c3
+                elif self.gridindexingtype in ["mitgcm", "croco"]:
+                    U0 = self.U.data[ti, zi, yi, xi] * c4
+                    U1 = self.U.data[ti, zi, yi, xi + 1] * c2
+                    V0 = self.V.data[ti, zi, yi, xi] * c1
+                    V1 = self.V.data[ti, zi, yi + 1, xi] * c3
+            U = (1 - xsi) * U0 + xsi * U1
+            V = (1 - eta) * V0 + eta * V1
+            rad = np.pi / 180.0
+            deg2m = 1852 * 60.0
+            if applyConversion:
+                meshJac = (deg2m * deg2m * math.cos(rad * y)) if grid.mesh == "spherical" else 1
+            else:
+                meshJac = deg2m if grid.mesh == "spherical" else 1
 
-        u = (
-            (-(1 - eta) * U - (1 - xsi) * V) * px[0]
-            + ((1 - eta) * U - xsi * V) * px[1]
-            + (eta * U + xsi * V) * px[2]
-            + (-eta * U + (1 - xsi) * V) * px[3]
-        ) / jac
-        v = (
-            (-(1 - eta) * U - (1 - xsi) * V) * py[0]
-            + ((1 - eta) * U - xsi * V) * py[1]
-            + (eta * U + xsi * V) * py[2]
-            + (-eta * U + (1 - xsi) * V) * py[3]
-        ) / jac
-        if isinstance(u, da.core.Array):
-            u = u.compute()
-            v = v.compute()
+            jac = i_u._compute_jacobian_determinant(py, px, eta, xsi) * meshJac
+
+            u = (
+                (-(1 - eta) * U - (1 - xsi) * V) * px[0]
+                + ((1 - eta) * U - xsi * V) * px[1]
+                + (eta * U + xsi * V) * px[2]
+                + (-eta * U + (1 - xsi) * V) * px[3]
+            ) / jac
+            v = (
+                (-(1 - eta) * U - (1 - xsi) * V) * py[0]
+                + ((1 - eta) * U - xsi * V) * py[1]
+                + (eta * U + xsi * V) * py[2]
+                + (-eta * U + (1 - xsi) * V) * py[3]
+            ) / jac
+            if isinstance(u, da.core.Array):
+                u = u.compute()
+                v = v.compute()
+            return (u, v)
+
+        u, v = _calc_UV(ti, yi, xi)
+        if ti < self.U.grid.tdim - 1 and time > self.U.grid.time[ti]:
+            ut1, vt1 = _calc_UV(ti + 1, yi, xi)
+            u = (1 - tau) * u + tau * ut1
+            v = (1 - tau) * v + tau * vt1
         return (u, v)
 
     def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time, particle=None):
@@ -1255,7 +1264,7 @@ class VectorField:
         else:
             if self.gridindexingtype == "croco":
                 z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
-            (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
+            (u, v) = self.spatial_c_grid_interpolation2D(time, z, y, x, particle=particle)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
                 w = self.W.units.to_target(w, z, y, x)
@@ -1387,14 +1396,8 @@ class VectorField:
         elif self.U.interp_method == "cgrid_velocity":
             tau, ti = self.U._time_index(time)
             (u, v) = self.spatial_c_grid_interpolation2D(
-                ti, z, y, x, time, particle=particle, applyConversion=applyConversion
+                time, z, y, x, particle=particle, applyConversion=applyConversion
             )
-            if ti < self.U.grid.tdim - 1 and time > self.U.grid.time[ti]:
-                (u1, v1) = self.spatial_c_grid_interpolation2D(
-                    ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion
-                )
-                u = u * (1 - tau) + u1 * tau
-                v = v * (1 - tau) + v1 * tau
         if "3D" in self.vector_type:
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=applyConversion)
             return (u, v, w)
