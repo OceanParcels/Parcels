@@ -164,10 +164,8 @@ class Field:
     ):
         if not isinstance(name, tuple):
             self.name = name
-            self.filebuffername = name
         else:
             self.name = name[0]
-            self.filebuffername = name[1]
         self.data = data
         if grid:
             self._grid = grid
