@@ -208,8 +208,6 @@ class Kernel(BaseKernel):
         """
         if self.fieldset is not None:
             if pyfunc is AdvectionAnalytical:
-                if self.fieldset.particlefile is not None:
-                    self.fieldset.particlefile._is_analytical = True
                 if self._fieldset.U.interp_method != "cgrid_velocity":
                     raise NotImplementedError("Analytical Advection only works with C-grids")
                 if self._fieldset.U.grid._gtype not in [GridType.CurvilinearZGrid, GridType.RectilinearZGrid]:

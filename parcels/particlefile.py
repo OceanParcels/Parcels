@@ -64,7 +64,6 @@ class ParticleFile:
                 self.vars_to_write[var.name] = var.dtype
         self._mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
         self.particleset.fieldset._particlefile = self
-        self._is_analytical = False  # Flag to indicate if ParticleFile is used for analytical trajectories
 
         # Reset obs_written of each particle, in case new ParticleFile created for a ParticleSet
         particleset.particledata.setallvardata("obs_written", 0)
