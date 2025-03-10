@@ -6,6 +6,7 @@ from parcels.tools.statuscodes import StatusCode
 from parcels.uxfieldset import UXFieldSet
 
 __all__ = [
+    "UxAdvectionEuler",
     "AdvectionAnalytical",
     "AdvectionEE",
     "AdvectionRK4",
@@ -17,9 +18,10 @@ __all__ = [
 def UxAdvectionEuler(particle,fieldset:UXFieldSet,time):
     """Advection of particles using Explicit Euler (aka Euler Forward) integration.
     on an unstructured grid."""
-    vel = fieldset.eval(["u","v"],time,particle.depth,particle.lat,particle.lon,particle)
-    particle.lon += vel["u"] * particle.dt
-    particle.lat += vel["v"] * particle.dt
+    vel, ei = fieldset.eval(["u","v"],time,particle.depth,particle.lat,particle.lon, particle.ei[0])
+    particle.ei[0] = ei
+    particle_dlon += vel["u"] * particle.dt
+    particle_dlat += vel["v"] * particle.dt
 
 def AdvectionRK4(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration."""

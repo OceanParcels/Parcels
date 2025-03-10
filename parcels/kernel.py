@@ -206,6 +206,8 @@ class Kernel(BaseKernel):
 
         This function is to be called from the derived class when setting up the 'pyfunc'.
         """
+
+        ## To do : Add checks for UXFieldSet - joe@fluidnumerics.com
         if self.fieldset is not None:
             if pyfunc is AdvectionRK4_3D:
                 warning = False
@@ -335,17 +337,17 @@ class Kernel(BaseKernel):
                 stacklevel=2,
             )
 
-        if pset.fieldset is not None:
-            for g in pset.fieldset.gridset.grids:
-                if len(g._load_chunk) > g._chunk_not_loaded:  # not the case if a field in not called in the kernel
-                    g._load_chunk = np.where(
-                        g._load_chunk == g._chunk_loaded_touched, g._chunk_deprecated, g._load_chunk
-                    )
+        # if pset.fieldset is not None:
+        #     for g in pset.fieldset.gridset.grids:
+        #         if len(g._load_chunk) > g._chunk_not_loaded:  # not the case if a field in not called in the kernel
+        #             g._load_chunk = np.where(
+        #                 g._load_chunk == g._chunk_loaded_touched, g._chunk_deprecated, g._load_chunk
+        #             )
 
-            for f in self.fieldset.get_fields():
-                if isinstance(f, (VectorField, NestedField)):
-                    continue
-                f.data = np.array(f.data)
+            # for f in self.fieldset.get_fields():
+            #     if isinstance(f, (VectorField, NestedField)):
+            #         continue
+            #     f.data = np.array(f.data)
 
         if not self._positionupdate_kernels_added:
             self.add_positionupdate_kernels()
@@ -424,6 +426,7 @@ class Kernel(BaseKernel):
             except KeyError:
                 if abs(endtime - p.time_nextloop) < abs(p.dt) - 1e-6:
                     p.dt = abs(endtime - p.time_nextloop) * sign_dt
+
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:

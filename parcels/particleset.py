@@ -979,7 +979,10 @@ class ParticleSet:
         if runtime is not None and endtime is not None:
             raise RuntimeError("Only one of (endtime, runtime) can be specified")
 
-        mintime, maxtime = self.fieldset.gridset.dimrange("time_full")
+        if type(self.fieldset) == UXFieldSet:
+            mintime, maxtime = self.fieldset.get_time_range()
+        else:
+            mintime, maxtime = self.fieldset.gridset.dimrange("time_full")
 
         default_release_time = mintime if dt >= 0 else maxtime
         if np.any(np.isnan(self.particledata.data["time"])):
@@ -1049,18 +1052,19 @@ class ParticleSet:
 
             time_at_startofloop = time
 
-            next_input = self.fieldset.computeTimeChunk(time, dt)
+            #next_input = self.fieldset.computeTimeChunk(time, dt)
 
             # Define next_time (the timestamp when the execution needs to be handed back to python)
-            if dt > 0:
-                next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
-            else:
-                next_time = max(next_prelease, next_input, next_output, next_callback, endtime)
+            #if dt > 0:
+            #    next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
+            #else:
+            #    next_time = max(next_prelease, next_input, next_output, next_callback, endtime)
 
+            next_time = endtime
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self._interaction_kernel is None:
                 if not skip_kernel:
-                    res = self._kernel.execute(self, endtime=next_time, dt=dt)
+                    res = self._kernel.execute(self, endtime=next_time, dt=dt) # joe@fluidnumerics.com : switched to hardcoded endtime
                     if res == StatusCode.StopAllExecution:
                         return StatusCode.StopAllExecution
             # Interaction: interleave the interaction and non-interaction kernel for each time step.
