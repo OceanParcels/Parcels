@@ -17,6 +17,8 @@ from parcels import (
 from tests.utils import TEST_DATA
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="From_pop is not supported during v4-alpha development. This will be reconsidered in v4.")
 def test_fieldset_warning_pop():
     filenames = str(TEST_DATA / "POPtestdata_time.nc")
     variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
