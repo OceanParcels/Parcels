@@ -215,8 +215,6 @@ class Field:
         # propagate in SciPy's interpolators
         self.data[np.isnan(self.data)] = 0.0
 
-        self._dimensions = kwargs.pop("dimensions", None)
-
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
@@ -226,10 +224,6 @@ class Field:
 
     def __repr__(self) -> str:
         return field_repr(self)
-
-    @property
-    def dimensions(self):
-        return self._dimensions
 
     @property
     def grid(self):
