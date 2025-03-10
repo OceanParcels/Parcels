@@ -176,7 +176,7 @@ def AdvectionAnalytical(particle, fieldset, time):  # pragma: no cover
     I_s = 10  # number of intermediate time steps
     direction = 1.0 if particle.dt > 0 else -1.0
     withW = True if "W" in [f.name for f in fieldset.get_fields()] else False
-    withTime = True if len(fieldset.U.grid.time_full) > 1 else False
+    withTime = True if len(fieldset.U.grid.time) > 1 else False
     ti = fieldset.U._time_index(time)
     ds_t = particle.dt
     if withTime:

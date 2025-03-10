@@ -862,7 +862,7 @@ class VectorField:
             np.allclose(grid1.lon, grid2.lon)
             and np.allclose(grid1.lat, grid2.lat)
             and np.allclose(grid1.depth, grid2.depth)
-            and np.allclose(grid1.time_full, grid2.time_full)
+            and np.allclose(grid1.time, grid2.time)
         )
 
     def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None, applyConversion=True):
