@@ -642,7 +642,7 @@ class Field:
         ctx = InterpolationContext3D(self.data, tau, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
         return f(ctx)
 
-    def _spatial_interpolation(self, time, z, y, x, particle=None):
+    def _interpolate(self, time, z, y, x, particle=None):
         """Interpolate spatial field values."""
         try:
             if self.grid.zdim == 1:
@@ -720,7 +720,7 @@ class Field:
         if self.gridindexingtype == "croco" and self not in [self.fieldset.H, self.fieldset.Zeta]:
             z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
 
-        value = self._spatial_interpolation(time, z, y, x, particle=particle)
+        value = self._interpolate(time, z, y, x, particle=particle)
 
         if applyConversion:
             return self.units.to_target(value, z, y, x)
@@ -875,7 +875,7 @@ class VectorField:
             and np.allclose(grid1.time_full, grid2.time_full)
         )
 
-    def spatial_c_grid_interpolation2D(self, time, z, y, x, particle=None, applyConversion=True):
+    def c_grid_interpolation2D(self, time, z, y, x, particle=None, applyConversion=True):
         grid = self.U.grid
         (tau, _, eta, xsi, ti, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
 
@@ -956,7 +956,7 @@ class VectorField:
             v = (1 - tau) * v + tau * vt1
         return (u, v)
 
-    def spatial_c_grid_interpolation3D_full(self, time, z, y, x, particle=None):
+    def c_grid_interpolation3D_full(self, time, z, y, x, particle=None):
         grid = self.U.grid
         (tau, zeta, eta, xsi, ti, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
 
@@ -1169,7 +1169,7 @@ class VectorField:
             w = w.compute()
         return (u, v, w)
 
-    def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None, applyConversion=True):
+    def c_grid_interpolation3D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         """Perform C grid interpolation in 3D. ::
 
             +---+---+---+
@@ -1186,11 +1186,11 @@ class VectorField:
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
         if self.U.grid._gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
-            (u, v, w) = self.spatial_c_grid_interpolation3D_full(time, z, y, x, particle=particle)
+            (u, v, w) = self.c_grid_interpolation3D_full(time, z, y, x, particle=particle)
         else:
             if self.gridindexingtype == "croco":
                 z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
-            (u, v) = self.spatial_c_grid_interpolation2D(time, z, y, x, particle=particle)
+            (u, v) = self.c_grid_interpolation2D(time, z, y, x, particle=particle)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
                 w = self.W.units.to_target(w, z, y, x)
@@ -1208,7 +1208,7 @@ class VectorField:
             else:
                 return True
 
-    def spatial_slip_interpolation(self, time, z, y, x, particle=None, applyConversion=True):
+    def slip_interpolation(self, time, z, y, x, particle=None, applyConversion=True):
         (_, zeta, eta, xsi, ti, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
@@ -1311,7 +1311,7 @@ class VectorField:
 
     def eval(self, time, z, y, x, particle=None, applyConversion=True):
         if self.U.interp_method in ["partialslip", "freeslip"]:
-            return self.spatial_slip_interpolation(time, z, y, x, particle=particle, applyConversion=applyConversion)
+            return self.slip_interpolation(time, z, y, x, particle=particle, applyConversion=applyConversion)
 
         if self.U.interp_method not in ["cgrid_velocity", "partialslip", "freeslip"]:
             u = self.U.eval(time, z, y, x, particle=particle, applyConversion=False)
@@ -1321,9 +1321,7 @@ class VectorField:
                 v = self.V.units.to_target(v, z, y, x)
         elif self.U.interp_method == "cgrid_velocity":
             tau, ti = self.U._time_index(time)
-            (u, v) = self.spatial_c_grid_interpolation2D(
-                time, z, y, x, particle=particle, applyConversion=applyConversion
-            )
+            (u, v) = self.c_grid_interpolation2D(time, z, y, x, particle=particle, applyConversion=applyConversion)
         if "3D" in self.vector_type:
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=applyConversion)
             return (u, v, w)
