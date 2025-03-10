@@ -16,7 +16,7 @@ from parcels.application_kernels.advection import (
     AdvectionRK4_3D_CROCO,
     AdvectionRK45,
 )
-from parcels.field import Field, NestedField, VectorField
+from parcels.field import Field, VectorField
 from parcels.grid import GridType
 from parcels.tools.statuscodes import (
     StatusCode,
@@ -216,10 +216,6 @@ class Kernel(BaseKernel):
                     and self._fieldset.W._scaling_factor > 0
                 ):
                     warning = True
-                if isinstance(self._fieldset.W, NestedField):
-                    for f in self._fieldset.W:
-                        if f._creation_log != "from_nemo" and f._scaling_factor is not None and f._scaling_factor > 0:
-                            warning = True
                 if warning:
                     warnings.warn(
                         "Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z. "
@@ -337,7 +333,7 @@ class Kernel(BaseKernel):
 
         if pset.fieldset is not None:
             for f in self.fieldset.get_fields():
-                if isinstance(f, (VectorField, NestedField)):
+                if isinstance(f, VectorField):
                     continue
                 f.data = np.array(f.data)
 
