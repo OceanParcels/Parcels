@@ -177,16 +177,14 @@ def AdvectionAnalytical(particle, fieldset, time):  # pragma: no cover
     direction = 1.0 if particle.dt > 0 else -1.0
     withW = True if "W" in [f.name for f in fieldset.get_fields()] else False
     withTime = True if len(fieldset.U.grid.time_full) > 1 else False
-    ti = fieldset.U._time_index(time)
+    tau, zeta, eta, xsi, ti, zi, yi, xi = fieldset.U._search_indices(
+        time, particle.depth, particle.lat, particle.lon, particle=particle
+    )
     ds_t = particle.dt
     if withTime:
-        tau = (time - fieldset.U.grid.time[ti]) / (fieldset.U.grid.time[ti + 1] - fieldset.U.grid.time[ti])
         time_i = np.linspace(0, fieldset.U.grid.time[ti + 1] - fieldset.U.grid.time[ti], I_s)
         ds_t = min(ds_t, time_i[np.where(time - fieldset.U.grid.time[ti] < time_i)[0][0]])
 
-    zeta, eta, xsi, zi, yi, xi = fieldset.U._search_indices(
-        time, particle.depth, particle.lat, particle.lon, ti, particle=particle
-    )
     if withW:
         if abs(xsi - 1) < tol:
             if fieldset.U.data[0, zi + 1, yi + 1, xi + 1] > 0:
