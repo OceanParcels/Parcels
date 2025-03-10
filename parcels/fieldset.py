@@ -497,8 +497,6 @@ class FieldSet:
             gridindexingtype="nemo",
             **kwargs,
         )
-        if hasattr(fieldset, "W"):
-            fieldset.W.set_scaling_factor(-1.0)
         return fieldset
 
     @classmethod
@@ -814,8 +812,6 @@ class FieldSet:
             gridindexingtype="mom5",
             **kwargs,
         )
-        if hasattr(fieldset, "W"):
-            fieldset.W.set_scaling_factor(-1)
         return fieldset
 
     @classmethod
@@ -905,7 +901,7 @@ class FieldSet:
             Default is False if dimensions includes time, else True
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-            Note that in the case of from_pop() and from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
+            Note that in the case of from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
         **kwargs :
             Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
         """

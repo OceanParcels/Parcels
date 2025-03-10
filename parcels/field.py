@@ -219,7 +219,6 @@ class Field:
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
         self.data[np.isnan(self.data)] = 0.0
-        self._scaling_factor = None
 
         self._dimensions = kwargs.pop("dimensions", None)
         self._dataFiles = kwargs.pop("dataFiles", None)
@@ -575,26 +574,6 @@ class Field:
 
         return data
 
-    def set_scaling_factor(self, factor):
-        """Scales the field data by some constant factor.
-
-        Parameters
-        ----------
-        factor :
-            scaling factor
-
-
-        Examples
-        --------
-        For usage examples see the following tutorial:
-
-        * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__
-        """
-        if self._scaling_factor:
-            raise NotImplementedError(f"Scaling factor for field {self.name} already defined.")
-        self._scaling_factor = factor
-        self.data *= factor
-
     def _search_indices(self, time, z, y, x, ti, particle=None, search2D=False):
         if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             return _search_indices_rectilinear(self, time, z, y, x, ti, particle=particle, search2D=search2D)
@@ -761,8 +740,6 @@ class Field:
 
     def _rescale_and_set_minmax(self, data):
         data[np.isnan(data)] = 0
-        if self._scaling_factor:
-            data *= self._scaling_factor
         return data
 
     def ravel_index(self, zi, yi, xi):

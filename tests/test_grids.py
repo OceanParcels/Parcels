@@ -111,6 +111,8 @@ def test_time_format_in_grid():
         RectilinearZGrid(lon, lat, time=time)
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="negate_depth removed in v4")
 def test_negate_depth():
     depth = np.linspace(0, 5, 10, dtype=np.float32)
     fieldset = FieldSet.from_data(
@@ -975,4 +977,4 @@ def test_bgrid_interpolation(gridindexingtype, extrapolation):
             if extrapolation:
                 assert np.allclose(pset.Wvel[0], 0, atol=1e-9)
             else:
-                assert np.allclose(pset.Wvel[0], -w * convfactor)
+                assert np.allclose(pset.Wvel[0], w * convfactor)

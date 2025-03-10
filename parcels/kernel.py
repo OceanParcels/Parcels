@@ -16,7 +16,7 @@ from parcels.application_kernels.advection import (
     AdvectionRK4_3D_CROCO,
     AdvectionRK45,
 )
-from parcels.field import Field, VectorField
+from parcels.field import VectorField
 from parcels.grid import GridType
 from parcels.tools.statuscodes import (
     StatusCode,
@@ -207,23 +207,7 @@ class Kernel(BaseKernel):
         This function is to be called from the derived class when setting up the 'pyfunc'.
         """
         if self.fieldset is not None:
-            if pyfunc is AdvectionRK4_3D:
-                warning = False
-                if (
-                    isinstance(self._fieldset.W, Field)
-                    and self._fieldset.W._creation_log != "from_nemo"
-                    and self._fieldset.W._scaling_factor is not None
-                    and self._fieldset.W._scaling_factor > 0
-                ):
-                    warning = True
-                if warning:
-                    warnings.warn(
-                        "Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z. "
-                        "If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)",
-                        KernelWarning,
-                        stacklevel=2,
-                    )
-            elif pyfunc is AdvectionAnalytical:
+            if pyfunc is AdvectionAnalytical:
                 if self.fieldset.particlefile is not None:
                     self.fieldset.particlefile._is_analytical = True
                 if self._fieldset.U.interp_method != "cgrid_velocity":
