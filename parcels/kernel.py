@@ -16,7 +16,7 @@ from parcels.application_kernels.advection import (
     AdvectionRK4_3D_CROCO,
     AdvectionRK45,
 )
-from parcels.field import NestedField, VectorField
+from parcels.field import VectorField
 from parcels.grid import GridType
 from parcels.tools.statuscodes import (
     StatusCode,
@@ -317,7 +317,7 @@ class Kernel(BaseKernel):
 
         if pset.fieldset is not None:
             for f in self.fieldset.get_fields():
-                if isinstance(f, (VectorField, NestedField)):
+                if isinstance(f, VectorField):
                     continue
                 f.data = np.array(f.data)
 

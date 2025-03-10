@@ -9,7 +9,7 @@ import numpy as np
 
 from parcels._compat import MPI
 from parcels._typing import GridIndexingType, InterpMethodOption, Mesh
-from parcels.field import Field, NestedField, VectorField
+from parcels.field import Field, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.particlefile import ParticleFile
@@ -35,7 +35,7 @@ class FieldSet:
         in custom kernels.
     """
 
-    def __init__(self, U: Field | NestedField | None, V: Field | NestedField | None, fields=None):
+    def __init__(self, U: Field | None, V: Field | None, fields=None):
         self.gridset = GridSet()
         self._completed: bool = False
         self._particlefile: ParticleFile | None = None
@@ -150,7 +150,7 @@ class FieldSet:
         v = fields.pop("V", None)
         return cls(u, v, fields=fields)
 
-    def add_field(self, field: Field | NestedField, name: str | None = None):
+    def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
 
         Parameters
@@ -166,8 +166,6 @@ class FieldSet:
         --------
         For usage examples see the following tutorials:
 
-        * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
-
         * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
@@ -179,11 +177,6 @@ class FieldSet:
 
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
             raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
-        if isinstance(field, NestedField):
-            setattr(self, name, field)
-            for fld in field:
-                self.gridset.add_grid(fld)
-                fld.fieldset = self
         else:
             setattr(self, name, field)
             self.gridset.add_grid(field)
@@ -222,21 +215,12 @@ class FieldSet:
             if isinstance(v, Field) and (v not in self.get_fields()):
                 self.add_field(v)
         vfield.fieldset = self
-        if isinstance(vfield, NestedField):
-            for f in vfield:
-                f.fieldset = self
 
     def _add_UVfield(self):
         if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
-            if isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField("UV", self.U, self.V))
-            else:
-                self.add_vector_field(VectorField("UV", self.U, self.V))
+            self.add_vector_field(VectorField("UV", self.U, self.V))
         if not hasattr(self, "UVW") and hasattr(self, "W"):
-            if isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField("UVW", self.U, self.V, self.W))
-            else:
-                self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
+            self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
 
     def _check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
@@ -268,13 +252,8 @@ class FieldSet:
             if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
                 raise ValueError("Not all velocity Fields have the same gridindexingtype")
 
-        if isinstance(self.U, NestedField):
-            w = self.W if hasattr(self, "W") else [None] * len(self.U)
-            for U, V, W in zip(self.U, self.V, w, strict=True):
-                check_velocityfields(U, V, W)
-        else:
-            W = self.W if hasattr(self, "W") else None
-            check_velocityfields(self.U, self.V, W)
+        W = self.W if hasattr(self, "W") else None
+        check_velocityfields(self.U, self.V, W)
 
         for g in self.gridset.grids:
             g._check_zonal_periodic()
@@ -288,7 +267,7 @@ class FieldSet:
         self._add_UVfield()
 
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or f._dataFiles is None:
+            if isinstance(f, VectorField) or f._dataFiles is None:
                 continue
         self._completed = True
 
@@ -1100,12 +1079,6 @@ class FieldSet:
             if type(v) in [Field, VectorField]:
                 if v not in fields:
                     fields.append(v)
-            elif isinstance(v, NestedField):
-                if v not in fields:
-                    fields.append(v)
-                for v2 in v:
-                    if v2 not in fields:
-                        fields.append(v2)
         return fields
 
     def add_constant(self, name, value):

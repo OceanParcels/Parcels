@@ -12,7 +12,6 @@ from parcels import (
     Field,
     FieldSet,
     Geographic,
-    NestedField,
     Particle,
     ParticleSet,
     StatusCode,
@@ -758,7 +757,11 @@ def test_multiple_grid_addlater_error():
     assert fail
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="Implementation of NestedFields is being reconsidered in v4.")
 def test_nestedfields():
+    from parcels import NestedField
+
     xdim = 10
     ydim = 20
 

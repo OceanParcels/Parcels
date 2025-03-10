@@ -30,6 +30,7 @@ dependencies: #! Keep in sync with [tool.pixi.dependencies] in pyproject.toml
 
   # Typing
   - mypy
+  - lxml # in CI
   - types-tqdm
   - types-psutil
 
