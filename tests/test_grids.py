@@ -575,6 +575,8 @@ def test_cgrid_uniform_3dvel_spherical(vert_mode, time):
     assert abs(pset[0].vertical - 1) < 1e-3
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="From_pop is not supported during v4-alpha development. This will be reconsidered in v4.")
 @pytest.mark.parametrize("vert_discretisation", ["zlevel", "slevel", "slevel2"])
 def test_popgrid(vert_discretisation):
     if vert_discretisation == "zlevel":
@@ -868,7 +870,7 @@ def test_bgrid_indexing_3D(gridindexingtype, withtime):
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
-@pytest.mark.parametrize("gridindexingtype", ["pop", "mom5"])
+@pytest.mark.parametrize("gridindexingtype", ["mom5"])  # TODO v4: add pop in params?
 @pytest.mark.parametrize("extrapolation", [True, False])
 def test_bgrid_interpolation(gridindexingtype, extrapolation):
     xi, yi = 3, 2
