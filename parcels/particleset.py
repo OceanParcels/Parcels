@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from parcels._compat import MPI
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.field import Field, NestedField
+from parcels.field import Field
 from parcels.grid import CurvilinearGrid, GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.interaction.neighborsearch import (
@@ -305,13 +305,8 @@ class ParticleSet:
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
-        if isinstance(field, NestedField):
-            for f in field:
-                if f.interp_method == "cgrid_velocity":
-                    return np.float64
-        else:
-            if field.interp_method == "cgrid_velocity":
-                return np.float64
+        if field.interp_method == "cgrid_velocity":
+            return np.float64
         return np.float32
 
     @property

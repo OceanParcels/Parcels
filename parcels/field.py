@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 
     from parcels.fieldset import FieldSet
 
-__all__ = ["Field", "NestedField", "VectorField"]
+__all__ = ["Field", "VectorField"]
 
 
 def _isParticle(key):
@@ -140,11 +140,6 @@ class Field:
         Write the Field in NetCDF format at the same frequency as the ParticleFile outputdt,
         using a filenaming scheme based on the ParticleFile name
 
-    Examples
-    --------
-    For usage examples see the following tutorials:
-
-    * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
     """
 
     allow_time_extrapolation: bool
@@ -1352,75 +1347,3 @@ class VectorField:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
-
-
-class NestedField(list):
-    """NestedField is a class that allows for interpolation of fields on different grids of potentially varying resolution.
-
-    The NestedField class is a list of Fields where the first Field that contains the particle within the domain is then used for interpolation.
-    This induces that the order of the fields in the list matters.
-    Each one it its turn, a field is interpolated: if the interpolation succeeds or if an error other
-    than `ErrorOutOfBounds` is thrown, the function is stopped. Otherwise, next field is interpolated.
-    NestedField returns an `ErrorOutOfBounds` only if last field is as well out of boundaries.
-    NestedField is composed of either Fields or VectorFields.
-
-    Parameters
-    ----------
-    name : str
-        Name of the NestedField
-    F : list of Field
-        List of fields (order matters). F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
-    V : list of Field
-        List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
-    W : list of Field
-        List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
-
-
-    Examples
-    --------
-    See `here <../examples/tutorial_NestedFields.ipynb>`__
-    for a detailed tutorial
-
-    """
-
-    def __init__(self, name: str, F, V=None, W=None):
-        if V is None:
-            if isinstance(F[0], VectorField):
-                vector_type = F[0].vector_type
-            for Fi in F:
-                assert isinstance(Fi, Field) or (
-                    isinstance(Fi, VectorField) and Fi.vector_type == vector_type
-                ), "Components of a NestedField must be Field or VectorField"
-                self.append(Fi)
-        elif W is None:
-            for i, Fi, Vi in zip(range(len(F)), F, V, strict=True):
-                assert isinstance(Fi, Field) and isinstance(
-                    Vi, Field
-                ), "F, and V components of a NestedField must be Field"
-                self.append(VectorField(f"{name}_{i}", Fi, Vi))
-        else:
-            for i, Fi, Vi, Wi in zip(range(len(F)), F, V, W, strict=True):
-                assert (
-                    isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field)
-                ), "F, V and W components of a NestedField must be Field"
-                self.append(VectorField(f"{name}_{i}", Fi, Vi, Wi))
-        self.name = name
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list.__getitem__(self, key)
-        else:
-            for iField in range(len(self)):
-                try:
-                    if _isParticle(key):
-                        val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
-                    else:
-                        val = list.__getitem__(self, iField).eval(*key)
-                    break
-                except tuple(AllParcelsErrorCodes.keys()) as error:
-                    if iField == len(self) - 1:
-                        vector_type = self[iField].vector_type if isinstance(self[iField], VectorField) else None
-                        return _deal_with_errors(error, key, vector_type=vector_type)
-                    else:
-                        pass
-            return val
