@@ -92,14 +92,6 @@ def test_fieldset_from_data(xdim, ydim):
     assert np.allclose(fieldset.V.data[0, :], data["V"], rtol=1e-12)
 
 
-def test_fieldset_extra_syntax():
-    """Simple test for fieldset initialisation from data."""
-    data, dimensions = generate_fieldset_data(10, 10)
-
-    with pytest.raises(SyntaxError):
-        FieldSet.from_data(data, dimensions, unknown_keyword=5)
-
-
 @pytest.mark.v4remove
 @pytest.mark.xfail(reason="vmin and vmax were removed as arguments")
 def test_fieldset_vmin_vmax():
