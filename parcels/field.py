@@ -222,7 +222,6 @@ class Field:
         self._scaling_factor = None
 
         self._dimensions = kwargs.pop("dimensions", None)
-        self._creation_log = kwargs.pop("creation_log", "")
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
@@ -457,8 +456,6 @@ class Field:
 
         if allow_time_extrapolation is None:
             allow_time_extrapolation = False if "time" in dimensions else True
-
-        kwargs["dimensions"] = dimensions.copy()
 
         return cls(
             variable,

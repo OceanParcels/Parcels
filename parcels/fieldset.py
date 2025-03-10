@@ -136,8 +136,6 @@ class FieldSet:
             else:
                 time_origin = kwargs.pop("time_origin", TimeConverter(0))
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-            if "creation_log" not in kwargs.keys():
-                kwargs["creation_log"] = "from_data"
 
             fields[name] = Field(
                 name,
@@ -363,8 +361,6 @@ class FieldSet:
 
         """
         fields: dict[str, Field] = {}
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_netcdf"
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
             paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
@@ -471,8 +467,6 @@ class FieldSet:
             Keyword arguments passed to the :func:`Fieldset.from_c_grid_dataset` constructor.
 
         """
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_nemo"
         if kwargs.pop("gridindexingtype", "nemo") != "nemo":
             raise ValueError(
                 "gridindexingtype must be 'nemo' in FieldSet.from_nemo(). Use FieldSet.from_c_grid_dataset otherwise"
@@ -517,8 +511,6 @@ class FieldSet:
         For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
         Note that vertical velocity (W) is assumed positive in the positive z direction (which is upward in MITgcm)
         """
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_mitgcm"
         if kwargs.pop("gridindexingtype", "mitgcm") != "mitgcm":
             raise ValueError(
                 "gridindexingtype must be 'mitgcm' in FieldSet.from_mitgcm(). Use FieldSet.from_c_grid_dataset otherwise"
@@ -560,8 +552,6 @@ class FieldSet:
 
         See `the CROCO 3D tutorial <../examples/tutorial_croco_3D.ipynb>`__ for more infomation.
         """
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_croco"
         if kwargs.pop("gridindexingtype", "croco") != "croco":
             raise ValueError(
                 "gridindexingtype must be 'croco' in FieldSet.from_croco(). Use FieldSet.from_c_grid_dataset otherwise"
@@ -709,8 +699,6 @@ class FieldSet:
                 interp_method[v] = "cgrid_velocity"
             else:
                 interp_method[v] = tracer_interp_method
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_c_grid_dataset"
 
         return cls.from_netcdf(
             filenames,
@@ -800,8 +788,6 @@ class FieldSet:
             Keyword arguments passed to the :func:`Fieldset.from_b_grid_dataset` constructor.
 
         """
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_pop"
         fieldset = cls.from_b_grid_dataset(
             filenames,
             variables,
@@ -899,8 +885,6 @@ class FieldSet:
         **kwargs :
             Keyword arguments passed to the :func:`Fieldset.from_b_grid_dataset` constructor.
         """
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_mom5"
         fieldset = cls.from_b_grid_dataset(
             filenames,
             variables,
@@ -1025,8 +1009,6 @@ class FieldSet:
                 interp_method[v] = "bgrid_w_velocity"
             else:
                 interp_method[v] = tracer_interp_method
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_b_grid_dataset"
 
         return cls.from_netcdf(
             filenames,
@@ -1073,8 +1055,6 @@ class FieldSet:
         """
         if extra_fields is None:
             extra_fields = {}
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_parcels"
 
         dimensions = {}
         default_dims = {"lon": "nav_lon", "lat": "nav_lat", "depth": "depth", "time": "time_counter"}
@@ -1126,8 +1106,6 @@ class FieldSet:
             Keyword arguments passed to the :func:`Field.from_xarray` constructor.
         """
         fields = {}
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_xarray_dataset"
 
         for var, name in variables.items():
             dims = dimensions[var] if var in dimensions else dimensions
