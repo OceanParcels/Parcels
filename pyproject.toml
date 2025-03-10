@@ -85,6 +85,7 @@ coverage = "*"
 
 # Typing
 mypy = "*"
+lxml = "*" # in CI
 types-tqdm = "*"
 types-psutil = "*"
 

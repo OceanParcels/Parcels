@@ -97,6 +97,7 @@ jobs:
     needs:
       - unit-test
       - integration-test
+      - typechecking
     steps:
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v4
@@ -116,13 +117,10 @@ jobs:
       - run: conda install lxml # dep for report generation
       - name: Typechecking
         run: |
-          mypy --install-types --non-interactive parcels --cobertura-xml-report mypy_report
-      - name: Upload mypy coverage to Codecov
-        uses: codecov/codecov-action@v5.3.1
-        if: ${{ always() }} # Upload even on error of mypy
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          mypy --install-types --non-interactive parcels --html-report mypy-report
+      - name: Upload test results
+        if: ${{ always() }} # Upload even on mypy error
+        uses: actions/upload-artifact@v4
         with:
-          file: mypy_report/cobertura.xml
-          flags: mypy
-          fail_ci_if_error: false
+          name: Mypy report
+          path: mypy-report
