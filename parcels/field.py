@@ -159,7 +159,7 @@ class Field:
         allow_time_extrapolation: bool | None = None,
         gridindexingtype: GridIndexingType = "nemo",
         to_write: bool = False,
-        **kwargs,
+        data_full_zdim=None,
     ):
         if not isinstance(name, tuple):
             self.name = name
@@ -218,9 +218,7 @@ class Field:
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
-        self.data_full_zdim = kwargs.pop("data_full_zdim", None)
-        if len(kwargs) > 0:
-            raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
+        self.data_full_zdim = data_full_zdim
 
     def __repr__(self) -> str:
         return field_repr(self)
