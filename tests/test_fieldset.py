@@ -76,8 +76,8 @@ def multifile_fieldset(tmp_path):
 
     files = {"U": ufiles, "V": vfiles}
     variables = {"U": "U", "V": "V"}
-    dimensions = {"lon": "lon", "lat": "lat"}
-    return FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps)
+    dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
+    return FieldSet.from_netcdf(files, variables, dimensions)
 
 
 @pytest.mark.parametrize("xdim", [100, 200])
@@ -174,9 +174,8 @@ def test_fieldset_from_modulefile():
     fieldset = FieldSet.from_modulefile(nemo_fname)
     assert fieldset.U._creation_log == "from_nemo"
 
-    indices = {"lon": range(6, 10)}
-    fieldset = FieldSet.from_modulefile(nemo_fname, indices=indices)
-    assert fieldset.U.grid.lon.shape[1] == 4
+    fieldset = FieldSet.from_modulefile(nemo_fname)
+    assert fieldset.U.grid.lon.shape[1] == 21
 
     with pytest.raises(IOError):
         FieldSet.from_modulefile(nemo_error_fname)
@@ -235,36 +234,6 @@ def test_fieldset_from_cgrid_interpmethod():
     with pytest.raises(TypeError):
         # should fail because FieldSet.from_c_grid_dataset does not support interp_method
         FieldSet.from_c_grid_dataset(filenames, variable, dimensions, interp_method="partialslip")
-
-
-@pytest.mark.parametrize("indslon", [range(10, 20), [1]])
-@pytest.mark.parametrize("indslat", [range(30, 60), [22]])
-def test_fieldset_from_file_subsets(indslon, indslat, tmpdir):
-    """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset_data(100, 100)
-    filepath = tmpdir.join("test_subsets")
-    fieldsetfull = FieldSet.from_data(data, dimensions)
-    fieldsetfull.write(filepath)
-    indices = {"lon": indslon, "lat": indslat}
-    indices_back = indices.copy()
-    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices)
-    assert indices == indices_back
-    assert np.allclose(fieldsetsub.U.lon, fieldsetfull.U.grid.lon[indices["lon"]])
-    assert np.allclose(fieldsetsub.U.lat, fieldsetfull.U.grid.lat[indices["lat"]])
-    assert np.allclose(fieldsetsub.V.lon, fieldsetfull.V.grid.lon[indices["lon"]])
-    assert np.allclose(fieldsetsub.V.lat, fieldsetfull.V.grid.lat[indices["lat"]])
-
-    ixgrid = np.ix_([0], indices["lat"], indices["lon"])
-    assert np.allclose(fieldsetsub.U.data, fieldsetfull.U.data[ixgrid])
-    assert np.allclose(fieldsetsub.V.data, fieldsetfull.V.data[ixgrid])
-
-
-def test_empty_indices(tmpdir):
-    data, dimensions = generate_fieldset_data(100, 100)
-    filepath = tmpdir.join("test_subsets")
-    FieldSet.from_data(data, dimensions).write(filepath)
-    with pytest.raises(RuntimeError):
-        FieldSet.from_parcels(filepath, indices={"lon": []})
 
 
 @pytest.mark.parametrize("calltype", ["from_data", "from_nemo"])
@@ -373,9 +342,9 @@ def test_fieldset_diffgrids_from_file(tmp_path):
 
     files = {"U": [str(f) for f in ufiles], "V": [str(f) for f in vfiles]}
     variables = {"U": "U", "V": "V"}
-    dimensions = {"lon": "lon", "lat": "lat"}
+    dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
 
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, allow_time_extrapolation=True)
     assert fieldset.gridset.size == 2
     assert fieldset.U.grid != fieldset.V.grid
 
@@ -524,6 +493,8 @@ def test_fieldset_write(tmp_zarrfile):
     assert np.allclose(fieldset.U.data, da["U"].values, atol=1.0)
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1918")
 @pytest.mark.parametrize("datetype", ["float", "datetime64"])
 def test_timestamps(datetype, tmpdir):
     data1, dims1 = generate_fieldset_data(10, 10, 1, 10)

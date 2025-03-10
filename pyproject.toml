@@ -46,7 +46,7 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 
 [tool.pixi.tasks]
 tests = "pytest"
-tests-notebooks = "pytest -v -s --nbval-lax -k 'not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions'" # TODO v4: Re-enable `tutorial_periodic_boundaries` and `tutorial_timevaryingdepthdimensions` notebooks
+tests-notebooks = "pytest -v -s --nbval-lax -k 'not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_croco_3D'" # TODO v4: Re-enable `tutorial_periodic_boundaries`, `tutorial_timevaryingdepthdimensions`, and `tutorial_croco_3D` notebooks
 coverage = "coverage run -m pytest && coverage html"
 typing = "mypy parcels"
 pre-commit = "pre-commit run --all-files"
@@ -117,6 +117,7 @@ local_scheme = "no-local-version"
 
 [tool.pytest.ini_options]
 addopts = ["--strict-config", "--strict-markers"]
+xfail_strict = true
 testpaths = ["tests", "docs/examples"]
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
 minversion = "7"

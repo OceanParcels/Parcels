@@ -187,6 +187,8 @@ def test_advection_RK45(lon, lat, rk45_tol):
     print(fieldset.RK45_tol)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="When refactoring fieldfilebuffer croco support was dropped. This will be fixed in v4.")
 def test_conversion_3DCROCO():
     """Test of the (SciPy) version of the conversion from depth to sigma in CROCO
 
@@ -248,6 +250,8 @@ def test_advection_3DCROCO():
     assert np.allclose(pset.lon_nextloop, [x + runtime for x in X.flatten()], atol=1e-3)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="When refactoring fieldfilebuffer croco support was dropped. This will be fixed in v4.")
 def test_advection_2DCROCO():
     fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO2D.py")
 
