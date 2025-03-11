@@ -1,7 +1,6 @@
 import cftime
 import numpy as np
 import uxarray as ux
-<<<<<<< HEAD
 import cftime
 
 from parcels._compat import MPI
@@ -15,15 +14,11 @@ from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.warnings import FieldSetWarning
-=======
-from uxarray.neighbors import _barycentric_coordinates
->>>>>>> 4caf74cec87c44fcda455904624b512ff72c4d13
 
 __all__ = ["UXFieldSet"]
 
 _inside_tol = 1e-6
 
-<<<<<<< HEAD
 # class UXVectorField:
 #     def __init__(self, name: str, U: ux.UxDataArray, V: ux.UxDataArray, W: ux.UxDataArray | None = None):
 #         self.name = name
@@ -48,14 +43,6 @@ class UXFieldSet:
     """A FieldSet class that holds hydrodynamic data needed to execute particles
     in a UXArray.Dataset"""
     # Change uxds to ds_list - which is a list of either uxDataset or xarray dataset
-=======
-
-class UXFieldSet:
-    """A FieldSet class that holds hydrodynamic data needed to execute particles
-    in a UXArray.Dataset
-    """
-
->>>>>>> 4caf74cec87c44fcda455904624b512ff72c4d13
     def __init__(self, uxds: ux.UxDataset, time_origin: float | np.datetime64 | np.timedelta64 | cftime.datetime = 0):
         # Ensure that dataset provides a grid, and the u and v velocity
         # components at a minimum
@@ -79,7 +66,6 @@ class UXFieldSet:
         assert self.uxds.v is not None, "UXFieldSet does not provide v velocity data"
         assert self.uxds.uxgrid is not None, "UXFieldSet does not provide a grid"
 
-<<<<<<< HEAD
     def _face_interp(self, field, time, z, y, x, ei):
         ti = 0
         zi = 0
@@ -87,18 +73,6 @@ class UXFieldSet:
     
     def _node_interp(self, field, time, z, y, x, ei):
         """Performs barycentric interpolation of a field at a given location."""        
-=======
-    def _face_interp(self, field, time, z, y, x, particle=None):
-        # ti, zi, fi = self.unravel_index(particle.ei) # Get the time, z, and face index of the particle
-        ti = 0
-        zi = 0
-        fi = particle.ei
-        return field[ti, zi, fi]
-
-    def _node_interp(self, field, time, z, y, x, particle=None):
-        """Performs barycentric interpolation of a field at a given location."""
-        # ti, zi, fi = self.unravel_index(particle.ei) # Get the time, z, and face index of the particle
->>>>>>> 4caf74cec87c44fcda455904624b512ff72c4d13
         ti = 0
         zi = 0
         coords =np.deg2rad([[x, y]])
