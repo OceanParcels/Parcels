@@ -1,13 +1,7 @@
-import importlib.util
-import os
-import sys
-import warnings
-from copy import deepcopy
-from glob import glob
-
-import dask.array as da
+import cftime
 import numpy as np
 import uxarray as ux
+<<<<<<< HEAD
 import cftime
 
 from parcels._compat import MPI
@@ -21,11 +15,15 @@ from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.warnings import FieldSetWarning
+=======
+from uxarray.neighbors import _barycentric_coordinates
+>>>>>>> 4caf74cec87c44fcda455904624b512ff72c4d13
 
 __all__ = ["UXFieldSet"]
 
 _inside_tol = 1e-6
 
+<<<<<<< HEAD
 # class UXVectorField:
 #     def __init__(self, name: str, U: ux.UxDataArray, V: ux.UxDataArray, W: ux.UxDataArray | None = None):
 #         self.name = name
@@ -50,9 +48,16 @@ class UXFieldSet:
     """A FieldSet class that holds hydrodynamic data needed to execute particles
     in a UXArray.Dataset"""
     # Change uxds to ds_list - which is a list of either uxDataset or xarray dataset
-    def __init__(self, uxds: ux.UxDataset, time_origin: float | np.datetime64 | np.timedelta64 | cftime.datetime = 0):
+=======
 
-        # Ensure that dataset provides a grid, and the u and v velocity 
+class UXFieldSet:
+    """A FieldSet class that holds hydrodynamic data needed to execute particles
+    in a UXArray.Dataset
+    """
+
+>>>>>>> 4caf74cec87c44fcda455904624b512ff72c4d13
+    def __init__(self, uxds: ux.UxDataset, time_origin: float | np.datetime64 | np.timedelta64 | cftime.datetime = 0):
+        # Ensure that dataset provides a grid, and the u and v velocity
         # components at a minimum
         if not hasattr(uxds, "uxgrid"):
             raise ValueError("The UXArray dataset does not provide a grid")
@@ -60,7 +65,7 @@ class UXFieldSet:
             raise ValueError("The UXArray dataset does not provide u velocity data")
         if not hasattr(uxds, "v"):
             raise ValueError("The UXArray dataset does not provide v velocity data")
-        
+
         self.time_origin = time_origin
         self.uxds = uxds
         self._spatialhash = self.uxds.uxgrid.get_spatial_hash()
@@ -74,6 +79,7 @@ class UXFieldSet:
         assert self.uxds.v is not None, "UXFieldSet does not provide v velocity data"
         assert self.uxds.uxgrid is not None, "UXFieldSet does not provide a grid"
 
+<<<<<<< HEAD
     def _face_interp(self, field, time, z, y, x, ei):
         ti = 0
         zi = 0
@@ -81,6 +87,18 @@ class UXFieldSet:
     
     def _node_interp(self, field, time, z, y, x, ei):
         """Performs barycentric interpolation of a field at a given location."""        
+=======
+    def _face_interp(self, field, time, z, y, x, particle=None):
+        # ti, zi, fi = self.unravel_index(particle.ei) # Get the time, z, and face index of the particle
+        ti = 0
+        zi = 0
+        fi = particle.ei
+        return field[ti, zi, fi]
+
+    def _node_interp(self, field, time, z, y, x, particle=None):
+        """Performs barycentric interpolation of a field at a given location."""
+        # ti, zi, fi = self.unravel_index(particle.ei) # Get the time, z, and face index of the particle
+>>>>>>> 4caf74cec87c44fcda455904624b512ff72c4d13
         ti = 0
         zi = 0
         coords =np.deg2rad([[x, y]])
@@ -140,6 +158,7 @@ class UXFieldSet:
         for f in field_names:
             field = getattr(self.uxds, f)
             face_registered = ("n_face" in field.dims)
+
             if face_registered:
                 r = self._face_interp(field, time, z, y, x, fi)
             else:
@@ -194,4 +213,3 @@ def _triangle_area(A, B, C):
     Compute the area of a triangle given by three points.
     """
     return 0.5 * (A[0] * (B[1] - C[1]) + B[0] * (C[1] - A[1]) + C[0] * (A[1] - B[1]))
-

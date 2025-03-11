@@ -9,7 +9,6 @@ import numpy as np
 import xarray as xr
 from scipy.spatial import KDTree
 from tqdm import tqdm
-import uxarray as ux
 
 from parcels._compat import MPI
 from parcels.application_kernels.advection import AdvectionRK4
@@ -32,6 +31,7 @@ from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
 from parcels.tools.warnings import ParticleSetWarning
 from parcels.uxfieldset import UXFieldSet
+
 __all__ = ["ParticleSet"]
 
 
@@ -169,7 +169,7 @@ class ParticleSet:
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
 
         if type(fieldset) == UXFieldSet:
-            lonlatdepth_dtype = np.float32 # To do : get precision from fieldset
+            lonlatdepth_dtype = np.float32  # To do : get precision from fieldset
         else:
             if isinstance(fieldset.U, Field) and (not fieldset.U.allow_time_extrapolation):
                 _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.U.grid.time_full)
