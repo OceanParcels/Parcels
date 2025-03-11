@@ -3,6 +3,7 @@
 import math
 
 from parcels.tools.statuscodes import StatusCode
+from parcels.uxfieldset import UXFieldSet
 
 __all__ = [
     "AdvectionAnalytical",
@@ -12,6 +13,15 @@ __all__ = [
     "AdvectionRK4_3D_CROCO",
     "AdvectionRK45",
 ]
+
+
+def UxAdvectionEuler(particle, fieldset: UXFieldSet, time):
+    """Advection of particles using Explicit Euler (aka Euler Forward) integration.
+    on an unstructured grid.
+    """
+    vel = fieldset.eval(["u", "v"], time, particle.depth, particle.lat, particle.lon, particle)
+    particle.lon += vel["u"] * particle.dt
+    particle.lat += vel["v"] * particle.dt
 
 
 def AdvectionRK4(particle, fieldset, time):  # pragma: no cover

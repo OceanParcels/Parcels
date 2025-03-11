@@ -13,3 +13,4 @@ from parcels.particle import *
 from parcels.particlefile import *
 from parcels.particleset import *
 from parcels.tools import *
+from parcels.uxfieldset import *
