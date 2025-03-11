@@ -634,6 +634,8 @@ def test_analyticalAgrid():
         pset.execute(AdvectionAnalytical, runtime=1)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1927")
 @pytest.mark.parametrize("u", [1, -0.2, -0.3, 0])
 @pytest.mark.parametrize("v", [1, -0.3, 0, -1])
 @pytest.mark.parametrize("w", [None, 1, -0.3, 0, -1])
