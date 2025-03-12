@@ -873,6 +873,7 @@ def test_bgrid_indexing_3D(gridindexingtype, withtime):
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
+@pytest.mark.v4alpha
 @pytest.mark.parametrize("gridindexingtype", ["mom5"])  # TODO v4: add pop in params?
 @pytest.mark.parametrize("extrapolation", [True, False])
 def test_bgrid_interpolation(gridindexingtype, extrapolation):
