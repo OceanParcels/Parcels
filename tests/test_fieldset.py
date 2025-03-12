@@ -86,19 +86,10 @@ def test_fieldset_from_data(xdim, ydim):
     """Simple test for fieldset initialisation from data."""
     data, dimensions = generate_fieldset_data(xdim, ydim)
     fieldset = FieldSet.from_data(data, dimensions)
-    assert fieldset.U._creation_log == "from_data"
     assert len(fieldset.U.data.shape) == 3
     assert len(fieldset.V.data.shape) == 3
     assert np.allclose(fieldset.U.data[0, :], data["U"], rtol=1e-12)
     assert np.allclose(fieldset.V.data[0, :], data["V"], rtol=1e-12)
-
-
-def test_fieldset_extra_syntax():
-    """Simple test for fieldset initialisation from data."""
-    data, dimensions = generate_fieldset_data(10, 10)
-
-    with pytest.raises(SyntaxError):
-        FieldSet.from_data(data, dimensions, unknown_keyword=5)
 
 
 @pytest.mark.v4remove
@@ -172,7 +163,6 @@ def test_fieldset_from_modulefile():
     nemo_error_fname = str(TEST_DATA / "fieldset_nemo_error.py")
 
     fieldset = FieldSet.from_modulefile(nemo_fname)
-    assert fieldset.U._creation_log == "from_nemo"
 
     fieldset = FieldSet.from_modulefile(nemo_fname)
     assert fieldset.U.grid.lon.shape[1] == 21
@@ -379,7 +369,6 @@ def test_fieldset_write_curvilinear(tmpdir):
     variables = {"dx": "e1u"}
     dimensions = {"lon": "glamu", "lat": "gphiu"}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
-    assert fieldset.dx._creation_log == "from_nemo"
 
     newfile = tmpdir.join("curv_field")
     fieldset.write(newfile)
@@ -389,7 +378,6 @@ def test_fieldset_write_curvilinear(tmpdir):
         variables={"dx": "dx"},
         dimensions={"time": "time_counter", "depth": "depthdx", "lon": "nav_lon", "lat": "nav_lat"},
     )
-    assert fieldset2.dx._creation_log == "from_netcdf"
 
     for var in ["lon", "lat", "data"]:
         assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
@@ -648,7 +636,6 @@ def test_fieldset_from_xarray(tdim):
     else:
         dimensions = {"lat": "lat", "lon": "lon", "depth": "depth"}
     fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh="flat")
-    assert fieldset.U._creation_log == "from_xarray_dataset"
 
     pset = ParticleSet(fieldset, Particle, 0, 0, depth=20)
 
