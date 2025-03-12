@@ -303,9 +303,9 @@ Example of particle advection around an idealised peninsula"""
 
     # Open fieldset file set
     filenames = {
-        "U": str(filename / "U.nc"),
-        "V": str(filename / "V.nc"),
-        "P": str(filename / "P.nc"),
+        "U": f"{filename}U.nc",
+        "V": f"{filename}V.nc",
+        "P": f"{filename}P.nc",
     }
     variables = {"U": "vozocrtx", "V": "vomecrty", "P": "P"}
     dimensions = {"lon": "nav_lon", "lat": "nav_lat", "time": "time_counter"}
