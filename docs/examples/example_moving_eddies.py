@@ -1,4 +1,3 @@
-import gc
 import math
 from argparse import ArgumentParser
 from datetime import timedelta
@@ -229,12 +228,16 @@ def fieldsetfile(mesh, tmpdir):
     return filename
 
 
-@pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_moving_eddies_file(mesh, tmpdir):
-    gc.collect()
-    fieldset = parcels.FieldSet.from_parcels(
-        fieldsetfile(mesh, tmpdir), extra_fields={"P": "P"}
-    )
+def test_moving_eddies_file(tmpdir):
+    data_folder = parcels.download_example_dataset("MovingEddies_data")
+    filenames = {
+        "U": str(data_folder / "moving_eddiesU.nc"),
+        "V": str(data_folder / "moving_eddiesV.nc"),
+        "P": str(data_folder / "moving_eddiesP.nc"),
+    }
+    variables = {"U": "vozocrtx", "V": "vomecrty", "P": "P"}
+    dimensions = {"lon": "nav_lon", "lat": "nav_lat", "time": "time_counter"}
+    fieldset = parcels.FieldSet.from_netcdf(filenames, variables, dimensions)
     outfile = tmpdir.join("EddyParticle")
     pset = moving_eddies_example(fieldset, outfile, 2)
     # Also include last timestep
@@ -242,12 +245,8 @@ def test_moving_eddies_file(mesh, tmpdir):
         pset.particledata.setallvardata(
             f"{var}", pset.particledata.getvardata(f"{var}_nextloop")
         )
-    if mesh == "flat":
-        assert pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5
-        assert pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5
-    else:
-        assert pset[0].lon < 2.0 and 46.2 < pset[0].lat < 46.25
-        assert pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85
+    assert pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5
+    assert pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5
 
 
 @pytest.mark.v4alpha

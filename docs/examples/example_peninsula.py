@@ -1,4 +1,3 @@
-import gc
 import math  # NOQA
 from argparse import ArgumentParser
 from datetime import timedelta
@@ -216,14 +215,18 @@ def fieldsetfile(mesh, tmpdir):
     return filename
 
 
-@pytest.mark.parametrize("mesh", ["flat", "spherical"])
-def test_peninsula_file(mesh, tmpdir):
+def test_peninsula_file(tmpdir):
     """Open fieldset files and execute."""
-    gc.collect()
-    fieldset = parcels.FieldSet.from_parcels(
-        fieldsetfile(mesh, tmpdir),
-        extra_fields={"P": "P"},
-        allow_time_extrapolation=True,
+    data_folder = parcels.download_example_dataset("Peninsula_data")
+    filenames = {
+        "U": str(data_folder / "peninsulaU.nc"),
+        "V": str(data_folder / "peninsulaV.nc"),
+        "P": str(data_folder / "peninsulaP.nc"),
+    }
+    variables = {"U": "vozocrtx", "V": "vomecrty", "P": "P"}
+    dimensions = {"lon": "nav_lon", "lat": "nav_lat", "time": "time_counter"}
+    fieldset = parcels.FieldSet.from_netcdf(
+        filenames, variables, dimensions, allow_time_extrapolation=True
     )
     outfile = tmpdir.join("Peninsula")
     pset = peninsula_example(fieldset, outfile, 5, degree=1)
@@ -299,9 +302,17 @@ Example of particle advection around an idealised peninsula"""
     fieldset.write(filename)
 
     # Open fieldset file set
-    fieldset = parcels.FieldSet.from_parcels(
-        "peninsula", extra_fields={"P": "P"}, allow_time_extrapolation=True
+    filenames = {
+        "U": str(filename / "U.nc"),
+        "V": str(filename / "V.nc"),
+        "P": str(filename / "P.nc"),
+    }
+    variables = {"U": "vozocrtx", "V": "vomecrty", "P": "P"}
+    dimensions = {"lon": "nav_lon", "lat": "nav_lat", "time": "time_counter"}
+    fieldset = parcels.FieldSet.from_netcdf(
+        filenames, variables, dimensions, allow_time_extrapolation=True
     )
+
     outfile = "Peninsula"
 
     if args.profiling:

@@ -402,7 +402,13 @@ def test_pset_execute_outputdt_backwards_fieldset_timevarying():
 
     # TODO: Not ideal using the `download_example_dataset` here, but I'm struggling to recreate this error using the test suite fieldsets we have
     example_dataset_folder = parcels.download_example_dataset("MovingEddies_data")
-    fieldset = parcels.FieldSet.from_parcels(f"{example_dataset_folder}/moving_eddies")
+    filenames = {
+        "U": str(example_dataset_folder / "moving_eddiesU.nc"),
+        "V": str(example_dataset_folder / "moving_eddiesV.nc"),
+    }
+    variables = {"U": "vozocrtx", "V": "vomecrty"}
+    dimensions = {"lon": "nav_lon", "lat": "nav_lat", "time": "time_counter"}
+    fieldset = parcels.FieldSet.from_netcdf(filenames, variables, dimensions)
 
     ds = setup_pset_execute(outputdt=outputdt, execute_kwargs=dict(runtime=runtime, dt=dt), fieldset=fieldset)
     file_outputdt = ds.isel(trajectory=0).time.diff(dim="obs").values
