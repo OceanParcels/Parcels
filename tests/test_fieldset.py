@@ -450,9 +450,11 @@ def test_fieldset_write(tmp_zarrfile):
     fieldset.U.to_write = True
 
     def UpdateU(particle, fieldset, time):  # pragma: no cover
+        from parcels._index_search import _search_time_index
+
         tmp1, tmp2 = fieldset.UV[particle]
         _, yi, xi = fieldset.U.unravel_index(particle.ei)
-        _, ti = fieldset.U._search_time_index(time)
+        _, ti = _search_time_index(fieldset.U.grid, time)
         fieldset.U.data[ti, yi, xi] += 1
         fieldset.U.grid.time[0] = time
 
