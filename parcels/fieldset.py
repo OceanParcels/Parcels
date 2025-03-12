@@ -2,7 +2,6 @@ import importlib.util
 import os
 import sys
 import warnings
-from copy import deepcopy
 from glob import glob
 
 import numpy as np
@@ -891,57 +890,6 @@ class FieldSet:
             mesh=mesh,
             allow_time_extrapolation=allow_time_extrapolation,
             interp_method=interp_method,
-            **kwargs,
-        )
-
-    @classmethod
-    def from_parcels(
-        cls,
-        basename,
-        uvar="vozocrtx",
-        vvar="vomecrty",
-        extra_fields=None,
-        allow_time_extrapolation: bool | None = None,
-        **kwargs,
-    ):
-        """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
-
-        Parameters
-        ----------
-        basename : str
-            Base name of the file(s); may contain
-            wildcards to indicate multiple files.
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        extra_fields :
-            Extra fields to read beyond U and V (Default value = None)
-        allow_time_extrapolation : bool
-            boolean whether to allow for extrapolation
-            (i.e. beyond the last available time snapshot)
-            Default is False if dimensions includes time, else True
-        uvar :
-             (Default value = 'vozocrtx')
-        vvar :
-             (Default value = 'vomecrty')
-        **kwargs :
-            Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
-        """
-        if extra_fields is None:
-            extra_fields = {}
-
-        dimensions = {}
-        default_dims = {"lon": "nav_lon", "lat": "nav_lat", "depth": "depth", "time": "time_counter"}
-        extra_fields.update({"U": uvar, "V": vvar})
-        for vars in extra_fields:
-            dimensions[vars] = deepcopy(default_dims)
-            dimensions[vars]["depth"] = f"depth{vars.lower()}"
-        filenames = {v: str(f"{basename}{v}.nc") for v in extra_fields.keys()}
-        return cls.from_netcdf(
-            filenames,
-            variables=extra_fields,
-            dimensions=dimensions,
-            allow_time_extrapolation=allow_time_extrapolation,
             **kwargs,
         )
 
