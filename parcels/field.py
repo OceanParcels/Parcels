@@ -1253,7 +1253,7 @@ class VectorField:
         if self.U.interp_method in ["partialslip", "freeslip"]:
             return self.slip_interpolation(time, z, y, x, particle=particle, applyConversion=applyConversion)
 
-        if self.U.interp_method not in ["cgrid_velocity", "partialslip", "freeslip"]:
+        if self.U.interp_method not in ["cgrid_velocity"]:
             u = self.U.eval(time, z, y, x, particle=particle, applyConversion=False)
             v = self.V.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
