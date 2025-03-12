@@ -231,7 +231,7 @@ def test_conversion_3DCROCO():
 
 
 @pytest.mark.v4alpha
-@pytest.mark.xfail(reason="When refactoring fieldfilebuffer croco support was dropped. This will be fixed in v4.")
+@pytest.mark.xfail(reason="CROCO 3D interpolation is not yet implemented correctly in v4. ")
 def test_advection_3DCROCO():
     fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
 

@@ -25,7 +25,7 @@ from parcels._typing import (
     assert_valid_gridindexingtype,
     assert_valid_interp_method,
 )
-from parcels.tools._helpers import default_repr, field_repr
+from parcels.tools._helpers import default_repr, field_repr, should_calculate_next_ti
 from parcels.tools.converters import (
     TimeConverter,
     UnitConverter,
@@ -542,17 +542,21 @@ class Field:
 
         return data
 
-    def _search_indices(self, time, z, y, x, ti, particle=None, search2D=False):
+    def _search_indices(self, time, z, y, x, particle=None, search2D=False):
+        tau, ti = self._search_time_index(time)
+
         if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
-            return _search_indices_rectilinear(self, time, z, y, x, ti, particle=particle, search2D=search2D)
+            (zeta, eta, xsi, zi, yi, xi) = _search_indices_rectilinear(
+                self, time, z, y, x, ti, particle=particle, search2D=search2D
+            )
         else:
-            return _search_indices_curvilinear(self, time, z, y, x, ti, particle=particle, search2D=search2D)
+            (zeta, eta, xsi, zi, yi, xi) = _search_indices_curvilinear(
+                self, time, z, y, x, ti, particle=particle, search2D=search2D
+            )
+        return (tau, zeta, eta, xsi, ti, zi, yi, xi)
 
-    def _interpolator2D(self, time, z, y, x, ti, particle=None):
+    def _interpolator2D(self, time, z, y, x, particle=None):
         """Impelement 2D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
-        (_, eta, xsi, _, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
-        ctx = InterpolationContext2D(self.data, eta, xsi, ti, yi, xi)
-
         try:
             f = get_2d_interpolator_registry()[self.interp_method]
         except KeyError:
@@ -562,26 +566,31 @@ class Field:
                 )
             else:
                 raise RuntimeError(self.interp_method + " is not implemented for 2D grids")
+
+        (tau, _, eta, xsi, ti, _, yi, xi) = self._search_indices(time, z, y, x, particle=particle)
+
+        ctx = InterpolationContext2D(self.data, tau, eta, xsi, ti, yi, xi)
         return f(ctx)
 
-    def _interpolator3D(self, time, z, y, x, ti, particle=None):
+    def _interpolator3D(self, time, z, y, x, particle=None):
         """Impelement 3D interpolation with coordinate transformations as seen in Delandmeter and Van Sebille (2019), 10.5194/gmd-12-3571-2019.."""
-        (zeta, eta, xsi, zi, yi, xi) = self._search_indices(time, z, y, x, ti, particle=particle)
-        ctx = InterpolationContext3D(self.data, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
-
         try:
             f = get_3d_interpolator_registry()[self.interp_method]
         except KeyError:
             raise RuntimeError(self.interp_method + " is not implemented for 3D grids")
+
+        (tau, zeta, eta, xsi, ti, zi, yi, xi) = self._search_indices(time, z, y, x, particle=particle)
+
+        ctx = InterpolationContext3D(self.data, tau, zeta, eta, xsi, ti, zi, yi, xi, self.gridindexingtype)
         return f(ctx)
 
-    def _spatial_interpolation(self, time, z, y, x, ti, particle=None):
+    def _interpolate(self, time, z, y, x, particle=None):
         """Interpolate spatial field values."""
         try:
             if self.grid.zdim == 1:
-                val = self._interpolator2D(time, z, y, x, ti, particle=particle)
+                val = self._interpolator2D(time, z, y, x, particle=particle)
             else:
-                val = self._interpolator3D(time, z, y, x, ti, particle=particle)
+                val = self._interpolator3D(time, z, y, x, particle=particle)
 
             if np.isnan(val):
                 # Detect Out-of-bounds sampling and raise exception
@@ -593,8 +602,8 @@ class Field:
             e = add_note(e, f"Error interpolating field '{self.name}'.", before=True)
             raise e
 
-    def _time_index(self, time):
-        """Find the index in the time array associated with a given time.
+    def _search_time_index(self, time):
+        """Find and return the index and relative coordinate in the time array associated with a given time.
 
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
@@ -606,13 +615,24 @@ class Field:
         if time_index.all():
             # If given time > last known field time, use
             # the last field frame without interpolation
-            return len(self.grid.time) - 1
+            ti = len(self.grid.time) - 1
         elif np.logical_not(time_index).all():
             # If given time < any time in the field, use
             # the first field frame without interpolation
-            return 0
+            ti = 0
         else:
-            return time_index.argmin() - 1 if time_index.any() else 0
+            ti = time_index.argmin() - 1 if time_index.any() else 0
+        if self.grid.tdim == 1:
+            tau = 0
+        elif ti == len(self.grid.time) - 1:
+            tau = 1
+        else:
+            tau = (
+                (time - self.grid.time[ti]) / (self.grid.time[ti + 1] - self.grid.time[ti])
+                if self.grid.time[ti] != self.grid.time[ti + 1]
+                else 0
+            )
+        return tau, ti
 
     def _check_velocitysampling(self):
         if self.name in ["U", "V", "W"]:
@@ -639,20 +659,10 @@ class Field:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        ti = self._time_index(time)
         if self.gridindexingtype == "croco" and self not in [self.fieldset.H, self.fieldset.Zeta]:
             z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
-        if ti < self.grid.tdim - 1 and time > self.grid.time[ti]:
-            f0 = self._spatial_interpolation(time, z, y, x, ti, particle=particle)
-            f1 = self._spatial_interpolation(time, z, y, x, ti + 1, particle=particle)
-            t0 = self.grid.time[ti]
-            t1 = self.grid.time[ti + 1]
-            value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
-        else:
-            # Skip temporal interpolation if time is outside
-            # of the defined time range or if we have hit an
-            # exact value in the time array.
-            value = self._spatial_interpolation(self.grid.time[ti], z, y, x, ti, particle=particle)
+
+        value = self._interpolate(time, z, y, x, particle=particle)
 
         if applyConversion:
             return self.units.to_target(value, z, y, x)
@@ -805,9 +815,9 @@ class VectorField:
             and np.allclose(grid1.time_full, grid2.time_full)
         )
 
-    def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None, applyConversion=True):
+    def c_grid_interpolation2D(self, time, z, y, x, particle=None, applyConversion=True):
         grid = self.U.grid
-        (_, eta, xsi, zi, yi, xi) = self.U._search_indices(time, z, y, x, ti, particle=particle)
+        (tau, _, eta, xsi, ti, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
 
         if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
@@ -827,59 +837,68 @@ class VectorField:
         c2 = i_u._geodetic_distance(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
         c3 = i_u._geodetic_distance(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
         c4 = i_u._geodetic_distance(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
-        if grid.zdim == 1:
-            if self.gridindexingtype == "nemo":
-                U0 = self.U.data[ti, yi + 1, xi] * c4
-                U1 = self.U.data[ti, yi + 1, xi + 1] * c2
-                V0 = self.V.data[ti, yi, xi + 1] * c1
-                V1 = self.V.data[ti, yi + 1, xi + 1] * c3
-            elif self.gridindexingtype in ["mitgcm", "croco"]:
-                U0 = self.U.data[ti, yi, xi] * c4
-                U1 = self.U.data[ti, yi, xi + 1] * c2
-                V0 = self.V.data[ti, yi, xi] * c1
-                V1 = self.V.data[ti, yi + 1, xi] * c3
-        else:
-            if self.gridindexingtype == "nemo":
-                U0 = self.U.data[ti, zi, yi + 1, xi] * c4
-                U1 = self.U.data[ti, zi, yi + 1, xi + 1] * c2
-                V0 = self.V.data[ti, zi, yi, xi + 1] * c1
-                V1 = self.V.data[ti, zi, yi + 1, xi + 1] * c3
-            elif self.gridindexingtype in ["mitgcm", "croco"]:
-                U0 = self.U.data[ti, zi, yi, xi] * c4
-                U1 = self.U.data[ti, zi, yi, xi + 1] * c2
-                V0 = self.V.data[ti, zi, yi, xi] * c1
-                V1 = self.V.data[ti, zi, yi + 1, xi] * c3
-        U = (1 - xsi) * U0 + xsi * U1
-        V = (1 - eta) * V0 + eta * V1
-        rad = np.pi / 180.0
-        deg2m = 1852 * 60.0
-        if applyConversion:
-            meshJac = (deg2m * deg2m * math.cos(rad * y)) if grid.mesh == "spherical" else 1
-        else:
-            meshJac = deg2m if grid.mesh == "spherical" else 1
 
-        jac = i_u._compute_jacobian_determinant(py, px, eta, xsi) * meshJac
+        def _calc_UV(ti, yi, xi):
+            if grid.zdim == 1:
+                if self.gridindexingtype == "nemo":
+                    U0 = self.U.data[ti, yi + 1, xi] * c4
+                    U1 = self.U.data[ti, yi + 1, xi + 1] * c2
+                    V0 = self.V.data[ti, yi, xi + 1] * c1
+                    V1 = self.V.data[ti, yi + 1, xi + 1] * c3
+                elif self.gridindexingtype in ["mitgcm", "croco"]:
+                    U0 = self.U.data[ti, yi, xi] * c4
+                    U1 = self.U.data[ti, yi, xi + 1] * c2
+                    V0 = self.V.data[ti, yi, xi] * c1
+                    V1 = self.V.data[ti, yi + 1, xi] * c3
+            else:
+                if self.gridindexingtype == "nemo":
+                    U0 = self.U.data[ti, zi, yi + 1, xi] * c4
+                    U1 = self.U.data[ti, zi, yi + 1, xi + 1] * c2
+                    V0 = self.V.data[ti, zi, yi, xi + 1] * c1
+                    V1 = self.V.data[ti, zi, yi + 1, xi + 1] * c3
+                elif self.gridindexingtype in ["mitgcm", "croco"]:
+                    U0 = self.U.data[ti, zi, yi, xi] * c4
+                    U1 = self.U.data[ti, zi, yi, xi + 1] * c2
+                    V0 = self.V.data[ti, zi, yi, xi] * c1
+                    V1 = self.V.data[ti, zi, yi + 1, xi] * c3
+            U = (1 - xsi) * U0 + xsi * U1
+            V = (1 - eta) * V0 + eta * V1
+            rad = np.pi / 180.0
+            deg2m = 1852 * 60.0
+            if applyConversion:
+                meshJac = (deg2m * deg2m * math.cos(rad * y)) if grid.mesh == "spherical" else 1
+            else:
+                meshJac = deg2m if grid.mesh == "spherical" else 1
 
-        u = (
-            (-(1 - eta) * U - (1 - xsi) * V) * px[0]
-            + ((1 - eta) * U - xsi * V) * px[1]
-            + (eta * U + xsi * V) * px[2]
-            + (-eta * U + (1 - xsi) * V) * px[3]
-        ) / jac
-        v = (
-            (-(1 - eta) * U - (1 - xsi) * V) * py[0]
-            + ((1 - eta) * U - xsi * V) * py[1]
-            + (eta * U + xsi * V) * py[2]
-            + (-eta * U + (1 - xsi) * V) * py[3]
-        ) / jac
-        if isinstance(u, da.core.Array):
-            u = u.compute()
-            v = v.compute()
+            jac = i_u._compute_jacobian_determinant(py, px, eta, xsi) * meshJac
+
+            u = (
+                (-(1 - eta) * U - (1 - xsi) * V) * px[0]
+                + ((1 - eta) * U - xsi * V) * px[1]
+                + (eta * U + xsi * V) * px[2]
+                + (-eta * U + (1 - xsi) * V) * px[3]
+            ) / jac
+            v = (
+                (-(1 - eta) * U - (1 - xsi) * V) * py[0]
+                + ((1 - eta) * U - xsi * V) * py[1]
+                + (eta * U + xsi * V) * py[2]
+                + (-eta * U + (1 - xsi) * V) * py[3]
+            ) / jac
+            if isinstance(u, da.core.Array):
+                u = u.compute()
+                v = v.compute()
+            return (u, v)
+
+        u, v = _calc_UV(ti, yi, xi)
+        if should_calculate_next_ti(ti, tau, self.U.grid.tdim):
+            ut1, vt1 = _calc_UV(ti + 1, yi, xi)
+            u = (1 - tau) * u + tau * ut1
+            v = (1 - tau) * v + tau * vt1
         return (u, v)
 
-    def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time, particle=None):
+    def c_grid_interpolation3D_full(self, time, z, y, x, particle=None):
         grid = self.U.grid
-        (zeta, eta, xsi, zi, yi, xi) = self.U._search_indices(time, z, y, x, ti, particle=particle)
+        (tau, zeta, eta, xsi, ti, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
 
         if grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
@@ -931,6 +950,14 @@ class VectorField:
         v1 = self.V.data[ti, zi, yi + 1, xi + 1]
         w0 = self.W.data[ti, zi, yi + 1, xi + 1]
         w1 = self.W.data[ti, zi + 1, yi + 1, xi + 1]
+
+        if should_calculate_next_ti(ti, tau, self.U.grid.tdim):
+            u0 = (1 - tau) * u0 + tau * self.U.data[ti + 1, zi, yi + 1, xi]
+            u1 = (1 - tau) * u1 + tau * self.U.data[ti + 1, zi, yi + 1, xi + 1]
+            v0 = (1 - tau) * v0 + tau * self.V.data[ti + 1, zi, yi, xi + 1]
+            v1 = (1 - tau) * v1 + tau * self.V.data[ti + 1, zi, yi + 1, xi + 1]
+            w0 = (1 - tau) * w0 + tau * self.W.data[ti + 1, zi, yi + 1, xi + 1]
+            w1 = (1 - tau) * w1 + tau * self.W.data[ti + 1, zi + 1, yi + 1, xi + 1]
 
         U0 = u0 * i_u.jacobian3D_lin_face(pz, py, px, zeta, eta, 0, "zonal", grid.mesh)
         U1 = u1 * i_u.jacobian3D_lin_face(pz, py, px, zeta, eta, 1, "zonal", grid.mesh)
@@ -1082,7 +1109,7 @@ class VectorField:
             w = w.compute()
         return (u, v, w)
 
-    def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None, applyConversion=True):
+    def c_grid_interpolation3D(self, ti, z, y, x, time, particle=None, applyConversion=True):
         """Perform C grid interpolation in 3D. ::
 
             +---+---+---+
@@ -1099,11 +1126,11 @@ class VectorField:
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
         if self.U.grid._gtype in [GridType.RectilinearSGrid, GridType.CurvilinearSGrid]:
-            (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
+            (u, v, w) = self.c_grid_interpolation3D_full(time, z, y, x, particle=particle)
         else:
             if self.gridindexingtype == "croco":
                 z = _croco_from_z_to_sigma_scipy(self.fieldset, time, z, y, x, particle=particle)
-            (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
+            (u, v) = self.c_grid_interpolation2D(time, z, y, x, particle=particle)
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
                 w = self.W.units.to_target(w, z, y, x)
@@ -1121,8 +1148,8 @@ class VectorField:
             else:
                 return True
 
-    def spatial_slip_interpolation(self, ti, z, y, x, time, particle=None, applyConversion=True):
-        (zeta, eta, xsi, zi, yi, xi) = self.U._search_indices(time, z, y, x, ti, particle=particle)
+    def slip_interpolation(self, time, z, y, x, particle=None, applyConversion=True):
+        (_, zeta, eta, xsi, ti, zi, yi, xi) = self.U._search_indices(time, z, y, x, particle=particle)
         di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
 
         f_u, f_v, f_w = 1, 1, 1
@@ -1223,66 +1250,22 @@ class VectorField:
             return u, v
 
     def eval(self, time, z, y, x, particle=None, applyConversion=True):
-        if self.U.interp_method not in ["cgrid_velocity", "partialslip", "freeslip"]:
+        if self.U.interp_method in ["partialslip", "freeslip"]:
+            return self.slip_interpolation(time, z, y, x, particle=particle, applyConversion=applyConversion)
+
+        if self.U.interp_method not in ["cgrid_velocity"]:
             u = self.U.eval(time, z, y, x, particle=particle, applyConversion=False)
             v = self.V.eval(time, z, y, x, particle=particle, applyConversion=False)
             if applyConversion:
                 u = self.U.units.to_target(u, z, y, x)
                 v = self.V.units.to_target(v, z, y, x)
-            if "3D" in self.vector_type:
-                w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
-                if applyConversion:
-                    w = self.W.units.to_target(w, z, y, x)
-                return (u, v, w)
-            else:
-                return (u, v)
+        elif self.U.interp_method == "cgrid_velocity":
+            (u, v) = self.c_grid_interpolation2D(time, z, y, x, particle=particle, applyConversion=applyConversion)
+        if "3D" in self.vector_type:
+            w = self.W.eval(time, z, y, x, particle=particle, applyConversion=applyConversion)
+            return (u, v, w)
         else:
-            interp = {
-                "cgrid_velocity": {
-                    "2D": self.spatial_c_grid_interpolation2D,
-                    "3D": self.spatial_c_grid_interpolation3D,
-                },
-                "partialslip": {"2D": self.spatial_slip_interpolation, "3D": self.spatial_slip_interpolation},
-                "freeslip": {"2D": self.spatial_slip_interpolation, "3D": self.spatial_slip_interpolation},
-            }
-            grid = self.U.grid
-            ti = self.U._time_index(time)
-            if ti < grid.tdim - 1 and time > grid.time[ti]:
-                t0 = grid.time[ti]
-                t1 = grid.time[ti + 1]
-                if "3D" in self.vector_type:
-                    (u0, v0, w0) = interp[self.U.interp_method]["3D"](
-                        ti, z, y, x, time, particle=particle, applyConversion=applyConversion
-                    )
-                    (u1, v1, w1) = interp[self.U.interp_method]["3D"](
-                        ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion
-                    )
-                    w = w0 + (w1 - w0) * ((time - t0) / (t1 - t0))
-                else:
-                    (u0, v0) = interp[self.U.interp_method]["2D"](
-                        ti, z, y, x, time, particle=particle, applyConversion=applyConversion
-                    )
-                    (u1, v1) = interp[self.U.interp_method]["2D"](
-                        ti + 1, z, y, x, time, particle=particle, applyConversion=applyConversion
-                    )
-                u = u0 + (u1 - u0) * ((time - t0) / (t1 - t0))
-                v = v0 + (v1 - v0) * ((time - t0) / (t1 - t0))
-                if "3D" in self.vector_type:
-                    return (u, v, w)
-                else:
-                    return (u, v)
-            else:
-                # Skip temporal interpolation if time is outside
-                # of the defined time range or if we have hit an
-                # exact value in the time array.
-                if "3D" in self.vector_type:
-                    return interp[self.U.interp_method]["3D"](
-                        ti, z, y, x, grid.time[ti], particle=particle, applyConversion=applyConversion
-                    )
-                else:
-                    return interp[self.U.interp_method]["2D"](
-                        ti, z, y, x, grid.time[ti], particle=particle, applyConversion=applyConversion
-                    )
+            return (u, v)
 
     def __getitem__(self, key):
         try:

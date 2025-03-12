@@ -68,9 +68,9 @@ def data_2d():
 )
 def test_raw_2d_interpolation(data_2d, func, eta, xsi, expected):
     """Test the 2D interpolation functions on the raw arrays."""
-    ti = 0
+    tau, ti = 0, 0
     yi, xi = 1, 1
-    ctx = interpolation.InterpolationContext2D(data_2d, eta, xsi, ti, yi, xi)
+    ctx = interpolation.InterpolationContext2D(data_2d, tau, eta, xsi, ti, yi, xi)
     assert func(ctx) == expected
 
 

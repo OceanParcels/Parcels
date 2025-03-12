@@ -457,7 +457,8 @@ def test_cgrid_uniform_2dvel(time):
     assert (pset[0].meridional - 1) < 1e-6
 
 
-@pytest.mark.parametrize("vert_mode", ["zlev", "slev1", "slev2"])
+@pytest.mark.v4alpha
+@pytest.mark.parametrize("vert_mode", ["zlev"])  # , "slev1", "slev2"])  # TODO v4: time-varying depth not supported yet
 @pytest.mark.parametrize("time", [True, False])
 def test_cgrid_uniform_3dvel(vert_mode, time):
     lon = np.array([[0, 2], [0.4, 1.5]])
