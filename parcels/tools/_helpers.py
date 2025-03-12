@@ -154,6 +154,7 @@ def timedelta_to_float(dt: float | timedelta | np.timedelta64) -> float:
     return float(dt)
 
 
-def calculate_next_ti(ti, tau, tdim):
+def should_calculate_next_ti(ti: int, tau: float, tdim: int) -> bool:
     """Check if the time is beyond the last time in the field"""
-    return tau > np.finfo(float).eps and ti < tdim - 1
+    tau_is_significant = tau > np.finfo(float).eps
+    return tau_is_significant and ti < tdim - 1

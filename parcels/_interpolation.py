@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from parcels._typing import GridIndexingType
-from parcels.tools._helpers import calculate_next_ti
+from parcels.tools._helpers import should_calculate_next_ti
 
 
 @dataclass
@@ -118,7 +118,7 @@ def _nearest_2d(ctx: InterpolationContext2D) -> float:
     xii = ctx.xi if ctx.xsi <= 0.5 else ctx.xi + 1
     yii = ctx.yi if ctx.eta <= 0.5 else ctx.yi + 1
     ft0 = ctx.data[ctx.ti, yii, xii]
-    if not calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
+    if not should_calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
         return ft0
     ft1 = ctx.data[ctx.ti + 1, yii, xii]
     return (1 - ctx.tau) * ft0 + ctx.tau * ft1
@@ -140,7 +140,7 @@ def _interp_on_unit_square(*, eta: float, xsi: float, data: np.ndarray, yi: int,
 @register_2d_interpolator("freeslip")
 def _linear_2d(ctx: InterpolationContext2D) -> float:
     ft0 = _interp_on_unit_square(eta=ctx.eta, xsi=ctx.xsi, data=ctx.data[ctx.ti, :, :], yi=ctx.yi, xi=ctx.xi)
-    if not calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
+    if not should_calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
         return ft0
     ft1 = _interp_on_unit_square(eta=ctx.eta, xsi=ctx.xsi, data=ctx.data[ctx.ti + 1, :, :], yi=ctx.yi, xi=ctx.xi)
     return (1 - ctx.tau) * ft0 + ctx.tau * ft1
@@ -157,9 +157,9 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
     land = np.isclose(data[ti, yi : yi + 2, xi : xi + 2], 0.0)
     nb_land = np.sum(land)
 
-    def _get_data_temporalinterp(ti, yi, xi):
+    def _get_data_temporalinterp(*, ti, yi, xi):
         dt0 = data[ti, yi, xi]
-        if not calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
+        if not should_calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
             return dt0
         dt1 = data[ti + 1, yi, xi]
         return (1 - ctx.tau) * dt0 + ctx.tau * dt1
@@ -176,9 +176,9 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
                     if land[j][i] == 1:  # index search led us directly onto land
                         return 0
                     else:
-                        return _get_data_temporalinterp(ti, yi + j, xi + i)
+                        return _get_data_temporalinterp(ti=ti, yi=yi + j, xi=xi + i)
                 elif land[j][i] == 0:
-                    val += _get_data_temporalinterp(ti, yi + j, xi + i) / distance
+                    val += _get_data_temporalinterp(ti=ti, yi=yi + j, zi=xi + i) / distance
                     w_sum += 1 / distance
         return val / w_sum
     else:
@@ -189,7 +189,7 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
 @register_2d_interpolator("bgrid_tracer")
 def _tracer_2d(ctx: InterpolationContext2D) -> float:
     ft0 = ctx.data[ctx.ti, ctx.yi + 1, ctx.xi + 1]
-    if not calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
+    if not should_calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
         return ft0
     ft1 = ctx.data[ctx.ti + 1, ctx.yi + 1, ctx.xi + 1]
     return (1 - ctx.tau) * ft0 + ctx.tau * ft1
@@ -201,7 +201,7 @@ def _nearest_3d(ctx: InterpolationContext3D) -> float:
     yii = ctx.yi if ctx.eta <= 0.5 else ctx.yi + 1
     zii = ctx.zi if ctx.zeta <= 0.5 else ctx.zi + 1
     ft0 = ctx.data[ctx.ti, zii, yii, xii]
-    if not calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
+    if not should_calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
         return ft0
     ft1 = ctx.data[ctx.ti + 1, zii, yii, xii]
     return (1 - ctx.tau) * ft0 + ctx.tau * ft1
@@ -222,7 +222,7 @@ def _cgrid_W_velocity_3d(ctx: InterpolationContext3D) -> float:
         )
     elif ctx.gridindexingtype in ["mitgcm", "croco"]:
         ft0 = _get_cgrid_depth_point(zeta=ctx.zeta, data=ctx.data[ctx.ti, :, :, :], zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
-    if not calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
+    if not should_calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
         return ft0
 
     if ctx.gridindexingtype == "nemo":
@@ -239,9 +239,9 @@ def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:
     land = np.isclose(ctx.data[ctx.ti, ctx.zi : ctx.zi + 2, ctx.yi : ctx.yi + 2, ctx.xi : ctx.xi + 2], 0.0)
     nb_land = np.sum(land)
 
-    def _get_data_temporalinterp(ti, zi, yi, xi):
+    def _get_data_temporalinterp(*, ti, zi, yi, xi):
         dt0 = ctx.data[ti, zi, yi, xi]
-        if not calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
+        if not should_calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
             return dt0
         dt1 = data[ti + 1, zi, yi, xi]
         return (1 - ctx.tau) * dt0 + ctx.tau * dt1
@@ -259,9 +259,11 @@ def _linear_invdist_land_tracer_3d(ctx: InterpolationContext3D) -> float:
                         if land[k][j][i] == 1:  # index search led us directly onto land
                             return 0
                         else:
-                            return _get_data_temporalinterp(ctx.ti, ctx.zi + k, ctx.yi + j, ctx.xi + i)
+                            return _get_data_temporalinterp(ti=ctx.ti, zi=ctx.zi + k, yi=ctx.yi + j, xi=ctx.xi + i)
                     elif land[k][j][i] == 0:
-                        val += _get_data_temporalinterp(ctx.ti, ctx.zi + k, ctx.yi + j, ctx.xi + i) / distance
+                        val += (
+                            _get_data_temporalinterp(ti=ctx.ti, zi=ctx.zi + k, yi=ctx.yi + j, xi=ctx.xi + i) / distance
+                        )
                         w_sum += 1 / distance
         return val / w_sum
     else:
@@ -307,7 +309,7 @@ def _linear_3d(ctx: InterpolationContext3D) -> float:
     zdim = ctx.data.shape[1]
     data_3d = ctx.data[ctx.ti, :, :, :]
     fz0, fz1 = _get_3d_f0_f1(eta=ctx.eta, xsi=ctx.xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
-    if calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
+    if should_calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
         data_3d = ctx.data[ctx.ti + 1, :, :, :]
         fz0_t1, fz1_t1 = _get_3d_f0_f1(eta=ctx.eta, xsi=ctx.xsi, data=data_3d, zi=ctx.zi, yi=ctx.yi, xi=ctx.xi)
         fz0 = (1 - ctx.tau) * fz0 + ctx.tau * fz0_t1
@@ -337,7 +339,7 @@ def _linear_3d_bgrid_w_velocity(ctx: InterpolationContext3D) -> float:
 @register_3d_interpolator("cgrid_tracer")
 def _tracer_3d(ctx: InterpolationContext3D) -> float:
     ft0 = ctx.data[ctx.ti, ctx.zi, ctx.yi + 1, ctx.xi + 1]
-    if not calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
+    if not should_calculate_next_ti(ctx.ti, ctx.tau, ctx.data.shape[0]):
         return ft0
     ft1 = ctx.data[ctx.ti + 1, ctx.zi, ctx.yi + 1, ctx.xi + 1]
     return (1 - ctx.tau) * ft0 + ctx.tau * ft1

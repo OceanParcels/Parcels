@@ -26,7 +26,7 @@ from parcels._typing import (
     assert_valid_gridindexingtype,
     assert_valid_interp_method,
 )
-from parcels.tools._helpers import calculate_next_ti, default_repr, field_repr
+from parcels.tools._helpers import default_repr, field_repr, should_calculate_next_ti
 from parcels.tools.converters import (
     TimeConverter,
     UnitConverter,
@@ -601,7 +601,7 @@ class Field:
         self.data *= factor
 
     def _search_indices(self, time, z, y, x, particle=None, search2D=False):
-        tau, ti = self._time_index(time)
+        tau, ti = self._search_time_index(time)
 
         if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             (zeta, eta, xsi, zi, yi, xi) = _search_indices_rectilinear(
@@ -660,8 +660,8 @@ class Field:
             e = add_note(e, f"Error interpolating field '{self.name}'.", before=True)
             raise e
 
-    def _time_index(self, time):
-        """Find the index in the time array associated with a given time.
+    def _search_time_index(self, time):
+        """Find and return the index and relative coordinate in the time array associated with a given time.
 
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
@@ -950,7 +950,7 @@ class VectorField:
             return (u, v)
 
         u, v = _calc_UV(ti, yi, xi)
-        if calculate_next_ti(ti, tau, self.U.grid.tdim):
+        if should_calculate_next_ti(ti, tau, self.U.grid.tdim):
             ut1, vt1 = _calc_UV(ti + 1, yi, xi)
             u = (1 - tau) * u + tau * ut1
             v = (1 - tau) * v + tau * vt1
@@ -1011,7 +1011,7 @@ class VectorField:
         w0 = self.W.data[ti, zi, yi + 1, xi + 1]
         w1 = self.W.data[ti, zi + 1, yi + 1, xi + 1]
 
-        if calculate_next_ti(ti, tau, self.U.grid.tdim):
+        if should_calculate_next_ti(ti, tau, self.U.grid.tdim):
             u0 = (1 - tau) * u0 + tau * self.U.data[ti + 1, zi, yi + 1, xi]
             u1 = (1 - tau) * u1 + tau * self.U.data[ti + 1, zi, yi + 1, xi + 1]
             v0 = (1 - tau) * v0 + tau * self.V.data[ti + 1, zi, yi, xi + 1]
@@ -1320,7 +1320,6 @@ class VectorField:
                 u = self.U.units.to_target(u, z, y, x)
                 v = self.V.units.to_target(v, z, y, x)
         elif self.U.interp_method == "cgrid_velocity":
-            tau, ti = self.U._time_index(time)
             (u, v) = self.c_grid_interpolation2D(time, z, y, x, particle=particle, applyConversion=applyConversion)
         if "3D" in self.vector_type:
             w = self.W.eval(time, z, y, x, particle=particle, applyConversion=applyConversion)
