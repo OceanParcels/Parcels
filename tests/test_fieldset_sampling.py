@@ -5,6 +5,7 @@ from math import cos, pi
 import numpy as np
 import pytest
 import xarray as xr
+from numpy.testing import assert_allclose
 
 from parcels import (
     AdvectionRK4,
@@ -92,10 +93,10 @@ def test_fieldset_sample(fieldset):
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([fieldset.UV[0, 0.0, 70.0, x][1] for x in lon])
     u_s = np.array([fieldset.UV[0, 0.0, y, -45.0][0] for y in lat])
-    assert np.allclose(
+    assert_allclose(
         v_s, lon, rtol=1e-5
     )  # Tolerances were rtol=1e-7, increased due to numpy v2 float32 changes (see #1603)
-    assert np.allclose(u_s, lat, rtol=1e-5)
+    assert_allclose(u_s, lat, rtol=1e-5)
 
 
 def test_fieldset_sample_eval(fieldset):
@@ -105,10 +106,10 @@ def test_fieldset_sample_eval(fieldset):
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([fieldset.UV.eval(0, 0.0, 70.0, x)[1] for x in lon])
     u_s = np.array([fieldset.UV.eval(0, 0.0, y, 0.0)[0] for y in lat])
-    assert np.allclose(
+    assert_allclose(
         v_s, lon, rtol=1e-5
     )  # Tolerances were rtol=1e-7, increased due to numpy v2 float32 changes (see #1603)
-    assert np.allclose(u_s, lat, rtol=1e-5)
+    assert_allclose(u_s, lat, rtol=1e-5)
 
 
 @pytest.mark.v4remove
@@ -168,7 +169,7 @@ def test_pset_from_field():
     pdens = np.histogram2d(pset.lat, pset.lon, bins=[np.linspace(0.0, 1.0, ydim + 1), np.linspace(0.0, 1.0, xdim + 1)])[
         0
     ]
-    assert np.allclose(pdens / sum(pdens.flatten()), startfield / sum(startfield.flatten()), atol=1e-2)
+    assert_allclose(pdens / sum(pdens.flatten()), startfield / sum(startfield.flatten()), atol=1e-2)
 
 
 def test_nearest_neighbor_interpolation2D():
@@ -189,8 +190,8 @@ def test_nearest_neighbor_interpolation2D():
     xv, yv = np.meshgrid(np.linspace(0.0, 1.0, int(np.sqrt(npart))), np.linspace(0.0, 1.0, int(np.sqrt(npart))))
     pset = ParticleSet(fieldset, pclass=pclass(), lon=xv.flatten(), lat=yv.flatten())
     pset.execute(SampleP, endtime=1, dt=1)
-    assert np.allclose(pset.p[(pset.lon < 0.5) & (pset.lat > 0.5)], 1.0, rtol=1e-5)
-    assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5)], 0.0, rtol=1e-5)
+    assert_allclose(pset.p[(pset.lon < 0.5) & (pset.lat > 0.5)], 1.0, rtol=1e-5)
+    assert_allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5)], 0.0, rtol=1e-5)
 
 
 def test_nearest_neighbor_interpolation3D():
@@ -215,8 +216,8 @@ def test_nearest_neighbor_interpolation3D():
     pset2 = ParticleSet(fieldset, pclass=pclass(), lon=xv.flatten(), lat=yv.flatten(), depth=np.ones(npart))
     pset.add(pset2)
     pset.execute(SampleP, endtime=1, dt=1)
-    assert np.allclose(pset.p[(pset.lon < 0.5) & (pset.lat > 0.5) & (pset.depth > 0.5)], 1.0, rtol=1e-5)
-    assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5) & (pset.depth < 0.5)], 0.0, rtol=1e-5)
+    assert_allclose(pset.p[(pset.lon < 0.5) & (pset.lat > 0.5) & (pset.depth > 0.5)], 1.0, rtol=1e-5)
+    assert_allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5) & (pset.depth < 0.5)], 0.0, rtol=1e-5)
 
 
 @pytest.mark.parametrize("withDepth", [True, False])
@@ -249,7 +250,7 @@ def test_inversedistance_nearland(withDepth, arrtype):
     if arrtype == "rand":
         assert np.all((pset.p > 2) & (pset.p < 3))
     else:
-        assert np.allclose(pset.p, 1.0, rtol=1e-5)
+        assert_allclose(pset.p, 1.0, rtol=1e-5)
 
     success = False
     try:
@@ -298,17 +299,17 @@ def test_partialslip_nearland_zonal(boundaryslip, withW, withT):
     kernel = AdvectionRK4_3D if withW else AdvectionRK4
     pset.execute(kernel, endtime=2, dt=1)
     if boundaryslip == "partialslip":
-        assert np.allclose([p.lon for p in pset if p.lat >= 0.5 and p.lat <= 3.5], 0.1)
-        assert np.allclose([pset[0].lon, pset[-1].lon], 0.06)
-        assert np.allclose([pset[1].lon, pset[-2].lon], 0.08)
+        assert_allclose([p.lon for p in pset if p.lat >= 0.5 and p.lat <= 3.5], 0.1)
+        assert_allclose([pset[0].lon, pset[-1].lon], 0.06)
+        assert_allclose([pset[1].lon, pset[-2].lon], 0.08)
         if withW:
-            assert np.allclose([p.depth for p in pset if p.lat >= 0.5 and p.lat <= 3.5], 0.1)
-            assert np.allclose([pset[0].depth, pset[-1].depth], 0.06)
-            assert np.allclose([pset[1].depth, pset[-2].depth], 0.08)
+            assert_allclose([p.depth for p in pset if p.lat >= 0.5 and p.lat <= 3.5], 0.1)
+            assert_allclose([pset[0].depth, pset[-1].depth], 0.06)
+            assert_allclose([pset[1].depth, pset[-2].depth], 0.08)
     else:
-        assert np.allclose([p.lon for p in pset], 0.1)
+        assert_allclose([p.lon for p in pset], 0.1)
         if withW:
-            assert np.allclose([p.depth for p in pset], 0.1)
+            assert_allclose([p.depth for p in pset], 0.1)
 
 
 @pytest.mark.parametrize("boundaryslip", ["freeslip", "partialslip"])
@@ -340,17 +341,17 @@ def test_partialslip_nearland_meridional(boundaryslip, withW):
     kernel = AdvectionRK4_3D if withW else AdvectionRK4
     pset.execute(kernel, endtime=2, dt=1)
     if boundaryslip == "partialslip":
-        assert np.allclose([p.lat for p in pset if p.lon >= 0.5 and p.lon <= 3.5], 0.1)
-        assert np.allclose([pset[0].lat, pset[-1].lat], 0.06)
-        assert np.allclose([pset[1].lat, pset[-2].lat], 0.08)
+        assert_allclose([p.lat for p in pset if p.lon >= 0.5 and p.lon <= 3.5], 0.1)
+        assert_allclose([pset[0].lat, pset[-1].lat], 0.06)
+        assert_allclose([pset[1].lat, pset[-2].lat], 0.08)
         if withW:
-            assert np.allclose([p.depth for p in pset if p.lon >= 0.5 and p.lon <= 3.5], 0.1)
-            assert np.allclose([pset[0].depth, pset[-1].depth], 0.06)
-            assert np.allclose([pset[1].depth, pset[-2].depth], 0.08)
+            assert_allclose([p.depth for p in pset if p.lon >= 0.5 and p.lon <= 3.5], 0.1)
+            assert_allclose([pset[0].depth, pset[-1].depth], 0.06)
+            assert_allclose([pset[1].depth, pset[-2].depth], 0.08)
     else:
-        assert np.allclose([p.lat for p in pset], 0.1)
+        assert_allclose([p.lat for p in pset], 0.1)
         if withW:
-            assert np.allclose([p.depth for p in pset], 0.1)
+            assert_allclose([p.depth for p in pset], 0.1)
 
 
 @pytest.mark.parametrize("boundaryslip", ["freeslip", "partialslip"])
@@ -372,13 +373,13 @@ def test_partialslip_nearland_vertical(boundaryslip):
     )
     pset.execute(AdvectionRK4, endtime=2, dt=1)
     if boundaryslip == "partialslip":
-        assert np.allclose([p.lon for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
-        assert np.allclose([p.lat for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
-        assert np.allclose([pset[0].lon, pset[-1].lon, pset[0].lat, pset[-1].lat], 0.06)
-        assert np.allclose([pset[1].lon, pset[-2].lon, pset[1].lat, pset[-2].lat], 0.08)
+        assert_allclose([p.lon for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
+        assert_allclose([p.lat for p in pset if p.depth >= 0.5 and p.depth <= 3.5], 0.1)
+        assert_allclose([pset[0].lon, pset[-1].lon, pset[0].lat, pset[-1].lat], 0.06)
+        assert_allclose([pset[1].lon, pset[-2].lon, pset[1].lat, pset[-2].lat], 0.08)
     else:
-        assert np.allclose([p.lon for p in pset], 0.1)
-        assert np.allclose([p.lat for p in pset], 0.1)
+        assert_allclose([p.lon for p in pset], 0.1)
+        assert_allclose([p.lat for p in pset], 0.1)
 
 
 def test_fieldset_sample_particle():
@@ -396,11 +397,11 @@ def test_fieldset_sample_particle():
     lat = np.linspace(-80, 80, npart)
     pset = ParticleSet(fieldset, pclass=pclass(), lon=lon, lat=np.zeros(npart) + 70.0)
     pset.execute(pset.Kernel(SampleUV), endtime=1.0, dt=1.0)
-    assert np.allclose(pset.v, lon, rtol=1e-6)
+    assert_allclose(pset.v, lon, rtol=1e-6)
 
     pset = ParticleSet(fieldset, pclass=pclass(), lat=lat, lon=np.zeros(npart) - 45.0)
     pset.execute(pset.Kernel(SampleUV), endtime=1.0, dt=1.0)
-    assert np.allclose(pset.u, lat, rtol=1e-6)
+    assert_allclose(pset.u, lat, rtol=1e-6)
 
 
 def test_fieldset_sample_geographic(fieldset_geometric):
@@ -412,11 +413,11 @@ def test_fieldset_sample_geographic(fieldset_geometric):
 
     pset = ParticleSet(fieldset, pclass=pclass(), lon=lon, lat=np.zeros(npart) + 70.0)
     pset.execute(pset.Kernel(SampleUV), endtime=1.0, dt=1.0)
-    assert np.allclose(pset.v, lon, rtol=1e-6)
+    assert_allclose(pset.v, lon, rtol=1e-6)
 
     pset = ParticleSet(fieldset, pclass=pclass(), lat=lat, lon=np.zeros(npart) - 45.0)
     pset.execute(pset.Kernel(SampleUV), endtime=1.0, dt=1.0)
-    assert np.allclose(pset.u, lat, rtol=1e-6)
+    assert_allclose(pset.u, lat, rtol=1e-6)
 
 
 def test_fieldset_sample_geographic_noconvert(fieldset_geometric):
@@ -428,11 +429,11 @@ def test_fieldset_sample_geographic_noconvert(fieldset_geometric):
 
     pset = ParticleSet(fieldset, pclass=pclass(), lon=lon, lat=np.zeros(npart) + 70.0)
     pset.execute(pset.Kernel(SampleUVNoConvert), endtime=1.0, dt=1.0)
-    assert np.allclose(pset.v, lon * 1000 * 1.852 * 60, rtol=1e-6)
+    assert_allclose(pset.v, lon * 1000 * 1.852 * 60, rtol=1e-6)
 
     pset = ParticleSet(fieldset, pclass=pclass(), lat=lat, lon=np.zeros(npart) - 45.0)
     pset.execute(pset.Kernel(SampleUVNoConvert), endtime=1.0, dt=1.0)
-    assert np.allclose(pset.u, lat * 1000 * 1.852 * 60, rtol=1e-6)
+    assert_allclose(pset.u, lat * 1000 * 1.852 * 60, rtol=1e-6)
 
 
 def test_fieldset_sample_geographic_polar(fieldset_geometric_polar):
@@ -444,11 +445,11 @@ def test_fieldset_sample_geographic_polar(fieldset_geometric_polar):
 
     pset = ParticleSet(fieldset, pclass=pclass(), lon=lon, lat=np.zeros(npart) + 70.0)
     pset.execute(pset.Kernel(SampleUV), endtime=1.0, dt=1.0)
-    assert np.allclose(pset.v, lon, rtol=1e-6)
+    assert_allclose(pset.v, lon, rtol=1e-6)
 
     pset = ParticleSet(fieldset, pclass=pclass(), lat=lat, lon=np.zeros(npart) - 45.0)
     pset.execute(pset.Kernel(SampleUV), endtime=1.0, dt=1.0)
-    assert np.allclose(pset.u, lat, rtol=1e-2)
+    assert_allclose(pset.u, lat, rtol=1e-2)
 
 
 def test_meridionalflow_spherical():
@@ -559,27 +560,27 @@ def test_sampling_out_of_bounds_time(allow_time_extrapolation):
     pset = ParticleSet(fieldset, pclass=pclass(), lon=[0.5], lat=[0.5], time=-1.0)
     if allow_time_extrapolation:
         pset.execute(SampleP, endtime=-0.9, dt=0.1)
-        assert np.allclose(pset.p, 0.0, rtol=1e-5)
+        assert_allclose(pset.p, 0.0, rtol=1e-5)
     else:
         with pytest.raises(RuntimeError):
             pset.execute(SampleP, endtime=-0.9, dt=0.1)
 
     pset = ParticleSet(fieldset, pclass=pclass(), lon=[0.5], lat=[0.5], time=0)
     pset.execute(SampleP, runtime=0.1, dt=0.1)
-    assert np.allclose(pset.p, 0.0, rtol=1e-5)
+    assert_allclose(pset.p, 0.0, rtol=1e-5)
 
     pset = ParticleSet(fieldset, pclass=pclass(), lon=[0.5], lat=[0.5], time=0.5)
     pset.execute(SampleP, runtime=0.1, dt=0.1)
-    assert np.allclose(pset.p, 0.5, rtol=1e-5)
+    assert_allclose(pset.p, 0.5, rtol=1e-5)
 
     pset = ParticleSet(fieldset, pclass=pclass(), lon=[0.5], lat=[0.5], time=1.0)
     pset.execute(SampleP, runtime=0.1, dt=0.1)
-    assert np.allclose(pset.p, 1.0, rtol=1e-5)
+    assert_allclose(pset.p, 1.0, rtol=1e-5)
 
     pset = ParticleSet(fieldset, pclass=pclass(), lon=[0.5], lat=[0.5], time=2.0)
     if allow_time_extrapolation:
         pset.execute(SampleP, runtime=0.1, dt=0.1)
-        assert np.allclose(pset.p, 1.0, rtol=1e-5)
+        assert_allclose(pset.p, 1.0, rtol=1e-5)
     else:
         with pytest.raises(RuntimeError):
             pset.execute(SampleP, runtime=0.1, dt=0.1)
@@ -655,7 +656,7 @@ def test_sampling_multigrids_non_vectorfield_from_file(npart, tmpdir):
 
     kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
     pset.execute(kernels, runtime=10, dt=1)
-    assert np.allclose(pset.sample_var, 10.0)
+    assert_allclose(pset.sample_var, 10.0)
 
 
 @pytest.mark.parametrize("npart", [1, 10])
@@ -694,7 +695,7 @@ def test_sampling_multigrids_non_vectorfield(npart):
 
     kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
     pset.execute(kernels, runtime=10, dt=1)
-    assert np.allclose(pset.sample_var, 10.0)
+    assert_allclose(pset.sample_var, 10.0)
 
 
 @pytest.mark.parametrize("ugridfactor", [1, 10])
@@ -830,7 +831,7 @@ def test_nestedfields():
     pset.execute(pset.Kernel(AdvectionRK4) + SampleP + Recover, runtime=1, dt=1)
     assert np.isclose(pset.lat[0], 0)
     assert np.isclose(pset.p[0], 999)
-    assert np.allclose(fieldset.UV[0][0, 0, 0, 0], [0.1, 0.2])
+    assert_allclose(fieldset.UV[0][0, 0, 0, 0], [0.1, 0.2])
 
 
 def test_fieldset_sampling_updating_order(tmp_zarrfile):

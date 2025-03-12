@@ -4,6 +4,7 @@ from datetime import timedelta
 import numpy as np
 import pytest
 import xarray as xr
+from numpy.testing import assert_allclose
 
 from parcels import (
     AdvectionRK4,
@@ -243,7 +244,7 @@ def test_rectilinear_s_grid_sampling(z4d):
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=[lon], lat=[lat], depth=[bath_func(lon) * ratio])
 
     pset.execute(pset.Kernel(sampleTemp), runtime=1)
-    assert np.allclose(pset.temp[0], ratio, atol=1e-4)
+    assert_allclose(pset.temp[0], ratio, atol=1e-4)
 
 
 def test_rectilinear_s_grids_advect1():
@@ -286,7 +287,7 @@ def test_rectilinear_s_grids_advect1():
     pset = ParticleSet.from_list(fieldset, Particle, lon=lon, lat=lat, depth=depth)
 
     pset.execute(AdvectionRK4_3D, runtime=10000, dt=500)
-    assert np.allclose(pset.depth / bath_func(pset.lon), ratio)
+    assert_allclose(pset.depth / bath_func(pset.lon), ratio)
 
 
 def test_rectilinear_s_grids_advect2():
@@ -330,7 +331,7 @@ def test_rectilinear_s_grids_advect2():
     kernel = pset.Kernel(moveEast)
     for _ in range(10):
         pset.execute(kernel, runtime=100, dt=50)
-        assert np.allclose(pset.relDepth[0], depth / bath_func(pset.lon[0]))
+        assert_allclose(pset.relDepth[0], depth / bath_func(pset.lon[0]))
 
 
 def test_curvilinear_grids():
@@ -362,7 +363,7 @@ def test_curvilinear_grids():
 
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=[400, -200], lat=[600, 600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=1)
-    assert np.allclose(pset.speed[0], 1000)
+    assert_allclose(pset.speed[0], 1000)
 
 
 def test_nemo_grid():
@@ -627,10 +628,10 @@ def test_popgrid(vert_discretisation):
         assert pset.out_of_bounds[1] == 0
         assert pset.out_of_bounds[2] == 1
     else:
-        assert np.allclose(pset.zonal, 0.015)
-        assert np.allclose(pset.meridional, 0.01)
-        assert np.allclose(pset.vert, -0.01)
-        assert np.allclose(pset.tracer, 1)
+        assert_allclose(pset.zonal, 0.015)
+        assert_allclose(pset.meridional, 0.01)
+        assert_allclose(pset.vert, -0.01)
+        assert_allclose(pset.tracer, 1)
 
 
 @pytest.mark.parametrize("gridindexingtype", ["mitgcm", "nemo"])
@@ -716,7 +717,7 @@ def test_cgrid_indexing(gridindexingtype, coordtype):
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=4e3, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4, runtime=timedelta(hours=14), dt=timedelta(minutes=5))
-    assert np.allclose(pset.radius, pset.radius_start, atol=10)
+    assert_allclose(pset.radius, pset.radius_start, atol=10)
 
 
 @pytest.mark.parametrize("gridindexingtype", ["mitgcm", "nemo"])
@@ -792,7 +793,7 @@ def test_cgrid_indexing_3D(gridindexingtype, withtime):
     pset = ParticleSet(fieldset, pclass=MyParticle, depth=4e3, lon=0, lat=0, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D, runtime=timedelta(hours=14), dt=timedelta(minutes=5))
-    assert np.allclose(pset.radius, pset.radius_start, atol=10)
+    assert_allclose(pset.radius, pset.radius_start, atol=10)
 
 
 @pytest.mark.parametrize("gridindexingtype", ["pop", "mom5"])
@@ -869,7 +870,7 @@ def test_bgrid_indexing_3D(gridindexingtype, withtime):
     pset = ParticleSet(fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D, runtime=timedelta(hours=14), dt=timedelta(minutes=5))
-    assert np.allclose(pset.radius, pset.radius_start, atol=10)
+    assert_allclose(pset.radius, pset.radius_start, atol=10)
 
 
 @pytest.mark.parametrize("gridindexingtype", ["mom5"])  # TODO v4: add pop in params?
@@ -971,10 +972,10 @@ def test_bgrid_interpolation(gridindexingtype, extrapolation):
 
         convfactor = 0.01 if gridindexingtype == "pop" else 1.0
         if pointtype in ["U", "V"]:
-            assert np.allclose(pset.Uvel[0], u * convfactor)
-            assert np.allclose(pset.Vvel[0], v * convfactor)
+            assert_allclose(pset.Uvel[0], u * convfactor)
+            assert_allclose(pset.Vvel[0], v * convfactor)
         elif pointtype == "W":
             if extrapolation:
-                assert np.allclose(pset.Wvel[0], 0, atol=1e-9)
+                assert_allclose(pset.Wvel[0], 0, atol=1e-9)
             else:
-                assert np.allclose(pset.Wvel[0], w * convfactor)
+                assert_allclose(pset.Wvel[0], w * convfactor)
