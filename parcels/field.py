@@ -1,7 +1,6 @@
 import collections
 import math
 import warnings
-from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -160,14 +159,12 @@ class Field:
         allow_time_extrapolation: bool | None = None,
         gridindexingtype: GridIndexingType = "nemo",
         to_write: bool = False,
-        **kwargs,
+        data_full_zdim=None,
     ):
         if not isinstance(name, tuple):
             self.name = name
-            self.filebuffername = name
         else:
             self.name = name[0]
-            self.filebuffername = name[1]
         self.data = data
         if grid:
             self._grid = grid
@@ -187,7 +184,6 @@ class Field:
             self.units = unitconverters_map[self.fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
-        self._loaded_time_indices: Iterable[int] = []  # type: ignore
         if isinstance(interp_method, dict):
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
@@ -214,30 +210,18 @@ class Field:
             self.allow_time_extrapolation = allow_time_extrapolation
 
         self.data = self._reshape(self.data)
-        self._loaded_time_indices = range(self.grid.tdim)
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
         self.data[np.isnan(self.data)] = 0.0
 
-        self._dimensions = kwargs.pop("dimensions", None)
-        self._dataFiles = kwargs.pop("dataFiles", None)
-        self._creation_log = kwargs.pop("creation_log", "")
-
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
-        self.data_full_zdim = kwargs.pop("data_full_zdim", None)
-        self.filebuffers = [None] * 2
-        if len(kwargs) > 0:
-            raise SyntaxError(f'Field received an unexpected keyword argument "{list(kwargs.keys())[0]}"')
+        self.data_full_zdim = data_full_zdim
 
     def __repr__(self) -> str:
         return field_repr(self)
-
-    @property
-    def dimensions(self):
-        return self._dimensions
 
     @property
     def grid(self):
@@ -286,27 +270,19 @@ class Field:
             return filenames
 
     @staticmethod
-    def _collect_timeslices(data_filenames, dimensions, indices):
-        timeslices = []
-        dataFiles = []
+    def _collect_time(data_filenames, dimensions, indices):
+        time = []
         for fname in data_filenames:
             with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                 ftime = filebuffer.time
-                timeslices.append(ftime)
-                dataFiles.append([fname] * len(ftime))
-        time = np.concatenate(timeslices).ravel()
-        dataFiles = np.concatenate(dataFiles).ravel()
+                time.append(ftime)
+        time = np.concatenate(time).ravel()
         if time.size == 1 and time[0] is None:
             time[0] = 0
         time_origin = TimeConverter(time[0])
         time = time_origin.reltime(time)
 
-        if not np.all((time[1:] - time[:-1]) > 0):
-            id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
-            raise AssertionError(
-                f"Please make sure your netCDF files are ordered in time. First pair of non-ordered files: {dataFiles[id_not_ordered]}, {dataFiles[id_not_ordered + 1]}"
-            )
-        return time, time_origin, timeslices, dataFiles
+        return time, time_origin
 
     @classmethod
     def from_netcdf(
@@ -430,17 +406,11 @@ class Field:
             # Concatenate time variable to determine overall dimension
             # across multiple files
             if "time" in dimensions:
-                time, time_origin, timeslices, dataFiles = cls._collect_timeslices(data_filenames, dimensions, indices)
+                time, time_origin = cls._collect_time(data_filenames, dimensions, indices)
                 grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-                kwargs["dataFiles"] = dataFiles
             else:  # e.g. for the CROCO CS_w field, see https://github.com/OceanParcels/Parcels/issues/1831
                 grid = Grid.create_grid(lon, lat, depth, np.array([0.0]), time_origin=TimeConverter(0.0), mesh=mesh)
                 data_filenames = [data_filenames[0]]
-        elif grid is not None and ("dataFiles" not in kwargs or kwargs["dataFiles"] is None):
-            # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
-            # ==== correct file time series again.
-            _, _, _, dataFiles = cls._collect_timeslices(data_filenames, dimensions, indices)
-            kwargs["dataFiles"] = dataFiles
 
         if "time" in indices:
             warnings.warn(
@@ -472,8 +442,6 @@ class Field:
 
         if allow_time_extrapolation is None:
             allow_time_extrapolation = False if "time" in dimensions else True
-
-        kwargs["dimensions"] = dimensions.copy()
 
         return cls(
             variable,
