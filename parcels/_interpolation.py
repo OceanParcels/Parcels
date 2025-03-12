@@ -178,7 +178,7 @@ def _linear_invdist_land_tracer_2d(ctx: InterpolationContext2D) -> float:
                     else:
                         return _get_data_temporalinterp(ti=ti, yi=yi + j, xi=xi + i)
                 elif land[j][i] == 0:
-                    val += _get_data_temporalinterp(ti=ti, yi=yi + j, zi=xi + i) / distance
+                    val += _get_data_temporalinterp(ti=ti, yi=yi + j, xi=xi + i) / distance
                     w_sum += 1 / distance
         return val / w_sum
     else:
