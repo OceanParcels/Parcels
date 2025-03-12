@@ -99,10 +99,8 @@ def test_rotation_example(tmpdir):
 
 
 def main():
-    fset_filename = "decaying_moving_eddy"
     outfile = "DecayingMovingParticle.zarr"
     fieldset = decaying_moving_eddy_fieldset()
-    fieldset.write(fset_filename)
 
     decaying_moving_example(fieldset, outfile)
 

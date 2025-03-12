@@ -1,7 +1,6 @@
 import collections
 import math
 import warnings
-from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 import dask.array as da
@@ -134,9 +133,6 @@ class Field:
     allow_time_extrapolation : bool
         boolean whether to allow for extrapolation in time
         (i.e. beyond the last available time snapshot)
-    to_write : bool
-        Write the Field in NetCDF format at the same frequency as the ParticleFile outputdt,
-        using a filenaming scheme based on the ParticleFile name
 
     """
 
@@ -157,7 +153,6 @@ class Field:
         interp_method: InterpMethod = "linear",
         allow_time_extrapolation: bool | None = None,
         gridindexingtype: GridIndexingType = "nemo",
-        to_write: bool = False,
         data_full_zdim=None,
     ):
         if not isinstance(name, tuple):
@@ -176,7 +171,6 @@ class Field:
             self._grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
         self.fieldtype = self.name if fieldtype is None else fieldtype
-        self.to_write = to_write
         if self.grid.mesh == "flat" or (self.fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == "spherical":
@@ -630,53 +624,6 @@ class Field:
             return self.units.to_target(value, z, y, x)
         else:
             return value
-
-    def write(self, filename, varname=None):
-        """Write a :class:`Field` to a netcdf file.
-
-        Parameters
-        ----------
-        filename : str
-            Basename of the file (i.e. '{filename}{Field.name}.nc')
-        varname : str
-            Name of the field, to be appended to the filename. (Default value = None)
-        """
-        filepath = str(Path(f"{filename}{self.name}.nc"))
-        if varname is None:
-            varname = self.name
-        # Derive name of 'depth' variable for NEMO convention
-        vname_depth = f"depth{self.name.lower()}"
-
-        # Create DataArray objects for file I/O
-        if self.grid._gtype == GridType.RectilinearZGrid:
-            nav_lon = xr.DataArray(
-                self.grid.lon + np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32),
-                coords=[("y", self.grid.lat), ("x", self.grid.lon)],
-            )
-            nav_lat = xr.DataArray(
-                self.grid.lat.reshape(self.grid.ydim, 1) + np.zeros(self.grid.xdim, dtype=np.float32),
-                coords=[("y", self.grid.lat), ("x", self.grid.lon)],
-            )
-        elif self.grid._gtype == GridType.CurvilinearZGrid:
-            nav_lon = xr.DataArray(self.grid.lon, coords=[("y", range(self.grid.ydim)), ("x", range(self.grid.xdim))])
-            nav_lat = xr.DataArray(self.grid.lat, coords=[("y", range(self.grid.ydim)), ("x", range(self.grid.xdim))])
-        else:
-            raise NotImplementedError("Field.write only implemented for RectilinearZGrid and CurvilinearZGrid")
-
-        attrs = {"units": "seconds since " + str(self.grid.time_origin)} if self.grid.time_origin.calendar else {}
-        time_counter = xr.DataArray(self.grid.time, dims=["time_counter"], attrs=attrs)
-        vardata = xr.DataArray(
-            self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)),
-            dims=["time_counter", vname_depth, "y", "x"],
-        )
-        # Create xarray Dataset and output to netCDF format
-        attrs = {"parcels_mesh": self.grid.mesh}
-        dset = xr.Dataset(
-            {varname: vardata},
-            coords={"nav_lon": nav_lon, "nav_lat": nav_lat, "time_counter": time_counter, vname_depth: self.grid.depth},
-            attrs=attrs,
-        )
-        dset.to_netcdf(filepath, unlimited_dims="time_counter")
 
     def _rescale_and_set_minmax(self, data):
         data[np.isnan(data)] = 0

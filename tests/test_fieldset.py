@@ -229,13 +229,11 @@ def test_illegal_dimensionsdict(calltype):
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 200])
 def test_add_field(xdim, ydim, tmpdir):
-    filepath = tmpdir.join("test_add")
     data, dimensions = generate_fieldset_data(xdim, ydim)
     fieldset = FieldSet.from_data(data, dimensions)
     field = Field("newfld", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     fieldset.add_field(field)
     assert fieldset.newfld.data.shape == fieldset.U.data.shape
-    fieldset.write(filepath)
 
 
 @pytest.mark.parametrize("dupobject", ["same", "new"])
@@ -348,26 +346,6 @@ def test_fieldset_samegrids_from_data():
     assert fieldset1.U.grid == fieldset1.B.grid
 
 
-def test_fieldset_write_curvilinear(tmpdir):
-    fname = str(TEST_DATA / "mask_nemo_cross_180lon.nc")
-    filenames = {"dx": fname, "mesh_mask": fname}
-    variables = {"dx": "e1u"}
-    dimensions = {"lon": "glamu", "lat": "gphiu"}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
-
-    newfile = tmpdir.join("curv_field")
-    fieldset.write(newfile)
-
-    fieldset2 = FieldSet.from_netcdf(
-        filenames=newfile + "dx.nc",
-        variables={"dx": "dx"},
-        dimensions={"time": "time_counter", "depth": "depthdx", "lon": "nav_lon", "lat": "nav_lat"},
-    )
-
-    for var in ["lon", "lat", "data"]:
-        assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
-
-
 def addConst(particle, fieldset, time):  # pragma: no cover
     particle.lon = particle.lon + fieldset.movewest + fieldset.moveeast
 
@@ -435,37 +413,6 @@ def test_add_second_vector_field():
 
     assert abs(pset.lon[0] - 2.5) < 1e-9
     assert abs(pset.lat[0] - 0.5) < 1e-9
-
-
-def test_fieldset_write(tmp_zarrfile):
-    xdim, ydim = 3, 4
-    lon = np.linspace(0.0, 10.0, xdim, dtype=np.float32)
-    lat = np.linspace(0.0, 10.0, ydim, dtype=np.float32)
-    U = np.ones((ydim, xdim), dtype=np.float32)
-    V = np.zeros((ydim, xdim), dtype=np.float32)
-    data = {"U": U, "V": V}
-    dimensions = {"U": {"lat": lat, "lon": lon}, "V": {"lat": lat, "lon": lon}}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-
-    fieldset.U.to_write = True
-
-    def UpdateU(particle, fieldset, time):  # pragma: no cover
-        from parcels._index_search import _search_time_index
-
-        tmp1, tmp2 = fieldset.UV[particle]
-        _, yi, xi = fieldset.U.unravel_index(particle.ei)
-        _, ti = _search_time_index(fieldset.U.grid, time)
-        fieldset.U.data[ti, yi, xi] += 1
-        fieldset.U.grid.time[0] = time
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=5, lat=5)
-    ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=2.0)
-    pset.execute(UpdateU, dt=1, runtime=10, output_file=ofile)
-
-    assert fieldset.U.data[0, 1, 0] == 11
-
-    da = xr.open_dataset(str(tmp_zarrfile).replace(".zarr", "_0005U.nc"))
-    assert np.allclose(fieldset.U.data, da["U"].values, atol=1.0)
 
 
 @pytest.mark.v4remove

@@ -86,10 +86,7 @@ def test_rotation_example(tmpdir):
 
 
 def main():
-    filename = "radial_rotation"
     fieldset = radial_rotation_fieldset()
-    fieldset.write(filename)
-
     outfile = "RadialParticle"
     rotation_example(fieldset, outfile)
 

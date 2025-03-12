@@ -75,7 +75,6 @@ def field_repr(field: Field) -> str:
     grid            : {field.grid!r}
     extrapolate time: {field.allow_time_extrapolation!r}
     gridindexingtype: {field.gridindexingtype!r}
-    to_write        : {field.to_write!r}
 """
     return textwrap.dedent(out).strip()
 

@@ -101,16 +101,12 @@ def stommel_example(
     outfile="StommelParticle.zarr",
     repeatdt=None,
     maxage=None,
-    write_fields=True,
     custom_partition_function=False,
 ):
     parcels.timer.fieldset = parcels.timer.Timer(
         "FieldSet", parent=parcels.timer.stommel
     )
     fieldset = stommel_fieldset(grid_type=grid_type)
-    if write_fields:
-        filename = "stommel"
-        fieldset.write(filename)
     parcels.timer.fieldset.stop()
 
     parcels.timer.pset = parcels.timer.Timer("Pset", parent=parcels.timer.stommel)
@@ -184,14 +180,12 @@ def test_stommel_fieldset(grid_type, tmpdir):
         method=method["RK4"],
         grid_type=grid_type,
         outfile=outfile,
-        write_fields=False,
     )
     psetRK45 = stommel_example(
         1,
         method=method["RK45"],
         grid_type=grid_type,
         outfile=outfile,
-        write_fields=False,
     )
     assert np.allclose(psetRK4.lon, psetRK45.lon, rtol=1e-3)
     assert np.allclose(psetRK4.lat, psetRK45.lat, rtol=1.1e-3)
@@ -252,12 +246,6 @@ Example of particle advection in the steady-state solution of the Stommel equati
         help="max age of the particles (after which particles are deleted)",
     )
     p.add_argument(
-        "-wf",
-        "--write_fields",
-        default=True,
-        help="Write the hydrodynamic fields to NetCDF",
-    )
-    p.add_argument(
         "-cpf",
         "--custom_partition_function",
         default=False,
@@ -274,7 +262,6 @@ Example of particle advection in the steady-state solution of the Stommel equati
         outfile=args.outfile,
         repeatdt=args.repeatdt,
         maxage=args.maxage,
-        write_fields=args.write_fields,
         custom_partition_function=args.custom_partition_function,
     )
     parcels.timer.stommel.stop()
