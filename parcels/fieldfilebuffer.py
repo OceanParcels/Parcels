@@ -84,13 +84,10 @@ class NetcdfFileBuffer:
 
     @property
     def depth(self):
+        self.indices["depth"] = range(self.zdim)
         if "depth" in self.dimensions:
-            depth = self.dataset[self.dimensions["depth"]]
-            self.indices["depth"] = range(self.zdim)
-            return depth
-        else:
-            self.indices["depth"] = [0]
-            return np.zeros(1)
+            return self.dataset[self.dimensions["depth"]]
+        return np.zeros(1)
 
     @property
     def data_full_zdim(self):
